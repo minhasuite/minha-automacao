@@ -25,8 +25,9 @@ entram sozinhos. A primeira publicação (editor ou API) o torna manual.
 - **Início**: selos "N ligados" e "W agora" (soma da potência); seções Luzes
   (pontos liga/desliga com nome/etiqueta de luz, em âmbar), Agora (lista dos
   ligados + alertas), Consumo (gráfico de potência 24 h + lista), Segurança
-  (risco sensível/crítico, portão, abertura e movimento), Cenas e Áreas (um
-  cartão por área quando há mais de uma).
+  (risco sensível/crítico, portão, abertura e movimento), Câmeras (um widget
+  `camera` por câmera), Cenas e Áreas (um cartão por área quando há mais de
+  uma). Nas views de área a câmera também vira widget `camera`.
 - **Uma view por área** (`area` = id da área): uma seção por dispositivo
   (luzes primeiro) e o gráfico de consumo da área. Tensão e corrente ficam de
   fora; ponto oculto ou desativado também.
@@ -83,6 +84,7 @@ ou `key` do ponto.
 | `area_card` | `area` | cartão da área com ligados, abertos, movimento, potência, sem sinal; navega para a view com `area` igual |
 | `scene_bar` | `scenes` (ids; vazio = todas) | botões de cena |
 | `alerts` | — | alertas abertos com "Ciente" |
+| `camera` | `bind` (ponto `stream` de dispositivo `go2rtc`), `live` (padrão true), `snapshot_interval` (2–300 s, padrão 10) | quadro periódico e "Ao vivo" (WebRTC); sem conexão, o aviso no lugar da imagem |
 | `heading` | `title` | título |
 | `markdown` | `text` | texto puro (sem Liquid por enquanto) |
 
@@ -90,7 +92,7 @@ ou `key` do ponto.
 `off`: o resto), `area`, `device_class` (`power` também pega medição em W),
 `tag`, `quality`. Ponto oculto ou desativado nunca entra.
 
-Ficam para depois (driver ainda não existe ou v1.1): `camera`, `vacuum`,
+Ficam para depois (driver ainda não existe ou v1.1): `vacuum`,
 `energy`, `timeline`, `health`, `calendar`, `select`/`slider`/`button`/`gate`
 como tipos próprios (hoje cobertos pelo `tile`) e os da indústria.
 
@@ -100,7 +102,7 @@ A definição publicada (ou o rascunho com `?draft=1`, para quem edita) com:
 
 - widgets que o papel não vê removidos; cada widget ganha `visible` (estado,
   qualidade, hora agora), `data` e `deps`;
-- `data` por tipo: `tile`/`group`/`chart` → `point_ids`, `missing`; `stat` →
+- `data` por tipo: `tile`/`group`/`chart`/`camera` → `point_ids`, `missing`; `stat` →
   `value`, `unit`, `text`, `point_ids`; `gauge` → `min`, `max`, `ratio`;
   `query_list` → `point_ids`, `count`; `area_card` → `area`, `view_id`, `on`,
   `open`, `motion`, `power`, `unavailable`, `total`; `scene_bar` → `scenes`

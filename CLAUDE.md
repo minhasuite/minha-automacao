@@ -26,7 +26,9 @@ ponto, `/locais/:id/automacao`, `/alertas`) e na API +
 editor web, widgets ao vivo, API; formato em `docs/dashboards.md`) no Início +
 **F6**: automações com a DSL JSON (`Automation`, versões, `AutomationRun` com
 trace, simulação, editor de blocos em `/locais/:id/automacoes`, API e webhook;
-referência em `docs/automacoes.md`).
+referência em `docs/automacoes.md`) + **F8 (1ª metade)**: drivers `mqtt`
+(Mosquitto, ouvinte, descoberta do zigbee2mqtt) e `go2rtc` (câmeras, widget
+`camera` com quadro e ao vivo por WebRTC passando pelo Rails).
 
 ## Rodar
 
@@ -152,6 +154,36 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   própria automação ou corrente > 3 = "laço evitado". Comando sempre por
   `Points::Command` (`run:`), nunca direto no driver. Notificação `kind:
   "automacao"`. No Dell nenhuma automação ativa sobre aparelho real até a F10.
+- **MQTT (F8)**: `Drivers::Mqtt` (endereço do ponto `{topic, json_path,
+  command_topic, payload_on, payload_off}`; número com `scale`/`offset` via
+  `Point#from_raw`/`to_raw`) e `Mqtt::Listener` no worker (só com `MQTT_URL`;
+  assina os tópicos dos pontos a cada 30 s, caiu = pontos `unavailable`,
+  reconexão até 60 s). Comando só publica; o eco do estado atualiza o ponto.
+  Broker e senha são do servidor (`.env`), por isso não há tabela
+  `integrations`: credencial de aparelho continua em `devices.credential`.
+- **zigbee2mqtt (F8)**: serviço no perfil `zigbee`, desligado até o
+  coordenador USB chegar. Descoberta: `zigbee2mqtt/bridge/devices` (retido) →
+  `Mqtt::Z2m.discover!` (dispositivo por `ieee_address`, ponto pela
+  propriedade, chave `nome_z2m.propriedade`; exposes binário/numérico/enum/
+  texto → onoff, contato, movimento, problema, medição, dimmer, setpoint,
+  enum, evento). Local: `Z2M_SITE_ID` ou o único local do servidor.
+  **Para ligar:** no Dell, `ls /dev/serial/by-id/`; no `.env`,
+  `ZIGBEE_DEVICE=/dev/serial/by-id/usb-...` e `ZIGBEE_ADAPTER=` (`ember` para
+  Sonoff ZBDongle-E/EFR32, `zstack` para ZBDongle-P/CC2652); `bin/deploy-local`
+  liga o perfil sozinho. Frontend do z2m em `:8080` com
+  `Z2M_FRONTEND_TOKEN` do `.env`. Parear com `permit_join` pelo frontend.
+- **Câmeras (F8)**: dispositivo `go2rtc` (`address` {host, port, username},
+  `credential` = senha) e um ponto `stream` por canal (`address` {path};
+  use o substream e RTSP/TCP, padrão do go2rtc: o DVR Hikvision entrega H.264
+  quebrado no main). O go2rtc sobe sem config; `Go2rtcSyncJob` (a cada minuto)
+  põe os streams pela API (nome = id do ponto). Usuário sem senha fica de fora
+  (o DVR bloqueia com senha errada). O navegador só fala com o Rails:
+  `GET /cameras/:id/quadro` (JPEG, último guardado em `tmp/snapshots`, 3 s de
+  reaproveitamento, nada no histórico) e `POST /cameras/:id/ao-vivo` (oferta
+  SDP → go2rtc → resposta), qualquer papel no local. Mídia WebRTC na 8555
+  (tcp/udp) anunciada em `APP_HOST`. Sem `GO2RTC_URL` (VPS) o widget mostra
+  "Sem conexão". Importação: `... | rake 'go2rtc:importar[Casa]'` com o JSON
+  na entrada padrão (senha nunca em arquivo nem argumento).
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 
@@ -159,8 +191,11 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
 
 Debian `192.168.68.199` (`ssh -i ~/.ssh/dell_automacao herlon@…`), em
 `/opt/minha-automacao`: `docker-compose.yml` (= `docker-compose.local.yml`),
-`.env` (chmod 600, segredos gerados lá; nunca no repo), `backups/` (pg_dump
-diário, 7 dias). `bin/deploy-local [tag]` no WSL: usa a imagem local do
+`.env` (chmod 600, segredos gerados lá; nunca no repo: inclui
+`MQTT_PASSWORD` e `Z2M_FRONTEND_TOKEN`), `backups/` (pg_dump diário, 7 dias).
+Serviços: db, web, worker, mosquitto (1883 na rede local), go2rtc (só 8555
+de mídia exposta), backup, cloudflared (perfil `tunnel`) e zigbee2mqtt
+(perfil `zigbee`). `bin/deploy-local [tag]` no WSL: usa a imagem local do
 runner (ou puxa), `docker save | ssh docker load`, sobe e espera o `/up`. Web
 em `http://192.168.68.199/` (HTTP na rede: `ASSUME_SSL`/`FORCE_SSL=false`).
 Túnel: serviço `cloudflared` (perfil `tunnel`) liga sozinho quando o `.env`
