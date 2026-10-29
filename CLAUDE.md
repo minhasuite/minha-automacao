@@ -16,8 +16,10 @@ notificações, assinatura, IA, licenças, telemetria, páginas legais e conta) 
 modelo), na web (`/locais`) e na API + **F2**: comandos rastreados
 (`Command`, `Points::Command` → `ExecuteCommandJob` → `Drivers.for`),
 histórico (`readings` particionada, `reading_rollups`, `events`), tempo real
-(Solid Cable, `PointsChannel`) e página do ponto com gráfico. Drivers de
-verdade (F3), automações e dashboards ainda não existem.
+(Solid Cable, `PointsChannel`) e página do ponto com gráfico + **F3**: driver
+`tuya_local` (3.1/3.3/3.4/3.5), ouvinte persistente, importação do LocalTuya
+e o servidor local da casa (`docker-compose.local.yml`, `bin/deploy-local`).
+Automações e dashboards ainda não existem.
 
 ## Rodar
 
@@ -88,6 +90,38 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   `turbo_stream_from point, channel: PointsChannel` (exige papel no local) e a
   mudança chega como *refresh* com morph: cada tela recarrega com o próprio
   papel do usuário.
+
+- **Tuya local (F3)**: `Tuya::Protocol` (quadros, sem rede) → `Tuya::Connection`
+  (TCP 6668, sessão 3.4/3.5) → `Drivers::TuyaLocal`. Dispositivo: `address`
+  `{host, version, port}`, `external_id` = device_id, `credential` = local_key
+  (`encrypts`); ponto: `address` `{"dps" => "1"}`, número = bruto × `scale` +
+  `offset`. Sem tabela `integrations` (nada é compartilhado entre aparelhos;
+  entra com o primeiro driver de conta). Importação:
+  `rake 'tuya:importar[arquivo.json,Casa]'` (JSON de `core.config_entries` →
+  `data.devices` do LocalTuya; área "Importados do HA"; idempotente por
+  device_id; nome com portão/sirene vira risco crítico).
+- **Ouvinte Tuya (`devices.listen`) fica DESLIGADO por padrão até a migração
+  (F10)**: o LocalTuya do HA está conectado nos mesmos aparelhos e muitos
+  aceitam uma conexão só. Ligue só para teste e desligue no fim. Ele roda no
+  processo worker (`SolidQueue.on_worker_start`, `TUYA_LISTENER=off`
+  desliga), uma thread por aparelho, heartbeat 10 s, reconexão até 60 s; caiu
+  = pontos `unavailable`. Com ele ligado o comando sai pela conexão aberta.
+  Sem `listen`, o comando abre uma conexão curta (set + status). Exige um
+  processo worker só (`JOB_CONCURRENCY=1`).
+- Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
+  bomba/filtro da piscina; leitura de estado pode.
+
+## Servidor local (casa)
+
+Debian `192.168.68.199` (`ssh -i ~/.ssh/dell_automacao herlon@…`), em
+`/opt/minha-automacao`: `docker-compose.yml` (= `docker-compose.local.yml`),
+`.env` (chmod 600, segredos gerados lá; nunca no repo), `backups/` (pg_dump
+diário, 7 dias). `bin/deploy-local [tag]` no WSL: usa a imagem local do
+runner (ou puxa), `docker save | ssh docker load`, sobe e espera o `/up`. Web
+em `http://192.168.68.199/` (HTTP na rede: `ASSUME_SSL`/`FORCE_SSL=false`).
+Túnel: serviço `cloudflared` (perfil `tunnel`) liga sozinho quando o `.env`
+tem `CF_TUNNEL_TOKEN`. sudo pede senha; use `docker run -v` para mexer fora
+de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 ## Web
 
