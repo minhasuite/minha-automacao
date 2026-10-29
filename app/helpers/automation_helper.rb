@@ -1,7 +1,10 @@
 # Telas das primitivas de automação (F4).
 module AutomationHelper
   COMMAND_CHOICES = { "Ligar" => "on", "Desligar" => "off", "Alternar" => "toggle", "Pulsar (portão)" => "pulse",
-                      "Apertar (botão)" => "press", "Ajustar valor" => "set", "Selecionar opção" => "select" }.freeze
+                      "Apertar (botão)" => "press", "Ajustar valor" => "set", "Selecionar opção" => "select",
+                      "Iniciar limpeza (robô)" => "start", "Pausar (robô)" => "pause", "Parar (robô)" => "stop",
+                      "Voltar à base (robô)" => "home", "Lavar o pano (robô)" => "wash_mop", "Secar o pano (robô)" => "dry_mop",
+                      "Esvaziar (robô)" => "empty", "Anunciar (Echo)" => "announce", "Falar (Echo)" => "speak" }.freeze
 
   def point_choices(site, writable: false)
     scope = site.points.includes(:device).ordered
@@ -48,5 +51,5 @@ module AutomationHelper
     "#{cond} · #{rule.severity_label} · #{count_label(rule.escalation.size, 'etapa', 'etapas')}#{repeat}"
   end
 
-  def channels_label(channels) = channels.map { |c| Notifier::CHANNELS.fetch(c, c) }.join(" e ").downcase
+  def channels_label(channels) = channels.map { |c| Notifier.channel_label(c) }.join(" e ").downcase
 end

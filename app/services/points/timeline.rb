@@ -4,7 +4,10 @@ module Points
   class Timeline
     Item = Struct.new(:at, :kind, :title, :detail, :user, :tone, keyword_init: true)
     COMMAND_LABELS = { "on" => "Ligar", "off" => "Desligar", "toggle" => "Alternar", "set" => "Ajustar",
-                       "select" => "Selecionar", "press" => "Acionar", "pulse" => "Acionar" }.freeze
+                       "select" => "Selecionar", "press" => "Acionar", "pulse" => "Acionar", "start" => "Iniciar limpeza",
+                       "pause" => "Pausar", "stop" => "Parar", "home" => "Voltar à base", "clean_rooms" => "Limpar cômodos",
+                       "wash_mop" => "Lavar o pano", "dry_mop" => "Secar o pano", "empty" => "Esvaziar", "locate" => "Localizar",
+                       "announce" => "Anunciar", "speak" => "Falar" }.freeze
     QUALITY_LABELS = { "good" => "Normal", "stale" => "Desatualizado", "unavailable" => "Indisponível", "error" => "Com erro" }.freeze
     AUDIT_LABELS = { "create" => "Ponto criado", "update" => "Cadastro alterado", "destroy" => "Ponto excluído" }.freeze
     TONES = { "confirmed" => "success", "failed" => "danger", "expired" => "warn" }.freeze

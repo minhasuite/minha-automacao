@@ -4,11 +4,18 @@ module PointsHelper
   POINT_ICONS = { "onoff" => "light-bulb", "dimmer" => "sun", "color" => "sparkles", "gate" => "switch-horizontal",
                   "contact" => "view-boards", "motion" => "eye", "tamper" => "exclamation-circle", "problem" => "exclamation-circle",
                   "measure" => "chart-bar", "enum" => "view-list", "setpoint" => "calculator", "command" => "lightning-bolt",
-                  "text" => "document-text", "vacuum" => "refresh", "speaker" => "bell", "stream" => "video-camera",
+                  "text" => "document-text", "vacuum" => "vacuum", "speaker" => "speakerphone", "stream" => "video-camera",
                   "climate" => "sun", "event" => "bell" }.freeze
   BOOL_TEXT = { "onoff" => %w[Ligado Desligado], "contact" => %w[Aberto Fechado], "motion" => %w[Movimento Parado],
                 "tamper" => %w[Violado Normal], "problem" => %w[Problema Normal] }.freeze
   GATE_TEXT = { "open" => "Aberto", "closed" => "Fechado", "opening" => "Abrindo", "unknown" => "Desconhecido" }.freeze
+  # Estados de texto por capacidade (portão, robô, Echo).
+  STATE_TEXT = {
+    "gate" => GATE_TEXT,
+    "vacuum" => { "docked" => "Na base", "cleaning" => "Limpando", "returning" => "Voltando para a base", "paused" => "Pausado",
+                  "idle" => "Parado", "error" => "Com erro" },
+    "speaker" => { "online" => "Pronta", "offline" => "Fora do ar" }
+  }.freeze
 
   TONE_CLASSES = { "success" => "text-success", "danger" => "text-danger", "warn" => "text-warn", "muted" => "text-muted" }.freeze
 
@@ -34,8 +41,8 @@ module PointsHelper
       "Sem valor"
     elsif BOOL_TEXT.key?(point.capability)
       BOOL_TEXT[point.capability][v ? 0 : 1]
-    elsif point.capability == "gate"
-      GATE_TEXT.fetch(v.to_s, v.to_s)
+    elsif STATE_TEXT.key?(point.capability)
+      STATE_TEXT[point.capability].fetch(v.to_s, v.to_s)
     elsif v.is_a?(Numeric)
       [ number_with_precision(v, precision: 2, strip_insignificant_zeros: true), point.unit ].compact.join(" ")
     elsif v.is_a?(Hash) || v.is_a?(Array)
