@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Implanta no servidor local da casa (docker-compose.local.yml), rodando no
+# WSL: puxa a imagem com o login do GHCR que já existe aqui, envia por
+# `docker save | ssh docker load` (o servidor não guarda credencial do
+# GitHub), gera os segredos lá na primeira vez e sobe o compose.
+#
+#   bin/deploy-local [tag]          # tag padrão: latest
+#   DEPLOY_HOST=herlon@192.168.68.199 DEPLOY_KEY=~/.ssh/dell_automacao
+set -euo pipefail
+
+TAG="${1:-latest}"
+IMAGE="ghcr.io/minhasuite/minha-automacao:$TAG"
+HOST="${DEPLOY_HOST:-herlon@192.168.68.199}"
+KEY="${DEPLOY_KEY:-$HOME/.ssh/dell_automacao}"
+DIR="${DEPLOY_DIR:-/opt/minha-automacao}"
+SSH=(ssh -i "$KEY" -o BatchMode=yes "$HOST")
+cd "$(dirname "$0")/.."
+
+echo "==> imagem $IMAGE"
+docker pull "$IMAGE" >/dev/null
+local_id=$(docker image inspect --format '{{.Id}}' "$IMAGE" | sed 's/^sha256://')
+remote_id=$("${SSH[@]}" "docker image inspect --format '{{.Id}}' $IMAGE 2>/dev/null | sed 's/^sha256://'" || true)
+if [ "$local_id" != "$remote_id" ]; then
+  echo "==> enviando a imagem (pode levar alguns minutos)"
+  docker save "$IMAGE" | gzip -1 | "${SSH[@]}" "gunzip | docker load" >/dev/null
+else
+  echo "==> imagem já está no servidor"
+fi
+
+echo "==> compose e segredos"
+"${SSH[@]}" "mkdir -p $DIR/backups"
+scp -q -i "$KEY" docker-compose.local.yml "$HOST:$DIR/docker-compose.yml"
+# Segredos nascem no servidor e não saem de lá.
+"${SSH[@]}" bash -s "$DIR" <<'REMOTE'
+set -euo pipefail
+cd "$1"
+touch .env && chmod 600 .env
+gen() { grep -q "^$1=" .env || echo "$1=$(openssl rand -hex "${2:-32}")" >> .env; }
+gen SECRET_KEY_BASE 64
+gen DB_PASSWORD 24
+gen AR_ENCRYPTION_PRIMARY_KEY
+gen AR_ENCRYPTION_DETERMINISTIC_KEY
+gen AR_ENCRYPTION_KEY_DERIVATION_SALT
+REMOTE
+
+echo "==> subindo"
+"${SSH[@]}" bash -s "$DIR" "$IMAGE" <<'REMOTE'
+set -euo pipefail
+cd "$1"
+profiles=()
+grep -q '^CF_TUNNEL_TOKEN=.' .env && profiles=(--profile tunnel)
+IMAGE="$2" docker compose "${profiles[@]}" up -d --remove-orphans
+for _ in $(seq 1 60); do
+  if curl -fsS -o /dev/null "http://127.0.0.1:${WEB_PORT:-80}/up"; then
+    echo "no ar: http://$(hostname -I | awk '{print $1}')/"
+    docker compose "${profiles[@]}" ps --format '{{.Service}}: {{.Status}}'
+    exit 0
+  fi
+  sleep 5
+done
+docker compose logs --tail 50 web
+exit 1
+REMOTE

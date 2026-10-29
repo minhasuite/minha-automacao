@@ -24,10 +24,13 @@ Rails.application.configure do
   config.active_storage.service = (ENV["ACTIVE_STORAGE_SERVICE"].presence || (ENV["R2_ACCESS_KEY_ID"].present? ? "cloudflare" : "local")).to_sym
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  config.assume_ssl = true
+  # Servidor local (docker-compose.local.yml) também atende por HTTP na rede
+  # da casa: lá ASSUME_SSL=false e FORCE_SSL=false (o túnel manda o
+  # X-Forwarded-Proto https).
+  config.assume_ssl = ENV["ASSUME_SSL"] != "false"
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
+  config.force_ssl = ENV["FORCE_SSL"] != "false"
 
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }

@@ -1,0 +1,108 @@
+# Servidor local da casa (/opt/minha-automacao no Debian): Postgres próprio,
+# web, worker (fila + ouvinte Tuya), backup diário e túnel Cloudflare.
+# Subido pelo bin/deploy-local (a imagem vem do WSL; o servidor não guarda
+# credencial do GitHub). Segredos em /opt/minha-automacao/.env (chmod 600),
+# gerados lá na primeira vez; nada daqui é segredo.
+#
+# Rede bridge: o driver tuya_local fala TCP direto com o IP do aparelho, sem
+# precisar de host. A descoberta por broadcast UDP (6666/6667) pediria
+# network_mode: host no worker; ainda não existe (o IP vem da importação).
+
+x-app: &app
+  image: ${IMAGE:-ghcr.io/minhasuite/minha-automacao:latest}
+  restart: unless-stopped
+  env_file: .env
+  environment: &app-env
+    RAILS_ENV: production
+    DATABASE_URL: postgresql://minha_automacao:${DB_PASSWORD:?set DB_PASSWORD}@db:5432/minha_automacao
+    RAILS_LOG_TO_STDOUT: "true"
+    APP_HOST: ${APP_HOST:-192.168.68.199}
+    ASSUME_SSL: "false"
+    FORCE_SSL: "false"
+    ACTIVE_STORAGE_SERVICE: local
+  volumes:
+    - storage:/app/storage
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: minha_automacao
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      POSTGRES_DB: minha_automacao
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U minha_automacao"]
+      interval: 5s
+      retries: 10
+
+  web:
+    <<: *app
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-80}:3000"
+    environment:
+      <<: *app-env
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-3}
+    command: bash -c "bundle exec rails db:prepare && exec bundle exec puma -C config/puma.rb"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/up || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  # Fila (comandos dos aparelhos, tarefas recorrentes) e o ouvinte Tuya.
+  worker:
+    <<: *app
+    depends_on:
+      web:
+        condition: service_healthy
+    command: bundle exec ruby bin/jobs
+    environment:
+      <<: *app-env
+      DB_POOL: "12" # 3 threads do worker + Solid Queue + uma por aparelho ouvido
+
+  # pg_dump diário com 7 dias de retenção em /opt/minha-automacao/backups.
+  backup:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    entrypoint:
+      - sh
+      - -c
+      - |
+        while true; do
+          f=/backups/minha_automacao-$$(date +%F).sql.gz
+          pg_dump -h db -U minha_automacao minha_automacao | gzip > "$$f.tmp" && mv "$$f.tmp" "$$f" && echo "backup $$f"
+          find /backups -name 'minha_automacao-*.sql.gz' -mtime +7 -delete
+          sleep 86400
+        done
+
+  # Acesso externo. Sem CF_TUNNEL_TOKEN no .env o serviço fica de fora
+  # (perfil `tunnel`, ligado pelo bin/deploy-local quando o token existe).
+  cloudflared:
+    image: cloudflare/cloudflared:2025.10.0
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    depends_on:
+      web:
+        condition: service_healthy
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN:-}
+
+volumes:
+  pgdata:
+  storage:
