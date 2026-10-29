@@ -29,7 +29,9 @@ module Accounts
             [ m.table_name.to_sym, m.order(:created_at).map { |r| r.as_json(except: "tenant_id") } ]
           end,
           # Automações (F6): a definição publicada e o rascunho (sem o token do webhook).
-          automations: Automation.order(:created_at).map { |r| r.as_json(except: %w[tenant_id webhook_token]) }
+          automations: Automation.order(:created_at).map { |r| r.as_json(except: %w[tenant_id webhook_token]) },
+          # Integrações (F8): sem as credenciais.
+          integrations: Integration.order(:created_at).map { |r| r.as_json(except: %w[tenant_id credentials]) }
         }
       end
     end

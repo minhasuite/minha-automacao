@@ -1,0 +1,64 @@
+<% tones = { "ok" => "success", "error" => "danger", "pending" => "warn", "online" => "success", "offline" => "danger" } %>
+<%= render "web/shared/header", title: "Integrações", subtitle: "#{@site.name} · contas e aparelhos ligados a serviços de fora", back: site_path(@site) %>
+
+<% if @integrations.empty? && @direct.empty? %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink">Nenhuma integração neste local.</p>
+    <p class="mt-1">A conta da Alexa e o robô Xiaomi entram pela importação no servidor local (os segredos não passam pela tela).</p>
+  </div>
+<% end %>
+
+<% if @integrations.any? %>
+  <p class="ss-section mb-3">Contas</p>
+  <div class="grid gap-4 md:grid-cols-2">
+    <% @integrations.each do |i| %>
+      <section class="ss-card ss-card-pad" aria-labelledby="int-<%= i.id %>">
+        <div class="flex items-start gap-3">
+          <span class="ss-icon-tile text-accent"><%= icon(i.driver == "alexa" ? "speakerphone" : "link") %></span>
+          <div class="min-w-0 flex-1">
+            <h2 id="int-<%= i.id %>" class="font-bold text-ink"><%= i.name %></h2>
+            <p class="text-sm text-muted"><%= i.driver_label %></p>
+          </div>
+          <span class="ss-badge ss-badge-<%= tones.fetch(i.status, 'accent') %>"><%= i.status_label %></span>
+        </div>
+        <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+          <div><dt class="text-muted">Último sucesso</dt><dd class="font-semibold text-ink"><%= i.last_ok_at ? l(i.last_ok_at, format: :short) : "Ainda não" %></dd></div>
+          <div><dt class="text-muted">Aparelhos</dt><dd class="font-semibold text-ink"><%= i.devices.size %></dd></div>
+        </dl>
+        <% if i.last_error.present? %>
+          <p class="mt-3 text-sm text-danger" role="status">Último erro: <%= i.last_error %></p>
+        <% end %>
+        <% if i.devices.any? %>
+          <ul class="mt-3 flex flex-wrap gap-2" aria-label="Aparelhos de <%= i.name %>">
+            <% i.devices.sort_by(&:name).each do |d| %>
+              <li><%= link_to d.name, device_path(d), class: "ss-chip no-underline" %></li>
+            <% end %>
+          </ul>
+        <% end %>
+        <% if can?(:manage) && i.driver == "alexa" %>
+          <%= button_to discover_integration_path(i), class: "ss-btn ss-btn-outline ss-btn-sm mt-4", form: { data: { turbo_submits_with: "Atualizando…" } } do %><%= icon("refresh", "size-4") %>Atualizar lista de Echo<% end %>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @direct.any? %>
+  <p class="ss-section mt-6 mb-3">Conexão direta na rede local</p>
+  <ul class="ss-card divide-y divide-line overflow-hidden">
+    <% @direct.each do |d| %>
+      <li>
+        <%= link_to device_path(d), class: "flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 no-underline hover:bg-field" do %>
+          <span class="ss-icon-tile text-accent"><%= icon("vacuum") %></span>
+          <span class="min-w-0 flex-1 basis-48">
+            <span class="block font-semibold text-ink"><%= d.name %></span>
+            <span class="block text-sm text-muted"><%= d.driver_label %> · leitura a cada <%= Drivers::XiaomiMiot::POLL_EVERY %> s · <%= d.last_seen_at ? "última leitura #{l(d.last_seen_at, format: :short)}" : "ainda sem leitura" %></span>
+          </span>
+          <% label, tone = d.last_seen_at.nil? ? %w[Aguardando warn] : (d.status == "online" ? %w[Respondendo success] : [ "Sem resposta", "danger" ]) %>
+          <span class="ss-badge ss-badge-<%= tone %>"><%= label %></span>
+          <%= icon("chevron-right", "size-4 text-muted") %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

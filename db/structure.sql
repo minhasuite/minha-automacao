@@ -398,7 +398,8 @@ CREATE TABLE public.devices (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     credential text,
-    listen boolean DEFAULT false NOT NULL
+    listen boolean DEFAULT false NOT NULL,
+    integration_id uuid
 );
 
 
@@ -426,6 +427,26 @@ CREATE TABLE public.feature_flags (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     key character varying NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: integrations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.integrations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    driver character varying NOT NULL,
+    name character varying NOT NULL,
+    settings jsonb DEFAULT '{}'::jsonb NOT NULL,
+    credentials text,
+    status character varying DEFAULT 'pending'::character varying NOT NULL,
+    last_error character varying,
+    last_ok_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -1642,6 +1663,14 @@ ALTER TABLE ONLY public.feature_flags
 
 
 --
+-- Name: integrations integrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.integrations
+    ADD CONSTRAINT integrations_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: invites invites_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2290,6 +2319,13 @@ CREATE INDEX index_devices_on_external_id ON public.devices USING btree (externa
 
 
 --
+-- Name: index_devices_on_integration_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_devices_on_integration_id ON public.devices USING btree (integration_id);
+
+
+--
 -- Name: index_devices_on_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2329,6 +2365,20 @@ CREATE INDEX index_events_on_tenant_id ON public.events USING btree (tenant_id);
 --
 
 CREATE UNIQUE INDEX index_feature_flags_on_key ON public.feature_flags USING btree (key);
+
+
+--
+-- Name: index_integrations_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_integrations_on_site_id ON public.integrations USING btree (site_id);
+
+
+--
+-- Name: index_integrations_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_integrations_on_tenant_id ON public.integrations USING btree (tenant_id);
 
 
 --
@@ -3470,6 +3520,14 @@ ALTER TABLE ONLY public.notifications
 
 
 --
+-- Name: devices fk_rails_b386e7e412; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.devices
+    ADD CONSTRAINT fk_rails_b386e7e412 FOREIGN KEY (integration_id) REFERENCES public.integrations(id) ON DELETE SET NULL;
+
+
+--
 -- Name: point_links fk_rails_b42977bcc7; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3483,6 +3541,14 @@ ALTER TABLE ONLY public.point_links
 
 ALTER TABLE ONLY public.invites
     ADD CONSTRAINT fk_rails_b52eeab183 FOREIGN KEY (created_by_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: integrations fk_rails_b5896051eb; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.integrations
+    ADD CONSTRAINT fk_rails_b5896051eb FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -3523,6 +3589,14 @@ ALTER TABLE ONLY public.solid_queue_scheduled_executions
 
 ALTER TABLE ONLY public.dashboard_versions
     ADD CONSTRAINT fk_rails_cc7233754b FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: integrations fk_rails_d329ca1b17; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.integrations
+    ADD CONSTRAINT fk_rails_d329ca1b17 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -3684,6 +3758,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261030100001'),
 ('20261029500001'),
 ('20261029400001'),
 ('20261029300001'),

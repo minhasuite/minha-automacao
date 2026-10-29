@@ -78,6 +78,9 @@ Rails.application.routes.draw do
         end
         resources :automation_runs, path: "execucoes", only: %i[index show], shallow: true
       end
+      resources :integrations, path: "integracoes", only: :index, shallow: true do
+        post :discover, on: :member, path: "atualizar"
+      end
       resources :areas, path: "areas", except: :index, shallow: true
       resources :devices, path: "dispositivos", except: :index, shallow: true do
         resources :points, path: "pontos", except: :index, shallow: true do

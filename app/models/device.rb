@@ -15,6 +15,7 @@ class Device < ApplicationRecord
 
   belongs_to :site
   belongs_to :area, optional: true
+  belongs_to :integration, optional: true
   has_many :points, dependent: nil # cascade no banco
 
   encrypts :credential
