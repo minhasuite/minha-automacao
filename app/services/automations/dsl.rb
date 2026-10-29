@@ -37,7 +37,7 @@ module Automations
     }.freeze
 
     CONDITIONS = {
-      "state" => { label: "Ponto está", fields: [ f("point", :point, "Ponto", required: true), f("is", :value, "Valor"),
+      "state" => { label: "Ponto está", fields: [ f("point", :point, "Ponto", required: true), f("is", :value, "Está"),
                                                  f("quality", :select, "Ou situação", options: QUALITIES), f("for", :duration, "Há pelo menos") ] },
       "numeric" => { label: "Ponto entre limites", fields: [ f("point", :point, "Ponto", required: true), f("above", :number, "Acima de"), f("below", :number, "Abaixo de") ] },
       "time" => { label: "Janela de horário", fields: [ f("after", :time, "Depois de"), f("before", :time, "Antes de"), f("days", :days, "Dias") ] },
@@ -68,6 +68,10 @@ module Automations
     }.freeze
 
     OPTION = { label: "Opção", fields: [ f("conditions", :conditions, "Se"), f("actions", :actions, "Então") ] }.freeze
+
+    # Campos simples (não lista) que o formulário de um bloco pode mandar.
+    FORM_FIELDS = [ TRIGGERS, CONDITIONS, ACTIONS ].flat_map { |c| c.values.flat_map { |s| s[:fields] } }
+                                                   .reject { |fd| fd.kind.in?(%i[conditions actions options days channels]) }.map(&:name).uniq.freeze
 
     # Lista de blocos → catálogo dos tipos dela.
     CATALOG = { triggers: TRIGGERS, conditions: CONDITIONS, actions: ACTIONS }.freeze

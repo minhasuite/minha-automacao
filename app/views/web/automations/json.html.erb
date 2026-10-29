@@ -1,0 +1,15 @@
+<%= render "web/shared/header", title: "JSON do rascunho", subtitle: "#{@automation.name} · DSL de automação (docs/automacoes.md). Pontos pela chave; validado antes de salvar.", back: edit_automation_path(@automation) %>
+<%= form_with url: json_automation_path(@automation), method: :patch, class: "ss-card ss-card-pad grid gap-3" do %>
+  <% if @errors.present? %>
+    <div class="rounded-xl bg-danger-soft text-danger p-3 text-sm" role="alert">
+      <p class="font-bold">O JSON não foi salvo:</p>
+      <ul class="list-disc pl-5 mt-1"><% @errors.first(10).each do |e| %><li><%= e %></li><% end %></ul>
+    </div>
+  <% end %>
+  <label class="ss-label" for="definition">Definição: triggers, conditions, actions</label>
+  <%= text_area_tag :definition, @text, id: "definition", rows: 28, spellcheck: false, class: "ss-input num text-xs leading-relaxed" %>
+  <div class="flex flex-wrap gap-2">
+    <%= submit_tag "Validar e salvar no rascunho", class: "ss-btn ss-btn-primary" %>
+    <%= link_to "Cancelar", edit_automation_path(@automation), class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

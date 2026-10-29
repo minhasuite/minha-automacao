@@ -92,7 +92,8 @@ class Automation < ApplicationRecord
   def simulate!(points: {}, at: nil, trigger: {}, definition: working_draft, skip_conditions: false)
     at = at.presence && (at.is_a?(String) ? Time.zone.parse(at) : at)
     trigger = { "type" => "manual", "title" => "Simulação" }.merge(trigger.to_h.stringify_keys)
-    run = runs.create!(tenant_id: tenant_id, site: site, version: version, trigger: trigger, status: "running", dry_run: true, started_at: Time.current)
+    run = runs.create!(tenant_id: tenant_id, site: site, version: (version if definition == self.definition), trigger: trigger, status: "running",
+                       dry_run: true, started_at: Time.current)
     ctx = Automations::Context.new(site: site, trigger: trigger, overrides: points, at: at)
     run.steps << { "kind" => "trigger", "title" => "Gatilho simulado: #{trigger['title']}", "result" => "ok" }
     Automations::Engine.start(run, definition, ctx, skip_conditions: skip_conditions)

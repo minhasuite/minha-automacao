@@ -1,0 +1,48 @@
+<% fmt = ->(t) { t && l(Time.zone.parse(t.to_s), format: "%H:%M:%S") } %>
+<%= render "web/shared/header", title: (@run.dry_run ? "Simulação" : "Execução"), subtitle: "#{@automation.name} · #{l(@run.started_at, format: :long)}",
+                                back: automation_automation_runs_path(@automation), badge: run_badge(@run) do %>
+  <% if can?(:manage) %>
+    <%= link_to edit_automation_path(@automation), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar automação<% end %>
+    <% if @run.dry_run %><%= link_to simulate_automation_path(@automation), class: "ss-btn ss-btn-outline" do %><%= icon("refresh", "size-4") %>Simular de novo<% end %><% end %>
+  <% end %>
+<% end %>
+
+<div class="grid gap-4 lg:grid-cols-3 items-start">
+  <section class="ss-card ss-card-pad lg:col-span-2 min-w-0" aria-label="Passo a passo">
+    <h2>Passo a passo</h2>
+    <% if @run.dry_run %><p class="text-sm text-muted">Simulação: nenhum comando saiu e nenhum aviso foi enviado.</p><% end %>
+    <ol class="mt-3 relative">
+      <% @run.steps.each do |s| %>
+        <li class="flex gap-3 pb-4 min-w-0">
+          <%= result_icon(s["result"]) %>
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold text-ink break-words"><%= s["title"] %></p>
+            <% if s["detail"].present? %><p class="text-sm text-ink-2 break-words"><%= s["detail"] %></p><% end %>
+            <% meta = [ fmt.call(s["at"]), ("#{s['ms']} ms" if s["ms"].to_i.positive?) ].compact %>
+            <% if meta.any? %><p class="text-xs text-muted num"><%= meta.join(" · ") %></p><% end %>
+            <% if s["checks"].present? %><%= render "web/automation_runs/checks", checks: s["checks"] %><% end %>
+          </div>
+        </li>
+      <% end %>
+    </ol>
+  </section>
+
+  <aside class="ss-card ss-card-pad min-w-0" aria-label="Resumo">
+    <h2>Resumo</h2>
+    <dl class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+      <dt class="text-muted">Gatilho</dt><dd class="text-ink break-words"><%= @run.trigger["title"] || "Disparo" %></dd>
+      <dt class="text-muted">Situação</dt><dd class="text-ink"><%= @run.status_label %></dd>
+      <dt class="text-muted">Versão</dt><dd class="text-ink"><%= @run.version&.positive? ? @run.version : "rascunho" %></dd>
+      <dt class="text-muted">Começou</dt><dd class="text-ink num"><%= l(@run.started_at, format: "%d/%m %H:%M:%S") %></dd>
+      <% if @run.finished_at %><dt class="text-muted">Terminou</dt><dd class="text-ink num"><%= l(@run.finished_at, format: "%d/%m %H:%M:%S") %></dd><% end %>
+      <% if @run.resume_at && @run.status == "waiting" %><dt class="text-muted">Retoma</dt><dd class="text-ink num"><%= l(@run.resume_at, format: "%d/%m %H:%M:%S") %></dd><% end %>
+      <% if @run.depth.positive? %><dt class="text-muted">Corrente</dt><dd class="text-ink"><%= @run.depth %> automação(ões) antes</dd><% end %>
+    </dl>
+    <% if @run.error.present? %><p class="mt-3 rounded-xl bg-danger-soft text-danger p-3 text-sm font-semibold break-words"><%= @run.error %></p><% end %>
+    <% vars = @run.state["vars"].to_h.except("repeat_index") %>
+    <% if vars.any? %>
+      <p class="ss-label mt-4">Variáveis</p>
+      <ul class="text-sm num"><% vars.each do |k, v| %><li class="break-words"><span class="text-muted"><%= k %></span> = <%= v.inspect.truncate(120) %></li><% end %></ul>
+    <% end %>
+  </aside>
+</div>

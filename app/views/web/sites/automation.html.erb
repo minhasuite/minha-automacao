@@ -1,4 +1,5 @@
 <%= render "web/shared/header", title: "Automação", subtitle: "#{@site.name} · cenas, agendas, espelhamentos, avisos e alertas", back: site_path(@site) do %>
+  <%= link_to site_automations_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("lightning-bolt", "size-4") %>Automações com regras<% end %>
   <%= link_to alerts_path, class: "ss-btn ss-btn-ghost" do %><%= icon("exclamation-circle", "size-4") %>Alertas ativos<% end %>
 <% end %>
 <%= render "web/automation/lists", site: @site %>

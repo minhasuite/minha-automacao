@@ -1,0 +1,20 @@
+<%= render "web/shared/header", title: "Execuções", subtitle: "#{@automation.name} · últimos #{AutomationRun::RETENTION_DAYS} dias", back: (can?(:manage) ? edit_automation_path(@automation) : site_automations_path(@site)) %>
+<% if @runs.empty? %>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma execução ainda.</p><p class="mt-1">Quando um gatilho disparar (ou alguém simular), o passo a passo aparece aqui.</p></div>
+<% else %>
+  <ul class="ss-card divide-y divide-line overflow-hidden" aria-label="Execuções">
+    <% @runs.each do |r| %>
+      <li>
+        <%= link_to automation_run_path(r), class: "flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 no-underline hover:bg-field" do %>
+          <span class="min-w-0 flex-1 basis-48">
+            <span class="block font-semibold text-ink"><%= l(r.started_at, format: :short) %><% if r.dry_run %> <span class="ss-badge ss-badge-accent">Simulação</span><% end %></span>
+            <span class="block text-sm text-muted break-words"><%= r.trigger["title"] || "Disparo" %><%= " · #{r.error}" if r.error.present? %></span>
+          </span>
+          <%= run_badge(r) %>
+          <%= icon("chevron-right", "size-4 text-muted") %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+  <%= render "web/shared/pagination", pagy: @pagy %>
+<% end %>

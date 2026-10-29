@@ -1,0 +1,39 @@
+<% published = params[:publicada] == "1" && @automation.published? %>
+<%= render "web/shared/header", title: "Simular", subtitle: "#{@automation.name} · roda a seco: nada é comandado nem avisado, o trace mostra o que aconteceria", back: edit_automation_path(@automation) %>
+<%= form_with url: simulate_automation_path(@automation), method: :post, class: "ss-card ss-card-pad grid gap-4 max-w-3xl" do %>
+  <fieldset>
+    <legend class="ss-label">O que simular</legend>
+    <div class="flex flex-wrap gap-2">
+      <%= link_to "Rascunho", simulate_automation_path(@automation), class: "ss-chip", "aria-current": (!published).to_s %>
+      <% if @automation.published? %><%= link_to "Versão #{@automation.version} publicada", simulate_automation_path(@automation, publicada: 1), class: "ss-chip", "aria-current": published.to_s %><% end %>
+    </div>
+    <%= hidden_field_tag :publicada, published ? "1" : "0", id: nil %>
+  </fieldset>
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div><label class="ss-label" for="sim-at">Data e hora (vazio = agora)</label><%= datetime_local_field_tag :at, nil, class: "ss-input", id: "sim-at" %></div>
+    <div class="flex items-end"><label class="inline-flex items-center gap-2 text-sm pb-2"><%= check_box_tag :skip_conditions, "1", false, id: "sim-skip" %>Ignorar as condições (como "Executar agora")</label></div>
+  </div>
+  <% if @points.any? %>
+    <fieldset>
+      <legend class="ss-label">Valores hipotéticos (vazio = valor atual)</legend>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <% @points.each do |p| %>
+          <% id = "sim-#{p.id}" %>
+          <div class="min-w-0">
+            <label class="text-sm font-semibold text-ink block truncate" for="<%= id %>"><%= p.name %> <span class="font-normal text-muted">· agora <%= point_value_text(p) %></span></label>
+            <% choices = dsl_value_choices(p) %>
+            <% if choices %>
+              <%= select_tag "points[#{p.key}]", options_for_select(choices), include_blank: "Valor atual", class: "ss-input", id: id %>
+            <% else %>
+              <%= text_field_tag "points[#{p.key}]", nil, class: "ss-input", id: id, placeholder: p.value.to_s, inputmode: (p.numeric? ? "decimal" : nil) %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </fieldset>
+  <% end %>
+  <div class="flex flex-wrap gap-2">
+    <%= button_tag type: "submit", class: "ss-btn ss-btn-primary" do %><%= icon("eye", "size-4") %>Simular<% end %>
+    <%= link_to "Cancelar", edit_automation_path(@automation), class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

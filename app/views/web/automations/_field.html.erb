@@ -1,0 +1,65 @@
+<%# locals: (fd:, node:, dom:, points:, site:) -%>
+<% id = "#{dom}-#{fd.name}" %>
+<% name = "block[#{fd.name}]" %>
+<% v = node[fd.name] %>
+<% wide = fd.kind.in?(%i[template expr days channels]) %>
+<div class="<%= 'sm:col-span-2' if wide %> min-w-0">
+  <% if fd.kind.in?(%i[days channels bool]) %>
+    <fieldset>
+      <legend class="ss-label"><%= fd.label %></legend>
+      <% if fd.kind == :days %>
+        <%= hidden_field_tag "#{name}[]", "", id: nil %>
+        <div class="flex flex-wrap gap-x-3 gap-y-1">
+          <% Automations::Dsl::DAYS.each_with_index do |d, i| %>
+            <label class="inline-flex items-center gap-1 text-sm"><%= check_box_tag "#{name}[]", i, v.nil? || v.include?(i), id: "#{id}-#{i}" %><%= d %></label>
+          <% end %>
+        </div>
+      <% elsif fd.kind == :channels %>
+        <%= hidden_field_tag "#{name}[]", "", id: nil %>
+        <div class="flex flex-wrap gap-x-3 gap-y-1">
+          <% Notifier::CHANNELS.each do |key, label| %>
+            <label class="inline-flex items-center gap-1 text-sm"><%= check_box_tag "#{name}[]", key, v.nil? || v.include?(key), id: "#{id}-#{key}" %><%= label %></label>
+          <% end %>
+        </div>
+      <% else %>
+        <%= hidden_field_tag name, "0", id: nil %>
+        <label class="inline-flex items-center gap-2 text-sm"><%= check_box_tag name, "1", v.nil? ? fd.name == "continue_on_timeout" : v, id: id %>Sim</label>
+      <% end %>
+    </fieldset>
+  <% else %>
+    <label class="ss-label" for="<%= id %>"><%= fd.label %></label>
+    <% case_kind = fd.kind %>
+    <% if case_kind.in?(%i[point writable_point]) %>
+      <% list = points.values.uniq.select { |p| case_kind == :point || p.writable } %>
+      <%= select_tag name, grouped_options_for_select(list.group_by { |p| p.device.name }.sort.map { |dev, ps| [ dev, ps.map { |p| [ p.name, p.id ] } ] }, v),
+                     include_blank: "Escolha o ponto", class: "ss-input", id: id %>
+    <% elsif case_kind == :value %>
+      <% choices = dsl_value_choices(points[node["point"]]) %>
+      <% if choices %>
+        <%= select_tag name, options_for_select(choices, v.to_s), include_blank: (fd.name == "value" ? "Sem valor" : "Qualquer"), class: "ss-input", id: id %>
+      <% else %>
+        <%= text_field_tag name, v, class: "ss-input", id: id, placeholder: (fd.name == "value" ? "" : "Qualquer") %>
+      <% end %>
+    <% elsif case_kind == :command %>
+      <% point = points[node["point"]] %>
+      <% allowed = point ? Points::Command::COMMANDS.fetch(point.capability, []) : AutomationHelper::COMMAND_CHOICES.values %>
+      <%= select_tag name, options_for_select(AutomationHelper::COMMAND_CHOICES.select { |_, c| allowed.include?(c) }, v), class: "ss-input", id: id %>
+    <% elsif case_kind == :select %>
+      <%= select_tag name, options_for_select(fd.options.invert, v), include_blank: (fd.required ? false : "Nenhum"), class: "ss-input", id: id %>
+    <% elsif case_kind == :scene %>
+      <%= select_tag name, options_for_select(site.scenes.order(:name).map { |s| [ s.name, s.id ] }, v), include_blank: "Escolha a cena", class: "ss-input", id: id %>
+    <% elsif case_kind == :alert_rule %>
+      <%= select_tag name, options_for_select(site.alert_rules.order(:name).map { |r| [ r.name, r.id ] }, v), include_blank: "Escolha a regra", class: "ss-input", id: id %>
+    <% elsif case_kind == :time %>
+      <%= time_field_tag name, v, class: "ss-input", id: id %>
+    <% elsif case_kind == :template %>
+      <%= text_area_tag name, v, class: "ss-input", id: id, rows: 2, maxlength: 500, placeholder: "Texto com {{ trigger.point }}, {{ points[\"chave\"].text }}..." %>
+    <% elsif case_kind == :expr %>
+      <%= text_field_tag name, v, class: "ss-input num text-sm", id: id, maxlength: 500, spellcheck: false, placeholder: "sala.temperatura > 28 and hour >= 22" %>
+    <% elsif case_kind == :number %>
+      <%= text_field_tag name, v, class: "ss-input", id: id, inputmode: "decimal" %>
+    <% else %>
+      <%= text_field_tag name, v, class: "ss-input", id: id, maxlength: 500, placeholder: (case_kind == :duration ? "30s, 5m, 1h30m" : nil) %>
+    <% end %>
+  <% end %>
+</div>

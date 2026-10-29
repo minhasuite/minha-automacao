@@ -58,6 +58,22 @@ Rails.application.routes.draw do
           post :prefer, path: "padrao"
         end
       end
+      # Automações da DSL (F6): editor, versões e simulação só para técnico ou dono.
+      resources :automations, path: "automacoes", path_names: { new: "nova", edit: "editar" }, except: :show, shallow: true do
+        member do
+          patch :draft, path: "rascunho"
+          post :publish, path: "publicar"
+          post :discard, path: "descartar"
+          post :revert, path: "voltar"
+          get :json
+          patch :json, action: :update_json
+          get :simulate, path: "simular"
+          post :simulate, path: "simular", action: :run_simulation
+          post :run, path: "executar"
+          post :webhook
+        end
+        resources :automation_runs, path: "execucoes", only: %i[index show], shallow: true
+      end
       resources :areas, path: "areas", except: :index, shallow: true
       resources :devices, path: "dispositivos", except: :index, shallow: true do
         resources :points, path: "pontos", except: :index, shallow: true do
@@ -141,6 +157,22 @@ Rails.application.routes.draw do
       resources :alerts, only: %i[index show] do
         post :ack, on: :member
       end
+      # Automações (F6).
+      resources :sites, only: [] do
+        resources :automations, except: %i[new edit], shallow: true do
+          member do
+            post :publish
+            post :revert
+            get :versions
+            post :simulate
+            post :run
+            get :runs
+            post :webhook
+          end
+        end
+      end
+      resources :automation_runs, only: :show
+      post "hooks/automations/:token", to: "automation_hooks#create", as: :automation_hook
 
       get "billing", to: "billing#show"
       post "billing/google/verify", to: "billing#verify_google"

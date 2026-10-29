@@ -1,0 +1,36 @@
+<%= render "web/shared/header", title: "Automações", subtitle: "#{@site.name} · regras com várias condições, horários, esperas e avisos", back: automation_site_path(@site) do %>
+  <% if can?(:manage) %><%= link_to new_site_automation_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Nova automação<% end %><% end %>
+<% end %>
+
+<% if @automations.empty? %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink">Nenhuma automação neste local.</p>
+    <p class="mt-1">Ex.: movimento na sala depois das 18h com as luzes apagadas acende o pendente e apaga 2 minutos depois do último movimento.</p>
+    <p class="mt-1 text-sm">Para o simples (ligar às 17h, espelhar interruptor, avisar quando abrir) use as <%= link_to "primitivas", automation_site_path(@site) %>.</p>
+  </div>
+<% else %>
+  <ul class="ss-card divide-y divide-line overflow-hidden" aria-label="Automações">
+    <% @automations.each do |a| %>
+      <li class="flex flex-wrap items-center gap-3 px-4 py-3" id="automation-<%= a.id %>">
+        <span class="ss-icon-tile <%= a.enabled ? 'text-accent' : 'text-muted' %>"><%= icon("lightning-bolt") %></span>
+        <div class="min-w-0 flex-1 basis-48">
+          <p class="font-semibold text-ink break-words"><%= a.name %>
+            <% unless a.enabled %> <span class="ss-badge ss-badge-warn"><%= a.published? ? "Desligada" : "Rascunho" %></span><% end %>
+            <% if a.draft? && a.published? %> <span class="ss-badge">Rascunho com mudanças</span><% end %></p>
+          <p class="text-sm text-muted"><%= [ a.area&.name, a.mode_label.split(" (").first, last_run_text(a) ].compact.join(" · ") %></p>
+          <% if a.last_error.present? %><p class="text-sm text-danger mt-1 flex gap-1"><%= icon("exclamation-circle", "size-4 shrink-0 mt-0.5") %><span><%= a.last_error %></span></p><% end %>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <%= link_to automation_automation_runs_path(a), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("view-list", "size-4") %>Execuções<% end %>
+          <% if can?(:manage) %>
+            <% if a.published? %>
+              <%= button_to (a.enabled ? "Desligar" : "Ligar"), automation_path(a), method: :patch, params: { automation: { enabled: !a.enabled }, back: request.fullpath },
+                            class: "ss-btn ss-btn-sm #{a.enabled ? 'ss-btn-ghost' : 'ss-btn-outline'}", form: { class: "contents" }, "aria-label": "#{a.enabled ? 'Desligar' : 'Ligar'} #{a.name}" %>
+            <% end %>
+            <%= link_to edit_automation_path(a), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": "Editar #{a.name}" do %><%= icon("pencil", "size-4") %>Editar<% end %>
+          <% end %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

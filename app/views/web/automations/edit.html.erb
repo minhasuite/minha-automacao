@@ -1,0 +1,105 @@
+<% points = @site.points.includes(:device).ordered.to_a %>
+<% by_id = points.index_by(&:id) %>
+<% risk = @automation.max_risk(@draft) %>
+<% critical = risk == "critical" %>
+<% status = [ (@automation.published? ? "versão #{@automation.version} publicada" : "nunca publicada"), (@automation.enabled ? "ligada" : "desligada"), ("rascunho com mudanças" if @automation.draft?) ].compact %>
+<%= render "web/shared/header", title: @automation.name, subtitle: "#{@site.name} · #{status.join(' · ')}", back: site_automations_path(@site) do %>
+  <%= link_to simulate_automation_path(@automation), class: "ss-btn ss-btn-outline" do %><%= icon("eye", "size-4") %>Simular<% end %>
+  <% if @automation.published? %>
+    <% run_risk = @automation.max_risk(@automation.definition) %>
+    <%= button_to run_automation_path(@automation), params: { confirm_critical: (run_risk == "critical" ? "1" : nil) }.compact, class: "ss-btn ss-btn-outline",
+                  form: { data: { turbo_confirm: "Executar agora a versão #{@automation.version}, sem checar as condições?#{' Ela comanda ponto crítico.' if run_risk == 'critical'}", turbo_confirm_button: "Executar" } } do %><%= icon("lightning-bolt", "size-4") %>Executar agora<% end %>
+  <% end %>
+  <%= button_to publish_automation_path(@automation), params: { confirm_critical: (critical ? "1" : nil) }.compact, class: "ss-btn ss-btn-primary", disabled: @errors.any? || (@automation.published? && !@automation.draft?),
+                form: { data: { turbo_confirm: "Publicar o rascunho como versão #{@automation.version + 1}?#{' Ela comanda ponto crítico (portão, sirene...).' if critical}", turbo_confirm_button: "Publicar" } } do %><%= icon("upload", "size-4") %>Publicar<% end %>
+<% end %>
+
+<% if flash[:webhook_url] %>
+  <div id="webhook" class="ss-card ss-card-pad mb-4 border border-accent" role="status">
+    <p class="font-bold text-ink">Endereço do webhook (aparece só agora)</p>
+    <p class="text-sm text-muted">POST com JSON; o corpo chega em <code>trigger.data</code>. Gerar de novo invalida este.</p>
+    <code class="block mt-2 break-all text-sm"><%= flash[:webhook_url] %></code>
+  </div>
+<% end %>
+
+<div class="grid gap-6 lg:grid-cols-3 items-start">
+  <div class="lg:col-span-2 flex flex-col gap-4 min-w-0">
+    <% if @errors.any? %>
+      <div class="rounded-xl bg-warn-soft p-3 text-sm" role="status">
+        <p class="font-bold text-ink flex items-center gap-2"><%= icon("exclamation-circle", "size-5 text-warn") %>Falta para publicar</p>
+        <ul class="list-disc pl-5 mt-1 text-ink-2"><% @errors.first(8).each do |e| %><li><%= e %></li><% end %></ul>
+      </div>
+    <% end %>
+    <% if critical %>
+      <p class="rounded-xl bg-danger-soft text-danger p-3 text-sm font-semibold flex gap-2"><%= icon("exclamation-circle", "size-5 shrink-0") %>Esta automação comanda ponto crítico. Publicar e executar pedem confirmação.</p>
+    <% end %>
+
+    <% Automations::Dsl::CATALOG.each_key do |kind| %>
+      <section class="ss-card ss-card-pad" aria-labelledby="sec-<%= kind %>">
+        <h2 id="sec-<%= kind %>"><%= AutomationsHelper::KIND_TITLES[kind] %></h2>
+        <p class="text-sm text-muted mb-3"><%= AutomationsHelper::KIND_HINTS[kind] %></p>
+        <%= render "web/automations/list", list: Array(@draft[kind.to_s]), path: kind.to_s, kind: kind, points: by_id, automation: @automation %>
+      </section>
+    <% end %>
+  </div>
+
+  <aside class="flex flex-col gap-4 min-w-0">
+    <section class="ss-card ss-card-pad" aria-label="Situação">
+      <h2>Situação</h2>
+      <p class="text-sm text-muted mt-1"><%= last_run_text(@automation) %><% if @automation.last_error.present? %> · <span class="text-danger"><%= @automation.last_error %></span><% end %></p>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <% if @automation.published? %>
+          <%= button_to (@automation.enabled ? "Desligar" : "Ligar"), automation_path(@automation), method: :patch, params: { automation: { enabled: !@automation.enabled } },
+                        class: "ss-btn ss-btn-sm #{@automation.enabled ? 'ss-btn-ghost' : 'ss-btn-primary'}", form: { class: "contents" } %>
+        <% else %>
+          <p class="text-sm text-muted">Publique para poder ligar.</p>
+        <% end %>
+        <%= link_to automation_automation_runs_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("view-list", "size-4") %>Execuções<% end %>
+      </div>
+    </section>
+
+    <details class="ss-card ss-card-pad" <%= "open" if @automation.errors.any? %>>
+      <summary class="cursor-pointer font-bold text-ink">Nome e modo</summary>
+      <div class="mt-3"><%= render "web/automations/settings", automation: @automation, site: @site %></div>
+    </details>
+
+    <% if Array(@draft["triggers"]).any? { |t| t["type"] == "webhook" } %>
+      <section class="ss-card ss-card-pad" aria-label="Webhook">
+        <h2>Webhook</h2>
+        <p class="text-sm text-muted mt-1"><%= @automation.webhook_token.present? ? "Token gerado. Para ver o endereço, gere outro (o anterior deixa de valer)." : "Gere o endereço para chamar de fora (IA, scripts)." %></p>
+        <%= button_to webhook_automation_path(@automation), class: "ss-btn ss-btn-outline ss-btn-sm mt-3",
+                      form: { data: (@automation.webhook_token.present? ? { turbo_confirm: "Gerar outro endereço? O atual para de funcionar." } : {}) } do %><%= icon("link", "size-4") %><%= @automation.webhook_token.present? ? "Gerar outro" : "Gerar endereço" %><% end %>
+      </section>
+    <% end %>
+
+    <section class="ss-card ss-card-pad" aria-label="Versões">
+      <h2>Versões</h2>
+      <% versions = @automation.versions.includes(:author).limit(10).to_a %>
+      <% if versions.empty? %>
+        <p class="text-sm text-muted mt-1">Nenhuma ainda.</p>
+      <% else %>
+        <ul class="mt-2 divide-y divide-line">
+          <% versions.each do |v| %>
+            <li class="py-2 flex items-center gap-2 text-sm">
+              <span class="flex-1 min-w-0"><span class="font-semibold text-ink">Versão <%= v.version %></span> · <%= l(v.created_at, format: :short) %><%= " · #{v.author.name}" if v.author %></span>
+              <% if v.version != @automation.version %>
+                <%= button_to "Voltar", revert_automation_path(@automation), params: { version: v.version, confirm_critical: (@automation.max_risk(v.definition) == "critical" ? "1" : nil) }.compact,
+                              class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents", data: { turbo_confirm: "Publicar de novo a versão #{v.version}?" } } %>
+              <% else %>
+                <span class="ss-badge ss-badge-success">Atual</span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+
+    <section class="ss-card ss-card-pad flex flex-wrap gap-2" aria-label="Mais">
+      <%= link_to json_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("document-text", "size-4") %>JSON avançado<% end %>
+      <% if @automation.draft? %>
+        <%= button_to discard_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents", data: { turbo_confirm: "Descartar as mudanças do rascunho?" } } do %><%= icon("reply", "size-4") %>Descartar rascunho<% end %>
+      <% end %>
+      <%= button_to automation_path(@automation), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", form: { class: "contents", data: { turbo_confirm: "Excluir a automação #{@automation.name} com as versões e execuções?" } } do %><%= icon("trash", "size-4") %>Excluir<% end %>
+    </section>
+  </aside>
+</div>
