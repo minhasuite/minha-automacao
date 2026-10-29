@@ -26,16 +26,14 @@ A mesma stack dos outros produtos da suíte (skill `padrao-suite`).
 | Planos | `Billing::Entitlement` + Google Play + licenciamento central |
 | Telemetria | meulog (`lib/meu_log.rb`, `MeuLogInstrumented`) |
 
-**Dois modos de execução, uma base de código** (ESQUEMA-V1 §3 e §11): a
-**central** roda na VPS da suíte (multi-tenant, Postgres, cadastro,
-dashboards, histórico consolidado, API do app, integrações) e a **borda**
-roda em qualquer Linux com Docker no local (`EDGE=1`, SQLite, motor de
-automação e drivers, buffer offline), ligada à central por MQTT de saída.
-Imagem multi-arquitetura (`linux/amd64` + `linux/arm64`).
+**Um servidor só, no local** (ESQUEMA-V1 §3 e §11, revisto em 2026-10-29):
+web, API, worker (motor de automação e drivers) e Postgres rodam juntos num
+servidor dentro de casa (qualquer Linux com Docker), com acesso externo por
+túnel Cloudflare. Sem central/borda, sem MQTT entre eles. A VPS da suíte
+serve só para validar UI/UX no desenvolvimento. Imagem multi-arquitetura
+(`linux/amd64` + `linux/arm64`).
 
 ## Consequências
 
 - Esta base é só a da suíte; o domínio (sites, dispositivos, pontos,
-  automações, borda) entra em migrations e ADRs seguintes.
-- Todo código novo precisa funcionar nos dois modos ou ser explicitamente
-  de um só (por exemplo, billing só na central).
+  automações) entra em migrations e ADRs seguintes.

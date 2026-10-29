@@ -2,7 +2,10 @@
 
 Monolito Rails 8.1: web (Hotwire) **e** API `/api/v1` do app Flutter
 `minha-automacao-app`, no mesmo processo. É o servidor de automação da
-MinhaSuite (casa, loja e fábrica), no lugar do Home Assistant. Produto em
+MinhaSuite (casa, loja e fábrica), no lugar do Home Assistant. Roda inteiro
+num servidor local (Linux com Docker, túnel Cloudflare para fora); não há
+central/borda nem `EDGE=1`. A VPS (`minhaautomacao.minhasuite.com`) serve só
+para validar UI/UX. Produto em
 `../docs/PROPOSTA.md`; modelo de dados, DSL, API e decisões em
 `../docs/ESQUEMA-V1.md`; stack em `docs/adr/0001-stack.md`. O padrão da suíte
 está na skill `padrao-suite`; aqui só o que é deste repo.
@@ -10,9 +13,11 @@ está na skill `padrao-suite`; aqui só o que é deste repo.
 **Estado:** base da suíte (empresa, usuários, auth da API, convites, push,
 notificações, assinatura, IA, licenças, telemetria, páginas legais e conta) +
 **F1**: locais, áreas, papéis por local, dispositivos, pontos, etiquetas (só
-modelo) e comando síncrono no driver `virtual` (`Points::Command`), na web
-(`/locais`) e na API. Histórico, comandos rastreados, borda, drivers,
-automações e dashboards ainda não existem.
+modelo), na web (`/locais`) e na API + **F2**: comandos rastreados
+(`Command`, `Points::Command` → `ExecuteCommandJob` → `Drivers.for`),
+histórico (`readings` particionada, `reading_rollups`, `events`), tempo real
+(Solid Cable, `PointsChannel`) e página do ponto com gráfico. Drivers de
+verdade (F3), automações e dashboards ainda não existem.
 
 ## Rodar
 
@@ -64,6 +69,25 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   `licencas:enviar_tudo`) reenvia tudo todo dia às 4h.
 - `encrypts` exige `AR_ENCRYPTION_*` em produção (dev/teste derivam do
   `secret_key_base`).
+- **Comandos (F2)**: `Points::Command.call(point, cmd, value, source:)` valida
+  (422 antes de criar), cria o `Command` e roda o `ExecuteCommandJob`: na hora
+  no driver `virtual`, na fila nos outros. API responde **202** com o
+  comando. Status `pending → sent → confirmed | failed | expired` (na fila há
+  mais de `Command::TTL` = expira, não executa). Driver novo = classe com
+  `execute(point, command, value)` em `Drivers::REGISTRY`.
+- **Valor novo de ponto só por `Point#report!`**: grava o ponto, a leitura
+  (`history`/`deadband`/`interval`), o evento de qualidade e faz
+  `broadcast_refresh_to(point)`. Comando não vira AuditEvent (a tabela
+  `commands` é a trilha); cadastro e papel por local viram.
+- **Histórico**: `readings` particionada por mês em UTC (`readings_AAAA_MM` +
+  `readings_default`), por isso o banco é `db/structure.sql` (não schema.rb).
+  `ReadingsMaintenanceJob` (3h) cria a do mês seguinte e aplica retenção (cru
+  365 dias ou `retention_days`; comandos e eventos 365). `RollupReadingsJob`
+  (hora em hora, :05) refaz as 3 últimas horas e os dias delas (dia de SP).
+- **Tempo real**: Solid Cable no banco primário. Tela com ponto usa
+  `turbo_stream_from point, channel: PointsChannel` (exige papel no local) e a
+  mudança chega como *refresh* com morph: cada tela recarrega com o próprio
+  papel do usuário.
 
 ## Web
 
@@ -87,6 +111,12 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   de setter próprio.
 - Modelo tenant-scoped sem empresa atual levanta `NoTenantSet`
   (`require_tenant`): em job, script e spec use `ActsAsTenant.with_tenant`.
+- `pg_dump` do container de dev é o 18 (PGDG, `.devcontainer/Dockerfile`): o
+  17 do Debian recusa o servidor 18 e o `db:migrate` não gera o structure.sql.
+- `Reading`/`ReadingRollup` não têm chave primária: sempre `order(...)` antes
+  de `first`, e grave com `insert_all!`/`upsert_all`.
+- Partição `readings_default` com linhas do mês impede criar a partição
+  daquele mês (o job roda antes do mês começar; se falhar, mova as linhas).
 
 ## Deploy
 
