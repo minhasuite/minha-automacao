@@ -7,10 +7,12 @@ MinhaSuite (casa, loja e fábrica), no lugar do Home Assistant. Produto em
 `../docs/ESQUEMA-V1.md`; stack em `docs/adr/0001-stack.md`. O padrão da suíte
 está na skill `padrao-suite`; aqui só o que é deste repo.
 
-**Estado:** só a base da suíte (copiada do meu-gestor, sem o domínio dele):
-empresa, usuários, auth da API, convites, push, notificações, assinatura,
-IA, licenças, telemetria, páginas legais e conta. O domínio de automação
-(sites, áreas, dispositivos, pontos, automações, borda) ainda não existe.
+**Estado:** base da suíte (empresa, usuários, auth da API, convites, push,
+notificações, assinatura, IA, licenças, telemetria, páginas legais e conta) +
+**F1**: locais, áreas, papéis por local, dispositivos, pontos, etiquetas (só
+modelo) e comando síncrono no driver `virtual` (`Points::Command`), na web
+(`/locais`) e na API. Histórico, comandos rastreados, borda, drivers,
+automações e dashboards ainda não existem.
 
 ## Rodar
 
@@ -30,7 +32,16 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
 - **Papéis** (`User::ROLES`): `owner` (Dono: tudo, inclusive plano, chaves de
   integração, zerar e convidar administrador), `admin` (Administrador:
   convida membro, vê os avisos da empresa, usa a IA), `member` (Membro).
-  Papel por local virá em `site_memberships` (ESQUEMA-V1 §4.1).
+  Dono e administrador da empresa são `owner` em todos os locais.
+- **Papel por local** (`SiteMembership::ROLES`, crescente): guest < operator <
+  resident < technician < owner. Ver: qualquer; cadastro: technician+; local e
+  membros: owner; comando conforme o risco do ponto (normal guest+, sensitive
+  operator+, critical resident+). Sem papel = 404. Mesma regra na web e na API
+  (`SiteAuthorization`). `expires_at` vencido = sem acesso; `area_ids` ainda
+  não restringe nada.
+- **Pontos**: `key` única no local (gerada `dispositivo.ponto`); `options` é
+  lista de rótulos; os filhos do local caem por cascade no banco (sem
+  `dependent:`). `devices.driver` fica no dispositivo até as integrações (F3).
 - **Convite** por código (sem e-mail): `Invite.generate!` mostra o código uma
   vez; entrar com ele (`Companies::Join`) tira a pessoa da empresa atual. Se
   ela era a única e a empresa tem dados (`Accounts::WipeData::MODELS`), exige
@@ -80,7 +91,7 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
 ## Deploy
 
 Push no `master` → quality → imagem `ghcr.io/minhasuite/minha-automacao`. O
-deploy em `/opt/minha-automacao` (`ms-minha-automacao-{web,worker}`) está
-**desligado** no CI até existirem banco, Caddy e DNS (passo 3 do checklist da
-suíte). Boot com `db:prepare`. Na VPS as variáveis são `MINHA_AUTOMACAO_*`; no
+deploy em `/opt/minha-automacao` (`ms-minha-automacao-{web,worker}`) roda no
+CI (`deploy-prod`) e avisa o meulog; produção em
+`https://minhaautomacao.minhasuite.com`. Boot com `db:prepare`. Na VPS as variáveis são `MINHA_AUTOMACAO_*`; no
 container, nome curto.
