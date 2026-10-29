@@ -83,6 +83,7 @@ services:
       - sh
       - -c
       - |
+        sleep 600 # primeiro backup depois do db:prepare
         while true; do
           f=/backups/minha_automacao-$$(date +%F).sql.gz
           pg_dump -h db -U minha_automacao minha_automacao | gzip > "$$f.tmp" && mv "$$f.tmp" "$$f" && echo "backup $$f"
