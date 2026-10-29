@@ -1,0 +1,80 @@
+module Dashboards
+  # Operações do editor web sobre uma cópia da definição (o rascunho): criar,
+  # alterar, mover (setas) e remover view, seção e widget. Quem chama valida
+  # (Schema) e grava; aqui só se mexe no JSON. Levanta KeyError se o id não
+  # existe.
+  class Editor
+    attr_reader :definition
+
+    def initialize(definition)
+      @definition = definition.deep_dup
+      @definition["schema_version"] ||= Schema::VERSION
+      @definition["views"] ||= []
+    end
+
+    def add_view(title:, icon: nil)
+      views << { "id" => new_id("v"), "title" => title.presence || "Nova view", "icon" => icon.presence, "sections" => [] }.compact
+      views.last["id"]
+    end
+
+    def update_view(id, title:, icon: nil)
+      view(id).merge!("title" => title.presence || view(id)["title"], "icon" => icon.presence).compact!
+    end
+
+    def add_section(view_id, title:)
+      sections = view(view_id)["sections"] ||= []
+      sections << { "id" => new_id("s"), "title" => title.presence, "widgets" => [] }.compact
+      sections.last["id"]
+    end
+
+    def update_section(id, title:, span: nil)
+      s = section(id)
+      s["title"] = title.presence
+      s["span"] = span
+      s.compact!
+    end
+
+    def add_widget(section_id, attrs)
+      w = { "id" => new_id("w") }.merge(attrs)
+      (section(section_id)["widgets"] ||= []) << w
+      w["id"]
+    end
+
+    def update_widget(id, attrs)
+      w = widget(id)
+      w.replace({ "id" => w["id"] }.merge(attrs))
+    end
+
+    # kind: view/section/widget; dir: up/down. No limite da lista, não faz nada.
+    def move(kind, id, dir)
+      list = container(kind, id)
+      i = list.index { |x| x["id"] == id }
+      j = dir == "up" ? i - 1 : i + 1
+      list[i], list[j] = list[j], list[i] if j.between?(0, list.size - 1)
+    end
+
+    def remove(kind, id)
+      container(kind, id).reject! { |x| x["id"] == id }
+    end
+
+    def view(id) = views.find { |v| v["id"] == id } || raise(KeyError, "view #{id}")
+    def section(id) = sections.find { |s| s["id"] == id } || raise(KeyError, "seção #{id}")
+    def widget(id) = widgets.find { |w| w["id"] == id } || raise(KeyError, "widget #{id}")
+
+    private
+
+    def views = @definition["views"]
+    def sections = views.flat_map { |v| Array(v["sections"]) }
+    def widgets = sections.flat_map { |s| Array(s["widgets"]) }
+
+    def container(kind, id)
+      case kind
+      when "view" then views
+      when "section" then views.find { |v| Array(v["sections"]).any? { |s| s["id"] == id } }&.dig("sections")
+      when "widget" then sections.find { |s| Array(s["widgets"]).any? { |w| w["id"] == id } }&.dig("widgets")
+      end || raise(KeyError, "#{kind} #{id}")
+    end
+
+    def new_id(prefix) = "#{prefix}-#{SecureRandom.alphanumeric(8).downcase}"
+  end
+end

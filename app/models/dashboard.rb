@@ -1,0 +1,73 @@
+# Dashboard do local (ESQUEMA-V1 §4.6 e §6), dirigido pelo servidor: a web e o
+# app renderizam o mesmo JSON. `definition` = versão publicada, `draft` =
+# rascunho do editor. Publicar e voltar versão gravam um DashboardVersion.
+# `auto`: a definição sai do Dashboards::Generator a cada leitura (áreas e
+# pontos novos entram sozinhos) até a primeira publicação, que o torna manual.
+class Dashboard < ApplicationRecord
+  include Auditable
+
+  acts_as_tenant :tenant
+
+  KINDS = { "home" => "Casa", "plant" => "Fábrica", "custom" => "Personalizado" }.freeze
+
+  belongs_to :site
+  has_many :versions, -> { order(version: :desc) }, class_name: "DashboardVersion", dependent: nil # cascade no banco
+
+  validates :name, presence: true
+  validates :kind, inclusion: { in: KINDS.keys }
+  validate :roles_known
+  validate :definitions_valid
+
+  normalizes :name, with: ->(v) { v.to_s.squish }
+
+  audited_attributes :name, :version, :roles, :site_default
+
+  scope :ordered, -> { order(site_default: :desc, position: :asc, created_at: :asc) }
+
+  # Locais sem dashboard ganham o automático (Início + uma view por área).
+  def self.ensure_for(site)
+    site.dashboards.ordered.to_a.presence || [ site.dashboards.create!(name: site.name, kind: site.kind == "plant" ? "plant" : "home", auto: true, site_default: true) ]
+  end
+
+  # Padrão da pessoa no local; senão o padrão do local; senão o primeiro.
+  def self.default_for(site, user, role)
+    list = ensure_for(site).select { |d| d.visible_to?(role) }
+    list.find { |d| d.id == user.dashboard_prefs[site.id] } || list.first
+  end
+
+  def kind_label = KINDS.fetch(kind, kind)
+  def visible_to?(role) = roles.empty? || role == "owner" || roles.include?(role)
+  def published = auto? ? Dashboards::Generator.call(site) : definition
+  def working_draft = draft || published
+  def draft? = draft.present?
+
+  # Publica o rascunho (ou `new_definition`, da API): vira a versão nova e o
+  # dashboard deixa de ser automático.
+  def publish!(new_definition = draft, author: Current.user)
+    raise ArgumentError, "nada para publicar" if new_definition.blank?
+
+    transaction do
+      update!(definition: new_definition, draft: nil, auto: false, version: version + 1)
+      versions.create!(tenant_id: tenant_id, version: version, definition: definition, author: author)
+    end
+  end
+
+  # Voltar versão: a antiga é publicada de novo como a próxima versão.
+  def revert!(number, author: Current.user)
+    publish!(versions.find_by!(version: number).definition, author: author)
+  end
+
+  private
+
+  def roles_known
+    errors.add(:roles, "tem papel inválido") unless roles.all? { |r| SiteMembership::ROLES.include?(r) }
+  end
+
+  def definitions_valid
+    { definition: (definition unless auto?), draft: draft }.each do |attr, value|
+      next if value.nil?
+
+      Dashboards::Schema.errors(value).first(5).each { |e| errors.add(attr, e) }
+    end
+  end
+end

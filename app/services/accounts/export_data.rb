@@ -25,7 +25,7 @@ module Accounts
           commands: CommandSerializer.new(Command.includes(:point).order(:created_at)).to_h,
           events: Event.order(:at).map { |e| e.slice(:point_id, :kind, :payload, :source, :at) },
           # Automação (F4): as regras como estão no banco.
-          **[ PointLink, Scene, Schedule, NotifyRule, AlertRule, Alert ].to_h do |m|
+          **[ PointLink, Scene, Schedule, NotifyRule, AlertRule, Alert, Dashboard ].to_h do |m|
             [ m.table_name.to_sym, m.order(:created_at).map { |r| r.as_json(except: "tenant_id") } ]
           end
         }

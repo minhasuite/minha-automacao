@@ -17,6 +17,7 @@ class Site < ApplicationRecord
   has_many :notify_rules, dependent: nil
   has_many :alert_rules, dependent: nil
   has_many :alerts, dependent: nil
+  has_many :dashboards, dependent: nil
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }
