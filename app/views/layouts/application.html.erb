@@ -11,6 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
   <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
+  <%= turbo_refresh_method_tag :morph %>
+  <%= turbo_refresh_scroll_tag :preserve %>
   <%= yield :head %>
   <script>try { if (localStorage.getItem("side") === "collapsed") document.documentElement.classList.add("ss-collapsed"); if (localStorage.getItem("privacy") === "on") document.documentElement.dataset.privacy = "on" } catch (_) {}</script>
 </head>

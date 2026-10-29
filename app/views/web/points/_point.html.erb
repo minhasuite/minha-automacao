@@ -1,11 +1,11 @@
-<%# locals: (point:, error: nil) -%>
-<%= turbo_frame_tag point, class: "block" do %>
+<%# locals: (point:, error: nil, target: nil) -%>
+<%= turbo_frame_tag point, class: "block", target: target do %>
   <% on = point_on?(point) %>
   <div class="ss-card p-4 flex flex-col gap-3 h-full <%= 'ss-card-grad' if on %> <%= 'opacity-60' if point.disabled %>">
     <div class="flex items-start gap-3">
       <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= on ? 'ss-grad' : 'bg-field text-muted' %>"><%= icon(point_icon(point)) %></span>
       <div class="min-w-0 flex-1">
-        <p class="font-bold text-ink truncate"><%= point.name %></p>
+        <p class="font-bold text-ink truncate"><%= link_to point.name, point_path(point), data: { turbo_frame: "_top" }, class: "text-ink no-underline hover:text-accent" %></p>
         <p class="text-xs text-muted truncate"><%= point.capability_label %><%= " · #{point.risk_label}" unless point.risk == "normal" %></p>
       </div>
       <% if can?(:manage) %>

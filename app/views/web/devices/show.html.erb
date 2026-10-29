@@ -12,5 +12,6 @@
     <% if can?(:manage) %><%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Adicionar ponto<% end %><% end %>
   </div>
 <% else %>
+  <% @points.each { |p| %><%= turbo_stream_from p, channel: PointsChannel %><% } %>
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><%= render partial: "web/points/point", collection: @points, as: :point %></div>
 <% end %>

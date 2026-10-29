@@ -1,0 +1,63 @@
+<%= turbo_stream_from @point, channel: PointsChannel %>
+<%= render "web/shared/header", title: @point.name, subtitle: [ @point.capability_label, @device.name, @point.area&.name || @device.area&.name ].compact.join(" · "), back: device_path(@device) %>
+
+<div class="grid gap-4 lg:grid-cols-3">
+  <%# Na página do ponto o comando recarrega a página toda (gráfico e lista juntos). %>
+  <div><%= render "web/points/point", point: @point, target: "_top" %></div>
+
+  <section class="ss-card ss-card-pad lg:col-span-2" aria-labelledby="chart-title">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 id="chart-title">Histórico</h2>
+      <nav class="flex gap-2" aria-label="Período do gráfico">
+        <% Points::History::RANGES.each_key do |range| %>
+          <%= link_to range, point_path(@point, range: range), class: "ss-chip no-underline", "aria-current": (range == @range ? "true" : nil) %>
+        <% end %>
+      </nav>
+    </div>
+    <% chart = history_chart(@history) %>
+    <% if chart %>
+      <div class="ss-chart mt-4">
+        <div class="flex gap-2">
+          <% if chart[:max] %>
+            <div class="flex flex-col justify-between text-xs text-muted num text-right shrink-0 py-1">
+              <span><%= number_with_precision(chart[:max], precision: 2, strip_insignificant_zeros: true) %></span>
+              <span><%= number_with_precision(chart[:min], precision: 2, strip_insignificant_zeros: true) %></span>
+            </div>
+          <% end %>
+          <div class="flex-1 min-w-0 rounded-xl bg-field overflow-hidden"><%= chart[:svg] %></div>
+        </div>
+        <div class="flex justify-between text-xs text-muted num mt-1 <%= 'pl-10' if chart[:max] %>">
+          <span><%= l(@history.from, format: :short) %></span><span><%= l(@history.to, format: :short) %></span>
+        </div>
+        <% if chart[:on_seconds] %>
+          <p class="text-sm text-ink-2 mt-3">Ligado por <strong class="num"><%= duration_text(chart[:on_seconds]) %></strong> no período.</p>
+        <% end %>
+        <p class="sr-only"><%= @history.raw? ? "Leituras cruas" : "Médias por #{@history.resolution == '1h' ? 'hora' : 'dia'}" %> de <%= l(@history.from, format: :short) %> a <%= l(@history.to, format: :short) %>.</p>
+      </div>
+    <% elsif @point.numeric? || @point.bool? %>
+      <p class="text-sm text-muted mt-4">Sem leituras neste período.</p>
+    <% else %>
+      <p class="text-sm text-muted mt-4">Este tipo de ponto não tem gráfico; veja os últimos acontecimentos abaixo.</p>
+    <% end %>
+  </section>
+</div>
+
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="timeline-title">
+  <h2 id="timeline-title">Últimos acontecimentos</h2>
+  <% if @timeline.empty? %>
+    <p class="text-sm text-muted mt-2">Nada por aqui ainda.</p>
+  <% else %>
+    <ul class="mt-3 divide-y divide-line">
+      <% @timeline.each do |item| %>
+        <li class="flex items-start gap-3 py-3">
+          <span class="grid place-items-center size-8 shrink-0 rounded-lg bg-field <%= PointsHelper::TONE_CLASSES.fetch(item.tone) %>"><%= icon({ "command" => "lightning-bolt", "event" => "exclamation-circle", "audit" => "pencil" }.fetch(item.kind), "size-4") %></span>
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold text-ink"><%= item.title %><% if item.user %> <span class="font-normal text-muted">por <%= item.user %></span><% end %></p>
+            <% if item.detail %><p class="text-sm text-muted"><%= item.detail %></p><% end %>
+          </div>
+          <time class="text-xs text-muted num shrink-0" datetime="<%= item.at.iso8601 %>"><%= l(item.at, format: :short) %></time>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>

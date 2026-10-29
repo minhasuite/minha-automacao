@@ -1,7 +1,14 @@
 module Web
-  # Cadastro de pontos e comando pela tela (Turbo Frame: só o cartão do ponto
-  # é trocado na resposta).
+  # Cadastro de pontos, comando pela tela (Turbo Frame: só o cartão do ponto
+  # é trocado na resposta) e a página do ponto com gráfico e últimos eventos.
   class PointsController < ApplicationController
+    def show
+      load_for(:view)
+      @range = params[:range].presence_in(Points::History::RANGES.keys) || "24h"
+      @history = Points::History.new(@point, from: (Time.current - Points::History::RANGES.fetch(@range)).iso8601)
+      @timeline = Points::Timeline.call(@point)
+    end
+
     def new
       @device = Device.find(params[:device_id])
       @site = @device.site
@@ -38,8 +45,9 @@ module Web
       @point = Point.find(params[:id])
       @site = @point.site
       authorize_site!(@site, :command, risk: @point.risk)
-      Points::Command.call(@point, params[:command], params[:value])
-      respond(nil)
+      command = Points::Command.call(@point, params[:command], params[:value], source: "web")
+      @point.reload
+      respond(command.error)
     rescue Points::Command::Error => e
       respond(e.message)
     end

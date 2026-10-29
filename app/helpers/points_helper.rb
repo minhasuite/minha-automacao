@@ -10,10 +10,21 @@ module PointsHelper
                 "tamper" => %w[Violado Normal], "problem" => %w[Problema Normal] }.freeze
   GATE_TEXT = { "open" => "Aberto", "closed" => "Fechado", "opening" => "Abrindo", "unknown" => "Desconhecido" }.freeze
 
+  TONE_CLASSES = { "success" => "text-success", "danger" => "text-danger", "warn" => "text-warn", "muted" => "text-muted" }.freeze
+
   def site_icon(site) = SITE_ICONS.fetch(site.kind, "home")
   def point_icon(point) = POINT_ICONS.fetch(point.capability, "cube")
   def point_on?(point) = point.value == true || point.value == "open"
   def count_label(n, one, many) = "#{n} #{n == 1 ? one : many}"
+
+  # 5400 → "1 h 30 min"; menos de um minuto → "45 s".
+  def duration_text(seconds)
+    h, rest = seconds.to_i.divmod(3600)
+    m, s = rest.divmod(60)
+    return "#{s} s" if h.zero? && m.zero?
+
+    [ ("#{h} h" if h.positive?), ("#{m} min" if m.positive?) ].compact.join(" ")
+  end
 
   def point_value_text(point)
     v = point.value
