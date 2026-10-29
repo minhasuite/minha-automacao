@@ -7,7 +7,7 @@ RSpec.describe Points::Command do
   around { |ex| ActsAsTenant.with_tenant(tenant) { ex.run } }
 
   def point(**attrs) = create(:point, device: device, **attrs)
-  def run(p, command, value = nil) = described_class.call(p, command, value).reload.value
+  def run(p, command, value = nil) = described_class.call(p, command, value, source: "api").point.reload.value
 
   def expect_error(code, &)
     expect(&).to raise_error(described_class::Error) { |e| expect(e.code).to eq(code) }
@@ -16,7 +16,7 @@ RSpec.describe Points::Command do
   it "liga, desliga e alterna um ponto virtual, marcando quando mudou" do
     p = point
     travel_to(Time.zone.parse("2026-10-29 10:00")) { expect(run(p, "on")).to be true }
-    expect(p.changed_at).to eq(Time.zone.parse("2026-10-29 10:00"))
+    expect(p.reload.changed_at).to eq(Time.zone.parse("2026-10-29 10:00"))
     travel_to(Time.zone.parse("2026-10-29 11:00")) { run(p, "on") }
     expect(p.reload.changed_at).to eq(Time.zone.parse("2026-10-29 10:00"))
     expect(p.reported_at).to eq(Time.zone.parse("2026-10-29 11:00"))
@@ -33,7 +33,7 @@ RSpec.describe Points::Command do
     expect(run(gate, "pulse")).to eq("open")
     expect(run(gate, "pulse")).to eq("closed")
     button = point(capability: "command")
-    described_class.call(button, "press")
+    described_class.call(button, "press", source: "web")
     expect(button.reload.reported_at).to be_present
   end
 

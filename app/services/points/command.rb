@@ -1,9 +1,9 @@
 module Points
-  # Comando num ponto (ESQUEMA-V1 §4.3). Valida capacidade e argumento; no
-  # driver `virtual` grava o valor direto no ponto. Quem pode mandar (papel x
-  # risco) é checado antes, no controller.
-  # ponytail: síncrono e sem tabela `commands`; a fila, o ack e a trilha chegam
-  # com a F2/F3 (borda e drivers), mantendo esta interface.
+  # Comando num ponto (ESQUEMA-V1 §4.3/§4.4). Valida capacidade e argumento,
+  # cria o `::Command` rastreável e o executa pelo ExecuteCommandJob: na hora
+  # no driver `virtual` (sem aparelho, a tela responde instantâneo), na fila
+  # nos drivers de verdade (F3). Quem pode mandar (papel x risco) é checado
+  # antes, no controller.
   class Command
     class Error < StandardError
       attr_reader :code
@@ -19,7 +19,17 @@ module Points
       "text" => %w[set], "command" => %w[press], "gate" => %w[pulse]
     }.freeze
 
-    def self.call(point, command, value = nil) = new(point, command.to_s, value).call
+    # Mesmo `client_uuid` (reenvio do app offline) devolve o comando já criado.
+    def self.call(point, command, value = nil, source:, user: Current.user, client_uuid: nil)
+      existing = ::Command.find_by(client_uuid: client_uuid) if client_uuid.present?
+      return existing if existing
+
+      new(point, command.to_s, value).new_value # valida antes de criar
+      record = ::Command.create!(site: point.site, point: point, command: command.to_s, value: value, source: source,
+                                 user: user, client_uuid: client_uuid.presence)
+      point.device.virtual? ? ExecuteCommandJob.perform_now(record.id) : ExecuteCommandJob.perform_later(record.id)
+      record.reload
+    end
 
     def initialize(point, command, value)
       @point = point
@@ -27,21 +37,15 @@ module Points
       @value = value
     end
 
-    def call
+    # Valor que o ponto passa a ter (levanta Error se o comando não serve).
+    def new_value
       raise Error.new(:point_disabled, "Ponto desativado.") if @point.disabled || @point.device.disabled
       raise Error.new(:not_writable, "Este ponto só lê, não recebe comando.") unless @point.writable
       unless COMMANDS.fetch(@point.capability, []).include?(@command)
         raise Error.new(:unsupported_command, "Comando \"#{@command}\" não vale para #{@point.capability_label.downcase}.")
       end
-      raise Error.new(:driver_unavailable, "O driver #{@point.device.driver} ainda não executa comandos.") unless @point.device.virtual?
+      raise Error.new(:driver_unavailable, "O driver #{@point.device.driver} ainda não executa comandos.") unless Drivers.supported?(@point.device)
 
-      write(new_value)
-      @point
-    end
-
-    private
-
-    def new_value
       case @point.capability
       when "onoff" then { "on" => true, "off" => false }.fetch(@command) { !@point.value }
       when "dimmer", "setpoint" then number
@@ -51,11 +55,7 @@ module Points
       end
     end
 
-    def write(value)
-      now = Time.current
-      @point.changed_at = now unless value == @point.value
-      @point.update!(value: value, quality: "good", reported_at: now)
-    end
+    private
 
     def number
       n = BigDecimal(@value.to_s.tr(",", "."))

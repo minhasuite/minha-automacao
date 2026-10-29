@@ -16,5 +16,12 @@ production:
   prune_device_tokens:
     class: PruneDeviceTokensJob
     schedule: every sunday at 4am America/Sao_Paulo
+  # Histórico (F2): rollups de hora e dia; partição do mês seguinte e retenção.
+  rollup_readings:
+    class: RollupReadingsJob
+    schedule: every hour at minute 5
+  readings_maintenance:
+    class: ReadingsMaintenanceJob
+    schedule: every day at 3am America/Sao_Paulo
 
 development: {}

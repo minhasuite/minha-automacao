@@ -20,7 +20,10 @@ module Accounts
           sites: SiteSerializer.new(Site.order(:name)).to_h,
           areas: AreaSerializer.new(Area.order(:name)).to_h,
           devices: DeviceSerializer.new(Device.order(:name)).to_h,
-          points: PointSerializer.new(Point.order(:key)).to_h
+          points: PointSerializer.new(Point.order(:key)).to_h,
+          # Leituras ficam de fora (volume); o histórico de comandos e eventos vai.
+          commands: CommandSerializer.new(Command.includes(:point).order(:created_at)).to_h,
+          events: Event.order(:at).map { |e| e.slice(:point_id, :kind, :payload, :source, :at) }
         }
       end
     end

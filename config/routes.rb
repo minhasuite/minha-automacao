@@ -34,7 +34,7 @@ Rails.application.routes.draw do
     resources :sites, path: "locais", path_names: { new: "novo", edit: "editar" } do
       resources :areas, path: "areas", except: :index, shallow: true
       resources :devices, path: "dispositivos", except: :index, shallow: true do
-        resources :points, path: "pontos", except: %i[index show], shallow: true do
+        resources :points, path: "pontos", except: :index, shallow: true do
           post :command, on: :member, path: "comando"
         end
       end
@@ -87,9 +87,12 @@ Rails.application.routes.draw do
         resources :devices, except: %i[new edit], shallow: true do
           resources :points, except: %i[new edit], shallow: true do
             post :commands, on: :member, action: :command
+            get :history, on: :member
           end
         end
       end
+
+      resources :commands, only: :show
 
       get "billing", to: "billing#show"
       post "billing/google/verify", to: "billing#verify_google"

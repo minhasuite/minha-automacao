@@ -1,6 +1,8 @@
 # Papel da pessoa num local (ESQUEMA-V1 §4.1). ROLES em ordem crescente de poder.
 # Visitante com validade: `expires_at` vencido = sem acesso.
 class SiteMembership < ApplicationRecord
+  include Auditable
+
   acts_as_tenant :tenant
 
   class Forbidden < StandardError; end
@@ -18,6 +20,8 @@ class SiteMembership < ApplicationRecord
   validates :role, inclusion: { in: ROLES }
   validates :user_id, uniqueness: { scope: :site_id }
   validate :user_in_same_tenant
+
+  audited_attributes :role, :expires_at, :area_ids
 
   scope :active, -> { where(expires_at: nil).or(where(expires_at: Time.current..)) }
 

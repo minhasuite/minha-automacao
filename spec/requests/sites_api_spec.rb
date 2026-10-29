@@ -29,8 +29,14 @@ RSpec.describe "API de locais, dispositivos e pontos" do
     expect(data).to include("key" => "rele.portao", "writable" => true, "scale" => 1.0, "value" => nil, "expose" => { "alexa" => true })
     point_id = data["id"]
 
-    post "/api/v1/points/#{point_id}/commands", params: { command: "on" }, headers: headers
-    expect(data).to include("value" => true, "quality" => "good")
+    post "/api/v1/points/#{point_id}/commands", params: { command: "on", client_uuid: "5b0c1c51-8a4e-4f53-9f0e-2a3d4b5c6d7e" }, headers: headers
+    expect(response).to have_http_status(:accepted)
+    expect(data).to include("status" => "confirmed", "source" => "api", "point_value" => true, "user_id" => owner.id)
+    command_id = data["command_id"]
+    post "/api/v1/points/#{point_id}/commands", params: { command: "off", client_uuid: "5b0c1c51-8a4e-4f53-9f0e-2a3d4b5c6d7e" }, headers: headers
+    expect(data).to include("command_id" => command_id, "command" => "on")
+    get "/api/v1/commands/#{command_id}", headers: headers
+    expect(data).to include("status" => "confirmed", "confirmed_at" => be_present)
     get "/api/v1/points/#{point_id}", headers: headers
     expect(data["value"]).to be true
 
@@ -99,7 +105,7 @@ RSpec.describe "API de locais, dispositivos e pontos" do
       get "/api/v1/sites", headers: h
       expect(data.first).to include("id" => site.id, "my_role" => "guest")
       post "/api/v1/points/#{lamp.id}/commands", params: { command: "on" }, headers: h
-      expect(response).to have_http_status(:ok)
+      expect(response).to have_http_status(:accepted)
       post "/api/v1/points/#{gate.id}/commands", params: { command: "pulse" }, headers: h
       expect(response).to have_http_status(:forbidden)
       post "/api/v1/sites/#{site.id}/areas", params: { name: "Sala" }, headers: h
@@ -114,7 +120,7 @@ RSpec.describe "API de locais, dispositivos e pontos" do
 
     it "operador abre o portão; técnico cadastra mas não mexe no local" do
       post "/api/v1/points/#{gate.id}/commands", params: { command: "pulse" }, headers: member("operator")
-      expect(data["value"]).to eq("open")
+      expect(data["point_value"]).to eq("open")
       tech = member("technician")
       post "/api/v1/sites/#{site.id}/areas", params: { name: "Sala" }, headers: tech
       expect(response).to have_http_status(:created)

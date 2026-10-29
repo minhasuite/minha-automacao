@@ -3,7 +3,7 @@ module Accounts
   # membros, o login e o plano. AiUsage fica (senão zerar resetaria a cota).
   # Cada tabela do domínio que chegar entra em MODELS (filhos antes dos pais).
   class WipeData
-    MODELS = [ Tagging, Tag, SiteMembership, Point, Device, Area, Site, Notification ].freeze
+    MODELS = [ Command, Event, Tagging, Tag, SiteMembership, Point, Device, Area, Site, Notification ].freeze
 
     def self.call(tenant) = new(tenant).call
 
