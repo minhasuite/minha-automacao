@@ -12,7 +12,7 @@ info:
     Papéis: `owner` (dono), `admin` (administrador), `member` (membro).
 
     Base da suíte + F1 (locais, áreas, membros, dispositivos, pontos e comando no driver virtual).
-    Mais F2 (comandos e histórico), F4 (primitivas de automação e alertas) e F5 (dashboards). A DSL de automação (§5) entra nas próximas fases.
+    Mais F2 (comandos e histórico), F4 (primitivas de automação e alertas), F5 (dashboards) e F6 (automações com a DSL, docs/automacoes.md).
 servers:
   - url: https://minhaautomacao.minhasuite.com/api/v1
 security:
@@ -191,3 +191,23 @@ paths:
   /dashboards/{id}/publish: { post: { summary: "Publica o rascunho (ou o automático, que vira manual) como versão nova", responses: { "200": { description: Dashboard } } } }
   /dashboards/{id}/revert: { post: { summary: "{version}: publica de novo uma versão antiga como a próxima", responses: { "200": { description: Dashboard }, "404": { $ref: "#/components/responses/Error" } } } }
   /dashboards/{id}/versions: { get: { summary: "[{version, author, created_at, definition}] (technician+)", responses: { "200": { description: "DashboardVersion[]" } } } }
+  # ---- Automações (F6, ESQUEMA-V1 §5). DSL em docs/automacoes.md. Ver lista e execuções: qualquer papel no local;
+  # criar/alterar/publicar/voltar/simular/excluir: technician+. Publicar ou executar com ponto sensível/crítico exige o papel do
+  # risco; crítico exige confirm_critical: true (senão 422 confirmation_required).
+  /sites/{id}/automations:
+    get: { summary: "[{id, site_id, area_id, name, description, enabled, mode single|restart|queued|parallel, max_runs, version, has_draft, webhook, last_run_at, last_status, last_error, updated_at}]", responses: { "200": { description: "Automation[]" } } }
+    post: { summary: "Cria {name, mode?, max_runs?, area_id?, description?, enabled?, definition?, publish? (padrão true), confirm_critical?}. Ponto por UUID ou key. 422 validation_failed com a lista de erros da DSL", responses: { "201": { description: "Automation (com definition e draft)" }, "422": { $ref: "#/components/responses/Error" } } }
+  /automations/{id}:
+    get: { summary: "Automação com definition (publicada) e draft", responses: { "200": { description: Automation } } }
+    patch: { summary: "{name?, mode?, max_runs?, area_id?, description?, enabled? (só publicada), definition?, publish?, confirm_critical?}", responses: { "200": { description: Automation }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } }
+    delete: { summary: "Exclui com versões e execuções (technician+)", responses: { "204": { description: ok } } }
+  /automations/{id}/publish: { post: { summary: "{confirm_critical?}: publica o rascunho como versão nova (valida a DSL)", responses: { "200": { description: Automation }, "422": { $ref: "#/components/responses/Error" } } } }
+  /automations/{id}/revert: { post: { summary: "{version, confirm_critical?}: publica de novo uma versão antiga como a próxima", responses: { "200": { description: Automation }, "404": { $ref: "#/components/responses/Error" } } } }
+  /automations/{id}/versions: { get: { summary: "[{version, author, created_at, definition}] (technician+)", responses: { "200": { description: "AutomationVersion[]" } } } }
+  /automations/{id}/simulate: { post: { summary: "{points?: {key|id: valor}, at?, trigger?, definition?, published?, skip_conditions?}: roda a seco (nada comandado nem avisado) e devolve a execução com steps", responses: { "200": { description: AutomationRun } } } }
+  /automations/{id}/run: { post: { summary: "Executar agora (versão publicada, sem as condições). {confirm_critical?}. 409 not_started se o modo descartou", responses: { "202": { description: AutomationRun }, "403": { $ref: "#/components/responses/Error" }, "409": { $ref: "#/components/responses/Error" } } } }
+  /automations/{id}/runs: { get: { summary: "Execuções (paginado, ?dry_run=true|false), sem steps: [{id, automation_id, version, status queued|running|waiting|done|skipped|stopped|failed|cancelled|loop, status_label, dry_run, depth, trigger, error, started_at, finished_at, resume_at}]", responses: { "200": { description: "AutomationRun[]" } } } }
+  /automations/{id}/webhook: { post: { summary: "Gera/troca o token do webhook (technician+): {url, token}, mostrado só nesta resposta", responses: { "200": { description: "{url, token}" } } } }
+  /automation_runs/{id}: { get: { summary: "Execução com o trace: steps [{at, path, kind, title, result ok|false|error|simulated|waiting|timeout|skipped, detail, ms, checks [{label, result, values, children}]}]", responses: { "200": { description: AutomationRun } } } }
+  /hooks/automations/{token}:
+    post: { summary: "Webhook das automações (sem login; o token é a credencial). JSON até 10 KB vira trigger.data; 60/min por token. 404 se o token não existe ou a automação está desligada/sem gatilho webhook", security: [], responses: { "202": { description: "{run_id, status}" }, "404": { $ref: "#/components/responses/Error" }, "413": { $ref: "#/components/responses/Error" } } }

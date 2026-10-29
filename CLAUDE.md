@@ -23,8 +23,10 @@ e o servidor local da casa (`docker-compose.local.yml`, `bin/deploy-local`) +
 `Schedule`, `Scene`, `NotifyRule`, `AlertRule`/`Alert`) na web (página do
 ponto, `/locais/:id/automacao`, `/alertas`) e na API +
 **F5**: dashboards dirigidos pelo servidor (`Dashboard`, versões, automático,
-editor web, widgets ao vivo, API; formato em `docs/dashboards.md`) no Início.
-Automações (DSL) ainda não existem.
+editor web, widgets ao vivo, API; formato em `docs/dashboards.md`) no Início +
+**F6**: automações com a DSL JSON (`Automation`, versões, `AutomationRun` com
+trace, simulação, editor de blocos em `/locais/:id/automacoes`, API e webhook;
+referência em `docs/automacoes.md`).
 
 ## Rodar
 
@@ -137,6 +139,19 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   `/paineis/:id/w/:widget_id` com o papel de quem vê. Widget nunca comanda
   direto: o botão vai para `PointsController#command` (papel x risco) e volta
   ao quadro. Painel padrão da pessoa em `users.dashboard_prefs`.
+- **Automações da DSL (F6)**: `definition` = publicada (roda), `draft` =
+  rascunho do editor (pode ficar incompleto; a DSL é validada na
+  publicação). Tipos e campos numa tabela só (`Automations::Dsl`): tipo novo =
+  entrada lá + `act_<tipo>`/`cond_<tipo>` no motor (o editor e a validação
+  saem da tabela). Ações viram programa plano (`Engine#compile`); espera grava
+  `pc`/variáveis em `automation_runs.state` e agenda `AutomationResumeJob`
+  com `seq` (job velho não retoma). Gatilhos de ponto vêm do
+  `Automations.on_change` (mesma regra de "valor que voltou com a conexão não
+  dispara"); horário/sol pelo `RunSchedulesJob` a cada minuto. Laço: causa =
+  execução na thread ou comando com `automation_run_id` no ponto há < 10 s;
+  própria automação ou corrente > 3 = "laço evitado". Comando sempre por
+  `Points::Command` (`run:`), nunca direto no driver. Notificação `kind:
+  "automacao"`. No Dell nenhuma automação ativa sobre aparelho real até a F10.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 
