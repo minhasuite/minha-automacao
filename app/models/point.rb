@@ -33,6 +33,9 @@ class Point < ApplicationRecord
   belongs_to :area, optional: true
   has_many :commands, dependent: nil # cascade no banco
   has_many :events, dependent: nil
+  has_many :notify_rules, dependent: nil
+  has_many :alert_rules, dependent: nil
+  has_many :schedules, dependent: nil
 
   before_validation :fill_defaults, on: :create
 
@@ -77,6 +80,17 @@ class Point < ApplicationRecord
       events.create!(site: site, kind: "quality", payload: { from: quality_was, to: quality }, at: at)
     end
     broadcast_refresh_to(self) if value_changed || quality != quality_was || capability == "command"
+    Automations.on_change(self, quality_was) if value_changed
+  end
+
+  # Texto do formulário ("true", "25,5", "open") → valor no tipo do ponto.
+  def cast(raw)
+    return raw unless raw.is_a?(String)
+    return if raw.blank?
+    return ActiveModel::Type::Boolean.new.cast(raw) if bool?
+    return Float(raw.tr(",", "."), exception: false) || raw if numeric?
+
+    raw
   end
 
   # Formulário web: "Casa, Fora, Férias" ↔ ["Casa", "Fora", "Férias"].

@@ -120,6 +120,49 @@ CREATE TABLE public.ai_usages (
 
 
 --
+-- Name: alert_rules; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.alert_rules (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    point_id uuid NOT NULL,
+    name character varying NOT NULL,
+    operator character varying DEFAULT 'eq'::character varying NOT NULL,
+    value jsonb,
+    for_s integer DEFAULT 0 NOT NULL,
+    severity character varying DEFAULT 'warning'::character varying NOT NULL,
+    escalation jsonb DEFAULT '[]'::jsonb NOT NULL,
+    repeat_s integer,
+    auto_resolve boolean DEFAULT true NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: alerts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.alerts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    alert_rule_id uuid NOT NULL,
+    point_id uuid NOT NULL,
+    level integer DEFAULT 0 NOT NULL,
+    opened_at timestamp(6) without time zone NOT NULL,
+    acked_by_id uuid,
+    acked_at timestamp(6) without time zone,
+    resolved_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: api_tokens; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -205,7 +248,8 @@ CREATE TABLE public.commands (
     sent_at timestamp(6) without time zone,
     confirmed_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    origin_point_id uuid
 );
 
 
@@ -334,6 +378,43 @@ CREATE TABLE public.notifications (
 
 
 --
+-- Name: notify_rules; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notify_rules (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    point_id uuid NOT NULL,
+    to_value jsonb,
+    message character varying,
+    channels character varying[] DEFAULT '{in_app,push}'::character varying[] NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: point_links; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.point_links (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    source_point_id uuid NOT NULL,
+    target_point_id uuid NOT NULL,
+    mode character varying DEFAULT 'mirror'::character varying NOT NULL,
+    bidirectional boolean DEFAULT false NOT NULL,
+    trigger_value jsonb,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: points; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -443,6 +524,47 @@ CREATE TABLE public.readings_default (
     at timestamp(6) without time zone CONSTRAINT readings_at_not_null NOT NULL,
     value numeric,
     value_text text
+);
+
+
+--
+-- Name: scenes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.scenes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    name character varying NOT NULL,
+    icon character varying,
+    items jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: schedules; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.schedules (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    point_id uuid,
+    scene_id uuid,
+    name character varying NOT NULL,
+    command character varying,
+    value jsonb,
+    kind character varying DEFAULT 'time'::character varying NOT NULL,
+    time_of_day character varying,
+    offset_min integer DEFAULT 0 NOT NULL,
+    days integer[] DEFAULT '{0,1,2,3,4,5,6}'::integer[] NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    next_run_at timestamp(6) without time zone,
+    last_run_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -1285,6 +1407,22 @@ ALTER TABLE ONLY public.ai_usages
 
 
 --
+-- Name: alert_rules alert_rules_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alert_rules
+    ADD CONSTRAINT alert_rules_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: alerts alerts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alerts
+    ADD CONSTRAINT alerts_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: api_tokens api_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1381,11 +1519,43 @@ ALTER TABLE ONLY public.notifications
 
 
 --
+-- Name: notify_rules notify_rules_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notify_rules
+    ADD CONSTRAINT notify_rules_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: point_links point_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.point_links
+    ADD CONSTRAINT point_links_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: points points_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.points
     ADD CONSTRAINT points_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scenes scenes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scenes
+    ADD CONSTRAINT scenes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: schedules schedules_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT schedules_pkey PRIMARY KEY (id);
 
 
 --
@@ -1637,6 +1807,69 @@ CREATE UNIQUE INDEX index_ai_usages_on_tenant_id_and_feature_and_period ON publi
 
 
 --
+-- Name: index_alert_rules_on_point_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alert_rules_on_point_id ON public.alert_rules USING btree (point_id);
+
+
+--
+-- Name: index_alert_rules_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alert_rules_on_site_id ON public.alert_rules USING btree (site_id);
+
+
+--
+-- Name: index_alert_rules_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alert_rules_on_tenant_id ON public.alert_rules USING btree (tenant_id);
+
+
+--
+-- Name: index_alerts_on_acked_by_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alerts_on_acked_by_id ON public.alerts USING btree (acked_by_id);
+
+
+--
+-- Name: index_alerts_on_alert_rule_id_and_opened_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alerts_on_alert_rule_id_and_opened_at ON public.alerts USING btree (alert_rule_id, opened_at);
+
+
+--
+-- Name: index_alerts_on_point_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alerts_on_point_id ON public.alerts USING btree (point_id);
+
+
+--
+-- Name: index_alerts_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alerts_on_site_id ON public.alerts USING btree (site_id);
+
+
+--
+-- Name: index_alerts_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alerts_on_tenant_id ON public.alerts USING btree (tenant_id);
+
+
+--
+-- Name: index_alerts_open_per_rule; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_alerts_open_per_rule ON public.alerts USING btree (alert_rule_id) WHERE (resolved_at IS NULL);
+
+
+--
 -- Name: index_api_tokens_on_access_token_digest; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1868,6 +2101,62 @@ CREATE INDEX index_notifications_on_user_id ON public.notifications USING btree 
 
 
 --
+-- Name: index_notify_rules_on_point_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notify_rules_on_point_id ON public.notify_rules USING btree (point_id);
+
+
+--
+-- Name: index_notify_rules_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notify_rules_on_site_id ON public.notify_rules USING btree (site_id);
+
+
+--
+-- Name: index_notify_rules_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notify_rules_on_tenant_id ON public.notify_rules USING btree (tenant_id);
+
+
+--
+-- Name: index_point_links_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_point_links_on_site_id ON public.point_links USING btree (site_id);
+
+
+--
+-- Name: index_point_links_on_source_point_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_point_links_on_source_point_id ON public.point_links USING btree (source_point_id);
+
+
+--
+-- Name: index_point_links_on_source_point_id_and_target_point_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_point_links_on_source_point_id_and_target_point_id ON public.point_links USING btree (source_point_id, target_point_id);
+
+
+--
+-- Name: index_point_links_on_target_point_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_point_links_on_target_point_id ON public.point_links USING btree (target_point_id);
+
+
+--
+-- Name: index_point_links_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_point_links_on_tenant_id ON public.point_links USING btree (tenant_id);
+
+
+--
 -- Name: index_points_on_area_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1914,6 +2203,55 @@ CREATE UNIQUE INDEX index_reading_rollups_uniqueness ON public.reading_rollups U
 --
 
 CREATE INDEX index_readings_on_point_id_and_at ON ONLY public.readings USING btree (point_id, at DESC);
+
+
+--
+-- Name: index_scenes_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_scenes_on_site_id ON public.scenes USING btree (site_id);
+
+
+--
+-- Name: index_scenes_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_scenes_on_tenant_id ON public.scenes USING btree (tenant_id);
+
+
+--
+-- Name: index_schedules_on_next_run_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_schedules_on_next_run_at ON public.schedules USING btree (next_run_at) WHERE enabled;
+
+
+--
+-- Name: index_schedules_on_point_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_schedules_on_point_id ON public.schedules USING btree (point_id);
+
+
+--
+-- Name: index_schedules_on_scene_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_schedules_on_scene_id ON public.schedules USING btree (scene_id);
+
+
+--
+-- Name: index_schedules_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_schedules_on_site_id ON public.schedules USING btree (site_id);
+
+
+--
+-- Name: index_schedules_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_schedules_on_tenant_id ON public.schedules USING btree (tenant_id);
 
 
 --
@@ -2358,6 +2696,22 @@ ALTER INDEX public.index_readings_on_point_id_and_at ATTACH PARTITION public.rea
 
 
 --
+-- Name: notify_rules fk_rails_073e957909; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notify_rules
+    ADD CONSTRAINT fk_rails_073e957909 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: schedules fk_rails_084a346429; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT fk_rails_084a346429 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: subscriptions fk_rails_0cedf77d81; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2398,6 +2752,38 @@ ALTER TABLE ONLY public.service_api_keys
 
 
 --
+-- Name: point_links fk_rails_19bdc1fe3f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.point_links
+    ADD CONSTRAINT fk_rails_19bdc1fe3f FOREIGN KEY (source_point_id) REFERENCES public.points(id) ON DELETE CASCADE;
+
+
+--
+-- Name: alert_rules fk_rails_20afd75383; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alert_rules
+    ADD CONSTRAINT fk_rails_20afd75383 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
+-- Name: schedules fk_rails_228e8ae418; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT fk_rails_228e8ae418 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
+-- Name: alerts fk_rails_23dded3105; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alerts
+    ADD CONSTRAINT fk_rails_23dded3105 FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
+
+
+--
 -- Name: devices fk_rails_244482c7d4; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2414,11 +2800,27 @@ ALTER TABLE ONLY public.site_memberships
 
 
 --
+-- Name: scenes fk_rails_28279ad49b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scenes
+    ADD CONSTRAINT fk_rails_28279ad49b FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: solid_queue_recurring_executions fk_rails_318a5533ed; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.solid_queue_recurring_executions
     ADD CONSTRAINT fk_rails_318a5533ed FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: schedules fk_rails_324e2727f9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT fk_rails_324e2727f9 FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
 
 
 --
@@ -2510,6 +2912,14 @@ ALTER TABLE ONLY public.ai_usages
 
 
 --
+-- Name: alerts fk_rails_61df1056f3; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alerts
+    ADD CONSTRAINT fk_rails_61df1056f3 FOREIGN KEY (acked_by_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: events fk_rails_6844d4946c; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2526,11 +2936,35 @@ ALTER TABLE ONLY public.areas
 
 
 --
+-- Name: alert_rules fk_rails_6da1190cf0; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alert_rules
+    ADD CONSTRAINT fk_rails_6da1190cf0 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: site_memberships fk_rails_6e07c54368; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.site_memberships
     ADD CONSTRAINT fk_rails_6e07c54368 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: point_links fk_rails_734958d827; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.point_links
+    ADD CONSTRAINT fk_rails_734958d827 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: alerts fk_rails_7814415382; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alerts
+    ADD CONSTRAINT fk_rails_7814415382 FOREIGN KEY (alert_rule_id) REFERENCES public.alert_rules(id) ON DELETE CASCADE;
 
 
 --
@@ -2558,6 +2992,14 @@ ALTER TABLE ONLY public.notifications
 
 
 --
+-- Name: alerts fk_rails_80074b944a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alerts
+    ADD CONSTRAINT fk_rails_80074b944a FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: solid_queue_ready_executions fk_rails_81fcbd66af; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2566,11 +3008,27 @@ ALTER TABLE ONLY public.solid_queue_ready_executions
 
 
 --
+-- Name: notify_rules fk_rails_86a65c9929; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notify_rules
+    ADD CONSTRAINT fk_rails_86a65c9929 FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
+
+
+--
 -- Name: subscriptions fk_rails_933bdff476; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscriptions
     ADD CONSTRAINT fk_rails_933bdff476 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: alerts fk_rails_965d7a3df8; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alerts
+    ADD CONSTRAINT fk_rails_965d7a3df8 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -2614,6 +3072,14 @@ ALTER TABLE ONLY public.taggings
 
 
 --
+-- Name: scenes fk_rails_a0f7192e82; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scenes
+    ADD CONSTRAINT fk_rails_a0f7192e82 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: points fk_rails_a4e1ac986e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2630,11 +3096,27 @@ ALTER TABLE ONLY public.invites
 
 
 --
+-- Name: schedules fk_rails_ab7cc5b87d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT fk_rails_ab7cc5b87d FOREIGN KEY (scene_id) REFERENCES public.scenes(id) ON DELETE CASCADE;
+
+
+--
 -- Name: notifications fk_rails_b080fb4855; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT fk_rails_b080fb4855 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: point_links fk_rails_b42977bcc7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.point_links
+    ADD CONSTRAINT fk_rails_b42977bcc7 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -2710,11 +3192,27 @@ ALTER TABLE ONLY public.points
 
 
 --
+-- Name: point_links fk_rails_dfc33b5548; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.point_links
+    ADD CONSTRAINT fk_rails_dfc33b5548 FOREIGN KEY (target_point_id) REFERENCES public.points(id) ON DELETE CASCADE;
+
+
+--
 -- Name: areas fk_rails_e17994ac11; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.areas
     ADD CONSTRAINT fk_rails_e17994ac11 FOREIGN KEY (parent_id) REFERENCES public.areas(id) ON DELETE SET NULL;
+
+
+--
+-- Name: alert_rules fk_rails_e82824b3ed; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alert_rules
+    ADD CONSTRAINT fk_rails_e82824b3ed FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
 
 
 --
@@ -2731,6 +3229,14 @@ ALTER TABLE ONLY public.device_tokens
 
 ALTER TABLE ONLY public.api_tokens
     ADD CONSTRAINT fk_rails_f16b5e0447 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: notify_rules fk_rails_f2621aff5a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notify_rules
+    ADD CONSTRAINT fk_rails_f2621aff5a FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -2756,6 +3262,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261029300001'),
 ('20261029200001'),
 ('20261029100002'),
 ('20261029100001'),

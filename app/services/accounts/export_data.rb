@@ -23,7 +23,11 @@ module Accounts
           points: PointSerializer.new(Point.order(:key)).to_h,
           # Leituras ficam de fora (volume); o histórico de comandos e eventos vai.
           commands: CommandSerializer.new(Command.includes(:point).order(:created_at)).to_h,
-          events: Event.order(:at).map { |e| e.slice(:point_id, :kind, :payload, :source, :at) }
+          events: Event.order(:at).map { |e| e.slice(:point_id, :kind, :payload, :source, :at) },
+          # Automação (F4): as regras como estão no banco.
+          **[ PointLink, Scene, Schedule, NotifyRule, AlertRule, Alert ].to_h do |m|
+            [ m.table_name.to_sym, m.order(:created_at).map { |r| r.as_json(except: "tenant_id") } ]
+          end
         }
       end
     end

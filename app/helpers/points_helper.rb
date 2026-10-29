@@ -45,6 +45,9 @@ module PointsHelper
     end
   end
 
+  # Um valor qualquer no texto do ponto (regras: "quando ficar Aberto").
+  def point_value_label(point, value) = point_value_text(point.dup.tap { |p| p.value = value })
+
   # Confirmação antes de acionar ponto sensível, crítico ou com texto próprio.
   def point_confirm_data(point)
     return {} if point.confirm.blank? && point.risk == "normal"

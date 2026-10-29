@@ -11,6 +11,12 @@ class Site < ApplicationRecord
   has_many :devices, dependent: nil
   has_many :points, dependent: nil
   has_many :memberships, class_name: "SiteMembership", dependent: nil
+  has_many :point_links, dependent: nil
+  has_many :scenes, dependent: nil
+  has_many :schedules, dependent: nil
+  has_many :notify_rules, dependent: nil
+  has_many :alert_rules, dependent: nil
+  has_many :alerts, dependent: nil
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }

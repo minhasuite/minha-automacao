@@ -1,0 +1,49 @@
+# Alerta aberto por uma AlertRule (ESQUEMA-V1 §4.5): a central com "ciente".
+# `level` = etapas já avisadas. "Ciente" para o escalonamento (o alerta fica
+# aberto até a condição sumir; regra sem auto_resolve fecha no ciente).
+class Alert < ApplicationRecord
+  acts_as_tenant :tenant
+
+  belongs_to :site
+  belongs_to :alert_rule
+  belongs_to :point
+  belongs_to :acked_by, class_name: "User", optional: true
+
+  scope :active, -> { where(resolved_at: nil) }
+  scope :recent, -> { order(opened_at: :desc) }
+
+  def acked? = acked_at.present?
+  def resolved? = resolved_at.present?
+
+  # Agenda a etapa `level` (na hora se a espera for zero).
+  def schedule_step
+    steps = alert_rule.escalation
+    wait = level < steps.size ? steps[level]["wait_s"] : alert_rule.repeat_s
+    return unless wait
+    return step!(level) if wait.zero?
+
+    AlertStepJob.set(wait: wait.seconds).perform_later(id, level)
+  end
+
+  # Avisa a etapa `n` e agenda a próxima. Job repetido ou atrasado não avisa
+  # duas vezes (só age se `n` for a próxima etapa).
+  def step!(n)
+    return if resolved? || acked? || n != level
+
+    steps = alert_rule.escalation
+    step = steps[n] || steps.last
+    minutes = ((Time.current - (point.changed_at || opened_at)) / 60).floor
+    Notifier.deliver!(step["channels"], kind: "alerta", title: alert_rule.name,
+                                        body: "#{point.name}: #{ApplicationController.helpers.point_value_text(point)} há #{minutes} min",
+                                        data: { alert_id: id, point_id: point_id, site_id: site_id, severity: alert_rule.severity },
+                                        dedup_key: "alert:#{id}:#{n}")
+    update!(level: n + 1)
+    schedule_step
+  end
+
+  def ack!(user)
+    update!(acked_by: user, acked_at: Time.current, resolved_at: (Time.current unless alert_rule.auto_resolve))
+  end
+
+  def resolve! = update!(resolved_at: Time.current)
+end

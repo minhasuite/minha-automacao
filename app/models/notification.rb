@@ -5,7 +5,7 @@ class Notification < ApplicationRecord
   acts_as_tenant :tenant
   belongs_to :user, optional: true
 
-  KINDS = %w[convite resumo_diario sistema].freeze
+  KINDS = %w[convite resumo_diario sistema aviso alerta].freeze
 
   validates :kind, inclusion: { in: KINDS }
   validates :title, presence: true
