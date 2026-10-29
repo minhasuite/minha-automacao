@@ -21,8 +21,10 @@ histórico (`readings` particionada, `reading_rollups`, `events`), tempo real
 e o servidor local da casa (`docker-compose.local.yml`, `bin/deploy-local`) +
 **F4**: primitivas declarativas (`pulse_ms`/`max_on_s`, `PointLink`,
 `Schedule`, `Scene`, `NotifyRule`, `AlertRule`/`Alert`) na web (página do
-ponto, `/locais/:id/automacao`, `/alertas`) e na API. Automações (DSL) e
-dashboards ainda não existem.
+ponto, `/locais/:id/automacao`, `/alertas`) e na API +
+**F5**: dashboards dirigidos pelo servidor (`Dashboard`, versões, automático,
+editor web, widgets ao vivo, API; formato em `docs/dashboards.md`) no Início.
+Automações (DSL) ainda não existem.
 
 ## Rodar
 
@@ -125,6 +127,16 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   `alexa` entra lá na F8. Avisos e alertas vão para dono/administradores.
   "Ciente" (operator+) para o escalonamento; o alerta fecha quando a condição
   some (`auto_resolve`) ou no ciente (sem `auto_resolve`).
+- **Dashboards (F5)**: JSON da §6 validado por `Dashboards::Schema` (à mão;
+  tipo novo = entrada em `WIDGETS` + partial `web/dashboards/widgets/_<tipo>` +
+  dado no `Resolver`). `definition` = publicada, `draft` = rascunho; publicar e
+  voltar versão gravam `dashboard_versions`. Local sem dashboard ganha o
+  automático (`auto`, regenerado a cada leitura até a primeira publicação).
+  Tempo real: `Point#report!` manda `point_changed` (só o id) no stream
+  `[site, :points]`; a tela recarrega os `turbo-frame[data-points~=id]` em
+  `/paineis/:id/w/:widget_id` com o papel de quem vê. Widget nunca comanda
+  direto: o botão vai para `PointsController#command` (papel x risco) e volta
+  ao quadro. Painel padrão da pessoa em `users.dashboard_prefs`.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

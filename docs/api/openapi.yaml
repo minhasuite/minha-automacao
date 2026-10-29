@@ -12,7 +12,7 @@ info:
     Papéis: `owner` (dono), `admin` (administrador), `member` (membro).
 
     Base da suíte + F1 (locais, áreas, membros, dispositivos, pontos e comando no driver virtual).
-    O resto do domínio (ESQUEMA-V1 §8: histórico, automações, dashboards, borda) entra nas próximas fases.
+    Mais F2 (comandos e histórico), F4 (primitivas de automação e alertas) e F5 (dashboards). A DSL de automação (§5) entra nas próximas fases.
 servers:
   - url: https://minhaautomacao.minhasuite.com/api/v1
 security:
@@ -178,3 +178,16 @@ paths:
   /alerts/{id}: { get: { summary: Alerta, responses: { "200": { description: Alert } } } }
   /alerts/{id}/ack:
     post: { summary: "Ciente (operator+): para o escalonamento; sem auto_resolve, também fecha", responses: { "200": { description: Alert }, "403": { $ref: "#/components/responses/Error" } } }
+  # ---- Dashboards (F5, ESQUEMA-V1 §6). JSON da definição e do resolvido em docs/dashboards.md. Ver: qualquer papel no
+  # local e na lista roles do dashboard (vazia = todos; dono sempre); criar/alterar/publicar/voltar/excluir: technician+.
+  /sites/{id}/dashboards:
+    get: { summary: "Dashboards do local que o papel vê: [{id, site_id, name, kind home|plant|custom, auto, site_default, version, has_draft, roles, schema_version, updated_at, default (o que abre no Início desta pessoa)}]. Local sem nenhum ganha o automático (Início + uma view por área)", responses: { "200": { description: "Dashboard[]" } } }
+    post: { summary: "Cria {name, kind?, roles[]?, site_default?, definition? (sem ela, cópia do automático)} e publica a versão 1. 422 validation_failed com details.definition", responses: { "201": { description: Dashboard }, "422": { $ref: "#/components/responses/Error" } } }
+  /dashboards/{id}:
+    get: { summary: "Resolvido para quem pede: {id, name, version, schema_version, role, can_edit, views[] (widgets com visible, data, deps; os que o papel não vê saem), points{id: {value, text, on, quality, can_command, risk, confirm…}}}. ?draft=1 resolve o rascunho (technician+). ETag/If-None-Match → 304", responses: { "200": { description: "Dashboard resolvido" }, "304": { description: "Sem mudança" }, "404": { $ref: "#/components/responses/Error" } } }
+    put: { summary: "{name?, kind?, roles[]?, site_default?, definition?, publish? (padrão true)}: definition validada vira versão nova; publish false guarda só no rascunho", responses: { "200": { description: Dashboard }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } }
+    patch: { summary: "Igual ao PUT", responses: { "200": { description: Dashboard } } }
+    delete: { summary: "Exclui (technician+). Sem nenhum, o local volta a ter o automático", responses: { "204": { description: ok } } }
+  /dashboards/{id}/publish: { post: { summary: "Publica o rascunho (ou o automático, que vira manual) como versão nova", responses: { "200": { description: Dashboard } } } }
+  /dashboards/{id}/revert: { post: { summary: "{version}: publica de novo uma versão antiga como a próxima", responses: { "200": { description: Dashboard }, "404": { $ref: "#/components/responses/Error" } } } }
+  /dashboards/{id}/versions: { get: { summary: "[{version, author, created_at, definition}] (technician+)", responses: { "200": { description: "DashboardVersion[]" } } } }
