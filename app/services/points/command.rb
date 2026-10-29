@@ -21,13 +21,15 @@ module Points
 
     # Mesmo `client_uuid` (reenvio do app offline) devolve o comando já criado.
     # `origin`: ponto cujo espelhamento gerou o comando (anti-eco do PointLink).
-    def self.call(point, command, value = nil, source:, user: Current.user, client_uuid: nil, origin: nil)
+    # `run`: execução de automação que mandou (proteção contra laço, F6).
+    def self.call(point, command, value = nil, source:, user: Current.user, client_uuid: nil, origin: nil, run: nil)
       existing = ::Command.find_by(client_uuid: client_uuid) if client_uuid.present?
       return existing if existing
 
       new(point, command.to_s, value).new_value # valida antes de criar
       record = ::Command.create!(site: point.site, point: point, command: command.to_s, value: value, source: source,
-                                 user: user, client_uuid: client_uuid.presence, origin_point_id: origin&.id)
+                                 user: user, client_uuid: client_uuid.presence, origin_point_id: origin&.id,
+                                 automation_run_id: run&.id)
       point.device.virtual? ? ExecuteCommandJob.perform_now(record.id) : ExecuteCommandJob.perform_later(record.id)
       record.reload
     end

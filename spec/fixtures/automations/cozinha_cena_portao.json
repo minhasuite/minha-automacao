@@ -1,0 +1,12 @@
+{
+  "ha": "Garagem | Portão Eletrônico | Switch de Cena da cozinha aciona pulso (+ desligar interruptor após 3s)",
+  "notes": "Exemplo do ESQUEMA-V1 §5: duas automações do HA viram uma. O 'desligar após 3 s' do portão é o pulse_ms do ponto.",
+  "mode": "single",
+  "definition": {
+    "triggers": [{ "type": "state", "point": "cozinha.switch_cena", "to": true }],
+    "actions": [
+      { "type": "command", "point": "garagem.portao_eletronico", "command": "pulse" },
+      { "type": "command", "point": "cozinha.switch_cena", "command": "off" }
+    ]
+  }
+}

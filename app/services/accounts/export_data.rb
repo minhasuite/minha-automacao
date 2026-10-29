@@ -27,7 +27,9 @@ module Accounts
           # Automação (F4): as regras como estão no banco.
           **[ PointLink, Scene, Schedule, NotifyRule, AlertRule, Alert, Dashboard ].to_h do |m|
             [ m.table_name.to_sym, m.order(:created_at).map { |r| r.as_json(except: "tenant_id") } ]
-          end
+          end,
+          # Automações (F6): a definição publicada e o rascunho (sem o token do webhook).
+          automations: Automation.order(:created_at).map { |r| r.as_json(except: %w[tenant_id webhook_token]) }
         }
       end
     end

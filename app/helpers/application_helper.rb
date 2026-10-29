@@ -4,7 +4,8 @@ module ApplicationHelper
   NOTIFICATION_KINDS = { "convite" => [ "users", "bg-accent-soft text-accent" ],
                          "resumo_diario" => [ "calendar", "bg-accent-soft text-accent" ],
                          "aviso" => [ "bell", "bg-accent-soft text-accent" ],
-                         "alerta" => [ "exclamation-circle", "bg-danger-soft text-danger" ] }.freeze
+                         "alerta" => [ "exclamation-circle", "bg-danger-soft text-danger" ],
+                         "automacao" => [ "lightning-bolt", "bg-accent-soft text-accent" ] }.freeze
 
   def initials(name) = name.to_s.split.first(2).map { |w| w[0] }.join.upcase
 

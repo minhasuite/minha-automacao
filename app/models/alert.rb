@@ -9,6 +9,13 @@ class Alert < ApplicationRecord
   belongs_to :point
   belongs_to :acked_by, class_name: "User", optional: true
 
+  # Gatilho "alerta" das automações (F6).
+  after_create_commit { Automations.safely { Automations::Triggers.alert(self, "open") } }
+  after_update_commit do
+    Automations.safely { Automations::Triggers.alert(self, "ack") } if saved_change_to_acked_at? && acked_at
+    Automations.safely { Automations::Triggers.alert(self, "resolve") } if saved_change_to_resolved_at? && resolved_at
+  end
+
   scope :active, -> { where(resolved_at: nil) }
   scope :recent, -> { order(opened_at: :desc) }
 

@@ -1,6 +1,6 @@
 # Manutenção diária do histórico: cria a partição do mês seguinte, apaga as
 # partições velhas, as leituras além do `retention_days` de cada ponto e os
-# comandos/eventos com mais de um ano.
+# comandos/eventos com mais de um ano e as execuções de automação velhas.
 class ReadingsMaintenanceJob < ApplicationJob
   queue_as :default
 
@@ -15,5 +15,6 @@ class ReadingsMaintenanceJob < ApplicationJob
       Command.where(created_at: ...(now - Command::RETENTION_DAYS.days)).delete_all
       Event.where(at: ...(now - Event::RETENTION_DAYS.days)).delete_all
     end
+    AutomationRun.prune!(now)
   end
 end

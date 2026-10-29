@@ -60,3 +60,7 @@ group :test do
   gem "webmock", "~> 3.24"
   gem "simplecov", require: false
 end
+
+# Automações (F6): expressões sem código arbitrário e textos com objetos limitados.
+gem "dentaku", "~> 4.1"
+gem "liquid", "~> 5.14"

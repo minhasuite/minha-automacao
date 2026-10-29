@@ -1,0 +1,21 @@
+{
+  "ha": "Garagem | Portão Principal | Alerta escalonado se aberto (5-160min + perpétuo)",
+  "notes": "repeat count 6 com delay por template vira repetir com espera por expressão; a fase perpétua vira repetir enquanto (limitado a 100 voltas = 11 dias). Alexa entra na F8.",
+  "mode": "restart",
+  "definition": {
+    "triggers": [{ "type": "state", "point": "garagem.sensor_portao", "from": false, "to": true }],
+    "actions": [
+      { "type": "repeat", "count": 6, "actions": [
+        { "type": "wait", "expr": "if(repeat_index = 1, 5, 5 * 2^(repeat_index - 2)) * 60" },
+        { "type": "condition", "conditions": [{ "type": "state", "point": "garagem.sensor_portao", "is": true }] },
+        { "type": "set", "var": "minutos", "expr": "5 * 2^(repeat_index - 1)" },
+        { "type": "notify", "channels": ["in_app", "push"], "title": "ALERTA", "message": "Portão aberto há {{ minutos }} minutos." }
+      ] },
+      { "type": "repeat", "while": [{ "type": "state", "point": "garagem.sensor_portao", "is": true }], "actions": [
+        { "type": "wait", "for": "160m" },
+        { "type": "condition", "conditions": [{ "type": "state", "point": "garagem.sensor_portao", "is": true }] },
+        { "type": "notify", "channels": ["in_app", "push"], "title": "ALERTA", "message": "Portão aberto há {{ points[\"garagem.sensor_portao\"].since_min }} minutos." }
+      ] }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "ha": "Suíte Eva | Smartphone | Alerta de bateria baixa",
+  "notes": "numeric_state + time_pattern /10 viram limiar e 'a cada 10m'; o template de carregamento vira expressão dentaku.",
+  "mode": "single",
+  "definition": {
+    "triggers": [
+      { "type": "numeric", "point": "eva.bateria", "below": 15 },
+      { "type": "time", "every": "10m" }
+    ],
+    "conditions": [
+      { "type": "numeric", "point": "eva.bateria", "below": 15 },
+      { "type": "state", "point": "eva.alerta_reconhecido", "is": false },
+      { "type": "expr", "expr": "eva.carregando = false" }
+    ],
+    "actions": [
+      { "type": "notify", "channels": ["in_app", "push"], "title": "RECARREGUE O CELULAR",
+        "message": "Bateria em {{ points[\"eva.bateria\"].text }} no Smartphone Eva!" }
+    ]
+  }
+}

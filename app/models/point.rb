@@ -72,6 +72,7 @@ class Point < ApplicationRecord
   # leitura de histórico, o evento de qualidade e avisa as telas abertas.
   def report!(new_value, quality: "good", at: Time.current)
     value_changed = new_value != value
+    value_was = value
     quality_was = self.quality
     self.changed_at = at if value_changed
     update!(value: new_value, quality: quality, reported_at: at)
@@ -85,7 +86,7 @@ class Point < ApplicationRecord
       # os widgets que dependem dele (Turbo Frame, com o papel de quem vê).
       Turbo::StreamsChannel.broadcast_action_to(site, :points, action: :point_changed, target: id)
     end
-    Automations.on_change(self, quality_was) if value_changed
+    Automations.on_change(self, quality_was, value_was) if value_changed
   end
 
   # Texto do formulário ("true", "25,5", "open") → valor no tipo do ponto.

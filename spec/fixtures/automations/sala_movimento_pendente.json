@@ -1,0 +1,22 @@
+{
+  "ha": "Sala de estar | Câmera | Acender pendente ao detectar movimento (18h-05h)",
+  "notes": "O cooldown de 60 s depois de mexer na luz (template com last_changed) vira o \"há pelo menos 60s\" em cada luz. O wait_for_trigger (sem movimento por 2 min) vira esperar condição com 'for'.",
+  "mode": "single",
+  "definition": {
+    "triggers": [{ "type": "state", "point": "sala.camera_movimento", "from": false, "to": true }],
+    "conditions": [
+      { "type": "time", "after": "18:00", "before": "05:00" },
+      { "type": "state", "point": "cozinha.iluminacao", "is": false, "for": "60s" },
+      { "type": "state", "point": "cozinha.sala_jantar", "is": false, "for": "60s" },
+      { "type": "state", "point": "sala.sala_estar", "is": false, "for": "60s" },
+      { "type": "state", "point": "sala.sala_tv", "is": false, "for": "60s" },
+      { "type": "state", "point": "cozinha.pendentes", "is": false, "for": "60s" }
+    ],
+    "actions": [
+      { "type": "command", "point": "cozinha.pendentes", "command": "on" },
+      { "type": "wait_for", "conditions": [{ "type": "state", "point": "sala.camera_movimento", "is": false, "for": "2m" }], "timeout": "6h" },
+      { "type": "condition", "conditions": [{ "type": "state", "point": "cozinha.pendentes", "is": true }] },
+      { "type": "command", "point": "cozinha.pendentes", "command": "off" }
+    ]
+  }
+}

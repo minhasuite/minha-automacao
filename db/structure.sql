@@ -230,6 +230,73 @@ CREATE TABLE public.audit_events (
 
 
 --
+-- Name: automation_runs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.automation_runs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    automation_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    cause_run_id uuid,
+    version integer,
+    trigger jsonb DEFAULT '{}'::jsonb NOT NULL,
+    status character varying DEFAULT 'running'::character varying NOT NULL,
+    dry_run boolean DEFAULT false NOT NULL,
+    depth integer DEFAULT 0 NOT NULL,
+    steps jsonb DEFAULT '[]'::jsonb NOT NULL,
+    state jsonb DEFAULT '{}'::jsonb NOT NULL,
+    error character varying,
+    started_at timestamp(6) without time zone NOT NULL,
+    finished_at timestamp(6) without time zone,
+    resume_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: automation_versions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.automation_versions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    automation_id uuid NOT NULL,
+    author_id uuid,
+    version integer NOT NULL,
+    definition jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: automations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.automations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    area_id uuid,
+    name character varying NOT NULL,
+    description text,
+    enabled boolean DEFAULT false NOT NULL,
+    mode character varying DEFAULT 'single'::character varying NOT NULL,
+    max_runs integer DEFAULT 10 NOT NULL,
+    definition jsonb DEFAULT '{}'::jsonb NOT NULL,
+    draft jsonb,
+    version integer DEFAULT 0 NOT NULL,
+    webhook_token character varying,
+    last_run_at timestamp(6) without time zone,
+    last_status character varying,
+    last_error character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: commands; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -249,7 +316,8 @@ CREATE TABLE public.commands (
     confirmed_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    origin_point_id uuid
+    origin_point_id uuid,
+    automation_run_id uuid
 );
 
 
@@ -1494,6 +1562,30 @@ ALTER TABLE ONLY public.audit_events
 
 
 --
+-- Name: automation_runs automation_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automation_runs
+    ADD CONSTRAINT automation_runs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: automation_versions automation_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automation_versions
+    ADD CONSTRAINT automation_versions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: automations automations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automations
+    ADD CONSTRAINT automations_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: commands commands_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1985,6 +2077,111 @@ CREATE INDEX index_audit_events_on_auditable_type_and_auditable_id ON public.aud
 --
 
 CREATE INDEX index_audit_events_on_tenant_id ON public.audit_events USING btree (tenant_id);
+
+
+--
+-- Name: index_automation_runs_on_automation_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automation_runs_on_automation_id ON public.automation_runs USING btree (automation_id);
+
+
+--
+-- Name: index_automation_runs_on_automation_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automation_runs_on_automation_id_and_created_at ON public.automation_runs USING btree (automation_id, created_at);
+
+
+--
+-- Name: index_automation_runs_on_cause_run_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automation_runs_on_cause_run_id ON public.automation_runs USING btree (cause_run_id);
+
+
+--
+-- Name: index_automation_runs_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automation_runs_on_site_id ON public.automation_runs USING btree (site_id);
+
+
+--
+-- Name: index_automation_runs_on_site_id_and_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automation_runs_on_site_id_and_status ON public.automation_runs USING btree (site_id, status);
+
+
+--
+-- Name: index_automation_runs_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automation_runs_on_tenant_id ON public.automation_runs USING btree (tenant_id);
+
+
+--
+-- Name: index_automation_versions_on_author_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automation_versions_on_author_id ON public.automation_versions USING btree (author_id);
+
+
+--
+-- Name: index_automation_versions_on_automation_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automation_versions_on_automation_id ON public.automation_versions USING btree (automation_id);
+
+
+--
+-- Name: index_automation_versions_on_automation_id_and_version; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_automation_versions_on_automation_id_and_version ON public.automation_versions USING btree (automation_id, version);
+
+
+--
+-- Name: index_automation_versions_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automation_versions_on_tenant_id ON public.automation_versions USING btree (tenant_id);
+
+
+--
+-- Name: index_automations_on_area_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automations_on_area_id ON public.automations USING btree (area_id);
+
+
+--
+-- Name: index_automations_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automations_on_site_id ON public.automations USING btree (site_id);
+
+
+--
+-- Name: index_automations_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automations_on_tenant_id ON public.automations USING btree (tenant_id);
+
+
+--
+-- Name: index_automations_on_webhook_token; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_automations_on_webhook_token ON public.automations USING btree (webhook_token);
+
+
+--
+-- Name: index_commands_on_automation_run_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_commands_on_automation_run_id ON public.commands USING btree (automation_run_id);
 
 
 --
@@ -2793,6 +2990,14 @@ ALTER INDEX public.index_readings_on_point_id_and_at ATTACH PARTITION public.rea
 
 
 --
+-- Name: automation_versions fk_rails_002e3d5c41; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automation_versions
+    ADD CONSTRAINT fk_rails_002e3d5c41 FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: notify_rules fk_rails_073e957909; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2905,6 +3110,22 @@ ALTER TABLE ONLY public.scenes
 
 
 --
+-- Name: automations fk_rails_2d0b9707e7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automations
+    ADD CONSTRAINT fk_rails_2d0b9707e7 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
+-- Name: automations fk_rails_2f12249e60; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automations
+    ADD CONSTRAINT fk_rails_2f12249e60 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: solid_queue_recurring_executions fk_rails_318a5533ed; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2921,6 +3142,14 @@ ALTER TABLE ONLY public.schedules
 
 
 --
+-- Name: automation_runs fk_rails_35ff6ac887; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automation_runs
+    ADD CONSTRAINT fk_rails_35ff6ac887 FOREIGN KEY (automation_id) REFERENCES public.automations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: commands fk_rails_37053e57d9; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2934,6 +3163,14 @@ ALTER TABLE ONLY public.commands
 
 ALTER TABLE ONLY public.commands
     ADD CONSTRAINT fk_rails_370b310a97 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: automation_versions fk_rails_3987ae7367; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automation_versions
+    ADD CONSTRAINT fk_rails_3987ae7367 FOREIGN KEY (automation_id) REFERENCES public.automations(id) ON DELETE CASCADE;
 
 
 --
@@ -3105,6 +3342,14 @@ ALTER TABLE ONLY public.solid_queue_ready_executions
 
 
 --
+-- Name: automation_versions fk_rails_835446d9e5; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automation_versions
+    ADD CONSTRAINT fk_rails_835446d9e5 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: notify_rules fk_rails_86a65c9929; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3241,6 +3486,14 @@ ALTER TABLE ONLY public.invites
 
 
 --
+-- Name: automations fk_rails_b84450b916; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automations
+    ADD CONSTRAINT fk_rails_b84450b916 FOREIGN KEY (area_id) REFERENCES public.areas(id) ON DELETE SET NULL;
+
+
+--
 -- Name: solid_queue_batch_executions fk_rails_bc9f981155; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3305,6 +3558,14 @@ ALTER TABLE ONLY public.points
 
 
 --
+-- Name: automation_runs fk_rails_d766b3bf6e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automation_runs
+    ADD CONSTRAINT fk_rails_d766b3bf6e FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: points fk_rails_d7a2e829a4; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3361,6 +3622,14 @@ ALTER TABLE ONLY public.dashboards
 
 
 --
+-- Name: commands fk_rails_ead6accc90; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.commands
+    ADD CONSTRAINT fk_rails_ead6accc90 FOREIGN KEY (automation_run_id) REFERENCES public.automation_runs(id) ON DELETE SET NULL;
+
+
+--
 -- Name: api_tokens fk_rails_f16b5e0447; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3385,6 +3654,22 @@ ALTER TABLE ONLY public.audit_events
 
 
 --
+-- Name: automation_runs fk_rails_fda4d9d75d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automation_runs
+    ADD CONSTRAINT fk_rails_fda4d9d75d FOREIGN KEY (cause_run_id) REFERENCES public.automation_runs(id) ON DELETE SET NULL;
+
+
+--
+-- Name: automation_runs fk_rails_feb0b29ea9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automation_runs
+    ADD CONSTRAINT fk_rails_feb0b29ea9 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: readings readings_point_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3399,6 +3684,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261029500001'),
 ('20261029400001'),
 ('20261029300001'),
 ('20261029200001'),

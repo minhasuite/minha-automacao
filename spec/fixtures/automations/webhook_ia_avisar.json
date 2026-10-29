@@ -1,0 +1,17 @@
+{
+  "ha": "Casa | IA | Webhook para sessões de IA avisarem",
+  "notes": "variables com trigger.json viram 'definir variável' com Liquid; o canal echo vira aviso no app até a F8 (Alexa).",
+  "mode": "queued",
+  "definition": {
+    "triggers": [{ "type": "webhook" }],
+    "actions": [
+      { "type": "set", "var": "mensagem", "value": "{{ trigger.data.mensagem | strip | truncate: 500, \"\" }}" },
+      { "type": "set", "var": "canal", "value": "{{ trigger.data.canal | default: \"celular\" | downcase }}" },
+      { "type": "condition", "conditions": [{ "type": "expr", "expr": "mensagem != ''" }] },
+      { "type": "if", "conditions": [{ "type": "expr", "expr": "canal = 'celular' or canal = 'ambos'" }],
+        "then": [{ "type": "notify", "channels": ["in_app", "push"], "title": "{{ trigger.data.titulo | default: \"IA\" | truncate: 60 }}", "message": "{{ mensagem }}" }] },
+      { "type": "if", "conditions": [{ "type": "expr", "expr": "canal = 'echo' or canal = 'ambos'" }],
+        "then": [{ "type": "notify", "channels": ["in_app"], "title": "Anúncio pendente (Alexa na F8)", "message": "{{ mensagem }}" }] }
+    ]
+  }
+}

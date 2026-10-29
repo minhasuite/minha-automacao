@@ -1,0 +1,13 @@
+{
+  "ha": "Cozinha | Hub Zigbee | Push a cada 30 min se offline",
+  "notes": "state: unavailable vira a situação (qualidade) do ponto.",
+  "mode": "single",
+  "definition": {
+    "triggers": [{ "type": "time", "every": "30m" }],
+    "conditions": [{ "type": "state", "point": "cozinha.hub_zigbee", "quality": "unavailable" }],
+    "actions": [
+      { "type": "notify", "channels": ["in_app", "push"], "title": "Hub Zigbee offline",
+        "message": "Sem resposta às {{ now | date: \"%H:%M\" }}. Interruptores Zigbee sem controle. Reinicie o hub na cozinha." }
+    ]
+  }
+}
