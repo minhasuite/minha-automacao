@@ -119,9 +119,7 @@ jobs:
 
   deploy-prod:
     needs: build
-    # Sem servidor ainda: banco, Caddy e DNS vêm no passo 3 do checklist da suíte.
-    # Ao religar, volte para: if: github.ref_name == 'master'
-    if: false
+    if: github.ref_name == 'master'
     runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
     environment: production
     steps:
