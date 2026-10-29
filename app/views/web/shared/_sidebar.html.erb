@@ -15,6 +15,7 @@
   </div>
   <nav class="ss-nav ss-side-scroll flex-1 overflow-y-auto px-2 py-4 space-y-1" aria-label="Principal">
     <%= nav_link "Início", root_path, icon: "lightning-bolt" %>
+    <%= nav_link "Locais", sites_path, icon: "home" %>
     <%= nav_link "Notificações", notifications_path, icon: "bell", badge: Notification.for_user(current_user).unread.count %>
     <%= nav_link "Configurações", settings_path, icon: "cog", class: "mt-3" %>
   </nav>

@@ -1,0 +1,43 @@
+# Locais, áreas e pontos na tela.
+module PointsHelper
+  SITE_ICONS = { "home" => "home", "store" => "shopping-bag", "plant" => "office-building" }.freeze
+  POINT_ICONS = { "onoff" => "light-bulb", "dimmer" => "sun", "color" => "sparkles", "gate" => "switch-horizontal",
+                  "contact" => "view-boards", "motion" => "eye", "tamper" => "exclamation-circle", "problem" => "exclamation-circle",
+                  "measure" => "chart-bar", "enum" => "view-list", "setpoint" => "calculator", "command" => "lightning-bolt",
+                  "text" => "document-text", "vacuum" => "refresh", "speaker" => "bell", "stream" => "photograph",
+                  "climate" => "sun", "event" => "bell" }.freeze
+  BOOL_TEXT = { "onoff" => %w[Ligado Desligado], "contact" => %w[Aberto Fechado], "motion" => %w[Movimento Parado],
+                "tamper" => %w[Violado Normal], "problem" => %w[Problema Normal] }.freeze
+  GATE_TEXT = { "open" => "Aberto", "closed" => "Fechado", "opening" => "Abrindo", "unknown" => "Desconhecido" }.freeze
+
+  def site_icon(site) = SITE_ICONS.fetch(site.kind, "home")
+  def point_icon(point) = POINT_ICONS.fetch(point.capability, "cube")
+  def point_on?(point) = point.value == true || point.value == "open"
+  def count_label(n, one, many) = "#{n} #{n == 1 ? one : many}"
+
+  def point_value_text(point)
+    v = point.value
+    if point.capability == "command"
+      point.reported_at ? "Acionado #{l(point.reported_at, format: :short)}" : "Pronto"
+    elsif v.nil?
+      "Sem valor"
+    elsif BOOL_TEXT.key?(point.capability)
+      BOOL_TEXT[point.capability][v ? 0 : 1]
+    elsif point.capability == "gate"
+      GATE_TEXT.fetch(v.to_s, v.to_s)
+    elsif v.is_a?(Numeric)
+      [ number_with_precision(v, precision: 2, strip_insignificant_zeros: true), point.unit ].compact.join(" ")
+    elsif v.is_a?(Hash) || v.is_a?(Array)
+      v.to_json.truncate(40)
+    else
+      v.to_s
+    end
+  end
+
+  # Confirmação antes de acionar ponto sensível, crítico ou com texto próprio.
+  def point_confirm_data(point)
+    return {} if point.confirm.blank? && point.risk == "normal"
+
+    { turbo_confirm: point.confirm.presence || "Acionar #{point.name}?", turbo_confirm_title: point.risk_label }
+  end
+end

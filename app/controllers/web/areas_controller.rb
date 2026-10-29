@@ -1,0 +1,51 @@
+module Web
+  # Área com seus dispositivos e o controle dos pontos.
+  class AreasController < ApplicationController
+    def show
+      @area = Area.find(params[:id])
+      @site = @area.site
+      authorize_site!(@site, :view)
+      @devices = @area.devices.includes(:points).order(:name)
+    end
+
+    def new
+      @site = Site.find(params[:site_id])
+      authorize_site!(@site, :manage)
+      @area = @site.areas.new
+    end
+
+    def create
+      @site = Site.find(params[:site_id])
+      authorize_site!(@site, :manage)
+      @area = @site.areas.new(area_params)
+      return render(:new, status: :unprocessable_content) unless @area.save
+
+      redirect_to @area, notice: "Área criada."
+    end
+
+    def edit = load_for(:manage)
+
+    def update
+      load_for(:manage)
+      return render(:edit, status: :unprocessable_content) unless @area.update(area_params)
+
+      redirect_to @area, notice: "Área atualizada."
+    end
+
+    def destroy
+      load_for(:manage)
+      @area.destroy!
+      redirect_to @site, notice: "Área excluída. Os dispositivos dela ficaram sem área."
+    end
+
+    private
+
+    def load_for(action)
+      @area = Area.find(params[:id])
+      @site = @area.site
+      authorize_site!(@site, action)
+    end
+
+    def area_params = params.require(:area).permit(:name, :kind, :parent_id)
+  end
+end

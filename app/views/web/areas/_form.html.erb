@@ -1,0 +1,11 @@
+<%# locals: (site:, area:) -%>
+<%= form_with model: area.new_record? ? [ site, area ] : area, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-2 max-w-3xl" do |f| %>
+  <%= render "web/shared/errors", record: area %>
+  <div class="md:col-span-2"><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: "Sala, Cozinha, Garagem", autofocus: true %></div>
+  <div><%= f.label :kind, "Tipo", class: "ss-label" %><%= f.select :kind, Area::KINDS.invert, {}, class: "ss-input" %></div>
+  <div><%= f.label :parent_id, "Dentro de", class: "ss-label" %><%= f.select :parent_id, site.areas.where.not(id: area.id).order(:name).pluck(:name, :id), { include_blank: "Nenhuma (área principal)" }, class: "ss-input" %></div>
+  <div class="md:col-span-2 flex flex-wrap gap-2">
+    <%= f.submit area.new_record? ? "Criar área" : "Salvar área", class: "ss-btn ss-btn-primary" %>
+    <%= link_to "Cancelar", area.new_record? ? site : area, class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

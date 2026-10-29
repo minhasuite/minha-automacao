@@ -1,0 +1,18 @@
+<%= render "web/shared/header", title: "Locais", subtitle: "Casas, lojas e fábricas: cada local tem suas áreas, dispositivos e pontos." do %>
+  <% if current_user.admin? %><%= link_to new_site_path, class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo local<% end %><% end %>
+<% end %>
+<% if @sites.any? %>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <% @sites.each_with_index do |site, i| %><%= render "web/sites/card", site: site, delay: [ i, 7 ].min * 40 %><% end %>
+  </div>
+<% else %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink">Nenhum local ainda.</p>
+    <% if current_user.admin? %>
+      <p class="mt-1">Crie a sua casa, loja ou fábrica para começar.</p>
+      <%= link_to new_site_path, class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar meu primeiro local<% end %>
+    <% else %>
+      <p class="mt-1">Peça ao dono da empresa para dar acesso a um local.</p>
+    <% end %>
+  </div>
+<% end %>

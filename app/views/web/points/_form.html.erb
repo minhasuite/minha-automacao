@@ -1,0 +1,33 @@
+<%# locals: (device:, point:) -%>
+<%= form_with model: point.new_record? ? [ device, point ] : point, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-3 max-w-4xl" do |f| %>
+  <%= render "web/shared/errors", record: point %>
+  <div class="md:col-span-2"><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: "Luz do teto", autofocus: true %></div>
+  <div><%= f.label :capability, "Tipo", class: "ss-label" %><%= f.select :capability, Point::CAPABILITY_LABELS.invert, {}, class: "ss-input" %></div>
+  <div><%= f.label :unit, "Unidade", class: "ss-label" %><%= f.text_field :unit, class: "ss-input", placeholder: "°C, W, %" %></div>
+  <div><%= f.label :risk, "Risco", class: "ss-label" %><%= f.select :risk, Point::RISKS.invert, {}, class: "ss-input" %>
+    <p class="text-xs text-muted mt-1">Sensível pede operador ou acima; crítico, morador ou acima. Ambos pedem confirmação.</p></div>
+  <div><%= f.label :area_id, "Área", class: "ss-label" %><%= f.select :area_id, device.site.areas.order(:name).pluck(:name, :id), { include_blank: "A do dispositivo" }, class: "ss-input" %></div>
+  <div><%= f.label :min, "Mínimo", class: "ss-label" %><%= f.number_field :min, step: "any", class: "ss-input num" %></div>
+  <div><%= f.label :max, "Máximo", class: "ss-label" %><%= f.number_field :max, step: "any", class: "ss-input num" %></div>
+  <div><%= f.label :step, "Passo", class: "ss-label" %><%= f.number_field :step, step: "any", class: "ss-input num" %></div>
+  <div class="md:col-span-2"><%= f.label :options_text, "Opções (para seleção, separadas por vírgula)", class: "ss-label" %><%= f.text_field :options_text, class: "ss-input", placeholder: "Casa, Fora, Férias" %></div>
+  <div><%= f.label :confirm, "Texto de confirmação", class: "ss-label" %><%= f.text_field :confirm, class: "ss-input", placeholder: "Abrir o portão?" %></div>
+  <details class="md:col-span-3">
+    <summary class="ss-section cursor-pointer">Avançado</summary>
+    <div class="mt-3 grid gap-4 md:grid-cols-3">
+      <div><%= f.label :key, "Chave (única no local)", class: "ss-label" %><%= f.text_field :key, class: "ss-input num", placeholder: "gerada pelo nome" %></div>
+      <div><%= f.label :device_class, "Classe", class: "ss-label" %><%= f.text_field :device_class, class: "ss-input", placeholder: "temperature, power, door" %></div>
+      <div><%= f.label :scale, "Escala (calibração)", class: "ss-label" %><%= f.number_field :scale, step: "any", class: "ss-input num" %></div>
+      <div><%= f.label :offset, "Deslocamento (calibração)", class: "ss-label" %><%= f.number_field :offset, step: "any", class: "ss-input num" %></div>
+      <div><%= f.label :pulse_ms, "Pulso (ms)", class: "ss-label" %><%= f.number_field :pulse_ms, min: 1, class: "ss-input num" %></div>
+      <div><%= f.label :max_on_s, "Desliga sozinho após (s)", class: "ss-label" %><%= f.number_field :max_on_s, min: 1, class: "ss-input num" %></div>
+      <label class="ss-check"><%= f.check_box :writable %> Recebe comando</label>
+      <label class="ss-check"><%= f.check_box :hidden %> Escondido</label>
+      <label class="ss-check"><%= f.check_box :disabled %> Desativado</label>
+    </div>
+  </details>
+  <div class="md:col-span-3 flex flex-wrap gap-2">
+    <%= f.submit point.new_record? ? "Criar ponto" : "Salvar ponto", class: "ss-btn ss-btn-primary" %>
+    <%= link_to "Cancelar", device, class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

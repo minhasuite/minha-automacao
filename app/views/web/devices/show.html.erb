@@ -1,0 +1,16 @@
+<%= render "web/shared/header", title: @device.name, subtitle: [ @device.driver_label, @device.area&.name || "Sem área", @site.name ].join(" · "), back: (@device.area ? area_path(@device.area) : site_path(@site)), badge: (tag.span("Desativado", class: "ss-badge ss-badge-warn") if @device.disabled) do %>
+  <% if can?(:manage) %>
+    <%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo ponto<% end %>
+    <%= link_to edit_device_path(@device), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar<% end %>
+  <% end %>
+<% end %>
+
+<% if @points.empty? %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink">Nenhum ponto ainda.</p>
+    <p class="mt-1">Ponto é o que se lê ou comanda: um relé, uma lâmpada, um sensor, uma seleção.</p>
+    <% if can?(:manage) %><%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Adicionar ponto<% end %><% end %>
+  </div>
+<% else %>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><%= render partial: "web/points/point", collection: @points, as: :point %></div>
+<% end %>

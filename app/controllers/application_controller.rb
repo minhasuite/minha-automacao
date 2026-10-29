@@ -3,6 +3,7 @@
 class ApplicationController < ActionController::Base
   include MeuLogInstrumented
   include Pagy::Backend
+  include SiteAuthorization
 
   allow_browser versions: :modern
   set_current_tenant_through_filter
@@ -10,7 +11,11 @@ class ApplicationController < ActionController::Base
   before_action :require_login!
   before_action :set_tenant
 
-  helper_method :current_user
+  helper_method :current_user, :can?
+
+  rescue_from SiteMembership::Forbidden do |e|
+    back_with_alert(e.message)
+  end
 
   rescue_from ActiveRecord::RecordNotFound do
     render "web/shared/not_found", status: :not_found, layout: current_user ? "application" : "auth"

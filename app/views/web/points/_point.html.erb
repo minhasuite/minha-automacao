@@ -1,0 +1,42 @@
+<%# locals: (point:, error: nil) -%>
+<%= turbo_frame_tag point, class: "block" do %>
+  <% on = point_on?(point) %>
+  <div class="ss-card p-4 flex flex-col gap-3 h-full <%= 'ss-card-grad' if on %> <%= 'opacity-60' if point.disabled %>">
+    <div class="flex items-start gap-3">
+      <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= on ? 'ss-grad' : 'bg-field text-muted' %>"><%= icon(point_icon(point)) %></span>
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-ink truncate"><%= point.name %></p>
+        <p class="text-xs text-muted truncate"><%= point.capability_label %><%= " · #{point.risk_label}" unless point.risk == "normal" %></p>
+      </div>
+      <% if can?(:manage) %>
+        <%= link_to edit_point_path(point), data: { turbo_frame: "_top" }, class: "grid place-items-center size-8 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", title: "Editar ponto", "aria-label": "Editar #{point.name}" do %><%= icon("pencil", "size-4") %><% end %>
+      <% end %>
+    </div>
+    <p class="text-2xl font-bold <%= point.value.is_a?(Numeric) ? "num text-ink" : (point.value.nil? ? "text-muted" : "text-ink") %>" aria-live="polite"><%= point_value_text(point) %></p>
+    <% if error %><p class="text-sm font-semibold text-danger" role="alert"><%= error %></p><% end %>
+    <% if point.writable && !point.disabled && Points::Command::COMMANDS.key?(point.capability) && can?(:command, risk: point.risk) %>
+      <% confirm = point_confirm_data(point) %>
+      <% if point.capability == "onoff" %>
+        <%= button_to command_point_path(point), params: { command: on ? "off" : "on" }, class: "ss-btn #{on ? 'ss-btn-outline' : 'ss-btn-primary'} w-full", form: { data: confirm }, "aria-pressed": on do %><%= icon(on ? "x-circle" : "lightning-bolt", "size-4") %><%= on ? "Desligar" : "Ligar" %><% end %>
+      <% elsif point.capability.in?(%w[gate command]) %>
+        <%= button_to command_point_path(point), params: { command: point.capability == "gate" ? "pulse" : "press" }, class: "ss-btn ss-btn-primary w-full", form: { data: confirm } do %><%= icon("lightning-bolt", "size-4") %>Acionar<% end %>
+      <% else %>
+        <%= form_with url: command_point_path(point), class: "flex gap-2", data: confirm do |f| %>
+          <%= f.hidden_field :command, value: point.capability == "enum" ? "select" : "set", id: nil %>
+          <% field_id = "value_#{point.id}" %>
+          <label for="<%= field_id %>" class="sr-only">Novo valor de <%= point.name %></label>
+          <% if point.capability == "enum" %>
+            <%= f.select :value, point.option_values, { selected: point.value }, class: "ss-input flex-1 min-w-0", id: field_id %>
+          <% elsif point.numeric? %>
+            <%= f.number_field :value, value: point.value, min: point.min, max: point.max, step: point.step || "any", class: "ss-input num flex-1 min-w-0", id: field_id, inputmode: "decimal", required: true %>
+          <% else %>
+            <%= f.text_field :value, value: point.value, maxlength: 255, class: "ss-input flex-1 min-w-0", id: field_id %>
+          <% end %>
+          <%= f.submit "Aplicar", class: "ss-btn ss-btn-primary" %>
+        <% end %>
+      <% end %>
+    <% elsif point.writable && !point.disabled && !Points::Command::COMMANDS.key?(point.capability) %>
+      <p class="text-xs text-muted">O controle deste tipo chega com os drivers.</p>
+    <% end %>
+  </div>
+<% end %>
