@@ -1,0 +1,164 @@
+# Cópia de minhasuite/minha-infra/.github/actions/deploy-vps (11/10/2026). Os repos da
+# organização minhasuite (plano Free) não alcançam action/workflow de repo privado
+# de outra conta: ver minha-infra/runbooks/deploy.md. Mudou lá? Copie de novo.
+name: Deploy na VPS
+description: >
+  Envia o compose, sobe a imagem nova, espera a saúde e faz rollback se ela não
+  responder. Vive numa action composta — e não solta no workflow — para o job de
+  recuperação repetir o MESMO deploy num runner novo sem duplicar o script.
+
+inputs:
+  ssh_key:          { description: "Chave privada de deploy", required: true }
+  host:             { description: "IP da VPS", required: true }
+  user:             { description: "Usuário SSH", required: true }
+  app_path:         { description: "Diretório do módulo na VPS", required: true }
+  compose_file:     { description: "Arquivo compose", required: true }
+  health_container: { description: "Container a checar no /up", required: true }
+
+outputs:
+  motivo:
+    description: "Por que falhou: 'rede' (vale repetir noutro runner) ou 'saude' (não vale)"
+    value: ${{ steps.deploy.outputs.motivo }}
+
+runs:
+  using: composite
+  steps:
+    - name: Preparar chave SSH
+      shell: bash
+      env:
+        VPS_SSH_KEY: ${{ inputs.ssh_key }}
+      run: |
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+        printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+
+    - name: Enviar compose, subir e checar saúde (com retry e rollback)
+      id: deploy
+      shell: bash
+      env:
+        VPS_HOST: ${{ inputs.host }}
+        VPS_USER: ${{ inputs.user }}
+        APP_PATH: ${{ inputs.app_path }}
+        COMPOSE_FILE: ${{ inputs.compose_file }}
+        HEALTH_CONTAINER: ${{ inputs.health_container }}
+      run: |
+        set -euo pipefail
+        SSH_OPTS="-i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20"
+
+        deploy() {
+          # `|| return 1` explícito: a função é chamada com `set +e` (para
+          # capturar o código de saída), então um scp que falha não abortaria
+          # sozinho — e o ssh subiria com o compose ANTIGO que já está lá.
+          scp $SSH_OPTS "$COMPOSE_FILE" "$VPS_USER@$VPS_HOST:$APP_PATH/" || return 1
+          ssh $SSH_OPTS "$VPS_USER@$VPS_HOST" bash -s <<REMOTE
+            set -e
+            cd "$APP_PATH"
+            C="docker compose -f $COMPOSE_FILE --env-file .env"
+
+            # A imagem que está NO AR agora — é para onde voltamos se a nova
+            # subir quebrada. Tem de ser lida antes do pull, senão a tag já
+            # aponta para a imagem nova.
+            PREV_ID=\$(docker inspect --format '{{.Image}}' $HEALTH_CONTAINER 2>/dev/null || echo "")
+            PREV_REF=\$(docker inspect --format '{{.Config.Image}}' $HEALTH_CONTAINER 2>/dev/null || echo "")
+
+            \$C pull
+
+            # `up -d` NÃO pode abortar o script. O compose tem healthcheck
+            # próprio e outros serviços dependem dele com `service_healthy`,
+            # então quando a versão nova não fica saudável o próprio `up`
+            # retorna erro — e com `set -e` o script morria aqui, ANTES da
+            # espera ativa e antes do rollback. Descoberto num teste de
+            # rollback proposital em 11/08/2026: o dev ficou quebrado e a
+            # imagem ruim subiu 4 vezes, porque o rc=1 parecia falha de rede.
+            set +e
+            \$C up -d
+            UP_RC=\$?
+            set -e
+            if [ \$UP_RC -ne 0 ]; then
+              echo "compose up -d retornou \$UP_RC — seguindo para a checagem de saúde"
+            fi
+
+            # Espera ativa em vez de "sleep 8": app que roda migration no boot
+            # demora mais que isso, e o sleep fixo dava um WARN mentiroso.
+            OK=""
+            for i in \$(seq 1 30); do
+              if docker exec $HEALTH_CONTAINER curl -fsS http://127.0.0.1:3000/up >/dev/null 2>&1; then
+                OK=1; break
+              fi
+              sleep 4
+            done
+
+            if [ -n "\$OK" ]; then
+              echo "Health $HEALTH_CONTAINER: OK"
+              # Só agora: o prune apaga a imagem anterior, que é o alvo do
+              # rollback. Antes ele rodava logo depois do 'up' e queimava a
+              # única saída que sobrava quando a nova imagem não subia.
+              docker image prune -f
+              exit 0
+            fi
+
+            echo "Health $HEALTH_CONTAINER: FALHOU após 120s"
+            docker logs --tail 40 $HEALTH_CONTAINER 2>&1 || true
+
+            if [ -n "\$PREV_ID" ] && [ -n "\$PREV_REF" ]; then
+              echo "Voltando para a imagem anterior (\$PREV_ID)"
+              docker tag "\$PREV_ID" "\$PREV_REF"
+              # Mesmo cuidado do `up` de cima: aqui ele também pode retornar
+              # erro (healthcheck do compose) e não pode matar o script antes
+              # de a gente conferir e AVISAR em que estado o ar ficou.
+              set +e
+              \$C up -d
+              ROLLBACK_OK=""
+              for i in \$(seq 1 20); do
+                if docker exec $HEALTH_CONTAINER curl -fsS http://127.0.0.1:3000/up >/dev/null 2>&1; then
+                  ROLLBACK_OK=1; break
+                fi
+                sleep 3
+              done
+              set -e
+              if [ -n "\$ROLLBACK_OK" ]; then
+                echo "Rollback OK — o ar está com a versão anterior"
+              else
+                echo "Rollback NÃO respondeu — precisa de olho humano"
+              fi
+            else
+              echo "Sem imagem anterior conhecida: nada para onde voltar"
+            fi
+
+            # 9 = a nova versão subiu e não passou na saúde. Diferente de
+            # falha de rede: repetir não muda nada.
+            exit 9
+        REMOTE
+        }
+
+        # Rede entre runner e provedor cai sozinha (06/08/2026: três deploys
+        # seguidos com i/o timeout sem UMA tentativa registrada no sshd).
+        # 4 tentativas com espera crescente — em 10/08 as 3 antigas, dentro de
+        # ~3min, não bastaram e foi preciso rerun na mão.
+        for attempt in 1 2 3 4; do
+          echo "::group::Tentativa $attempt"
+          set +e
+          deploy
+          rc=$?
+          set -e
+          echo "::endgroup::"
+
+          if [ $rc -eq 0 ]; then
+            exit 0
+          fi
+          if [ $rc -eq 9 ]; then
+            echo "A aplicação não passou na checagem de saúde. Não adianta repetir."
+            echo "motivo=saude" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "Tentativa $attempt falhou (rc=$rc)."
+          case $attempt in
+            1) sleep 30 ;;
+            2) sleep 60 ;;
+            3) sleep 120 ;;
+          esac
+        done
+
+        echo "Deploy falhou nas 4 tentativas."
+        echo "motivo=rede" >> "$GITHUB_OUTPUT"
+        exit 1

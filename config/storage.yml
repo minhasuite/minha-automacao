@@ -1,0 +1,19 @@
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+# Cloudflare R2 (S3-compatível), bucket próprio (minha-automacao-prod).
+cloudflare:
+  service: S3
+  access_key_id: <%= ENV["R2_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= ENV["R2_SECRET_ACCESS_KEY"] %>
+  endpoint: <%= ENV["R2_ENDPOINT"] %>
+  bucket: <%= ENV["R2_BUCKET"] %>
+  region: auto
+  # R2 não implementa os checksums default do aws-sdk-s3 recente.
+  request_checksum_calculation: when_required
+  response_checksum_validation: when_required

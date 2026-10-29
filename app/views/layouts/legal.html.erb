@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= content_for(:title) %> — Minha Automação</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f6f5fb; color: #1f2420; margin: 0; padding: 24px 16px; line-height: 1.6; }
+    main { background: #fff; border-radius: 16px; padding: 28px; max-width: 760px; margin: 0 auto; box-shadow: 0 6px 24px rgba(0,0,0,.06); }
+    h1 { font-size: 1.6rem; margin: 0 0 4px; } h2 { font-size: 1.1rem; margin-top: 28px; }
+    .meta { color: #5d655f; font-size: .85rem; margin: 0 0 20px; }
+    a { color: #5a45e8; } nav { max-width: 760px; margin: 0 auto 12px; font-weight: 700; color: #5a45e8; }
+    footer { max-width: 760px; margin: 16px auto 0; font-size: .85rem; color: #5d655f; }
+  </style>
+</head>
+<body>
+  <nav>Minha Automação</nav>
+  <main>
+    <h1><%= content_for(:title) %></h1>
+    <% if @updated_on %><p class="meta">Última atualização: <%= @updated_on.strftime("%d/%m/%Y") %></p><% end %>
+    <%= yield %>
+  </main>
+  <footer>
+    <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a> · <a href="/exclusao">Exclusão de dados</a> ·
+    contato: <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a>
+  </footer>
+</body>
+</html>

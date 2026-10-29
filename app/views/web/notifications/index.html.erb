@@ -1,0 +1,21 @@
+<%= render "web/shared/header", title: "Notificações", subtitle: "Avisos da empresa e da sua conta." do %>
+  <%= button_to read_all_notifications_path, method: :patch, class: "ss-btn ss-btn-ghost" do %><%= icon("check", "size-4") %>Marcar tudo como lido<% end %>
+<% end %>
+<% if @notifications.any? %>
+  <div class="ss-card divide-y divide-line overflow-hidden">
+    <% @notifications.each do |n| %>
+      <% ico, tone = ApplicationHelper::NOTIFICATION_KINDS.fetch(n.kind, [ "bell", "bg-field text-muted" ]) %>
+      <%= button_to read_notification_path(n), method: :patch, class: "w-full text-left px-4 py-3.5 bg-transparent border-0 cursor-pointer hover:bg-field flex items-start gap-3 #{'opacity-70' if n.read_at}", form_class: "block" do %>
+        <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= tone %>"><%= icon(ico, "size-5") %></span>
+        <span class="min-w-0 flex-1">
+          <span class="flex items-start justify-between gap-3"><span class="<%= n.read_at ? 'font-semibold' : 'font-bold' %> text-ink"><%= with_money(n.title) %></span>
+            <span class="shrink-0 text-xs text-muted flex items-center gap-1.5 mt-0.5"><%= l(n.created_at, format: :short) %><% unless n.read_at %><span class="size-2 rounded-full bg-accent" aria-label="não lida"></span><% end %></span></span>
+          <% if n.body.present? %><span class="block text-sm text-muted mt-0.5"><%= with_money(n.body) %></span><% end %>
+        </span>
+      <% end %>
+    <% end %>
+  </div>
+  <%= render "web/shared/pagination", pagy: @pagy %>
+<% else %>
+  <div class="ss-card ss-empty">Nenhuma notificação.</div>
+<% end %>

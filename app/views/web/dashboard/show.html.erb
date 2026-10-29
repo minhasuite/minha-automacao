@@ -1,0 +1,23 @@
+<%= render "web/shared/header", title: "#{greeting}, #{current_user.name.split.first}", subtitle: "#{l(Date.current, format: :long).upcase_first} · #{current_user.tenant.trade_name.presence || current_user.tenant.name}" %>
+
+<div class="grid gap-4 md:grid-cols-3">
+  <section class="ss-hero ss-rise p-6 md:col-span-2 flex flex-col gap-3" aria-label="Boas-vindas">
+    <p class="ss-kicker">Minha Automação</p>
+    <p class="text-2xl font-bold">Sua central de automação está quase pronta.</p>
+    <p class="text-sm opacity-90">Os locais, aparelhos e automações chegam nas próximas entregas. Por enquanto, ajuste a empresa e convide quem vai usar.</p>
+  </section>
+  <%= link_to notifications_path, class: "ss-card ss-card-pad no-underline ss-rise", style: "animation-delay: 60ms" do %>
+    <div class="flex items-start justify-between gap-3"><p class="ss-kicker">Notificações</p><span class="ss-icon-tile text-accent"><%= icon("bell") %></span></div>
+    <p class="ss-stat -mt-1"><%= @unread %></p>
+    <p class="text-sm mt-1 text-muted"><%= @unread == 1 ? "não lida" : "não lidas" %></p>
+  <% end %>
+</div>
+
+<div class="mt-4">
+  <%= link_to settings_path, class: "ss-card p-4 no-underline flex items-center gap-3 hover:shadow-lg transition" do %>
+    <span class="grid place-items-center size-11 rounded-xl bg-accent-soft text-accent"><%= icon("cog") %></span>
+    <span class="flex-1"><span class="block font-bold text-ink">Configurações</span>
+      <span class="block text-sm text-muted">Empresa, plano, convites e a sua conta.</span></span>
+    <%= icon("chevron-right", "size-4 text-muted") %>
+  <% end %>
+</div>

@@ -1,0 +1,24 @@
+module Accounts
+  # Os dados da empresa num Hash legível (LGPD): conta, empresa, membros e
+  # notificações. Cada tabela do domínio que chegar entra aqui.
+  class ExportData
+    def self.call(tenant, user) = new(tenant, user).call
+
+    def initialize(tenant, user)
+      @tenant = tenant
+      @user = user
+    end
+
+    def call
+      ActsAsTenant.with_tenant(@tenant) do
+        {
+          exported_at: Time.current.iso8601,
+          user: { name: @user.name, email: @user.email, role: @user.role, created_at: @user.created_at.iso8601 },
+          company: CompanySerializer.new(@tenant).to_h,
+          members: @tenant.users.order(:name).map { |u| { name: u.name, email: u.email, role: u.role, joined_at: u.created_at.iso8601 } },
+          notifications: Notification.order(:created_at).map { |n| n.slice(:kind, :title, :body, :read_at, :created_at) }
+        }
+      end
+    end
+  end
+end

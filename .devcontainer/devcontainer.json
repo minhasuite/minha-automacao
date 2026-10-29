@@ -1,0 +1,15 @@
+{
+  "name": "minha-automacao",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/app",
+  "postCreateCommand": "bundle install && for i in 1 2 3 4 5; do bin/rails db:prepare && break || sleep 5; done",
+  "customizations": {
+    "vscode": {
+      "extensions": ["Shopify.ruby-lsp"],
+      "settings": { "rubyLsp.rubyVersionManager": { "identifier": "none" } }
+    }
+  },
+  "forwardPorts": [4121],
+  "remoteUser": "root"
+}

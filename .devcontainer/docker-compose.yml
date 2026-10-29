@@ -1,0 +1,47 @@
+# Nome de projeto fixo → não colide com o devcontainer dos vizinhos.
+# Portas próprias: Postgres 127.0.0.1:6299, app :4121. Fila e cache no
+# Postgres (Solid Queue/Cache), sem broker à parte.
+name: minha-automacao
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    volumes:
+      - ..:/app
+      - bundle-cache:/usr/local/bundle
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:6299/minha_automacao_development
+      DATABASE_TEST_URL: postgresql://postgres:postgres@127.0.0.1:6299/minha_automacao_test
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-local}
+      APP_HOST: localhost:4121
+      PORT: "4121"
+    command: sleep infinity
+
+  postgres:
+    image: postgres:18-alpine
+    ports:
+      - "127.0.0.1:6299:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: minha_automacao_development
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  bundle-cache:

@@ -1,0 +1,13 @@
+pt-BR:
+  activerecord:
+    models:
+      user: Usuário
+      tenant: Empresa
+    attributes:
+      user:
+        email: E-mail
+        password: Senha
+        name: Nome
+        role: Papel
+      tenant:
+        name: Razão social

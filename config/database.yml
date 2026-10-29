@@ -1,0 +1,18 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("DB_POOL") { ENV.fetch("RAILS_MAX_THREADS", 5) } %>
+
+development:
+  <<: *default
+  url: <%= ENV.fetch("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:5799/minha_automacao_development") %>
+
+test:
+  <<: *default
+  url: <%= ENV.fetch("DATABASE_TEST_URL", "postgresql://postgres:postgres@127.0.0.1:5799/minha_automacao_test") %>
+
+# Single-DB: fila (Solid Queue) e cache (Solid Cache) vivem no próprio
+# minha_automacao_prod — as tabelas solid_* vêm de migration comum.
+production:
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>

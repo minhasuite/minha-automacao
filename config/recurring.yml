@@ -1,0 +1,20 @@
+# Tarefas recorrentes do Solid Queue (sem cron externo). Horários em
+# America/Sao_Paulo (config.time_zone).
+production:
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: every hour at minute 12
+  # Assinatura: renovação sem RTDN e plano das empresas.
+  billing_reconcile:
+    class: BillingReconcileJob
+    schedule: every hour at minute 40
+  # Reenvio diário à central de licenças (o informe que falhou na rede não volta sozinho).
+  licencas_enviar_tudo:
+    class: LicencasEnviarTudoJob
+    schedule: every day at 4am America/Sao_Paulo
+  # Device token parado há 60 dias não recebe push de ninguém.
+  prune_device_tokens:
+    class: PruneDeviceTokensJob
+    schedule: every sunday at 4am America/Sao_Paulo
+
+development: {}

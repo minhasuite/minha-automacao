@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: Minha Automação API
+  version: "1.0"
+  description: |
+    API `/api/v1` do Minha Automação (app Flutter e integrações). Contrato da suíte:
+    sucesso `{data, meta?}`, erro `{error: {code, message, details?}}`, datas ISO-8601.
+    Paginação Pagy: `?page=&per_page=` e `meta: {page, per_page, count, pages, next, prev}`.
+
+    Auth: `Authorization: Bearer <access>` (30 min; renove com `POST /auth/refresh`)
+    ou `X-Api-Key` (integração, só nos recursos com escopo).
+    Papéis: `owner` (dono), `admin` (administrador), `member` (membro).
+
+    Só a base da suíte por enquanto; o domínio de automação (ESQUEMA-V1 §8) entra depois.
+servers:
+  - url: https://minhaautomacao.minhasuite.com/api/v1
+security:
+  - bearer: []
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer }
+    apiKey: { type: apiKey, in: header, name: X-Api-Key }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [not_found, validation_failed, unauthorized, forbidden, plan_required, parameter_missing,
+                     company_not_empty, invalid_invite, already_member, invalid_credentials, invalid_token,
+                     token_reuse_detected, invalid_password, google_unconfigured, verification_failed,
+                     ai_unavailable, rate_limited, internal_error]
+            message: { type: string }
+            details: { type: object }
+    Tokens:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        token_type: { type: string, example: Bearer }
+        access_expires_at: { type: string, format: date-time }
+        refresh_expires_at: { type: string, format: date-time }
+        user: { $ref: "#/components/schemas/User" }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [owner, admin, member] }
+        role_label: { type: string, example: Dono }
+        company: { type: object, properties: { id: { type: string }, name: { type: string }, plan: { type: string } } }
+        has_password: { type: boolean }
+        google_linked: { type: boolean }
+        created_at: { type: string, format: date-time }
+    Company:
+      type: object
+      description: A empresa (tenant). Só o dono altera.
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        trade_name: { type: string, nullable: true }
+        document: { type: string, nullable: true, description: "Só dígitos (CPF ou CNPJ)" }
+        phone: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        city: { type: string, nullable: true }
+        uf: { type: string, nullable: true }
+        ibge_code: { type: string, nullable: true }
+        plan: { type: string, enum: [free, pro, max] }
+        members_count: { type: integer }
+        created_at: { type: string, format: date-time }
+  responses:
+    Error:
+      description: erro
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+paths:
+  /auth/signup:
+    post:
+      security: []
+      summary: "Cria empresa e dono {name, email, password, company_name?, device_name?}"
+      responses: { "201": { description: tokens }, "422": { $ref: "#/components/responses/Error" } }
+  /auth/login: { post: { security: [], summary: "E-mail e senha {email, password, device_name?}", responses: { "201": { description: tokens }, "401": { $ref: "#/components/responses/Error" } } } }
+  /auth/google: { post: { security: [], summary: "id_token do Google (client web); cria a conta na primeira vez", responses: { "201": { description: tokens }, "401": { $ref: "#/components/responses/Error" }, "503": { $ref: "#/components/responses/Error" } } } }
+  /auth/refresh: { post: { security: [], summary: "Rotaciona o par {refresh_token}; reuso de refresh antigo revoga a sessão", responses: { "200": { description: tokens }, "401": { $ref: "#/components/responses/Error" } } } }
+  /auth/logout: { delete: { summary: Revoga a sessão atual, responses: { "204": { description: ok } } } }
+  /auth/password/forgot: { post: { security: [], summary: "{email}. Sempre 200 (não revela se a conta existe)", responses: { "200": { description: ok } } } }
+  /auth/password/reset: { post: { security: [], summary: "{token, password}. Token de 30 min, uso único; derruba as sessões", responses: { "200": { description: ok }, "422": { $ref: "#/components/responses/Error" } } } }
+  /me:
+    get: { summary: Perfil, responses: { "200": { description: User } } }
+    patch: { summary: "{name?, email?, password?, current_password?}", responses: { "200": { description: User }, "422": { $ref: "#/components/responses/Error" } } }
+    delete: { summary: "Exclui a conta; o último membro leva a empresa junto", responses: { "204": { description: ok } } }
+  /me/export: { get: { summary: Dados da empresa em JSON (LGPD), responses: { "200": { description: ok } } } }
+  /me/wipe: { post: { summary: "Zera o conteúdo da empresa (só dono)", responses: { "200": { description: "{deleted: {tabela: n}}" }, "403": { $ref: "#/components/responses/Error" } } } }
+  /me/sessions: { get: { summary: Sessões ativas, responses: { "200": { description: ok } } }, delete: { summary: Encerra as outras, responses: { "200": { description: "{revoked}" } } } }
+  /me/sessions/{id}: { delete: { summary: Encerra uma sessão, responses: { "204": { description: ok } } } }
+  /company:
+    get: { summary: A empresa, responses: { "200": { description: Company } } }
+    patch: { summary: "Atualiza (só dono)", responses: { "200": { description: Company }, "403": { $ref: "#/components/responses/Error" } } }
+  /company/invites: { post: { summary: "Código de convite {role? member|admin} (administrador; só o dono convida admin)", responses: { "201": { description: "{code, role, expires_at}" }, "403": { $ref: "#/components/responses/Error" } } } }
+  /company/join: { post: { summary: "Entra com {code, discard_current?}; 409 company_not_empty", responses: { "200": { description: Company }, "409": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } } }
+  /notifications: { get: { summary: "?unread=", responses: { "200": { description: "lista paginada; meta.unread_count" } } } }
+  /notifications/{id}/read: { patch: { summary: Marca lida, responses: { "200": { description: ok } } } }
+  /notifications/read: { patch: { summary: "Marca todas {ids?}", responses: { "200": { description: "{marked, unread_count}" } } } }
+  /device_tokens: { post: { summary: "Token FCM {token, platform android|ios}", responses: { "201": { description: ok } } } }
+  /device_tokens/{token}: { delete: { summary: Remove, responses: { "204": { description: ok } } } }
+  /api_keys:
+    get: { summary: "Chaves de integração ativas (só dono)", responses: { "200": { description: ok } } }
+    post: { summary: "{name, scopes: [read|write]} → chave em claro só nesta resposta (só dono)", responses: { "201": { description: ok }, "422": { $ref: "#/components/responses/Error" } } }
+  /api_keys/{id}: { delete: { summary: Revoga, responses: { "204": { description: ok } } } }
+  /billing: { get: { summary: "Plano da empresa {plan free|pro|max, status, provider, expires_at, auto_renewing, product_id, base_plan, trial, purchased_by_me, purchaser_name, trial_eligible, limits {ai{feature: cota}, ai_tier}, usage {ai}, catalog[]}", responses: { "200": { description: ok } } } }
+  /billing/google/verify: { post: { summary: "{purchase_token} → servidor consulta a Play (subscriptionsv2) e devolve o mesmo de /billing; 422 verification_failed", responses: { "200": { description: ok }, "422": { $ref: "#/components/responses/Error" } } } }
+  /ai/quota: { get: { summary: "Cota de IA por feature (ask, daily_summary) e teto diário. Grátis: available false", responses: { "200": { description: ok } } } }
+  /ai/ask: { post: { summary: "{question} (administrador) → {answer}. Placeholder até o domínio chegar; 402 plan_required fora do plano, 503 ai_unavailable", responses: { "200": { description: ok }, "402": { $ref: "#/components/responses/Error" }, "503": { $ref: "#/components/responses/Error" } } } }

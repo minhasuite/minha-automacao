@@ -1,0 +1,53 @@
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+
+plugins:
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: disable
+  Exclude:
+    - "bin/**/*"
+    - "db/schema.rb"
+    - "vendor/**/*"
+    - "tmp/**/*"
+    - "node_modules/**/*"
+    # SDK do meulog copiado: idêntico à origem para facilitar a atualização.
+    - "lib/meu_log.rb"
+
+# Request specs checam status + corpo + efeito no banco no mesmo exemplo.
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/ExampleLength:
+  Enabled: false
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+RSpec/NestedGroups:
+  Max: 4
+RSpec/DescribeClass:
+  Enabled: false
+RSpec/MultipleDescribes:
+  Enabled: false
+RSpec/SpecFilePathFormat:
+  Enabled: false
+RSpec/ContextWording:
+  Enabled: false
+RSpec/LetSetup:
+  Enabled: false
+RSpec/IndexedLet:
+  Enabled: false
+RSpec/StubbedMock:
+  Enabled: false
+RSpec/MessageSpies:
+  Enabled: false
+RSpec/ExpectInHook:
+  Enabled: false
+RSpec/NamedSubject:
+  Enabled: false
+RSpec/ExpectChange:
+  Enabled: false
+RSpec/ReceiveMessages:
+  Enabled: false
+RSpec/VerifiedDoubleReference:
+  Enabled: false

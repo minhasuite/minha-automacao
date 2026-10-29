@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= content_for(:title) || "Minha Automação" %></title>
+  <%= csrf_meta_tags %>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+  <%= yield :head %>
+</head>
+<%# Entrar / criar conta / esqueci a senha: tela dividida como no meu-financeiro. %>
+<body class="min-h-screen" data-controller="theme">
+  <div class="min-h-screen grid lg:grid-cols-2">
+    <aside class="ss-hero rounded-none! hidden lg:flex flex-col justify-between p-12 shadow-none!">
+      <%= link_to root_path, class: "flex items-center gap-3 no-underline text-white font-bold text-lg" do %>
+        <span class="grid place-items-center size-10 rounded-2xl bg-white/15 ring-1 ring-white/25"><%= icon("lightning-bolt", "size-5") %></span>Minha Automação
+      <% end %>
+      <div class="max-w-md">
+        <p class="text-4xl font-bold leading-tight tracking-tight">Sua casa e sua empresa,<br>no automático.</p>
+        <p class="mt-4 text-white/80 leading-relaxed">Aparelhos, sensores, cenas e avisos num lugar só, com app de verdade no celular.</p>
+      </div>
+      <p class="text-xs text-white/70">© <%= Date.current.year %> Minha Automação · MinhaSuite</p>
+    </aside>
+    <main class="flex flex-col items-center justify-center px-4 py-10">
+      <%= link_to root_path, class: "lg:hidden mb-8 flex items-center gap-2.5 no-underline font-bold text-lg text-ink" do %>
+        <span class="grid place-items-center size-9 rounded-xl ss-grad"><%= icon("lightning-bolt", "size-5") %></span>Minha Automação
+      <% end %>
+      <div class="w-full max-w-md">
+        <%= render "web/shared/flash" %>
+        <div class="ss-card p-7 sm:p-10 ss-rise"><%= yield %></div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

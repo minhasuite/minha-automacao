@@ -1,0 +1,10 @@
+<%# locals: (title:, subtitle: nil, back: nil, badge: nil) -%>
+<% content_for :title, title %>
+<div class="mb-6 flex flex-wrap items-end justify-between gap-3 ss-rise">
+  <div class="min-w-0">
+    <% if back %><%= link_to back, class: "inline-flex items-center gap-1 text-sm font-semibold text-muted no-underline hover:text-accent mb-1" do %><%= icon("arrow-left", "size-4") %>Voltar<% end %><% end %>
+    <div class="flex flex-wrap items-center gap-3"><h1 class="truncate"><%= title %></h1><%= badge %></div>
+    <% if subtitle %><p class="text-sm text-muted mt-1 max-w-3xl"><%= subtitle %></p><% end %>
+  </div>
+  <div class="flex flex-wrap items-center gap-2"><%= yield %></div>
+</div>

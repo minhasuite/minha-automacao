@@ -1,0 +1,154 @@
+name: CI/CD
+
+# Um pipeline só, em ordem: qualidade → imagem → deploy → aviso ao meulog.
+# Push no master = produção (não há staging); develop e PR rodam só a
+# qualidade. O deploy (e o aviso ao meulog) estão desligados até existir o
+# servidor.
+#
+# Autocontido de propósito: este repo é da organização minhasuite (Free) e
+# não alcança os reusable workflows privados de minhasuite/minha-infra (ver
+# minha-infra/runbooks/deploy.md). Os passos são os mesmos de lá; o deploy
+# usa a cópia local da action em .github/actions/deploy-vps.
+on:
+  push:
+    branches: [master, develop]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+  pull_request:
+    branches: [master, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: minha_automacao_test
+        ports: ["5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      RAILS_ENV: test
+      SECRET_KEY_BASE: 0000000000000000000000000000000000000000000000000000000000000000ci
+    steps:
+      # Porta livre no host: no runner self-hosted várias CIs rodam ao mesmo tempo.
+      - name: Portas dos serviços
+        run: |
+          echo "DATABASE_TEST_URL=postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports['5432'] }}/minha_automacao_test" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v5
+      # Runner self-hosted da WSL: sem compilador no host, roda num container.
+      - name: Testes em container (self-hosted)
+        if: runner.environment == 'self-hosted'
+        run: |
+          if ! docker image inspect ci-ruby:3.3-suite >/dev/null 2>&1; then
+            docker build -t ci-ruby:3.3-suite - <<'DOCKERFILE'
+          FROM ruby:3.3.10-slim
+          RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+                build-essential git curl ca-certificates libpq-dev libyaml-dev libvips42 libvips-dev \
+                pkg-config postgresql-client fonts-dejavu-core && rm -rf /var/lib/apt/lists/*
+          DOCKERFILE
+          fi
+          docker run --rm --network host -v "$GITHUB_WORKSPACE:/app" -v ci-bundle-cache:/usr/local/bundle -w /app \
+            -e RAILS_ENV=test -e DATABASE_TEST_URL="$DATABASE_TEST_URL" -e SECRET_KEY_BASE="$SECRET_KEY_BASE" \
+            ci-ruby:3.3-suite bash -ec '
+              bundle check || bundle install --jobs 4 --retry 3
+              bundle exec rails tailwindcss:build
+              bundle exec rubocop --parallel
+              bundle exec brakeman -q --no-pager -i config/brakeman.ignore
+              bundle exec rails db:create db:schema:load
+              bundle exec rspec --format progress
+            '
+      # libvips (Active Storage) e DejaVu (acento em PDF).
+      - name: Dependências do sistema
+        if: runner.environment != 'self-hosted'
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libvips42 fonts-dejavu-core
+      - uses: ruby/setup-ruby@v1
+        if: runner.environment != 'self-hosted'
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      # Layout usa stylesheet_link_tag "tailwind": sem o build, spec que renderiza HTML quebra.
+      - name: CSS (Tailwind)
+        if: runner.environment != 'self-hosted'
+        run: bundle exec rails tailwindcss:build
+      - name: Rubocop
+        if: runner.environment != 'self-hosted'
+        run: bundle exec rubocop --parallel
+      - name: Brakeman
+        if: runner.environment != 'self-hosted'
+        run: bundle exec brakeman -q --no-pager -i config/brakeman.ignore
+      - name: Banco de teste
+        if: runner.environment != 'self-hosted'
+        run: bundle exec rails db:create db:schema:load
+      - name: RSpec
+        if: runner.environment != 'self-hosted'
+        run: bundle exec rspec --format progress
+
+  build:
+    needs: quality
+    if: github.event_name != 'pull_request' && github.ref_name == 'master'
+    runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      # docker build/push simples: o buildx não funciona com o podman do runner da WSL.
+      - name: Login no GHCR
+        run: printf '%s\n' "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      # O push para o GHCR falha sozinho de vez em quando (403 num blob): até 3 tentativas.
+      - name: Build e push
+        run: |
+          set -euo pipefail
+          docker build -f Dockerfile.prod --build-arg "GIT_SHA=${{ github.sha }}" \
+            -t ghcr.io/minhasuite/minha-automacao:latest -t ghcr.io/minhasuite/minha-automacao:sha-${{ github.sha }} .
+          for t in 1 2 3; do
+            if docker push ghcr.io/minhasuite/minha-automacao:latest && docker push ghcr.io/minhasuite/minha-automacao:sha-${{ github.sha }}; then exit 0; fi
+            sleep $((t * 20))
+          done
+          exit 1
+
+  deploy-prod:
+    needs: build
+    # Sem servidor ainda: banco, Caddy e DNS vêm no passo 3 do checklist da suíte.
+    # Ao religar, volte para: if: github.ref_name == 'master'
+    if: false
+    runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
+    environment: production
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/deploy-vps
+        with:
+          ssh_key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          user: ${{ secrets.VPS_USER }}
+          app_path: ${{ vars.VPS_APP_PATH }}
+          compose_file: docker-compose.prod.yml
+          health_container: ms-minha-automacao-web
+
+  # Conta ao meulog qual versão subiu. Sem o secret, sai em silêncio.
+  avisa-meulog:
+    needs: deploy-prod
+    if: github.ref_name == 'master'
+    runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
+    steps:
+      - name: POST /api/v1/deploys
+        env:
+          MEULOG_TOKEN: ${{ secrets.MEULOG_API_TOKEN }}
+        run: |
+          if [ -z "$MEULOG_TOKEN" ]; then echo "sem MEULOG_API_TOKEN; nada a avisar"; exit 0; fi
+          corpo=$(jq -n --arg v "$GITHUB_SHA" --arg a "$GITHUB_ACTOR" \
+            --arg u "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA" \
+            '{version: $v, environment: "prod", commit: $v, author: $a, url: $u}')
+          curl -fsS -X POST "https://meulog.minhasuite.com/minhasuite/api/v1/deploys" \
+            -H "Authorization: Bearer $MEULOG_TOKEN" -H "Content-Type: application/json" -d "$corpo" \
+            || echo "meulog não registrou o deploy; a produção está no ar de qualquer forma"
