@@ -5,7 +5,7 @@
 <% else %>
   <% off_line = p["quality"] != "good" %>
   <% css = "dw-card dw-tile #{dw_color_class(w)} #{'dw-on' if p['on'] && p['capability'] != 'measure'} #{'dw-unavailable' if off_line}" %>
-  <% state = off_line ? "Indisponível" : p["text"] %>
+  <% state = off_line ? "Indisponível" : (p["value"].nil? && p["capability"] != "command" ? "Aguardando leitura" : p["text"]) %>
   <% toggle = w["tap"] != "more_info" && p["can_command"] && p["capability"] == "onoff" %>
   <% press = p["can_command"] && p["capability"].in?(%w[command gate]) %>
   <div class="relative h-full">

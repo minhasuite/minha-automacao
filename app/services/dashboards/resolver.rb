@@ -78,7 +78,7 @@ module Dashboards
       nums = list.map(&:value).grep(Numeric)
       value = case agg
       when "count" then list.size
-      when "sum" then nums.sum.round(2)
+      when "sum" then nums.any? ? nums.sum.round(2) : nil
       when "avg" then nums.any? ? (nums.sum / nums.size).round(2) : nil
       when "min" then nums.min
       when "max" then nums.max
@@ -160,7 +160,7 @@ module Dashboards
 
     def tagged(name) = (@tags ||= {})[name] ||= Tagging.joins(:tag).where(tags: { name: name.to_s.downcase }, taggable_type: "Point").pluck(:taggable_id).to_set
 
-    def on?(p) = p.value == true || p.value == "open" || (p.value.is_a?(Numeric) && p.value.positive?)
+    def on?(p) = p.value == true || p.value == "open"
 
     def visible?(w)
       cond = w["visible_if"] or return true

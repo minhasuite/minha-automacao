@@ -11,7 +11,7 @@
       <% if p["capability"] == "onoff" && p["can_command"] && !off_line %>
         <%= dw_command_button(p, "toggle", w: w, dashboard: dashboard, live: live, class: "dw-switch", "aria-pressed": p["on"], "aria-label": "#{p['on'] ? 'Desligar' : 'Ligar'} #{p['name']}") do %><span></span><% end %>
       <% else %>
-        <span class="text-sm font-semibold <%= p['value'].is_a?(Numeric) ? 'num text-ink' : 'text-ink-2' %> shrink-0"><%= off_line ? "Indisponível" : p["text"] %></span>
+        <span class="text-sm font-semibold <%= p['value'].is_a?(Numeric) ? 'num text-ink' : 'text-ink-2' %> shrink-0"><%= off_line ? "Indisponível" : (p["value"].nil? ? "—" : p["text"]) %></span>
       <% end %>
     </li>
   <% end %>

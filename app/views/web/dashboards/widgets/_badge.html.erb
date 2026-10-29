@@ -1,9 +1,11 @@
 <%# locals: (w:) -%>
 <% d = w["data"] %>
-<span class="dw-badge">
-  <% if w["aggregate"] == "count" && d["value"].to_i.zero? %>
-    Nenhum <%= w["label"].to_s.delete_suffix("s") %>
-  <% else %>
-    <strong class="num"><%= d["text"] %></strong><% if w["label"].present? %> <span class="font-semibold opacity-85"><%= w["aggregate"] == "count" && d["value"] == 1 ? w["label"].delete_suffix("s") : w["label"] %></span><% end %>
-  <% end %>
-</span>
+<% unless d["value"].nil? %>
+  <span class="dw-badge">
+    <% if w["aggregate"] == "count" && d["value"].to_i.zero? %>
+      Nenhum <%= w["label"].to_s.delete_suffix("s") %>
+    <% else %>
+      <strong class="num"><%= d["text"] %></strong><% if w["label"].present? %> <span class="font-semibold opacity-85"><%= w["aggregate"] == "count" && d["value"] == 1 ? w["label"].delete_suffix("s") : w["label"] %></span><% end %>
+    <% end %>
+  </span>
+<% end %>

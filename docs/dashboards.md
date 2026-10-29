@@ -86,8 +86,8 @@ ou `key` do ponto.
 | `heading` | `title` | título |
 | `markdown` | `text` | texto puro (sem Liquid por enquanto) |
 
-`query`: `capability` (uma ou lista), `state` (`on`: verdadeiro, `open` ou
-número > 0; `off`), `area`, `device_class` (`power` também pega medição em W),
+`query`: `capability` (uma ou lista), `state` (`on`: verdadeiro, `open`;
+`off`: o resto), `area`, `device_class` (`power` também pega medição em W),
 `tag`, `quality`. Ponto oculto ou desativado nunca entra.
 
 Ficam para depois (driver ainda não existe ou v1.1): `camera`, `vacuum`,
