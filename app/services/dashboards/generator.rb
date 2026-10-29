@@ -45,6 +45,8 @@ module Dashboards
         ])
       end
       sections << section("s-home-security", "Segurança", "exclamation-circle", security.map { |p| tile(p, "ws", label: home_label(p), span: span(12, 6, 4)) }) if security.any?
+      cameras = @points.select { |p| camera?(p) }
+      sections << section("s-home-cameras", "Câmeras", "video-camera", cameras.map { |p| camera(p, "wc") }) if cameras.any?
       sections << section("s-home-scenes", "Cenas", "sparkles", [ { "id" => "w-home-scenes", "type" => "scene_bar", "span" => span(12, 12, 12) } ]) if @site.scenes.exists?
       if @areas.size > 1
         cards = @areas.map { |a| { "id" => "w-area-#{a.id}", "type" => "area_card", "area" => a.id, "span" => span(12, 6, 4) } }
@@ -79,6 +81,8 @@ module Dashboards
     end
 
     def tile(point, prefix, span:, label: nil)
+      return camera(point, prefix) if camera?(point)
+
       w = { "id" => "#{prefix}-#{point.id}", "type" => "tile", "bind" => point.id, "span" => span }
       w["label"] = label if label && label != point.name
       w["color"] = "amber" if light?(point)
@@ -87,6 +91,9 @@ module Dashboards
       w["features"] = [ "select" ] if point.capability == "enum" && point.writable
       w
     end
+
+    def camera?(p) = p.capability == "stream" && p.device.driver == "go2rtc"
+    def camera(p, prefix) = { "id" => "#{prefix}-#{p.id}", "type" => "camera", "bind" => p.id, "live" => true, "span" => span(12, 6, 6) }
 
     def section(id, title, icon, widgets, span: nil)
       { "id" => id, "title" => title, "icon" => icon, "span" => span, "widgets" => widgets }.compact

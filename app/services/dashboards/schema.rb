@@ -9,16 +9,16 @@ module Dashboards
     MAX_WIDGETS = 400
 
     # Tipo → props obrigatórias. Os da §6.2 que dependem de driver que ainda não
-    # existe (câmera, robô, mídia) e os da indústria ficam de fora por ora.
+    # existe (robô, mídia) e os da indústria ficam de fora por ora.
     WIDGETS = {
       "heading" => %w[title], "markdown" => %w[text], "tile" => %w[bind], "group" => %w[binds],
       "stat" => [], "gauge" => %w[bind], "chart" => %w[binds], "query_list" => %w[query],
-      "area_card" => %w[area], "scene_bar" => [], "alerts" => []
+      "area_card" => %w[area], "scene_bar" => [], "alerts" => [], "camera" => %w[bind]
     }.freeze
     WIDGET_LABELS = {
       "tile" => "Ponto", "group" => "Grupo de pontos", "stat" => "Contador / número", "gauge" => "Medidor",
       "chart" => "Gráfico", "query_list" => "Lista automática", "area_card" => "Área", "scene_bar" => "Cenas",
-      "alerts" => "Alertas ativos", "heading" => "Título", "markdown" => "Texto"
+      "alerts" => "Alertas ativos", "camera" => "Câmera", "heading" => "Título", "markdown" => "Texto"
     }.freeze
     SCREENS = %w[mobile tablet desktop].freeze
     TAPS = %w[toggle more_info navigate none].freeze
@@ -88,6 +88,8 @@ module Dashboards
       e << "#{where}: range inválido" if w.key?("range") && !RANGES.include?(w["range"])
       e << "#{where}: color inválida" if w.key?("color") && !COLORS.include?(w["color"])
       e << "#{where}: stat precisa de bind ou query" if type == "stat" && blank?(w["bind"]) && blank?(w["query"])
+      e << "#{where}: live precisa ser true ou false" if w.key?("live") && ![ true, false ].include?(w["live"])
+      e << "#{where}: snapshot_interval precisa ser de 2 a 300 segundos" if w.key?("snapshot_interval") && !(w["snapshot_interval"].is_a?(Integer) && w["snapshot_interval"].between?(2, 300))
       %w[min max].each { |k| e << "#{where}: #{k} precisa ser número" if w.key?(k) && !w[k].is_a?(Numeric) }
     end
 

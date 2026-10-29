@@ -24,6 +24,10 @@ production:
   run_schedules:
     class: RunSchedulesJob
     schedule: every minute
+  # Câmeras (F8): streams do go2rtc.
+  go2rtc_sync:
+    class: Go2rtcSyncJob
+    schedule: every minute
   readings_maintenance:
     class: ReadingsMaintenanceJob
     schedule: every day at 3am America/Sao_Paulo

@@ -4,7 +4,7 @@ module PointsHelper
   POINT_ICONS = { "onoff" => "light-bulb", "dimmer" => "sun", "color" => "sparkles", "gate" => "switch-horizontal",
                   "contact" => "view-boards", "motion" => "eye", "tamper" => "exclamation-circle", "problem" => "exclamation-circle",
                   "measure" => "chart-bar", "enum" => "view-list", "setpoint" => "calculator", "command" => "lightning-bolt",
-                  "text" => "document-text", "vacuum" => "refresh", "speaker" => "bell", "stream" => "photograph",
+                  "text" => "document-text", "vacuum" => "refresh", "speaker" => "bell", "stream" => "video-camera",
                   "climate" => "sun", "event" => "bell" }.freeze
   BOOL_TEXT = { "onoff" => %w[Ligado Desligado], "contact" => %w[Aberto Fechado], "motion" => %w[Movimento Parado],
                 "tamper" => %w[Violado Normal], "problem" => %w[Problema Normal] }.freeze

@@ -123,11 +123,21 @@
   .dw-pop summary { list-style: none; }
   .dw-pop summary::-webkit-details-marker { display: none; }
   .dw-wf [data-for] { display: none; }
+
+  /* Câmera (F8): quadro 16:9, "Ao vivo" e estado sem conexão por cima. */
+  .dw-camera { padding: .8rem; }
+  .dw-camera-view { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; background: #0b0b12; }
+  .dw-camera-view img, .dw-camera-view video { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .dw-camera-view [hidden] { display: none; }
+  .dw-camera-status { position: absolute; inset: 0; display: grid; place-items: center; padding: 1rem; text-align: center; color: rgba(255, 255, 255, .78); font-size: .85rem; font-weight: 600; }
+  .dw-camera-live { flex-shrink: 0; height: 2rem; padding: 0 .8rem; border-radius: 999px; font-size: .78rem; font-weight: 700; color: var(--ink-2); background: var(--field); cursor: pointer; }
+  .dw-camera-live:hover { color: var(--accent); }
+  .dw-camera-live[aria-pressed="true"] { background: var(--grad); color: #fff; }
 }
 @media (min-width: 640px) { .dw-w { grid-column: span var(--t, 6) / span var(--t, 6); } }
 @media (min-width: 1024px) { .dw-w { grid-column: span var(--d, 4) / span var(--d, 4); } }
 /* Formulário do widget: só os campos do tipo escolhido (sem JS). */
-.dw-wf:has(option[value="tile"]:checked) [data-for~="tile"], .dw-wf:has(option[value="group"]:checked) [data-for~="group"],
+.dw-wf:has(option[value="tile"]:checked) [data-for~="tile"], .dw-wf:has(option[value="camera"]:checked) [data-for~="camera"], .dw-wf:has(option[value="group"]:checked) [data-for~="group"],
 .dw-wf:has(option[value="stat"]:checked) [data-for~="stat"], .dw-wf:has(option[value="gauge"]:checked) [data-for~="gauge"],
 .dw-wf:has(option[value="chart"]:checked) [data-for~="chart"], .dw-wf:has(option[value="query_list"]:checked) [data-for~="query_list"],
 .dw-wf:has(option[value="area_card"]:checked) [data-for~="area_card"], .dw-wf:has(option[value="scene_bar"]:checked) [data-for~="scene_bar"],

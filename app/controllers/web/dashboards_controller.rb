@@ -177,6 +177,7 @@ module Web
       when "tile" then attrs.merge!("bind" => p[:bind].presence, "tap" => p[:tap].presence, "color" => p[:color].presence, "features" => tile_features(p[:bind]))
       when "group" then attrs["binds"] = Array(p[:binds]).compact_blank.first(8)
       when "chart" then attrs.merge!("binds" => Array(p[:binds]).compact_blank.first(8), "range" => p[:range].presence || "24h")
+      when "camera" then attrs.merge!("bind" => p[:bind].presence, "live" => true)
       when "gauge" then attrs.merge!("bind" => p[:bind].presence, "min" => number(p[:min]), "max" => number(p[:max]))
       when "stat", "query_list"
         query = p.fetch(:query, {}).to_h.compact_blank

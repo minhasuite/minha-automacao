@@ -31,6 +31,10 @@ Rails.application.routes.draw do
       patch :read_all, on: :collection, path: "todas-lidas"
     end
 
+    # Câmeras (F8): quadro e ao vivo (WebRTC) passando pelo Rails.
+    get "cameras/:id/quadro", to: "cameras#snapshot", as: :camera_snapshot
+    post "cameras/:id/ao-vivo", to: "cameras#webrtc", as: :camera_webrtc
+
     resources :alerts, only: :index, path: "alertas" do
       post :ack, on: :member, path: "ciente"
     end

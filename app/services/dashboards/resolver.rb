@@ -58,7 +58,7 @@ module Dashboards
       state_ref = use(point(w.dig("visible_if", "state", "point")))
       deps = [ *binds, state_ref ].compact
       case w["type"]
-      when "tile", "group", "chart" then [ { "point_ids" => binds.map(&:id), "missing" => binds.size < [ w["bind"], *Array(w["binds"]) ].compact.size }, deps ]
+      when "tile", "group", "chart", "camera" then [ { "point_ids" => binds.map(&:id), "missing" => binds.size < [ w["bind"], *Array(w["binds"]) ].compact.size }, deps ]
       when "gauge" then gauge(w, binds.first, deps)
       when "stat" then stat(w, binds, deps)
       when "query_list"

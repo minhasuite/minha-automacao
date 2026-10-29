@@ -10,7 +10,7 @@
   <div><label class="ss-label" for="l-<%= uid %>">Rótulo <span class="font-normal">(opcional)</span></label>
     <%= text_field_tag "widget[label]", w["label"], class: "ss-input", id: "l-#{uid}", maxlength: 80, placeholder: "Usa o nome do ponto" %></div>
 
-  <div class="sm:col-span-2" data-for="tile gauge stat"><label class="ss-label" for="b-<%= uid %>">Ponto</label>
+  <div class="sm:col-span-2" data-for="tile gauge stat camera"><label class="ss-label" for="b-<%= uid %>">Ponto</label>
     <%= select_tag "widget[bind]", grouped_options_for_select(point_options, w["bind"]), include_blank: "Escolha um ponto", class: "ss-input", id: "b-#{uid}" %></div>
   <div class="sm:col-span-2" data-for="group chart"><label class="ss-label" for="bs-<%= uid %>">Pontos <span class="font-normal">(até 8; Ctrl/toque para marcar vários)</span></label>
     <%= select_tag "widget[binds][]", grouped_options_for_select(point_options, w["binds"]), multiple: true, size: 6, class: "ss-input", id: "bs-#{uid}" %></div>
