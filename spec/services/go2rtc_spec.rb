@@ -5,7 +5,7 @@ RSpec.describe Drivers::Go2rtc do
   let(:site) { within(tenant) { create(:site, name: "Casa") } }
   let(:base) { "http://go2rtc:1984" }
   let(:cams) do
-    [ { name: "DVR", host: "192.168.0.10", port: 554, username: "admin", password: "s3nh@:x", area: "Sala",
+    [ { name: "DVR", host: "192.168.0.10", port: 554, username: "admin", password: "s3nh@:x/y", area: "Sala",
         streams: [ { "name" => "Canal 1", "path" => "/Streaming/Channels/102" }, { "name" => "Canal 2", "path" => "/Streaming/Channels/202" } ] },
       { name: "Sem senha", host: "192.168.0.11", username: "admin", streams: [ { "name" => "Frente", "path" => "/live" } ] },
       { name: "Aberta", host: "192.168.0.12", streams: [ { "name" => "Quintal", "path" => "/V_ENC_001" } ] } ]
@@ -31,10 +31,10 @@ RSpec.describe Drivers::Go2rtc do
     expect(import(cams.map { |c| c.merge(password: nil) })).to eq(devices: 0, points: 0)
     dvr = within(tenant) { Device.find_by!(name: "DVR") }
     expect(dvr.area.name).to eq("Sala")
-    expect(dvr.credential).to eq("s3nh@:x") # senha vazia na reimportação manteve a gravada
+    expect(dvr.credential).to eq("s3nh@:x/y") # senha vazia na reimportação manteve a gravada
     expect(dvr.read_attribute_before_type_cast(:credential)).not_to include("s3nh")
     expect(stream("Canal 1")).to have_attributes(capability: "stream", writable: false, history: "none")
-    expect(described_class.source(stream("Canal 1"))).to eq("rtsp://admin:s3nh%40%3Ax@192.168.0.10:554/Streaming/Channels/102")
+    expect(described_class.source(stream("Canal 1"))).to eq("rtsp://admin:s3nh%40%3Ax%2Fy@192.168.0.10:554/Streaming/Channels/102")
     expect(described_class.source(stream("Quintal"))).to eq("rtsp://192.168.0.12:554/V_ENC_001")
     expect(described_class.source(stream("Frente"))).to be_nil # usuário sem senha: fica de fora
   end
