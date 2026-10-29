@@ -31,6 +31,15 @@ Rails.application.routes.draw do
       patch :read_all, on: :collection, path: "todas-lidas"
     end
 
+    resources :sites, path: "locais", path_names: { new: "novo", edit: "editar" } do
+      resources :areas, path: "areas", except: :index, shallow: true
+      resources :devices, path: "dispositivos", except: :index, shallow: true do
+        resources :points, path: "pontos", except: %i[index show], shallow: true do
+          post :command, on: :member, path: "comando"
+        end
+      end
+    end
+
     get "configuracoes", to: "settings#show", as: :settings
     patch "configuracoes/empresa", to: "settings#update_company", as: :settings_company
     patch "configuracoes/conta", to: "settings#update_account", as: :settings_account
@@ -71,6 +80,16 @@ Rails.application.routes.draw do
       end
       resources :device_tokens, only: %i[create destroy], param: :token, constraints: { token: %r{[^/]+} }
       resources :api_keys, only: %i[index create destroy]
+
+      resources :sites, except: %i[new edit] do
+        resources :areas, except: %i[new edit], shallow: true
+        resources :members, controller: :site_memberships, only: %i[index create update destroy], shallow: true
+        resources :devices, except: %i[new edit], shallow: true do
+          resources :points, except: %i[new edit], shallow: true do
+            post :commands, on: :member, action: :command
+          end
+        end
+      end
 
       get "billing", to: "billing#show"
       post "billing/google/verify", to: "billing#verify_google"

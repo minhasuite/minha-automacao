@@ -11,7 +11,8 @@ info:
     ou `X-Api-Key` (integração, só nos recursos com escopo).
     Papéis: `owner` (dono), `admin` (administrador), `member` (membro).
 
-    Só a base da suíte por enquanto; o domínio de automação (ESQUEMA-V1 §8) entra depois.
+    Base da suíte + F1 (locais, áreas, membros, dispositivos, pontos e comando no driver virtual).
+    O resto do domínio (ESQUEMA-V1 §8: histórico, automações, dashboards, borda) entra nas próximas fases.
 servers:
   - url: https://minhaautomacao.minhasuite.com/api/v1
 security:
@@ -115,3 +116,33 @@ paths:
   /billing/google/verify: { post: { summary: "{purchase_token} → servidor consulta a Play (subscriptionsv2) e devolve o mesmo de /billing; 422 verification_failed", responses: { "200": { description: ok }, "422": { $ref: "#/components/responses/Error" } } } }
   /ai/quota: { get: { summary: "Cota de IA por feature (ask, daily_summary) e teto diário. Grátis: available false", responses: { "200": { description: ok } } } }
   /ai/ask: { post: { summary: "{question} (administrador) → {answer}. Placeholder até o domínio chegar; 402 plan_required fora do plano, 503 ai_unavailable", responses: { "200": { description: ok }, "402": { $ref: "#/components/responses/Error" }, "503": { $ref: "#/components/responses/Error" } } } }
+  # ---- Locais, áreas, dispositivos e pontos (F1, ESQUEMA-V1 §4.1–4.3) -------------------------------------------
+  # Papel por local (SiteMembership): guest < operator < resident < technician < owner. Dono/administrador da
+  # empresa é owner em todos. Sem papel no local = 404. Ver: qualquer papel; cadastro de áreas, dispositivos e
+  # pontos: technician+; editar/excluir o local e membros: owner. Comando: normal guest+, sensitive operator+,
+  # critical resident+ (403 forbidden abaixo disso).
+  /sites:
+    get: { summary: "Locais que a pessoa vê (paginado). Cada um traz my_role", responses: { "200": { description: "Site[]" } } }
+    post: { summary: "Cria {name, kind home|store|plant, timezone?, address?, latitude?, longitude?, wallpaper?} (administrador da empresa)", responses: { "201": { description: Site }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } }
+  /sites/{id}:
+    get: { summary: Local, responses: { "200": { description: Site }, "404": { $ref: "#/components/responses/Error" } } }
+    patch: { summary: "Edita (owner do local)", responses: { "200": { description: Site }, "403": { $ref: "#/components/responses/Error" } } }
+    delete: { summary: "Exclui com áreas, dispositivos e pontos (owner do local)", responses: { "204": { description: ok } } }
+  /sites/{id}/areas:
+    get: { summary: "Áreas (por position, name)", responses: { "200": { description: "Area[]" } } }
+    post: { summary: "Cria {name, kind room|floor|outdoor|line|cell|warehouse, parent_id?, icon?, background?, position?} (technician+)", responses: { "201": { description: Area } } }
+  /areas/{id}: { get: { summary: Área, responses: { "200": { description: Area } } }, patch: { summary: "Edita (technician+)", responses: { "200": { description: Area } } }, delete: { summary: "Exclui; dispositivos ficam sem área (technician+)", responses: { "204": { description: ok } } } }
+  /sites/{id}/members:
+    get: { summary: "Membros do local (owner)", responses: { "200": { description: "SiteMembership[] {role, area_ids, expires_at, user{name,email}}" } } }
+    post: { summary: "{user_id (da empresa), role guest|operator|resident|technician|owner, expires_at?, area_ids?} (owner)", responses: { "201": { description: SiteMembership }, "404": { $ref: "#/components/responses/Error" } } }
+  /members/{id}: { patch: { summary: "{role?, expires_at?, area_ids?} (owner)", responses: { "200": { description: SiteMembership } } }, delete: { summary: "Remove (owner)", responses: { "204": { description: ok } } } }
+  /sites/{id}/devices:
+    get: { summary: "Dispositivos (?area_id=)", responses: { "200": { description: "Device[]" } } }
+    post: { summary: "Cria {name, area_id?, driver virtual|tuya_local|tuya_cloud|xiaomi_miot|alexa|mqtt|modbus_tcp|onvif|go2rtc, manufacturer?, model?, serial?, external_id?, address{}?, firmware?, disabled?} (technician+). Na F1 só o virtual executa comando", responses: { "201": { description: Device } } }
+  /devices/{id}: { get: { summary: Dispositivo, responses: { "200": { description: Device } } }, patch: { summary: "Edita (technician+)", responses: { "200": { description: Device } } }, delete: { summary: "Exclui com os pontos (technician+)", responses: { "204": { description: ok } } } }
+  /devices/{id}/points:
+    get: { summary: Pontos do dispositivo, responses: { "200": { description: "Point[]" } } }
+    post: { summary: "Cria {name, capability (§4.3 sem machine/counter), key? (gerada: dispositivo.ponto, única no local), area_id?, unit?, options[]? (obrigatório em enum), min?, max?, step?, writable?, address{}?, scale?, offset?, deadband?, history?, pulse_ms?, max_on_s?, confirm?, risk normal|sensitive|critical, expose{}?, hidden?, disabled?} (technician+)", responses: { "201": { description: Point }, "422": { $ref: "#/components/responses/Error" } } }
+  /points/{id}: { get: { summary: "Ponto com value, quality, changed_at, reported_at", responses: { "200": { description: Point } } }, patch: { summary: "Edita (technician+)", responses: { "200": { description: Point } } }, delete: { summary: "Exclui (technician+)", responses: { "204": { description: ok } } } }
+  /points/{id}/commands:
+    post: { summary: "{command, value?}: onoff on|off|toggle; dimmer/setpoint set(value na faixa min..max); enum select(value em options); text set; command press; gate pulse. Driver virtual grava o valor e devolve o ponto (síncrono na F1). 422 unsupported_command|invalid_value|not_writable|point_disabled|driver_unavailable; 403 se o papel não alcança o risco", responses: { "200": { description: Point }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } }
