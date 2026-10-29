@@ -8,7 +8,7 @@
   <fieldset class="md:col-span-2">
     <legend class="ss-label">Canais</legend>
     <div class="flex flex-wrap gap-3">
-      <%= f.collection_check_boxes :channels, Notifier::CHANNELS.to_a, :first, :last do |b| %><label class="ss-check"><%= b.check_box %> <%= b.text %></label><% end %>
+      <%= f.collection_check_boxes :channels, Notifier.channel_choices(site), :first, :last do |b| %><label class="ss-check"><%= b.check_box %> <%= b.text %></label><% end %>
     </div>
   </fieldset>
   <label class="ss-check"><%= f.check_box :enabled %> Ativo</label>

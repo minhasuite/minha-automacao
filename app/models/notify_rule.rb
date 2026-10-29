@@ -33,6 +33,6 @@ class NotifyRule < ApplicationRecord
   private
 
   def channels_fit
-    errors.add(:channels, "precisa de pelo menos um canal válido") if channels.empty? || (channels - Notifier::CHANNELS.keys).any?
+    errors.add(:channels, "precisa de pelo menos um canal válido") unless Notifier.valid_channels?(channels)
   end
 end

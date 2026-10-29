@@ -256,7 +256,7 @@ module Automations
         when :var then "nome de variável inválido (letras minúsculas, números e _)" unless v.is_a?(String) && VAR.match?(v)
         when :expr then expr_error(v)
         when :template then template_error(v)
-        when :channels then "canal inválido" unless v.is_a?(Array) && v.any? && (v - Notifier::CHANNELS.keys).empty?
+        when :channels then "canal inválido" unless Notifier.valid_channels?(v)
         when :scene then "cena não existe neste local" unless v.is_a?(String) && @site.scenes.exists?(id: v)
         when :alert_rule then "regra de alerta não existe neste local" unless v.is_a?(String) && @site.alert_rules.exists?(id: v)
         when :command then command_error(node, v)

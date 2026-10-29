@@ -250,7 +250,7 @@ module Automations
       title = @ctx.render(node["title"])
       body = @ctx.render(node["message"]).presence
       channels = node["channels"].presence || Notifier::CHANNELS.keys
-      detail = [ body, "canais: #{channels.map { |ch| Notifier::CHANNELS.fetch(ch, ch) }.join(', ').downcase}" ].compact.join(" · ")
+      detail = [ body, "canais: #{channels.map { |ch| Notifier.channel_label(ch) }.join(', ').downcase}" ].compact.join(" · ")
       return [ "Avisar: #{title}", "simulated", "Não enviado (simulação). #{detail}" ] if dry_run?
 
       Notifier.deliver!(channels, kind: "automacao", title: title, body: body,

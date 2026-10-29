@@ -34,7 +34,7 @@ module AutomationsHelper
     when :days then Array(v).map { |d| Automations::Dsl::DAYS[d.to_i] }.join("/")
     when :select then fd.options.fetch(v, v)
     when :bool then v ? "sim" : "não"
-    when :channels then Array(v).map { |c| Notifier::CHANNELS.fetch(c, c) }.join(" e ").downcase
+    when :channels then Array(v).map { |c| Notifier.channel_label(c) }.join(" e ").downcase
     when :command then command_label(v)
     when :scene then Scene.find_by(id: v)&.name || "cena removida"
     when :alert_rule then AlertRule.find_by(id: v)&.name || "regra removida"

@@ -17,8 +17,8 @@
         <div class="flex flex-wrap items-center gap-3">
           <label class="text-sm text-muted w-16" for="step_<%= i %>">Etapa <%= i + 1 %></label>
           <%= number_field_tag "alert_rule[steps][#{i}][wait_min]", (s["wait_s"] && (s["wait_s"] / 60.0).round(2).to_s.delete_suffix(".0")), min: 0, step: "any", class: "ss-input num w-28", id: "step_#{i}", placeholder: "min" %>
-          <% Notifier::CHANNELS.each do |key, name| %>
-            <label class="ss-check"><%= check_box_tag "alert_rule[steps][#{i}][channels][]", key, Array(s["channels"]).include?(key), id: "step_#{i}_#{key}" %> <%= name %></label>
+          <% Notifier.channel_choices(site).each do |key, name| %>
+            <label class="ss-check"><%= check_box_tag "alert_rule[steps][#{i}][channels][]", key, Array(s["channels"]).include?(key), id: "step_#{i}_#{key.parameterize}" %> <%= name %></label>
           <% end %>
         </div>
       <% end %>

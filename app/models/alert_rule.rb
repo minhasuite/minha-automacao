@@ -96,7 +96,7 @@ class AlertRule < ApplicationRecord
 
   def escalation_fits
     ok = escalation.all? do |s|
-      s["wait_s"].is_a?(Integer) && s["wait_s"] >= 0 && s["channels"].is_a?(Array) && s["channels"].any? && (s["channels"] - Notifier::CHANNELS.keys).empty?
+      s["wait_s"].is_a?(Integer) && s["wait_s"] >= 0 && Notifier.valid_channels?(s["channels"])
     end
     errors.add(:escalation, "precisa de etapas com espera (≥ 0) e canais válidos") unless ok
   end
