@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_10_000003) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_29_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -96,6 +96,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_000003) do
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
+  create_table "areas", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "tenant_id", null: false
+    t.uuid "site_id", null: false
+    t.uuid "parent_id"
+    t.string "name", null: false
+    t.string "kind", default: "room", null: false
+    t.string "icon"
+    t.string "background"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_areas_on_parent_id"
+    t.index ["site_id"], name: "index_areas_on_site_id"
+    t.index ["tenant_id"], name: "index_areas_on_tenant_id"
+  end
+
   create_table "audit_events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "tenant_id"
     t.uuid "user_id"
@@ -117,6 +133,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_000003) do
     t.datetime "updated_at", null: false
     t.index ["token"], name: "index_device_tokens_on_token", unique: true
     t.index ["user_id"], name: "index_device_tokens_on_user_id"
+  end
+
+  create_table "devices", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "tenant_id", null: false
+    t.uuid "site_id", null: false
+    t.uuid "area_id"
+    t.string "driver", default: "virtual", null: false
+    t.string "name", null: false
+    t.string "manufacturer"
+    t.string "model"
+    t.string "serial"
+    t.string "external_id"
+    t.jsonb "address", default: {}, null: false
+    t.string "firmware"
+    t.string "status", default: "online", null: false
+    t.datetime "last_seen_at"
+    t.uuid "battery_point_id"
+    t.boolean "disabled", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["area_id"], name: "index_devices_on_area_id"
+    t.index ["site_id"], name: "index_devices_on_site_id"
+    t.index ["tenant_id"], name: "index_devices_on_tenant_id"
   end
 
   create_table "feature_flags", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -170,6 +209,51 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_000003) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "points", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "tenant_id", null: false
+    t.uuid "site_id", null: false
+    t.uuid "device_id", null: false
+    t.uuid "area_id"
+    t.string "key", null: false
+    t.string "name", null: false
+    t.string "icon"
+    t.string "capability", null: false
+    t.string "data_type"
+    t.string "device_class"
+    t.string "state_class"
+    t.string "unit"
+    t.jsonb "options", default: [], null: false
+    t.decimal "min"
+    t.decimal "max"
+    t.decimal "step"
+    t.boolean "writable", default: false, null: false
+    t.jsonb "address", default: {}, null: false
+    t.decimal "scale", default: "1.0", null: false
+    t.decimal "offset", default: "0.0", null: false
+    t.decimal "deadband"
+    t.string "history", default: "on_change", null: false
+    t.integer "history_interval_s"
+    t.integer "retention_days"
+    t.integer "pulse_ms"
+    t.integer "max_on_s"
+    t.string "confirm"
+    t.string "risk", default: "normal", null: false
+    t.jsonb "expose", default: {}, null: false
+    t.jsonb "value"
+    t.string "quality", default: "good", null: false
+    t.datetime "changed_at"
+    t.datetime "reported_at"
+    t.boolean "hidden", default: false, null: false
+    t.boolean "disabled", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["area_id"], name: "index_points_on_area_id"
+    t.index ["device_id"], name: "index_points_on_device_id"
+    t.index ["site_id", "key"], name: "index_points_on_site_id_and_key", unique: true
+    t.index ["site_id"], name: "index_points_on_site_id"
+    t.index ["tenant_id"], name: "index_points_on_tenant_id"
+  end
+
   create_table "service_api_keys", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "user_id", null: false
     t.string "name", null: false
@@ -182,6 +266,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_000003) do
     t.datetime "updated_at", null: false
     t.index ["token_digest"], name: "index_service_api_keys_on_token_digest", unique: true
     t.index ["user_id"], name: "index_service_api_keys_on_user_id"
+  end
+
+  create_table "site_memberships", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "tenant_id", null: false
+    t.uuid "site_id", null: false
+    t.uuid "user_id", null: false
+    t.string "role", default: "resident", null: false
+    t.uuid "area_ids", default: [], null: false, array: true
+    t.datetime "expires_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["site_id", "user_id"], name: "index_site_memberships_on_site_id_and_user_id", unique: true
+    t.index ["site_id"], name: "index_site_memberships_on_site_id"
+    t.index ["tenant_id"], name: "index_site_memberships_on_tenant_id"
+    t.index ["user_id"], name: "index_site_memberships_on_user_id"
+  end
+
+  create_table "sites", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "tenant_id", null: false
+    t.string "name", null: false
+    t.string "kind", default: "home", null: false
+    t.string "timezone", default: "America/Sao_Paulo", null: false
+    t.string "address"
+    t.decimal "latitude", precision: 9, scale: 6
+    t.decimal "longitude", precision: 9, scale: 6
+    t.string "wallpaper"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tenant_id"], name: "index_sites_on_tenant_id"
   end
 
   create_table "solid_cache_entries", force: :cascade do |t|
@@ -367,6 +480,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_000003) do
     t.index ["user_id"], name: "index_subscriptions_on_user_id"
   end
 
+  create_table "taggings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "tenant_id", null: false
+    t.uuid "tag_id", null: false
+    t.string "taggable_type", null: false
+    t.uuid "taggable_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tag_id", "taggable_type", "taggable_id"], name: "index_taggings_uniqueness", unique: true
+    t.index ["tag_id"], name: "index_taggings_on_tag_id"
+    t.index ["taggable_type", "taggable_id"], name: "index_taggings_on_taggable"
+    t.index ["tenant_id"], name: "index_taggings_on_tenant_id"
+  end
+
+  create_table "tags", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "tenant_id", null: false
+    t.string "name", null: false
+    t.string "color"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tenant_id", "name"], name: "index_tags_on_tenant_id_and_name", unique: true
+    t.index ["tenant_id"], name: "index_tags_on_tenant_id"
+  end
+
   create_table "tenants", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "trade_name"
@@ -401,14 +537,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_000003) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_usages", "tenants"
   add_foreign_key "api_tokens", "users"
+  add_foreign_key "areas", "areas", column: "parent_id", on_delete: :nullify
+  add_foreign_key "areas", "sites", on_delete: :cascade
+  add_foreign_key "areas", "tenants"
   add_foreign_key "audit_events", "tenants", on_delete: :cascade
   add_foreign_key "device_tokens", "users"
+  add_foreign_key "devices", "areas", on_delete: :nullify
+  add_foreign_key "devices", "sites", on_delete: :cascade
+  add_foreign_key "devices", "tenants"
   add_foreign_key "invites", "tenants"
   add_foreign_key "invites", "users", column: "accepted_by_id", on_delete: :nullify
   add_foreign_key "invites", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "notifications", "tenants"
   add_foreign_key "notifications", "users", on_delete: :cascade
+  add_foreign_key "points", "areas", on_delete: :nullify
+  add_foreign_key "points", "devices", on_delete: :cascade
+  add_foreign_key "points", "sites", on_delete: :cascade
+  add_foreign_key "points", "tenants"
   add_foreign_key "service_api_keys", "users"
+  add_foreign_key "site_memberships", "sites", on_delete: :cascade
+  add_foreign_key "site_memberships", "tenants"
+  add_foreign_key "site_memberships", "users", on_delete: :cascade
+  add_foreign_key "sites", "tenants"
   add_foreign_key "solid_queue_batch_executions", "solid_queue_batches", column: "batch_id", on_delete: :cascade
   add_foreign_key "solid_queue_batch_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
@@ -419,5 +569,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_000003) do
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "subscriptions", "tenants", on_delete: :cascade
   add_foreign_key "subscriptions", "users", on_delete: :nullify
+  add_foreign_key "taggings", "tags", on_delete: :cascade
+  add_foreign_key "taggings", "tenants"
+  add_foreign_key "tags", "tenants"
   add_foreign_key "users", "tenants"
 end

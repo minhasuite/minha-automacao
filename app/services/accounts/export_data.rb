@@ -16,7 +16,11 @@ module Accounts
           user: { name: @user.name, email: @user.email, role: @user.role, created_at: @user.created_at.iso8601 },
           company: CompanySerializer.new(@tenant).to_h,
           members: @tenant.users.order(:name).map { |u| { name: u.name, email: u.email, role: u.role, joined_at: u.created_at.iso8601 } },
-          notifications: Notification.order(:created_at).map { |n| n.slice(:kind, :title, :body, :read_at, :created_at) }
+          notifications: Notification.order(:created_at).map { |n| n.slice(:kind, :title, :body, :read_at, :created_at) },
+          sites: SiteSerializer.new(Site.order(:name)).to_h,
+          areas: AreaSerializer.new(Area.order(:name)).to_h,
+          devices: DeviceSerializer.new(Device.order(:name)).to_h,
+          points: PointSerializer.new(Point.order(:key)).to_h
         }
       end
     end

@@ -19,3 +19,33 @@ FactoryBot.define do
     title { "Olá" }
   end
 end
+
+FactoryBot.define do
+  factory :site do
+    sequence(:name) { |n| "Casa #{n}" }
+  end
+
+  factory :area do
+    site
+    sequence(:name) { |n| "Sala #{n}" }
+  end
+
+  factory :device do
+    area { nil }
+    site { area&.site || association(:site) }
+    sequence(:name) { |n| "Interruptor #{n}" }
+  end
+
+  factory :point do
+    device
+    site { device.site }
+    sequence(:name) { |n| "Luz #{n}" }
+    capability { "onoff" }
+  end
+
+  factory :site_membership do
+    site
+    user { association :user, tenant: site.tenant }
+    role { "resident" }
+  end
+end

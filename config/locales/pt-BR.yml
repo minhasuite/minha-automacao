@@ -3,6 +3,10 @@ pt-BR:
     models:
       user: Usuário
       tenant: Empresa
+      site: Local
+      area: Área
+      device: Dispositivo
+      point: Ponto
     attributes:
       user:
         email: E-mail
@@ -11,3 +15,43 @@ pt-BR:
         role: Papel
       tenant:
         name: Razão social
+      site:
+        name: Nome
+        kind: Tipo
+        timezone: Fuso horário
+        latitude: Latitude
+        longitude: Longitude
+      area:
+        name: Nome
+        kind: Tipo
+        parent: Área de cima
+      site_membership:
+        role: Papel
+        user: Pessoa
+      device:
+        name: Nome
+        driver: Driver
+        status: Situação
+        area: Área
+      point:
+        name: Nome
+        key: Chave
+        capability: Tipo
+        data_type: Tipo do valor
+        state_class: Classe de estado
+        history: Histórico
+        risk: Risco
+        quality: Qualidade
+        scale: Escala
+        offset: Deslocamento
+        options: Opções
+        max: Máximo
+        min: Mínimo
+        device: Dispositivo
+        area: Área
+        pulse_ms: Pulso
+        max_on_s: Tempo máximo ligado
+        history_interval_s: Intervalo do histórico
+        retention_days: Retenção
+      tag:
+        name: Nome

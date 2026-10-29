@@ -1,0 +1,94 @@
+# Ponto: o centro de tudo (ESQUEMA-V1 §4.2). Um valor lido ou comandado de um
+# dispositivo, com capacidade (§4.3), calibração, risco e o último valor.
+class Point < ApplicationRecord
+  include Auditable
+
+  acts_as_tenant :tenant
+
+  # §4.3 sem `machine`/`counter` (v1.1). Capacidade → tipo do valor.
+  CAPABILITIES = {
+    "onoff" => "bool", "dimmer" => "integer", "color" => "json", "gate" => "enum",
+    "contact" => "bool", "motion" => "bool", "tamper" => "bool", "problem" => "bool",
+    "measure" => "decimal", "enum" => "enum", "setpoint" => "decimal", "command" => nil,
+    "text" => "string", "vacuum" => "enum", "speaker" => "json", "stream" => "string",
+    "climate" => "json", "event" => "json"
+  }.freeze
+  CAPABILITY_LABELS = {
+    "onoff" => "Liga/desliga", "dimmer" => "Intensidade", "color" => "Cor", "gate" => "Portão",
+    "contact" => "Sensor de abertura", "motion" => "Sensor de movimento", "tamper" => "Violação",
+    "problem" => "Problema", "measure" => "Medição", "enum" => "Seleção", "setpoint" => "Valor ajustável",
+    "command" => "Botão", "text" => "Texto", "vacuum" => "Robô aspirador", "speaker" => "Alto-falante",
+    "stream" => "Câmera", "climate" => "Clima", "event" => "Evento"
+  }.freeze
+  # Só leitura por natureza (o resto nasce gravável).
+  READ_ONLY = %w[contact motion tamper problem measure stream event].freeze
+  DATA_TYPES = %w[bool integer decimal enum string json timestamp].freeze
+  STATE_CLASSES = %w[measurement total total_increasing].freeze
+  HISTORY = %w[none on_change interval].freeze
+  RISKS = { "normal" => "Normal", "sensitive" => "Sensível", "critical" => "Crítico" }.freeze
+  QUALITIES = %w[good stale unavailable error].freeze
+
+  belongs_to :site
+  belongs_to :device
+  belongs_to :area, optional: true
+
+  before_validation :fill_defaults, on: :create
+
+  validates :name, :key, presence: true
+  validates :key, uniqueness: { scope: :site_id }, format: { with: /\A[a-z0-9_]+(\.[a-z0-9_]+)*\z/ }
+  validates :capability, inclusion: { in: CAPABILITIES.keys }
+  validates :data_type, inclusion: { in: DATA_TYPES }, allow_nil: true
+  validates :state_class, inclusion: { in: STATE_CLASSES }, allow_nil: true
+  validates :history, inclusion: { in: HISTORY }
+  validates :risk, inclusion: { in: RISKS.keys }
+  validates :quality, inclusion: { in: QUALITIES }
+  validates :scale, :offset, numericality: true
+  validates :pulse_ms, :max_on_s, :history_interval_s, :retention_days, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  validate :same_site
+  validate :options_list
+  validate :range_order
+
+  normalizes :name, with: ->(v) { v.to_s.squish }
+  normalizes :key, with: ->(v) { v.to_s.strip.downcase.presence }
+  normalizes :unit, :icon, :device_class, :confirm, :state_class, :data_type, with: ->(v) { v.to_s.strip.presence }
+
+  audited_attributes :name, :key, :risk, :capability
+
+  scope :ordered, -> { order(:name) }
+
+  def capability_label = CAPABILITY_LABELS.fetch(capability, capability)
+  def risk_label = RISKS.fetch(risk, risk)
+  def effective_area_id = area_id || device&.area_id
+  def option_values = Array(options).map(&:to_s)
+  def numeric? = data_type.in?(%w[integer decimal])
+
+  # Formulário web: "Casa, Fora, Férias" ↔ ["Casa", "Fora", "Férias"].
+  def options_text = option_values.join(", ")
+  def options_text=(text)
+    self.options = text.to_s.split(",").map(&:strip).compact_blank
+  end
+
+  private
+
+  def fill_defaults
+    self.site_id ||= device&.site_id
+    self.data_type ||= CAPABILITIES[capability]
+    self.writable = !capability.in?(READ_ONLY) unless writable_changed?
+    self.min, self.max = 0, 100 if capability == "dimmer" && min.nil? && max.nil?
+    self.key ||= [ device&.name, name ].map { |s| s.to_s.parameterize(separator: "_") }.compact_blank.join(".").presence
+  end
+
+  def same_site
+    errors.add(:device, "precisa ser deste local") if device && device.site_id != site_id
+    errors.add(:area, "precisa ser deste local") if area && area.site_id != site_id
+  end
+
+  def options_list
+    errors.add(:options, "precisa ser uma lista de opções") unless options.is_a?(Array) && options.all? { |o| o.is_a?(String) && o.present? }
+    errors.add(:options, "não pode ficar vazia numa seleção") if capability == "enum" && option_values.empty?
+  end
+
+  def range_order
+    errors.add(:max, "precisa ser maior que o mínimo") if min && max && max <= min
+  end
+end
