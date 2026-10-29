@@ -29,6 +29,16 @@ RSpec.describe PointsChannel, type: :channel do
     subscribe(signed_stream_name: "forjado")
     expect(subscription).to be_rejected
   end
+
+  it "assina os pontos do local (dashboards) só com papel nele" do
+    stub_connection current_user: owner
+    subscribe(signed_stream_name: Turbo::StreamsChannel.signed_stream_name([ point.site, :points ]))
+    expect(subscription).to be_confirmed
+
+    stub_connection current_user: create(:user, tenant: tenant, role: "member")
+    subscribe(signed_stream_name: Turbo::StreamsChannel.signed_stream_name([ point.site, :points ]))
+    expect(subscription).to be_rejected
+  end
 end
 
 RSpec.describe ApplicationCable::Connection, type: :channel do

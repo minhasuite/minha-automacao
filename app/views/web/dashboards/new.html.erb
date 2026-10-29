@@ -1,0 +1,11 @@
+<%= render "web/shared/header", title: "Novo painel", subtitle: "Comece do zero ou de uma cópia do painel automático.", back: site_dashboards_path(@site) %>
+<%= form_with model: @dashboard, url: site_dashboards_path(@site), class: "ss-card ss-card-pad grid gap-4 md:grid-cols-2 max-w-3xl" do |f| %>
+  <%= render "web/shared/errors", record: @dashboard %>
+  <div class="md:col-span-2"><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: "Painel da cozinha", autofocus: true %></div>
+  <div><%= f.label :kind, "Tipo", class: "ss-label" %><%= f.select :kind, Dashboard::KINDS.invert, {}, class: "ss-input" %></div>
+  <div class="flex items-end"><label class="ss-check"><%= check_box_tag :copy_auto, "1", true %>Começar com uma cópia do automático</label></div>
+  <div class="md:col-span-2 flex flex-wrap gap-2">
+    <%= f.submit "Criar painel", class: "ss-btn ss-btn-primary" %>
+    <%= link_to "Cancelar", site_dashboards_path(@site), class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

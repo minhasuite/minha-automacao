@@ -1,0 +1,5 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<div class="dw-card text-ink-2 leading-relaxed">
+  <% if w["label"].present? %><p class="dw-card-title"><%= w["label"] %></p><% end %>
+  <%= simple_format(h(w["text"].to_s)) %>
+</div>

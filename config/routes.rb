@@ -45,6 +45,19 @@ Rails.application.routes.draw do
       resources :scenes, path: "cenas", except: %i[index show], shallow: true do
         post :activate, on: :member, path: "acionar"
       end
+      # Dashboards (F5): editor e versões só para técnico ou dono.
+      resources :dashboards, path: "paineis", path_names: { new: "novo", edit: "editar" }, shallow: true do
+        member do
+          get "w/:widget_id", action: :widget, as: :widget
+          patch :draft, path: "rascunho"
+          post :publish, path: "publicar"
+          post :discard, path: "descartar"
+          post :revert, path: "voltar"
+          get :json
+          patch :json, action: :update_json
+          post :prefer, path: "padrao"
+        end
+      end
       resources :areas, path: "areas", except: :index, shallow: true
       resources :devices, path: "dispositivos", except: :index, shallow: true do
         resources :points, path: "pontos", except: :index, shallow: true do
@@ -115,6 +128,14 @@ Rails.application.routes.draw do
         resources :alert_rules, except: %i[new edit], shallow: true
         resources :scenes, except: %i[new edit], shallow: true do
           post :activate, on: :member
+        end
+      end
+      # Dashboards (F5).
+      resources :sites, only: [] do
+        resources :dashboards, except: %i[new edit], shallow: true do
+          post :publish, on: :member
+          post :revert, on: :member
+          get :versions, on: :member
         end
       end
       resources :alerts, only: %i[index show] do

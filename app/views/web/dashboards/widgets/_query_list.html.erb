@@ -1,0 +1,12 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<div class="dw-card">
+  <div class="flex items-center justify-between gap-2">
+    <p class="dw-card-title"><%= w["label"].presence || "Lista" %></p>
+    <% if w["data"]["count"].positive? %><span class="ss-badge ss-badge-accent num"><%= w["data"]["count"] %></span><% end %>
+  </div>
+  <% if w["data"]["point_ids"].empty? %>
+    <p class="dw-quiet"><%= icon("check-circle", "size-5 text-success") %><%= w["empty_text"].presence || "Nada por aqui agora." %></p>
+  <% else %>
+    <%= render "web/dashboards/widgets/rows", ids: w["data"]["point_ids"], points: points, w: w, dashboard: dashboard, live: live %>
+  <% end %>
+</div>

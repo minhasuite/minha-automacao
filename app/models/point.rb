@@ -79,7 +79,12 @@ class Point < ApplicationRecord
     if quality != quality_was
       events.create!(site: site, kind: "quality", payload: { from: quality_was, to: quality }, at: at)
     end
-    broadcast_refresh_to(self) if value_changed || quality != quality_was || capability == "command"
+    if value_changed || quality != quality_was || capability == "command"
+      broadcast_refresh_to(self)
+      # Dashboards: um aviso por local só com o id do ponto; cada tela recarrega
+      # os widgets que dependem dele (Turbo Frame, com o papel de quem vê).
+      Turbo::StreamsChannel.broadcast_action_to(site, :points, action: :point_changed, target: id)
+    end
     Automations.on_change(self, quality_was) if value_changed
   end
 

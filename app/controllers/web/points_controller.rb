@@ -55,6 +55,11 @@ module Web
     private
 
     def respond(error)
+      # Widget de dashboard: volta para o próprio quadro (recarrega só ele).
+      if params[:dashboard_id].present? && params[:widget_id].present? && turbo_frame_request?
+        flash[:alert] = error if error
+        return redirect_to(widget_dashboard_path(params[:dashboard_id], widget_id: params[:widget_id]), status: :see_other)
+      end
       return render(partial: "web/points/point", locals: { point: @point, error: error }) if turbo_frame_request?
 
       redirect_back fallback_location: @point.device, **(error ? { alert: error } : {})

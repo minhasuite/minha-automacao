@@ -1,0 +1,137 @@
+<% views = @draft["views"] %>
+<% view = views.find { |v| v["id"] == params[:view] } || views.first %>
+<% point_options = @points.group_by { |p| p.device.name }.sort.map { |dev, ps| [ dev, ps.map { |p| [ "#{p.name}#{' (oculto)' if p.hidden}", p.id ] } ] } %>
+<% names = @points.index_by(&:id) %>
+<% scenes = @site.scenes.order(:name).to_a %>
+<%= render "web/shared/header", title: "Editar #{@dashboard.name}", subtitle: [ @site.name, (@dashboard.auto? ? "automático: ao publicar, vira manual" : "versão #{@dashboard.version} publicada"), ("rascunho com mudanças" if @dashboard.draft?) ].compact.join(" · "), back: dashboard_path(@dashboard) do %>
+  <%= link_to dashboard_path(@dashboard, rascunho: 1, view: view&.dig("id")), class: "ss-btn ss-btn-outline" do %><%= icon("eye", "size-4") %>Pré-visualizar<% end %>
+  <%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary", disabled: !@dashboard.draft? && !@dashboard.auto?, form: { data: { turbo_confirm: "Publicar o rascunho para todos que usam este painel?", turbo_confirm_button: "Publicar" } } do %><%= icon("upload", "size-4") %>Publicar<% end %>
+<% end %>
+
+<div class="grid gap-6 lg:grid-cols-3 items-start">
+  <div class="lg:col-span-2 flex flex-col gap-4 min-w-0">
+    <nav class="dw-tabs !mt-0" aria-label="Views do rascunho">
+      <% views.each do |v| %>
+        <%= link_to edit_dashboard_path(@dashboard, view: v["id"]), class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
+      <% end %>
+      <details class="dw-pop">
+        <summary class="ss-chip cursor-pointer"><%= icon("plus", "size-4") %>Nova view</summary>
+        <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "ss-card p-3 mt-2 flex gap-2" do %>
+          <%= hidden_field_tag :op, "add_view", id: nil %>
+          <label class="sr-only" for="nv-title">Nome da view</label>
+          <%= text_field_tag :title, nil, class: "ss-input", id: "nv-title", placeholder: "Cozinha", required: true, maxlength: 60 %>
+          <%= submit_tag "Criar", class: "ss-btn ss-btn-primary" %>
+        <% end %>
+      </details>
+    </nav>
+
+    <% if view %>
+      <section class="ss-card ss-card-pad" aria-label="View <%= view['title'] %>">
+        <div class="flex flex-wrap items-end gap-3">
+          <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-0" do %>
+            <%= hidden_field_tag :op, "update_view", id: nil %><%= hidden_field_tag :target, view["id"], id: nil %><%= hidden_field_tag :view_id, view["id"], id: nil %>
+            <div class="flex-1 min-w-40"><label class="ss-label" for="vt">Nome da view</label><%= text_field_tag :title, view["title"], class: "ss-input", id: "vt", maxlength: 60 %></div>
+            <div class="w-40"><label class="ss-label" for="vi">Ícone</label><%= select_tag :icon, options_for_select(%w[home view-boards light-bulb lightning-bolt sun moon chart-bar switch-horizontal cube office-building sparkles bell], view["icon"]), include_blank: "Padrão", class: "ss-input", id: "vi" %></div>
+            <%= submit_tag "Salvar", class: "ss-btn ss-btn-ghost" %>
+          <% end %>
+          <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "view", target: view["id"], view_id: view["id"], name: "a view #{view['title']}" %>
+        </div>
+      </section>
+
+      <% Array(view["sections"]).each do |s| %>
+        <section class="ss-card ss-card-pad" aria-label="Seção <%= s['title'] %>">
+          <div class="flex flex-wrap items-end gap-3">
+            <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-0" do %>
+              <%= hidden_field_tag :op, "update_section", id: nil %><%= hidden_field_tag :target, s["id"], id: nil %><%= hidden_field_tag :view_id, view["id"], id: nil %>
+              <div class="flex-1 min-w-40"><label class="ss-label" for="st-<%= s['id'] %>">Seção</label><%= text_field_tag :title, s["title"], class: "ss-input", id: "st-#{s['id']}", maxlength: 60, placeholder: "Sem título" %></div>
+              <div class="w-44"><label class="ss-label" for="sw-<%= s['id'] %>">Largura no computador</label>
+                <%= select_tag "span[desktop]", options_for_select({ "Inteira" => 12, "Dois terços" => 8, "Metade" => 6, "Um terço" => 4 }, s.dig("span", "desktop") || 12), class: "ss-input", id: "sw-#{s['id']}" %>
+                <%= hidden_field_tag "span[mobile]", 12, id: nil %><%= hidden_field_tag "span[tablet]", (s.dig("span", "desktop") || 12) == 12 ? 12 : 6, id: nil %></div>
+              <%= submit_tag "Salvar", class: "ss-btn ss-btn-ghost" %>
+            <% end %>
+            <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "section", target: s["id"], view_id: view["id"], name: "a seção #{s['title']}" %>
+          </div>
+
+          <ul class="mt-4 divide-y divide-line">
+            <% Array(s["widgets"]).each do |w| %>
+              <% bound = [ w["bind"], *Array(w["binds"]) ].compact.filter_map { |id| names[id]&.name } %>
+              <% sp = DashboardsHelper::DEFAULT_SPAN.merge(w["span"] || {}) %>
+              <li id="<%= w['id'] %>" class="py-2 flex items-start gap-2">
+                <details class="flex-1 min-w-0" <%= "open" if @editing == w["id"] %>>
+                  <summary class="flex items-center gap-3 cursor-pointer list-none">
+                    <span class="grid place-items-center size-9 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(DashboardsHelper::WIDGET_ICONS.fetch(w["type"], "cube"), "size-4") %></span>
+                    <span class="min-w-0 flex-1">
+                      <span class="block font-semibold text-ink truncate"><%= w["label"].presence || w["title"].presence || bound.first || Dashboards::Schema::WIDGET_LABELS[w["type"]] %></span>
+                      <span class="block text-xs text-muted truncate"><%= Dashboards::Schema::WIDGET_LABELS.fetch(w["type"], w["type"]) %><%= " · #{bound.size} pontos" if bound.size > 1 %> · <span class="num"><%= sp.values_at("mobile", "tablet", "desktop").join(" / ") %></span><%= " · só #{w.dig('visible_if', 'role').map { |r| SiteMembership.role_label(r).downcase }.to_sentence}" if w.dig("visible_if", "role") %></span>
+                    </span>
+                    <span class="ss-btn ss-btn-ghost ss-btn-sm"><%= icon("pencil", "size-4") %><span class="sr-only">Editar</span></span>
+                  </summary>
+                  <%= render "web/dashboards/widget_form", dashboard: @dashboard, w: w, op: "update_widget", target: w["id"], view_id: view["id"], point_options: point_options, areas: @areas, scenes: scenes %>
+                </details>
+                <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "widget", target: w["id"], view_id: view["id"], name: "o widget" %>
+              </li>
+            <% end %>
+          </ul>
+          <% if Array(s["widgets"]).empty? %><p class="text-sm text-muted mt-3">Seção vazia: adicione o primeiro widget.</p><% end %>
+          <details class="mt-3 rounded-2xl bg-field p-3">
+            <summary class="cursor-pointer font-semibold text-accent flex items-center gap-2"><%= icon("plus", "size-4") %>Adicionar widget</summary>
+            <%= render "web/dashboards/widget_form", dashboard: @dashboard, w: {}, op: "add_widget", target: s["id"], view_id: view["id"], point_options: point_options, areas: @areas, scenes: scenes %>
+          </details>
+        </section>
+      <% end %>
+
+      <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "ss-card p-3 flex gap-2" do %>
+        <%= hidden_field_tag :op, "add_section", id: nil %><%= hidden_field_tag :view_id, view["id"], id: nil %>
+        <label class="sr-only" for="ns-title">Nome da nova seção</label>
+        <%= text_field_tag :title, nil, class: "ss-input", id: "ns-title", placeholder: "Nova seção (ex.: Luzes)", maxlength: 60 %>
+        <%= submit_tag "Adicionar seção", class: "ss-btn ss-btn-outline" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <aside class="flex flex-col gap-4">
+    <%= form_with model: @dashboard, url: dashboard_path(@dashboard), class: "ss-card ss-card-pad grid gap-3" do |f| %>
+      <h2>Painel</h2>
+      <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true %></div>
+      <fieldset><legend class="ss-label">Quem vê <span class="font-normal">(nenhum = todos)</span></legend>
+        <div class="flex flex-wrap gap-3">
+          <% SiteMembership::ROLES.each do |r| %><label class="ss-check"><%= check_box_tag "dashboard[roles][]", r, @dashboard.roles.include?(r), id: "dr-#{r}" %><%= SiteMembership.role_label(r) %></label><% end %>
+          <%= hidden_field_tag "dashboard[roles][]", "", id: nil %>
+        </div></fieldset>
+      <label class="ss-check"><%= f.check_box :site_default %>Padrão do local</label>
+      <div><%= f.submit "Salvar painel", class: "ss-btn ss-btn-ghost" %></div>
+    <% end %>
+
+    <section class="ss-card ss-card-pad">
+      <h2>Rascunho</h2>
+      <p class="text-sm text-muted mt-1">As mudanças ficam aqui até publicar. Quem usa o painel continua vendo a versão publicada.</p>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <%= link_to json_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("document-text", "size-4") %>JSON avançado<% end %>
+        <% if @dashboard.draft? %><%= button_to "Descartar rascunho", discard_dashboard_path(@dashboard), class: "ss-btn ss-btn-danger ss-btn-sm", form: { data: { turbo_confirm: "Descartar as mudanças do rascunho?" } } %><% end %>
+      </div>
+    </section>
+
+    <section class="ss-card ss-card-pad" aria-labelledby="versions-title">
+      <h2 id="versions-title">Versões</h2>
+      <% versions = @dashboard.versions.includes(:author).limit(15) %>
+      <% if versions.empty? %>
+        <p class="text-sm text-muted mt-1">Nenhuma publicada ainda<%= " (painel automático)" if @dashboard.auto? %>.</p>
+      <% else %>
+        <ul class="mt-2 divide-y divide-line">
+          <% versions.each do |v| %>
+            <li class="py-2 flex items-center gap-2">
+              <span class="min-w-0 flex-1"><span class="font-semibold text-ink num">v<%= v.version %></span> <span class="text-xs text-muted"><%= l(v.created_at, format: :short) %><%= " · #{v.author.name.split.first}" if v.author %></span></span>
+              <% if v.version == @dashboard.version %>
+                <span class="ss-badge ss-badge-success">No ar</span>
+              <% else %>
+                <%= button_to "Voltar para esta", revert_dashboard_path(@dashboard), params: { version: v.version }, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm: "Publicar de novo a versão #{v.version}?", turbo_confirm_button: "Publicar" } } %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+
+    <%= button_to dashboard_path(@dashboard), method: :delete, class: "ss-btn ss-btn-danger w-full", form: { data: { turbo_confirm: "Excluir o painel #{@dashboard.name}?" } } do %><%= icon("trash", "size-4") %>Excluir painel<% end %>
+  </aside>
+</div>

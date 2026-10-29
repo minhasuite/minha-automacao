@@ -65,7 +65,7 @@ RSpec.describe "Web: locais, áreas, dispositivos e pontos" do
     get "/locais/#{site.id}"
     expect(response.body).to include("Sala", "1 dispositivo")
     get "/"
-    expect(response.body).to include("Casa da Lia", "1 local")
+    expect(response.body).to include("Casa da Lia", "Ligados agora")
     get "/locais"
     expect(response.body).to include("Casa da Lia")
   end

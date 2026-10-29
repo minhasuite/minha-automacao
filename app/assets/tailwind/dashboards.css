@@ -1,0 +1,135 @@
+/* Dashboards (F5): grid de 12 colunas com largura por tela (--m/--t/--d no
+   style do widget), tiles que acendem na cor do que fazem (âmbar = luz),
+   cartões de área com arte própria e o editor. Cores só por token. */
+:root {
+  --amber: #b45309; --amber-soft: #fff3df; --amber-grad: linear-gradient(135deg, #fbbf24 0%, #f59e0b 55%, #f97316 100%);
+  --green-grad: linear-gradient(135deg, #34d399, #059669); --red-grad: linear-gradient(135deg, #fb7185, #e11d48);
+  --blue-grad: linear-gradient(135deg, #60a5fa, #2563eb);
+  --s0: #6d5cf6; --s1: #f59e0b; --s2: #10b981; --s3: #3b82f6; --s4: #ec4899; --s5: #14b8a6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --amber: #fbbf24; --amber-soft: #33240c; --s0: #8f80ff; --s1: #fbbf24; --s2: #34d399; --s3: #60a5fa; --s4: #f472b6; --s5: #2dd4bf; }
+}
+[data-theme="dark"] { --amber: #fbbf24; --amber-soft: #33240c; --s0: #8f80ff; --s1: #fbbf24; --s2: #34d399; --s3: #60a5fa; --s4: #f472b6; --s5: #2dd4bf; }
+
+@layer components {
+  .dw-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: .75rem; align-items: start; }
+  .dw-sections { gap: 1.75rem 1.25rem; }
+  .dw-w { grid-column: span var(--m, 12) / span var(--m, 12); min-width: 0; }
+  .dw-w[hidden] { display: none; }
+  .dw-sec-title { display: flex; align-items: center; gap: .45rem; margin: 0 0 .65rem .15rem; font-size: .72rem; font-weight: 700;
+                  text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+  .dw-heading { display: flex; align-items: center; gap: .5rem; font-size: 1.15rem; font-weight: 800; color: var(--ink); padding: .5rem .15rem 0; }
+  .dw-hero { padding: 1.4rem 1.5rem; }
+  .dw-hero h1 { font-size: clamp(1.5rem, 4vw, 2rem); }
+  .dw-hero-btn { display: inline-flex; align-items: center; gap: .4rem; height: 2.25rem; padding: 0 .8rem; border-radius: 999px; color: #fff;
+                 font-weight: 700; font-size: .82rem; text-decoration: none; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .22); }
+  .dw-hero-btn:hover { background: rgba(255, 255, 255, .26); }
+  .dw-badge { display: inline-flex; align-items: center; gap: .35rem; padding: .45rem .85rem; border-radius: 999px; color: #fff; font-size: .9rem;
+              background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .24); backdrop-filter: blur(6px); }
+  .dw-tabs { display: flex; gap: .5rem; overflow-x: auto; margin-top: 1rem; padding: .25rem .1rem .5rem; scrollbar-width: none; }
+  .dw-tabs::-webkit-scrollbar { display: none; }
+
+  .dw-card { position: relative; height: 100%; padding: .95rem 1rem; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card);
+             border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); transition: background .35s ease, border-color .35s ease, box-shadow .25s ease, transform .15s ease; }
+  .dw-card-title { font-size: .82rem; font-weight: 800; color: var(--ink); }
+  .dw-tile { display: flex; align-items: center; gap: .8rem; min-height: 4.6rem; }
+  .dw-press { width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+  .dw-press:hover { box-shadow: var(--shadow-hover); }
+  .dw-press:active { transform: scale(.98); }
+  .dw-ico { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex-shrink: 0; border-radius: 14px; background: var(--field);
+            color: var(--muted); transition: background .35s ease, color .35s ease, box-shadow .35s ease; }
+  .dw-ico svg { width: 1.3rem; height: 1.3rem; }
+  .dw-ico-sm { width: 2rem; height: 2rem; border-radius: 10px; }
+  .dw-ico-sm svg { width: 1rem; height: 1rem; }
+  .dw-name { display: block; font-weight: 700; color: var(--ink); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* No tile o nome quebra em até duas linhas (2 por linha no celular). */
+  .dw-tile .dw-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow-wrap: anywhere; }
+  @media (max-width: 639px) { .dw-tile { gap: .6rem; padding: .8rem; } .dw-tile .dw-ico { width: 2.4rem; height: 2.4rem; border-radius: 12px; } }
+  .dw-state { display: block; margin-top: .1rem; font-size: .8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dw-big { font-size: 1.2rem; font-weight: 600; color: var(--ink); }
+  .dw-more { position: absolute; top: .55rem; right: .55rem; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 9px; color: var(--muted); }
+  .dw-more:hover { background: var(--field); color: var(--accent); }
+  .dw-unavailable { opacity: .55; }
+
+  /* Ligado: a cor do widget (roxo da marca; âmbar para luz). */
+  .dw-on.dw-card { border-color: color-mix(in srgb, var(--accent) 38%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 11%, var(--surface)), var(--surface) 75%); }
+  .dw-on .dw-ico { background: var(--grad); color: #fff; box-shadow: 0 8px 20px -8px rgba(90, 69, 232, .7); }
+  .dw-on .dw-state { color: var(--ink-2); font-weight: 600; }
+  .dw-amber.dw-on.dw-card { border-color: color-mix(in srgb, var(--amber) 42%, var(--line)); background: linear-gradient(135deg, var(--amber-soft), var(--surface) 78%); }
+  .dw-amber.dw-on .dw-ico { background: var(--amber-grad); box-shadow: 0 8px 22px -8px rgba(245, 158, 11, .8); }
+  .dw-green.dw-on .dw-ico { background: var(--green-grad); }
+  .dw-red.dw-on .dw-ico { background: var(--red-grad); }
+  .dw-blue.dw-on .dw-ico { background: var(--blue-grad); }
+
+  .dw-rows { margin-top: .4rem; }
+  .dw-row { display: flex; align-items: center; gap: .65rem; padding: .5rem 0; border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+  .dw-row:first-child { border-top: 0; }
+  .dw-row a:hover .dw-name { color: var(--accent); }
+  .dw-quiet { display: flex; align-items: center; gap: .5rem; margin-top: .6rem; font-size: .875rem; color: var(--muted); }
+  /* Interruptor (pílula) das listas. */
+  .dw-switch { position: relative; width: 2.75rem; height: 1.6rem; flex-shrink: 0; border-radius: 999px; border: 0; cursor: pointer;
+               background: color-mix(in srgb, var(--muted) 35%, var(--field)); transition: background .25s ease; }
+  .dw-switch span { position: absolute; top: .2rem; left: .2rem; width: 1.2rem; height: 1.2rem; border-radius: 999px; background: #fff;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: transform .25s cubic-bezier(.2, .8, .2, 1); }
+  .dw-switch[aria-pressed="true"] { background: var(--accent); }
+  .dw-amber .dw-switch[aria-pressed="true"] { background: var(--amber-grad); }
+  .dw-switch[aria-pressed="true"] span { transform: translateX(1.15rem); }
+  .dw-range { width: 100%; accent-color: var(--accent); }
+  .dw-amber .dw-range { accent-color: #f59e0b; }
+  .dw-tile form { flex-basis: 100%; }
+  .dw-stat { display: flex; align-items: center; gap: .85rem; }
+
+  .dw-gauge-track, .dw-gauge-bar { fill: none; stroke-width: 9; stroke-linecap: round; }
+  .dw-gauge-track { stroke: var(--field); }
+  .dw-gauge-bar { stroke: var(--accent); transition: stroke-dasharray .6s ease; }
+
+  .dw-s0 { stroke: var(--s0); } .dw-s1 { stroke: var(--s1); } .dw-s2 { stroke: var(--s2); }
+  .dw-s3 { stroke: var(--s3); } .dw-s4 { stroke: var(--s4); } .dw-s5 { stroke: var(--s5); }
+  .dw-bg0 { background: var(--s0); } .dw-bg1 { background: var(--s1); } .dw-bg2 { background: var(--s2); }
+  .dw-bg3 { background: var(--s3); } .dw-bg4 { background: var(--s4); } .dw-bg5 { background: var(--s5); }
+  .dw-legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .35rem 1rem; margin-top: .75rem; font-size: .8rem; color: var(--ink-2); }
+  .dw-legend li { display: flex; align-items: center; gap: .45rem; min-width: 0; }
+  .dw-dot { width: .6rem; height: .6rem; border-radius: 999px; flex-shrink: 0; }
+
+  /* Cartão de área: foto (com véu) ou uma das artes da casa. */
+  .dw-area { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 8.5rem; padding: 1rem; overflow: hidden;
+             border-radius: 18px; color: #fff; box-shadow: var(--shadow-card); isolation: isolate; transition: transform .25s cubic-bezier(.2, .8, .2, 1), box-shadow .25s ease; }
+  .dw-area:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+  .dw-area::after { content: ""; position: absolute; inset: auto -20% -60% auto; width: 75%; aspect-ratio: 1; z-index: -1; border-radius: 999px;
+                    background: radial-gradient(circle, rgba(255, 255, 255, .28), transparent 65%); }
+  .dw-area-photo { background: linear-gradient(180deg, rgba(14, 13, 22, .05), rgba(14, 13, 22, .72)), var(--photo) center / cover; }
+  .dw-art-0 { background: linear-gradient(135deg, #5a45e8, #3b82f6); }
+  .dw-art-1 { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+  .dw-art-2 { background: linear-gradient(135deg, #0ea5e9, #10b981); }
+  .dw-art-3 { background: linear-gradient(135deg, #7b5cff, #ec4899); }
+  .dw-art-4 { background: linear-gradient(135deg, #14b8a6, #3b82f6); }
+  .dw-art-5 { background: linear-gradient(135deg, #334155, #5a45e8); }
+  .dw-area-ico { position: absolute; top: .9rem; left: 1rem; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 12px;
+                 background: rgba(255, 255, 255, .2); backdrop-filter: blur(4px); }
+  .dw-area-name { font-size: 1.15rem; font-weight: 800; letter-spacing: -.01em; }
+  .dw-area-chip { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 700;
+                  background: rgba(255, 255, 255, .2); }
+  .dw-scene { display: inline-flex; align-items: center; gap: .45rem; padding: .6rem 1rem; border-radius: 14px; font-weight: 700; font-size: .875rem;
+              color: var(--ink); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-card); cursor: pointer; }
+  .dw-scene:hover { border-color: var(--accent); color: var(--accent); }
+  .dw-scene svg { color: var(--accent); }
+
+  /* Editor. */
+  .dw-tool { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 9px; border: 1px solid var(--line); background: var(--surface);
+             color: var(--muted); cursor: pointer; }
+  .dw-tool:hover { color: var(--accent); border-color: var(--accent); }
+  .dw-tool-danger:hover { color: var(--danger); border-color: var(--danger); }
+  .dw-pop summary { list-style: none; }
+  .dw-pop summary::-webkit-details-marker { display: none; }
+  .dw-wf [data-for] { display: none; }
+}
+@media (min-width: 640px) { .dw-w { grid-column: span var(--t, 6) / span var(--t, 6); } }
+@media (min-width: 1024px) { .dw-w { grid-column: span var(--d, 4) / span var(--d, 4); } }
+/* Formulário do widget: só os campos do tipo escolhido (sem JS). */
+.dw-wf:has(option[value="tile"]:checked) [data-for~="tile"], .dw-wf:has(option[value="group"]:checked) [data-for~="group"],
+.dw-wf:has(option[value="stat"]:checked) [data-for~="stat"], .dw-wf:has(option[value="gauge"]:checked) [data-for~="gauge"],
+.dw-wf:has(option[value="chart"]:checked) [data-for~="chart"], .dw-wf:has(option[value="query_list"]:checked) [data-for~="query_list"],
+.dw-wf:has(option[value="area_card"]:checked) [data-for~="area_card"], .dw-wf:has(option[value="scene_bar"]:checked) [data-for~="scene_bar"],
+.dw-wf:has(option[value="heading"]:checked) [data-for~="heading"], .dw-wf:has(option[value="markdown"]:checked) [data-for~="markdown"] { display: block; }
+.dw-wf:has(option[value="gauge"]:checked) div.grid[data-for~="gauge"] { display: grid; }

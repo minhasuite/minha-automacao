@@ -1,0 +1,12 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<div class="flex flex-wrap gap-2">
+  <% w["data"]["scenes"].each do |s| %>
+    <% if s["can_activate"] %>
+      <% confirm = s["confirm"] ? { turbo_confirm: "Acionar a cena #{s['name']}?", turbo_confirm_button: "Acionar" } : {} %>
+      <%= button_to activate_scene_path(s["id"]), params: { back: dashboard_path(dashboard) }, class: "dw-scene", form: { data: { turbo_frame: "_top", **confirm } } do %><%= icon(s["icon"].presence || "sparkles", "size-4") %><%= s["name"] %><% end %>
+    <% else %>
+      <span class="dw-scene opacity-60" title="Seu papel não aciona esta cena"><%= icon(s["icon"].presence || "sparkles", "size-4") %><%= s["name"] %></span>
+    <% end %>
+  <% end %>
+  <% if w["data"]["scenes"].empty? %><p class="dw-quiet"><%= icon("sparkles", "size-5 text-muted") %>Nenhuma cena criada.</p><% end %>
+</div>

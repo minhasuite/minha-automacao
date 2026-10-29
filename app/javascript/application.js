@@ -41,6 +41,28 @@ document.addEventListener("turbo:load", () => {
   if (d) { d.open = true; el.scrollIntoView({ block: "start" }) }
 })
 
+// Dashboards: o servidor avisa "o ponto X mudou" (stream do local, sem HTML) e
+// cada quadro de widget que depende dele (data-points) se recarrega sozinho,
+// renderizado com o papel de quem vê. Junta avisos seguidos em 250 ms.
+const stale = new Set()
+let staleTimer
+Turbo.StreamActions.point_changed = function () {
+  document.querySelectorAll(`turbo-frame[data-points~="${CSS.escape(this.target)}"]`).forEach((f) => stale.add(f))
+  clearTimeout(staleTimer)
+  staleTimer = setTimeout(() => {
+    stale.forEach((f) => {
+      if (!f.isConnected) return
+      if (f.getAttribute("src")) f.reload(); else f.src = f.dataset.src
+    })
+    stale.clear()
+  }, 250)
+}
+
+// Slider e seleção de widget se aplicam ao soltar/escolher.
+document.addEventListener("change", (e) => {
+  if (e.target.matches("[data-autosubmit]")) e.target.form.requestSubmit()
+})
+
 // Linha de tabela inteira clicável: vai para o primeiro link da linha.
 document.addEventListener("click", (e) => {
   const row = e.target.closest(".ss-table tbody tr")

@@ -11,6 +11,35 @@ module ChartsHelper
     history.point.bool? ? bands_chart(history) : line_chart(history)
   end
 
+  # Widget de gráfico (dashboard): um booleano vira faixas; números viram
+  # linhas na mesma escala, uma cor por série (.dw-s0…). { svg:, min:, max:,
+  # on_seconds:, series: [[ponto, índice]], from:, to: } ou nil sem dado.
+  def dashboard_chart(points, range)
+    from = (Time.current - Points::History::RANGES.fetch(range, 24.hours)).iso8601
+    histories = points.map { |p| Points::History.new(p, from: from) }
+    return if histories.empty?
+    return history_chart(histories.first)&.merge(series: [ [ points.first, 0 ] ], from: histories.first.from, to: histories.first.to) if points.first.bool?
+
+    series = histories.each_with_index.filter_map do |h, i|
+      rows = h.raw? ? h.items.map { |r| [ r.at, r.value ] } : h.items.map { |r| [ r.starts_at, r.avg ] }
+      rows = rows.reject { |_, v| v.nil? }
+      [ h, rows, i ] if rows.any? && !h.point.bool?
+    end
+    return if series.empty?
+
+    values = series.flat_map { |_, rows, _| rows.map { |r| r[1].to_f } }
+    lo, hi = [ values.min, 0 ].min, values.max
+    hi = lo + 1 if hi == lo
+    y = ->(v) { (H - 4 - ((v.to_f - lo) / (hi - lo) * (H - 8))).round(2) }
+    shapes = series.map do |h, rows, i|
+      line = rows.map { |at, v| "#{chart_x(h, at)},#{y.(v)}" }
+      line << "#{chart_x(h, [ Time.current, h.to ].min)},#{y.(rows.last[1])}" if h.raw?
+      tag.polyline(points: line.join(" "), fill: "none", class: "dw-s#{i % 6}", "stroke-width": 2,
+                   "vector-effect": "non-scaling-stroke", "stroke-linejoin": "round")
+    end
+    { svg: svg_tag(safe_join(shapes)), min: lo, max: hi, series: series.map { |h, _, i| [ h.point, i ] }, from: histories.first.from, to: histories.first.to }
+  end
+
   private
 
   def chart_x(history, at) = ((at - history.from) / (history.to - history.from) * W).clamp(0, W).round(1)
