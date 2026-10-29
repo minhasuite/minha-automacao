@@ -1,0 +1,61 @@
+module Drivers
+  # MQTT genérico (o Mosquitto do servidor local; o zigbee2mqtt é um caso dele).
+  # Ponto ↔ tópico por `points.address`: `topic` (estado), `json_path` ("a.b";
+  # vazio = o payload inteiro), `command_topic` (padrão `topic/set`),
+  # `payload_on`/`payload_off` (padrão true/false). Número: bruto × scale +
+  # offset. O valor entra pelo `Mqtt::Listener` quando o aparelho publica o
+  # estado; o comando só publica (o eco do estado atualiza o ponto), salvo
+  # ponto sem tópico de estado, que é atualizado na hora.
+  class Mqtt
+    class Error < StandardError; end
+
+    def self.url = ENV["MQTT_URL"].presence
+
+    def execute(point, command, value)
+      a = point.address
+      topic = a["command_topic"].presence || (a["topic"].present? && "#{a['topic']}/set") or raise Error, "Ponto sem tópico no endereço."
+      new_value = Points::Command.new(point, command, value).new_value
+      ::Mqtt::Listener.publish(topic, self.class.payload(point, new_value))
+      point.report!(new_value) if a["topic"].blank?
+    end
+
+    # Valor do ponto → payload publicado.
+    def self.payload(point, value)
+      a = point.address
+      raw = if point.bool?
+        value ? a.fetch("payload_on", true) : a.fetch("payload_off", false)
+      else
+        point.to_raw(value)
+      end
+      path = a["json_path"].presence or return raw.is_a?(String) ? raw : raw.to_json
+      path.split(".").reverse.reduce(raw) { |acc, k| { k => acc } }.to_json
+    end
+
+    # Payload recebido → valor do ponto; nil = a mensagem não traz o campo.
+    def self.value_for(point, payload)
+      raw = extract(payload, point.address["json_path"].presence)
+      return if raw.nil?
+      return bool(point, raw) if point.bool?
+      return point.from_raw(raw.is_a?(String) ? Float(raw, exception: false) : raw) if point.numeric?
+
+      point.data_type == "json" ? raw : raw.to_s
+    end
+
+    def self.extract(payload, path)
+      return payload unless path
+
+      data = JSON.parse(payload)
+      path.split(".").reduce(data) { |d, k| d.is_a?(Hash) ? d[k] : nil }
+    rescue JSON::ParserError
+      nil
+    end
+
+    def self.bool(point, raw)
+      a = point.address
+      return true if raw.to_s == a.fetch("payload_on", true).to_s
+      return false if raw.to_s == a.fetch("payload_off", false).to_s
+
+      raw if [ true, false ].include?(raw)
+    end
+  end
+end

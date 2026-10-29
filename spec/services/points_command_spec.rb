@@ -46,7 +46,7 @@ RSpec.describe Points::Command do
     expect_error(:unsupported_command) { run(point(capability: "color"), "set_color") }
     expect_error(:not_writable) { run(point(capability: "measure"), "set", "1") }
     expect_error(:point_disabled) { run(point(disabled: true), "on") }
-    real = create(:point, device: create(:device, site: device.site, driver: "mqtt"))
+    real = create(:point, device: create(:device, site: device.site, driver: "xiaomi_miot"))
     expect_error(:driver_unavailable) { run(real, "on") }
   end
 end

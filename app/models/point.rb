@@ -99,6 +99,21 @@ class Point < ApplicationRecord
     raw
   end
 
+  # Bruto do aparelho ↔ valor do ponto (calibração: valor = bruto × scale + offset).
+  def from_raw(raw)
+    return raw unless numeric? && raw.is_a?(Numeric)
+
+    v = (BigDecimal(raw.to_s) * scale) + offset
+    data_type == "integer" ? v.round.to_i : v.to_f
+  end
+
+  def to_raw(value)
+    return value unless numeric?
+    raise ArgumentError, "Escala zero no ponto #{key}." if scale.zero?
+
+    ((BigDecimal(value.to_s) - offset) / scale).round.to_i
+  end
+
   # Formulário web: "Casa, Fora, Férias" ↔ ["Casa", "Fora", "Férias"].
   def options_text = option_values.join(", ")
   def options_text=(text)

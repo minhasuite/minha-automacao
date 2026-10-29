@@ -2,4 +2,6 @@
 # aparelho com `listen` ligado (VPS, padrão até a F10) ele só olha a tabela.
 Rails.application.config.after_initialize do
   SolidQueue.on_worker_start { Tuya::Listener.start } if defined?(SolidQueue) && ENV["TUYA_LISTENER"] != "off"
+  # Ouvinte MQTT (F8): só com MQTT_URL (servidor local com o Mosquitto).
+  SolidQueue.on_worker_start { Mqtt::Listener.start } if defined?(SolidQueue)
 end

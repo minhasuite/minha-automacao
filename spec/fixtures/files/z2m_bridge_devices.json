@@ -1,0 +1,115 @@
+[
+  {
+    "ieee_address": "0x00124b0029117c4a",
+    "type": "Coordinator",
+    "network_address": 0,
+    "supported": true,
+    "disabled": false,
+    "friendly_name": "Coordinator",
+    "definition": null,
+    "power_source": null,
+    "interview_completed": true,
+    "interviewing": false
+  },
+  {
+    "ieee_address": "0xa4c138f1d2b4e5f1",
+    "type": "EndDevice",
+    "network_address": 12345,
+    "supported": true,
+    "disabled": false,
+    "friendly_name": "sala_temperatura",
+    "description": null,
+    "manufacturer": "_TZ3000_fllyghyj",
+    "model_id": "TS0201",
+    "power_source": "Battery",
+    "interview_completed": true,
+    "interviewing": false,
+    "definition": {
+      "model": "WSD500A",
+      "vendor": "Tuya",
+      "description": "Temperature & humidity sensor",
+      "supports_ota": false,
+      "options": [],
+      "exposes": [
+        { "type": "numeric", "name": "battery", "label": "Battery", "property": "battery", "access": 1, "unit": "%", "value_min": 0, "value_max": 100, "category": "diagnostic" },
+        { "type": "numeric", "name": "temperature", "label": "Temperature", "property": "temperature", "access": 1, "unit": "°C" },
+        { "type": "numeric", "name": "humidity", "label": "Humidity", "property": "humidity", "access": 1, "unit": "%" },
+        { "type": "numeric", "name": "linkquality", "label": "Linkquality", "property": "linkquality", "access": 1, "unit": "lqi", "value_min": 0, "value_max": 255, "category": "diagnostic" }
+      ]
+    }
+  },
+  {
+    "ieee_address": "0x00158d0004a1b2c3",
+    "type": "EndDevice",
+    "friendly_name": "porta_cozinha",
+    "power_source": "Battery",
+    "interview_completed": true,
+    "disabled": false,
+    "definition": {
+      "model": "MCCGQ11LM",
+      "vendor": "Aqara",
+      "description": "Door and window sensor",
+      "exposes": [
+        { "type": "binary", "name": "contact", "label": "Contact", "property": "contact", "access": 1, "value_on": false, "value_off": true },
+        { "type": "numeric", "name": "battery", "label": "Battery", "property": "battery", "access": 1, "unit": "%" }
+      ]
+    }
+  },
+  {
+    "ieee_address": "0x00158d0005c3d4e5",
+    "type": "EndDevice",
+    "friendly_name": "movimento_corredor",
+    "interview_completed": true,
+    "disabled": false,
+    "definition": {
+      "model": "RTCGQ11LM",
+      "vendor": "Aqara",
+      "exposes": [
+        { "type": "binary", "name": "occupancy", "label": "Occupancy", "property": "occupancy", "access": 1, "value_on": true, "value_off": false },
+        { "type": "numeric", "name": "illuminance", "label": "Illuminance", "property": "illuminance", "access": 1, "unit": "lx" }
+      ]
+    }
+  },
+  {
+    "ieee_address": "0xa4c1380b7e6f5d4c",
+    "type": "Router",
+    "friendly_name": "interruptor_varanda",
+    "interview_completed": true,
+    "disabled": false,
+    "definition": {
+      "model": "TS0002",
+      "vendor": "Tuya",
+      "exposes": [
+        { "type": "switch", "endpoint": "l1", "features": [ { "type": "binary", "name": "state", "label": "State", "property": "state_l1", "endpoint": "l1", "access": 7, "value_on": "ON", "value_off": "OFF", "value_toggle": "TOGGLE" } ] },
+        { "type": "switch", "endpoint": "l2", "features": [ { "type": "binary", "name": "state", "label": "State", "property": "state_l2", "endpoint": "l2", "access": 7, "value_on": "ON", "value_off": "OFF", "value_toggle": "TOGGLE" } ] },
+        { "type": "enum", "name": "power_on_behavior", "label": "Power-on behavior", "property": "power_on_behavior", "access": 7, "values": [ "off", "on", "previous" ] },
+        { "type": "enum", "name": "action", "label": "Action", "property": "action", "access": 1, "values": [ "single", "double", "hold" ] }
+      ]
+    }
+  },
+  {
+    "ieee_address": "0x001788010b1c2d3e",
+    "type": "Router",
+    "friendly_name": "luz_quarto",
+    "interview_completed": true,
+    "disabled": false,
+    "definition": {
+      "model": "9290022166",
+      "vendor": "Philips",
+      "exposes": [
+        { "type": "light", "features": [
+          { "type": "binary", "name": "state", "label": "State", "property": "state", "access": 7, "value_on": "ON", "value_off": "OFF", "value_toggle": "TOGGLE" },
+          { "type": "numeric", "name": "brightness", "label": "Brightness", "property": "brightness", "access": 7, "value_min": 0, "value_max": 254 }
+        ] }
+      ]
+    }
+  },
+  {
+    "ieee_address": "0x0000000000000099",
+    "type": "EndDevice",
+    "friendly_name": "pareando",
+    "interview_completed": false,
+    "disabled": false,
+    "definition": null
+  }
+]

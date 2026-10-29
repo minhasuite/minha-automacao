@@ -63,4 +63,7 @@ end
 
 # Automações (F6): expressões sem código arbitrário e textos com objetos limitados.
 gem "dentaku", "~> 4.1"
+
+# Driver mqtt (F8): Mosquitto local e zigbee2mqtt.
+gem "mqtt", "0.6.0"
 gem "liquid", "~> 5.14"

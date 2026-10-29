@@ -1,5 +1,6 @@
 # Dispositivo do local. Executam comando os drivers de `Drivers::REGISTRY`
-# (virtual e tuya_local); os outros entram só no cadastro por enquanto.
+# (virtual, tuya_local e mqtt); go2rtc é câmera (só visualização) e os outros
+# entram só no cadastro por enquanto.
 # Tuya local: `address` {host, version, port}, `external_id` = device_id,
 # `credential` = local_key (cifrada), `listen` liga o ouvinte persistente.
 class Device < ApplicationRecord

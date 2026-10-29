@@ -1,0 +1,106 @@
+module Mqtt
+  # Conexão persistente com o broker (MQTT_URL) no processo worker: assina os
+  # tópicos de estado dos pontos `mqtt` (e o `bridge/devices` do zigbee2mqtt,
+  # para a descoberta) e passa cada mensagem para `Point#report!`. Caiu: os
+  # pontos ficam `unavailable` e reconecta com espera crescente (até 60 s);
+  # as mensagens retidas devolvem o valor na volta. Sem MQTT_URL (VPS) não
+  # liga, e o comando falha com "MQTT não configurado".
+  class Listener
+    SCAN_EVERY = 30
+    MAX_BACKOFF = 60
+
+    class << self
+      def start
+        return if Drivers::Mqtt.url.nil? || @thread&.alive?
+
+        @thread = Thread.new do
+          failures = 0
+          loop do
+            failures = session ? 0 : failures + 1
+            sleep [ 2**failures, MAX_BACKOFF ].min
+          end
+        end
+      end
+
+      # Usa a conexão do ouvinte; sem ela (outro processo, ouvinte parado), uma curta.
+      def publish(topic, payload)
+        url = Drivers::Mqtt.url or raise Drivers::Mqtt::Error, "MQTT não configurado neste servidor."
+        if @client&.connected?
+          @client.publish(topic, payload)
+        else
+          MQTT::Client.connect(url) { |c| c.publish(topic, payload) }
+        end
+      rescue MQTT::Exception, SystemCallError, SocketError, Timeout::Error => e
+        raise Drivers::Mqtt::Error, "Sem conexão com o broker MQTT: #{e.message}"
+      end
+
+      # Uma sessão com o broker: true se chegou a conectar.
+      def session
+        connected = false
+        MQTT::Client.connect(Drivers::Mqtt.url, keep_alive: 15) do |client|
+          @client = client
+          connected = true
+          subscribed = Set.new
+          next_scan = 0
+          loop do
+            if monotonic >= next_scan
+              (topics - subscribed.to_a).each { |t| client.subscribe(t => 0) && subscribed << t }
+              next_scan = monotonic + SCAN_EVERY
+            end
+            next sleep(0.2) if client.queue_empty?
+
+            topic, payload = client.get
+            handle(topic, payload)
+          end
+        end
+      rescue MQTT::Exception, SystemCallError, SocketError, Timeout::Error, IOError => e
+        Rails.logger.warn("[mqtt] #{e.class}: #{e.message}")
+        unavailable!
+        connected
+      ensure
+        @client = nil
+      end
+
+      def topics
+        wrap do
+          list = Point.joins(:device).where(devices: { driver: "mqtt", disabled: false }).distinct.pluck(Arel.sql("points.address->>'topic'")).compact_blank
+          list << Z2m.devices_topic if Z2m.site
+          list.uniq
+        end
+      end
+
+      def handle(topic, payload)
+        wrap do
+          next Z2m.discover!(Z2m.site, payload) if topic == Z2m.devices_topic && Z2m.site
+
+          Point.joins(:device).where(devices: { driver: "mqtt", disabled: false }).where("points.address->>'topic' = ?", topic).includes(:device).find_each do |point|
+            value = Drivers::Mqtt.value_for(point, payload)
+            next if value.nil?
+
+            ActsAsTenant.with_tenant(point.tenant) do
+              point.device.update_columns(status: "online", last_seen_at: Time.current)
+              point.report!(value)
+            end
+          end
+        end
+      rescue StandardError => e
+        Rails.error.report(e, handled: true)
+      end
+
+      def unavailable!
+        wrap do
+          Point.joins(:device).where(devices: { driver: "mqtt" }).where.not(quality: "unavailable").find_each do |p|
+            ActsAsTenant.with_tenant(p.tenant) { p.report!(p.value, quality: "unavailable") }
+          end
+        end
+      rescue StandardError => e
+        Rails.error.report(e, handled: true)
+      end
+
+      private
+
+      def wrap(&) = Rails.application.executor.wrap { ActsAsTenant.without_tenant(&) }
+      def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    end
+  end
+end
