@@ -11,7 +11,7 @@ require "action_mailer/railtie"
 # require "action_mailbox/engine"
 # require "action_text/engine"
 require "action_view/railtie"
-# require "action_cable/engine"
+require "action_cable/engine"
 # require "rails/test_unit/railtie"
 
 # Require the gems listed in Gemfile, including any gems
@@ -42,6 +42,10 @@ module MinhaAutomacao
 
     # UUID em toda tabela (inclusive as do Active Storage).
     config.generators.orm :active_record, primary_key_type: :uuid
+
+    # db/structure.sql (não schema.rb): `readings` é particionada por mês e o
+    # schema.rb não sabe descrever partição.
+    config.active_record.schema_format = :sql
 
     # Monolito: web (Hotwire, sessão em cookie) e API /api/v1 (ApiToken, sem
     # cookie) no mesmo processo. Api::V1::BaseController herda de

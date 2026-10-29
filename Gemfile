@@ -18,9 +18,10 @@ gem "googleauth", "~> 1.11"
 # Multi-tenant (a casa) com require_tenant.
 gem "acts_as_tenant", "~> 1.0"
 
-# Fila, cache — Solid* no Postgres, sem Redis.
+# Fila, cache e Action Cable — Solid* no Postgres, sem Redis.
 gem "solid_queue", "~> 1.4"
 gem "solid_cache", "~> 1.0"
+gem "solid_cable", "~> 3.0"
 
 # API JSON
 gem "alba", "~> 3.7"

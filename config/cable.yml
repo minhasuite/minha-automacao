@@ -1,0 +1,14 @@
+# Action Cable no Postgres (Solid Cable, tabela solid_cable_messages no banco
+# primário). Tempo real da web: Turbo Streams por ponto (PointsChannel).
+development:
+  adapter: solid_cable
+  polling_interval: 0.1.seconds
+  message_retention: 1.day
+
+test:
+  adapter: test
+
+production:
+  adapter: solid_cable
+  polling_interval: 0.1.seconds
+  message_retention: 1.day

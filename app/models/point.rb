@@ -31,6 +31,8 @@ class Point < ApplicationRecord
   belongs_to :site
   belongs_to :device
   belongs_to :area, optional: true
+  has_many :commands, dependent: nil # cascade no banco
+  has_many :events, dependent: nil
 
   before_validation :fill_defaults, on: :create
 
@@ -61,6 +63,21 @@ class Point < ApplicationRecord
   def effective_area_id = area_id || device&.area_id
   def option_values = Array(options).map(&:to_s)
   def numeric? = data_type.in?(%w[integer decimal])
+  def bool? = data_type == "bool"
+
+  # Único caminho de valor novo (driver, comando virtual): grava o ponto, a
+  # leitura de histórico, o evento de qualidade e avisa as telas abertas.
+  def report!(new_value, quality: "good", at: Time.current)
+    value_changed = new_value != value
+    quality_was = self.quality
+    self.changed_at = at if value_changed
+    update!(value: new_value, quality: quality, reported_at: at)
+    Reading.record!(self, at) if value_changed
+    if quality != quality_was
+      events.create!(site: site, kind: "quality", payload: { from: quality_was, to: quality }, at: at)
+    end
+    broadcast_refresh_to(self) if value_changed || quality != quality_was || capability == "command"
+  end
 
   # Formulário web: "Casa, Fora, Férias" ↔ ["Casa", "Fora", "Férias"].
   def options_text = option_values.join(", ")
