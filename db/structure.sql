@@ -246,7 +246,9 @@ CREATE TABLE public.devices (
     battery_point_id uuid,
     disabled boolean DEFAULT false NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    credential text,
+    listen boolean DEFAULT false NOT NULL
 );
 
 
@@ -1754,6 +1756,13 @@ CREATE INDEX index_devices_on_area_id ON public.devices USING btree (area_id);
 
 
 --
+-- Name: index_devices_on_external_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_devices_on_external_id ON public.devices USING btree (external_id);
+
+
+--
 -- Name: index_devices_on_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2747,6 +2756,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261029200001'),
 ('20261029100002'),
 ('20261029100001'),
 ('20261029000001'),

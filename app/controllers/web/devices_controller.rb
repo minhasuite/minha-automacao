@@ -44,6 +44,6 @@ module Web
       authorize_site!(@site, action)
     end
 
-    def device_params = params.require(:device).permit(:name, :area_id, :driver, :manufacturer, :model, :serial, :disabled)
+    def device_params = params.require(:device).permit(:name, :area_id, :driver, :manufacturer, :model, :serial, :disabled, :listen)
   end
 end

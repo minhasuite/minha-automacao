@@ -1,9 +1,8 @@
 # Drivers que executam comando (ESQUEMA-V1 §4.2). Interface mínima:
 # `execute(point, command, value)` aplica no aparelho e reporta o valor novo
-# com `point.report!`; erro levanta exceção (o comando vira `failed`). A F3
-# pluga `tuya_local` e os outros aqui.
+# com `point.report!`; erro levanta exceção (o comando vira `failed`).
 module Drivers
-  REGISTRY = { "virtual" => "Drivers::Virtual" }.freeze
+  REGISTRY = { "virtual" => "Drivers::Virtual", "tuya_local" => "Drivers::TuyaLocal" }.freeze
 
   def self.supported?(device) = REGISTRY.key?(device.driver)
   def self.for(device) = REGISTRY.fetch(device.driver).constantize.new

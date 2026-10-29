@@ -4,11 +4,15 @@
   <div class="md:col-span-2"><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: "Interruptor da sala", autofocus: true %></div>
   <div><%= f.label :area_id, "Área", class: "ss-label" %><%= f.select :area_id, site.areas.order(:name).pluck(:name, :id), { include_blank: "Sem área" }, class: "ss-input" %></div>
   <div><%= f.label :driver, "Driver", class: "ss-label" %><%= f.select :driver, Device::DRIVERS.invert, {}, class: "ss-input" %>
-    <p class="text-xs text-muted mt-1">Por enquanto só o virtual executa comandos; os outros chegam com a borda.</p></div>
+    <p class="text-xs text-muted mt-1">Executam comandos: virtual e Tuya local. Os outros chegam nas próximas fases.</p></div>
   <div><%= f.label :manufacturer, "Fabricante", class: "ss-label" %><%= f.text_field :manufacturer, class: "ss-input" %></div>
   <div><%= f.label :model, "Modelo", class: "ss-label" %><%= f.text_field :model, class: "ss-input" %></div>
   <div><%= f.label :serial, "Número de série", class: "ss-label" %><%= f.text_field :serial, class: "ss-input num" %></div>
   <div class="flex items-end"><label class="ss-check"><%= f.check_box :disabled %> Desativado (não recebe comando)</label></div>
+  <% if device.tuya_local? %>
+    <div class="md:col-span-2"><label class="ss-check"><%= f.check_box :listen %> Manter conexão com o aparelho (o botão físico atualiza a tela)</label>
+      <p class="text-xs text-muted mt-1">Deixe desligado enquanto o Home Assistant controla este aparelho: muitos aceitam uma conexão só.</p></div>
+  <% end %>
   <div class="md:col-span-2 flex flex-wrap gap-2">
     <%= f.submit device.new_record? ? "Criar dispositivo" : "Salvar dispositivo", class: "ss-btn ss-btn-primary" %>
     <%= link_to "Cancelar", device.new_record? ? (device.area || site) : device, class: "ss-btn ss-btn-ghost" %>

@@ -1,5 +1,7 @@
-# Dispositivo do local. Na F1 só o driver `virtual` executa comando; os outros
-# entram no cadastro e passam a funcionar com os drivers (F3).
+# Dispositivo do local. Executam comando os drivers de `Drivers::REGISTRY`
+# (virtual e tuya_local); os outros entram só no cadastro por enquanto.
+# Tuya local: `address` {host, version, port}, `external_id` = device_id,
+# `credential` = local_key (cifrada), `listen` liga o ouvinte persistente.
 class Device < ApplicationRecord
   include Auditable
 
@@ -14,6 +16,8 @@ class Device < ApplicationRecord
   belongs_to :area, optional: true
   has_many :points, dependent: nil # cascade no banco
 
+  encrypts :credential
+
   validates :name, presence: true
   validates :driver, inclusion: { in: DRIVERS.keys }
   validates :status, inclusion: { in: STATUSES }
@@ -24,6 +28,7 @@ class Device < ApplicationRecord
   audited_attributes :name, :driver, :area_id
 
   def virtual? = driver == "virtual"
+  def tuya_local? = driver == "tuya_local"
   def driver_label = DRIVERS.fetch(driver, driver)
 
   private
