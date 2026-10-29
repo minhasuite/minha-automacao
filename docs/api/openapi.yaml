@@ -150,3 +150,31 @@ paths:
     get: { summary: "?from&to (ISO 8601; padrão: últimas 24h) &resolution auto|raw|1h|1d. auto: até 2 dias cru, até 31 dias 1h, depois 1d; booleano sempre cru. Cru: [{at, value, value_text}] (a primeira linha é o valor vigente em from). Rollup: [{starts_at, min, max, avg, sum, last, count, on_seconds}]. meta {from, to, resolution, truncated} (máx. 5000). 400 invalid_parameter", responses: { "200": { description: "Reading[] ou Rollup[]" }, "400": { $ref: "#/components/responses/Error" } } }
   /commands/{id}:
     get: { summary: "Situação do comando (mesmo formato do 202)", responses: { "200": { description: Command }, "404": { $ref: "#/components/responses/Error" } } }
+  # ---- Automação (F4). Ver: qualquer papel no local; criar/editar/excluir: technician+. JSON = linha do banco sem tenant_id. 422 validation_failed com details.
+  /sites/{id}/point_links:
+    get: { summary: "Espelhamentos do local", responses: { "200": { description: "PointLink[]" } } }
+    post: { summary: "Cria {source_point_id, target_point_id, mode mirror|invert|trigger, bidirectional? (mirror/invert entre liga/desliga), trigger_value? (trigger; padrão true), enabled?}. Recusa laço com outros espelhamentos. Anti-eco: não comanda destino já no valor nem devolve o próprio comando (15 s); valor que volta com a conexão não aciona", responses: { "201": { description: PointLink }, "422": { $ref: "#/components/responses/Error" } } }
+  /point_links/{id}: { get: { summary: Espelhamento, responses: { "200": { description: PointLink } } }, patch: { summary: "Edita (technician+)", responses: { "200": { description: PointLink } } }, delete: { summary: "Exclui (technician+)", responses: { "204": { description: ok } } } }
+  /sites/{id}/schedules:
+    get: { summary: "Agendas do local", responses: { "200": { description: "Schedule[]" } } }
+    post: { summary: "Cria {name, kind time|sunrise|sunset, time_of_day? HH:MM (time), offset_min? -720..720, days[] 0=domingo..6, point_id + command + value? OU scene_id, enabled?}. Fuso e latitude/longitude do local (sol exige as duas). Devolve next_run_at; atrasada mais de 5 min (servidor fora) é pulada", responses: { "201": { description: Schedule }, "422": { $ref: "#/components/responses/Error" } } }
+  /schedules/{id}: { get: { summary: Agenda, responses: { "200": { description: Schedule } } }, patch: { summary: "Edita (technician+)", responses: { "200": { description: Schedule } } }, delete: { summary: "Exclui (technician+)", responses: { "204": { description: ok } } } }
+  /sites/{id}/scenes:
+    get: { summary: "Cenas do local", responses: { "200": { description: "Scene[]" } } }
+    post: { summary: "Cria {name, icon?, items[{point_id, command, value?}]} (comandos de POST /points/{id}/commands)", responses: { "201": { description: Scene }, "422": { $ref: "#/components/responses/Error" } } }
+  /scenes/{id}: { get: { summary: Cena, responses: { "200": { description: Scene } } }, patch: { summary: "Edita (technician+)", responses: { "200": { description: Scene } } }, delete: { summary: "Exclui (technician+)", responses: { "204": { description: ok } } } }
+  /scenes/{id}/activate:
+    post: { summary: "Aciona (papel conforme o ponto de maior risco) → 202 {commands: Command[], errors: [\"Ponto: motivo\"]}; um ponto com erro não impede os outros", responses: { "202": { description: "Comandos" }, "403": { $ref: "#/components/responses/Error" } } }
+  /sites/{id}/notify_rules:
+    get: { summary: "Avisos do local", responses: { "200": { description: "NotifyRule[]" } } }
+    post: { summary: "Cria {point_id, to_value? (vazio = toda mudança), message? ({ponto}, {valor}), channels[] in_app|push, enabled?}. Vai para dono e administradores", responses: { "201": { description: NotifyRule }, "422": { $ref: "#/components/responses/Error" } } }
+  /notify_rules/{id}: { get: { summary: Aviso, responses: { "200": { description: NotifyRule } } }, patch: { summary: "Edita (technician+)", responses: { "200": { description: NotifyRule } } }, delete: { summary: "Exclui (technician+)", responses: { "204": { description: ok } } } }
+  /sites/{id}/alert_rules:
+    get: { summary: "Regras de alerta do local", responses: { "200": { description: "AlertRule[]" } } }
+    post: { summary: "Cria {name, point_id, operator eq|ne|gt|lt, value, for_s? (tempo na condição), severity info|warning|critical, escalation[{wait_s (desde a etapa anterior), channels[] in_app|push}], repeat_s? (≥ 60, repete a última etapa), auto_resolve?, enabled?}. Abre um alerta por regra; ciente para de repetir", responses: { "201": { description: AlertRule }, "422": { $ref: "#/components/responses/Error" } } }
+  /alert_rules/{id}: { get: { summary: Regra de alerta, responses: { "200": { description: AlertRule } } }, patch: { summary: "Edita (technician+); desativar resolve o alerta aberto", responses: { "200": { description: AlertRule } } }, delete: { summary: "Exclui com os alertas (technician+)", responses: { "204": { description: ok } } } }
+  /alerts:
+    get: { summary: "?status=open|all (padrão open) dos locais visíveis: [{id, alert_rule_id, name, severity, point_id, point_name, point_value, level (avisos já dados), opened_at, acked_by_id, acked_at, resolved_at}]", responses: { "200": { description: "Alert[]" } } }
+  /alerts/{id}: { get: { summary: Alerta, responses: { "200": { description: Alert } } } }
+  /alerts/{id}/ack:
+    post: { summary: "Ciente (operator+): para o escalonamento; sem auto_resolve, também fecha", responses: { "200": { description: Alert }, "403": { $ref: "#/components/responses/Error" } } }

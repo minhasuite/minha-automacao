@@ -1,0 +1,26 @@
+<%# locals: (site:, record:) -%>
+<%= form_with model: record.new_record? ? [ site, record ] : record, class: "ss-card ss-card-pad grid gap-4 max-w-4xl" do |f| %>
+  <%= render "web/shared/errors", record: record %>
+  <%= hidden_field_tag :back, params[:back], id: nil %>
+  <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: "Chegada, Cinema, Boa noite", autofocus: true %></div>
+  <fieldset>
+    <legend class="ss-label">Comandos (linha sem ponto é ignorada)</legend>
+    <div class="grid gap-2">
+      <% choices = point_choices(site, writable: true) %>
+      <% (record.items + Array.new(3) { {} }).each_with_index do |item, i| %>
+        <div class="grid gap-2 sm:grid-cols-3">
+          <label class="sr-only" for="item_<%= i %>_point">Ponto <%= i + 1 %></label>
+          <%= select_tag "scene[items][#{i}][point_id]", options_for_select(choices, item["point_id"]), include_blank: "Ponto", class: "ss-input", id: "item_#{i}_point" %>
+          <label class="sr-only" for="item_<%= i %>_command">Comando <%= i + 1 %></label>
+          <%= select_tag "scene[items][#{i}][command]", options_for_select(AutomationHelper::COMMAND_CHOICES, item["command"] || "on"), class: "ss-input", id: "item_#{i}_command" %>
+          <label class="sr-only" for="item_<%= i %>_value">Valor <%= i + 1 %></label>
+          <%= text_field_tag "scene[items][#{i}][value]", item["value"], class: "ss-input", id: "item_#{i}_value", placeholder: "Valor (ajustar/selecionar)" %>
+        </div>
+      <% end %>
+    </div>
+  </fieldset>
+  <div class="flex flex-wrap gap-2">
+    <%= f.submit "Salvar cena", class: "ss-btn ss-btn-primary" %>
+    <%= link_to "Cancelar", back_path, class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

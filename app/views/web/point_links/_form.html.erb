@@ -1,0 +1,16 @@
+<%# locals: (site:, record:) -%>
+<%= form_with model: record.new_record? ? [ site, record ] : record, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-2 max-w-3xl" do |f| %>
+  <%= render "web/shared/errors", record: record %>
+  <%= hidden_field_tag :back, params[:back], id: nil %>
+  <div><%= f.label :source_point_id, "Quando este ponto mudar", class: "ss-label" %><%= f.select :source_point_id, point_choices(site), { include_blank: "Escolha" }, class: "ss-input", required: true %></div>
+  <div><%= f.label :target_point_id, "Comandar este", class: "ss-label" %><%= f.select :target_point_id, point_choices(site, writable: true), { include_blank: "Escolha" }, class: "ss-input", required: true %></div>
+  <div><%= f.label :mode, "Como", class: "ss-label" %><%= f.select :mode, PointLink::MODES.invert, {}, class: "ss-input" %>
+    <p class="text-xs text-muted mt-1">Espelhar: fica igual. Inverter: fica o contrário. Acionar: liga, pulsa o portão ou aperta o botão (o pulso do destino desliga sozinho).</p></div>
+  <div><%= f.label :trigger_value, "Acionar quando ficar (só no modo Acionar)", class: "ss-label" %><%= f.text_field :trigger_value, value: record.trigger_value, class: "ss-input", placeholder: "vazio = ligado" %></div>
+  <label class="ss-check"><%= f.check_box :bidirectional %> Nos dois sentidos (os dois são interruptores)</label>
+  <label class="ss-check"><%= f.check_box :enabled %> Ativo</label>
+  <div class="md:col-span-2 flex flex-wrap gap-2">
+    <%= f.submit "Salvar espelhamento", class: "ss-btn ss-btn-primary" %>
+    <%= link_to "Cancelar", back_path, class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

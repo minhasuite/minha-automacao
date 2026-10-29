@@ -3,6 +3,7 @@
     <%= link_to new_site_area_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Nova área<% end %>
     <%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("cube", "size-4") %>Novo dispositivo<% end %>
   <% end %>
+  <%= link_to automation_site_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("clock", "size-4") %>Automação<% end %>
   <% if can?(:admin) %><%= link_to edit_site_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar<% end %><% end %>
 <% end %>
 

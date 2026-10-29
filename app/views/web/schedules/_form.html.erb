@@ -1,0 +1,27 @@
+<%# locals: (site:, record:) -%>
+<%= form_with model: record.new_record? ? [ site, record ] : record, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-3 max-w-4xl" do |f| %>
+  <%= render "web/shared/errors", record: record %>
+  <%= hidden_field_tag :back, params[:back], id: nil %>
+  <div class="md:col-span-3"><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: "Ligar a sala às 17h", autofocus: true %></div>
+  <div><%= f.label :kind, "Quando", class: "ss-label" %><%= f.select :kind, Schedule::KINDS.invert, {}, class: "ss-input" %></div>
+  <div><%= f.label :time_of_day, "Horário (se for horário fixo)", class: "ss-label" %><%= f.time_field :time_of_day, class: "ss-input num" %></div>
+  <div><%= f.label :offset_min, "Ajuste em minutos (+ depois, - antes)", class: "ss-label" %><%= f.number_field :offset_min, class: "ss-input num", min: -720, max: 720 %></div>
+  <fieldset class="md:col-span-3">
+    <legend class="ss-label">Dias</legend>
+    <div class="flex flex-wrap gap-3">
+      <%= f.collection_check_boxes :days, Schedule::DAYS.each_with_index.map { |d, i| [ i, d ] }, :first, :last do |b| %>
+        <label class="ss-check"><%= b.check_box %> <%= b.text %></label>
+      <% end %>
+    </div>
+  </fieldset>
+  <div><%= f.label :point_id, "Ponto", class: "ss-label" %><%= f.select :point_id, point_choices(site, writable: true), { include_blank: "Nenhum (usar cena)" }, class: "ss-input" %></div>
+  <div><%= f.label :command, "Comando", class: "ss-label" %><%= f.select :command, AutomationHelper::COMMAND_CHOICES, { include_blank: true }, class: "ss-input" %></div>
+  <div><%= f.label :value, "Valor (ajustar/selecionar)", class: "ss-label" %><%= f.text_field :value, value: record.value, class: "ss-input" %></div>
+  <div class="md:col-span-3"><%= f.label :scene_id, "Ou acionar a cena", class: "ss-label" %><%= f.select :scene_id, site.scenes.order(:name).pluck(:name, :id), { include_blank: "Nenhuma" }, class: "ss-input" %></div>
+  <label class="ss-check"><%= f.check_box :enabled %> Ativa</label>
+  <% if record.next_run_at && record.enabled %><p class="md:col-span-2 text-sm text-muted">Próxima vez: <%= l(record.next_run_at.in_time_zone(site.timezone), format: :short) %></p><% end %>
+  <div class="md:col-span-3 flex flex-wrap gap-2">
+    <%= f.submit "Salvar agenda", class: "ss-btn ss-btn-primary" %>
+    <%= link_to "Cancelar", back_path, class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

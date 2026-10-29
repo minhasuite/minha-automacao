@@ -1,0 +1,40 @@
+<%= render "web/shared/header", title: "Alertas", subtitle: "Abertos agora e os últimos resolvidos dos seus locais. \"Ciente\" para de repetir o aviso." %>
+
+<section class="ss-card ss-card-pad" aria-labelledby="open-title">
+  <h2 id="open-title">Abertos</h2>
+  <% if @open.empty? %>
+    <p class="text-sm text-muted mt-2">Nenhum alerta aberto.</p>
+  <% else %>
+    <ul class="mt-2 divide-y divide-line">
+      <% @open.each do |a| %>
+        <% critical = a.alert_rule.severity == "critical" %>
+        <li class="flex flex-wrap items-center gap-3 py-3">
+          <span class="grid place-items-center size-9 shrink-0 rounded-lg <%= critical ? 'bg-danger-soft text-danger' : 'bg-warn-soft text-warn' %>"><%= icon("exclamation-circle", "size-5") %></span>
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold text-ink"><%= a.alert_rule.name %> <span class="ss-badge <%= critical ? 'ss-badge-danger' : 'ss-badge-warn' %>"><%= a.alert_rule.severity_label %></span></p>
+            <p class="text-sm text-muted"><%= a.point.name %>: <%= point_value_text(a.point) %> · <%= a.site.name %> · aberto <%= l(a.opened_at, format: :short) %> · <%= count_label(a.level, "aviso", "avisos") %><% if a.acked? %> · ciente por <%= a.acked_by&.name || "alguém" %><% end %></p>
+          </div>
+          <% if !a.acked? && SiteMembership.allowed?(a.site.role_for(current_user), :command, risk: "sensitive") %>
+            <%= button_to ack_alert_path(a), class: "ss-btn ss-btn-primary ss-btn-sm" do %><%= icon("check", "size-4") %>Ciente<% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>
+
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="closed-title">
+  <h2 id="closed-title">Resolvidos</h2>
+  <% if @closed.empty? %>
+    <p class="text-sm text-muted mt-2">Nada por aqui ainda.</p>
+  <% else %>
+    <ul class="mt-2 divide-y divide-line">
+      <% @closed.each do |a| %>
+        <li class="py-3">
+          <p class="font-semibold text-ink"><%= a.alert_rule.name %></p>
+          <p class="text-sm text-muted"><%= a.site.name %> · de <%= l(a.opened_at, format: :short) %> a <%= l(a.resolved_at, format: :short) %><% if a.acked? %> · ciente por <%= a.acked_by&.name || "alguém" %><% end %></p>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>

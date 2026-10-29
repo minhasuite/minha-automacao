@@ -1,0 +1,5 @@
+<%= render "web/shared/header", title: (@record.new_record? ? "Novo: #{controller.label.downcase}" : controller.label), subtitle: @site.name, back: back_path %>
+<%= render "web/#{controller_name}/form", site: @site, record: @record %>
+<% if @record.persisted? %>
+  <%= button_to polymorphic_path(@record), method: :delete, params: { back: params[:back] }, class: "ss-btn ss-btn-ghost text-danger mt-4", form: { data: { turbo_confirm: "Excluir #{controller.label.downcase}?" } } do %><%= icon("trash", "size-4") %>Excluir<% end %>
+<% end %>

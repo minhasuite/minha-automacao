@@ -14,6 +14,12 @@ module Web
       @loose_devices = @site.devices.where(area_id: nil).order(:name)
     end
 
+    # Tudo o que é automático no local: cenas, agendas, espelhamentos, avisos e alertas.
+    def automation
+      set_site
+      authorize_site!(@site, :view)
+    end
+
     def new = @site = Site.new
 
     def create
@@ -41,7 +47,7 @@ module Web
     private
 
     def set_site = @site = Site.find(params[:id])
-    def site_params = params.require(:site).permit(:name, :kind, :address)
+    def site_params = params.require(:site).permit(:name, :kind, :address, :timezone, :latitude, :longitude)
 
     def require_admin!
       redirect_to sites_path, alert: "Só administrador ou dono da empresa cria locais." unless current_user.admin?

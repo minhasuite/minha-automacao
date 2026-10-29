@@ -18,8 +18,11 @@ modelo), na web (`/locais`) e na API + **F2**: comandos rastreados
 histórico (`readings` particionada, `reading_rollups`, `events`), tempo real
 (Solid Cable, `PointsChannel`) e página do ponto com gráfico + **F3**: driver
 `tuya_local` (3.1/3.3/3.4/3.5), ouvinte persistente, importação do LocalTuya
-e o servidor local da casa (`docker-compose.local.yml`, `bin/deploy-local`).
-Automações e dashboards ainda não existem.
+e o servidor local da casa (`docker-compose.local.yml`, `bin/deploy-local`) +
+**F4**: primitivas declarativas (`pulse_ms`/`max_on_s`, `PointLink`,
+`Schedule`, `Scene`, `NotifyRule`, `AlertRule`/`Alert`) na web (página do
+ponto, `/locais/:id/automacao`, `/alertas`) e na API. Automações (DSL) e
+dashboards ainda não existem.
 
 ## Rodar
 
@@ -108,6 +111,20 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   = pontos `unavailable`. Com ele ligado o comando sai pela conexão aberta.
   Sem `listen`, o comando abre uma conexão curta (set + status). Exige um
   processo worker só (`JOB_CONCURRENCY=1`).
+- **Primitivas (F4)**: `Point#report!` com valor novo chama
+  `Automations.on_change` (auto-off, espelhamento, aviso, alerta; erro numa
+  não para as outras; corrente síncrona até `MAX_DEPTH`). Valor que volta com
+  a conexão (qualidade anterior ≠ good) não espelha nem avisa. Todo tempo
+  (pulso, `max_on_s`, `for_s` do alerta, etapas) é job agendado no Solid Queue
+  com carimbo (`changed_at`/`level`): sobrevive a reinício e job velho não age;
+  agendas são `next_run_at` no banco + `RunSchedulesJob` a cada minuto
+  (atrasada > 5 min é pulada). Espelhamento: sem ciclo além do par
+  bidirecional (validação), não comanda destino já no valor, anti-eco por
+  `commands.origin_point_id` (15 s). Comando de automação: `source:
+  "automation"`, sem usuário. Canais: `Notifier.deliver!` (in_app + push);
+  `alexa` entra lá na F8. Avisos e alertas vão para dono/administradores.
+  "Ciente" (operator+) para o escalonamento; o alerta fecha quando a condição
+  some (`auto_resolve`) ou no ciente (sem `auto_resolve`).
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

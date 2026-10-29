@@ -42,6 +42,25 @@
   </section>
 </div>
 
+<p class="ss-section mt-6 mb-3">Automação deste ponto</p>
+<% if @point.capability == "onoff" && @point.writable %>
+  <section class="ss-card ss-card-pad mb-4 flex flex-wrap items-center gap-3" aria-labelledby="auto-off-title">
+    <div class="min-w-0 flex-1">
+      <h2 id="auto-off-title">Desligar sozinho</h2>
+      <p class="text-sm text-muted mt-1">
+        <% if @point.pulse_ms || @point.max_on_s %>
+          <%= [ ("pulso: desliga #{number_with_precision(@point.pulse_ms / 1000.0, precision: 1, strip_insignificant_zeros: true)} s depois de ligar" if @point.pulse_ms),
+                ("desliga depois de #{duration_text(@point.max_on_s)} ligado" if @point.max_on_s) ].compact.join(" · ") %>, ligado por qualquer caminho.
+        <% else %>
+          Não desliga sozinho. Use pulso para portão (liga e desliga em segundos) ou um tempo máximo ligado (filtro da piscina).
+        <% end %>
+      </p>
+    </div>
+    <% if can?(:manage) %><%= link_to edit_point_path(@point), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("clock", "size-4") %>Ajustar<% end %><% end %>
+  </section>
+<% end %>
+<%= render "web/automation/lists", site: @site, point: @point %>
+
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="timeline-title">
   <h2 id="timeline-title">Últimos acontecimentos</h2>
   <% if @timeline.empty? %>

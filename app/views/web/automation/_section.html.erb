@@ -1,0 +1,12 @@
+<%# locals: (title:, items:, empty:, new_path: nil) -%>
+<section class="ss-card ss-card-pad" aria-label="<%= title %>">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h2><%= title %></h2>
+    <% if new_path && can?(:manage) %><%= link_to new_path, class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("plus", "size-4") %>Novo<% end %><% end %>
+  </div>
+  <% if items.empty? %>
+    <p class="text-sm text-muted mt-2"><%= empty %></p>
+  <% else %>
+    <ul class="mt-2 divide-y divide-line"><%= yield %></ul>
+  <% end %>
+</section>

@@ -31,7 +31,20 @@ Rails.application.routes.draw do
       patch :read_all, on: :collection, path: "todas-lidas"
     end
 
+    resources :alerts, only: :index, path: "alertas" do
+      post :ack, on: :member, path: "ciente"
+    end
+
     resources :sites, path: "locais", path_names: { new: "novo", edit: "editar" } do
+      get :automation, on: :member, path: "automacao"
+      # Primitivas de automação (F4): criadas a partir do local ou do ponto.
+      resources :point_links, path: "espelhamentos", except: %i[index show], shallow: true
+      resources :schedules, path: "agendas", except: %i[index show], shallow: true
+      resources :notify_rules, path: "avisos", except: %i[index show], shallow: true
+      resources :alert_rules, path: "regras-de-alerta", except: %i[index show], shallow: true
+      resources :scenes, path: "cenas", except: %i[index show], shallow: true do
+        post :activate, on: :member, path: "acionar"
+      end
       resources :areas, path: "areas", except: :index, shallow: true
       resources :devices, path: "dispositivos", except: :index, shallow: true do
         resources :points, path: "pontos", except: :index, shallow: true do
@@ -93,6 +106,20 @@ Rails.application.routes.draw do
       end
 
       resources :commands, only: :show
+
+      # Automação (F4).
+      resources :sites, only: [] do
+        resources :point_links, except: %i[new edit], shallow: true
+        resources :schedules, except: %i[new edit], shallow: true
+        resources :notify_rules, except: %i[new edit], shallow: true
+        resources :alert_rules, except: %i[new edit], shallow: true
+        resources :scenes, except: %i[new edit], shallow: true do
+          post :activate, on: :member
+        end
+      end
+      resources :alerts, only: %i[index show] do
+        post :ack, on: :member
+      end
 
       get "billing", to: "billing#show"
       post "billing/google/verify", to: "billing#verify_google"
