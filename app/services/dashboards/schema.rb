@@ -8,17 +8,17 @@ module Dashboards
     MAX_BYTES = 256.kilobytes
     MAX_WIDGETS = 400
 
-    # Tipo → props obrigatórias. Os da §6.2 que dependem de driver que ainda não
-    # existe (robô, mídia) e os da indústria ficam de fora por ora.
+    # Tipo → props obrigatórias. Os da §6.2 de mídia e os da indústria ficam
+    # de fora por ora.
     WIDGETS = {
       "heading" => %w[title], "markdown" => %w[text], "tile" => %w[bind], "group" => %w[binds],
       "stat" => [], "gauge" => %w[bind], "chart" => %w[binds], "query_list" => %w[query],
-      "area_card" => %w[area], "scene_bar" => [], "alerts" => [], "camera" => %w[bind]
+      "area_card" => %w[area], "scene_bar" => [], "alerts" => [], "camera" => %w[bind], "vacuum" => %w[bind]
     }.freeze
     WIDGET_LABELS = {
       "tile" => "Ponto", "group" => "Grupo de pontos", "stat" => "Contador / número", "gauge" => "Medidor",
       "chart" => "Gráfico", "query_list" => "Lista automática", "area_card" => "Área", "scene_bar" => "Cenas",
-      "alerts" => "Alertas ativos", "camera" => "Câmera", "heading" => "Título", "markdown" => "Texto"
+      "alerts" => "Alertas ativos", "camera" => "Câmera", "vacuum" => "Robô aspirador", "heading" => "Título", "markdown" => "Texto"
     }.freeze
     SCREENS = %w[mobile tablet desktop].freeze
     TAPS = %w[toggle more_info navigate none].freeze

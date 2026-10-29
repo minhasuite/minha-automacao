@@ -59,6 +59,7 @@ module Dashboards
       deps = [ *binds, state_ref ].compact
       case w["type"]
       when "tile", "group", "chart", "camera" then [ { "point_ids" => binds.map(&:id), "missing" => binds.size < [ w["bind"], *Array(w["binds"]) ].compact.size }, deps ]
+      when "vacuum" then vacuum(binds.first, deps)
       when "gauge" then gauge(w, binds.first, deps)
       when "stat" then stat(w, binds, deps)
       when "query_list"
@@ -102,6 +103,20 @@ module Dashboards
       v = point&.value
       ratio = v.is_a?(Numeric) && max > min ? ((v - min) / (max - min)).clamp(0, 1).round(4) : nil
       [ { "point_ids" => [ point&.id ].compact, "min" => min, "max" => max, "ratio" => ratio }, deps ]
+    end
+
+    # Robô: o ponto `vacuum` e os irmãos do mesmo aparelho pelo papel no
+    # endereço (situação, bateria, erro, ajustes, peças), cômodos e ações.
+    def vacuum(point, deps)
+      return [ { "point_ids" => [], "missing" => true }, deps ] unless point&.capability == "vacuum"
+
+      siblings = @all.select { |p| p.device_id == point.device_id && p.id != point.id && !p.disabled }.each { |p| use(p) }
+      by_role = siblings.group_by { |p| p.address["role"] }
+      one = ->(role) { by_role[role]&.first&.id }
+      [ { "point_ids" => [ point.id ], "rooms" => Array(point.address["rooms"]), "actions" => Array(point.address["actions"]&.keys),
+          "detail" => one.call("detail"), "battery" => one.call("battery"), "fault" => one.call("fault"),
+          "settings" => Points::Command::VACUUM_SETTINGS.filter_map { |r| (id = one.call(r)) && [ r, id ] }.to_h,
+          "parts" => [ *by_role["part"], *by_role["detergent"] ].map(&:id) }, deps + siblings ]
     end
 
     def area_card(w, deps)

@@ -137,9 +137,39 @@
 @media (min-width: 640px) { .dw-w { grid-column: span var(--t, 6) / span var(--t, 6); } }
 @media (min-width: 1024px) { .dw-w { grid-column: span var(--d, 4) / span var(--d, 4); } }
 /* Formulário do widget: só os campos do tipo escolhido (sem JS). */
-.dw-wf:has(option[value="tile"]:checked) [data-for~="tile"], .dw-wf:has(option[value="camera"]:checked) [data-for~="camera"], .dw-wf:has(option[value="group"]:checked) [data-for~="group"],
+.dw-wf:has(option[value="tile"]:checked) [data-for~="tile"], .dw-wf:has(option[value="camera"]:checked) [data-for~="camera"], .dw-wf:has(option[value="vacuum"]:checked) [data-for~="vacuum"], .dw-wf:has(option[value="group"]:checked) [data-for~="group"],
 .dw-wf:has(option[value="stat"]:checked) [data-for~="stat"], .dw-wf:has(option[value="gauge"]:checked) [data-for~="gauge"],
 .dw-wf:has(option[value="chart"]:checked) [data-for~="chart"], .dw-wf:has(option[value="query_list"]:checked) [data-for~="query_list"],
 .dw-wf:has(option[value="area_card"]:checked) [data-for~="area_card"], .dw-wf:has(option[value="scene_bar"]:checked) [data-for~="scene_bar"],
 .dw-wf:has(option[value="heading"]:checked) [data-for~="heading"], .dw-wf:has(option[value="markdown"]:checked) [data-for~="markdown"] { display: block; }
 .dw-wf:has(option[value="gauge"]:checked) div.grid[data-for~="gauge"] { display: grid; }
+/* Robô aspirador (F8): estado, comandos, cômodos em pílulas, ajustes e peças. */
+@layer components {
+  .dw-vac-battery { flex-shrink: 0; padding: .25rem .6rem; border-radius: 999px; font-size: .78rem; font-weight: 700; color: var(--ink-2); background: var(--field); }
+  .dw-vac-alert { display: flex; align-items: center; gap: .4rem; margin-top: .65rem; font-size: .82rem; font-weight: 600; color: var(--danger); }
+  .dw-vac-title { margin: .9rem 0 .45rem; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+  .dw-vac-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: .5rem; margin-top: .85rem; }
+  .dw-vac-actions form { margin: 0; }
+  .dw-vac-btn { display: inline-flex; width: 100%; align-items: center; justify-content: center; gap: .4rem; min-height: 2.6rem; padding: 0 .75rem;
+                border-radius: 12px; font: inherit; font-size: .84rem; font-weight: 700; color: var(--ink); background: var(--field); cursor: pointer;
+                border: 1px solid transparent; }
+  .dw-vac-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .dw-vac-main { background: var(--grad); color: #fff; }
+  .dw-vac-main:hover { color: #fff; filter: brightness(1.06); }
+  .dw-vac-rooms { display: flex; flex-wrap: wrap; gap: .45rem; }
+  .dw-vac-room { position: relative; cursor: pointer; }
+  .dw-vac-room input { position: absolute; opacity: 0; pointer-events: none; }
+  .dw-vac-room span { display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 .85rem; border-radius: 999px; font-size: .84rem; font-weight: 600;
+                      color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); transition: background .2s ease, color .2s ease, border-color .2s ease; }
+  .dw-vac-room:hover span { border-color: var(--accent); }
+  .dw-vac-room input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .dw-vac-room input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .dw-vac-room input:disabled + span { opacity: .6; cursor: default; }
+  .dw-vac-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: .6rem; margin-top: .9rem; }
+  .dw-vac-label { display: block; margin-bottom: .25rem; font-size: .75rem; font-weight: 700; color: var(--muted); }
+  .dw-vac-parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .45rem 1.25rem; font-size: .84rem; color: var(--ink-2); }
+  .dw-vac-parts li { display: grid; grid-template-columns: minmax(0, 7.5rem) 1fr 2.6rem; align-items: center; gap: .6rem; }
+  .dw-vac-bar { height: .4rem; border-radius: 999px; background: var(--field); overflow: hidden; }
+  .dw-vac-bar span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+  .dw-vac-bar .dw-vac-low { background: var(--danger); }
+}

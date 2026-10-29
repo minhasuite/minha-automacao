@@ -47,6 +47,8 @@ module Dashboards
       sections << section("s-home-security", "Segurança", "exclamation-circle", security.map { |p| tile(p, "ws", label: home_label(p), span: span(12, 6, 4)) }) if security.any?
       cameras = @points.select { |p| camera?(p) }
       sections << section("s-home-cameras", "Câmeras", "video-camera", cameras.map { |p| camera(p, "wc") }) if cameras.any?
+      vacuums = @points.select { |p| vacuum?(p) }
+      sections << section("s-home-vacuum", "Robô", "vacuum", vacuums.map { |p| tile(p, "wv", span: span(12, 12, 12)) }) if vacuums.any?
       sections << section("s-home-scenes", "Cenas", "sparkles", [ { "id" => "w-home-scenes", "type" => "scene_bar", "span" => span(12, 12, 12) } ]) if @site.scenes.exists?
       if @areas.size > 1
         cards = @areas.map { |a| { "id" => "w-area-#{a.id}", "type" => "area_card", "area" => a.id, "span" => span(12, 6, 4) } }
@@ -69,6 +71,7 @@ module Dashboards
       useful = points.reject { |p| technical?(p) }
       sections = useful.group_by(&:device).sort_by { |d, ps| [ ps.any? { |p| light?(p) } ? 0 : 1, d.name ] }.map do |device, ps|
         ps = ps.sort_by { |p| [ p.writable ? 0 : 1, p.name ] }
+        ps = ps.select { |p| vacuum?(p) } if ps.any? { |p| vacuum?(p) } # o widget do robô já mostra os irmãos
         wspan = ps.size == 1 ? span(12, 12, 12) : span(6, 6, 6)
         section("s-#{id}-#{device.id}", device.name, nil, ps.map { |p| tile(p, "wa", span: wspan) }, span: span(12, 12, 6))
       end
@@ -82,6 +85,7 @@ module Dashboards
 
     def tile(point, prefix, span:, label: nil)
       return camera(point, prefix) if camera?(point)
+      return { "id" => "#{prefix}-#{point.id}", "type" => "vacuum", "bind" => point.id, "span" => span(12, 12, 12) } if vacuum?(point)
 
       w = { "id" => "#{prefix}-#{point.id}", "type" => "tile", "bind" => point.id, "span" => span }
       w["label"] = label if label && label != point.name
@@ -93,6 +97,7 @@ module Dashboards
     end
 
     def camera?(p) = p.capability == "stream" && p.device.driver == "go2rtc"
+    def vacuum?(p) = p.capability == "vacuum"
     def camera(p, prefix) = { "id" => "#{prefix}-#{p.id}", "type" => "camera", "bind" => p.id, "live" => true, "span" => span(12, 6, 6) }
 
     def section(id, title, icon, widgets, span: nil)
