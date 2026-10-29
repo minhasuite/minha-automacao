@@ -86,12 +86,7 @@ services:
       - sh
       - -c
       - |
-        printf 'listener 1883
-allow_anonymous false
-password_file /mosquitto/passwd
-persistence true
-persistence_location /mosquitto/data/
-' > /mosquitto/m.conf
+        printf 'listener 1883\nallow_anonymous false\npassword_file /mosquitto/passwd\npersistence true\npersistence_location /mosquitto/data/\n' > /mosquitto/m.conf
         mosquitto_passwd -b -c /mosquitto/passwd automacao "$$MQTT_PASSWORD"
         chown mosquitto:mosquitto /mosquitto/passwd /mosquitto/data && chmod 600 /mosquitto/passwd
         exec mosquitto -c /mosquitto/m.conf
