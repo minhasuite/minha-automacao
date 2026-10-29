@@ -56,7 +56,7 @@ uma com o valor visto (`agora: Desligado`).
 |---|---|---|
 | `command` | `point`, `command`, `value?` | comando pelo `Points::Command` (papel x risco, fila, rastreio); a execução vai em `commands.automation_run_id` |
 | `scene` | `scene` | aciona a cena |
-| `notify` | `title`, `message?`, `channels?` (`in_app`, `push`; padrão os dois) | `Notifier.deliver!` para dono e administradores, texto Liquid |
+| `notify` | `title`, `message?`, `channels?` (`in_app`, `push`, `alexa:<id do ponto speaker>`; padrão in_app e push) | `Notifier.deliver!` para dono e administradores, texto Liquid |
 | `wait` | `for` **ou** `expr` (segundos) | espera (job agendado; sobrevive a reinício) |
 | `wait_for` | `conditions`, `timeout`, `continue_on_timeout?` (padrão `true`) | espera as condições valerem; a mudança de ponto retoma na hora |
 | `if` | `conditions`, `then`, `else?` | ramo |
@@ -163,7 +163,7 @@ depois de mexer na luz" do HA vira o `for` em cada luz; o
 
 **Webhook para a IA avisar** (`queued`): `set mensagem = {{ trigger.data.mensagem | strip }}`,
 `condition expr "mensagem != ''"` e `if canal = 'celular' or canal = 'ambos'`
-→ `notify`. O anúncio na Alexa entra com o canal `alexa` (F8).
+→ `notify`. O anúncio na Alexa é o canal `alexa:<id do ponto da Echo>` (F8).
 
 **Cena da cozinha aciona o portão** (ESQUEMA-V1 §5): `state
 cozinha.switch_cena to true` → `command garagem.portao_eletronico pulse` +

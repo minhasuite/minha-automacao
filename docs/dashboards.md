@@ -27,7 +27,8 @@ entram sozinhos. A primeira publicação (editor ou API) o torna manual.
   ligados + alertas), Consumo (gráfico de potência 24 h + lista), Segurança
   (risco sensível/crítico, portão, abertura e movimento), Câmeras (um widget
   `camera` por câmera), Cenas e Áreas (um cartão por área quando há mais de
-  uma). Nas views de área a câmera também vira widget `camera`.
+  uma). Nas views de área a câmera também vira widget `camera`; o robô vira widget `vacuum`
+  (seção "Robô" no Início e, na view da área, só ele na seção do aparelho).
 - **Uma view por área** (`area` = id da área): uma seção por dispositivo
   (luzes primeiro) e o gráfico de consumo da área. Tensão e corrente ficam de
   fora; ponto oculto ou desativado também.
@@ -85,6 +86,7 @@ ou `key` do ponto.
 | `scene_bar` | `scenes` (ids; vazio = todas) | botões de cena |
 | `alerts` | — | alertas abertos com "Ciente" |
 | `camera` | `bind` (ponto `stream` de dispositivo `go2rtc`), `live` (padrão true), `snapshot_interval` (2–300 s, padrão 10) | quadro periódico e "Ao vivo" (WebRTC); sem conexão, o aviso no lugar da imagem |
+| `vacuum` | `bind` (ponto `vacuum` de dispositivo `xiaomi_miot`) | estado, bateria, aviso de erro, Limpar a casa/Pausar/Parar/Voltar à base, cômodos do mapa em pílulas + ajustes (modo, potência, água, caminho, vezes) e "Limpar selecionados" (`clean_rooms`), base (lavar, secar, esvaziar) e peças com barra; os irmãos do aparelho entram pelo `address.role` |
 | `heading` | `title` | título |
 | `markdown` | `text` | texto puro (sem Liquid por enquanto) |
 
@@ -102,7 +104,8 @@ A definição publicada (ou o rascunho com `?draft=1`, para quem edita) com:
 
 - widgets que o papel não vê removidos; cada widget ganha `visible` (estado,
   qualidade, hora agora), `data` e `deps`;
-- `data` por tipo: `tile`/`group`/`chart`/`camera` → `point_ids`, `missing`; `stat` →
+- `data` por tipo: `tile`/`group`/`chart`/`camera` → `point_ids`, `missing`; `vacuum` → `point_ids`,
+  `rooms`, `actions`, `detail`, `battery`, `fault`, `settings` ({papel → id}), `parts`; `stat` →
   `value`, `unit`, `text`, `point_ids`; `gauge` → `min`, `max`, `ratio`;
   `query_list` → `point_ids`, `count`; `area_card` → `area`, `view_id`, `on`,
   `open`, `motion`, `power`, `unavailable`, `total`; `scene_bar` → `scenes`

@@ -28,7 +28,9 @@ editor web, widgets ao vivo, API; formato em `docs/dashboards.md`) no Início +
 trace, simulação, editor de blocos em `/locais/:id/automacoes`, API e webhook;
 referência em `docs/automacoes.md`) + **F8 (1ª metade)**: drivers `mqtt`
 (Mosquitto, ouvinte, descoberta do zigbee2mqtt) e `go2rtc` (câmeras, widget
-`camera` com quadro e ao vivo por WebRTC passando pelo Rails).
+`camera` com quadro e ao vivo por WebRTC passando pelo Rails) + **F8 (2ª metade)**:
+`integrations` (conta da Alexa), drivers `xiaomi_miot` (robô por miIO local,
+widget `vacuum`) e `alexa` (anúncio/fala, canal `alexa:<ponto>` nos avisos).
 
 ## Rodar
 
@@ -184,6 +186,30 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   (tcp/udp) anunciada em `APP_HOST`. Sem `GO2RTC_URL` (VPS) o widget mostra
   "Sem conexão". Importação: `... | rake 'go2rtc:importar[Casa]'` com o JSON
   na entrada padrão (senha nunca em arquivo nem argumento).
+- **Xiaomi (F8)**: protocolo local miIO/MIoT (UDP 54321) em `Miio::Protocol`
+  (quadros, sem rede) → `Miio::Client` → `Drivers::XiaomiMiot`. Nada passa pela
+  nuvem: o `xiaomi_home` do HA usa OAuth e girar o token dele derruba o robô no
+  HA. Dispositivo: `address` {host, model}, `external_id` = did, `credential` =
+  token do aparelho (hex, de `.storage/xiaomi_home/miot_devices/*.dict` do HA).
+  Ponto: `address` {siid, piid, role, map?}; o `vacuum` leva `actions`
+  ({comando → [siid, aiid]}) e `rooms` ([{id, name}] do mapa; junção de
+  cômodos no app troca ids: reimporte). Modelo dos pontos em `Miio::Vacuum`
+  (X20 Max `xiaomi.vacuum.d109gl`). `Miio::Poller` no worker lê a cada 30 s
+  (`MIIO_POLLER=off` desliga); comando lê de novo no fim. `clean_rooms` grava
+  só os ajustes que mudaram e manda os ids como texto ("5,45", ação 2.16).
+  Importação: `... | rake 'xiaomi:importar[Casa]'` (JSON na entrada padrão).
+  Robô: só leitura de teste; nada de limpar, voltar, lavar, secar, esvaziar.
+- **Alexa (F8)**: `Alexa::Client` (API não oficial do app, `alexa.amazon.com.br`,
+  cookies de sessão já logada + cabeçalho csrf; sem login nem 2FA aqui) →
+  `Drivers::Alexa` (`announce`/`speak` em ponto `speaker`). A conta é
+  `Integration` (`credentials` cifrado = {cookie → valor}, `status`,
+  `last_error`, `last_ok_at`; tela `/locais/:id/integracoes`, "Atualizar
+  lista de Echo" só lê). Importação: `cat <cookies do alexa_media> | rake
+  'alexa:importar[Casa]'` (só família ECHO/KNIGHT/ROOK). Os cookies são uma
+  cópia: quando o HA renovar e a Amazon recusar (401/403), a integração fica
+  "Com erro" e é só importar de novo. Canal `alexa:<id do ponto>` em
+  `Notifier` (aviso, alerta, ação "Avisar"): manda `announce` pela fila
+  (source automation). Nunca anuncie de teste.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 
