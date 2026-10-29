@@ -1,5 +1,6 @@
 # Servidor local da casa (/opt/minha-automacao no Debian): Postgres próprio,
-# web, worker (fila + ouvinte Tuya), backup diário e túnel Cloudflare.
+# web, worker (fila + ouvintes Tuya e MQTT), Mosquitto, go2rtc (câmeras),
+# zigbee2mqtt (perfil `zigbee`), backup diário e túnel Cloudflare.
 # Subido pelo bin/deploy-local (a imagem vem do WSL; o servidor não guarda
 # credencial do GitHub). Segredos em /opt/minha-automacao/.env (chmod 600),
 # gerados lá na primeira vez; nada daqui é segredo.
@@ -20,6 +21,7 @@ x-app: &app
     ASSUME_SSL: "false"
     FORCE_SSL: "false"
     ACTIVE_STORAGE_SERVICE: local
+    GO2RTC_URL: http://go2rtc:1984
   volumes:
     - storage:/app/storage
 
@@ -67,6 +69,77 @@ services:
     environment:
       <<: *app-env
       DB_POOL: "12" # 3 threads do worker + Solid Queue + uma por aparelho ouvido
+      MQTT_URL: mqtt://automacao:${MQTT_PASSWORD:?set MQTT_PASSWORD}@mosquitto:1883
+
+  # Broker MQTT (driver mqtt, zigbee2mqtt). Com senha; a porta 1883 fica na
+  # rede local para sensores (o túnel só leva a web).
+  mosquitto:
+    image: eclipse-mosquitto:2.0.20
+    restart: unless-stopped
+    environment:
+      MQTT_PASSWORD: ${MQTT_PASSWORD:?set MQTT_PASSWORD}
+    ports:
+      - "1883:1883"
+    volumes:
+      - mosquitto:/mosquitto/data
+    command:
+      - sh
+      - -c
+      - |
+        printf 'listener 1883
+allow_anonymous false
+password_file /mosquitto/passwd
+persistence true
+persistence_location /mosquitto/data/
+' > /mosquitto/m.conf
+        mosquitto_passwd -b -c /mosquitto/passwd automacao "$$MQTT_PASSWORD"
+        chown mosquitto:mosquitto /mosquitto/passwd /mosquitto/data && chmod 600 /mosquitto/passwd
+        exec mosquitto -c /mosquitto/m.conf
+
+  # Câmeras. Sem config própria: o worker põe os streams pela API
+  # (Go2rtcSyncJob). API e RTSP só na rede do compose (o navegador passa pelo
+  # Rails); 8555 é a mídia WebRTC, anunciada no IP do servidor.
+  go2rtc:
+    image: alexxit/go2rtc:1.9.9
+    restart: unless-stopped
+    command:
+      - go2rtc
+      - -config
+      - "{api: {listen: ':1984'}, rtsp: {listen: ''}, srtp: {listen: ''}, webrtc: {listen: ':8555', candidates: ['${APP_HOST:-192.168.68.199}:8555']}}"
+    ports:
+      - "8555:8555/tcp"
+      - "8555:8555/udp"
+
+  # Zigbee: perfil `zigbee`, ligado pelo bin/deploy-local quando o .env tem
+  # ZIGBEE_DEVICE (/dev/serial/by-id/... do coordenador USB). A descoberta
+  # (bridge/devices → dispositivos e pontos) roda no worker.
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt:2.6.2
+    restart: unless-stopped
+    profiles: ["zigbee"]
+    depends_on:
+      - mosquitto
+    environment:
+      TZ: America/Sao_Paulo
+      Z2M_ONBOARD_NO_SERVER: "1"
+      ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://mosquitto:1883
+      ZIGBEE2MQTT_CONFIG_MQTT_USER: automacao
+      ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD: ${MQTT_PASSWORD:?set MQTT_PASSWORD}
+      ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/zigbee
+      ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: ${ZIGBEE_ADAPTER:-ember}
+      ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_ENABLED: "false"
+      ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY: GENERATE
+      ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID: GENERATE
+      ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID: GENERATE
+      ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED: "true"
+      ZIGBEE2MQTT_CONFIG_FRONTEND_PORT: "8080"
+      ZIGBEE2MQTT_CONFIG_FRONTEND_AUTH_TOKEN: ${Z2M_FRONTEND_TOKEN:-}
+    devices:
+      - ${ZIGBEE_DEVICE:-/dev/null}:/dev/zigbee
+    ports:
+      - "8080:8080"
+    volumes:
+      - zigbee2mqtt:/app/data
 
   # pg_dump diário com 7 dias de retenção em /opt/minha-automacao/backups.
   backup:
@@ -107,3 +180,5 @@ services:
 volumes:
   pgdata:
   storage:
+  mosquitto:
+  zigbee2mqtt:
