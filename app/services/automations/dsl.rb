@@ -13,7 +13,11 @@ module Automations
   # Duração: "30s", "5m", "1h30m" ou segundos (número); o sinal "-" só vale no
   # deslocamento do sol.
   module Dsl
-    Field = Struct.new(:name, :kind, :label, :required, :options, keyword_init: true)
+    Field = Struct.new(:name, :kind, :label, :required, :options, keyword_init: true) do
+      # Opções do `:select`: hash fixo ou lambda lido na hora (registro de
+      # plugins, como os provedores de IA e os tipos de consulta).
+      def choices = options.respond_to?(:call) ? options.call : options
+    end
 
     def self.f(name, kind, label, required: false, options: nil) = Field.new(name: name, kind: kind, label: label, required: required, options: options)
 
@@ -39,6 +43,11 @@ module Automations
     LIST_KINDS = %i[conditions actions options].freeze
     # Tipos de campo que guardam um ponto (UUID no JSON, `key` no avançado).
     POINT_KINDS = %i[point writable_point camera].freeze
+    # Listas de pontos (Lote 2: imagens de câmera e contexto da IA).
+    POINT_LIST_KINDS = %i[cameras points].freeze
+    # Campos que o formulário manda como lista (`name[]`).
+    ARRAY_KINDS = %i[days channels cameras points areas tags].freeze
+    MAX_PROMPT = 4_000
 
     DURATION = /\A(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?\z/
     TIME = /\A([01]\d|2[0-3]):[0-5]\d\z/
@@ -56,7 +65,12 @@ module Automations
     # Campos simples (não lista) que o formulário de um bloco pode mandar.
     def form_fields
       KINDS.flat_map { |k| registry(k).plugins.flat_map(&:fields) }
-           .reject { |fd| fd.kind.in?(%i[conditions actions options days channels script_fields]) }.map(&:name).uniq
+           .reject { |fd| fd.kind.in?(%i[conditions actions options script_fields] + ARRAY_KINDS) }.map(&:name).uniq
+    end
+
+    # Campos de lista do formulário ({nome => []}, para o `permit`).
+    def array_form_fields
+      KINDS.flat_map { |k| registry(k).plugins.flat_map(&:fields) }.select { |fd| fd.kind.in?(ARRAY_KINDS) }.map(&:name).uniq.index_with { [] }
     end
 
     # "1h30m" / "-15m" / 90 → segundos (nil se inválida).
@@ -101,6 +115,8 @@ module Automations
             node[fd.name] = encrypt_secret(node[fd.name])
           elsif fd.kind.in?(POINT_KINDS) && (point = by_ref[node[fd.name].to_s])
             node[fd.name] = point.id
+          elsif fd.kind.in?(POINT_LIST_KINDS) && node[fd.name].is_a?(Array)
+            node[fd.name] = node[fd.name].map { |ref| by_ref[ref.to_s]&.id || ref }
           elsif fd.kind == :value && point && node[fd.name].is_a?(String)
             node[fd.name] = point.cast(node[fd.name])
           end
@@ -125,7 +141,10 @@ module Automations
       keys = site.points.pluck(:id, :key).to_h
       walk(definition.deep_dup) do |node, kind|
         s = spec(kind, node["type"]) or next
-        s.fields.each { |fd| node[fd.name] = keys.fetch(node[fd.name], node[fd.name]) if fd.kind.in?(POINT_KINDS) }
+        s.fields.each do |fd|
+          node[fd.name] = keys.fetch(node[fd.name], node[fd.name]) if fd.kind.in?(POINT_KINDS)
+          node[fd.name] = node[fd.name].map { |id| keys.fetch(id, id) } if fd.kind.in?(POINT_LIST_KINDS) && node[fd.name].is_a?(Array)
+        end
       end
     end
 
@@ -153,7 +172,10 @@ module Automations
       ids = []
       walk(definition) do |node, kind|
         s = spec(kind, node["type"]) or next
-        s.fields.each { |fd| ids << node[fd.name] if fd.kind.in?(POINT_KINDS) && node[fd.name].present? }
+        s.fields.each do |fd|
+          ids << node[fd.name] if fd.kind.in?(POINT_KINDS) && node[fd.name].present?
+          ids.concat(node[fd.name]) if fd.kind.in?(POINT_LIST_KINDS) && node[fd.name].is_a?(Array)
+        end
       end
       ids.uniq
     end
@@ -242,13 +264,21 @@ module Automations
         when :number then "precisa ser número" unless v.is_a?(Numeric)
         when :time then "horário precisa ser HH:MM" unless v.is_a?(String) && TIME.match?(v)
         when :days then "dias precisam ser de 0 (dom) a 6 (sáb)" unless v.is_a?(Array) && v.any? && v.all? { |d| d.is_a?(Integer) && d.between?(0, 6) }
-        when :select then "opção inválida" unless fd.options.key?(v)
+        when :select then "opção inválida" unless fd.choices.key?(v)
         when :bool then "precisa ser verdadeiro ou falso" unless [ true, false ].include?(v)
         when :text then "texto longo demais" unless v.is_a?(String) && v.size <= 500
         when :secret then "segredo inválido" unless (v.is_a?(String) && v.size <= 500) || (v.is_a?(Hash) && v["enc"].is_a?(String))
         when :var then "nome de variável inválido (letras minúsculas, números e _)" unless v.is_a?(String) && VAR.match?(v)
         when :expr then expr_error(v)
         when :template then template_error(v)
+        when :prompt then template_error(v, MAX_PROMPT)
+        when :cameras then list_error(v) { |id| camera_error(id) }
+        when :points then list_error(v) { |id| point_error(id, false) }
+        when :areas then list_error(v) { |id| "área não existe neste local" unless @site.areas.exists?(id: id) }
+        when :tags then list_error(v) { |id| "etiqueta não existe" unless Tag.exists?(id: id) }
+        when :ai_output then Ai::Output.error(v)
+        when :dataset then "conjunto de dados não existe neste local" unless v.is_a?(String) && @site.datasets.exists?(id: v)
+        when :kv then "precisam ser {campo: texto}" unless v.is_a?(Hash) && v.size <= Dataset::MAX_FIELDS && v.all? { |k, x| k.is_a?(String) && x.is_a?(String) && x.size <= 500 }
         when :channels then "canal inválido" unless Notifier.valid_channels?(v)
         when :recipient then recipient_error(v)
         when :camera then camera_error(v)
@@ -317,8 +347,14 @@ module Automations
         "expressão inválida (#{e.message.truncate(80)})"
       end
 
-      def template_error(v)
-        return "precisa ser texto de até 500 caracteres" unless v.is_a?(String) && v.size <= 500
+      def list_error(v)
+        return "precisa ser uma lista" unless v.is_a?(Array) && v.size <= 50 && v.all?(String)
+
+        v.lazy.filter_map { |id| yield id }.first
+      end
+
+      def template_error(v, max = 500)
+        return "precisa ser texto de até #{max} caracteres" unless v.is_a?(String) && v.size <= max
 
         Liquid::Template.parse(v, error_mode: :strict)
         nil

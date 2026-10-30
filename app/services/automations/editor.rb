@@ -85,10 +85,17 @@ module Automations
       when :days
         days = Array(raw).map(&:to_i).uniq.sort
         days.size == 7 ? nil : days
-      when :channels then Array(raw)
+      when :channels, :cameras, :points, :areas, :tags then Array(raw)
       when :buttons then buttons(raw)
+      when :ai_output then Ai::Output.parse(raw)
+      when :kv then kv(raw)
       else raw.to_s.strip.presence
       end
+    end
+
+    # "campo: texto {{ liquid }}", um por linha → {campo => texto}.
+    def kv(raw)
+      raw.to_s.lines.filter_map { |l| k, v = l.split(":", 2); [ k.strip, v.strip ] if v && k.strip.present? }.to_h.presence
     end
 
     # "sim: Sim" e "nao: Agora não", um por linha → [{id, title}] (linha sem ":" usa o texto como id e título).

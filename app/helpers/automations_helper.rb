@@ -20,7 +20,7 @@ module AutomationsHelper
       next if v.nil? || Automations::Dsl.list_kind?(fd.kind)
 
       text = dsl_value_text(fd, v, node, points)
-      fd.kind.in?(%i[point writable_point command template expr]) ? text : "#{fd.label.sub(/ \(.*\)\z/, '').downcase} #{text}"
+      fd.kind.in?(%i[point writable_point command template expr prompt]) ? text : "#{fd.label.sub(/ \(.*\)\z/, '').downcase} #{text}"
     end.join(" · ")
   end
 
@@ -30,7 +30,7 @@ module AutomationsHelper
     when :value then (p = points[node["point"]]) ? point_value_label(p, v) : v.to_s
     when :duration then Automations::Dsl.duration_label(Automations::Dsl.seconds(v))
     when :days then Array(v).map { |d| Automations::Dsl::DAYS[d.to_i] }.join("/")
-    when :select then fd.options.fetch(v, v)
+    when :select then fd.choices.fetch(v, v)
     when :bool then v ? "sim" : "não"
     when :channels then Array(v).map { |c| Notifier.channel_label(c) }.join(" e ").downcase
     when :recipient then (s = points.values.first&.site) ? Notifier.recipient_label(v, s) : v.to_s
@@ -42,6 +42,11 @@ module AutomationsHelper
     when :script_fields then v.map { |k, x| "#{k} = #{x}" }.join(", ")
     when :alert_rule then AlertRule.find_by(id: v)&.name || "regra removida"
     when :secret then "guardado"
+    when :cameras, :points then Array(v).map { |id| points[id]&.name || "ponto removido" }.join(", ").truncate(80)
+    when :areas, :tags then "#{Array(v).size} escolhida(s)"
+    when :dataset then Dataset.find_by(id: v)&.name || "conjunto removido"
+    when :kv then v.to_h.keys.join(", ")
+    when :ai_output then v.is_a?(Hash) ? "JSON schema" : Array(v).filter_map { |f| f["name"] }.join(", ")
     else v.to_s.truncate(80)
     end
   end

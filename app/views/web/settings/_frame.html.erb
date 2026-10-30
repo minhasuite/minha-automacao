@@ -3,6 +3,7 @@
              [ "Pessoas", people_path, "users", :people, current_user.admin? ],
              [ "Chaves de integração", api_keys_path, "link", :api_keys, current_user.owner? ],
              [ "Aplicativos", apps_path, "cube", :apps, current_user.owner? ],
+             [ "IA", settings_ai_path, "sparkles", :ai, current_user.admin? ],
              [ "Sistema", settings_system_path, "cog", :system, true ],
              [ "Minha conta", settings_account_path, "user-group", :account, true ],
              [ "Meus aparelhos", push_subscriptions_path, "bell", :push, true ] ] %>

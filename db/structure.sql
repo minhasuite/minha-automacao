@@ -71,6 +71,47 @@ CREATE TABLE public.active_storage_variant_records (
 
 
 --
+-- Name: ai_accounts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ai_accounts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    provider character varying NOT NULL,
+    api_key text,
+    base_url character varying,
+    model character varying,
+    enabled boolean DEFAULT true NOT NULL,
+    last_ok_at timestamp(6) without time zone,
+    last_error character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: ai_calls; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ai_calls (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid,
+    automation_id uuid,
+    source character varying NOT NULL,
+    provider character varying NOT NULL,
+    model character varying,
+    input_tokens integer DEFAULT 0 NOT NULL,
+    output_tokens integer DEFAULT 0 NOT NULL,
+    cost numeric(12,6) DEFAULT 0.0 NOT NULL,
+    status character varying NOT NULL,
+    error character varying,
+    duration_ms integer,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: ai_plan_features; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -390,6 +431,37 @@ CREATE TABLE public.dashboards (
     updated_at timestamp(6) without time zone NOT NULL,
     icon character varying,
     sidebar boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: dataset_records; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dataset_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    dataset_id uuid NOT NULL,
+    data jsonb DEFAULT '{}'::jsonb NOT NULL,
+    automation_run_id uuid,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: datasets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.datasets (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    name character varying NOT NULL,
+    key character varying NOT NULL,
+    fields jsonb DEFAULT '[]'::jsonb NOT NULL,
+    retention_days integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -1583,6 +1655,22 @@ ALTER TABLE ONLY public.active_storage_variant_records
 
 
 --
+-- Name: ai_accounts ai_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_accounts
+    ADD CONSTRAINT ai_accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ai_calls ai_calls_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_calls
+    ADD CONSTRAINT ai_calls_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: ai_plan_features ai_plan_features_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1708,6 +1796,22 @@ ALTER TABLE ONLY public.dashboard_versions
 
 ALTER TABLE ONLY public.dashboards
     ADD CONSTRAINT dashboards_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: dataset_records dataset_records_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dataset_records
+    ADD CONSTRAINT dataset_records_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: datasets datasets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.datasets
+    ADD CONSTRAINT datasets_pkey PRIMARY KEY (id);
 
 
 --
@@ -2040,6 +2144,41 @@ CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_b
 --
 
 CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
+
+
+--
+-- Name: index_ai_accounts_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_ai_accounts_on_tenant_id ON public.ai_accounts USING btree (tenant_id);
+
+
+--
+-- Name: index_ai_accounts_on_tenant_id_and_provider; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_ai_accounts_on_tenant_id_and_provider ON public.ai_accounts USING btree (tenant_id, provider);
+
+
+--
+-- Name: index_ai_calls_on_automation_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_ai_calls_on_automation_id ON public.ai_calls USING btree (automation_id);
+
+
+--
+-- Name: index_ai_calls_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_ai_calls_on_site_id ON public.ai_calls USING btree (site_id);
+
+
+--
+-- Name: index_ai_calls_on_tenant_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_ai_calls_on_tenant_id_and_created_at ON public.ai_calls USING btree (tenant_id, created_at);
 
 
 --
@@ -2425,6 +2564,34 @@ CREATE INDEX index_dashboards_on_site_id ON public.dashboards USING btree (site_
 --
 
 CREATE INDEX index_dashboards_on_tenant_id ON public.dashboards USING btree (tenant_id);
+
+
+--
+-- Name: index_dataset_records_on_dataset_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_dataset_records_on_dataset_id_and_created_at ON public.dataset_records USING btree (dataset_id, created_at);
+
+
+--
+-- Name: index_datasets_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_datasets_on_site_id ON public.datasets USING btree (site_id);
+
+
+--
+-- Name: index_datasets_on_site_id_and_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_datasets_on_site_id_and_key ON public.datasets USING btree (site_id, key);
+
+
+--
+-- Name: index_datasets_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_datasets_on_tenant_id ON public.datasets USING btree (tenant_id);
 
 
 --
@@ -3278,6 +3445,22 @@ ALTER TABLE ONLY public.point_links
 
 
 --
+-- Name: dataset_records fk_rails_1e3a8433bd; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dataset_records
+    ADD CONSTRAINT fk_rails_1e3a8433bd FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: ai_accounts fk_rails_1f9f9e2934; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_accounts
+    ADD CONSTRAINT fk_rails_1f9f9e2934 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: alert_rules fk_rails_20afd75383; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3382,6 +3565,14 @@ ALTER TABLE ONLY public.commands
 
 
 --
+-- Name: datasets fk_rails_390f4d8005; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.datasets
+    ADD CONSTRAINT fk_rails_390f4d8005 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: automation_versions fk_rails_3987ae7367; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3459,6 +3650,14 @@ ALTER TABLE ONLY public.api_tokens
 
 ALTER TABLE ONLY public.reading_rollups
     ADD CONSTRAINT fk_rails_4e44c42ca7 FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
+
+
+--
+-- Name: ai_calls fk_rails_4e48191c3d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_calls
+    ADD CONSTRAINT fk_rails_4e48191c3d FOREIGN KEY (automation_id) REFERENCES public.automations(id) ON DELETE SET NULL;
 
 
 --
@@ -3611,6 +3810,14 @@ ALTER TABLE ONLY public.notify_rules
 
 ALTER TABLE ONLY public.dashboard_versions
     ADD CONSTRAINT fk_rails_8887c3671f FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: dataset_records fk_rails_8b57992fe9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dataset_records
+    ADD CONSTRAINT fk_rails_8b57992fe9 FOREIGN KEY (dataset_id) REFERENCES public.datasets(id) ON DELETE CASCADE;
 
 
 --
@@ -3782,11 +3989,35 @@ ALTER TABLE ONLY public.solid_queue_scheduled_executions
 
 
 --
+-- Name: ai_calls fk_rails_c634de66b8; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_calls
+    ADD CONSTRAINT fk_rails_c634de66b8 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: dashboard_versions fk_rails_cc7233754b; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.dashboard_versions
     ADD CONSTRAINT fk_rails_cc7233754b FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: ai_calls fk_rails_cd950a6025; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_calls
+    ADD CONSTRAINT fk_rails_cd950a6025 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE SET NULL;
+
+
+--
+-- Name: datasets fk_rails_cf1a97a02e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.datasets
+    ADD CONSTRAINT fk_rails_cf1a97a02e FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -3956,6 +4187,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261031170001'),
 ('20261031160001'),
 ('20261031050002'),
 ('20261031050001'),

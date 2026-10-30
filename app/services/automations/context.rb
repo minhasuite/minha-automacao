@@ -54,10 +54,11 @@ module Automations
       raise Error, "Expressão \"#{expr.truncate(60)}\": #{e.message.truncate(120)}"
     end
 
-    def render(template)
+    # `limit`: o pedido à IA (Lote 2) leva textos maiores que os 1000 de um aviso.
+    def render(template, limit: 1000)
       return "" if template.blank?
 
-      Liquid::Template.parse(template.to_s, error_mode: :strict).render!(assigns, { strict_filters: true }).truncate(1000)
+      Liquid::Template.parse(template.to_s, error_mode: :strict).render!(assigns, { strict_filters: true }).truncate(limit)
     rescue Liquid::Error => e
       raise Error, "Texto \"#{template.to_s.truncate(60)}\": #{e.message.truncate(120)}"
     end

@@ -250,7 +250,7 @@ module Web
       target = params[:target].to_s
       case params[:op]
       when "add" then editor.add(target, params[:type].to_s)
-      when "update" then editor.update(target, params.fetch(:block, {}).permit(*Automations::Dsl.form_fields, days: [], channels: [], fields: {}).to_h)
+      when "update" then editor.update(target, params.fetch(:block, {}).permit(*Automations::Dsl.form_fields, **Automations::Dsl.array_form_fields, fields: {}).to_h)
       when "move" then editor.move(target, params[:dir])
       when "remove" then editor.remove(target) && nil
       else raise KeyError, "op"

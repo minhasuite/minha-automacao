@@ -2,7 +2,7 @@
 <% id = "#{dom}-#{fd.name}" %>
 <% name = "block[#{fd.name}]" %>
 <% v = node[fd.name] %>
-<% wide = fd.kind.in?(%i[template expr days channels script_fields buttons]) %>
+<% wide = fd.kind.in?(%i[template expr days channels script_fields buttons prompt ai_output kv cameras points areas tags]) %>
 <div class="<%= 'sm:col-span-2' if wide %> min-w-0">
   <% if fd.kind == :script_fields %>
     <% script = site.scripts.find_by(id: node["script"]) if node["script"].is_a?(String) %>
@@ -61,7 +61,23 @@
       <% point = points[node["point"]] %>
       <%= select_tag name, options_for_select(command_options(point), v), class: "ss-input", id: id %>
     <% elsif case_kind == :select %>
-      <%= select_tag name, options_for_select(fd.options.invert, v), include_blank: (fd.required ? false : "Nenhum"), class: "ss-input", id: id %>
+      <%= select_tag name, options_for_select(fd.choices.invert, v), include_blank: (fd.required ? false : "Nenhum"), class: "ss-input", id: id %>
+    <% elsif case_kind.in?(%i[cameras points areas tags]) %>
+      <% list = if case_kind == :areas then site.areas.order(:name).map { |a| [ a.name, a.id ] }
+                elsif case_kind == :tags then Tag.order(:name).map { |t| [ t.name, t.id ] }
+                else points.values.uniq.select { |p| case_kind == :points || p.capability == "stream" }.sort_by { |p| [ p.device.name, p.name ] }.map { |p| [ "#{p.device.name}: #{p.name}", p.id ] }
+                end %>
+      <%= hidden_field_tag "#{name}[]", "", id: nil %>
+      <%= select_tag "#{name}[]", options_for_select(list, Array(v)), multiple: true, size: [ [ list.size, 2 ].max, 6 ].min, class: "ss-input", id: id %>
+      <p class="text-xs text-muted mt-1">Ctrl ou toque longo para escolher vários.</p>
+    <% elsif case_kind == :prompt %>
+      <%= text_area_tag name, v, class: "ss-input", id: id, rows: 5, maxlength: Automations::Dsl::MAX_PROMPT, placeholder: "Texto com {{ trigger.point }}, {{ points[\"chave\"].text }}, {{ variavel }}..." %>
+    <% elsif case_kind == :ai_output %>
+      <%= text_area_tag name, (Ai::Output.text(v) if v), class: "ss-input num text-sm", id: id, rows: 3, spellcheck: false, placeholder: "anomalia: sim/não Achou algo fora do normal?\nmotivo: texto" %>
+    <% elsif case_kind == :kv %>
+      <%= text_area_tag name, v.to_h.map { |k, x| "#{k}: #{x}" }.join("\n"), class: "ss-input num text-sm", id: id, rows: 3, spellcheck: false, placeholder: "porta: {{ trigger.point }}\nvalor: {{ trigger.value }}" %>
+    <% elsif case_kind == :dataset %>
+      <%= select_tag name, options_for_select(site.datasets.order(:name).map { |d| [ d.name, d.id ] }, v), include_blank: "Escolha o conjunto", class: "ss-input", id: id %>
     <% elsif case_kind == :recipient %>
       <%= select_tag name, options_for_select(Notifier.recipient_choices(site), v), class: "ss-input", id: id %>
     <% elsif case_kind == :camera %>

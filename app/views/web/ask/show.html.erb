@@ -1,0 +1,38 @@
+<%= render "web/shared/header", title: "Perguntar à casa", subtitle: "Pergunte sobre o estado atual: a IA lê os pontos do local e o resumo das últimas horas. Só responde, não executa comandos." %>
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] items-start max-w-5xl">
+  <div class="grid gap-4 min-w-0">
+    <%= form_with url: ask_path, class: "ss-card ss-card-pad grid gap-3" do %>
+      <% if @sites.size > 1 %>
+        <div><%= label_tag :site_id, "Local", class: "ss-label" %><%= select_tag :site_id, options_for_select(@sites.map { |s| [ s.name, s.id ] }, @site&.id), class: "ss-input" %></div>
+      <% elsif @site %>
+        <%= hidden_field_tag :site_id, @site.id %>
+      <% end %>
+      <div><%= label_tag :question, "Sua pergunta", class: "ss-label" %>
+        <%= text_area_tag :question, @question, rows: 3, maxlength: 1000, required: true, class: "ss-input", autofocus: @response.nil?,
+                          placeholder: "Tem alguma luz acesa? Qual porta ficou aberta mais tempo hoje? Algum aparelho sem sinal?" %></div>
+      <div><button type="submit" class="ss-btn ss-btn-primary" data-turbo-submits-with="Pensando..." <%= "disabled" unless @site %>><%= icon("sparkles", "size-4") %>Perguntar</button></div>
+    <% end %>
+
+    <% if @error %>
+      <div class="ss-card ss-card-pad border-l-4 border-danger" role="alert">
+        <p class="font-bold text-ink">Não deu para responder</p>
+        <p class="text-sm text-muted mt-1"><%= @error %></p>
+        <% if current_user.admin? %><p class="text-sm mt-2"><%= link_to "Configurar a IA", settings_ai_path %></p><% end %>
+      </div>
+    <% elsif @response %>
+      <section class="ss-card ss-card-pad" aria-labelledby="resp-t" aria-live="polite">
+        <h2 id="resp-t" class="flex items-center gap-2"><%= icon("sparkles", "size-5") %>Resposta</h2>
+        <div class="mt-2 text-ink whitespace-pre-line break-words"><%= @response.data.is_a?(Hash) ? @response.data.to_json : @response.data %></div>
+        <p class="mt-3 text-xs text-muted"><%= [ Ai.provider(@response.provider)&.label, @response.model, "#{@response.tokens} tokens", usd(@response.cost) ].compact.join(" · ") %></p>
+      </section>
+    <% end %>
+  </div>
+  <aside class="ss-card ss-card-pad text-sm text-muted">
+    <h2 class="text-base text-ink font-bold">Como funciona</h2>
+    <ul class="mt-2 grid gap-2 list-disc pl-4">
+      <li>A IA recebe o nome, o valor e há quanto tempo cada ponto do local mudou<% if @site %> (<%= @site.points.count %> pontos em <%= @site.name %>)<% end %>.</li>
+      <li>Usa o provedor padrão de Configurações → IA, com a sua chave, e conta no limite do mês.</li>
+      <li>Nada é executado: para agir, use os painéis, as cenas ou uma automação.</li>
+    </ul>
+  </aside>
+</div>
