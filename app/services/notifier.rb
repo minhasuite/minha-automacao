@@ -2,7 +2,8 @@
 # canais escolhidos. Cada canal é um plugin em Notifier::Channels (CHANNELS):
 # no app, push (que por sua vez tem transportes: Web Push e FCM) e fala na
 # Echo. Canal novo = classe com `owns?(canal)`, `choices(site)`, `label(canal)`,
-# `capabilities` e `deliver(canal, notificações)` + nome em CHANNELS; nada
+# `capabilities` e `deliver(canal, notificações)` [+ `speak(canal, texto,
+# chime:)` se for canal de fala] + nome em CHANNELS; nada
 # muda aqui, na ação "Avisar" nem no editor. O aviso declara o que quer
 # (título, corpo, botões, imagem, link, tag, prioridade, validade...) e cada
 # canal usa o que suporta (`capabilities`) e ignora o resto.
@@ -28,6 +29,10 @@ module Notifier
   def valid_channels?(list) = list.is_a?(Array) && list.any? && list.all? { |c| channel_for(c) }
 
   def channel_choices(site) = channels.flat_map { |c| c.choices(site) }
+
+  # Canais de fala (Lote 3): os que respondem a `speak(canal, texto, chime:)`; a ação "Falar" usa só estes.
+  def speech_channel?(channel) = channel_for(channel).respond_to?(:speak)
+  def speech_choices(site) = channels.select { |c| c.respond_to?(:speak) }.flat_map { |c| c.choices(site) }
 
   def channel_label(channel) = channel_for(channel)&.label(channel.to_s) || "Canal removido"
 

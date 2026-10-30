@@ -34,7 +34,7 @@
       <% elsif fd.kind == :channels %>
         <%= hidden_field_tag "#{name}[]", "", id: nil %>
         <div class="flex flex-wrap gap-x-3 gap-y-1">
-          <% Notifier.channel_choices(site).each do |key, label| %>
+          <% (fd.options == :speech ? Notifier.speech_choices(site) : Notifier.channel_choices(site)).each do |key, label| %>
             <label class="inline-flex items-center gap-1 text-sm"><%= check_box_tag "#{name}[]", key, v.nil? ? Notifier.default_channels.include?(key) : v.include?(key), id: "#{id}-#{key.parameterize}" %><%= label %></label>
           <% end %>
         </div>
