@@ -67,3 +67,18 @@ O resto (outros selectors, entidade fixa, `wait_for_trigger`, `choose`,
 `variables`, template...) vai para `unsupported` e aparece na tela como
 "não suportado: …"; a automação criada roda sem essas partes. Sem nenhum
 gatilho ou nenhuma ação conversível, a importação é recusada com a lista.
+
+### Automações e scripts do HA (Lote 4, G32)
+
+A mesma tela aceita o `automations.yaml` (lista), uma automação só ou o
+`scripts.yaml`. Cada automação ou script vira um blueprint deste local
+(`Blueprints::HaImport.import`), com o mesmo conversor e o mesmo relatório do
+que não converteu. Cada entidade fixa (`entity_id`, inclusive em `target`)
+vira uma entrada de ponto com o nome da entidade (`switch.varanda`) e o
+filtro de capacidade pelo domínio. Em "Criar automação" a pessoa escolhe o
+ponto daqui de cada entidade; a automação nasce como qualquer outra criada
+de blueprint (desligada, ponto crítico só no rascunho). Item sem nada que
+rode aqui (sem gatilho ou sem ação) fica de fora e é contado no aviso. Até
+100 itens por vez. Templates do HA (Jinja) não convertem: aparecem como
+"condição template" e devem ser refeitos com `expr`, `count_points` ou
+Liquid.

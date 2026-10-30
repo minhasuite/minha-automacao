@@ -68,7 +68,7 @@ ou `key` do ponto.
 | Campo | Valor |
 |---|---|
 | `span` | `{mobile, tablet, desktop}`, de 1 a 12 colunas (padrão 12/6/4). Seção também aceita `span` (padrão 12/12/12). Celular < 640 px ≤ tablet < 1024 px ≤ computador |
-| `visible_if` | `role` (lista de papéis; quem não está some do JSON), `state` `{point, is}` (`is` valor ou lista), `quality` (lista, do ponto do widget), `time` `{after, before}` em HH:MM no fuso do local (pode passar da meia-noite), `device` (lista; só o app avalia) |
+| `visible_if` | `role` (lista de papéis; quem não está some do JSON), `state` `{point, is}` (`is` valor ou lista), `numeric` `{point, above, below}` (faixa aberta, Lote 4), `quality` (lista, do ponto do widget), `time` `{after, before}` em HH:MM no fuso do local (pode passar da meia-noite), `any` (lista de 1 a 10 condições: basta uma, sem `role`/`screen` dentro), `screen` (lista de `mobile`/`tablet`/`desktop`: a tela esconde nas outras; o app usa a mesma lista), `device` (lista; só o app avalia). Todas as chaves valem juntas (E). O formulário do editor cuida de papel e tela; o resto vem do JSON e fica ao salvar pelo formulário |
 | `label`, `icon`, `color` | `color`: `accent`, `amber`, `green`, `red`, `blue` (a cor quando ligado) |
 | `tap` | `toggle` (padrão em liga/desliga), `more_info` (só abre o ponto), `navigate`, `none` |
 
@@ -89,11 +89,32 @@ ou `key` do ponto.
 | `vacuum` | `bind` (ponto `vacuum` de dispositivo `xiaomi_miot`) | estado, bateria, aviso de erro, Limpar a casa/Pausar/Parar/Voltar à base, cômodos do mapa em pílulas + ajustes (modo, potência, água, caminho, vezes) e "Limpar selecionados" (`clean_rooms`), base (lavar, secar, esvaziar) e peças com barra; os irmãos do aparelho entram pelo `address.role` |
 | `energy` | `binds` (pontos kWh/Wh acumulados ou W/kW, somados), `period` (`today`/`week`/`month`/`cycle`), `cycle_day` (1–28), `tariff` (R$/kWh) **ou** `tariff_point` (ponto, ex. helper Número), `goal` (kWh), `compare` | "Consumo e custo" (F9): consumo, custo, projeção linear até o fim do período, meta, comparação com o mesmo trecho do período anterior e barras por hora (hoje) ou dia, pelos rollups de hora (`Dashboards::Energy`) |
 | `heading` | `title` | título |
-| `markdown` | `text` | texto puro (sem Liquid por enquanto) |
+| `markdown` (plugin) | `text` | Texto com Liquid (Lote 4): o mesmo das automações (`{{ points["sala.luz"].text }}`, `{{ now \| date: "%H:%M" }}`, `{% if %}`, `{{ "state=on tag=luz" \| points_where \| size }}`) e Markdown mínimo (`# título`, `- item`, `**negrito**`, `*itálico*`, linha em branco = parágrafo). Os pontos citados como `points["chave"]` entram nas dependências (o texto se refaz quando mudam); erro de Liquid aparece embaixo do texto |
+| `weather` (plugin) | `bind` (ponto `weather` da integração Clima), `forecast` (`daily` padrão, `hourly`, `none`) | condição, temperatura, sensação, umidade, vento e chance de chuva de agora, e 5 dias ou 8 horas de previsão |
 
-`query`: `capability` (uma ou lista), `state` (`on`: verdadeiro, `open`;
-`off`: o resto), `area`, `device_class` (`power` também pega medição em W),
-`tag`, `quality`. Ponto oculto ou desativado nunca entra.
+`query` (Lote 4: `Points::Query`, o mesmo das expressões e do Liquid):
+`capability` (uma ou lista), `state` (`on`: verdadeiro, `open`; `off`: o
+resto), `is` (valor em texto), `area` (id ou nome), `device_class` (`power`
+também pega medição em W), `tag`, `quality`, `integration` (driver do
+aparelho: `tuya_local`, `virtual`…), `device` e `name` (contém),
+`exclude` (nome, chave ou aparelho contém; vírgula = vários), `above`/`below`
+(número), `unchanged_min` (sem mudar há N minutos), `changed_min` (mudou nos
+últimos N minutos), `sort` (`name`, `value`, `changed_at`; `-` na frente =
+decrescente) e `limit`. Lista = vírgula ou JSON. Ponto oculto ou desativado
+nunca entra.
+
+### Tipo novo de widget (aberto para extensão, Lote 4)
+
+Widget novo = classe em `app/services/dashboards/widgets/` (herda de
+`Dashboards::Widgets::Base`) + nome em `Dashboards::Widgets::PLUGINS` +
+partial `web/dashboards/widgets/_<tipo>`. A classe diz `describe type:,
+label:, icon:, required:, params:, bind:` e, se precisar, `errors(w)`
+(validação além das props), `data(resolver, w, binds)` (→ `[data, pontos
+extras]`, que viram dependência do tempo real), `attrs(params)` (formulário
+→ props) e `form` (partial com os campos próprios no editor,
+`data-for="<tipo>"`). O `Schema` (`types`/`labels`), o `Resolver`, o editor
+(tipo, seletor de ponto, campos) e a tela perguntam ao plugin; nenhum deles
+ganha `case` novo. Os tipos da F5 continuam em `Schema::WIDGETS`.
 
 Ficam para depois (driver ainda não existe ou v1.1): `vacuum`,
 `timeline`, `health`, `calendar`, `select`/`slider`/`button`/`gate`

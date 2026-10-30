@@ -74,6 +74,7 @@ sol. **Dias**: 0 = domingo … 6 = sábado (sem `days` = todos).
 | `webhook` | — | `POST /api/v1/hooks/automations/:token` (corpo em `trigger.data`) |
 | `manual` | — | só pelo "Executar agora" (que sempre existe) |
 | `notification_action` | `actions?` (ids separados por vírgula) | alguém respondeu a um aviso com botões (push, aviso in-app ou /notificacoes); `trigger.action`, `trigger.user`, `trigger.user_id`, `trigger.data` (Lote 1) |
+| `event` | `event` (nome: minúsculas, números, `_ . : -`), `match?` ({campo: valor}, todos precisam bater) | chegou o evento (Lote 4, G6): os da ação `fire_event` e os do sistema, como `automation_finished` (qualquer execução terminou: `automation_id`, `automation`, `kind`, `status`, `reason`), `notification_action` e `script_finished`. `trigger.event` e `trigger.data.campo`. O fim da própria automação não a dispara; a cadeia passa pela mesma proteção de laço |
 
 Valor que volta junto com a conexão (o ponto estava indisponível) não
 dispara, como nas primitivas.
@@ -104,6 +105,9 @@ uma com o valor visto (`agora: Desligado`).
 | `speak` | `channels` (só canais de fala: os plugins de `Notifier::Channels` com `speak`, hoje `alexa:<id>`), `message` (Liquid), `chime?` (padrão `true`: com o som de anúncio; `false` = só a voz) | "Falar" (Lote 3): fala sem criar aviso no app nem push. Rotina da Alexa é o comando `routine` (valor = nome ou frase da rotina) num ponto `speaker`, pela ação `command` |
 | `wait_notification` | `actions?`, `timeout`, `continue_on_timeout?`, `response_variable?` | espera a resposta a um aviso **desta execução** (durável); a variável recebe {action, title, user, user_id, data} ou fica vazia no tempo limite |
 | `calendar_events` | `point` (agenda), `start?` (`-1h`, `2h`), `within`, `contains?`, `response_variable?` | eventos da agenda que tocam a janela: {events: [{summary, start, end, all_day, location}], count, titles} |
+| `weather_forecast` | `point` (ponto `weather` da integração Clima), `kind` (`daily`/`hourly`), `count?`, `response_variable?` | "Ler previsão do tempo" (Lote 4): {current: {condition, condition_text, temperature, humidity…}, forecast: [{date ou time, condition, condition_text, temperature_max/min ou temperature, precipitation_probability}], count, today, text} (`text` = "Agora: Chuva, 21°. Hoje: Chuva, 17° a 24°, 90% de chance de chuva") |
+| `fire_event` | `event`, `data?` ({campo: texto Liquid}) | "Disparar evento" (Lote 4): acorda o gatilho `event` e o `wait_event` do local; nomes do sistema são reservados |
+| `wait_event` | `event`, `match?`, `timeout`, `continue_on_timeout?`, `response_variable?` | "Esperar evento" (durável): a variável recebe os dados do evento ou fica vazia no tempo limite |
 | `ai_task` | `prompt` (Liquid, até 4000), `system?`, `cameras?` (quadro agora), `image_urls?` (URL https ou anexo `/rails/active_storage/...`, uma por linha), `output?` (campos `[{name, type, description}]` ou JSON schema; vazio = texto), `temperature?`, `max_tokens?`, `provider?`, `model?`, `response_variable?` | "Pedir à IA" pela IA da instalação (`docs/ia.md`): {data (texto ou os campos), provider, model, tokens, cost} |
 | `ai_data` | `points?`, `areas?`, `tags?` (pelo menos um), `history?` (`24h`) + os campos de `ai_task` | "Gerar dados por IA": põe antes do pedido o estado e o resumo do histórico desses pontos |
 | `dataset_record` | `dataset`, `values` ({campo: texto Liquid}), `response_variable?` | "Registrar dados": grava uma linha no conjunto (`docs/dados.md`); resposta {id, em, ...campos} |
@@ -125,7 +129,8 @@ que não é de controle; "Seguir se der erro" no editor), a falha vira um passo
 
 **Ações que devolvem dados** (`response_variable`, Lote 1): `script` (com
 `wait`), `http`, `calendar_events`, `wait_notification` e, no Lote 2,
-`ai_task`, `ai_data`, `dataset_record` e `dataset_query`. A variável é um
+`ai_task`, `ai_data`, `dataset_record` e `dataset_query`; no Lote 4,
+`weather_forecast` e `wait_event`. A variável é um
 objeto: no texto `{{ agenda.count }}`, `{% for e in agenda.events %}`; na
 expressão `agenda.count > 0`, `r.json.temp * 2`, `lista.0` (índice) e
 `lista.count`. Campo que não existe = erro com o nome no trace.
@@ -156,11 +161,23 @@ Expressão: aritmética, comparação, `and`/`or`/`not`, `if(c, a, b)`, `round`,
 (0 = domingo), `day`, `month`, `trigger_value`, `repeat_index`. Ponto sem
 valor ou nome desconhecido = erro (condição falsa com o motivo no trace).
 
+Conjunto de pontos (Lote 4, G8; `Points::Query`, a mesma consulta do
+`query` dos painéis, em texto `chave=valor` separado por espaço, aspas para
+valor com espaço): `count_points("capability=onoff state=on")`,
+`sum_points(...)`, `min_points(...)`, `max_points(...)`, `avg_points(...)`.
+Ex.: `count_points("tag=bateria below=30") > 0`,
+`count_points("quality=unavailable unchanged_min=60 exclude=teste")`. Na
+simulação, a consulta vê os valores hipotéticos. Filtro novo = uma linha em
+`Points::Query::FILTERS`.
+
 Texto: `{{ trigger.title }}`, `{{ trigger.point }}`, `{{ trigger.value }}`,
 `{{ trigger.data.campo }}` (webhook), `{{ points["sala.luz"].text }}`
 (também `.value`, `.quality`, `.changed_at`, `.since_min`),
 `{{ site.name }}`, `{{ now | date: "%H:%M" }}` e as variáveis pelo nome.
 Variável com objeto (resposta de ação) por ponto: `{{ resposta.action }}`.
+Conjunto de pontos: `{{ "tag=luz state=on sort=name" | points_where | map: "name" | join: ", " }}`
+(cada item tem `key`, `name`, `value`, `text`, `quality`, `unit`, `device`,
+`changed_at` e `since_min`).
 Até 1000 caracteres.
 
 ## Execução

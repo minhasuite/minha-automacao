@@ -99,3 +99,8 @@ Nada fora do plugin pergunta o tipo: telas e motor usam
 capacidade. Capacidade nova (como `counter`, `timer`, `datetime`) entra em
 `Point::CAPABILITIES` e, se tiver tela própria, no `tile` pela capacidade.
 Spec do tipo em `spec/services/helper_types_spec.rb`.
+
+**Sensor calculado com consulta (Lote 4, G8):** a expressão pode usar
+`count_points("...")` (e sum/min/max/avg) e o texto `points_where`. Nesse
+caso a origem é o local inteiro (`sources` com `"*"`): o helper refaz a cada
+mudança de qualquer ponto do local, menos a dele mesmo.

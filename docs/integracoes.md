@@ -135,6 +135,30 @@ gravado no `adopt!`) que ainda não teve nenhum contato (`last_seen_at` nulo),
 por até 7 dias. Os demais (inclusive DVR casado por IP e virtuais) mostram
 Online / Offline / Com erro.
 
+### Clima (Lote 4, `WeatherPlugin`)
+
+Previsão do tempo de um provedor em `Weather::PROVIDERS` (padrão Open-Meteo,
+grátis e sem chave). A localização é a latitude e longitude do local
+(cadastro do local); dá para informar outra só nesta integração (campos
+vazios = a do local). Vira o aparelho virtual "Clima" com o ponto `weather`
+(valor = condição com os nomes do HA: `sunny`, `partlycloudy`, `rainy`…;
+agora, previsão por dia e por hora em `address`) e um `measure` por medida
+que o provedor informa (temperatura, sensação, umidade, vento, chance de
+chuva hoje). Lê a cada 30 min. **Provedor novo** = classe em
+`app/services/weather/providers/` (`describe key:, label:, needs_key:` e
+`fetch(lat:, lon:, zone:, api_key:)` no formato comum de `Weather`) + nome em
+`PROVIDERS`; chave do provedor fica cifrada na integração.
+
+### Sistema (Lote 4, `SystemPlugin`)
+
+O próprio servidor como pontos do aparelho virtual "Sistema": disco usado
+(%) e livre (GB), último backup e "Backup atrasado" (mais de 26 h; lê a pasta
+`BACKUP_DIR`, padrão `/backups`, montada só leitura no servidor da casa),
+integrações com erro (número e nomes), automações ligadas, execuções e falhas
+em 24 h, execuções em andamento e pontos sem sinal. Lê a cada 5 min. Medida
+nova = uma entrada em `SystemPlugin::METRICS`; medida sem leitura no servidor
+não cria ponto.
+
 ## Lista de dispositivos e página do dispositivo
 
 `/locais/:id/dispositivos`: tabela (nome, fabricante/modelo, área,

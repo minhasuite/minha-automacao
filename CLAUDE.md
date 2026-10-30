@@ -61,7 +61,15 @@ PullPoint no `Onvif::Listener`), câmera Tuya por dados no mapa (movimento
 decodificado por `Points::Decode`, sensor de pulso `hold_s`, sirene crítica),
 sessão própria da Alexa (`Alexa::Auth`: login da Amazon no navegador, 2FA lá,
 renovação pelo refresh token; rotina como comando `routine`) e a ação
-"Falar" pelos canais de fala do `Notifier` (`docs/cameras.md`).
+"Falar" pelos canais de fala do `Notifier` (`docs/cameras.md`) + **Lote 4**:
+clima por plugin (`Weather::PROVIDERS`, integração Clima, ação "Ler previsão
+do tempo", widget `weather`), widgets como plugins (`Dashboards::Widgets`;
+Texto com Liquid e Markdown mínimo), `visible_if` com faixa, OU e tela,
+consultas sobre o conjunto de pontos (`Points::Query`: painel, Liquid
+`points_where`, `count_points(...)` e afins), eventos (gatilho "Evento",
+"Disparar/Esperar evento", `automation_finished`), integração Sistema (disco,
+backup, automações e integrações como pontos) e importação de automações e
+scripts do HA como blueprints.
 
 ## Rodar
 
@@ -390,6 +398,22 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `capability`, `properties`, `handle`). Exposição: `points/scenes.alexa_exposed`
   (padrão falso) e `alexa_name`; crítico só com `alexa_risk_confirmed`. No Dell
   nada fica exposto: teste com token temporário e revogue.
+- **Lote 4 (aberto/fechado)**: widget novo = classe em
+  `Dashboards::Widgets::PLUGINS` (`describe type:, label:, required:, params:,
+  bind:`, `errors`, `data`, `attrs`, `form`) + partial; o `case` do Resolver e
+  do controller do painel ficou só com os tipos da F5 e cai no plugin no
+  `else`. Provedor de clima = classe em `Weather::PROVIDERS` (formato comum em
+  `weather.rb`). Filtro de consulta = linha em `Points::Query::FILTERS`
+  (lambda); a mesma consulta serve ao painel, ao Liquid (filtro
+  `points_where`, registrado só no render do `Automations::Context`) e ao
+  dentaku (`Expr::AGGREGATES`, funções por calculadora com o contexto).
+  Sensor calculado com consulta tem `sources` `["*"]`. Evento: plugin de
+  gatilho responde `listens?(nome)`; `Triggers.event(site, nome, dados,
+  cause:)` sempre põe `event` e `data` no payload; a ação `fire_event` não usa
+  nome reservado (`Triggers::SYSTEM_EVENTS` e os `event` dos plugins). Medida
+  do Sistema = entrada em `SystemPlugin::METRICS`. Importar do HA: cada
+  entidade fixa vira entrada de ponto do blueprint (nada de mapear entity_id
+  por nome).
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 
