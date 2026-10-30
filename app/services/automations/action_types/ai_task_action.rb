@@ -11,9 +11,9 @@ module Automations
     class AiTaskAction < Base
       FIELDS = [
         f("prompt", :prompt, "Pedido (texto com {{ }})", required: true), f("system", :prompt, "Instruções de sistema (opcional)"),
-        f("cameras", :cameras, "Imagens: quadro destas câmeras agora"), f("image_urls", :template, "Ou imagens por URL ou anexo (uma por linha)"),
-        f("output", :ai_output, "Saída estruturada: um campo por linha (nome: texto|número|inteiro|sim/não|lista descrição) ou JSON schema. Vazio = texto livre"),
-        f("temperature", :number, "Temperatura (0 a 2; se o provedor aceitar)"), f("max_tokens", :number, "Limite de tokens da resposta"),
+        f("cameras", :cameras, "Imagens das câmeras (quadro de agora)"), f("image_urls", :template, "Imagens por URL ou anexo (uma por linha)"),
+        f("output", :ai_output, "Saída estruturada (um campo por linha, nome: texto|número|inteiro|sim/não|lista descrição; ou JSON schema; vazio = texto livre)"),
+        f("temperature", :number, "Temperatura (0 a 2; se o provedor aceitar)"), f("max_tokens", :number, "Limite de tokens (da resposta)"),
         f("provider", :select, "Provedor (vazio = o padrão)", options: -> { Ai.choices }), f("model", :text, "Modelo (vazio = o do provedor)")
       ].freeze
 
