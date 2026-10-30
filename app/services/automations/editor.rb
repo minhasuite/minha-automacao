@@ -2,20 +2,12 @@ module Automations
   # Operações do editor visual no rascunho: cada bloco (gatilho, condição,
   # ação, opção) tem um caminho ("actions.2.then.0") e o formulário dele
   # manda os campos como texto; aqui viram o JSON da DSL pelo tipo do campo
-  # (Dsl::TRIGGERS/CONDITIONS/ACTIONS). Bloco pela metade pode ficar no
-  # rascunho: a validação completa barra só a publicação.
+  # (os campos do plugin do bloco, Automations::Block). Bloco pela metade
+  # pode ficar no rascunho: a validação completa barra só a publicação.
   class Editor
     # Nome da lista → tipo de bloco que ela aceita.
     LISTS = { "triggers" => :triggers, "conditions" => :conditions, "while" => :conditions, "until" => :conditions,
               "actions" => :actions, "then" => :actions, "else" => :actions, "default" => :actions, "options" => :options }.freeze
-    # O bloco já nasce com o que costuma ser usado (e passa na validação quando dá).
-    DEFAULTS = {
-      triggers: { "time" => { "at" => "18:00" }, "sun" => { "event" => "sunset" }, "alert" => { "on" => "open" } },
-      conditions: { "time" => { "after" => "18:00" }, "sun" => { "after" => "sunset" }, "expr" => { "expr" => "hour >= 18" } },
-      actions: { "command" => { "command" => "on" }, "notify" => { "channels" => Notifier::CHANNELS.keys, "title" => "Aviso" },
-                 "wait" => { "for" => "1m" }, "wait_for" => { "conditions" => [], "timeout" => "5m" },
-                 "choose" => { "options" => [ { "conditions" => [], "actions" => [] } ] }, "repeat" => { "count" => 2 } }
-    }.freeze
 
     attr_reader :definition
 
@@ -42,10 +34,10 @@ module Automations
       spec = Dsl.spec(kind, node["type"]) or raise KeyError, "tipo"
       form = form.to_h.stringify_keys
       point = @site.points.find_by(id: node["point"]) if node["point"]
-      spec[:fields].each do |fd|
-        next if Dsl::LIST_KINDS.key?(fd.kind) || !form.key?(fd.name)
+      spec.fields.each do |fd|
+        next if Dsl.list_kind?(fd.kind) || !form.key?(fd.name)
 
-        value = cast(fd, form[fd.name], point)
+        value = fd.kind == :script_fields ? script_fields(form[fd.name], node) : cast(fd, form[fd.name], point)
         point = @site.points.find_by(id: value) if fd.kind.in?(%i[point writable_point])
         value.nil? ? node.delete(fd.name) : node[fd.name] = value
       end
@@ -69,8 +61,16 @@ module Automations
     private
 
     def new_block(kind, type)
-      Dsl.spec(kind, type) or raise KeyError, "tipo"
-      { "type" => type }.merge(DEFAULTS.dig(kind, type).to_h.deep_dup)
+      spec = Dsl.spec(kind, type) or raise KeyError, "tipo"
+      { "type" => type }.merge(spec.defaults.deep_dup)
+    end
+
+    # Campos do script chamado: texto do formulário → tipo do campo (vazio some).
+    def script_fields(raw, node)
+      script = @site.scripts.find_by(id: node["script"]) if node["script"].is_a?(String)
+      return nil unless script && raw.respond_to?(:to_h)
+
+      raw.to_h.stringify_keys.slice(*script.fields.pluck("name")).compact_blank.presence&.then { |h| script.cast_fields(h) }
     end
 
     def cast(fd, raw, point)

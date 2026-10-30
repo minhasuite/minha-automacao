@@ -1,13 +1,15 @@
 module Automations
   # A linguagem das automações (ESQUEMA-V1 §5): `{triggers, conditions,
-  # actions}`. Uma tabela só (TRIGGERS/CONDITIONS/ACTIONS) diz os tipos, os
-  # campos e o tipo de cada campo; dela saem a validação, o editor visual
-  # (formulário por bloco) e a conversão do formulário. Validado à mão, como o
-  # dashboard (Dashboards::Schema), porque a checagem depende do local
-  # (ponto existe, comando serve para o ponto).
+  # actions}`. Cada tipo de bloco é um plugin (Block) registrado em
+  # TriggerTypes, ConditionTypes e ActionTypes (F8f): ele diz os campos e o
+  # tipo de cada campo; daqui saem a validação, o editor visual (formulário
+  # por bloco) e a conversão do formulário. Validado à mão, como o dashboard
+  # (Dashboards::Schema), porque a checagem depende do local (ponto existe,
+  # comando serve para o ponto).
   #
   # Ponto: no JSON pode vir o UUID ou a `key` ("cozinha.luz"); ao salvar vira
-  # UUID (`normalize`), o JSON avançado mostra a `key` (`with_keys`).
+  # UUID (`normalize`), o JSON avançado mostra a `key` (`with_keys`). Em
+  # script, "$nome" = o ponto escolhido no campo `nome`.
   # Duração: "30s", "5m", "1h30m" ou segundos (número); o sinal "-" só vale no
   # deslocamento do sol.
   module Dsl
@@ -22,60 +24,19 @@ module Automations
     MODES = { "single" => "Uma por vez (ignora novo disparo)", "restart" => "Reinicia (cancela a anterior)",
               "queued" => "Em fila", "parallel" => "Em paralelo" }.freeze
 
-    TRIGGERS = {
-      "state" => { label: "Ponto mudou", fields: [ f("point", :point, "Ponto", required: true), f("from", :value, "De (opcional)"),
-                                                  f("to", :value, "Para (opcional)"), f("for", :duration, "Por pelo menos") ] },
-      "numeric" => { label: "Passou de um limite", fields: [ f("point", :point, "Ponto", required: true), f("above", :number, "Acima de"),
-                                                             f("below", :number, "Abaixo de"), f("for", :duration, "Por pelo menos") ] },
-      "time" => { label: "Horário", fields: [ f("at", :time, "Às (HH:MM)"), f("every", :duration, "Ou a cada (ex.: 10m)"), f("days", :days, "Dias") ] },
-      "sun" => { label: "Sol", fields: [ f("event", :select, "Quando", required: true, options: SUN_EVENTS),
-                                         f("offset", :duration, "Deslocamento (ex.: -15m)"), f("days", :days, "Dias") ] },
-      "alert" => { label: "Alerta", fields: [ f("rule", :alert_rule, "Regra de alerta", required: true),
-                                              f("on", :select, "Quando", required: true, options: ALERT_EVENTS) ] },
-      "manual" => { label: "Manual (Executar agora)", fields: [] },
-      "webhook" => { label: "Webhook (chamada externa com token)", fields: [] }
-    }.freeze
+    # Pseudo-bloco das opções do "Escolher".
+    class Option
+      def self.label = "Opção"
+      def self.fields = [ Dsl.f("conditions", :conditions, "Se"), Dsl.f("actions", :actions, "Então") ]
+      def self.rules(_node) = []
+      def self.defaults = {}
+    end
 
-    CONDITIONS = {
-      "state" => { label: "Ponto está", fields: [ f("point", :point, "Ponto", required: true), f("is", :value, "Está"),
-                                                 f("quality", :select, "Ou situação", options: QUALITIES), f("for", :duration, "Há pelo menos") ] },
-      "numeric" => { label: "Ponto entre limites", fields: [ f("point", :point, "Ponto", required: true), f("above", :number, "Acima de"), f("below", :number, "Abaixo de") ] },
-      "time" => { label: "Janela de horário", fields: [ f("after", :time, "Depois de"), f("before", :time, "Antes de"), f("days", :days, "Dias") ] },
-      "sun" => { label: "Sol", fields: [ f("after", :select, "Depois do", options: SUN_EVENTS), f("after_offset", :duration, "Deslocamento"),
-                                         f("before", :select, "Antes do", options: SUN_EVENTS), f("before_offset", :duration, "Deslocamento") ] },
-      "expr" => { label: "Expressão", fields: [ f("expr", :expr, "Expressão (ex.: sala.temperatura > 28 and hour >= 22)", required: true) ] },
-      "and" => { label: "Todas (e)", fields: [ f("conditions", :conditions, "Condições") ] },
-      "or" => { label: "Alguma (ou)", fields: [ f("conditions", :conditions, "Condições") ] },
-      "not" => { label: "Nenhuma (não)", fields: [ f("conditions", :conditions, "Condições") ] }
-    }.freeze
-
-    ACTIONS = {
-      "command" => { label: "Comandar ponto", fields: [ f("point", :writable_point, "Ponto", required: true), f("command", :command, "Comando", required: true),
-                                                        f("value", :value, "Valor (ajustar/selecionar)") ] },
-      "scene" => { label: "Acionar cena", fields: [ f("scene", :scene, "Cena", required: true) ] },
-      "notify" => { label: "Avisar", fields: [ f("channels", :channels, "Canais"), f("title", :template, "Título", required: true), f("message", :template, "Mensagem") ] },
-      "wait" => { label: "Esperar", fields: [ f("for", :duration, "Tempo (ex.: 5m)"), f("expr", :expr, "Ou segundos por expressão") ] },
-      "wait_for" => { label: "Esperar condição", fields: [ f("conditions", :conditions, "Até que"), f("timeout", :duration, "Tempo limite", required: true),
-                                                           f("continue_on_timeout", :bool, "Seguir se o tempo acabar") ] },
-      "if" => { label: "Se / senão", fields: [ f("conditions", :conditions, "Se"), f("then", :actions, "Então"), f("else", :actions, "Senão") ] },
-      "choose" => { label: "Escolher", fields: [ f("options", :options, "Opções"), f("default", :actions, "Se nenhuma servir") ] },
-      "repeat" => { label: "Repetir", fields: [ f("count", :number, "Vezes"), f("while", :conditions, "Enquanto"), f("until", :conditions, "Até que"),
-                                                f("actions", :actions, "Fazer") ] },
-      "set" => { label: "Definir variável", fields: [ f("var", :var, "Nome", required: true), f("expr", :expr, "Expressão (número/lógica)"),
-                                                      f("value", :template, "Ou texto") ] },
-      "condition" => { label: "Parar se falso", fields: [ f("conditions", :conditions, "Seguir só se") ] },
-      "stop" => { label: "Parar", fields: [ f("reason", :text, "Motivo"), f("error", :bool, "Marcar como erro") ] }
-    }.freeze
-
-    OPTION = { label: "Opção", fields: [ f("conditions", :conditions, "Se"), f("actions", :actions, "Então") ] }.freeze
-
-    # Campos simples (não lista) que o formulário de um bloco pode mandar.
-    FORM_FIELDS = [ TRIGGERS, CONDITIONS, ACTIONS ].flat_map { |c| c.values.flat_map { |s| s[:fields] } }
-                                                   .reject { |fd| fd.kind.in?(%i[conditions actions options days channels]) }.map(&:name).uniq.freeze
-
-    # Lista de blocos → catálogo dos tipos dela.
-    CATALOG = { triggers: TRIGGERS, conditions: CONDITIONS, actions: ACTIONS }.freeze
-    LIST_KINDS = { conditions: CONDITIONS, actions: ACTIONS, options: { "option" => OPTION } }.freeze
+    # Listas de blocos da definição → registro dos tipos (plugins).
+    REGISTRIES = { triggers: "TriggerTypes", conditions: "ConditionTypes", actions: "ActionTypes" }.freeze
+    KINDS = REGISTRIES.keys.freeze
+    # Tipos de campo que são listas de blocos (aninhadas).
+    LIST_KINDS = %i[conditions actions options].freeze
 
     DURATION = /\A(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?\z/
     TIME = /\A([01]\d|2[0-3]):[0-5]\d\z/
@@ -85,10 +46,15 @@ module Automations
 
     module_function
 
-    def spec(kind, type)
-      return OPTION if kind == :options
+    def registry(kind) = Automations.const_get(REGISTRIES.fetch(kind))
+    def catalog(kind) = kind == :options ? { "option" => Option } : registry(kind).catalog
+    def spec(kind, type) = kind == :options ? Option : registry(kind)[type]
+    def list_kind?(kind) = LIST_KINDS.include?(kind)
 
-      LIST_KINDS.merge(triggers: TRIGGERS).fetch(kind)[type]
+    # Campos simples (não lista) que o formulário de um bloco pode mandar.
+    def form_fields
+      KINDS.flat_map { |k| registry(k).plugins.flat_map(&:fields) }
+           .reject { |fd| fd.kind.in?(%i[conditions actions options days channels script_fields]) }.map(&:name).uniq
     end
 
     # "1h30m" / "-15m" / 90 → segundos (nil se inválida).
@@ -126,7 +92,7 @@ module Automations
       walk(definition) do |node, kind|
         s = spec(kind, node["type"]) or next
         point = nil
-        s[:fields].each do |fd|
+        s.fields.each do |fd|
           next unless node.key?(fd.name)
 
           if fd.kind.in?(%i[point writable_point]) && (point = by_ref[node[fd.name].to_s])
@@ -143,7 +109,7 @@ module Automations
       keys = site.points.pluck(:id, :key).to_h
       walk(definition.deep_dup) do |node, kind|
         s = spec(kind, node["type"]) or next
-        s[:fields].each { |fd| node[fd.name] = keys.fetch(node[fd.name], node[fd.name]) if fd.kind.in?(%i[point writable_point]) }
+        s.fields.each { |fd| node[fd.name] = keys.fetch(node[fd.name], node[fd.name]) if fd.kind.in?(%i[point writable_point]) }
       end
     end
 
@@ -152,7 +118,7 @@ module Automations
     def walk(definition, &block)
       return definition unless definition.is_a?(Hash)
 
-      CATALOG.each_key { |kind| walk_list(definition[kind.to_s], kind, &block) }
+      KINDS.each { |kind| walk_list(definition[kind.to_s], kind, &block) }
       definition
     end
 
@@ -162,7 +128,7 @@ module Automations
 
         yield node, kind
         s = spec(kind, node["type"]) or next
-        s[:fields].each { |fd| walk_list(node[fd.name], fd.kind, &block) if LIST_KINDS.key?(fd.kind) }
+        s.fields.each { |fd| walk_list(node[fd.name], fd.kind, &block) if list_kind?(fd.kind) }
       end
     end
 
@@ -171,16 +137,18 @@ module Automations
       ids = []
       walk(definition) do |node, kind|
         s = spec(kind, node["type"]) or next
-        s[:fields].each { |fd| ids << node[fd.name] if fd.kind.in?(%i[point writable_point]) && node[fd.name].present? }
+        s.fields.each { |fd| ids << node[fd.name] if fd.kind.in?(%i[point writable_point]) && node[fd.name].present? }
       end
       ids.uniq
     end
 
-    # Pontos comandados pelas ações (para papel x risco e confirmação).
-    def commanded_points(definition, site)
+    # Pontos comandados pelas ações (para papel x risco e confirmação); cada
+    # plugin de ação diz os seus (`seen`: scripts já visitados).
+    def commanded_points(definition, site, seen = Set.new)
       ids = []
-      walk(definition) { |node, kind| ids << node["point"] if kind == :actions && node["type"] == "command" }
-      ids.compact.empty? ? [] : site.points.where(id: ids.uniq).to_a
+      walk(definition) { |node, kind| ids.concat(ActionTypes[node["type"]]&.commanded_point_ids(node, site, seen).to_a) if kind == :actions }
+      ids = ids.compact.uniq
+      ids.empty? ? [] : site.points.where(id: ids).to_a
     end
 
     # Risco mais alto entre os pontos comandados.
@@ -189,18 +157,22 @@ module Automations
     end
 
     # Lista de mensagens ("ações 2 (Comandar ponto): ponto não existe neste local").
-    def errors(definition, site)
+    # `fields`: campos do script (F8f) — definição de script não tem gatilho
+    # nem condição e pode citar ponto de campo como "$nome".
+    def errors(definition, site, fields: nil)
       return [ "A definição precisa ser um objeto JSON." ] unless definition.is_a?(Hash)
 
-      Validator.new(site).call(definition)
+      Validator.new(site, fields).call(definition)
     end
 
-    # Validação: chaves conhecidas, campos obrigatórios e tipos de cada campo.
+    # Validação: chaves conhecidas, campos obrigatórios, o tipo de cada campo
+    # e as regras do plugin (`rules`).
     class Validator
       LIST_NAMES = { triggers: "gatilhos", conditions: "condições", actions: "ações", options: "opções" }.freeze
 
-      def initialize(site)
+      def initialize(site, fields = nil)
         @site = site
+        @fields = fields&.index_by { |fd| fd["name"] }
         @points = site.points.includes(:device).index_by(&:id)
         @errors = []
       end
@@ -208,8 +180,12 @@ module Automations
       def call(definition)
         extra = definition.keys - %w[triggers conditions actions]
         @errors << "Chave desconhecida: #{extra.join(', ')}." if extra.any?
-        CATALOG.each_key { |kind| list(definition[kind.to_s], kind, LIST_NAMES[kind]) }
-        @errors << "Falta pelo menos um gatilho." if Array(definition["triggers"]).empty?
+        KINDS.each { |kind| list(definition[kind.to_s], kind, LIST_NAMES[kind]) }
+        if @fields
+          @errors << "Script não tem gatilho nem condição: quem chama é a automação, o painel, a API ou o botão Executar." if Array(definition["triggers"]).any? || Array(definition["conditions"]).any?
+        elsif Array(definition["triggers"]).empty?
+          @errors << "Falta pelo menos um gatilho."
+        end
         @errors << "Falta pelo menos uma ação." if Array(definition["actions"]).empty?
         @errors
       end
@@ -229,18 +205,18 @@ module Automations
         type = kind == :options ? "option" : node["type"]
         s = Dsl.spec(kind, type) or return @errors << "#{where}: tipo \"#{node['type']}\" não existe."
 
-        where = "#{where} (#{s[:label]})"
-        names = s[:fields].map(&:name)
+        where = "#{where} (#{s.label})"
+        names = s.fields.map(&:name)
         extra = node.keys - names - %w[type id]
         @errors << "#{where}: campo desconhecido #{extra.join(', ')}." if extra.any?
-        s[:fields].each do |fd|
+        s.fields.each do |fd|
           v = node[fd.name]
           next @errors << "#{where}: falta #{fd.label.downcase}." if fd.required && (v.nil? || v == "" || v == [])
           next if v.nil?
 
           field(fd, v, node, where)
         end
-        rules(type, kind, node, where)
+        s.rules(node).each { |m| @errors << "#{where}: #{m}" }
       end
 
       def field(fd, v, node, where)
@@ -258,6 +234,8 @@ module Automations
         when :template then template_error(v)
         when :channels then "canal inválido" unless Notifier.valid_channels?(v)
         when :scene then "cena não existe neste local" unless v.is_a?(String) && @site.scenes.exists?(id: v)
+        when :script then "script não existe neste local" unless v.is_a?(String) && @site.scripts.exists?(id: v)
+        when :script_fields then script_fields_error(node, v)
         when :alert_rule then "regra de alerta não existe neste local" unless v.is_a?(String) && @site.alert_rules.exists?(id: v)
         when :command then command_error(node, v)
         when :value then nil
@@ -266,30 +244,29 @@ module Automations
         @errors << "#{where}: #{fd.label.downcase}: #{msg}." if msg
       end
 
-      def rules(type, kind, node, where)
-        if kind == :triggers
-          @errors << "#{where}: use \"às\" ou \"a cada\"." if type == "time" && node["at"].nil? == node["every"].nil?
-          @errors << "#{where}: \"a cada\" precisa ser de 1 min a 24 h, em minutos inteiros." if type == "time" && node["every"] && !every_ok?(node["every"])
-        end
-        @errors << "#{where}: informe acima de e/ou abaixo de." if type == "numeric" && node["above"].nil? && node["below"].nil?
-        @errors << "#{where}: informe o valor ou a situação." if kind == :conditions && type == "state" && !node.key?("is") && node["quality"].nil?
-        @errors << "#{where}: informe depois de e/ou antes de." if type.in?(%w[time sun]) && kind == :conditions && node["after"].nil? && node["before"].nil?
-        if kind == :actions
-          @errors << "#{where}: informe o tempo ou a expressão." if type == "wait" && node["for"].nil? == node["expr"].nil?
-          @errors << "#{where}: informe a expressão ou o texto." if type == "set" && node["expr"].nil? == node["value"].nil?
-          @errors << "#{where}: informe vezes, enquanto ou até que (só um)." if type == "repeat" && %w[count while until].count { |k| node[k].present? } != 1
-          @errors << "#{where}: no máximo #{MAX_REPEAT} vezes." if type == "repeat" && node["count"].is_a?(Numeric) && !node["count"].between?(1, MAX_REPEAT)
-        end
-      end
-
-      def every_ok?(v)
-        sec = Dsl.seconds(v)
-        sec && sec.between?(60, 86_400) && (sec % 60).zero?
-      end
-
       def point_error(id, writable)
+        return field_ref_error(id) if id.is_a?(String) && id.start_with?("$")
+
         point = @points[id] or return "ponto não existe neste local"
         "#{point.name} não recebe comando" if writable && !point.writable
+      end
+
+      # "$nome" = ponto escolhido no campo do script.
+      def field_ref_error(ref)
+        "campo #{ref} não existe no script (ou não é do tipo ponto)" unless @fields&.dig(ref.delete_prefix("$"), "type") == "point"
+      end
+
+      def script_fields_error(node, v)
+        return "precisam ser um objeto {campo: valor}" unless v.is_a?(Hash)
+
+        script = @site.scripts.find_by(id: node["script"]) if node["script"].is_a?(String)
+        return unless script
+
+        unknown = v.keys - script.fields.pluck("name")
+        return "campo desconhecido #{unknown.join(', ')}" if unknown.any?
+
+        missing = script.fields.select { |fd| fd["required"] && fd["default"].nil? && v[fd["name"]].blank? }
+        "falta #{missing.pluck('label').join(', ').downcase}" if missing.any?
       end
 
       def command_error(node, command)

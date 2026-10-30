@@ -40,9 +40,10 @@ module Automations
 
     # Relógio: gatilhos de horário e de sol que caem neste minuto.
     def tick(now = Time.current)
+      types = TriggerTypes.plugins.select(&:clock).map(&:key)
       list = ActsAsTenant.without_tenant do
         Automation.where(enabled: true)
-                  .where("definition->'triggers' @> ? OR definition->'triggers' @> ?", [ { type: "time" } ].to_json, [ { type: "sun" } ].to_json).to_a
+                  .where(([ "definition->'triggers' @> ?" ] * types.size).join(" OR "), *types.map { |k| [ { type: k } ].to_json }).to_a
       end
       list.each do |a|
         ActsAsTenant.with_tenant(a.tenant) do
@@ -65,38 +66,18 @@ module Automations
       end
     end
 
-    def changed_into?(t, value, was)
-      return false if value == was
-
-      case t["type"]
-      when "state" then (!t.key?("from") || was == t["from"]) && (!t.key?("to") || value == t["to"])
-      when "numeric" then in_range?(t, value) && !in_range?(t, was)
-      else false
-      end
-    end
-
-    def holds?(t, value)
-      t["type"] == "numeric" ? in_range?(t, value) : (!t.key?("to") || value == t["to"])
-    end
-
-    def in_range?(t, v) = v.is_a?(Numeric) && (t["above"].nil? || v > t["above"]) && (t["below"].nil? || v < t["below"])
+    # O plugin do gatilho decide (TriggerTypes).
+    def changed_into?(t, value, was) = value != was && TriggerTypes[t["type"]]&.fires_on_change?(t, value, was) || false
+    def holds?(t, value) = TriggerTypes[t["type"]]&.holds?(t, value) || false
 
     def clock?(t, site, now)
-      zone = ActiveSupport::TimeZone[site.timezone]
-      local = now.in_time_zone(zone)
+      plugin = TriggerTypes[t["type"]]
+      return false unless plugin&.clock
+
+      local = now.in_time_zone(ActiveSupport::TimeZone[site.timezone])
       return false if t["days"] && !t["days"].include?(local.wday)
 
-      case t["type"]
-      when "time"
-        minute_of_day = (local.hour * 60) + local.min
-        t["at"] ? local.strftime("%H:%M") == t["at"] : (minute_of_day % (Dsl.seconds(t["every"]) / 60)).zero?
-      when "sun"
-        return false unless site.latitude && site.longitude
-
-        at = Sun.at(t["event"], local.to_date, site.latitude, site.longitude, zone) or return false
-        (at + Dsl.seconds(t["offset"]).to_i).in_time_zone(zone).strftime("%H:%M") == local.strftime("%H:%M")
-      else false
-      end
+      plugin.due?(t, site, local)
     end
 
     def info(t, point, was)
@@ -105,8 +86,7 @@ module Automations
     end
 
     def clock_info(t, now)
-      title = t["type"] == "time" ? (t["at"] ? "Horário #{t['at']}" : "A cada #{Dsl.duration_label(Dsl.seconds(t['every']))}") : Dsl::SUN_EVENTS[t["event"]]
-      { "type" => t["type"], "title" => title, "at" => now.iso8601 }
+      { "type" => t["type"], "title" => TriggerTypes[t["type"]].title(t), "at" => now.iso8601 }
     end
 
     # Quem causou a mudança: a execução rodando nesta thread (pontos virtuais

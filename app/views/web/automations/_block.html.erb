@@ -2,14 +2,14 @@
 <% spec = Automations::Dsl.spec(kind, kind == :options ? "option" : node["type"]) %>
 <% dom = block_dom_id(path) %>
 <% focus = params[:b] == path %>
-<% plain = spec ? spec[:fields].reject { |fd| Automations::Dsl::LIST_KINDS.key?(fd.kind) } : [] %>
-<% lists = spec ? spec[:fields].select { |fd| Automations::Dsl::LIST_KINDS.key?(fd.kind) } : [] %>
+<% plain = spec ? spec.fields.reject { |fd| Automations::Dsl.list_kind?(fd.kind) } : [] %>
+<% lists = spec ? spec.fields.select { |fd| Automations::Dsl.list_kind?(fd.kind) } : [] %>
 <li id="<%= dom %>" class="rounded-2xl border <%= focus ? 'border-accent' : 'border-line' %> bg-page/40 p-3 scroll-mt-24 min-w-0">
   <div class="flex items-start gap-2">
     <% if plain.any? %>
       <details class="flex-1 min-w-0" <%= "open" if focus %>>
         <summary class="cursor-pointer flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span class="font-semibold text-ink"><%= spec[:label] %></span>
+          <span class="font-semibold text-ink"><%= spec.label %></span>
           <span class="text-sm text-muted break-words min-w-0"><%= block_summary(node, spec, points).presence || "toque para preencher" %></span>
         </summary>
         <%= form_with url: draft_automation_path(automation), method: :patch, class: "grid gap-3 sm:grid-cols-2 mt-3" do %>
@@ -21,7 +21,7 @@
         <% end %>
       </details>
     <% else %>
-      <p class="flex-1 min-w-0 font-semibold text-ink"><%= spec ? spec[:label] : "Tipo desconhecido: #{node['type']}" %></p>
+      <p class="flex-1 min-w-0 font-semibold text-ink"><%= spec ? spec.label : "Tipo desconhecido: #{node['type']}" %></p>
     <% end %>
     <div class="flex shrink-0 items-center">
       <% unless first %>

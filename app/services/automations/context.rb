@@ -31,7 +31,8 @@ module Automations
 
     def now = (@at || Time.current).in_time_zone(@zone)
     def points = @points ||= site.points.to_a.each_with_object({}) { |p, h| h[p.id] = h[p.key] = p }
-    def point(ref) = points[ref]
+    # "$nome" = ponto escolhido no campo `nome` do script (F8f).
+    def point(ref) = ref.is_a?(String) && ref.start_with?("$") ? points[vars[ref.delete_prefix("$")]] : points[ref]
     def value(point) = @overrides.key?(point.id) ? @overrides[point.id] : point.value
 
     # Valor hipotético estável: conta como "há muito tempo" (o `for` passa).

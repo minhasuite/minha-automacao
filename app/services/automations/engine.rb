@@ -66,7 +66,7 @@ module Automations
         ok, checks = @conditions.check(node["conditions"])
         timeout = !ok && Time.current >= Time.zone.parse(wait["deadline"])
         return if by_event && !ok
-        return claim && suspend_wait_for(wait["path"], node, Time.zone.parse(wait["deadline"])) unless ok || timeout
+        return claim && suspend_wait_for(wait["path"], Time.zone.parse(wait["deadline"])) unless ok || timeout
         return unless claim
 
         within do
@@ -86,7 +86,57 @@ module Automations
       end
     end
 
+    # ---- para os plugins de ação ----------------------------------------------
+
+    attr_reader :ctx, :conditions, :program, :run
+
+    def dry_run? = @run.dry_run
+
+    # ---- compilação (os plugins de ActionTypes emitem os passos) -------------
+
+    def emit(op)
+      @program << op
+      @program.size - 1
+    end
+
+    def compile(actions, path)
+      Array(actions).each_with_index do |a, i|
+        plugin = ActionTypes[a["type"]] or raise Failure, "Ação desconhecida: #{a['type']}"
+        plugin.compile(self, a, "#{path}.#{i}")
+      end
+    end
+
+    def suspend_wait_for(path, deadline)
+      at = [ deadline, @ctx.recheck_at, Time.current + WAIT_POLL ].compact.min
+      suspend(at, "kind" => "wait_for", "path" => path, "deadline" => deadline.iso8601(3))
+    end
+
+    def suspend(resume_at, wait)
+      @seq += 1
+      save(status: "waiting", resume_at: resume_at, wait: wait)
+      AutomationResumeJob.set(wait_until: resume_at).perform_later(@run.id, @seq)
+      :halt
+    end
+
+    def finish(status, error = nil)
+      return :halt if @run.finished_at
+
+      save(status: status, error: error&.truncate(255), finished_at: Time.current, resume_at: nil)
+      @run.automation.after_run(@run) unless dry_run?
+      :halt
+    end
+
+    def trace(path, kind, title, result, detail: nil, checks: nil, ms: nil)
+      return if @run.steps.size > MAX_TRACE
+      return @run.steps << { "kind" => "truncated", "title" => "Trace cortado em #{MAX_TRACE} passos", "result" => "ok" } if @run.steps.size == MAX_TRACE
+
+      @run.steps << { "at" => Time.current.iso8601(3), "path" => path, "kind" => kind, "title" => title, "result" => result,
+                      "detail" => detail, "checks" => checks, "ms" => ms }.compact
+    end
+
     private
+
+    def node_at(path) = @program.find { |op| op[0] == :act && op[1] == path }&.dig(2) || raise(Failure, "A espera não existe mais nesta versão.")
 
     # Muda waiting → running de forma atômica (job e evento ao mesmo tempo:
     # só um retoma).
@@ -113,57 +163,6 @@ module Automations
     ensure
       Thread.current[:automation_run] = previous
     end
-
-    # ---- compilação ----------------------------------------------------------
-
-    def emit(op)
-      @program << op
-      @program.size - 1
-    end
-
-    def compile(actions, path)
-      Array(actions).each_with_index do |a, i|
-        p = "#{path}.#{i}"
-        case a["type"]
-        when "if" then compile_if(a, p)
-        when "choose" then compile_choose(a, p)
-        when "repeat"
-          emit([ :rep_init, p ])
-          start = emit([ :rep_check, p, a, nil ])
-          compile(a["actions"], "#{p}.actions")
-          emit([ :jmp, start ])
-          @program[start][3] = @program.size
-        else emit([ :act, p, a ])
-        end
-      end
-    end
-
-    def compile_if(a, p)
-      branch = emit([ :branch, p, a["conditions"], nil, "Se" ])
-      compile(a["then"], "#{p}.then")
-      if Array(a["else"]).any?
-        jump = emit([ :jmp, nil ])
-        @program[branch][3] = @program.size
-        compile(a["else"], "#{p}.else")
-        @program[jump][1] = @program.size
-      else
-        @program[branch][3] = @program.size
-      end
-    end
-
-    def compile_choose(a, p)
-      ends = Array(a["options"]).each_with_index.map do |o, n|
-        branch = emit([ :branch, "#{p}.options.#{n}", o["conditions"], nil, "Opção #{n + 1}" ])
-        compile(o["actions"], "#{p}.options.#{n}.actions")
-        jump = emit([ :jmp, nil ])
-        @program[branch][3] = @program.size
-        jump
-      end
-      compile(a["default"], "#{p}.default")
-      ends.each { |j| @program[j][1] = @program.size }
-    end
-
-    def node_at(path) = @program.find { |op| op[0] == :act && op[1] == path }&.dig(2) || raise(Failure, "A espera não existe mais nesta versão.")
 
     # ---- execução ------------------------------------------------------------
 
@@ -216,137 +215,20 @@ module Automations
 
     def act(path, node)
       t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      title, result, detail, checks = send(:"act_#{node['type']}", path, node)
+      title, result, detail, checks = ActionTypes[node["type"]].call(self, path, node)
       return :halt if title == :halt
       return if title == :skip
 
       trace(path, node["type"], title, result, detail: detail, checks: checks, ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round)
     end
 
-    def act_command(_path, node)
-      p = @ctx.point(node["point"]) or raise Failure, "Ponto removido do local."
-      title = "#{COMMAND_LABELS.fetch(node['command'], node['command'])} #{p.name}#{" (#{node['value']})" unless node['value'].nil?}"
-      if dry_run?
-        value = Points::Command.new(p, node["command"].to_s, node["value"]).new_value
-        @ctx.set_value(p, value)
-        return [ title, "simulated", "Não enviado (simulação). Ficaria: #{@ctx.point_text(p, value)}" ]
-      end
-
-      c = Points::Command.call(p, node["command"], node["value"], source: "automation", user: nil, run: @run)
-      raise Failure, "#{p.name}: #{c.error}" if c.status == "failed"
-
-      [ title, "ok", "Comando #{c.status_label.downcase}" ]
-    end
-
-    def act_scene(_path, node)
-      scene = @ctx.site.scenes.find_by(id: node["scene"]) or raise Failure, "Cena removida do local."
-      return [ "Acionar cena #{scene.name}", "simulated", "Não acionada (simulação): #{scene.items.size} comandos" ] if dry_run?
-
-      commands, failures = scene.activate!(source: "automation", user: nil)
-      [ "Acionar cena #{scene.name}", failures.any? ? "error" : "ok", [ "#{commands.size} comandos", *failures ].join(" · ") ]
-    end
-
-    def act_notify(_path, node)
-      title = @ctx.render(node["title"])
-      body = @ctx.render(node["message"]).presence
-      channels = node["channels"].presence || Notifier::CHANNELS.keys
-      detail = [ body, "canais: #{channels.map { |ch| Notifier.channel_label(ch) }.join(', ').downcase}" ].compact.join(" · ")
-      return [ "Avisar: #{title}", "simulated", "Não enviado (simulação). #{detail}" ] if dry_run?
-
-      Notifier.deliver!(channels, kind: "automacao", title: title, body: body,
-                                  data: { automation_id: @run.automation_id, run_id: @run.id, site_id: @run.site_id })
-      [ "Avisar: #{title}", "ok", detail ]
-    end
-
-    def act_set(_path, node)
-      v = node.key?("expr") ? @ctx.calc(node["expr"]) : @ctx.render(node["value"])
-      @ctx.vars[node["var"]] = v
-      [ "#{node['var']} = #{v.inspect.truncate(80)}", "ok" ]
-    end
-
-    def act_stop(path, node)
-      trace(path, "stop", "Parar#{": #{node['reason']}" if node['reason'].present?}", node["error"] ? "error" : "ok")
-      finish(node["error"] ? "failed" : "stopped", node["reason"].presence)
-      [ :halt ]
-    end
-
-    def act_condition(path, node)
-      ok, checks = @conditions.check(node["conditions"])
-      return [ "Seguir só se: sim", "ok", nil, checks ] if ok
-
-      trace(path, "condition", "Seguir só se: não, parou aqui", "false", checks: checks)
-      finish("stopped", nil)
-      [ :halt ]
-    end
-
-    def act_wait(path, node)
-      sec = node.key?("for") ? Dsl.seconds(node["for"]) : @ctx.calc(node["expr"]).to_f.round
-      sec = sec.to_i.clamp(0, Dsl::MAX_DURATION)
-      label = "Esperar #{Dsl.duration_label(sec)}"
-      return [ label, "simulated", "Não esperou (simulação)." ] if dry_run? || sec.zero?
-
-      until_at = Time.current + sec
-      trace(path, "wait", label, "waiting", detail: "até #{I18n.l(until_at.in_time_zone(@ctx.now.time_zone), format: '%d/%m %H:%M:%S')}")
-      suspend(until_at, "kind" => "wait", "path" => path)
-      [ :halt ]
-    end
-
-    def act_wait_for(path, node)
-      ok, checks = @conditions.check(node["conditions"])
-      timeout = Dsl.seconds(node["timeout"]).to_i
-      return [ "Esperar condição: já atendida", "ok", nil, checks ] if ok
-
-      if dry_run?
-        stop = node["continue_on_timeout"] == false
-        trace(path, "wait_for", "Esperar condição: não se cumpre na simulação", "timeout",
-              detail: "Seguiria após #{Dsl.duration_label(timeout)}#{' parando aqui' if stop}.", checks: checks)
-        return [ :halt ].tap { finish("stopped", "Tempo limite da espera") } if stop
-
-        return [ :skip ]
-      end
-
-      trace(path, "wait_for", "Esperar condição (até #{Dsl.duration_label(timeout)})", "waiting", checks: checks)
-      suspend_wait_for(path, node, Time.current + timeout)
-      [ :halt ]
-    end
-
-    def suspend_wait_for(path, _node, deadline)
-      at = [ deadline, @ctx.recheck_at, Time.current + WAIT_POLL ].compact.min
-      suspend(at, "kind" => "wait_for", "path" => path, "deadline" => deadline.iso8601(3))
-    end
-
-    def suspend(resume_at, wait)
-      @seq += 1
-      save(status: "waiting", resume_at: resume_at, wait: wait)
-      AutomationResumeJob.set(wait_until: resume_at).perform_later(@run.id, @seq)
-      :halt
-    end
-
-    def finish(status, error = nil)
-      return :halt if @run.finished_at
-
-      save(status: status, error: error&.truncate(255), finished_at: Time.current, resume_at: nil)
-      @run.automation.after_run(@run) unless dry_run?
-      :halt
-    end
-
     def save(wait: nil, **attrs)
       @run.update!(attrs.merge(state: { "pc" => @pc, "vars" => @ctx.vars, "counters" => @counters, "seq" => @seq, "wait" => wait }.compact))
-    end
-
-    def trace(path, kind, title, result, detail: nil, checks: nil, ms: nil)
-      return if @run.steps.size > MAX_TRACE
-      return @run.steps << { "kind" => "truncated", "title" => "Trace cortado em #{MAX_TRACE} passos", "result" => "ok" } if @run.steps.size == MAX_TRACE
-
-      @run.steps << { "at" => Time.current.iso8601(3), "path" => path, "kind" => kind, "title" => title, "result" => result,
-                      "detail" => detail, "checks" => checks, "ms" => ms }.compact
     end
 
     def close_wait(result)
       step = @run.steps.reverse.find { |s| s["result"] == "waiting" }
       step["result"] = result if step
     end
-
-    def dry_run? = @run.dry_run
   end
 end
