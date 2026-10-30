@@ -1,0 +1,53 @@
+# Códigos padrão da Tuya (dp code) que viram ponto, para a varredura da
+# conta Smart Life (Tuya::Cloud.points). Interruptor (switch_N), lâmpada
+# (switch_led + bright_value) e medição da tomada (cur_*) passam pela mesma
+# tradução da importação do LocalTuya; o resto segue o tipo do dp com os
+# nomes, unidades e capacidades daqui. Código novo = linha nova aqui.
+codes:
+  doorcontact_state: { name: Abertura, capability: contact, device_class: door }
+  temp_current: { name: Temperatura, unit: "°C", device_class: temperature }
+  va_temperature: { name: Temperatura, unit: "°C", device_class: temperature }
+  humidity_value: { name: Umidade, unit: "%", device_class: humidity }
+  va_humidity: { name: Umidade, unit: "%", device_class: humidity }
+  battery_percentage: { name: Bateria, unit: "%", device_class: battery }
+  work_mode: { name: Modo }
+  mode: { name: Modo }
+  temp_set: { name: Temperatura desejada }
+  fan_speed_enum: { name: Velocidade }
+  child_lock: { name: Trava infantil }
+  switch_backlight: { name: Luz de fundo }
+# Booleano só de leitura com estes nomes vira "problema".
+problem: "alarm|fault|tamper"
+# Configuração, temporizador e acumulado: não viram ponto.
+skip: "^(countdown|cycle_time|random_time|switch_inching|relay_status|light_mode|add_ele|overcharge_switch|flash_scene|scene_data|colour_data|music_data|control_data)"
+# Categoria Tuya → nome na lista de encontrados.
+categories:
+  dj: Lâmpada
+  dd: Fita de LED
+  dc: Cordão de luz
+  xdd: Luz de teto
+  fwd: Luz ambiente
+  tgq: Dimmer
+  tgkg: Dimmer
+  cz: Tomada
+  pc: Filtro de linha
+  kg: Interruptor
+  cl: Cortina
+  clkg: Interruptor de cortina
+  ckmkzq: Portão
+  mcs: Sensor de porta
+  pir: Sensor de movimento
+  wsdcg: Temperatura e umidade
+  ywbj: Sensor de fumaça
+  rqbj: Sensor de gás
+  sj: Sensor de vazamento
+  sgbj: Sirene
+  wg2: Gateway
+  wxkg: Botão
+  ms: Fechadura
+  sp: Câmera
+  fs: Ventilador
+  kt: Ar-condicionado
+  wk: Termostato
+  ggq: Irrigação
+  ldcg: Sensor de luz

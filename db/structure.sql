@@ -401,7 +401,9 @@ CREATE TABLE public.devices (
     listen boolean DEFAULT false NOT NULL,
     integration_id uuid,
     poll_s integer DEFAULT 1800,
-    polled_at timestamp(6) without time zone
+    polled_at timestamp(6) without time zone,
+    removed_at timestamp(6) without time zone,
+    last_error character varying
 );
 
 
@@ -452,7 +454,8 @@ CREATE TABLE public.integrations (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     poll_s integer DEFAULT 1800,
-    polled_at timestamp(6) without time zone
+    polled_at timestamp(6) without time zone,
+    inventory text
 );
 
 
@@ -3762,6 +3765,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261030100003'),
 ('20261030100002'),
 ('20261030100001'),
 ('20261029500001'),

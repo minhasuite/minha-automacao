@@ -1,20 +1,23 @@
-# Conta de um serviço externo usada por vários aparelhos (F8: Alexa). Guarda
-# as credenciais cifradas e o estado da última conversa com o serviço.
+# Conta de um serviço externo usada por vários aparelhos (F8/F8c). Guarda as
+# credenciais cifradas, o estado da última conversa com o serviço e a última
+# lista de aparelhos da conta (`inventory`, cifrado: leva local_key/token).
+# A varredura e a adoção ficam em `Integrations`.
 class Integration < ApplicationRecord
   include Auditable
 
   acts_as_tenant :tenant
 
-  DRIVERS = { "alexa" => "Alexa (Amazon)" }.freeze
-  STATUSES = { "pending" => "Aguardando", "ok" => "Funcionando", "error" => "Com erro" }.freeze
+  STATUSES = { "pending" => "Aguardando login", "ok" => "Conectada", "error" => "Com erro", "syncing" => "Sincronizando" }.freeze
+  SYNC_S = 6 * 3600 # varredura da conta: padrão 6 h
 
   belongs_to :site
   has_many :devices, dependent: nil # o banco solta (on_delete nullify)
 
   encrypts :credentials
+  encrypts :inventory
 
   validates :name, presence: true
-  validates :driver, inclusion: { in: DRIVERS.keys }
+  validates :driver, inclusion: { in: ->(_) { Integrations.drivers } }
   validates :status, inclusion: { in: STATUSES.keys }
 
   validates :poll_s, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
@@ -27,8 +30,12 @@ class Integration < ApplicationRecord
 
   audited_attributes :name, :driver
 
-  def driver_label = DRIVERS.fetch(driver, driver)
+  # Tipo (nome, ícone, assistente, varredura) vem do plugin registrado.
+  def plugin = Integrations.for_driver(driver)
+  def driver_label = plugin&.title || driver
   def status_label = STATUSES.fetch(status, status)
+  def icon_name = plugin&.icon || "link"
+  def account = settings["account"].presence
 
   def ok! = update_columns(status: "ok", last_error: nil, last_ok_at: Time.current)
   def error!(message) = update_columns(status: "error", last_error: message.to_s.truncate(255))
@@ -38,5 +45,14 @@ class Integration < ApplicationRecord
     JSON.parse(credentials.presence || "{}")
   rescue JSON::ParserError
     {}
+  end
+
+  def merge_secrets!(values) = update!(credentials: secrets.merge(values.stringify_keys).to_json)
+
+  # Aparelhos da última varredura ([] se nunca varreu).
+  def found
+    Array(JSON.parse(inventory.presence || "[]"))
+  rescue JSON::ParserError
+    []
   end
 end

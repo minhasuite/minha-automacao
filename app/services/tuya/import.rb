@@ -17,6 +17,12 @@ module Tuya
 
     def self.call(site, data) = new(site, data).call
 
+    # `core.config_entries` inteiro do HA → aparelhos de todas as entradas do LocalTuya.
+    def self.from_config_entries(data)
+      entries = Array(data.is_a?(Hash) ? data.dig("data", "entries") : nil).select { |e| e["domain"] == "localtuya" }
+      entries.flat_map { |e| e.dig("data", "devices").then { |d| d.is_a?(Hash) ? d.values : Array(d) } }
+    end
+
     def initialize(site, data)
       @site = site
       @devices = (data.is_a?(Hash) && data.key?("devices") ? data["devices"] : data)
@@ -32,6 +38,41 @@ module Tuya
       result
     end
 
+    # Entidade do LocalTuya ({platform, id, friendly_name, brightness…}) →
+    # atributos de ponto. A varredura da Tuya na nuvem monta a mesma entidade.
+    def self.specs_for(e)
+      name = e["friendly_name"].to_s.split("|").last.to_s.strip.presence || "Ponto #{e['id']}"
+      case e["platform"]
+      when "switch" then [ onoff(name, e) ] + measures(e)
+      when "light" then [ onoff(name, e), dimmer(name, e) ].compact
+      else []
+      end
+    end
+
+    def self.onoff(name, e)
+      risky = name.match?(RISKY) || e["device_name"].to_s.match?(RISKY)
+      { name: name, capability: "onoff", address: { "dps" => e["id"].to_s },
+        risk: risky ? "critical" : "normal", confirm: (risky ? "Acionar #{name}?" : nil) }
+    end
+
+    def self.dimmer(name, e)
+      return unless e["brightness"]
+
+      upper = (e["brightness_upper"].presence || 1000).to_d
+      lower = (e["brightness_lower"].presence || 10).to_d
+      { name: "#{name} (brilho)", capability: "dimmer", address: { "dps" => e["brightness"].to_s },
+        scale: 100 / upper, min: [ (lower * 100 / upper).ceil, 1 ].max, max: 100 }
+    end
+
+    def self.measures(e)
+      MEASURES.filter_map do |attr, m|
+        next unless e[attr]
+
+        { name: m[:name], capability: "measure", address: { "dps" => e[attr].to_s }, unit: m[:unit],
+          device_class: m[:device_class], state_class: "measurement", scale: e["#{attr}_scale"] || m[:scale] }
+      end
+    end
+
     private
 
     def import_device(area, d, result)
@@ -45,7 +86,7 @@ module Tuya
       result.devices += 1
 
       Array(d["entities"]).each do |e|
-        specs = specs_for(e)
+        specs = self.class.specs_for(e)
         result.skipped << "#{device.name}: #{e['platform']} (dps #{e['id']})" if specs.empty?
         specs.each do |spec|
           next if device.points.any? { |p| p.address["dps"].to_s == spec[:address]["dps"] }
@@ -53,39 +94,6 @@ module Tuya
           device.points.create!(spec)
           result.points += 1
         end
-      end
-    end
-
-    def specs_for(e)
-      name = e["friendly_name"].to_s.split("|").last.to_s.strip.presence || "Ponto #{e['id']}"
-      case e["platform"]
-      when "switch" then [ onoff(name, e) ] + measures(e)
-      when "light" then [ onoff(name, e), dimmer(name, e) ].compact
-      else []
-      end
-    end
-
-    def onoff(name, e)
-      risky = name.match?(RISKY)
-      { name: name, capability: "onoff", address: { "dps" => e["id"].to_s },
-        risk: risky ? "critical" : "normal", confirm: (risky ? "Acionar #{name}?" : nil) }
-    end
-
-    def dimmer(name, e)
-      return unless e["brightness"]
-
-      upper = (e["brightness_upper"].presence || 1000).to_d
-      lower = (e["brightness_lower"].presence || 10).to_d
-      { name: "#{name} (brilho)", capability: "dimmer", address: { "dps" => e["brightness"].to_s },
-        scale: 100 / upper, min: [ (lower * 100 / upper).ceil, 1 ].max, max: 100 }
-    end
-
-    def measures(e)
-      MEASURES.filter_map do |attr, m|
-        next unless e[attr]
-
-        { name: m[:name], capability: "measure", address: { "dps" => e[attr].to_s }, unit: m[:unit],
-          device_class: m[:device_class], state_class: "measurement", scale: m[:scale] }
       end
     end
   end

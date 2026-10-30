@@ -1,0 +1,11 @@
+# Propriedades MIoT (miot-spec.org) que viram ponto num aparelho Xiaomi,
+# pelo nome do tipo (urn:miot-spec-v2:property:<nome>:...). Robô aspirador
+# usa o mapa de Miio::Vacuum. Propriedade nova = linha nova aqui.
+properties:
+  "on": { name: Liga/desliga, capability: onoff, writable_only: true }
+  brightness: { name: Brilho, capability: dimmer }
+  temperature: { name: Temperatura, capability: measure, unit: "°C", device_class: temperature }
+  relative-humidity: { name: Umidade, capability: measure, unit: "%", device_class: humidity }
+  battery-level: { name: Bateria, capability: measure, unit: "%", device_class: battery }
+  electric-power: { name: Potência, capability: measure, unit: W, device_class: power }
+  illumination: { name: Iluminância, capability: measure, unit: lx, device_class: illuminance }

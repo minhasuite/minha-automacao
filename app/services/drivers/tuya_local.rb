@@ -31,6 +31,23 @@ module Drivers
       conn&.close
     end
 
+    # "Reconectar": tenta a versão gravada e depois as outras (só leitura de
+    # estado); a que responder fica no endereço do aparelho.
+    VERSIONS = %w[3.3 3.4 3.5 3.1].freeze
+    def self.reconnect(device)
+      error = nil
+      ([ device.address["version"] ] + VERSIONS).compact.uniq.each do |v|
+        device.address = device.address.merge("version" => v)
+        poll(device)
+        device.update_columns(address: device.address)
+        return v
+      rescue StandardError => e
+        error = e
+      end
+      device.restore_attributes([ :address ])
+      raise error
+    end
+
     def self.unavailable!(device)
       device.update_columns(status: "offline")
       device.points.each { |p| p.report!(p.value, quality: "unavailable") unless p.quality == "unavailable" }

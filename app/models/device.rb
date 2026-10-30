@@ -44,6 +44,61 @@ class Device < ApplicationRecord
   def tuya_local? = driver == "tuya_local"
   def driver_label = DRIVERS.fetch(driver, driver)
 
+  # Situação da lista de dispositivos (filtro): removido da conta > com erro >
+  # sem resposta > novo (7 dias) > respondendo.
+  SITUATIONS = { "online" => "Respondendo", "offline" => "Sem resposta", "error" => "Com erro", "new" => "Novo",
+                 "removed" => "Removido da conta" }.freeze
+  NEW_FOR = 7.days
+
+  scope :in_situation, lambda { |s|
+    case s
+    when "removed" then where.not(removed_at: nil)
+    when "error" then where(removed_at: nil).where("devices.last_error IS NOT NULL OR devices.status = 'error'")
+    when "offline" then where(removed_at: nil, status: "offline")
+    when "new" then where(removed_at: nil).where(created_at: NEW_FOR.ago..)
+    when "online" then where(removed_at: nil, status: "online", last_error: nil)
+    else all
+    end
+  }
+
+  def situation
+    return "removed" if removed_at
+    return "error" if last_error.present? || status == "error"
+    return "offline" if status == "offline"
+
+    created_at && created_at > NEW_FOR.ago ? "new" : "online"
+  end
+
+  # Endereço na rede (formulário): IP e versão do protocolo Tuya.
+  def host = address["host"]
+  def protocol_version = address["version"]
+
+  def host=(value)
+    self.address = address.merge("host" => value.to_s.strip.presence).compact
+  end
+
+  def protocol_version=(value)
+    self.address = address.merge("version" => value.to_s.strip.presence).compact
+  end
+
+  # Onde os pontos deste aparelho aparecem: [rótulo, registro], para a página do dispositivo.
+  def usages
+    ids = points.pluck(:id, :key).flatten.compact
+    return [] if ids.empty?
+
+    like = ids.map { |v| "%#{self.class.sanitize_sql_like(v)}%" }
+    point_ids = points.select(:id)
+    [
+      [ "Painel", site.dashboards.where("definition::text LIKE ANY (ARRAY[?])", like) ],
+      [ "Automação", site.automations.where("definition::text LIKE ANY (ARRAY[?])", like) ],
+      [ "Cena", site.scenes.where("items::text LIKE ANY (ARRAY[?])", like) ],
+      [ "Espelhamento", site.point_links.where(source_point_id: point_ids).or(site.point_links.where(target_point_id: point_ids)) ],
+      [ "Aviso", site.notify_rules.where(point_id: point_ids) ],
+      [ "Alerta", site.alert_rules.where(point_id: point_ids) ],
+      [ "Agenda", site.schedules.where(point_id: point_ids) ]
+    ].flat_map { |label, scope| scope.map { |r| [ label, r ] } }
+  end
+
   private
 
   def area_in_same_site

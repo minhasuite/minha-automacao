@@ -8,7 +8,7 @@ module Polling
   TICK = 15
   GAP = 2
   DEVICES = { "tuya_local" => "Drivers::TuyaLocal", "xiaomi_miot" => "Drivers::XiaomiMiot" }.freeze
-  INTEGRATIONS = { "alexa" => ->(i) { Alexa::Import.discover!(i) } }.freeze
+  # Integração de conta: varredura (`Integrations.sync!`; Alexa = lista de Echo).
   DUE = "COALESCE(poll_s, 0) > 0 AND (polled_at IS NULL OR polled_at <= now() - make_interval(secs => poll_s))".freeze
 
   module_function
@@ -32,13 +32,14 @@ module Polling
       sleep gap if i.positive?
       poll_device(id)
     end
-    wrap { Integration.where(driver: INTEGRATIONS.keys).where(DUE).pluck(:id) }.each { |id| poll_integration(id) }
+    wrap { Integration.where(driver: Integrations.drivers).where(DUE).pluck(:id) }.each { |id| poll_integration(id) }
   rescue StandardError => e
     Rails.error.report(e, handled: true)
   end
 
   # true = leu. Falha marca o aparelho e os pontos como indisponíveis.
-  def poll_device(id)
+  # `reconnect`: Tuya tenta as outras versões do protocolo e grava a que respondeu.
+  def poll_device(id, reconnect: false)
     wrap do
       device = Device.find_by(id: id) or next false
       next false unless supported?(device)
@@ -46,10 +47,12 @@ module Polling
       ActsAsTenant.with_tenant(device.tenant) do
         device.update_columns(polled_at: Time.current)
         driver = DEVICES.fetch(device.driver).constantize
-        driver.poll(device)
+        reconnect && driver.respond_to?(:reconnect) ? driver.reconnect(device) : driver.poll(device)
+        device.update_columns(last_error: nil) if device.last_error
         true
       rescue StandardError => e
         Rails.logger.warn("[polling] #{device.name}: #{e.class}: #{e.message}")
+        device.update_columns(last_error: "#{l_now} #{e.message}".truncate(255))
         driver.unavailable!(device)
         false
       end
@@ -61,14 +64,16 @@ module Polling
       integration = Integration.find_by(id: id) or next false
       ActsAsTenant.with_tenant(integration.tenant) do
         integration.update_columns(polled_at: Time.current)
-        INTEGRATIONS.fetch(integration.driver).call(integration)
+        Integrations.sync!(integration)
         true
-      rescue StandardError => e # o próprio discover! grava o erro na integração
+      rescue StandardError => e # o próprio sync! grava o erro na integração
         Rails.logger.warn("[polling] #{integration.name}: #{e.message}")
         false
       end
     end
   end
+
+  def l_now = I18n.l(Time.current, format: :short)
 
   def wrap(&) = Rails.application.executor.wrap { ActsAsTenant.without_tenant(&) }
 end

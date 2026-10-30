@@ -31,7 +31,7 @@ module Accounts
           # Automações (F6): a definição publicada e o rascunho (sem o token do webhook).
           automations: Automation.order(:created_at).map { |r| r.as_json(except: %w[tenant_id webhook_token]) },
           # Integrações (F8): sem as credenciais.
-          integrations: Integration.order(:created_at).map { |r| r.as_json(except: %w[tenant_id credentials]) }
+          integrations: Integration.order(:created_at).map { |r| r.as_json(except: %w[tenant_id credentials inventory]) }
         }
       end
     end
