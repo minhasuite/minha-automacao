@@ -14,12 +14,17 @@ module Drivers
 
     class Error < StandardError; end
 
-    # Grava nos pontos do aparelho os dps recebidos.
-    def self.report(device, dps, at: Time.current)
+    # Grava nos pontos do aparelho os dps recebidos. `push`: veio do aparelho
+    # sozinho (ouvinte); ponto `push_only` (mensagem de evento, como o
+    # movimento da câmera) ignora o estado completo, que repete a última.
+    def self.report(device, dps, at: Time.current, push: false)
       device.update_columns(status: "online", last_seen_at: at)
       device.points.each do |point|
         dp = point.address["dps"]&.to_s
-        point.report!(point.from_raw(dps[dp]), at: at) if dp && dps.key?(dp)
+        next unless dp && dps.key?(dp) && (push || !point.address["push_only"])
+
+        value = point.from_raw(dps[dp])
+        point.report!(value, at: at) unless value.nil? && point.address["decode"] # decodificado nil = mensagem de outro tipo
       end
     end
 

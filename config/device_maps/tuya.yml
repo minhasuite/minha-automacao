@@ -1,5 +1,7 @@
 # Códigos padrão da Tuya (dp code) que viram ponto, para a varredura da
-# conta Smart Life (Tuya::Cloud.points). Interruptor (switch_N), lâmpada
+# conta Smart Life (Tuya::Cloud.points). Além de nome/unidade/capacidade,
+# `risk` vai para o ponto e `decode`/`field`/`match`/`hold_s`/`push_only` vão
+# para o endereço (Points::Decode, PointHoldJob). Interruptor (switch_N), lâmpada
 # (switch_led + bright_value) e medição da tomada (cur_*) passam pela mesma
 # tradução da importação do LocalTuya; o resto segue o tipo do dp com os
 # nomes, unidades e capacidades daqui. Código novo = linha nova aqui.
@@ -16,6 +18,15 @@ codes:
   fan_speed_enum: { name: Velocidade }
   child_lock: { name: Trava infantil }
   switch_backlight: { name: Luz de fundo }
+  # Câmera (categoria sp). A sirene é um liga/desliga comum, de risco crítico.
+  siren_switch: { name: Sirene, risk: critical }
+  floodlight_switch: { name: Holofote }
+  motion_switch: { name: Detecção de movimento }
+  basic_private: { name: Modo privacidade }
+  # Movimento: o dp chega como base64 de um JSON {cmd: "ipc_motion", ...}
+  # empurrado pelo aparelho; vira verdadeiro e volta a falso depois de hold_s.
+  # `push_only`: o estado completo repete a última mensagem e não conta.
+  initiative_message: { name: Movimento, capability: motion, device_class: motion, decode: base64_json, field: cmd, match: ipc_motion, hold_s: 30, push_only: true }
 # Booleano só de leitura com estes nomes vira "problema".
 problem: "alarm|fault|tamper"
 # Configuração, temporizador e acumulado: não viram ponto.

@@ -79,7 +79,7 @@ module Tuya
           if (msg = conn.read(1))
             last_heard = monotonic
             dps = msg.dps
-            with_device(device_id) { |d| Drivers::TuyaLocal.report(d, dps) } if dps.is_a?(Hash) && dps.any?
+            with_device(device_id) { |d| Drivers::TuyaLocal.report(d, dps, push: true) } if dps.is_a?(Hash) && dps.any?
           end
           raise Tuya::Connection::Error, "aparelho calado há #{SILENCE_LIMIT}s" if monotonic - last_heard > SILENCE_LIMIT
           next unless monotonic - last_beat > HEARTBEAT_EVERY

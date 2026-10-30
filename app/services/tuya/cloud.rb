@@ -23,6 +23,8 @@ module Tuya
     MAP = YAML.load_file(Rails.root.join("config/device_maps/tuya.yml")).freeze
     SKIP = Regexp.new(MAP["skip"])
     PROBLEM = Regexp.new(MAP["problem"])
+    # Chaves do mapa que vão para o endereço do ponto (Points::Decode, PointHoldJob, ouvinte).
+    ADDRESS_KEYS = %w[decode field match hold_s push_only].freeze
 
     # --- login por QR (sem token ainda) --------------------------------------
 
@@ -177,7 +179,12 @@ module Tuya
 
     def self.generic(code, r, d, writable)
       known = MAP["codes"][code] || {}
-      base = { name: known["name"] || code.humanize, address: { "dps" => r["dpId"].to_s } }
+      base = { name: known["name"] || code.humanize, address: { "dps" => r["dpId"].to_s }, risk: known["risk"] }
+      if known["decode"] # mensagem empacotada (ex.: movimento da câmera): o mapa diz como ler
+        return base.merge(capability: known["capability"], device_class: known["device_class"],
+                          address: base[:address].merge(known.slice(*ADDRESS_KEYS)))
+      end
+
       sc = (10**-d["scale"].to_i).to_d
       case r["valueType"]
       when "Boolean"

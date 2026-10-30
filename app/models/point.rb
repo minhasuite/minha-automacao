@@ -84,6 +84,7 @@ class Point < ApplicationRecord
     quality_was = self.quality
     self.changed_at = at if value_changed
     update!(value: new_value, quality: quality, reported_at: at)
+    PointHoldJob.schedule(self) if new_value == true && address["hold_s"].present? # sensor de pulso (movimento da câmera)
     Reading.record!(self, at) if value_changed
     if quality != quality_was
       events.create!(site: site, kind: "quality", payload: { from: quality_was, to: quality }, at: at)
@@ -128,7 +129,9 @@ class Point < ApplicationRecord
   end
 
   # Bruto do aparelho ↔ valor do ponto (calibração: valor = bruto × scale + offset).
+  # Endereço com `decode` (mapa de dados): Points::Decode desembrulha antes (nil = ignorar).
   def from_raw(raw)
+    return Points::Decode.call(address, raw) if address["decode"].present?
     return raw unless numeric? && raw.is_a?(Numeric)
 
     v = (BigDecimal(raw.to_s) * scale) + offset
