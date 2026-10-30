@@ -3,11 +3,12 @@ module Api
     # Locais (ESQUEMA-V1 §8). Criar: administrador da empresa. Editar e excluir:
     # dono do local. Ver: qualquer papel no local.
     class SitesController < BaseController
+      self.key_actions = { index: "read", show: "read" }
       before_action :require_admin!, only: :create
       before_action :set_site, only: %i[show update destroy]
 
       def index
-        records, meta = paginate(Site.visible_to(current_user).order(:name))
+        records, meta = paginate(visible_sites.order(:name))
         render_data(serialize(records), meta: meta)
       end
 

@@ -3,6 +3,8 @@ module Api
     # Pontos do dispositivo e comandos. Cadastro: técnico ou dono. Comando: o
     # papel mínimo depende do risco do ponto (SiteMembership::MIN_ROLE_BY_RISK).
     class PointsController < BaseController
+      self.key_actions = { index: "read", show: "read", history: "read", command: "command", write_value: "write" }
+
       def index
         device = Device.find(params[:device_id])
         authorize_site!(device.site, :view)
@@ -45,6 +47,18 @@ module Api
         record = Points::Command.call(point, params.require(:command), params[:value], source: "api",
                                                                                       client_uuid: params[:client_uuid])
         render_data(CommandSerializer.new(record).to_h, status: :accepted)
+      end
+
+      # POST /points/:id/value { value } — outro sistema escreve o valor de um
+      # ponto virtual (ex.: preço no e-ink). Grava como leitura (Point#report!):
+      # dispara automações, avisos e o tempo real como qualquer mudança.
+      def write_value
+        point = Point.find(params[:id])
+        authorize_site!(point.site, :command, risk: point.risk)
+        return render_error(:not_virtual, "Só ponto de dispositivo virtual recebe valor de fora.", status: :unprocessable_content) unless point.device.driver == "virtual"
+
+        point.report!(point.cast(params.require(:value).to_s))
+        render_data(PointSerializer.new(point).to_h)
       end
 
       # GET /points/:id/history?from=&to=&resolution=auto|raw|1h|1d (ISO 8601).

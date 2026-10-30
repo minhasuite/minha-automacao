@@ -26,7 +26,7 @@ module Api
 
       # Chave de serviço é só leitura e não compra.
       def require_app_token!
-        render_error(:forbidden, "Só pelo app.", status: :forbidden) if @current_scopes
+        render_error(:forbidden, "Só pelo app.", status: :forbidden) if @service_key
       end
     end
   end

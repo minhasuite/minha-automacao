@@ -1,0 +1,55 @@
+<% site_names = @sites.to_h { |s| [ s.id, s.name ] } %>
+<%= render "web/shared/header", title: "Configurações", subtitle: "Chaves de integração: outro sistema fala com a API pelo cabeçalho X-Api-Key, só nos locais e com as permissões da chave." %>
+<%= render layout: "web/settings/frame", locals: { current: :api_keys } do %>
+<% if @plain %>
+  <section class="ss-card ss-card-grad p-4 mb-4" role="status" aria-labelledby="nova-chave-t">
+    <h2 id="nova-chave-t" class="flex items-center gap-2"><%= icon("link", "size-4") %>Chave <%= @created.name %> criada</h2>
+    <p class="text-sm text-muted mt-1">Copie agora e guarde no outro sistema: ela não aparece de novo.</p>
+    <div class="mt-3 flex gap-2" data-controller="clipboard">
+      <label for="plain-key" class="sr-only">Chave</label>
+      <input id="plain-key" class="ss-input num" value="<%= @plain %>" readonly data-clipboard-target="source">
+      <button type="button" class="ss-btn ss-btn-primary" data-action="clipboard#copy"><%= icon("duplicate", "size-4") %>Copiar</button>
+    </div>
+  </section>
+<% end %>
+
+<% if @keys.empty? %>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma chave ativa.</p><p class="mt-1">Crie uma abaixo para um sistema externo ler ou mandar valores para os pontos.</p></div>
+<% else %>
+  <section class="ss-card overflow-x-auto" aria-label="Chaves ativas">
+    <table class="ss-table">
+      <thead><tr><th>Chave</th><th class="hidden md:table-cell">Locais</th><th class="hidden sm:table-cell">Permissões</th><th class="hidden lg:table-cell">Validade</th><th class="hidden md:table-cell">Último uso</th><th class="r"><span class="sr-only">Revogar</span></th></tr></thead>
+      <tbody>
+        <% @keys.each do |k| %>
+          <tr>
+            <td><span class="block font-semibold text-ink"><%= k.name %></span><span class="block text-xs text-muted">criada em <%= l(k.created_at.to_date) %><%= " · vencida" if k.expired? %></span></td>
+            <td class="hidden md:table-cell"><%= k.site_ids.filter_map { |id| site_names[id] }.to_sentence %></td>
+            <td class="hidden sm:table-cell"><div class="flex flex-wrap gap-1"><% k.scopes.each do |s| %><span class="ss-badge"><%= ServiceApiKey::SCOPES[s] %></span><% end %></div></td>
+            <td class="hidden lg:table-cell"><%= k.expires_at ? l(k.expires_at.to_date) : "Sem validade" %></td>
+            <td class="hidden md:table-cell"><%= k.last_used_at ? ago_text(k.last_used_at) : "Nunca" %></td>
+            <td class="r"><%= button_to "Revogar", api_key_path(k), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", form: { data: { turbo_confirm: "Revogar a chave #{k.name}? O sistema que usa para de funcionar na hora.", turbo_confirm_button: "Revogar" } } %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+<% end %>
+
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="criar-t">
+  <h2 id="criar-t">Nova chave</h2>
+  <%= form_with scope: :api_key, url: api_keys_path, class: "mt-3 grid gap-4 md:grid-cols-2", data: { turbo: false } do |f| %>
+    <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, maxlength: 60, placeholder: "minhas-vendas (e-ink de preços)" %></div>
+    <div><%= f.label :validity, "Validade", class: "ss-label" %><%= f.select :validity, Web::ApiKeysController::VALIDITY.invert, { selected: "365" }, class: "ss-input" %></div>
+    <fieldset><legend class="ss-label">Locais permitidos</legend>
+      <div class="flex flex-wrap gap-3">
+        <% @sites.each do |s| %><label class="ss-check"><%= check_box_tag "api_key[site_ids][]", s.id, @sites.one?, id: "ak-site-#{s.id}" %><%= s.name %></label><% end %>
+      </div></fieldset>
+    <fieldset><legend class="ss-label">Permissões</legend>
+      <div class="flex flex-wrap gap-3">
+        <% ServiceApiKey::SCOPES.each do |key, label| %><label class="ss-check"><%= check_box_tag "api_key[scopes][]", key, key == "read", id: "ak-scope-#{key}" %><%= label %></label><% end %>
+      </div></fieldset>
+    <p class="md:col-span-2 text-sm text-muted">Ler: locais, dispositivos, pontos e histórico. Comandar: ligar/desligar e demais comandos (o risco do ponto continua valendo). Escrever valor: grava o valor de um ponto virtual com <code>POST /api/v1/points/:id/value</code>.</p>
+    <div class="md:col-span-2"><%= f.submit "Criar chave", class: "ss-btn ss-btn-primary" %></div>
+  <% end %>
+</section>
+<% end %>

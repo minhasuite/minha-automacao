@@ -12,8 +12,9 @@ module Api
 
       set_current_tenant_through_filter
 
-      class_attribute :service_scope, default: nil
-      class_attribute :service_write_scope, default: nil
+      # Chave de integração (X-Api-Key): só as ações listadas aqui, cada uma
+      # com a permissão que exige (ServiceApiKey::SCOPES). O resto = 403.
+      class_attribute :key_actions, default: {}
 
       before_action :authenticate_request!
       before_action :check_service_key!
@@ -61,29 +62,40 @@ module Api
           @current_api_token = token
           token.touch_usage!
         elsif (key = request.headers["X-Api-Key"].presence)
-          service_key = ServiceApiKey.find_by_token(key) or return unauthorized!
-          @current_api_user = service_key.user
-          @current_scopes = service_key.scopes
-          service_key.touch_usage!
+          @service_key = ServiceApiKey.find_by_token(key) or return unauthorized!
+          @current_api_user = @service_key.user
+          @service_key.touch_usage!
         else
           return unauthorized!
         end
+        return unauthorized! if @current_api_user.disabled?
+
         Current.user = @current_api_user
       end
 
       def current_user = @current_api_user
       def current_tenant_record = current_user.tenant
 
-      # Chave de serviço (X-Api-Key): GET em controller com `service_scope`, ou
-      # escrita em controller com `service_write_scope`, cobertos pela chave.
-      # Token do app: acesso
-      # total à própria empresa.
+      # Chave de integração: a ação precisa estar em `key_actions` e a chave ter
+      # a permissão dela. Token do app: acesso conforme o papel da pessoa.
       def check_service_key!
-        return if @current_scopes.nil?
-        return if request.get? && service_scope && @current_scopes.include?(service_scope)
-        return if !request.get? && service_write_scope && @current_scopes.include?(service_write_scope)
+        return if @service_key.nil?
+        return if @service_key.scopes.include?(key_actions[action_name.to_sym])
 
         render_error(:forbidden, "Chave de integração sem acesso a esta operação.", status: :forbidden)
+      end
+
+      # Com chave, além do papel, o local precisa estar entre os da chave
+      # (fora deles = não encontrado, como sem papel).
+      def authorize_site!(site, action, risk: nil)
+        raise ActiveRecord::RecordNotFound if @service_key && !@service_key.site_ids.include?(site.id)
+
+        super
+      end
+
+      def visible_sites
+        sites = Site.visible_to(current_user)
+        @service_key ? sites.where(id: @service_key.site_ids) : sites
       end
 
       def set_tenant = set_current_tenant(current_user.tenant)

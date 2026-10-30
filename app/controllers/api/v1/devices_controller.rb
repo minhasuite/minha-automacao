@@ -2,6 +2,8 @@ module Api
   module V1
     # Dispositivos do local (?area_id= filtra). Ver: qualquer papel; cadastro: técnico ou dono.
     class DevicesController < BaseController
+      self.key_actions = { index: "read", show: "read" }
+
       def index
         site = Site.find(params[:site_id])
         authorize_site!(site, :view)
