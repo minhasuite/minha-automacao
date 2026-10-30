@@ -8,7 +8,7 @@ module Points
                        "pause" => "Pausar", "stop" => "Parar", "home" => "Voltar à base", "clean_rooms" => "Limpar cômodos",
                        "wash_mop" => "Lavar o pano", "dry_mop" => "Secar o pano", "empty" => "Esvaziar", "locate" => "Localizar",
                        "announce" => "Anunciar", "speak" => "Falar", "increment" => "Incrementar", "decrement" => "Decrementar",
-                       "reset" => "Zerar", "cancel" => "Cancelar", "finish" => "Terminar" }.freeze
+                       "reset" => "Zerar", "cancel" => "Cancelar", "finish" => "Terminar", "run" => "Executar" }.freeze
     QUALITY_LABELS = { "good" => "Normal", "stale" => "Desatualizado", "unavailable" => "Indisponível", "error" => "Com erro" }.freeze
     AUDIT_LABELS = { "create" => "Ponto criado", "update" => "Cadastro alterado", "destroy" => "Ponto excluído" }.freeze
     TONES = { "confirmed" => "success", "failed" => "danger", "expired" => "warn" }.freeze

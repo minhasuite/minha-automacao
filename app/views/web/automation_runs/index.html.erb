@@ -1,4 +1,4 @@
-<%= render "web/shared/header", title: "Execuções", subtitle: "#{@automation.name} · últimos #{AutomationRun::RETENTION_DAYS} dias", back: (can?(:manage) ? edit_automation_path(@automation) : site_automations_path(@site)) %>
+<%= render "web/shared/header", title: "Execuções", subtitle: "#{@automation.name} · últimos #{AutomationRun::RETENTION_DAYS} dias", back: (can?(:manage) ? edit_automation_path(@automation) : (@automation.script? ? site_scripts_path(@site) : site_automations_path(@site))) %>
 <% if @runs.empty? %>
   <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma execução ainda.</p><p class="mt-1">Quando um gatilho disparar (ou alguém simular), o passo a passo aparece aqui.</p></div>
 <% else %>

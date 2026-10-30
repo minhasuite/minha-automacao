@@ -18,7 +18,9 @@ class Site < ApplicationRecord
   has_many :alert_rules, dependent: nil
   has_many :alerts, dependent: nil
   has_many :dashboards, dependent: nil
-  has_many :automations, dependent: nil
+  has_many :automations, -> { where(kind: "automation") }, dependent: nil, inverse_of: :site
+  has_many :scripts, -> { where(kind: "script") }, class_name: "Automation", dependent: nil, inverse_of: :site
+  has_many :blueprints, dependent: nil
   has_many :integrations, dependent: nil
 
   validates :name, presence: true

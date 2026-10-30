@@ -12,7 +12,8 @@ class Point < ApplicationRecord
     "contact" => "bool", "motion" => "bool", "tamper" => "bool", "problem" => "bool",
     "measure" => "decimal", "enum" => "enum", "setpoint" => "decimal", "command" => nil,
     "text" => "string", "vacuum" => "enum", "speaker" => "json", "stream" => "string",
-    "climate" => "json", "event" => "json", "counter" => "integer", "timer" => "enum", "datetime" => "string"
+    "climate" => "json", "event" => "json", "counter" => "integer", "timer" => "enum", "datetime" => "string",
+    "script" => nil
   }.freeze
   CAPABILITY_LABELS = {
     "onoff" => "Liga/desliga", "dimmer" => "Intensidade", "color" => "Cor", "gate" => "Portão",
@@ -20,7 +21,7 @@ class Point < ApplicationRecord
     "problem" => "Problema", "measure" => "Medição", "enum" => "Seleção", "setpoint" => "Valor ajustável",
     "command" => "Botão", "text" => "Texto", "vacuum" => "Robô aspirador", "speaker" => "Alto-falante",
     "stream" => "Câmera", "climate" => "Clima", "event" => "Evento",
-    "counter" => "Contador", "timer" => "Temporizador", "datetime" => "Data e hora"
+    "counter" => "Contador", "timer" => "Temporizador", "datetime" => "Data e hora", "script" => "Script"
   }.freeze
   # Só leitura por natureza (o resto nasce gravável).
   READ_ONLY = %w[contact motion tamper problem measure stream event].freeze
@@ -105,6 +106,7 @@ class Point < ApplicationRecord
     [
       [ "Painel", site.dashboards.where("definition::text LIKE ANY (ARRAY[?])", like) ],
       [ "Automação", site.automations.where("definition::text LIKE ANY (ARRAY[?])", like) ],
+      [ "Script", site.scripts.where("definition::text LIKE ANY (ARRAY[?])", like) ],
       [ "Cena", site.scenes.where("items::text LIKE ANY (ARRAY[?])", like) ],
       [ "Espelhamento", site.point_links.where(source_point_id: point_ids).or(site.point_links.where(target_point_id: point_ids)) ],
       [ "Aviso", site.notify_rules.where(point_id: point_ids) ],

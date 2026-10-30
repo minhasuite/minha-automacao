@@ -292,6 +292,35 @@ CREATE TABLE public.automations (
     last_status character varying,
     last_error character varying,
     created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    kind character varying DEFAULT 'automation'::character varying NOT NULL,
+    fields jsonb DEFAULT '[]'::jsonb NOT NULL,
+    icon character varying,
+    blueprint_id uuid,
+    blueprint_inputs jsonb,
+    blueprint_version integer
+);
+
+
+--
+-- Name: blueprints; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.blueprints (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    name character varying NOT NULL,
+    description text,
+    domain character varying DEFAULT 'automation'::character varying NOT NULL,
+    mode character varying DEFAULT 'single'::character varying NOT NULL,
+    inputs jsonb DEFAULT '[]'::jsonb NOT NULL,
+    definition jsonb DEFAULT '{}'::jsonb NOT NULL,
+    source character varying DEFAULT 'manual'::character varying NOT NULL,
+    source_url character varying,
+    unsupported jsonb DEFAULT '[]'::jsonb NOT NULL,
+    version integer DEFAULT 1 NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
 
@@ -1622,6 +1651,14 @@ ALTER TABLE ONLY public.automations
 
 
 --
+-- Name: blueprints blueprints_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.blueprints
+    ADD CONSTRAINT blueprints_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: commands commands_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2201,10 +2238,24 @@ CREATE INDEX index_automations_on_area_id ON public.automations USING btree (are
 
 
 --
+-- Name: index_automations_on_blueprint_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automations_on_blueprint_id ON public.automations USING btree (blueprint_id);
+
+
+--
 -- Name: index_automations_on_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_automations_on_site_id ON public.automations USING btree (site_id);
+
+
+--
+-- Name: index_automations_on_site_id_and_kind; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automations_on_site_id_and_kind ON public.automations USING btree (site_id, kind);
 
 
 --
@@ -2219,6 +2270,27 @@ CREATE INDEX index_automations_on_tenant_id ON public.automations USING btree (t
 --
 
 CREATE UNIQUE INDEX index_automations_on_webhook_token ON public.automations USING btree (webhook_token);
+
+
+--
+-- Name: index_blueprints_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_blueprints_on_site_id ON public.blueprints USING btree (site_id);
+
+
+--
+-- Name: index_blueprints_on_site_id_and_source; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_blueprints_on_site_id_and_source ON public.blueprints USING btree (site_id, source) WHERE ((source)::text ~~ 'builtin:%'::text);
+
+
+--
+-- Name: index_blueprints_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_blueprints_on_tenant_id ON public.blueprints USING btree (tenant_id);
 
 
 --
@@ -3094,6 +3166,14 @@ ALTER TABLE ONLY public.subscriptions
 
 
 --
+-- Name: blueprints fk_rails_0da735ddc0; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.blueprints
+    ADD CONSTRAINT fk_rails_0da735ddc0 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: devices fk_rails_12ad68c8f1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3270,6 +3350,14 @@ ALTER TABLE ONLY public.invites
 
 
 --
+-- Name: blueprints fk_rails_42bb587701; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.blueprints
+    ADD CONSTRAINT fk_rails_42bb587701 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: events fk_rails_4b008cd1c8; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3403,6 +3491,14 @@ ALTER TABLE ONLY public.notifications
 
 ALTER TABLE ONLY public.alerts
     ADD CONSTRAINT fk_rails_80074b944a FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
+-- Name: automations fk_rails_80f17165a8; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.automations
+    ADD CONSTRAINT fk_rails_80f17165a8 FOREIGN KEY (blueprint_id) REFERENCES public.blueprints(id) ON DELETE SET NULL;
 
 
 --
@@ -3780,6 +3876,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261031000001'),
 ('20261030300001'),
 ('20261030200001'),
 ('20261030100003'),

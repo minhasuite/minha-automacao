@@ -1,8 +1,11 @@
 module Drivers
   # Ponto sem aparelho: o valor do comando vira o valor do ponto. Helper
   # (F8e) entrega ao plugin (temporizador agenda, grupo repassa aos membros).
+  # Ponto de script (F8f) executa o script.
   class Virtual
     def execute(point, command, value)
+      return Scripts.execute(point, value) if point.capability == "script"
+
       plugin = point.helper_type
       return plugin.execute(point, command, value) if plugin
 

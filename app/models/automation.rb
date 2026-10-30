@@ -11,12 +11,20 @@
 # Proteções: disparo causado pela própria automação (ou corrente com mais de
 # MAX_DEPTH automações) vira execução "laço evitado" e não roda; mais de
 # MAX_PER_MINUTE execuções por minuto são ignoradas.
+#
+# Script (F8f, `kind: "script"`): só ações, com campos (`fields`: nome,
+# rótulo, tipo, padrão, obrigatório, opções); quem chama é a ação "Executar
+# script", o botão do painel (ponto de capacidade `script`, Scripts), a API e
+# o "Executar". Mesmas versões, modos e execuções (trace) das automações.
+# Criada por blueprint: `blueprint` + `blueprint_inputs` (+ a versão usada).
 class Automation < ApplicationRecord
   include Auditable
 
   acts_as_tenant :tenant
 
   MODES = Automations::Dsl::MODES
+  KINDS = { "automation" => "Automação", "script" => "Script" }.freeze
+  FIELD_TYPES = { "text" => "Texto", "number" => "Número", "boolean" => "Sim/não", "point" => "Ponto", "select" => "Seleção" }.freeze
   MAX_PER_MINUTE = 30
   # Corrente de automações (uma disparando a outra). Abaixo do limite das
   # primitivas (Automations::MAX_DEPTH), para o laço evitado ficar no trace.
@@ -27,6 +35,9 @@ class Automation < ApplicationRecord
 
   belongs_to :site
   belongs_to :area, optional: true
+  belongs_to :blueprint, optional: true
+  has_many :taggings, as: :taggable, dependent: :delete_all
+  has_many :tags, through: :taggings
   has_many :versions, -> { order(version: :desc) }, class_name: "AutomationVersion", dependent: nil # cascade no banco
   has_many :runs, class_name: "AutomationRun", dependent: nil
 
@@ -36,6 +47,8 @@ class Automation < ApplicationRecord
 
   validates :name, presence: true
   validates :mode, inclusion: { in: MODES.keys }
+  validates :kind, inclusion: { in: KINDS.keys }
+  validate :fields_valid
   validates :max_runs, numericality: { only_integer: true, in: 1..50 }
   validate :definitions_valid
   validate { errors.add(:enabled, "só depois de publicar uma versão") if enabled && !published? }
@@ -47,10 +60,25 @@ class Automation < ApplicationRecord
 
   scope :ordered, -> { order(:name) }
 
+  after_save { Scripts.sync!(self) if script? }
+  after_destroy { Scripts.remove!(self) if script? }
+
+  def script? = kind == "script"
+  def kind_label = KINDS.fetch(kind, kind)
   def mode_label = MODES.fetch(mode, mode)
+  def errors_in(defn) = Automations::Dsl.errors(defn, site, fields: (fields if script?))
+  def blueprint_outdated? = blueprint.present? && blueprint_version.to_i < blueprint.version
+
+  # Rótulos ("iluminação, noite"): Tag/Tagging de sempre.
+  def label_list = tags.map(&:name).sort.join(", ")
+
+  def label_list=(text)
+    names = text.to_s.split(",").map { |n| n.squish.downcase }.compact_blank.uniq.first(10)
+    self.tags = names.map { |n| Tag.find_or_create_by!(name: n) }
+  end
   def published? = version.positive?
   def draft? = draft.present?
-  def working_draft = draft || (published? ? definition : Automations::Dsl.empty)
+  def working_draft = draft || (published? ? definition : (script? ? { "actions" => [] } : Automations::Dsl.empty))
   def webhook? = Array(definition["triggers"]).any? { |t| t["type"] == "webhook" }
 
   def definition_for(number)
@@ -62,7 +90,7 @@ class Automation < ApplicationRecord
     raise ArgumentError, "nada para publicar" if new_definition.blank?
 
     transaction do
-      update!(definition: new_definition, draft: nil, version: version + 1)
+      update!(definition: new_definition, draft: nil, version: version + 1, blueprint_version: blueprint&.version)
       versions.create!(tenant_id: tenant_id, version: version, definition: definition, author: author)
     end
   end
@@ -87,6 +115,49 @@ class Automation < ApplicationRecord
     run&.status == "running" ? start(run) : run
   end
 
+  # Script: valores dos campos (padrão, tipo e obrigatório). Levanta
+  # ArgumentError com a mensagem para a tela.
+  def field_values(given)
+    given = given.to_h.stringify_keys
+    unknown = given.keys - fields.pluck("name")
+    raise ArgumentError, "campo desconhecido: #{unknown.join(', ')}" if unknown.any?
+
+    values = cast_fields(given.compact_blank)
+    fields.each do |fd|
+      values[fd["name"]] = fd["default"] if !values.key?(fd["name"]) && !fd["default"].nil?
+      raise ArgumentError, "falta o campo #{fd['label']}" if fd["required"] && values[fd["name"]].nil?
+    end
+    values
+  end
+
+  # Texto do formulário → tipo do campo (o que não converte levanta ArgumentError).
+  def cast_fields(given)
+    by_name = fields.index_by { |fd| fd["name"] }
+    given.to_h.stringify_keys.to_h do |name, raw|
+      fd = by_name[name] or next [ name, raw ]
+      [ name, cast_field(fd, raw) ]
+    end
+  end
+
+  def field_defaults = fields.to_h { |fd| [ fd["name"], fd["default"] ] }.compact
+
+  # Pontos escolhidos nos campos de tipo ponto (papel x risco de quem chama).
+  def point_field_values(given)
+    names = fields.select { |fd| fd["type"] == "point" }.pluck("name")
+    refs = given.to_h.stringify_keys.values_at(*names).compact.map(&:to_s)
+    refs.empty? ? [] : site.points.where(id: refs.grep(UUID)).or(site.points.where(key: refs)).pluck(:id)
+  end
+
+  # Risco de executar com esses campos: o do script e o dos pontos escolhidos.
+  def run_risk(values = {})
+    risks = [ max_risk(definition), *site.points.where(id: point_field_values(values)).pluck(:risk) ]
+    risks.max_by { |r| Point::RISKS.keys.index(r) }
+  end
+
+  def run_script!(values, title:, cause: nil, user: nil)
+    fire!({ "type" => "script", "title" => title, "fields" => values, "user_id" => user&.id }.compact, cause: cause, skip_conditions: true)
+  end
+
   # Simulação: roda o rascunho (ou a publicada) a seco, com valores
   # hipotéticos de pontos e hora. Grava a execução (`dry_run`) para o trace.
   def simulate!(points: {}, at: nil, trigger: {}, definition: working_draft, skip_conditions: false)
@@ -94,7 +165,7 @@ class Automation < ApplicationRecord
     trigger = { "type" => "manual", "title" => "Simulação" }.merge(trigger.to_h.stringify_keys)
     run = runs.create!(tenant_id: tenant_id, site: site, version: (version if definition == self.definition), trigger: trigger, status: "running",
                        dry_run: true, started_at: Time.current)
-    ctx = Automations::Context.new(site: site, trigger: trigger, overrides: points, at: at)
+    ctx = Automations::Context.new(site: site, trigger: trigger, vars: (field_defaults if script?), overrides: points, at: at)
     run.steps << { "kind" => "trigger", "title" => "Gatilho simulado: #{trigger['title']}", "result" => "ok" }
     Automations::Engine.start(run, definition, ctx, skip_conditions: skip_conditions)
     run.reload
@@ -138,7 +209,7 @@ class Automation < ApplicationRecord
   end
 
   def start(run)
-    ctx = Automations::Context.new(site: site, trigger: run.trigger)
+    ctx = Automations::Context.new(site: site, trigger: run.trigger, vars: run.trigger["fields"].to_h)
     Automations::Engine.start(run, definition, ctx, skip_conditions: run.trigger["skip_conditions"] == true)
     run.reload
   end
@@ -164,6 +235,42 @@ class Automation < ApplicationRecord
     errors.add(:draft, "precisa ser um objeto JSON") unless draft.nil? || draft.is_a?(Hash)
     return unless published? && site
 
-    Automations::Dsl.errors(definition, site).first(5).each { |e| errors.add(:definition, e) }
+    errors_in(definition).first(5).each { |e| errors.add(:definition, e) }
+  end
+
+  UUID = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
+
+  def cast_field(fd, raw)
+    case fd["type"]
+    when "number" then raw.is_a?(Numeric) ? raw : number_field(fd, raw)
+    when "boolean" then ActiveModel::Type::Boolean.new.cast(raw)
+    when "point" then point_ref(raw.to_s)&.id || raise(ArgumentError, "#{fd['label']}: ponto não existe")
+    when "select" then raw.to_s.presence_in(Array(fd["options"]).map(&:to_s)) || raise(ArgumentError, "#{fd['label']}: opção inválida")
+    else raw.to_s.truncate(500)
+    end
+  end
+
+  def number_field(fd, raw)
+    n = Float(raw.to_s.tr(",", "."), exception: false) or raise ArgumentError, "#{fd['label']}: número inválido"
+    n % 1 == 0 ? n.to_i : n
+  end
+
+  def point_ref(ref) = (site.points.find_by(id: ref) if UUID.match?(ref)) || site.points.find_by(key: ref)
+
+  # Campos do script: nome de variável único, tipo conhecido, seleção com opções.
+  def fields_valid
+    return errors.add(:fields, "precisam ser uma lista") unless fields.is_a?(Array)
+    return if fields.empty?
+    return errors.add(:fields, "só existem em script") unless script?
+
+    names = fields.map { |fd| fd.is_a?(Hash) && fd["name"] }
+    errors.add(:fields, "precisam de nome com letras minúsculas, números e _") unless names.all? { |n| n.is_a?(String) && Automations::Dsl::VAR.match?(n) }
+    errors.add(:fields, "têm nome repetido") if names.uniq.size != names.size
+    fields.each do |fd|
+      next unless fd.is_a?(Hash)
+
+      errors.add(:fields, "têm tipo inválido em #{fd['name']}") unless FIELD_TYPES.key?(fd["type"])
+      errors.add(:fields, "de seleção precisam de opções (#{fd['name']})") if fd["type"] == "select" && Array(fd["options"]).empty?
+    end
   end
 end

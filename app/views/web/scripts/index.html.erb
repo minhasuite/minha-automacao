@@ -1,0 +1,47 @@
+<%= render "web/shared/header", title: "Automações e cenas", subtitle: "#{@site.name} · scripts: sequências de ações reutilizáveis, com campos" do %>
+  <% if can?(:manage) %><%= link_to new_site_script_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo script<% end %><% end %>
+<% end %>
+<%= render "web/automations/tabs", site: @site, current: :scripts %>
+
+<% if @total.zero? %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink">Nenhum script neste local.</p>
+    <p class="mt-1 max-w-lg mx-auto">Script é uma sequência de ações com nome, como "Boa noite" ou "Ligar o cômodo", que as automações chamam, o painel mostra como botão e a API executa. Pode pedir campos (o cômodo, o tempo).</p>
+    <% if can?(:manage) %><%= link_to new_site_script_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar o primeiro<% end %><% end %>
+  </div>
+<% else %>
+  <%= form_with url: site_scripts_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do %>
+    <div class="min-w-48 flex-1"><label for="q" class="ss-label">Procurar</label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: "Nome do script" %></div>
+    <button type="submit" class="ss-btn ss-btn-ghost" aria-label="Procurar"><%= icon("search", "size-4") %></button>
+  <% end %>
+  <% if @scripts.empty? %>
+    <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum script com esse nome.</p></div>
+  <% else %>
+    <ul class="ss-card ss-rows" aria-label="Scripts">
+      <% @scripts.each do |s| %>
+        <li id="script-<%= s.id %>">
+          <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(s.icon.presence_in(HelperTypes::ICONS) || "play") %></span>
+          <div class="min-w-0 flex-1 basis-48">
+            <p class="font-bold text-ink break-words"><%= link_to s.name, (can?(:manage) ? edit_automation_path(s) : automation_automation_runs_path(s)), class: "text-ink no-underline hover:text-accent" %>
+              <% unless s.published? %> <span class="ss-badge ss-badge-warn">Rascunho</span><% end %>
+              <% if s.draft? && s.published? %> <span class="ss-badge">Rascunho com mudanças</span><% end %></p>
+            <p class="text-sm text-muted break-words"><%= [ s.area&.name, count_label(s.fields.size, "campo", "campos"), s.mode_label.split(" (").first ].compact.join(" · ") %></p>
+            <p class="text-xs text-muted">Última execução: <%= last_run_text(s).downcase %></p>
+            <% if s.last_error.present? %><p class="text-sm text-danger mt-1 flex gap-1"><%= icon("exclamation-circle", "size-4 shrink-0 mt-0.5") %><span><%= s.last_error %></span></p><% end %>
+          </div>
+          <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+            <%= link_to automation_automation_runs_path(s), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("view-list", "size-4") %>Execuções<% end %>
+            <% if s.published? && can?(:command, risk: s.max_risk(s.definition)) %>
+              <% if s.fields.any? %>
+                <%= link_to run_automation_path(s), class: "ss-btn ss-btn-primary ss-btn-sm" do %><%= icon("play", "size-4") %>Executar<% end %>
+              <% else %>
+                <%= button_to run_automation_path(s), params: { back: request.fullpath, confirm_critical: ("1" if s.max_risk(s.definition) == "critical") }.compact, class: "ss-btn ss-btn-primary ss-btn-sm",
+                              form: { class: "contents", data: { turbo_confirm: "Executar #{s.name}?", turbo_confirm_button: "Executar" } } do %><%= icon("play", "size-4") %>Executar<% end %>
+              <% end %>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>

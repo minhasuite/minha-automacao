@@ -4,7 +4,8 @@ module AutomationHelper
                       "Apertar (botão)" => "press", "Ajustar valor" => "set", "Selecionar opção" => "select",
                       "Iniciar limpeza (robô)" => "start", "Pausar (robô)" => "pause", "Parar (robô)" => "stop",
                       "Voltar à base (robô)" => "home", "Lavar o pano (robô)" => "wash_mop", "Secar o pano (robô)" => "dry_mop",
-                      "Esvaziar (robô)" => "empty", "Anunciar (Echo)" => "announce", "Falar (Echo)" => "speak" }.freeze
+                      "Esvaziar (robô)" => "empty", "Anunciar (Echo)" => "announce", "Falar (Echo)" => "speak",
+                      "Executar (script)" => "run" }.freeze
 
   def point_choices(site, writable: false)
     scope = site.points.includes(:device).ordered
@@ -17,8 +18,7 @@ module AutomationHelper
     of_point = ->(rel) { point ? rel.where(point_id: point.id) : rel }
     links = site.point_links
     links = links.where(source_point_id: point.id).or(site.point_links.where(target_point_id: point.id)) if point
-    { scenes: point ? [] : site.scenes.order(:name).to_a,
-      schedules: of_point.call(site.schedules).includes(:point, :scene).order(:name).to_a,
+    { schedules: of_point.call(site.schedules).includes(:point, :scene).order(:name).to_a,
       links: links.includes(:source_point, :target_point).order(:created_at).to_a,
       notify_rules: of_point.call(site.notify_rules).includes(:point).order(:created_at).to_a,
       alert_rules: of_point.call(site.alert_rules).includes(:point).order(:name).to_a }

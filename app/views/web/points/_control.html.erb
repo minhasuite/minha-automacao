@@ -9,6 +9,8 @@
     <% if cmds.include?("toggle") %>
       <% on = point_on?(point) %>
       <%= button_to command_point_path(point), params: { command: "toggle" }, class: "ss-switch", form: { data: confirm }, "aria-pressed": on.to_s, "aria-label": "#{on ? 'Desligar' : 'Ligar'} #{point.name}", title: on ? "Desligar" : "Ligar" do %><% end %>
+    <% elsif cmds.include?("run") %>
+      <%= button_to command_point_path(point), params: { command: "run" }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: confirm } do %><%= icon("play", "size-4") %>Executar<% end %>
     <% elsif cmds.include?("press") %>
       <%= button_to command_point_path(point), params: { command: "press" }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: confirm } do %><%= icon("lightning-bolt", "size-4") %>Apertar<% end %>
     <% elsif cmds.include?("select") %>

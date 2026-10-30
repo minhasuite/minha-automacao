@@ -2,7 +2,7 @@
 <%= render "web/shared/header", title: (@run.dry_run ? "Simulação" : "Execução"), subtitle: "#{@automation.name} · #{l(@run.started_at, format: :long)}",
                                 back: automation_automation_runs_path(@automation), badge: run_badge(@run) do %>
   <% if can?(:manage) %>
-    <%= link_to edit_automation_path(@automation), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar automação<% end %>
+    <%= link_to edit_automation_path(@automation), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar <%= @automation.kind_label.downcase %><% end %>
     <% if @run.dry_run %><%= link_to simulate_automation_path(@automation), class: "ss-btn ss-btn-outline" do %><%= icon("refresh", "size-4") %>Simular de novo<% end %><% end %>
   <% end %>
 <% end %>

@@ -131,7 +131,7 @@ module Api
       # JSON como veio (sem strong params: a DSL valida). Aceita `key` de ponto.
       def definition_param(automation)
         raw = Automations::Dsl.normalize(request.request_parameters["definition"].deep_dup, automation.site)
-        errors = Automations::Dsl.errors(raw, automation.site)
+        errors = automation.errors_in(raw)
         raise ActiveRecord::RecordInvalid, Automation.new.tap { |a| errors.each { |e| a.errors.add(:definition, e) } } if errors.any?
 
         raw

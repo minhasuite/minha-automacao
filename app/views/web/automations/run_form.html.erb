@@ -1,0 +1,22 @@
+<% risk = @automation.max_risk(@automation.definition) %>
+<%= render "web/shared/header", title: "Executar #{@automation.name}", subtitle: "#{@site.name} · script, versão #{@automation.version}",
+                                back: (can?(:manage) ? edit_automation_path(@automation) : site_scripts_path(@site)) %>
+<% if @automation.published? %>
+  <%= form_with url: run_automation_path(@automation), class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl",
+                data: { turbo_confirm: "Executar #{@automation.name}?", turbo_confirm_button: "Executar" } do %>
+    <% @automation.fields.each do |fd| %>
+      <div class="min-w-0">
+        <label class="ss-label" for="run-<%= fd['name'] %>"><%= fd["label"] %><%= " *" if fd["required"] && fd["default"].nil? %></label>
+        <%= render "web/automations/field_input", fd: fd, name: "fields[#{fd['name']}]", value: fd["default"], id: "run-#{fd['name']}", site: @site %>
+      </div>
+    <% end %>
+    <% if risk == "critical" %>
+      <label class="sm:col-span-2 inline-flex items-center gap-2 text-sm text-danger font-semibold"><%= check_box_tag :confirm_critical, "1", false, id: "run-critical" %>Comanda ponto crítico: confirmo</label>
+    <% end %>
+    <div class="sm:col-span-2 flex flex-wrap gap-2">
+      <%= button_tag type: "submit", class: "ss-btn ss-btn-primary" do %><%= icon("play", "size-4") %>Executar<% end %>
+    </div>
+  <% end %>
+<% else %>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink">Publique o script antes de executar.</p></div>
+<% end %>

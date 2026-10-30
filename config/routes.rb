@@ -42,14 +42,25 @@ Rails.application.routes.draw do
     end
 
     resources :sites, path: "locais", path_names: { new: "novo", edit: "editar" } do
-      get :automation, on: :member, path: "automacao"
+      # Seção "Automações e cenas" (F8f): Automações · Cenas · Scripts ·
+      # Blueprints · Regras (agendas, espelhamentos, avisos e alertas da F4).
+      get :rules, on: :member, path: "regras"
+      get :automation, on: :member, path: "automacao" # antiga: redireciona para Regras
       # Primitivas de automação (F4): criadas a partir do local ou do ponto.
       resources :point_links, path: "espelhamentos", except: %i[index show], shallow: true
       resources :schedules, path: "agendas", except: %i[index show], shallow: true
       resources :notify_rules, path: "avisos", except: %i[index show], shallow: true
       resources :alert_rules, path: "regras-de-alerta", except: %i[index show], shallow: true
-      resources :scenes, path: "cenas", except: %i[index show], shallow: true do
+      resources :scenes, path: "cenas", except: :show, shallow: true do
         post :activate, on: :member, path: "acionar"
+      end
+      # Scripts (F8f): automação de `kind: "script"`; o editor, as versões e as
+      # execuções são os das automações (rotas /automacoes/:id).
+      resources :scripts, path: "scripts", only: %i[index new create], path_names: { new: "novo" }
+      # Blueprints (F8f): prontos, importados do HA e "criar a partir de".
+      resources :blueprints, path: "blueprints", except: :edit, path_names: { new: "importar" }, shallow: true do
+        get :use, on: :member, path: "usar"
+        post :use, on: :member, path: "usar", action: :instantiate
       end
       # Dashboards (F5): editor e versões só para técnico ou dono.
       resources :dashboards, path: "paineis", path_names: { new: "novo", edit: "editar" }, shallow: true do
@@ -67,7 +78,11 @@ Rails.application.routes.draw do
       end
       # Automações da DSL (F6): editor, versões e simulação só para técnico ou dono.
       resources :automations, path: "automacoes", path_names: { new: "nova", edit: "editar" }, except: :show, shallow: true do
+        post :bulk, on: :collection, path: "lote"
         member do
+          get :run, path: "executar", action: :run_form
+          patch :fields, path: "campos"
+          post :rebuild, path: "refazer"
           patch :draft, path: "rascunho"
           post :publish, path: "publicar"
           post :discard, path: "descartar"
@@ -179,6 +194,11 @@ Rails.application.routes.draw do
         resources :alert_rules, except: %i[new edit], shallow: true
         resources :scenes, except: %i[new edit], shallow: true do
           post :activate, on: :member
+        end
+        # Scripts (F8f).
+        resources :scripts, except: %i[new edit], shallow: true do
+          post :run, on: :member
+          get :runs, on: :member
         end
       end
       # Dashboards (F5).

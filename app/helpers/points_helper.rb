@@ -5,7 +5,8 @@ module PointsHelper
                   "contact" => "view-boards", "motion" => "eye", "tamper" => "exclamation-circle", "problem" => "exclamation-circle",
                   "measure" => "chart-bar", "enum" => "view-list", "setpoint" => "calculator", "command" => "lightning-bolt",
                   "text" => "document-text", "vacuum" => "vacuum", "speaker" => "speakerphone", "stream" => "video-camera",
-                  "climate" => "sun", "event" => "bell", "counter" => "plus", "timer" => "clock", "datetime" => "calendar" }.freeze
+                  "climate" => "sun", "event" => "bell", "counter" => "plus", "timer" => "clock", "datetime" => "calendar",
+                  "script" => "play" }.freeze
   BOOL_TEXT = { "onoff" => %w[Ligado Desligado], "contact" => %w[Aberto Fechado], "motion" => %w[Movimento Parado],
                 "tamper" => %w[Violado Normal], "problem" => %w[Problema Normal] }.freeze
   GATE_TEXT = { "open" => "Aberto", "closed" => "Fechado", "opening" => "Abrindo", "unknown" => "Desconhecido" }.freeze
