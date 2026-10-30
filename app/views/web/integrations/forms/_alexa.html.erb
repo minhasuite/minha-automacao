@@ -1,4 +1,23 @@
 <%# locals: (f:, integration:) -%>
-<p class="text-sm text-ink-2">Cole o conteúdo do arquivo de cookies da sessão já logada (no HA: <code>.storage/alexa_media.&lt;email&gt;.cookies</code>) ou um objeto JSON {nome: valor}. As Echo da conta aparecem sozinhas.</p>
-<div><%= f.label :cookies, "Cookies da sessão", class: "ss-label" %><%= f.text_area :cookies, rows: 6, class: "ss-input font-mono text-xs", required: true, autocomplete: "off", spellcheck: false %></div>
-<p class="text-xs text-muted">Fica cifrado no banco. Quando a Amazon recusar a sessão, o card fica "Com erro" e é só colar de novo em Reconfigurar.</p>
+<% if integration.nil? %>
+  <p class="text-sm text-ink-2">Você entra com a sua conta Amazon na página da própria Amazon (senha e verificação em duas etapas ficam lá). As Echo da conta aparecem sozinhas e a sessão se renova sem precisar entrar de novo.</p>
+  <div>
+    <%= f.label :domain, "Amazon do país da conta", class: "ss-label" %>
+    <%= f.select :domain, Alexa::Auth::DOMAINS, { selected: Alexa::Auth::DEFAULT_DOMAIN }, class: "ss-input" %>
+  </div>
+<% else %>
+  <div>
+    <%= f.label :return_url, "Endereço da página depois de entrar", class: "ss-label" %>
+    <%= f.text_area :return_url, rows: 3, class: "ss-input font-mono text-xs", autocomplete: "off", spellcheck: false,
+                    placeholder: "https://www.amazon.com.br/ap/maplanding?...openid.oa2.authorization_code=..." %>
+  </div>
+  <p class="text-xs text-muted">O endereço tem um código de uso único que vale poucos minutos. Fica só o necessário para renovar a sessão, cifrado no banco.</p>
+<% end %>
+<details class="text-sm">
+  <summary class="cursor-pointer text-ink-2">Avançado: colar cookies de uma sessão já logada</summary>
+  <div class="grid gap-2 mt-2">
+    <p class="text-xs text-muted">Só se o login acima não servir. Arquivo de cookies (formato alexapy) ou um objeto JSON {nome: valor}. Esse modo não se renova: quando a Amazon recusar, o card fica "Com erro".</p>
+    <%= f.label :cookies, "Cookies da sessão", class: "ss-label" %>
+    <%= f.text_area :cookies, rows: 4, class: "ss-input font-mono text-xs", autocomplete: "off", spellcheck: false %>
+  </div>
+</details>

@@ -4,7 +4,7 @@ module AutomationHelper
                       "Apertar (botão)" => "press", "Ajustar valor" => "set", "Selecionar opção" => "select",
                       "Iniciar limpeza (robô)" => "start", "Pausar (robô)" => "pause", "Parar (robô)" => "stop",
                       "Voltar à base (robô)" => "home", "Lavar o pano (robô)" => "wash_mop", "Secar o pano (robô)" => "dry_mop",
-                      "Esvaziar (robô)" => "empty", "Anunciar (Echo)" => "announce", "Falar (Echo)" => "speak",
+                      "Esvaziar (robô)" => "empty", "Anunciar (Echo)" => "announce", "Falar (Echo)" => "speak", "Rotina da Alexa (Echo)" => "routine",
                       "Executar (script)" => "run" }.freeze
 
   def point_choices(site, writable: false)

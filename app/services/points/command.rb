@@ -17,7 +17,7 @@ module Points
     COMMANDS = {
       "onoff" => %w[on off toggle], "dimmer" => %w[set], "setpoint" => %w[set], "enum" => %w[select],
       "text" => %w[set], "command" => %w[press], "gate" => %w[pulse], "datetime" => %w[set],
-      "vacuum" => %w[start pause stop home clean_rooms wash_mop dry_mop empty locate], "speaker" => %w[announce speak],
+      "vacuum" => %w[start pause stop home clean_rooms wash_mop dry_mop empty locate], "speaker" => %w[announce speak routine],
       "script" => %w[run]
     }.freeze
     VACUUM_SETTINGS = %w[mode suction water route times].freeze

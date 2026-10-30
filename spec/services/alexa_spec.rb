@@ -38,7 +38,7 @@ RSpec.describe "Alexa (anúncio não oficial)" do
     expect(import).to eq(devices: 2, points: 2, echos: 2)
     integration = site.integrations.sole
     expect(integration.status).to eq("ok")
-    expect(integration.secrets).to eq("session-id" => "S1", "csrf" => "C1")
+    expect(integration.secrets).to eq("cookies" => { "session-id" => "S1", "csrf" => "C1" })
     expect(Integration.connection.select_value("select credentials from integrations")).not_to include("session-id")
     cozinha = Device.find_by!(name: "Echo Cozinha")
     expect(cozinha).to have_attributes(driver: "alexa", external_id: "G0C", integration: integration, status: "online")

@@ -1,5 +1,6 @@
 module Alexa
-  # Conta da Alexa a partir dos cookies de uma sessão já logada (o arquivo
+  # Conta da Alexa a partir dos cookies de uma sessão já logada (o login
+  # próprio fica em Alexa::Auth; este é o caminho de colar cookies: o arquivo
   # `.storage/alexa_media.<email>.cookies` do HA, formato alexapy, ou um
   # objeto {nome => valor}) e descoberta das Echo (só leitura da lista).
   # Idempotente: integração por local, Echo pelo número de série.
@@ -21,8 +22,8 @@ module Alexa
     def call(site, data, name: "Alexa")
       integration = site.integrations.find_or_initialize_by(driver: "alexa")
       integration.name = name if integration.new_record?
-      integration.settings = { "host" => Client::HOST }.merge(integration.settings)
-      integration.credentials = cookies_from(data).to_json
+      integration.settings = { "host" => Client::HOST }.merge(integration.settings).except("login")
+      integration.credentials = { "cookies" => cookies_from(data) }.merge(integration.secrets.slice("serial")).to_json
       integration.save!
       discover!(integration)
     end
@@ -31,7 +32,7 @@ module Alexa
     def discover!(integration, client: Drivers::Alexa.client_for(integration))
       list = client.devices.select { |d| FAMILIES.include?(d["deviceFamily"]) }
       site = integration.site
-      area = site.areas.find_or_create_by!(name: AREA)
+      area = site.areas.find_or_create_by!(name: AREA) unless integration.settings["login"] == "app" # login próprio: Echo nova sem área
       count = { devices: 0, points: 0 }
       list.each do |d|
         device = site.devices.find_or_initialize_by(driver: "alexa", external_id: d["serialNumber"])
