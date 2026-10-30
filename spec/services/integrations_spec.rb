@@ -14,8 +14,8 @@ RSpec.describe Integrations do
 
   describe "plugins" do
     it "catálogo vem do registro, com interface comum" do
-      expect(described_class.plugins.map(&:key)).to eq(%w[tuya xiaomi alexa camera hikvision mqtt zigbee2mqtt calendar weather ha_import])
-      expect(described_class.drivers).to eq(%w[tuya xiaomi alexa camera hikvision mqtt calendar weather])
+      expect(described_class.plugins.map(&:key)).to eq(%w[tuya xiaomi alexa camera hikvision mqtt zigbee2mqtt calendar weather system ha_import])
+      expect(described_class.drivers).to eq(%w[tuya xiaomi alexa camera hikvision mqtt calendar weather system])
       expect(described_class.for_driver("mqtt")).to eq(Integrations::MqttPlugin)
       expect(described_class.plugin("zigbee2mqtt").driver).to eq("mqtt")
       described_class.plugins.each { |p| expect([ p.title, p.icon, p.description ]).to all(be_present) }

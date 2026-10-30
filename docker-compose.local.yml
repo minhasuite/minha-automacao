@@ -25,6 +25,7 @@ x-app: &app
     SUPERVISOR_URL: http://supervisor:8099
   volumes:
     - storage:/app/storage
+    - ./backups:/backups:ro # Sistema (Lote 4): data do último backup
 
 services:
   db:

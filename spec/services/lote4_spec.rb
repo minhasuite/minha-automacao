@@ -330,6 +330,42 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
     end
   end
 
+  describe "pontos de sistema (G19)" do
+    it "disco, backup, integrações com erro, automações e pontos sem sinal viram pontos e acompanham a mudança" do
+      Dir.mktmpdir do |dir|
+        File.write(File.join(dir, "minha_automacao-2026-10-29.sql.gz"), "x")
+        stamp = ->(name, at) { File.utime(Time.zone.parse(at).to_time, Time.zone.parse(at).to_time, File.join(dir, name)) }
+        stamp.call("minha_automacao-2026-10-29.sql.gz", "2026-10-29 03:00")
+        File.write(File.join(dir, "parcial.sql.gz.tmp"), "x")
+        stub_const("ENV", ENV.to_h.merge("BACKUP_DIR" => dir))
+        site.integrations.create!(driver: "calendar", name: "Agenda", status: "error")
+        create(:point, site: site, device: create(:device, site: site), name: "Sem sinal", quality: "unavailable")
+        failed = build({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "stop", "reason" => "x", "error" => true } ] }, enabled: true)
+        failed.fire!({ "type" => "manual" })
+
+        outcome = Integrations::SystemPlugin.setup(site, {})
+        expect(outcome.notice).to start_with("Sistema adicionado")
+        integration = site.integrations.find_by!(driver: "system")
+        values = Integrations::SystemPlugin.device_for(integration).points.to_h { |p| [ p.address["field"], p.value ] }
+        expect(values).to include("integrations_error" => 1, "integrations_error_names" => "Agenda", "automations_on" => 1, "runs_24h" => 1,
+                                  "failed_24h" => 1, "running" => 0, "points_unavailable" => 1, "backup_late" => true)
+        expect(values["backup_at"]).to start_with("2026-10-29T03:00")
+        expect(values["disk_used"]).to be_between(0, 100)
+        expect(values["disk_free"]).to be >= 0
+
+        File.write(File.join(dir, "minha_automacao-2026-10-30.sql.gz"), "x")
+        stamp.call("minha_automacao-2026-10-30.sql.gz", "2026-10-30 03:00")
+        Integrations::SystemPlugin.setup(site, {})
+        expect(site.integrations.where(driver: "system").count).to eq(1)
+        late = Integrations::SystemPlugin.device_for(integration).points.find_by!("address->>'field' = 'backup_late'")
+        expect(late.value).to be(false)
+      end
+      expect(Integrations::SystemPlugin.last_backup("/nao/existe")).to be_nil
+      allow(Open3).to receive(:capture2).and_raise(Errno::ENOENT)
+      expect(Integrations::SystemPlugin.disk).to be_nil
+    end
+  end
+
   describe "plugins falsos (aberto/fechado)" do
     it "um provedor de clima novo entra pelo registro e alimenta pontos, ação e widget sem mexer no núcleo" do
       fake = Class.new(Weather::Providers::Base) do
