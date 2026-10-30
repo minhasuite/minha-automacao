@@ -1,4 +1,4 @@
-<%= render "web/shared/header", title: @dataset.name, subtitle: "#{@site.name} · #{@dataset.free? ? 'campos livres' : @dataset.fields_text.tr("\n", ', ')}#{" · guarda #{@dataset.retention_days} dias" if @dataset.retention_days}", back: site_datasets_path(@site) do %>
+<%= render "web/shared/header", title: @dataset.name, subtitle: "#{@site.name} · #{@dataset.free? ? 'campos livres' : @dataset.fields_text.gsub("\n", ", ")}#{" · guarda #{@dataset.retention_days} dias" if @dataset.retention_days}", back: site_datasets_path(@site) do %>
   <%= link_to dataset_path(@dataset, format: :csv, filtros: @filters.presence, dias: (@days if @days.positive?)), class: "ss-btn ss-btn-ghost", data: { turbo: false } do %><%= icon("download", "size-4") %>Exportar CSV<% end %>
   <% if can?(:manage) %><%= link_to edit_dataset_path(@dataset), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar<% end %><% end %>
 <% end %>

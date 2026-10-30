@@ -22,7 +22,7 @@
     <%= form_with url: settings_ai_path, method: :patch, scope: :ai, class: "mt-4 grid gap-3 sm:grid-cols-3 items-end" do |f| %>
       <div><%= f.label :default_provider, "Provedor padrão", class: "ss-label" %>
         <%= f.select :default_provider, Ai.providers.map { |p| [ p.label, p.key ] }, { selected: b.default_provider, include_blank: "O primeiro configurado" }, class: "ss-input" %></div>
-      <div><%= f.label :limit_usd, "Limite de gasto por mês (US$)", class: "ss-label" %><%= f.text_field :limit_usd, value: b.limit_usd, class: "ss-input num", inputmode: "decimal", placeholder: "Sem limite" %></div>
+      <div><%= f.label :limit_usd, "Limite de gasto por mês (US$)", class: "ss-label" %><%= f.text_field :limit_usd, value: b.limit_usd&.then { |v| v % 1 == 0 ? v.to_i : v }, class: "ss-input num", inputmode: "decimal", placeholder: "Sem limite" %></div>
       <div><%= f.label :limit_calls, "Limite de chamadas por mês", class: "ss-label" %><%= f.number_field :limit_calls, value: b.limit_calls, min: 1, class: "ss-input num", placeholder: "Sem limite" %></div>
       <div class="sm:col-span-3"><%= f.submit "Salvar padrão e limite", class: "ss-btn ss-btn-primary", name: nil %></div>
     <% end %>
