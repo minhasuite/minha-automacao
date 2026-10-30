@@ -18,7 +18,7 @@
 <% if @apps.empty? %>
   <div class="ss-card ss-empty"><p>Nenhum aplicativo com "<%= params[:q] %>".</p></div>
 <% else %>
-  <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Catálogo de aplicativos">
+  <ul class="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3" aria-label="Catálogo de aplicativos">
     <% @apps.each do |app| %>
       <li>
         <%= link_to app_path(app.key), class: "ss-card ss-card-link p-4 no-underline flex items-start gap-3 h-full" do %>
