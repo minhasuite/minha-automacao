@@ -248,12 +248,22 @@ module Automations
     # (depois de cada volta).
     def repeat_done(node, n)
       return [ n > node["count"], nil ] if node["count"]
+      return for_each_done(node, n) if node["for_each"]
 
       if node["while"]
         ok, checks = @conditions.check(node["while"])
         return [ !ok, checks ]
       end
       n > 1 ? @conditions.check(node["until"]) : [ false, nil ]
+    end
+
+    # "Para cada" (Lote 5): a lista é lida na primeira volta e guardada no
+    # contador da repetição; cada volta põe o item em `repeat_item`.
+    def for_each_done(node, n)
+      @ctx.vars["repeat_items"] = ActionTypes::RepeatAction.items(@ctx, node) if n == 1
+      list = Array(@ctx.vars["repeat_items"])
+      @ctx.vars["repeat_item"] = list[n - 1]
+      [ n > list.size, nil ]
     end
 
     def act(path, node)

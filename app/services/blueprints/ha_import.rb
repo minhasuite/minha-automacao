@@ -575,8 +575,18 @@ module Blueprints
       return [ body.merge("count" => r["count"]) ] if r["count"].is_a?(Integer)
       return [ body.merge("while" => conditions(r["while"])) ] if r.key?("while")
       return [ body.merge("until" => conditions(r["until"])) ] if r.key?("until")
+      items = for_each(r["for_each"])
+      return [ body.merge("for_each" => items) ] if items
 
       note("repetição #{(r.keys - %w[sequence]).first || '?'} (for_each)") && []
+    end
+
+    # Lote 5 (G22): lista de valores simples ou "{{ variavel }}".
+    def for_each(v)
+      return v.map(&:to_s).join(", ") if v.is_a?(Array) && v.all? { |x| x.is_a?(String) || x.is_a?(Numeric) } && v.none? { |x| x.to_s.include?(",") }
+
+      expr = @jinja.expr(v) if v.is_a?(String)
+      expr if expr&.match?(/\A[a-z_][a-z0-9_.]*\z/)
     end
 
     # Lote 5: o texto Jinja vira expressão (número, lógica) ou Liquid (texto).

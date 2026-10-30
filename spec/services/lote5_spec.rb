@@ -305,5 +305,202 @@ RSpec.describe "Lote 5: importador do HA, Jinja e gatilhos novos" do
       expect(values).to eq("ds" => ds.id)
       expect(definition["actions"][0]["dataset"]).to eq(ds.id)
     end
+
+    it "provedor de voz novo (STT/TTS) por Ai::PROVIDERS: gerar fala e transcrever numa automação, sem entrar no texto" do
+      fake = Class.new(Ai::Providers::Base) do
+        describe key: "voz_falsa", label: "Voz falsa", default_model: "v1", capabilities: %i[stt tts], key_required: false,
+                 stt_model: "ouve-1", tts_model: "fala-1", tts_voice: "grave"
+        def speak(text:, model:, voice:, timeout:) = { media_type: "audio/mpeg", data: "MP3:#{voice}:#{text}" } # rubocop:disable Lint/UnusedMethodArgument
+        def transcribe(audio:, media_type:, model:, language:, timeout:) = "ouvi #{audio} (#{media_type}, #{model}, #{language})" # rubocop:disable Lint/UnusedMethodArgument
+      end
+      stub_const("Ai::Providers::VozFalsa", fake)
+      stub_const("Ai::PROVIDERS", Ai::PROVIDERS + %w[VozFalsa])
+      AiAccount.create!(provider: "voz_falsa")
+      expect(Ai.choices(:stt)).to include("voz_falsa" => "Voz falsa")
+      expect(Ai.choices(:text)).not_to include("voz_falsa")
+      expect(AiAccount.pick).to be_nil # não serve para texto
+
+      a = build({ "triggers" => [ { "type" => "manual" } ],
+                  "actions" => [ { "type" => "tts", "text" => "Olá {{ site.name }}", "response_variable" => "fala" },
+                                 { "type" => "stt", "audio" => "{{ fala.url }}", "language" => "pt", "provider" => "voz_falsa", "response_variable" => "ouvido" },
+                                 { "type" => "notify", "channels" => [ "in_app" ], "title" => "{{ ouvido.text }}", "message" => "{{ fala.bytes }} {{ fala.content_type }}" } ] })
+      run = a.fire!({ "type" => "manual" })
+      expect(run.reload.status).to eq("done")
+      expect(Notification.last.title).to eq("ouvi MP3:grave:Olá Local (audio/mpeg, ouve-1, pt)")
+      expect(Notification.last.body).to eq("20 audio/mpeg")
+      expect(AiCall.order(:created_at).pluck(:provider, :model, :status)).to eq([ %w[voz_falsa fala-1 ok], %w[voz_falsa ouve-1 ok] ])
+      expect(ActiveStorage::Blob.last.filename.to_s).to end_with(".mp3")
+    end
+  end
+
+  describe "repetir para cada (G22)" do
+    it "lista de variável ou itens por vírgula, com o item no texto; o importador traz o for_each" do
+      build({ "triggers" => [ { "type" => "manual" } ],
+              "actions" => [ { "type" => "repeat", "for_each" => "sala, cozinha", "actions" => [
+                { "type" => "notify", "channels" => [ "in_app" ], "title" => "{{ repeat.index }}: {{ repeat.item }}" }
+              ] }, { "type" => "dataset_query", "dataset" => site.datasets.create!(name: "L", key: "l").id, "op" => "rows", "response_variable" => "dados" },
+                     { "type" => "repeat", "for_each" => "dados.rows", "actions" => [ { "type" => "notify", "channels" => [ "in_app" ], "title" => "linha {{ repeat.index }}" } ] } ] })
+        .fire!({ "type" => "manual" })
+      expect(Notification.order(:created_at).pluck(:title)).to eq([ "1: sala", "2: cozinha" ])
+      expect(Automations::ActionTypes::RepeatAction.rules("for_each" => "a", "count" => 2)).to include(a_string_including("só um"))
+      ctx = Automations::Context.new(site: site, vars: { "r" => { "l" => [ 1, 2 ] } })
+      expect(Automations::ActionTypes::RepeatAction.items(ctx, "for_each" => "r.l")).to eq([ 1, 2 ])
+
+      bp = Blueprints::HaImport.import("alias: X
+triggers: [ { trigger: state, entity_id: switch.a } ]
+actions:
+  - repeat: { for_each: \"{{ celulares }}\", sequence: [ { delay: 1 } ] }
+  - repeat: { for_each: [ { a: 1 } ], sequence: [] }
+").sole
+      expect(bp["definition"]["actions"][0]).to include("for_each" => "celulares")
+      expect(bp["unsupported"]).to eq([ "repetição for_each (for_each)" ])
+    end
+  end
+
+  describe "sensor calculado com estado anterior e atributos (G9)" do
+    def helper(form)
+      h = HelperTypes.build(site, HelperTypes.plugin("template"))
+      ok = HelperTypes.save(h, { "name" => "Calc #{SecureRandom.hex(2)}" }.merge(form))
+      [ ok, h ]
+    end
+
+    it "acumulador pelo relógio (previous + a cada), sem refazer quando a origem muda" do
+      kwh = point("Consumo", capability: "measure", key: "casa.kwh", value: 2)
+      ok, acc = helper("kind" => "number", "expr" => "previous + casa.kwh * 0.5", "every" => "5m")
+      expect(ok).to be(true)
+      expect(acc.address).to include("every" => 300, "sources" => [])
+      expect(acc.reload.value).to eq(1)
+      kwh.report!(4)
+      expect(acc.reload.value).to eq(1) # a origem mudou, mas só o relógio refaz
+      tz = ActiveSupport::TimeZone[site.timezone]
+      HelperTypes.tick(tz.parse("2026-10-30 12:03"))
+      expect(acc.reload.value).to eq(1)
+      HelperTypes.tick(tz.parse("2026-10-30 12:05"))
+      expect(acc.reload.value).to eq(3)
+      expect(HelperTypes::Template.summary(acc)).to include("a cada 5 min")
+      expect(helper("kind" => "number", "expr" => "1", "every" => "90s").first).to be(false)
+      expect(helper("kind" => "number", "expr" => "1", "every" => "xyz").first).to be(false)
+    end
+
+    it "data e hora (timestamp) por conta ou texto e atributos lidos no texto, na expressão e no widget" do
+      luz = point("Luz", key: "sala.luz", value: true)
+      _ok, ts = helper("kind" => "timestamp", "expr" => "1793440800")
+      expect(ts.reload.value).to eq(Time.zone.at(1_793_440_800).in_time_zone(site.timezone).strftime("%Y-%m-%dT%H:%M"))
+      expect(ts.capability).to eq("datetime")
+      _ok, ts2 = helper("kind" => "timestamp", "expr" => "{{ now | date: \"%Y-%m-%d\" }} 08:00")
+      expect(ts2.reload.value).to eq("2026-10-30T08:00")
+
+      ok, frase = helper("kind" => "text", "expr" => "{{ points[\"sala.luz\"].text }}",
+                         "attrs" => "frase: Luz {{ points[\"sala.luz\"].text | downcase }}\nquantas: {{ \"count_points('state=on')\" | calc }}")
+      expect(ok).to be(true)
+      expect(frase.address["sources"]).to include(luz.id)
+      expect(frase.reload.attrs).to eq("frase" => "Luz ligado", "quantas" => "1")
+      luz.report!(false)
+      expect(frase.reload.attrs["frase"]).to eq("Luz desligado")
+
+      ctx = Automations::Context.new(site: site)
+      expect(ctx.render("{{ points[\"#{frase.key}\"].attrs.frase }}")).to eq("Luz desligado")
+      expect(ctx.calc("#{frase.key}.attrs.quantas = '0'")).to be(true)
+      expect { ctx.calc("#{frase.key}.attrs.nada = 1") }.to raise_error(Automations::Context::Error, /não tem o atributo nada/)
+      expect { ctx.calc("sumiu.ponto.attrs.x = 1") }.to raise_error(Automations::Context::Error, /não é ponto/)
+
+      dashboard = Dashboard.create!(site: site, name: "P", kind: "home", definition: { "schema_version" => 1, "views" => [ { "id" => "v", "title" => "V", "sections" => [] } ] })
+      defn = { "schema_version" => 1, "views" => [ { "id" => "v", "title" => "V", "sections" => [ { "id" => "s", "widgets" => [
+        { "id" => "a", "type" => "stat", "bind" => frase.key, "attribute" => "frase" }, { "id" => "b", "type" => "stat", "bind" => frase.key, "attribute" => "outro" }
+      ] } ] } ] }
+      expect(Dashboards::Schema.errors(defn)).to eq([])
+      ws = Dashboards::Resolver.new(dashboard, role: "owner", definition: defn).call["views"][0]["sections"][0]["widgets"]
+      expect(ws.map { |w| w["data"]["text"] }).to eq([ "Luz desligado", "—" ])
+
+      expect(helper("kind" => "text", "expr" => "x", "attrs" => "Nome Ruim: x").first).to be(false)
+      expect(helper("kind" => "text", "expr" => "x", "attrs" => "a: {{ x").first).to be(false)
+    end
+
+    it "duração no valor anterior vai no gatilho (ficou ligado por)" do
+      bomba = point("Bomba")
+      bomba.report!(true)
+      travel 95.minutes
+      build({ "triggers" => [ { "type" => "state", "point" => bomba.id, "to" => false } ],
+              "actions" => [ { "type" => "notify", "channels" => [ "in_app" ], "title" => "Ligada {{ trigger.duration | divided_by: 60 }} min",
+                               "message" => "{{ \"trigger.duration > 3600\" | calc }}" } ] })
+      bomba.report!(false)
+      expect(Notification.last.title).to eq("Ligada 95 min")
+      expect(Notification.last.body).to eq("true")
+    end
+  end
+
+  describe "voz (G14) pelos provedores de verdade, só com WebMock" do
+    let(:audio) { "ID3fake-audio".b }
+
+    it "OpenAI: transcrição em multipart e fala em MP3" do
+      allow(SafeHttp).to receive(:lookup).and_return([ "93.184.216.34" ])
+      AiAccount.create!(provider: "openai", api_key: "sk-o")
+      stub_request(:post, "https://api.openai.com/v1/audio/transcriptions").to_return(body: { text: " Liga a luz " }.to_json)
+      stub_request(:post, "https://api.openai.com/v1/audio/speech").to_return(body: "MP3DATA")
+      res = Ai::Audio.transcribe(tenant: tenant, audio: audio, media_type: "audio/mpeg")
+      expect(res.data).to eq("Liga a luz")
+      expect(res.model).to eq("gpt-4o-mini-transcribe")
+      expect(a_request(:post, "https://api.openai.com/v1/audio/transcriptions").with { |r|
+        r.headers["Authorization"] == "Bearer sk-o" && r.body.include?("name=\"model\"\r\n\r\ngpt-4o-mini-transcribe") && r.body.include?("filename=\"audio.mp3\"") &&
+          r.body.include?("ID3fake-audio")
+      }).to have_been_made
+      fala = Ai::Audio.speak(tenant: tenant, text: "Oi", voice: "nova")
+      expect(fala.data).to eq(media_type: "audio/mpeg", data: "MP3DATA")
+      expect(a_request(:post, "https://api.openai.com/v1/audio/speech").with(body: { model: "gpt-4o-mini-tts", input: "Oi", voice: "nova", response_format: "mp3" }.to_json)).to have_been_made
+
+      stub_request(:post, "https://api.openai.com/v1/audio/transcriptions").to_return(status: 401, body: "nope")
+      expect { Ai::Audio.transcribe(tenant: tenant, audio: audio, media_type: "audio/mpeg") }.to raise_error(Ai::Client::Error, /recusada/)
+      expect(AiCall.order(:created_at).last).to have_attributes(status: "error", provider: "openai")
+    end
+
+    it "voz local (Whisper/Piper) pelo endereço liberado na rede da casa" do
+      tenant.update!(http_allow_text: "192.168.68.60")
+      AiAccount.create!(provider: "local_audio", base_url: "http://192.168.68.60:8000/v1", model: "Systran/faster-whisper-small")
+      stub_request(:post, "http://192.168.68.60:8000/v1/audio/transcriptions").to_return(body: { text: "oi casa" }.to_json)
+      stub_request(:post, "http://192.168.68.60:8000/v1/audio/speech").to_return(body: "WAVE")
+      res = Ai::Audio.transcribe(tenant: tenant, audio: audio, media_type: "audio/webm", provider: "local_audio")
+      expect([ res.data, res.model ]).to eq([ "oi casa", "Systran/faster-whisper-small" ])
+      expect(Ai::Audio.speak(tenant: tenant, text: "x").model).to eq("tts-1")
+      expect(Ai.provider("local_audio").supports?(:text)).to be false
+
+      tenant.update!(http_allow_text: "")
+      expect { Ai::Audio.speak(tenant: tenant, text: "x") }.to raise_error(Ai::Client::Error, /Voz/)
+      expect { Ai::Audio.transcribe(tenant: tenant, audio: "x" * (Ai::Audio::MAX_BYTES + 1), media_type: "audio/webm") }.to raise_error(Ai::Client::Error, /grande/)
+    end
+
+    it "Gemini: transcrição pelo generateContent e fala em PCM virando WAV" do
+      AiAccount.create!(provider: "gemini", api_key: "g")
+      base = "https://generativelanguage.googleapis.com/v1beta/models"
+      stub_request(:post, "#{base}/gemini-2.5-flash:generateContent")
+        .to_return(headers: { "Content-Type" => "application/json" }, body: { candidates: [ { content: { parts: [ { text: "bom dia " } ] } } ] }.to_json)
+      pcm = "\x01\x00\x02\x00".b
+      stub_request(:post, "#{base}/gemini-2.5-flash-preview-tts:generateContent")
+        .to_return(headers: { "Content-Type" => "application/json" },
+                   body: { candidates: [ { content: { parts: [ { inlineData: { mimeType: "audio/L16;codec=pcm;rate=16000", data: Base64.strict_encode64(pcm) } } ] } } ] }.to_json)
+      expect(Ai::Audio.transcribe(tenant: tenant, audio: audio, media_type: "audio/ogg").data).to eq("bom dia")
+      wav = Ai::Audio.speak(tenant: tenant, text: "oi").data
+      expect(wav[:media_type]).to eq("audio/wav")
+      expect(wav[:data]).to start_with("RIFF".b)
+      expect(wav[:data].byteslice(24, 4).unpack1("V")).to eq(16_000)
+      expect(wav[:data]).to end_with(pcm)
+    end
+
+    it "sem provedor de voz, a ação falha com mensagem clara e o áudio vem de anexo ou https" do
+      expect { Ai::Audio.speak(tenant: tenant, text: "x") }.to raise_error(Ai::Client::Error, /Nenhum provedor de texto para fala/)
+      blob, url = Ai::Audio.store("abc", "audio/ogg", "teste")
+      expect(url).to include("/rails/active_storage/blobs/").and end_with(".ogg")
+      expect(Ai::Audio.fetch(url)).to eq([ "abc", "audio/ogg" ])
+      expect(blob).to be_persisted
+      allow(SafeHttp).to receive(:lookup).and_return([ "93.184.216.34" ])
+      stub_request(:get, "https://exemplo.com/a.mp3").to_return(body: "mp3", headers: { "Content-Type" => "audio/mpeg; x=1" })
+      expect(Ai::Audio.fetch("https://exemplo.com/a.mp3")).to eq([ "mp3", "audio/mpeg" ])
+      stub_request(:get, "https://exemplo.com/b.mp3").to_return(status: 404)
+      expect { Ai::Audio.fetch("https://exemplo.com/b.mp3") }.to raise_error(ArgumentError, /404/)
+
+      a = build({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "stt", "audio" => "https://exemplo.com/b.mp3" } ] })
+      run = a.fire!({ "type" => "manual" })
+      expect(run.reload.status).to eq("failed")
+      expect(run.error).to include("Voz:")
+    end
   end
 end

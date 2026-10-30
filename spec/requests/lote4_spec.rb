@@ -102,7 +102,7 @@ RSpec.describe "Lote 4: telas de clima e painel" do
         action: [ { service: shell_command.x } ]
       - alias: Template
         trigger: [ { platform: time, at: "08:00" } ]
-        condition: [ { condition: template, value_template: "{{ 1 }}" } ]
+        condition: [ { condition: template, value_template: "{{ state_attr('sun.sun', 'elevation') > 0 }}" } ]
         action: [ { service: light.turn_off, entity_id: light.sala } ]
     YAML
     post "/locais/#{site.id}/blueprints", params: { yaml: yaml }

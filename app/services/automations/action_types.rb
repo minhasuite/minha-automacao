@@ -10,7 +10,7 @@ module Automations
   module ActionTypes
     extend Block::Registry
 
-    PLUGINS = %w[CommandAction SceneAction ScriptAction NotifyAction SpeakAction WaitNotificationAction FireEventAction WaitEventAction HttpAction CalendarEventsAction WeatherForecastAction AiTaskAction AiDataAction DatasetRecordAction DatasetQueryAction
+    PLUGINS = %w[CommandAction SceneAction ScriptAction NotifyAction SpeakAction WaitNotificationAction FireEventAction WaitEventAction HttpAction CalendarEventsAction WeatherForecastAction AiTaskAction AiDataAction SttAction TtsAction DatasetRecordAction DatasetQueryAction
                  WaitAction WaitForAction
                  IfAction ChooseAction RepeatAction SetAction ConditionAction StopAction].freeze
 
@@ -226,13 +226,25 @@ module Automations
     class RepeatAction < Base
       def self.control? = true
 
+      # Lote 5 (G22, `for_each` do HA): "para cada" item de uma lista, que é
+      # uma variável (resposta de ação: `dados.rows`) ou itens separados por
+      # vírgula; o item fica em `repeat_item` ({{ repeat.item }} no texto).
       describe key: "repeat", label: "Repetir", defaults: { "count" => 2 },
                fields: [ f("count", :number, "Vezes"), f("while", :conditions, "Enquanto"), f("until", :conditions, "Até que"),
-                         f("actions", :actions, "Fazer") ]
+                         f("for_each", :text, "Para cada (variável com lista ou itens separados por vírgula)"), f("actions", :actions, "Fazer") ]
+      MODES = %w[count while until for_each].freeze
+
+      # Itens do "para cada": a variável (lista) ou o texto dividido por vírgula.
+      def self.items(ctx, node)
+        ref = node["for_each"].to_s.strip
+        head, *path = ref.split(".")
+        list = ctx.vars.key?(head) && path.reduce(ctx.vars[head]) { |o, k| o.is_a?(Hash) ? o[k] : nil } if ref.match?(/\A[a-z_][a-z0-9_.]*\z/)
+        list.is_a?(Array) ? list : ref.split(",").map(&:strip).compact_blank
+      end
 
       def self.rules(node)
         msgs = []
-        msgs << "informe vezes, enquanto ou até que (só um)." if %w[count while until].count { |k| node[k].present? } != 1
+        msgs << "informe vezes, enquanto, até que ou para cada (só um)." if MODES.count { |k| node[k].present? } != 1
         msgs << "no máximo #{Dsl::MAX_REPEAT} vezes." if node["count"].is_a?(::Numeric) && !node["count"].between?(1, Dsl::MAX_REPEAT)
         msgs
       end

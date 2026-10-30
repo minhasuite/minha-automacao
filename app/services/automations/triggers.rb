@@ -126,9 +126,12 @@ module Automations
       plugin.due?(t, site, local)
     end
 
+    # `duration` (Lote 5, G9): segundos que o ponto ficou no valor anterior ("ficou ligado por").
     def info(t, point, was)
+      before = point.changed_at_before_last_save if point.saved_change_to_changed_at?
       { "type" => t["type"], "title" => "#{point.name}: #{ApplicationController.helpers.point_value_text(point)}#{" há #{Dsl.duration_label(Dsl.seconds(t['for']))}" if t['for']}",
-        "point_id" => point.id, "point" => point.name, "value" => point.value, "from" => was }.compact
+        "point_id" => point.id, "point" => point.name, "value" => point.value, "from" => was,
+        "duration" => ((point.changed_at - before).round if before && point.changed_at) }.compact
     end
 
     def clock_info(t, now)

@@ -176,7 +176,7 @@ module Web
     # Formulário do widget → JSON (só o que vale para o tipo; vazio some).
     def widget_attrs
       p = params.fetch(:widget, {}).permit(:type, :label, :bind, :title, :text, :aggregate, :range, :color, :tap, :area, :min, :max, :empty_text,
-                                           :period, :cycle_day, :tariff, :tariff_point, :goal, :compare, *Dashboards::Widgets.plugins.flat_map(&:params),
+                                           :period, :cycle_day, :tariff, :tariff_point, :goal, :compare, :attribute, *Dashboards::Widgets.plugins.flat_map(&:params),
                                            binds: [], scenes: [], roles: [], screens: [], query: %i[capability state tag area device_class quality integration unchanged_min exclude sort])
       type = p[:type].presence_in(Dashboards::Schema.types.keys) || "tile"
       attrs = { "type" => type, "label" => p[:label].presence, "span" => span_param }
@@ -192,6 +192,7 @@ module Web
         attrs["query"] = query.presence
         attrs["bind"] = p[:bind].presence if query.empty?
         attrs["aggregate"] = query.empty? && p[:aggregate] == "count" ? "last" : p[:aggregate].presence if type == "stat"
+        attrs["attribute"] = p[:attribute].presence if type == "stat" && query.empty? # Lote 5 (G9): atributo do ponto
         attrs["empty_text"] = p[:empty_text].presence if type == "query_list"
       when "energy"
         attrs.merge!("binds" => Array(p[:binds]).compact_blank.first(8), "period" => p[:period].presence_in(Dashboards::Energy::PERIODS.keys) || "month",

@@ -704,7 +704,8 @@ CREATE TABLE public.points (
     updated_at timestamp(6) without time zone NOT NULL,
     helper character varying,
     alexa_exposed boolean DEFAULT false NOT NULL,
-    alexa_name character varying
+    alexa_name character varying,
+    attrs jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 
@@ -4187,6 +4188,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261031190001'),
 ('20261031170001'),
 ('20261031160001'),
 ('20261031050002'),

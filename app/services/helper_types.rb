@@ -62,6 +62,21 @@ module HelperTypes
          .where("jsonb_exists_any(points.address->'sources', ARRAY[?]::text[])", ids + [ "*" ])
   end
 
+  # Relógio (Lote 5, G9): helper com "a cada" (`address.every`, segundos) se
+  # refaz no minuto em que cai, em vez de quando a origem muda.
+  def tick(now = Time.current)
+    ActsAsTenant.without_tenant do
+      Point.where.not(helper: nil).where("(points.address->>'every')::int > 0").includes(:site).find_each do |p|
+        local = now.in_time_zone(ActiveSupport::TimeZone[p.site.timezone])
+        next unless (((local.hour * 60) + local.min) % (p.address["every"].to_i / 60)).zero?
+
+        ActsAsTenant.with_tenant(p.tenant) { self.for(p)&.refresh!(p) }
+      rescue StandardError => e
+        Rails.error.report(e, handled: true)
+      end
+    end
+  end
+
   # No começo do worker: quem não restaura volta ao valor inicial.
   def boot!
     ActsAsTenant.without_tenant do

@@ -80,7 +80,7 @@ module Automations
     # Ponto como o Liquid vê (`points["k"]` e cada item do `points_where`).
     def point_drop(p)
       since = changed_at(p)
-      { "key" => p.key, "name" => p.name, "value" => value(p), "text" => point_text(p), "quality" => p.quality, "unit" => p.unit,
+      { "key" => p.key, "name" => p.name, "value" => value(p), "text" => point_text(p), "quality" => p.quality, "unit" => p.unit, "attrs" => p.attrs,
         "device" => p.device&.name, "changed_at" => since&.in_time_zone(@zone), "since_min" => since && ((now - since) / 60).floor }
     end
 
@@ -98,11 +98,20 @@ module Automations
                   "trigger_value" => trigger["value"], "timestamp" => now.to_i }
       return builtin[name] if builtin.key?(name)
 
+      return attr(name) if name.include?(".attrs.")
+
       p = point(name) or raise Error, "\"#{name}\" não é ponto deste local nem variável"
       v = value(p)
       raise Error, "#{p.name} está sem valor" if v.nil?
 
       v
+    end
+
+    # Atributo de ponto (Lote 5, G9): `sala.resumo.attrs.frase`.
+    def attr(name)
+      key, attr = name.split(".attrs.", 2)
+      p = point(key) or raise Error, "\"#{key}\" não é ponto deste local"
+      p.attrs.to_h.fetch(attr) { raise Error, "#{p.name} não tem o atributo #{attr}" }
     end
 
     def dig_var(value, path, name)
@@ -118,7 +127,7 @@ module Automations
     def assigns
       pts = site.points.includes(:device).to_a.to_h { |p| [ p.key, point_drop(p) ] }
       vars.merge("trigger" => trigger, "vars" => vars, "points" => pts, "site" => { "name" => site.name }, "now" => now,
-                 "repeat" => { "index" => vars["repeat_index"] })
+                 "repeat" => { "index" => vars["repeat_index"], "item" => vars["repeat_item"] })
     end
 
     # Filtro Liquid `calc`: a expressão (texto) calculada nesta execução.

@@ -198,6 +198,7 @@ module Blueprints
     def variable(p, liquid: false)
       return TRIGGER[p] if TRIGGER.key?(p)
       return liquid ? p : "repeat_index" if p == "repeat.index"
+      return liquid ? p : "repeat_item" if p == "repeat.item"
       return "trigger.data.#{::Regexp.last_match(1)}" if p.match(TRIGGER_DATA)
       fail! if p.start_with?("trigger.", "states.", "this.", "wait.") || p.in?(%w[trigger states this wait now none None])
 

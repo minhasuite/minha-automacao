@@ -97,7 +97,8 @@ module Dashboards
       end
       unit = agg == "count" ? nil : list.filter_map(&:unit).first
       deps += w["query"] ? query(w["query"], with_state: false) : []
-      [ { "value" => value, "unit" => unit, "text" => stat_text(value, unit, agg, list.first), "point_ids" => list.first(LIST_LIMIT).map(&:id) }, deps ]
+      text = w["attribute"].present? && agg == "last" ? list.first&.attrs.to_h[w["attribute"]].to_s.presence || "—" : stat_text(value, unit, agg, list.first)
+      [ { "value" => value, "unit" => unit, "text" => text, "point_ids" => list.first(LIST_LIMIT).map(&:id) }, deps ]
     end
 
     def stat_text(value, unit, agg, first)

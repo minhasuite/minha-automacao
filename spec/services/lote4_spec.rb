@@ -355,7 +355,7 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       YAML
       bp = Blueprints::HaImport.import(yaml).sole
       acts = bp["definition"]["actions"]
-      expect(acts.map { |a| a["type"] }).to eq(%w[set set if choose condition repeat repeat stop])
+      expect(acts.map { |a| a["type"] }).to eq(%w[set set if choose condition repeat repeat repeat stop])
       expect(acts[0]).to eq("type" => "set", "var" => "msg", "expr" => "[[switch_a]]")
       expect(acts[1]).to eq("type" => "set", "var" => "n", "expr" => "2")
       expect(acts[2]).to include("conditions" => [ { "type" => "state", "point" => { "!input" => "switch_a" }, "is" => true } ],
@@ -365,8 +365,9 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       expect(acts[4]["conditions"]).to eq([ { "type" => "numeric", "point" => { "!input" => "sensor_t" }, "above" => 20 } ])
       expect(acts[5]).to include("count" => 3)
       expect(acts[6]["until"].size).to eq(1)
-      expect(acts[7]).to eq("type" => "stop", "reason" => "erro", "error" => true)
-      expect(bp["unsupported"]).to eq([ "repetição for_each (for_each)" ])
+      expect(acts[7]).to eq("type" => "repeat", "actions" => [], "for_each" => "1, 2")
+      expect(acts[8]).to eq("type" => "stop", "reason" => "erro", "error" => true)
+      expect(bp["unsupported"]).to eq([])
     end
   end
 

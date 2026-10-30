@@ -41,6 +41,8 @@
     <%= select_tag "widget[query][sort]", options_for_select({ "Nome" => "name", "Menor valor" => "value", "Maior valor" => "-value", "Mudou há mais tempo" => "changed_at", "Mudou por último" => "-changed_at" }, q["sort"]), include_blank: "Nome", class: "ss-input", id: "qo-#{uid}" %></div>
   <div data-for="stat"><label class="ss-label" for="ag-<%= uid %>">Mostrar</label>
     <%= select_tag "widget[aggregate]", options_for_select({ "Quantos são" => "count", "Soma" => "sum", "Média" => "avg", "Mínimo" => "min", "Máximo" => "max", "Valor do ponto" => "last" }, w["aggregate"]), class: "ss-input", id: "ag-#{uid}" %></div>
+  <div data-for="stat"><label class="ss-label" for="at-<%= uid %>">Atributo <span class="font-normal">(opcional, no lugar do valor)</span></label>
+    <%= text_field_tag "widget[attribute]", w["attribute"], class: "ss-input num", id: "at-#{uid}", maxlength: 40, placeholder: "frase" %></div>
   <div data-for="query_list"><label class="ss-label" for="et-<%= uid %>">Texto quando vazio</label>
     <%= text_field_tag "widget[empty_text]", w["empty_text"], class: "ss-input", id: "et-#{uid}", placeholder: "Tudo desligado." %></div>
   <div data-for="chart"><label class="ss-label" for="rg-<%= uid %>">Período</label>
