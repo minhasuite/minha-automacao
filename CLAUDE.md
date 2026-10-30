@@ -34,7 +34,9 @@ widget `vacuum`) e `alexa` (anúncio/fala, canal `alexa:<ponto>` nos avisos). + 
 integrações de conta como plugins (`Integrations::Plugin`, catálogo, assistente,
 varredura e adoção; Tuya/Smart Life por QR, Xiaomi, Alexa, DVR Hikvision,
 MQTT/Zigbee2MQTT, importar do HA) e a lista de dispositivos do local
-(`docs/integracoes.md`).
+(`docs/integracoes.md`) + **F8d**: Configurações, pessoas, chaves e visões
+dos painéis + **F8e**: helpers como plugins (`HelperTypes`, aba "Helpers"
+do local; `docs/helpers.md`).
 
 ## Rodar
 
@@ -242,6 +244,22 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   external_id` (ou IP com `match: host`): nunca duplica, atualiza chave/IP,
   marca `removed_at`. A nuvem só descobre; o controle é sempre local. Tuya da
   nuvem não traz IP nem versão: IP na edição + Reconectar.
+- **Helpers (F8e)**: helper = ponto (`points.helper` = tipo, configuração em
+  `address`) do dispositivo virtual "Helpers" do local (`external_id:
+  "helpers"`, fora da lista de dispositivos). Cada tipo é um plugin em
+  `app/services/helper_types/`, registrado em `HelperTypes::PLUGINS`, com a
+  partial `web/site_helpers/forms/_<key>`; nada de `case` por tipo fora dele.
+  **Tipo novo** = classe (`describe`, `fields`, `assign` e o que mudar:
+  `initial_value`, `commands`, `new_value(cmd)`, `execute`, `actions`,
+  `value_text`, `sourced?`/`refresh!`) + linha em `PLUGINS` + partial + spec
+  (`docs/helpers.md`). `Points::Command` pergunta ao plugin
+  (`commands_for`, `new_value`), o driver virtual entrega o `execute`, e
+  `Automations.on_change` chama `HelperTypes.on_change` (refaz grupo, sensor
+  calculado e estatística pelas `address.sources`). Temporizador termina por
+  `HelperTimerJob` com carimbo (sobrevive a reinício). `restore: false`
+  volta ao inicial no início do worker (`HelperTypes.boot!`). Telas e
+  widgets desenham pela capacidade/comandos (`commands_for`/`actions_for`),
+  nunca pelo tipo de helper.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

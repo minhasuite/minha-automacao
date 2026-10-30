@@ -69,6 +69,24 @@ uma com o valor visto (`agora: Desligado`).
 Erro numa ação (comando recusado, expressão inválida) para a execução como
 "Falhou" e aparece na lista de automações.
 
+### Helpers (F8e)
+
+Helper é ponto (`docs/helpers.md`), então entra nos blocos de sempre:
+
+- gatilho `state` no helper: mudou de valor (botão: sem `from`/`to`, dispara
+  a cada aperto; temporizador terminou: `"to": "finished"`);
+- condição `state`/`numeric`/`expr`, como qualquer ponto;
+- ação `command` com os comandos do plugin: `set`/`select` (número, texto,
+  data e hora, lista), `increment`/`decrement`/`reset` (contador),
+  `start` (`value` opcional, ex. `"5m"`)/`pause`/`cancel`/`finish`
+  (temporizador), `on`/`off`/`toggle` (liga/desliga e grupo). O editor
+  mostra só os que o helper aceita, com os rótulos dele.
+
+```json
+{ "triggers": [ { "type": "state", "point": "helpers.rega", "to": "finished" } ],
+  "actions": [ { "type": "command", "point": "helpers.visitas", "command": "increment" } ] }
+```
+
 ## Expressões (dentaku) e textos (Liquid)
 
 Expressão: aritmética, comparação, `and`/`or`/`not`, `if(c, a, b)`, `round`,

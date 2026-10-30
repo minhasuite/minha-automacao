@@ -76,7 +76,7 @@ ou `key` do ponto.
 
 | Tipo | Props | Mostra |
 |---|---|---|
-| `tile` | `bind`, `features` (`toggle`/`select`/`slider`) | ponto: liga/desliga, valor, seleção, slider (dimmer/setpoint), botão (`command`/`gate`) |
+| `tile` | `bind`, `features` (`toggle`/`select`/`slider`) | ponto: liga/desliga, valor, seleção, slider (dimmer/setpoint; `mode: box` = caixa de número), campo de texto/data/hora (comando `set`, tipo pelo `input` do ponto), botão (`command`/`gate`) e botões de ação (`actions`: contador, temporizador). Serve a todos os helpers (F8e) |
 | `group` | `binds` (até 8) | lista de pontos com interruptor |
 | `stat` | `bind` ou `query`, `aggregate` (`count`/`sum`/`avg`/`min`/`max`/`last`) | contador ("3 ligados") ou número; também é o tipo dos `badges` |
 | `gauge` | `bind`, `min`, `max` (padrão: do ponto, senão 0–100) | medidor em arco |
@@ -97,6 +97,11 @@ ou `key` do ponto.
 Ficam para depois (driver ainda não existe ou v1.1): `vacuum`,
 `energy`, `timeline`, `health`, `calendar`, `select`/`slider`/`button`/`gate`
 como tipos próprios (hoje cobertos pelo `tile`) e os da indústria.
+
+Cada ponto do `points` resolvido leva também `icon`, `helper`, `commands`
+(os que aceita, do plugin se for helper), `actions` (comandos sem valor para
+botões), `mode` e `input` (`number`, `text`, `password`, `date`, `time`,
+`datetime-local`).
 
 ## Resolvido (`GET /api/v1/dashboards/:id`)
 
