@@ -3,14 +3,7 @@
 <% back = request.fullpath %>
 <% q = { back: back, point_id: point&.id }.compact %>
 <div class="grid gap-4 lg:grid-cols-2">
-  <% unless point %>
-    <%= render layout: "web/automation/section", locals: { title: "Cenas", items: lists[:scenes], new_path: new_site_scene_path(site, q), empty: "Nenhuma cena. Cena é um conjunto de comandos com nome, como \"Chegada\" ou \"Cinema\"." } do %>
-      <% lists[:scenes].each do |s| %>
-        <% activate = can?(:command, risk: s.risk) ? button_to(activate_scene_path(s), params: { back: back }, class: "ss-btn ss-btn-primary ss-btn-sm", form: { class: "contents", data: (s.risk == "normal" ? {} : { turbo_confirm: "Acionar a cena #{s.name}?" }) }) { safe_join([ icon("lightning-bolt", "size-4"), "Acionar" ]) } : nil %>
-        <%= render "web/automation/item", title: s.name, detail: count_label(s.items.size, "comando", "comandos"), record: s, back: back, extra: activate %>
-      <% end %>
-    <% end %>
-  <% end %>
+
   <%= render layout: "web/automation/section", locals: { title: "Agendas", items: lists[:schedules], new_path: new_site_schedule_path(site, q), empty: "Nenhuma agenda. Ex.: ligar às 17h, desligar às 23h, acender no pôr do sol." } do %>
     <% lists[:schedules].each do |s| %>
       <%= render "web/automation/item", title: s.name, detail: schedule_detail(s), record: s, back: back, enabled: s.enabled %>

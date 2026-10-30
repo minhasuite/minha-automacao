@@ -6,11 +6,22 @@
   <% off_line = p["quality"] != "good" %>
   <% css = "dw-card dw-tile #{dw_color_class(w)} #{'dw-on' if p['on'] && p['capability'] != 'measure'} #{'dw-unavailable' if off_line}" %>
   <% state = off_line ? "Indisponível" : (p["value"].nil? && p["capability"] != "command" ? "Aguardando leitura" : p["text"]) %>
-  <% toggle = w["tap"] != "more_info" && p["can_command"] && p["capability"] == "onoff" %>
-  <% press = p["can_command"] && p["capability"].in?(%w[command gate]) %>
+  <% toggle = w["tap"] != "more_info" && p["can_command"] && Array(p["commands"]).include?("toggle") %>
+  <% press = p["can_command"] && p["capability"].in?(%w[command gate script]) %>
+  <% press_cmd = { "gate" => "pulse", "script" => "run" }.fetch(p["capability"], "press") %>
   <div class="relative h-full">
-    <% if toggle || press %>
-      <%= dw_command_button(p, toggle ? "toggle" : (p["capability"] == "gate" ? "pulse" : "press"), w: w, dashboard: dashboard, live: live, class: "#{css} dw-press", form_class: "h-full", "aria-pressed": (p["on"] if toggle), "aria-label": "#{toggle ? (p['on'] ? 'Desligar' : 'Ligar') : 'Acionar'} #{dw_label(w, p)}") do %>
+    <% if toggle %>
+      <%# Liga/desliga (ponto comum ou helper, F8f): o switch fica no próprio tile, como na lista de helpers; o nome abre os detalhes. %>
+      <div class="<%= css %> items-center">
+        <span class="dw-ico"><%= icon(w["icon"].presence || dw_point_icon(p)) %></span>
+        <%= link_to point_path(p["id"]), class: "min-w-0 flex-1 no-underline", data: { turbo_frame: "_top" } do %>
+          <span class="dw-name"><%= dw_label(w, p) %></span><span class="dw-state"><%= state %></span>
+        <% end %>
+        <%= dw_command_button(p, "toggle", w: w, dashboard: dashboard, live: live, class: "ss-switch", form_class: "contents", "aria-pressed": p["on"].to_s,
+                              "aria-label": "#{p['on'] ? 'Desligar' : 'Ligar'} #{dw_label(w, p)}", title: (p["on"] ? "Desligar" : "Ligar")) do %><% end %>
+      </div>
+    <% elsif press %>
+      <%= dw_command_button(p, press_cmd, w: w, dashboard: dashboard, live: live, class: "#{css} dw-press", form_class: "h-full", "aria-label": "#{p['capability'] == 'script' ? 'Executar' : 'Acionar'} #{dw_label(w, p)}") do %>
         <span class="dw-ico"><%= icon(w["icon"].presence || dw_point_icon(p)) %></span>
         <span class="min-w-0 flex-1 pr-6"><span class="dw-name"><%= dw_label(w, p) %></span><span class="dw-state"><%= state %></span></span>
       <% end %>

@@ -14,11 +14,14 @@ module Web
       @loose_devices = @site.devices.where(area_id: nil).order(:name)
     end
 
-    # Tudo o que é automático no local: cenas, agendas, espelhamentos, avisos e alertas.
-    def automation
+    # Regras simples da F4 (agendas, espelhamentos, avisos e alertas), aba da
+    # seção "Automações e cenas" (F8f). A rota antiga redireciona.
+    def rules
       set_site
       authorize_site!(@site, :view)
     end
+
+    def automation = redirect_to(rules_site_path(params[:id]), status: :moved_permanently)
 
     def new = @site = Site.new
 

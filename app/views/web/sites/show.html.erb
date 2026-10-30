@@ -4,7 +4,7 @@
     <%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("cube", "size-4") %>Novo dispositivo<% end %>
   <% end %>
   <%= link_to site_dashboards_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("view-boards", "size-4") %>Painéis<% end %>
-  <%= link_to automation_site_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("clock", "size-4") %>Automação<% end %>
+  <%= link_to site_automations_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("lightning-bolt", "size-4") %>Automações e cenas<% end %>
   <% if can?(:admin) %><%= link_to edit_site_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar<% end %><% end %>
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :areas %>
