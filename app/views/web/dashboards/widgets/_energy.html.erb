@@ -1,0 +1,45 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<% d = w["data"] %>
+<% kwh = ->(v) { "#{number_with_precision(v, precision: v.to_f < 10 ? 2 : 1, strip_insignificant_zeros: true, delimiter: '.', separator: ',')} kWh" } %>
+<% money = ->(v) { number_to_currency(v, unit: "R$ ", separator: ",", delimiter: ".") } %>
+<div class="dw-card">
+  <div class="dw-energy-head">
+    <div class="min-w-0">
+      <p class="dw-card-title"><%= w["label"].presence || "Consumo e custo" %></p>
+      <p class="text-xs text-muted"><%= d["period_label"] %></p>
+    </div>
+    <span class="dw-ico dw-ico-sm" style="color: var(--amber)"><%= icon("lightning-bolt") %></span>
+  </div>
+  <% if d["missing"] %>
+    <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %>Escolha um ponto de energia (kWh) ou de potência (W).</p>
+  <% else %>
+    <p class="dw-energy-big num mt-2"><%= d["cost"] ? money.(d["cost"]) : kwh.(d["kwh"]) %></p>
+    <p class="text-sm text-ink-2 num"><%= d["cost"] ? "#{kwh.(d['kwh'])} · #{money.(d['tariff'])}/kWh" : "Sem tarifa: só o consumo" %></p>
+    <div class="dw-energy-facts">
+      <% if d["projection_kwh"] %>
+        <div class="dw-energy-fact">Projeção <%= d["period"] == "today" ? "do dia" : "do período" %>
+          <strong class="num"><%= d["projection_cost"] ? money.(d["projection_cost"]) : kwh.(d["projection_kwh"]) %></strong></div>
+      <% end %>
+      <% if d.key?("previous_kwh") %>
+        <div class="dw-energy-fact">Período anterior, mesmo trecho
+          <strong class="num"><%= kwh.(d["previous_kwh"]) %>
+            <% if d["delta_pct"] %><span class="<%= d['delta_pct'].positive? ? 'dw-up' : 'dw-down' %> text-xs"><%= d["delta_pct"].positive? ? "+" : "" %><%= d["delta_pct"] %>%</span><% end %>
+          </strong></div>
+      <% end %>
+      <% if d["goal"] %>
+        <div class="dw-energy-fact">Meta <%= kwh.(d["goal"]) %>
+          <strong class="num"><%= (d["goal_ratio"] * 100).round %>% <span class="text-xs font-normal">da meta<%= " (projeção)" if d["projection_kwh"] %></span></strong>
+          <div class="dw-meter<%= ' dw-over' if d['goal_ratio'] > 1 %>" role="img" aria-label="<%= (d['goal_ratio'] * 100).round %>% da meta"><span style="width: <%= [ d['goal_ratio'] * 100, 100 ].min.round %>%"></span></div></div>
+      <% end %>
+    </div>
+    <% max = d["bars"].filter_map { |b| b["kwh"] }.max.to_f %>
+    <% last_filled = d["bars"].rindex { |b| b["kwh"] } %>
+    <div class="dw-bars" role="img" aria-label="Consumo por <%= d['period'] == 'today' ? 'hora' : 'dia' %>">
+      <% d["bars"].each_with_index do |b, i| %>
+        <% h = b["kwh"] && max.positive? ? [ (b["kwh"] / max * 100).round, 3 ].max : 3 %>
+        <span class="<%= 'dw-bar-empty' if b['kwh'].nil? %><%= ' dw-bar-now' if i == last_filled %>" style="height: <%= h %>%" title="<%= b['label'] %>: <%= b['kwh'] ? kwh.(b['kwh']) : 'ainda não' %>"></span>
+      <% end %>
+    </div>
+    <div class="flex justify-between text-xs text-muted num mt-1"><span><%= d["bars"].first&.dig("label") %></span><span><%= d["bars"].last&.dig("label") %></span></div>
+  <% end %>
+</div>

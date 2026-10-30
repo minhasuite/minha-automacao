@@ -176,6 +176,7 @@ module Web
     # Formulário do widget → JSON (só o que vale para o tipo; vazio some).
     def widget_attrs
       p = params.fetch(:widget, {}).permit(:type, :label, :bind, :title, :text, :aggregate, :range, :color, :tap, :area, :min, :max, :empty_text,
+                                           :period, :cycle_day, :tariff, :tariff_point, :goal, :compare,
                                            binds: [], scenes: [], roles: [], query: %i[capability state tag area device_class quality])
       type = p[:type].presence_in(Dashboards::Schema::WIDGETS.keys) || "tile"
       attrs = { "type" => type, "label" => p[:label].presence, "span" => span_param }
@@ -192,6 +193,11 @@ module Web
         attrs["bind"] = p[:bind].presence if query.empty?
         attrs["aggregate"] = query.empty? && p[:aggregate] == "count" ? "last" : p[:aggregate].presence if type == "stat"
         attrs["empty_text"] = p[:empty_text].presence if type == "query_list"
+      when "energy"
+        attrs.merge!("binds" => Array(p[:binds]).compact_blank.first(8), "period" => p[:period].presence_in(Dashboards::Energy::PERIODS.keys) || "month",
+                     "tariff_point" => p[:tariff_point].presence, "goal" => number(p[:goal]), "compare" => p[:compare] == "1" || nil)
+        attrs["cycle_day"] = p[:cycle_day].to_i.clamp(1, 28) if attrs["period"] == "cycle"
+        attrs["tariff"] = number(p[:tariff]) unless attrs["tariff_point"]
       when "area_card" then attrs["area"] = p[:area].presence
       when "scene_bar" then attrs["scenes"] = Array(p[:scenes]).compact_blank.presence
       when "heading" then attrs["title"] = p[:title].presence || p[:label].presence

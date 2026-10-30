@@ -12,7 +12,7 @@
 
   <div class="sm:col-span-2" data-for="tile gauge stat camera vacuum"><label class="ss-label" for="b-<%= uid %>">Ponto</label>
     <%= select_tag "widget[bind]", grouped_options_for_select(point_options, w["bind"]), include_blank: "Escolha um ponto", class: "ss-input", id: "b-#{uid}" %></div>
-  <div class="sm:col-span-2" data-for="group chart"><label class="ss-label" for="bs-<%= uid %>">Pontos <span class="font-normal">(até 8; Ctrl/toque para marcar vários)</span></label>
+  <div class="sm:col-span-2" data-for="group chart energy"><label class="ss-label" for="bs-<%= uid %>">Pontos <span class="font-normal">(até 8; Ctrl/toque para marcar vários; no consumo, kWh ou W somados)</span></label>
     <%= select_tag "widget[binds][]", grouped_options_for_select(point_options, w["binds"]), multiple: true, size: 6, class: "ss-input", id: "bs-#{uid}" %></div>
   <div class="sm:col-span-2" data-for="heading"><label class="ss-label" for="h-<%= uid %>">Título</label>
     <%= text_field_tag "widget[title]", w["title"], class: "ss-input", id: "h-#{uid}", maxlength: 80 %></div>
@@ -34,6 +34,17 @@
     <%= text_field_tag "widget[empty_text]", w["empty_text"], class: "ss-input", id: "et-#{uid}", placeholder: "Tudo desligado." %></div>
   <div data-for="chart"><label class="ss-label" for="rg-<%= uid %>">Período</label>
     <%= select_tag "widget[range]", options_for_select({ "24 horas" => "24h", "7 dias" => "7d", "30 dias" => "30d" }, w["range"]), class: "ss-input", id: "rg-#{uid}" %></div>
+  <div data-for="energy"><label class="ss-label" for="pe-<%= uid %>">Período</label>
+    <%= select_tag "widget[period]", options_for_select(Dashboards::Energy::PERIODS.invert, w["period"] || "month"), class: "ss-input", id: "pe-#{uid}" %></div>
+  <div data-for="energy"><label class="ss-label" for="cd-<%= uid %>">Dia de corte <span class="font-normal">(só no ciclo)</span></label>
+    <%= number_field_tag "widget[cycle_day]", w["cycle_day"], in: 1..28, class: "ss-input num", id: "cd-#{uid}", placeholder: "1 a 28" %></div>
+  <div data-for="energy"><label class="ss-label" for="tf-<%= uid %>">Tarifa fixa (R$/kWh)</label>
+    <%= text_field_tag "widget[tariff]", w["tariff"], class: "ss-input num", id: "tf-#{uid}", inputmode: "decimal", placeholder: "0,95" %></div>
+  <div data-for="energy"><label class="ss-label" for="tp2-<%= uid %>">Ou tarifa de um ponto <span class="font-normal">(helper Número)</span></label>
+    <%= select_tag "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), include_blank: "Usar a tarifa fixa", class: "ss-input", id: "tp2-#{uid}" %></div>
+  <div data-for="energy"><label class="ss-label" for="gl-<%= uid %>">Meta (kWh no período, opcional)</label>
+    <%= text_field_tag "widget[goal]", w["goal"], class: "ss-input num", id: "gl-#{uid}", inputmode: "decimal" %></div>
+  <div data-for="energy" class="flex items-end"><label class="ss-check"><%= hidden_field_tag "widget[compare]", "0", id: nil %><%= check_box_tag "widget[compare]", "1", w["compare"], id: "cp-#{uid}" %>Comparar com o período anterior</label></div>
   <div data-for="area_card"><label class="ss-label" for="ar-<%= uid %>">Área</label>
     <%= select_tag "widget[area]", options_from_collection_for_select(areas, :id, :name, w["area"]), class: "ss-input", id: "ar-#{uid}" %></div>
   <div class="sm:col-span-2" data-for="scene_bar"><label class="ss-label" for="sc-<%= uid %>">Cenas <span class="font-normal">(nenhuma marcada = todas)</span></label>

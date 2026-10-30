@@ -115,6 +115,21 @@
   .dw-scene:hover { border-color: var(--accent); color: var(--accent); }
   .dw-scene svg { color: var(--accent); }
 
+  /* Consumo e custo (F9): número grande, linha de projeção/meta e barras por dia/hora. */
+  .dw-energy-head { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+  .dw-energy-big { font-size: clamp(1.6rem, 4.5vw, 2.1rem); font-weight: 800; letter-spacing: -.02em; color: var(--ink); line-height: 1.1; }
+  .dw-energy-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: .5rem; margin-top: .85rem; }
+  .dw-energy-fact { padding: .5rem .65rem; border-radius: 12px; background: var(--field); font-size: .75rem; color: var(--muted); }
+  .dw-energy-fact strong { display: block; font-size: .95rem; color: var(--ink); }
+  .dw-meter { height: .5rem; margin-top: .4rem; border-radius: 999px; background: var(--field); overflow: hidden; }
+  .dw-meter span { display: block; height: 100%; border-radius: 999px; background: var(--green-grad); transition: width .6s ease; }
+  .dw-meter.dw-over span { background: var(--red-grad); }
+  .dw-bars { display: flex; align-items: flex-end; gap: 2px; height: 4.5rem; margin-top: .9rem; }
+  .dw-bars span { flex: 1 1 0; min-width: 0; border-radius: 4px 4px 1px 1px; background: color-mix(in srgb, var(--accent) 70%, transparent); }
+  .dw-bars span.dw-bar-now { background: var(--amber-grad); }
+  .dw-bars span.dw-bar-empty { background: var(--field); }
+  .dw-up { color: var(--danger); } .dw-down { color: var(--success, #059669); }
+
   /* Editor. */
   .dw-tool { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 9px; border: 1px solid var(--line); background: var(--surface);
              color: var(--muted); cursor: pointer; }
@@ -141,7 +156,8 @@
 .dw-wf:has(option[value="stat"]:checked) [data-for~="stat"], .dw-wf:has(option[value="gauge"]:checked) [data-for~="gauge"],
 .dw-wf:has(option[value="chart"]:checked) [data-for~="chart"], .dw-wf:has(option[value="query_list"]:checked) [data-for~="query_list"],
 .dw-wf:has(option[value="area_card"]:checked) [data-for~="area_card"], .dw-wf:has(option[value="scene_bar"]:checked) [data-for~="scene_bar"],
-.dw-wf:has(option[value="heading"]:checked) [data-for~="heading"], .dw-wf:has(option[value="markdown"]:checked) [data-for~="markdown"] { display: block; }
+.dw-wf:has(option[value="heading"]:checked) [data-for~="heading"], .dw-wf:has(option[value="markdown"]:checked) [data-for~="markdown"],
+.dw-wf:has(option[value="energy"]:checked) [data-for~="energy"] { display: block; }
 .dw-wf:has(option[value="gauge"]:checked) div.grid[data-for~="gauge"] { display: grid; }
 /* Robô aspirador (F8): estado, comandos, cômodos em pílulas, ajustes e peças. */
 @layer components {

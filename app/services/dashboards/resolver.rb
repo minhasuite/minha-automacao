@@ -60,6 +60,9 @@ module Dashboards
       case w["type"]
       when "tile", "group", "chart", "camera" then [ { "point_ids" => binds.map(&:id), "missing" => binds.size < [ w["bind"], *Array(w["binds"]) ].compact.size }, deps ]
       when "vacuum" then vacuum(binds.first, deps)
+      when "energy"
+        tariff = use(point(w["tariff_point"]))
+        [ Energy.new(w, binds, @site, tariff_point: tariff).call, [ *deps, tariff ].compact ]
       when "gauge" then gauge(w, binds.first, deps)
       when "stat" then stat(w, binds, deps)
       when "query_list"

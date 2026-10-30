@@ -13,12 +13,13 @@ module Dashboards
     WIDGETS = {
       "heading" => %w[title], "markdown" => %w[text], "tile" => %w[bind], "group" => %w[binds],
       "stat" => [], "gauge" => %w[bind], "chart" => %w[binds], "query_list" => %w[query],
-      "area_card" => %w[area], "scene_bar" => [], "alerts" => [], "camera" => %w[bind], "vacuum" => %w[bind]
+      "area_card" => %w[area], "scene_bar" => [], "alerts" => [], "camera" => %w[bind], "vacuum" => %w[bind],
+      "energy" => %w[binds]
     }.freeze
     WIDGET_LABELS = {
       "tile" => "Ponto", "group" => "Grupo de pontos", "stat" => "Contador / número", "gauge" => "Medidor",
       "chart" => "Gráfico", "query_list" => "Lista automática", "area_card" => "Área", "scene_bar" => "Cenas",
-      "alerts" => "Alertas ativos", "camera" => "Câmera", "vacuum" => "Robô aspirador", "heading" => "Título", "markdown" => "Texto"
+      "alerts" => "Alertas ativos", "camera" => "Câmera", "vacuum" => "Robô aspirador", "energy" => "Consumo e custo", "heading" => "Título", "markdown" => "Texto"
     }.freeze
     SCREENS = %w[mobile tablet desktop].freeze
     TAPS = %w[toggle more_info navigate none].freeze
@@ -93,6 +94,17 @@ module Dashboards
       e << "#{where}: live precisa ser true ou false" if w.key?("live") && ![ true, false ].include?(w["live"])
       e << "#{where}: snapshot_interval precisa ser de 2 a 300 segundos" if w.key?("snapshot_interval") && !(w["snapshot_interval"].is_a?(Integer) && w["snapshot_interval"].between?(2, 300))
       %w[min max].each { |k| e << "#{where}: #{k} precisa ser número" if w.key?(k) && !w[k].is_a?(Numeric) }
+      energy(w, where, e) if type == "energy"
+    end
+
+    # Consumo e custo (F9): período, dia de corte, tarifa (número ou ponto), meta e comparação.
+    def energy(w, where, e)
+      e << "#{where}: period inválido" if w.key?("period") && !Energy::PERIODS.key?(w["period"])
+      e << "#{where}: cycle_day precisa ser de 1 a 28" if w.key?("cycle_day") && !(w["cycle_day"].is_a?(Integer) && w["cycle_day"].between?(1, 28))
+      e << "#{where}: tariff precisa ser número maior ou igual a zero" if w.key?("tariff") && !(w["tariff"].is_a?(Numeric) && w["tariff"] >= 0)
+      e << "#{where}: tariff_point precisa ser texto" if w.key?("tariff_point") && !w["tariff_point"].is_a?(String)
+      e << "#{where}: goal precisa ser número maior que zero" if w.key?("goal") && !(w["goal"].is_a?(Numeric) && w["goal"].positive?)
+      e << "#{where}: compare precisa ser true ou false" if w.key?("compare") && ![ true, false ].include?(w["compare"])
     end
 
     # Caminho da visão (opcional): minúsculas, números e hífen; único no painel.
