@@ -3,6 +3,7 @@
 # no lugar do valor do esquema: "toggle", "pulse" e "press" não são valor).
 class Scene < ApplicationRecord
   include Auditable
+  include AlexaExposable
 
   acts_as_tenant :tenant
 
@@ -14,7 +15,7 @@ class Scene < ApplicationRecord
 
   normalizes :name, with: ->(v) { v.to_s.squish }
 
-  audited_attributes :name, :items
+  audited_attributes :name, :items, :alexa_exposed
 
   # Formulário e API: descarta linha sem ponto e guarda só as chaves conhecidas.
   def items=(list)

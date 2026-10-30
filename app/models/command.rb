@@ -5,7 +5,7 @@ class Command < ApplicationRecord
 
   STATUSES = { "pending" => "Pendente", "sent" => "Enviado", "confirmed" => "Confirmado",
                "failed" => "Falhou", "expired" => "Expirado" }.freeze
-  SOURCES = { "web" => "web", "api" => "app/API", "automation" => "automação" }.freeze
+  SOURCES = { "web" => "web", "api" => "app/API", "automation" => "automação", "alexa" => "Alexa" }.freeze
   # Comando que não saiu nesse tempo não sai mais (portão abrindo 5 min depois).
   TTL = 1.minute
   RETENTION_DAYS = 365

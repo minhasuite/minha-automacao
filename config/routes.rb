@@ -13,6 +13,12 @@ Rails.application.routes.draw do
 
   post "webhooks/google_play", to: "webhooks/google_play#create"
 
+  # Alexa Smart Home (F9): diretivas repassadas pela Lambda e tokens do account linking.
+  post "alexa/smart_home", to: "alexa_smart_home#smart_home"
+  post "oauth/token", to: "alexa_smart_home#token"
+  get "oauth/autorizar", to: "web/oauth#new", as: :oauth_authorize
+  post "oauth/autorizar", to: "web/oauth#create"
+
   # ---- Web (Hotwire, sessão em cookie) --------------------------------------
   get "entrar", to: "web/sessions#new", as: :login
   post "entrar", to: "web/sessions#create"
@@ -109,6 +115,11 @@ Rails.application.routes.draw do
           get :found, path: "encontrados"
           post :adopt, path: "adicionar"
         end
+      end
+      # Alexa Smart Home (F9): o que expor, nome falado, vínculos e cliente OAuth.
+      resource :alexa, controller: "alexa", path: "alexa", only: %i[show update] do
+        post :client, path: "cliente"
+        delete "vinculos/:token_id", action: :unlink, as: :unlink
       end
       # Helpers (F8e): catálogo de tipos (plugins), lista com valor e cadastro.
       resources :helpers, controller: "site_helpers", path: "helpers", except: :show, path_names: { new: "novo", edit: "editar" }, shallow: true

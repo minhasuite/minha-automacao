@@ -10,6 +10,13 @@ class ApiToken < ApplicationRecord
   REFRESH_TTL = 60.days
 
   scope :active, -> { where(revoked_at: nil) }
+  # Token do app (sem cliente externo); o da Alexa só vale em /alexa/smart_home.
+  scope :app, -> { where(client: nil) }
+  scope :alexa, -> { where(client: "alexa") }
+
+  belongs_to :site, optional: true
+
+  ALEXA_CODE_TTL = 5.minutes
 
   # => [registro, access_plain, refresh_plain]
   def self.issue(user, device_name: nil)
@@ -24,13 +31,13 @@ class ApiToken < ApplicationRecord
   def self.find_by_access(plain)
     return if plain.blank?
 
-    active.where(access_token_digest: digest(plain)).where("access_expires_at > ?", Time.current).first
+    active.app.where(access_token_digest: digest(plain)).where("access_expires_at > ?", Time.current).first
   end
 
-  def self.find_by_refresh(plain)
+  def self.find_by_refresh(plain, scope: active.app)
     return if plain.blank?
 
-    active.where(refresh_token_digest: digest(plain)).where("refresh_expires_at > ?", Time.current).first
+    scope.where(refresh_token_digest: digest(plain)).where("refresh_expires_at > ?", Time.current).first
   end
 
   # Refresh que casa com o digest ANTERIOR de um token ativo = alguém reusou
@@ -38,7 +45,33 @@ class ApiToken < ApplicationRecord
   def self.reused(plain)
     return if plain.blank?
 
-    active.find_by(previous_refresh_token_digest: digest(plain))
+    active.app.find_by(previous_refresh_token_digest: digest(plain))
+  end
+
+  # --- Alexa (F9): account linking por OAuth 2.0 (authorization code) ------
+
+  # Código de autorização = registro ainda não usado (5 min). → código em claro.
+  def self.alexa_code!(user, site, redirect_uri)
+    code = generate_token
+    create!(user: user, site: site, client: "alexa", redirect_uri: redirect_uri, device_name: "Alexa (#{site.name})",
+            access_token_digest: digest(code), refresh_token_digest: digest(generate_token),
+            access_expires_at: ALEXA_CODE_TTL.from_now, refresh_expires_at: ALEXA_CODE_TTL.from_now)
+    code
+  end
+
+  # Troca o código (uma vez só: a rotação muda o digest) → [registro, access, refresh] ou nil.
+  def self.redeem_alexa_code(code, redirect_uri)
+    token = active.alexa.where(last_used_at: nil, access_token_digest: digest(code)).where("access_expires_at > ?", Time.current).first
+    return unless token && token.redirect_uri == redirect_uri.to_s
+
+    [ token, *token.rotate! ]
+  end
+
+  # Access token da diretiva Smart Home (só depois da troca do código).
+  def self.find_alexa(plain)
+    return if plain.blank?
+
+    active.alexa.where.not(last_used_at: nil).where(access_token_digest: digest(plain)).where("access_expires_at > ?", Time.current).first
   end
 
   # Janela deslizante: cada rotação estende o refresh por mais 60 dias.

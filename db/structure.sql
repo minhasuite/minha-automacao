@@ -178,7 +178,10 @@ CREATE TABLE public.api_tokens (
     last_used_at timestamp(6) without time zone,
     revoked_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    site_id uuid,
+    client character varying,
+    redirect_uri character varying
 );
 
 
@@ -625,7 +628,9 @@ CREATE TABLE public.points (
     disabled boolean DEFAULT false NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    helper character varying
+    helper character varying,
+    alexa_exposed boolean DEFAULT false NOT NULL,
+    alexa_name character varying
 );
 
 
@@ -708,7 +713,9 @@ CREATE TABLE public.scenes (
     icon character varying,
     items jsonb DEFAULT '[]'::jsonb NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    alexa_exposed boolean DEFAULT false NOT NULL,
+    alexa_name character varying
 );
 
 
@@ -2106,6 +2113,13 @@ CREATE UNIQUE INDEX index_api_tokens_on_access_token_digest ON public.api_tokens
 
 
 --
+-- Name: index_api_tokens_on_client; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_api_tokens_on_client ON public.api_tokens USING btree (client);
+
+
+--
 -- Name: index_api_tokens_on_previous_refresh_token_digest; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2117,6 +2131,13 @@ CREATE INDEX index_api_tokens_on_previous_refresh_token_digest ON public.api_tok
 --
 
 CREATE UNIQUE INDEX index_api_tokens_on_refresh_token_digest ON public.api_tokens USING btree (refresh_token_digest);
+
+
+--
+-- Name: index_api_tokens_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_api_tokens_on_site_id ON public.api_tokens USING btree (site_id);
 
 
 --
@@ -3375,6 +3396,14 @@ ALTER TABLE ONLY public.solid_queue_blocked_executions
 
 
 --
+-- Name: api_tokens fk_rails_4d2f9218d7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.api_tokens
+    ADD CONSTRAINT fk_rails_4d2f9218d7 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: reading_rollups fk_rails_4e44c42ca7; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3877,6 +3906,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261031050002'),
 ('20261031050001'),
 ('20261031000001'),
 ('20261030300001'),

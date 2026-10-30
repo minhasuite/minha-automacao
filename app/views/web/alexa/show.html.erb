@@ -1,0 +1,91 @@
+<%= render "web/shared/header", title: "Expor para a Alexa", subtitle: "#{@site.name} · o que a skill Smart Home pode ver e comandar (\"Alexa, liga a luz da sala\")", back: site_path(@site) %>
+<%= render "web/sites/tabs", site: @site, current: :alexa %>
+<% admin = can?(:admin) %>
+<% exposed = @items.count { |t, _| t.alexa_exposed } %>
+
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+  <%= form_with url: site_alexa_path(@site), method: :patch, class: "ss-card min-w-0", aria: { label: "Pontos e cenas para a Alexa" } do %>
+    <div class="ss-card-pad flex flex-wrap items-center justify-between gap-2 border-b border-line">
+      <div>
+        <h2 class="font-bold">Pontos e cenas</h2>
+        <p class="text-sm text-muted"><span class="num"><%= exposed %></span> de <span class="num"><%= @items.size %></span> expostos. Tudo começa desligado.</p>
+      </div>
+      <% if admin && @items.any? %><%= submit_tag "Salvar", class: "ss-btn ss-btn-primary", name: nil %><% end %>
+    </div>
+    <% if @items.empty? %>
+      <p class="ss-card-pad text-sm text-muted">Nenhum ponto que a Alexa entende neste local (liga/desliga, intensidade, número, temperatura alvo, portão, script ou cena).</p>
+    <% else %>
+      <ul class="ss-rows">
+        <% @items.each do |t, ifaces| %>
+          <% id = Alexa::SmartHome.endpoint_id(t) %>
+          <% critical = t.risk == "critical" %>
+          <li class="flex-wrap">
+            <label class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
+              <%= hidden_field_tag "items[#{id}][exposed]", "0", id: nil %>
+              <%= check_box_tag "items[#{id}][exposed]", "1", t.alexa_exposed, id: "ax-#{id}", disabled: !admin, class: "size-5 accent-[var(--accent)]" %>
+              <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= t.alexa_exposed ? 'ss-grad' : 'bg-accent-soft text-accent' %>"><%= icon(t.is_a?(Scene) ? "sparkles" : point_icon(t)) %></span>
+              <span class="min-w-0">
+                <span class="block font-bold text-ink truncate"><%= t.name %></span>
+                <span class="block text-xs text-muted truncate"><%= [ t.is_a?(Scene) ? "Cena" : t.device.name, ifaces.map { |i| i.namespace.delete_prefix("Alexa.") }.join(", ") ].join(" · ") %></span>
+              </span>
+            </label>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <% if critical %><span class="ss-badge ss-badge-danger shrink-0">Crítico</span><% end %>
+              <%= text_field_tag "items[#{id}][name]", t.alexa_name, placeholder: "Nome falado: #{t.name}", maxlength: 60, disabled: !admin,
+                                 class: "ss-input text-sm sm:w-56", "aria-label": "Nome falado de #{t.name}" %>
+            </div>
+            <% if critical && admin %>
+              <label class="ss-check w-full text-sm text-danger">
+                <%= check_box_tag "items[#{id}][confirm]", "1", false, id: "axc-#{id}" %>
+                Confirmo expor <%= t.name %>: qualquer pessoa perto de uma Echo vinculada poderá acionar.
+                <%= "A Alexa pede o código de voz para abrir (ligue no app da Alexa)." if ifaces.any? { |i| i.namespace == "Alexa.LockController" } %>
+              </label>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <% if admin %><div class="ss-card-pad border-t border-line"><%= submit_tag "Salvar", class: "ss-btn ss-btn-primary", name: nil %></div><% end %>
+    <% end %>
+  <% end %>
+
+  <div class="grid gap-4">
+    <section class="ss-card ss-card-pad" aria-labelledby="links-t">
+      <h2 id="links-t" class="font-bold">Contas da Alexa vinculadas</h2>
+      <% if @links.empty? %>
+        <p class="text-sm text-muted mt-1">Nenhuma. Vincule pela skill no app da Alexa (passo a passo em docs/alexa-skill.md).</p>
+      <% else %>
+        <ul class="mt-2 grid gap-2">
+          <% @links.each do |tk| %>
+            <li class="flex items-center justify-between gap-2 text-sm">
+              <span class="min-w-0"><span class="block font-semibold truncate"><%= tk.user.name %></span><span class="text-xs text-muted">desde <%= l(tk.created_at.to_date) %><%= ", usada #{time_ago_in_words(tk.last_used_at)} atrás" if tk.last_used_at %></span></span>
+              <% if admin %><%= button_to "Desvincular", unlink_site_alexa_path(@site, token_id: tk.id), method: :delete, class: "ss-btn ss-btn-ghost text-sm", form: { data: { turbo_confirm: "A Alexa perde o acesso a este local." } } %><% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+
+    <section class="ss-card ss-card-pad" aria-labelledby="client-t">
+      <h2 id="client-t" class="font-bold">Skill (Developer Console)</h2>
+      <dl class="mt-2 grid gap-2 text-sm">
+        <div><dt class="text-muted">URL de autorização</dt><dd class="font-mono text-xs break-all"><%= oauth_authorize_url %></dd></div>
+        <div><dt class="text-muted">URL do token</dt><dd class="font-mono text-xs break-all"><%= request.base_url %>/oauth/token</dd></div>
+        <div><dt class="text-muted">Client ID</dt><dd class="font-mono text-xs break-all"><%= @tenant.alexa_client_id || "ainda não gerado" %></dd></div>
+        <% if @secret %>
+          <div class="rounded-xl bg-accent-soft p-2"><dt class="text-muted">Client Secret (só agora)</dt><dd class="font-mono text-xs break-all" data-controller="clipboard"><%= @secret %></dd></div>
+        <% end %>
+      </dl>
+      <% if current_user.owner? && admin %>
+        <%= form_with url: client_site_alexa_path(@site), class: "mt-3 grid gap-2" do %>
+          <%= label_tag :redirect_uris, "URLs de retorno da Amazon (Alexa Redirect URLs)", class: "ss-label" %>
+          <%= text_area_tag :redirect_uris, @tenant.alexa_redirect_uris.join("\n"), rows: 3, class: "ss-input text-xs font-mono", placeholder: "https://pitangui.amazon.com/api/skill/link/..." %>
+          <div class="flex flex-wrap gap-2">
+            <%= submit_tag "Salvar URLs", class: "ss-btn ss-btn-ghost", name: nil %>
+            <%= submit_tag @tenant.alexa_client_id ? "Gerar novo segredo" : "Gerar cliente", name: "generate", class: "ss-btn ss-btn-primary",
+                           data: (@tenant.alexa_client_id ? { turbo_confirm: "O segredo antigo deixa de valer. A skill precisa do novo." } : {}) %>
+          </div>
+        <% end %>
+      <% end %>
+    </section>
+  </div>
+</div>

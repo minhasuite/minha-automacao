@@ -31,6 +31,15 @@ class Rack::Attack
     req.env["HTTP_AUTHORIZATION"] if req.path.start_with?("/api/v1/") && req.env["HTTP_AUTHORIZATION"].present?
   end
 
+  # Alexa (F9): troca de token (adivinhar código/segredo) e diretivas.
+  throttle("oauth_token/ip", limit: 20, period: 1.minute) do |req|
+    req.ip if req.path == "/oauth/token" && req.post?
+  end
+
+  throttle("alexa/ip", limit: 120, period: 1.minute) do |req|
+    req.ip if req.path == "/alexa/smart_home" && req.post?
+  end
+
   self.throttled_responder = lambda do |_request|
     body = { error: { code: "rate_limited", message: "Muitas requisições, tente de novo em instantes." } }
     [ 429, { "Content-Type" => "application/json" }, [ body.to_json ] ]

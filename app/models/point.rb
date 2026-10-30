@@ -2,6 +2,7 @@
 # dispositivo, com capacidade (§4.3), calibração, risco e o último valor.
 class Point < ApplicationRecord
   include Auditable
+  include AlexaExposable
 
   acts_as_tenant :tenant
 
@@ -61,7 +62,7 @@ class Point < ApplicationRecord
   normalizes :key, with: ->(v) { v.to_s.strip.downcase.presence }
   normalizes :unit, :icon, :device_class, :confirm, :state_class, :data_type, with: ->(v) { v.to_s.strip.presence }
 
-  audited_attributes :name, :key, :risk, :capability
+  audited_attributes :name, :key, :risk, :capability, :alexa_exposed
 
   scope :ordered, -> { order(:name) }
   scope :helpers, -> { where.not(helper: nil) }
