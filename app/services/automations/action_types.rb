@@ -10,14 +10,41 @@ module Automations
   module ActionTypes
     extend Block::Registry
 
-    PLUGINS = %w[CommandAction SceneAction ScriptAction NotifyAction HttpAction WaitAction WaitForAction IfAction ChooseAction RepeatAction
-                 SetAction ConditionAction StopAction].freeze
+    PLUGINS = %w[CommandAction SceneAction ScriptAction NotifyAction WaitNotificationAction HttpAction CalendarEventsAction WaitAction WaitForAction
+                 IfAction ChooseAction RepeatAction SetAction ConditionAction StopAction].freeze
+
+    # Toda ação que faz algo (não as de controle) aceita "Seguir se der erro"
+    # (Lote 1, `continue_on_error` do HA): a falha vira "erro tolerado" no trace.
+    CONTINUE_ON_ERROR = Dsl.f("continue_on_error", :bool, "Seguir se der erro")
+    # Contrato "toda ação pode devolver dados" (Lote 1, `response_variable` do
+    # HA): o plugin declara `returns "formato"` e ganha o campo; o que ele passa
+    # a `respond` vai para a variável, que o Liquid e as expressões das ações
+    # seguintes leem (`resposta.status`, `{% for e in agenda.events %}`).
+    RESPONSE_VARIABLE = Dsl.f("response_variable", :var, "Guardar a resposta em")
 
     class Base < Block
       class << self
         def compile(engine, node, path) = engine.emit([ :act, path, node ])
         def call(_engine, _path, _node) = raise(NotImplementedError)
         def commanded_point_ids(_node, _site, _seen) = []
+        def control? = false
+
+        # Formato da resposta (texto para a documentação e o editor); nil = não devolve.
+        def returns(format = nil)
+          @returns = format if format
+          @returns
+        end
+
+        def fields
+          list = super
+          list += [ RESPONSE_VARIABLE ] if returns
+          list += [ CONTINUE_ON_ERROR ] unless control?
+          list
+        end
+
+        def respond(e, node, value)
+          e.ctx.vars[node["response_variable"]] = value if node["response_variable"].present?
+        end
       end
     end
 
@@ -58,9 +85,16 @@ module Automations
 
     # Chama um script do local com os campos (F8f). O script roda como
     # execução própria (trace dele), ligada a esta pela causa (laço evitado).
+    # Lote 1: com "esperar", a automação só segue quando o script termina e a
+    # resposta (as variáveis do script no fim) vai para `response_variable`;
+    # sem, dispara e não espera (como antes).
     class ScriptAction < Base
       describe key: "script", label: "Executar script",
-               fields: [ f("script", :script, "Script", required: true), f("fields", :script_fields, "Campos") ]
+               fields: [ f("script", :script, "Script", required: true), f("fields", :script_fields, "Campos"),
+                         f("wait", :bool, "Esperar o fim e a resposta") ]
+      returns "as variáveis do script no fim (com esperar)"
+
+      def self.rules(node) = node["response_variable"].present? && node["wait"] != true ? [ "para guardar a resposta, marque esperar o fim." ] : []
 
       def self.commanded_point_ids(node, site, seen)
         script = site.scripts.find_by(id: node["script"]) if node["script"].is_a?(String)
@@ -70,7 +104,7 @@ module Automations
         Dsl.commanded_points(script.definition, site, seen).map(&:id) + script.point_field_values(node["fields"])
       end
 
-      def self.call(e, _path, node)
+      def self.call(e, path, node)
         script = e.ctx.site.scripts.find_by(id: node["script"]) or raise Engine::Failure, "Script removido do local."
         given = node["fields"].to_h.transform_values { |v| v.is_a?(String) && v.include?("{{") ? e.ctx.render(v) : v }
         values = script.field_values(given)
@@ -82,31 +116,28 @@ module Automations
         return [ title, "skipped", "Não iniciou: já está rodando (#{script.mode_label.split(' (').first.downcase})" ] unless run
         return [ title, "skipped", run.error ] if run.status == "loop"
         raise Engine::Failure, "Script #{script.name}: #{run.error}" if run.status == "failed"
+        return wait_for_script(e, path, node, script, run, title) if node["wait"] == true && !run.finished?
 
+        respond(e, node, run.response) if node["wait"] == true
         [ title, "ok", [ "Execução #{run.status_label.downcase}", detail ].compact.join(" · ") ]
       rescue ArgumentError => ex
         raise Engine::Failure, "Script: #{ex.message}"
       end
-    end
 
-    class NotifyAction < Base
-      describe key: "notify", label: "Avisar", defaults: { "channels" => Notifier::CHANNELS.keys, "title" => "Aviso" },
-               fields: [ f("channels", :channels, "Canais"), f("title", :template, "Título", required: true), f("message", :template, "Mensagem") ]
-
-      def self.call(e, _path, node)
-        title = e.ctx.render(node["title"])
-        body = e.ctx.render(node["message"]).presence
-        channels = node["channels"].presence || Notifier::CHANNELS.keys
-        detail = [ body, "canais: #{channels.map { |ch| Notifier.channel_label(ch) }.join(', ').downcase}" ].compact.join(" · ")
-        return [ "Avisar: #{title}", "simulated", "Não enviado (simulação). #{detail}" ] if e.dry_run?
-
-        r = e.run
-        Notifier.deliver!(channels, kind: "automacao", title: title, body: body, data: { automation_id: r.automation_id, run_id: r.id, site_id: r.site_id })
-        [ "Avisar: #{title}", "ok", detail ]
+      # O script ficou esperando (ou na fila): esta execução espera o evento
+      # "script_finished" dele, sem prazo além do máximo da DSL.
+      def self.wait_for_script(e, path, node, script, run, title)
+        e.trace(path, "script", title, "waiting", detail: "Esperando o script terminar")
+        e.suspend(Time.current + Dsl::MAX_DURATION, "kind" => "event", "event" => "script_finished", "match" => { "run_id" => run.id },
+                                                    "path" => path, "var" => node["response_variable"], "key" => "response",
+                                                    "got" => "Script #{script.name} terminou", "stop_on_timeout" => true)
+        [ :halt ]
       end
     end
 
     class WaitAction < Base
+      def self.control? = true
+
       describe key: "wait", label: "Esperar", defaults: { "for" => "1m" },
                fields: [ f("for", :duration, "Tempo (ex.: 5m)"), f("expr", :expr, "Ou segundos por expressão") ]
 
@@ -126,6 +157,8 @@ module Automations
     end
 
     class WaitForAction < Base
+      def self.control? = true
+
       describe key: "wait_for", label: "Esperar condição", defaults: { "conditions" => [], "timeout" => "5m" },
                fields: [ f("conditions", :conditions, "Até que"), f("timeout", :duration, "Tempo limite", required: true),
                          f("continue_on_timeout", :bool, "Seguir se o tempo acabar") ]
@@ -151,6 +184,8 @@ module Automations
     end
 
     class IfAction < Base
+      def self.control? = true
+
       describe key: "if", label: "Se / senão",
                fields: [ f("conditions", :conditions, "Se"), f("then", :actions, "Então"), f("else", :actions, "Senão") ]
 
@@ -169,6 +204,8 @@ module Automations
     end
 
     class ChooseAction < Base
+      def self.control? = true
+
       describe key: "choose", label: "Escolher", defaults: { "options" => [ { "conditions" => [], "actions" => [] } ] },
                fields: [ f("options", :options, "Opções"), f("default", :actions, "Se nenhuma servir") ]
 
@@ -186,6 +223,8 @@ module Automations
     end
 
     class RepeatAction < Base
+      def self.control? = true
+
       describe key: "repeat", label: "Repetir", defaults: { "count" => 2 },
                fields: [ f("count", :number, "Vezes"), f("while", :conditions, "Enquanto"), f("until", :conditions, "Até que"),
                          f("actions", :actions, "Fazer") ]
@@ -220,6 +259,8 @@ module Automations
     end
 
     class ConditionAction < Base
+      def self.control? = true
+
       describe key: "condition", label: "Parar se falso", fields: [ f("conditions", :conditions, "Seguir só se") ]
 
       def self.call(e, path, node)
@@ -233,6 +274,8 @@ module Automations
     end
 
     class StopAction < Base
+      def self.control? = true
+
       describe key: "stop", label: "Parar", fields: [ f("reason", :text, "Motivo"), f("error", :bool, "Marcar como erro") ]
 
       def self.call(e, path, node)

@@ -28,11 +28,17 @@ motor, no disparo, na validação ou no editor: eles perguntam ao plugin.
      (valor de ponto), ou `clock` = true + `due?(t, site, hora_local)` +
      `title(t)` (relógio, a cada minuto). Evento próprio (alerta, webhook)
      chama `Automation#fire!` de onde o evento acontece;
+     ou `event` = "nome" + `fires_on_event?(t, dados)` + `event_info(t, dados)`
+     (evento interno de `Automations::Triggers.event`, ex. `notification_action`);
    - **condição**: `check(ev, c)` → `[ok, rótulo, valores vistos, filhos]`
      (`ev.ctx`, `ev.point!`, `ev.held?`, `ev.window?`, `ev.check`);
    - **ação**: `call(engine, path, node)` → `[título, resultado, detalhe,
      checks]` ou `[:halt]`/`[:skip]`; `compile` só se tiver saltos; e
      `commanded_point_ids(node, site, seen)` se comandar ponto (papel x risco).
+     Ação que devolve dados declara `returns "formato"` e chama
+     `respond(e, node, valor)`: o campo `response_variable` aparece sozinho.
+     Toda ação que não é de controle (`control?` falso) ganha
+     `continue_on_error`.
 3. O nome da classe em `PLUGINS` do registro (a ordem é a do editor).
 4. Spec (veja `spec/services/f8f_spec.rb`: um tipo novo registrado por
    `stub_const` roda sem mudar o motor).
@@ -67,6 +73,7 @@ sol. **Dias**: 0 = domingo … 6 = sábado (sem `days` = todos).
 | `alert` | `rule` (AlertRule), `on` (`open`/`ack`/`resolve`) | o alerta abriu, alguém marcou ciente ou fechou |
 | `webhook` | — | `POST /api/v1/hooks/automations/:token` (corpo em `trigger.data`) |
 | `manual` | — | só pelo "Executar agora" (que sempre existe) |
+| `notification_action` | `actions?` (ids separados por vírgula) | alguém respondeu a um aviso com botões (push, aviso in-app ou /notificacoes); `trigger.action`, `trigger.user`, `trigger.user_id`, `trigger.data` (Lote 1) |
 
 Valor que volta junto com a conexão (o ponto estava indisponível) não
 dispara, como nas primitivas.
@@ -92,9 +99,11 @@ uma com o valor visto (`agora: Desligado`).
 |---|---|---|
 | `command` | `point`, `command`, `value?` | comando pelo `Points::Command` (papel x risco, fila, rastreio); a execução vai em `commands.automation_run_id` |
 | `scene` | `scene` | aciona a cena |
-| `script` | `script`, `fields?` | executa o script com os campos (`docs/scripts.md`); execução própria, laço barrado |
-| `notify` | `title`, `message?`, `channels?` (`in_app`, `push`, `alexa:<id do ponto speaker>`; padrão in_app e push) | `Notifier.deliver!` para dono e administradores, texto Liquid |
-| `http` | `method`, `url`, `headers?`, `secret?` (cifrado, `{{ secret }}`), `body?`, `timeout?` | chama outro sistema pelo `SafeHttp` (sem IP interno; `docs/api-integracoes.md`); resposta em `http_status`/`http_body` (F9) |
+| `script` | `script`, `fields?`, `wait?`, `response_variable?` | executa o script com os campos (`docs/scripts.md`); execução própria, laço barrado. Com `wait`, espera o fim (durável) e a resposta = variáveis do script no fim; sem, dispara e segue |
+| `notify` | `title`, `message?`, `channels?` (plugins de `Notifier::Channels`: `in_app`, `push`, `alexa:<id>`; padrão in_app e push), `to?` (`admins`, `user:<id>`, `role:<papel>`; `role:guest` = todos do local), `buttons?` ([{id, title}], até 3), `camera?` (quadro do go2rtc agora), `image_url?`, `url?` (ao tocar), `priority?` (`normal`/`high`/`critical`), `tag?`, `ttl?`, `sticky?`, `group?`, `clear?` (só apagar a `tag`) | `Notifier.deliver!`, texto Liquid; cada canal usa o que suporta (`docs/push.md`) |
+| `wait_notification` | `actions?`, `timeout`, `continue_on_timeout?`, `response_variable?` | espera a resposta a um aviso **desta execução** (durável); a variável recebe {action, title, user, user_id, data} ou fica vazia no tempo limite |
+| `calendar_events` | `point` (agenda), `start?` (`-1h`, `2h`), `within`, `contains?`, `response_variable?` | eventos da agenda que tocam a janela: {events: [{summary, start, end, all_day, location}], count, titles} |
+| `http` | `method`, `url`, `headers?`, `secret?` (cifrado, `{{ secret }}`), `body?`, `timeout?` | chama outro sistema pelo `SafeHttp` (sem IP interno; `docs/api-integracoes.md`); resposta em `http_status`/`http_body` (F9); com `response_variable`, {status, body, json} |
 | `wait` | `for` **ou** `expr` (segundos) | espera (job agendado; sobrevive a reinício) |
 | `wait_for` | `conditions`, `timeout`, `continue_on_timeout?` (padrão `true`) | espera as condições valerem; a mudança de ponto retoma na hora |
 | `if` | `conditions`, `then`, `else?` | ramo |
@@ -105,7 +114,15 @@ uma com o valor visto (`agora: Desligado`).
 | `stop` | `reason?`, `error?` | para (com `error`, "Falhou") |
 
 Erro numa ação (comando recusado, expressão inválida) para a execução como
-"Falhou" e aparece na lista de automações.
+"Falhou" e aparece na lista de automações. Com `continue_on_error: true` (toda ação
+que não é de controle; "Seguir se der erro" no editor), a falha vira um passo
+"erro tolerado" no trace e a execução segue.
+
+**Ações que devolvem dados** (`response_variable`, Lote 1): `script` (com
+`wait`), `http`, `calendar_events` e `wait_notification`. A variável é um
+objeto: no texto `{{ agenda.count }}`, `{% for e in agenda.events %}`; na
+expressão `agenda.count > 0`, `r.json.temp * 2`, `lista.0` (índice) e
+`lista.count`. Campo que não existe = erro com o nome no trace.
 
 ### Helpers (F8e)
 
@@ -137,6 +154,7 @@ Texto: `{{ trigger.title }}`, `{{ trigger.point }}`, `{{ trigger.value }}`,
 `{{ trigger.data.campo }}` (webhook), `{{ points["sala.luz"].text }}`
 (também `.value`, `.quality`, `.changed_at`, `.since_min`),
 `{{ site.name }}`, `{{ now | date: "%H:%M" }}` e as variáveis pelo nome.
+Variável com objeto (resposta de ação) por ponto: `{{ resposta.action }}`.
 Até 1000 caracteres.
 
 ## Execução

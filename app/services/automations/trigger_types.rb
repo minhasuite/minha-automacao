@@ -5,12 +5,14 @@ module Automations
   #   fires_on_change?(t, valor, anterior) — valor novo de ponto (`point`);
   #   holds?(t, valor) — no fim do `for`, ainda vale?
   #   clock + due?(t, site, hora local) + title(t) — relógio, a cada minuto.
+  #   event + fires_on_event?(t, dados) + event_info(t, dados) — evento interno
+  #     (Triggers.event: resposta de aviso).
   # Gatilho de evento próprio (alerta, webhook, manual) dispara de fora pelo
   # Automation#fire!.
   module TriggerTypes
     extend Block::Registry
 
-    PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger].freeze
+    PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger NotificationActionTrigger].freeze
 
     class Base < Block
       class << self
@@ -19,6 +21,9 @@ module Automations
         def clock = false
         def due?(_t, _site, _local) = false
         def title(_t) = label
+        def event = nil
+        def fires_on_event?(_t, _payload) = false
+        def event_info(t, _payload) = { "type" => t["type"], "title" => title(t) }
       end
     end
 

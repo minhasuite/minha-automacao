@@ -32,6 +32,18 @@ module Automations
       new(run, run.automation.definition_for(run.version), ctx).resume(seq.nil?)
     end
 
+    # Evento esperado chegou (espera "event": resposta de aviso, fim de
+    # script). `match`: cada chave precisa bater (lista = qualquer um dela).
+    def self.resume_event(run, payload)
+      wait = run.state["wait"] || {}
+      return unless run.status == "waiting" && wait["kind"] == "event" && match?(wait["match"], payload)
+
+      ctx = Context.new(site: run.site, trigger: run.trigger, vars: run.state["vars"])
+      new(run, run.automation.definition_for(run.version), ctx).resume_with(payload)
+    end
+
+    def self.match?(filter, payload) = filter.to_h.all? { |k, v| v.blank? || Array(v).include?(payload[k]) }
+
     def initialize(run, definition, ctx)
       @run = run
       @definition = definition
@@ -61,6 +73,8 @@ module Automations
 
     def resume(by_event)
       wait = @run.state["wait"] || {}
+      return resume_with(nil) if wait["kind"] == "event" # tempo limite
+
       if wait["kind"] == "wait_for"
         node = node_at(wait["path"])
         ok, checks = @conditions.check(node["conditions"])
@@ -83,6 +97,25 @@ module Automations
           close_wait("ok")
           run_program
         end
+      end
+    end
+
+    # Retoma a espera "event": com os dados do evento ou, sem eles (nil), pelo
+    # tempo limite. A variável `var` da espera recebe os dados (ou `key` deles;
+    # nil no tempo limite). Dados com `error` (script que falhou) viram falha.
+    def resume_with(payload)
+      return unless claim
+
+      wait = @run.state["wait"] || {}
+      within do
+        @ctx.vars[wait["var"]] = payload && (wait["key"] ? payload[wait["key"]] : payload) if wait["var"].present?
+        close_wait(payload ? "ok" : "timeout")
+        trace(wait["path"], "wait", payload ? wait["got"] || "Evento recebido" : "Tempo limite da espera", payload ? "ok" : "timeout",
+              detail: (payload && wait["detail"] ? payload[wait["detail"]] : nil))
+        raise Failure, payload["error"] if payload && payload["error"].present?
+        next finish("stopped", "Tempo limite da espera") if payload.nil? && wait["stop_on_timeout"]
+
+        run_program
       end
     end
 
@@ -122,7 +155,14 @@ module Automations
       return :halt if @run.finished_at
 
       save(status: status, error: error&.truncate(255), finished_at: Time.current, resume_at: nil)
-      @run.automation.after_run(@run) unless dry_run?
+      unless dry_run?
+        @run.automation.after_run(@run)
+        # Quem chamou o script e espera a resposta (ação "Executar script" com esperar).
+        if @run.automation.script?
+          Triggers.event(@run.site_id, "script_finished", { "run_id" => @run.id, "status" => status, "response" => @run.response,
+                                                            "error" => (error.presence || "parou sem concluir" if status == "failed") }.compact)
+        end
+      end
       :halt
     end
 
@@ -215,11 +255,23 @@ module Automations
 
     def act(path, node)
       t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      title, result, detail, checks = ActionTypes[node["type"]].call(self, path, node)
+      title, result, detail, checks = call_action(path, node)
       return :halt if title == :halt
       return if title == :skip
 
       trace(path, node["type"], title, result, detail: detail, checks: checks, ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round)
+    end
+
+    # `continue_on_error` (Lote 1): a falha da ação fica no trace como "erro
+    # tolerado" e a execução segue.
+    def call_action(path, node)
+      plugin = ActionTypes[node["type"]]
+      plugin.call(self, path, node)
+    rescue Failure, Points::Command::Error, Context::Error, StandardError => e
+      raise unless node["continue_on_error"] == true
+
+      Rails.error.report(e, handled: true) unless e.is_a?(Failure) || e.is_a?(Points::Command::Error) || e.is_a?(Context::Error)
+      [ "#{plugin.label}: erro tolerado", "tolerated", e.message.truncate(200) ]
     end
 
     def save(wait: nil, **attrs)

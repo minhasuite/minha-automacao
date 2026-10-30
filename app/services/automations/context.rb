@@ -71,6 +71,10 @@ module Automations
     def variable(name)
       return vars[name] if vars.key?(name)
 
+      # Resposta guardada em variável (Lote 1): `agenda.count`, `resposta.action`, `http.status`.
+      head, *path = name.split(".")
+      return dig_var(vars[head], path, name) if path.any? && vars.key?(head)
+
       builtin = { "hour" => now.hour, "minute" => now.min, "weekday" => now.wday, "day" => now.day, "month" => now.month,
                   "trigger_value" => trigger["value"] }
       return builtin[name] if builtin.key?(name)
@@ -80,6 +84,16 @@ module Automations
       raise Error, "#{p.name} está sem valor" if v.nil?
 
       v
+    end
+
+    def dig_var(value, path, name)
+      v = path.reduce(value) do |o, k|
+        if o.is_a?(Hash) then o[k]
+        elsif o.is_a?(Array) && k.match?(/\A\d+\z/) then o[k.to_i]
+        elsif o.is_a?(Array) && %w[size count].include?(k) then o.size
+        end
+      end
+      v.nil? ? raise(Error, "\"#{name}\" está sem valor") : v
     end
 
     def assigns

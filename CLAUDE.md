@@ -46,7 +46,11 @@ blueprints com importação do HA (`docs/scripts.md`, `docs/blueprints.md`) +
 v3 + "Expor para a Alexa"; `docs/alexa-skill.md`), Google Agenda / ICS como
 plugin de integração e a ação "Chamar HTTP" com `SafeHttp`
 (`docs/api-integracoes.md`). Nada disso é módulo da casa: widget, plugin de
-integração, plugin de gatilho/condição/ação e registro de interfaces.
+integração, plugin de gatilho/condição/ação e registro de interfaces. +
+**Lote 1 (paridade HA)**: PWA + Web Push (VAPID), canais do aviso como
+plugins (`Notifier::Channels`) e transportes de push (`Push::TRANSPORTS`),
+aviso com botões, imagem e link, gatilho/espera "resposta de aviso",
+`continue_on_error` e `response_variable` (`docs/push.md`).
 
 ## Rodar
 
@@ -98,6 +102,21 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
 - **Notificação** com `user` vai só para a pessoa; sem `user`, para dono e
   administradores (`Notification.for_user`, `SendPushJob`). Crie pelo
   `Notifier.notify!` (push + `dedup_key`).
+- **Canais e push (Lote 1)**: canal do aviso = plugin em `Notifier::Channels`
+  (`owns?`, `choices`, `label`, `capabilities`, `deliver`); transporte de push
+  = módulo em `Push::TRANSPORTS` (`Browser` = Web Push, `Fcm`), com
+  `capabilities` (`Notifier::FEATURES`): `Push::Message#to_h` corta o que o
+  transporte não suporta. Nada de `case` por canal. Resposta de botão: uma vez
+  (`responded_at`), token assinado por notificação + pessoa no service worker
+  (`POST /push/resposta`), evento `notification_action` por
+  `Automations::Triggers.event` (gatilho com `event` no plugin e espera
+  `kind: "event"` no motor). Web Push exige https (Dell: só pelo acesso
+  externo) e as chaves `VAPID_*` (`bin/vapid-keys`; nunca no repo). Nunca
+  mande push de teste para o celular de alguém: teste com navegador headless.
+- **`response_variable` e `continue_on_error` (Lote 1)**: ação que devolve
+  dados declara `returns` e chama `respond`; a variável é objeto (Liquid
+  `{{ r.x }}`, dentaku `r.x`, `lista.count`). Toda ação fora as de controle
+  (`control?`) aceita `continue_on_error` (passo "erro tolerado").
 - **IA**: features em `AiPlanFeature::FEATURES` (`ask`, `daily_summary` são
   placeholders). Grátis não tem IA; Pro no tier light, Max no standard.
   Feature nova = entrada em `DEFAULTS` (a lista entra na chave do cache).

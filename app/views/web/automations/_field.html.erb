@@ -2,7 +2,7 @@
 <% id = "#{dom}-#{fd.name}" %>
 <% name = "block[#{fd.name}]" %>
 <% v = node[fd.name] %>
-<% wide = fd.kind.in?(%i[template expr days channels script_fields]) %>
+<% wide = fd.kind.in?(%i[template expr days channels script_fields buttons]) %>
 <div class="<%= 'sm:col-span-2' if wide %> min-w-0">
   <% if fd.kind == :script_fields %>
     <% script = site.scripts.find_by(id: node["script"]) if node["script"].is_a?(String) %>
@@ -35,7 +35,7 @@
         <%= hidden_field_tag "#{name}[]", "", id: nil %>
         <div class="flex flex-wrap gap-x-3 gap-y-1">
           <% Notifier.channel_choices(site).each do |key, label| %>
-            <label class="inline-flex items-center gap-1 text-sm"><%= check_box_tag "#{name}[]", key, v.nil? ? Notifier::CHANNELS.key?(key) : v.include?(key), id: "#{id}-#{key.parameterize}" %><%= label %></label>
+            <label class="inline-flex items-center gap-1 text-sm"><%= check_box_tag "#{name}[]", key, v.nil? ? Notifier.default_channels.include?(key) : v.include?(key), id: "#{id}-#{key.parameterize}" %><%= label %></label>
           <% end %>
         </div>
       <% else %>
@@ -62,6 +62,12 @@
       <%= select_tag name, options_for_select(command_options(point), v), class: "ss-input", id: id %>
     <% elsif case_kind == :select %>
       <%= select_tag name, options_for_select(fd.options.invert, v), include_blank: (fd.required ? false : "Nenhum"), class: "ss-input", id: id %>
+    <% elsif case_kind == :recipient %>
+      <%= select_tag name, options_for_select(Notifier.recipient_choices(site), v), class: "ss-input", id: id %>
+    <% elsif case_kind == :camera %>
+      <%= select_tag name, options_for_select(points.values.uniq.select { |p| p.capability == "stream" }.map { |p| [ "#{p.device.name}: #{p.name}", p.id ] }, v), include_blank: "Sem imagem de câmera", class: "ss-input", id: id %>
+    <% elsif case_kind == :buttons %>
+      <%= text_area_tag name, Array(v).map { |b| "#{b["id"]}: #{b["title"]}" }.join("\n"), class: "ss-input", id: id, rows: 3, maxlength: 300, placeholder: "sim: Sim (um por linha)" %>
     <% elsif case_kind == :script %>
       <%= select_tag name, options_for_select(site.scripts.ordered.map { |s| [ s.name, s.id ] }, v), include_blank: "Escolha o script", class: "ss-input", id: id %>
     <% elsif case_kind == :scene %>

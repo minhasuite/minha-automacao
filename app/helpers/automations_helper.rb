@@ -9,7 +9,7 @@ module AutomationsHelper
   }.freeze
   RESULT_STYLES = { "ok" => %w[check-circle text-success], "false" => %w[x-circle text-muted], "error" => %w[exclamation-circle text-danger],
                     "simulated" => %w[eye text-accent], "waiting" => %w[clock text-accent], "timeout" => %w[clock text-warn],
-                    "skipped" => %w[minus-circle text-warn] }.freeze
+                    "skipped" => %w[minus-circle text-warn], "tolerated" => %w[exclamation-circle text-warn] }.freeze
 
   def dsl_type_choices(kind) = Automations::Dsl.catalog(kind).map { |type, s| [ s.label, type ] }
 
@@ -33,6 +33,9 @@ module AutomationsHelper
     when :select then fd.options.fetch(v, v)
     when :bool then v ? "sim" : "não"
     when :channels then Array(v).map { |c| Notifier.channel_label(c) }.join(" e ").downcase
+    when :recipient then (s = points.values.first&.site) ? Notifier.recipient_label(v, s) : v.to_s
+    when :camera then points[v]&.name || "câmera removida"
+    when :buttons then Array(v).pluck("title").join(", ")
     when :command then (p = points[node["point"]]) ? command_options(p).find { |_, c| c == v }&.first || command_label(v) : command_label(v)
     when :scene then Scene.find_by(id: v)&.name || "cena removida"
     when :script then Automation.find_by(id: v)&.name || "script removido"

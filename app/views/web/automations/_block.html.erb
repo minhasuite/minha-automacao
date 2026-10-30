@@ -17,6 +17,7 @@
           <% plain.each do |fd| %>
             <%= render "web/automations/field", fd: fd, node: node, dom: dom, points: points, site: automation.site %>
           <% end %>
+          <% if spec.respond_to?(:returns) && spec.returns %><p class="sm:col-span-2 text-xs text-muted">Devolve na variável: <span class="num"><%= spec.returns %></span></p><% end %>
           <div class="sm:col-span-2"><%= submit_tag "Salvar bloco", class: "ss-btn ss-btn-primary ss-btn-sm" %></div>
         <% end %>
       </details>

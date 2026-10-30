@@ -66,6 +66,25 @@ module Automations
       end
     end
 
+    # Evento interno com nome e dados (Lote 1: "notification_action" quando
+    # alguém responde a um aviso, "script_finished" quando um script acaba).
+    # Dispara as automações com gatilho cujo plugin escuta o evento
+    # (`event` + `fires_on_event?`) e retoma as execuções esperando por ele
+    # (espera "event" do motor, com o filtro `match`).
+    def event(site_id, name, payload)
+      plugins = TriggerTypes.plugins.select { |pl| pl.event == name }
+      if plugins.any?
+        Automation.where(site_id: site_id, enabled: true)
+                  .where(([ "definition->'triggers' @> ?" ] * plugins.size).join(" OR "), *plugins.map { |pl| [ { type: pl.key } ].to_json }).find_each do |a|
+          t = a.definition["triggers"].find { |tr| (pl = TriggerTypes[tr["type"]]) && pl.event == name && pl.fires_on_event?(tr, payload) } or next
+          Automations.safely { a.fire!(TriggerTypes[t["type"]].event_info(t, payload)) }
+        end
+      end
+      AutomationRun.where(site_id: site_id, status: "waiting", dry_run: false)
+                   .where("state->'wait'->>'kind' = 'event' AND state->'wait'->>'event' = ?", name)
+                   .find_each { |r| Automations.safely { Engine.resume_event(r, payload) } }
+    end
+
     # O plugin do gatilho decide (TriggerTypes).
     def changed_into?(t, value, was) = value != was && TriggerTypes[t["type"]]&.fires_on_change?(t, value, was) || false
     def holds?(t, value) = TriggerTypes[t["type"]]&.holds?(t, value) || false

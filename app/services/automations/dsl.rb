@@ -37,6 +37,8 @@ module Automations
     KINDS = REGISTRIES.keys.freeze
     # Tipos de campo que são listas de blocos (aninhadas).
     LIST_KINDS = %i[conditions actions options].freeze
+    # Tipos de campo que guardam um ponto (UUID no JSON, `key` no avançado).
+    POINT_KINDS = %i[point writable_point camera].freeze
 
     DURATION = /\A(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?\z/
     TIME = /\A([01]\d|2[0-3]):[0-5]\d\z/
@@ -97,7 +99,7 @@ module Automations
 
           if fd.kind == :secret && node[fd.name].is_a?(String)
             node[fd.name] = encrypt_secret(node[fd.name])
-          elsif fd.kind.in?(%i[point writable_point]) && (point = by_ref[node[fd.name].to_s])
+          elsif fd.kind.in?(POINT_KINDS) && (point = by_ref[node[fd.name].to_s])
             node[fd.name] = point.id
           elsif fd.kind == :value && point && node[fd.name].is_a?(String)
             node[fd.name] = point.cast(node[fd.name])
@@ -123,7 +125,7 @@ module Automations
       keys = site.points.pluck(:id, :key).to_h
       walk(definition.deep_dup) do |node, kind|
         s = spec(kind, node["type"]) or next
-        s.fields.each { |fd| node[fd.name] = keys.fetch(node[fd.name], node[fd.name]) if fd.kind.in?(%i[point writable_point]) }
+        s.fields.each { |fd| node[fd.name] = keys.fetch(node[fd.name], node[fd.name]) if fd.kind.in?(POINT_KINDS) }
       end
     end
 
@@ -151,7 +153,7 @@ module Automations
       ids = []
       walk(definition) do |node, kind|
         s = spec(kind, node["type"]) or next
-        s.fields.each { |fd| ids << node[fd.name] if fd.kind.in?(%i[point writable_point]) && node[fd.name].present? }
+        s.fields.each { |fd| ids << node[fd.name] if fd.kind.in?(POINT_KINDS) && node[fd.name].present? }
       end
       ids.uniq
     end
@@ -248,6 +250,9 @@ module Automations
         when :expr then expr_error(v)
         when :template then template_error(v)
         when :channels then "canal inválido" unless Notifier.valid_channels?(v)
+        when :recipient then recipient_error(v)
+        when :camera then camera_error(v)
+        when :buttons then nil # regras do plugin
         when :scene then "cena não existe neste local" unless v.is_a?(String) && @site.scenes.exists?(id: v)
         when :script then "script não existe neste local" unless v.is_a?(String) && @site.scripts.exists?(id: v)
         when :script_fields then script_fields_error(node, v)
@@ -257,6 +262,17 @@ module Automations
         else list(v, fd.kind, "#{where} › #{fd.label.downcase}") && nil
         end
         @errors << "#{where}: #{fd.label.downcase}: #{msg}." if msg
+      end
+
+      def recipient_error(v)
+        return "destinatário inválido" unless Notifier.valid_recipient?(v)
+
+        "pessoa não existe" if v.start_with?("user:") && !User.exists?(id: v.delete_prefix("user:"), tenant_id: @site.tenant_id)
+      end
+
+      def camera_error(id)
+        point = @points[id] or return "câmera não existe neste local"
+        "#{point.name} não é câmera" unless point.capability == "stream"
       end
 
       def point_error(id, writable)

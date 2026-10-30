@@ -86,8 +86,17 @@ module Automations
         days = Array(raw).map(&:to_i).uniq.sort
         days.size == 7 ? nil : days
       when :channels then Array(raw)
+      when :buttons then buttons(raw)
       else raw.to_s.strip.presence
       end
+    end
+
+    # "sim: Sim" e "nao: Agora não", um por linha → [{id, title}] (linha sem ":" usa o texto como id e título).
+    def buttons(raw)
+      raw.to_s.lines.filter_map do |line|
+        id, title = line.include?(":") ? line.split(":", 2).map(&:strip) : [ line.strip.parameterize(separator: "_"), line.strip ]
+        { "id" => id.downcase, "title" => title } if id.present? && title.present?
+      end.presence
     end
 
     def parent(path)
