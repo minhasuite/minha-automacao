@@ -5,9 +5,40 @@ sozinho, espelhamento, agenda, cena, aviso, alerta). A DSL é para o resto:
 várias condições, janela de horário, esperas, ramos, repetição, variáveis e
 aviso com texto montado.
 
-Código: `Automations::Dsl` (tipos e validação), `Automations::Engine`
-(execução), `Automations::Triggers` (disparo), `Automations::Context`
-(valores, expressões e textos), `Automations::Editor` (editor de blocos).
+Código: `Automations::Dsl` (validação e utilidades), os plugins de cada tipo
+em `Automations::TriggerTypes`, `ConditionTypes` e `ActionTypes` (F8f),
+`Automations::Engine` (execução), `Automations::Triggers` (disparo),
+`Automations::Context` (valores, expressões e textos), `Automations::Editor`
+(editor de blocos). Scripts em `docs/scripts.md`, blueprints em
+`docs/blueprints.md`.
+
+## Tipo novo de gatilho, condição ou ação (aberto para extensão)
+
+Cada tipo é um plugin (`Automations::Block`), no padrão de
+`Integrations::PLUGINS` e `HelperTypes::PLUGINS`. Nada de `case` por tipo no
+motor, no disparo, na validação ou no editor: eles perguntam ao plugin.
+
+1. Classe em `app/services/automations/<lista>_types.rb` (ou num arquivo
+   próprio, `app/services/automations/action_types/meu_tipo.rb`), herdando
+   de `TriggerTypes::Base`, `ConditionTypes::Base` ou `ActionTypes::Base`:
+   `describe key:, label:, fields: [ f(nome, tipo_do_campo, rótulo, required:, options:) ], defaults: {}`
+   e `rules(node)` (mensagens além do tipo de cada campo).
+2. O que o tipo faz:
+   - **gatilho**: `fires_on_change?(t, valor, anterior)` e `holds?(t, valor)`
+     (valor de ponto), ou `clock` = true + `due?(t, site, hora_local)` +
+     `title(t)` (relógio, a cada minuto). Evento próprio (alerta, webhook)
+     chama `Automation#fire!` de onde o evento acontece;
+   - **condição**: `check(ev, c)` → `[ok, rótulo, valores vistos, filhos]`
+     (`ev.ctx`, `ev.point!`, `ev.held?`, `ev.window?`, `ev.check`);
+   - **ação**: `call(engine, path, node)` → `[título, resultado, detalhe,
+     checks]` ou `[:halt]`/`[:skip]`; `compile` só se tiver saltos; e
+     `commanded_point_ids(node, site, seen)` se comandar ponto (papel x risco).
+3. O nome da classe em `PLUGINS` do registro (a ordem é a do editor).
+4. Spec (veja `spec/services/f8f_spec.rb`: um tipo novo registrado por
+   `stub_const` roda sem mudar o motor).
+
+Tipo de **campo** novo (`:script`, `:scene`...) é a exceção: entra no
+`Validator#field`, no `Editor#cast` e na partial `web/automations/_field`.
 
 ## Formato
 
@@ -56,6 +87,7 @@ uma com o valor visto (`agora: Desligado`).
 |---|---|---|
 | `command` | `point`, `command`, `value?` | comando pelo `Points::Command` (papel x risco, fila, rastreio); a execução vai em `commands.automation_run_id` |
 | `scene` | `scene` | aciona a cena |
+| `script` | `script`, `fields?` | executa o script com os campos (`docs/scripts.md`); execução própria, laço barrado |
 | `notify` | `title`, `message?`, `channels?` (`in_app`, `push`, `alexa:<id do ponto speaker>`; padrão in_app e push) | `Notifier.deliver!` para dono e administradores, texto Liquid |
 | `wait` | `for` **ou** `expr` (segundos) | espera (job agendado; sobrevive a reinício) |
 | `wait_for` | `conditions`, `timeout`, `continue_on_timeout?` (padrão `true`) | espera as condições valerem; a mudança de ponto retoma na hora |
@@ -186,6 +218,23 @@ depois de mexer na luz" do HA vira o `for` em cada luz; o
 **Cena da cozinha aciona o portão** (ESQUEMA-V1 §5): `state
 cozinha.switch_cena to true` → `command garagem.portao_eletronico pulse` +
 `command cozinha.switch_cena off` (o pulso de 3 s é o `pulse_ms` do ponto).
+
+## Tela (F8f)
+
+Seção **Automações e cenas** do local, com as abas Automações · Cenas ·
+Scripts · Blueprints · Regras simples (agendas, espelhamentos, avisos e
+alertas da F4; `/locais/:id/automacao` redireciona para
+`/locais/:id/regras`). A lista de automações tem busca, filtros (situação,
+área, rótulo), última execução, switch de ligar e ações em massa (ligar,
+desligar, excluir as marcadas). Rótulos = `Tag`/`Tagging` (campo "Rótulos"
+em "Nome e modo").
+
+**Cenas**: "Capturar estado agora" lê o valor atual dos pontos escolhidos e
+vira as linhas da cena (comando que repõe o valor: on/off, set, select), sem
+comandar nada; cada linha é ajustável. O modo ao vivo (caixa "aplicar ao
+salvar") vem desligado: editar não mexe na casa. Acionar: lista, painel
+(`scene_bar`), ação `scene` e `POST /api/v1/scenes/:id/activate` (chave:
+`command`).
 
 ## API
 

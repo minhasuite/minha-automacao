@@ -36,7 +36,10 @@ varredura e adoção; Tuya/Smart Life por QR, Xiaomi, Alexa, DVR Hikvision,
 MQTT/Zigbee2MQTT, importar do HA) e a lista de dispositivos do local
 (`docs/integracoes.md`) + **F8d**: Configurações, pessoas, chaves e visões
 dos painéis + **F8e**: helpers como plugins (`HelperTypes`, aba "Helpers"
-do local; `docs/helpers.md`).
+do local; `docs/helpers.md`) + **F8f**: gatilhos, condições e ações da DSL
+como plugins, seção "Automações e cenas" (Automações · Cenas · Scripts ·
+Blueprints · Regras simples), scripts com campos, cenas com captura e
+blueprints com importação do HA (`docs/scripts.md`, `docs/blueprints.md`).
 
 ## Rodar
 
@@ -163,9 +166,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   ao quadro. Painel padrão da pessoa em `users.dashboard_prefs`.
 - **Automações da DSL (F6)**: `definition` = publicada (roda), `draft` =
   rascunho do editor (pode ficar incompleto; a DSL é validada na
-  publicação). Tipos e campos numa tabela só (`Automations::Dsl`): tipo novo =
-  entrada lá + `act_<tipo>`/`cond_<tipo>` no motor (o editor e a validação
-  saem da tabela). Ações viram programa plano (`Engine#compile`); espera grava
+  publicação). Ações viram programa plano (`Engine#compile`); espera grava
   `pc`/variáveis em `automation_runs.state` e agenda `AutomationResumeJob`
   com `seq` (job velho não retoma). Gatilhos de ponto vêm do
   `Automations.on_change` (mesma regra de "valor que voltou com a conexão não
@@ -174,6 +175,35 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   própria automação ou corrente > 3 = "laço evitado". Comando sempre por
   `Points::Command` (`run:`), nunca direto no driver. Notificação `kind:
   "automacao"`. No Dell nenhuma automação ativa sobre aparelho real até a F10.
+- **Gatilho, condição ou ação nova (F8f)**: cada tipo é um plugin
+  (`Automations::Block`) registrado em `Automations::TriggerTypes::PLUGINS`,
+  `ConditionTypes::PLUGINS` ou `ActionTypes::PLUGINS`; **nada de `case` por
+  tipo** no motor, no disparo, na validação ou no editor (eles perguntam ao
+  plugin). Tipo novo = classe (`describe key:, label:, fields:, defaults:`,
+  `rules`, e `fires_on_change?`/`holds?`/`clock`+`due?` no gatilho,
+  `check(ev, c)` na condição, `call(engine, path, node)` [+ `compile`,
+  `commanded_point_ids`] na ação) + nome em `PLUGINS` + spec. Passo a passo
+  em `docs/automacoes.md`. Tipo de campo novo é que mexe no `Validator`, no
+  `Editor#cast` e em `web/automations/_field`.
+- **Scripts (F8f)**: `Automation` de `kind: "script"` (`site.scripts`;
+  `site.automations` só traz `kind: "automation"`): só ações, `fields`
+  (campos tipados; `$nome` = ponto do campo), mesmas versões/modos/trace.
+  Cada script tem um ponto de capacidade `script` (comando `run`) no
+  dispositivo virtual "Scripts" (`Scripts`, fora da lista de dispositivos):
+  é o botão do painel e o que a Alexa (F9) vai expor. Ação `script` chama
+  com campos (execução própria, `cause_run`, laço barrado). API
+  `/api/v1/scripts` (`run` exige o papel do risco dos pontos do script e dos
+  campos; chave com `command`).
+- **Blueprints (F8f)**: `Blueprint` (inputs tipados + DSL com
+  `{"!input": k}`); prontos em `config/blueprints/*.json`
+  (`Blueprints.sync_builtin!`), importados do HA por
+  `Blueprints::HaImport` (o que não converte vai para `unsupported` e
+  aparece na tela). Mudar inputs/definition/mode sobe a versão e refaz só o
+  **rascunho** das automações ligadas (aviso no editor). Criar por blueprint
+  com ponto crítico fica no rascunho.
+- **Cenas (F8f)**: "Capturar estado agora" (`Scene.capture`) só lê; modo ao
+  vivo (aplicar ao salvar) desligado por padrão. Nunca acione cena real de
+  teste.
 - **MQTT (F8)**: `Drivers::Mqtt` (endereço do ponto `{topic, json_path,
   command_topic, payload_on, payload_off}`; número com `scale`/`offset` via
   `Point#from_raw`/`to_raw`) e `Mqtt::Listener` no worker (só com `MQTT_URL`;
