@@ -38,6 +38,7 @@ module AutomationsHelper
     when :script then Automation.find_by(id: v)&.name || "script removido"
     when :script_fields then v.map { |k, x| "#{k} = #{x}" }.join(", ")
     when :alert_rule then AlertRule.find_by(id: v)&.name || "regra removida"
+    when :secret then "guardado"
     else v.to_s.truncate(80)
     end
   end

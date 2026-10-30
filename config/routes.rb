@@ -124,6 +124,7 @@ Rails.application.routes.draw do
     # integração e Sistema; mais a conta de quem está logado.
     get "configuracoes", to: "settings#show", as: :settings
     get "configuracoes/sistema", to: "settings#system", as: :settings_system
+    patch "configuracoes/sistema", to: "settings#update_system"
     get "configuracoes/conta", to: "settings#account", as: :settings_account
     patch "configuracoes/conta", to: "settings#update_account"
     delete "configuracoes/conta", to: "settings#destroy_account"

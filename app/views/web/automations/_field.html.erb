@@ -72,6 +72,8 @@
       <%= time_field_tag name, v, class: "ss-input", id: id %>
     <% elsif case_kind == :template %>
       <%= text_area_tag name, v, class: "ss-input", id: id, rows: 2, maxlength: 500, placeholder: "Texto com {{ trigger.point }}, {{ points[\"chave\"].text }}..." %>
+    <% elsif case_kind == :secret %>
+      <%= password_field_tag name, nil, class: "ss-input", id: id, maxlength: 500, autocomplete: "new-password", placeholder: (v ? "Guardado (cifrado). Vazio = mantém" : "Token, senha...") %>
     <% elsif case_kind == :expr %>
       <%= text_field_tag name, v, class: "ss-input num text-sm", id: id, maxlength: 500, spellcheck: false, placeholder: "sala.temperatura > 28 and hour >= 22" %>
     <% elsif case_kind == :number %>

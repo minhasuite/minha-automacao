@@ -95,13 +95,27 @@ module Automations
         s.fields.each do |fd|
           next unless node.key?(fd.name)
 
-          if fd.kind.in?(%i[point writable_point]) && (point = by_ref[node[fd.name].to_s])
+          if fd.kind == :secret && node[fd.name].is_a?(String)
+            node[fd.name] = encrypt_secret(node[fd.name])
+          elsif fd.kind.in?(%i[point writable_point]) && (point = by_ref[node[fd.name].to_s])
             node[fd.name] = point.id
           elsif fd.kind == :value && point && node[fd.name].is_a?(String)
             node[fd.name] = point.cast(node[fd.name])
           end
         end
       end
+    end
+
+    # Campo `:secret` (F9): texto em claro vira {"enc" => cifrado} ao salvar
+    # (Active Record Encryption); só a ação lê de volta.
+    def encrypt_secret(plain) = { "enc" => ActiveRecord::Encryption.encryptor.encrypt(plain) }
+
+    def decrypt_secret(value)
+      return value if value.nil? || value.is_a?(String)
+
+      ActiveRecord::Encryption.encryptor.decrypt(value["enc"].to_s)
+    rescue ActiveRecord::Encryption::Errors::Base
+      nil
     end
 
     # Para o JSON avançado: UUID → key (mais legível).
@@ -229,6 +243,7 @@ module Automations
         when :select then "opção inválida" unless fd.options.key?(v)
         when :bool then "precisa ser verdadeiro ou falso" unless [ true, false ].include?(v)
         when :text then "texto longo demais" unless v.is_a?(String) && v.size <= 500
+        when :secret then "segredo inválido" unless (v.is_a?(String) && v.size <= 500) || (v.is_a?(Hash) && v["enc"].is_a?(String))
         when :var then "nome de variável inválido (letras minúsculas, números e _)" unless v.is_a?(String) && VAR.match?(v)
         when :expr then expr_error(v)
         when :template then template_error(v)

@@ -10,7 +10,7 @@ module Automations
   module ActionTypes
     extend Block::Registry
 
-    PLUGINS = %w[CommandAction SceneAction ScriptAction NotifyAction WaitAction WaitForAction IfAction ChooseAction RepeatAction
+    PLUGINS = %w[CommandAction SceneAction ScriptAction NotifyAction HttpAction WaitAction WaitForAction IfAction ChooseAction RepeatAction
                  SetAction ConditionAction StopAction].freeze
 
     class Base < Block

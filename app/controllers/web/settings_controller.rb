@@ -4,7 +4,7 @@ module Web
   # externo); mais "Minha conta". Sem dados de empresa na tela: o tenant
   # continua por dentro (acts_as_tenant).
   class SettingsController < ApplicationController
-    before_action :require_owner!, only: :wipe
+    before_action :require_owner!, only: %i[wipe update_system]
 
     def show = redirect_to(settings_dashboards_path)
 
@@ -20,6 +20,12 @@ module Web
     def system
       Licencas::Sync.throttled(current_user.tenant)
       @billing = Billing::Status.call(current_user.tenant, current_user)
+    end
+
+    # Saída HTTP (ação "Chamar HTTP", agenda ICS): endereços internos liberados.
+    def update_system
+      current_user.tenant.update!(http_allow_text: params[:http_allow])
+      redirect_to settings_system_path, notice: "Endereços liberados salvos."
     end
 
     def account; end

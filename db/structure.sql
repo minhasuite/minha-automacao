@@ -1381,7 +1381,8 @@ CREATE TABLE public.tenants (
     plan_provider character varying(20),
     plan_expires_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    settings jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 
@@ -3876,6 +3877,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261031050001'),
 ('20261031000001'),
 ('20261030300001'),
 ('20261030200001'),

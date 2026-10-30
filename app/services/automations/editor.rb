@@ -36,6 +36,7 @@ module Automations
       point = @site.points.find_by(id: node["point"]) if node["point"]
       spec.fields.each do |fd|
         next if Dsl.list_kind?(fd.kind) || !form.key?(fd.name)
+        next if fd.kind == :secret && form[fd.name].blank? # vazio = mantém o guardado
 
         value = fd.kind == :script_fields ? script_fields(form[fd.name], node) : cast(fd, form[fd.name], point)
         point = @site.points.find_by(id: value) if fd.kind.in?(%i[point writable_point])

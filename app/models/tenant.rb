@@ -24,4 +24,11 @@ class Tenant < ApplicationRecord
 
   def effective_plan = Plans.normalize(plan).to_sym
   def timezone = TIMEZONE
+
+  # Endereços internos liberados para a saída HTTP (SafeHttp): host ou CIDR.
+  def http_allow = Array(settings["http_allow"])
+  def http_allow_text = http_allow.join("\n")
+  def http_allow_text=(text)
+    self.settings = settings.merge("http_allow" => text.to_s.split(/[\s,]+/).map(&:strip).compact_blank.uniq.first(50))
+  end
 end

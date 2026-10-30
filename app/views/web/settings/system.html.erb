@@ -23,6 +23,20 @@
   <p class="text-sm text-muted mt-3">O acesso de fora de casa passa por um túnel seguro (Cloudflare) configurado no servidor; nenhuma porta do roteador fica aberta. O app do celular usa o mesmo endereço público.</p>
 </section>
 
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="http-t">
+  <h2 id="http-t">Saída HTTP</h2>
+  <p class="text-sm text-muted mt-1">A ação "Chamar HTTP" e as agendas por link só falam com endereços da internet. Para chamar um sistema da rede de casa, libere o endereço aqui: um por linha, nome exato ou faixa (<code>192.168.68.0/24</code>).</p>
+  <% if owner %>
+    <%= form_with url: settings_system_path, method: :patch, class: "mt-3 grid gap-2 max-w-xl" do %>
+      <%= label_tag :http_allow, "Endereços internos liberados", class: "ss-label" %>
+      <%= text_area_tag :http_allow, current_user.tenant.http_allow_text, rows: 3, class: "ss-input num", placeholder: "192.168.68.10\nmeu-gestor.local" %>
+      <div><%= submit_tag "Salvar", class: "ss-btn ss-btn-primary", name: nil %></div>
+    <% end %>
+  <% else %>
+    <p class="text-sm mt-2"><%= current_user.tenant.http_allow.presence&.join(", ") || "Nenhum endereço interno liberado." %></p>
+  <% end %>
+</section>
+
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="plan-t">
   <h2 id="plan-t">Plano</h2>
   <% b = @billing %>
