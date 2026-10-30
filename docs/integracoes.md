@@ -83,6 +83,19 @@ ponto]}`, guardada cifrada em `integrations.inventory`.
   `Go2rtcSyncJob` põe as câmeras no go2rtc. ONVIF fica para depois.
 - **MQTT / Zigbee2MQTT**: sem conta; o card liga os aparelhos `mqtt` do local
   (a descoberta continua no `Mqtt::Z2m`).
+- **Google Agenda / ICS** (F9, `CalendarPlugin`, `Calendars`): modo **link
+  iCal** (o "endereço secreto no formato iCal" do Google ou qualquer .ics;
+  links cifrados nas credenciais, baixados pelo `SafeHttp`) ou modo **conta
+  Google** (OAuth só leitura, `Calendars::Google`; aparece só com
+  `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET`; URI de retorno a cadastrar no
+  Google Cloud: `https://<host>/integracoes/oauth/retorno`). Um ponto
+  `calendar` por agenda no dispositivo virtual `calendar:<integração>`: eventos
+  de ontem a +31 dias em `address.events`, valor = evento de agora ou o
+  próximo (`{summary, start, end, all_day, location, now}`), refeito a cada
+  minuto por `Integrations.tick` (RunSchedulesJob). Leitura a cada 15 min
+  (`poll_s`). Gatilho `calendar` e condição `calendar` da DSL. O retorno OAuth
+  (`/integracoes/oauth/retorno`, `state` assinado com o id da integração) é
+  genérico: plugin novo com OAuth implementa `oauth_callback`.
 - **Importar do Home Assistant**: arquivo `core.config_entries`; entram as
   entradas do LocalTuya (`Tuya::Import`, idempotente). O resto do arquivo é
   descartado.

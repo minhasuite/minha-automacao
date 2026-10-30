@@ -19,6 +19,7 @@ x-app-env: &app-env
   APP_HOST: ${MINHA_AUTOMACAO_APP_HOST:-minhaautomacao.minhasuite.com}
   # Login Google: client WEB (o app manda o id_token emitido para ele).
   GOOGLE_CLIENT_ID: ${MINHA_AUTOMACAO_GOOGLE_CLIENT_ID:-}
+  GOOGLE_CLIENT_SECRET: ${MINHA_AUTOMACAO_GOOGLE_CLIENT_SECRET:-}
   # meulog (telemetria). Vazio = desligado. A CONTA vai no caminho da URL.
   MEULOG_URL: ${MINHA_AUTOMACAO_MEULOG_URL:-}
   MEULOG_TOKEN: ${MINHA_AUTOMACAO_MEULOG_TOKEN:-}

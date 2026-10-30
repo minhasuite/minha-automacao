@@ -41,7 +41,12 @@ como plugins, seção "Automações e cenas" (Automações · Cenas · Scripts �
 Blueprints · Regras simples), scripts com campos, cenas com captura e
 blueprints com importação do HA (`docs/scripts.md`, `docs/blueprints.md`) +
 **F8g**: aplicativos (Configurações → Aplicativos, loja, catálogo em
-`config/apps/*.yml` e o supervisor com o socket do Docker; `docs/aplicativos.md`).
+`config/apps/*.yml` e o supervisor com o socket do Docker; `docs/aplicativos.md`) +
+**F9**: widget `energy` "Consumo e custo", Alexa Smart Home (OAuth + diretivas
+v3 + "Expor para a Alexa"; `docs/alexa-skill.md`), Google Agenda / ICS como
+plugin de integração e a ação "Chamar HTTP" com `SafeHttp`
+(`docs/api-integracoes.md`). Nada disso é módulo da casa: widget, plugin de
+integração, plugin de gatilho/condição/ação e registro de interfaces.
 
 ## Rodar
 
@@ -303,6 +308,29 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `AuditEvent` `app.<ação>`. "Abrir interface" redireciona para a porta do app
   na rede de casa (sem proxy: websocket). Sem `SUPERVISOR_URL` (VPS) só o
   catálogo.
+- **Saída HTTP (F9)**: todo pedido para endereço digitado pelo usuário passa
+  por `SafeHttp` (IP interno bloqueado, conexão presa ao IP checado, redirect
+  rechecado). Liberação por instalação em `tenants.settings["http_allow"]`
+  (Configurações → Sistema). Nunca use `Net::HTTP` direto com URL do usuário.
+- **Ação `http` (F9)**: campo `:secret` cifrado na DSL (`{"enc" => …}`),
+  `{{ secret }}` só na montagem dos textos; trace mostra só o host.
+- **Energia (F9)**: é só o widget `energy` (`Dashboards::Energy`, rollups de
+  hora + valor atual), sem tabela nem tela própria. Tarifa = número ou ponto.
+- **Agenda (F9)**: plugin `calendar` (`Integrations::CalendarPlugin`,
+  `Calendars`): ponto `calendar` por agenda com `address.events`; o relógio
+  das integrações é `Integrations.tick` (plugin com `tick(now)`), chamado pelo
+  RunSchedulesJob antes dos gatilhos. OAuth de plugin: `oauth_callback` +
+  `/integracoes/oauth/retorno` (state assinado). Modo Google só com
+  `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`.
+- **Alexa Smart Home (F9)**: o vínculo é um `ApiToken` com `client: "alexa"` e
+  `site_id`; o código de autorização é o próprio registro antes do primeiro
+  uso (5 min; a rotação o consome). `ApiToken.find_by_access` só aceita
+  `client: nil` (app) e `find_alexa` só o da Alexa. Cliente OAuth da
+  instalação em `tenants.settings["alexa"]` (segredo só em digest). Interface
+  nova = classe em `Alexa::SmartHome::Interfaces::PLUGINS` (`applies?`,
+  `capability`, `properties`, `handle`). Exposição: `points/scenes.alexa_exposed`
+  (padrão falso) e `alexa_name`; crítico só com `alexa_risk_confirmed`. No Dell
+  nada fica exposto: teste com token temporário e revogue.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

@@ -87,6 +87,7 @@ ou `key` do ponto.
 | `alerts` | — | alertas abertos com "Ciente" |
 | `camera` | `bind` (ponto `stream` de dispositivo `go2rtc`), `live` (padrão true), `snapshot_interval` (2–300 s, padrão 10) | quadro periódico e "Ao vivo" (WebRTC); sem conexão, o aviso no lugar da imagem |
 | `vacuum` | `bind` (ponto `vacuum` de dispositivo `xiaomi_miot`) | estado, bateria, aviso de erro, Limpar a casa/Pausar/Parar/Voltar à base, cômodos do mapa em pílulas + ajustes (modo, potência, água, caminho, vezes) e "Limpar selecionados" (`clean_rooms`), base (lavar, secar, esvaziar) e peças com barra; os irmãos do aparelho entram pelo `address.role` |
+| `energy` | `binds` (pontos kWh/Wh acumulados ou W/kW, somados), `period` (`today`/`week`/`month`/`cycle`), `cycle_day` (1–28), `tariff` (R$/kWh) **ou** `tariff_point` (ponto, ex. helper Número), `goal` (kWh), `compare` | "Consumo e custo" (F9): consumo, custo, projeção linear até o fim do período, meta, comparação com o mesmo trecho do período anterior e barras por hora (hoje) ou dia, pelos rollups de hora (`Dashboards::Energy`) |
 | `heading` | `title` | título |
 | `markdown` | `text` | texto puro (sem Liquid por enquanto) |
 
@@ -95,7 +96,7 @@ ou `key` do ponto.
 `tag`, `quality`. Ponto oculto ou desativado nunca entra.
 
 Ficam para depois (driver ainda não existe ou v1.1): `vacuum`,
-`energy`, `timeline`, `health`, `calendar`, `select`/`slider`/`button`/`gate`
+`timeline`, `health`, `calendar`, `select`/`slider`/`button`/`gate`
 como tipos próprios (hoje cobertos pelo `tile`) e os da indústria.
 
 Cada ponto do `points` resolvido leva também `icon`, `helper`, `commands`
@@ -112,7 +113,9 @@ A definição publicada (ou o rascunho com `?draft=1`, para quem edita) com:
 - `data` por tipo: `tile`/`group`/`chart`/`camera` → `point_ids`, `missing`; `vacuum` → `point_ids`,
   `rooms`, `actions`, `detail`, `battery`, `fault`, `settings` ({papel → id}), `parts`; `stat` →
   `value`, `unit`, `text`, `point_ids`; `gauge` → `min`, `max`, `ratio`;
-  `query_list` → `point_ids`, `count`; `area_card` → `area`, `view_id`, `on`,
+  `query_list` → `point_ids`, `count`; `energy` → `kwh`, `cost`, `projection_kwh`,
+  `projection_cost`, `tariff`, `goal`, `goal_ratio`, `previous_kwh`, `delta_pct`, `bars`
+  ([{at, label, kwh}]), `period_label`, `point_ids`, `missing`; `area_card` → `area`, `view_id`, `on`,
   `open`, `motion`, `power`, `unavailable`, `total`; `scene_bar` → `scenes`
   (`can_activate`, `confirm`); `alerts` → `alerts` (`can_ack`);
 - `deps`: ids dos pontos cuja mudança muda o widget (o tempo real usa);

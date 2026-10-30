@@ -39,6 +39,9 @@ motor, no disparo, na validação ou no editor: eles perguntam ao plugin.
 
 Tipo de **campo** novo (`:script`, `:scene`...) é a exceção: entra no
 `Validator#field`, no `Editor#cast` e na partial `web/automations/_field`.
+O `:secret` (F9) guarda `{"enc" => …}` (Active Record Encryption) ao salvar
+(`Dsl.normalize`); vazio no editor mantém o guardado; só a ação lê de volta
+(`Dsl.decrypt_secret`).
 
 ## Formato
 
@@ -60,6 +63,7 @@ sol. **Dias**: 0 = domingo … 6 = sábado (sem `days` = todos).
 | `numeric` | `point`, `above?`, `below?`, `for?` | o valor **entra** na faixa (não repete enquanto continua nela) |
 | `time` | `at` (HH:MM) **ou** `every` (minutos inteiros, 1 min a 24 h), `days?` | no minuto; `every: "10m"` = :00, :10, :20… |
 | `sun` | `event` (`sunrise`/`sunset`), `offset?`, `days?` | nascer/pôr do sol do local (precisa de latitude/longitude) |
+| `calendar` | `point` (agenda), `event` (`start`/`end`), `contains?`, `offset?` (`-15m` = antes) | evento da agenda começou/terminou (F9; relógio, a cada minuto) |
 | `alert` | `rule` (AlertRule), `on` (`open`/`ack`/`resolve`) | o alerta abriu, alguém marcou ciente ou fechou |
 | `webhook` | — | `POST /api/v1/hooks/automations/:token` (corpo em `trigger.data`) |
 | `manual` | — | só pelo "Executar agora" (que sempre existe) |
@@ -75,6 +79,7 @@ dispara, como nas primitivas.
 | `numeric` | `point`, `above?`, `below?` | o valor está na faixa |
 | `time` | `after?`, `before?`, `days?` | na janela (pode virar a meia-noite: 18:00 → 05:00) |
 | `sun` | `after?`, `before?` (`sunrise`/`sunset`), `after_offset?`, `before_offset?` | depois/antes do sol (depois do pôr e antes do nascer = noite) |
+| `calendar` | `point` (agenda), `contains?` | há evento agora na agenda (F9) |
 | `expr` | `expr` | a expressão dá verdadeiro (ou número ≠ 0) |
 | `and` / `or` / `not` | `conditions` | todas / alguma / nenhuma |
 
@@ -89,6 +94,7 @@ uma com o valor visto (`agora: Desligado`).
 | `scene` | `scene` | aciona a cena |
 | `script` | `script`, `fields?` | executa o script com os campos (`docs/scripts.md`); execução própria, laço barrado |
 | `notify` | `title`, `message?`, `channels?` (`in_app`, `push`, `alexa:<id do ponto speaker>`; padrão in_app e push) | `Notifier.deliver!` para dono e administradores, texto Liquid |
+| `http` | `method`, `url`, `headers?`, `secret?` (cifrado, `{{ secret }}`), `body?`, `timeout?` | chama outro sistema pelo `SafeHttp` (sem IP interno; `docs/api-integracoes.md`); resposta em `http_status`/`http_body` (F9) |
 | `wait` | `for` **ou** `expr` (segundos) | espera (job agendado; sobrevive a reinício) |
 | `wait_for` | `conditions`, `timeout`, `continue_on_timeout?` (padrão `true`) | espera as condições valerem; a mudança de ponto retoma na hora |
 | `if` | `conditions`, `then`, `else?` | ramo |
