@@ -4,7 +4,8 @@
              [ "Chaves de integração", api_keys_path, "link", :api_keys, current_user.owner? ],
              [ "Aplicativos", apps_path, "cube", :apps, current_user.owner? ],
              [ "Sistema", settings_system_path, "cog", :system, true ],
-             [ "Minha conta", settings_account_path, "user-group", :account, true ] ] %>
+             [ "Minha conta", settings_account_path, "user-group", :account, true ],
+             [ "Meus aparelhos", push_subscriptions_path, "bell", :push, true ] ] %>
 <div class="lg:grid lg:grid-cols-[13rem_1fr] lg:gap-6 lg:items-start">
   <nav class="ss-subnav" aria-label="Seções das configurações">
     <% items.each do |label, path, ico, key, show| %>

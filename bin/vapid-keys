@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Gera o par VAPID do Web Push (PWA, Lote 1) e grava no arquivo de ambiente,
+# só se ainda não houver: VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY (P-256,
+# base64url). A chave privada nunca aparece na tela nem vai para o repo.
+# Trocar as chaves invalida todas as inscrições (cada aparelho inscreve de novo).
+#
+#   bin/vapid-keys [arquivo]          # padrão: .env
+#   PREFIX=MINHA_AUTOMACAO_ bin/vapid-keys /opt/minha-automacao/.env   # VPS
+set -euo pipefail
+
+FILE="${1:-.env}"
+P="${PREFIX:-}"
+touch "$FILE" && chmod 600 "$FILE"
+if grep -q "^${P}VAPID_PRIVATE_KEY=." "$FILE"; then
+  echo "VAPID já existe em $FILE (nada mudou)"
+  exit 0
+fi
+
+b64url() { base64 -w0 | tr '+/' '-_' | tr -d '='; }
+pem=$(openssl ecparam -name prime256v1 -genkey -noout 2>/dev/null)
+priv=$(printf '%s\n' "$pem" | openssl ec -outform DER 2>/dev/null | tail -c +8 | head -c 32 | b64url)
+pub=$(printf '%s\n' "$pem" | openssl ec -pubout -outform DER 2>/dev/null | tail -c 65 | b64url)
+[ "${#priv}" -eq 43 ] && [ "${#pub}" -eq 87 ] || { echo "falha ao gerar as chaves" >&2; exit 1; }
+
+sed -i "/^${P}VAPID_PUBLIC_KEY=/d;/^${P}VAPID_PRIVATE_KEY=/d" "$FILE"
+{ echo "${P}VAPID_PUBLIC_KEY=$pub"; echo "${P}VAPID_PRIVATE_KEY=$priv"; } >> "$FILE"
+echo "VAPID gravado em $FILE (pública: ${pub:0:12}...)"

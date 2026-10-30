@@ -5,14 +5,33 @@
   <div class="ss-card divide-y divide-line overflow-hidden">
     <% @notifications.each do |n| %>
       <% ico, tone = ApplicationHelper::NOTIFICATION_KINDS.fetch(n.kind, [ "bell", "bg-field text-muted" ]) %>
-      <%= button_to read_notification_path(n), method: :patch, class: "w-full text-left px-4 py-3.5 bg-transparent border-0 cursor-pointer hover:bg-field flex items-start gap-3 #{'opacity-70' if n.read_at}", form_class: "block" do %>
-        <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= tone %>"><%= icon(ico, "size-5") %></span>
-        <span class="min-w-0 flex-1">
-          <span class="flex items-start justify-between gap-3"><span class="<%= n.read_at ? 'font-semibold' : 'font-bold' %> text-ink"><%= with_money(n.title) %></span>
-            <span class="shrink-0 text-xs text-muted flex items-center gap-1.5 mt-0.5"><%= l(n.created_at, format: :short) %><% unless n.read_at %><span class="size-2 rounded-full bg-accent" aria-label="não lida"></span><% end %></span></span>
-          <% if n.body.present? %><span class="block text-sm text-muted mt-0.5"><%= with_money(n.body) %></span><% end %>
-        </span>
-      <% end %>
+      <div id="<%= dom_id(n) %>" class="<%= 'opacity-70' if n.read_at && !n.actionable? %>">
+        <%= button_to read_notification_path(n), method: :patch, class: "w-full text-left px-4 py-3.5 bg-transparent border-0 cursor-pointer hover:bg-field flex items-start gap-3", form_class: "block" do %>
+          <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= tone %>"><%= icon(ico, "size-5") %></span>
+          <span class="min-w-0 flex-1">
+            <span class="flex items-start justify-between gap-3"><span class="<%= n.read_at ? 'font-semibold' : 'font-bold' %> text-ink break-words min-w-0"><%= with_money(n.title) %></span>
+              <span class="shrink-0 text-xs text-muted flex items-center gap-1.5 mt-0.5"><%= l(n.created_at, format: :short) %><% unless n.read_at %><span class="size-2 rounded-full bg-accent" aria-label="não lida"></span><% end %></span></span>
+            <% if n.body.present? %><span class="block text-sm text-muted mt-0.5 break-words"><%= with_money(n.body) %></span><% end %>
+          </span>
+        <% end %>
+        <% if n.image_url || n.actions.any? || n.open_url %>
+          <div class="px-4 pb-3.5 pl-[4.25rem] grid gap-2 min-w-0">
+            <% if n.image_url %><img src="<%= n.image_url %>" alt="Imagem do aviso" loading="lazy" class="rounded-xl max-h-56 w-auto max-w-full border border-line"><% end %>
+            <div class="flex flex-wrap items-center gap-2">
+              <% if n.actionable? %>
+                <% n.actions.each do |a| %>
+                  <%= button_to a["title"], respond_notification_path(n), method: :patch, params: { action_id: a["id"] }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { class: "contents" } %>
+                <% end %>
+              <% elsif n.response %>
+                <span class="ss-badge ss-badge-success"><%= icon("check", "size-3.5") %>Respondido: <%= n.response_title %> (<%= n.response["user"] %>)</span>
+              <% end %>
+              <% if n.open_url %>
+                <%= link_to n.open_url, class: "ss-btn ss-btn-ghost ss-btn-sm", **(n.open_url.start_with?("/") ? {} : { target: "_blank", rel: "noopener" }) do %><%= icon("external-link", "size-4") %>Abrir<% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
     <% end %>
   </div>
   <%= render "web/shared/pagination", pagy: @pagy %>

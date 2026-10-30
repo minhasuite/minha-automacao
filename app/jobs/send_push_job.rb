@@ -1,19 +1,13 @@
-# Push FCM de uma notificação: aparelhos da pessoa, ou dos administradores da empresa
-# quando a notificação não tem dono.
+# Push de uma notificação nos aparelhos de quem recebe, por todos os
+# transportes ligados (Push::TRANSPORTS: Web Push e FCM). Com `clear_tag`,
+# só apaga o aviso com aquela tag dos aparelhos de quem recebeu essa notificação.
 class SendPushJob < ApplicationJob
   queue_as :default
 
-  def perform(notification_id)
-    return unless Push::FcmService.configured?
-
+  def perform(notification_id, clear_tag: nil)
     notification = ActsAsTenant.without_tenant { Notification.find_by(id: notification_id) }
     return unless notification
 
-    users = notification.user_id ? User.where(id: notification.user_id) : User.where(tenant_id: notification.tenant_id, role: %w[owner admin])
-    DeviceToken.where(user: users).find_each do |device|
-      result = Push::FcmService.deliver(device.token, title: notification.title, body: notification.body.to_s,
-                                                      data: notification.data.merge("kind" => notification.kind, "notification_id" => notification.id))
-      device.destroy if result == :unregistered
-    end
+    clear_tag ? Push.clear(Push.recipients(notification), clear_tag) : Push.deliver(notification)
   end
 end

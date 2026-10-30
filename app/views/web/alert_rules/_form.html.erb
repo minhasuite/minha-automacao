@@ -12,7 +12,7 @@
   <fieldset class="md:col-span-3">
     <legend class="ss-label">Etapas (espera em minutos desde a etapa anterior; a primeira conta da abertura)</legend>
     <div class="grid gap-2">
-      <% steps = record.escalation.presence || [ { "wait_s" => 0, "channels" => Notifier::CHANNELS.keys } ] %>
+      <% steps = record.escalation.presence || [ { "wait_s" => 0, "channels" => Notifier.default_channels } ] %>
       <% (steps + Array.new([ 5 - steps.size, 1 ].max) { {} }).each_with_index do |s, i| %>
         <div class="flex flex-wrap items-center gap-3">
           <label class="text-sm text-muted w-16" for="step_<%= i %>">Etapa <%= i + 1 %></label>

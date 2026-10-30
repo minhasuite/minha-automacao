@@ -90,7 +90,7 @@ class AlertRule < ApplicationRecord
   private
 
   def tidy_escalation
-    self.escalation = [ { "wait_s" => 0, "channels" => Notifier::CHANNELS.keys } ] if escalation.blank?
+    self.escalation = [ { "wait_s" => 0, "channels" => Notifier.default_channels } ] if escalation.blank?
     self.escalation = escalation.map { |s| s.to_h.stringify_keys.slice("wait_s", "channels") }
   end
 

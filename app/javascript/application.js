@@ -97,3 +97,9 @@ document.addEventListener("focusout", (e) => {
   if (!isNaN(n)) e.target.value = n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 })
 document.addEventListener("turbo:load", () => document.querySelectorAll("[data-mask]:not([data-mask=money])").forEach(applyMask))
+
+// PWA (Lote 1): o service worker recebe o push e responde os botões do aviso.
+// Só em contexto seguro (https ou localhost): pelo http da rede de casa não registra.
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register("/service-worker.js", { scope: "/" }).catch(() => {})
+}

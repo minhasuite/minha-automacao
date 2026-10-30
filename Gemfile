@@ -70,3 +70,5 @@ gem "liquid", "~> 5.14"
 
 # Integrações (F8c): QR code do login da Tuya (SVG no servidor).
 gem "rqrcode", "~> 3.1"
+# Web Push (VAPID) para a PWA: canal "push" sem o app nativo (Lote 1).
+gem "web-push", "~> 3.1"

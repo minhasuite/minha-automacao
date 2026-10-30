@@ -17,6 +17,14 @@
   </div>
 </section>
 
+<section class="ss-card ss-card-pad mt-4 flex flex-wrap items-center justify-between gap-3" aria-labelledby="aparelhos-t">
+  <div class="min-w-0">
+    <h2 id="aparelhos-t">Meus aparelhos</h2>
+    <p class="text-sm text-muted mt-1">Receba os avisos no celular e no computador, mesmo com o app fechado.</p>
+  </div>
+  <%= link_to push_subscriptions_path, class: "ss-btn ss-btn-outline" do %><%= icon("bell", "size-4") %>Gerenciar aparelhos<% end %>
+</section>
+
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="excluir-t">
   <h2 id="excluir-t">Excluir minha conta</h2>
   <p class="text-sm text-muted mt-1">Sai da instalação. Se você é a última pessoa, a instalação inteira é apagada.</p>

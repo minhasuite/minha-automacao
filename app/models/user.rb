@@ -10,6 +10,7 @@ class User < ApplicationRecord
   has_many :api_tokens, dependent: :delete_all
   has_many :service_api_keys, dependent: :delete_all
   has_many :device_tokens, dependent: :delete_all
+  has_many :push_subscriptions, dependent: :delete_all
 
   ROLES = %w[owner admin member].freeze
   ROLE_LABELS = { "owner" => "Dono", "admin" => "Administrador", "member" => "Membro" }.freeze

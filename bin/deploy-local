@@ -46,6 +46,8 @@ gen MQTT_PASSWORD 24
 gen Z2M_FRONTEND_TOKEN 16
 gen SUPERVISOR_TOKEN 32
 REMOTE
+# Web Push (PWA): par VAPID gerado lá, uma vez só.
+"${SSH[@]}" bash -s "$DIR/.env" < bin/vapid-keys
 
 echo "==> subindo"
 "${SSH[@]}" bash -s "$DIR" "$IMAGE" <<'REMOTE'

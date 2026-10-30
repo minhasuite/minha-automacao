@@ -13,6 +13,13 @@ Rails.application.routes.draw do
 
   post "webhooks/google_play", to: "webhooks/google_play#create"
 
+  # PWA (Lote 1): manifesto, service worker e o que ele chama sem sessão (a
+  # resposta do botão com o token de uso único e a imagem por URL assinada).
+  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
+  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+  post "push/resposta", to: "push#respond", as: :push_respond
+  get "push/imagem", to: "push#image", as: :push_image
+
   # Alexa Smart Home (F9): diretivas repassadas pela Lambda e tokens do account linking.
   post "alexa/smart_home", to: "alexa_smart_home#smart_home"
   post "oauth/token", to: "alexa_smart_home#token"
@@ -36,6 +43,7 @@ Rails.application.routes.draw do
 
     resources :notifications, only: :index, path: "notificacoes" do
       patch :read, on: :member, path: "lida"
+      patch :respond, on: :member, path: "responder"
       patch :read_all, on: :collection, path: "todas-lidas"
     end
 
@@ -145,6 +153,10 @@ Rails.application.routes.draw do
     get "configuracoes/exportar", to: "settings#export", as: :settings_export
     post "configuracoes/zerar", to: "settings#wipe", as: :settings_wipe
     get "configuracoes/paineis", to: "settings#dashboards", as: :settings_dashboards
+    # Meus aparelhos (Lote 1): navegadores inscritos no Web Push.
+    resources :push_subscriptions, path: "configuracoes/aparelhos", only: %i[index create destroy] do
+      post :test, on: :collection, path: "teste"
+    end
     scope "configuracoes" do
       resources :people, path: "pessoas", only: %i[index show create update destroy] do
         post :toggle, on: :member, path: "ativar"

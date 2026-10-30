@@ -1,6 +1,7 @@
 # Manutenção diária do histórico: cria a partição do mês seguinte, apaga as
 # partições velhas, as leituras além do `retention_days` de cada ponto e os
-# comandos/eventos com mais de um ano e as execuções de automação velhas.
+# comandos/eventos com mais de um ano, as execuções de automação velhas e os
+# quadros de câmera dos avisos vencidos.
 class ReadingsMaintenanceJob < ApplicationJob
   queue_as :default
 
@@ -16,5 +17,6 @@ class ReadingsMaintenanceJob < ApplicationJob
       Event.where(at: ...(now - Event::RETENTION_DAYS.days)).delete_all
     end
     AutomationRun.prune!(now)
+    Notification.purge_old_images!(now)
   end
 end

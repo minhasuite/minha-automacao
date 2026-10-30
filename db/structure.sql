@@ -544,7 +544,9 @@ CREATE TABLE public.notifications (
     dedup_key character varying,
     read_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    responded_at timestamp(6) without time zone,
+    response jsonb
 );
 
 
@@ -631,6 +633,24 @@ CREATE TABLE public.points (
     helper character varying,
     alexa_exposed boolean DEFAULT false NOT NULL,
     alexa_name character varying
+);
+
+
+--
+-- Name: push_subscriptions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.push_subscriptions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    endpoint text NOT NULL,
+    p256dh_key character varying NOT NULL,
+    auth_key character varying NOT NULL,
+    name character varying,
+    user_agent character varying,
+    last_used_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -1779,6 +1799,14 @@ ALTER TABLE ONLY public.points
 
 
 --
+-- Name: push_subscriptions push_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.push_subscriptions
+    ADD CONSTRAINT push_subscriptions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: scenes scenes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2652,6 +2680,20 @@ CREATE INDEX index_points_on_tenant_id ON public.points USING btree (tenant_id);
 
 
 --
+-- Name: index_push_subscriptions_on_endpoint; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_push_subscriptions_on_endpoint ON public.push_subscriptions USING btree (endpoint);
+
+
+--
+-- Name: index_push_subscriptions_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_push_subscriptions_on_user_id ON public.push_subscriptions USING btree (user_id);
+
+
+--
 -- Name: index_reading_rollups_uniqueness; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3380,6 +3422,14 @@ ALTER TABLE ONLY public.blueprints
 
 
 --
+-- Name: push_subscriptions fk_rails_43d43720fc; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.push_subscriptions
+    ADD CONSTRAINT fk_rails_43d43720fc FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: events fk_rails_4b008cd1c8; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3906,6 +3956,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261031160001'),
 ('20261031050002'),
 ('20261031050001'),
 ('20261031000001'),
