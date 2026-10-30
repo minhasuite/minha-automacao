@@ -30,7 +30,8 @@ module Drivers
       return if a["username"].present? && d.credential.blank?
 
       auth = a["username"].present? ? "#{ERB::Util.url_encode(a['username'])}:#{ERB::Util.url_encode(d.credential)}@" : ""
-      "rtsp://#{auth}#{a['host']}:#{a['port'].presence || 554}#{point.address['path']}"
+      port = point.address["port"].presence || a["port"].presence || 554
+      "#{a['scheme'].presence || 'rtsp'}://#{auth}#{a['host']}:#{port}#{point.address['path']}"
     end
 
     def points = Point.joins(:device).includes(:device).where(capability: "stream", disabled: false, devices: { driver: "go2rtc", disabled: false })

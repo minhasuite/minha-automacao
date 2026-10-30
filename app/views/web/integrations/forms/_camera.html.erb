@@ -1,0 +1,27 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<% mode = s["mode"] || "rtsp" %>
+<% if integration.nil? %>
+  <fieldset class="grid gap-2">
+    <legend class="ss-label">Como achar o vídeo</legend>
+    <label class="ss-check"><%= f.radio_button :mode, "rtsp", checked: true %>Endereço RTSP <span class="text-muted text-sm">— qualquer câmera que tenha RTSP</span></label>
+    <label class="ss-check"><%= f.radio_button :mode, "onvif" %>ONVIF <span class="text-muted text-sm">— acha os perfis de vídeo e o sensor de movimento sozinho</span></label>
+  </fieldset>
+  <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "Câmera da garagem", maxlength: 80 %></div>
+<% end %>
+<div class="grid gap-4 md:grid-cols-2">
+  <% if integration.nil? || mode == "rtsp" %>
+    <div class="md:col-span-2">
+      <%= f.label :url, "Endereço RTSP#{' (modo RTSP)' if integration.nil?}", class: "ss-label" %>
+      <%= f.text_field :url, class: "ss-input font-mono text-sm", autocomplete: "off", spellcheck: false, value: nil,
+                       placeholder: integration ? "Deixe vazio para manter o endereço guardado" : "rtsp://192.168.0.20:554/stream2" %>
+    </div>
+  <% end %>
+  <% if integration.nil? || mode == "onvif" %>
+    <div><%= f.label :host, "IP da câmera#{' (modo ONVIF)' if integration.nil?}", class: "ss-label" %><%= f.text_field :host, class: "ss-input num", value: s["host"], placeholder: "192.168.0.20", inputmode: "decimal" %></div>
+    <div><%= f.label :onvif_port, "Porta ONVIF", class: "ss-label" %><%= f.number_field :onvif_port, class: "ss-input num", value: s["onvif_port"], placeholder: "80 (muitas usam 8000 ou 2020)" %></div>
+  <% end %>
+  <div><%= f.label :username, "Usuário", class: "ss-label" %><%= f.text_field :username, class: "ss-input", value: s["username"], autocomplete: "off" %></div>
+  <div><%= f.label :password, "Senha", class: "ss-label" %><%= f.password_field :password, class: "ss-input", autocomplete: "new-password", placeholder: (integration ? "deixe vazio para manter" : nil) %></div>
+</div>
+<p class="text-xs text-muted">Usuário e senha podem vir na própria URL (rtsp://usuario:senha@IP/...): o sistema separa e guarda a senha cifrada, nunca no endereço. Prefira o substream (menor) e câmeras com RTSP sobre TCP. Movimento só pelo ONVIF, quando a câmera tem eventos.</p>
