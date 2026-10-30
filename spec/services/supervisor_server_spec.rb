@@ -58,7 +58,9 @@ RSpec.describe Supervisor::App do
     expect(create[2]["Env"].join).not_to include("nunca")
     expect(req("POST", "/apps/uptime_kuma/install").first).to eq(409)
 
-    expect(req("POST", "/apps/uptime_kuma/stop").last.dig("data", "state")).to eq("exited")
+    docker.containers_by_id.values.last["State"]["Health"] = { "Status" => "unhealthy" }
+    stopped = req("POST", "/apps/uptime_kuma/stop").last["data"]
+    expect(stopped.values_at("state", "health")).to eq([ "exited", nil ])
     expect(req("POST", "/apps/uptime_kuma/start").last.dig("data", "state")).to eq("running")
     expect(req("POST", "/apps/uptime_kuma/restart").first).to eq(200)
     expect(req("POST", "/apps/uptime_kuma/kill").first).to eq(422)
@@ -133,6 +135,7 @@ RSpec.describe Supervisor::App do
   it "watchdog reinicia app sem saúde com política de reinício" do
     sick = docker.add(labels: { AppCatalog::LABEL => "node_red" }, health: "unhealthy", policy: "on-failure")
     docker.add(labels: { AppCatalog::LABEL => "esphome" }, health: "unhealthy", policy: "no")
+    docker.add(labels: { AppCatalog::LABEL => "frigate" }, health: "unhealthy", policy: "unless-stopped", state: "exited")
     app.watchdog!
     expect(docker.calls.map { |c| c[1] }).to eq([ "/containers/#{sick}/restart" ])
   end

@@ -13,7 +13,7 @@ class FakeDocker
   def add(labels:, state: "running", policy: "no", env: [], health: nil)
     id = "c#{@seq += 1}"
     @containers_by_id[id] = { "Id" => id, "Config" => { "Labels" => labels, "Env" => env },
-                              "State" => { "Status" => state, "Health" => (health && { "Status" => health }) }.compact,
+                              "State" => { "Status" => state, "Running" => state == "running", "Health" => (health && { "Status" => health }) }.compact,
                               "HostConfig" => { "RestartPolicy" => { "Name" => policy } } }
     id
   end
@@ -35,8 +35,8 @@ class FakeDocker
     in [ :post, "/containers/create" ]
       id = add(labels: body["Labels"], policy: body.dig("HostConfig", "RestartPolicy", "Name"), env: body["Env"], state: "created")
       [ 201, { "Id" => id } ]
-    in [ :post, %r{/containers/(\w+)/start} ] then @containers_by_id[$1]["State"]["Status"] = "running"
-    in [ :post, %r{/containers/(\w+)/stop} ] then @containers_by_id[$1]["State"]["Status"] = "exited"
+    in [ :post, %r{/containers/(\w+)/start} ] then @containers_by_id[$1]["State"].merge!("Status" => "running", "Running" => true)
+    in [ :post, %r{/containers/(\w+)/stop} ] then @containers_by_id[$1]["State"].merge!("Status" => "exited", "Running" => false)
     in [ :post, %r{/containers/(\w+)/update} ] then @containers_by_id[$1]["HostConfig"]["RestartPolicy"] = { "Name" => body[:RestartPolicy][:Name] }
     in [ :delete, %r{/containers/(\w+)} ] then @containers_by_id.delete($1)
     in [ :post, "/volumes/create" ] then @volumes[body[:Name]] = body[:Labels]

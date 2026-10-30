@@ -129,7 +129,9 @@ module Supervisor
     def watchdog!
       @docker.containers([ AppCatalog::LABEL ]).each do |c|
         info = @docker.inspect(c["Id"])
-        next unless info.dig("State", "Health", "Status") == "unhealthy" && info.dig("HostConfig", "RestartPolicy", "Name") != "no"
+        # Saúde só vale rodando: parado pelo usuário guarda o último "unhealthy".
+        next unless info.dig("State", "Running") && info.dig("State", "Health", "Status") == "unhealthy" &&
+                    info.dig("HostConfig", "RestartPolicy", "Name") != "no"
 
         Supervisor.log("watchdog: reiniciando #{info.dig('Config', 'Labels', AppCatalog::LABEL)}")
         @docker.call(:post, "/containers/#{c['Id']}/restart")
@@ -177,7 +179,7 @@ module Supervisor
       labels = c.dig("Config", "Labels") || {}
       policy = c.dig("HostConfig", "RestartPolicy", "Name").to_s
       running = c.dig("State", "Status") == "running"
-      out.merge(state: c.dig("State", "Status"), health: c.dig("State", "Health", "Status"), started_at: c.dig("State", "StartedAt"),
+      out.merge(state: c.dig("State", "Status"), health: (c.dig("State", "Health", "Status") if running), started_at: c.dig("State", "StartedAt"),
                 version: labels["minha-automacao.version"] || app.version,
                 options: (JSON.parse(labels["minha-automacao.options"]) rescue {}),
                 boot: %w[always unless-stopped].include?(policy), watchdog: policy != "no" && !policy.empty?,
