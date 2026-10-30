@@ -8,6 +8,7 @@ RSpec.describe Miio::Cloud do
   let(:ssecurity) { Base64.strict_encode64("s" * 16) }
   let(:integration) { site.integrations.create!(driver: "xiaomi", name: "Xiaomi", credentials: { "username" => "eu@x", "password" => "segredo", "region" => "us" }.to_json) }
   let(:token) { "0123456789abcdef0123456789abcdef" }
+  let(:lp) { "https://sgp.lp.account.xiaomi.com/lp/s?d=sgp&a=ANON&t=1" }
 
   around { |ex| ActsAsTenant.with_tenant(tenant) { ex.run } }
 
@@ -65,23 +66,65 @@ RSpec.describe Miio::Cloud do
     expect { described_class.new(integration).login }.to raise_error(described_class::Error, /não conferem/)
   end
 
-  it "login por QR: gera, espera e entra" do
-    stub_request(:get, /longPolling\/loginUrl/).to_return(account(qr: "https://account.xiaomi.com/qr.png", lp: "https://lp.xiaomi.com/poll", loginUrl: "https://x"))
+  # Respostas reais (anonimizadas) do account.xiaomi.com.
+  def stub_qr
+    stub_request(:get, /longPolling\/loginUrl/).to_return(account(
+      loginUrl: "https://account.xiaomi.com/longPolling/login?ticket=ANON&dc=sgp&sid=xiaomiio", qr: "https://account.xiaomi.com/qr.png",
+      qrTips: "Use o app Mi Home", lp: lp, sl: "https://account.xiaomi.com/longPolling/login?ticket=ANON", timeout: 300,
+      timeInterval: 300, code: 0, result: "ok", desc: "成功", description: "成功"
+    ))
     stub_request(:get, "https://account.xiaomi.com/qr.png").to_return(body: "PNG")
-    cloud = described_class.new(integration)
-    expect(cloud.qr_start).to eq("PNG")
-    stub_request(:get, "https://lp.xiaomi.com/poll").to_raise(Net::ReadTimeout).then
-                                                     .to_return(status: 404).then
-                                                     .to_return(account(ssecurity: ssecurity, userId: 7, location: "https://sts.api.io.mi.com/sts?d=1"))
+  end
+
+  it "login por QR: gera, espera numa requisição longa no worker e entra" do
+    stub_qr
+    expect { expect(described_class.new(integration).qr_start).to eq("PNG") }.to have_enqueued_job(XiaomiQrLoginJob).with(integration.id)
+    expect(integration.reload.secrets).to include("lp" => lp, "qr_until" => be_within(5).of(Time.now.to_i + 300))
+    expect(described_class.new(integration).qr_done?).to be false # a tela só lê o estado, não chama a Xiaomi
+
+    stub_request(:get, lp).to_return(account(psecurity: "ANON", nonce: 1, ssecurity: ssecurity, passToken: "ANON", userId: 7, cUserId: "ANON",
+                                             securityStatus: 0, location: "https://sts.api.io.mi.com/sts?d=1", code: 0, result: "ok"))
     stub_sts
-    expect(described_class.new(integration.reload).qr_poll).to be false
-    expect(described_class.new(integration.reload).qr_poll).to be false
-    expect(described_class.new(integration.reload).qr_poll).to be true
+    XiaomiQrLoginJob.wait(integration.id)
+    expect(WebMock).to have_requested(:get, lp).once
     expect(integration.reload.secrets).to include("user_id" => "7", "service_token" => "ST-1")
     expect(integration.secrets["lp"]).to be_nil
+    expect(integration.status).to eq("syncing")
+    expect(described_class.new(integration).qr_done?).to be true
+  end
+
+  it "QR vencido: lp repetido dá 403, ou a espera passa do prazo" do
+    stub_qr
+    described_class.new(integration).qr_start
+    stub_request(:get, lp).to_return(status: 403, body: "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"><html>403 Forbidden</html>")
+    XiaomiQrLoginJob.wait(integration.id)
+    expect(integration.reload.secrets["lp"]).to be_nil
+    expect { described_class.new(integration).qr_done? }.to raise_error(described_class::Error, "QR expirou, gere outro.")
+
+    stub_request(:get, lp).to_raise(Net::ReadTimeout)
+    described_class.new(integration).qr_start
+    XiaomiQrLoginJob.wait(integration.id)
+    expect { described_class.new(integration.reload).qr_done? }.to raise_error(described_class::Error, /expirou/)
+
+    # Worker caiu durante a espera: a tela vence o QR pelo prazo.
+    described_class.new(integration).qr_start
+    expect(described_class.new(integration.reload).qr_done?).to be false
+    travel 7.minutes do
+      expect { described_class.new(integration).qr_done? }.to raise_error(described_class::Error, /expirou/)
+    end
+
+    # Erro de um QR antigo não apaga o atual.
+    described_class.new(integration).qr_failed!("https://antigo", "QR expirou, gere outro.")
+    expect(integration.reload.secrets["lp"]).to eq(lp)
 
     stub_request(:get, /longPolling\/loginUrl/).to_return(account({}))
-    expect { cloud.qr_start }.to raise_error(described_class::Error, /QR/)
+    expect { described_class.new(integration).qr_start }.to raise_error(described_class::Error, /QR/)
+  end
+
+  it "o job solta a fila: a espera vai para uma thread" do
+    allow(XiaomiQrLoginJob).to receive(:wait)
+    XiaomiQrLoginJob.perform_now(integration.id).join
+    expect(XiaomiQrLoginJob).to have_received(:wait).with(integration.id)
   end
 
   it "lista casas, compartilhadas e aparelhos com token, IP e cômodo" do

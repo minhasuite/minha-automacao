@@ -15,6 +15,9 @@ export default class extends Controller {
       const r = await fetch(this.urlValue, { headers: { Accept: "application/json" } })
       const j = r.ok ? await r.json() : {}
       if (j.url) { clearInterval(this.timer); window.Turbo.visit(j.url) }
+      // {error}: para de perguntar e mostra (ex.: "QR expirou, gere outro.").
+      const status = this.element.querySelector("[role=status]")
+      if (j.error && status) { clearInterval(this.timer); status.textContent = j.error }
     } finally { this.busy = false }
   }
 }

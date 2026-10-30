@@ -125,10 +125,11 @@ RSpec.describe "Integrações e dispositivos do local (F8c)" do
     expect(response).to redirect_to("/integracoes/#{qr.id}/conectar?modo=qr")
     follow_redirect!
     expect(response.body).to include("Escaneie com o app Mi Home", "data:image/png;base64,#{Base64.strict_encode64('PNG')}")
-    stub_request(:get, "https://lp.x/p").to_raise(Net::ReadTimeout)
     get "/integracoes/#{qr.id}/estado"
     expect(response.parsed_body).to eq({})
+    expect(WebMock).not_to have_requested(:get, "https://lp.x/p") # a espera é do worker
     stub_request(:get, "https://lp.x/p").to_raise(SocketError)
+    XiaomiQrLoginJob.wait(qr.id)
     get "/integracoes/#{qr.id}/estado"
     expect(response.parsed_body["error"]).to include("Sem conexão")
   end

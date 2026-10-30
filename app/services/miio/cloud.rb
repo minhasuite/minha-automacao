@@ -19,7 +19,8 @@ module Miio
     QS = "%3Fsid%3Dxiaomiio%26_json%3Dtrue".freeze
     REGIONS = { "" => "Procurar em todas", "cn" => "China", "de" => "Europa", "us" => "Estados Unidos", "ru" => "Rússia",
                 "tw" => "Taiwan", "sg" => "Singapura", "in" => "Índia", "i2" => "Índia (i2)" }.freeze
-    AGENT = "Android-7.1.1-1.0.0-ONEPLUS A3010-136-ABCDEFGHIJKLM APP/xiaomi.smarthome APPV/62830".freeze
+    QR_EXPIRED = "QR expirou, gere outro.".freeze
+    AGENT ="Android-7.1.1-1.0.0-ONEPLUS A3010-136-ABCDEFGHIJKLM APP/xiaomi.smarthome APPV/62830".freeze
 
     def initialize(integration)
       @integration = integration
@@ -59,20 +60,39 @@ module Miio
       r = json(request(:get, "#{ACCOUNT}/longPolling/loginUrl?#{URI.encode_www_form(params)}"))
       raise Error, "A Xiaomi não gerou o QR code." if r["qr"].blank? || r["lp"].blank?
 
-      save!("lp" => r["lp"])
-      request(:get, r["qr"]).body
+      png = request(:get, r["qr"]).body
+      save!("lp" => r["lp"], "qr_until" => Time.now.to_i + r["timeout"].to_i.clamp(60, 600), "qr_error" => nil)
+      XiaomiQrLoginJob.perform_later(@integration.id)
+      png
     end
 
-    # true quando o app confirmou o QR; false enquanto espera.
-    def qr_poll(timeout: 5)
-      return false if @s["lp"].blank?
+    # Espera o app confirmar o QR (no worker, pelo XiaomiQrLoginJob). O `lp`
+    # vale UMA requisição: largar por timeout e repetir dá 403. Por isso é uma
+    # só, longa, até o QR vencer. :ok, ou Error QR_EXPIRED.
+    def qr_wait
+      lp = @s["lp"] or raise Error, QR_EXPIRED
+      res = request(:get, lp, timeout: [ @s["qr_until"].to_i - Time.now.to_i, 1 ].max + 15)
+      j = res.is_a?(Net::HTTPSuccess) ? json(res) : {}
+      raise Error, QR_EXPIRED if j["location"].blank? || j["ssecurity"].blank?
 
-      res = request(:get, @s["lp"], timeout: timeout)
-      return false unless res.is_a?(Net::HTTPSuccess)
-
-      finish(json(res)) == :ok
+      finish(j)
     rescue Net::ReadTimeout
+      raise Error, QR_EXPIRED
+    end
+
+    # Para a tela (a cada 3 s, só lê o estado): true quando entrou, false
+    # esperando; Error quando o QR venceu ou falhou.
+    def qr_done?
+      raise Error, @s["qr_error"] if @s["qr_error"].present?
+      return logged_in? if @s["lp"].blank?
+      raise Error, QR_EXPIRED if Time.now.to_i > @s["qr_until"].to_i + 60 # worker caiu no meio da espera
+
       false
+    end
+
+    # O QR `lp` não entrou: registra para a tela, se ainda for o QR atual.
+    def qr_failed!(lp, message)
+      save!("lp" => nil, "qr_error" => message) if @s["lp"] == lp
     end
 
     # Aparelhos de todas as casas (próprias e compartilhadas), no formato do inventário.

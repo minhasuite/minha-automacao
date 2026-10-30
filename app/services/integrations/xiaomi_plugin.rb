@@ -36,7 +36,8 @@ module Integrations
       { qr_png: Miio::Cloud.new(integration).qr_start }
     end
 
-    def self.logged_in?(integration) = Miio::Cloud.new(integration).qr_poll && Integrations.start_sync!(integration)
+    # Só lê o estado: quem espera o app confirmar é o XiaomiQrLoginJob.
+    def self.logged_in?(integration) = Miio::Cloud.new(integration).qr_done?
 
     def self.inventory(integration) = Miio::Cloud.new(integration).inventory
   end
