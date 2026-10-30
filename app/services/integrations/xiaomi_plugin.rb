@@ -26,7 +26,7 @@ module Integrations
       Integrations.start_sync!(integration)
       outcome(:found, integration: integration, notice: "Conta Xiaomi conectada. Procurando os aparelhos…")
     rescue Miio::Cloud::Error => e
-      integration.error!(e.message)
+      integration.error!(e)
       outcome(:connect, integration: integration, alert: e.message)
     end
 

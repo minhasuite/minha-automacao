@@ -82,7 +82,9 @@ module Integrations
       integration.ok!
       { found: calendars.size, fresh: 0, removed: 0, keys: 0, events: calendars.sum { |c| c[:events].size } }
     rescue SafeHttp::Error, Integrations::Error => e
-      integration.error!(e.message)
+      integration.error!(e)
+      raise if e.is_a?(Integrations::Error)
+
       raise Integrations::Error, e.message
     end
 

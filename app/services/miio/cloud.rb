@@ -51,7 +51,7 @@ module Miio
       end
       return save!("captcha" => nil) && :two_factor if second["notificationUrl"].present?
 
-      raise Error, "Usuário ou senha da Xiaomi não conferem."
+      raise Integrations.auth(Error.new("Usuário ou senha da Xiaomi não conferem."))
     end
 
     # QR para o app Mi Home: devolve a imagem (PNG) e guarda o endereço de espera.
@@ -101,7 +101,7 @@ module Miio
 
     # Aparelhos de todas as casas (próprias e compartilhadas), no formato do inventário.
     def inventory
-      raise Error, "Conta Xiaomi sem login: entre de novo." unless logged_in?
+      raise Integrations.auth(Error.new("Conta Xiaomi sem login: entre de novo.")) unless logged_in?
 
       regions = @s["region"].present? ? [ @s["region"] ] : REGIONS.keys.compact_blank
       errors = []
@@ -151,7 +151,7 @@ module Miio
                            headers: { "x-xiaomi-protocal-flag-cli" => "PROTOCAL-HTTP2", "MIOT-ENCRYPT-ALGORITHM" => "ENCRYPT-RC4" })
       if res.code.to_i.in?([ 401, 403 ])
         save!("service_token" => nil)
-        raise Error, "A sessão da Xiaomi expirou: entre de novo."
+        raise Integrations.auth(Error.new("A sessão da Xiaomi expirou: entre de novo."))
       end
       raise Error, "A Xiaomi respondeu #{res.code}." unless res.is_a?(Net::HTTPSuccess)
 

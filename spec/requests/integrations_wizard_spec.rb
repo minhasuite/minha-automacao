@@ -87,6 +87,26 @@ RSpec.describe "Integrações e dispositivos do local (F8c)" do
     expect(response.body).to include("user code invalid", "Não deu para gerar o QR")
   end
 
+  it "varredura falhou: rede oferece Tentar de novo; credencial oferece Reconfigurar" do
+    integration = within(tenant) do
+      site.integrations.create!(driver: "xiaomi", name: "Xiaomi", credentials: { region: "us", user_id: "1", ssecurity: Base64.strict_encode64("s" * 16), service_token: "ST" }.to_json)
+    end
+    stub_request(:post, /api\.io\.mi\.com/).to_timeout
+    within(tenant) { expect { Integrations.sync!(integration) }.to raise_error(Integrations::Error) }
+    get "/integracoes/#{integration.id}/encontrados"
+    expect(response.body).to include("OpenTimeout em us.api.io.mi.com", "Tentar de novo", "Voltar às integrações")
+    expect(response.body).not_to include("Reconfigurar")
+    expect { post "/integracoes/#{integration.id}/sincronizar" }.to have_enqueued_job(SyncIntegrationJob) # sem novo login
+
+    stub_request(:post, /api\.io\.mi\.com/).to_return(status: 401)
+    within(tenant) { expect { Integrations.sync!(integration.reload) }.to raise_error(Integrations::AuthError) }
+    get "/integracoes/#{integration.id}/encontrados"
+    expect(response.body).to include("expirou", "Reconfigurar", "Voltar às integrações")
+    expect(response.body).not_to include("Tentar de novo")
+    within(tenant) { integration.reload.ok! }
+    expect(within(tenant) { integration.reload.auth_error? }).to be false
+  end
+
   it "Xiaomi: senha com captcha e 2FA; QR do Mi Home" do
     post "/locais/#{site.id}/integracoes", params: { tipo: "xiaomi", integration: { username: "", password: "" } }
     expect(response).to have_http_status(:unprocessable_content)

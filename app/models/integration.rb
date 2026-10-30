@@ -37,8 +37,15 @@ class Integration < ApplicationRecord
   def icon_name = plugin&.icon || "link"
   def account = settings["account"].presence
 
-  def ok! = update_columns(status: "ok", last_error: nil, last_ok_at: Time.current)
-  def error!(message) = update_columns(status: "error", last_error: message.to_s.truncate(255))
+  def ok! = update_columns(status: "ok", last_error: nil, last_ok_at: Time.current, settings: settings.except("auth_error"))
+
+  # Recebe a exceção (ou só o texto). Credencial (Integrations::AuthError) liga `auth_error?`.
+  def error!(error)
+    update_columns(status: "error", last_error: (error.try(:message) || error).to_s.truncate(255),
+                   settings: settings.merge("auth_error" => error.is_a?(Integrations::AuthError)))
+  end
+
+  def auth_error? = settings["auth_error"] == true
 
   # Credenciais em JSON ({} se vazias ou ilegíveis).
   def secrets

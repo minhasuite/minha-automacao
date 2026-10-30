@@ -40,7 +40,7 @@ module Isapi
         req["Authorization"] = digest(res["www-authenticate"], settings["username"], password, path)
         res = http.request(req)
       end
-      raise Error, "Usuário ou senha do DVR não conferem." if res.code == "401"
+      raise Integrations.auth(Error.new("Usuário ou senha do DVR não conferem.")) if res.code == "401"
       raise Error, "O DVR respondeu #{res.code}." unless res.is_a?(Net::HTTPSuccess)
 
       res.body

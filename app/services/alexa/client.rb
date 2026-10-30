@@ -18,7 +18,7 @@ module Alexa
     def initialize(cookies:, host: HOST)
       @cookies = cookies.to_h
       @host = host.presence || HOST
-      raise Error, "Sem cookies da sessão da Alexa." if @cookies.empty?
+      raise Integrations.auth(Error.new("Sem cookies da sessão da Alexa.")) if @cookies.empty?
     end
 
     # [{"serialNumber", "deviceType", "accountName", "deviceFamily", "online", "deviceOwnerCustomerId", ...}]
@@ -81,7 +81,7 @@ module Alexa
       req["Accept"] = "application/json"
       req["Referer"] = "https://#{@host}/spa/index.html"
       res = Net::HTTP.start(@host, 443, use_ssl: true, open_timeout: 5, read_timeout: 15) { |h| h.request(req) }
-      raise Error, "Sessão da Alexa expirada ou recusada (#{res.code}). Refaça a importação dos cookies." if %w[401 403].include?(res.code)
+      raise Integrations.auth(Error.new("Sessão da Alexa expirada ou recusada (#{res.code}). Refaça a importação dos cookies.")) if %w[401 403].include?(res.code)
       raise Error, "A Alexa respondeu #{res.code}." unless res.is_a?(Net::HTTPSuccess)
 
       res.body.present? ? JSON.parse(res.body) : {}

@@ -14,10 +14,17 @@
 module Integrations
   class Error < StandardError; end
 
+  # Erro de credencial (senha errada, sessão vencida, sem login): marca a
+  # exceção (`Integrations.auth(Error.new(...))`) e a tela de encontrados
+  # oferece "Reconfigurar"; rede e servidor fora oferecem "Tentar de novo".
+  module AuthError; end
+
   # Ordem = ordem do catálogo. Integração nova: classe + uma linha aqui.
   PLUGINS = %w[TuyaPlugin XiaomiPlugin AlexaPlugin HikvisionPlugin MqttPlugin Zigbee2mqttPlugin CalendarPlugin HaImportPlugin].freeze
 
   module_function
+
+  def auth(error) = error.extend(AuthError)
 
   # A cada minuto (RunSchedulesJob): plugin que precisa do relógio (agenda).
   def tick(now = Time.current) = plugins.each { |p| p.tick(now) }
@@ -55,7 +62,7 @@ module Integrations
     notify_new(integration, fresh) if fresh.any? && !first
     counts.merge(found: list.size, fresh: fresh.size)
   rescue StandardError => e
-    integration.error!(e.message) if integration.persisted?
+    integration.error!(e) if integration.persisted?
     raise
   end
 

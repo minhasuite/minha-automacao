@@ -30,7 +30,7 @@ module Calendars
 
     def access_token(integration)
       s = integration.secrets
-      raise Integrations::Error, "Falta entrar com o Google." if s["refresh_token"].blank?
+      raise Integrations.auth(Integrations::Error.new("Falta entrar com o Google.")) if s["refresh_token"].blank?
       return s["access_token"] if s["access_token"].present? && s["expires_at"].to_i > Time.current.to_i + 60
 
       fresh = tokens(grant_type: "refresh_token", refresh_token: s["refresh_token"])
@@ -63,7 +63,10 @@ module Calendars
       res = SafeHttp.request("POST", TOKEN, headers: { "Content-Type" => "application/x-www-form-urlencoded" },
                                             body: URI.encode_www_form(form.merge(client_id: client_id, client_secret: client_secret)))
       body = parse(res)
-      raise Integrations::Error, body["error_description"] || body["error"] || "erro #{res.status}" unless res.status == 200
+      unless res.status == 200
+        error = Integrations::Error.new(body["error_description"] || body["error"] || "erro #{res.status}")
+        raise res.status.between?(400, 499) ? Integrations.auth(error) : error # 4xx = refresh_token recusado
+      end
 
       { "access_token" => body["access_token"], "expires_at" => Time.current.to_i + body["expires_in"].to_i,
         "refresh_token" => body["refresh_token"] }.compact

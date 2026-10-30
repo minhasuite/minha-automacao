@@ -28,7 +28,7 @@ module Tuya
 
     def self.qr_code(user_code)
       r = http(:post, "#{LOGIN_HOST}/v1.0/m/life/home-assistant/qrcode/tokens?#{URI.encode_www_form(clientid: CLIENT_ID, usercode: user_code, schema: SCHEMA)}")
-      raise Error, r["msg"].presence || "A Tuya recusou o código de usuário." unless r["success"]
+      raise Integrations.auth(Error.new(r["msg"].presence || "A Tuya recusou o código de usuário.")) unless r["success"]
 
       r.dig("result", "qrcode")
     end
@@ -89,7 +89,7 @@ module Tuya
     def initialize(integration)
       @integration = integration
       @s = integration.secrets
-      raise Error, "Conta Tuya sem login: escaneie o QR code de novo." if @s.dig("token", "refresh_token").blank? || @s["endpoint"].blank?
+      raise Integrations.auth(Error.new("Conta Tuya sem login: escaneie o QR code de novo.")) if @s.dig("token", "refresh_token").blank? || @s["endpoint"].blank?
     end
 
     def get(path, params = nil)
