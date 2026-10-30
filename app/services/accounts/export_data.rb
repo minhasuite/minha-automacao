@@ -30,6 +30,11 @@ module Accounts
           end,
           # Automações (F6): a definição publicada e o rascunho (sem o token do webhook).
           automations: Automation.order(:created_at).map { |r| r.as_json(except: %w[tenant_id webhook_token]) },
+          # Dados (Lote 2): conjuntos e registros; IA: contas sem a chave e o uso.
+          datasets: Dataset.order(:created_at).map { |r| r.as_json(except: "tenant_id") },
+          dataset_records: DatasetRecord.order(:created_at).limit(100_000).map { |r| r.as_json(except: "tenant_id") },
+          ai_accounts: AiAccount.order(:provider).map { |r| r.as_json(except: %w[tenant_id api_key]) },
+          ai_calls: AiCall.order(:created_at).map { |r| r.as_json(except: "tenant_id") },
           # Integrações (F8): sem as credenciais.
           integrations: Integration.order(:created_at).map { |r| r.as_json(except: %w[tenant_id credentials inventory]) }
         }

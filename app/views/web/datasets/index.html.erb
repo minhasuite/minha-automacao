@@ -1,0 +1,25 @@
+<%= render "web/shared/header", title: "Dados", subtitle: "#{@site.name} · conjuntos que as automações registram e consultam (histórico de análises, contadores, \"já avisei hoje\")", back: site_path(@site) do %>
+  <% if can?(:manage) %><%= link_to new_site_dataset_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo conjunto<% end %><% end %>
+<% end %>
+<%= render "web/sites/tabs", site: @site, current: :datasets %>
+
+<% if @datasets.empty? %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink">Nenhum conjunto de dados neste local.</p>
+    <p class="mt-1 max-w-md mx-auto">Um conjunto é uma tabela sua: a ação "Registrar dados" grava uma linha, "Consultar dados" e o helper Consulta leem (contagem, soma, média, último valor).</p>
+    <% if can?(:manage) %><%= link_to new_site_dataset_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar o primeiro<% end %><% end %>
+  </div>
+<% else %>
+  <ul class="ss-card ss-rows" aria-label="Conjuntos de dados">
+    <% @datasets.each do |d| %>
+      <li>
+        <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon("table") %></span>
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-ink truncate"><%= link_to d.name, dataset_path(d), class: "text-ink no-underline hover:text-accent" %></p>
+          <p class="text-xs text-muted truncate"><%= [ "chave #{d.key}", (d.free? ? "campos livres" : d.field_names.join(", ")), (d.retention_days ? "guarda #{d.retention_days} dias" : "guarda tudo") ].join(" · ") %></p>
+        </div>
+        <p class="text-sm font-bold text-ink num shrink-0"><%= number_with_delimiter(@counts[d.id].to_i) %> <span class="text-muted font-normal">registro(s)</span></p>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

@@ -10,7 +10,8 @@ module Automations
   module ActionTypes
     extend Block::Registry
 
-    PLUGINS = %w[CommandAction SceneAction ScriptAction NotifyAction WaitNotificationAction HttpAction CalendarEventsAction WaitAction WaitForAction
+    PLUGINS = %w[CommandAction SceneAction ScriptAction NotifyAction WaitNotificationAction HttpAction CalendarEventsAction AiTaskAction AiDataAction DatasetRecordAction DatasetQueryAction
+                 WaitAction WaitForAction
                  IfAction ChooseAction RepeatAction SetAction ConditionAction StopAction].freeze
 
     # Toda ação que faz algo (não as de controle) aceita "Seguir se der erro"

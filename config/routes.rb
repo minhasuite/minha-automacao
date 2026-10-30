@@ -131,6 +131,8 @@ Rails.application.routes.draw do
       end
       # Helpers (F8e): catálogo de tipos (plugins), lista com valor e cadastro.
       resources :helpers, controller: "site_helpers", path: "helpers", except: :show, path_names: { new: "novo", edit: "editar" }, shallow: true
+      # Conjuntos de dados (Lote 2): o que as automações registram; lista com filtros e CSV.
+      resources :datasets, path: "dados", path_names: { new: "novo", edit: "editar" }, shallow: true
       resources :areas, path: "areas", except: :index, shallow: true
       resources :devices, path: "dispositivos", shallow: true do
         post :bulk, on: :collection, path: "lote"
@@ -153,6 +155,14 @@ Rails.application.routes.draw do
     get "configuracoes/exportar", to: "settings#export", as: :settings_export
     post "configuracoes/zerar", to: "settings#wipe", as: :settings_wipe
     get "configuracoes/paineis", to: "settings#dashboards", as: :settings_dashboards
+    # IA da instalação (Lote 2): provedores (chave cifrada), teste, padrão, limite e uso.
+    get "configuracoes/ia", to: "ai_settings#show", as: :settings_ai
+    patch "configuracoes/ia", to: "ai_settings#update"
+    patch "configuracoes/ia/:provider", to: "ai_settings#provider", as: :settings_ai_provider
+    post "configuracoes/ia/:provider/teste", to: "ai_settings#check", as: :settings_ai_check
+    # Perguntar à casa (Lote 2): só leitura, com os pontos do local como contexto.
+    get "perguntar", to: "ask#show", as: :ask
+    post "perguntar", to: "ask#create"
     # Meus aparelhos (Lote 1): navegadores inscritos no Web Push.
     resources :push_subscriptions, path: "configuracoes/aparelhos", only: %i[index create destroy] do
       post :test, on: :collection, path: "teste"

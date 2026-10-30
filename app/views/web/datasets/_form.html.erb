@@ -1,0 +1,13 @@
+<%# locals: (dataset:, url:, method:) -%>
+<%= form_with model: dataset, scope: :dataset, url: url, method: method, class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl w-full" do |f| %>
+  <%= render "web/shared/errors", record: dataset %>
+  <div class="sm:col-span-2"><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, maxlength: 80, autofocus: dataset.new_record?, placeholder: "Ex.: Análises da IA, Aberturas do portão" %></div>
+  <div class="sm:col-span-2"><%= f.label :fields_text, "Campos (opcional, um por linha: nome: tipo)", class: "ss-label" %>
+    <%= f.text_area :fields_text, rows: 4, class: "ss-input num text-sm", spellcheck: false, placeholder: "porta: texto\nminutos: número\nconfirmado: sim/não\nquando: data" %>
+    <p class="text-xs text-muted mt-1">Tipos: texto, número, sim/não, data. Sem campos, o conjunto aceita qualquer campo (números são reconhecidos).</p></div>
+  <div><%= f.label :retention_days, "Guardar por (dias)", class: "ss-label" %><%= f.number_field :retention_days, class: "ss-input num", min: 1, max: 3650, placeholder: "Vazio = para sempre" %></div>
+  <div class="sm:col-span-2 flex flex-wrap gap-2">
+    <%= f.submit dataset.new_record? ? "Criar conjunto" : "Salvar", class: "ss-btn ss-btn-primary" %>
+    <%= link_to "Cancelar", dataset.new_record? ? site_datasets_path(dataset.site) : dataset_path(dataset), class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

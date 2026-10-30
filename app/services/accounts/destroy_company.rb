@@ -6,7 +6,7 @@ module Accounts
     def call(tenant)
       ActsAsTenant.with_tenant(tenant) do
         WipeData.call(tenant)
-        [ AiUsage, Invite ].each(&:delete_all)
+        [ AiUsage, AiCall, AiAccount, Invite ].each(&:delete_all)
       end
       AuditEvent.where(tenant_id: tenant.id).delete_all
       User.where(tenant_id: tenant.id).find_each(&:destroy!)

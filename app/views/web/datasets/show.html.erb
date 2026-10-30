@@ -1,0 +1,36 @@
+<%= render "web/shared/header", title: @dataset.name, subtitle: "#{@site.name} · #{@dataset.free? ? 'campos livres' : @dataset.fields_text.tr("\n", ', ')}#{" · guarda #{@dataset.retention_days} dias" if @dataset.retention_days}", back: site_datasets_path(@site) do %>
+  <%= link_to dataset_path(@dataset, format: :csv, filtros: @filters.presence, dias: (@days if @days.positive?)), class: "ss-btn ss-btn-ghost", data: { turbo: false } do %><%= icon("download", "size-4") %>Exportar CSV<% end %>
+  <% if can?(:manage) %><%= link_to edit_dataset_path(@dataset), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar<% end %><% end %>
+<% end %>
+
+<%= form_with url: dataset_path(@dataset), method: :get, class: "ss-card ss-card-pad mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] items-end", role: "search" do %>
+  <div class="min-w-0"><label for="filtros" class="ss-label">Filtros (um por linha: campo = valor, campo contém x, campo &gt; 3)</label>
+    <%= text_area_tag :filtros, @filters, rows: 2, class: "ss-input num text-sm", spellcheck: false, placeholder: "porta = garagem" %></div>
+  <div><label for="dias" class="ss-label">Últimos (dias)</label><%= number_field_tag :dias, (@days if @days.positive?), min: 1, class: "ss-input num", placeholder: "Todos" %></div>
+  <div class="flex gap-2"><button type="submit" class="ss-btn ss-btn-primary"><%= icon("filter", "size-4") %>Filtrar</button>
+    <% if @filters.present? || @days.positive? %><%= link_to "Limpar", dataset_path(@dataset), class: "ss-btn ss-btn-ghost" %><% end %></div>
+  <% if @error %><p class="sm:col-span-3 text-sm text-danger" role="alert"><%= @error %></p><% end %>
+<% end %>
+
+<% if @records.empty? %>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum registro<%= " com esses filtros" if @filters.present? || @days.positive? %>.</p>
+    <p class="mt-1">A ação "Registrar dados" de uma automação grava aqui.</p></div>
+<% else %>
+  <section class="ss-card overflow-x-auto" aria-label="Registros">
+    <table class="ss-table">
+      <thead><tr><th>Quando</th><% @columns.each do |c| %><th><%= c %></th><% end %></tr></thead>
+      <tbody>
+        <% @records.each do |r| %>
+          <tr>
+            <td class="num whitespace-nowrap"><%= l(r.created_at.in_time_zone(@site.timezone), format: "%d/%m/%Y %H:%M") %></td>
+            <% @columns.each do |c| %>
+              <% v = r.data[c] %>
+              <td class="<%= 'num r' if v.is_a?(Numeric) %> max-w-xs truncate" title="<%= v.to_s.truncate(300) %>"><%= v == true ? "sim" : (v == false ? "não" : (v.is_a?(Hash) || v.is_a?(Array) ? v.to_json : v).to_s.truncate(120)) %></td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+  <%= render "web/shared/pagination", pagy: @pagy %>
+<% end %>

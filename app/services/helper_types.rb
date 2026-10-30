@@ -10,7 +10,7 @@
 # `new_value`) e o driver virtual entrega a ele (`execute`).
 module HelperTypes
   # Ordem = ordem do catálogo. Tipo novo: classe + uma linha aqui + partial.
-  PLUGINS = %w[Toggle Number Select Text Datetime Button Counter Timer Group Template Statistics].freeze
+  PLUGINS = %w[Toggle Number Select Text Datetime Button Counter Timer Group Template Statistics DatasetQuery].freeze
   # `external_id` do dispositivo virtual que guarda os helpers do local.
   DEVICE_ID = "helpers".freeze
   # Ícones que o formulário oferece (arquivos de app/assets/images/icons).
@@ -46,8 +46,12 @@ module HelperTypes
   end
 
   # Valor de um ponto mudou: refaz os helpers que dependem dele (grupo, sensor calculado, estatística).
-  def on_change(point)
-    dependents(point.site_id, [ point.id ]).find_each { |h| self.for(h)&.refresh!(h) }
+  def on_change(point) = refresh_dependents(point.site_id, [ point.id ])
+
+  # Refaz os helpers cuja origem (`address.sources`) inclui um destes ids
+  # (ponto ou, no helper Consulta, conjunto de dados).
+  def refresh_dependents(site_id, ids)
+    dependents(site_id, ids).find_each { |h| self.for(h)&.refresh!(h) }
   end
 
   def dependents(site_id, ids)

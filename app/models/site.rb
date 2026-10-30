@@ -22,6 +22,7 @@ class Site < ApplicationRecord
   has_many :scripts, -> { where(kind: "script") }, class_name: "Automation", dependent: nil, inverse_of: :site
   has_many :blueprints, dependent: nil
   has_many :integrations, dependent: nil
+  has_many :datasets, dependent: nil
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }

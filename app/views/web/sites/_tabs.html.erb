@@ -2,7 +2,8 @@
 <nav class="ss-subnav lg:!flex-row lg:!static" aria-label="Seções do local">
   <% [ [ "Painéis", site_dashboards_path(site), "view-boards", :dashboards ], [ "Dispositivos", site_devices_path(site), "cube", :devices ],
        [ "Integrações", site_integrations_path(site), "link", :integrations ], [ "Automações e cenas", site_automations_path(site), "lightning-bolt", :automation ],
-       [ "Helpers", site_helpers_path(site), "collection", :helpers ], [ "Alexa", site_alexa_path(site), "speakerphone", :alexa ],
+       [ "Helpers", site_helpers_path(site), "collection", :helpers ],
+       [ "Dados", site_datasets_path(site), "table", :datasets ], [ "Alexa", site_alexa_path(site), "speakerphone", :alexa ],
        [ "Áreas", site_path(site), "home", :areas ], [ "Alertas", alerts_path, "exclamation-circle", :alerts ] ].each do |label, path, ico, key| %>
     <%= link_to path, class: (key == current ? "!text-accent !border-accent" : nil), "aria-current": (key == current ? "page" : nil) do %><%= icon(ico, "size-4") %><%= label %><% end %>
   <% end %>

@@ -18,5 +18,6 @@ class ReadingsMaintenanceJob < ApplicationJob
     end
     AutomationRun.prune!(now)
     Notification.purge_old_images!(now)
+    Dataset.purge_old! # retenção dos conjuntos de dados (Lote 2)
   end
 end
