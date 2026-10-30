@@ -1,0 +1,20 @@
+name: Editor de arquivos (VS Code)
+category: Ferramentas
+icon: document-text
+description: VS Code no navegador para editar arquivos e scripts. Edita só a própria pasta do app, não a configuração do servidor.
+image: codercom/code-server
+version: "4.96.4"
+network: bridge
+ports:
+  - { container: 8080, host: 8443 }
+volumes:
+  - { name: projects, path: /home/coder/project }
+  - { name: config, path: /home/coder/.config }
+web_ui: { port: 8443 }
+options:
+  - key: password
+    label: Senha de acesso
+    type: string
+    secret: true
+    required: true
+    env: PASSWORD

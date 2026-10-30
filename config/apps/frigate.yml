@@ -1,0 +1,16 @@
+name: Frigate
+category: Câmeras
+icon: eye
+description: Gravador de câmeras com detecção de pessoas e objetos (detector na CPU). A configuração das câmeras fica no editor do próprio Frigate.
+image: ghcr.io/blakeblackshear/frigate
+version: "0.15.1"
+network: apps
+shm_mb: 256
+ports:
+  - { container: 8971, host: 8971 }
+volumes:
+  - { name: config, path: /config }
+  - { name: media, path: /media/frigate }
+web_ui: { port: 8971 }
+env:
+  TZ: America/Sao_Paulo

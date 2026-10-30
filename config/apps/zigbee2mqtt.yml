@@ -1,0 +1,41 @@
+name: Zigbee2MQTT
+category: Rede e MQTT
+icon: lightning-bolt
+description: Controla aparelhos Zigbee pelo coordenador USB e publica tudo no MQTT; os aparelhos pareados aparecem sozinhos nos locais.
+image: koenkk/zigbee2mqtt
+version: "2.6.2"
+network: apps
+ports:
+  - { container: 8080, host: 8080 }
+volumes:
+  - { name: data, path: /app/data }
+web_ui: { port: 8080 }
+env:
+  TZ: America/Sao_Paulo
+  Z2M_ONBOARD_NO_SERVER: "1"
+  ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://mosquitto:1883
+  ZIGBEE2MQTT_CONFIG_MQTT_USER: automacao
+  ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/zigbee
+  ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_ENABLED: "false"
+  ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY: GENERATE
+  ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID: GENERATE
+  ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID: GENERATE
+  ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED: "true"
+  ZIGBEE2MQTT_CONFIG_FRONTEND_PORT: "8080"
+server_env:
+  ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD: MQTT_PASSWORD
+  ZIGBEE2MQTT_CONFIG_FRONTEND_AUTH_TOKEN: Z2M_FRONTEND_TOKEN
+options:
+  - key: serial_port
+    label: Coordenador USB
+    type: device
+    path: /dev/zigbee
+    required: true
+    help: "No servidor: ls /dev/serial/by-id/ (ex.: /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00-port0)."
+  - key: adapter
+    label: Tipo do coordenador
+    type: enum
+    choices: [ember, zstack, deconz, zigate]
+    default: ember
+    env: ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER
+    help: ember para Sonoff ZBDongle-E (EFR32); zstack para ZBDongle-P (CC2652).

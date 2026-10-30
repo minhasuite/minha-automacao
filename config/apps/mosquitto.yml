@@ -1,0 +1,9 @@
+# App do sistema: já roda no compose (serviço mosquitto). Pode ser visto,
+# reiniciado e ter o log lido; não é instalado nem desinstalado aqui.
+name: Mosquitto
+category: Rede e MQTT
+icon: switch-horizontal
+description: Broker MQTT do servidor. Os aparelhos MQTT e o Zigbee2MQTT conversam por ele.
+image: eclipse-mosquitto
+version: "2.0.20"
+system: mosquitto

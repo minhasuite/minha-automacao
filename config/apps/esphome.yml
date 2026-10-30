@@ -1,0 +1,25 @@
+name: ESPHome
+category: Dispositivos
+icon: cube
+description: Cria e atualiza firmwares de ESP32/ESP8266 por YAML, com atualização pela rede. Sem descoberta mDNS (o app não roda na rede do host).
+image: esphome/esphome
+version: "2025.2.0"
+network: bridge
+ports:
+  - { container: 6052, host: 6052 }
+volumes:
+  - { name: config, path: /config }
+web_ui: { port: 6052 }
+env:
+  TZ: America/Sao_Paulo
+options:
+  - key: username
+    label: Usuário do painel
+    type: string
+    env: USERNAME
+    pattern: '\A[\w.-]{0,40}\z'
+  - key: password
+    label: Senha do painel
+    type: string
+    secret: true
+    env: PASSWORD

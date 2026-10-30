@@ -1,0 +1,8 @@
+# App do sistema: já roda no compose (serviço go2rtc).
+name: go2rtc
+category: Câmeras
+icon: video-camera
+description: Servidor de vídeo das câmeras (RTSP para WebRTC). Os streams são criados sozinhos a partir das câmeras cadastradas.
+image: alexxit/go2rtc
+version: "1.9.9"
+system: go2rtc

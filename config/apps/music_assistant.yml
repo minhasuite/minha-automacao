@@ -1,0 +1,14 @@
+name: Music Assistant
+category: Mídia
+icon: speakerphone
+description: Junta suas bibliotecas e serviços de música e toca nos alto-falantes da casa. Sem descoberta automática de aparelhos (não roda na rede do host).
+image: ghcr.io/music-assistant/server
+version: "2.5.0"
+network: bridge
+ports:
+  - { container: 8095, host: 8095 }
+volumes:
+  - { name: data, path: /data }
+web_ui: { port: 8095 }
+env:
+  TZ: America/Sao_Paulo

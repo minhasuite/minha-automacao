@@ -1,0 +1,19 @@
+name: Node-RED
+category: Automação
+icon: share
+description: Editor visual de fluxos para integrar serviços e protocolos. Fala com o MQTT do servidor (host mosquitto).
+image: nodered/node-red
+version: "4.0.9"
+network: apps
+ports:
+  - { container: 1880, host: 1880 }
+volumes:
+  - { name: data, path: /data }
+web_ui: { port: 1880 }
+options:
+  - key: tz
+    label: Fuso horário
+    type: string
+    env: TZ
+    default: America/Sao_Paulo
+    pattern: '\A[A-Za-z_]+(/[A-Za-z_]+)?\z'
