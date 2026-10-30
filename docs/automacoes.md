@@ -67,7 +67,7 @@ sol. **Dias**: 0 = domingo … 6 = sábado (sem `days` = todos).
 |---|---|---|
 | `state` | `point`, `from?`, `to?`, `for?` | o valor muda (de/para); com `for`, se ficou assim o tempo todo |
 | `numeric` | `point`, `above?`, `below?`, `for?` | o valor **entra** na faixa (não repete enquanto continua nela) |
-| `time` | `at` (HH:MM) **ou** `every` (minutos inteiros, 1 min a 24 h), `days?` | no minuto; `every: "10m"` = :00, :10, :20… |
+| `time` | `at` (HH:MM) **ou** `every` (minutos inteiros, 1 min a 24 h) **ou** `at_point` (ponto data e hora), `days?` | no minuto; `every: "10m"` = :00, :10, :20…; `at_point`: "HH:MM" todo dia ou "AAAA-MM-DDTHH:MM" naquele dia (Lote 5) |
 | `sun` | `event` (`sunrise`/`sunset`), `offset?`, `days?` | nascer/pôr do sol do local (precisa de latitude/longitude) |
 | `calendar` | `point` (agenda), `event` (`start`/`end`), `contains?`, `offset?` (`-15m` = antes) | evento da agenda começou/terminou (F9; relógio, a cada minuto) |
 | `alert` | `rule` (AlertRule), `on` (`open`/`ack`/`resolve`) | o alerta abriu, alguém marcou ciente ou fechou |
@@ -78,6 +78,12 @@ sol. **Dias**: 0 = domingo … 6 = sábado (sem `days` = todos).
 
 Valor que volta junto com a conexão (o ponto estava indisponível) não
 dispara, como nas primitivas.
+
+Todo gatilho aceita `id` (Lote 5): a execução leva em `trigger.id`, e a
+condição `expr` "trigger.id = 'botao'" diz qual disparou. Gatilho de ponto
+leva também `trigger.duration`: segundos que o ponto ficou no valor anterior
+("ficou ligado por"). O evento do sistema `system_started` chega uma vez a
+cada início do servidor (gatilho "Evento").
 
 ### Condições
 
@@ -117,7 +123,7 @@ uma com o valor visto (`agora: Desligado`).
 | `wait_for` | `conditions`, `timeout`, `continue_on_timeout?` (padrão `true`) | espera as condições valerem; a mudança de ponto retoma na hora |
 | `if` | `conditions`, `then`, `else?` | ramo |
 | `choose` | `options: [{conditions, actions}]`, `default?` | a primeira opção que vale |
-| `repeat` | `count` **ou** `while` **ou** `until`, `actions` | repete (até 100 voltas); `repeat_index` = volta atual |
+| `repeat` | `count` **ou** `while` **ou** `until` **ou** `for_each`, `actions` | repete (até 100 voltas); `repeat_index` = volta atual; `for_each` (Lote 5): variável com lista (`dados.rows`) ou itens por vírgula, item em `repeat_item` / `{{ repeat.item }}` |
 | `set` | `var`, `expr` **ou** `value` (Liquid) | define variável |
 | `condition` | `conditions` | para aqui (situação "Parada") se não valer |
 | `stop` | `reason?`, `error?` | para (com `error`, "Falhou") |
@@ -158,8 +164,11 @@ Helper é ponto (`docs/helpers.md`), então entra nos blocos de sempre:
 Expressão: aritmética, comparação, `and`/`or`/`not`, `if(c, a, b)`, `round`,
 `min`, `max`… sem código arbitrário. Variáveis: pontos pela `key`
 (`sala.temperatura > 28`), variáveis do `set`, `hour`, `minute`, `weekday`
-(0 = domingo), `day`, `month`, `trigger_value`, `repeat_index`. Ponto sem
-valor ou nome desconhecido = erro (condição falsa com o motivo no trace).
+(0 = domingo), `day`, `month`, `trigger_value`, `repeat_index`, e (Lote 5)
+`timestamp` (segundos desde 1970), `trigger.id`, `trigger.value`,
+`trigger.duration`, `trigger.data.campo` e atributos de ponto
+(`sala.resumo.attrs.frase`). Ponto sem valor ou nome desconhecido = erro
+(condição falsa com o motivo no trace).
 
 Conjunto de pontos (Lote 4, G8; `Points::Query`, a mesma consulta do
 `query` dos painéis, em texto `chave=valor` separado por espaço, aspas para
@@ -177,7 +186,8 @@ Texto: `{{ trigger.title }}`, `{{ trigger.point }}`, `{{ trigger.value }}`,
 Variável com objeto (resposta de ação) por ponto: `{{ resposta.action }}`.
 Conjunto de pontos: `{{ "tag=luz state=on sort=name" | points_where | map: "name" | join: ", " }}`
 (cada item tem `key`, `name`, `value`, `text`, `quality`, `unit`, `device`,
-`changed_at` e `since_min`).
+`changed_at` e `since_min`; e `attrs`, Lote 5). Expressão dentro do texto
+(Lote 5): `{{ "5 * repeat_index" | calc }}`.
 Até 1000 caracteres.
 
 ## Execução

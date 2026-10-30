@@ -78,7 +78,7 @@ ou `key` do ponto.
 |---|---|---|
 | `tile` | `bind`, `features` (`toggle`/`select`/`slider`) | ponto: liga/desliga, valor, seleção, slider (dimmer/setpoint; `mode: box` = caixa de número), campo de texto/data/hora (comando `set`, tipo pelo `input` do ponto), botão (`command`/`gate`) e botões de ação (`actions`: contador, temporizador). Serve a todos os helpers (F8e) |
 | `group` | `binds` (até 8) | lista de pontos com interruptor |
-| `stat` | `bind` ou `query`, `aggregate` (`count`/`sum`/`avg`/`min`/`max`/`last`) | contador ("3 ligados") ou número; também é o tipo dos `badges` |
+| `stat` | `bind` ou `query`, `aggregate` (`count`/`sum`/`avg`/`min`/`max`/`last`), `attribute?` | contador ("3 ligados") ou número; também é o tipo dos `badges`. Com `bind` e `attribute` (Lote 5), mostra o atributo do ponto (`points.attrs`, escrito pelo sensor calculado) no lugar do valor |
 | `gauge` | `bind`, `min`, `max` (padrão: do ponto, senão 0–100) | medidor em arco |
 | `chart` | `binds`, `range` (`24h`/`7d`/`30d`) | linhas na mesma escala (booleano: faixas ligado) |
 | `query_list` | `query`, `empty_text` | lista automática (até 24) |

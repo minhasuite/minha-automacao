@@ -69,7 +69,13 @@ consultas sobre o conjunto de pontos (`Points::Query`: painel, Liquid
 `points_where`, `count_points(...)` e afins), eventos (gatilho "Evento",
 "Disparar/Esperar evento", `automation_finished`), integração Sistema (disco,
 backup, automações e integrações como pontos) e importação de automações e
-scripts do HA como blueprints.
+scripts do HA como blueprints + **Lote 5**: importador do HA completo
+(aparelho, início do sistema, horário vindo de ponto, cena, script, helpers,
+id do gatilho) com o Jinja comum traduzido para expressão e Liquid
+(`Blueprints::Jinja`, entrada `[[chave]]` no texto), gatilho "Sistema
+iniciou", sensor calculado com `previous`, "a cada", data e hora e atributos
+(`points.attrs`), "para cada" no Repetir e voz (STT/TTS) como capacidade dos
+provedores de IA, com as ações "Transcrever áudio" e "Gerar fala".
 
 ## Rodar
 
@@ -414,6 +420,19 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   do Sistema = entrada em `SystemPlugin::METRICS`. Importar do HA: cada
   entidade fixa vira entrada de ponto do blueprint (nada de mapear entity_id
   por nome).
+- **Lote 5 (aberto/fechado)**: serviço do HA novo no importador = linha em
+  `HaImport::SERVICES` (método) ou `HELPER_COMMANDS`; o `case` do
+  `HaImport#trigger`/`#condition` traduz a sintaxe do YAML do HA, não tipos
+  daqui. Tradução de Jinja só no `Blueprints::Jinja` (o que não cobre devolve
+  nil e o importador anota). Entrada de blueprint que escolhe registro do
+  local = linha em `Blueprint::RECORD_INPUTS`. Voz: capacidade `stt`/`tts`
+  em `Ai::CAPABILITIES`, provedor implementa `transcribe`/`speak` e declara
+  `stt_model`/`tts_model`/`tts_voice`; `AiAccount.pick(capability:)` separa
+  texto de voz. Fala gerada = anexo com URL assinada de 1 dia
+  (`Ai::Audio.store`, apagada pelo `ActiveStorage::PurgeJob`). Evento
+  `system_started` pelo `SolidQueue.on_start` (supervisor, uma vez por
+  início). Sensor calculado "a cada" não depende das origens (`sources` vazio)
+  e se refaz no `HelperTypes.tick` (RunSchedulesJob).
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

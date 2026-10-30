@@ -79,14 +79,46 @@ filtro de capacidade pelo domínio. Em "Criar automação" a pessoa escolhe o
 ponto daqui de cada entidade; a automação nasce como qualquer outra criada
 de blueprint (desligada, ponto crítico só no rascunho). Item sem nada que
 rode aqui (sem gatilho ou sem ação) fica de fora e é contado no aviso. Até
-100 itens por vez. Templates do HA (Jinja) não convertem: aparecem como
-"condição template" e devem ser refeitos com `expr`, `count_points` ou
-Liquid.
+100 itens por vez. O Jinja comum é traduzido (Lote 5, abaixo); o resto
+aparece como "condição template" ou "texto com template" e deve ser refeito
+com `expr`, `count_points` ou Liquid.
 
 O conversor também leva o controle de fluxo (`if`, `choose`, `condition` como
 ação, `stop`, `repeat` com `count`/`while`/`until`, `variables` → `set`) e os
 gatilhos `time_pattern` ("/N" minutos ou horas), `webhook` e `event` (gatilho
 "Evento"). Condição que não converte dentro de um bloco é anotada ("o bloco
-ficou sem ela"). Nas 58 automações reais da casa, 41 viram blueprint (6 sem
-perda) e 17 ficam de fora (gatilho de aparelho, início do HA, horário por
-entidade).
+ficou sem ela").
+
+### Lote 5: o que antes ficava de fora
+
+- **Aparelho**: gatilho, condição e ação `device` (`turned_on`, `no_motion`,
+  `is_off`, `turn_on`...) e `device_id` no alvo viram estado ou comando numa
+  entrada "Aparelho do HA xxxxxxxx (domínio)". Tipo com `no_`/`not_` ou
+  `off` = desligado; `changed_states` = qualquer mudança.
+- **Início do HA** (`homeassistant: start`) vira o gatilho "Evento" com
+  `system_started` (o servidor subiu).
+- **Horário**: vários horários viram um gatilho cada; segundos (`32400`)
+  viram `09:00`; `weekday` vira `days`; horário vindo de entidade
+  (`at: input_datetime.x`) vira "no horário do ponto" (`at_point`).
+- **Agenda**, **cena** (entrada do tipo cena, escolhida entre as do local),
+  **script** (`script.x` ou `script.turn_on`: comando `run` no ponto do
+  script, com os campos constantes), **helpers** (`set_value`,
+  `select_option`, `start`, `increment`...), `event`, `wait_for_trigger` de
+  evento, `wait_template`, `calendar.get_events` com `duration`,
+  `weather.get_forecasts`, `ai_task.generate_data` e `repeat.for_each`.
+- **Espelho** `switch.turn_{{ trigger.to_state.state }}` vira "se o gatilho
+  ligou, liga; senão, desliga".
+- **`id` do gatilho** vai junto; a condição `trigger` vira `trigger.id = 'x'`.
+- **Jinja** (`Blueprints::Jinja`): `states()`, `is_state()`, `now()` (hora,
+  minuto, dia, mês, dia da semana, `strftime`, `isoformat`),
+  `as_timestamp(now())`, `iif()`, `a if c else b`, `in [...]`, comparações,
+  aritmética, `and`/`or`/`not` e os filtros `int`, `float`, `round`, `bool`,
+  `trim`, `count`, `default`, `join`. Condição vira `expr`; texto vira
+  Liquid (o que não tem filtro Liquid é calculado com `{{ "expr" | calc }}`).
+  A entidade citada no texto vira entrada e aparece como `[[entrada]]`, que o
+  "Criar automação" troca pela `key` do ponto escolhido. Sem tradução:
+  `state_attr`, `namespace`, `{% %}`, `is defined`, `states.x.y`, dicionários.
+
+Nas 58 automações reais da casa: antes 41 viravam blueprint (6 sem perda);
+agora 57 viram (28 sem perda, todas com a DSL válida). A que sobra só chama
+`shell_command`. Nos 14 scripts: de 9 (0 sem perda) para 12 (2 sem perda).

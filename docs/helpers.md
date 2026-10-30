@@ -29,7 +29,7 @@ padrão sim; não = volta ao inicial quando o worker sobe, `HelperTypes.boot!`).
 | `counter` | Contador | `counter` | `initial`, `step`, `min`/`max` opcionais (passa do limite = fica no limite) | increment, decrement, reset, set |
 | `timer` | Temporizador | `timer` | `duration_s`; contando: `finishes_at`; pausado: `remaining_s` | start (valor opcional "5m"), pause, cancel, finish |
 | `group` | Grupo | a dos membros (`measure` para números) | `sources` (membros do mesmo tipo), `mode`: `any`/`all` ou `mean`/`min`/`max`/`sum` | on, off, toggle (só grupo de liga/desliga; repassa a cada membro) |
-| `template` | Sensor calculado | `measure`, `onoff` (só leitura) ou `text` | `kind` (`number`/`bool`/`text`), `expr`, `sources` (pontos cuja chave aparece) | — |
+| `template` | Sensor calculado | `measure`, `onoff` (só leitura), `text` ou `datetime` | `kind` (`number`/`bool`/`text`/`timestamp`), `expr`, `sources` (pontos cuja chave aparece), `every?` (segundos), `attrs?` ({nome: Liquid}) | — |
 | `statistics` | Estatística | `measure` | `sources` (um ponto numérico), `func` (`mean`/`min`/`max`/`sum`), `window_s` | — |
 | `dataset_query` | Consulta (Lote 2) | `measure` (`text` no último valor de campo de texto) | `sources` (o conjunto de dados), `op` (tipo de consulta de um valor só), `field`, `window_s`, `filters` | — |
 
@@ -45,7 +45,13 @@ padrão sim; não = volta ao inicial quando o worker sobe, `HelperTypes.boot!`).
 - **Sensor calculado**: número e liga/desliga pela calculadora das automações
   (dentaku: `sala.temperatura - externo.temperatura`, `if()`, `round()`);
   texto pelo Liquid delas (`{{ points["sala.luz"].text }}`). Erro na conta =
-  qualidade "Com erro".
+  qualidade "Com erro". Lote 5 (G9): `previous` é o próprio valor de antes
+  (acumulador: `previous + casa.kwh * 0.9`); "a cada" (`every`) refaz pelo
+  relógio em vez de quando a origem muda; "Data e hora" aceita segundos
+  (`timestamp + 3600`) ou texto e grava "AAAA-MM-DDTHH:MM"; atributos (uma
+  linha por atributo, "nome: texto Liquid") vão para `points.attrs`, lidos no
+  Liquid (`points["k"].attrs.nome`), na expressão (`k.attrs.nome`) e no
+  widget Número (campo Atributo).
 - **Estatística**: leituras do histórico da janela; sem leitura, o valor
   atual. Só se refaz quando a origem muda (numa janela parada o valor velho
   não sai sozinho).

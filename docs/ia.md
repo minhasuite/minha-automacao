@@ -38,6 +38,20 @@ cru da resposta vai só para o log, sem o prompt.
 | `openai` | platform.openai.com | `gpt-5-mini` | `/chat/completions` por Net::HTTP; sem temperatura (modelos de raciocínio) |
 | `gemini` | aistudio.google.com | `gemini-3.5-flash` | `generateContent` por Net::HTTP |
 | `ollama` | opcional | `llama3.2` (`llava`, `qwen2.5vl`, `gemma3` para imagem) | URL configurável, pelo `SafeHttp`: libere o IP em Configurações → Sistema → Saída HTTP |
+| `local_audio` | opcional | `whisper-1` (transcrição), `tts-1` (fala) | Só voz (Lote 5): servidor da casa compatível com `/v1/audio` (faster-whisper-server/speaches, openedai-speech com Piper), pelo `SafeHttp` |
+
+### Voz (Lote 5, G14)
+
+`stt` (voz para texto) e `tts` (texto para fala) são capacidades como as
+outras. O provedor que as declara implementa `transcribe(audio:, media_type:,
+model:, language:, timeout:)` e `speak(text:, model:, voice:, timeout:)` e
+diz `stt_model`, `tts_model` e `tts_voice`. OpenAI (`gpt-4o-mini-transcribe`,
+`gpt-4o-mini-tts`) e "Voz local" usam o mesmo formato
+(`Ai::Providers::OpenaiAudio`); Gemini transcreve pelo `generateContent` e
+fala em PCM, que vira WAV. `Ai::Audio` escolhe a conta com a capacidade
+(`AiAccount.pick(capability:)`: provedor só de voz não entra na escolha de
+texto), confere o limite do mês e registra o `AiCall` sem o áudio nem o
+texto. O "Testar conexão" de provedor só de voz gera uma fala curta.
 
 ## Configurações → IA
 
@@ -73,6 +87,13 @@ automação segue.
   tempo mudou e, com `history`, leituras, mínimo, máximo e média na janela.
   O "vigia de anomalia" e o "resumo da semana" do HA são automações do
   usuário com esta ação (e "Consultar dados" para o histórico), não código.
+
+- **`stt` "Transcrever áudio"** (Lote 5): áudio por URL https ou anexo
+  `/rails/active_storage/...`, idioma, provedor e modelo opcionais. Resposta
+  `{text, provider, model}` (`{{ fala.text }}`), que pode ir para "Pedir à IA".
+- **`tts` "Gerar fala"** (Lote 5): texto Liquid, voz, provedor e modelo
+  opcionais. O áudio vira anexo com URL assinada que vale 1 dia (e é apagado
+  depois). Resposta `{url, content_type, bytes, provider, model}`.
 
 Simulação não chama a IA.
 
