@@ -39,10 +39,16 @@ module Web
       account = AiAccount.find_by(provider: params[:provider].to_s)
       return redirect_to(settings_ai_path, alert: "Salve a chave antes de testar.") unless account&.usable?
 
-      res = Ai::Request.call(tenant: current_user.tenant, provider: account.provider, source: "teste", max_tokens: 30, timeout: 30,
-                             prompt: "Responda apenas com a palavra OK.")
+      notice = if account.plugin.supports?(:text)
+        res = Ai::Request.call(tenant: current_user.tenant, provider: account.provider, source: "teste", max_tokens: 30, timeout: 30,
+                               prompt: "Responda apenas com a palavra OK.")
+        "#{account.plugin.label} respondeu (#{res.model}, #{res.tokens} tokens)."
+      else # só voz (Lote 5): gera uma fala curta
+        res = Ai::Audio.speak(tenant: current_user.tenant, provider: account.provider, source: "teste", text: "OK")
+        "#{account.plugin.label} gerou a fala (#{res.model}, #{res.data[:data].bytesize} bytes)."
+      end
       account.update!(last_ok_at: Time.current, last_error: nil)
-      redirect_to settings_ai_path(anchor: account.provider), notice: "#{account.plugin.label} respondeu (#{res.model}, #{res.tokens} tokens)."
+      redirect_to settings_ai_path(anchor: account.provider), notice: notice
     rescue Ai::Client::Error => e
       account.update!(last_error: e.message.truncate(200))
       redirect_to settings_ai_path(anchor: account.provider), alert: "#{account.plugin.label}: #{e.message}"

@@ -12,8 +12,31 @@ module Ai
 
       describe key: "gemini", label: "Google Gemini", env: "GEMINI_API_KEY", default_model: "gemini-3.5-flash",
                models: %w[gemini-3.5-flash gemini-3.5-flash-lite gemini-3.1-pro-preview gemini-2.5-flash],
-               base_url: "https://generativelanguage.googleapis.com/v1beta/models", capabilities: %i[text image structured tools temperature],
+               base_url: "https://generativelanguage.googleapis.com/v1beta/models", capabilities: %i[text image structured tools temperature stt tts],
+               stt_model: "gemini-2.5-flash", tts_model: "gemini-2.5-flash-preview-tts", tts_voice: "Kore",
                hint: "Chave em aistudio.google.com → Get API key."
+
+      PCM_RATE = /rate=(\d+)/
+
+      # Voz (Lote 5, G14): o áudio vai junto do pedido de transcrição.
+      def transcribe(audio:, media_type:, model:, language:, timeout:)
+        ask = "Transcreva o áudio#{" (idioma: #{language})" if language.present?}. Responda só com o texto falado, sem comentários."
+        body = { contents: [ { role: "user", parts: [ { text: ask }, { inlineData: { mimeType: media_type, data: Base64.strict_encode64(audio) } } ] } ] }
+        json = post_json("#{@base_url}/#{model}:generateContent", body, { "x-goog-api-key" => @api_key.to_s }, timeout)
+        Array(json.dig("candidates", 0, "content", "parts")).filter_map { |p| p["text"] }.join.strip.presence ||
+          raise(Ai::Client::Error, "Não entendi nada no áudio.")
+      end
+
+      # O modelo de fala devolve PCM 16 bits mono; vira WAV.
+      def speak(text:, model:, voice:, timeout:)
+        body = { contents: [ { parts: [ { text: text } ] } ],
+                 generationConfig: { responseModalities: [ "AUDIO" ], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } }
+        json = post_json("#{@base_url}/#{model}:generateContent", body, { "x-goog-api-key" => @api_key.to_s }, timeout)
+        inline = json.dig("candidates", 0, "content", "parts", 0, "inlineData") or raise Ai::Client::Error, "A IA não devolveu áudio. Tente de novo."
+        pcm = Base64.decode64(inline["data"].to_s)
+        rate = inline["mimeType"].to_s[PCM_RATE, 1]&.to_i || 24_000
+        { media_type: "audio/wav", data: wav(pcm, rate) }
+      end
 
       def complete(model:, system:, user:, schema:, max_tokens:, timeout:, effort: nil, temperature: nil)
         thinking, headroom = thinking_config(model.to_s, effort.presence)
@@ -31,6 +54,8 @@ module Ai
       end
 
       private
+
+      def wav(pcm, rate) = [ "RIFF", 36 + pcm.bytesize, "WAVE", "fmt ", 16, 1, 1, rate, rate * 2, 2, 16, "data", pcm.bytesize ].pack("a4Va4a4VvvVVvva4V") + pcm
 
       def thinking_config(model, effort)
         level = effort && (BUDGETS.key?(effort) ? effort : "high")

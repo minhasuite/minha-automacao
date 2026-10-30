@@ -19,8 +19,9 @@ class AiAccount < ApplicationRecord
   def self.usable = all.select(&:usable?)
 
   # Provedor pedido (chave) ou o padrão da instalação, ou o primeiro que serve.
-  def self.pick(key = nil, default: nil)
-    list = usable
+  # `capability`: só os que fazem aquilo (texto; voz no Lote 5).
+  def self.pick(key = nil, default: nil, capability: :text)
+    list = usable.select { |a| a.plugin.supports?(capability) }
     return list.find { |a| a.provider == key.to_s } if key.present?
 
     list.find { |a| a.provider == default.to_s } || list.first

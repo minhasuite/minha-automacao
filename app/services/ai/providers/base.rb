@@ -15,13 +15,18 @@ module Ai
     # da suíte (Ai::Client); nil = o provedor só existe com chave da instalação.
     # Erro: Ai::Client::TransientError (429, 5xx, rede) ou Ai::Client::Error,
     # sempre com mensagem genérica (o corpo cru do provedor só no log).
+    #
+    # Voz (Lote 5, G14), para quem declara `stt`/`tts` e os modelos:
+    #   transcribe(audio:, media_type:, model:, language:, timeout:) → texto
+    #   speak(text:, model:, voice:, timeout:) → {media_type:, data: bytes}
     class Base
       Result = Data.define(:data, :usage)
 
       class << self
-        attr_reader :key, :label, :default_model, :env, :base_url, :hint
+        attr_reader :key, :label, :default_model, :env, :base_url, :hint, :stt_model, :tts_model, :tts_voice
 
-        def describe(key:, label:, default_model:, capabilities:, models: [], env: nil, base_url: nil, custom_url: false, key_required: true, hint: nil)
+        def describe(key:, label:, default_model:, capabilities:, models: [], env: nil, base_url: nil, custom_url: false, key_required: true, hint: nil,
+                     stt_model: nil, tts_model: nil, tts_voice: nil)
           unknown = capabilities - Ai::CAPABILITIES.keys
           raise ArgumentError, "capacidade desconhecida: #{unknown.join(', ')}" if unknown.any?
 
@@ -35,6 +40,9 @@ module Ai
           @custom_url = custom_url
           @key_required = key_required
           @hint = hint
+          @stt_model = stt_model
+          @tts_model = tts_model
+          @tts_voice = tts_voice
         end
 
         def capabilities = @capabilities || []
@@ -50,6 +58,8 @@ module Ai
       end
 
       def complete(model:, system:, user:, schema:, max_tokens:, timeout:, effort: nil, temperature: nil) = raise(NotImplementedError)
+      def transcribe(audio:, media_type:, model:, language:, timeout:) = raise(NotImplementedError)
+      def speak(text:, model:, voice:, timeout:) = raise(NotImplementedError)
 
       private
 

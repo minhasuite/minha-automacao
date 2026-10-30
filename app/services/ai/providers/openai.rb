@@ -4,8 +4,11 @@ module Ai
     # SDK). Imagem do formato Anthropic vira `image_url` com data URI. Sem
     # temperatura: os modelos de raciocínio (gpt-5) recusam valor fora do padrão.
     class Openai < Base
+      include OpenaiAudio
+
       describe key: "openai", label: "OpenAI", env: "OPENAI_API_KEY", default_model: "gpt-5-mini", models: %w[gpt-5-mini gpt-5],
-               base_url: "https://api.openai.com/v1", capabilities: %i[text image structured tools],
+               base_url: "https://api.openai.com/v1", capabilities: %i[text image structured tools stt tts],
+               stt_model: "gpt-4o-mini-transcribe", tts_model: "gpt-4o-mini-tts", tts_voice: "alloy",
                hint: "Chave em platform.openai.com → API keys."
 
       def complete(model:, system:, user:, schema:, max_tokens:, timeout:, effort: nil, temperature: nil) # rubocop:disable Lint/UnusedMethodArgument
