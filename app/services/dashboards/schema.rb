@@ -42,12 +42,14 @@ module Dashboards
       return e << "views precisa ser uma lista com ao menos uma view" unless views.is_a?(Array) && views.any?
 
       ids = []
+      paths = []
       views.each_with_index do |view, vi|
         next e << "view #{vi + 1} precisa ser um objeto" unless view.is_a?(Hash)
 
         where = "view #{view['id'] || vi + 1}"
         check_id(view, where, ids, e)
         e << "#{where}: título obrigatório" if view["title"].to_s.strip.empty?
+        path(view, where, paths, e)
         Array(view["badges"]).each { |b| widget(b, "#{where} (selo)", ids, e) }
         sections = view["sections"]
         next e << "#{where}: sections precisa ser uma lista" unless sections.is_a?(Array)
@@ -91,6 +93,15 @@ module Dashboards
       e << "#{where}: live precisa ser true ou false" if w.key?("live") && ![ true, false ].include?(w["live"])
       e << "#{where}: snapshot_interval precisa ser de 2 a 300 segundos" if w.key?("snapshot_interval") && !(w["snapshot_interval"].is_a?(Integer) && w["snapshot_interval"].between?(2, 300))
       %w[min max].each { |k| e << "#{where}: #{k} precisa ser número" if w.key?(k) && !w[k].is_a?(Numeric) }
+    end
+
+    # Caminho da visão (opcional): minúsculas, números e hífen; único no painel.
+    def path(view, where, paths, e)
+      return unless view.key?("path")
+      return e << "#{where}: caminho só com letras minúsculas, números e hífen (até 40)" unless view["path"].is_a?(String) && view["path"].match?(/\A[a-z0-9][a-z0-9-]{0,39}\z/)
+
+      e << "#{where}: caminho repetido" if paths.include?(view["path"])
+      paths << view["path"]
     end
 
     def check_id(obj, where, ids, e)

@@ -63,6 +63,7 @@ module DashboardsHelper
   def dw_area_art(area) = "dw-art-#{area['id'].to_s.bytes.sum % AREA_ARTS}"
 
   def dw_view_path(dashboard, view, home:)
-    home ? root_path(local: dashboard.site_id, view: view["id"]) : dashboard_path(dashboard, view: view["id"])
+    slug = view["path"].presence || view["id"]
+    home ? root_path(local: dashboard.site_id, view: slug) : dashboard_path(dashboard, view: slug)
   end
 end

@@ -17,8 +17,10 @@ module Dashboards
       views.last["id"]
     end
 
-    def update_view(id, title:, icon: nil)
-      view(id).merge!("title" => title.presence || view(id)["title"], "icon" => icon.presence).compact!
+    # `path`: o pedaço da URL da visão (?view=cozinha); vazio = usa o id.
+    def update_view(id, title:, icon: nil, path: nil)
+      view(id).merge!("title" => title.presence || view(id)["title"], "icon" => icon.presence,
+                      "path" => path.to_s.parameterize.presence).compact!
     end
 
     def add_section(view_id, title:)

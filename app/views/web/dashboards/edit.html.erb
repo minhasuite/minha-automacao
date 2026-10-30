@@ -10,15 +10,15 @@
 
 <div class="grid gap-6 lg:grid-cols-3 items-start">
   <div class="lg:col-span-2 flex flex-col gap-4 min-w-0">
-    <nav class="dw-tabs !mt-0" aria-label="Views do rascunho">
+    <nav class="dw-tabs !mt-0" aria-label="Visões do rascunho">
       <% views.each do |v| %>
         <%= link_to edit_dashboard_path(@dashboard, view: v["id"]), class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
       <% end %>
       <details class="dw-pop">
-        <summary class="ss-chip cursor-pointer"><%= icon("plus", "size-4") %>Nova view</summary>
+        <summary class="ss-chip cursor-pointer"><%= icon("plus", "size-4") %>Nova visão</summary>
         <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "ss-card p-3 mt-2 flex gap-2" do %>
           <%= hidden_field_tag :op, "add_view", id: nil %>
-          <label class="sr-only" for="nv-title">Nome da view</label>
+          <label class="sr-only" for="nv-title">Nome da visão</label>
           <%= text_field_tag :title, nil, class: "ss-input", id: "nv-title", placeholder: "Cozinha", required: true, maxlength: 60 %>
           <%= submit_tag "Criar", class: "ss-btn ss-btn-primary" %>
         <% end %>
@@ -26,15 +26,16 @@
     </nav>
 
     <% if view %>
-      <section class="ss-card ss-card-pad" aria-label="View <%= view['title'] %>">
+      <section class="ss-card ss-card-pad" aria-label="Visão <%= view['title'] %>">
         <div class="flex flex-wrap items-end gap-3">
           <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-0" do %>
             <%= hidden_field_tag :op, "update_view", id: nil %><%= hidden_field_tag :target, view["id"], id: nil %><%= hidden_field_tag :view_id, view["id"], id: nil %>
-            <div class="flex-1 min-w-40"><label class="ss-label" for="vt">Nome da view</label><%= text_field_tag :title, view["title"], class: "ss-input", id: "vt", maxlength: 60 %></div>
-            <div class="w-40"><label class="ss-label" for="vi">Ícone</label><%= select_tag :icon, options_for_select(%w[home view-boards light-bulb lightning-bolt sun moon chart-bar switch-horizontal cube office-building sparkles bell], view["icon"]), include_blank: "Padrão", class: "ss-input", id: "vi" %></div>
+            <div class="flex-1 min-w-40"><label class="ss-label" for="vt">Nome da visão</label><%= text_field_tag :title, view["title"], class: "ss-input", id: "vt", maxlength: 60 %></div>
+            <div class="w-40"><label class="ss-label" for="vi">Ícone</label><%= select_tag :icon, options_for_select(Dashboard::ICONS, view["icon"]), include_blank: "Padrão", class: "ss-input", id: "vi" %></div>
+            <div class="w-40"><label class="ss-label" for="vp">Caminho</label><%= text_field_tag :path, view["path"], class: "ss-input num", id: "vp", maxlength: 40, placeholder: view["id"], pattern: "[a-z0-9][a-z0-9-]*", title: "Letras minúsculas, números e hífen" %></div>
             <%= submit_tag "Salvar", class: "ss-btn ss-btn-ghost" %>
           <% end %>
-          <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "view", target: view["id"], view_id: view["id"], name: "a view #{view['title']}" %>
+          <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "view", target: view["id"], view_id: view["id"], name: "a visão #{view['title']}" %>
         </div>
       </section>
 
@@ -92,7 +93,9 @@
   <aside class="flex flex-col gap-4">
     <%= form_with model: @dashboard, url: dashboard_path(@dashboard), class: "ss-card ss-card-pad grid gap-3" do |f| %>
       <h2>Painel</h2>
-      <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true %></div>
+      <div><%= f.label :name, "Título", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true %></div>
+      <div><%= f.label :icon, "Ícone", class: "ss-label" %><%= f.select :icon, Dashboard::ICONS, { include_blank: "Padrão" }, class: "ss-input" %></div>
+      <label class="ss-check"><%= f.check_box :sidebar %>Mostrar no menu lateral</label>
       <fieldset><legend class="ss-label">Quem vê <span class="font-normal">(nenhum = todos)</span></legend>
         <div class="flex flex-wrap gap-3">
           <% SiteMembership::ROLES.each do |r| %><label class="ss-check"><%= check_box_tag "dashboard[roles][]", r, @dashboard.roles.include?(r), id: "dr-#{r}" %><%= SiteMembership.role_label(r) %></label><% end %>
@@ -101,6 +104,12 @@
       <label class="ss-check"><%= f.check_box :site_default %>Padrão do local</label>
       <div><%= f.submit "Salvar painel", class: "ss-btn ss-btn-ghost" %></div>
     <% end %>
+    <% if current_user.dashboard_prefs[@site.id] == @dashboard.id %>
+      <p class="ss-badge ss-badge-success w-fit">Abre no seu Início</p>
+    <% else %>
+      <%= button_to prefer_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost w-full" do %><%= icon("home", "size-4") %>Abrir no meu Início<% end %>
+    <% end %>
+    <%= button_to duplicate_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost w-full" do %><%= icon("duplicate", "size-4") %>Duplicar painel<% end %>
 
     <section class="ss-card ss-card-pad">
       <h2>Rascunho</h2>

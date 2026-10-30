@@ -1,6 +1,7 @@
 <%= render "web/shared/header", title: "Painéis", subtitle: "#{@site.name} · escolha o que abre no seu Início.", back: site_path(@site) do %>
   <% if can?(:manage) %><%= link_to new_site_dashboard_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo painel<% end %><% end %>
 <% end %>
+<%= render "web/sites/tabs", site: @site, current: :dashboards %>
 
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
   <% @dashboards.each_with_index do |d, i| %>

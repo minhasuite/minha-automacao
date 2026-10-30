@@ -9,18 +9,23 @@ class Dashboard < ApplicationRecord
   acts_as_tenant :tenant
 
   KINDS = { "home" => "Casa", "plant" => "Fábrica", "custom" => "Personalizado" }.freeze
+  # Ícones do painel e das visões (os SVG de app/assets/images/icons).
+  ICONS = %w[view-boards home light-bulb lightning-bolt sun moon chart-bar switch-horizontal cube office-building
+             sparkles bell video-camera vacuum shopping-bag truck clock].freeze
 
   belongs_to :site
   has_many :versions, -> { order(version: :desc) }, class_name: "DashboardVersion", dependent: nil # cascade no banco
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }
+  validates :icon, inclusion: { in: ICONS }, allow_nil: true
   validate :roles_known
   validate :definitions_valid
 
   normalizes :name, with: ->(v) { v.to_s.squish }
+  normalizes :icon, with: ->(v) { v.presence }
 
-  audited_attributes :name, :version, :roles, :site_default
+  audited_attributes :name, :version, :roles, :site_default, :sidebar
 
   scope :ordered, -> { order(site_default: :desc, position: :asc, created_at: :asc) }
 
@@ -35,7 +40,24 @@ class Dashboard < ApplicationRecord
     list.find { |d| d.id == user.dashboard_prefs[site.id] } || list.first
   end
 
+  # Painéis marcados "mostrar no menu" que a pessoa vê (barra lateral, como no HA).
+  def self.sidebar_for(user)
+    sites = Site.visible_to(user).to_a.index_by(&:id)
+    where(sidebar: true, site_id: sites.keys).ordered.includes(:site).to_a
+      .select { |d| d.visible_to?(sites[d.site_id].role_for(user)) }
+  end
+
   def kind_label = KINDS.fetch(kind, kind)
+  def icon_name = icon || "view-boards"
+
+  # Cópia manual (fora do menu e do padrão): publicada como versão 1.
+  def duplicate!(author: Current.user)
+    transaction do
+      copy = site.dashboards.create!(name: "#{name} (cópia)", kind: kind, icon: icon, roles: roles, definition: published, position: position + 1)
+      copy.publish!(copy.definition, author: author)
+      copy
+    end
+  end
   def visible_to?(role) = roles.empty? || role == "owner" || roles.include?(role)
   def published = auto? ? Dashboards::Generator.call(site) : definition
   def working_draft = draft || published

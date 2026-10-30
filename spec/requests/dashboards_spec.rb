@@ -52,7 +52,7 @@ RSpec.describe "Dashboards: web e API" do
     it "edita o rascunho sem JSON, pré-visualiza, publica e volta versão" do
       d = dashboard
       get "/paineis/#{d.id}/editar"
-      expect(response.body).to include("Adicionar widget", "Nova view", "Versões")
+      expect(response.body).to include("Adicionar widget", "Nova visão", "Versões")
 
       patch "/paineis/#{d.id}/rascunho", params: { op: "add_view", title: "Cozinha" }
       d.reload
@@ -137,7 +137,7 @@ RSpec.describe "Dashboards: web e API" do
       post "/paineis/#{cozinha.id}/padrao"
       expect(user.reload.dashboard_prefs).to include("site" => site.id, site.id => cozinha.id)
       get "/"
-      expect(response.body).to include("Esta view ainda está vazia")
+      expect(response.body).to include("Esta visão ainda está vazia")
       delete "/paineis/#{cozinha.id}"
       expect(within(tenant) { Dashboard.exists?(cozinha.id) }).to be false
     end
@@ -148,7 +148,7 @@ RSpec.describe "Dashboards: web e API" do
       guest = member("guest")
       sign_in(guest)
       get "/"
-      expect(response.body).to include("Esta view ainda está vazia").or include("Vamos montar")
+      expect(response.body).to include("Esta visão ainda está vazia").or include("Vamos montar")
       within(tenant) { d.update!(roles: []) }
       get "/"
       expect(response.body).to include("Luz")

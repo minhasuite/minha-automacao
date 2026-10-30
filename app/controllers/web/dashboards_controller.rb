@@ -62,10 +62,16 @@ module Web
       redirect_to edit_dashboard_path(@dashboard), notice: "Painel salvo."
     end
 
+    def duplicate
+      load_dashboard(:manage)
+      copy = @dashboard.duplicate!
+      redirect_to edit_dashboard_path(copy), notice: "Painel duplicado. Ajuste o nome e as visões."
+    end
+
     def destroy
       load_dashboard(:manage)
       @dashboard.destroy!
-      redirect_to site_dashboards_path(@site), notice: "Painel excluído."
+      redirect_to settings_dashboards_path, notice: "Painel excluído."
     end
 
     # Operação do editor no rascunho (ver Dashboards::Editor).
@@ -132,11 +138,11 @@ module Web
     end
 
     def pick_view(resolved)
-      resolved["views"].find { |v| v["id"] == params[:view] } || resolved["views"].first
+      Dashboards.pick_view(resolved, params[:view])
     end
 
     def dashboard_params
-      params.require(:dashboard).permit(:name, :kind, :site_default, roles: []).tap { |p| p[:roles] = Array(p[:roles]).compact_blank if p.key?(:roles) }
+      params.require(:dashboard).permit(:name, :kind, :site_default, :icon, :sidebar, roles: []).tap { |p| p[:roles] = Array(p[:roles]).compact_blank if p.key?(:roles) }
     end
 
     def blank_definition = { "schema_version" => Dashboards::Schema::VERSION, "views" => [ { "id" => "home", "title" => "Início", "sections" => [] } ] }
@@ -147,7 +153,7 @@ module Web
       focus = { view: params[:view_id] }
       case params[:op]
       when "add_view" then focus[:view] = editor.add_view(title: params[:title], icon: params[:icon])
-      when "update_view" then editor.update_view(t, title: params[:title], icon: params[:icon])
+      when "update_view" then editor.update_view(t, title: params[:title], icon: params[:icon], path: params[:path])
       when "add_section" then editor.add_section(params[:view_id], title: params[:title])
       when "update_section" then editor.update_section(t, title: params[:title], span: span_param)
       when "add_widget" then focus[:w] = editor.add_widget(t, widget_attrs)

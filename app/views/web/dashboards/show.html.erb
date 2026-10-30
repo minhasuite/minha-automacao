@@ -37,16 +37,16 @@
 </section>
 
 <% if @resolved["views"].size > 1 %>
-  <nav class="dw-tabs" aria-label="Views do painel">
+  <nav class="dw-tabs" aria-label="Visões do painel">
     <% @resolved["views"].each do |v| %>
-      <%= link_to dw_view_path(@dashboard, v, home: @home).then { |p| @preview ? dashboard_path(@dashboard, view: v["id"], rascunho: 1) : p }, class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
+      <%= link_to dw_view_path(@dashboard, v, home: @home).then { |p| @preview ? dashboard_path(@dashboard, view: v["path"].presence || v["id"], rascunho: 1) : p }, class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
     <% end %>
   </nav>
 <% end %>
 
 <% if view["sections"].all? { |s| s["widgets"].empty? } %>
   <div class="ss-card ss-empty mt-4">
-    <p class="font-bold text-ink">Esta view ainda está vazia.</p>
+    <p class="font-bold text-ink">Esta visão ainda está vazia.</p>
     <% if @resolved["can_edit"] %><p class="mt-1">Abra o editor e adicione seções e widgets.</p><%= link_to "Editar painel", edit_dashboard_path(@dashboard, view: view["id"]), class: "ss-btn ss-btn-primary mt-4" %><% end %>
   </div>
 <% else %>

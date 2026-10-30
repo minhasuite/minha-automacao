@@ -12,7 +12,7 @@ module Web
       @dashboard = Dashboard.default_for(@site, current_user, @site_role) or return render(:welcome)
       @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role) }
       @resolved = Dashboards::Resolver.new(@dashboard, role: @site_role).call
-      @view = @resolved["views"].find { |v| v["id"] == params[:view] } || @resolved["views"].first
+      @view = Dashboards.pick_view(@resolved, params[:view])
       @home = true
       render "web/dashboards/show"
     end
