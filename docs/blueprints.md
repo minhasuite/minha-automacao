@@ -82,3 +82,11 @@ rode aqui (sem gatilho ou sem ação) fica de fora e é contado no aviso. Até
 100 itens por vez. Templates do HA (Jinja) não convertem: aparecem como
 "condição template" e devem ser refeitos com `expr`, `count_points` ou
 Liquid.
+
+O conversor também leva o controle de fluxo (`if`, `choose`, `condition` como
+ação, `stop`, `repeat` com `count`/`while`/`until`, `variables` → `set`) e os
+gatilhos `time_pattern` ("/N" minutos ou horas), `webhook` e `event` (gatilho
+"Evento"). Condição que não converte dentro de um bloco é anotada ("o bloco
+ficou sem ela"). Nas 58 automações reais da casa, 41 viram blueprint (6 sem
+perda) e 17 ficam de fora (gatilho de aparelho, início do HA, horário por
+entidade).

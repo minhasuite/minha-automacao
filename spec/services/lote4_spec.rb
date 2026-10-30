@@ -297,7 +297,7 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
             - action: notify.notify
               data: { title: Porta, message: "Aberta" }
         - alias: Só serviço estranho
-          trigger: [ { platform: homeassistant, event: start } ]
+          trigger: [ { platform: homeassistant, event: start }, { platform: time_pattern, minutes: "/30" }, { platform: event, event_type: mobile_app_notification_action, event_data: { action: OK } }, { platform: webhook, webhook_id: x } ]
           action: [ { service: shell_command.algo } ]
         - nao_e_automacao: true
       YAML
@@ -316,6 +316,8 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       expect(list[1]["definition"]["triggers"]).to eq([ { "type" => "state", "point" => { "!input" => "binary_sensor_porta" }, "to" => true, "for" => "2m" } ])
       expect(list[1]["inputs"].first.dig("filter", "capability")).to eq(%w[contact motion problem tamper])
       expect(list[2]["unsupported"]).to include("gatilho homeassistant", "ação shell_command.algo")
+      expect(list[2]["definition"]["triggers"]).to eq([ { "type" => "time", "every" => "30m" }, { "type" => "event", "event" => "mobile_app_notification_action", "match" => { "action" => "OK" } },
+                                                        { "type" => "webhook" } ])
 
       scripts = Blueprints::HaImport.import("boa_noite:\n  alias: Boa noite\n  sequence:\n    - service: light.turn_off\n      entity_id: light.sala\n")
       expect(scripts.sole).to include("name" => "Boa noite", "domain" => "script")
@@ -327,6 +329,43 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       expect(lamp).to be_persisted
       expect { Blueprints::HaImport.import("- a: 1") }.to raise_error(Blueprints::HaImport::Error, /Não achei blueprint/)
       expect(Blueprints::HaImport.import("blueprint:\n  name: X\n  domain: automation\ntrigger: []\naction: []\n").sole["name"]).to eq("X")
+    end
+
+    it "controle de fluxo do HA vira se, escolher, parar se falso, parar, repetir e variáveis" do
+      yaml = <<~YAML
+        alias: Fluxo
+        trigger: [ { platform: state, entity_id: switch.a } ]
+        action:
+          - variables: { msg: "{{ states('switch.a') }}", n: 2 }
+          - if: [ { condition: state, entity_id: switch.a, state: "on" } ]
+            then: [ { service: switch.turn_on, entity_id: switch.b } ]
+            else: [ { service: switch.turn_off, entity_id: switch.b } ]
+          - choose:
+              - conditions: [ { condition: template, value_template: "{{ true }}" } ]
+                sequence: [ { stop: "fim" } ]
+            default: [ { delay: 5 } ]
+          - condition: numeric_state
+            entity_id: sensor.t
+            above: 20
+          - repeat: { count: 3, sequence: [ { delay: 1 } ] }
+          - repeat: { until: [ { condition: state, entity_id: switch.b, state: "off" } ], sequence: [ { delay: 1 } ] }
+          - repeat: { for_each: [1, 2], sequence: [] }
+          - stop: erro
+            error: true
+      YAML
+      bp = Blueprints::HaImport.import(yaml).sole
+      acts = bp["definition"]["actions"]
+      expect(acts.map { |a| a["type"] }).to eq(%w[set set if choose condition repeat repeat stop])
+      expect(acts[0]).to eq("type" => "set", "var" => "msg", "value" => "{{ states('switch.a') }}")
+      expect(acts[2]).to include("conditions" => [ { "type" => "state", "point" => { "!input" => "switch_a" }, "is" => true } ],
+                                 "else" => [ { "type" => "command", "point" => { "!input" => "switch_b" }, "command" => "off" } ])
+      expect(acts[3]).to eq("type" => "choose", "options" => [ { "conditions" => [], "actions" => [ { "type" => "stop", "reason" => "fim" } ] } ], "default" => [ { "type" => "wait", "for" => "5s" } ])
+      expect(acts[4]["conditions"]).to eq([ { "type" => "numeric", "point" => { "!input" => "sensor_t" }, "above" => 20 } ])
+      expect(acts[5]).to include("count" => 3)
+      expect(acts[6]["until"].size).to eq(1)
+      expect(acts[7]).to eq("type" => "stop", "reason" => "erro", "error" => true)
+      expect(bp["unsupported"]).to include("variáveis com template do HA (confira o texto)", "condição template",
+                                           "condição não convertida dentro de se/escolher/repetir: o bloco ficou sem ela, confira", "repetição for_each (for_each)")
     end
   end
 

@@ -273,8 +273,28 @@ module Blueprints
         at = at.is_a?(String) ? at[0, 5] : at
         input_ref?(at) || at.to_s.match?(Automations::Dsl::TIME) ? { "type" => "time", "at" => at } : note("gatilho time por entidade") && nil
       when "sun" then { "type" => "sun", "event" => t["event"].to_s, "offset" => (duration(t["offset"]) if t["offset"]) }.compact
+      when "time_pattern" then time_pattern(t)
+      when "webhook" then { "type" => "webhook" }
+      when "event" then event_trigger(t)
       end
       out || (note("gatilho #{kind.presence || '?'}") && nil)
+    end
+
+    # Lote 4 (G32): "/N" em minutos (ou horas) vira "a cada"; o resto não converte.
+    def time_pattern(t)
+      return { "type" => "time", "every" => "#{t['minutes'].to_s.delete_prefix('/')}m" } if t["minutes"].to_s.match?(%r{\A/\d+\z}) && t["hours"].blank?
+      return { "type" => "time", "every" => "#{t['hours'].to_s.delete_prefix('/')}h" } if t["hours"].to_s.match?(%r{\A/\d+\z}) && t["minutes"].to_s.in?(%w[0 00])
+
+      nil
+    end
+
+    # Evento com nome (G6): os dados do filtro só os que são texto simples.
+    def event_trigger(t)
+      name = t["event_type"].to_s
+      return unless name.match?(Automations::Triggers::EVENT_NAME)
+
+      data = t["event_data"].is_a?(Hash) ? t["event_data"].select { |_, v| v.is_a?(String) || v.is_a?(Numeric) }.transform_values(&:to_s) : {}
+      { "type" => "event", "event" => name, "match" => data.presence }.compact
     end
 
     def condition(c)
@@ -317,9 +337,16 @@ module Blueprints
 
     def actions(raw) = list(raw).flat_map { |a| action(a) }
 
+    # Controle de fluxo do HA → blocos da DSL (Lote 4, G32): chave do HA → método.
+    FLOW = { "if" => :flow_if, "choose" => :flow_choose, "condition" => :flow_condition, "stop" => :flow_stop,
+             "repeat" => :flow_repeat, "variables" => :flow_variables }.freeze
+
     def action(a)
       return note("ação em texto") && [] unless a.is_a?(Hash)
       return [ { "type" => "wait", "for" => duration(a["delay"]) } ] if a.key?("delay")
+
+      flow = FLOW.find { |k, _| a.key?(k) }
+      return send(flow[1], a) if flow
 
       service = (a["action"] || a["service"]).to_s
       return note("ação #{(a.keys - IGNORED).first || '?'}") && [] if service.empty?
@@ -334,6 +361,43 @@ module Blueprints
       else
         note("ação #{service}") && []
       end
+    end
+
+    def conditions(raw)
+      given = list(raw)
+      out = given.filter_map { |c| condition(c) }
+      note("condição não convertida dentro de se/escolher/repetir: o bloco ficou sem ela, confira") if out.size < given.size
+      out
+    end
+
+    def flow_if(a)
+      [ { "type" => "if", "conditions" => conditions(a["if"]), "then" => actions(a["then"]), "else" => actions(a["else"]).presence }.compact ]
+    end
+
+    def flow_choose(a)
+      options = list(a["choose"]).map { |o| { "conditions" => conditions(o["conditions"]), "actions" => actions(o["sequence"]) } }
+      return note("ação choose") && [] if options.empty?
+
+      [ { "type" => "choose", "options" => options, "default" => actions(a["default"]).presence }.compact ]
+    end
+
+    def flow_condition(a) = [ { "type" => "condition", "conditions" => conditions([ a ]) } ]
+    def flow_stop(a) = [ { "type" => "stop", "reason" => a["stop"].to_s.presence, "error" => (true if a["error"] == true) }.compact ]
+
+    def flow_repeat(a)
+      r = a["repeat"].is_a?(Hash) ? a["repeat"] : {}
+      body = { "type" => "repeat", "actions" => actions(r["sequence"]) }
+      return [ body.merge("count" => r["count"]) ] if r["count"].is_a?(Integer)
+      return [ body.merge("while" => conditions(r["while"])) ] if r.key?("while")
+      return [ body.merge("until" => conditions(r["until"])) ] if r.key?("until")
+
+      note("repetição #{(r.keys - %w[sequence]).first || '?'} (for_each)") && []
+    end
+
+    def flow_variables(a)
+      vars = a["variables"].is_a?(Hash) ? a["variables"] : {}
+      note("variáveis com template do HA (confira o texto)") if vars.values.any? { |v| v.to_s.include?("{{") || v.to_s.include?("{%") }
+      vars.map { |k, v| { "type" => "set", "var" => k.to_s.downcase.gsub(/[^a-z0-9_]/, "_"), "value" => v.to_s } }
     end
 
     def targets(a)
