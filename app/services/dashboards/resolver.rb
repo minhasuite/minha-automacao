@@ -5,7 +5,7 @@ module Dashboards
   # alertas, cenas) e o dicionário `points` com o valor atual de cada ponto
   # usado. O app redesenha um widget trocando só a entrada de `points`.
   class Resolver
-    POINT_FIELDS = %i[id key name capability unit risk confirm writable options quality changed_at device_class].freeze
+    POINT_FIELDS = %i[id key name icon capability unit risk confirm writable options quality changed_at device_class helper].freeze
     LIST_LIMIT = 24
 
     attr_reader :dashboard, :role
@@ -207,8 +207,9 @@ module Dashboards
       p.slice(*POINT_FIELDS).merge(
         "value" => p.value, "text" => helpers.point_value_text(p), "on" => on?(p), "area_id" => p.effective_area_id,
         "device" => p.device.name, "min" => p.min&.to_f, "max" => p.max&.to_f, "step" => p.step&.to_f,
-        "commands" => Points::Command::COMMANDS.fetch(p.capability, []),
-        "can_command" => p.writable && !p.disabled && !p.device.disabled && Drivers.supported?(p.device) && Points::Command::COMMANDS.key?(p.capability) &&
+        "commands" => (cmds = Points::Command.commands_for(p)), "actions" => Points::Command.actions_for(p),
+        "mode" => p.address["mode"], "input" => helpers.point_input_type(p),
+        "can_command" => p.writable && !p.disabled && !p.device.disabled && Drivers.supported?(p.device) && cmds.any? &&
                          SiteMembership.allowed?(role, :command, risk: p.risk)
       ).stringify_keys
     end

@@ -42,8 +42,7 @@
       <% end %>
     <% elsif case_kind == :command %>
       <% point = points[node["point"]] %>
-      <% allowed = point ? Points::Command::COMMANDS.fetch(point.capability, []) : AutomationHelper::COMMAND_CHOICES.values %>
-      <%= select_tag name, options_for_select(AutomationHelper::COMMAND_CHOICES.select { |_, c| allowed.include?(c) }, v), class: "ss-input", id: id %>
+      <%= select_tag name, options_for_select(command_options(point), v), class: "ss-input", id: id %>
     <% elsif case_kind == :select %>
       <%= select_tag name, options_for_select(fd.options.invert, v), include_blank: (fd.required ? false : "Nenhum"), class: "ss-input", id: id %>
     <% elsif case_kind == :scene %>

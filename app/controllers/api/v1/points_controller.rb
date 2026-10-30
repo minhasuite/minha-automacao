@@ -57,8 +57,12 @@ module Api
         authorize_site!(point.site, :command, risk: point.risk)
         return render_error(:not_virtual, "Só ponto de dispositivo virtual recebe valor de fora.", status: :unprocessable_content) unless point.device.driver == "virtual"
 
-        point.report!(point.cast(params.require(:value).to_s))
+        value = point.cast(params.require(:value).to_s)
+        value = point.helper_type.check(point, value) if point.helper_type
+        point.report!(value)
         render_data(PointSerializer.new(point).to_h)
+      rescue Points::Command::Error => e
+        render_error(e.code, e.message, status: :unprocessable_content)
       end
 
       # GET /points/:id/history?from=&to=&resolution=auto|raw|1h|1d (ISO 8601).

@@ -35,7 +35,7 @@ module AutomationsHelper
     when :select then fd.options.fetch(v, v)
     when :bool then v ? "sim" : "não"
     when :channels then Array(v).map { |c| Notifier.channel_label(c) }.join(" e ").downcase
-    when :command then command_label(v)
+    when :command then (p = points[node["point"]]) ? command_options(p).find { |_, c| c == v }&.first || command_label(v) : command_label(v)
     when :scene then Scene.find_by(id: v)&.name || "cena removida"
     when :alert_rule then AlertRule.find_by(id: v)&.name || "regra removida"
     else v.to_s.truncate(80)
@@ -46,6 +46,8 @@ module AutomationsHelper
   def dsl_value_choices(point)
     return unless point
     return [ true, false ].map { |b| [ point_value_label(point, b), b.to_s ] } if point.bool?
+
+    return PointsHelper::STATE_TEXT[point.capability].map { |v, label| [ label, v ] } if point.capability == "timer"
 
     point.option_values.map { |o| [ point_value_label(point, o), o ] } if point.capability.in?(%w[enum gate])
   end

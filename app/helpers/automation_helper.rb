@@ -26,6 +26,14 @@ module AutomationHelper
 
   def command_label(command) = COMMAND_CHOICES.key(command) || command
 
+  # [rótulo, comando] que o ponto aceita; helper usa os rótulos do plugin.
+  def command_options(point)
+    return COMMAND_CHOICES.to_a unless point
+
+    labels = COMMAND_CHOICES.invert.merge(point.helper_type&.command_labels || {})
+    Points::Command.commands_for(point).map { |c| [ labels.fetch(c, c), c ] }
+  end
+
   def link_detail(link)
     parts = [ link.mode_label ]
     parts << "nos dois sentidos" if link.bidirectional

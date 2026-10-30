@@ -7,5 +7,5 @@ class PointSerializer < ApplicationSerializer
              :state_class, :unit, :options
   %i[min max step scale offset deadband].each { |f| attribute(f) { |p| decimal(p.public_send(f)) } }
   attributes :writable, :address, :history, :history_interval_s, :retention_days, :pulse_ms, :max_on_s, :confirm,
-             :risk, :expose, :value, :quality, :changed_at, :reported_at, :hidden, :disabled, :created_at, :updated_at
+             :risk, :expose, :helper, :value, :quality, :changed_at, :reported_at, :hidden, :disabled, :created_at, :updated_at
 end
