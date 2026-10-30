@@ -27,8 +27,8 @@ RSpec.describe "Automações (DSL): web e API" do
     it "cria, monta no editor de blocos, publica, liga, simula, executa e mostra o trace" do
       get "/locais/#{site.id}/automacoes"
       expect(response.body).to include("Nenhuma automação neste local")
-      get "/locais/#{site.id}/automacao"
-      expect(response.body).to include("Automações com regras")
+      get "/locais/#{site.id}/regras"
+      expect(response.body).to include("Regras simples", "Blueprints")
       get "/locais/#{site.id}/automacoes/nova"
       post "/locais/#{site.id}/automacoes", params: { automation: { name: "" } }
       expect(response).to have_http_status(:unprocessable_content)
@@ -72,7 +72,7 @@ RSpec.describe "Automações (DSL): web e API" do
       expect(response).to redirect_to("/locais/#{site.id}/automacoes")
       expect(automation.enabled).to be true
       get "/locais/#{site.id}/automacoes"
-      expect(response.body).to include("Movimento acende", "Nunca rodou", "Desligar")
+      expect(response.body).to include("Movimento acende", "nunca rodou", "Desligar")
 
       get "/automacoes/#{a.id}/simular"
       expect(response.body).to include("Valores hipotéticos", "Movimento", "Luz")
@@ -132,7 +132,7 @@ RSpec.describe "Automações (DSL): web e API" do
       expect(flash[:alert]).to include("Corrija antes de publicar")
       within(tenant) { a.update!(draft: { "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "command", "point" => gate.id, "command" => "pulse" } ] }) }
       get "/automacoes/#{a.id}/editar"
-      expect(response.body).to include("Esta automação comanda ponto crítico")
+      expect(response.body).to include("Comanda ponto crítico")
       post "/automacoes/#{a.id}/publicar"
       expect(flash[:alert]).to include("confirme antes")
       expect(automation.version).to eq(0)

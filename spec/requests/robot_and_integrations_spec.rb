@@ -66,7 +66,7 @@ RSpec.describe "Robô no painel e tela de integrações (F8)" do
     SyncIntegrationJob.perform_now(integration.id)
     expect(within(tenant) { integration.reload.last_error }).to include("expirada")
 
-    get "/locais/#{site.id}/automacao"
+    get "/locais/#{site.id}/regras"
     get "/locais/#{site.id}/avisos/novo"
     expect(response.body).to include("Falar na Echo Sala")
   end

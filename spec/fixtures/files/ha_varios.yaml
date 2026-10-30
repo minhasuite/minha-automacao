@@ -1,0 +1,111 @@
+blueprint:
+  name: Vários tipos
+  domain: automation
+  input:
+    sensors:
+      name: Seção
+      input:
+        temp:
+          name: Temperatura
+          selector:
+            entity:
+              domain: sensor
+        door:
+          name: Porta
+          selector:
+            entity:
+              domain: binary_sensor
+              device_class: door
+        fan:
+          name: Ventilador
+          selector:
+            entity:
+              domain: fan
+              multiple: true
+    limite:
+      name: Limite
+      default: 28
+      selector:
+        number: {}
+    ativo:
+      name: Ativo
+      default: true
+      selector:
+        boolean: {}
+    modo:
+      name: Modo
+      selector:
+        select:
+          options:
+            - label: Rápido
+              value: rapido
+            - lento
+    hora:
+      name: Hora
+      default: "07:30:00"
+      selector:
+        time: {}
+    espera:
+      name: Espera
+      default: { hours: 0, minutes: 5, seconds: 0 }
+      selector:
+        duration: {}
+    nota:
+      name: Nota
+      selector:
+        text: {}
+    alvo:
+      name: Área
+      selector:
+        area: {}
+mode: queued
+variables:
+  x: 1
+trigger:
+  - platform: numeric_state
+    entity_id: !input temp
+    above: !input limite
+    for: "00:01:00"
+  - platform: time
+    at: !input hora
+  - platform: sun
+    event: sunset
+    offset: "-00:15:00"
+  - platform: state
+    entity_id: sensor.fixa
+  - platform: mqtt
+    topic: x
+  - platform: time
+    at: input_datetime.acordar
+condition:
+  - condition: state
+    entity_id: !input door
+    state: "off"
+  - condition: time
+    after: "18:00:00"
+    weekday: [mon, fri]
+  - condition: numeric_state
+    entity_id: !input temp
+    below: 40
+  - condition: template
+    value_template: "{{ true }}"
+  - "{{ is_state('sun.sun', 'below_horizon') }}"
+action:
+  - service: fan.turn_on
+    target:
+      entity_id: !input fan
+    data:
+      percentage: 50
+  - service: notify.mobile_app
+    data:
+      title: Calor
+      message: "Está {{ states('sensor.x') }} graus"
+  - service: persistent_notification.create
+    data:
+      message: Pronto
+  - delay: { minutes: 2 }
+  - delay: !input espera
+  - service: scene.turn_on
+    target:
+      entity_id: scene.cinema
+  - choose: []

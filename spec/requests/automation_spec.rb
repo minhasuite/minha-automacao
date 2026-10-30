@@ -16,7 +16,9 @@ RSpec.describe "Automação: web e API" do
 
     it "cria, edita, desativa e exclui cada primitiva a partir do local e do ponto" do
       get "/locais/#{site.id}/automacao"
-      expect(response.body).to include("Nenhuma cena", "Nenhuma agenda", "Nenhum espelhamento", "Nenhum aviso", "Nenhum alerta")
+      expect(response).to redirect_to("/locais/#{site.id}/regras")
+      get "/locais/#{site.id}/regras"
+      expect(response.body).to include("Regras simples", "Nenhuma agenda", "Nenhum espelhamento", "Nenhum aviso", "Nenhum alerta")
 
       back = "/pontos/#{switch.id}"
       get "/locais/#{site.id}/espelhamentos/novo", params: { point_id: switch.id, back: back }
@@ -28,7 +30,7 @@ RSpec.describe "Automação: web e API" do
       link = within(tenant) { PointLink.sole }
 
       post "/locais/#{site.id}/agendas", params: { schedule: { name: "Ligar 17h", kind: "time", time_of_day: "17:00", days: [ "", "1", "2" ], point_id: light.id, command: "on", enabled: "1" } }
-      expect(response).to redirect_to("/locais/#{site.id}/automacao")
+      expect(response).to redirect_to("/locais/#{site.id}/regras")
       post "/locais/#{site.id}/avisos", params: { notify_rule: { point_id: door.id, to_value: "true", channels: [ "", "in_app", "push" ], enabled: "1" } }
       post "/locais/#{site.id}/regras-de-alerta", params: { alert_rule: {
         name: "Porta aberta", point_id: door.id, operator: "eq", value: "true", for_min: "5", severity: "warning", repeat_min: "160",
@@ -41,8 +43,10 @@ RSpec.describe "Automação: web e API" do
       scene = within(tenant) { Scene.sole }
       expect(scene.items.size).to eq(1)
 
-      get "/locais/#{site.id}/automacao"
-      expect(response.body).to include("Chegada", "Ligar 17h", "Interruptor → Luz", "nos dois sentidos", "Porta aberta", "por 5 min")
+      get "/locais/#{site.id}/regras"
+      expect(response.body).to include("Ligar 17h", "Interruptor → Luz", "nos dois sentidos", "Porta aberta", "por 5 min")
+      get "/locais/#{site.id}/cenas"
+      expect(response.body).to include("Chegada", "1 ponto")
       get "/pontos/#{switch.id}"
       expect(response.body).to include("Automação deste ponto", "Desligar sozinho", "Interruptor → Luz")
       get "/pontos/#{door.id}"
@@ -89,7 +93,7 @@ RSpec.describe "Automação: web e API" do
       within(tenant) { create(:site_membership, site: site, user: guest, role: "guest") }
       within(tenant) { AlertRule.create!(point: door, name: "Porta aberta", value: false) }
       sign_in(guest)
-      get "/locais/#{site.id}/automacao"
+      get "/locais/#{site.id}/regras"
       expect(response.body).not_to include("Novo")
       get "/locais/#{site.id}/cenas/novo"
       expect(response).to redirect_to("/")
