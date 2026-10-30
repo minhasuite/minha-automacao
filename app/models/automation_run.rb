@@ -30,6 +30,8 @@ class AutomationRun < ApplicationRecord
   def tone = TONES.fetch(status, "muted")
   def finished? = finished_at.present?
   def duration_s = finished_at && (finished_at - started_at)
+  # Resposta do script (Lote 1): as variáveis no fim da execução.
+  def response = state["vars"].to_h.except("repeat_index", "secret")
 
   def cancel!
     update!(status: "cancelled", finished_at: Time.current, resume_at: nil,
