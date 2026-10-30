@@ -16,6 +16,7 @@ module Miio
       device.assign_attributes(name: device.name.presence || data["name"].presence || "Robô aspirador",
                                area: device.area || area || site.areas.find_or_create_by!(name: AREA),
                                manufacturer: "Xiaomi", model: data["model"], address: device.address.merge("host" => data.fetch("host"), "model" => data["model"]).compact)
+      device.poll_s = 60 if created # o robô na tela pede estado recente; o padrão (30 min) é para o resto
       device.credential = data["token"] if data["token"].present?
       rooms = Array(data["rooms"]).map { |r| { "id" => Integer(r["id"]), "name" => r["name"].to_s.squish } }
       points = 0

@@ -3,12 +3,10 @@ module Drivers
   # nada passa pela nuvem nem mexe na conta Xiaomi do HA. Dispositivo:
   # `address` {host, model}, `external_id` = did, `credential` = token (hex,
   # cifrado). Ponto: `address` {siid, piid[, map, decode]} (ver Miio::Vacuum).
-  # O estado vem do `Miio::Poller` (a cada `POLL_EVERY` s); depois de cada
-  # comando o aparelho é lido de novo.
+  # O estado vem da leitura periódica (`Polling`, `devices.poll_s`; o robô
+  # nasce com 60 s); depois de cada comando o aparelho é lido de novo.
   class XiaomiMiot
     class Error < StandardError; end
-
-    POLL_EVERY = 30
 
     def self.client_for(device)
       raise Error, "Dispositivo sem host ou token." if device.address["host"].blank? || device.credential.blank?

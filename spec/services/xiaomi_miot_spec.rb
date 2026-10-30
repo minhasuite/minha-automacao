@@ -141,7 +141,7 @@ RSpec.describe "Xiaomi MIoT (robô aspirador)" do
         m.call(d).tap { |c| c.instance_variable_set(:@timeout, 0.1) && c.instance_variable_set(:@retries, 0) }
       end
       device
-      Miio::Poller.tick
+      expect(Polling.poll_device(device.id)).to be false
       expect(robot.reload.quality).to eq("unavailable")
       expect(device.reload.status).to eq("offline")
     end

@@ -8,6 +8,10 @@
   <div><%= f.label :manufacturer, "Fabricante", class: "ss-label" %><%= f.text_field :manufacturer, class: "ss-input" %></div>
   <div><%= f.label :model, "Modelo", class: "ss-label" %><%= f.text_field :model, class: "ss-input" %></div>
   <div><%= f.label :serial, "Número de série", class: "ss-label" %><%= f.text_field :serial, class: "ss-input num" %></div>
+  <% if Polling.supported?(device) %>
+    <div><%= f.label :poll_min, "Ler o estado a cada (minutos)", class: "ss-label" %><%= f.number_field :poll_min, min: 0, step: "any", class: "ss-input num", placeholder: "vazio ou 0 = não ler" %>
+      <p class="text-xs text-muted mt-1">Só leitura, um aparelho por vez. Padrão: 30 minutos.</p></div>
+  <% end %>
   <div class="flex items-end"><label class="ss-check"><%= f.check_box :disabled %> Desativado (não recebe comando)</label></div>
   <% if device.tuya_local? %>
     <div class="md:col-span-2"><label class="ss-check"><%= f.check_box :listen %> Manter conexão com o aparelho (o botão físico atualiza a tela)</label>

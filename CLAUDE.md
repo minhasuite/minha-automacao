@@ -194,8 +194,8 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   Ponto: `address` {siid, piid, role, map?}; o `vacuum` leva `actions`
   ({comando → [siid, aiid]}) e `rooms` ([{id, name}] do mapa; junção de
   cômodos no app troca ids: reimporte). Modelo dos pontos em `Miio::Vacuum`
-  (X20 Max `xiaomi.vacuum.d109gl`). `Miio::Poller` no worker lê a cada 30 s
-  (`MIIO_POLLER=off` desliga); comando lê de novo no fim. `clean_rooms` grava
+  (X20 Max `xiaomi.vacuum.d109gl`); o robô nasce com leitura a cada 60 s;
+  comando lê de novo no fim. `clean_rooms` grava
   só os ajustes que mudaram e manda os ids como texto ("5,45", ação 2.16).
   Importação: `... | rake 'xiaomi:importar[Casa]'` (JSON na entrada padrão).
   Robô: só leitura de teste; nada de limpar, voltar, lavar, secar, esvaziar.
@@ -210,6 +210,15 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   "Com erro" e é só importar de novo. Canal `alexa:<id do ponto>` em
   `Notifier` (aviso, alerta, ação "Avisar"): manda `announce` pela fila
   (source automation). Nunca anuncie de teste.
+- **Leitura periódica (F8)**: `Polling` no worker (`POLLING=off` desliga),
+  só leitura: `devices.poll_s`/`integrations.poll_s` (segundos; padrão 1800,
+  nulo ou 0 desliga; tela em minutos), `polled_at` = última tentativa. Um
+  aparelho por vez com `GAP` (2 s) entre eles; Tuya com `listen` fica de fora.
+  Driver com leitura = `poll(device)` + `unavailable!(device)` em
+  `Polling::DEVICES` (tuya_local: conexão curta; xiaomi_miot); integração em
+  `Polling::INTEGRATIONS` (Alexa: lista de Echo). "Atualizar agora" na página
+  do dispositivo (operador+) → `PollDeviceJob`. Tuya: a conexão curta pode
+  esbarrar no LocalTuya do HA (aparelho de conexão única); falhou = indisponível.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

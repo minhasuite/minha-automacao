@@ -17,6 +17,14 @@ class Integration < ApplicationRecord
   validates :driver, inclusion: { in: DRIVERS.keys }
   validates :status, inclusion: { in: STATUSES.keys }
 
+  validates :poll_s, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
+
+  # Formulário em minutos (vazio ou 0 = não lê).
+  def poll_min = poll_s && (poll_s / 60.0).round(2).to_s.delete_suffix(".0")
+  def poll_min=(value)
+    self.poll_s = value.blank? ? nil : (value.to_s.tr(",", ".").to_f * 60).round
+  end
+
   audited_attributes :name, :driver
 
   def driver_label = DRIVERS.fetch(driver, driver)

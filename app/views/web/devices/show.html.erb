@@ -1,4 +1,7 @@
 <%= render "web/shared/header", title: @device.name, subtitle: [ @device.driver_label, @device.area&.name || "Sem área", @site.name ].join(" · "), back: (@device.area ? area_path(@device.area) : site_path(@site)), badge: (tag.span("Desativado", class: "ss-badge ss-badge-warn") if @device.disabled) do %>
+  <% if Polling.supported?(@device) && can?(:command, risk: "sensitive") %>
+    <%= button_to refresh_device_path(@device), class: "ss-btn ss-btn-outline", form: { data: { turbo_submits_with: "Pedindo…" } } do %><%= icon("refresh", "size-4") %>Atualizar agora<% end %>
+  <% end %>
   <% if can?(:manage) %>
     <%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo ponto<% end %>
     <%= link_to edit_device_path(@device), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar<% end %>

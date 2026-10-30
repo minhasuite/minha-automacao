@@ -33,6 +33,13 @@ module PointsHelper
     [ ("#{h} h" if h.positive?), ("#{m} min" if m.positive?) ].compact.join(" ")
   end
 
+  # Intervalo da leitura periódica (segundos) em texto.
+  def poll_label(seconds)
+    return "sem leitura periódica" if seconds.to_i <= 0
+
+    "leitura a cada #{duration_text(seconds)}"
+  end
+
   def point_value_text(point)
     v = point.value
     if point.capability == "command"

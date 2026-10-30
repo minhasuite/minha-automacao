@@ -35,6 +35,13 @@
             <% end %>
           </ul>
         <% end %>
+        <p class="mt-3 text-sm text-muted"><%= poll_label(i.poll_s).capitalize %> (lista de Echo e se estão no ar).</p>
+        <% if can?(:manage) %>
+          <%= form_with model: i, url: integration_path(i), method: :patch, class: "mt-3 flex flex-wrap items-end gap-2" do |f| %>
+            <div><%= f.label :poll_min, "Ler a cada (minutos)", class: "ss-label", for: "poll-#{i.id}" %><%= f.number_field :poll_min, min: 0, step: "any", class: "ss-input num w-32", id: "poll-#{i.id}", placeholder: "0 = não ler" %></div>
+            <%= f.submit "Salvar", class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+          <% end %>
+        <% end %>
         <% if can?(:manage) && i.driver == "alexa" %>
           <%= button_to discover_integration_path(i), class: "ss-btn ss-btn-outline ss-btn-sm mt-4", form: { data: { turbo_submits_with: "Atualizando…" } } do %><%= icon("refresh", "size-4") %>Atualizar lista de Echo<% end %>
         <% end %>
@@ -52,7 +59,7 @@
           <span class="ss-icon-tile text-accent"><%= icon("vacuum") %></span>
           <span class="min-w-0 flex-1 basis-48">
             <span class="block font-semibold text-ink"><%= d.name %></span>
-            <span class="block text-sm text-muted"><%= d.driver_label %> · leitura a cada <%= Drivers::XiaomiMiot::POLL_EVERY %> s · <%= d.last_seen_at ? "última leitura #{l(d.last_seen_at, format: :short)}" : "ainda sem leitura" %></span>
+            <span class="block text-sm text-muted"><%= d.driver_label %> · <%= poll_label(d.poll_s) %> · <%= d.last_seen_at ? "última leitura #{l(d.last_seen_at, format: :short)}" : "ainda sem leitura" %></span>
           </span>
           <% label, tone = d.last_seen_at.nil? ? %w[Aguardando warn] : (d.status == "online" ? %w[Respondendo success] : [ "Sem resposta", "danger" ]) %>
           <span class="ss-badge ss-badge-<%= tone %>"><%= label %></span>

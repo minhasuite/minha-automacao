@@ -10,6 +10,14 @@ module Web
       @direct = @site.devices.where(driver: "xiaomi_miot").order(:name)
     end
 
+    # Intervalo da leitura periódica da conta (minutos; vazio ou 0 = não lê).
+    def update
+      integration = Integration.find(params[:id])
+      authorize_site!(integration.site, :manage)
+      ok = integration.update(params.require(:integration).permit(:poll_min))
+      redirect_to site_integrations_path(integration.site), **(ok ? { notice: "Intervalo salvo." } : { alert: integration.errors.full_messages.to_sentence })
+    end
+
     def discover
       integration = Integration.find(params[:id])
       authorize_site!(integration.site, :manage)

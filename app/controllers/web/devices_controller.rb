@@ -36,14 +36,24 @@ module Web
       redirect_to(@device.area || @site, notice: "Dispositivo excluído.")
     end
 
-    private
+    # "Atualizar agora": uma leitura fora da vez, pela fila (só leitura).
+    # Operador para cima (quem pode mandar comando sensível).
+    def refresh
+      load_for(:command, risk: "sensitive")
+      return redirect_to(@device, alert: "Este dispositivo não tem leitura.") unless Polling.supported?(@device)
 
-    def load_for(action)
-      @device = Device.find(params[:id])
-      @site = @device.site
-      authorize_site!(@site, action)
+      PollDeviceJob.perform_later(@device.id)
+      redirect_to @device, notice: "Leitura pedida. Os valores chegam em instantes."
     end
 
-    def device_params = params.require(:device).permit(:name, :area_id, :driver, :manufacturer, :model, :serial, :disabled, :listen)
+    private
+
+    def load_for(action, **)
+      @device = Device.find(params[:id])
+      @site = @device.site
+      authorize_site!(@site, action, **)
+    end
+
+    def device_params = params.require(:device).permit(:name, :area_id, :driver, :manufacturer, :model, :serial, :disabled, :listen, :poll_min)
   end
 end

@@ -23,6 +23,14 @@ module Drivers
       end
     end
 
+    # Leitura periódica (Polling): conexão curta, estado completo, fecha.
+    def self.poll(device)
+      conn = connection_for(device).connect
+      report(device, conn.status)
+    ensure
+      conn&.close
+    end
+
     def self.unavailable!(device)
       device.update_columns(status: "offline")
       device.points.each { |p| p.report!(p.value, quality: "unavailable") unless p.quality == "unavailable" }

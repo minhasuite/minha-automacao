@@ -80,9 +80,11 @@ Rails.application.routes.draw do
       end
       resources :integrations, path: "integracoes", only: :index, shallow: true do
         post :discover, on: :member, path: "atualizar"
+        patch :update, on: :member, path: ""
       end
       resources :areas, path: "areas", except: :index, shallow: true
       resources :devices, path: "dispositivos", except: :index, shallow: true do
+        post :refresh, on: :member, path: "atualizar"
         resources :points, path: "pontos", except: :index, shallow: true do
           post :command, on: :member, path: "comando"
         end
