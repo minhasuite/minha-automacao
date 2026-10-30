@@ -24,7 +24,10 @@ module Web
       authorize_site!(@site, :manage)
       url = params[:url].to_s.strip.presence
       text = url ? Blueprints::HaImport.fetch(url) : params[:yaml].to_s
-      attrs = Blueprints::HaImport.call(text, source_url: url)
+      list = Blueprints::HaImport.import(text, source_url: url)
+      return import_many(list) if list.size > 1
+
+      attrs = list.first
       @unsupported = attrs["unsupported"]
       return import_error("Nada que a DSL daqui rode: #{empty_parts(attrs).to_sentence}.") if empty_parts(attrs).any?
 
@@ -97,6 +100,18 @@ module Web
     def empty_parts(attrs)
       d = attrs["definition"]
       [ ("nenhum gatilho" if attrs["domain"] == "automation" && d["triggers"].blank?), ("nenhuma ação" if d["actions"].blank?) ].compact
+    end
+
+    # Várias automações/scripts do HA (Lote 4, G32): um blueprint por item; os
+    # que não têm nada que rode ficam de fora e entram na contagem.
+    def import_many(list)
+      ok, empty = list.partition { |a| empty_parts(a).empty? }
+      Blueprint.transaction { ok.each { |a| @site.blueprints.create!(a) } }
+      partial = ok.count { |a| a["unsupported"].any? }
+      parts = [ "#{helpers.count_label(ok.size, 'importado', 'importados')} como blueprint",
+                ("#{partial} com partes não suportadas" if partial.positive?),
+                ("#{empty.size} sem nada que rode aqui: #{empty.map { |a| a['name'] }.first(5).to_sentence}" if empty.any?) ].compact
+      redirect_to site_blueprints_path(@site), notice: "#{parts.join('; ')}. Abra cada um e use \"Criar automação\" para escolher os pontos."
     end
 
     def import_error(message)

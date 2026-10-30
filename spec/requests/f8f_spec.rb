@@ -244,7 +244,7 @@ RSpec.describe "F8f: Automações e cenas (web e API)" do
 
     it "importa do HA (YAML e URL), mostra o não suportado, edita o JSON propagando e exclui" do
       get "/locais/#{site.id}/blueprints/importar"
-      expect(response.body).to include("Importar blueprint do Home Assistant", "O que converte")
+      expect(response.body).to include("Importar do Home Assistant", "O que converte")
       post "/locais/#{site.id}/blueprints", params: { yaml: "blueprint: {}" }
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("Não importou")

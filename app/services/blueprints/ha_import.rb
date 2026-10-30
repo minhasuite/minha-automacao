@@ -9,6 +9,12 @@ module Blueprints
   #   notify.*, persistent_notification.create e delay.
   # O resto entra em `unsupported` ("ação wait_for_trigger"), mostrado na tela;
   # nada levanta erro além de YAML inválido ou "não é blueprint".
+  #
+  # Lote 4 (G32): também automações e scripts do HA (`automations.yaml`, uma
+  # automação só ou `scripts.yaml`). Cada um vira um blueprint deste local em
+  # que cada entidade fixa (`entity_id`) é uma entrada de ponto: o "Criar
+  # automação" pergunta qual ponto daqui faz o papel de cada entidade, e o
+  # relatório do que não converteu é o mesmo `unsupported`.
   class HaImport
     class Error < StandardError; end
 
@@ -74,6 +80,54 @@ module Blueprints
 
     def self.call(text, source_url: nil) = new(text, source_url).call
 
+    ENTITY = /\A[a-z_]+\.[a-z0-9_]+\z/
+    MAX_ITEMS = 100
+
+    # Blueprint, automação(ões) ou scripts do HA → lista de atributos de Blueprint.
+    def self.import(text, source_url: nil)
+      importer = new(text, source_url)
+      doc = importer.send(:parse)
+      return [ importer.call ] if doc.is_a?(Hash) && doc.key?("blueprint")
+
+      items = ha_items(doc)
+      raise Error, "Não achei blueprint, automação nem script do Home Assistant no YAML." if items.empty?
+      raise Error, "Itens demais (máximo #{MAX_ITEMS} por vez)." if items.size > MAX_ITEMS
+
+      items.map { |domain, name, body| new("", source_url).convert(as_blueprint(domain, name, body)) }
+    end
+
+    # [[domínio, nome, corpo]]: lista de automações, uma automação ou o mapa de scripts.
+    def self.ha_items(doc)
+      automation = ->(h) { h.is_a?(Hash) && (h.key?("trigger") || h.key?("triggers")) && (h.key?("action") || h.key?("actions")) }
+      if doc.is_a?(Array) then doc.select(&automation).each_with_index.map { |a, i| [ "automation", a["alias"].presence || "Automação #{i + 1}", a ] }
+      elsif automation.call(doc) then [ [ "automation", doc["alias"].presence || "Automação importada", doc ] ]
+      elsif doc.is_a?(Hash) then doc.select { |_, s| s.is_a?(Hash) && s.key?("sequence") }.map { |k, s| [ "script", s["alias"].presence || k.to_s.humanize, s ] }
+      else []
+      end
+    end
+
+    # Entidade fixa → entrada `!input` de ponto (filtrada pelo domínio da entidade).
+    def self.as_blueprint(domain, name, body)
+      inputs = {}
+      walk = lambda do |v, key = nil|
+        if key == "entity_id" && (v.is_a?(String) || v.is_a?(Array))
+          refs = Array(v).map do |e|
+            next e unless e.is_a?(String) && e.match?(ENTITY)
+
+            k = e.tr(".", "_").first(60)
+            inputs[k] ||= { "name" => e, "selector" => { "entity" => { "domain" => e.split(".").first } } }
+            { "!input" => k }
+          end
+          v.is_a?(Array) ? refs : refs.first
+        elsif v.is_a?(Hash) then v.to_h { |k, x| [ k, walk.call(x, k) ] }
+        elsif v.is_a?(Array) then v.map { |x| walk.call(x) }
+        else v
+        end
+      end
+      converted = walk.call(body.except("id", "alias", "description", "icon", "fields"))
+      converted.merge("blueprint" => { "name" => name.to_s.truncate(120), "description" => body["description"].to_s.presence, "domain" => domain, "input" => inputs })
+    end
+
     def initialize(text, source_url = nil)
       @text = text.to_s
       @source_url = source_url
@@ -83,10 +137,13 @@ module Blueprints
 
     # → atributos do Blueprint (com `unsupported`).
     def call
-      raise Error, "Cole o YAML do blueprint." if @text.strip.empty?
-      raise Error, "YAML grande demais." if @text.bytesize > MAX_BYTES
-
       doc = parse
+      raise Error, "O YAML precisa ser um objeto." unless doc.is_a?(Hash)
+
+      convert(doc)
+    end
+
+    def convert(doc)
       bp = doc["blueprint"]
       raise Error, "Não parece um blueprint do Home Assistant (falta a chave blueprint)." unless bp.is_a?(Hash)
 
@@ -106,11 +163,11 @@ module Blueprints
 
     # `!input nome` vira `{"!input": "nome"}` antes do YAML seguro.
     def parse
-      yaml = @text.gsub(/!input\s+(['"]?)([\w.-]+)\1/) { %({"!input": "#{::Regexp.last_match(2)}"}) }
-      doc = YAML.safe_load(yaml, aliases: false)
-      raise Error, "O YAML precisa ser um objeto." unless doc.is_a?(Hash)
+      raise Error, "Cole o YAML do blueprint." if @text.strip.empty?
+      raise Error, "YAML grande demais." if @text.bytesize > MAX_BYTES
 
-      doc
+      yaml = @text.gsub(/!input\s+(['"]?)([\w.-]+)\1/) { %({"!input": "#{::Regexp.last_match(2)}"}) }
+      YAML.safe_load(yaml, aliases: false)
     rescue Psych::Exception => e
       raise Error, "YAML inválido: #{e.message.truncate(120)}"
     end

@@ -271,6 +271,65 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
     end
   end
 
+  describe "importar automações e scripts do HA (G32)" do
+    let(:automations_yaml) do
+      <<~YAML
+        - id: "1"
+          alias: Varanda | Luz | Ligar às 18h
+          trigger:
+            - platform: time
+              at: "18:00:00"
+          condition:
+            - condition: template
+              value_template: "{{ is_state('sun.sun', 'below_horizon') }}"
+          action:
+            - service: switch.turn_on
+              target:
+                entity_id: [switch.varanda, light.jardim]
+            - delay: "00:05:00"
+        - alias: Porta | Aviso
+          triggers:
+            - trigger: state
+              entity_id: binary_sensor.porta
+              to: "on"
+              for: { minutes: 2 }
+          actions:
+            - action: notify.notify
+              data: { title: Porta, message: "Aberta" }
+        - alias: Só serviço estranho
+          trigger: [ { platform: homeassistant, event: start } ]
+          action: [ { service: shell_command.algo } ]
+        - nao_e_automacao: true
+      YAML
+    end
+
+    it "uma automação por blueprint, entidade fixa vira entrada de ponto, relatório do que não converteu" do
+      list = Blueprints::HaImport.import(automations_yaml)
+      expect(list.map { |a| a["name"] }).to eq([ "Varanda | Luz | Ligar às 18h", "Porta | Aviso", "Só serviço estranho" ])
+      luz = list[0]
+      expect(luz["inputs"].map { |i| [ i["key"], i["label"], i.dig("filter", "capability") ] }).to eq([ [ "switch_varanda", "switch.varanda", %w[onoff] ], [ "light_jardim", "light.jardim", %w[onoff] ] ])
+      expect(luz["definition"]["triggers"]).to eq([ { "type" => "time", "at" => "18:00" } ])
+      expect(luz["definition"]["actions"]).to eq([ { "type" => "command", "point" => { "!input" => "switch_varanda" }, "command" => "on" },
+                                                   { "type" => "command", "point" => { "!input" => "light_jardim" }, "command" => "on" },
+                                                   { "type" => "wait", "for" => "5m" } ])
+      expect(luz["unsupported"]).to eq([ "condição template" ])
+      expect(list[1]["definition"]["triggers"]).to eq([ { "type" => "state", "point" => { "!input" => "binary_sensor_porta" }, "to" => true, "for" => "2m" } ])
+      expect(list[1]["inputs"].first.dig("filter", "capability")).to eq(%w[contact motion problem tamper])
+      expect(list[2]["unsupported"]).to include("gatilho homeassistant", "ação shell_command.algo")
+
+      scripts = Blueprints::HaImport.import("boa_noite:\n  alias: Boa noite\n  sequence:\n    - service: light.turn_off\n      entity_id: light.sala\n")
+      expect(scripts.sole).to include("name" => "Boa noite", "domain" => "script")
+      expect(scripts.sole["definition"]["actions"]).to eq([ { "type" => "command", "point" => { "!input" => "light_sala" }, "command" => "off" } ])
+
+      bp = site.blueprints.create!(list[0])
+      lamp = create(:point, site: site, device: create(:device, site: site), name: "Varanda")
+      expect(bp.inputs.size).to eq(2)
+      expect(lamp).to be_persisted
+      expect { Blueprints::HaImport.import("- a: 1") }.to raise_error(Blueprints::HaImport::Error, /Não achei blueprint/)
+      expect(Blueprints::HaImport.import("blueprint:\n  name: X\n  domain: automation\ntrigger: []\naction: []\n").sole["name"]).to eq("X")
+    end
+  end
+
   describe "plugins falsos (aberto/fechado)" do
     it "um provedor de clima novo entra pelo registro e alimenta pontos, ação e widget sem mexer no núcleo" do
       fake = Class.new(Weather::Providers::Base) do

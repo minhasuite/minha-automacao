@@ -92,6 +92,27 @@ RSpec.describe "Lote 4: telas de clima e painel" do
     expect(response.body).to include("Sem mudar há (min)", "Deixar de fora nomes com", "Mudou por último")
   end
 
+  it "importar automations.yaml do HA cria um blueprint por automação e o Criar automação pede os pontos (G32)" do
+    yaml = <<~YAML
+      - alias: Varanda ligar
+        trigger: [ { platform: time, at: "18:00" } ]
+        action: [ { service: switch.turn_on, entity_id: switch.varanda } ]
+      - alias: Só shell
+        trigger: [ { platform: time, at: "07:00" } ]
+        action: [ { service: shell_command.x } ]
+      - alias: Template
+        trigger: [ { platform: time, at: "08:00" } ]
+        condition: [ { condition: template, value_template: "{{ 1 }}" } ]
+        action: [ { service: light.turn_off, entity_id: light.sala } ]
+    YAML
+    post "/locais/#{site.id}/blueprints", params: { yaml: yaml }
+    expect(response).to redirect_to("/locais/#{site.id}/blueprints")
+    expect(flash[:notice]).to include("2 importados como blueprint", "1 com partes não suportadas", "1 sem nada que rode aqui: Só shell", "Criar automação")
+    bp = within(tenant) { site.blueprints.find_by!(name: "Varanda ligar") }
+    get "/blueprints/#{bp.id}"
+    expect(response.body).to include("switch.varanda")
+  end
+
   it "editor de automação: adiciona e preenche Ler previsão do tempo" do
     post "/locais/#{site.id}/integracoes", params: { tipo: "weather", integration: { provider: "open_meteo" } }
     a = within(tenant) { Automation.create!(site: site, name: "Teste Lote4 editor", kind: "automation") }
