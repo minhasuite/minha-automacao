@@ -58,6 +58,8 @@ module Integrations
     end
 
     def self.oauth_callback(integration, params)
+      return super unless integration.settings["mode"] == "google"
+
       tokens = Calendars::Google.exchange(params[:code], params[:redirect_uri])
       integration.update!(credentials: integration.secrets.merge(tokens).to_json, status: "ok")
       read(integration, "Conta Google conectada")
