@@ -1,0 +1,3 @@
+<%# locals: (w:, uid:) -%>
+<div data-for="weather"><label class="ss-label" for="wf-<%= uid %>">Previsão</label>
+  <%= select_tag "widget[forecast]", options_for_select(Dashboards::Widgets::WeatherWidget::FORECASTS.invert, w["forecast"] || "daily"), class: "ss-input", id: "wf-#{uid}" %></div>

@@ -13,6 +13,46 @@ module DashboardsHelper
     "--m: #{s['mobile']}; --t: #{s['tablet']}; --d: #{s['desktop']}"
   end
 
+  # Visibilidade por tela (Lote 4, G18b): `visible_if.screen` → classes que escondem nas outras.
+  def dw_screen_class(w)
+    screens = w.dig("visible_if", "screen") or return ""
+    (Dashboards::Schema::SCREENS - Array(screens)).map { |s| "dw-hide-#{s}" }.join(" ")
+  end
+
+  # Texto do widget Texto (Lote 4, G18a): escapa tudo e aplica um Markdown
+  # mínimo: "# título" (até ###), "- item", **negrito**, *itálico*; linha em
+  # branco separa parágrafos.
+  # ponytail: subconjunto à mão; trocar por commonmarker se pedirem tabela/link.
+  def dw_markdown(text)
+    out = []
+    block = nil # [:p | :ul, linhas]
+    flush = lambda do
+      if block
+        out << (block[0] == :ul ? tag.ul(safe_join(block[1].map { |l| tag.li(dw_inline(l)) }), class: "list-disc pl-5") : tag.p(safe_join(block[1].map { |l| dw_inline(l) }, tag.br)))
+      end
+      block = nil
+    end
+    text.to_s.strip.each_line(chomp: true) do |line|
+      kind, content = if line.strip.empty? then [ nil, nil ]
+      elsif (m = line.match(/\A(\#{1,3}) (.+)/)) then [ :"h#{m[1].size}", m[2] ]
+      elsif (m = line.match(/\A\s*[-*] (.+)/)) then [ :ul, m[1] ]
+      else [ :p, line ]
+      end
+      flush.call if kind.nil? || kind.to_s.start_with?("h") || block&.first != kind
+      next unless kind
+
+      next out << tag.p(dw_inline(content), class: kind == :h1 ? "text-base font-bold text-ink" : "font-semibold text-ink") if kind.to_s.start_with?("h")
+
+      (block ||= [ kind, [] ])[1] << content
+    end
+    flush.call
+    safe_join(out)
+  end
+
+  def dw_inline(s)
+    ERB::Util.html_escape(s).to_str.gsub(/\*\*(.+?)\*\*/, '<strong>\1</strong>').gsub(/(?<![*\w])\*(?!\s)(.+?)\*(?!\w)/, '<em>\1</em>').html_safe # rubocop:disable Rails/OutputSafety
+  end
+
   def dw_light?(p) = p["capability"].in?(%w[onoff dimmer]) && "#{p['name']} #{p['device']}".match?(Dashboards::Generator::LIGHT)
 
   def dw_point_icon(p)

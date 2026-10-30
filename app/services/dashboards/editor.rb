@@ -42,10 +42,15 @@ module Dashboards
       w["id"]
     end
 
+    # O formulário só cuida de papel e tela no visible_if: o resto (estado,
+    # faixa, OU, hora, vindos do JSON) fica.
     def update_widget(id, attrs)
       w = widget(id)
-      w.replace({ "id" => w["id"] }.merge(attrs))
+      visible = (w["visible_if"] || {}).except(*FORM_VISIBILITY).merge(attrs["visible_if"] || {})
+      w.replace({ "id" => w["id"] }.merge(attrs).merge("visible_if" => visible.presence).compact)
     end
+
+    FORM_VISIBILITY = %w[role screen].freeze
 
     # kind: view/section/widget; dir: up/down. No limite da lista, não faz nada.
     def move(kind, id, dir)

@@ -1,5 +1,6 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<div class="dw-card text-ink-2 leading-relaxed">
+<div class="dw-card dw-md text-ink-2 leading-relaxed">
   <% if w["label"].present? %><p class="dw-card-title"><%= w["label"] %></p><% end %>
-  <%= simple_format(h(w["text"].to_s)) %>
+  <%= dw_markdown(w.dig("data", "text") || w["text"]) %>
+  <% if (err = w.dig("data", "error")) %><p class="text-xs text-danger mt-1" role="alert"><%= err %></p><% end %>
 </div>

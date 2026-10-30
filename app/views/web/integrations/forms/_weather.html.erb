@@ -1,0 +1,22 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<% site = integration&.site || @site %>
+<% if integration.nil? %>
+  <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "Clima", maxlength: 80 %></div>
+<% end %>
+<div>
+  <%= f.label :provider, "Provedor", class: "ss-label" %>
+  <%= f.select :provider, options_for_select(Weather.choices.invert, s["provider"]), {}, class: "ss-input" %>
+</div>
+<% if Weather.providers.any?(&:needs_key) %>
+  <div>
+    <%= f.label :api_key, "Chave do provedor (só se ele pedir)", class: "ss-label" %>
+    <%= f.password_field :api_key, class: "ss-input", autocomplete: "off", value: nil, placeholder: integration ? "Deixe vazio para manter a guardada" : "" %>
+  </div>
+<% end %>
+<fieldset class="grid grid-cols-2 gap-2">
+  <legend class="ss-label">Localização <span class="font-normal">(vazio = a do local<%= ": #{site.latitude}, #{site.longitude}" if site&.latitude && site&.longitude %>)</span></legend>
+  <div><%= f.label :latitude, "Latitude", class: "text-xs text-muted" %><%= f.text_field :latitude, value: s["latitude"], class: "ss-input num", inputmode: "decimal", placeholder: "-12,345678" %></div>
+  <div><%= f.label :longitude, "Longitude", class: "text-xs text-muted" %><%= f.text_field :longitude, value: s["longitude"], class: "ss-input num", inputmode: "decimal", placeholder: "-45,678901" %></div>
+</fieldset>
+<p class="text-xs text-muted">Lê a condição, a temperatura e a previsão de 7 dias a cada 30 min (mude em Intervalo no card). Os pontos ficam num aparelho "Clima" do local.</p>

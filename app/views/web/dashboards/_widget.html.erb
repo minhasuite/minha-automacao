@@ -3,8 +3,8 @@
   <% if badge %>
     <% if w["visible"] %><%= render "web/dashboards/widgets/badge", w: w %><% end %>
   <% else %>
-    <div class="dw-w" style="<%= dw_span_style(w['span']) %>"<%= " hidden" if !w["visible"] %>>
-      <%= render "web/dashboards/widgets/#{w['type']}", w: w, points: points, dashboard: dashboard, live: live %>
+    <div class="dw-w <%= dw_screen_class(w) %>" style="<%= dw_span_style(w['span']) %>"<%= " hidden" if !w["visible"] %>>
+      <%= render Dashboards::Widgets[w["type"]]&.partial || "web/dashboards/widgets/#{w['type']}", w: w, points: points, dashboard: dashboard, live: live %>
       <% if error %><p class="text-sm font-semibold text-danger mt-1 px-1" role="alert"><%= error %></p><% end %>
     </div>
   <% end %>

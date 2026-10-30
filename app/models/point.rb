@@ -14,7 +14,7 @@ class Point < ApplicationRecord
     "measure" => "decimal", "enum" => "enum", "setpoint" => "decimal", "command" => nil,
     "text" => "string", "vacuum" => "enum", "speaker" => "json", "stream" => "string",
     "climate" => "json", "event" => "json", "counter" => "integer", "timer" => "enum", "datetime" => "string",
-    "script" => nil, "calendar" => "json"
+    "script" => nil, "calendar" => "json", "weather" => "enum"
   }.freeze
   CAPABILITY_LABELS = {
     "onoff" => "Liga/desliga", "dimmer" => "Intensidade", "color" => "Cor", "gate" => "Portão",
@@ -22,10 +22,10 @@ class Point < ApplicationRecord
     "problem" => "Problema", "measure" => "Medição", "enum" => "Seleção", "setpoint" => "Valor ajustável",
     "command" => "Botão", "text" => "Texto", "vacuum" => "Robô aspirador", "speaker" => "Alto-falante",
     "stream" => "Câmera", "climate" => "Clima", "event" => "Evento",
-    "counter" => "Contador", "timer" => "Temporizador", "datetime" => "Data e hora", "script" => "Script", "calendar" => "Agenda"
+    "counter" => "Contador", "timer" => "Temporizador", "datetime" => "Data e hora", "script" => "Script", "calendar" => "Agenda", "weather" => "Clima"
   }.freeze
   # Só leitura por natureza (o resto nasce gravável).
-  READ_ONLY = %w[contact motion tamper problem measure stream event calendar].freeze
+  READ_ONLY = %w[contact motion tamper problem measure stream event calendar weather].freeze
   DATA_TYPES = %w[bool integer decimal enum string json timestamp].freeze
   STATE_CLASSES = %w[measurement total total_increasing].freeze
   HISTORY = %w[none on_change interval].freeze

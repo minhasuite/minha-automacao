@@ -8,10 +8,10 @@ module Dashboards
     MAX_BYTES = 256.kilobytes
     MAX_WIDGETS = 400
 
-    # Tipo → props obrigatórias. Os da §6.2 de mídia e os da indústria ficam
-    # de fora por ora.
+    # Tipo → props obrigatórias (os da F5). Tipo novo entra como plugin em
+    # `Dashboards::Widgets` (Lote 4); `types`/`labels` juntam os dois.
     WIDGETS = {
-      "heading" => %w[title], "markdown" => %w[text], "tile" => %w[bind], "group" => %w[binds],
+      "heading" => %w[title], "tile" => %w[bind], "group" => %w[binds],
       "stat" => [], "gauge" => %w[bind], "chart" => %w[binds], "query_list" => %w[query],
       "area_card" => %w[area], "scene_bar" => [], "alerts" => [], "camera" => %w[bind], "vacuum" => %w[bind],
       "energy" => %w[binds]
@@ -19,7 +19,7 @@ module Dashboards
     WIDGET_LABELS = {
       "tile" => "Ponto", "group" => "Grupo de pontos", "stat" => "Contador / número", "gauge" => "Medidor",
       "chart" => "Gráfico", "query_list" => "Lista automática", "area_card" => "Área", "scene_bar" => "Cenas",
-      "alerts" => "Alertas ativos", "camera" => "Câmera", "vacuum" => "Robô aspirador", "energy" => "Consumo e custo", "heading" => "Título", "markdown" => "Texto"
+      "alerts" => "Alertas ativos", "camera" => "Câmera", "vacuum" => "Robô aspirador", "energy" => "Consumo e custo", "heading" => "Título"
     }.freeze
     SCREENS = %w[mobile tablet desktop].freeze
     TAPS = %w[toggle more_info navigate none].freeze
@@ -29,9 +29,16 @@ module Dashboards
     COLORS = %w[accent amber green red blue].freeze
     QUERY_KEYS = %w[capability state tag area quality device_class].freeze
     STATES = %w[on off].freeze
+    # visible_if (Lote 4, G18b: faixa numérica, OU e tamanho de tela). Dentro do
+    # `any` (OU) não entram papel nem tela.
+    VISIBILITY = %w[role state numeric quality time device screen any].freeze
+    MAX_ANY = 10
     TIME = /\A([01]\d|2[0-3]):[0-5]\d\z/
 
     module_function
+
+    def types = WIDGETS.merge(Widgets.plugins.to_h { |p| [ p.type, p.required ] })
+    def labels = WIDGET_LABELS.merge(Widgets.plugins.to_h { |p| [ p.type, p.label ] })
 
     def errors(defn)
       e = []
@@ -77,9 +84,9 @@ module Dashboards
       where = "widget #{w['id'] || '?'} (#{where})"
       check_id(w, where, ids, e)
       type = w["type"]
-      return e << "#{where}: tipo desconhecido #{type.inspect}" unless WIDGETS.key?(type)
+      required = types[type] or return e << "#{where}: tipo desconhecido #{type.inspect}"
 
-      WIDGETS[type].each { |prop| e << "#{where}: #{prop} obrigatório" if blank?(w[prop]) }
+      required.each { |prop| e << "#{where}: #{prop} obrigatório" if blank?(w[prop]) }
       e << "#{where}: bind precisa ser texto" if w.key?("bind") && !w["bind"].is_a?(String)
       e << "#{where}: binds precisa ser uma lista de até 8 pontos" if w.key?("binds") && !(w["binds"].is_a?(Array) && w["binds"].size <= 8 && w["binds"].all?(String))
       span(w["span"], where, e)
@@ -95,6 +102,7 @@ module Dashboards
       e << "#{where}: snapshot_interval precisa ser de 2 a 300 segundos" if w.key?("snapshot_interval") && !(w["snapshot_interval"].is_a?(Integer) && w["snapshot_interval"].between?(2, 300))
       %w[min max].each { |k| e << "#{where}: #{k} precisa ser número" if w.key?(k) && !w[k].is_a?(Numeric) }
       energy(w, where, e) if type == "energy"
+      Widgets[type]&.errors(w)&.each { |m| e << "#{where}: #{m}" }
     end
 
     # Consumo e custo (F9): período, dia de corte, tarifa (número ou ponto), meta e comparação.
@@ -131,11 +139,23 @@ module Dashboards
       value.each { |k, n| e << "#{where}: span.#{k} precisa ser de 1 a 12" unless n.is_a?(Integer) && n.between?(1, 12) }
     end
 
-    def visible_if(value, where, e)
+    def visible_if(value, where, e, nested: false)
       return if value.nil?
       return e << "#{where}: visible_if precisa ser um objeto" unless value.is_a?(Hash)
 
-      e << "#{where}: visible_if com chave desconhecida" unless (value.keys - %w[role state quality time device]).empty?
+      e << "#{where}: visible_if com chave desconhecida" unless (value.keys - VISIBILITY).empty?
+      e << "#{where}: visible_if.any não aceita role nem screen" if nested && (value.key?("role") || value.key?("screen"))
+      numeric = value["numeric"]
+      e << "#{where}: visible_if.numeric precisa de {point, above e/ou below}" if value.key?("numeric") &&
+                                                                                 !(numeric.is_a?(Hash) && numeric["point"].is_a?(String) && (numeric.keys - %w[point above below]).empty? &&
+                                                                                   %w[above below].any? { |k| numeric.key?(k) } && numeric.values_at("above", "below").compact.all?(Numeric))
+      e << "#{where}: visible_if.screen precisa ser lista de #{SCREENS.join(', ')}" if value.key?("screen") && !(value["screen"].is_a?(Array) && value["screen"].any? && (value["screen"] - SCREENS).empty?)
+      if value.key?("any")
+        list = value["any"]
+        next_level = list.is_a?(Array) && list.size.between?(1, MAX_ANY) && !nested
+        e << "#{where}: visible_if.any precisa ser lista de 1 a #{MAX_ANY} condições (sem any dentro)" unless next_level
+        list.each { |c| visible_if(c, where, e, nested: true) } if next_level
+      end
       e << "#{where}: visible_if.role inválido" if value.key?("role") && !(value["role"].is_a?(Array) && (value["role"] - SiteMembership::ROLES).empty?)
       e << "#{where}: visible_if.state precisa de {point, is}" if value.key?("state") && !(value["state"].is_a?(Hash) && value["state"]["point"].is_a?(String) && value["state"].key?("is"))
       e << "#{where}: visible_if.quality inválido" if value.key?("quality") && !(Array(value["quality"]) - Point::QUALITIES).empty?

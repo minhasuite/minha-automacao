@@ -176,9 +176,9 @@ module Web
     # Formulário do widget → JSON (só o que vale para o tipo; vazio some).
     def widget_attrs
       p = params.fetch(:widget, {}).permit(:type, :label, :bind, :title, :text, :aggregate, :range, :color, :tap, :area, :min, :max, :empty_text,
-                                           :period, :cycle_day, :tariff, :tariff_point, :goal, :compare,
-                                           binds: [], scenes: [], roles: [], query: %i[capability state tag area device_class quality])
-      type = p[:type].presence_in(Dashboards::Schema::WIDGETS.keys) || "tile"
+                                           :period, :cycle_day, :tariff, :tariff_point, :goal, :compare, *Dashboards::Widgets.plugins.flat_map(&:params),
+                                           binds: [], scenes: [], roles: [], screens: [], query: %i[capability state tag area device_class quality])
+      type = p[:type].presence_in(Dashboards::Schema.types.keys) || "tile"
       attrs = { "type" => type, "label" => p[:label].presence, "span" => span_param }
       case type
       when "tile" then attrs.merge!("bind" => p[:bind].presence, "tap" => p[:tap].presence, "color" => p[:color].presence, "features" => tile_features(p[:bind]))
@@ -201,10 +201,13 @@ module Web
       when "area_card" then attrs["area"] = p[:area].presence
       when "scene_bar" then attrs["scenes"] = Array(p[:scenes]).compact_blank.presence
       when "heading" then attrs["title"] = p[:title].presence || p[:label].presence
-      when "markdown" then attrs["text"] = p[:text].presence
+      else attrs.merge!(Dashboards::Widgets[type]&.attrs(p) || {}) # widget plugin (Lote 4)
       end
       roles = Array(p[:roles]).compact_blank
-      attrs["visible_if"] = { "role" => roles } if roles.any? && roles.size < SiteMembership::ROLES.size
+      screens = Array(p[:screens]).compact_blank & Dashboards::Schema::SCREENS
+      visible = { "role" => (roles if roles.any? && roles.size < SiteMembership::ROLES.size),
+                  "screen" => (screens if screens.any? && screens.size < Dashboards::Schema::SCREENS.size) }.compact
+      attrs["visible_if"] = visible.presence
       attrs.compact
     end
 

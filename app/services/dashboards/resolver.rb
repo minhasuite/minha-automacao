@@ -41,6 +41,7 @@ module Dashboards
     end
 
     def point(ref) = ref.is_a?(String) ? (@by_id[ref] || @by_key[ref]) : nil
+    def site = @site
     def points_payload = @used.transform_values { |p| point_json(p) }
 
     private
@@ -55,8 +56,7 @@ module Dashboards
     # [data, pontos de que o widget depende (para o tempo real)].
     def data_for(w)
       binds = [ w["bind"], *Array(w["binds"]) ].compact.filter_map { |ref| use(point(ref)) }
-      state_ref = use(point(w.dig("visible_if", "state", "point")))
-      deps = [ *binds, state_ref ].compact
+      deps = [ *binds, *visibility_refs(w["visible_if"]).filter_map { |ref| use(point(ref)) } ]
       case w["type"]
       when "tile", "group", "chart", "camera" then [ { "point_ids" => binds.map(&:id), "missing" => binds.size < [ w["bind"], *Array(w["binds"]) ].compact.size }, deps ]
       when "vacuum" then vacuum(binds.first, deps)
@@ -72,8 +72,15 @@ module Dashboards
       when "area_card" then area_card(w, deps)
       when "scene_bar" then [ { "scenes" => scenes(w) }, deps ]
       when "alerts" then alerts(deps)
-      else [ {}, deps ]
+      else plugin_data(w, binds, deps)
       end
+    end
+
+    # Widget plugin (Dashboards::Widgets, Lote 4): o plugin calcula; os pontos extras viram dependência.
+    def plugin_data(w, binds, deps)
+      plugin = Widgets[w["type"]] or return [ {}, deps ]
+      data, extra = plugin.data(self, w, binds)
+      [ data, deps + Array(extra).each { |p| use(p) } ]
     end
 
     def stat(w, binds, deps)
@@ -180,21 +187,37 @@ module Dashboards
 
     def on?(p) = p.value == true || p.value == "open"
 
-    def visible?(w)
-      cond = w["visible_if"] or return true
-      if (st = cond["state"])
-        p = point(st["point"])
-        return false unless p && Array(st["is"]).map(&:to_s).include?(p.value.to_s)
-      end
-      if cond["quality"]
-        p = point(w["bind"] || Array(w["binds"]).first)
-        return false unless p && Array(cond["quality"]).include?(p.quality)
-      end
-      cond["time"] ? time_ok?(cond["time"]) : true
+    # Regras do visible_if avaliadas aqui (todas valem: E); `any` = OU. Papel
+    # sai em `resolve`; tela (`screen`) e aparelho (`device`) são da tela/app.
+    VISIBILITY = { "state" => :state_ok?, "numeric" => :numeric_ok?, "quality" => :quality_ok?, "time" => :time_ok?, "any" => :any_ok? }.freeze
+
+    def visible?(w) = condition_ok?(w["visible_if"], w)
+
+    def condition_ok?(cond, w)
+      return true unless cond.is_a?(Hash)
+
+      cond.all? { |k, v| (m = VISIBILITY[k]).nil? || send(m, v, w) }
+    end
+
+    def state_ok?(st, _w) = (p = point(st["point"])) && Array(st["is"]).map(&:to_s).include?(p.value.to_s) || false
+
+    def numeric_ok?(n, _w)
+      v = point(n["point"])&.value
+      v.is_a?(Numeric) && (n["above"].nil? || v > n["above"]) && (n["below"].nil? || v < n["below"])
+    end
+
+    def quality_ok?(q, w) = (p = point(w["bind"] || Array(w["binds"]).first)) && Array(q).include?(p.quality) || false
+    def any_ok?(list, w) = Array(list).any? { |c| condition_ok?(c, w) }
+
+    # Pontos citados no visible_if (dependências do tempo real), inclusive dentro do `any`.
+    def visibility_refs(cond)
+      return [] unless cond.is_a?(Hash)
+
+      [ cond.dig("state", "point"), cond.dig("numeric", "point"), *Array(cond["any"]).flat_map { |c| visibility_refs(c) } ].compact
     end
 
     # Janela que pode passar da meia-noite ("18:00" a "06:00"), no fuso do local.
-    def time_ok?(t)
+    def time_ok?(t, _w = nil)
       now = Time.current.in_time_zone(@site.timezone).strftime("%H:%M")
       after = t["after"] || "00:00"
       before = t["before"] || "24:00"

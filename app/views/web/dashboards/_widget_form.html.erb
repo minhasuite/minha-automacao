@@ -2,22 +2,27 @@
 <% q = w["query"] || {} %>
 <% span = DashboardsHelper::DEFAULT_SPAN.merge(w["span"] || {}) %>
 <% roles = Array(w.dig("visible_if", "role")) %>
+<% screens = Array(w.dig("visible_if", "screen")) %>
+<% plugins = Dashboards::Widgets.plugins %>
 <% uid = "#{op}-#{target}" %>
 <%= form_with url: draft_dashboard_path(dashboard), method: :patch, class: "dw-wf grid gap-3 sm:grid-cols-2 pt-3" do |f| %>
   <%= hidden_field_tag :op, op, id: nil %><%= hidden_field_tag :target, target, id: nil %><%= hidden_field_tag :view_id, view_id, id: nil %>
   <div><label class="ss-label" for="t-<%= uid %>">Tipo</label>
-    <%= select_tag "widget[type]", options_for_select(Dashboards::Schema::WIDGET_LABELS.invert, w["type"] || "tile"), class: "ss-input", id: "t-#{uid}" %></div>
+    <%= select_tag "widget[type]", options_for_select(Dashboards::Schema.labels.invert, w["type"] || "tile"), class: "ss-input", id: "t-#{uid}" %></div>
   <div><label class="ss-label" for="l-<%= uid %>">Rótulo <span class="font-normal">(opcional)</span></label>
     <%= text_field_tag "widget[label]", w["label"], class: "ss-input", id: "l-#{uid}", maxlength: 80, placeholder: "Usa o nome do ponto" %></div>
 
-  <div class="sm:col-span-2" data-for="tile gauge stat camera vacuum"><label class="ss-label" for="b-<%= uid %>">Ponto</label>
+  <%# Widgets plugin (Lote 4): mostrar os campos do tipo e o seletor de ponto (bind). %>
+  <style><%= plugins.map { |pl| ".dw-wf:has(option[value=#{pl.type}]:checked) [data-for~=#{pl.type}]" }.join(", ") %> { display: block; }</style>
+  <div class="sm:col-span-2" data-for="tile gauge stat camera vacuum <%= plugins.select(&:bind?).map(&:type).join(" ") %>"><label class="ss-label" for="b-<%= uid %>">Ponto</label>
     <%= select_tag "widget[bind]", grouped_options_for_select(point_options, w["bind"]), include_blank: "Escolha um ponto", class: "ss-input", id: "b-#{uid}" %></div>
   <div class="sm:col-span-2" data-for="group chart energy"><label class="ss-label" for="bs-<%= uid %>">Pontos <span class="font-normal">(até 8; Ctrl/toque para marcar vários; no consumo, kWh ou W somados)</span></label>
     <%= select_tag "widget[binds][]", grouped_options_for_select(point_options, w["binds"]), multiple: true, size: 6, class: "ss-input", id: "bs-#{uid}" %></div>
   <div class="sm:col-span-2" data-for="heading"><label class="ss-label" for="h-<%= uid %>">Título</label>
     <%= text_field_tag "widget[title]", w["title"], class: "ss-input", id: "h-#{uid}", maxlength: 80 %></div>
-  <div class="sm:col-span-2" data-for="markdown"><label class="ss-label" for="x-<%= uid %>">Texto</label>
-    <%= text_area_tag "widget[text]", w["text"], class: "ss-input", id: "x-#{uid}", rows: 3, maxlength: 2000 %></div>
+  <div class="sm:col-span-2" data-for="markdown"><label class="ss-label" for="x-<%= uid %>">Texto <span class="font-normal">(aceita Liquid: {{ points["chave.do.ponto"].text }}, {% if %}; **negrito**, - lista)</span></label>
+    <%= text_area_tag "widget[text]", w["text"], class: "ss-input", id: "x-#{uid}", rows: 4, maxlength: 4000 %></div>
+  <% plugins.filter_map(&:form).each do |form| %><%= render form, w: w, uid: uid %><% end %>
   <div data-for="stat query_list"><label class="ss-label" for="qc-<%= uid %>">Quais pontos: tipo</label>
     <%= select_tag "widget[query][capability]", options_for_select(Point::CAPABILITY_LABELS.invert, q["capability"]), include_blank: "Qualquer", class: "ss-input", id: "qc-#{uid}" %></div>
   <div data-for="stat query_list"><label class="ss-label" for="qs-<%= uid %>">Estado</label>
@@ -64,6 +69,14 @@
       <% { "mobile" => "Celular", "tablet" => "Tablet", "desktop" => "Computador" }.each do |screen, label| %>
         <div><label class="text-xs text-muted" for="sp-<%= screen %>-<%= uid %>"><%= label %></label>
           <%= select_tag "span[#{screen}]", options_for_select((1..12).to_a.reverse, span[screen]), class: "ss-input num", id: "sp-#{screen}-#{uid}" %></div>
+      <% end %>
+    </div>
+  </fieldset>
+  <fieldset class="sm:col-span-2">
+    <legend class="ss-label">Mostrar em <span class="font-normal">(nenhum marcado = todas as telas)</span></legend>
+    <div class="flex flex-wrap gap-3">
+      <% { "mobile" => "Celular", "tablet" => "Tablet", "desktop" => "Computador" }.each do |screen, label| %>
+        <label class="ss-check"><%= check_box_tag "widget[screens][]", screen, screens.include?(screen), id: "sc-#{screen}-#{uid}" %><%= label %></label>
       <% end %>
     </div>
   </fieldset>

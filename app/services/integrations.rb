@@ -20,7 +20,7 @@ module Integrations
   module AuthError; end
 
   # Ordem = ordem do catálogo. Integração nova: classe + uma linha aqui.
-  PLUGINS = %w[TuyaPlugin XiaomiPlugin AlexaPlugin CameraPlugin HikvisionPlugin MqttPlugin Zigbee2mqttPlugin CalendarPlugin HaImportPlugin].freeze
+  PLUGINS = %w[TuyaPlugin XiaomiPlugin AlexaPlugin CameraPlugin HikvisionPlugin MqttPlugin Zigbee2mqttPlugin CalendarPlugin WeatherPlugin HaImportPlugin].freeze
 
   module_function
 

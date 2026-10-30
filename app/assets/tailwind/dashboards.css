@@ -189,3 +189,15 @@
   .dw-vac-bar span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
   .dw-vac-bar .dw-vac-low { background: var(--danger); }
 }
+/* Visibilidade por tela (Lote 4, G18b): visible_if.screen vira estas classes. */
+@media (max-width: 639.98px) { .dw-hide-mobile { display: none !important; } }
+@media (min-width: 640px) and (max-width: 1023.98px) { .dw-hide-tablet { display: none !important; } }
+@media (min-width: 1024px) { .dw-hide-desktop { display: none !important; } }
+/* Clima (Lote 4, G11) e Texto com Markdown mínimo (G18a). */
+@layer components {
+  .dw-weather-temp { font-size: 2.1rem; font-weight: 800; line-height: 1; color: var(--ink); }
+  .dw-weather-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(3.3rem, 1fr); gap: .4rem; margin-top: .85rem; overflow-x: auto; }
+  .dw-weather-list li { display: flex; flex-direction: column; align-items: center; gap: .15rem; padding: .5rem .25rem; border-radius: 12px; background: var(--field); }
+  .dw-md ul { margin: .35rem 0; }
+  .dw-md p + p, .dw-md ul + p, .dw-md p + ul { margin-top: .5rem; }
+}

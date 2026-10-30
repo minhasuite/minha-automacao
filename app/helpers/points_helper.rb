@@ -6,7 +6,7 @@ module PointsHelper
                   "measure" => "chart-bar", "enum" => "view-list", "setpoint" => "calculator", "command" => "lightning-bolt",
                   "text" => "document-text", "vacuum" => "vacuum", "speaker" => "speakerphone", "stream" => "video-camera",
                   "climate" => "sun", "event" => "bell", "counter" => "plus", "timer" => "clock", "datetime" => "calendar",
-                  "script" => "play", "calendar" => "calendar" }.freeze
+                  "script" => "play", "calendar" => "calendar", "weather" => "sun" }.freeze
   BOOL_TEXT = { "onoff" => %w[Ligado Desligado], "contact" => %w[Aberto Fechado], "motion" => %w[Movimento Parado],
                 "tamper" => %w[Violado Normal], "problem" => %w[Problema Normal] }.freeze
   GATE_TEXT = { "open" => "Aberto", "closed" => "Fechado", "opening" => "Abrindo", "unknown" => "Desconhecido" }.freeze
@@ -16,7 +16,8 @@ module PointsHelper
     "vacuum" => { "docked" => "Na base", "cleaning" => "Limpando", "returning" => "Voltando para a base", "paused" => "Pausado",
                   "idle" => "Parado", "error" => "Com erro" },
     "speaker" => { "online" => "Pronta", "offline" => "Fora do ar" },
-    "timer" => { "idle" => "Parado", "active" => "Contando", "paused" => "Pausado", "finished" => "Terminou" }
+    "timer" => { "idle" => "Parado", "active" => "Contando", "paused" => "Pausado", "finished" => "Terminou" },
+    "weather" => Weather::CONDITIONS.transform_values(&:first)
   }.freeze
   # Botões de ação (Points::Command.actions_for): comando → [ícone, rótulo].
   ACTION_BUTTONS = { "increment" => %w[plus Mais], "decrement" => %w[minus Menos], "reset" => %w[refresh Zerar],
