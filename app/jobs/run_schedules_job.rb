@@ -5,6 +5,7 @@ class RunSchedulesJob < ApplicationJob
 
   def perform
     Schedule.run_due
+    Integrations.tick # antes dos gatilhos: o "agora" das agendas já anda
     Automations::Triggers.tick
   end
 end

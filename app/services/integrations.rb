@@ -15,9 +15,16 @@ module Integrations
   class Error < StandardError; end
 
   # Ordem = ordem do catálogo. Integração nova: classe + uma linha aqui.
-  PLUGINS = %w[TuyaPlugin XiaomiPlugin AlexaPlugin HikvisionPlugin MqttPlugin Zigbee2mqttPlugin HaImportPlugin].freeze
+  PLUGINS = %w[TuyaPlugin XiaomiPlugin AlexaPlugin HikvisionPlugin MqttPlugin Zigbee2mqttPlugin CalendarPlugin HaImportPlugin].freeze
 
   module_function
+
+  # A cada minuto (RunSchedulesJob): plugin que precisa do relógio (agenda).
+  def tick(now = Time.current) = plugins.each { |p| p.tick(now) }
+
+  # `state` do OAuth de um plugin (F9): id da integração assinado, 15 min.
+  def oauth_state(integration) = Rails.application.message_verifier(:integration_oauth).generate(integration.id, expires_in: 15.minutes)
+  def from_oauth_state(state) = Rails.application.message_verifier(:integration_oauth).verified(state.to_s)
 
   def plugins = PLUGINS.map { |name| const_get(name) }
   def plugin(key) = plugins.find { |p| p.key == key.to_s }

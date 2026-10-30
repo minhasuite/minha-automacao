@@ -1,0 +1,8 @@
+<%# locals: (integration:, auth_url: nil) -%>
+<% if auth_url %>
+  <section class="ss-card ss-card-pad grid gap-3">
+    <h2 class="font-bold">Entrar com o Google</h2>
+    <p class="text-sm text-ink-2">O Google pede para autorizar a leitura das agendas (só leitura). Depois volta para cá e as agendas viram pontos.</p>
+    <div><%= link_to auth_url, class: "ss-btn ss-btn-primary", data: { turbo: false } do %><%= icon("calendar", "size-4") %>Entrar com o Google<% end %></div>
+  </section>
+<% end %>

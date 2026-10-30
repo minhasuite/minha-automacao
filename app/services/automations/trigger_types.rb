@@ -10,7 +10,7 @@ module Automations
   module TriggerTypes
     extend Block::Registry
 
-    PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger AlertTrigger ManualTrigger WebhookTrigger].freeze
+    PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger].freeze
 
     class Base < Block
       class << self

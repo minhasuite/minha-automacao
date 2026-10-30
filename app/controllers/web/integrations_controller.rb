@@ -33,7 +33,7 @@ module Web
     # Passo de login / Reconfigurar (QR, captcha, senha).
     def connect
       load_for(:manage)
-      @locals = @plugin.connect_locals(@integration, params)
+      @locals = @plugin.connect_locals(@integration, params.merge(redirect_uri: integrations_oauth_callback_url))
     rescue Integrations::Error => e
       @locals = {}
       flash.now[:alert] = e.message
@@ -42,6 +42,16 @@ module Web
     def login
       load_for(:manage)
       follow(@plugin.login(@integration, form))
+    end
+
+    # Volta do login externo (OAuth): o `state` assinado diz a integração.
+    def oauth_callback
+      id = Integrations.from_oauth_state(params[:state]) or return redirect_to(root_path, alert: "Login expirado: comece de novo.")
+      params[:id] = id
+      load_for(:manage)
+      return follow(@plugin.outcome(:connect, integration: @integration, alert: "Login cancelado.")) if params[:error].present?
+
+      follow(@plugin.oauth_callback(@integration, { code: params[:code], redirect_uri: integrations_oauth_callback_url }))
     end
 
     # Consultado pela tela a cada 3 s: {url} quando é hora de ir para os encontrados.

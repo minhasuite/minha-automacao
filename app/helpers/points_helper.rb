@@ -6,7 +6,7 @@ module PointsHelper
                   "measure" => "chart-bar", "enum" => "view-list", "setpoint" => "calculator", "command" => "lightning-bolt",
                   "text" => "document-text", "vacuum" => "vacuum", "speaker" => "speakerphone", "stream" => "video-camera",
                   "climate" => "sun", "event" => "bell", "counter" => "plus", "timer" => "clock", "datetime" => "calendar",
-                  "script" => "play" }.freeze
+                  "script" => "play", "calendar" => "calendar" }.freeze
   BOOL_TEXT = { "onoff" => %w[Ligado Desligado], "contact" => %w[Aberto Fechado], "motion" => %w[Movimento Parado],
                 "tamper" => %w[Violado Normal], "problem" => %w[Problema Normal] }.freeze
   GATE_TEXT = { "open" => "Aberto", "closed" => "Fechado", "opening" => "Abrindo", "unknown" => "Desconhecido" }.freeze
@@ -69,6 +69,8 @@ module PointsHelper
       text
     elsif point.capability == "command"
       point.reported_at ? "Acionado #{l(point.reported_at, format: :short)}" : "Pronto"
+    elsif point.capability == "calendar"
+      calendar_text(v)
     elsif v.nil?
       "Sem valor"
     elsif BOOL_TEXT.key?(point.capability)
@@ -82,6 +84,19 @@ module PointsHelper
     else
       v.to_s
     end
+  end
+
+  # Agenda (F9): "Agora: Reunião" ou "Reunião · sex 14:00" (dia inteiro: só a data).
+  def calendar_text(v)
+    return "Nada nos próximos dias" unless v.is_a?(Hash) && v["start"]
+    return "Agora: #{v['summary']}" if v["now"]
+
+    at = Time.zone.parse(v["start"])
+    when_text = if at.to_date == Date.current then "hoje"
+    elsif at.to_date == Date.current + 1 then "amanhã"
+    else l(at, format: "%a %d/%m")
+    end
+    "#{v['summary']} · #{when_text}#{l(at, format: ' %H:%M') unless v['all_day']}"
   end
 
   # Valor do ponto para um <input> (data/hora no formato do campo).

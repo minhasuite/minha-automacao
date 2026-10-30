@@ -37,6 +37,9 @@ Rails.application.routes.draw do
     get "cameras/:id/quadro", to: "cameras#snapshot", as: :camera_snapshot
     post "cameras/:id/ao-vivo", to: "cameras#webrtc", as: :camera_webrtc
 
+    # Retorno do OAuth de plugin de integração (F9: Google Agenda); `state` assinado.
+    get "integracoes/oauth/retorno", to: "integrations#oauth_callback", as: :integrations_oauth_callback
+
     resources :alerts, only: :index, path: "alertas" do
       post :ack, on: :member, path: "ciente"
     end

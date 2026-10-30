@@ -45,6 +45,12 @@ module Integrations
       # Plugin com varredura própria (não usa o inventário genérico).
       def custom_sync? = false
 
+      # Retorno do OAuth (`/integracoes/oauth/retorno`, params com code e redirect_uri) → Outcome.
+      def oauth_callback(integration, _params) = outcome(:connect, integration: integration, alert: "Esta integração não usa login externo.")
+
+      # A cada minuto (Integrations.tick); padrão: nada.
+      def tick(_now) = nil
+
       # Segredo gravado no aparelho adotado (local_key, token…).
       def device_secret(_integration, entry) = entry["secret"].presence
 
