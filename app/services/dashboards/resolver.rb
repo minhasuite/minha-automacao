@@ -166,24 +166,13 @@ module Dashboards
       end }, deps + watched ]
     end
 
-    # {capability, state, tag, area, quality, device_class}; `state` filtra só no fim
-    # (sem ele, a lista dos pontos que podem entrar: dependência do tempo real).
+    # Filtros do `Points::Query` (Lote 4, G8: também integração, há quanto
+    # tempo mudou, faixa, exclusão, ordem e corte). Sem `state`, a lista dos
+    # pontos que podem entrar (dependência do tempo real).
     def query(q, with_state: true)
       @queries ||= {}
-      @queries[[ q, with_state ]] ||= begin
-        q ||= {}
-        list = @all.reject { |p| p.hidden || p.disabled }
-        list = list.select { |p| Array(q["capability"]).include?(p.capability) } if q["capability"]
-        list = list.select { |p| Array(q["device_class"]).include?(p.device_class) || (q["device_class"] == "power" && p.unit == "W" && p.capability == "measure") } if q["device_class"]
-        list = list.select { |p| p.effective_area_id == q["area"] } if q["area"]
-        list = list.select { |p| Array(q["quality"]).include?(p.quality) } if q["quality"]
-        list = list.select { |p| tagged(q["tag"]).include?(p.id) } if q["tag"]
-        list = list.select { |p| on?(p) == (q["state"] == "on") } if q["state"] && with_state
-        list
-      end
+      @queries[[ q, with_state ]] ||= (@point_query ||= Points::Query.new(@site, points: @all)).call(q || {}, with_state: with_state)
     end
-
-    def tagged(name) = (@tags ||= {})[name] ||= Tagging.joins(:tag).where(tags: { name: name.to_s.downcase }, taggable_type: "Point").pluck(:taggable_id).to_set
 
     def on?(p) = p.value == true || p.value == "open"
 

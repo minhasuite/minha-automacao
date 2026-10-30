@@ -33,6 +33,12 @@
     <%= select_tag "widget[query][device_class]", options_for_select({ "Potência (W)" => "power", "Energia (kWh)" => "energy", "Temperatura" => "temperature", "Umidade" => "humidity", "Bateria" => "battery" }, q["device_class"]), include_blank: "Qualquer", class: "ss-input", id: "qd-#{uid}" %></div>
   <div data-for="stat query_list"><label class="ss-label" for="qt-<%= uid %>">Etiqueta</label>
     <%= text_field_tag "widget[query][tag]", q["tag"], class: "ss-input", id: "qt-#{uid}", placeholder: "iluminacao" %></div>
+  <div data-for="stat query_list"><label class="ss-label" for="qi-<%= uid %>">Sem mudar há (min)</label>
+    <%= number_field_tag "widget[query][unchanged_min]", q["unchanged_min"], min: 1, class: "ss-input num", id: "qi-#{uid}", placeholder: "60" %></div>
+  <div data-for="stat query_list"><label class="ss-label" for="qx-<%= uid %>">Deixar de fora nomes com</label>
+    <%= text_field_tag "widget[query][exclude]", q["exclude"], class: "ss-input", id: "qx-#{uid}", placeholder: "teste, reserva" %></div>
+  <div data-for="query_list"><label class="ss-label" for="qo-<%= uid %>">Ordem</label>
+    <%= select_tag "widget[query][sort]", options_for_select({ "Nome" => "name", "Menor valor" => "value", "Maior valor" => "-value", "Mudou há mais tempo" => "changed_at", "Mudou por último" => "-changed_at" }, q["sort"]), include_blank: "Nome", class: "ss-input", id: "qo-#{uid}" %></div>
   <div data-for="stat"><label class="ss-label" for="ag-<%= uid %>">Mostrar</label>
     <%= select_tag "widget[aggregate]", options_for_select({ "Quantos são" => "count", "Soma" => "sum", "Média" => "avg", "Mínimo" => "min", "Máximo" => "max", "Valor do ponto" => "last" }, w["aggregate"]), class: "ss-input", id: "ag-#{uid}" %></div>
   <div data-for="query_list"><label class="ss-label" for="et-<%= uid %>">Texto quando vazio</label>

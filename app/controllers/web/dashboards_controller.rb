@@ -177,7 +177,7 @@ module Web
     def widget_attrs
       p = params.fetch(:widget, {}).permit(:type, :label, :bind, :title, :text, :aggregate, :range, :color, :tap, :area, :min, :max, :empty_text,
                                            :period, :cycle_day, :tariff, :tariff_point, :goal, :compare, *Dashboards::Widgets.plugins.flat_map(&:params),
-                                           binds: [], scenes: [], roles: [], screens: [], query: %i[capability state tag area device_class quality])
+                                           binds: [], scenes: [], roles: [], screens: [], query: %i[capability state tag area device_class quality integration unchanged_min exclude sort])
       type = p[:type].presence_in(Dashboards::Schema.types.keys) || "tile"
       attrs = { "type" => type, "label" => p[:label].presence, "span" => span_param }
       case type

@@ -54,8 +54,12 @@ module HelperTypes
     dependents(site_id, ids).find_each { |h| self.for(h)&.refresh!(h) }
   end
 
+  # Origem "*" (Lote 4, G8: sensor calculado com consulta ao conjunto de
+  # pontos) = refaz em qualquer mudança do local, menos a dele mesmo.
+  # ponytail: refaz a cada mudança; filtrar pela consulta se pesar em local grande.
   def dependents(site_id, ids)
-    Point.where(site_id: site_id).where.not(helper: nil).where("jsonb_exists_any(points.address->'sources', ARRAY[?]::text[])", ids)
+    Point.where(site_id: site_id).where.not(helper: nil).where.not(id: ids)
+         .where("jsonb_exists_any(points.address->'sources', ARRAY[?]::text[])", ids + [ "*" ])
   end
 
   # No começo do worker: quem não restaura volta ao valor inicial.

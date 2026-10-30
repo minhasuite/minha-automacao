@@ -78,6 +78,20 @@ RSpec.describe "Lote 4: telas de clima e painel" do
     expect(response.body).to include("<strong>Ligado</strong>")
   end
 
+  it "lista automática com os filtros novos pelo formulário (G8)" do
+    d = within(tenant) { Dashboard.ensure_for(site).first }
+    patch "/paineis/#{d.id}/rascunho", params: { op: "add_view", title: "Manutenção" }
+    v = within(tenant) { d.reload.draft["views"].last["id"] }
+    patch "/paineis/#{d.id}/rascunho", params: { op: "add_section", view_id: v, title: "Sem sinal" }
+    s = within(tenant) { d.reload.draft["views"].last["sections"].last["id"] }
+    patch "/paineis/#{d.id}/rascunho", params: { op: "add_widget", target: s, view_id: v,
+                                                 widget: { type: "query_list", query: { capability: "onoff", unchanged_min: "30", exclude: "teste", sort: "-changed_at", tag: "" } } }
+    w = within(tenant) { d.reload.draft["views"].last["sections"].last["widgets"].last }
+    expect(w["query"]).to eq("capability" => "onoff", "unchanged_min" => "30", "exclude" => "teste", "sort" => "-changed_at")
+    get "/paineis/#{d.id}/editar", params: { view: v }
+    expect(response.body).to include("Sem mudar há (min)", "Deixar de fora nomes com", "Mudou por último")
+  end
+
   it "editor de automação: adiciona e preenche Ler previsão do tempo" do
     post "/locais/#{site.id}/integracoes", params: { tipo: "weather", integration: { provider: "open_meteo" } }
     a = within(tenant) { Automation.create!(site: site, name: "Teste Lote4 editor", kind: "automation") }

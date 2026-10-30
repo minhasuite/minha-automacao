@@ -27,7 +27,7 @@ module Dashboards
     AGGREGATES = %w[count sum avg min max last].freeze
     RANGES = %w[24h 7d 30d].freeze
     COLORS = %w[accent amber green red blue].freeze
-    QUERY_KEYS = %w[capability state tag area quality device_class].freeze
+    QUERY_KEYS = Points::Query::KEYS
     STATES = %w[on off].freeze
     # visible_if (Lote 4, G18b: faixa numérica, OU e tamanho de tela). Dentro do
     # `any` (OU) não entram papel nem tela.

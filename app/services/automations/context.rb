@@ -10,6 +10,9 @@ module Automations
   # `{{ trigger.data.x }}` (webhook), `{{ points["sala.luz"].text }}` (também
   # `.value`, `.quality`, `.changed_at` e `.since_min`, minutos no valor),
   # `{{ site.name }}`, `{{ now | date: "%H:%M" }}` e as variáveis pelo nome.
+  # Conjunto de pontos (Lote 4, G8, `Points::Query`): no texto
+  # `{{ "tag=luz state=on" | points_where | size }}`, na expressão
+  # `count_points("quality=unavailable") > 0` (e sum/min/max/avg_points).
   class Context
     class Error < StandardError; end
 
@@ -47,7 +50,7 @@ module Automations
     end
 
     def calc(expr)
-      calculator = Expr.calculator
+      calculator = Expr.calculator(self)
       deps = calculator.dependencies(expr)
       plain(calculator.evaluate!(expr, deps.to_h { |name| [ name, variable(name) ] }))
     rescue Dentaku::Error, Dentaku::ParseError, Dentaku::TokenizerError, ZeroDivisionError, ArgumentError, TypeError => e
@@ -58,13 +61,24 @@ module Automations
     def render(template, limit: 1000)
       return "" if template.blank?
 
-      Liquid::Template.parse(template.to_s, error_mode: :strict).render!(assigns, { strict_filters: true }).truncate(limit)
+      Liquid::Template.parse(template.to_s, error_mode: :strict)
+            .render!(assigns, { strict_filters: true, filters: [ Points::Query::LiquidFilter ], registers: { automation_context: self } }).truncate(limit)
     rescue Liquid::Error => e
       raise Error, "Texto \"#{template.to_s.truncate(60)}\": #{e.message.truncate(120)}"
     end
 
     def point_text(point, v = value(point))
       ApplicationController.helpers.point_value_label(point, v)
+    end
+
+    # Pontos da consulta, com os valores desta execução (os hipotéticos na simulação).
+    def query(q) = Points::Query.new(site, points: site.points.includes(:device, :area), value: method(:value), now: now).call(q)
+
+    # Ponto como o Liquid vê (`points["k"]` e cada item do `points_where`).
+    def point_drop(p)
+      since = changed_at(p)
+      { "key" => p.key, "name" => p.name, "value" => value(p), "text" => point_text(p), "quality" => p.quality, "unit" => p.unit,
+        "device" => p.device&.name, "changed_at" => since&.in_time_zone(@zone), "since_min" => since && ((now - since) / 60).floor }
     end
 
     private
@@ -98,11 +112,7 @@ module Automations
     end
 
     def assigns
-      pts = site.points.to_a.to_h do |p|
-        since = changed_at(p)
-        [ p.key, { "name" => p.name, "value" => value(p), "text" => point_text(p), "quality" => p.quality,
-                   "changed_at" => since&.in_time_zone(@zone), "since_min" => since && ((now - since) / 60).floor } ]
-      end
+      pts = site.points.includes(:device).to_a.to_h { |p| [ p.key, point_drop(p) ] }
       vars.merge("trigger" => trigger, "vars" => vars, "points" => pts, "site" => { "name" => site.name }, "now" => now,
                  "repeat" => { "index" => vars["repeat_index"] })
     end

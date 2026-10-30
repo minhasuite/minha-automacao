@@ -157,6 +157,73 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
     end
   end
 
+  describe "consultas sobre o conjunto de pontos (G8)" do
+    let!(:area) { create(:area, site: site, name: "Sala de estar") }
+    let!(:tuya) { create(:device, site: site, area: area, name: "Tomada", driver: "tuya_local") }
+    let!(:luz) { create(:point, site: site, device: tuya, name: "Luz teto", key: "sala.luz", value: true, changed_at: 2.hours.ago) }
+    let!(:abajur) { create(:point, site: site, device: tuya, name: "Abajur teste", key: "sala.abajur", value: true, changed_at: 5.minutes.ago) }
+    let!(:off) { create(:point, site: site, device: tuya, name: "Luz varanda", key: "varanda.luz", value: false, quality: "unavailable") }
+    let!(:bat) { create(:point, site: site, device: create(:device, site: site, name: "Sensor"), name: "Bateria", key: "sensor.bat", capability: "measure", unit: "%", value: 18) }
+    let!(:bat2) { create(:point, site: site, device: bat.device, name: "Bateria 2", key: "sensor.bat2", capability: "measure", unit: "%", value: 64) }
+
+    before { Tagging.create!(tag: Tag.create!(name: "bateria"), taggable: bat) && Tagging.create!(tag: Tag.find_by!(name: "bateria"), taggable: bat2) }
+
+    def q(text) = Points::Query.new(site).call(text).map(&:key)
+
+    it "filtra por tipo, estado, área pelo nome, integração, tempo sem mudar, exclusão, faixa, etiqueta, ordem e corte" do
+      expect(q("capability=onoff state=on")).to contain_exactly("sala.luz", "sala.abajur")
+      expect(q(%(area="sala de estar" quality=unavailable))).to eq([ "varanda.luz" ])
+      expect(q("integration=tuya_local unchanged_min=60")).to contain_exactly("sala.luz", "varanda.luz")
+      expect(q("capability=onoff exclude=teste,varanda")).to eq([ "sala.luz" ])
+      expect(q("tag=bateria below=30")).to eq([ "sensor.bat" ])
+      expect(q("capability=measure sort=-value limit=1")).to eq([ "sensor.bat2" ])
+      expect(q("changed_min=10")).to eq([ "sala.abajur" ])
+      expect(q("name=bateria,abajur sort=name")).to eq(%w[sala.abajur sensor.bat sensor.bat2])
+      expect(q("is=false device=tomada")).to eq([ "varanda.luz" ])
+      expect(Points::Query.error("cor=azul")).to include("filtro desconhecido: cor")
+      expect(Points::Query.error(%(area="sem fim))).to include("consulta inválida")
+      expect(Points::Query.error("capability=onoff")).to be_nil
+    end
+
+    it "Liquid e expressões contam e listam, e a simulação usa os valores hipotéticos" do
+      actions = [ { "type" => "set", "var" => "n", "expr" => %(count_points("capability=onoff state=on") + max_points("tag=bateria")) },
+                  { "type" => "set", "var" => "media", "expr" => %(round(avg_points("tag=bateria"))) },
+                  { "type" => "set", "var" => "lista", "value" => %({{ "capability=onoff state=on sort=name" | points_where | map: "name" | join: ", " }}) },
+                  { "type" => "set", "var" => "fora", "value" => %({% assign f = "quality=unavailable" | points_where %}{{ f.size }} {{ f.first.text }}) } ]
+      a = build({ "triggers" => [ { "type" => "manual" } ], "actions" => actions })
+      run = a.fire!({ "type" => "manual" })
+      expect(run.state["vars"]).to include("n" => 66, "media" => 41, "lista" => "Abajur teste, Luz teto", "fora" => "1 Desligado")
+
+      sim = a.simulate!(points: { "sala.abajur" => "false" })
+      expect(sim.state["vars"]).to include("n" => 65, "lista" => "Luz teto")
+
+      bad = build({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "set", "var" => "x", "expr" => %(count_points("cor=azul")) } ] }).fire!({ "type" => "manual" })
+      expect(bad.error).to include("filtro desconhecido")
+      expect { Automations::Expr.calculator.evaluate!(%(count_points("state=on"))) }.to raise_error(/só funciona numa execução/)
+    end
+
+    it "lista automática do painel com os filtros novos e sensor calculado que acompanha o local" do
+      dashboard = Dashboard.create!(site: site, name: "P", kind: "home", definition: { "schema_version" => 1, "views" => [ { "id" => "v", "title" => "V", "sections" => [] } ] })
+      defn = { "schema_version" => 1, "views" => [ { "id" => "v", "title" => "V", "sections" => [ { "id" => "s", "widgets" => [
+        { "id" => "l", "type" => "query_list", "query" => { "capability" => "onoff", "unchanged_min" => "60", "sort" => "name" } },
+        { "id" => "c", "type" => "stat", "query" => { "tag" => "bateria", "below" => 30 } }
+      ] } ] } ] }
+      expect(Dashboards::Schema.errors(defn)).to eq([])
+      ws = Dashboards::Resolver.new(dashboard, role: "owner", definition: defn).call["views"][0]["sections"][0]["widgets"]
+      expect(ws[0]["data"]["point_ids"]).to eq([ luz.id, off.id ])
+      expect(ws[1]["data"]["value"]).to eq(1)
+      expect(Dashboards::Schema.errors(defn.deep_merge("views" => [ { "id" => "v", "title" => "V", "sections" => [ { "id" => "s", "widgets" => [ { "id" => "x", "type" => "query_list", "query" => { "cor" => "x" } } ] } ] } ])))
+        .to eq([ "widget x (seção s): query com chave desconhecida" ])
+
+      helper = HelperTypes.build(site, HelperTypes.plugin("template"))
+      expect(HelperTypes.save(helper, { "name" => "Luzes acesas", "kind" => "number", "expr" => %(count_points("capability=onoff state=on")) })).to be(true)
+      expect(helper.reload.value).to eq(2)
+      expect(helper.address["sources"]).to include("*")
+      off.report!(true)
+      expect(helper.reload.value).to eq(3)
+    end
+  end
+
   describe "plugins falsos (aberto/fechado)" do
     it "um provedor de clima novo entra pelo registro e alimenta pontos, ação e widget sem mexer no núcleo" do
       fake = Class.new(Weather::Providers::Base) do
@@ -184,6 +251,16 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       run = build({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "weather_forecast", "point" => main.id, "kind" => "daily", "response_variable" => "c" } ] })
               .fire!({ "type" => "manual" })
       expect(run.state["vars"]["c"]["text"]).to eq("Agora: Ventania, 51°. Hoje: Ventania, 15° a 22°")
+    end
+
+    it "um filtro de consulta novo entra pelo registro e vale no painel, no Liquid e nas expressões" do
+      lamp = create(:point, site: site, device: create(:device, site: site), name: "Lâmpada", key: "l1", value: true, icon: "light-bulb")
+      create(:point, site: site, device: lamp.device, name: "Outra", key: "l2", value: true)
+      stub_const("Points::Query::FILTERS", Points::Query::FILTERS.merge("icon" => ->(_q, p, v) { p.icon == v }))
+      stub_const("Points::Query::KEYS", Points::Query::FILTERS.keys + Points::Query::OPTIONS)
+      expect(Points::Query.new(site).call("icon=light-bulb").map(&:key)).to eq([ "l1" ])
+      run = build({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "set", "var" => "n", "expr" => %(count_points("icon=light-bulb")) } ] }).fire!({ "type" => "manual" })
+      expect(run.state["vars"]["n"]).to eq(1)
     end
 
     it "um tipo de card novo entra pelo registro: valida, resolve, edita e desenha sem mexer no núcleo" do

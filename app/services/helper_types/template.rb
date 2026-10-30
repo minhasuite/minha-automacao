@@ -7,6 +7,8 @@ module HelperTypes
   class Template < Plugin
     KINDS = { "number" => [ "Número", "measure" ], "bool" => [ "Liga/desliga (sim/não)", "onoff" ], "text" => [ "Texto", "text" ] }.freeze
     MAX = 500
+    # Consulta ao conjunto de pontos (Lote 4, G8): a origem é o local inteiro.
+    DYNAMIC = /\b(?:#{Automations::Expr::AGGREGATES.keys.join('|')})\s*\(|points_where/
 
     describe key: "template", title: "Sensor calculado", icon: "sparkles", capability: "measure",
              description: "Um valor calculado a partir de outros pontos: diferença de temperatura, consumo somado."
@@ -20,6 +22,7 @@ module HelperTypes
       point.writable = false
       point.unit = form["unit"] if kind == "number" && form.key?("unit")
       sources = point.site.points.where.not(id: point.id).pluck(:id, :key).select { |_, k| expr.include?(k) }.map(&:first)
+      sources << "*" if expr.match?(DYNAMIC)
       point.address = point.address.merge("kind" => kind, "expr" => expr, "sources" => sources)
       return point.errors.add(:base, "Escreva a expressão (até #{MAX} caracteres).") unless expr.present? && expr.size <= MAX
 
