@@ -131,6 +131,23 @@ stream (`PointsChannel`, exige papel no local) e recarrega só os quadros
 `GET /paineis/:id/w/:widget_id`, renderizados com o papel de quem vê. O
 comando de um widget volta para o próprio quadro.
 
+## Painéis em Configurações (F8d)
+
+`/configuracoes/paineis`: todos os painéis dos locais que a pessoa vê, com a
+coluna Local; criar (por local), editar, duplicar (`POST /paineis/:id/duplicar`,
+cópia publicada como v1, fora do menu e do padrão) e excluir. No painel:
+`icon` (lista `Dashboard::ICONS`), `sidebar` (mostrar no menu lateral, como no
+HA: `Dashboard.sidebar_for(user)` respeita `roles`), `roles` e o padrão por
+pessoa ("Abrir no meu Início" = `prefer`).
+
+**Visões (abas)** = as `views` do JSON (existem desde a F5, então os painéis
+antigos já são "uma ou mais visões" e nada precisou migrar). Cada visão tem
+`title`, `icon`, `path` (opcional, `[a-z0-9-]`, até 40, único no painel; a
+URL usa `?view=<path>` e cai no `id` sem caminho) e as seções/widgets. No
+editor: adicionar, renomear, ícone, caminho, setas para reordenar e excluir,
+tudo no rascunho (publicar/descartar/versões continuam valendo). Na tela as
+abas rolam na horizontal no celular (`.dw-tabs`).
+
 ## Web
 
 - `/` (Início): painel padrão da pessoa no local dela.
@@ -139,3 +156,4 @@ comando de um widget volta para o próprio quadro.
   dono): views, seções e widgets por formulário, setas para reordenar, largura
   por tela, quem vê, pré-visualizar, publicar, descartar, versões; e
   `/paineis/:id/json` (JSON avançado validado).
+- `/configuracoes/paineis`: lista da instalação (ver acima).

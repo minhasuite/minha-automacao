@@ -101,8 +101,7 @@ paths:
   /company:
     get: { summary: A empresa, responses: { "200": { description: Company } } }
     patch: { summary: "Atualiza (só dono)", responses: { "200": { description: Company }, "403": { $ref: "#/components/responses/Error" } } }
-  /company/invites: { post: { summary: "Código de convite {role? member|admin} (administrador; só o dono convida admin)", responses: { "201": { description: "{code, role, expires_at}" }, "403": { $ref: "#/components/responses/Error" } } } }
-  /company/join: { post: { summary: "Entra com {code, discard_current?}; 409 company_not_empty", responses: { "200": { description: Company }, "409": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } } }
+  /company/invites: { post: { summary: "Link de convite de uso único, 7 dias {role? member|admin, site_id?, site_role?} (só o dono). A pessoa abre o link e se cadastra direto nesta instalação", responses: { "201": { description: "{url, role, site_id, site_role, expires_at}" }, "403": { $ref: "#/components/responses/Error" } } } }
   /notifications: { get: { summary: "?unread=", responses: { "200": { description: "lista paginada; meta.unread_count" } } } }
   /notifications/{id}/read: { patch: { summary: Marca lida, responses: { "200": { description: ok } } } }
   /notifications/read: { patch: { summary: "Marca todas {ids?}", responses: { "200": { description: "{marked, unread_count}" } } } }
@@ -110,7 +109,7 @@ paths:
   /device_tokens/{token}: { delete: { summary: Remove, responses: { "204": { description: ok } } } }
   /api_keys:
     get: { summary: "Chaves de integração ativas (só dono)", responses: { "200": { description: ok } } }
-    post: { summary: "{name, scopes: [read|write]} → chave em claro só nesta resposta (só dono)", responses: { "201": { description: ok }, "422": { $ref: "#/components/responses/Error" } } }
+    post: { summary: "{name, scopes: [read|command|write], site_ids: [] (obrigatório), expires_at?} → chave em claro só nesta resposta (só dono). Com X-Api-Key: read = GET de sites, devices, points e history; command = POST /points/:id/commands; write = POST /points/:id/value; local fora de site_ids = 404; o resto = 403", responses: { "201": { description: ok }, "422": { $ref: "#/components/responses/Error" } } }
   /api_keys/{id}: { delete: { summary: Revoga, responses: { "204": { description: ok } } } }
   /billing: { get: { summary: "Plano da empresa {plan free|pro|max, status, provider, expires_at, auto_renewing, product_id, base_plan, trial, purchased_by_me, purchaser_name, trial_eligible, limits {ai{feature: cota}, ai_tier}, usage {ai}, catalog[]}", responses: { "200": { description: ok } } } }
   /billing/google/verify: { post: { summary: "{purchase_token} → servidor consulta a Play (subscriptionsv2) e devolve o mesmo de /billing; 422 verification_failed", responses: { "200": { description: ok }, "422": { $ref: "#/components/responses/Error" } } } }
@@ -146,6 +145,8 @@ paths:
   /points/{id}: { get: { summary: "Ponto com value, quality, changed_at, reported_at", responses: { "200": { description: Point } } }, patch: { summary: "Edita (technician+)", responses: { "200": { description: Point } } }, delete: { summary: "Exclui (technician+)", responses: { "204": { description: ok } } } }
   /points/{id}/commands:
     post: { summary: "{command, value?, client_uuid?}: onoff on|off|toggle; dimmer/setpoint set(value na faixa min..max); enum select(value em options); text set; command press; gate pulse. Cria o comando rastreado e responde 202 {command_id, status pending|sent|confirmed|failed|expired, source, error, point_value, sent_at, confirmed_at}; no driver virtual já vem confirmed. Mesmo client_uuid devolve o comando já criado. 422 unsupported_command|invalid_value|not_writable|point_disabled|driver_unavailable; 403 se o papel não alcança o risco", responses: { "202": { description: Command }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } }
+  /points/{id}/value:
+    post: { summary: "{value} grava o valor de um ponto de dispositivo virtual (Point#report!: automações, avisos e tempo real). Chave com permissão write. 422 not_virtual", responses: { "200": { description: Point }, "422": { $ref: "#/components/responses/Error" } } }
   /points/{id}/history:
     get: { summary: "?from&to (ISO 8601; padrão: últimas 24h) &resolution auto|raw|1h|1d. auto: até 2 dias cru, até 31 dias 1h, depois 1d; booleano sempre cru. Cru: [{at, value, value_text}] (a primeira linha é o valor vigente em from). Rollup: [{starts_at, min, max, avg, sum, last, count, on_seconds}]. meta {from, to, resolution, truncated} (máx. 5000). 400 invalid_parameter", responses: { "200": { description: "Reading[] ou Rollup[]" }, "400": { $ref: "#/components/responses/Error" } } }
   /commands/{id}:

@@ -64,10 +64,22 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
 - **Pontos**: `key` única no local (gerada `dispositivo.ponto`); `options` é
   lista de rótulos; os filhos do local caem por cascade no banco (sem
   `dependent:`). `devices.driver` fica no dispositivo até as integrações (F3).
-- **Convite** por código (sem e-mail): `Invite.generate!` mostra o código uma
-  vez; entrar com ele (`Companies::Join`) tira a pessoa da empresa atual. Se
-  ela era a única e a empresa tem dados (`Accounts::WipeData::MODELS`), exige
-  `discard_current`.
+- **Sem "empresa" na tela (F8d)**: o tenant continua por dentro
+  (`acts_as_tenant`), mas a interface fala em "instalação". Não existe mais
+  entrar em outra empresa (`Companies::Join` e `company/join` saíram).
+- **Configurações (F8d)**: `/configuracoes/{paineis,pessoas,chaves,sistema,conta}`
+  com subnavegação (`web/settings/_frame`). Pessoas: o dono cria a conta
+  (e-mail + senha inicial) ou gera um **link de convite** de uso único, 7 dias
+  (`Invite.generate!` → token em claro só na resposta; `/convite/:token`
+  público cria a conta na instalação com `site_id`/`site_role`). Pessoa
+  desativada (`users.disabled_at`) não entra na web, na API nem por chave; o
+  dono não se desativa nem se remove. Link e chave aparecem só na resposta
+  (form com `turbo: false`), nunca em flash.
+- **Chave de integração** (`ServiceApiKey`): `site_ids` (obrigatório) +
+  `scopes` read/command/write. Controller da API libera ação para chave só via
+  `key_actions` ({ação → permissão}); `authorize_site!` da API dá 404 em local
+  fora da chave e `visible_sites` filtra listas. `POST /points/:id/value` só
+  em ponto de dispositivo `virtual`.
 - **Zerar / exportar / excluir**: tabela nova do domínio entra em
   `Accounts::WipeData::MODELS` (filhos antes dos pais) e em
   `Accounts::ExportData`. `AiUsage` não zera (senão zeraria a cota).

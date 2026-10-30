@@ -87,11 +87,19 @@ ponto]}`, guardada cifrada em `integrations.inventory`.
   entradas do LocalTuya (`Tuya::Import`, idempotente). O resto do arquivo é
   descartado.
 
+Card da integração (F8d): uma ação principal, "Ver dispositivos", e o menu
+"⋯" (técnico+) com Sincronizar agora, Reconfigurar, Intervalo e Remover.
+
+**Novo** só vale para o aparelho adotado de uma varredura (`devices.discovered_at`,
+gravado no `adopt!`) que ainda não teve nenhum contato (`last_seen_at` nulo),
+por até 7 dias. Os demais (inclusive DVR casado por IP e virtuais) mostram
+Online / Offline / Com erro.
+
 ## Lista de dispositivos e página do dispositivo
 
 `/locais/:id/dispositivos`: tabela (nome, fabricante/modelo, área,
-integração, pontos, situação), filtros (integração, área, situação: respondendo
-/ sem resposta / com erro / novo (7 dias) / removido da conta), busca e
+integração, pontos, situação), filtros (integração, área, situação: Online
+/ Offline / Com erro (pelo último contato) / Novo / Removido da conta), busca e
 paginação (50). Ações em massa (técnico+): mover de área, ligar/desligar a
 leitura periódica (30 min / 0) e remover.
 
