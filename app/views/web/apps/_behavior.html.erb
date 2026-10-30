@@ -1,0 +1,11 @@
+<%# locals: (boot:, watchdog:) -%>
+<div>
+  <%= hidden_field_tag :boot, "0", id: nil %>
+  <label class="ss-check"><%= check_box_tag :boot, "1", boot, id: "app-boot" %>Iniciar com o servidor</label>
+  <p class="text-xs text-muted mt-1">Sobe sozinho quando o servidor liga (e volta se cair).</p>
+</div>
+<div>
+  <%= hidden_field_tag :watchdog, "0", id: nil %>
+  <label class="ss-check"><%= check_box_tag :watchdog, "1", watchdog, id: "app-watchdog" %>Watchdog</label>
+  <p class="text-xs text-muted mt-1">Reinicia se o app cair ou ficar sem responder.</p>
+</div>

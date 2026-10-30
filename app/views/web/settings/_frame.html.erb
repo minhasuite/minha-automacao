@@ -2,6 +2,7 @@
 <% items = [ [ "Painéis", settings_dashboards_path, "view-boards", :dashboards, true ],
              [ "Pessoas", people_path, "users", :people, current_user.admin? ],
              [ "Chaves de integração", api_keys_path, "link", :api_keys, current_user.owner? ],
+             [ "Aplicativos", apps_path, "cube", :apps, current_user.owner? ],
              [ "Sistema", settings_system_path, "cog", :system, true ],
              [ "Minha conta", settings_account_path, "user-group", :account, true ] ] %>
 <div class="lg:grid lg:grid-cols-[13rem_1fr] lg:gap-6 lg:items-start">

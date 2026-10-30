@@ -1,0 +1,126 @@
+<% st = @status || {} %>
+<% label, tone = app_state(st) %>
+<% installed = st["installed"] %>
+<% running = st["state"] == "running" %>
+<%= render "web/shared/header", title: @app.name, subtitle: @app.description, back: apps_path,
+           badge: (@status ? tag.span(label, class: "ss-badge #{"ss-badge-#{tone}" if tone}") : nil) %>
+<%= render layout: "web/settings/frame", locals: { current: :apps } do %>
+<div <%= tag.attributes(data: { controller: "reload", reload_every_value: 4000 }) if st["busy"] %>>
+<% if @offline || !Apps::Supervisor.configured? %>
+  <div class="ss-card ss-card-pad mb-4 flex items-start gap-3" role="status">
+    <span class="ss-icon-tile text-accent"><%= icon("information-circle") %></span>
+    <div><p class="font-bold text-ink">Disponível no servidor local</p><p class="text-sm text-muted mt-0.5"><%= @offline || "Os aplicativos rodam no servidor de casa; aqui você vê só o catálogo." %></p></div>
+  </div>
+<% end %>
+
+<% if installed %>
+  <nav class="mb-4 flex gap-2 overflow-x-auto pb-1" aria-label="Seções do aplicativo">
+    <% [ [ "Informações", "info", "information-circle" ], [ "Configuração", "config", "cog" ], [ "Log", "log", "document-text" ] ].each do |name, key, ico| %>
+      <%= link_to app_path(@app.key, aba: key), class: "ss-chip shrink-0", "aria-current": (@tab == key).to_s do %><%= icon(ico, "size-4") %><%= name %><% end %>
+    <% end %>
+  </nav>
+<% end %>
+
+<% if st["error"] %>
+  <div class="ss-card ss-card-pad mb-4 text-sm text-danger" role="alert">Última operação falhou: <%= st["error"] %></div>
+<% end %>
+
+<% if !installed || @tab == "info" %>
+  <section class="ss-card ss-card-pad" aria-labelledby="sobre-t">
+    <div class="flex items-start gap-3">
+      <span class="ss-icon-tile text-accent"><%= icon(@app.icon) %></span>
+      <div class="min-w-0 flex-1">
+        <h2 id="sobre-t" class="font-bold text-ink"><%= @app.name %></h2>
+        <p class="text-sm text-muted"><%= @app.category %><%= " · do sistema (roda no compose do servidor)" if @app.system? %></p>
+      </div>
+    </div>
+    <dl class="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-4 text-sm">
+      <div><dt class="text-muted">Versão</dt><dd class="font-semibold text-ink num"><%= st["version"] || @app.version %></dd></div>
+      <div><dt class="text-muted">No catálogo</dt><dd class="font-semibold text-ink num"><%= @app.version %></dd></div>
+      <div><dt class="text-muted">Memória</dt><dd class="font-semibold text-ink num"><%= st["memory_mb"] ? "#{st['memory_mb'].round} MB" : "–" %></dd></div>
+      <div><dt class="text-muted">Interface</dt><dd class="font-semibold text-ink num"><%= @app.web_ui ? "porta #{@app.web_ui['port']}" : "Sem interface" %></dd></div>
+    </dl>
+    <% if app_update?(@app, st) %>
+      <div class="mt-4 flex flex-wrap items-center gap-3 rounded-xl p-3 bg-[var(--warn-soft)]" role="status">
+        <span class="text-sm font-semibold text-ink">Atualização disponível: <%= st["version"] %> → <%= @app.version %></span>
+        <%= button_to "Atualizar", upgrade_app_path(@app.key), class: "ss-btn ss-btn-primary ss-btn-sm", form: { data: { turbo_confirm: "Atualizar #{@app.name} para #{@app.version}? O app reinicia; os dados ficam." } } %>
+      </div>
+    <% end %>
+    <% if installed %>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <% unless @app.system? %>
+          <% if running %>
+            <%= button_to act_app_path(@app.key, do: "stop"), class: "ss-btn ss-btn-ghost", disabled: st["busy"].present? do %><%= icon("stop", "size-4") %>Parar<% end %>
+          <% else %>
+            <%= button_to act_app_path(@app.key, do: "start"), class: "ss-btn ss-btn-primary", disabled: st["busy"].present? do %><%= icon("play", "size-4") %>Iniciar<% end %>
+          <% end %>
+        <% end %>
+        <%= button_to act_app_path(@app.key, do: "restart"), class: "ss-btn ss-btn-ghost", disabled: st["busy"].present?,
+                      form: { data: { turbo_confirm: (@app.system? ? "Reiniciar #{@app.name}? Fica fora por alguns segundos." : nil) } } do %><%= icon("refresh", "size-4") %>Reiniciar<% end %>
+        <% if @app.web_ui && running %>
+          <%= link_to launch_app_path(@app.key), class: "ss-btn ss-btn-outline", target: "_blank", rel: "noopener" do %><%= icon("external-link", "size-4") %>Abrir interface<% end %>
+        <% end %>
+      </div>
+      <% if @app.web_ui %><p class="text-xs text-muted mt-2">A interface abre pela porta <%= @app.web_ui["port"] %> do servidor, só na rede de casa, com o login do próprio aplicativo.</p><% end %>
+    <% end %>
+  </section>
+
+  <% if Apps::Supervisor.configured? && !@offline && !installed && !@app.system? %>
+    <section class="ss-card ss-card-pad mt-4" aria-labelledby="instalar-t">
+      <h2 id="instalar-t">Instalar</h2>
+      <% if st["busy"] %>
+        <p class="text-sm text-muted mt-1" role="status"><%= st["busy"] %>… a página atualiza sozinha.</p>
+      <% else %>
+        <%= form_with url: install_app_path(@app.key), class: "mt-3 grid gap-4 md:grid-cols-2", data: { turbo_submits_with: "Instalando…" } do %>
+          <%= render "web/apps/options", app: @app, values: {} %>
+          <%= render "web/apps/behavior", boot: true, watchdog: true %>
+          <div class="md:col-span-2"><%= submit_tag "Instalar", class: "ss-btn ss-btn-primary", name: nil %></div>
+        <% end %>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if installed && !@app.system? %>
+    <section class="ss-card ss-card-pad mt-4" aria-labelledby="comp-t">
+      <h2 id="comp-t">Comportamento</h2>
+      <%= form_with url: app_path(@app.key), method: :patch, class: "mt-3 grid gap-4 md:grid-cols-2" do %>
+        <%= render "web/apps/behavior", boot: st["boot"], watchdog: st["watchdog"] %>
+        <div class="md:col-span-2"><%= submit_tag "Salvar", class: "ss-btn ss-btn-ghost", name: nil %></div>
+      <% end %>
+    </section>
+
+    <section class="ss-card ss-card-pad mt-4" aria-labelledby="desinst-t">
+      <h2 id="desinst-t">Desinstalar</h2>
+      <%= form_with url: app_path(@app.key), method: :delete, class: "mt-3 flex flex-wrap items-center gap-4",
+                    data: { turbo_confirm: "Desinstalar #{@app.name}?", turbo_confirm_button: "Desinstalar" } do %>
+        <label class="ss-check"><%= check_box_tag :keep_data, "1", true, id: "keep-data" %>Manter os dados (reinstalar depois volta como estava)</label>
+        <%= button_tag class: "ss-btn ss-btn-danger", name: nil do %><%= icon("trash", "size-4") %>Desinstalar<% end %>
+      <% end %>
+    </section>
+  <% end %>
+<% elsif @tab == "config" %>
+  <section class="ss-card ss-card-pad" aria-labelledby="conf-t">
+    <h2 id="conf-t">Configuração</h2>
+    <% if @app.system? || @app.options.empty? %>
+      <p class="text-sm text-muted mt-1"><%= @app.system? ? "Configurado pelo servidor (compose e .env); não muda por aqui." : "Este aplicativo não tem opções: a configuração fica na interface dele." %></p>
+    <% else %>
+      <p class="text-sm text-muted mt-1">Salvar recria o container com as opções novas; os dados ficam.</p>
+      <%= form_with url: app_path(@app.key), method: :patch, class: "mt-3 grid gap-4 md:grid-cols-2", data: { turbo_submits_with: "Salvando…" } do %>
+        <%= render "web/apps/options", app: @app, values: st["options"] || {} %>
+        <div class="md:col-span-2"><%= submit_tag "Salvar e reiniciar", class: "ss-btn ss-btn-primary", name: nil, disabled: st["busy"].present? %></div>
+      <% end %>
+    <% end %>
+  </section>
+<% else %>
+  <section class="ss-card ss-card-pad" aria-labelledby="log-t">
+    <div class="flex items-center justify-between gap-3">
+      <h2 id="log-t">Log</h2>
+      <span class="text-xs text-muted">Últimas 200 linhas, atualiza a cada 5 s</span>
+    </div>
+    <turbo-frame id="app-log" src="<%= logs_app_path(@app.key) %>" data-controller="reload" data-reload-every-value="5000">
+      <p class="text-sm text-muted mt-3">Carregando…</p>
+    </turbo-frame>
+  </section>
+<% end %>
+</div>
+<% end %>

@@ -138,6 +138,17 @@ Rails.application.routes.draw do
       end
       resources :invites, path: "convites", only: :destroy
       resources :api_keys, path: "chaves", only: %i[index create destroy]
+      # Aplicativos (F8g): catálogo em config/apps/*.yml, ações pelo supervisor.
+      get "aplicativos/loja", to: "apps#store", as: :apps_store
+      resources :apps, path: "aplicativos", param: :key, only: %i[index show update destroy], constraints: { key: /[a-z0-9_]+/ } do
+        member do
+          post :install, path: "instalar"
+          post :act, path: "acao"
+          post :upgrade, path: "atualizar"
+          get :logs, path: "log"
+          get :launch, path: "abrir"
+        end
+      end
     end
   end
 

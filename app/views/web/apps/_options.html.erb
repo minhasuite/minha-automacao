@@ -1,0 +1,25 @@
+<%# locals: (app:, values:) -%>
+<% app.options.each do |o| %>
+  <% id = "opt-#{o['key']}" %>
+  <% name = "options[#{o['key']}]" %>
+  <% value = values.key?(o["key"]) ? values[o["key"]] : o["default"] %>
+  <div>
+    <% if o["type"] == "boolean" %>
+      <%= hidden_field_tag name, "0", id: nil %>
+      <label class="ss-check"><%= check_box_tag name, "1", value == true, id: id %><%= o["label"] %></label>
+    <% else %>
+      <%= label_tag id, o["label"] + (o["required"] ? " *" : ""), class: "ss-label" %>
+      <% if o["type"] == "enum" %>
+        <%= select_tag name, options_for_select(o["choices"], value), id: id, class: "ss-input" %>
+      <% elsif o["secret"] %>
+        <%= password_field_tag name, nil, id: id, class: "ss-input", autocomplete: "new-password", placeholder: (values.key?(o["key"]) ? "Em branco mantém a atual" : nil), required: o["required"] && !values.key?(o["key"]) %>
+      <% elsif o["type"] == "integer" %>
+        <%= number_field_tag name, value, id: id, class: "ss-input num", min: o["min"], max: o["max"], required: o["required"] %>
+      <% else %>
+        <%= text_field_tag name, value, id: id, class: "ss-input", required: o["required"], maxlength: 200,
+                           placeholder: (o["type"] == "device" ? "/dev/serial/by-id/..." : nil) %>
+      <% end %>
+    <% end %>
+    <% if o["help"] %><p class="text-xs text-muted mt-1"><%= o["help"] %></p><% end %>
+  </div>
+<% end %>
