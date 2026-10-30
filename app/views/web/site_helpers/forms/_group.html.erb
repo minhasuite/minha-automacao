@@ -2,7 +2,7 @@
 <% selected = Array(point.address["sources"]) %>
 <% members = point.site.points.includes(:device).where(capability: HelperTypes::Group::BOOL_CAPS + HelperTypes::Group::NUM_CAPS)
                   .where.not(id: point.id).where("points.helper IS DISTINCT FROM 'group'").ordered %>
-<fieldset class="sm:col-span-2">
+<fieldset class="sm:col-span-2 min-w-0">
   <legend class="ss-label">Membros (do mesmo tipo)</legend>
   <%= hidden_field_tag "helper[members][]", "", id: nil %>
   <div class="max-h-72 overflow-y-auto rounded-xl p-3 grid gap-3 ring-1 ring-inset ring-line">
@@ -11,7 +11,7 @@
         <p class="text-xs font-bold uppercase text-muted mb-1"><%= cap %></p>
         <div class="grid gap-1 sm:grid-cols-2">
           <% ps.each do |p| %>
-            <label class="ss-check !font-normal"><%= check_box_tag "helper[members][]", p.id, selected.include?(p.id), id: "m_#{p.id}" %><span class="truncate"><%= p.name %> <span class="text-muted">· <%= p.device.name %></span></span></label>
+            <label class="ss-check !font-normal min-w-0"><%= check_box_tag "helper[members][]", p.id, selected.include?(p.id), id: "m_#{p.id}" %><span class="truncate"><%= p.name %> <span class="text-muted">· <%= p.device.name %></span></span></label>
           <% end %>
         </div>
       </div>

@@ -3,7 +3,7 @@
 <div><%= f.label :max, "Máximo", class: "ss-label" %><%= f.number_field :max, value: point.max || 100, step: "any", class: "ss-input num", required: true %></div>
 <div><%= f.label :step, "Passo", class: "ss-label" %><%= f.number_field :step, value: point.step || 1, step: "any", min: 0, class: "ss-input num", required: true %></div>
 <div><%= f.label :unit, "Unidade", class: "ss-label" %><%= f.text_field :unit, value: point.unit, class: "ss-input", maxlength: 20, placeholder: "°C, min, %" %></div>
-<fieldset class="sm:col-span-2"><legend class="ss-label">Na tela</legend>
+<fieldset class="sm:col-span-2 min-w-0"><legend class="ss-label">Na tela</legend>
   <div class="flex flex-wrap gap-4">
     <% HelperTypes::Number::MODES.each do |k, label| %><label class="ss-check"><%= f.radio_button :mode, k, checked: (point.address["mode"] || "slider") == k %><%= label %></label><% end %>
   </div>
