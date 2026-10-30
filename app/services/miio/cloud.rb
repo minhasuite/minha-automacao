@@ -13,6 +13,7 @@ module Miio
   # andamento), captcha (imagem), user_id, ssecurity, service_token.
   class Cloud
     class Error < Integrations::Error; end
+    class QrTimeout < StandardError; end
 
     ACCOUNT = "https://account.xiaomi.com".freeze
     STS = "https://sts.api.io.mi.com/sts".freeze
@@ -68,15 +69,18 @@ module Miio
 
     # Espera o app confirmar o QR (no worker, pelo XiaomiQrLoginJob). O `lp`
     # vale UMA requisição: largar por timeout e repetir dá 403. Por isso é uma
-    # só, longa, até o QR vencer. :ok, ou Error QR_EXPIRED.
+    # só, longa, até o QR vencer. :ok, ou Error QR_EXPIRED. O prazo é total
+    # (Timeout): a Xiaomi segura a conexão além do `timeout` do QR e o
+    # read_timeout sozinho não cortava.
     def qr_wait
       lp = @s["lp"] or raise Error, QR_EXPIRED
-      res = request(:get, lp, timeout: [ @s["qr_until"].to_i - Time.now.to_i, 1 ].max + 15)
+      wait = [ @s["qr_until"].to_i - Time.now.to_i, 1 ].max + 15
+      res = Timeout.timeout(wait, QrTimeout) { request(:get, lp, timeout: wait) }
       j = res.is_a?(Net::HTTPSuccess) ? json(res) : {}
       raise Error, QR_EXPIRED if j["location"].blank? || j["ssecurity"].blank?
 
       finish(j)
-    rescue Net::ReadTimeout
+    rescue Net::ReadTimeout, QrTimeout
       raise Error, QR_EXPIRED
     end
 

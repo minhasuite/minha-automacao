@@ -106,6 +106,13 @@ RSpec.describe Miio::Cloud do
     XiaomiQrLoginJob.wait(integration.id)
     expect { described_class.new(integration.reload).qr_done? }.to raise_error(described_class::Error, /expirou/)
 
+    # A Xiaomi segura a conexão além do prazo: o corte é pelo prazo total.
+    described_class.new(integration).qr_start
+    allow(Timeout).to receive(:timeout).and_raise(described_class::QrTimeout)
+    XiaomiQrLoginJob.wait(integration.id)
+    expect(Timeout).to have_received(:timeout).with(be_within(5).of(315), described_class::QrTimeout)
+    expect { described_class.new(integration.reload).qr_done? }.to raise_error(described_class::Error, /expirou/)
+
     # Worker caiu durante a espera: a tela vence o QR pelo prazo.
     described_class.new(integration).qr_start
     expect(described_class.new(integration.reload).qr_done?).to be false
