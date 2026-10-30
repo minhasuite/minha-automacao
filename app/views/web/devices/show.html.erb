@@ -45,19 +45,6 @@
   </section>
   <section class="ss-card ss-card-pad" aria-labelledby="uso">
     <h2 id="uso" class="flex items-center gap-2"><%= icon("collection", "size-5") %>Onde é usado</h2>
-    <% if @usages.empty? %>
-      <p class="mt-3 text-sm text-muted">Nenhum painel, automação, cena, espelhamento, aviso, alerta ou agenda usa os pontos deste dispositivo.</p>
-    <% else %>
-      <ul class="mt-3 divide-y divide-line text-sm">
-        <% @usages.each do |label, r| %>
-          <li class="py-2 flex items-center gap-2">
-            <span class="ss-chip"><%= label %></span>
-            <% path = { Dashboard => -> { dashboard_path(r) }, Automation => -> { edit_automation_path(r) }, Scene => -> { edit_scene_path(r) }, PointLink => -> { edit_point_link_path(r) },
-                        NotifyRule => -> { edit_notify_rule_path(r) }, AlertRule => -> { edit_alert_rule_path(r) }, Schedule => -> { edit_schedule_path(r) } }[r.class] %>
-            <%= link_to (r.try(:name).presence || label), path.call, class: "font-semibold text-ink no-underline hover:text-accent" %>
-          </li>
-        <% end %>
-      </ul>
-    <% end %>
+    <%= render "web/shared/usages", usages: @usages, empty: "Nenhum painel, automação, cena, espelhamento, aviso, alerta, agenda ou helper usa os pontos deste dispositivo." %>
   </section>
 </div>

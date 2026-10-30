@@ -1,0 +1,16 @@
+<%= render "web/shared/header", title: @point.name, subtitle: "#{@plugin.title} · chave #{@point.key}", back: site_helpers_path(@site) %>
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
+  <%= render "form", point: @point, plugin: @plugin, url: helper_path(@point), method: :patch %>
+  <aside class="grid gap-4">
+    <section class="ss-card ss-card-pad" aria-labelledby="uso">
+      <h2 id="uso" class="flex items-center gap-2"><%= icon("collection", "size-5") %>Onde é usado</h2>
+      <%= render "web/shared/usages", usages: @usages, empty: "Nenhum painel, automação, cena, espelhamento, aviso, alerta, agenda ou outro helper usa este helper." %>
+    </section>
+    <section class="ss-card ss-card-pad" aria-labelledby="excluir">
+      <h2 id="excluir" class="flex items-center gap-2"><%= icon("trash", "size-5") %>Excluir</h2>
+      <p class="mt-2 text-sm text-muted"><%= @usages.any? ? "Usado em #{@usages.size} lugar(es) acima: eles ficam com o ponto removido." : "Apaga o helper e o histórico dele." %></p>
+      <%= button_to helper_path(@point), method: :delete, class: "ss-btn ss-btn-outline ss-btn-sm mt-3 !text-danger",
+                    form: { data: { turbo_confirm: "Excluir o helper #{@point.name}?#{" Ele é usado em #{@usages.size} lugar(es)." if @usages.any?}", turbo_confirm_button: "Excluir" } } do %><%= icon("trash", "size-4") %>Excluir helper<% end %>
+    </section>
+  </aside>
+</div>

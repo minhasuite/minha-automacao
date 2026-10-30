@@ -1,0 +1,53 @@
+<%= render "web/shared/header", title: "Helpers", subtitle: "#{@site.name} · chaves, números, listas, contadores e temporizadores para usar nas automações e nos painéis", back: site_path(@site) do %>
+  <% if can?(:manage) %><%= link_to new_site_helper_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Criar helper<% end %><% end %>
+<% end %>
+<%= render "web/sites/tabs", site: @site, current: :helpers %>
+
+<% filtered = params.values_at(:q, :tipo).any?(&:present?) %>
+<% if @counts.empty? %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink">Nenhum helper neste local.</p>
+    <p class="mt-1 max-w-md mx-auto">Helper é um valor seu, sem aparelho: o modo da casa, um contador de visitas, um temporizador da rega. Ele aparece nas automações e nos painéis como qualquer ponto.</p>
+    <% if can?(:manage) %><%= link_to new_site_helper_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar o primeiro<% end %><% end %>
+  </div>
+<% else %>
+  <%= form_with url: site_helpers_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do %>
+    <div class="min-w-48 flex-1"><label for="q" class="ss-label">Procurar</label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: "Nome ou chave" %></div>
+    <%= hidden_field_tag :tipo, params[:tipo] if params[:tipo].present? %>
+    <button type="submit" class="ss-btn ss-btn-ghost" aria-label="Procurar"><%= icon("search", "size-4") %></button>
+  <% end %>
+  <nav class="mb-4 flex gap-2 overflow-x-auto pb-1" aria-label="Filtrar por tipo">
+    <%= link_to site_helpers_path(@site, q: params[:q].presence), class: "ss-chip", "aria-current": params[:tipo].blank?.to_s do %>Todos <span class="num opacity-70"><%= @counts.values.sum %></span><% end %>
+    <% HelperTypes.plugins.select { |p| @counts.key?(p.key) }.each do |p| %>
+      <%= link_to site_helpers_path(@site, tipo: p.key, q: params[:q].presence), class: "ss-chip", "aria-current": (params[:tipo] == p.key).to_s do %><%= icon(p.icon, "size-4") %><%= p.title %> <span class="num opacity-70"><%= @counts[p.key] %></span><% end %>
+    <% end %>
+  </nav>
+
+  <% if @helpers.empty? %>
+    <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum helper<%= " com esses filtros" if filtered %>.</p></div>
+  <% else %>
+    <% @helpers.each { |h| %><%= turbo_stream_from h, channel: PointsChannel %><% } %>
+    <ul class="ss-card ss-rows" aria-label="Helpers">
+      <% @helpers.each do |h| %>
+        <% plugin = h.helper_type %>
+        <li id="<%= dom_id(h) %>">
+          <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= point_on?(h) ? 'ss-grad' : 'bg-accent-soft text-accent' %>"><%= icon(point_icon(h)) %></span>
+          <div class="min-w-0 flex-1">
+            <p class="font-bold text-ink truncate"><%= link_to h.name, point_path(h), class: "text-ink no-underline hover:text-accent" %></p>
+            <p class="text-xs text-muted truncate"><%= [ plugin&.title, h.area&.name, plugin&.summary(h) ].compact_blank.join(" · ") %></p>
+          </div>
+          <p class="max-w-[45%] truncate text-right text-sm font-bold <%= h.quality == 'good' ? 'text-ink' : 'text-warn' %> <%= 'num' if h.value.is_a?(Numeric) %> shrink-0" aria-live="polite">
+            <%= h.quality == "good" ? point_value_text(h) : (h.quality == "error" ? "Com erro" : "Indisponível") %>
+          </p>
+          <div class="flex w-full items-center justify-end gap-1 sm:w-auto sm:shrink-0">
+            <%= render "web/points/control", point: h %>
+            <% if can?(:manage) %>
+              <%= link_to edit_helper_path(h), class: "grid place-items-center size-9 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", title: "Editar", "aria-label": "Editar #{h.name}" do %><%= icon("pencil", "size-4") %><% end %>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+    <%= render "web/shared/pagination", pagy: @pagy %>
+  <% end %>
+<% end %>

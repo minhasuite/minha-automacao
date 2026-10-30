@@ -1,0 +1,2 @@
+<%= render "web/shared/header", title: "Novo helper: #{@plugin.title}", subtitle: @plugin.description, back: new_site_helper_path(@site) %>
+<%= render "form", point: @point, plugin: @plugin, url: site_helpers_path(@site, tipo: @plugin.key), method: :post %>

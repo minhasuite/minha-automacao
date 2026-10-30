@@ -1,0 +1,23 @@
+<%# locals: (f:, point:) -%>
+<% selected = Array(point.address["sources"]) %>
+<% members = point.site.points.includes(:device).where(capability: HelperTypes::Group::BOOL_CAPS + HelperTypes::Group::NUM_CAPS)
+                  .where.not(id: point.id).where("points.helper IS DISTINCT FROM 'group'").ordered %>
+<fieldset class="sm:col-span-2">
+  <legend class="ss-label">Membros (do mesmo tipo)</legend>
+  <%= hidden_field_tag "helper[members][]", "", id: nil %>
+  <div class="max-h-72 overflow-y-auto rounded-xl p-3 grid gap-3 ring-1 ring-inset ring-line">
+    <% members.group_by(&:capability_label).sort.each do |cap, ps| %>
+      <div>
+        <p class="text-xs font-bold uppercase text-muted mb-1"><%= cap %></p>
+        <div class="grid gap-1 sm:grid-cols-2">
+          <% ps.each do |p| %>
+            <label class="ss-check !font-normal"><%= check_box_tag "helper[members][]", p.id, selected.include?(p.id), id: "m_#{p.id}" %><span class="truncate"><%= p.name %> <span class="text-muted">· <%= p.device.name %></span></span></label>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <p class="text-xs text-muted mt-1">Liga/desliga recebe comando e repassa a todos; números e sensores só leem.</p>
+</fieldset>
+<div class="sm:col-span-2"><%= f.label :mode, "Valor do grupo", class: "ss-label" %>
+  <%= f.select :mode, grouped_options_for_select([ [ "Liga/desliga e sensores", HelperTypes::Group::BOOL_MODES.invert.to_a ], [ "Números", HelperTypes::Group::NUM_MODES.invert.to_a ] ], point.address["mode"]), {}, class: "ss-input" %></div>

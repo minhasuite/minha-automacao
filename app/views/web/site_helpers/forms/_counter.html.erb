@@ -1,0 +1,5 @@
+<%# locals: (f:, point:) -%>
+<div><%= f.label :initial, "Valor inicial", class: "ss-label" %><%= f.number_field :initial, value: point.address["initial"] || 0, step: 1, class: "ss-input num", required: true %></div>
+<div><%= f.label :step, "Passo", class: "ss-label" %><%= f.number_field :step, value: (point.step || 1).to_i, step: 1, min: 1, class: "ss-input num", required: true %></div>
+<div><%= f.label :min, "Mínimo (opcional)", class: "ss-label" %><%= f.number_field :min, value: point.min&.to_i, step: 1, class: "ss-input num" %></div>
+<div><%= f.label :max, "Máximo (opcional)", class: "ss-label" %><%= f.number_field :max, value: point.max&.to_i, step: 1, class: "ss-input num" %></div>

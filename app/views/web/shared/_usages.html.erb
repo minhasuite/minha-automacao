@@ -1,0 +1,16 @@
+<%# locals: (usages:, empty:) -%>
+<% if usages.empty? %>
+  <p class="mt-3 text-sm text-muted"><%= empty %></p>
+<% else %>
+  <ul class="mt-3 divide-y divide-line text-sm">
+    <% usages.each do |label, r| %>
+      <li class="py-2 flex items-center gap-2">
+        <span class="ss-chip"><%= label %></span>
+        <% path = { Dashboard => -> { dashboard_path(r) }, Automation => -> { edit_automation_path(r) }, Scene => -> { edit_scene_path(r) }, PointLink => -> { edit_point_link_path(r) },
+                    NotifyRule => -> { edit_notify_rule_path(r) }, AlertRule => -> { edit_alert_rule_path(r) }, Schedule => -> { edit_schedule_path(r) },
+                    Point => -> { edit_helper_path(r) } }[r.class] %>
+        <%= link_to (r.try(:name).presence || label), path.call, class: "font-semibold text-ink no-underline hover:text-accent" %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

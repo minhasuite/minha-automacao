@@ -232,6 +232,22 @@
   .ss-chip:hover { border-color: var(--accent); color: var(--accent); }
   .ss-chip[aria-current="true"] { background: var(--accent); color: #fff; }
   .ss-rise { animation: ss-rise .45s cubic-bezier(.2, .8, .2, 1) both; }
+  /* Chave liga/desliga (botão com aria-pressed). */
+  .ss-switch { position: relative; flex-shrink: 0; width: 2.9rem; height: 1.65rem; border-radius: 999px; border: 0; cursor: pointer;
+               background: var(--field); box-shadow: inset 0 0 0 1px var(--line); transition: background .2s ease; }
+  .ss-switch::after { content: ""; position: absolute; top: .2rem; left: .2rem; width: 1.25rem; height: 1.25rem; border-radius: 999px;
+                      background: #fff; box-shadow: 0 1px 3px rgba(30, 26, 56, .3); transition: transform .2s cubic-bezier(.2, .8, .2, 1); }
+  .ss-switch[aria-pressed="true"] { background: var(--grad); box-shadow: none; }
+  .ss-switch[aria-pressed="true"]::after { transform: translateX(1.25rem); }
+  .ss-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Lista de helpers: linha com ícone, nome, valor e o controle na mesma linha. */
+  .ss-rows > li { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--line); }
+  .ss-rows > li:last-child { border-bottom: 0; }
+  .ss-rows > li:hover { background: color-mix(in srgb, var(--accent) 3%, transparent); }
+  .ss-step { display: inline-flex; align-items: center; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+  .ss-step form { display: contents; }
+  .ss-step button { display: grid; place-items: center; width: 2.2rem; height: 2.2rem; color: var(--ink-2); cursor: pointer; }
+  .ss-step button:hover { background: var(--accent-soft); color: var(--accent); }
 
   /* Chat da IA: FAB + painel lateral (permanente entre as páginas). */
   .ss-fab { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 40; display: inline-flex; align-items: center; gap: .55rem;

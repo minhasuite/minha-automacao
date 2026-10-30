@@ -16,6 +16,7 @@ module DashboardsHelper
   def dw_light?(p) = p["capability"].in?(%w[onoff dimmer]) && "#{p['name']} #{p['device']}".match?(Dashboards::Generator::LIGHT)
 
   def dw_point_icon(p)
+    return p["icon"] if p["icon"].present? && HelperTypes::ICONS.include?(p["icon"])
     return "light-bulb" if dw_light?(p)
     return "lightning-bolt" if p["device_class"] == "power" || p["unit"] == "W"
     return "switch-horizontal" if p["capability"] == "onoff"

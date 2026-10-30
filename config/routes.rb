@@ -92,6 +92,8 @@ Rails.application.routes.draw do
           post :adopt, path: "adicionar"
         end
       end
+      # Helpers (F8e): catálogo de tipos (plugins), lista com valor e cadastro.
+      resources :helpers, controller: "site_helpers", path: "helpers", except: :show, path_names: { new: "novo", edit: "editar" }, shallow: true
       resources :areas, path: "areas", except: :index, shallow: true
       resources :devices, path: "dispositivos", shallow: true do
         post :bulk, on: :collection, path: "lote"
@@ -155,6 +157,7 @@ Rails.application.routes.draw do
       resources :api_keys, only: %i[index create destroy]
 
       resources :sites, except: %i[new edit] do
+        resources :helpers, controller: "site_helpers", only: :index
         resources :areas, except: %i[new edit], shallow: true
         resources :members, controller: :site_memberships, only: %i[index create update destroy], shallow: true
         resources :devices, except: %i[new edit], shallow: true do

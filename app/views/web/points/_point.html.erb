@@ -14,9 +14,11 @@
     </div>
     <p class="text-2xl font-bold <%= point.value.is_a?(Numeric) ? "num text-ink" : (point.value.nil? ? "text-muted" : "text-ink") %>" aria-live="polite"><%= point_value_text(point) %></p>
     <% if error %><p class="text-sm font-semibold text-danger" role="alert"><%= error %></p><% end %>
-    <% if point.writable && !point.disabled && Points::Command::COMMANDS.key?(point.capability) && can?(:command, risk: point.risk) %>
+    <% if point.writable && !point.disabled && Points::Command.commands_for(point).any? && can?(:command, risk: point.risk) %>
       <% confirm = point_confirm_data(point) %>
-      <% if point.capability == "onoff" %>
+      <% if point.helper_type %>
+        <%= render "web/points/control", point: point %>
+      <% elsif point.capability == "onoff" %>
         <%= button_to command_point_path(point), params: { command: on ? "off" : "on" }, class: "ss-btn #{on ? 'ss-btn-outline' : 'ss-btn-primary'} w-full", form: { data: confirm }, "aria-pressed": on do %><%= icon(on ? "x-circle" : "lightning-bolt", "size-4") %><%= on ? "Desligar" : "Ligar" %><% end %>
       <% elsif point.capability.in?(%w[gate command]) %>
         <%= button_to command_point_path(point), params: { command: point.capability == "gate" ? "pulse" : "press" }, class: "ss-btn ss-btn-primary w-full", form: { data: confirm } do %><%= icon("lightning-bolt", "size-4") %>Acionar<% end %>
@@ -35,7 +37,7 @@
           <%= f.submit "Aplicar", class: "ss-btn ss-btn-primary" %>
         <% end %>
       <% end %>
-    <% elsif point.writable && !point.disabled && !Points::Command::COMMANDS.key?(point.capability) %>
+    <% elsif point.writable && !point.disabled && Points::Command.commands_for(point).empty? %>
       <p class="text-xs text-muted">O controle deste tipo chega com os drivers.</p>
     <% end %>
   </div>

@@ -5,7 +5,7 @@ module PointsHelper
                   "contact" => "view-boards", "motion" => "eye", "tamper" => "exclamation-circle", "problem" => "exclamation-circle",
                   "measure" => "chart-bar", "enum" => "view-list", "setpoint" => "calculator", "command" => "lightning-bolt",
                   "text" => "document-text", "vacuum" => "vacuum", "speaker" => "speakerphone", "stream" => "video-camera",
-                  "climate" => "sun", "event" => "bell" }.freeze
+                  "climate" => "sun", "event" => "bell", "counter" => "plus", "timer" => "clock", "datetime" => "calendar" }.freeze
   BOOL_TEXT = { "onoff" => %w[Ligado Desligado], "contact" => %w[Aberto Fechado], "motion" => %w[Movimento Parado],
                 "tamper" => %w[Violado Normal], "problem" => %w[Problema Normal] }.freeze
   GATE_TEXT = { "open" => "Aberto", "closed" => "Fechado", "opening" => "Abrindo", "unknown" => "Desconhecido" }.freeze
@@ -14,13 +14,17 @@ module PointsHelper
     "gate" => GATE_TEXT,
     "vacuum" => { "docked" => "Na base", "cleaning" => "Limpando", "returning" => "Voltando para a base", "paused" => "Pausado",
                   "idle" => "Parado", "error" => "Com erro" },
-    "speaker" => { "online" => "Pronta", "offline" => "Fora do ar" }
+    "speaker" => { "online" => "Pronta", "offline" => "Fora do ar" },
+    "timer" => { "idle" => "Parado", "active" => "Contando", "paused" => "Pausado", "finished" => "Terminou" }
   }.freeze
+  # Botões de ação (Points::Command.actions_for): comando → [ícone, rótulo].
+  ACTION_BUTTONS = { "increment" => %w[plus Mais], "decrement" => %w[minus Menos], "reset" => %w[refresh Zerar],
+                     "start" => %w[play Iniciar], "pause" => %w[pause Pausar], "cancel" => %w[x Cancelar], "finish" => %w[check Terminar] }.freeze
 
   TONE_CLASSES = { "success" => "text-success", "danger" => "text-danger", "warn" => "text-warn", "muted" => "text-muted" }.freeze
 
   def site_icon(site) = SITE_ICONS.fetch(site.kind, "home")
-  def point_icon(point) = POINT_ICONS.fetch(point.capability, "cube")
+  def point_icon(point) = point.icon.presence_in(HelperTypes::ICONS) || POINT_ICONS.fetch(point.capability, "cube")
   def point_on?(point) = point.value == true || point.value == "open"
   def count_label(n, one, many) = "#{n} #{n == 1 ? one : many}"
 
@@ -42,6 +46,15 @@ module PointsHelper
     "há #{duration_text(secs / 60 * 60)}"
   end
 
+  # Segundos → "1h30m" (campo de duração dos helpers).
+  def helper_duration(seconds)
+    return if seconds.nil?
+
+    h, rest = seconds.to_i.divmod(3600)
+    m, s = rest.divmod(60)
+    [ ("#{h}h" if h.positive?), ("#{m}m" if m.positive?), ("#{s}s" if s.positive?) ].join.presence || "0s"
+  end
+
   # Intervalo da leitura periódica (segundos) em texto.
   def poll_label(seconds)
     return "sem leitura periódica" if seconds.to_i <= 0
@@ -51,7 +64,9 @@ module PointsHelper
 
   def point_value_text(point)
     v = point.value
-    if point.capability == "command"
+    if (text = point.helper_type&.value_text(point))
+      text
+    elsif point.capability == "command"
       point.reported_at ? "Acionado #{l(point.reported_at, format: :short)}" : "Pronto"
     elsif v.nil?
       "Sem valor"
@@ -66,6 +81,14 @@ module PointsHelper
     else
       v.to_s
     end
+  end
+
+  # Valor do ponto para um <input> (data/hora no formato do campo).
+  def point_input_type(point)
+    return "number" if point.numeric?
+    return { "date" => "date", "time" => "time" }.fetch(point.address["mode"], "datetime-local") if point.capability == "datetime"
+
+    point.address["password"] ? "password" : "text"
   end
 
   # Um valor qualquer no texto do ponto (regras: "quando ficar Aberto").

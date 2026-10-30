@@ -1,0 +1,6 @@
+<%# locals: (f:, point:) -%>
+<fieldset class="sm:col-span-2"><legend class="ss-label">Guarda</legend>
+  <div class="flex flex-wrap gap-4">
+    <% HelperTypes::Datetime::MODES.each do |k, label| %><label class="ss-check"><%= f.radio_button :mode, k, checked: HelperTypes::Datetime.mode(point) == k %><%= label %></label><% end %>
+  </div>
+</fieldset>
