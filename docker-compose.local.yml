@@ -1,6 +1,6 @@
 # Servidor local da casa (/opt/minha-automacao no Debian): Postgres próprio,
 # web, worker (fila + ouvintes Tuya e MQTT), Mosquitto, go2rtc (câmeras),
-# zigbee2mqtt (perfil `zigbee`), backup diário e túnel Cloudflare.
+# supervisor dos aplicativos, backup diário e túnel Cloudflare.
 # Subido pelo bin/deploy-local (a imagem vem do WSL; o servidor não guarda
 # credencial do GitHub). Segredos em /opt/minha-automacao/.env (chmod 600),
 # gerados lá na primeira vez; nada daqui é segredo.
@@ -22,6 +22,7 @@ x-app: &app
     FORCE_SSL: "false"
     ACTIVE_STORAGE_SERVICE: local
     GO2RTC_URL: http://go2rtc:1984
+    SUPERVISOR_URL: http://supervisor:8099
   volumes:
     - storage:/app/storage
 
@@ -80,6 +81,7 @@ services:
       MQTT_PASSWORD: ${MQTT_PASSWORD:?set MQTT_PASSWORD}
     ports:
       - "1883:1883"
+    networks: [default, apps] # apps instalados (Zigbee2MQTT, Node-RED) falam MQTT
     volumes:
       - mosquitto:/mosquitto/data
     command:
@@ -105,36 +107,28 @@ services:
       - "8555:8555/tcp"
       - "8555:8555/udp"
 
-  # Zigbee: perfil `zigbee`, ligado pelo bin/deploy-local quando o .env tem
-  # ZIGBEE_DEVICE (/dev/serial/by-id/... do coordenador USB). A descoberta
-  # (bridge/devices → dispositivos e pontos) roda no worker.
-  zigbee2mqtt:
-    image: koenkk/zigbee2mqtt:2.6.2
+  # Supervisor dos aplicativos (F8g, supervisor/server.rb): o ÚNICO serviço
+  # com o socket do Docker. API só na rede interna (sem porta no host), com
+  # SUPERVISOR_TOKEN; sem env_file (não recebe os segredos do Rails, só os
+  # que um manifesto pode repassar). Os apps instalados (ma-app-*) ficam fora
+  # do compose: o deploy não os derruba.
+  supervisor:
+    image: ${IMAGE:-ghcr.io/minhasuite/minha-automacao:latest}
     restart: unless-stopped
-    profiles: ["zigbee"]
-    depends_on:
-      - mosquitto
+    command: bundle exec ruby supervisor/server.rb
     environment:
-      TZ: America/Sao_Paulo
-      Z2M_ONBOARD_NO_SERVER: "1"
-      ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://mosquitto:1883
-      ZIGBEE2MQTT_CONFIG_MQTT_USER: automacao
-      ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD: ${MQTT_PASSWORD:?set MQTT_PASSWORD}
-      ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/zigbee
-      ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: ${ZIGBEE_ADAPTER:-ember}
-      ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_ENABLED: "false"
-      ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY: GENERATE
-      ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID: GENERATE
-      ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID: GENERATE
-      ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED: "true"
-      ZIGBEE2MQTT_CONFIG_FRONTEND_PORT: "8080"
-      ZIGBEE2MQTT_CONFIG_FRONTEND_AUTH_TOKEN: ${Z2M_FRONTEND_TOKEN:-}
-    devices:
-      - ${ZIGBEE_DEVICE:-/dev/null}:/dev/zigbee
-    ports:
-      - "8080:8080"
+      SUPERVISOR_TOKEN: ${SUPERVISOR_TOKEN:?set SUPERVISOR_TOKEN}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:?set MQTT_PASSWORD}
+      Z2M_FRONTEND_TOKEN: ${Z2M_FRONTEND_TOKEN:-}
+      APPS_NETWORK: minha-automacao-apps
+      APPS_PROJECT: minha-automacao
     volumes:
-      - zigbee2mqtt:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8099/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   # pg_dump diário com 7 dias de retenção em /opt/minha-automacao/backups.
   backup:
@@ -176,4 +170,9 @@ volumes:
   pgdata:
   storage:
   mosquitto:
-  zigbee2mqtt:
+
+networks:
+  # Rede dos apps instalados pelo supervisor (manifesto com `network: apps`):
+  # alcançam o mosquitto, não o banco nem o web.
+  apps:
+    name: minha-automacao-apps

@@ -44,6 +44,7 @@ gen AR_ENCRYPTION_DETERMINISTIC_KEY
 gen AR_ENCRYPTION_KEY_DERIVATION_SALT
 gen MQTT_PASSWORD 24
 gen Z2M_FRONTEND_TOKEN 16
+gen SUPERVISOR_TOKEN 32
 REMOTE
 
 echo "==> subindo"
@@ -52,7 +53,6 @@ set -euo pipefail
 cd "$1"
 profiles=()
 grep -q '^CF_TUNNEL_TOKEN=.' .env && profiles+=(--profile tunnel)
-grep -q '^ZIGBEE_DEVICE=.' .env && profiles+=(--profile zigbee)
 # A tag implantada fica no .env: `docker compose up` à mão sobe a mesma.
 sed -i '/^IMAGE=/d' .env && echo "IMAGE=$2" >> .env
 docker compose "${profiles[@]}" up -d --remove-orphans --quiet-pull
