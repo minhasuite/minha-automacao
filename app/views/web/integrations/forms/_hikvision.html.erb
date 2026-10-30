@@ -1,0 +1,9 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<div class="grid gap-4 md:grid-cols-2">
+  <div><%= f.label :host, "IP do DVR ou da câmera", class: "ss-label" %><%= f.text_field :host, class: "ss-input num", required: integration.nil?, value: s["host"], placeholder: "192.168.0.10", inputmode: "decimal" %></div>
+  <div><%= f.label :http_port, "Porta HTTP", class: "ss-label" %><%= f.number_field :http_port, class: "ss-input num", value: s["http_port"], placeholder: "80" %></div>
+  <div><%= f.label :username, "Usuário", class: "ss-label" %><%= f.text_field :username, class: "ss-input", required: integration.nil?, value: s["username"], autocomplete: "off" %></div>
+  <div><%= f.label :password, "Senha", class: "ss-label" %><%= f.password_field :password, class: "ss-input", required: integration.nil?, autocomplete: "new-password", placeholder: (integration ? "deixe vazio para manter" : nil) %></div>
+</div>
+<p class="text-xs text-muted">Lê os canais pela ISAPI (Hikvision) e usa o substream de cada um. Cuidado com a senha: o DVR bloqueia o usuário depois de algumas tentativas erradas.</p>

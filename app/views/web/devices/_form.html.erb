@@ -13,7 +13,11 @@
       <p class="text-xs text-muted mt-1">Só leitura, um aparelho por vez. Padrão: 30 minutos.</p></div>
   <% end %>
   <div class="flex items-end"><label class="ss-check"><%= f.check_box :disabled %> Desativado (não recebe comando)</label></div>
+  <% if device.driver.in?(%w[tuya_local xiaomi_miot go2rtc]) %>
+    <div><%= f.label :host, "IP na rede local", class: "ss-label" %><%= f.text_field :host, class: "ss-input num", inputmode: "decimal", placeholder: "192.168.0.50" %></div>
+  <% end %>
   <% if device.tuya_local? %>
+    <div><%= f.label :protocol_version, "Versão do protocolo Tuya", class: "ss-label" %><%= f.select :protocol_version, Drivers::TuyaLocal::VERSIONS, { include_blank: "Descobrir (Reconectar)" }, class: "ss-input" %></div>
     <div class="md:col-span-2"><label class="ss-check"><%= f.check_box :listen %> Manter conexão com o aparelho (o botão físico atualiza a tela)</label>
       <p class="text-xs text-muted mt-1">Deixe desligado enquanto o Home Assistant controla este aparelho: muitos aceitam uma conexão só.</p></div>
   <% end %>

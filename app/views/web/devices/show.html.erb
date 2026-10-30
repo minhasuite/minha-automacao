@@ -1,6 +1,7 @@
 <%= render "web/shared/header", title: @device.name, subtitle: [ @device.driver_label, @device.area&.name || "Sem área", @site.name ].join(" · "), back: (@device.area ? area_path(@device.area) : site_path(@site)), badge: (tag.span("Desativado", class: "ss-badge ss-badge-warn") if @device.disabled) do %>
   <% if Polling.supported?(@device) && can?(:command, risk: "sensitive") %>
     <%= button_to refresh_device_path(@device), class: "ss-btn ss-btn-outline", form: { data: { turbo_submits_with: "Pedindo…" } } do %><%= icon("refresh", "size-4") %>Atualizar agora<% end %>
+    <%= button_to reconnect_device_path(@device), class: "ss-btn ss-btn-ghost", form: { data: { turbo_submits_with: "Reconectando…" } } do %><%= icon("switch-horizontal", "size-4") %>Reconectar<% end %>
   <% end %>
   <% if can?(:manage) %>
     <%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo ponto<% end %>
@@ -18,3 +19,45 @@
   <% @points.each { |p| %><%= turbo_stream_from p, channel: PointsChannel %><% } %>
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><%= render partial: "web/points/point", collection: @points, as: :point %></div>
 <% end %>
+
+<% s = @device.situation %>
+<div class="mt-6 grid gap-4 lg:grid-cols-2">
+  <section class="ss-card ss-card-pad" aria-labelledby="diag">
+    <h2 id="diag" class="flex items-center gap-2"><%= icon("information-circle", "size-5") %>Diagnóstico</h2>
+    <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+      <div><dt class="text-muted">Situação</dt><dd class="font-semibold text-ink"><%= Device::SITUATIONS[s] %></dd></div>
+      <div><dt class="text-muted">Último contato</dt><dd class="font-semibold text-ink"><%= @device.last_seen_at ? l(@device.last_seen_at, format: :short) : "Ainda não" %></dd></div>
+      <div><dt class="text-muted">IP</dt><dd class="font-semibold text-ink num"><%= @device.host.presence || "Não informado" %></dd></div>
+      <div><dt class="text-muted">Versão do protocolo</dt><dd class="font-semibold text-ink num"><%= @device.protocol_version.presence || "—" %></dd></div>
+      <div><dt class="text-muted">Integração</dt><dd class="font-semibold text-ink"><%= @device.integration ? link_to(@device.integration.name, site_integrations_path(@site)) : "Nenhuma" %></dd></div>
+      <div><dt class="text-muted">Leitura</dt><dd class="font-semibold text-ink"><%= Polling.supported?(@device) ? poll_label(@device.poll_s).capitalize : "Não lê sozinho" %></dd></div>
+      <div class="col-span-2"><dt class="text-muted">Fabricante / modelo</dt><dd class="font-semibold text-ink"><%= [ @device.manufacturer, @device.model ].compact_blank.join(" · ").presence || "—" %></dd></div>
+    </dl>
+    <% if @device.removed_at %><p class="mt-3 text-sm text-warn" role="status">Sumiu da conta da integração em <%= l(@device.removed_at, format: :short) %>. Nada foi apagado; remova aqui se não for voltar.</p><% end %>
+    <% if @device.last_error.present? %><p class="mt-3 text-sm text-danger" role="status">Último erro: <%= @device.last_error %></p><% end %>
+    <% if @device.tuya_local? && @device.host.blank? %><p class="mt-3 text-sm text-warn">Sem IP: a conta da Tuya não informa o IP da rede local. Preencha em Editar (veja no roteador) e use Reconectar.</p><% end %>
+    <% if @problems.any? %>
+      <p class="ss-section mt-4">Falhas recentes</p>
+      <ul class="mt-2 text-sm grid gap-1">
+        <% @problems.each do |e| %><li><span class="text-muted"><%= l(e.at, format: :short) %></span> · <%= e.payload["to"] == "unavailable" ? "sem resposta" : e.payload["to"] %></li><% end %>
+      </ul>
+    <% end %>
+  </section>
+  <section class="ss-card ss-card-pad" aria-labelledby="uso">
+    <h2 id="uso" class="flex items-center gap-2"><%= icon("collection", "size-5") %>Onde é usado</h2>
+    <% if @usages.empty? %>
+      <p class="mt-3 text-sm text-muted">Nenhum painel, automação, cena, espelhamento, aviso, alerta ou agenda usa os pontos deste dispositivo.</p>
+    <% else %>
+      <ul class="mt-3 divide-y divide-line text-sm">
+        <% @usages.each do |label, r| %>
+          <li class="py-2 flex items-center gap-2">
+            <span class="ss-chip"><%= label %></span>
+            <% path = { Dashboard => -> { dashboard_path(r) }, Automation => -> { edit_automation_path(r) }, Scene => -> { edit_scene_path(r) }, PointLink => -> { edit_point_link_path(r) },
+                        NotifyRule => -> { edit_notify_rule_path(r) }, AlertRule => -> { edit_alert_rule_path(r) }, Schedule => -> { edit_schedule_path(r) } }[r.class] %>
+            <%= link_to (r.try(:name).presence || label), path.call, class: "font-semibold text-ink no-underline hover:text-accent" %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+</div>

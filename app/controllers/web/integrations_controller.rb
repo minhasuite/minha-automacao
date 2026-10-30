@@ -1,30 +1,116 @@
 module Web
-  # Integrações do local (F8): contas (Alexa) e aparelhos com conexão própria
-  # (robô Xiaomi), com estado, último sucesso e último erro. Ver: qualquer
-  # papel; atualizar a lista de Echo (só leitura na conta): técnico ou dono.
+  # Integrações do local (F8c), como no HA: em cima as que já existem (card
+  # com resumo, sem lista de aparelhos), embaixo o catálogo pesquisável. Todo
+  # passo por tipo é do plugin (`Integrations::Plugin`): aqui só se segue o
+  # `Outcome`. Ver: qualquer papel; o resto: técnico ou dono.
   class IntegrationsController < ApplicationController
     def index
       @site = Site.find(params[:site_id])
       authorize_site!(@site, :view)
-      @integrations = @site.integrations.includes(:devices).order(:name)
-      @direct = @site.devices.where(driver: "xiaomi_miot").order(:name)
+      @integrations = @site.integrations.order(:name).to_a
+      ids = @integrations.map(&:id)
+      @device_counts = Device.where(integration_id: ids).group(:integration_id).count
+      @point_counts = Point.joins(:device).where(devices: { integration_id: ids }).group("devices.integration_id").count
+      @pending = @integrations.to_h { |i| [ i.id, Integrations.pending(i).size ] }
+      q = params[:q].to_s.squish.downcase
+      @catalog = Integrations.plugins.select { |p| q.empty? || "#{p.title} #{p.description}".downcase.include?(q) }
     end
 
-    # Intervalo da leitura periódica da conta (minutos; vazio ou 0 = não lê).
+    def new
+      @site = Site.find(params[:site_id])
+      authorize_site!(@site, :manage)
+      @plugin = Integrations.plugin(params[:tipo]) or redirect_to(site_integrations_path(@site, anchor: "adicionar"))
+    end
+
+    def create
+      @site = Site.find(params[:site_id])
+      authorize_site!(@site, :manage)
+      @plugin = Integrations.plugin(params[:tipo]) or return redirect_to(site_integrations_path(@site))
+
+      follow(@plugin.setup(@site, form))
+    end
+
+    # Passo de login / Reconfigurar (QR, captcha, senha).
+    def connect
+      load_for(:manage)
+      @locals = @plugin.connect_locals(@integration, params)
+    rescue Integrations::Error => e
+      @locals = {}
+      flash.now[:alert] = e.message
+    end
+
+    def login
+      load_for(:manage)
+      follow(@plugin.login(@integration, form))
+    end
+
+    # Consultado pela tela a cada 3 s: {url} quando é hora de ir para os encontrados.
+    def status
+      load_for(:manage)
+      done = if @integration.status == "syncing" then false
+      elsif params[:sync].present? then true
+      else @plugin.logged_in?(@integration)
+      end
+      render json: done ? { url: found_integration_path(@integration) } : {}
+    rescue Integrations::Error => e
+      render json: { error: e.message }
+    end
+
+    def found
+      load_for(:view)
+      @entries = @integration.found
+      @known = Integrations.matched_ids(@integration)
+      @areas = @site.areas.order(:name).to_a
+    end
+
+    def adopt
+      load_for(:manage)
+      areas = params.fetch(:area, {}).to_unsafe_h
+      ids = params[:all].present? ? Integrations.pending(@integration).map { |e| e["id"] } : Array(params[:pick])
+      count = Integrations.adopt!(@integration, ids.to_h { |id| [ id, areas[id] ] })
+      redirect_to site_devices_path(@site, integracao: @integration.id), notice: "#{count} dispositivo(s) adicionado(s), com os pontos."
+    end
+
+    def sync
+      load_for(:manage)
+      Integrations.start_sync!(@integration)
+      redirect_to found_integration_path(@integration), notice: "Sincronizando: a lista chega em instantes."
+    end
+
+    # Intervalo da varredura da conta (minutos; vazio ou 0 = só manual).
     def update
-      integration = Integration.find(params[:id])
-      authorize_site!(integration.site, :manage)
-      ok = integration.update(params.require(:integration).permit(:poll_min))
-      redirect_to site_integrations_path(integration.site), **(ok ? { notice: "Intervalo salvo." } : { alert: integration.errors.full_messages.to_sentence })
+      load_for(:manage)
+      ok = @integration.update(params.require(:integration).permit(:poll_min))
+      redirect_to site_integrations_path(@site), **(ok ? { notice: "Intervalo salvo." } : { alert: @integration.errors.full_messages.to_sentence })
     end
 
-    def discover
-      integration = Integration.find(params[:id])
-      authorize_site!(integration.site, :manage)
-      r = Alexa::Import.discover!(integration)
-      redirect_to site_integrations_path(integration.site), notice: "Lista atualizada: #{r[:echos]} Echo na conta, #{r[:devices]} nova(s)."
-    rescue Alexa::Client::Error, Drivers::Alexa::Error => e
-      redirect_to site_integrations_path(integration.site), alert: "Não deu para atualizar: #{e.message}"
+    def destroy
+      load_for(:manage)
+      @integration.destroy!
+      redirect_to site_integrations_path(@site), notice: "Integração removida. Os dispositivos continuam no local."
+    end
+
+    private
+
+    def load_for(action)
+      @integration = Integration.find(params[:id])
+      @site = @integration.site
+      @plugin = @integration.plugin
+      authorize_site!(@site, action)
+    end
+
+    def form = params.fetch(:integration, {})
+
+    def follow(o)
+      flash_now = { notice: o.notice, alert: o.alert }.compact
+      if o.to == :form
+        flash_now.each { |k, v| flash.now[k] = v }
+        return render(:new, status: :unprocessable_content)
+      end
+
+      url = { found: -> { found_integration_path(o.integration) }, connect: -> { connect_integration_path(o.integration, **o.params) },
+              devices: -> { site_devices_path(@site) } }.fetch(o.to, -> { site_integrations_path(@site) }).call
+      redirect_to url, **flash_now
     end
   end
 end

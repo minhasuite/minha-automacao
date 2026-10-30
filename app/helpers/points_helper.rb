@@ -33,6 +33,15 @@ module PointsHelper
     [ ("#{h} h" if h.positive?), ("#{m} min" if m.positive?) ].compact.join(" ")
   end
 
+  # "há 7 min", "há 1 h 5 min"; mais de um dia = data curta.
+  def ago_text(time)
+    secs = (Time.current - time).to_i
+    return "agora" if secs < 60
+    return l(time, format: :short) if secs >= 86_400
+
+    "há #{duration_text(secs / 60 * 60)}"
+  end
+
   # Intervalo da leitura periódica (segundos) em texto.
   def poll_label(seconds)
     return "sem leitura periódica" if seconds.to_i <= 0

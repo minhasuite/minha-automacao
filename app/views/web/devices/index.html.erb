@@ -1,0 +1,55 @@
+<% tones = { "online" => "success", "offline" => "danger", "error" => "danger", "new" => "accent", "removed" => "warn" } %>
+<%= render "web/shared/header", title: "Dispositivos", subtitle: "#{@site.name} · todos os aparelhos do local", back: site_path(@site) do %>
+  <% if can?(:manage) %><%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("plus", "size-4") %>Novo dispositivo<% end %><% end %>
+<% end %>
+<%= render "web/sites/tabs", site: @site, current: :devices %>
+
+<%= form_with url: site_devices_path(@site), method: :get, class: "ss-filters mb-4 flex flex-wrap items-end gap-3", role: "search" do %>
+  <div class="min-w-48 flex-1"><label for="q" class="ss-label">Procurar</label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: "Nome, modelo, fabricante ou área" %></div>
+  <div><label for="integracao" class="ss-label">Integração</label><%= select_tag :integracao, options_for_select([ [ "Todas", "" ] ] + @integrations.map { |i| [ i.name, i.id ] }, params[:integracao]), class: "ss-input" %></div>
+  <div><label for="area" class="ss-label">Área</label><%= select_tag :area, options_for_select([ [ "Todas", "" ], [ "Sem área", "none" ] ] + @areas.map { |a| [ a.name, a.id ] }, params[:area]), class: "ss-input" %></div>
+  <div><label for="situacao" class="ss-label">Situação</label><%= select_tag :situacao, options_for_select([ [ "Todas", "" ] ] + Device::SITUATIONS.invert.to_a, params[:situacao]), class: "ss-input" %></div>
+  <button type="submit" class="ss-btn ss-btn-ghost">Filtrar</button>
+<% end %>
+
+<% if @devices.empty? %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink">Nenhum dispositivo<%= " com esses filtros" if params.values_at(:q, :integracao, :area, :situacao).any?(&:present?) %>.</p>
+    <p class="mt-1">Adicione uma integração para trazer os aparelhos da conta, ou cadastre um à mão.</p>
+  </div>
+<% else %>
+  <%= form_with url: bulk_site_devices_path(@site, **params.permit(:integracao, :area, :situacao, :q).to_h.symbolize_keys), method: :post, id: "lote" do %>
+    <% if can?(:manage) %>
+      <div class="ss-card ss-card-pad mb-3 flex flex-wrap items-end gap-2">
+        <div><label for="acao" class="ss-label">Com os marcados</label><%= select_tag :acao, options_for_select([ [ "Escolha a ação", "" ] ] + Web::DevicesController::BULK.invert.to_a), class: "ss-input" %></div>
+        <div><label for="area_id" class="ss-label">Área (para mover)</label><%= select_tag :area_id, options_for_select([ [ "Sem área", "" ] ] + @areas.map { |a| [ a.name, a.id ] }), class: "ss-input" %></div>
+        <button type="submit" class="ss-btn ss-btn-outline" data-turbo-confirm="Aplicar a ação nos dispositivos marcados? Remover apaga também os pontos e o histórico." data-turbo-confirm-button="Aplicar">Aplicar</button>
+      </div>
+    <% end %>
+    <div class="ss-card overflow-x-auto">
+      <table class="ss-table">
+        <thead>
+          <tr>
+            <% if can?(:manage) %><th class="w-8"><span class="sr-only">Marcar</span></th><% end %>
+            <th>Nome</th><th class="hidden md:table-cell">Fabricante / modelo</th><th class="hidden sm:table-cell">Área</th><th class="hidden sm:table-cell">Integração</th><th class="r hidden md:table-cell">Pontos</th><th>Situação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @devices.each do |d| %>
+            <% s = d.situation %>
+            <tr>
+              <% if can?(:manage) %><td><input type="checkbox" name="ids[]" value="<%= d.id %>" aria-label="Marcar <%= d.name %>"></td><% end %>
+              <td><%= link_to d.name, device_path(d), class: "font-semibold text-ink no-underline hover:text-accent" %><span class="block text-xs text-muted md:hidden"><%= [ d.area&.name, d.manufacturer, d.model ].compact_blank.join(" · ") %></span></td>
+              <td class="hidden md:table-cell text-ink-2"><%= [ d.manufacturer, d.model ].compact_blank.join(" · ").presence || d.driver_label %></td>
+              <td class="hidden sm:table-cell"><%= d.area&.name || "—" %></td>
+              <td class="hidden sm:table-cell"><%= d.integration&.name || d.driver_label %></td>
+              <td class="r num hidden md:table-cell"><%= @points.fetch(d.id, 0) %></td>
+              <td><span class="ss-badge ss-badge-<%= tones[s] %>"><%= Device::SITUATIONS[s] %></span></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+  <%= render "web/shared/pagination", pagy: @pagy %>
+<% end %>

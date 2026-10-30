@@ -1,0 +1,9 @@
+<%= render "web/shared/header", title: "Adicionar #{@plugin.title}", subtitle: @plugin.description, back: site_integrations_path(@site, anchor: "adicionar") %>
+<%= form_with scope: :integration, url: site_integrations_path(@site, tipo: @plugin.key), multipart: true, class: "ss-card ss-card-pad grid gap-4 max-w-2xl",
+              data: { turbo_submits_with: "Conectando…" } do |f| %>
+  <%= render "web/integrations/forms/#{@plugin.key}", f: f, integration: nil %>
+  <div class="flex flex-wrap gap-2">
+    <%= f.submit "Continuar", class: "ss-btn ss-btn-primary" %>
+    <%= link_to "Cancelar", site_integrations_path(@site), class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

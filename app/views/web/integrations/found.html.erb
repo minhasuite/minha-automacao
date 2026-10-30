@@ -1,0 +1,81 @@
+<% pending = @entries.reject { |e| @known.include?(e["id"]) || e["sub"] } %>
+<% added = @entries.select { |e| @known.include?(e["id"]) } %>
+<% subs = @entries.select { |e| e["sub"] && !@known.include?(e["id"]) } %>
+<%= render "web/shared/header", title: "Dispositivos encontrados", subtitle: "#{@integration.name} · #{@integration.driver_label}#{" · #{@integration.account}" if @integration.account}", back: site_integrations_path(@site) do %>
+  <% if can?(:manage) %>
+    <%= button_to sync_integration_path(@integration), class: "ss-btn ss-btn-ghost", form: { data: { turbo_submits_with: "Pedindo…" } } do %><%= icon("refresh", "size-4") %>Sincronizar agora<% end %>
+  <% end %>
+<% end %>
+
+<% if @integration.status == "syncing" %>
+  <div class="ss-card ss-card-pad mb-4 flex items-center gap-3" role="status" data-controller="poll" data-poll-url-value="<%= status_integration_path(@integration, sync: 1) %>">
+    <span class="ss-dots" aria-hidden="true"></span>
+    <p class="text-sm"><strong>Varrendo a conta.</strong> Com muitos aparelhos leva alguns minutos; a lista aparece sozinha.</p>
+  </div>
+<% elsif @integration.last_error.present? %>
+  <div class="ss-card ss-card-pad mb-4 text-sm text-danger" role="alert">
+    Não deu para ler a conta: <%= @integration.last_error %>
+    <% if can?(:manage) && @integration.plugin&.reconfigurable? %><%= link_to "Reconfigurar", connect_integration_path(@integration), class: "ss-btn ss-btn-outline ss-btn-sm ml-2" %><% end %>
+  </div>
+<% end %>
+
+<% if pending.empty? && @integration.status != "syncing" %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink">Nada novo para adicionar.</p>
+    <p class="mt-1"><%= @entries.empty? ? "A conta ainda não tem aparelhos lidos." : "Tudo o que a conta tem já está no local." %></p>
+  </div>
+<% elsif pending.any? %>
+  <%= form_with url: adopt_integration_path(@integration), method: :post, class: "ss-card overflow-hidden", data: { turbo_submits_with: "Adicionando…" } do %>
+    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-line">
+      <p class="text-sm"><strong class="num"><%= pending.size %></strong> aparelho(s) novo(s). Marque os que quer e a área de cada um (vem do cômodo da conta).</p>
+      <% if can?(:manage) %>
+        <div class="flex gap-2">
+          <button type="submit" class="ss-btn ss-btn-outline ss-btn-sm">Adicionar selecionados</button>
+          <button type="submit" name="all" value="1" class="ss-btn ss-btn-primary ss-btn-sm"><%= icon("plus", "size-4") %>Adicionar todos</button>
+        </div>
+      <% end %>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="ss-table">
+        <thead><tr><th class="w-8"><span class="sr-only">Escolher</span></th><th>Aparelho</th><th class="hidden md:table-cell">Tipo</th><th class="hidden md:table-cell">Cômodo na conta</th><th class="hidden md:table-cell">Pontos</th><th>Área</th></tr></thead>
+        <tbody>
+          <% pending.each do |e| %>
+            <% cid = "pick-#{e['id'].to_s.parameterize}" %>
+            <tr>
+              <td><input type="checkbox" name="pick[]" value="<%= e['id'] %>" id="<%= cid %>" checked aria-label="Adicionar <%= e['name'] %>"></td>
+              <td>
+                <label for="<%= cid %>" class="font-semibold text-ink"><%= e["name"] %></label>
+                <span class="block text-xs text-muted"><%= [ e["manufacturer"], e["model"] ].compact_blank.join(" · ") %><%= " · IP #{e.dig('address', 'host')}" if e.dig("address", "host").present? %></span>
+                <span class="block text-xs text-muted md:hidden"><%= [ e["category"], e["room"], ("fora do ar" if e["online"] == false) ].compact_blank.join(" · ") %></span>
+              </td>
+              <td class="hidden md:table-cell"><span class="ss-chip"><%= e["category"].presence || "—" %></span><% if e["online"] == false %> <span class="ss-badge ss-badge-warn">Fora do ar</span><% end %></td>
+              <td class="hidden md:table-cell"><%= e["room"].presence || "—" %></td>
+              <td class="num hidden md:table-cell"><%= Array(e["points"]).size %></td>
+              <td>
+                <% suggested = Integrations.suggest_area(@site, e["room"], @areas) %>
+                <% options = [ [ "Sem área", "" ] ] + @areas.map { |a| [ a.name, a.id ] } + (suggested.to_s.start_with?("new:") ? [ [ "Nova: #{suggested.delete_prefix('new:')}", suggested ] ] : []) %>
+                <%= select_tag "area[#{e['id']}]", options_for_select(options, suggested), class: "ss-input ss-btn-sm min-w-32", "aria-label": "Área de #{e['name']}" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+<% end %>
+
+<% if subs.any? %>
+  <details class="ss-card ss-card-pad mt-4">
+    <summary class="cursor-pointer font-semibold"><%= subs.size %> aparelho(s) ligado(s) a um gateway Zigbee</summary>
+    <p class="text-sm text-muted mt-2">O controle local destes passa pelo gateway da Tuya, que ainda não é suportado. Eles migram para o zigbee2mqtt quando o coordenador chegar.</p>
+    <ul class="mt-2 flex flex-wrap gap-2"><% subs.each do |e| %><li class="ss-chip"><%= e["name"] %></li><% end %></ul>
+  </details>
+<% end %>
+
+<% if added.any? %>
+  <details class="ss-card ss-card-pad mt-4">
+    <summary class="cursor-pointer font-semibold"><%= added.size %> já no local</summary>
+    <p class="text-sm text-muted mt-2">Ligados a esta integração: a chave local e o IP se atualizam sozinhos a cada sincronização.</p>
+    <%= link_to "Ver na lista de dispositivos", site_devices_path(@site, integracao: @integration.id), class: "ss-btn ss-btn-ghost ss-btn-sm mt-2" %>
+  </details>
+<% end %>

@@ -1,0 +1,4 @@
+<%# locals: (f:, integration:) -%>
+<p class="text-sm text-ink-2">Cole o conteúdo do arquivo de cookies da sessão já logada (no HA: <code>.storage/alexa_media.&lt;email&gt;.cookies</code>) ou um objeto JSON {nome: valor}. As Echo da conta aparecem sozinhas.</p>
+<div><%= f.label :cookies, "Cookies da sessão", class: "ss-label" %><%= f.text_area :cookies, rows: 6, class: "ss-input font-mono text-xs", required: true, autocomplete: "off", spellcheck: false %></div>
+<p class="text-xs text-muted">Fica cifrado no banco. Quando a Amazon recusar a sessão, o card fica "Com erro" e é só colar de novo em Reconfigurar.</p>

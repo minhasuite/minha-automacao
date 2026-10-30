@@ -12,5 +12,5 @@ SimpleCov.start "rails" do
   group "Models", "app/models"
   group "Jobs", "app/jobs"
 
-  minimum_coverage 70
+  minimum_coverage 90
 end

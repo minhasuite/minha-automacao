@@ -25,7 +25,7 @@ RSpec.describe "Leitura periódica na web" do
 
     integration = within(tenant) { site.integrations.create!(driver: "alexa", name: "Alexa") }
     get "/locais/#{site.id}/integracoes"
-    expect(response.body).to include("Leitura a cada 30 min")
+    expect(response.body).to include("Sincroniza sozinha a cada 30 min")
     patch "/integracoes/#{integration.id}", params: { integration: { poll_min: "60" } }
     expect(within(tenant) { integration.reload.poll_s }).to eq(3600)
     patch "/integracoes/#{integration.id}", params: { integration: { poll_min: "-1" } }
@@ -44,6 +44,6 @@ RSpec.describe "Leitura periódica na web" do
   it "o job lê o aparelho" do
     allow(Polling).to receive(:poll_device)
     PollDeviceJob.perform_now(device.id)
-    expect(Polling).to have_received(:poll_device).with(device.id)
+    expect(Polling).to have_received(:poll_device).with(device.id, reconnect: false)
   end
 end

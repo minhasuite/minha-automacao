@@ -50,20 +50,21 @@ RSpec.describe "Robô no painel e tela de integrações (F8)" do
     expect(response.body).not_to include("Limpar selecionados")
   end
 
-  it "integrações: conta da Alexa com estado e robô com conexão direta; atualizar lê a lista" do
+  it "integrações: card da Alexa com estado e resumo (sem lista de aparelhos); sincronizar lê a lista pela fila" do
     integration = within(tenant) do
       site.integrations.create!(driver: "alexa", name: "Alexa", credentials: { "csrf" => "C" }.to_json, status: "error", last_error: "Sessão expirada")
     end
     get "/locais/#{site.id}/integracoes"
-    expect(response.body).to include("Alexa (Amazon)", "Com erro", "Sessão expirada", "Atualizar lista de Echo", "Robô aspirador", "Conexão direta")
+    expect(response.body).to include("Alexa (Amazon)", "Com erro", "Sessão expirada", "Sincronizar agora", "Ver dispositivos", "Adicionar integração")
 
     stub_request(:get, "https://alexa.amazon.com.br/api/devices-v2/device?cached=true")
       .to_return({ body: { devices: [ { accountName: "Echo Sala", deviceFamily: "ECHO", serialNumber: "S", online: true } ] }.to_json }, { status: 401 })
-    post "/integracoes/#{integration.id}/atualizar"
-    expect(flash[:notice]).to include("1 Echo")
+    expect { post "/integracoes/#{integration.id}/sincronizar" }.to have_enqueued_job(SyncIntegrationJob).with(integration.id)
+    expect(within(tenant) { integration.reload.status }).to eq("syncing")
+    SyncIntegrationJob.perform_now(integration.id)
     expect(within(tenant) { integration.reload.status }).to eq("ok")
-    post "/integracoes/#{integration.id}/atualizar"
-    expect(flash[:alert]).to include("expirada")
+    SyncIntegrationJob.perform_now(integration.id)
+    expect(within(tenant) { integration.reload.last_error }).to include("expirada")
 
     get "/locais/#{site.id}/automacao"
     get "/locais/#{site.id}/avisos/novo"
@@ -76,9 +77,9 @@ RSpec.describe "Robô no painel e tela de integrações (F8)" do
     within(tenant) { create(:site_membership, site: site, user: guest, role: "guest") }
     sign_in(guest)
     get "/locais/#{site.id}/integracoes"
-    expect(response.body).to include("Aguardando")
-    expect(response.body).not_to include("Atualizar lista de Echo")
-    post "/integracoes/#{integration.id}/atualizar"
+    expect(response.body).to include("Aguardando login")
+    expect(response.body).not_to include("Sincronizar agora")
+    post "/integracoes/#{integration.id}/sincronizar"
     expect(response).to have_http_status(:not_found).or have_http_status(:forbidden).or redirect_to("/")
   end
 end
