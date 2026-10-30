@@ -324,10 +324,10 @@ RSpec.describe "F8f: plugins da DSL, scripts e blueprints" do
         expect(d["conditions"]).to eq([
           { "type" => "state", "point" => { "!input" => "door" }, "is" => false },
           { "type" => "time", "after" => "18:00", "days" => [ 1, 5 ] },
-          { "type" => "numeric", "point" => { "!input" => "temp" }, "below" => 40 }
+          { "type" => "numeric", "point" => { "!input" => "temp" }, "below" => 40 }, { "type" => "expr", "expr" => "true" }
         ])
         expect(d["actions"]).to eq([
-          { "type" => "command", "point" => { "!input" => "fan" }, "command" => "on" },
+          { "type" => "set", "var" => "x", "expr" => "1" }, { "type" => "command", "point" => { "!input" => "fan" }, "command" => "on" },
           { "type" => "notify", "channels" => %w[in_app push], "title" => "Calor", "message" => "Está {{ states('sensor.x') }} graus" },
           { "type" => "notify", "channels" => [ "in_app" ], "title" => "Aviso", "message" => "Pronto" },
           { "type" => "wait", "for" => "2m" }, { "type" => "wait", "for" => { "!input" => "espera" } }
@@ -335,8 +335,8 @@ RSpec.describe "F8f: plugins da DSL, scripts e blueprints" do
         expect(attrs["mode"]).to eq("queued")
         expect(attrs["unsupported"]).to include("entrada alvo (selector area)", "entrada fan: várias entidades (aqui é um ponto só)",
                                                 "entidade fixa sensor.fixa (use uma entrada de ponto)", "gatilho mqtt", "gatilho time por entidade",
-                                                "condição template", "condição em texto (template)", "dados extras em fan.turn_on (brilho, cor...)",
-                                                a_string_including("template do HA"), "ação scene.turn_on", "ação choose", "chave variables")
+                                                "condição template", "dados extras em fan.turn_on (brilho, cor...)",
+                                                a_string_including("template do HA"), "ação scene.turn_on", "ação choose")
       end
 
       it "erros claros: vazio, YAML inválido, sem blueprint, domínio" do

@@ -13,6 +13,9 @@ module Automations
   # Conjunto de pontos (Lote 4, G8, `Points::Query`): no texto
   # `{{ "tag=luz state=on" | points_where | size }}`, na expressão
   # `count_points("quality=unavailable") > 0` (e sum/min/max/avg_points).
+  # Lote 5: na expressão, `trigger.id`, `trigger.value`, `trigger.data.x` e
+  # `timestamp` (segundos desde 1970); no texto, `{{ "hour * 60" | calc }}`
+  # calcula uma expressão (o Jinja traduzido pelo importador usa isso).
   class Context
     class Error < StandardError; end
 
@@ -62,7 +65,7 @@ module Automations
       return "" if template.blank?
 
       Liquid::Template.parse(template.to_s, error_mode: :strict)
-            .render!(assigns, { strict_filters: true, filters: [ Points::Query::LiquidFilter ], registers: { automation_context: self } }).truncate(limit)
+            .render!(assigns, { strict_filters: true, filters: [ Points::Query::LiquidFilter, CalcFilter ], registers: { automation_context: self } }).truncate(limit)
     rescue Liquid::Error => e
       raise Error, "Texto \"#{template.to_s.truncate(60)}\": #{e.message.truncate(120)}"
     end
@@ -89,9 +92,10 @@ module Automations
       # Resposta guardada em variável (Lote 1): `agenda.count`, `resposta.action`, `http.status`.
       head, *path = name.split(".")
       return dig_var(vars[head], path, name) if path.any? && vars.key?(head)
+      return dig_var(trigger, path, name) if path.any? && head == "trigger"
 
       builtin = { "hour" => now.hour, "minute" => now.min, "weekday" => now.wday, "day" => now.day, "month" => now.month,
-                  "trigger_value" => trigger["value"] }
+                  "trigger_value" => trigger["value"], "timestamp" => now.to_i }
       return builtin[name] if builtin.key?(name)
 
       p = point(name) or raise Error, "\"#{name}\" não é ponto deste local nem variável"
@@ -115,6 +119,16 @@ module Automations
       pts = site.points.includes(:device).to_a.to_h { |p| [ p.key, point_drop(p) ] }
       vars.merge("trigger" => trigger, "vars" => vars, "points" => pts, "site" => { "name" => site.name }, "now" => now,
                  "repeat" => { "index" => vars["repeat_index"] })
+    end
+
+    # Filtro Liquid `calc`: a expressão (texto) calculada nesta execução.
+    module CalcFilter
+      def calc(input)
+        ctx = @context.registers[:automation_context] or raise Liquid::Error, "calc fora de um texto do local"
+        ctx.calc(input.to_s)
+      rescue Error => e
+        raise Liquid::Error, e.message
+      end
     end
 
     # BigDecimal do dentaku → número simples (o estado vai para JSON).

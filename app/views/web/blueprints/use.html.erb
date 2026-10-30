@@ -21,6 +21,8 @@
         <% groups = list.group_by { |p| p.area&.name || p.device.name }.sort.map { |g, ps| [ g, ps.map { |p| [ p.name, p.id ] } ] } %>
         <%= select_tag name, grouped_options_for_select(groups, value), include_blank: (list.empty? ? "Nenhum ponto serve" : "Escolha o ponto"), class: "ss-input", id: id %>
         <% if caps.any? %><p class="text-xs text-muted mt-1">Só <%= caps.map { |c| Point::CAPABILITY_LABELS.fetch(c, c).downcase }.join(" ou ") %>, agrupados por área.</p><% end %>
+      <% elsif (assoc = Blueprint::RECORD_INPUTS[input["type"]]) %>
+        <%= select_tag name, options_for_select(@site.public_send(assoc).order(:name).map { |r| [ r.name, r.id ] }, value), include_blank: "Escolha", class: "ss-input", id: id %>
       <% elsif input["type"] == "boolean" %>
         <%= select_tag name, options_for_select([ %w[Sim true], %w[Não false] ], value.nil? ? nil : value.to_s), class: "ss-input", id: id %>
       <% elsif input["type"] == "select" %>

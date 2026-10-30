@@ -315,8 +315,8 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       expect(luz["unsupported"]).to eq([ "condição template" ])
       expect(list[1]["definition"]["triggers"]).to eq([ { "type" => "state", "point" => { "!input" => "binary_sensor_porta" }, "to" => true, "for" => "2m" } ])
       expect(list[1]["inputs"].first.dig("filter", "capability")).to eq(%w[contact motion problem tamper])
-      expect(list[2]["unsupported"]).to include("gatilho homeassistant", "ação shell_command.algo")
-      expect(list[2]["definition"]["triggers"]).to eq([ { "type" => "time", "every" => "30m" }, { "type" => "event", "event" => "mobile_app_notification_action", "match" => { "action" => "OK" } },
+      expect(list[2]["unsupported"]).to include("ação shell_command.algo")
+      expect(list[2]["definition"]["triggers"]).to eq([ { "type" => "event", "event" => "system_started" }, { "type" => "time", "every" => "30m" }, { "type" => "event", "event" => "mobile_app_notification_action", "match" => { "action" => "OK" } },
                                                         { "type" => "webhook" } ])
 
       scripts = Blueprints::HaImport.import("boa_noite:\n  alias: Boa noite\n  sequence:\n    - service: light.turn_off\n      entity_id: light.sala\n")
@@ -356,16 +356,17 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       bp = Blueprints::HaImport.import(yaml).sole
       acts = bp["definition"]["actions"]
       expect(acts.map { |a| a["type"] }).to eq(%w[set set if choose condition repeat repeat stop])
-      expect(acts[0]).to eq("type" => "set", "var" => "msg", "value" => "{{ states('switch.a') }}")
+      expect(acts[0]).to eq("type" => "set", "var" => "msg", "expr" => "[[switch_a]]")
+      expect(acts[1]).to eq("type" => "set", "var" => "n", "expr" => "2")
       expect(acts[2]).to include("conditions" => [ { "type" => "state", "point" => { "!input" => "switch_a" }, "is" => true } ],
                                  "else" => [ { "type" => "command", "point" => { "!input" => "switch_b" }, "command" => "off" } ])
-      expect(acts[3]).to eq("type" => "choose", "options" => [ { "conditions" => [], "actions" => [ { "type" => "stop", "reason" => "fim" } ] } ], "default" => [ { "type" => "wait", "for" => "5s" } ])
+      expect(acts[3]).to eq("type" => "choose", "options" => [ { "conditions" => [ { "type" => "expr", "expr" => "true" } ], "actions" => [ { "type" => "stop", "reason" => "fim" } ] } ],
+                            "default" => [ { "type" => "wait", "for" => "5s" } ])
       expect(acts[4]["conditions"]).to eq([ { "type" => "numeric", "point" => { "!input" => "sensor_t" }, "above" => 20 } ])
       expect(acts[5]).to include("count" => 3)
       expect(acts[6]["until"].size).to eq(1)
       expect(acts[7]).to eq("type" => "stop", "reason" => "erro", "error" => true)
-      expect(bp["unsupported"]).to include("variáveis com template do HA (confira o texto)", "condição template",
-                                           "condição não convertida dentro de se/escolher/repetir: o bloco ficou sem ela, confira", "repetição for_each (for_each)")
+      expect(bp["unsupported"]).to eq([ "repetição for_each (for_each)" ])
     end
   end
 

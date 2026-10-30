@@ -10,4 +10,6 @@ Rails.application.config.after_initialize do
   SolidQueue.on_worker_start { Polling.start } if defined?(SolidQueue) && ENV["POLLING"] != "off"
   # Helpers sem "restaurar depois de reiniciar" voltam ao valor inicial (F8e).
   SolidQueue.on_worker_start { HelperTypes.boot! } if defined?(SolidQueue)
+  # Gatilho "Sistema iniciou" (Lote 5, G7): uma vez por início do supervisor.
+  SolidQueue.on_start { SystemStartedJob.perform_later } if defined?(SolidQueue)
 end

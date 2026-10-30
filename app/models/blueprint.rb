@@ -14,7 +14,13 @@ class Blueprint < ApplicationRecord
   acts_as_tenant :tenant
 
   INPUT_TYPES = { "point" => "Ponto", "number" => "Número", "text" => "Texto", "boolean" => "Sim/não",
-                  "select" => "Seleção", "duration" => "Duração", "time" => "Horário" }.freeze
+                  "select" => "Seleção", "duration" => "Duração", "time" => "Horário", "scene" => "Cena" }.freeze
+  # Entrada que escolhe um registro do local (Lote 5: a cena do `scene.turn_on`
+  # importado do HA): tipo → associação do Site. Tipo novo = uma linha aqui.
+  RECORD_INPUTS = { "scene" => :scenes }.freeze
+  # Entrada dentro de texto ou expressão (Lote 5): `[[chave]]` vira a `key`
+  # do ponto escolhido (ou o valor da entrada), ao criar a automação.
+  INLINE_INPUT = /\[\[([a-z0-9_]+)\]\]/
   SOURCES = { "builtin" => "Pronto", "ha" => "Importado do HA", "manual" => "Manual" }.freeze
 
   belongs_to :site
@@ -50,7 +56,8 @@ class Blueprint < ApplicationRecord
       [ input["key"], v.nil? || v == "" ? nil : cast(input, v, errors) ]
     end
     inputs.each { |input| errors << "Falta #{input['label'].to_s.downcase}." if values[input["key"]].nil? && required?(input) }
-    [ replace(definition.deep_dup, values), values.compact, errors ]
+    keys = site.points.where(id: values.values.grep(Automation::UUID)).pluck(:id, :key).to_h
+    [ replace(definition.deep_dup, values, keys), values.compact, errors ]
   end
 
   # Automação (ou script) nova a partir das entradas. Publicada se a DSL
@@ -92,6 +99,9 @@ class Blueprint < ApplicationRecord
     when "select" then v.to_s.presence_in(Array(input["options"]).map(&:to_s)) || errors.push("#{label}: opção inválida.") && nil
     when "duration" then Automations::Dsl.seconds(v) ? (v.is_a?(Numeric) ? v : v.to_s.delete(" ")) : errors.push("#{label}: duração inválida (use 30s, 5m, 1h30m).") && nil
     when "time" then v.to_s[0, 5].then { |t| Automations::Dsl::TIME.match?(t) ? t : errors.push("#{label}: horário inválido.") && nil }
+    when *RECORD_INPUTS.keys
+      scope = site.public_send(RECORD_INPUTS[input["type"]])
+      (scope.find_by(id: v.to_s) if Automation::UUID.match?(v.to_s))&.id || scope.find_by(name: v.to_s)&.id || errors.push("#{label}: não existe neste local.") && nil
     else v.to_s.truncate(500)
     end
   end
@@ -118,13 +128,15 @@ class Blueprint < ApplicationRecord
   end
 
   # `{"!input": "k"}` → valor; entrada opcional vazia some da definição.
-  def replace(node, values)
+  # `[[k]]` num texto → `key` do ponto (ou o valor) da entrada.
+  def replace(node, values, keys = {})
     case node
     when Hash
       return values[node["!input"]] if node.keys == [ "!input" ]
 
-      node.to_h { |k, v| [ k, replace(v, values) ] }.compact
-    when Array then node.map { |v| replace(v, values) }.compact
+      node.to_h { |k, v| [ k, replace(v, values, keys) ] }.compact
+    when Array then node.map { |v| replace(v, values, keys) }.compact
+    when String then node.gsub(INLINE_INPUT) { (v = values[::Regexp.last_match(1)]).nil? ? ::Regexp.last_match(0) : keys.fetch(v, v).to_s }
     else node
     end
   end

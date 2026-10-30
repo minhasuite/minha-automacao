@@ -15,6 +15,15 @@ module Blueprints
   # que cada entidade fixa (`entity_id`) é uma entrada de ponto: o "Criar
   # automação" pergunta qual ponto daqui faz o papel de cada entidade, e o
   # relatório do que não converteu é o mesmo `unsupported`.
+  #
+  # Lote 5: aparelho (`device_id` e gatilho/condição/ação `device`), início do
+  # HA (evento "system_started"), horário vindo de entidade (`at_point`),
+  # agenda, cena (entrada do tipo cena), script (ponto `script`, comando run),
+  # espelho `turn_{{ trigger.to_state.state }}`, helpers (set/select/start...),
+  # evento, espera de evento ou de template, agenda, previsão e IA; o `id` do
+  # gatilho vai junto e a condição `trigger` vira `trigger.id = 'x'`. O Jinja
+  # comum vira expressão ou Liquid (Blueprints::Jinja); a entidade citada no
+  # texto vira entrada e aparece como `[[entrada]]`.
   class HaImport
     class Error < StandardError; end
 
@@ -81,7 +90,10 @@ module Blueprints
     def self.call(text, source_url: nil) = new(text, source_url).call
 
     ENTITY = /\A[a-z_]+\.[a-z0-9_]+\z/
+    DEVICE = /\A[0-9a-f]{32}\z/
     MAX_ITEMS = 100
+    # Domínios do HA sem ponto equivalente aqui (não viram entrada no texto).
+    NO_POINT = %w[sun zone person device_tracker update conversation ai_task tts stt automation].freeze
 
     # Blueprint, automação(ões) ou scripts do HA → lista de atributos de Blueprint.
     def self.import(text, source_url: nil)
@@ -93,7 +105,7 @@ module Blueprints
       raise Error, "Não achei blueprint, automação nem script do Home Assistant no YAML." if items.empty?
       raise Error, "Itens demais (máximo #{MAX_ITEMS} por vez)." if items.size > MAX_ITEMS
 
-      items.map { |domain, name, body| new("", source_url).convert(as_blueprint(domain, name, body)) }
+      items.map { |domain, name, body| new("", source_url, entities: true).convert(as_blueprint(domain, name, body)) }
     end
 
     # [[domínio, nome, corpo]]: lista de automações, uma automação ou o mapa de scripts.
@@ -107,20 +119,33 @@ module Blueprints
     end
 
     # Entidade fixa → entrada `!input` de ponto (filtrada pelo domínio da entidade).
+    # Lote 5: aparelho (`device_id`, ou o `entity_id` do registro, que é um id
+    # de 32 hex) também vira entrada, com o domínio do bloco como filtro; no
+    # gatilho, condição e ação de aparelho fica só a entidade.
     def self.as_blueprint(domain, name, body)
       inputs = {}
-      walk = lambda do |v, key = nil|
-        if key == "entity_id" && (v.is_a?(String) || v.is_a?(Array))
-          refs = Array(v).map do |e|
-            next e unless e.is_a?(String) && e.match?(ENTITY)
+      ref = lambda do |e, hint|
+        if e.match?(ENTITY)
+          k = e.tr(".", "_").first(60)
+          inputs[k] ||= { "name" => e, "selector" => { "entity" => { "domain" => e.split(".").first } } }
+        elsif e.match?(DEVICE)
+          k = "aparelho_#{e.first(8)}"
+          inputs[k] ||= { "name" => "Aparelho do HA #{e.first(8)}#{" (#{hint})" if hint}", "selector" => { "entity" => { "domain" => hint }.compact } }
+        else next e
+        end
+        { "!input" => k }
+      end
+      walk = lambda do |v, hint = nil|
+        if v.is_a?(Hash)
+          hint = v["domain"].presence || (v["action"] || v["service"]).to_s.split(".").first.presence || hint
+          v = v.except("device_id") if v["type"] && v["entity_id"].present?
+          v.to_h do |k, x|
+            next [ k, walk.call(x, hint) ] unless %w[entity_id device_id].include?(k) && (x.is_a?(String) || x.is_a?(Array))
 
-            k = e.tr(".", "_").first(60)
-            inputs[k] ||= { "name" => e, "selector" => { "entity" => { "domain" => e.split(".").first } } }
-            { "!input" => k }
+            refs = Array(x).map { |e| e.is_a?(String) ? ref.call(e, hint) : e }
+            [ k, x.is_a?(Array) ? refs : refs.first ]
           end
-          v.is_a?(Array) ? refs : refs.first
-        elsif v.is_a?(Hash) then v.to_h { |k, x| [ k, walk.call(x, k) ] }
-        elsif v.is_a?(Array) then v.map { |x| walk.call(x) }
+        elsif v.is_a?(Array) then v.map { |x| walk.call(x, hint) }
         else v
         end
       end
@@ -128,11 +153,15 @@ module Blueprints
       converted.merge("blueprint" => { "name" => name.to_s.truncate(120), "description" => body["description"].to_s.presence, "domain" => domain, "input" => inputs })
     end
 
-    def initialize(text, source_url = nil)
+    # `entities`: entidade fixa citada em texto ou horário vira entrada (só nas
+    # automações e scripts do HA; num blueprint de verdade fica anotada).
+    def initialize(text, source_url = nil, entities: false)
+      @entities = entities
       @text = text.to_s
       @source_url = source_url
       @unsupported = []
       @inputs = {}
+      @jinja = Jinja.new(method(:entity_input))
     end
 
     # → atributos do Blueprint (com `unsupported`).
@@ -152,7 +181,9 @@ module Blueprints
 
       convert_inputs(bp["input"])
       definition = domain == "script" ? { "actions" => actions(doc["sequence"]) } : automation(doc)
-      (doc.keys - %w[blueprint mode max max_exceeded trigger triggers condition conditions action actions sequence fields description alias icon]).each { |k| note("chave #{k}") }
+      definition["actions"] = flow_variables(doc) + definition["actions"] if doc["variables"].is_a?(Hash) # variáveis da automação: no começo
+      (doc.keys - %w[blueprint mode max max_exceeded trigger triggers condition conditions action actions sequence fields description alias icon
+                     variables initial_state trace]).each { |k| note("chave #{k}") }
       mode = doc["mode"].to_s.presence_in(Automation::MODES.keys) || "single"
       { "name" => bp["name"].to_s.presence || "Blueprint importado", "description" => bp["description"].to_s.truncate(1000).presence,
         "domain" => domain, "mode" => mode, "inputs" => @inputs.values, "definition" => definition, "source" => "ha",
@@ -175,7 +206,7 @@ module Blueprints
     def note(what) = @unsupported << what
 
     def automation(doc)
-      { "triggers" => list(doc["triggers"] || doc["trigger"]).filter_map { |t| trigger(t) },
+      { "triggers" => list(doc["triggers"] || doc["trigger"]).flat_map { |t| trigger(t) },
         "conditions" => list(doc["conditions"] || doc["condition"]).filter_map { |c| condition(c) },
         "actions" => actions(doc["actions"] || doc["action"]) }
     end
@@ -210,7 +241,7 @@ module Blueprints
 
     def input_type(kind, conf, key)
       case kind
-      when "entity" then point_input(conf, key)
+      when "entity" then Array(conf["domain"]) == [ "scene" ] ? { "type" => "scene" } : point_input(conf, key)
       when "target" then point_input(conf["entity"].is_a?(Hash) ? conf["entity"] : {}, key)
       when "number" then { "type" => "number" }
       when "boolean" then { "type" => "boolean" }
@@ -233,18 +264,19 @@ module Blueprints
       { "type" => "point", "filter" => filter.presence }.compact
     end
 
+    # Domínio do HA → capacidade daqui (o binary_sensor depende da classe).
+    DOMAIN_CAPS = { "light" => "onoff", "switch" => "onoff", "fan" => "onoff", "input_boolean" => "onoff", "sensor" => "measure",
+                    "script" => "script", "calendar" => "calendar", "weather" => "weather", "camera" => "stream", "input_text" => "text",
+                    "input_select" => "enum", "select" => "enum", "input_datetime" => "datetime", "counter" => "counter", "timer" => "timer",
+                    "vacuum" => "vacuum", "media_player" => "speaker" }.freeze
+
     def capabilities(domains, classes)
       domains.flat_map do |d|
-        case d
-        when "light", "switch", "fan", "input_boolean" then %w[onoff]
-        when "sensor" then %w[measure]
-        when "binary_sensor"
-          next %w[motion] if (classes & %w[motion occupancy presence]).any?
-          next %w[contact] if (classes & %w[door window opening garage_door]).any?
+        next Array(DOMAIN_CAPS[d]) unless d == "binary_sensor"
+        next %w[motion] if (classes & %w[motion occupancy presence]).any?
+        next %w[contact] if (classes & %w[door window opening garage_door]).any?
 
-          %w[contact motion problem tamper]
-        else []
-        end
+        %w[contact motion problem tamper]
       end
     end
 
@@ -259,26 +291,79 @@ module Blueprints
       end
     end
 
+    # Entidade citada num texto Jinja ou num horário (Lote 5) → chave da
+    # entrada de ponto (nil = domínio sem ponto aqui).
+    def entity_input(e)
+      domain = e.split(".").first
+      return if !@entities || NO_POINT.include?(domain)
+
+      k = e.tr(".", "_").first(60)
+      input(k, { "name" => e, "selector" => { "entity" => { "domain" => domain } } }) unless @inputs.key?(k)
+      k if @inputs.dig(k, "type") == "point"
+    end
+
     # ---- gatilhos e condições ---------------------------------------------------
 
+    # Gatilho do HA → lista de gatilhos daqui (vários horários ou entidades viram um cada).
     def trigger(t)
-      return note("gatilho inválido") unless t.is_a?(Hash)
+      return note("gatilho inválido") && [] unless t.is_a?(Hash)
+
+      ids = t["entity_id"]
+      return ids.flat_map { |e| trigger(t.merge("entity_id" => e)) } if ids.is_a?(Array) && ids.size > 1
 
       kind = (t["trigger"] || t["platform"]).to_s
       out = case kind
       when "state" then state_like(t, "to", "from")&.merge({ "type" => "state" })
       when "numeric_state" then numeric(t)
-      when "time"
-        at = t["at"].is_a?(Array) ? (note("gatilho time com vários horários: usei o primeiro") && t["at"].first) : t["at"]
-        at = at.is_a?(String) ? at[0, 5] : at
-        input_ref?(at) || at.to_s.match?(Automations::Dsl::TIME) ? { "type" => "time", "at" => at } : note("gatilho time por entidade") && nil
+      when "time" then time_triggers(t)
       when "sun" then { "type" => "sun", "event" => t["event"].to_s, "offset" => (duration(t["offset"]) if t["offset"]) }.compact
       when "time_pattern" then time_pattern(t)
       when "webhook" then { "type" => "webhook" }
       when "event" then event_trigger(t)
+      when "homeassistant" then ({ "type" => "event", "event" => "system_started" } if t["event"] == "start")
+      when "calendar" then calendar_trigger(t)
+      when "device" then device_block(t)
       end
-      out || (note("gatilho #{kind.presence || '?'}") && nil)
+      out = Array.wrap(out).compact
+      return note("gatilho #{kind.presence || '?'}") && [] if out.empty?
+
+      out.map { |o| t["id"].present? ? o.merge("id" => t["id"].to_s) : o }
     end
+
+    # Lote 5: vários horários, horário em segundos (32400) e horário vindo de
+    # entidade (input_datetime → ponto de data e hora, `at_point`).
+    def time_triggers(t)
+      days = Array(t["weekday"]).filter_map { |d| WEEKDAYS.index(d.to_s) }.presence
+      Array.wrap(t["at"]).filter_map do |at|
+        at = clock(at) if at.is_a?(Integer)
+        base = if input_ref?(at) then { "type" => "time", "at" => at }
+        elsif at.is_a?(String) && at[0, 5].match?(Automations::Dsl::TIME) then { "type" => "time", "at" => at[0, 5] }
+        elsif at.is_a?(String) && at.match?(ENTITY) && (k = entity_input(at)) then { "type" => "time", "at_point" => { "!input" => k } }
+        else next note("gatilho time por entidade") && nil
+        end
+        base.merge({ "days" => days }.compact)
+      end
+    end
+
+    def calendar_trigger(t)
+      point = entity(t["entity_id"]) or return
+      { "type" => "calendar", "point" => point, "event" => t["event"].to_s.presence_in(%w[start end]) || "start",
+        "offset" => (duration(t["offset"]) if t["offset"]) }.compact
+    end
+
+    # Gatilho ou condição "de aparelho" do HA (type: turned_on, motion,
+    # is_off...): vira estado ou faixa no ponto escolhido. Tipo com no_/not_
+    # ou "off" = desligado; changed_states = qualquer mudança.
+    def device_block(h)
+      point = entity(h["entity_id"]) or return
+      type = h["type"].to_s.delete_prefix("is_")
+      return numeric(h) if h.key?("above") || h.key?("below")
+
+      { "type" => "state", "point" => point, "to" => (device_state(type) unless type == "changed_states"),
+        "for" => (duration(h["for"]) if h["for"]) }.compact
+    end
+
+    def device_state(type) = !type.match?(/\A(no|not)_|(\A|_)off\z/)
 
     # Lote 4 (G32): "/N" em minutos (ou horas) vira "a cada"; o resto não converte.
     def time_pattern(t)
@@ -298,17 +383,38 @@ module Blueprints
     end
 
     def condition(c)
+      return expr_condition(c) if c.is_a?(String)
       return note("condição em texto (template)") && nil unless c.is_a?(Hash)
 
       kind = c["condition"].to_s
+      ids = c["entity_id"]
+      return { "type" => "and", "conditions" => ids.filter_map { |e| condition(c.merge("entity_id" => e)) } } if ids.is_a?(Array) && ids.size > 1
+
       out = case kind
       when "state" then state_like(c, "state", nil)&.then { |h| h.transform_keys { |k| k == "state" ? "is" : k } }&.merge({ "type" => "state" })
       when "numeric_state" then numeric(c)&.except("for")
       when "time"
         days = Array(c["weekday"]).filter_map { |d| WEEKDAYS.index(d.to_s) }
-        { "type" => "time", "after" => c["after"]&.to_s&.first(5), "before" => c["before"]&.to_s&.first(5), "days" => days.presence }.compact
+        after, before = clock(c["after"]), clock(c["before"])
+        { "type" => "time", "after" => after || ("00:00" unless before), "before" => before, "days" => days.presence }.compact
+      when "template" then return expr_condition(c["value_template"])
+      when "trigger" then { "type" => "expr", "expr" => Array.wrap(c["id"]).map { |i| "trigger.id = '#{i.to_s.delete("'")}'" }.join(" or ") }
+      when "and", "or", "not" then { "type" => kind, "conditions" => conditions(c["conditions"]) }
+      when "sun" then sun_condition(c)
+      when "device" then device_block(c)&.then { |h| h["type"] == "numeric" ? h.except("for") : h.except("to").merge("is" => h["to"]).compact }
       end
       out || (note("condição #{kind.presence || '?'}") && nil)
+    end
+
+    def sun_condition(c)
+      { "type" => "sun", "after" => c["after"], "before" => c["before"], "after_offset" => (duration(c["after_offset"]) if c["after_offset"]),
+        "before_offset" => (duration(c["before_offset"]) if c["before_offset"]) }.compact
+    end
+
+    # Lote 5: condição template do HA → expressão daqui (Blueprints::Jinja).
+    def expr_condition(template)
+      expr = @jinja.expr(template) or return note("condição template") && nil
+      { "type" => "expr", "expr" => expr }
     end
 
     def state_like(h, to_key, from_key)
@@ -339,28 +445,107 @@ module Blueprints
 
     # Controle de fluxo do HA → blocos da DSL (Lote 4, G32): chave do HA → método.
     FLOW = { "if" => :flow_if, "choose" => :flow_choose, "condition" => :flow_condition, "stop" => :flow_stop,
-             "repeat" => :flow_repeat, "variables" => :flow_variables }.freeze
+             "repeat" => :flow_repeat, "variables" => :flow_variables, "event" => :flow_event, "wait_for_trigger" => :flow_wait_trigger,
+             "wait_template" => :flow_wait_template }.freeze
+
+    # Serviço do HA → método (Lote 5).
+    SERVICES = { "scene.turn_on" => :service_scene, "script.turn_on" => :service_script, "calendar.get_events" => :service_calendar,
+                 "weather.get_forecasts" => :service_weather, "ai_task.generate_data" => :service_ai }.freeze
+    # Serviço de helper do HA → comando daqui (o valor vem de `data`).
+    HELPER_COMMANDS = { "set_value" => "set", "select_option" => "select", "set_datetime" => "set", "press" => "press",
+                        "start" => "start", "cancel" => "cancel", "pause" => "pause", "finish" => "finish",
+                        "increment" => "increment", "decrement" => "decrement", "reset" => "reset" }.freeze
+    HELPER_DOMAINS = %w[input_number input_text input_select select input_datetime input_button button timer counter number].freeze
+    MIRROR = /\A\w+\.turn_\{\{\s*trigger\.to_state\.state\s*\}\}\z/
 
     def action(a)
       return note("ação em texto") && [] unless a.is_a?(Hash)
-      return [ { "type" => "wait", "for" => duration(a["delay"]) } ] if a.key?("delay")
+      return delay(a["delay"]) if a.key?("delay")
 
       flow = FLOW.find { |k, _| a.key?(k) }
       return send(flow[1], a) if flow
+      return Array.wrap(device_action(a)) if a["type"] && a["entity_id"] && !a.key?("action") && !a.key?("service")
 
       service = (a["action"] || a["service"]).to_s
       return note("ação #{(a.keys - IGNORED).first || '?'}") && [] if service.empty?
 
+      service_action(service, a) || (note("ação #{service}") && [])
+    end
+
+    def service_action(service, a)
       domain, name = service.split(".", 2)
-      if SWITCHES.include?(domain) && COMMANDS.key?(name)
+      if service.match?(MIRROR) then mirror(a)
+      elsif SERVICES.key?(service) then send(SERVICES[service], a)
+      elsif SWITCHES.include?(domain) && COMMANDS.key?(name)
         note("dados extras em #{service} (brilho, cor...)") if a["data"].is_a?(Hash) && (a["data"].keys - %w[entity_id]).any?
         targets(a).map { |p| { "type" => "command", "point" => p, "command" => COMMANDS[name] } }
       elsif domain == "notify" || service == "persistent_notification.create"
         data = a["data"].is_a?(Hash) ? a["data"] : {}
         [ notify(data, domain == "notify" ? %w[in_app push] : %w[in_app]) ]
-      else
-        note("ação #{service}") && []
+      elsif domain == "script" && (k = entity_input(service)) then service_script(a.merge("target" => { "entity_id" => { "!input" => k } }))
+      elsif HELPER_DOMAINS.include?(domain) && HELPER_COMMANDS.key?(name) then helper_command(HELPER_COMMANDS[name], a)
       end
+    end
+
+    # `switch.turn_{{ trigger.to_state.state }}` (espelhar): se o gatilho ligou, liga; senão, desliga.
+    def mirror(a)
+      on, off = %w[on off].map { |c| targets(a).map { |p| { "type" => "command", "point" => p, "command" => c } } }
+      return if on.empty?
+
+      [ { "type" => "if", "conditions" => [ { "type" => "expr", "expr" => "trigger.value = true" } ], "then" => on, "else" => off } ]
+    end
+
+    def device_action(a)
+      point = entity(a["entity_id"]) or return
+      command = COMMANDS[a["type"].to_s] or return note("ação de aparelho #{a['type']}") && nil
+      { "type" => "command", "point" => point, "command" => command }
+    end
+
+    def service_scene(a) = targets(a, "scene").map { |s| { "type" => "scene", "scene" => s } }.presence
+
+    # Script é ponto daqui (capacidade script, comando run); campos constantes vão no valor.
+    def service_script(a)
+      fields = (a["data"].is_a?(Hash) ? a["data"] : {}).merge(a["variables"].is_a?(Hash) ? a["variables"] : {})
+      dynamic = fields.values.any? { |v| v.to_s.include?("{{") }
+      note("campos do script com template do HA (confira)") if dynamic
+      targets(a).map { |p| { "type" => "command", "point" => p, "command" => "run", "value" => (fields.presence unless dynamic) }.compact }.presence
+    end
+
+    def helper_command(command, a)
+      data = a["data"].is_a?(Hash) ? a["data"] : {}
+      value = data.values_at("value", "option", "datetime", "time", "date", "duration").compact.first
+      return note("valor com template do HA em #{command} (confira)") && nil if value.to_s.include?("{{")
+
+      targets(a).map { |p| { "type" => "command", "point" => p, "command" => command, "value" => value }.compact }.presence
+    end
+
+    def service_calendar(a)
+      point = targets(a).first or return
+      within = duration(a.dig("data", "duration")) if a.dig("data", "duration")
+      return note("calendar.get_events com início/fim por template (use \"durante\")") && nil unless within
+
+      [ { "type" => "calendar_events", "point" => point, "within" => within, "response_variable" => var_name(a["response_variable"], "agenda") } ]
+    end
+
+    def service_weather(a)
+      point = targets(a).first or return
+      [ { "type" => "weather_forecast", "point" => point, "kind" => a.dig("data", "type").to_s.presence_in(%w[daily hourly]) || "daily",
+          "response_variable" => var_name(a["response_variable"], "clima") } ]
+    end
+
+    def service_ai(a)
+      data = a["data"].is_a?(Hash) ? a["data"] : {}
+      prompt = text(data["instructions"].to_s).presence or return
+      note("ai_task: estrutura ou anexos (confira a saída e as imagens)") if data["structure"] || data["attachments"]
+      [ { "type" => "ai_task", "prompt" => prompt, "response_variable" => var_name(a["response_variable"], "ia") } ]
+    end
+
+    def var_name(v, default) = v.to_s.downcase.gsub(/[^a-z0-9_]/, "_").presence || default
+
+    def delay(v)
+      return [ { "type" => "wait", "for" => duration(v) } ] unless v.to_s.include?("{{")
+
+      note("espera com template do HA") && []
     end
 
     def conditions(raw)
@@ -394,37 +579,80 @@ module Blueprints
       note("repetição #{(r.keys - %w[sequence]).first || '?'} (for_each)") && []
     end
 
+    # Lote 5: o texto Jinja vira expressão (número, lógica) ou Liquid (texto).
     def flow_variables(a)
       vars = a["variables"].is_a?(Hash) ? a["variables"] : {}
-      note("variáveis com template do HA (confira o texto)") if vars.values.any? { |v| v.to_s.include?("{{") || v.to_s.include?("{%") }
-      vars.map { |k, v| { "type" => "set", "var" => k.to_s.downcase.gsub(/[^a-z0-9_]/, "_"), "value" => v.to_s } }
+      vars.filter_map do |k, v|
+        set = { "type" => "set", "var" => k.to_s.downcase.gsub(/[^a-z0-9_]/, "_") }
+        if v.is_a?(Numeric) || v == true || v == false then set.merge("expr" => v.to_s)
+        elsif !v.is_a?(String) then note("variável #{k} com lista ou objeto") && nil
+        elsif (expr = @jinja.expr(v)) then set.merge("expr" => expr)
+        elsif (txt = text(v)) then set.merge("value" => txt)
+        else note("variáveis com template do HA (confira o texto)") && set.merge("value" => v)
+        end
+      end
     end
 
-    def targets(a)
+    def flow_event(a)
+      name = a["event"].to_s
+      return note("evento #{name.truncate(40)}") && [] unless name.match?(Automations::Triggers::EVENT_NAME)
+
+      data = (a["event_data"].is_a?(Hash) ? a["event_data"] : {}).to_h { |k, v| [ k.to_s, text(v.to_s) || note("dado do evento com template do HA") && v.to_s ] }
+      [ { "type" => "fire_event", "event" => name, "data" => data.presence }.compact ]
+    end
+
+    def flow_wait_trigger(a)
+      ts = list(a["wait_for_trigger"])
+      ev = (event_trigger(ts.first) if ts.size == 1 && ts.first.is_a?(Hash) && (ts.first["trigger"] || ts.first["platform"]) == "event")
+      return note("ação wait_for_trigger") && [] unless ev
+
+      [ { "type" => "wait_event", "event" => ev["event"], "match" => ev["match"], "timeout" => (a["timeout"] ? duration(a["timeout"]) : "1h"),
+          "continue_on_timeout" => (a["continue_on_timeout"] != false) }.compact ]
+    end
+
+    def flow_wait_template(a)
+      cond = expr_condition(a["wait_template"]) or return []
+      [ { "type" => "wait_for", "conditions" => [ cond ], "timeout" => (a["timeout"] ? duration(a["timeout"]) : "1h") } ]
+    end
+
+    # Pontos (ou cenas) do alvo: `target` com entity_id/device_id, `entity_id` solto ou em `data`.
+    def targets(a, type = "point")
       raw = a.key?("target") ? a["target"] : (a["entity_id"] || a.dig("data", "entity_id"))
-      raw = raw["entity_id"] if raw.is_a?(Hash) && !input_ref?(raw)
-      Array.wrap(raw).filter_map { |e| entity(e) }
+      raw = Array.wrap(raw["entity_id"]) + Array.wrap(raw["device_id"]) if raw.is_a?(Hash) && !input_ref?(raw)
+      Array.wrap(raw).filter_map { |e| entity(e, type) }
     end
 
     def notify(data, channels)
       title = data["title"].to_s.presence || "Aviso"
       message = data["message"].to_s.presence
-      note("texto com template do HA no aviso (confira: as variáveis do HA não existem aqui)") if [ title, message ].compact.any? { |t| t.include?("{{") || t.include?("{%") }
+      title, message = [ title, message ].map { |t| t && (text(t) || (note("texto com template do HA no aviso (confira: as variáveis do HA não existem aqui)") && t)) }
       { "type" => "notify", "channels" => channels, "title" => title.truncate(500), "message" => message&.truncate(500) }.compact
     end
 
+    # Texto Jinja → Liquid (nil = não traduziu).
+    def text(v) = @jinja.text(v)
+
     # ---- valores ----------------------------------------------------------------
 
-    # Entidade: só pela entrada (ponto escolhido ao criar a automação).
-    def entity(v)
+    # Entidade: só pela entrada (ponto ou cena escolhida ao criar a automação).
+    def entity(v, type = "point")
       v = v.first if v.is_a?(Array) && v.size == 1
-      return v if input_ref?(v) && @inputs.dig(v["!input"], "type") == "point"
+      return v if input_ref?(v) && @inputs.dig(v["!input"], "type") == type
 
       note(v.is_a?(String) ? "entidade fixa #{v} (use uma entrada de ponto)" : "entidade #{v.inspect.truncate(60)}")
       nil
     end
 
     def input_ref?(v) = v.is_a?(Hash) && v.keys == [ "!input" ]
+
+    # "18:00:00" ou 18000 (segundos) → "18:00"; entidade no horário fica anotada.
+    def clock(v)
+      return if v.nil?
+      return format("%02d:%02d", *(v.to_i / 60).divmod(60)) if v.is_a?(Integer)
+      return v.to_s[0, 5] if v.to_s[0, 5].match?(Automations::Dsl::TIME)
+
+      note("horário #{v.to_s.truncate(40)} na condição") && nil
+    end
 
     # "00:05:00", {minutes: 5}, 300 ou entrada → "5m" / segundos.
     def duration(v)

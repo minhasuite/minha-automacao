@@ -14,8 +14,13 @@ module Automations
 
     PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger NotificationActionTrigger EventTrigger].freeze
 
+    # Id do gatilho (Lote 5, `id` do HA): a execução leva em `trigger.id`, e a
+    # condição "trigger.id = 'x'" diz qual gatilho disparou.
+    TRIGGER_ID = Dsl.f("id", :text, "Id do gatilho (para a condição trigger.id)")
+
     class Base < Block
       class << self
+        def fields = super + [ TRIGGER_ID ]
         def fires_on_change?(_t, _value, _was) = false
         def holds?(_t, _value) = true
         def clock = false
@@ -50,21 +55,34 @@ module Automations
     end
 
     class TimeTrigger < Base
+      # Lote 5: "no horário de um ponto" (`at_point`, o input_datetime do HA):
+      # "HH:MM" todo dia ou "AAAA-MM-DDTHH:MM" naquele dia.
       describe key: "time", label: "Horário", defaults: { "at" => "18:00" },
-               fields: [ f("at", :time, "Às (HH:MM)"), f("every", :duration, "Ou a cada (ex.: 10m)"), f("days", :days, "Dias") ]
+               fields: [ f("at", :time, "Às (HH:MM)"), f("every", :duration, "Ou a cada (ex.: 10m)"),
+                         f("at_point", :point, "Ou no horário do ponto (data e hora)"), f("days", :days, "Dias") ]
+      WHEN = %w[at every at_point].freeze
 
       def self.clock = true
-      def self.title(t) = t["at"] ? "Horário #{t['at']}" : "A cada #{Dsl.duration_label(Dsl.seconds(t['every']))}"
 
-      def self.due?(t, _site, local)
+      def self.title(t)
+        return "Horário #{t['at']}" if t["at"]
+        return "Horário do ponto" if t["at_point"]
+
+        "A cada #{Dsl.duration_label(Dsl.seconds(t['every']))}"
+      end
+
+      def self.due?(t, site, local)
         return local.strftime("%H:%M") == t["at"] if t["at"]
+        return point_due?(site.points.find_by(id: t["at_point"])&.value.to_s, local) if t["at_point"]
 
         (((local.hour * 60) + local.min) % (Dsl.seconds(t["every"]) / 60)).zero?
       end
 
+      def self.point_due?(v, local) = v.match?(/\A\d{2}:\d{2}/) ? v[0, 5] == local.strftime("%H:%M") : v[0, 16] == local.strftime("%Y-%m-%dT%H:%M")
+
       def self.rules(node)
         msgs = []
-        msgs << "use \"às\" ou \"a cada\"." if node["at"].nil? == node["every"].nil?
+        msgs << "use \"às\", \"a cada\" ou \"no horário do ponto\" (só um)." if WHEN.count { |k| !node[k].nil? } != 1
         sec = node["every"] && Dsl.seconds(node["every"])
         msgs << "\"a cada\" precisa ser de 1 min a 24 h, em minutos inteiros." if node["every"] && !(sec&.between?(60, 86_400) && (sec % 60).zero?)
         msgs

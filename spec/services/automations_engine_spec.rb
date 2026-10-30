@@ -469,7 +469,7 @@ RSpec.describe "Automações: motor da DSL" do
         "outro" => 1
       }, site)
       expect(errors.join("\n")).to include(
-        "Chave desconhecida: outro", "gatilhos 1: tipo \"nada\" não existe", "gatilhos 2 (Horário): use \"às\" ou \"a cada\"",
+        "Chave desconhecida: outro", "gatilhos 1: tipo \"nada\" não existe", "gatilhos 2 (Horário): use \"às\", \"a cada\" ou \"no horário do ponto\" (só um)",
         "gatilhos 3 (Ponto mudou): ponto: ponto não existe", "condições 1 (Expressão): expressão", "condições 2 (Ponto está): informe o valor",
         "ações 1 (Esperar): tempo (ex.: 5m): duração inválida", "ações 2 (Avisar): título: texto inválido", "Bateria não recebe comando",
         "campo desconhecido extra", "no máximo 100 vezes"

@@ -24,7 +24,7 @@ module Automations
           wait = Dsl.seconds(t["for"]).to_i
           next AutomationTriggerJob.set(wait: wait.seconds).perform_later(a.id, i, point.changed_at.iso8601(6)) if wait.positive?
 
-          Automations.safely { a.fire!(info(t, point, value_was), cause: cause) }
+          Automations.safely { a.fire!(with_id(t, info(t, point, value_was)), cause: cause) }
         end
       end
     end
@@ -35,7 +35,7 @@ module Automations
       point = automation.site.points.find_by(id: t["point"]) or return
       return unless automation.enabled && point.changed_at&.iso8601(6) == stamp && holds?(t, point.value)
 
-      automation.fire!(info(t, point, nil))
+      automation.fire!(with_id(t, info(t, point, nil)))
     end
 
     # Relógio: gatilhos de horário e de sol que caem neste minuto.
@@ -48,7 +48,7 @@ module Automations
       list.each do |a|
         ActsAsTenant.with_tenant(a.tenant) do
           a.definition["triggers"].each do |t|
-            Automations.safely { a.fire!(clock_info(t, now)) } if clock?(t, a.site, now)
+            Automations.safely { a.fire!(with_id(t, clock_info(t, now))) } if clock?(t, a.site, now)
           end
         end
       end
@@ -69,7 +69,7 @@ module Automations
     # Eventos do sistema (Lote 4, G6): nome → rótulo. A ação "Disparar evento"
     # não pode usar estes nomes nem os dos plugins de gatilho.
     SYSTEM_EVENTS = { "automation_finished" => "Automação ou script terminou", "notification_action" => "Resposta de aviso",
-                      "script_finished" => "Script terminou" }.freeze
+                      "script_finished" => "Script terminou", "system_started" => "Sistema iniciou" }.freeze
 
     EVENT_NAME = /\A[a-z0-9][a-z0-9_.:-]{0,59}\z/
 
@@ -92,13 +92,25 @@ module Automations
           next if name == "automation_finished" && cause&.automation_id == a.id # o próprio fim não dispara de novo
 
           t = a.definition["triggers"].find { |tr| (pl = TriggerTypes[tr["type"]]) && pl.listens?(name) && pl.fires_on_event?(tr, payload) } or next
-          Automations.safely { a.fire!(TriggerTypes[t["type"]].event_info(t, payload), cause: cause) }
+          Automations.safely { a.fire!(with_id(t, TriggerTypes[t["type"]].event_info(t, payload)), cause: cause) }
         end
       end
       AutomationRun.where(site_id: site_id, status: "waiting", dry_run: false)
                    .where("state->'wait'->>'kind' = 'event' AND state->'wait'->>'event' = ?", name)
                    .find_each { |r| Automations.safely { Engine.resume_event(r, payload) } }
     end
+
+    # Lote 5 (G7, `homeassistant: start` do HA): o servidor subiu (o
+    # supervisor do Solid Queue, uma vez por início). Cada local recebe o
+    # evento "system_started".
+    def system_started!
+      ActsAsTenant.without_tenant { Site.includes(:tenant).to_a }.each do |site|
+        ActsAsTenant.with_tenant(site.tenant) { Automations.safely { event(site.id, "system_started", { "at" => Time.current.iso8601 }) } }
+      end
+    end
+
+    # Id do gatilho (Lote 5) vai junto: `trigger.id` na condição e no texto.
+    def with_id(t, info) = t["id"].present? ? info.merge("id" => t["id"]) : info
 
     # O plugin do gatilho decide (TriggerTypes).
     def changed_into?(t, value, was) = value != was && TriggerTypes[t["type"]]&.fires_on_change?(t, value, was) || false
