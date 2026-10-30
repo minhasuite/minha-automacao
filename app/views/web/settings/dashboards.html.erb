@@ -1,0 +1,53 @@
+<% manageable = @sites.select { |s| SiteMembership.allowed?(@roles[s.id], :manage) } %>
+<%= render "web/shared/header", title: "Configurações", subtitle: "Painéis de todos os locais: o que aparece no menu, quem vê e as visões de cada um." do %>
+  <% if manageable.size == 1 %>
+    <%= link_to new_site_dashboard_path(manageable.first), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo painel<% end %>
+  <% elsif manageable.any? %>
+    <details class="ss-menu">
+      <summary class="ss-btn ss-btn-primary"><%= icon("plus", "size-4") %>Novo painel</summary>
+      <div class="ss-menu-list" role="menu">
+        <% manageable.each do |s| %><%= link_to "Em #{s.name}", new_site_dashboard_path(s), role: "menuitem" %><% end %>
+      </div>
+    </details>
+  <% end %>
+<% end %>
+<%= render layout: "web/settings/frame", locals: { current: :dashboards } do %>
+<% if @dashboards.empty? %>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum painel ainda.</p><p class="mt-1">Crie um local primeiro: ele ganha o painel automático.</p></div>
+<% else %>
+  <div class="ss-card overflow-x-auto">
+    <table class="ss-table">
+      <thead><tr><th>Painel</th><th>Local</th><th class="hidden md:table-cell">Visões</th><th class="hidden sm:table-cell">No menu</th><th class="hidden lg:table-cell">Quem vê</th><th class="r"><span class="sr-only">Ações</span></th></tr></thead>
+      <tbody>
+        <% @dashboards.each do |d| %>
+          <% manage = SiteMembership.allowed?(@roles[d.site_id], :manage) %>
+          <tr>
+            <td>
+              <%= link_to dashboard_path(d), class: "flex items-center gap-3 no-underline text-ink hover:text-accent min-w-0" do %>
+                <span class="grid place-items-center size-9 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(d.icon_name, "size-4") %></span>
+                <span class="min-w-0"><span class="block font-semibold truncate"><%= d.name %></span>
+                  <span class="block text-xs text-muted"><%= d.auto? ? "automático" : "versão #{d.version}" %><%= " · rascunho" if d.draft? %><%= " · padrão do local" if d.site_default %><%= " · abre no seu Início" if current_user.dashboard_prefs[d.site_id] == d.id %></span></span>
+              <% end %>
+            </td>
+            <td><%= d.site.name %></td>
+            <td class="hidden md:table-cell"><%= d.auto? ? "Automáticas" : Array(d.definition["views"]).size %></td>
+            <td class="hidden sm:table-cell"><%= d.sidebar ? "Sim" : "Não" %></td>
+            <td class="hidden lg:table-cell"><%= d.roles.empty? ? "Todos" : d.roles.map { |r| SiteMembership.role_label(r) }.to_sentence %></td>
+            <td class="r">
+              <div class="flex justify-end gap-1">
+                <% if manage %>
+                  <%= link_to edit_dashboard_path(d), class: "dw-tool", title: "Editar #{d.name}", "aria-label": "Editar #{d.name}" do %><%= icon("pencil", "size-4") %><% end %>
+                  <%= button_to duplicate_dashboard_path(d), class: "dw-tool", title: "Duplicar #{d.name}", "aria-label": "Duplicar #{d.name}" do %><%= icon("duplicate", "size-4") %><% end %>
+                  <%= button_to dashboard_path(d), method: :delete, class: "dw-tool dw-tool-danger", title: "Excluir #{d.name}", "aria-label": "Excluir #{d.name}", form: { data: { turbo_confirm: "Excluir o painel #{d.name}?", turbo_confirm_button: "Excluir" } } do %><%= icon("trash", "size-4") %><% end %>
+                <% else %>
+                  <%= link_to "Abrir", dashboard_path(d), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+<% end %>

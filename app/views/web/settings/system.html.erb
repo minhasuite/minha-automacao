@@ -1,0 +1,36 @@
+<%= render "web/shared/header", title: "Configurações", subtitle: "Sistema: plano, cópia dos dados e acesso de fora de casa." %>
+<% owner = current_user.owner? %>
+<%= render layout: "web/settings/frame", locals: { current: :system } do %>
+<section class="ss-card ss-card-pad" aria-labelledby="backup-t">
+  <h2 id="backup-t">Backup e exportar</h2>
+  <p class="text-sm text-muted mt-1">O servidor de casa guarda uma cópia do banco todo dia (os últimos 7 dias ficam em <code>backups/</code> no servidor). Aqui você baixa os dados em JSON quando quiser.</p>
+  <div class="mt-3 flex flex-wrap gap-3">
+    <%= link_to settings_export_path, class: "ss-btn ss-btn-ghost", data: { turbo: false } do %><%= icon("download", "size-4") %>Exportar dados (JSON)<% end %>
+    <% if owner %>
+      <%= form_with url: settings_wipe_path, class: "flex gap-2", data: { turbo_confirm: "Apagar os dados da instalação? As pessoas e o plano ficam." } do %>
+        <%= text_field_tag :confirm, nil, placeholder: "Digite ZERAR", class: "ss-input w-36", "aria-label": "Confirmação para zerar" %><%= submit_tag "Zerar dados", class: "ss-btn ss-btn-danger", name: nil %>
+      <% end %>
+    <% end %>
+  </div>
+</section>
+
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="ext-t">
+  <h2 id="ext-t">Acesso externo</h2>
+  <dl class="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
+    <div><dt class="text-muted">Endereço que você está usando</dt><dd class="font-semibold text-ink break-all"><%= request.base_url %></dd></div>
+    <div><dt class="text-muted">Endereço público</dt><dd class="font-semibold text-ink break-all"><%= ENV["APP_HOST"].presence ? "https://#{ENV['APP_HOST']}" : "Não configurado" %></dd></div>
+  </dl>
+  <p class="text-sm text-muted mt-3">O acesso de fora de casa passa por um túnel seguro (Cloudflare) configurado no servidor; nenhuma porta do roteador fica aberta. O app do celular usa o mesmo endereço público.</p>
+</section>
+
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="plan-t">
+  <h2 id="plan-t">Plano</h2>
+  <% b = @billing %>
+  <p class="mt-1">
+    <span class="ss-badge ss-badge-accent"><%= Plans::NAMES[b[:plan]] %></span>
+    <% if b[:status] == "trial" %><span class="text-sm text-muted">teste grátis</span><% end %>
+    <% if b[:expires_at] %><span class="text-sm text-muted"><%= b[:auto_renewing] == false || b[:status] == "canceled" ? "vale até" : "renova em" %> <%= l(b[:expires_at].to_date) %></span><% end %>
+  </p>
+  <p class="text-sm text-muted mt-1">Tudo que não usa IA é grátis. A assinatura libera a IA e é feita pelo app Minha Automação no celular (Google Play)<%= ", com #{Plans::TRIAL_DAYS} dias grátis" if b[:trial_eligible] %>.</p>
+</section>
+<% end %>

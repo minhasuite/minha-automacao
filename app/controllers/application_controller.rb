@@ -35,7 +35,7 @@ class ApplicationController < ActionController::Base
     return @current_user if defined?(@current_user)
 
     user = User.find_by(id: session[:user_id])
-    @current_user = user if user && session[:pwd] == user.password_digest.to_s.last(10)
+    @current_user = user if user && !user.disabled? && session[:pwd] == user.password_digest.to_s.last(10)
   end
 
   def sign_in!(user)
@@ -56,7 +56,7 @@ class ApplicationController < ActionController::Base
   end
 
   def require_owner!
-    redirect_to root_path, alert: "Só o dono da empresa pode fazer isso." unless current_user.owner?
+    redirect_to root_path, alert: "Só o dono pode fazer isso." unless current_user.owner?
   end
 
   # Erro de formulário: volta para a página anterior com o aviso.

@@ -15,7 +15,7 @@ RSpec.describe "Web (sessão em cookie)" do
     expect(response).to have_http_status(:unprocessable_content)
     sign_in
     expect(response).to redirect_to("/")
-    %w[/ /notificacoes /configuracoes].each do |path|
+    %w[/ /notificacoes /configuracoes/paineis].each do |path|
       get path
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Minha Automação")
@@ -30,9 +30,9 @@ RSpec.describe "Web (sessão em cookie)" do
   it "cria conta" do
     get "/criar-conta"
     expect(response).to have_http_status(:ok)
-    post "/criar-conta", params: { name: "Lia", email: "lia@ex.com", password: "12345678", company_name: "Casa da Lia" }
+    post "/criar-conta", params: { name: "Lia", email: "lia@ex.com", password: "12345678" }
     expect(response).to redirect_to("/")
-    expect(User.find_by(email: "lia@ex.com").tenant.name).to eq("Casa da Lia")
+    expect(User.find_by(email: "lia@ex.com").tenant.name).to eq("Casa de Lia")
     post "/criar-conta", params: { name: "Lia", email: "lia@ex.com", password: "1" }
     expect(response).to have_http_status(:unprocessable_content)
   end
@@ -56,28 +56,24 @@ RSpec.describe "Web (sessão em cookie)" do
   describe "configurações" do
     before { sign_in }
 
-    it "atualiza empresa e conta" do
-      patch "/configuracoes/empresa", params: { company: { trade_name: "Casa Nova", uf: "sp" } }
-      expect(user.tenant.reload).to have_attributes(trade_name: "Casa Nova", uf: "SP")
+    it "abre cada seção, sem dados de empresa nem \"entrar em outra empresa\"" do
+      get "/configuracoes"
+      expect(response).to redirect_to("/configuracoes/paineis")
+      %w[/configuracoes/paineis /configuracoes/pessoas /configuracoes/chaves /configuracoes/sistema /configuracoes/conta].each do |path|
+        get path
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Empresa", "CNPJ", "Razão social", "outra empresa")
+      end
+    end
+
+    it "atualiza a conta" do
       patch "/configuracoes/conta", params: { account: { name: "Outro", password: "novasenha1", current_password: "errada" } }
       expect(flash[:alert]).to eq("Senha atual incorreta.")
       patch "/configuracoes/conta", params: { account: { name: "Outro", password: "novasenha1", current_password: "12345678" } }
       expect(user.reload).to have_attributes(name: "Outro")
       expect(user.authenticate("novasenha1")).to be_truthy
-      patch "/configuracoes/empresa", params: { company: { name: "" } }
+      patch "/configuracoes/conta", params: { account: { name: "" } }
       expect(flash[:alert]).to be_present
-    end
-
-    it "gera convite e entra em outra empresa pelo código" do
-      post "/configuracoes/convite", params: { role: "admin" }
-      code = flash[:notice][/\b[A-Z2-9]{10}\b/]
-      expect(code).to be_present
-      other = create(:user, email: "outro@ex.com")
-      sign_in(other)
-      post "/configuracoes/entrar-em-empresa", params: { code: "ERRADO" }
-      expect(flash[:alert]).to eq("Código inválido ou vencido.")
-      post "/configuracoes/entrar-em-empresa", params: { code: code }
-      expect(other.reload).to have_attributes(tenant_id: user.tenant_id, role: "admin")
     end
 
     it "exporta, zera e exclui a conta" do
@@ -86,7 +82,7 @@ RSpec.describe "Web (sessão em cookie)" do
       post "/configuracoes/zerar", params: { confirm: "nao" }
       expect(flash[:alert]).to include("ZERAR")
       post "/configuracoes/zerar", params: { confirm: "ZERAR" }
-      expect(flash[:notice]).to eq("Dados da empresa apagados.")
+      expect(flash[:notice]).to eq("Dados da instalação apagados.")
       delete "/configuracoes/conta", params: { confirm: "nao" }
       expect(flash[:alert]).to include("EXCLUIR")
       tenant_id = user.tenant_id
@@ -94,26 +90,34 @@ RSpec.describe "Web (sessão em cookie)" do
       expect(Tenant.exists?(tenant_id)).to be false
     end
 
-    it "membro não muda a empresa nem convida" do
+    it "membro não zera, não vê pessoas nem chaves" do
       member = create(:user, tenant: user.tenant, role: "member", email: "membro@ex.com")
       sign_in(member)
-      patch "/configuracoes/empresa", params: { company: { trade_name: "X" } }
-      expect(flash[:alert]).to eq("Só o dono da empresa pode fazer isso.")
-      post "/configuracoes/convite"
-      expect(flash[:alert]).to include("administrador")
+      post "/configuracoes/zerar", params: { confirm: "ZERAR" }
+      expect(flash[:alert]).to eq("Só o dono pode fazer isso.")
+      get "/configuracoes/pessoas"
+      expect(response).to redirect_to("/")
+      get "/configuracoes/chaves"
+      expect(response).to redirect_to("/")
+      get "/configuracoes/paineis"
+      expect(response.body).not_to include("Pessoas")
     end
   end
 
   it "chaves de integração pela API (só o dono)" do
+    site = within(user.tenant) { create(:site) }
     headers = auth_headers(user)
-    post "/api/v1/api_keys", params: { name: "ERP", scopes: %w[read] }, headers: headers
+    post "/api/v1/api_keys", params: { name: "ERP", scopes: %w[read], site_ids: [ site.id ] }, headers: headers
     expect(response).to have_http_status(:created)
     key_id = data["id"]
+    expect(data).to include("site_ids" => [ site.id ])
     expect(data["token"]).to start_with("svc_")
     get "/api/v1/me", headers: { "X-Api-Key" => data["token"] }
     expect(response).to have_http_status(:forbidden)
-    post "/api/v1/api_keys", params: { name: "x", scopes: %w[nada] }, headers: headers
+    post "/api/v1/api_keys", params: { name: "x", scopes: %w[nada], site_ids: [ site.id ] }, headers: headers
     expect(response).to have_http_status(:unprocessable_content)
+    post "/api/v1/api_keys", params: { name: "x", scopes: %w[read] }, headers: headers
+    expect(json.dig("error", "message")).to include("local")
     get "/api/v1/api_keys", headers: headers
     expect(data.size).to eq(1)
     get "/api/v1/api_keys", headers: auth_headers(create(:user, tenant: user.tenant, role: "admin"))

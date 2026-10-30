@@ -9,12 +9,9 @@
     <button type="button" class="lg:hidden grid place-items-center size-8 rounded-lg border-0 bg-transparent text-white/70 hover:text-white cursor-pointer" data-action="menu#close" aria-label="Fechar menu"><%= icon("x", "size-5") %></button>
   </div>
   <button type="button" class="ss-expand hidden mx-auto mt-2 size-8 place-items-center rounded-lg border-0 bg-transparent text-white/50 hover:text-white hover:bg-white/10 cursor-pointer" data-action="menu#collapse" title="Expandir menu" aria-label="Expandir menu"><%= icon("chevron-right", "size-4") %></button>
-  <div class="ss-side-label px-3 py-2.5 border-b border-white/10 shrink-0 flex items-center gap-2 text-xs text-white/60">
-    <span class="grid place-items-center size-5 rounded bg-white/10"><%= icon("office-building", "size-3.5") %></span>
-    <span class="truncate font-medium"><%= current_user.tenant.trade_name.presence || current_user.tenant.name %></span>
-  </div>
   <nav class="ss-nav ss-side-scroll flex-1 overflow-y-auto px-2 py-4 space-y-1" aria-label="Principal">
     <%= nav_link "Início", root_path, icon: "lightning-bolt" %>
+    <% Dashboard.sidebar_for(current_user).each do |d| %><%= nav_link d.name, dashboard_path(d), icon: d.icon_name %><% end %>
     <%= nav_link "Locais", sites_path, icon: "home" %>
     <%= nav_link "Alertas", alerts_path, icon: "exclamation-circle", badge: Alert.active.where(acked_at: nil, site_id: Site.visible_to(current_user).select(:id)).count %>
     <%= nav_link "Notificações", notifications_path, icon: "bell", badge: Notification.for_user(current_user).unread.count %>

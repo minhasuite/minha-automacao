@@ -1,32 +1,41 @@
 module Web
-  # Configurações: empresa (dono), plano, chaves de integração e conta
-  # (senha, exportar, zerar, excluir). Mesmas regras da API.
+  # Configurações da instalação (F8d): Painéis, Pessoas, Chaves de integração
+  # (controllers próprios) e Sistema (plano, exportar, zerar, backup e acesso
+  # externo); mais "Minha conta". Sem dados de empresa na tela: o tenant
+  # continua por dentro (acts_as_tenant).
   class SettingsController < ApplicationController
-    before_action :require_owner!, only: %i[update_company wipe]
+    before_action :require_owner!, only: :wipe
 
-    def show
-      @company = current_user.tenant
-      Licencas::Sync.throttled(@company)
-      @billing = Billing::Status.call(@company, current_user)
+    def show = redirect_to(settings_dashboards_path)
+
+    # Todos os painéis dos locais que a pessoa vê, com a coluna Local.
+    def dashboards
+      @sites = Site.visible_to(current_user).order(:name).to_a
+      @roles = @sites.to_h { |s| [ s.id, s.role_for(current_user) ] }
+      @sites.each { |s| Dashboard.ensure_for(s) }
+      @dashboards = Dashboard.where(site_id: @sites.map(&:id)).includes(:site).order(:name).to_a
+                             .select { |d| d.visible_to?(@roles[d.site_id]) }
     end
 
-    def update_company
-      current_user.tenant.update!(params.require(:company).permit(*CompanySerializer::EDITABLE))
-      redirect_to settings_path, notice: "Empresa atualizada."
+    def system
+      Licencas::Sync.throttled(current_user.tenant)
+      @billing = Billing::Status.call(current_user.tenant, current_user)
     end
+
+    def account; end
 
     def update_account
       attrs = params.require(:account).permit(:name, :email)
       if params.dig(:account, :password).present?
         unless current_user.password_digest.blank? || current_user.authenticate(params.dig(:account, :current_password).to_s)
-          return redirect_to(settings_path, alert: "Senha atual incorreta.")
+          return redirect_to(settings_account_path, alert: "Senha atual incorreta.")
         end
 
         attrs[:password] = params.dig(:account, :password)
       end
       current_user.update!(attrs)
       sign_in!(current_user) if attrs[:password]
-      redirect_to settings_path, notice: "Conta atualizada."
+      redirect_to settings_account_path, notice: "Conta atualizada."
     end
 
     def export
@@ -35,14 +44,14 @@ module Web
     end
 
     def wipe
-      return redirect_to(settings_path, alert: "Digite ZERAR para confirmar.") unless params[:confirm] == "ZERAR"
+      return redirect_to(settings_system_path, alert: "Digite ZERAR para confirmar.") unless params[:confirm] == "ZERAR"
 
       Accounts::WipeData.call(current_user.tenant)
-      redirect_to settings_path, notice: "Dados da empresa apagados."
+      redirect_to settings_system_path, notice: "Dados da instalação apagados."
     end
 
     def destroy_account
-      return redirect_to(settings_path, alert: "Digite EXCLUIR para confirmar.") unless params[:confirm] == "EXCLUIR"
+      return redirect_to(settings_account_path, alert: "Digite EXCLUIR para confirmar.") unless params[:confirm] == "EXCLUIR"
 
       tenant = current_user.tenant
       if tenant.users.where.not(id: current_user.id).exists?
@@ -52,24 +61,6 @@ module Web
       end
       reset_session
       redirect_to login_path, notice: "Conta excluída."
-    end
-
-    # Código de convite (administrador; só o dono convida administrador).
-    def invite
-      return redirect_to(settings_path, alert: "Só administrador ou dono pode convidar.") unless current_user.admin?
-
-      role = params[:role].presence_in(User::ROLES - %w[owner]) || "member"
-      return redirect_to(settings_path, alert: "Só o dono convida administradores.") if role == "admin" && !current_user.owner?
-
-      _invite, code = Invite.generate!(created_by: current_user, role: role)
-      redirect_to settings_path(anchor: "convites"), notice: "Código do convite: #{code} (vale 7 dias, uso único)."
-    end
-
-    def join
-      Companies::Join.call(user: current_user, code: params[:code].to_s, discard_current: params[:discard_current] == "1")
-      redirect_to root_path, notice: "Você entrou na empresa."
-    rescue Companies::Join::Error => e
-      redirect_to settings_path, alert: e.message
     end
   end
 end

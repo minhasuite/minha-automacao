@@ -154,7 +154,7 @@ RSpec.describe "Licenciamento central" do
         req = direitos(nil)
         2.times { get "/api/v1/billing", headers: auth_headers(user) }
         post "/entrar", params: { email: user.email, password: "12345678" }
-        get "/configuracoes" # o web consulta pelo mesmo throttle
+        get "/configuracoes/sistema" # o web consulta pelo mesmo throttle
         expect(response).to have_http_status(:ok)
         expect(req).to have_been_made.once
         travel_to(2.minutes.from_now) { get "/api/v1/billing", headers: auth_headers(user) }

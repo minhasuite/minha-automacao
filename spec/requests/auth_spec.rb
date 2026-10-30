@@ -2,13 +2,13 @@ require "rails_helper"
 
 RSpec.describe "Auth e conta" do
   describe "POST /api/v1/auth/signup" do
-    it "cria empresa, dono e tokens" do
-      post "/api/v1/auth/signup", params: { name: "Ana Souza", email: "ANA@ex.com", password: "12345678", company_name: "Ana Doces" }
+    it "cria a instalação, o dono e os tokens" do
+      post "/api/v1/auth/signup", params: { name: "Ana Souza", email: "ANA@ex.com", password: "12345678" }
       expect(response).to have_http_status(:created)
       expect(data).to include("token_type" => "Bearer")
       expect(data["user"]).to include("email" => "ana@ex.com", "role" => "owner")
       tenant = User.find_by(email: "ana@ex.com").tenant
-      expect(tenant.name).to eq("Ana Doces")
+      expect(tenant.name).to eq("Casa de Ana")
     end
 
     it "recusa senha curta e e-mail repetido" do

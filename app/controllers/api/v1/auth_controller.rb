@@ -8,11 +8,11 @@ module Api
       skip_before_action :authenticate_request!, only: PUBLIC
       skip_before_action :set_tenant, only: PUBLIC
 
-      # POST /auth/signup { name, email, password, company_name?, device_name? }
+      # POST /auth/signup { name, email, password, device_name? } — cria uma instalação nova.
       def signup
         user = nil
         ActiveRecord::Base.transaction do
-          tenant = Tenant.create!(name: params[:company_name].presence || "Empresa de #{params[:name].to_s.split.first || 'você'}")
+          tenant = Tenant.create!(name: "Casa de #{params[:name].to_s.split.first || 'você'}")
           user = User.create!(tenant: tenant, name: params[:name], email: params[:email], password: params[:password].to_s)
         end
         issue(user, :created)
@@ -21,7 +21,7 @@ module Api
       # POST /auth/login { email, password, device_name? }
       def login
         user = User.find_by(email: params[:email].to_s.strip.downcase)
-        if user&.password_digest.present? && user.authenticate(params[:password].to_s)
+        if user&.password_digest.present? && !user.disabled? && user.authenticate(params[:password].to_s)
           issue(user, :created)
         else
           BCrypt::Password.create("timing") unless user # iguala o tempo de resposta
@@ -34,7 +34,10 @@ module Api
       def google
         return render_error(:google_unconfigured, "Login Google indisponível.", status: :service_unavailable) if ENV["GOOGLE_CLIENT_ID"].blank?
 
-        issue(User.from_google!(params[:id_token]), :created)
+        user = User.from_google!(params[:id_token])
+        return render_error(:account_disabled, "Esta conta está desativada.", status: :forbidden) if user.disabled?
+
+        issue(user, :created)
       rescue Google::Auth::IDTokens::VerificationError
         render_error(:invalid_token, "Token do Google inválido.", status: :unauthorized)
       end
@@ -42,7 +45,7 @@ module Api
       # POST /auth/refresh { refresh_token }
       def refresh
         presented = params[:refresh_token].to_s
-        if (token = ApiToken.find_by_refresh(presented))
+        if (token = ApiToken.find_by_refresh(presented)) && !token.user.disabled?
           access, refresh = token.rotate!
           return render_tokens(token, access, refresh)
         end

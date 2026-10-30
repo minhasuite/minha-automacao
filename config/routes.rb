@@ -20,6 +20,8 @@ Rails.application.routes.draw do
   get "criar-conta", to: "web/sessions#new_signup", as: :signup
   post "criar-conta", to: "web/sessions#signup"
   delete "sair", to: "web/sessions#destroy", as: :logout
+  get "convite/:token", to: "web/invites#show", as: :invite_link
+  post "convite/:token", to: "web/invites#accept"
   get "esqueci-a-senha", to: "web/passwords#new", as: :forgot_password
   post "esqueci-a-senha", to: "web/passwords#create"
 
@@ -60,6 +62,7 @@ Rails.application.routes.draw do
           get :json
           patch :json, action: :update_json
           post :prefer, path: "padrao"
+          post :duplicate, path: "duplicar"
         end
       end
       # Automações da DSL (F6): editor, versões e simulação só para técnico ou dono.
@@ -100,14 +103,25 @@ Rails.application.routes.draw do
       end
     end
 
+    # Configurações da instalação inteira (F8d): Painéis, Pessoas, Chaves de
+    # integração e Sistema; mais a conta de quem está logado.
     get "configuracoes", to: "settings#show", as: :settings
-    patch "configuracoes/empresa", to: "settings#update_company", as: :settings_company
-    patch "configuracoes/conta", to: "settings#update_account", as: :settings_account
+    get "configuracoes/sistema", to: "settings#system", as: :settings_system
+    get "configuracoes/conta", to: "settings#account", as: :settings_account
+    patch "configuracoes/conta", to: "settings#update_account"
+    delete "configuracoes/conta", to: "settings#destroy_account"
     get "configuracoes/exportar", to: "settings#export", as: :settings_export
     post "configuracoes/zerar", to: "settings#wipe", as: :settings_wipe
-    delete "configuracoes/conta", to: "settings#destroy_account"
-    post "configuracoes/entrar-em-empresa", to: "settings#join", as: :settings_join
-    post "configuracoes/convite", to: "settings#invite", as: :settings_invite
+    get "configuracoes/paineis", to: "settings#dashboards", as: :settings_dashboards
+    scope "configuracoes" do
+      resources :people, path: "pessoas", only: %i[index show create update destroy] do
+        post :toggle, on: :member, path: "ativar"
+        patch :sites, on: :member, path: "locais"
+        post :invite, on: :collection, path: "convite"
+      end
+      resources :invites, path: "convites", only: :destroy
+      resources :api_keys, path: "chaves", only: %i[index create destroy]
+    end
   end
 
   namespace :api do
@@ -132,7 +146,6 @@ Rails.application.routes.draw do
       get "company", to: "companies#show"
       patch "company", to: "companies#update"
       post "company/invites", to: "companies#invite"
-      post "company/join", to: "companies#join"
 
       resources :notifications, only: :index do
         patch :read, on: :member
@@ -147,6 +160,7 @@ Rails.application.routes.draw do
         resources :devices, except: %i[new edit], shallow: true do
           resources :points, except: %i[new edit], shallow: true do
             post :commands, on: :member, action: :command
+            post :value, on: :member, action: :write_value
             get :history, on: :member
           end
         end

@@ -355,7 +355,9 @@ CREATE TABLE public.dashboards (
     roles character varying[] DEFAULT '{}'::character varying[] NOT NULL,
     "position" integer DEFAULT 0 NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    icon character varying,
+    sidebar boolean DEFAULT false NOT NULL
 );
 
 
@@ -403,7 +405,8 @@ CREATE TABLE public.devices (
     poll_s integer DEFAULT 1800,
     polled_at timestamp(6) without time zone,
     removed_at timestamp(6) without time zone,
-    last_error character varying
+    last_error character varying,
+    discovered_at timestamp(6) without time zone
 );
 
 
@@ -473,7 +476,9 @@ CREATE TABLE public.invites (
     expires_at timestamp(6) without time zone NOT NULL,
     accepted_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    site_id uuid,
+    site_role character varying
 );
 
 
@@ -725,7 +730,8 @@ CREATE TABLE public.service_api_keys (
     last_used_at timestamp(6) without time zone,
     revoked_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    site_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL
 );
 
 
@@ -1363,7 +1369,8 @@ CREATE TABLE public.users (
     role character varying DEFAULT 'owner'::character varying NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    dashboard_prefs jsonb DEFAULT '{}'::jsonb NOT NULL
+    dashboard_prefs jsonb DEFAULT '{}'::jsonb NOT NULL,
+    disabled_at timestamp(6) without time zone
 );
 
 
@@ -3765,6 +3772,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261030200001'),
 ('20261030100003'),
 ('20261030100002'),
 ('20261030100001'),

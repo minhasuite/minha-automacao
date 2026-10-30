@@ -1,65 +1,56 @@
 require "rails_helper"
 
-RSpec.describe "Empresa e convites" do
+RSpec.describe "Instalação e convite por link" do
   let(:owner) { create(:user) }
   let(:tenant) { owner.tenant }
   let(:headers) { auth_headers(owner) }
+  let(:site) { within(tenant) { create(:site, name: "Casa") } }
 
-  it "mostra e atualiza a empresa (só o dono)" do
+  it "mostra e atualiza a instalação (só o dono)" do
     get "/api/v1/company", headers: headers
     expect(data).to include("id" => tenant.id, "plan" => "free", "members_count" => 1)
-    patch "/api/v1/company", params: { trade_name: "Casa Boa", uf: "go", ibge_code: "5208707" }, headers: headers
-    expect(data).to include("trade_name" => "Casa Boa", "uf" => "GO", "ibge_code" => "5208707")
+    patch "/api/v1/company", params: { trade_name: "Casa Boa" }, headers: headers
+    expect(data).to include("trade_name" => "Casa Boa")
 
     member = create(:user, tenant: tenant, role: "member")
     patch "/api/v1/company", params: { name: "X" }, headers: auth_headers(member)
     expect(response).to have_http_status(:forbidden)
   end
 
-  it "convida com papel e entra com o código (uso único)" do
-    post "/api/v1/company/invites", params: { role: "admin" }, headers: headers
+  it "o dono gera o link (uso único) e a pessoa se cadastra direto na instalação, com o papel no local" do
+    post "/api/v1/company/invites", params: { role: "member", site_id: site.id, site_role: "operator" }, headers: headers
     expect(response).to have_http_status(:created)
-    code = data["code"]
-    newcomer = create(:user)
-    old = newcomer.tenant_id
-    post "/api/v1/company/join", params: { code: code }, headers: auth_headers(newcomer)
-    expect(data["id"]).to eq(tenant.id)
-    expect(newcomer.reload).to have_attributes(tenant_id: tenant.id, role: "admin")
-    expect(Tenant.exists?(old)).to be false
-    post "/api/v1/company/join", params: { code: code }, headers: auth_headers(create(:user))
-    expect(json.dig("error", "code")).to eq("invalid_invite")
-    post "/api/v1/company/join", params: { code: "X" }, headers: auth_headers(newcomer)
-    expect(json.dig("error", "code")).to eq("invalid_invite")
+    url = data["url"]
+    expect(url).to match(%r{/convite/[\w-]{20,}\z})
+    path = URI(url).path
+
+    get path
+    expect(response.body).to include("Você foi convidado", "Casa")
+    post path, params: { name: "Bia", email: "bia@ex.com", password: "1" }
+    expect(response).to have_http_status(:unprocessable_content)
+    post path, params: { name: "Bia", email: "bia@ex.com", password: "12345678" }
+    expect(response).to redirect_to("/")
+    bia = User.find_by!(email: "bia@ex.com")
+    expect(bia).to have_attributes(tenant_id: tenant.id, role: "member")
+    expect(within(tenant) { site.role_for(bia) }).to eq("operator")
+
+    get path
+    expect(response).to have_http_status(:not_found)
+    expect(response.body).to include("Convite inválido")
+    post path, params: { name: "Outro", email: "outro@ex.com", password: "12345678" }
+    expect(User.exists?(email: "outro@ex.com")).to be false
   end
 
-  it "quem já é da empresa não entra de novo" do
-    post "/api/v1/company/invites", headers: headers
-    post "/api/v1/company/join", params: { code: data["code"] }, headers: headers
-    expect(json.dig("error", "code")).to eq("already_member")
+  it "entrar em outra empresa não existe mais" do
+    post "/api/v1/company/join", params: { code: "X" }, headers: headers
+    expect(response).to have_http_status(:not_found)
   end
 
-  it "quem tem dados na empresa atual precisa confirmar o descarte" do
-    post "/api/v1/company/invites", headers: headers
-    code = data["code"]
-    other = create(:user)
-    within(other.tenant) { create(:notification) }
-    post "/api/v1/company/join", params: { code: code }, headers: auth_headers(other)
-    expect(response).to have_http_status(:conflict)
-    old = other.tenant_id
-    post "/api/v1/company/join", params: { code: code, discard_current: true }, headers: auth_headers(other)
-    expect(response).to have_http_status(:ok)
-    expect(other.reload.role).to eq("member")
-    expect(Tenant.exists?(old)).to be false
-  end
-
-  it "membro não convida; administrador não convida administrador" do
+  it "só o dono convida" do
     admin = create(:user, tenant: tenant, role: "admin")
-    post "/api/v1/company/invites", params: { role: "admin" }, headers: auth_headers(admin)
-    expect(response).to have_http_status(:forbidden)
     post "/api/v1/company/invites", headers: auth_headers(admin)
-    expect(response).to have_http_status(:created)
-    member = create(:user, tenant: tenant, role: "member")
-    post "/api/v1/company/invites", headers: auth_headers(member)
     expect(response).to have_http_status(:forbidden)
+    post "/api/v1/company/invites", params: { role: "owner" }, headers: headers
+    expect(data["role"]).to eq("member")
   end
 end

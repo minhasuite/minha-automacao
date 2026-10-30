@@ -1,4 +1,4 @@
-# Membro da empresa. NÃO é tenant-scoped (a autenticação roda antes de
+# Pessoa da instalação (o tenant da suíte; na tela não há "empresa"). NÃO é tenant-scoped (a autenticação roda antes de
 # existir tenant): filtre por tenant à mão — `tenant.users`, nunca User.all.
 #
 # Papéis: owner (dono, tudo), admin (administra a empresa, menos plano e
@@ -43,7 +43,17 @@ class User < ApplicationRecord
     end
     transaction do
       name = payload["name"].presence || email.split("@").first
-      create!(tenant: Tenant.create!(name: "Empresa de #{name.split.first}"), name: name, email: email, google_uid: payload["sub"])
+      create!(tenant: Tenant.create!(name: "Casa de #{name.split.first}"), name: name, email: email, google_uid: payload["sub"])
+    end
+  end
+
+  # Desativada: não entra (web, API, chave de integração) até ser reativada.
+  def disabled? = disabled_at.present?
+
+  def disable!
+    transaction do
+      update!(disabled_at: Time.current)
+      api_tokens.active.update_all(revoked_at: Time.current) # rubocop:disable Rails/SkipsModelValidations
     end
   end
 

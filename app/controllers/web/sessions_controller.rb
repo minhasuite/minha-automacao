@@ -11,7 +11,7 @@ module Web
 
     def create
       user = User.find_by(email: params[:email].to_s.strip.downcase)
-      if user&.password_digest.present? && user.authenticate(params[:password].to_s)
+      if user&.password_digest.present? && !user.disabled? && user.authenticate(params[:password].to_s)
         sign_in!(user)
         redirect_to safe_return_to || root_path
       else
@@ -25,7 +25,10 @@ module Web
     def google
       return redirect_to(login_path, alert: "Login com Google indisponível.") if ENV["GOOGLE_CLIENT_ID"].blank?
 
-      sign_in!(User.from_google!(params[:credential]))
+      user = User.from_google!(params[:credential])
+      return redirect_to(login_path, alert: "Esta conta está desativada.") if user.disabled?
+
+      sign_in!(user)
       redirect_to safe_return_to || root_path
     rescue Google::Auth::IDTokens::VerificationError
       redirect_to login_path, alert: "Não foi possível entrar com o Google. Tente de novo."
@@ -36,7 +39,7 @@ module Web
     def signup
       user = nil
       ActiveRecord::Base.transaction do
-        tenant = Tenant.create!(name: params[:company_name].presence || "Empresa de #{params[:name].to_s.split.first || 'você'}")
+        tenant = Tenant.create!(name: "Casa de #{params[:name].to_s.split.first || 'você'}")
         user = User.create!(tenant: tenant, name: params[:name], email: params[:email], password: params[:password].to_s)
       end
       sign_in!(user)
