@@ -32,7 +32,14 @@ assistente e do Reconfigurar) e, se precisar, `web/integrations/connect/_<key>`
 partial do formulário.**
 
 Mapas de categoria/modelo → pontos são dados: `config/device_maps/tuya.yml`
-(códigos de dp) e `config/device_maps/miot.yml` (propriedades MIoT).
+(códigos de dp) e `config/device_maps/miot.yml` (propriedades MIoT). No
+Tuya, além de nome, unidade e capacidade, o código leva `risk` (sirene =
+crítico) e as chaves de endereço `decode`/`field`/`match`/`hold_s`/
+`push_only`: valor empacotado (ex.: `initiative_message` da câmera, base64
+de JSON com `cmd: ipc_motion`) vira ponto por `Points::Decode`
+(decodificador novo = uma linha em `DECODERS`), volta a falso sozinho
+depois de `hold_s` (`PointHoldJob`) e, com `push_only`, só conta quando o
+aparelho empurra (o estado completo repete a última mensagem).
 
 ## Inventário, varredura e adoção (`Integrations`)
 
@@ -79,13 +86,28 @@ ponto]}`, guardada cifrada em `integrations.inventory`.
   "QR expirou, gere outro." quando vence. API do app cifrada em RC4 (`gethome`, `get_device_cnt`,
   `home_device_list`), servidor escolhido ou todos. Pontos: robô pelo
   `Miio::Vacuum`; o resto pela especificação pública do miot-spec.org.
-- **Alexa**: cookies da sessão (`Alexa::Import`), varredura = lista de Echo.
+- **Alexa** (Lote 3, `Alexa::Auth`): sessão própria pelo login da Amazon
+  no navegador da pessoa (o mesmo OAuth do app Alexa que o `alexa_media`
+  usa: PKCE, `/auth/register`, cookies por `/ap/exchangetoken/cookies`). A
+  senha e o 2FA ficam na página da Amazon; aqui só chegam o código de uso
+  único (no endereço final, colado na tela) e, depois, o refresh token e os
+  cookies, cifrados. Recusa (401/403) renova sozinha uma vez e repete; se a
+  renovação falhar, o card fica "Com erro" e pede "Reconfigurar". Colar
+  cookies (`Alexa::Import`) continua como modo avançado, sem renovação.
+  Varredura = lista de Echo; cada Echo é um ponto `speaker` (`announce`,
+  `speak`, `routine`).
+- **Câmera RTSP / ONVIF** (Lote 3, `CameraPlugin`, `Onvif`): uma câmera
+  por integração. RTSP: cola o endereço; usuário e senha saem da URL (a
+  senha só nas credenciais cifradas e no aparelho). ONVIF: IP, porta e
+  conta; lê fabricante, modelo, perfis e o RTSP de cada perfil e, se a
+  câmera tem eventos, cria o ponto `motion` (PullPoint, `Onvif::Listener`).
+  Vira aparelho `go2rtc` como o do DVR (`docs/cameras.md`).
 - **Câmeras / DVR** (`Isapi`): ISAPI Hikvision com Digest
   (`/ISAPI/System/deviceInfo`, `/ISAPI/Streaming/channels`), um aparelho
   `go2rtc` com um ponto `stream` por canal no substream (x02). O
   `Go2rtcSyncJob` põe as câmeras no go2rtc (sem arquivo de config, PUT e
   DELETE respondem 400 e valem; stream que falha vai para o log e o ponto
-  fica `unavailable`, sem parar os outros). ONVIF fica para depois.
+  fica `unavailable`, sem parar os outros). Câmera avulsa de qualquer marca: "Câmera RTSP / ONVIF" abaixo.
 - **MQTT / Zigbee2MQTT**: sem conta; o card liga os aparelhos `mqtt` do local
   (a descoberta continua no `Mqtt::Z2m`).
 - **Google Agenda / ICS** (F9, `CalendarPlugin`, `Calendars`): modo **link
@@ -134,6 +156,18 @@ chave).
 **Código de usuário**. No local: Integrações → Tuya / Smart Life → colar →
 Continuar → escanear o QR pelo app (botão de leitura no Início) → Autorizar.
 A tela vai sozinha para "Dispositivos encontrados"; marque e "Adicionar".
+
+**Alexa:** Integrações → Alexa (Amazon) → país da conta → Continuar →
+"Abrir o login da Amazon" (nova aba) → e-mail, senha e o código de duas
+etapas, se pedir → a Amazon termina numa página de erro / "não
+encontrada" (é esperado) → copie o endereço inteiro da barra e cole em
+"Endereço da página depois de entrar" → Conectar. O código vale poucos
+minutos; se expirar, abra o link de novo. No celular, use o navegador (o
+app da Amazon não deixa copiar o endereço).
+
+**Câmera:** Integrações → Câmera RTSP / ONVIF → RTSP (cole
+`rtsp://usuario:senha@IP:porta/caminho`) ou ONVIF (IP, porta ONVIF,
+usuário e senha) → Continuar → marque e "Adicionar".
 
 **Xiaomi:** Integrações → Xiaomi → e-mail/telefone/ID, senha e servidor
 (ou "Procurar em todas") → Continuar. Se aparecer a imagem, digite o texto e

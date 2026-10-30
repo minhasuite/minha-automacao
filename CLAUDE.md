@@ -55,7 +55,13 @@ instalação (provedores como plugins em `Ai::PROVIDERS`, chave do usuário
 cifrada, Configurações → IA com teste, padrão, limite mensal e uso; ações
 "Pedir à IA" e "Gerar dados por IA"; "Perguntar à casa"; `docs/ia.md`) e
 conjuntos de dados (aba Dados, ações "Registrar/Consultar dados", helper
-Consulta; consultas em `Datasets::AGGREGATES`; `docs/dados.md`).
+Consulta; consultas em `Datasets::AGGREGATES`; `docs/dados.md`) + **Lote 3**:
+câmera RTSP/ONVIF como plugin (`CameraPlugin`, `Onvif`, movimento por
+PullPoint no `Onvif::Listener`), câmera Tuya por dados no mapa (movimento
+decodificado por `Points::Decode`, sensor de pulso `hold_s`, sirene crítica),
+sessão própria da Alexa (`Alexa::Auth`: login da Amazon no navegador, 2FA lá,
+renovação pelo refresh token; rotina como comando `routine`) e a ação
+"Falar" pelos canais de fala do `Notifier` (`docs/cameras.md`).
 
 ## Rodar
 
@@ -266,7 +272,10 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   Aplicativos → Zigbee2MQTT, instale com esse caminho e o tipo (`ember` para
   Sonoff ZBDongle-E/EFR32, `zstack` para ZBDongle-P/CC2652). Frontend do z2m
   em `:8080` com `Z2M_FRONTEND_TOKEN` do `.env`. Parear pelo frontend.
-- **Câmeras (F8)**: dispositivo `go2rtc` (`address` {host, port, username},
+- **Câmeras (F8; Lote 3 em `docs/cameras.md`)**: plugin `CameraPlugin` para
+  câmera avulsa (RTSP colado, usuário/senha tirados da URL; ou ONVIF com
+  perfis e ponto `motion` por PullPoint no `Onvif::Listener`,
+  `ONVIF_LISTENER=off` desliga). Dispositivo `go2rtc` (`address` {scheme?, host, port, username, onvif_port?},
   `credential` = senha) e um ponto `stream` por canal (`address` {path};
   use o substream e RTSP/TCP, padrão do go2rtc: o DVR Hikvision entrega H.264
   quebrado no main). O go2rtc sobe sem config; `Go2rtcSyncJob` (a cada minuto)
@@ -291,8 +300,15 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   só os ajustes que mudaram e manda os ids como texto ("5,45", ação 2.16).
   Importação: `... | rake 'xiaomi:importar[Casa]'` (JSON na entrada padrão).
   Robô: só leitura de teste; nada de limpar, voltar, lavar, secar, esvaziar.
-- **Alexa (F8)**: `Alexa::Client` (API não oficial do app, `alexa.amazon.com.br`,
-  cookies de sessão já logada + cabeçalho csrf; sem login nem 2FA aqui) →
+- **Alexa (F8; login próprio no Lote 3)**: `Alexa::Auth` faz o login como o
+  app Alexa (PKCE no navegador da pessoa, ela cola o endereço final com o
+  código; `/auth/register` → refresh token + cookies; `refresh!` por
+  `/ap/exchangetoken/cookies`). Senha e 2FA nunca passam pelo servidor;
+  credenciais = {cookies, refresh_token, serial}, cifradas. O cliente renova
+  uma vez no 401/403 (`renew:`). Spec só com WebMock; nunca use login,
+  cookie ou token do HA nem fale numa Echo de teste. Antes (ainda vale como
+  modo avançado): `Alexa::Client` (API não oficial do app, `alexa.amazon.com.br`,
+  cookies de sessão já logada + cabeçalho csrf) →
   `Drivers::Alexa` (`announce`/`speak` em ponto `speaker`). A conta é
   `Integration` (`credentials` cifrado = {cookie → valor}, `status`,
   `last_error`, `last_ok_at`; tela `/locais/:id/integracoes`, "Atualizar
@@ -311,6 +327,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `Polling::INTEGRATIONS` (Alexa: lista de Echo). "Atualizar agora" na página
   do dispositivo (operador+) → `PollDeviceJob`. Tuya: a conexão curta pode
   esbarrar no LocalTuya do HA (aparelho de conexão única); falhou = indisponível.
+- **Valor empacotado e sensor de pulso (Lote 3)**: endereço do ponto com
+  `decode` (`Points::Decode::DECODERS`), `field`, `match` (nil = ignora),
+  `hold_s` (volta a falso, `PointHoldJob` com carimbo `reported_at`) e
+  `push_only` (Tuya: só o dp empurrado conta). Vem do mapa de dados, nunca
+  de código por aparelho.
 - **Integrações (F8c)**: plugin por tipo em `app/services/integrations/`,
   registrado em `Integrations::PLUGINS`; nada de `case` por tipo fora dele
   (telas = partials `forms/_<key>` e `connect/_<key>`). Mapas de dp/propriedade
