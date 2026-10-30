@@ -160,6 +160,21 @@ RSpec.describe Miio::Cloud do
     expect(list.last["points"]).to eq([])
   end
 
+  it "procurar em todas: região com timeout não derruba as outras; o erro diz só o host" do
+    logged!
+    integration.update!(credentials: integration.secrets.merge("region" => "").to_json)
+    fake_api({ "/v2/homeroom/gethome" => { result: { homelist: [ { id: 1, roomlist: [] } ] } },
+               "/v2/user/get_device_cnt" => { result: {} },
+               "/v2/home/home_device_list" => { result: { device_info: [ { did: "100", name: "Lâmpada", model: "yeelink.light.x", token: token, localip: "192.168.0.10" } ] } } })
+    stub_request(:post, %r{https://(?!us\.)[a-z0-9.]*api\.io\.mi\.com/app/}).to_timeout
+    stub_request(:get, %r{miot-spec.org}).to_return(body: { instances: [] }.to_json)
+    expect(described_class.new(integration).inventory.map { |e| e["id"] }).to eq(%w[100])
+
+    stub_request(:post, /api\.io\.mi\.com/).to_timeout
+    expect { described_class.new(integration).inventory }
+      .to raise_error(described_class::Error, "Sem conexão com a Xiaomi (OpenTimeout em api.io.mi.com).")
+  end
+
   it "sessão vencida: limpa o token e pede login de novo" do
     logged!
     stub_request(:post, /api\.io\.mi\.com/).to_return(status: 401)

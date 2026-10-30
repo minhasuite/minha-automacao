@@ -104,7 +104,17 @@ module Miio
       raise Error, "Conta Xiaomi sem login: entre de novo." unless logged_in?
 
       regions = @s["region"].present? ? [ @s["region"] ] : REGIONS.keys.compact_blank
-      regions.flat_map { |r| devices_in(r) }.uniq { |e| e["id"] }
+      errors = []
+      found = regions.flat_map do |r|
+        devices_in(r)
+      rescue Error => e # "Procurar em todas": uma região fora do ar não derruba as outras
+        Rails.logger.warn("[xiaomi] região #{r}: #{e.message}")
+        errors << e
+        []
+      end
+      raise errors.first if errors.size == regions.size
+
+      found.uniq { |e| e["id"] }
     end
 
     def devices_in(region)
@@ -204,7 +214,7 @@ module Miio
     rescue Net::ReadTimeout
       raise
     rescue SystemCallError, SocketError, Timeout::Error, IOError, OpenSSL::SSL::SSLError, JSON::ParserError => e
-      raise Error, "Sem conexão com a Xiaomi (#{e.class.name.demodulize})."
+      raise Error, "Sem conexão com a Xiaomi (#{e.class.name.demodulize} em #{uri&.host})." # só o host: a query leva tokens
     end
   end
 end
