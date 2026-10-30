@@ -30,7 +30,11 @@ referência em `docs/automacoes.md`) + **F8 (1ª metade)**: drivers `mqtt`
 (Mosquitto, ouvinte, descoberta do zigbee2mqtt) e `go2rtc` (câmeras, widget
 `camera` com quadro e ao vivo por WebRTC passando pelo Rails) + **F8 (2ª metade)**:
 `integrations` (conta da Alexa), drivers `xiaomi_miot` (robô por miIO local,
-widget `vacuum`) e `alexa` (anúncio/fala, canal `alexa:<ponto>` nos avisos).
+widget `vacuum`) e `alexa` (anúncio/fala, canal `alexa:<ponto>` nos avisos). + **F8c**:
+integrações de conta como plugins (`Integrations::Plugin`, catálogo, assistente,
+varredura e adoção; Tuya/Smart Life por QR, Xiaomi, Alexa, DVR Hikvision,
+MQTT/Zigbee2MQTT, importar do HA) e a lista de dispositivos do local
+(`docs/integracoes.md`).
 
 ## Rodar
 
@@ -43,7 +47,7 @@ docker compose -f .devcontainer/docker-compose.yml exec -T app bash -c \
 `bash -c`, não `bash -lc`. Detalhes em `docs/DEV_ENV.md`. Seeds:
 `bin/rails db:seed` (matriz de IA, flags e, só em dev, `teste@teste.com` /
 `12345678`). Web: `bin/rails tailwindcss:build` antes de abrir a tela ou
-rodar spec que renderiza layout. Cobertura mínima 70%.
+rodar spec que renderiza layout. Cobertura mínima 90%.
 
 ## Decisões que não se deduzem do código
 
@@ -219,6 +223,13 @@ rodar spec que renderiza layout. Cobertura mínima 70%.
   `Polling::INTEGRATIONS` (Alexa: lista de Echo). "Atualizar agora" na página
   do dispositivo (operador+) → `PollDeviceJob`. Tuya: a conexão curta pode
   esbarrar no LocalTuya do HA (aparelho de conexão única); falhou = indisponível.
+- **Integrações (F8c)**: plugin por tipo em `app/services/integrations/`,
+  registrado em `Integrations::PLUGINS`; nada de `case` por tipo fora dele
+  (telas = partials `forms/_<key>` e `connect/_<key>`). Mapas de dp/propriedade
+  → ponto em `config/device_maps/*.yml`. Varredura casa pelo `driver +
+  external_id` (ou IP com `match: host`): nunca duplica, atualiza chave/IP,
+  marca `removed_at`. A nuvem só descobre; o controle é sempre local. Tuya da
+  nuvem não traz IP nem versão: IP na edição + Reconectar.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 
