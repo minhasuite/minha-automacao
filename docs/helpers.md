@@ -31,6 +31,7 @@ padrão sim; não = volta ao inicial quando o worker sobe, `HelperTypes.boot!`).
 | `group` | Grupo | a dos membros (`measure` para números) | `sources` (membros do mesmo tipo), `mode`: `any`/`all` ou `mean`/`min`/`max`/`sum` | on, off, toggle (só grupo de liga/desliga; repassa a cada membro) |
 | `template` | Sensor calculado | `measure`, `onoff` (só leitura) ou `text` | `kind` (`number`/`bool`/`text`), `expr`, `sources` (pontos cuja chave aparece) | — |
 | `statistics` | Estatística | `measure` | `sources` (um ponto numérico), `func` (`mean`/`min`/`max`/`sum`), `window_s` | — |
+| `dataset_query` | Consulta (Lote 2) | `measure` (`text` no último valor de campo de texto) | `sources` (o conjunto de dados), `op` (tipo de consulta de um valor só), `field`, `window_s`, `filters` | — |
 
 - **Temporizador**: valor `idle` (Parado), `active` (Contando), `paused`
   (Pausado) ou `finished` (Terminou). O fim é um `HelperTimerJob` agendado no
@@ -48,6 +49,10 @@ padrão sim; não = volta ao inicial quando o worker sobe, `HelperTypes.boot!`).
 - **Estatística**: leituras do histórico da janela; sem leitura, o valor
   atual. Só se refaz quando a origem muda (numa janela parada o valor velho
   não sai sozinho).
+- **Consulta** (Lote 2, o sensor `sql` do HA sem SQL): `Datasets::Query` no
+  conjunto de dados (`docs/dados.md`). Refaz a cada linha gravada no conjunto
+  (a mesma `address.sources`, com o id do conjunto); erro = "Com erro",
+  conjunto excluído = indisponível.
 
 ## Automações, painéis e API
 

@@ -103,6 +103,10 @@ uma com o valor visto (`agora: Desligado`).
 | `notify` | `title`, `message?`, `channels?` (plugins de `Notifier::Channels`: `in_app`, `push`, `alexa:<id>`; padrão in_app e push), `to?` (`admins`, `user:<id>`, `role:<papel>`; `role:guest` = todos do local), `buttons?` ([{id, title}], até 3), `camera?` (quadro do go2rtc agora), `image_url?`, `url?` (ao tocar), `priority?` (`normal`/`high`/`critical`), `tag?`, `ttl?`, `sticky?`, `group?`, `clear?` (só apagar a `tag`) | `Notifier.deliver!`, texto Liquid; cada canal usa o que suporta (`docs/push.md`) |
 | `wait_notification` | `actions?`, `timeout`, `continue_on_timeout?`, `response_variable?` | espera a resposta a um aviso **desta execução** (durável); a variável recebe {action, title, user, user_id, data} ou fica vazia no tempo limite |
 | `calendar_events` | `point` (agenda), `start?` (`-1h`, `2h`), `within`, `contains?`, `response_variable?` | eventos da agenda que tocam a janela: {events: [{summary, start, end, all_day, location}], count, titles} |
+| `ai_task` | `prompt` (Liquid, até 4000), `system?`, `cameras?` (quadro agora), `image_urls?` (URL https ou anexo `/rails/active_storage/...`, uma por linha), `output?` (campos `[{name, type, description}]` ou JSON schema; vazio = texto), `temperature?`, `max_tokens?`, `provider?`, `model?`, `response_variable?` | "Pedir à IA" pela IA da instalação (`docs/ia.md`): {data (texto ou os campos), provider, model, tokens, cost} |
+| `ai_data` | `points?`, `areas?`, `tags?` (pelo menos um), `history?` (`24h`) + os campos de `ai_task` | "Gerar dados por IA": põe antes do pedido o estado e o resumo do histórico desses pontos |
+| `dataset_record` | `dataset`, `values` ({campo: texto Liquid}), `response_variable?` | "Registrar dados": grava uma linha no conjunto (`docs/dados.md`); resposta {id, em, ...campos} |
+| `dataset_query` | `dataset`, `op` (plugin de `Datasets::AGGREGATES`: `count`, `sum`, `avg`, `min`, `max`, `last`, `rows`), `field?`, `window?`, `filters?` (Liquid, um por linha), `limit?` | "Consultar dados": {value} ou {value, rows, count} |
 | `http` | `method`, `url`, `headers?`, `secret?` (cifrado, `{{ secret }}`), `body?`, `timeout?` | chama outro sistema pelo `SafeHttp` (sem IP interno; `docs/api-integracoes.md`); resposta em `http_status`/`http_body` (F9); com `response_variable`, {status, body, json} |
 | `wait` | `for` **ou** `expr` (segundos) | espera (job agendado; sobrevive a reinício) |
 | `wait_for` | `conditions`, `timeout`, `continue_on_timeout?` (padrão `true`) | espera as condições valerem; a mudança de ponto retoma na hora |
@@ -119,7 +123,8 @@ que não é de controle; "Seguir se der erro" no editor), a falha vira um passo
 "erro tolerado" no trace e a execução segue.
 
 **Ações que devolvem dados** (`response_variable`, Lote 1): `script` (com
-`wait`), `http`, `calendar_events` e `wait_notification`. A variável é um
+`wait`), `http`, `calendar_events`, `wait_notification` e, no Lote 2,
+`ai_task`, `ai_data`, `dataset_record` e `dataset_query`. A variável é um
 objeto: no texto `{{ agenda.count }}`, `{% for e in agenda.events %}`; na
 expressão `agenda.count > 0`, `r.json.temp * 2`, `lista.0` (índice) e
 `lista.count`. Campo que não existe = erro com o nome no trace.

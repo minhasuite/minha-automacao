@@ -50,7 +50,12 @@ integração, plugin de gatilho/condição/ação e registro de interfaces. +
 **Lote 1 (paridade HA)**: PWA + Web Push (VAPID), canais do aviso como
 plugins (`Notifier::Channels`) e transportes de push (`Push::TRANSPORTS`),
 aviso com botões, imagem e link, gatilho/espera "resposta de aviso",
-`continue_on_error` e `response_variable` (`docs/push.md`).
+`continue_on_error` e `response_variable` (`docs/push.md`) + **Lote 2**: IA da
+instalação (provedores como plugins em `Ai::PROVIDERS`, chave do usuário
+cifrada, Configurações → IA com teste, padrão, limite mensal e uso; ações
+"Pedir à IA" e "Gerar dados por IA"; "Perguntar à casa"; `docs/ia.md`) e
+conjuntos de dados (aba Dados, ações "Registrar/Consultar dados", helper
+Consulta; consultas em `Datasets::AGGREGATES`; `docs/dados.md`).
 
 ## Rodar
 
@@ -117,6 +122,20 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   dados declara `returns` e chama `respond`; a variável é objeto (Liquid
   `{{ r.x }}`, dentaku `r.x`, `lista.count`). Toda ação fora as de controle
   (`control?`) aceita `continue_on_error` (passo "erro tolerado").
+- **IA da instalação (Lote 2)**: provedor = classe em `app/services/ai/providers/`
+  (`Ai::Providers::Base`: `describe` com `capabilities` e `complete`) + nome
+  em `Ai::PROVIDERS`; a IA da suíte (`Ai::Provider.for`) usa os mesmos
+  plugins, só os que têm `env`. Chave do usuário em `AiAccount.api_key`
+  (`encrypts`), nunca na tela, no log ou no `.env`. Toda chamada passa por
+  `Ai::Request` (conta, limite `Ai::Budget`, capacidades) e vira um `AiCall`
+  sem prompt nem resposta. Ollama pelo `SafeHttp` (IP da LAN em `http_allow`).
+  Spec nunca chama provedor de verdade (WebMock ou provedor falso por
+  `stub_const`).
+- **Dados (Lote 2)**: `Dataset`/`DatasetRecord` por local; consulta pelo
+  `Datasets::Query` (tipo em `Datasets::AGGREGATES`, filtro em
+  `Datasets::OPERATORS`), nunca SQL do usuário. Gravar refaz os helpers
+  Consulta pela `address.sources` (= id do conjunto). Campo de select com
+  opções vindas de registro: `options: -> { ... }` e `fd.choices`.
 - **IA**: features em `AiPlanFeature::FEATURES` (`ask`, `daily_summary` são
   placeholders). Grátis não tem IA; Pro no tier light, Max no standard.
   Feature nova = entrada em `DEFAULTS` (a lista entra na chave do cache).
