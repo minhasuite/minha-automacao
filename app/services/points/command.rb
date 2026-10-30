@@ -16,7 +16,7 @@ module Points
 
     COMMANDS = {
       "onoff" => %w[on off toggle], "dimmer" => %w[set], "setpoint" => %w[set], "enum" => %w[select],
-      "text" => %w[set], "command" => %w[press], "gate" => %w[pulse],
+      "text" => %w[set], "command" => %w[press], "gate" => %w[pulse], "datetime" => %w[set],
       "vacuum" => %w[start pause stop home clean_rooms wash_mop dry_mop empty locate], "speaker" => %w[announce speak]
     }.freeze
     VACUUM_SETTINGS = %w[mode suction water route times].freeze
@@ -37,12 +37,18 @@ module Points
       record.reload
     end
 
+    # Comandos que o ponto aceita: os do plugin, se for helper (F8e), ou os da capacidade.
+    def self.commands_for(point) = (plugin = point.helper_type) ? plugin.commands(point) : COMMANDS.fetch(point.capability, [])
+
+    # Comandos sem valor que a tela mostra como botões (helpers: contador, temporizador).
+    def self.actions_for(point) = point.helper_type&.actions(point) || []
+
     # Pontos de ajuste do robô (papel → ponto irmão do mesmo aparelho).
     def self.vacuum_settings(point)
       point.device.points.select { |p| VACUUM_SETTINGS.include?(p.address["role"]) }.index_by { |p| p.address["role"] }
     end
 
-    attr_reader :value
+    attr_reader :point, :command, :value
 
     def initialize(point, command, value)
       @point = point
@@ -54,11 +60,16 @@ module Points
     def new_value
       raise Error.new(:point_disabled, "Ponto desativado.") if @point.disabled || @point.device.disabled
       raise Error.new(:not_writable, "Este ponto só lê, não recebe comando.") unless @point.writable
-      unless COMMANDS.fetch(@point.capability, []).include?(@command)
+      unless self.class.commands_for(@point).include?(@command)
         raise Error.new(:unsupported_command, "Comando \"#{@command}\" não vale para #{@point.capability_label.downcase}.")
       end
       raise Error.new(:driver_unavailable, "O driver #{@point.device.driver} ainda não executa comandos.") unless Drivers.supported?(@point.device)
 
+      (plugin = @point.helper_type) ? plugin.new_value(self) : by_capability
+    end
+
+    # Valor pela regra da capacidade (o plugin de helper parte dele).
+    def by_capability
       case @point.capability
       when "onoff" then { "on" => true, "off" => false }.fetch(@command) { !@point.value }
       when "dimmer", "setpoint" then number

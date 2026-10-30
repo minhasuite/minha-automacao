@@ -20,6 +20,8 @@ module Automations
     safely { PointLink.propagate(point) } if fresh
     safely { NotifyRule.fire(point) } if fresh
     safely { AlertRule.evaluate(point) }
+    # Helpers calculados que dependem do ponto (grupo, sensor calculado, estatística).
+    safely { HelperTypes.on_change(point) }
     # Automações da DSL (F6).
     safely { Triggers.on_change(point, value_was, fresh: fresh) }
   ensure

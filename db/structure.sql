@@ -595,7 +595,8 @@ CREATE TABLE public.points (
     hidden boolean DEFAULT false NOT NULL,
     disabled boolean DEFAULT false NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    helper character varying
 );
 
 
@@ -2536,6 +2537,13 @@ CREATE INDEX index_points_on_site_id ON public.points USING btree (site_id);
 
 
 --
+-- Name: index_points_on_site_id_and_helper; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_points_on_site_id_and_helper ON public.points USING btree (site_id, helper) WHERE (helper IS NOT NULL);
+
+
+--
 -- Name: index_points_on_site_id_and_key; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3772,6 +3780,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261030300001'),
 ('20261030200001'),
 ('20261030100003'),
 ('20261030100002'),

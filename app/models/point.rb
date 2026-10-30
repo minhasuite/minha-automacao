@@ -5,20 +5,22 @@ class Point < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  # §4.3 sem `machine`/`counter` (v1.1). Capacidade → tipo do valor.
+  # §4.3 sem `machine` (v1.1); counter, timer e datetime vêm dos helpers (F8e).
+  # Capacidade → tipo do valor.
   CAPABILITIES = {
     "onoff" => "bool", "dimmer" => "integer", "color" => "json", "gate" => "enum",
     "contact" => "bool", "motion" => "bool", "tamper" => "bool", "problem" => "bool",
     "measure" => "decimal", "enum" => "enum", "setpoint" => "decimal", "command" => nil,
     "text" => "string", "vacuum" => "enum", "speaker" => "json", "stream" => "string",
-    "climate" => "json", "event" => "json"
+    "climate" => "json", "event" => "json", "counter" => "integer", "timer" => "enum", "datetime" => "string"
   }.freeze
   CAPABILITY_LABELS = {
     "onoff" => "Liga/desliga", "dimmer" => "Intensidade", "color" => "Cor", "gate" => "Portão",
     "contact" => "Sensor de abertura", "motion" => "Sensor de movimento", "tamper" => "Violação",
     "problem" => "Problema", "measure" => "Medição", "enum" => "Seleção", "setpoint" => "Valor ajustável",
     "command" => "Botão", "text" => "Texto", "vacuum" => "Robô aspirador", "speaker" => "Alto-falante",
-    "stream" => "Câmera", "climate" => "Clima", "event" => "Evento"
+    "stream" => "Câmera", "climate" => "Clima", "event" => "Evento",
+    "counter" => "Contador", "timer" => "Temporizador", "datetime" => "Data e hora"
   }.freeze
   # Só leitura por natureza (o resto nasce gravável).
   READ_ONLY = %w[contact motion tamper problem measure stream event].freeze
@@ -49,6 +51,7 @@ class Point < ApplicationRecord
   validates :quality, inclusion: { in: QUALITIES }
   validates :scale, :offset, numericality: true
   validates :pulse_ms, :max_on_s, :history_interval_s, :retention_days, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  validates :helper, inclusion: { in: ->(_) { HelperTypes.keys } }, allow_nil: true
   validate :same_site
   validate :options_list
   validate :range_order
@@ -60,6 +63,7 @@ class Point < ApplicationRecord
   audited_attributes :name, :key, :risk, :capability
 
   scope :ordered, -> { order(:name) }
+  scope :helpers, -> { where.not(helper: nil) }
 
   def capability_label = CAPABILITY_LABELS.fetch(capability, capability)
   def risk_label = RISKS.fetch(risk, risk)
@@ -67,6 +71,8 @@ class Point < ApplicationRecord
   def option_values = Array(options).map(&:to_s)
   def numeric? = data_type.in?(%w[integer decimal])
   def bool? = data_type == "bool"
+  # Plugin do helper (F8e); nil = ponto comum.
+  def helper_type = HelperTypes.for(self)
 
   # Único caminho de valor novo (driver, comando virtual): grava o ponto, a
   # leitura de histórico, o evento de qualidade e avisa as telas abertas.
@@ -87,6 +93,25 @@ class Point < ApplicationRecord
       Turbo::StreamsChannel.broadcast_action_to(site, :points, action: :point_changed, target: id)
     end
     Automations.on_change(self, quality_was, value_was) if value_changed
+  end
+
+  # Onde estes pontos aparecem: [rótulo, registro] (dispositivo e helper).
+  def self.usages(site, points)
+    ids = points.pluck(:id, :key).flatten.compact
+    return [] if ids.empty?
+
+    like = ids.map { |v| "%#{sanitize_sql_like(v)}%" }
+    point_ids = points.pluck(:id)
+    [
+      [ "Painel", site.dashboards.where("definition::text LIKE ANY (ARRAY[?])", like) ],
+      [ "Automação", site.automations.where("definition::text LIKE ANY (ARRAY[?])", like) ],
+      [ "Cena", site.scenes.where("items::text LIKE ANY (ARRAY[?])", like) ],
+      [ "Espelhamento", site.point_links.where(source_point_id: point_ids).or(site.point_links.where(target_point_id: point_ids)) ],
+      [ "Aviso", site.notify_rules.where(point_id: point_ids) ],
+      [ "Alerta", site.alert_rules.where(point_id: point_ids) ],
+      [ "Agenda", site.schedules.where(point_id: point_ids) ],
+      [ "Helper", HelperTypes.dependents(site.id, point_ids) ]
+    ].flat_map { |label, scope| scope.map { |r| [ label, r ] } }
   end
 
   # Texto do formulário ("true", "25,5", "open") → valor no tipo do ponto.
@@ -125,7 +150,7 @@ class Point < ApplicationRecord
   def fill_defaults
     self.site_id ||= device&.site_id
     self.data_type ||= CAPABILITIES[capability]
-    self.writable = !capability.in?(READ_ONLY) unless writable_changed?
+    self.writable = !capability.in?(READ_ONLY) unless writable_changed? || helper
     self.min, self.max = 0, 100 if capability == "dimmer" && min.nil? && max.nil?
     self.key ||= [ device&.name, name ].map { |s| s.to_s.parameterize(separator: "_") }.compact_blank.join(".").presence
   end
