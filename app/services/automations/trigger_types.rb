@@ -12,7 +12,7 @@ module Automations
   module TriggerTypes
     extend Block::Registry
 
-    PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger NotificationActionTrigger].freeze
+    PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger NotificationActionTrigger EventTrigger].freeze
 
     class Base < Block
       class << self
@@ -22,6 +22,8 @@ module Automations
         def due?(_t, _site, _local) = false
         def title(_t) = label
         def event = nil
+        # Escuta este evento? Padrão: o nome fixo do plugin (`event`).
+        def listens?(name) = event.present? && event == name
         def fires_on_event?(_t, _payload) = false
         def event_info(t, _payload) = { "type" => t["type"], "title" => title(t) }
       end

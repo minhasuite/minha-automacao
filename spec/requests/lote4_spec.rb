@@ -98,7 +98,15 @@ RSpec.describe "Lote 4: telas de clima e painel" do
     patch "/automacoes/#{a.id}/rascunho", params: { op: "add", target: "actions", type: "weather_forecast" }
     patch "/automacoes/#{a.id}/rascunho", params: { op: "update", target: "actions.0", block: { point: weather_point.id, kind: "hourly", count: "6", response_variable: "tempo" } }
     expect(within(tenant) { a.reload.draft["actions"][0] }).to include("type" => "weather_forecast", "point" => weather_point.id, "kind" => "hourly", "count" => 6, "response_variable" => "tempo")
+    patch "/automacoes/#{a.id}/rascunho", params: { op: "add", target: "triggers", type: "event" }
+    patch "/automacoes/#{a.id}/rascunho", params: { op: "update", target: "triggers.0", block: { event: "porta.aberta", match: "lado: frente" } }
+    %w[fire_event wait_event].each { |t| patch "/automacoes/#{a.id}/rascunho", params: { op: "add", target: "actions", type: t } }
+    patch "/automacoes/#{a.id}/rascunho", params: { op: "update", target: "actions.1", block: { event: "aviso.pronto", data: "quem: {{ trigger.data.lado }}" } }
+    draft = within(tenant) { a.reload.draft }
+    expect(draft["triggers"][0]).to include("type" => "event", "event" => "porta.aberta", "match" => { "lado" => "frente" })
+    expect(draft["actions"][1]).to include("type" => "fire_event", "event" => "aviso.pronto", "data" => { "quem" => "{{ trigger.data.lado }}" })
+    expect(draft["actions"][2]).to include("type" => "wait_event", "timeout" => "10m", "response_variable" => "evento")
     get "/automacoes/#{a.id}/editar"
-    expect(response.body).to include("Ler previsão do tempo", "Por hora", "Devolve na variável")
+    expect(response.body).to include("Ler previsão do tempo", "Por hora", "Devolve na variável", "Disparar evento", "Esperar evento", "Nome do evento")
   end
 end

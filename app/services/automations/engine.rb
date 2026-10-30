@@ -162,6 +162,9 @@ module Automations
           Triggers.event(@run.site_id, "script_finished", { "run_id" => @run.id, "status" => status, "response" => @run.response,
                                                             "error" => (error.presence || "parou sem concluir" if status == "failed") }.compact)
         end
+        # Lote 4 (G6): qualquer execução que termina é um evento ("automação rodou").
+        Triggers.event(@run.site_id, "automation_finished", { "automation_id" => @run.automation_id, "automation" => @run.automation.name,
+                                                              "kind" => @run.automation.kind, "status" => status, "reason" => error.to_s.truncate(120) }, cause: @run)
       end
       :halt
     end

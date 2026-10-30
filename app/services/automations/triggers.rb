@@ -66,18 +66,33 @@ module Automations
       end
     end
 
+    # Eventos do sistema (Lote 4, G6): nome → rótulo. A ação "Disparar evento"
+    # não pode usar estes nomes nem os dos plugins de gatilho.
+    SYSTEM_EVENTS = { "automation_finished" => "Automação ou script terminou", "notification_action" => "Resposta de aviso",
+                      "script_finished" => "Script terminou" }.freeze
+
+    EVENT_NAME = /\A[a-z0-9][a-z0-9_.:-]{0,59}\z/
+
+    def reserved_event?(name) = SYSTEM_EVENTS.key?(name) || TriggerTypes.plugins.any? { |pl| pl.event == name }
+
     # Evento interno com nome e dados (Lote 1: "notification_action" quando
-    # alguém responde a um aviso, "script_finished" quando um script acaba).
+    # alguém responde a um aviso, "script_finished" quando um script acaba;
+    # Lote 4: "automation_finished" e os da ação "Disparar evento").
     # Dispara as automações com gatilho cujo plugin escuta o evento
-    # (`event` + `fires_on_event?`) e retoma as execuções esperando por ele
-    # (espera "event" do motor, com o filtro `match`).
-    def event(site_id, name, payload)
-      plugins = TriggerTypes.plugins.select { |pl| pl.event == name }
+    # (`listens?` + `fires_on_event?`, com o nome em `payload["event"]`) e
+    # retoma as execuções esperando por ele (espera "event" do motor, com o
+    # filtro `match`). `cause`: execução que gerou o evento (laço evitado).
+    def event(site_id, name, payload, cause: nil)
+      payload = payload.merge("event" => name)
+      payload["data"] = payload.except("event") unless payload.key?("data") # "Esperar evento" e {{ trigger.data }} leem daqui
+      plugins = TriggerTypes.plugins.select { |pl| pl.listens?(name) }
       if plugins.any?
         Automation.where(site_id: site_id, enabled: true)
                   .where(([ "definition->'triggers' @> ?" ] * plugins.size).join(" OR "), *plugins.map { |pl| [ { type: pl.key } ].to_json }).find_each do |a|
-          t = a.definition["triggers"].find { |tr| (pl = TriggerTypes[tr["type"]]) && pl.event == name && pl.fires_on_event?(tr, payload) } or next
-          Automations.safely { a.fire!(TriggerTypes[t["type"]].event_info(t, payload)) }
+          next if name == "automation_finished" && cause&.automation_id == a.id # o próprio fim não dispara de novo
+
+          t = a.definition["triggers"].find { |tr| (pl = TriggerTypes[tr["type"]]) && pl.listens?(name) && pl.fires_on_event?(tr, payload) } or next
+          Automations.safely { a.fire!(TriggerTypes[t["type"]].event_info(t, payload), cause: cause) }
         end
       end
       AutomationRun.where(site_id: site_id, status: "waiting", dry_run: false)

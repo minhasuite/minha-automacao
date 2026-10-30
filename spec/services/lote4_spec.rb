@@ -9,9 +9,10 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
 
   around { |ex| ActsAsTenant.with_tenant(tenant) { travel_to(Time.zone.parse("2026-10-30 12:00")) { ex.run } } }
 
-  def build(definition)
+  def build(definition, enabled: false)
     a = Automation.create!(site: site, name: "Teste #{SecureRandom.hex(3)}", kind: "automation", mode: "single")
     a.publish!(definition)
+    a.update!(enabled: true) if enabled
     a
   end
 
@@ -224,6 +225,52 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
     end
   end
 
+  describe "eventos (G6)" do
+    let(:manual) { [ { "type" => "manual" } ] }
+
+    it "Disparar evento acorda o gatilho Evento com filtro e dados; Esperar evento retoma com os dados" do
+      ouvinte = build({ "triggers" => [ { "type" => "event", "event" => "porta.aberta", "match" => { "lado" => "frente" } } ],
+                        "actions" => [ { "type" => "set", "var" => "quem", "value" => "{{ trigger.event }}:{{ trigger.data.quem }}" } ] }, enabled: true)
+      espera = build({ "triggers" => manual, "actions" => [ { "type" => "wait_event", "event" => "porta.aberta", "match" => { "lado" => "fundos" }, "timeout" => "5m", "response_variable" => "ev" },
+                                                            { "type" => "set", "var" => "vi", "value" => "{{ ev.quem }}" } ] })
+      waiting = espera.fire!({ "type" => "manual" })
+      expect(waiting.status).to eq("waiting")
+
+      disparo = ->(lado) { build({ "triggers" => manual, "actions" => [ { "type" => "fire_event", "event" => "porta.aberta", "data" => { "lado" => lado, "quem" => "{{ site.name }}", "error" => "x" } } ] }) }
+      run = disparo.("frente").fire!({ "type" => "manual" })
+      expect(run.steps.last).to include("title" => "Disparar evento porta.aberta", "detail" => "lado, quem, error")
+      got = ouvinte.runs.order(:created_at).last
+      expect(got).to have_attributes(status: "done", depth: 1)
+      expect(got.state["vars"]["quem"]).to eq("porta.aberta:Local")
+      expect(waiting.reload.status).to eq("waiting") # filtro "fundos" não bateu
+
+      disparo.("fundos").fire!({ "type" => "manual" })
+      expect(waiting.reload.status).to eq("done")
+      expect(waiting.state["vars"]).to include("vi" => "Local")
+      expect(ouvinte.runs.count).to eq(1)
+
+      sim = disparo.("frente").simulate!
+      expect(sim.steps.last["result"]).to eq("simulated")
+      expect(ouvinte.runs.count).to eq(1)
+    end
+
+    it "automação terminou é evento do sistema; o próprio fim não redispara; nomes do sistema são reservados" do
+      alvo = build({ "triggers" => manual, "actions" => [ { "type" => "stop", "reason" => "fim" } ] })
+      fiscal = build({ "triggers" => [ { "type" => "event", "event" => "automation_finished", "match" => { "automation" => alvo.name } } ],
+                       "actions" => [ { "type" => "set", "var" => "st", "value" => "{{ trigger.data.status }}/{{ trigger.data.reason }}" } ] }, enabled: true)
+      todos = build({ "triggers" => [ { "type" => "event", "event" => "automation_finished" } ], "actions" => [ { "type" => "set", "var" => "x", "expr" => "1" } ] }, enabled: true)
+      alvo.fire!({ "type" => "manual" })
+      expect(fiscal.runs.sole.state["vars"]["st"]).to eq("stopped/fim")
+      expect(todos.runs.count).to eq(2) # o fim do alvo e o do fiscal; o próprio fim não conta
+      expect(AutomationRun.where(status: "loop").count).to eq(0)
+
+      errors = Automations::Dsl.errors({ "triggers" => manual, "actions" => [ { "type" => "fire_event", "event" => "automation_finished" },
+                                                                                { "type" => "fire_event", "event" => "Com Espaço" } ] }, site).join(" | ")
+      expect(errors).to include("\"automation_finished\" é um evento do sistema", "nome do evento")
+      expect(Automations::TriggerTypes["event"].title({ "event" => "automation_finished" })).to eq("Evento Automação ou script terminou")
+    end
+  end
+
   describe "plugins falsos (aberto/fechado)" do
     it "um provedor de clima novo entra pelo registro e alimenta pontos, ação e widget sem mexer no núcleo" do
       fake = Class.new(Weather::Providers::Base) do
@@ -261,6 +308,21 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       expect(Points::Query.new(site).call("icon=light-bulb").map(&:key)).to eq([ "l1" ])
       run = build({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "set", "var" => "n", "expr" => %(count_points("icon=light-bulb")) } ] }).fire!({ "type" => "manual" })
       expect(run.state["vars"]["n"]).to eq(1)
+    end
+
+    it "um gatilho de evento novo escuta um evento próprio sem mexer no disparo" do
+      fake = Class.new(Automations::TriggerTypes::Base) do
+        describe key: "falso_evento", label: "Evento de teste"
+        def self.event = "teste.algo"
+        def self.fires_on_event?(_t, payload) = payload["n"].to_i > 1
+      end
+      stub_const("Automations::TriggerTypes::FalsoEvento", fake)
+      stub_const("Automations::TriggerTypes::PLUGINS", Automations::TriggerTypes::PLUGINS + %w[FalsoEvento])
+      a = build({ "triggers" => [ { "type" => "falso_evento" } ], "actions" => [ { "type" => "set", "var" => "x", "expr" => "1" } ] }, enabled: true)
+      Automations::Triggers.event(site.id, "teste.algo", { "n" => 1 })
+      Automations::Triggers.event(site.id, "teste.algo", { "n" => 2 })
+      expect(a.runs.count).to eq(1)
+      expect(Automations::Triggers.reserved_event?("teste.algo")).to be(true)
     end
 
     it "um tipo de card novo entra pelo registro: valida, resolve, edita e desenha sem mexer no núcleo" do
