@@ -38,6 +38,7 @@ module Drivers
     # Streams desejados (id do ponto → fonte), de todas as empresas do servidor.
     def wanted = ActsAsTenant.without_tenant { points.to_a }.filter_map { |p| (s = source(p)) && [ p.id, s ] }.to_h
 
+    # Um stream ruim não derruba os outros: fica no log e o ponto "unavailable".
     def sync!
       return unless url
 
@@ -46,10 +47,19 @@ module Drivers
       want.each do |name, src|
         next if Array(current.dig(name, "producers")).any? { |pr| pr["url"] == src }
 
-        # Sem arquivo de config o go2rtc cria o stream e responde 400 ("Config file disabled").
+        # Sem arquivo de config o go2rtc cria/apaga o stream e responde 400
+        # ("config file disabled"); o mesmo vale para o DELETE abaixo.
         request(Net::HTTP::Put, "/api/streams", { name: name, src: src }, ok: [ 400 ])
+      rescue Error => e
+        Rails.logger.warn("[go2rtc] stream #{name}: #{e.message}")
+        p = ActsAsTenant.without_tenant { Point.find_by(id: name) }
+        ActsAsTenant.with_tenant(p.tenant) { quality!(p, "unavailable") } if p
       end
-      (current.keys.grep(UUID) - want.keys).each { |name| request(Net::HTTP::Delete, "/api/streams", { src: name }) }
+      (current.keys.grep(UUID) - want.keys).each do |name|
+        request(Net::HTTP::Delete, "/api/streams", { src: name }, ok: [ 400 ])
+      rescue Error => e
+        Rails.logger.warn("[go2rtc] remover stream #{name}: #{e.message}")
+      end
       want.size
     end
 

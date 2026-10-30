@@ -73,14 +73,19 @@ ponto]}`, guardada cifrada em `integrations.inventory`.
 - **Xiaomi** (`Miio::Cloud`): login próprio (nunca o OAuth do `xiaomi_home`
   do HA). Senha (MD5 + `_sign`), captcha (imagem na tela, texto de volta) ou
   QR do Mi Home (`longPolling/loginUrl`), que é o caminho quando a Xiaomi
-  pede 2FA. API do app cifrada em RC4 (`gethome`, `get_device_cnt`,
+  pede 2FA. O `lp` do QR vale **uma** requisição (largar por timeout e
+  repetir dá 403): o `XiaomiQrLoginJob` segura uma só, numa thread do
+  worker, até o QR vencer (~5 min); a tela só lê o estado e mostra
+  "QR expirou, gere outro." quando vence. API do app cifrada em RC4 (`gethome`, `get_device_cnt`,
   `home_device_list`), servidor escolhido ou todos. Pontos: robô pelo
   `Miio::Vacuum`; o resto pela especificação pública do miot-spec.org.
 - **Alexa**: cookies da sessão (`Alexa::Import`), varredura = lista de Echo.
 - **Câmeras / DVR** (`Isapi`): ISAPI Hikvision com Digest
   (`/ISAPI/System/deviceInfo`, `/ISAPI/Streaming/channels`), um aparelho
   `go2rtc` com um ponto `stream` por canal no substream (x02). O
-  `Go2rtcSyncJob` põe as câmeras no go2rtc. ONVIF fica para depois.
+  `Go2rtcSyncJob` põe as câmeras no go2rtc (sem arquivo de config, PUT e
+  DELETE respondem 400 e valem; stream que falha vai para o log e o ponto
+  fica `unavailable`, sem parar os outros). ONVIF fica para depois.
 - **MQTT / Zigbee2MQTT**: sem conta; o card liga os aparelhos `mqtt` do local
   (a descoberta continua no `Mqtt::Z2m`).
 - **Google Agenda / ICS** (F9, `CalendarPlugin`, `Calendars`): modo **link

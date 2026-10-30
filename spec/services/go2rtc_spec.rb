@@ -58,6 +58,26 @@ RSpec.describe Drivers::Go2rtc do
     expect(del).to have_been_requested
   end
 
+  # No Dell: o DELETE sem arquivo de config também responde 400 e derrubava o
+  # sync a cada minuto, um stream removido por vez.
+  it "sync!: 400 do DELETE é normal e um stream ruim não derruba os outros" do
+    import(cams)
+    c1, c2, quintal = stream("Canal 1"), stream("Canal 2"), stream("Quintal")
+    olds = %w[11111111-2222-3333-4444-555555555555 66666666-2222-3333-4444-555555555555]
+    stub_request(:get, "#{base}/api/streams").to_return(body: olds.index_with({}).to_json)
+    stub_request(:put, %r{#{base}/api/streams\?}).to_return(status: 400, body: "config file disabled")
+    stub_request(:put, %r{#{base}/api/streams\?name=#{c1.id}}).to_return(status: 500)
+    stub_request(:delete, "#{base}/api/streams?src=#{olds[0]}").to_raise(Errno::ECONNRESET)
+    del = stub_request(:delete, "#{base}/api/streams?src=#{olds[1]}").to_return(status: 400, body: "config file disabled")
+
+    expect(described_class.sync!).to eq(3)
+    expect(a_request(:put, "#{base}/api/streams").with(query: hash_including(name: c2.id))).to have_been_made
+    expect(a_request(:put, "#{base}/api/streams").with(query: hash_including(name: quintal.id))).to have_been_made
+    expect(del).to have_been_requested
+    expect(stream("Canal 1").quality).to eq("unavailable")
+    expect(stream("Quintal").quality).not_to eq("unavailable")
+  end
+
   it "sem GO2RTC_URL (VPS) não faz nada" do
     ENV["GO2RTC_URL"] = nil
     expect(described_class.sync!).to be_nil
