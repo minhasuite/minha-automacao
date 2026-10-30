@@ -39,7 +39,9 @@ dos painéis + **F8e**: helpers como plugins (`HelperTypes`, aba "Helpers"
 do local; `docs/helpers.md`) + **F8f**: gatilhos, condições e ações da DSL
 como plugins, seção "Automações e cenas" (Automações · Cenas · Scripts ·
 Blueprints · Regras simples), scripts com campos, cenas com captura e
-blueprints com importação do HA (`docs/scripts.md`, `docs/blueprints.md`).
+blueprints com importação do HA (`docs/scripts.md`, `docs/blueprints.md`) +
+**F8g**: aplicativos (Configurações → Aplicativos, loja, catálogo em
+`config/apps/*.yml` e o supervisor com o socket do Docker; `docs/aplicativos.md`).
 
 ## Rodar
 
@@ -211,17 +213,16 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   reconexão até 60 s). Comando só publica; o eco do estado atualiza o ponto.
   Broker e senha são do servidor (`.env`), por isso não há tabela
   `integrations`: credencial de aparelho continua em `devices.credential`.
-- **zigbee2mqtt (F8)**: serviço no perfil `zigbee`, desligado até o
-  coordenador USB chegar. Descoberta: `zigbee2mqtt/bridge/devices` (retido) →
+- **zigbee2mqtt (F8, aplicativo desde a F8g)**: app `zigbee2mqtt` do catálogo,
+  não instalado até o coordenador USB chegar. Descoberta: `zigbee2mqtt/bridge/devices` (retido) →
   `Mqtt::Z2m.discover!` (dispositivo por `ieee_address`, ponto pela
   propriedade, chave `nome_z2m.propriedade`; exposes binário/numérico/enum/
   texto → onoff, contato, movimento, problema, medição, dimmer, setpoint,
   enum, evento). Local: `Z2M_SITE_ID` ou o único local do servidor.
-  **Para ligar:** no Dell, `ls /dev/serial/by-id/`; no `.env`,
-  `ZIGBEE_DEVICE=/dev/serial/by-id/usb-...` e `ZIGBEE_ADAPTER=` (`ember` para
-  Sonoff ZBDongle-E/EFR32, `zstack` para ZBDongle-P/CC2652); `bin/deploy-local`
-  liga o perfil sozinho. Frontend do z2m em `:8080` com
-  `Z2M_FRONTEND_TOKEN` do `.env`. Parear com `permit_join` pelo frontend.
+  **Para ligar:** no Dell, `ls /dev/serial/by-id/`; em Configurações →
+  Aplicativos → Zigbee2MQTT, instale com esse caminho e o tipo (`ember` para
+  Sonoff ZBDongle-E/EFR32, `zstack` para ZBDongle-P/CC2652). Frontend do z2m
+  em `:8080` com `Z2M_FRONTEND_TOKEN` do `.env`. Parear pelo frontend.
 - **Câmeras (F8)**: dispositivo `go2rtc` (`address` {host, port, username},
   `credential` = senha) e um ponto `stream` por canal (`address` {path};
   use o substream e RTSP/TCP, padrão do go2rtc: o DVR Hikvision entrega H.264
@@ -290,6 +291,18 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   volta ao inicial no início do worker (`HelperTypes.boot!`). Telas e
   widgets desenham pela capacidade/comandos (`commands_for`/`actions_for`),
   nunca pelo tipo de helper.
+- **Aplicativos (F8g)**: o Rails NUNCA monta o socket do Docker; só o
+  serviço `supervisor` (`supervisor/server.rb`, imagem do app, `:8099` só na
+  rede interna, `SUPERVISOR_TOKEN`). Catálogo = manifestos em
+  `config/apps/*.yml` lidos por `lib/app_catalog.rb` (Ruby puro, usado pelos
+  dois lados): imagem/portas/volumes/rede/devices só do manifesto, do pedido só
+  as opções do schema. App novo = um YAML + spec do catálogo verde, nada de
+  código (`docs/aplicativos.md`). Containers `ma-app-<chave>` com o label
+  `minha-automacao.app`; o supervisor só mexe neles e, nos apps do sistema
+  (Mosquitto, go2rtc), só status/log/reiniciar. Web só para o Dono, ação vira
+  `AuditEvent` `app.<ação>`. "Abrir interface" redireciona para a porta do app
+  na rede de casa (sem proxy: websocket). Sem `SUPERVISOR_URL` (VPS) só o
+  catálogo.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 
@@ -298,10 +311,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
 Debian `192.168.68.199` (`ssh -i ~/.ssh/dell_automacao herlon@…`), em
 `/opt/minha-automacao`: `docker-compose.yml` (= `docker-compose.local.yml`),
 `.env` (chmod 600, segredos gerados lá; nunca no repo: inclui
-`MQTT_PASSWORD` e `Z2M_FRONTEND_TOKEN`), `backups/` (pg_dump diário, 7 dias).
+`MQTT_PASSWORD`, `Z2M_FRONTEND_TOKEN` e `SUPERVISOR_TOKEN`), `backups/` (pg_dump diário, 7 dias).
 Serviços: db, web, worker, mosquitto (1883 na rede local), go2rtc (só 8555
-de mídia exposta), backup, cloudflared (perfil `tunnel`) e zigbee2mqtt
-(perfil `zigbee`). `bin/deploy-local [tag]` no WSL: usa a imagem local do
+de mídia exposta), supervisor (aplicativos; socket do Docker, sem porta),
+backup e cloudflared (perfil `tunnel`). Apps instalados (`ma-app-*`) ficam
+fora do compose, na rede `minha-automacao-apps` ou na `bridge`. `bin/deploy-local [tag]` no WSL: usa a imagem local do
 runner (ou puxa), `docker save | ssh docker load`, sobe e espera o `/up`. Web
 em `http://192.168.68.199/` (HTTP na rede: `ASSUME_SSL`/`FORCE_SSL=false`).
 Túnel: serviço `cloudflared` (perfil `tunnel`) liga sozinho quando o `.env`
