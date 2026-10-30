@@ -1,0 +1,26 @@
+<%= render "web/shared/header", title: "Importar blueprint do Home Assistant", subtitle: "#{@site.name} · cole o YAML ou o endereço; o que a DSL daqui não roda aparece como não suportado", back: site_blueprints_path(@site) %>
+<% if @error %>
+  <div class="rounded-xl bg-danger-soft text-danger p-3 text-sm mb-4 max-w-3xl" role="alert">
+    <p class="font-bold">Não importou: <%= @error %></p>
+    <% if @unsupported.present? %><p class="mt-1">Não suportado: <%= @unsupported.join("; ") %>.</p><% end %>
+  </div>
+<% end %>
+<%= form_with url: site_blueprints_path(@site), class: "ss-card ss-card-pad grid gap-4 max-w-3xl" do %>
+  <div>
+    <label class="ss-label" for="bp-url">Endereço (GitHub, gist ou comunidade do HA)</label>
+    <%= url_field_tag :url, params[:url], class: "ss-input", id: "bp-url", placeholder: "https://github.com/.../blueprints/automation/motion_light.yaml" %>
+  </div>
+  <p class="text-sm text-muted text-center">ou</p>
+  <div>
+    <label class="ss-label" for="bp-yaml">YAML do blueprint</label>
+    <%= text_area_tag :yaml, params[:yaml], id: "bp-yaml", rows: 14, spellcheck: false, class: "ss-input num text-xs leading-relaxed", placeholder: "blueprint:\n  name: ...\n  domain: automation\n  input: ..." %>
+  </div>
+  <div class="rounded-xl bg-accent-soft p-3 text-sm text-ink-2">
+    <p class="font-semibold text-ink">O que converte</p>
+    <p>Entradas entity, target, number, boolean, select, text, time e duration; gatilhos state, numeric_state, time e sun; condições state, numeric_state e time; ações ligar/desligar/alternar (light, switch, fan, input_boolean), notify e delay. O resto fica listado como não suportado.</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <%= button_tag type: "submit", class: "ss-btn ss-btn-primary" do %><%= icon("download", "size-4") %>Importar<% end %>
+    <%= link_to "Cancelar", site_blueprints_path(@site), class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

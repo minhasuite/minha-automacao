@@ -1,0 +1,15 @@
+{
+  "name": "Desligar após X minutos ligado",
+  "description": "Desliga sozinho o que ficou ligado mais tempo que o combinado (luz, tomada, ventilador).",
+  "domain": "automation",
+  "mode": "single",
+  "inputs": [
+    { "key": "alvo", "label": "O que desligar", "type": "point", "filter": { "capability": ["onoff"], "writable": true } },
+    { "key": "tempo", "label": "Depois de ligado por", "type": "duration", "default": "30m" }
+  ],
+  "definition": {
+    "triggers": [ { "type": "state", "point": { "!input": "alvo" }, "to": true, "for": { "!input": "tempo" } } ],
+    "conditions": [],
+    "actions": [ { "type": "command", "point": { "!input": "alvo" }, "command": "off" } ]
+  }
+}

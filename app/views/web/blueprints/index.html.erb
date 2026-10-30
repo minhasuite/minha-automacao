@@ -1,0 +1,24 @@
+<%= render "web/shared/header", title: "Automações e cenas", subtitle: "#{@site.name} · blueprints: modelos prontos para criar automações preenchendo um formulário" do %>
+  <% if can?(:manage) %><%= link_to new_site_blueprint_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("download", "size-4") %>Importar do HA<% end %><% end %>
+<% end %>
+<%= render "web/automations/tabs", site: @site, current: :blueprints %>
+
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  <% @blueprints.each do |b| %>
+    <article class="ss-card ss-card-pad flex flex-col gap-3 min-w-0" id="blueprint-<%= b.id %>">
+      <div class="flex items-start gap-3">
+        <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(b.domain == "script" ? "play" : "duplicate") %></span>
+        <div class="min-w-0">
+          <h2 class="!text-base break-words"><%= link_to b.name, blueprint_path(b), class: "text-ink no-underline hover:text-accent" %></h2>
+          <p class="text-xs text-muted"><%= [ b.domain_label, b.source_label, count_label(@counts.fetch(b.id, 0), "criada", "criadas") ].join(" · ") %></p>
+        </div>
+      </div>
+      <% if b.description.present? %><p class="text-sm text-ink-2 line-clamp-3"><%= b.description %></p><% end %>
+      <% if b.unsupported.any? %><p class="text-xs text-warn flex gap-1"><%= icon("exclamation-circle", "size-4 shrink-0") %><%= count_label(b.unsupported.size, "parte não suportada", "partes não suportadas") %></p><% end %>
+      <div class="mt-auto flex flex-wrap gap-2">
+        <% if can?(:manage) %><%= link_to use_blueprint_path(b), class: "ss-btn ss-btn-primary ss-btn-sm" do %><%= icon("plus", "size-4") %>Criar <%= b.domain == "script" ? "script" : "automação" %><% end %><% end %>
+        <%= link_to "Ver", blueprint_path(b), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+      </div>
+    </article>
+  <% end %>
+</div>

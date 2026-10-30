@@ -1,0 +1,44 @@
+<% noun = @blueprint.domain == "script" ? "script" : "automação" %>
+<% points = @site.points.includes(:device, :area).ordered.to_a %>
+<%= render "web/shared/header", title: "Criar #{noun}", subtitle: "#{@site.name} · a partir de \"#{@blueprint.name}\"", back: blueprint_path(@blueprint) %>
+<% if @errors.present? %>
+  <div class="rounded-xl bg-danger-soft text-danger p-3 text-sm mb-4 max-w-3xl" role="alert">
+    <p class="font-bold">Falta acertar:</p>
+    <ul class="list-disc pl-5 mt-1"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+  </div>
+<% end %>
+<%= form_with url: use_blueprint_path(@blueprint), class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl" do %>
+  <div class="sm:col-span-2"><label class="ss-label" for="bp-name">Nome</label><%= text_field_tag :name, params[:name] || @blueprint.name, class: "ss-input", id: "bp-name", maxlength: 120, required: true %></div>
+  <% @blueprint.inputs.each do |input| %>
+    <% id = "in-#{input['key']}" %>
+    <% name = "inputs[#{input['key']}]" %>
+    <% value = @values.key?(input["key"]) ? @values[input["key"]] : input["default"] %>
+    <div class="min-w-0 <%= 'sm:col-span-2' if input['type'] == 'point' %>">
+      <label class="ss-label" for="<%= id %>"><%= input["label"] %><%= " *" if @blueprint.required?(input) %></label>
+      <% if input["type"] == "point" %>
+        <% caps = Array(input.dig("filter", "capability")) %>
+        <% list = points.select { |p| (caps.empty? || caps.include?(p.capability)) && (!input.dig("filter", "writable") || p.writable) } %>
+        <% groups = list.group_by { |p| p.area&.name || p.device.name }.sort.map { |g, ps| [ g, ps.map { |p| [ p.name, p.id ] } ] } %>
+        <%= select_tag name, grouped_options_for_select(groups, value), include_blank: (list.empty? ? "Nenhum ponto serve" : "Escolha o ponto"), class: "ss-input", id: id %>
+        <% if caps.any? %><p class="text-xs text-muted mt-1">Só <%= caps.map { |c| Point::CAPABILITY_LABELS.fetch(c, c).downcase }.join(" ou ") %>, agrupados por área.</p><% end %>
+      <% elsif input["type"] == "boolean" %>
+        <%= select_tag name, options_for_select([ %w[Sim true], %w[Não false] ], value.nil? ? nil : value.to_s), class: "ss-input", id: id %>
+      <% elsif input["type"] == "select" %>
+        <%= select_tag name, options_for_select(Array(input["options"]), value), include_blank: !@blueprint.required?(input), class: "ss-input", id: id %>
+      <% elsif input["type"] == "time" %>
+        <%= time_field_tag name, value, class: "ss-input", id: id %>
+      <% elsif input["type"] == "number" %>
+        <%= text_field_tag name, value, class: "ss-input num", id: id, inputmode: "decimal" %>
+      <% else %>
+        <%= text_field_tag name, value, class: "ss-input", id: id, maxlength: 500, placeholder: (input["type"] == "duration" ? "30s, 5m, 1h30m" : nil) %>
+      <% end %>
+      <% if input["description"].present? %><p class="text-xs text-muted mt-1"><%= input["description"] %></p><% end %>
+    </div>
+  <% end %>
+  <div><label class="ss-label" for="bp-area">Área (opcional)</label><%= select_tag :area_id, options_for_select(@site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, params[:area_id]), include_blank: "Nenhuma", class: "ss-input", id: "bp-area" %></div>
+  <p class="sm:col-span-2 text-sm text-muted">A <%= noun %> nasce publicada<%= " e desligada" unless @blueprint.domain == "script" %>, ligada a este blueprint: se ele mudar, você recebe o rascunho novo para revisar.</p>
+  <div class="sm:col-span-2 flex flex-wrap gap-2">
+    <%= button_tag type: "submit", class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Criar <%= noun %><% end %>
+    <%= link_to "Cancelar", blueprint_path(@blueprint), class: "ss-btn ss-btn-ghost" %>
+  </div>
+<% end %>

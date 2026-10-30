@@ -1,0 +1,20 @@
+{
+  "name": "Ligar luz por movimento com tempo de desligar",
+  "description": "Acende a luz quando o sensor vê movimento e apaga depois de um tempo sem movimento. Movimento novo recomeça a contagem.",
+  "domain": "automation",
+  "mode": "restart",
+  "inputs": [
+    { "key": "sensor", "label": "Sensor de movimento", "type": "point", "filter": { "capability": ["motion", "contact"] } },
+    { "key": "luz", "label": "Luz", "type": "point", "filter": { "capability": ["onoff"], "writable": true } },
+    { "key": "tempo", "label": "Desligar depois de (sem movimento)", "type": "duration", "default": "2m" }
+  ],
+  "definition": {
+    "triggers": [ { "type": "state", "point": { "!input": "sensor" }, "to": true } ],
+    "conditions": [],
+    "actions": [
+      { "type": "command", "point": { "!input": "luz" }, "command": "on" },
+      { "type": "wait_for", "conditions": [ { "type": "state", "point": { "!input": "sensor" }, "is": false, "for": { "!input": "tempo" } } ], "timeout": "6h" },
+      { "type": "command", "point": { "!input": "luz" }, "command": "off" }
+    ]
+  }
+}
