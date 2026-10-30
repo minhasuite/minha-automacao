@@ -303,6 +303,18 @@ th.r .ss-sort { flex-direction: row-reverse; }
   .ss-subnav a { border-radius: 12px; border-color: transparent; background: transparent; }
   .ss-subnav a:hover { background: var(--surface); border-color: var(--line); }
 }
+/* Menu "⋯" (details/summary, sem JS): ações secundárias de um card ou da tela. */
+.ss-menu { position: relative; }
+.ss-menu > summary { list-style: none; cursor: pointer; }
+.ss-menu > summary::-webkit-details-marker { display: none; }
+.ss-menu-list { position: absolute; right: 0; top: calc(100% + .35rem); z-index: 40; min-width: 14rem; padding: .35rem; border-radius: 14px;
+                background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-card); display: grid; gap: .1rem; }
+.ss-menu-list > a, .ss-menu-list > form > button, .ss-menu-list > button { display: flex; align-items: center; gap: .55rem; width: 100%; padding: .55rem .7rem;
+                border-radius: 10px; font-size: .875rem; font-weight: 600; color: var(--ink-2); text-decoration: none; background: transparent;
+                border: 0; cursor: pointer; text-align: left; }
+.ss-menu-list > a:hover, .ss-menu-list > form > button:hover, .ss-menu-list > button:hover { background: var(--field); color: var(--accent); }
+.ss-menu-list .ss-menu-danger { color: var(--danger); }
+.ss-menu-list hr { border: 0; border-top: 1px solid var(--line); margin: .25rem 0; }
 /* Barra de salvar que acompanha a rolagem nos formulários longos. */
 .ss-actions { position: sticky; bottom: 1rem; z-index: 20; display: flex; gap: .5rem; width: fit-content; padding: .5rem; border-radius: 16px;
               background: color-mix(in srgb, var(--surface) 85%, transparent); backdrop-filter: blur(10px);

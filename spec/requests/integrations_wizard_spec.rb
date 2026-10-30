@@ -192,13 +192,17 @@ RSpec.describe "Integrações e dispositivos do local (F8c)" do
     let!(:lamp) { within(tenant) { create(:device, site: site, area: sala, name: "Lâmpada", driver: "tuya_local", model: "LED", integration: conta, address: { "host" => "10.0.0.2", "version" => "3.3" }, last_seen_at: Time.current) } }
     let!(:velha) { within(tenant) { create(:device, site: site, name: "Velha", created_at: 1.month.ago, status: "offline") } }
     let!(:sumiu) { within(tenant) { create(:device, site: site, name: "Sumiu", removed_at: Time.current, integration: conta) } }
+    let!(:nova) { within(tenant) { create(:device, site: site, name: "Adotada", integration: conta, discovered_at: Time.current) } }
 
     it "filtra por integração, área, situação e texto; ações em massa" do
       get "/locais/#{site.id}/dispositivos"
-      expect(response.body).to include("Lâmpada", "Velha", "Sumiu", "Removido da conta", "Sem resposta", "Com os marcados")
+      expect(response.body).to include("Lâmpada", "Velha", "Sumiu", "Removido da conta", "Offline", "Com os marcados")
       get "/locais/#{site.id}/dispositivos", params: { integracao: conta.id, situacao: "new" }
+      expect(response.body).to include("Adotada", "Novo")
+      expect(response.body).not_to include("Sumiu", "Lâmpada")
+      get "/locais/#{site.id}/dispositivos", params: { situacao: "online" }
       expect(response.body).to include("Lâmpada")
-      expect(response.body).not_to include("Sumiu")
+      expect(response.body).not_to include("Adotada")
       get "/locais/#{site.id}/dispositivos", params: { area: "none", q: "vel" }
       expect(response.body).to include("Velha")
       expect(response.body).not_to include("Lâmpada")

@@ -46,17 +46,20 @@ class Device < ApplicationRecord
 
   # Situação da lista de dispositivos (filtro): removido da conta > com erro >
   # sem resposta > novo (7 dias) > respondendo.
-  SITUATIONS = { "online" => "Respondendo", "offline" => "Sem resposta", "error" => "Com erro", "new" => "Novo",
+  SITUATIONS = { "online" => "Online", "offline" => "Offline", "error" => "Com erro", "new" => "Novo",
                  "removed" => "Removido da conta" }.freeze
+  # "Novo" = adotado de uma varredura de conta (`discovered_at`) e ainda sem
+  # nenhum contato; os demais seguem o último contato (status/erro).
   NEW_FOR = 7.days
+  NEW_SQL = "COALESCE(devices.discovered_at > :since AND devices.last_seen_at IS NULL, false)".freeze
 
   scope :in_situation, lambda { |s|
     case s
     when "removed" then where.not(removed_at: nil)
     when "error" then where(removed_at: nil).where("devices.last_error IS NOT NULL OR devices.status = 'error'")
     when "offline" then where(removed_at: nil, status: "offline")
-    when "new" then where(removed_at: nil).where(created_at: NEW_FOR.ago..)
-    when "online" then where(removed_at: nil, status: "online", last_error: nil)
+    when "new" then where(removed_at: nil, last_error: nil).where.not(status: %w[error offline]).where(NEW_SQL, since: NEW_FOR.ago)
+    when "online" then where(removed_at: nil, status: "online", last_error: nil).where.not(NEW_SQL, since: NEW_FOR.ago)
     else all
     end
   }
@@ -66,7 +69,7 @@ class Device < ApplicationRecord
     return "error" if last_error.present? || status == "error"
     return "offline" if status == "offline"
 
-    created_at && created_at > NEW_FOR.ago ? "new" : "online"
+    discovered_at && discovered_at > NEW_FOR.ago && last_seen_at.nil? ? "new" : "online"
   end
 
   # Endereço na rede (formulário): IP e versão do protocolo Tuya.
