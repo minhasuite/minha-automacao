@@ -26,6 +26,20 @@ class Scene < ApplicationRecord
 
   def points = Point.where(id: items.pluck("point_id")).index_by(&:id)
 
+  # Estado atual do ponto → linha da cena que o recoloca nesse valor ("Capturar
+  # estado agora", F8f). Só lê; nil = sem valor ou sem comando que o reponha.
+  def self.capture(point)
+    v = point.value
+    return if v.nil? || point.quality != "good"
+
+    cmds = Points::Command.commands_for(point)
+    item = if [ true, false ].include?(v) && (cmds & %w[on off]).size == 2 then { "command" => v ? "on" : "off" }
+    elsif cmds.include?("set") && !v.is_a?(Hash) then { "command" => "set", "value" => v }
+    elsif cmds.include?("select") then { "command" => "select", "value" => v.to_s }
+    end
+    item&.merge("point_id" => point.id)
+  end
+
   # Risco mais alto entre os pontos: define quem pode acionar.
   def risk = points.values.map(&:risk).max_by { |r| Point::RISKS.keys.index(r) } || "normal"
 
@@ -55,7 +69,7 @@ class Scene < ApplicationRecord
     items.each do |i|
       point = by_id[i["point_id"]]
       next errors.add(:items, "tem ponto de outro local") unless point&.site_id == site_id
-      next if Points::Command::COMMANDS.fetch(point.capability, []).include?(i["command"]) && point.writable
+      next if Points::Command.commands_for(point).include?(i["command"]) && point.writable
 
       errors.add(:items, "tem comando inválido para #{point.name}")
     end

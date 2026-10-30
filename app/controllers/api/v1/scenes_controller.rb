@@ -5,6 +5,8 @@ module Api
     class ScenesController < AutomationController
       self.model = Scene
       self.fields = [ :name, :icon, { items: %i[point_id command value] } ]
+      # Chave de integração (F8f): listar e ver com "read", acionar com "command".
+      self.key_actions = { index: "read", show: "read", activate: "command" }
 
       def activate
         scene = Scene.find(params[:id])

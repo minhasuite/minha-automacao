@@ -54,7 +54,7 @@ module Web
       authorize_site!(@site, action)
     end
 
-    def back_path = url_from(params[:back].presence) || automation_site_path(@site)
+    def back_path = url_from(params[:back].presence) || rules_site_path(@site)
     def defaults = {}
     def record_params = params.require(model.model_name.param_key).permit(*permitted)
   end
