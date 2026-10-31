@@ -162,6 +162,17 @@
   .ss-table tbody tr { transition: background-color .15s ease; }
   .ss-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 4%, transparent); }
   .ss-table .r { text-align: right; }
+  /* Tabela que vira cartões no celular: cada linha um bloco, cada célula "rótulo: valor"
+     (rótulo em data-label). Sem rolagem de lado. */
+  @media (max-width: 639px) {
+    .ss-table-stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .ss-table-stack, .ss-table-stack tbody, .ss-table-stack tr { display: block; }
+    .ss-table-stack tr { padding: .6rem .9rem; border-bottom: 1px solid var(--line); }
+    .ss-table-stack tr:last-child { border-bottom: 0; }
+    .ss-table-stack td { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .2rem 0; border: 0; max-width: none; text-align: right; white-space: normal; overflow-wrap: anywhere; }
+    .ss-table-stack td.hidden { display: none; }
+    .ss-table-stack td[data-label]::before { content: attr(data-label); flex-shrink: 0; text-align: left; font-size: .75rem; font-weight: 600; color: var(--muted); }
+  }
   .ss-card > .ss-table:first-child thead th:first-child, .ss-card > .ss-table:first-child th:first-child { border-top-left-radius: var(--r-card); }
   .ss-card > .ss-table:first-child thead th:last-child { border-top-right-radius: var(--r-card); }
   td.r, .ss-stat { font-variant-numeric: tabular-nums; }
@@ -172,6 +183,7 @@
   .ss-badge-success { background: var(--success-soft); color: var(--success); box-shadow: none; }
   .ss-badge-danger { background: var(--danger-soft); color: var(--danger); box-shadow: none; }
   .ss-badge-warn { background: var(--warn-soft); color: var(--warn); box-shadow: none; }
+  .ss-badge-muted { background: var(--field); color: var(--ink-2); box-shadow: none; }
 
   /* Sidebar escura do meu-financeiro: pílula ativa com gradiente e barra à esquerda. */
   .ss-side { background: var(--side); color: var(--side-ink); }

@@ -46,7 +46,7 @@ class Device < ApplicationRecord
 
   # Situação da lista de dispositivos (filtro): removido da conta > com erro >
   # sem resposta > novo (7 dias) > respondendo.
-  SITUATIONS = { "online" => "Online", "offline" => "Offline", "error" => "Com erro", "new" => "Novo",
+  SITUATIONS = { "online" => "Conectado", "offline" => "Sem sinal", "error" => "Com erro", "new" => "Novo",
                  "removed" => "Removido da conta" }.freeze
   # "Novo" = adotado de uma varredura de conta (`discovered_at`) e ainda sem
   # nenhum contato; os demais seguem o último contato (status/erro).

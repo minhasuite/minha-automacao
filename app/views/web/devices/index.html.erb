@@ -1,4 +1,3 @@
-<% tones = { "online" => "success", "offline" => "danger", "error" => "danger", "new" => "accent", "removed" => "warn" } %>
 <%= render "web/shared/header", title: "Dispositivos", subtitle: "#{@site.name} · todos os aparelhos do local", back: site_path(@site) do %>
   <% if can?(:manage) %><%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("plus", "size-4") %>Novo dispositivo<% end %><% end %>
 <% end %>
@@ -37,18 +36,18 @@
         </thead>
         <tbody>
           <% @devices.each do |d| %>
-            <% s = d.situation %>
+            <% label, tone, note = device_situation(d) %>
             <tr>
               <% if can?(:manage) %><td><input type="checkbox" name="ids[]" value="<%= d.id %>" aria-label="Marcar <%= d.name %>"></td><% end %>
               <td><div class="flex items-center gap-3 min-w-0">
-                <span class="ss-icon-tile size-9 text-accent max-sm:hidden"><%= icon(d.driver == "go2rtc" ? "video-camera" : "cube") %></span>
+                <span class="ss-icon-tile size-9 text-accent max-sm:size-8"><%= icon(device_icon(d)) %></span>
                 <div class="min-w-0"><%= link_to d.name, device_path(d), class: "font-semibold text-ink no-underline hover:text-accent" %><span class="block text-xs text-muted md:hidden"><%= [ d.area&.name, d.manufacturer, d.model ].compact_blank.join(" · ") %></span></div>
               </div></td>
               <td class="hidden md:table-cell text-ink-2"><%= [ d.manufacturer, d.model ].compact_blank.join(" · ").presence || d.driver_label %></td>
               <td class="hidden sm:table-cell"><%= d.area&.name || "—" %></td>
               <td class="hidden sm:table-cell"><%= d.integration&.name || d.driver_label %></td>
               <td class="r num hidden md:table-cell"><%= @points.fetch(d.id, 0) %></td>
-              <td><span class="ss-badge ss-badge-dot ss-badge-<%= tones[s] %>"><%= Device::SITUATIONS[s] %></span></td>
+              <td><span class="ss-badge ss-badge-dot ss-badge-<%= tone %>" title="<%= note %>"><%= label %></span><% if note && tone != "success" %><span class="block text-xs text-muted mt-1 max-w-48 max-md:hidden"><%= note.truncate(70) %></span><% end %></td>
             </tr>
           <% end %>
         </tbody>

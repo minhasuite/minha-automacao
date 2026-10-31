@@ -52,7 +52,7 @@
           <%= [ ("pulso: desliga #{number_with_precision(@point.pulse_ms / 1000.0, precision: 1, strip_insignificant_zeros: true)} s depois de ligar" if @point.pulse_ms),
                 ("desliga depois de #{duration_text(@point.max_on_s)} ligado" if @point.max_on_s) ].compact.join(" · ") %>, ligado por qualquer caminho.
         <% else %>
-          Não desliga sozinho. Use pulso para portão (liga e desliga em segundos) ou um tempo máximo ligado (filtro da piscina).
+          Não desliga sozinho. Use pulso para o que só precisa de um toque (liga e desliga em segundos) ou um tempo máximo ligado (uma bomba ou um aquecedor).
         <% end %>
       </p>
     </div>

@@ -17,7 +17,7 @@
   </div>
 <% else %>
   <% @points.each { |p| %><%= turbo_stream_from p, channel: PointsChannel %><% } %>
-  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><%= render partial: "web/points/point", collection: @points, as: :point %></div>
+  <div class="grid grid-cols-2 gap-3 lg:grid-cols-3"><%= render partial: "web/points/point", collection: @points, as: :point %></div>
 <% end %>
 
 <% s = @device.situation %>
@@ -25,7 +25,8 @@
   <section class="ss-card ss-card-pad" aria-labelledby="diag">
     <h2 id="diag" class="flex items-center gap-2"><%= icon("information-circle", "size-5") %>Diagnóstico</h2>
     <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
-      <div><dt class="text-muted">Situação</dt><dd class="font-semibold text-ink"><%= Device::SITUATIONS[s] %></dd></div>
+      <% label, _tone, note = device_situation(@device) %>
+      <div><dt class="text-muted">Situação</dt><dd class="font-semibold text-ink"><%= label %></dd><% if note && @device.last_error.blank? %><dd class="text-xs text-muted mt-0.5"><%= note %></dd><% end %></div>
       <div><dt class="text-muted">Último contato</dt><dd class="font-semibold text-ink"><%= @device.last_seen_at ? l(@device.last_seen_at, format: :short) : "Ainda não" %></dd></div>
       <div><dt class="text-muted">IP</dt><dd class="font-semibold text-ink num"><%= @device.host.presence || "Não informado" %></dd></div>
       <div><dt class="text-muted">Versão do protocolo</dt><dd class="font-semibold text-ink num"><%= @device.protocol_version.presence || "—" %></dd></div>

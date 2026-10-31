@@ -9,12 +9,12 @@
       <%= render "web/automation/item", title: s.name, detail: schedule_detail(s), record: s, back: back, enabled: s.enabled %>
     <% end %>
   <% end %>
-  <%= render layout: "web/automation/section", locals: { title: "Espelhar", items: lists[:links], new_path: new_site_point_link_path(site, q), empty: "Nenhum espelhamento. Ex.: o interruptor do terraço acende a escada; o interruptor aciona o portão." } do %>
+  <%= render layout: "web/automation/section", locals: { title: "Espelhar", items: lists[:links], new_path: new_site_point_link_path(site, q), empty: "Nenhum espelhamento. Ex.: um interruptor acende outra luz junto, ou um botão aciona outro aparelho." } do %>
     <% lists[:links].each do |l| %>
       <%= render "web/automation/item", title: "#{l.source_point.name} → #{l.target_point.name}", detail: link_detail(l), record: l, back: back, enabled: l.enabled %>
     <% end %>
   <% end %>
-  <%= render layout: "web/automation/section", locals: { title: "Avisos", items: lists[:notify_rules], new_path: new_site_notify_rule_path(site, q), empty: "Nenhum aviso. Ex.: notificar quando o portão abrir." } do %>
+  <%= render layout: "web/automation/section", locals: { title: "Avisos", items: lists[:notify_rules], new_path: new_site_notify_rule_path(site, q), empty: "Nenhum aviso. Ex.: notificar quando uma porta abrir." } do %>
     <% lists[:notify_rules].each do |r| %>
       <%= render "web/automation/item", title: r.point.name, detail: notify_detail(r), record: r, back: back, enabled: r.enabled %>
     <% end %>

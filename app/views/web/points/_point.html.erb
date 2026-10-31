@@ -1,18 +1,22 @@
 <%# locals: (point:, error: nil, target: nil) -%>
-<%= turbo_frame_tag point, class: "block", target: target do %>
+<%# Duas por linha no celular; ponto com campo (número, lista, texto, helper) ocupa a linha toda. %>
+<% wide = point.writable && (point.helper_type || !point.capability.in?(%w[onoff gate command])) %>
+<%= turbo_frame_tag point, class: "block #{'max-sm:col-span-2' if wide}", target: target do %>
   <% on = point_on?(point) %>
-  <div class="ss-card p-4 flex flex-col gap-3 h-full <%= 'ss-card-grad' if on %> <%= 'opacity-60' if point.disabled %>">
+  <% off_line = point.quality.in?(%w[unavailable error]) %>
+  <div class="ss-card p-3 sm:p-4 flex flex-col gap-3 h-full <%= 'ss-card-grad' if on %> <%= 'opacity-60' if point.disabled %>">
     <div class="flex items-start gap-3">
-      <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= on ? 'ss-grad' : 'bg-field text-muted' %>"><%= icon(point_icon(point)) %></span>
+      <span class="grid place-items-center size-8 sm:size-10 shrink-0 rounded-xl <%= on ? 'ss-grad' : 'bg-field text-muted' %>"><%= icon(point_icon(point)) %></span>
       <div class="min-w-0 flex-1">
-        <p class="font-bold text-ink truncate"><%= link_to point.name, point_path(point), data: { turbo_frame: "_top" }, class: "text-ink no-underline hover:text-accent" %></p>
+        <p class="font-bold text-ink line-clamp-2 break-words"><%= link_to point.name, point_path(point), data: { turbo_frame: "_top" }, class: "text-ink no-underline hover:text-accent" %></p>
         <p class="text-xs text-muted truncate"><%= point.capability_label %><%= " · #{point.risk_label}" unless point.risk == "normal" %></p>
       </div>
       <% if can?(:manage) %>
         <%= link_to edit_point_path(point), data: { turbo_frame: "_top" }, class: "grid place-items-center size-8 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", title: "Editar ponto", "aria-label": "Editar #{point.name}" do %><%= icon("pencil", "size-4") %><% end %>
       <% end %>
     </div>
-    <p class="text-2xl font-bold <%= point.value.is_a?(Numeric) ? "num text-ink" : (point.value.nil? ? "text-muted" : "text-ink") %>" aria-live="polite"><%= point_value_text(point) %></p>
+    <p class="text-xl sm:text-2xl font-bold <%= off_line ? "text-danger" : (point.value.is_a?(Numeric) ? "num text-ink" : (point.value.nil? ? "text-muted" : "text-ink")) %>" aria-live="polite"><%= off_line ? "Sem sinal" : point_value_text(point) %></p>
+    <% if (note = point_status_note(point)) %><p class="-mt-2 text-xs text-muted"><%= note %></p><% end %>
     <% if error %><p class="text-sm font-semibold text-danger" role="alert"><%= error %></p><% end %>
     <% if point.writable && !point.disabled && Points::Command.commands_for(point).any? && can?(:command, risk: point.risk) %>
       <% confirm = point_confirm_data(point) %>

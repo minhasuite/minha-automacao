@@ -24,7 +24,7 @@
         <% points = device.points.reject(&:hidden).sort_by(&:name) %>
         <% if points.any? %>
           <% points.each { |p| %><%= turbo_stream_from p, channel: PointsChannel %><% } %>
-          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><%= render partial: "web/points/point", collection: points, as: :point %></div>
+          <div class="grid grid-cols-2 gap-3 lg:grid-cols-3"><%= render partial: "web/points/point", collection: points, as: :point %></div>
         <% else %>
           <p class="ss-card p-4 text-sm text-muted">Sem pontos. <%= link_to("Adicionar ponto", new_device_point_path(device), class: "font-semibold text-accent") if can?(:manage) %></p>
         <% end %>

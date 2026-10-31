@@ -218,7 +218,7 @@ RSpec.describe "Integrações e dispositivos do local (F8c)" do
 
     it "filtra por integração, área, situação e texto; ações em massa" do
       get "/locais/#{site.id}/dispositivos"
-      expect(response.body).to include("Lâmpada", "Velha", "Sumiu", "Removido da conta", "Offline", "Com os marcados")
+      expect(response.body).to include("Lâmpada", "Velha", "Sumiu", "Removido da conta", "Sem sinal", "Com os marcados")
       get "/locais/#{site.id}/dispositivos", params: { integracao: conta.id, situacao: "new" }
       expect(response.body).to include("Adotada", "Novo")
       expect(response.body).not_to include("Sumiu", "Lâmpada")

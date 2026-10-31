@@ -8,7 +8,7 @@ module Web
     def index
       @site = Site.find(params[:site_id])
       authorize_site!(@site, :view)
-      scope = @site.devices.includes(:area, :integration).in_situation(params[:situacao].presence).listed
+      scope = @site.devices.includes(:area, :integration, :points).in_situation(params[:situacao].presence).listed
       scope = scope.where(integration_id: params[:integracao]) if params[:integracao].present?
       scope = scope.where(area_id: params[:area].presence == "none" ? nil : params[:area]) if params[:area].present?
       if (q = params[:q].to_s.squish).present?
@@ -16,7 +16,8 @@ module Web
         scope = scope.left_joins(:area).where("devices.name ILIKE :q OR devices.model ILIKE :q OR devices.manufacturer ILIKE :q OR areas.name ILIKE :q", q: like)
       end
       @points = Point.where(device_id: scope.select(:id)).group(:device_id).count
-      @pagy, @devices = pagy(scope.order(:name), limit: 50)
+      # Ordem sem acento e sem caixa ("Câmera" junto de "Casa", não depois de "COZ").
+      @pagy, @devices = pagy(scope.order(Arel.sql('devices.name COLLATE "und-x-icu"')), limit: 50)
       @integrations = @site.integrations.order(:name)
       @areas = @site.areas.order(:name)
     end
