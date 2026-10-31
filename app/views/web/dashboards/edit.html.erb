@@ -10,28 +10,30 @@
 
 <div class="grid gap-6 lg:grid-cols-3 items-start">
   <div class="lg:col-span-2 flex flex-col gap-4 min-w-0">
-    <nav class="dw-tabs !mt-0" aria-label="Visões do rascunho">
+    <div class="flex items-start gap-2">
+    <nav class="dw-tabs !mt-0 flex-1 min-w-0" aria-label="Visões do rascunho">
       <% views.each do |v| %>
         <%= link_to edit_dashboard_path(@dashboard, view: v["id"]), class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
       <% end %>
-      <details class="dw-pop">
-        <summary class="ss-chip cursor-pointer"><%= icon("plus", "size-4") %>Nova visão</summary>
-        <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "ss-card p-3 mt-2 flex gap-2" do %>
+    </nav>
+      <details class="ss-menu shrink-0 mt-1">
+        <summary class="ss-chip cursor-pointer"><%= icon("plus", "size-4") %><span class="max-sm:sr-only">Nova visão</span></summary>
+        <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "ss-menu-list !flex gap-2 p-3 w-[min(20rem,calc(100vw-2rem))]" do %>
           <%= hidden_field_tag :op, "add_view", id: nil %>
           <label class="sr-only" for="nv-title">Nome da visão</label>
           <%= text_field_tag :title, nil, class: "ss-input", id: "nv-title", placeholder: "Cozinha", required: true, maxlength: 60 %>
           <%= submit_tag "Criar", class: "ss-btn ss-btn-primary" %>
         <% end %>
       </details>
-    </nav>
+    </div>
 
     <% if view %>
       <section class="ss-card ss-card-pad" aria-label="Visão <%= view['title'] %>">
         <div class="flex flex-wrap items-end gap-3">
-          <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-0" do %>
+          <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-64" do %>
             <%= hidden_field_tag :op, "update_view", id: nil %><%= hidden_field_tag :target, view["id"], id: nil %><%= hidden_field_tag :view_id, view["id"], id: nil %>
             <div class="flex-1 min-w-40"><label class="ss-label" for="vt">Nome da visão</label><%= text_field_tag :title, view["title"], class: "ss-input", id: "vt", maxlength: 60 %></div>
-            <div class="w-40"><label class="ss-label" for="vi">Ícone</label><%= select_tag :icon, options_for_select(Dashboard::ICONS, view["icon"]), include_blank: "Padrão", class: "ss-input", id: "vi" %></div>
+            <div class="basis-full"><%= render "web/shared/icon_picker", name: "icon", selected: view["icon"], icons: Dashboard::ICONS, id: "vi", label: "Ícone da visão" %></div>
             <div class="w-40"><label class="ss-label" for="vp">Caminho</label><%= text_field_tag :path, view["path"], class: "ss-input num", id: "vp", maxlength: 40, placeholder: view["id"], pattern: "[a-z0-9][a-z0-9-]*", title: "Letras minúsculas, números e hífen" %></div>
             <%= submit_tag "Salvar", class: "ss-btn ss-btn-ghost" %>
           <% end %>
@@ -42,7 +44,7 @@
       <% Array(view["sections"]).each do |s| %>
         <section class="ss-card ss-card-pad" aria-label="Seção <%= s['title'] %>">
           <div class="flex flex-wrap items-end gap-3">
-            <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-0" do %>
+            <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-64" do %>
               <%= hidden_field_tag :op, "update_section", id: nil %><%= hidden_field_tag :target, s["id"], id: nil %><%= hidden_field_tag :view_id, view["id"], id: nil %>
               <div class="flex-1 min-w-40"><label class="ss-label" for="st-<%= s['id'] %>">Seção</label><%= text_field_tag :title, s["title"], class: "ss-input", id: "st-#{s['id']}", maxlength: 60, placeholder: "Sem título" %></div>
               <div class="w-44"><label class="ss-label" for="sw-<%= s['id'] %>">Largura no computador</label>
@@ -63,9 +65,9 @@
                     <span class="grid place-items-center size-9 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(DashboardsHelper::WIDGET_ICONS[w["type"]] || Dashboards::Widgets[w["type"]]&.icon || "cube", "size-4") %></span>
                     <span class="min-w-0 flex-1">
                       <span class="block font-semibold text-ink truncate"><%= w["label"].presence || w["title"].presence || bound.first || Dashboards::Schema.labels[w["type"]] %></span>
-                      <span class="block text-xs text-muted truncate"><%= Dashboards::Schema.labels.fetch(w["type"], w["type"]) %><%= " · #{bound.size} pontos" if bound.size > 1 %> · <span class="num"><%= sp.values_at("mobile", "tablet", "desktop").join(" / ") %></span><%= " · só #{w.dig('visible_if', 'role').map { |r| SiteMembership.role_label(r).downcase }.to_sentence}" if w.dig("visible_if", "role") %></span>
+                      <span class="block text-xs text-muted truncate"><%= Dashboards::Schema.labels.fetch(w["type"], w["type"]) %><%= " · #{bound.size} pontos" if bound.size > 1 %><span class="hidden sm:inline" title="Largura no celular / tablet / computador (de 12)"> · <span class="num"><%= sp.values_at("mobile", "tablet", "desktop").join(" / ") %></span></span><%= " · só #{w.dig('visible_if', 'role').map { |r| SiteMembership.role_label(r).downcase }.to_sentence}" if w.dig("visible_if", "role") %></span>
                     </span>
-                    <span class="ss-btn ss-btn-ghost ss-btn-sm"><%= icon("pencil", "size-4") %><span class="sr-only">Editar</span></span>
+                    <span class="ss-btn ss-btn-ghost ss-btn-sm max-sm:hidden"><%= icon("pencil", "size-4") %><span class="sr-only">Editar</span></span>
                   </summary>
                   <%= render "web/dashboards/widget_form", dashboard: @dashboard, w: w, op: "update_widget", target: w["id"], view_id: view["id"], point_options: point_options, areas: @areas, scenes: scenes %>
                 </details>
@@ -94,7 +96,7 @@
     <%= form_with model: @dashboard, url: dashboard_path(@dashboard), class: "ss-card ss-card-pad grid gap-3" do |f| %>
       <h2>Painel</h2>
       <div><%= f.label :name, "Título", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true %></div>
-      <div><%= f.label :icon, "Ícone", class: "ss-label" %><%= f.select :icon, Dashboard::ICONS, { include_blank: "Padrão" }, class: "ss-input" %></div>
+      <%= render "web/shared/icon_picker", name: "dashboard[icon]", selected: @dashboard.icon, icons: Dashboard::ICONS, id: "dashboard_icon" %>
       <label class="ss-check"><%= f.check_box :sidebar %>Mostrar no menu lateral</label>
       <fieldset><legend class="ss-label">Quem vê <span class="font-normal">(nenhum = todos)</span></legend>
         <div class="flex flex-wrap gap-3">

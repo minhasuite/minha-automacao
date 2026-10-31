@@ -170,7 +170,8 @@ module Web
       return redirect_to(edit_dashboard_path(@dashboard, view: focus[:view], w: focus[:w]), alert: errors.first(3).to_sentence) if errors.any?
 
       @dashboard.update!(draft: definition)
-      redirect_to edit_dashboard_path(@dashboard, view: focus[:view].presence || params[:view_id], w: focus[:w], anchor: focus[:w])
+      redirect_to edit_dashboard_path(@dashboard, view: focus[:view].presence || params[:view_id], w: focus[:w], anchor: focus[:w]),
+                  notice: "Salvo no rascunho. Publique para todos verem."
     end
 
     # Formulário do widget → JSON (só o que vale para o tipo; vazio some).

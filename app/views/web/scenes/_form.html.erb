@@ -7,7 +7,7 @@
   <%= hidden_field_tag :back, params[:back], id: nil %>
   <section class="ss-card ss-card-pad grid gap-4 sm:grid-cols-2">
     <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: "Chegada, Cinema, Boa noite", autofocus: record.new_record? %></div>
-    <div><%= f.label :icon, "Ícone", class: "ss-label" %><%= f.select :icon, HelperTypes::ICONS, { include_blank: "Padrão" }, class: "ss-input" %></div>
+    <div class="sm:col-span-2"><%= render "web/shared/icon_picker", name: "scene[icon]", selected: record.icon, icons: HelperTypes::ICONS, id: "scene_icon" %></div>
   </section>
 
   <section class="ss-card ss-card-pad" aria-labelledby="scene-capture">

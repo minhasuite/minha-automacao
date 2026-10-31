@@ -2,7 +2,7 @@
 <% by_id = points.index_by(&:id) %>
 <section id="campos" class="ss-card ss-card-pad scroll-mt-24" aria-labelledby="sec-fields">
   <h2 id="sec-fields">Campos</h2>
-  <p class="text-sm text-muted mb-3">O que quem chama informa (como os fields do HA). Na sequência: <code>{{ nome }}</code> no texto, <code>nome</code> na expressão, <code>$nome</code> no ponto.</p>
+  <p class="text-sm text-muted mb-3">O que quem chama o script informa. Na sequência: <code>{{ nome }}</code> no texto, <code>nome</code> na expressão, <code>$nome</code> no ponto.</p>
   <% if automation.fields.any? %>
     <ul class="grid gap-2 mb-3">
       <% automation.fields.each_with_index do |fd, i| %>
@@ -12,7 +12,7 @@
               <span class="font-semibold text-ink"><%= fd["label"] %></span>
               <code class="text-sm text-muted"><%= fd["name"] %></code>
               <span class="text-sm text-muted"><%= [ Automation::FIELD_TYPES[fd["type"]], ("obrigatório" if fd["required"]),
-                                                     ("padrão #{fd['type'] == 'point' ? by_id[fd['default']]&.name : fd['default']}" unless fd["default"].nil?) ].compact.join(" · ") %></span>
+                                                     ("padrão #{fd['type'] == 'point' ? by_id[fd['default']]&.name : { true => 'sim', false => 'não' }.fetch(fd['default'], fd['default'])}" unless fd["default"].nil?) ].compact.join(" · ") %></span>
             </summary>
             <%= render "web/automations/field_form", automation: automation, fd: fd, index: i, points: by_id %>
           </details>

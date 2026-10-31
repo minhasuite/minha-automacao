@@ -70,7 +70,8 @@ module Web
       editor = Automations::Editor.new(@automation.working_draft, @site)
       focus = apply(editor)
       @automation.update!(draft: editor.definition)
-      redirect_to edit_automation_path(@automation, b: focus, anchor: focus && "b-#{focus.tr('.', '-')}")
+      redirect_to edit_automation_path(@automation, b: focus, anchor: focus && "b-#{focus.tr('.', '-')}"),
+                  notice: "Salvo no rascunho. Publique para valer."
     rescue KeyError
       redirect_to edit_automation_path(@automation), alert: "Esse bloco não existe mais no rascunho."
     end
