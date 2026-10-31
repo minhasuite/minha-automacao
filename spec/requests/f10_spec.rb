@@ -70,7 +70,7 @@ RSpec.describe "F10: telas da sombra" do
     get "/locais/#{site.id}/sombra/relatorios/#{report.id}.csv"
     expect(response.body).to include("Automação;Referência;Status", "Liga a luz;x.a;MA a menos")
     get "/locais/#{site.id}/sombra"
-    expect(response.body).to include("Comparar agora", "1 ma a menos", "ref_falsa")
+    expect(response.body).to include("Comparar agora", "1 MA a menos", "ref_falsa")
     post "/locais/#{site.id}/sombra/comparar", params: { fonte: "nao_existe" }
     expect(flash[:alert]).to include("desconhecida")
   end

@@ -7,7 +7,7 @@ module ShadowHelper
   def shadow_summary(report)
     list = ShadowReport::STATUSES.keys.excluding("idle").filter_map do |s|
       n = report.summary[s].to_i
-      "#{n} #{ShadowReport.status_label(s).downcase}" if n.positive?
+      "#{n} #{ShadowReport.status_label(s).sub(/\A[A-Z](?=[a-z])/, &:downcase)}" if n.positive?
     end
     list.join(", ").presence || "sem disparos"
   end
