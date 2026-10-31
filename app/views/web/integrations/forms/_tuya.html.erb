@@ -6,4 +6,4 @@
   <li>Cole aqui. Na próxima tela aparece um QR code para escanear com o próprio app.</li>
 </ol>
 <div><%= f.label :user_code, "Código de usuário", class: "ss-label" %><%= f.text_field :user_code, class: "ss-input num", required: true, autocomplete: "off", value: integration&.secrets&.dig("user_code") %></div>
-<p class="text-xs text-muted">A conta só serve para descobrir os aparelhos e buscar a chave local de cada um. O controle continua direto na rede da casa.</p>
+<p class="text-xs text-muted">Como no Home Assistant: os aparelhos da conta, inclusive os Zigbee do hub, entram com estado em tempo real e comando pela nuvem da Tuya. O que já está na rede local (LocalTuya) continua sendo comandado direto na rede. Conectar aqui não desconecta o Home Assistant.</p>

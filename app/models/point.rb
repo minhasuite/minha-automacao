@@ -79,7 +79,8 @@ class Point < ApplicationRecord
   # Único caminho de valor novo (driver, comando virtual): grava o ponto, a
   # leitura de histórico, o evento de qualidade e avisa as telas abertas.
   def report!(new_value, quality: "good", at: Time.current)
-    value_changed = new_value != value
+    # Evento (botão, campainha) conta a cada aviso, mesmo repetido ("clique" de novo).
+    value_changed = new_value != value || (capability == "event" && !new_value.nil?)
     value_was = value
     quality_was = self.quality
     self.changed_at = at if value_changed

@@ -450,7 +450,7 @@ actions:
 
       stub_request(:post, "https://api.openai.com/v1/audio/transcriptions").to_return(status: 401, body: "nope")
       expect { Ai::Audio.transcribe(tenant: tenant, audio: audio, media_type: "audio/mpeg") }.to raise_error(Ai::Client::Error, /recusada/)
-      expect(AiCall.order(:created_at).last).to have_attributes(status: "error", provider: "openai")
+      expect(AiCall.where(provider: "openai").pluck(:status)).to include("error") # relógio parado: created_at empata
     end
 
     it "voz local (Whisper/Piper) pelo endereço liberado na rede da casa" do

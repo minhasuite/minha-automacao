@@ -5,6 +5,12 @@
 # (switch_led + bright_value) e medição da tomada (cur_*) passam pela mesma
 # tradução da importação do LocalTuya; o resto segue o tipo do dp com os
 # nomes, unidades e capacidades daqui. Código novo = linha nova aqui.
+# Família de códigos numerados (switch_mode1, switch_mode2…) vai em
+# `patterns` (regex; %{1} no nome = o número). `read_only` tira o comando de
+# um dp que a Tuya marca como gravável; capacidade `event` (botão, campainha)
+# dispara a cada empurrão, mesmo repetido, e só conta o que o aparelho
+# empurra (`push_only`). `decode: value` + `match`/`unmatched` transforma um
+# enum em verdadeiro/falso (pir → movimento).
 codes:
   doorcontact_state: { name: Abertura, capability: contact, device_class: door }
   temp_current: { name: Temperatura, unit: "°C", device_class: temperature }
@@ -12,6 +18,36 @@ codes:
   humidity_value: { name: Umidade, unit: "%", device_class: humidity }
   va_humidity: { name: Umidade, unit: "%", device_class: humidity }
   battery_percentage: { name: Bateria, unit: "%", device_class: battery }
+  va_battery: { name: Bateria, unit: "%", device_class: battery }
+  residual_electricity: { name: Bateria, unit: "%", device_class: battery }
+  temper_alarm: { name: Violação, capability: tamper, device_class: tamper }
+  pir: { name: Movimento, capability: motion, device_class: motion, decode: value, match: pir, unmatched: false }
+  presence_state: { name: Presença, capability: motion, device_class: occupancy, decode: value, match: presence, unmatched: false }
+  # Tomada e disjuntor: energia acumulada (kWh).
+  add_ele: { name: Energia, unit: kWh, device_class: energy, state_class: total_increasing }
+  temp_value: { name: Temperatura de cor }
+  temp_value_v2: { name: Temperatura de cor }
+  # Hub Zigbee: "alarm" = problema no hub.
+  master_state: { name: Hub com problema, capability: problem, device_class: problem, decode: value, match: alarm, unmatched: false }
+  # Fechadura (videolock/jtmspro/ms): só estado e eventos. Destravar pela
+  # nuvem de compartilhamento não existe (o HA também não tem); o estado do
+  # motor nunca vira comando.
+  lock_motor_state: { name: Motor da fechadura, capability: onoff, read_only: true, risk: critical }
+  doorbell: { name: Campainha, capability: event, push_only: true }
+  alarm_lock: { name: Alarme da fechadura, capability: event, push_only: true }
+  hijack: { name: Abertura sob coação, capability: problem }
+  open_inside: { name: Aberta por dentro, capability: event, push_only: true }
+  unlock_fingerprint: { name: Destravou por digital, capability: event, push_only: true }
+  unlock_password: { name: Destravou por senha, capability: event, push_only: true }
+  unlock_card: { name: Destravou por cartão, capability: event, push_only: true }
+  unlock_face: { name: Destravou por rosto, capability: event, push_only: true }
+  unlock_key: { name: Destravou por chave, capability: event, push_only: true }
+  unlock_temporary: { name: Destravou por senha temporária, capability: event, push_only: true }
+  unlock_dynamic: { name: Destravou por senha dinâmica, capability: event, push_only: true }
+  unlock_app: { name: Destravou pelo app, capability: event, push_only: true }
+  unlock_phone_remote: { name: Destravou pelo celular, capability: event, push_only: true }
+  unlock_voice_remote: { name: Destravou por voz, capability: event, push_only: true }
+  unlock_hand: { name: Destravou pela palma, capability: event, push_only: true }
   work_mode: { name: Modo }
   mode: { name: Modo }
   temp_set: { name: Temperatura desejada }
@@ -27,10 +63,18 @@ codes:
   # empurrado pelo aparelho; vira verdadeiro e volta a falso depois de hold_s.
   # `push_only`: o estado completo repete a última mensagem e não conta.
   initiative_message: { name: Movimento, capability: motion, device_class: motion, decode: base64_json, field: cmd, match: ipc_motion, hold_s: 30, push_only: true }
+patterns:
+  # Scene switch (wxkg) e botões sem fio: clique, duplo e longo viram evento.
+  - { match: '\Aswitch_mode(\d+)\z', name: "Botão %{1}", capability: event, push_only: true }
+  - { match: '\Aswitch(\d+)_value\z', name: "Botão %{1}", capability: event, push_only: true }
+# Categorias que são hub (gateway): o sub-dispositivo com a mesma chave
+# local, ou o único hub sem filhos na mesma chave, vira o "via" dele.
+gateways: [wg2, wnykq, wfcon, alexa_yywg, gateway]
 # Booleano só de leitura com estes nomes vira "problema".
 problem: "alarm|fault|tamper"
 # Configuração, temporizador e acumulado: não viram ponto.
-skip: "^(countdown|cycle_time|random_time|switch_inching|relay_status|light_mode|add_ele|overcharge_switch|flash_scene|scene_data|colour_data|music_data|control_data)"
+# Calibração (_coe), formatação, reinício, PTZ e cadastro de senha também não.
+skip: "^(countdown|cycle_time|random_time|switch_inching|relay_status|light_mode|overcharge_switch|flash_scene|scene_data|colour_data|music_data|control_data|switch_type|factory_reset|switch_alarm_sound|alarm_active|sd_format|ptz_|device_restart|motion_area|unlock_method|temporary_password|synch_method|remote_no|link_mode|dormant_time|online_switch|alarm_reminder|lock_record|lock_local_record|device_info|password_offline|unlock_offline|unlock_double)|_coe$"
 # Categoria Tuya → nome na lista de encontrados.
 categories:
   dj: Lâmpada
@@ -62,3 +106,14 @@ categories:
   wk: Termostato
   ggq: Irrigação
   ldcg: Sensor de luz
+  tdq: Interruptor
+  dlq: Disjuntor
+  znjdq: Disjuntor
+  zndb: Medidor de energia
+  hps: Sensor de presença
+  videolock: Fechadura
+  jtmspro: Fechadura
+  wnykq: Controle IR
+  infrared_tv: TV (IR)
+  infrared_ac: Ar-condicionado (IR)
+  qt: Contato seco

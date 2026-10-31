@@ -61,6 +61,8 @@ module Drivers
     def execute(point, command, value)
       dp = point.address["dps"].presence&.to_s or raise Error, "Ponto sem dps no endereço."
       device = point.device
+      # Sem IP na rede mas ligado à conta da nuvem: vai pela nuvem (o local é a preferência, não a única via).
+      return TuyaCloud.new.execute(point, command, value) if device.address["host"].blank? && point.address["code"].present? && device.integration
       raw = point.to_raw(Points::Command.new(point, command, value).new_value)
 
       if (live = Tuya::Listener.connection(device.id))

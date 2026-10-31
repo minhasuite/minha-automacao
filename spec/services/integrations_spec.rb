@@ -44,7 +44,7 @@ RSpec.describe Integrations do
       expect(old.address).to eq("host" => "10.0.0.5", "version" => "3.4")
       expect(gone.reload.removed_at).to be_present
       expect(integration.reload).to have_attributes(status: "ok", last_ok_at: be_present)
-      expect(described_class.pending(integration).map { |e| e["id"] }).to eq(%w[b2])
+      expect(described_class.pending(integration).map { |e| e["id"] }).to eq(%w[b2 c3]) # sub-dispositivo do hub também entra (nuvem)
       expect(Notification.count).to eq(0) # primeira varredura: a pessoa está olhando a lista
 
       allow(Integrations::TuyaPlugin).to receive(:inventory).and_return([ entry("a1"), entry("b2"), entry("d4", "name" => "Lâmpada nova"), entry("z9") ])
@@ -65,13 +65,13 @@ RSpec.describe Integrations do
       expect(described_class.suggest_area(site, nil)).to eq("")
 
       n = described_class.adopt!(integration, "b2" => sala.id, "c3" => "new:Cozinha", "d4" => "", "e5" => "", "zz" => "")
-      expect(n).to eq(3)
+      expect(n).to eq(4)
       b2 = site.devices.find_by!(external_id: "b2")
       expect(b2).to have_attributes(area: sala, integration: integration, credential: "key-b2", driver: "tuya_local", poll_s: 1800)
       expect(b2.points.sole.key).to eq("aparelho_b2.liga_desliga_2")
       expect(site.devices.find_by!(external_id: "c3").area.name).to eq("Cozinha")
       expect(site.devices.find_by!(external_id: "e5").area).to be_nil
-      expect(site.devices.find_by(external_id: "d4")).to be_nil
+      expect(site.devices.find_by(external_id: "d4")).to be_present
       expect(described_class.adopt!(integration, "b2" => "")).to eq(0)
     end
 

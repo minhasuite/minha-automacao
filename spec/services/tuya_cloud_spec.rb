@@ -99,8 +99,8 @@ RSpec.describe Tuya::Cloud do
     expect(list.map { |e| e["id"] }).to eq(%w[dev1 dev2 ir1])
     expect(list.last).to include("room" => nil, "points" => [])
     plug = list.first
-    expect(plug).to include("kind" => "tuya_local", "name" => "Tomada Sala", "secret" => "k1", "room" => "Sala", "category" => "Tomada", "online" => true,
-                            "address" => { "version" => "3.3" })
+    expect(plug).to include("kind" => "tuya_cloud", "name" => "Tomada Sala", "secret" => "k1", "room" => "Sala", "category" => "Tomada", "online" => true,
+                            "address" => {})
     expect(plug["points"].map { |p| [ p["name"], p["capability"], p["address"]["dps"] ] })
       .to eq([ [ "Liga/desliga", "onoff", "1" ], [ "Corrente", "measure", "18" ], [ "Potência", "measure", "19" ], [ "Tensão", "measure", "20" ] ])
     expect(plug["points"][1]["scale"].to_d).to eq("0.001".to_d)

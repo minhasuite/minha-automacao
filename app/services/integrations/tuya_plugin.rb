@@ -1,8 +1,11 @@
 module Integrations
-  # Smart Life / Tuya Smart por QR code (como a integração `tuya` do HA).
+  # Smart Life / Tuya Smart por QR code (como a integração `tuya` do HA):
+  # aparelhos da conta, inclusive os Zigbee atrás do hub, com estado, comando
+  # pela nuvem e tempo real pelo MQTT (Tuya::CloudListener). O que já está no
+  # local pelo LocalTuya é o mesmo aparelho e continua com comando local.
   class TuyaPlugin < Plugin
     describe key: "tuya", title: "Tuya / Smart Life", icon: "light-bulb",
-             description: "Lâmpadas, tomadas e interruptores do app Smart Life. Entra pelo QR code e acha todos os aparelhos da conta; o controle fica na rede local."
+             description: "Aparelhos do app Smart Life, inclusive os Zigbee do hub. Entra pelo QR code, como no Home Assistant; o que também está na rede local continua local."
 
     def self.setup(site, form)
       code = form[:user_code].to_s.strip
@@ -36,5 +39,36 @@ module Integrations
     end
 
     def self.inventory(integration) = Tuya::Cloud.new(integration).inventory
+
+    # Aparelhos da conta já no local (nuvem ou LocalTuya ligado a ela).
+    def self.devices(integration) = integration.devices.where(driver: Tuya::Cloud::DRIVERS, removed_at: nil, disabled: false)
+
+    # Estado da última varredura nos aparelhos; o LocalTuya ligado ganha o
+    # código de cada dp (comando sem IP e tempo real pela nuvem).
+    def self.refresh(integration)
+      by_id = integration.found.index_by { |e| e["id"] }
+      devices(integration).includes(:points).find_each do |device|
+        e = by_id[device.external_id] or next
+        fill_codes(device, e)
+        apply(device, e)
+      rescue StandardError => ex
+        Rails.logger.warn("[tuya] estado de #{device.name}: #{ex.message}")
+      end
+    end
+
+    # {online, state} da nuvem → aparelho (fora do ar = pontos indisponíveis).
+    def self.apply(device, info)
+      return Drivers::TuyaLocal.unavailable!(device) if info["online"] == false
+
+      Drivers::TuyaCloud.report(device, info["state"].to_h)
+    end
+
+    def self.fill_codes(device, e)
+      codes = Array(e["points"]).to_h { |p| [ p.dig("address", "dps").to_s, p.dig("address", "code") ] }
+      device.points.each do |p|
+        code = codes[p.address["dps"].to_s]
+        p.update_columns(address: p.address.merge("code" => code)) if code && p.address["code"] != code
+      end
+    end
   end
 end

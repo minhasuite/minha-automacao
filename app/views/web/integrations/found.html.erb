@@ -1,6 +1,6 @@
-<% pending = @entries.reject { |e| @known.include?(e["id"]) || e["sub"] } %>
+<% pending = @entries.reject { |e| @known.include?(e["id"]) } %>
 <% added = @entries.select { |e| @known.include?(e["id"]) } %>
-<% subs = @entries.select { |e| e["sub"] && !@known.include?(e["id"]) } %>
+<% names = @entries.to_h { |e| [ e["id"], e["name"] ] } %>
 <%= render "web/shared/header", title: "Dispositivos encontrados", subtitle: "#{@integration.name} · #{@integration.driver_label}#{" · #{@integration.account}" if @integration.account}", back: site_integrations_path(@site) do %>
   <% if can?(:manage) %>
     <%= button_to sync_integration_path(@integration), class: "ss-btn ss-btn-ghost", form: { data: { turbo_submits_with: "Pedindo…" } } do %><%= icon("refresh", "size-4") %>Sincronizar agora<% end %>
@@ -55,7 +55,7 @@
               <td><input type="checkbox" name="pick[]" value="<%= e['id'] %>" id="<%= cid %>" checked aria-label="Adicionar <%= e['name'] %>"></td>
               <td>
                 <label for="<%= cid %>" class="font-semibold text-ink"><%= e["name"] %></label>
-                <span class="block text-xs text-muted"><%= [ e["manufacturer"], e["model"] ].compact_blank.join(" · ") %><%= " · IP #{e.dig('address', 'host')}" if e.dig("address", "host").present? %></span>
+                <span class="block text-xs text-muted"><%= [ e["manufacturer"], e["model"] ].compact_blank.join(" · ") %><%= " · IP #{e.dig('address', 'host')}" if e.dig("address", "host").present? %><%= " · pelo hub #{names[e.dig('address', 'via')]}" if names[e.dig("address", "via")] %></span>
                 <span class="block text-xs text-muted md:hidden"><%= [ e["category"], e["room"], ("fora do ar" if e["online"] == false) ].compact_blank.join(" · ") %></span>
               </td>
               <td class="hidden md:table-cell"><span class="ss-chip"><%= e["category"].presence || "—" %></span><% if e["online"] == false %> <span class="ss-badge ss-badge-warn">Fora do ar</span><% end %></td>
@@ -72,14 +72,6 @@
       </table>
     </div>
   <% end %>
-<% end %>
-
-<% if subs.any? %>
-  <details class="ss-card ss-card-pad mt-4">
-    <summary class="cursor-pointer font-semibold"><%= subs.size %> aparelho(s) ligado(s) a um gateway Zigbee</summary>
-    <p class="text-sm text-muted mt-2">O controle local destes passa pelo gateway da Tuya, que ainda não é suportado. Eles migram para o zigbee2mqtt quando o coordenador chegar.</p>
-    <ul class="mt-2 flex flex-wrap gap-2"><% subs.each do |e| %><li class="ss-chip"><%= e["name"] %></li><% end %></ul>
-  </details>
 <% end %>
 
 <% if added.any? %>

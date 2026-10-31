@@ -2,6 +2,8 @@
 # aparelho com `listen` ligado (VPS, padrão até a F10) ele só olha a tabela.
 Rails.application.config.after_initialize do
   SolidQueue.on_worker_start { Tuya::Listener.start } if defined?(SolidQueue) && ENV["TUYA_LISTENER"] != "off"
+  # Tempo real da nuvem Tuya (Lote 6): só conecta com aparelho da conta adotado.
+  SolidQueue.on_worker_start { Tuya::CloudListener.start } if defined?(SolidQueue) && ENV["TUYA_CLOUD_LISTENER"] != "off"
   # Ouvinte MQTT (F8): só com MQTT_URL (servidor local com o Mosquitto).
   SolidQueue.on_worker_start { Mqtt::Listener.start } if defined?(SolidQueue)
   # Movimento das câmeras ONVIF (Lote 3); sem câmera com ponto de movimento, só olha a tabela.

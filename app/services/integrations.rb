@@ -5,8 +5,11 @@
 # comum: varredura (`sync!`, manual ou periódica) e adoção (`adopt!`).
 #
 # Inventário = lista de entradas no mesmo formato para todos: {id, kind
-# (driver do aparelho), name, manufacturer, model, category, room, online,
-# sub, secret (local_key/token), address, poll_s, points: [atributos]}.
+# (driver do aparelho), match_drivers (outros drivers que são o mesmo
+# aparelho, ex.: Tuya nuvem e local), name, manufacturer, model, category,
+# room, online, sub, secret (local_key/token), address (via = id do hub),
+# poll_s, points: [atributos]}. Depois da varredura e da adoção o plugin
+# pode gravar o estado (`refresh`).
 # Aparelho já cadastrado (driver + external_id; câmera também pelo IP) nunca
 # duplica: a varredura só o liga à integração e atualiza a chave/IP. O que
 # sumiu da conta fica com `removed_at` (nada é apagado). Aparelho novo na
@@ -57,6 +60,7 @@ module Integrations
     counts = reconcile(integration, list)
     integration.update!(inventory: list.to_json)
     integration.ok!
+    plugin.refresh(integration)
     known = matched_ids(integration)
     fresh = list.reject { |e| known.include?(e["id"]) || before.include?(e["id"]) }
     notify_new(integration, fresh) if fresh.any? && !first
@@ -86,23 +90,27 @@ module Integrations
 
   # Entrada com "match" => "host": aparelho cadastrado antes (sem external_id) casa pelo IP.
   def existing(site, e)
-    scope = site.devices.where(driver: e["kind"])
+    scope = site.devices.where(driver: drivers_of(e))
     scope.find_by(external_id: e["id"]) || (scope.find_by("address->>'host' = ?", e["id"]) if e["match"] == "host")
   end
 
   # ids do inventário que já são aparelhos do local (uma consulta só).
   def matched_ids(integration)
     list = integration.found
-    rows = integration.site.devices.where(driver: list.map { |e| e["kind"] }.uniq).pluck(:driver, :external_id, Arel.sql("address->>'host'"))
+    rows = integration.site.devices.where(driver: list.flat_map { |e| drivers_of(e) }.uniq).pluck(:driver, :external_id, Arel.sql("address->>'host'"))
     by_ext = rows.to_set { |d, ext, _| [ d, ext ] }
     by_host = rows.to_set { |d, _, h| [ d, h ] }
-    list.filter_map { |e| e["id"] if by_ext.include?([ e["kind"], e["id"] ]) || (e["match"] == "host" && by_host.include?([ e["kind"], e["id"] ])) }.to_set
+    list.filter_map do |e|
+      e["id"] if drivers_of(e).any? { |d| by_ext.include?([ d, e["id"] ]) || (e["match"] == "host" && by_host.include?([ d, e["id"] ])) }
+    end.to_set
   end
+
+  def drivers_of(e) = Array(e["match_drivers"].presence || e["kind"])
 
   # Encontrados e ainda não adicionados (o "novo" do card).
   def pending(integration)
     known = matched_ids(integration)
-    integration.found.reject { |e| known.include?(e["id"]) || e["sub"] }
+    integration.found.reject { |e| known.include?(e["id"]) }
   end
 
   # Área sugerida pelo cômodo da nuvem: área de mesmo nome, ou "new:<cômodo>".
@@ -117,13 +125,15 @@ module Integrations
     site = integration.site
     known = matched_ids(integration)
     by_id = integration.found.index_by { |e| e["id"] }
-    picks.sum do |id, area_ref|
+    added = picks.sum do |id, area_ref|
       e = by_id[id]
-      next 0 if e.nil? || e["sub"] || known.include?(id)
+      next 0 if e.nil? || known.include?(id)
 
       ActiveRecord::Base.transaction { create_device(integration, site, e, area_for(site, area_ref)) }
       1
     end
+    for_driver(integration.driver).refresh(integration) if added.positive?
+    added
   end
 
   def create_device(integration, site, e, area)

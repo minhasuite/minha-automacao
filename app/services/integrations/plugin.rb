@@ -48,6 +48,9 @@ module Integrations
       # Retorno do OAuth (`/integracoes/oauth/retorno`, params com code e redirect_uri) → Outcome.
       def oauth_callback(integration, _params) = outcome(:connect, integration: integration, alert: "Esta integração não usa login externo.")
 
+      # Depois da varredura e da adoção: grava o estado atual nos aparelhos (padrão: nada).
+      def refresh(_integration) = nil
+
       # A cada minuto (Integrations.tick); padrão: nada.
       def tick(_now) = nil
 

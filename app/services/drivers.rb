@@ -2,7 +2,7 @@
 # `execute(point, command, value)` aplica no aparelho e reporta o valor novo
 # com `point.report!`; erro levanta exceção (o comando vira `failed`).
 module Drivers
-  REGISTRY = { "virtual" => "Drivers::Virtual", "tuya_local" => "Drivers::TuyaLocal", "mqtt" => "Drivers::Mqtt",
+  REGISTRY = { "virtual" => "Drivers::Virtual", "tuya_local" => "Drivers::TuyaLocal", "tuya_cloud" => "Drivers::TuyaCloud", "mqtt" => "Drivers::Mqtt",
                "xiaomi_miot" => "Drivers::XiaomiMiot", "alexa" => "Drivers::Alexa" }.freeze
 
   def self.supported?(device) = REGISTRY.key?(device.driver)

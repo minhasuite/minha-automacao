@@ -58,27 +58,28 @@ RSpec.describe "Integrações e dispositivos do local (F8c)" do
 
     entries = [ { "id" => "d1", "kind" => "tuya_local", "name" => "Lâmpada", "room" => "Quarto", "category" => "dj", "secret" => "k",
                   "points" => [ { "name" => "Luz", "capability" => "onoff", "address" => { "dps" => "20" } } ] },
-                { "id" => "d2", "kind" => "tuya_local", "name" => "Gateway filho", "sub" => true, "points" => [] } ]
+                { "id" => "d2", "kind" => "tuya_cloud", "name" => "Sensor Zigbee", "sub" => true, "address" => { "via" => "d1" }, "points" => [] } ]
     allow(Integrations::TuyaPlugin).to receive(:inventory).and_return(entries)
     SyncIntegrationJob.perform_now(integration.id)
     get "/integracoes/#{integration.id}/estado", params: { sync: 1 }
     expect(response.parsed_body["url"]).to be_present
     get "/integracoes/#{integration.id}/encontrados"
-    expect(response.body).to include("Lâmpada", "Nova: Quarto", "Adicionar todos", "ligado(s) a um gateway Zigbee", "Gateway filho")
+    expect(response.body).to include("Lâmpada", "Nova: Quarto", "Adicionar todos", "Sensor Zigbee", "pelo hub Lâmpada")
 
     get "/locais/#{site.id}/integracoes"
-    expect(response.body).to include("1 novo(s) para adicionar", "Conectada", "eu@x", "Ver dispositivos")
+    expect(response.body).to include("2 novo(s) para adicionar", "Conectada", "eu@x", "Ver dispositivos")
 
     post "/integracoes/#{integration.id}/adicionar", params: { all: 1, area: { "d1" => "new:Quarto" } }
     expect(response).to redirect_to("/locais/#{site.id}/dispositivos?integracao=#{integration.id}")
-    device = within(tenant) { site.devices.sole }
+    expect(within(tenant) { site.devices.find_by!(name: "Sensor Zigbee").address }).to eq("via" => "d1")
+    device = within(tenant) { site.devices.find_by!(name: "Lâmpada") }
     expect(device).to have_attributes(name: "Lâmpada", integration_id: integration.id, credential: "k")
     expect(within(tenant) { device.area.name }).to eq("Quarto")
     follow_redirect!
     expect(response.body).to include("Lâmpada", "Quarto", "Smart Life", "Novo")
 
     get "/integracoes/#{integration.id}/encontrados"
-    expect(response.body).to include("Nada novo para adicionar", "1 já no local")
+    expect(response.body).to include("Nada novo para adicionar", "2 já no local")
     expect { post "/integracoes/#{integration.id}/sincronizar" }.to have_enqueued_job(SyncIntegrationJob)
 
     stub_request(:post, /usercode=novo/).to_return(body: { success: false, msg: "user code invalid" }.to_json)

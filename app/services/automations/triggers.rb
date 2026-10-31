@@ -19,7 +19,7 @@ module Automations
       cause = cause_of(point)
       Automation.where(site_id: point.site_id, enabled: true).where("definition->'triggers' @> ?", [ { point: point.id } ].to_json).find_each do |a|
         a.definition["triggers"].each_with_index do |t, i|
-          next unless t["point"] == point.id && changed_into?(t, point.value, value_was)
+          next unless t["point"] == point.id && changed_into?(t, point.value, value_was, repeat: point.capability == "event")
 
           wait = Dsl.seconds(t["for"]).to_i
           next AutomationTriggerJob.set(wait: wait.seconds).perform_later(a.id, i, point.changed_at.iso8601(6)) if wait.positive?
@@ -113,7 +113,8 @@ module Automations
     def with_id(t, info) = t["id"].present? ? info.merge("id" => t["id"]) : info
 
     # O plugin do gatilho decide (TriggerTypes).
-    def changed_into?(t, value, was) = value != was && TriggerTypes[t["type"]]&.fires_on_change?(t, value, was) || false
+    # `repeat`: ponto de evento (botão) dispara mesmo com o valor repetido.
+    def changed_into?(t, value, was, repeat: false) = (repeat || value != was) && TriggerTypes[t["type"]]&.fires_on_change?(t, value, was) || false
     def holds?(t, value) = TriggerTypes[t["type"]]&.holds?(t, value) || false
 
     def clock?(t, site, now)

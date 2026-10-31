@@ -152,7 +152,7 @@ RSpec.describe "Lote 3: câmeras e Alexa" do
       expect(specs).to include(hash_including("name" => "Sirene", "capability" => "onoff", "risk" => "critical"),
                                hash_including("name" => "Detecção de movimento", "capability" => "onoff"))
       motion_spec = specs.find { |s| s["capability"] == "motion" }
-      expect(motion_spec["address"]).to eq("dps" => "212", "decode" => "base64_json", "field" => "cmd", "match" => "ipc_motion", "hold_s" => 30, "push_only" => true)
+      expect(motion_spec["address"]).to eq("dps" => "212", "code" => "initiative_message", "decode" => "base64_json", "field" => "cmd", "match" => "ipc_motion", "hold_s" => 30, "push_only" => true)
 
       motion = device.points.find_by!(capability: "motion")
       Drivers::TuyaLocal.report(device, { "212" => msg("ipc_motion") }) # estado completo repete a última: não conta
