@@ -116,8 +116,32 @@ ficou sem ela").
   `trim`, `count`, `default`, `join`. Condição vira `expr`; texto vira
   Liquid (o que não tem filtro Liquid é calculado com `{{ "expr" | calc }}`).
   A entidade citada no texto vira entrada e aparece como `[[entrada]]`, que o
-  "Criar automação" troca pela `key` do ponto escolhido. Sem tradução:
-  `state_attr`, `namespace`, `{% %}`, `is defined`, `states.x.y`, dicionários.
+  "Criar automação" troca pela `key` do ponto escolhido.
+
+### Lote 7: o Jinja que ainda segurava rascunho
+
+| do HA | vira |
+|---|---|
+| `{% set x = ... %}`, `{% if %}/{% elif %}/{% else %}`, `{% for x in lista [if cond] %}`, `for k, v in d.items()` | `{% assign x = 'expr' \| calc %}` (ou `capture` se for texto), `if` (variável sozinha usa o vazio do Liquid; o resto vai pela conta), `for` |
+| `namespace(n=0, l=[])`, `ns.n = ...`, `ns.l = ns.l + [item]` | variáveis `ns_n`/`ns_l`; o item entra por `capture` + `concat` |
+| `states.ponto.x.last_changed` / `.last_updated`, `now()`, `(a - b).total_seconds()`, `timedelta(minutes=2)`, `as_timestamp(...)`, `as_local(...)` | segundos: `ponto.changed_at`, `timestamp`, a diferença; texto ISO por `to_timestamp(x)` |
+| `state_attr('x', 'a')`, `states.x.y.attributes.a`, `is_state_attr` | `ponto.attrs.a` (expressão) / `points["ponto"].attrs.a` (texto) |
+| `x is (not) defined`, `x is (not) none`, `x \| default(v)` | `defined('x')` (e `if(defined('x'), x, v)`) |
+| `{'a': 'A'}.get(x, 'padrão')`, `{'a': 1}[x]` | `if(x = 'a', 'A', 'padrão')` |
+| `.split('_')`, `[n]`, `[-1]`, `[:n]` (texto) | `\| split: "_"`, `\| slice: n \| first`, `\| last`, `\| slice: 0, n` |
+| `label_entities`, `area_entities` (+ soma), `integration_entities`, `states`, `states.dominio`, com `select('is_state', 'on')`, `select('in', ...)`, `reject('is_state', 'unavailable')`, `selectattr('state', 'eq', ...)` e `\| list \| count` | `count_points('tag=... area=... state=on')` (Points::Query) |
+| `config_entry_attr(x, 'state')` | `if(integration_ok('tipo'), 'loaded', 'not_loaded')` |
+| `trigger.to_state.attributes.event_type` (entidade de evento) | `trigger.value` |
+| `delay` com template (`{minutes: '{{ x }}'}`) | "Esperar" com segundos por expressão |
+| valor de helper com template (`timer.start` duração `{{ x }}`) | comando com valor em texto Liquid (resolvido na execução) |
+| `logbook.log`, `system_log.write` | "Anotar no histórico da execução" (só no trace; roda em sombra) |
+| `rest_command.x` (com o `configuration.yaml` na importação da instalação) | "Definir variável" dos campos + "Chamar HTTP" com URL, método, corpo, cabeçalhos e tempo limite |
+| `homeassistant.reload_config_entry` (id direto ou numa variável constante), `<dominio>.reload` | "Recarregar integração" daqui (`tuya`, `alexa`, `xiaomi`...) |
+
+Continuam sem tradução (o item fica no rascunho, com a nota): `from_json`,
+`map(attribute=...)`, `select('match', ...)`, iterar `states`/`states.x` e
+`states[e]`, `area_name`, `expand`, `this`, `.replace()`, `.date()`, o
+`stdout` do `shell_command` e `{% macro %}`.
 
 Nas 58 automações reais da casa: antes 41 viravam blueprint (6 sem perda);
 agora 57 viram (28 sem perda, todas com a DSL válida). A que sobra só chama

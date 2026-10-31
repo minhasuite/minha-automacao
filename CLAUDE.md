@@ -81,7 +81,11 @@ código do dp, MQTT em tempo real, eventos de botão; `docs/integracoes.md`). +
 **F10**: modo sombra (automação, script, cena, local e instalação), linha do
 tempo "teria feito", de-para de migração (`ExternalRef`), comparador com
 fonte de referência como plugin (Home Assistant) e importação do HA em
-sombra (`docs/migracao.md`).
+sombra (`docs/migracao.md`). + **Lote 7**: Jinja dos blocos `{% %}`,
+namespace, `last_changed`, `state_attr`, `is defined` e conjuntos de
+entidades (`count_points`), ações "Anotar" e "Recarregar integração",
+`rest_command` → "Chamar HTTP", valor do comando por Liquid, etiquetas e
+sensores template da tela do HA na importação, item com perda refeito no lugar.
 
 ## Rodar
 
@@ -445,6 +449,18 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `system_started` pelo `SolidQueue.on_start` (supervisor, uma vez por
   início). Sensor calculado "a cada" não depende das origens (`sources` vazio)
   e se refaz no `HelperTypes.tick` (RunSchedulesJob).
+- **Lote 7 (aberto/fechado)**: integração do HA → daqui é dado
+  (`HaImport::HA_PLUGINS` para recarregar e `integration_ok`, `HA_DRIVERS`
+  para a consulta `integration=`); serviço que só anota no diário =
+  `HaImport::LOG_SERVICES`. Os `case` novos do `Blueprints::Jinja` olham a
+  árvore do Jinja e os estados do HA (on/off/unavailable), não tipos daqui.
+  Variável do Liquid em volta (`assign`, item do `for`) chega ao `| calc`
+  (`Context#calc(expr, locals)`); na expressão, `ponto.changed_at` são os
+  segundos da última mudança e `defined('x')`, `to_timestamp(x)` e
+  `integration_ok('tipo')` são funções da calculadora (`Automations::Expr`).
+  Comando com valor `{{ }}` é texto Liquid resolvido na execução
+  (`Dsl.template?`). `shell_command` do HA não tem equivalente de propósito
+  (rodar comando no servidor de uma instalação multi-cliente não é seguro).
 - **Sombra (F10)**: `Shadow.active?` = marca da automação/cena, `sites.shadow`
   ou `tenants.settings["shadow"]`; a execução guarda `automation_runs.shadow`
   (herda de quem causou e da thread). Ação nova = **segurada** por padrão:

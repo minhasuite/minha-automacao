@@ -80,6 +80,37 @@ Como funciona por dentro:
    `bin/rails 'migracao:comparar[Casa,home_assistant,/tmp/logbook.json,6]'`.
 6. **Deixe rodar** alguns dias, cobrindo dia, noite e fim de semana.
 
+## Importar de novo (Lote 7)
+
+O importador pode rodar quantas vezes precisar (sempre em sombra):
+
+- publicada **sem perda** fica como está (pode ter sido revisada);
+- **rascunho** ou publicada **com perda** é refeita **no mesmo registro**
+  (mesmo id, mesmas execuções e "teria feito"), com o conversor e o de-para de
+  agora; publica se a DSL fechar e só fica ligada se publicou nesta importação
+  e está ligada no sistema antigo;
+- além dos arquivos acima, entram `core.label_registry.json` (etiquetas do HA
+  viram etiquetas dos pontos), `core.config_entries.json` (sensores template
+  criados pela tela do HA viram sensor calculado quando o Jinja traduz, ex.:
+  "Luzes acesas" = `count_points('tag=iluminação area=Cozinha state=on') > 0`;
+  e o id de cada integração, para "Recarregar integração") e
+  `configuration.yaml` (só o `rest_command:` é lido; `!include`/`!secret`
+  ficam vazios).
+
+O que o conversor passou a entender está em `docs/blueprints.md` (Lote 7).
+Sem equivalente, de propósito:
+
+- `shell_command`: rodar comando no servidor de uma instalação com vários
+  clientes não é seguro; refaça com "Chamar HTTP", "Registrar dados" ou uma
+  integração;
+- cor de lâmpada (`rgb_color`): a capacidade `color` não recebe comando aqui;
+- `media_player.play_media` (som na Echo), `conversation.process`, `ai_task`
+  do HA, `camera.snapshot`, gatilho por atributo (`last_called_timestamp`) e
+  alvo por etiqueta/área (`target: {label_id: ...}`);
+- entidades sem par: celular (`mobile_app`/`device_tracker`, depende do app
+  daqui), agendas Google (depende do login Google na integração Agenda),
+  `tuya_camera_motion` e os eventos do robô no HA.
+
 ## Leitura do relatório
 
 | Resultado | Quer dizer |
