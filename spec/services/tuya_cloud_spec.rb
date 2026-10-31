@@ -79,8 +79,11 @@ RSpec.describe Tuya::Cloud do
       "/v1.0/m/life/users/homes" => [ { "ownerId" => 77, "name" => "Casa" } ],
       %(/v1.0/m/life/ha/home/devices?{"homeId":"77"}) => [
         { "id" => "dev1", "name" => "Tomada Sala", "local_key" => "k1", "category" => "cz", "product_name" => "Smart Plug", "online" => true, "sub" => false },
-        { "id" => "dev2", "name" => "Sensor porta", "local_key" => "k2", "category" => "mcs", "online" => false, "sub" => true }
+        { "id" => "dev2", "name" => "Sensor porta", "local_key" => "k2", "category" => "mcs", "online" => false, "sub" => true },
+        { "id" => "ir1", "name" => "TV", "category" => "infrared_tv", "online" => true, "sub" => false }
       ],
+      # Controle IR virtual: a API devolve texto vazio no lugar do objeto (visto na conta real).
+      "/v1.0/m/life/devices/ir1/status" => "", "/v1.1/m/life/ir1/specifications" => "", "/v1.0/m/thing/ha/ir1/room" => "",
       "/v1.0/m/life/devices/dev1/status" => { "productKey" => "p", "dpStatusRelationDTOS" => [
         relation(1, "switch_1", "Boolean"), relation(9, "countdown_1", "Integer"),
         relation(18, "cur_current", "Integer", unit: "mA", scale: 0), relation(19, "cur_power", "Integer", unit: "W", scale: 1),
@@ -93,14 +96,15 @@ RSpec.describe Tuya::Cloud do
       "/v1.0/m/thing/ha/dev2/room" => nil
     })
     list = described_class.new(integration).inventory
-    expect(list.map { |e| e["id"] }).to eq(%w[dev1 dev2])
+    expect(list.map { |e| e["id"] }).to eq(%w[dev1 dev2 ir1])
+    expect(list.last).to include("room" => nil, "points" => [])
     plug = list.first
     expect(plug).to include("kind" => "tuya_local", "name" => "Tomada Sala", "secret" => "k1", "room" => "Sala", "category" => "Tomada", "online" => true,
                             "address" => { "version" => "3.3" })
     expect(plug["points"].map { |p| [ p["name"], p["capability"], p["address"]["dps"] ] })
       .to eq([ [ "Liga/desliga", "onoff", "1" ], [ "Corrente", "measure", "18" ], [ "Potência", "measure", "19" ], [ "Tensão", "measure", "20" ] ])
     expect(plug["points"][1]["scale"].to_d).to eq("0.001".to_d)
-    sensor = list.last
+    sensor = list[1]
     expect(sensor).to include("sub" => true, "online" => false, "room" => nil)
     expect(sensor["points"].map { |p| p.values_at("name", "capability", "unit") }).to eq([ [ "Abertura", "contact", nil ], [ "Bateria", "measure", "%" ] ])
   end

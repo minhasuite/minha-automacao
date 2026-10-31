@@ -120,9 +120,9 @@ module Tuya
     end
 
     def entry(d)
-      relations = Array(get("/v1.0/m/life/devices/#{d['id']}/status")&.dig("dpStatusRelationDTOS"))
-      writable = Array(get("/v1.1/m/life/#{d['id']}/specifications")&.dig("functions")).map { |f| f["code"] }
-      room = (get("/v1.0/m/thing/ha/#{d['id']}/room") rescue nil)&.dig("name")
+      relations = Array(get_hash("/v1.0/m/life/devices/#{d['id']}/status")["dpStatusRelationDTOS"])
+      writable = Array(get_hash("/v1.1/m/life/#{d['id']}/specifications")["functions"]).map { |f| f["code"] }
+      room = (get_hash("/v1.0/m/thing/ha/#{d['id']}/room") rescue {})["name"]
       { "id" => d["id"], "kind" => "tuya_local", "name" => d["name"].to_s.squish.presence || d["id"], "manufacturer" => "Tuya",
         "model" => d["product_name"], "category" => MAP["categories"][d["category"]] || d["category"], "room" => room, "online" => d["online"] == true,
         "sub" => d["sub"] == true, "secret" => d["local_key"], "address" => { "version" => "3.3" },
@@ -205,6 +205,9 @@ module Tuya
     end
 
     private
+
+    # Aparelho virtual (controle IR) responde texto vazio em vez de objeto.
+    def get_hash(path) = get(path).then { |r| r.is_a?(Hash) ? r : {} }
 
     def token = @s["token"] || {}
 
