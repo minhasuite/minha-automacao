@@ -41,13 +41,26 @@ responde em `POST /push/resposta {token, action_id}` sem sessão (o token é da
 pessoa e do aviso, vale uma vez). `type: clear` apaga pela tag. iOS recebe a
 notificação do sistema + os dados.
 
-**Ligar** (passo do dono, uma vez): criar o projeto Firebase do app
-(skill `android-suite`/`lancar-app-play`), baixar o `google-services.json`
-para `minha-automacao-app/android/app/` (e o secret
-`GOOGLE_SERVICES_JSON_BASE64` no CI) e pôr no servidor `FCM_CREDENTIALS_JSON`
-(conta de serviço com "Firebase Cloud Messaging API") e `FCM_PROJECT_ID` no
-`.env` (Dell: `/opt/minha-automacao/.env`; VPS: `MINHA_AUTOMACAO_FCM_*`).
-Sem isso o app funciona inteiro, só sem push.
+**Ligado** (31/10/2026): projeto Google Cloud/Firebase `minha-automacao-114798`
+(um projeto por app, convenção do `minha-infra`, skill `android-suite`), app
+Android com os SHA-1/SHA-256 da chave de upload. O `google-services.json` fica
+em `vault/android/minha-automacao-google-services.json`, em
+`android/app/google-services.json` (gitignored) para o build local e no secret
+`GOOGLE_SERVICES_JSON_BASE64` do CI. O servidor envia com a conta
+`fcm-sender@minha-automacao-114798.iam.gserviceaccount.com` (só o papel
+`roles/firebasecloudmessaging.admin`; chave em
+`vault/firebase/minha-automacao-adminsdk.json`): no Dell `FCM_CREDENTIALS_JSON`
+e `FCM_PROJECT_ID` em `/opt/minha-automacao/.env`; na VPS
+`MINHA_AUTOMACAO_FCM_CREDENTIALS_JSON`/`MINHA_AUTOMACAO_FCM_PROJECT_ID` no
+`.env` de `/opt/minha-automacao` (o compose repassa ao web e ao worker). Valor
+de uma linha, entre aspas simples, gravado por script Python (nunca `awk -v`).
+Trocar a chave: nova chave da conta, regravar as duas `.env`, `docker compose
+up -d web worker`. Sem credencial o app funciona inteiro, só sem push.
+
+O botão da notificação depende do receiver
+`com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver` no
+`AndroidManifest.xml`; sem ele o toque em Sim/Não não faz nada com o app em
+segundo plano ou fechado.
 
 ## App do celular (G17)
 

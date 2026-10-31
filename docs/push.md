@@ -38,6 +38,9 @@ no local; `role:guest` = todos do local). Uma notificação por pessoa.
   `priority`, `group`, `url`, `notification_id`): o app monta a notificação,
   inclusive fechado. iOS recebe a notificação do sistema + os dados. Detalhes
   em `docs/app.md`.
+  Ligado no Dell e na VPS (projeto Firebase `minha-automacao-114798`,
+  conta `fcm-sender@` só com o papel do FCM); testado no emulador com o app em
+  segundo plano e com o processo encerrado, resposta pelo botão registrada.
 - Spec: `spec/services/lote1_spec.rb` registra um canal e um transporte falsos
   por `stub_const` e prova que funcionam sem mudar o núcleo.
 
