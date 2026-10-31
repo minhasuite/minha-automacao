@@ -51,6 +51,10 @@ module Integrations
       # Depois da varredura e da adoção: grava o estado atual nos aparelhos (padrão: nada).
       def refresh(_integration) = nil
 
+      # Lote 9: endereço de vídeo de agora de um ponto `stream` sob demanda
+      # (`address.on_demand`: câmera de nuvem cujo endereço vence); nil = sem vídeo.
+      def stream_url(_point) = nil
+
       # A cada minuto (Integrations.tick); padrão: nada.
       def tick(_now) = nil
 

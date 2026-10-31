@@ -121,4 +121,54 @@ RSpec.describe "Lote 9: fechamento da migração" do
       expect { norm.call("") }.to raise_error(Points::Command::Error, /ao menos um/)
     end
   end
+
+  describe "câmera de nuvem sob demanda (ponto stream com address.on_demand)" do
+    around do |ex|
+      old = ENV.fetch("GO2RTC_URL", nil)
+      ENV["GO2RTC_URL"] = "http://go2rtc:1984"
+      ex.run
+    ensure
+      ENV["GO2RTC_URL"] = old
+    end
+
+    def cam_point(device)
+      create(:point, site: site, device: device, name: "Vídeo", key: "cam_#{SecureRandom.hex(2)}.video", capability: "stream", data_type: "string",
+                     writable: false, address: { "dps" => "video", "on_demand" => true })
+    end
+
+    # Extensão: integração nova com vídeo de nuvem = plugin com `stream_url`, sem mexer no go2rtc.
+    it "plugin falso (stub_const) dá o endereço de agora; o go2rtc recebe o stream e devolve o quadro" do
+      fake = Class.new(Integrations::Plugin) do
+        describe key: "nuvem_cam", title: "Nuvem", icon: "video-camera", description: "teste"
+        define_singleton_method(:stream_url) { |point| "rtsps://nuvem.exemplo/#{point.device.external_id}?t=1" }
+      end
+      stub_const("Integrations::NuvemCamPlugin", fake)
+      stub_const("Integrations::PLUGINS", Integrations::PLUGINS + [ "NuvemCamPlugin" ])
+      integration = Integration.create!(site: site, driver: "nuvem_cam", name: "Nuvem", status: "ok")
+      cam = cam_point(create(:device, site: site, driver: "virtual", name: "Câmera", external_id: "CAM1", integration: integration))
+      put = stub_request(:put, "http://go2rtc:1984/api/streams").with(query: { name: cam.id, src: "rtsps://nuvem.exemplo/CAM1?t=1" }).to_return(status: 400)
+      frame = stub_request(:get, "http://go2rtc:1984/api/frame.jpeg").with(query: { src: cam.id }).to_return(body: "JPEG")
+      FileUtils.rm_f(Drivers::Go2rtc::SNAPSHOT_DIR.join("#{cam.id}.jpg"))
+      expect(Drivers::Go2rtc.snapshot(cam)).to eq("JPEG")
+      expect(put).to have_been_requested.once
+      expect(frame).to have_been_requested.once
+
+      fake.define_singleton_method(:stream_url) { |_point| raise "pedido recusado" }
+      FileUtils.rm_f(Drivers::Go2rtc::SNAPSHOT_DIR.join("#{cam.id}.jpg"))
+      expect { Drivers::Go2rtc.snapshot(cam) }.to raise_error(Drivers::Go2rtc::Error, /pedido recusado/)
+      expect(cam.reload.quality).to eq("unavailable")
+    end
+
+    it "Tuya: câmera (categoria do mapa) ganha o ponto Vídeo e o plugin pede o endereço à nuvem" do
+      expect(Tuya::Cloud.stream_points("category" => "sp").first).to include("capability" => "stream", "address" => { "dps" => "video", "on_demand" => true })
+      expect(Tuya::Cloud.stream_points("category" => "dj")).to eq([])
+      integration = Integration.create!(site: site, driver: "tuya", name: "Tuya", status: "ok")
+      cam = cam_point(create(:device, site: site, driver: "tuya_cloud", name: "Câmera", external_id: "DEV1", integration: integration))
+      cloud = instance_double(Tuya::Cloud)
+      allow(Tuya::Cloud).to receive(:new).with(integration).and_return(cloud)
+      allow(cloud).to receive(:stream_url).with("DEV1").and_return("rtsps://tuya/x")
+      expect(Integrations::TuyaPlugin.stream_url(cam)).to eq("rtsps://tuya/x")
+      expect(Drivers::Go2rtc.source(cam)).to eq("rtsps://tuya/x")
+    end
+  end
 end

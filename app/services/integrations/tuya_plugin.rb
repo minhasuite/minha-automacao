@@ -40,6 +40,9 @@ module Integrations
 
     def self.inventory(integration) = Tuya::Cloud.new(integration).inventory
 
+    # Lote 9: vídeo da câmera pela nuvem, pedido na hora (ponto `stream` sob demanda).
+    def self.stream_url(point) = Tuya::Cloud.new(point.device.integration).stream_url(point.device.external_id)
+
     # Aparelhos da conta já no local (nuvem ou LocalTuya ligado a ela).
     def self.devices(integration) = integration.devices.where(driver: Tuya::Cloud::DRIVERS, removed_at: nil, disabled: false)
 

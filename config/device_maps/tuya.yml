@@ -98,6 +98,8 @@ patterns:
 # Categorias que são hub (gateway): o sub-dispositivo com a mesma chave
 # local, ou o único hub sem filhos na mesma chave, vira o "via" dele.
 gateways: [wg2, wnykq, wfcon, alexa_yywg, gateway]
+# Lote 9: câmera com vídeo pela nuvem → ponto "Vídeo" sob demanda (o endereço RTSP é pedido na hora e vence em minutos).
+streams: [sp]
 # Booleano só de leitura com estes nomes vira "problema".
 problem: "alarm|fault|tamper"
 # Configuração, temporizador e acumulado: não viram ponto.

@@ -149,8 +149,20 @@ module Tuya
       { "id" => d["id"], "kind" => "tuya_cloud", "match_drivers" => DRIVERS, "name" => d["name"].to_s.squish.presence || d["id"],
         "manufacturer" => "Tuya", "model" => d["product_name"], "category" => MAP["categories"][d["category"]] || d["category"], "room" => room,
         "online" => d["online"] == true, "sub" => d["sub"] == true && !self.class.gateway?(d), "secret" => d["local_key"], "poll_s" => 0,
-        "state" => self.class.state(d), "points" => self.class.points(d["name"].to_s, relations, writable) }
+        "state" => self.class.state(d), "points" => self.class.points(d["name"].to_s, relations, writable) + self.class.stream_points(d) }
     end
+
+    # Lote 9: câmera com vídeo pela nuvem (`streams` no mapa) → ponto `stream`
+    # sob demanda: o go2rtc recebe o endereço na hora de ver (Drivers::Go2rtc).
+    def self.stream_points(d)
+      return [] unless Array(MAP["streams"]).include?(d["category"])
+
+      [ { "name" => "Vídeo", "capability" => "stream", "data_type" => "string", "writable" => false, "history" => "none",
+          "address" => { "dps" => "video", "on_demand" => true } } ]
+    end
+
+    # Endereço RTSP de agora da câmera (o mesmo pedido do HA; vence em minutos).
+    def stream_url(device_id) = post("/v1.0/m/ipc/#{device_id}/stream/actions/allocate", { "type" => "rtsp" }).to_h["url"].presence
 
     def self.gateway?(d) = Array(MAP["gateways"]).include?(d["category"])
 

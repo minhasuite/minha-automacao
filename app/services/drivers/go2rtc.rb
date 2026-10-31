@@ -24,6 +24,8 @@ module Drivers
     def url = ENV["GO2RTC_URL"].presence
 
     def source(point)
+      return on_demand(point) if point.address["on_demand"]
+
       d = point.device
       a = d.address
       return if a["host"].blank? || point.address["path"].blank?
@@ -69,8 +71,7 @@ module Drivers
       file = SNAPSHOT_DIR.join("#{point.id}.jpg")
       return file.binread if file.exist? && file.mtime > SNAPSHOT_TTL.seconds.ago
 
-      raise Error, "Câmera sem conexão." unless url && source(point)
-
+      prepare(point)
       jpeg = request(Net::HTTP::Get, "/api/frame.jpeg", { src: point.id }).body
       FileUtils.mkdir_p(SNAPSHOT_DIR)
       file.binwrite(jpeg)
@@ -83,9 +84,22 @@ module Drivers
 
     # WebRTC: a oferta SDP do navegador vai ao go2rtc e a resposta volta.
     def webrtc(point, offer)
-      raise Error, "Câmera sem conexão." unless url && source(point)
-
+      prepare(point)
       request(Net::HTTP::Post, "/api/webrtc", { src: point.id }, body: offer).body
+    end
+
+    # Lote 9: câmera de nuvem (`address.on_demand`): o plugin da integração dá o
+    # endereço de agora (`stream_url`), posto no go2rtc na hora de ver. Fica
+    # fora do `sync!` (o endereço vence); o `sync!` tira o stream depois.
+    def on_demand(point)
+      point.device.integration&.plugin&.stream_url(point)
+    rescue StandardError => e
+      raise Error, "Câmera sem conexão (#{e.message.truncate(80)})."
+    end
+
+    def prepare(point)
+      src = (source(point) if url) or raise Error, "Câmera sem conexão."
+      request(Net::HTTP::Put, "/api/streams", { name: point.id, src: src }, ok: [ 400 ]) if point.address["on_demand"]
     end
 
     def request(klass, path, params = {}, body: nil, ok: [])
