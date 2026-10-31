@@ -85,7 +85,11 @@ sombra (`docs/migracao.md`). + **Lote 7**: Jinja dos blocos `{% %}`,
 namespace, `last_changed`, `state_attr`, `is defined` e conjuntos de
 entidades (`count_points`), ações "Anotar" e "Recarregar integração",
 `rest_command` → "Chamar HTTP", valor do comando por Liquid, etiquetas e
-sensores template da tela do HA na importação, item com perda refeito no lugar.
+sensores template da tela do HA na importação, item com perda refeito no lugar. +
+**Lote 8**: cor de lâmpada pelo mapa de dados (`Points::Color`), gatilho por
+atributo, ações "Comandar pontos por consulta" e "Resumo do histórico de
+pontos", eventos do robô deduzidos da leitura, som/música/volume na Echo e o
+importador do HA usando tudo isso.
 
 ## Rodar
 
@@ -461,6 +465,17 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   Comando com valor `{{ }}` é texto Liquid resolvido na execução
   (`Dsl.template?`). `shell_command` do HA não tem equivalente de propósito
   (rodar comando no servidor de uma instalação multi-cliente não é seguro).
+- **Lote 8 (aberto/fechado)**: formato de cor = linha em
+  `Points::Color::FORMATS` ([codificar, decodificar]); o mapa de dados diz o
+  formato, o `via` (driver) e os endereços irmãos (temperatura, modo). Driver
+  grava `Point#raw_writes(valor, via)` quando não é um dp só (nil = `to_raw`).
+  Evento deduzido do robô = linha em `vacuum_events` do `miot.yml`. Atributo
+  de ponto muda só por `Point#report_attrs!` (dispara o gatilho `state` com
+  `attribute`; o valor do gatilho não é convertido). Ponto novo do mapa entra
+  no aparelho já cadastrado pela varredura (`Integrations.add_points`).
+  Comandar por consulta e resumo do histórico são plugins de ação; o `case`
+  do `PointsHistoryAction#row` escolhe a opção da própria ação (op), não tipo
+  daqui. Importador: item publicado e solto do blueprint não é refeito.
 - **Sombra (F10)**: `Shadow.active?` = marca da automação/cena, `sites.shadow`
   ou `tenants.settings["shadow"]`; a execução guarda `automation_runs.shadow`
   (herda de quem causou e da thread). Ação nova = **segurada** por padrão:

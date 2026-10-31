@@ -65,7 +65,7 @@ sol. **Dias**: 0 = domingo … 6 = sábado (sem `days` = todos).
 
 | type | campos | dispara quando |
 |---|---|---|
-| `state` | `point`, `from?`, `to?`, `for?` | o valor muda (de/para); com `for`, se ficou assim o tempo todo |
+| `state` | `point`, `from?`, `to?`, `for?`, `attribute?` | o valor muda (de/para); com `for`, se ficou assim o tempo todo. Com `attribute` (Lote 8), vale o atributo do ponto (`points.attrs`, mudado só pelo `Point#report_attrs!`), comparado como texto, sem `for` |
 | `numeric` | `point`, `above?`, `below?`, `for?` | o valor **entra** na faixa (não repete enquanto continua nela) |
 | `time` | `at` (HH:MM) **ou** `every` (minutos inteiros, 1 min a 24 h) **ou** `at_point` (ponto data e hora), `days?` | no minuto; `every: "10m"` = :00, :10, :20…; `at_point`: "HH:MM" todo dia ou "AAAA-MM-DDTHH:MM" naquele dia (Lote 5) |
 | `sun` | `event` (`sunrise`/`sunset`), `offset?`, `days?` | nascer/pôr do sol do local (precisa de latitude/longitude) |
@@ -105,6 +105,7 @@ uma com o valor visto (`agora: Desligado`).
 | type | campos | faz |
 |---|---|---|
 | `command` | `point`, `command`, `value?` | comando pelo `Points::Command` (papel x risco, fila, rastreio); a execução vai em `commands.automation_run_id` |
+| `command_query` | `query` (consulta do `Points::Query`, Liquid), `command`, `value?` | "Comandar pontos por consulta" (Lote 8, G8): o mesmo comando em todos os pontos que a consulta acha na hora e aceitam o comando (até 100), cada um pelo `Points::Command`. Ex.: `tag=iluminação state=on` + `off`. Em sombra, o "teria feito" lista os pontos |
 | `scene` | `scene` | aciona a cena |
 | `script` | `script`, `fields?`, `wait?`, `response_variable?` | executa o script com os campos (`docs/scripts.md`); execução própria, laço barrado. Com `wait`, espera o fim (durável) e a resposta = variáveis do script no fim; sem, dispara e segue |
 | `notify` | `title`, `message?`, `channels?` (plugins de `Notifier::Channels`: `in_app`, `push`, `alexa:<id>`; padrão in_app e push), `to?` (`admins`, `user:<id>`, `role:<papel>`; `role:guest` = todos do local), `buttons?` ([{id, title}], até 3), `camera?` (quadro do go2rtc agora), `image_url?`, `url?` (ao tocar), `priority?` (`normal`/`high`/`critical`), `tag?`, `ttl?`, `sticky?`, `group?`, `clear?` (só apagar a `tag`) | `Notifier.deliver!`, texto Liquid; cada canal usa o que suporta (`docs/push.md`) |
@@ -118,6 +119,7 @@ uma com o valor visto (`agora: Desligado`).
 | `ai_data` | `points?`, `areas?`, `tags?` (pelo menos um), `history?` (`24h`) + os campos de `ai_task` | "Gerar dados por IA": põe antes do pedido o estado e o resumo do histórico desses pontos |
 | `dataset_record` | `dataset`, `values` ({campo: texto Liquid}), `response_variable?` | "Registrar dados": grava uma linha no conjunto (`docs/dados.md`); resposta {id, em, ...campos} |
 | `dataset_query` | `dataset`, `op` (plugin de `Datasets::AGGREGATES`: `count`, `sum`, `avg`, `min`, `max`, `last`, `rows`), `field?`, `window?`, `filters?` (Liquid, um por linha), `limit?` | "Consultar dados": {value} ou {value, rows, count} |
+| `points_history` | `query`, `op` (`energy_kwh`, `changes`, `on_minutes`), `period` (`days` com `last_days`, `this_month`, `last_month`), `to?` (valor contado em `changes`), `response_variable` | "Resumo do histórico de pontos" (Lote 8): só lê (roda em sombra). {total, count, points: [{key, name, device, total, days, last, median_prev, prev_days}]} do maior para o menor; em kWh, `days` vai do dia mais recente para trás e `median_prev` é a mediana dos dias anteriores com consumo (lê os rollups de hora como o widget de energia) |
 | `http` | `method`, `url`, `headers?`, `secret?` (cifrado, `{{ secret }}`), `body?`, `timeout?` | chama outro sistema pelo `SafeHttp` (sem IP interno; `docs/api-integracoes.md`); resposta em `http_status`/`http_body` (F9); com `response_variable`, {status, body, json} |
 | `wait` | `for` **ou** `expr` (segundos) | espera (job agendado; sobrevive a reinício) |
 | `wait_for` | `conditions`, `timeout`, `continue_on_timeout?` (padrão `true`) | espera as condições valerem; a mudança de ponto retoma na hora |
@@ -136,7 +138,7 @@ que não é de controle; "Seguir se der erro" no editor), a falha vira um passo
 **Ações que devolvem dados** (`response_variable`, Lote 1): `script` (com
 `wait`), `http`, `calendar_events`, `wait_notification` e, no Lote 2,
 `ai_task`, `ai_data`, `dataset_record` e `dataset_query`; no Lote 4,
-`weather_forecast` e `wait_event`. A variável é um
+`weather_forecast` e `wait_event`; no Lote 8, `points_history`. A variável é um
 objeto: no texto `{{ agenda.count }}`, `{% for e in agenda.events %}`; na
 expressão `agenda.count > 0`, `r.json.temp * 2`, `lista.0` (índice) e
 `lista.count`. Campo que não existe = erro com o nome no trace.

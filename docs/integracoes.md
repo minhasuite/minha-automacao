@@ -69,6 +69,11 @@ varredura e da adoção o plugin grava o estado atual (`Plugin.refresh`).
   Voltou: limpa.
 - Novo na conta (a partir da 2ª varredura): notificação `integracao`
   "Novo dispositivo encontrado" e o badge "N novo(s) para adicionar" no card.
+- Lote 8: ponto que o mapa de dados passou a trazer (cor da lâmpada, evento
+  do robô) entra no aparelho já cadastrado na próxima varredura
+  (`Integrations.add_points`; casa pelo endereço `dps` ou `siid/piid/eiid`).
+  O que já existe não muda (nem o endereço: mapa novo em ponto antigo pede
+  ajuste de dado).
 - `adopt!(integration, {id => área})`: área existente, `new:<cômodo>` (cria) ou
   vazia; a sugestão vem do cômodo da nuvem. Cria aparelho e pontos (chave do
   ponto única no local).
@@ -241,3 +246,31 @@ usuário e senha) → Continuar → marque e "Adicionar".
 (ou "Procurar em todas") → Continuar. Se aparecer a imagem, digite o texto e
 a senha de novo. Se pedir duas etapas, use "Entrar com o QR code" e escaneie
 pelo Mi Home.
+
+## Cor de lâmpada e eventos do robô (Lote 8)
+
+- **Cor** (`Points::Color`): ponto de capacidade `color`, comando `set` com
+  `{"hs": [h, s]}`, `{"rgb": [r, g, b]}`, `"#rrggbb"`, `{"kelvin": k}` ou
+  `{"mireds": m}` (e `"v"` 0 a 100 opcional). Como chega no aparelho vem de
+  `address.color`, montado pelo mapa: `hs` = formato (`Points::Color::FORMATS`:
+  `hsv_json`, `hsv_hex`, `rgb_int`; `via` troca o formato por driver, ex.: Tuya
+  JSON na nuvem e hex na LAN), `temp` = endereço irmão + faixa
+  (kelvin → bruto linear) e `mode` = endereço irmão do modo (`colour`/`white`).
+  O driver grava tudo num pedido (`Point#raw_writes`). Tuya: `colour_data_v2`
+  e `colour_data` em `tuya.yml` (irmãos por código). Xiaomi: `color` (RGB
+  inteiro) e `color-temperature` (kelvin) em `miot.yml` (irmão pelo nome, no
+  mesmo serviço). Na tela, o seletor de cor do navegador. Validado no Dell
+  numa lâmpada Tuya 3.3 pela LAN (vermelho, 3000 K e volta ao estado inicial).
+- **Eventos do robô** (`miot.yml`, `vacuum_events`): o protocolo local não
+  empurra evento; cada um vira ponto `event` (`siid/eiid`, `event`) que
+  dispara quando a situação (`when`: siid/piid, códigos `from` → `to`) muda
+  na leitura periódica (`Miio::Vacuum.fire_events`). Limpeza começou/concluída,
+  mapa concluído, base esvaziou, pano lavado e erro; mais o ponto "Limpeza
+  atual" (2.40, JSON com os cômodos). Evento novo = linha no mapa.
+- **Movimento da câmera Tuya**: já era ponto (`initiative_message`). O
+  importador do HA liga a entidade sem aparelho (`tuya_camera_motion`) pelo
+  começo do `unique_id` (= id do aparelho daqui) e pela classe do sensor.
+- **Echo** (G12): comandos `sound` (id do som da Alexa,
+  `amzn_sfx_doorbell_chime_01`), `play` ("PROVEDOR: busca", padrão Amazon
+  Music) e `volume` (0 a 100) no ponto `speaker`, pela sessão própria
+  (`Alexa::Client`). Testado só com WebMock.

@@ -292,7 +292,7 @@ module Integrations
       return false if unresolved.any? { |u| u.start_with?("script.") } && !last
 
       automation = old ? refresh!(old, attrs, name, values, domain, ext) : create!(attrs, name, values, domain, ext)
-      notes = attrs["unsupported"] + unresolved.map { |u| "sem de-para: #{u}" } + attribute_notes(automation)
+      notes = (attrs["unsupported"] + unresolved.map { |u| "sem de-para: #{u}" } + attribute_notes(automation)).uniq
       notes << "rascunho: não publicou (#{automation.errors_in(automation.draft).first || 'falta entrada sem de-para'})" if automation.draft?
       link!(ext, domain, automation, name)
       @r.items << { "kind" => domain, "name" => name, "ref" => ext, "lossless" => notes.empty?, "notes" => notes, "enabled" => automation.enabled }

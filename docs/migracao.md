@@ -128,6 +128,27 @@ de-para aparece à parte. Do lado daqui, alternar, apertar e rodar casam com
 qualquer estado. Aviso, fala e HTTP não entram na conta (o HA não os registra
 no diário), mas estão na linha do tempo "teria feito".
 
+## Lote 8 (recursos genéricos que faltavam)
+
+O importador passou a traduzir, sem nada da casa no código:
+
+- `light.turn_on` com `brightness`/`brightness_pct`/`rgb_color`/`hs_color`/
+  `color_temp_kelvin`/`color_temp` → "Ajustar" no ponto irmão (intensidade,
+  cor) do mesmo aparelho. A entrada irmã tem o rótulo `entidade#capacidade`
+  e o importador da instalação acha o ponto pela capacidade no aparelho.
+- alvo `label_id`/`area_id` → "Comandar pontos por consulta" (`tag=…`,
+  `area=… capability=onoff`; luz por área fica anotada, porque aqui a consulta
+  não separa luz de tomada).
+- `media_player.play_media` (som, rotina, música por provedor) e
+  `volume_set` → comandos do ponto `speaker`.
+- gatilho `state` com `attribute` → gatilho por atributo (avisa quando o
+  ponto daqui não informa o atributo: converte, mas não dispara).
+- `wait_for_trigger` de um estado (`to` + `for`) → "Esperar condição".
+- Jinja `expand(...) | map(attribute='last_changed') | max/min`.
+- entidade sem aparelho no HA pelo `unique_id` + classe; evento do robô por
+  `_e_<siid>_<eiid>`.
+- item publicado e solto do blueprint (assumido à mão) não é refeito.
+
 ## Fonte de referência nova
 
 Um plugin de integração (`Integrations::PLUGINS`) que responde a:
