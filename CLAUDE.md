@@ -488,6 +488,19 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   Comandar por consulta e resumo do histórico são plugins de ação; o `case`
   do `PointsHistoryAction#row` escolhe a opção da própria ação (op), não tipo
   daqui. Importador: item publicado e solto do blueprint não é refeito.
+- **Pacote 1 (aparelhos, aberto/fechado)**: aparelho da rede = plugin
+  `< Integrations::LanPlugin` (uma integração por aparelho: `port`,
+  `secrets`, `mdns`, `probe` → entrada) + driver em `Drivers::REGISTRY`
+  (+ `Polling::DEVICES` se lê); `Device` aceita qualquer driver registrado.
+  Mídia e controle remoto são capacidades (`media`, `remote`), não marcas:
+  o aparelho diz o que faz em `address.supports` (corta
+  `commands_for`) e o widget sai da capacidade (`Widgets.for_capability`,
+  `describe auto:`), no painel automático e na página do ponto. Transporte de
+  controle remoto = driver com `send_code`/`learn` chamando `Remotes.execute`
+  (códigos em `address.codes`). Descoberta (`Mdns.browse`) só lista; na rede
+  bridge do Docker o multicast não sai: `MDNS_SUBNET` liga a pergunta unicast
+  por IP. Protobuf em `Proto`, WebSocket em `WsClient`. Detalhes em
+  `docs/integracoes.md` (Pacote 1).
 - **Sombra (F10)**: `Shadow.active?` = marca da automação/cena, `sites.shadow`
   ou `tenants.settings["shadow"]`; a execução guarda `automation_runs.shadow`
   (herda de quem causou e da thread). Ação nova = **segurada** por padrão:

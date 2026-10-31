@@ -201,7 +201,8 @@ class Point < ApplicationRecord
   def fill_defaults
     self.site_id ||= device&.site_id
     self.data_type ||= CAPABILITIES[capability]
-    self.writable = !capability.in?(READ_ONLY) unless writable_changed? || helper
+    # `writable: false` vindo do mapa também vale (é igual ao padrão da coluna: só `came_from_user?` acusa).
+    self.writable = !capability.in?(READ_ONLY) unless writable_changed? || @attributes["writable"].came_from_user? || helper
     self.min, self.max = 0, 100 if capability == "dimmer" && min.nil? && max.nil?
     self.key ||= [ device&.name, name ].map { |s| s.to_s.parameterize(separator: "_") }.compact_blank.join(".").presence
   end

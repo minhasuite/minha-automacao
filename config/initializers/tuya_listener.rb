@@ -8,6 +8,9 @@ Rails.application.config.after_initialize do
   SolidQueue.on_worker_start { Mqtt::Listener.start } if defined?(SolidQueue)
   # Movimento das câmeras ONVIF (Lote 3); sem câmera com ponto de movimento, só olha a tabela.
   SolidQueue.on_worker_start { Onvif::Listener.start } if defined?(SolidQueue) && ENV["ONVIF_LISTENER"] != "off"
+  # Tempo real do ESPHome e do Matter (Pacote 1); sem aparelho adotado, só olham a tabela.
+  SolidQueue.on_worker_start { Esphome::Listener.start } if defined?(SolidQueue) && ENV["ESPHOME_LISTENER"] != "off"
+  SolidQueue.on_worker_start { Matter::Listener.start } if defined?(SolidQueue) && ENV["MATTER_LISTENER"] != "off"
   # Leitura periódica (F8: Tuya, Xiaomi, lista de Echo); POLLING=off desliga.
   SolidQueue.on_worker_start { Polling.start } if defined?(SolidQueue) && ENV["POLLING"] != "off"
   # Helpers sem "restaurar depois de reiniciar" voltam ao valor inicial (F8e).

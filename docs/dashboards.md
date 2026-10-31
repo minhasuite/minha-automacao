@@ -91,6 +91,8 @@ ou `key` do ponto.
 | `heading` | `title` | título |
 | `markdown` (plugin) | `text` | Texto com Liquid (Lote 4): o mesmo das automações (`{{ points["sala.luz"].text }}`, `{{ now \| date: "%H:%M" }}`, `{% if %}`, `{{ "state=on tag=luz" \| points_where \| size }}`) e Markdown mínimo (`# título`, `- item`, `**negrito**`, `*itálico*`, linha em branco = parágrafo). Os pontos citados como `points["chave"]` entram nas dependências (o texto se refaz quando mudam); erro de Liquid aparece embaixo do texto |
 | `weather` (plugin) | `bind` (ponto `weather` da integração Clima), `forecast` (`daily` padrão, `hourly`, `none`) | condição, temperatura, sensação, umidade, vento e chance de chuva de agora, e 5 dias ou 8 horas de previsão |
+| `media` (plugin, Pacote 1) | `bind` (ponto `media`; serve também para o `speaker` da Echo) | situação, título, artista/app, ligar/desligar, anterior/tocar-pausar/próxima, volume −/mudo/+, barra de volume e "Tocar" (`play_media`); só aparecem os controles que o ponto aceita (`Points::Command.commands_for`, cortado pelo `address.supports`). O painel automático e a página do ponto usam este widget para a capacidade `media` (`describe auto:`) |
+| `remote` (plugin, Pacote 1) | `bind` (ponto `remote`) | um botão por código aprendido (`send`) e "Aprender botão" (`learn`, até 20 s) para quem comanda |
 
 `query` (Lote 4: `Points::Query`, o mesmo das expressões e do Liquid):
 `capability` (uma ou lista), `state` (`on`: verdadeiro, `open`; `off`: o

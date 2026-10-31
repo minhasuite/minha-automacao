@@ -298,3 +298,131 @@ pelo Mi Home.
 - **Limpar cômodos por texto**: o valor do `clean_rooms` pode ser JSON ou só
   os cômodos separados por vírgula, pelo id ou pelo nome do mapa
   ("5, Cozinha"), para vir de um campo de script ou de uma consulta.
+
+## Aparelhos da rede, mídia, Matter, IR/RF e Spotify (Pacote 1)
+
+Nada aqui é código por marca no núcleo: cada integração é um plugin em
+`Integrations::PLUGINS`, cada driver uma linha em `Drivers::REGISTRY` (e em
+`Polling::DEVICES` se lê), os mapas ficam em `config/device_maps/*.yml` e o
+desenho sai da capacidade do ponto.
+
+### Peças comuns
+
+- **`Integrations::LanPlugin`**: aparelho da rede = uma integração por
+  aparelho (como no HA). `port`, `secrets` (campos cifrados na integração),
+  `mdns` (serviço DNS-SD) e `probe(integration)` → uma entrada de
+  inventário. Formulário comum `forms/_lan` (nome, IP, porta, segredos);
+  erro de rede vira aviso na tela de encontrados.
+- **Procurar na rede** (`Plugin.discovers?`/`discover`): o assistente lista o
+  que se anuncia (`Mdns.browse`, ou descoberta própria como o hello do
+  Broadlink) e "Usar" só preenche o IP. **Nada é cadastrado sozinho.** O
+  container na rede bridge do Docker não alcança o multicast: com
+  `MDNS_SUBNET` (ex.: `192.168.68.0/22`, no `.env`) o servidor também faz a
+  pergunta unicast a cada IP da faixa (RFC 6762 §6.7). Conferido no Dell em
+  31/10/2026: bridge sem a faixa = nada; com a faixa = HA e Matter
+  respondem; rede do host = tudo (Spotify Connect etc.).
+- **Capacidade `media`** (valor `{state, title, artist, album, app, source,
+  volume, muted}`; comandos `on off resume pause next previous volume
+  volume_up volume_down mute play_media`) e **`address.supports`**: o
+  aparelho diz o que faz e `Points::Command.commands_for` corta o resto.
+- **Capacidade `remote`** (controle remoto genérico, `Remotes`): códigos
+  aprendidos em `address.codes` ({botão → código}); comandos `send`,
+  `learn` (até 20 s) e `forget` pelo nome do botão. Transporte novo = driver
+  com `send_code`/`learn` chamando `Remotes.execute`.
+- **Widgets `media` e `remote`** (`Dashboards::Widgets`, também no app): o
+  painel automático e a página do ponto usam o widget da capacidade
+  (`describe auto:`). A Echo (`speaker`) pode usar o widget de mídia: aparece
+  só o volume, o único comando dela que o widget conhece.
+- `Proto` (protobuf mínimo: ESPHome, Cast), `WsClient` (WebSocket sobre o
+  `websocket-driver`: webOS, Tizen, Matter) e `Device` aceitando qualquer
+  driver registrado (rótulo vindo do plugin).
+
+### Tipos
+
+- **ESPHome** (`EsphomePlugin`, `Esphome::Client`): API nativa, TCP 6053.
+  Sem chave: quadro 0x00 + varint(tamanho) + varint(tipo) + protobuf. Com a
+  chave do YAML (`api: encryption: key`): Noise_NNpsk0_25519_ChaChaPoly_SHA256
+  (`Esphome::Noise`, prólogo `NoiseAPIInit\0\0`, quadro 0x01 + tamanho em 2
+  bytes). Senha antiga opcional; chave e senha cifradas. mDNS
+  `_esphomelib._tcp`; `external_id` = MAC. Entidades → pontos pelo
+  `esphome.yml` (binary_sensor pela `device_class`, sensor `measure` com
+  unidade e `state_class`, switch `onoff`, light `onoff` + `dimmer`, number
+  `setpoint`, button `command`, text_sensor `text`, cover `setpoint` 0–100 %,
+  crítico em garagem/portão); endereço `{key, kind, …}`. Tempo real pelo
+  `Esphome::Listener` no worker (uma conexão por aparelho; caiu =
+  `unavailable`, volta em até 60 s; `ESPHOME_LISTENER=off`). Fora: fan,
+  climate, lock, select, valve, media_player e cor da luz. O Noise foi
+  conferido só contra o responder do spec.
+- **Shelly** (`ShellyPlugin`, `Shelly`): mDNS `_shelly._tcp`; geração pelo
+  `/shelly`. Gen1 por HTTP (`/settings`, `/status`, `/relay|light|roller/N`,
+  Basic) e Gen2+ por RPC JSON em `POST /rpc` (Digest SHA-256, usuário
+  `admin`). Relé/luz `onoff`, brilho `dimmer`, persiana (posição `setpoint` +
+  movimento `enum`), potência, tensão, corrente e energia (kWh,
+  `total_increasing`) pelo `shelly.yml`. Leitura a cada 30 s e depois de cada
+  comando. Fora: tempo real (CoAP/WebSocket).
+- **Tasmota** (`TasmotaPlugin`, `Mqtt::Tasmota`): pelo broker do servidor,
+  com a descoberta nativa (`SetOption19 0`): `tasmota/discovery/<MAC>/config`
+  e `/sensors` viram aparelho `mqtt` (relé em `stat/<t>/RESULT` →
+  `cmnd/<t>/POWERn`, brilho com `lt_st`, cada número do `tele/<t>/SENSOR`
+  com nome e unidade do `tasmota.yml`). Os descobridores MQTT viraram
+  registro: `Mqtt::Listener::DISCOVERY` (`Z2m`, `Tasmota`; módulo com
+  `topics`, `handles?`, `handle`). Fora: persiana (`rl` 3).
+- **Matter** (`MatterPlugin`, `Matter::Client`): cliente do
+  python-matter-server (o mesmo do HA) por WebSocket. Serviço opcional
+  `matter-server` no compose, desligado (`docker compose --profile matter up
+  -d matter-server`, rede do host; o worker fala em `ws://<IP>:5580/ws`).
+  Nós → aparelhos `matter`; atributos → pontos pelo `matter.yml` (liga/
+  desliga, nível, temperatura, umidade, ocupação, abertura, iluminância,
+  bateria, potência, cortina); endereço `{node, endpoint, cluster,
+  attribute}`; comando por `device_command`. **Comissionar**: em
+  Reconfigurar, cole o código (MT:… ou 11 dígitos) com o aparelho já na rede
+  (`network_only`). Tempo real pelo `Matter::Listener`
+  (`MATTER_LISTENER=off`). Fora: energia acumulada (estrutura), Bluetooth,
+  ventilador, ar e fechadura.
+- **Mídia na rede** (`MediaLanPlugin`, `Drivers::MediaLan`): ponto `media`
+  lido a cada 60 s; TV que não responde = "Desligada". "Ligar" por
+  Wake-on-LAN só com o MAC (o broadcast UDP não sai da rede bridge).
+  - **Chromecast** (`cast`, `_googlecast._tcp`, 8009): CastV2 em TLS com
+    protobuf; volume, mudo, app, título, play/pausa, próxima/anterior, parar
+    e tocar endereço (Default Media Receiver).
+  - **LG webOS** (`webos`, 3000/3001): SSAP; volume, mudo, app, play/pausa,
+    desligar e abrir endereço; client-key cifrado.
+  - **Samsung Tizen** (`tizen`, 8002/8001): teclas do controle; estado por
+    `/api/v2/`; sem volume exato nem tocar endereço; token cifrado.
+  - **Android TV / Fire TV por ADB** (`adb`, 5555): chave RSA da integração
+    (cifrada), `input keyevent`, `am start` para tocar endereço e estado por
+    `dumpsys`.
+- **Broadlink** (`BroadlinkPlugin`, `Broadlink`): RM mini/RM4/Pro por UDP 80
+  (cabeçalho 0x38 com checksum, AES-128-CBC, `auth` 0x65). "Procurar na
+  rede" pelo hello (broadcast e, com `MDNS_SUBNET`, unicast). Ponto
+  "Controle" (`remote`); o RM4 Pro ganha temperatura e umidade. Modelo novo =
+  linha no `broadlink.yml`. Fora: varredura de RF (0x19–0x1E).
+- **IR da Tuya** (hub `wnykq`): `remotes` no `tuya.yml` dá ao hub o ponto
+  "Controle"; envio pelo dp 201 (`send_ir`) e aprendizado pelo `study`, com o
+  código no dp 202, pela rede local (`tuya_local`). Os controles virtuais
+  `infrared_tv`/`infrared_ac` continuam sem pontos (a nuvem de
+  compartilhamento não manda tecla IR; ver d61fd1b). Fora: aprender com o
+  ouvinte Tuya ligado no mesmo hub.
+- **Spotify** (`SpotifyPlugin`, `Spotify`): OAuth com o app da própria
+  pessoa (client id e secret cifrados; retorno genérico
+  `/integracoes/oauth/retorno`). Aparelho virtual `spotify:<integração>` com
+  ponto `media` (`resume pause next previous volume play_media`; URI
+  `spotify:…` ou link `open.spotify.com`), leitura a cada 30 s e token
+  renovado sozinho. "Tocar playlist" numa automação = "Comandar ponto" com
+  `play_media`. Fora: escolher o aparelho de destino; ligar e mudo (a API não
+  tem).
+
+### O que depende de quem instala
+
+- **LG**: aceitar o pedido na TV na primeira leitura (até 1 min); para ligar
+  pela rede, "Ligar via Wi-Fi/LAN" na TV. **Samsung**: "Permitir" na TV (30
+  s). **Android TV**: modo desenvolvedor, "Depuração de rede" e "Permitir
+  depuração? Sempre" (30 s). Chromecast não pede nada.
+- **Spotify**: developer.spotify.com/dashboard → Create app → Web API →
+  Redirect URI `https://<host>/integracoes/oauth/retorno` → copiar Client ID e
+  Secret → Integrações → Spotify → "Entrar com o Spotify". Em "Development
+  mode" só as contas cadastradas em User Management entram; controlar exige
+  Premium.
+- **Broadlink**: aparelho desbloqueado no app Broadlink.
+- **Matter**: subir o `matter-server` (perfil) e comissionar pelo código.
+- **ESPHome**: a chave `api: encryption: key` do YAML da placa.

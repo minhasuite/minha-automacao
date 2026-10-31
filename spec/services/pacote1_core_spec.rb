@@ -8,9 +8,6 @@ RSpec.describe "Pacote 1: núcleo de mídia, controle remoto e descoberta" do
   let(:tenant) { create(:tenant) }
   let(:site) { create(:site) }
   let(:device) { create(:device, site: site, name: "TV da sala", driver: "fake_tv") }
-
-  around { |ex| ActsAsTenant.with_tenant(tenant) { ex.run } }
-
   # Driver falso registrado como um de verdade (o núcleo não sabe quem é).
   let(:fake_driver) do
     Class.new do
@@ -21,6 +18,9 @@ RSpec.describe "Pacote 1: núcleo de mídia, controle remoto e descoberta" do
       end
     end
   end
+
+  around { |ex| ActsAsTenant.with_tenant(tenant) { ex.run } }
+
 
   before do
     stub_const("FakeTvDriver", fake_driver)
@@ -131,15 +131,15 @@ RSpec.describe "Pacote 1: núcleo de mídia, controle remoto e descoberta" do
 
   describe Proto do
     it "codifica e decodifica varint, texto, bool, float e fixed32" do
-      bytes = Proto.encode([ [ 1, :varint, 300 ], [ 2, :string, "olá" ], [ 3, :bool, true ], [ 4, :float, 1.5 ], [ 5, :fixed32, 0xDEADBEEF ], [ 6, :varint, nil ] ])
-      f = Proto.decode(bytes)
+      bytes = described_class.encode([ [ 1, :varint, 300 ], [ 2, :string, "olá" ], [ 3, :bool, true ], [ 4, :float, 1.5 ], [ 5, :fixed32, 0xDEADBEEF ], [ 6, :varint, nil ] ])
+      f = described_class.decode(bytes)
       expect(f[1]).to eq([ 300 ])
-      expect(Proto.string(f[2].first)).to eq("olá")
+      expect(described_class.string(f[2].first)).to eq("olá")
       expect(f[3]).to eq([ 1 ])
-      expect(Proto.float(f[4].first)).to eq(1.5)
-      expect(Proto.fixed32(f[5].first)).to eq(0xDEADBEEF)
+      expect(described_class.float(f[4].first)).to eq(1.5)
+      expect(described_class.fixed32(f[5].first)).to eq(0xDEADBEEF)
       expect(f.key?(6)).to be(false)
-      expect(Proto.read_varint(Proto.varint(-1), 0).first).to eq(0xFFFF_FFFF_FFFF_FFFF)
+      expect(described_class.read_varint(described_class.varint(-1), 0).first).to eq(0xFFFF_FFFF_FFFF_FFFF)
     end
   end
 
@@ -155,7 +155,7 @@ RSpec.describe "Pacote 1: núcleo de mídia, controle remoto e descoberta" do
     end
 
     it "pergunta PTR com resposta unicast e junta PTR, SRV, TXT e A de cada aparelho" do
-      q = Resolv::DNS::Message.decode(Mdns.query("_esphomelib._tcp.local"))
+      q = Resolv::DNS::Message.decode(described_class.query("_esphomelib._tcp.local"))
       expect(q.question.first.first.to_s).to eq("_esphomelib._tcp.local")
       type = "_esphomelib._tcp.local"
       packets = [
@@ -163,13 +163,13 @@ RSpec.describe "Pacote 1: núcleo de mídia, controle remoto e descoberta" do
         [ answer(type, "sala.#{type}", "sala.local", 6053, "192.168.0.10", []), "192.168.0.10" ],
         [ "lixo", "192.168.0.99" ]
       ]
-      list = Mdns.parse_all(type, packets)
+      list = described_class.parse_all(type, packets)
       expect(list).to eq([ { "name" => "sala", "host" => "192.168.0.10", "port" => 6053, "txt" => { "friendly_name" => "Sensor da sala", "board" => "esp32", "flag" => "" } } ])
     end
 
     it "varre só uma rede pequena" do
-      expect(Mdns.targets("192.168.0.0/30")).to eq(%w[192.168.0.1 192.168.0.2 192.168.0.3])
-      expect(Mdns.targets("10.0.0.0/8")).to eq([])
+      expect(described_class.targets("192.168.0.0/30")).to eq(%w[192.168.0.1 192.168.0.2 192.168.0.3])
+      expect(described_class.targets("10.0.0.0/8")).to eq([])
     end
   end
 

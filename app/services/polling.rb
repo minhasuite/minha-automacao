@@ -7,7 +7,9 @@
 module Polling
   TICK = 15
   GAP = 2
-  DEVICES = { "tuya_local" => "Drivers::TuyaLocal", "xiaomi_miot" => "Drivers::XiaomiMiot" }.freeze
+  DEVICES = { "tuya_local" => "Drivers::TuyaLocal", "xiaomi_miot" => "Drivers::XiaomiMiot",
+              "esphome" => "Drivers::Esphome", "shelly" => "Drivers::Shelly", "matter" => "Drivers::Matter", "broadlink" => "Drivers::Broadlink",
+              "cast" => "Drivers::Cast", "webos" => "Drivers::Webos", "tizen" => "Drivers::Tizen", "adb" => "Drivers::Adb", "spotify" => "Drivers::Spotify" }.freeze
   # Integração de conta: varredura (`Integrations.sync!`; Alexa = lista de Echo).
   DUE = "COALESCE(poll_s, 0) > 0 AND (polled_at IS NULL OR polled_at <= now() - make_interval(secs => poll_s))".freeze
 
