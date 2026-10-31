@@ -1,0 +1,4 @@
+<%# locals: (f:, integration:) -%>
+<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::EsphomePlugin,
+           fields: [ [ :encryption_key, "Chave de criptografia da API (se tiver)", "base64 do api: encryption: key" ], [ :password, "Senha da API (antiga, se tiver)", "" ] ],
+           note: "A chave fica no YAML do ESPHome, em api: encryption: key. Sem chave nem senha, deixe os dois vazios. A chave e a senha ficam cifradas." %>

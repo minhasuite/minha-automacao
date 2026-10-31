@@ -1,0 +1,41 @@
+# ESPHome (Pacote 1): entidade da API nativa → ponto pelas capacidades que
+# já existem. Mudar o comportamento de um tipo de sensor = mudar aqui, sem
+# código (Esphome.points).
+#
+# binary_sensor: device_class → capacidade (o resto vira `default`).
+binary_sensor:
+  default: contact
+  classes:
+    motion: motion
+    occupancy: motion
+    presence: motion
+    moving: motion
+    vibration: motion
+    door: contact
+    window: contact
+    opening: contact
+    garage_door: contact
+    tamper: tamper
+    problem: problem
+    smoke: problem
+    gas: problem
+    moisture: problem
+    safety: problem
+    carbon_monoxide: problem
+    heat: problem
+    cold: problem
+    battery: problem
+# Entidade que vira ponto direto: tipo → capacidade (e se recebe comando).
+kinds:
+  switch: { capability: onoff }
+  text_sensor: { capability: text, writable: false }
+  button: { capability: command }
+  number: { capability: setpoint }
+  sensor: { capability: measure }
+# Cortina/portão: posição 0 a 100 %. Risco pela device_class (portão = crítico).
+cover:
+  risk: { garage: critical, gate: critical, door: sensitive }
+# state_class do ESPHome (enum) → o daqui.
+state_class: { 1: measurement, 2: total_increasing, 3: total }
+# Modo de cor com brilho (bit 2 do ColorMode).
+brightness_bit: 2
