@@ -25,7 +25,7 @@ module Drivers
     def execute(point, command, value)
       code = point.address["code"].presence or raise Error, "Ponto sem código Tuya no endereço: sincronize a integração."
       new_value = Points::Command.new(point, command, value).new_value
-      writes = point.raw_writes(new_value)&.map { |a, raw| { "code" => a["code"], "value" => raw } } || [ { "code" => code, "value" => point.to_raw(new_value) } ]
+      writes = point.raw_writes(new_value, "tuya_cloud")&.map { |a, raw| { "code" => a["code"], "value" => raw } } || [ { "code" => code, "value" => point.to_raw(new_value) } ]
       self.class.cloud_for(point.device).commands(point.device.external_id, writes)
       point.report!(new_value)
     end

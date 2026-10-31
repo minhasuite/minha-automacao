@@ -17,14 +17,19 @@ module Points
     FORMATS = {
       "hsv_json" => [
         ->(c, f) { { "h" => c["h"].round, "s" => scale(c["s"], f["s_max"]), "v" => scale(c.fetch("v", 100), f["v_max"]) }.to_json },
-        ->(raw, f) { (d = raw.is_a?(String) ? JSON.parse(raw) : raw).is_a?(Hash) ? hs(d["h"], unscale(d["s"], f["s_max"]), unscale(d["v"], f["v_max"])) : nil }
+        ->(raw, f) { (d = hsv_hash(raw)) ? hs(d["h"], unscale(d["s"], f["s_max"]), unscale(d["v"], f["v_max"])) : nil }
+      ],
+      # Tuya pela LAN: "hhhhssssvvvv" (hex de 4 dígitos cada).
+      "hsv_hex" => [
+        ->(c, f) { format("%04x%04x%04x", c["h"].round, scale(c["s"], f["s_max"]), scale(c.fetch("v", 100), f["v_max"])) },
+        ->(raw, f) { FORMATS["hsv_json"].last.call(raw, f) }
       ],
       "rgb_int" => [
         ->(c, _f) { rgb(c.merge("v" => 100)).then { |r, g, b| (r << 16) | (g << 8) | b } }, # brilho é outra propriedade
         ->(raw, _f) { raw.is_a?(Integer) ? from_rgb([ (raw >> 16) & 255, (raw >> 8) & 255, raw & 255 ]) : nil }
       ]
     }.freeze
-    CONFIG_KEYS = %w[format s_max v_max raw_min raw_max min_k max_k hs temp].freeze
+    CONFIG_KEYS = %w[format via s_max v_max raw_min raw_max min_k max_k hs temp].freeze
     KELVIN = (1000..12_000)
 
     module_function
@@ -48,8 +53,18 @@ module Points
       c
     end
 
+    # {h, s, v} brutos: JSON (nuvem) ou "hhhhssssvvvv" (LAN).
+    def hsv_hash(raw)
+      return raw if raw.is_a?(Hash)
+      return %w[h s v].zip(raw.scan(/\h{4}/).map { |x| x.to_i(16) }).to_h if raw.is_a?(String) && raw.match?(/\A\h{12}\z/)
+
+      (d = JSON.parse(raw.to_s)).is_a?(Hash) ? d : nil
+    end
+
     # [[endereço, valor bruto]] a gravar no aparelho (modo antes da cor).
-    def writes(point, value)
+    # `via`: o caminho do comando (driver); `hs.via` no mapa troca o formato
+    # por caminho (a Tuya fala JSON na nuvem e hex na LAN).
+    def writes(point, value, via = nil)
       conf = point.address["color"].to_h
       mode = conf["mode"] && [ conf["mode"].except(*CONFIG_KEYS, "hs", "temp"), conf["mode"][value["mode"]] ]
       write = if value["mode"] == "temp"
@@ -57,7 +72,7 @@ module Points
         [ t.except(*CONFIG_KEYS), kelvin_raw(t, value["kelvin"]) ]
       else
         f = conf.fetch("hs")
-        [ point.address.except("color"), FORMATS.fetch(f["format"]).first.call(value.merge("v" => value["v"] || brightness(point)), f) ]
+        [ point.address.except("color"), FORMATS.fetch(f.dig("via", via.to_s) || f["format"]).first.call(value.merge("v" => value["v"] || brightness(point)), f) ]
       end
       [ (mode if mode&.last), write ].compact
     end

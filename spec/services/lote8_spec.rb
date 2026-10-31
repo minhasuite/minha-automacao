@@ -11,7 +11,7 @@ RSpec.describe "Lote 8: recursos genéricos da migração" do
   let(:site) { create(:site, name: "Local") }
   let(:device) { create(:device, site: site, driver: "virtual", name: "Aparelho") }
   let(:tuya_color) do
-    { "hs" => { "format" => "hsv_json", "s_max" => 1000, "v_max" => 1000 },
+    { "hs" => { "format" => "hsv_json", "via" => { "tuya_local" => "hsv_hex" }, "s_max" => 1000, "v_max" => 1000 },
       "temp" => { "code" => "temp_value_v2", "dps" => "23", "raw_min" => 0, "raw_max" => 1000, "min_k" => 2000, "max_k" => 6500 },
       "mode" => { "code" => "work_mode", "dps" => "21", "hs" => "colour", "temp" => "white" } }
   end
@@ -67,10 +67,10 @@ RSpec.describe "Lote 8: recursos genéricos da migração" do
       cor = create(:point, site: site, device: lamp, name: "Cor", key: "lamp.cor", capability: "color", data_type: "json", writable: true,
                            address: { "dps" => "24", "code" => "colour_data_v2", "color" => tuya_color })
       conn = instance_double(Tuya::Connection, set: {}, close: nil)
-      allow(conn).to receive_messages(connect: conn, status: { "24" => { "h" => 240, "s" => 500, "v" => 500 }.to_json })
+      allow(conn).to receive_messages(connect: conn, status: { "24" => "00f001f401f4" }) # a LAN responde em hex
       allow(Drivers::TuyaLocal).to receive(:connection_for).and_return(conn)
       Drivers::TuyaLocal.new.execute(cor, "set", { "hs" => [ 240, 50 ] })
-      expect(conn).to have_received(:set).with("21" => "colour", "24" => { "h" => 240, "s" => 500, "v" => 500 }.to_json)
+      expect(conn).to have_received(:set).with("21" => "colour", "24" => "00f001f401f4")
       expect(cor.reload.value).to eq("mode" => "hs", "h" => 240.0, "s" => 50.0, "v" => 50)
 
       Drivers::TuyaLocal.new.execute(cor, "set", { "kelvin" => 4250 })

@@ -143,7 +143,7 @@ class Point < ApplicationRecord
   # Gravações no aparelho para um valor ([[endereço, bruto]]) quando não é um
   # dp/propriedade só (Lote 8: cor = modo + cor ou temperatura). nil = o
   # driver grava `to_raw(value)` no endereço do ponto, como sempre.
-  def raw_writes(value) = address["color"].present? ? Points::Color.writes(self, value) : nil
+  def raw_writes(value, via = nil) = address["color"].present? ? Points::Color.writes(self, value, via) : nil
 
   # Atributos novos (Lote 8): único caminho, dispara os gatilhos "Ponto
   # mudou" com atributo (Automations::Triggers.on_attrs_change).

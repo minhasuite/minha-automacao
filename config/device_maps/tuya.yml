@@ -30,7 +30,7 @@ codes:
   # Lâmpada com cor (Lote 8): o ponto Cor recebe hs, rgb, #rrggbb ou kelvin
   # (Points::Color). `color` diz o formato do dp e os dps irmãos (por código)
   # da temperatura e do modo; código que o aparelho não tem fica de fora.
-  colour_data_v2: { name: Cor, capability: color, color: { hs: { format: hsv_json, s_max: 1000, v_max: 1000 }, temp: { code: temp_value_v2, raw_min: 0, raw_max: 1000, min_k: 2000, max_k: 6500 }, mode: { code: work_mode, hs: colour, temp: white } } }
+  colour_data_v2: { name: Cor, capability: color, color: { hs: { format: hsv_json, via: { tuya_local: hsv_hex }, s_max: 1000, v_max: 1000 }, temp: { code: temp_value_v2, raw_min: 0, raw_max: 1000, min_k: 2000, max_k: 6500 }, mode: { code: work_mode, hs: colour, temp: white } } }
   colour_data: { name: Cor, capability: color, color: { hs: { format: hsv_json, s_max: 255, v_max: 255 }, temp: { code: temp_value, raw_min: 25, raw_max: 255, min_k: 2000, max_k: 6500 }, mode: { code: work_mode, hs: colour, temp: white } } }
   # Hub Zigbee: "alarm" = problema no hub.
   master_state: { name: Hub com problema, capability: problem, device_class: problem, decode: value, match: alarm, unmatched: false }
