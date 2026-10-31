@@ -22,6 +22,7 @@ module Drivers
       device.points.each do |point|
         dp = point.address["dps"]&.to_s
         next unless dp && dps.key?(dp) && (push || !point.address["push_only"])
+        next if point.capability == "remote" # o valor do controle remoto é dos botões aprendidos (Remotes), não do dp
 
         value = point.from_raw(dps[dp])
         point.report!(value, at: at) unless value.nil? && point.address["decode"] # decodificado nil = mensagem de outro tipo
@@ -59,6 +60,7 @@ module Drivers
     end
 
     def execute(point, command, value)
+      return Remotes.execute(self, point, command, value.to_s.squish) if point.capability == "remote" # Pacote 1: hub IR
       dp = point.address["dps"].presence&.to_s or raise Error, "Ponto sem dps no endereço."
       device = point.device
       # Sem IP na rede mas ligado à conta da nuvem: vai pela nuvem (o local é a preferência, não a única via).
@@ -73,6 +75,50 @@ module Drivers
         begin
           conn.set(dps)
           self.class.report(device, conn.status) # estado completo: medição junto
+        ensure
+          conn.close
+        end
+      end
+    end
+
+    # Pacote 1: controle remoto pelo hub IR da Tuya (Smart IR, dp 201 manda e
+    # aprende, dp 202 traz o código aprendido; endereços vêm do `remotes` do
+    # tuya.yml). Transporte do Remotes: `send_code` e `learn`.
+    LEARN_S = 20
+
+    def send_code(point, code)
+      a = point.address
+      ir_write(point.device, a["dps"] => JSON.generate({ control: "send_ir", head: "", key1: "#{a['key_prefix']}#{code}", type: 0, delay: 300 }))
+    end
+
+    # ponytail: conexão curta própria; com o ouvinte (`listen`) ligado no hub o
+    # aparelho de conexão única pode recusar: desligue o ouvinte para aprender.
+    def learn(point)
+      a = point.address
+      conn = self.class.connection_for(point.device).connect
+      begin
+        conn.write_dps(a["dps"] => JSON.generate({ control: "study" }))
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + LEARN_S
+        while (left = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)) > 0
+          code = conn.read(left)&.dps.to_h[a["learn_dps"].to_s]
+          return code if code.present?
+        end
+        nil
+      ensure
+        conn.write_dps(a["dps"] => JSON.generate({ control: "study_exit" })) rescue nil # rubocop:disable Style/RescueModifier -- sair do aprendizado é melhor esforço
+        conn.close
+      end
+    end
+
+    private
+
+    def ir_write(device, dps)
+      if (live = Tuya::Listener.connection(device.id))
+        live.write_dps(dps)
+      else
+        conn = self.class.connection_for(device).connect
+        begin
+          conn.write_dps(dps)
         ensure
           conn.close
         end

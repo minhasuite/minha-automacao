@@ -1,0 +1,32 @@
+# Broadlink (Pacote 1): tipo do aparelho (devtype do hello) → modelo.
+# `framed`: comandos com o tamanho na frente (RM mini 3 novo e família RM4);
+# `sensors`: lê temperatura e umidade (RM4 com o cabo HTS2), vira ponto.
+# Modelo novo = linha nova aqui (lista do python-broadlink).
+models:
+  "0x2712": { name: RM2 }
+  "0x272a": { name: RM2 Pro Plus }
+  "0x2737": { name: RM Mini }
+  "0x278f": { name: RM Mini Shate }
+  "0x27c2": { name: RM Mini 3 }
+  "0x27c7": { name: RM Mini 3 }
+  "0x27d1": { name: RM Mini 3 }
+  "0x27de": { name: RM Mini 3 }
+  "0x5f36": { name: RM Mini 3, framed: true }
+  "0x6508": { name: RM Mini 3, framed: true }
+  "0x51da": { name: RM4 mini, framed: true }
+  "0x6070": { name: RM4C mini, framed: true }
+  "0x610e": { name: RM4 mini, framed: true }
+  "0x610f": { name: RM4C mini, framed: true }
+  "0x62bc": { name: RM4 mini, framed: true }
+  "0x62be": { name: RM4C mini, framed: true }
+  "0x6364": { name: RM4S, framed: true }
+  "0x648d": { name: RM4 mini, framed: true }
+  "0x6539": { name: RM4C mini, framed: true }
+  "0x653a": { name: RM4 mini, framed: true }
+  "0x6026": { name: RM4 Pro, framed: true, sensors: true }
+  "0x61a2": { name: RM4 Pro, framed: true, sensors: true }
+  "0x649b": { name: RM4 Pro, framed: true, sensors: true }
+  "0x653c": { name: RM4 Pro, framed: true, sensors: true }
+  "0x520b": { name: RM4 Pro, framed: true, sensors: true }
+  "0x5213": { name: RM4 Pro, framed: true, sensors: true }
+  "0x5218": { name: RM4C Pro, framed: true, sensors: true }

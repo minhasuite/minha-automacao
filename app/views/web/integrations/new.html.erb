@@ -1,6 +1,6 @@
 <%= render "web/shared/header", title: "Adicionar #{@plugin.title}", subtitle: @plugin.description, back: site_integrations_path(@site, anchor: "adicionar") %>
-<% if @plugin.mdns %>
-  <%# Pacote 1: descoberta na rede (mDNS). Só lista; "Usar" preenche o endereço do formulário. %>
+<% if @plugin.discovers? %>
+  <%# Pacote 1: descoberta na rede (mDNS ou a do plugin). Só lista; "Usar" preenche o endereço do formulário. %>
   <section class="ss-card ss-card-pad grid gap-3 max-w-2xl mb-4" aria-labelledby="na-rede">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div class="min-w-0">

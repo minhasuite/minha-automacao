@@ -98,6 +98,13 @@ patterns:
 # Categorias que são hub (gateway): o sub-dispositivo com a mesma chave
 # local, ou o único hub sem filhos na mesma chave, vira o "via" dele.
 gateways: [wg2, wnykq, wfcon, alexa_yywg, gateway]
+# Pacote 1: hub IR (Smart IR) → ponto "Controle" (`remote`, Remotes): dp que
+# manda/aprende, dp onde chega o código aprendido e o prefixo do key1 no envio.
+# Só pela rede local (driver tuya_local, LocalTuya importado com IP): a API de
+# compartilhamento não manda tecla IR. Os controles virtuais (infrared_tv,
+# infrared_ac) seguem sem pontos.
+remotes:
+  wnykq: { name: Controle, dps: "201", learn_dps: "202", key_prefix: "1" }
 # Lote 9: câmera com vídeo pela nuvem → ponto "Vídeo" sob demanda (o endereço RTSP é pedido na hora e vence em minutos).
 streams: [sp]
 # Booleano só de leitura com estes nomes vira "problema".

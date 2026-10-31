@@ -149,7 +149,7 @@ module Tuya
       { "id" => d["id"], "kind" => "tuya_cloud", "match_drivers" => DRIVERS, "name" => d["name"].to_s.squish.presence || d["id"],
         "manufacturer" => "Tuya", "model" => d["product_name"], "category" => MAP["categories"][d["category"]] || d["category"], "room" => room,
         "online" => d["online"] == true, "sub" => d["sub"] == true && !self.class.gateway?(d), "secret" => d["local_key"], "poll_s" => 0,
-        "state" => self.class.state(d), "points" => self.class.points(d["name"].to_s, relations, writable) + self.class.stream_points(d) }
+        "state" => self.class.state(d), "points" => (self.class.remote_points(d) + self.class.points(d["name"].to_s, relations, writable) + self.class.stream_points(d)).uniq { |p| p.dig("address", "dps") } }
     end
 
     # Lote 9: câmera com vídeo pela nuvem (`streams` no mapa) → ponto `stream`
@@ -159,6 +159,13 @@ module Tuya
 
       [ { "name" => "Vídeo", "capability" => "stream", "data_type" => "string", "writable" => false, "history" => "none",
           "address" => { "dps" => "video", "on_demand" => true } } ]
+    end
+
+    # Pacote 1: hub IR (`remotes` no mapa) → controle remoto genérico (Remotes), pela rede local.
+    def self.remote_points(d)
+      r = MAP.dig("remotes", d["category"]) or return []
+
+      [ { "name" => r["name"], "capability" => "remote", "history" => "none", "address" => r.except("name").merge("remote" => "tuya_ir") } ]
     end
 
     # Endereço RTSP de agora da câmera (o mesmo pedido do HA; vence em minutos).

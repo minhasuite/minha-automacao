@@ -20,7 +20,7 @@ module Web
       @site = Site.find(params[:site_id])
       authorize_site!(@site, :manage)
       @plugin = Integrations.plugin(params[:tipo]) or return redirect_to(site_integrations_path(@site, anchor: "adicionar"))
-      @found = discover if params[:procurar].present? && @plugin.mdns
+      @found = discover if params[:procurar].present? && @plugin.discovers?
     end
 
     def create

@@ -71,6 +71,9 @@ module Integrations
       # Encontrados na rede → [{"name", "host", "port", "txt"}] (padrão: mDNS do `mdns`).
       def discover = mdns ? Mdns.browse(mdns) : []
 
+      # Mostra "Procurar na rede": plugin com `mdns` ou com descoberta própria (Broadlink: hello UDP).
+      def discovers? = mdns.present?
+
       # A primeira varredura vem do login (polled_at agora: a periódica não corre antes dele).
       def new_integration(site, **attrs) = site.integrations.new(driver: driver, name: title, poll_s: Integration::SYNC_S, polled_at: Time.current, **attrs)
     end
