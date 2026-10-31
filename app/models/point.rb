@@ -14,7 +14,7 @@ class Point < ApplicationRecord
     "measure" => "decimal", "enum" => "enum", "setpoint" => "decimal", "command" => nil,
     "text" => "string", "vacuum" => "enum", "speaker" => "json", "stream" => "string",
     "climate" => "json", "event" => "json", "counter" => "integer", "timer" => "enum", "datetime" => "string",
-    "script" => nil, "calendar" => "json", "weather" => "enum"
+    "script" => nil, "calendar" => "json", "weather" => "enum", "media" => "json", "remote" => "json"
   }.freeze
   CAPABILITY_LABELS = {
     "onoff" => "Liga/desliga", "dimmer" => "Intensidade", "color" => "Cor", "gate" => "Portão",
@@ -22,7 +22,8 @@ class Point < ApplicationRecord
     "problem" => "Problema", "measure" => "Medição", "enum" => "Seleção", "setpoint" => "Valor ajustável",
     "command" => "Botão", "text" => "Texto", "vacuum" => "Robô aspirador", "speaker" => "Alto-falante",
     "stream" => "Câmera", "climate" => "Clima", "event" => "Evento",
-    "counter" => "Contador", "timer" => "Temporizador", "datetime" => "Data e hora", "script" => "Script", "calendar" => "Agenda", "weather" => "Clima"
+    "counter" => "Contador", "timer" => "Temporizador", "datetime" => "Data e hora", "script" => "Script", "calendar" => "Agenda", "weather" => "Clima",
+    "media" => "Mídia", "remote" => "Controle remoto"
   }.freeze
   # Só leitura por natureza (o resto nasce gravável).
   READ_ONLY = %w[contact motion tamper problem measure stream event calendar weather].freeze

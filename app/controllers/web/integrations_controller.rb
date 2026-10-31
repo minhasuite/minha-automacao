@@ -19,7 +19,8 @@ module Web
     def new
       @site = Site.find(params[:site_id])
       authorize_site!(@site, :manage)
-      @plugin = Integrations.plugin(params[:tipo]) or redirect_to(site_integrations_path(@site, anchor: "adicionar"))
+      @plugin = Integrations.plugin(params[:tipo]) or return redirect_to(site_integrations_path(@site, anchor: "adicionar"))
+      @found = discover if params[:procurar].present? && @plugin.mdns
     end
 
     def create
@@ -110,6 +111,14 @@ module Web
     end
 
     def form = params.fetch(:integration, {})
+
+    # Pacote 1: só lista o que se anuncia na rede (mDNS); nada é cadastrado.
+    def discover
+      @plugin.discover
+    rescue SystemCallError, IOError, SocketError => e
+      Rails.logger.warn("[mdns] #{@plugin.key}: #{e.message}")
+      []
+    end
 
     def follow(o)
       flash_now = { notice: o.notice, alert: o.alert }.compact

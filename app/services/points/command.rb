@@ -18,8 +18,12 @@ module Points
       "onoff" => %w[on off toggle], "dimmer" => %w[set], "setpoint" => %w[set], "enum" => %w[select],
       "text" => %w[set], "command" => %w[press], "gate" => %w[pulse], "datetime" => %w[set],
       "vacuum" => %w[start pause stop home clean_rooms wash_mop dry_mop empty locate],
-      "speaker" => %w[announce speak routine sound play volume], "script" => %w[run], "color" => %w[set]
+      "speaker" => %w[announce speak routine sound play volume], "script" => %w[run], "color" => %w[set],
+      # Pacote 1: mídia genérica (TV, Chromecast, Spotify…) e controle remoto (IR/RF aprendido).
+      "media" => %w[on off resume pause next previous volume volume_up volume_down mute play_media],
+      "remote" => %w[send learn forget]
     }.freeze
+    MAX_MEDIA = 500
     VACUUM_SETTINGS = %w[mode suction water route times].freeze
     MAX_SPEECH = 250
 
@@ -40,7 +44,13 @@ module Points
     end
 
     # Comandos que o ponto aceita: os do plugin, se for helper (F8e), ou os da capacidade.
-    def self.commands_for(point) = (plugin = point.helper_type) ? plugin.commands(point) : COMMANDS.fetch(point.capability, [])
+    # Pacote 1: `address.supports` (lista) corta o que o aparelho não faz (TV sem volume exato, Cast sem ligar).
+    def self.commands_for(point)
+      return point.helper_type.commands(point) if point.helper_type
+
+      list = COMMANDS.fetch(point.capability, [])
+      (s = point.address["supports"]).is_a?(Array) ? list & s : list
+    end
 
     # Comandos sem valor que a tela mostra como botões (helpers: contador, temporizador).
     def self.actions_for(point) = point.helper_type&.actions(point) || []
@@ -81,10 +91,40 @@ module Points
       when "vacuum" then vacuum_args && @point.value
       when "speaker" then (@command == "volume" ? volume : speech) && @point.value
       when "color" then @value = Points::Color.normalize(@point, @value) # Lote 8
+      when "media" then media_args && @point.value
+      when "remote" then remote_args && @point.value
       end
     end
 
+    # Nomes dos códigos aprendidos de um controle remoto (address.codes = {nome → código}).
+    def self.remote_buttons(point) = point.address["codes"].is_a?(Hash) ? point.address["codes"].keys : []
+
     private
+
+    # Mídia: volume 0 a 100; mudo sim/não (sem valor = inverte); tocar = URI, playlist ou busca.
+    def media_args
+      case @command
+      when "volume" then volume
+      when "mute" then @value = @value.nil? || @value == "" ? !(@point.value.is_a?(Hash) && @point.value["muted"]) : ActiveModel::Type::Boolean.new.cast(@value)
+      when "play_media"
+        @value = @value.to_s.strip
+        raise Error.new(:invalid_value, "Informe o que tocar (endereço, playlist ou busca).") if @value.empty?
+        raise Error.new(:invalid_value, "Texto longo demais (máximo #{MAX_MEDIA}).") if @value.length > MAX_MEDIA
+      else @value = nil
+      end
+      true
+    end
+
+    # Controle remoto: enviar/esquecer um botão aprendido (pelo nome); aprender = nome do botão novo.
+    def remote_args
+      @value = @value.to_s.squish
+      raise Error.new(:invalid_value, "Informe o nome do botão.") if @value.empty?
+      raise Error.new(:invalid_value, "Nome longo demais (máximo 60).") if @value.length > 60
+      return true if @command == "learn"
+      raise Error.new(:invalid_value, "Botão \"#{@value}\" não foi aprendido.") unless self.class.remote_buttons(@point).include?(@value)
+
+      true
+    end
 
     def number
       n = BigDecimal(@value.to_s.tr(",", "."))
@@ -142,7 +182,7 @@ module Points
       @value
     end
 
-    # Volume da Echo (G12): 0 a 100.
+    # Volume da Echo (G12) e da mídia: 0 a 100.
     def volume
       n = Integer(@value.to_s.split(/[.,]/).first, exception: false)
       raise Error.new(:invalid_value, "Volume de 0 a 100.") unless n&.between?(0, 100)

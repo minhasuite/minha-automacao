@@ -1,7 +1,13 @@
 <%# locals: (point:, error: nil, target: nil) -%>
 <%# Duas por linha no celular; ponto com campo (número, lista, texto, helper) ocupa a linha toda. %>
 <% wide = point.writable && (point.helper_type || !point.capability.in?(%w[onoff gate command])) %>
-<%= turbo_frame_tag point, class: "block #{'max-sm:col-span-2' if wide}", target: target do %>
+<% wp = Dashboards::Widgets.for_capability(point.capability) %>
+<%= turbo_frame_tag point, class: "block #{'max-sm:col-span-2' if wide || wp}", target: target do %>
+  <% if wp %>
+    <%# Pacote 1: capacidade com widget próprio (mídia, controle remoto) usa o mesmo desenho do painel. %>
+    <%= render wp.partial, w: { "id" => "pt-#{point.id}", "data" => wp.data(nil, {}, [ point ]).first }, points: { point.id => Dashboards::Resolver.point_json(point, @site_role) }, dashboard: nil, live: false %>
+    <% if error %><p class="mt-2 text-sm font-semibold text-danger" role="alert"><%= error %></p><% end %>
+  <% else %>
   <% on = point_on?(point) %>
   <% off_line = point.quality.in?(%w[unavailable error]) %>
   <div class="ss-card p-3 sm:p-4 flex flex-col gap-3 h-full <%= 'ss-card-grad' if on %> <%= 'opacity-60' if point.disabled %>">
@@ -47,4 +53,5 @@
       <p class="text-xs text-muted">O controle deste tipo chega com os drivers.</p>
     <% end %>
   </div>
+  <% end %>
 <% end %>

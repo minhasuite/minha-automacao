@@ -6,7 +6,11 @@ module PointsHelper
                   "measure" => "chart-bar", "enum" => "view-list", "setpoint" => "calculator", "command" => "lightning-bolt",
                   "text" => "document-text", "vacuum" => "vacuum", "speaker" => "speakerphone", "stream" => "video-camera",
                   "climate" => "sun", "event" => "bell", "counter" => "plus", "timer" => "clock", "datetime" => "calendar",
-                  "script" => "play", "calendar" => "calendar", "weather" => "sun" }.freeze
+                  "script" => "play", "calendar" => "calendar", "weather" => "sun", "media" => "desktop-computer",
+                  "remote" => "status-online" }.freeze
+  # Pacote 1: situação da mídia (`value.state`, nomes do HA).
+  MEDIA_TEXT = { "off" => "Desligada", "on" => "Ligada", "idle" => "Parada", "playing" => "Tocando", "paused" => "Pausada",
+                 "buffering" => "Carregando", "standby" => "Em espera" }.freeze
   BOOL_TEXT = { "onoff" => %w[Ligado Desligado], "contact" => %w[Aberto Fechado], "motion" => %w[Movimento Parado],
                 "tamper" => %w[Violado Normal], "problem" => %w[Problema Normal] }.freeze
   GATE_TEXT = { "open" => "Aberto", "closed" => "Fechado", "opening" => "Abrindo", "unknown" => "Desconhecido" }.freeze
@@ -82,6 +86,10 @@ module PointsHelper
       STATE_TEXT[point.capability].fetch(v.to_s, v.to_s)
     elsif v.is_a?(Numeric)
       [ number_with_precision(v, precision: 2, strip_insignificant_zeros: true), point.unit ].compact.join(" ")
+    elsif v.is_a?(Hash) && v.key?("state")
+      [ MEDIA_TEXT.fetch(v["state"].to_s, v["state"].to_s.humanize), v["title"].presence ].compact.join(" · ")
+    elsif v.is_a?(Hash) && v.key?("buttons")
+      "#{v['buttons'].to_i} botão(ões) aprendido(s)"
     elsif v.is_a?(Hash) || v.is_a?(Array)
       v.to_json.truncate(40)
     else
@@ -90,7 +98,7 @@ module PointsHelper
   end
 
   # Ícone do aparelho pelo que os pontos dele fazem (o dispositivo não tem tipo próprio).
-  DEVICE_ICON_ORDER = %w[stream vacuum gate climate speaker dimmer onoff contact motion measure enum].freeze
+  DEVICE_ICON_ORDER = %w[stream vacuum media remote gate climate speaker dimmer onoff contact motion measure enum].freeze
   def device_icon(device)
     points = device.points.to_a
     cap = DEVICE_ICON_ORDER.find { |c| points.any? { |p| p.capability == c } } or return "cube"

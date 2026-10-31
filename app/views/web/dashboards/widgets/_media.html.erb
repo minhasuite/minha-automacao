@@ -1,0 +1,67 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<% d = w["data"] %>
+<% p = points[Array(d["point_ids"]).first] %>
+<% if p.nil? %>
+  <div class="dw-card dw-tile dw-unavailable"><span class="dw-ico"><%= icon("desktop-computer") %></span><span><span class="dw-name"><%= w["label"].presence || "Mídia" %></span><span class="dw-state">Ponto não encontrado</span></span></div>
+<% else %>
+  <% m = d["media"] || {} %>
+  <% off_line = p["quality"] != "good" %>
+  <% playing = m["state"] == "playing" %>
+  <% can = p["can_command"] && !off_line %>
+  <% c = Array(d["controls"]) %>
+  <% btn = ->(cmd, ico, label, extra = "") { dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "dw-media-btn #{extra}", "aria-label": label, title: label) { icon(ico, "size-5") } } %>
+  <div class="dw-card dw-media <%= 'dw-on' if playing %> <%= 'dw-unavailable' if off_line %>">
+    <div class="flex items-center gap-3">
+      <span class="dw-ico"><%= icon(w["icon"].presence || p["display_icon"].presence || "desktop-computer") %></span>
+      <%= link_to point_path(p["id"]), class: "min-w-0 flex-1 no-underline", data: { turbo_frame: "_top" } do %>
+        <span class="dw-name"><%= dw_label(w, p) %></span>
+        <span class="dw-state"><%= off_line ? "Sem conexão" : (m["title"].present? ? PointsHelper::MEDIA_TEXT.fetch(m["state"].to_s, p["text"]) : p["text"]) %></span>
+      <% end %>
+      <% if can %>
+        <% on = !m["state"].to_s.in?([ "off", "" ]) %>
+        <% power = on ? "off" : "on" %>
+        <%= btn.call(power, "lightning-bolt", on ? "Desligar" : "Ligar", on ? "dw-media-power-on" : "") if c.include?(power) %>
+      <% end %>
+    </div>
+    <% if m["title"].present? && !off_line %>
+      <div class="dw-media-now">
+        <p class="dw-media-title"><%= m["title"] %></p>
+        <% sub = [ m["artist"], m["album"], m["app"] ].compact_blank.uniq %>
+        <% if sub.any? %><p class="dw-media-sub"><%= sub.join(" · ") %></p><% end %>
+      </div>
+    <% elsif m["app"].present? && !off_line %>
+      <p class="dw-media-sub mt-2"><%= m["app"] %></p>
+    <% end %>
+    <% if can %>
+      <% transport = [ ("previous" if c.include?("previous")), (playing ? ("pause" if c.include?("pause")) : ("resume" if c.include?("resume"))), ("next" if c.include?("next")) ].compact %>
+      <% volume_keys = (c & %w[volume_down mute volume_up]) %>
+      <% if transport.any? || volume_keys.any? %>
+        <div class="dw-media-bar" role="group" aria-label="Controles de <%= p['name'] %>">
+          <% transport.each do |cmd| %>
+            <%= btn.call(cmd, { "previous" => "rewind", "pause" => "pause", "resume" => "play", "next" => "fast-forward" }[cmd],
+                         { "previous" => "Anterior", "pause" => "Pausar", "resume" => "Tocar", "next" => "Próxima" }[cmd], cmd.in?(%w[pause resume]) ? "dw-media-main" : "") %>
+          <% end %>
+          <% if volume_keys.any? %><span class="dw-media-sep" aria-hidden="true"></span><% end %>
+          <% volume_keys.each do |cmd| %>
+            <%= btn.call(cmd, { "volume_down" => "minus", "mute" => m["muted"] ? "volume-off" : "volume-up", "volume_up" => "plus" }[cmd],
+                         { "volume_down" => "Baixar volume", "mute" => m["muted"] ? "Tirar o mudo" : "Mudo", "volume_up" => "Aumentar volume" }[cmd]) %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if c.include?("volume") %>
+        <%= dw_command_form(p, "volume", w: w, dashboard: dashboard, live: live) do %>
+          <label class="dw-media-vol"><span class="sr-only">Volume de <%= p["name"] %></span><%= icon("volume-up", "size-4") %>
+            <input type="range" name="value" class="dw-range flex-1" min="0" max="100" step="1" value="<%= m["volume"].to_i %>" data-autosubmit>
+            <span class="num text-xs text-muted w-8 text-right"><%= m["volume"] ? m["volume"].to_i : "—" %></span></label>
+        <% end %>
+      <% end %>
+      <% if c.include?("play_media") %>
+        <%= dw_command_form(p, "play_media", w: w, dashboard: dashboard, live: live) do %>
+          <div class="flex gap-2"><label for="pm-<%= w['id'] %>" class="sr-only">O que tocar</label>
+            <input id="pm-<%= w['id'] %>" type="text" name="value" class="ss-input flex-1 min-w-0" maxlength="500" placeholder="Endereço, playlist ou busca" required>
+            <button class="ss-btn ss-btn-outline" type="submit"><%= icon("music-note", "size-4") %>Tocar</button></div>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

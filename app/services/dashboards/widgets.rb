@@ -6,12 +6,14 @@ module Dashboards
   # Resolver, o editor e a API perguntam ao plugin; os tipos da F5 continuam
   # em `Schema::WIDGETS`.
   module Widgets
-    PLUGINS = %w[MarkdownWidget WeatherWidget].freeze
+    PLUGINS = %w[MarkdownWidget WeatherWidget MediaWidget RemoteWidget].freeze
 
     module_function
 
     def plugins = PLUGINS.map { |name| const_get(name) }
     def [](type) = plugins.find { |p| p.type == type.to_s }
+    # Pacote 1: widget que o painel automático usa para a capacidade (`describe auto:`).
+    def for_capability(cap) = plugins.find { |p| p.auto.include?(cap.to_s) }
 
     class Base
       class << self
@@ -19,18 +21,20 @@ module Dashboards
 
         # required: props obrigatórias; params: campos do editor (texto simples);
         # bind: true = o editor mostra o seletor de um ponto.
-        def describe(type:, label:, icon: "cube", required: [], params: [], bind: false)
+        def describe(type:, label:, icon: "cube", required: [], params: [], bind: false, auto: [])
           @type = type
           @label = label
           @icon = icon
           @required = required.freeze
           @params = params.freeze
           @bind = bind
+          @auto = auto.freeze
         end
 
         def required = @required || []
         def params = @params || []
         def bind? = @bind == true
+        def auto = @auto || []
 
         # Mensagens além das props obrigatórias (sem o "widget x:" na frente).
         def errors(_w) = []

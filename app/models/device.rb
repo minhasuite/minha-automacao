@@ -24,7 +24,8 @@ class Device < ApplicationRecord
   encrypts :credential
 
   validates :name, presence: true
-  validates :driver, inclusion: { in: DRIVERS.keys }
+  # Pacote 1: driver registrado (Drivers::REGISTRY) ou de plugin de integração também vale, sem mexer aqui.
+  validates :driver, inclusion: { in: ->(_) { DRIVERS.keys | Drivers::REGISTRY.keys | Integrations.drivers } }
   validates :status, inclusion: { in: STATUSES }
   validate :area_in_same_site
 
@@ -42,7 +43,7 @@ class Device < ApplicationRecord
 
   def virtual? = driver == "virtual"
   def tuya_local? = driver == "tuya_local"
-  def driver_label = DRIVERS.fetch(driver, driver)
+  def driver_label = DRIVERS.fetch(driver) { Integrations.for_driver(driver)&.title || driver }
 
   # Situação da lista de dispositivos (filtro): removido da conta > com erro >
   # sem resposta > novo (7 dias) > respondendo.

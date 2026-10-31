@@ -86,6 +86,9 @@ module Dashboards
     def tile(point, prefix, span:, label: nil)
       return camera(point, prefix) if camera?(point)
       return { "id" => "#{prefix}-#{point.id}", "type" => "vacuum", "bind" => point.id, "span" => span(12, 12, 12) } if vacuum?(point)
+      if (plugin = Widgets.for_capability(point.capability)) # Pacote 1: mídia, controle remoto
+        return { "id" => "#{prefix}-#{point.id}", "type" => plugin.type, "bind" => point.id, "span" => span(12, 12, 6) }
+      end
 
       w = { "id" => "#{prefix}-#{point.id}", "type" => "tile", "bind" => point.id, "span" => span }
       w["label"] = label if label && label != point.name

@@ -1,4 +1,31 @@
 <%= render "web/shared/header", title: "Adicionar #{@plugin.title}", subtitle: @plugin.description, back: site_integrations_path(@site, anchor: "adicionar") %>
+<% if @plugin.mdns %>
+  <%# Pacote 1: descoberta na rede (mDNS). Só lista; "Usar" preenche o endereço do formulário. %>
+  <section class="ss-card ss-card-pad grid gap-3 max-w-2xl mb-4" aria-labelledby="na-rede">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="min-w-0">
+        <h2 id="na-rede" class="font-bold text-ink">Na rede de casa</h2>
+        <p class="text-sm text-muted">Procura os aparelhos que se anunciam na rede. Nada é adicionado sozinho.</p>
+      </div>
+      <%= link_to new_site_integration_path(@site, tipo: @plugin.key, procurar: 1), class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("search", "size-4") %>Procurar na rede<% end %>
+    </div>
+    <% if @found %>
+      <% if @found.empty? %>
+        <p class="text-sm text-muted" role="status">Nenhum aparelho respondeu. Informe o endereço abaixo.</p>
+      <% else %>
+        <ul class="grid gap-2" role="list">
+          <% @found.each do |s| %>
+            <li class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-field px-3 py-2">
+              <span class="min-w-0"><span class="font-semibold text-ink"><%= s["txt"]["friendly_name"].presence || s["txt"]["fn"].presence || s["name"] %></span>
+                <span class="block text-xs text-muted num"><%= [ s["host"], s["port"] ].compact.join(":") %><%= " · #{s['txt']['md'] || s['txt']['app'] || s['txt']['board']}" if s["txt"].values_at("md", "app", "board").any?(&:present?) %></span></span>
+              <%= link_to "Usar", new_site_integration_path(@site, tipo: @plugin.key, host: s["host"], port: s["port"], nome: s["txt"]["friendly_name"].presence || s["txt"]["fn"].presence || s["name"]), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+  </section>
+<% end %>
 <%= form_with scope: :integration, url: site_integrations_path(@site, tipo: @plugin.key), multipart: true, class: "ss-card ss-card-pad grid gap-4 max-w-2xl",
               data: { turbo_submits_with: "Conectando…" } do |f| %>
   <%= render "web/integrations/forms/#{@plugin.key}", f: f, integration: nil %>
