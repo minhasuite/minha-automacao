@@ -16,21 +16,22 @@
   <div class="ss-card ss-empty">
     <p class="font-bold text-ink">Nenhum dispositivo<%= " com esses filtros" if params.values_at(:q, :integracao, :area, :situacao).any?(&:present?) %>.</p>
     <p class="mt-1">Adicione uma integração para trazer os aparelhos da conta, ou cadastre um à mão.</p>
+    <% if can?(:manage) && params.values_at(:q, :integracao, :area, :situacao).none?(&:present?) %>
+      <div class="mt-4 flex flex-wrap justify-center gap-2">
+        <%= link_to site_integrations_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("link", "size-4") %>Adicionar integração<% end %>
+        <%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("plus", "size-4") %>Cadastrar à mão<% end %>
+      </div>
+    <% elsif params.values_at(:q, :integracao, :area, :situacao).any?(&:present?) %>
+      <%= link_to "Limpar filtros", site_devices_path(@site), class: "ss-btn ss-btn-ghost mt-3" %>
+    <% end %>
   </div>
 <% else %>
-  <%= form_with url: bulk_site_devices_path(@site, **params.permit(:integracao, :area, :situacao, :q).to_h.symbolize_keys), method: :post, id: "lote" do %>
-    <% if can?(:manage) %>
-      <div class="ss-card ss-card-pad mb-3 flex flex-wrap items-end gap-2">
-        <div><label for="acao" class="ss-label">Com os marcados</label><%= select_tag :acao, options_for_select([ [ "Escolha a ação", "" ] ] + Web::DevicesController::BULK.invert.to_a), class: "ss-input" %></div>
-        <div><label for="area_id" class="ss-label">Área (para mover)</label><%= select_tag :area_id, options_for_select([ [ "Sem área", "" ] ] + @areas.map { |a| [ a.name, a.id ] }), class: "ss-input" %></div>
-        <button type="submit" class="ss-btn ss-btn-outline" data-turbo-confirm="Aplicar a ação nos dispositivos marcados? Remover apaga também os pontos e o histórico." data-turbo-confirm-button="Aplicar">Aplicar</button>
-      </div>
-    <% end %>
+  <%= form_with url: bulk_site_devices_path(@site, **params.permit(:integracao, :area, :situacao, :q).to_h.symbolize_keys), method: :post, id: "lote", class: "ss-bulk-scope", data: { controller: "select-all" } do %>
     <div class="ss-card overflow-x-auto">
       <table class="ss-table">
         <thead>
           <tr>
-            <% if can?(:manage) %><th class="w-8"><span class="sr-only">Marcar</span></th><% end %>
+            <% if can?(:manage) %><th class="w-8"><input type="checkbox" data-action="select-all#toggle" aria-label="Marcar todas"></th><% end %>
             <th>Nome</th><th class="hidden md:table-cell">Fabricante / modelo</th><th class="hidden sm:table-cell">Área</th><th class="hidden sm:table-cell">Integração</th><th class="r hidden md:table-cell">Pontos</th><th>Situação</th>
           </tr>
         </thead>
@@ -39,17 +40,28 @@
             <% s = d.situation %>
             <tr>
               <% if can?(:manage) %><td><input type="checkbox" name="ids[]" value="<%= d.id %>" aria-label="Marcar <%= d.name %>"></td><% end %>
-              <td><%= link_to d.name, device_path(d), class: "font-semibold text-ink no-underline hover:text-accent" %><span class="block text-xs text-muted md:hidden"><%= [ d.area&.name, d.manufacturer, d.model ].compact_blank.join(" · ") %></span></td>
+              <td><div class="flex items-center gap-3 min-w-0">
+                <span class="ss-icon-tile size-9 text-accent max-sm:hidden"><%= icon(d.driver == "go2rtc" ? "video-camera" : "cube") %></span>
+                <div class="min-w-0"><%= link_to d.name, device_path(d), class: "font-semibold text-ink no-underline hover:text-accent" %><span class="block text-xs text-muted md:hidden"><%= [ d.area&.name, d.manufacturer, d.model ].compact_blank.join(" · ") %></span></div>
+              </div></td>
               <td class="hidden md:table-cell text-ink-2"><%= [ d.manufacturer, d.model ].compact_blank.join(" · ").presence || d.driver_label %></td>
               <td class="hidden sm:table-cell"><%= d.area&.name || "—" %></td>
               <td class="hidden sm:table-cell"><%= d.integration&.name || d.driver_label %></td>
               <td class="r num hidden md:table-cell"><%= @points.fetch(d.id, 0) %></td>
-              <td><span class="ss-badge ss-badge-<%= tones[s] %>"><%= Device::SITUATIONS[s] %></span></td>
+              <td><span class="ss-badge ss-badge-dot ss-badge-<%= tones[s] %>"><%= Device::SITUATIONS[s] %></span></td>
             </tr>
           <% end %>
         </tbody>
       </table>
     </div>
+    <% if can?(:manage) %>
+      <div class="ss-bulk" role="region" aria-label="Ações nos marcados">
+        <span class="ss-bulk-count">marcado(s)</span>
+        <label for="acao" class="sr-only">Com os marcados</label><%= select_tag :acao, options_for_select([ [ "Com os marcados…", "" ] ] + Web::DevicesController::BULK.invert.to_a), class: "ss-input", required: true %>
+        <span class="ss-bulk-area contents"><label for="area_id" class="sr-only">Mover para a área</label><%= select_tag :area_id, options_for_select([ [ "Sem área", "" ] ] + @areas.map { |a| [ a.name, a.id ] }), class: "ss-input" %></span>
+        <button type="submit" class="ss-btn ss-btn-primary ss-btn-sm" data-turbo-confirm="Aplicar a ação nos dispositivos marcados? Remover apaga também os pontos e o histórico." data-turbo-confirm-button="Aplicar">Aplicar</button>
+      </div>
+    <% end %>
   <% end %>
   <%= render "web/shared/pagination", pagy: @pagy %>
 <% end %>

@@ -34,4 +34,25 @@ RSpec.describe "Acabamento de UI/UX" do
     get "/configuracoes/sistema"
     expect(response.body).to include("ss-danger-zone", "Digite ZERAR")
   end
+
+  it "rodada 2: ações em massa na barra flutuante, Publicar diz por quê e endereço da visão recolhido" do
+    within(tenant) { create(:device, site: site, name: "Lâmpada", driver: "virtual") }
+    get "/locais/#{site.id}/dispositivos"
+    expect(response.body).to include("ss-bulk-scope", 'class="ss-bulk"', "Marcar todas", "ss-badge-dot")
+    d = within(tenant) { Dashboard.ensure_for(site).first }
+    get "/paineis/#{d.id}/editar"
+    expect(response.body).to include("Endereço da visão", "ss-summary")
+    patch "/paineis/#{d.id}", params: { dashboard: { name: "Casa" } }
+    post "/paineis/#{d.id}/publicar"
+    get "/paineis/#{d.id}/editar"
+    expect(response.body).to include("Sem mudanças para publicar", 'aria-describedby="publish-why"')
+    get "/locais/#{site.id}/automacoes"
+    expect(response.body).to include("Criar a primeira", "Voltar a Casa")
+  end
+
+  it "rodada 2: pular para o conteúdo e menu do celular com aria-expanded" do
+    get "/"
+    follow_redirect! while response.redirect?
+    expect(response.body).to include('href="#conteudo"', 'id="conteudo"', 'aria-expanded="false"')
+  end
 end

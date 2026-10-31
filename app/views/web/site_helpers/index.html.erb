@@ -17,14 +17,14 @@
     <button type="submit" class="ss-btn ss-btn-ghost" aria-label="Procurar"><%= icon("search", "size-4") %></button>
   <% end %>
   <nav class="ss-chips mb-4" aria-label="Filtrar por tipo">
-    <%= link_to site_helpers_path(@site, q: params[:q].presence), class: "ss-chip", "aria-current": params[:tipo].blank?.to_s do %>Todos <span class="num opacity-70"><%= @counts.values.sum %></span><% end %>
+    <%= link_to site_helpers_path(@site, q: params[:q].presence), class: "ss-chip", "aria-current": params[:tipo].blank?.to_s do %>Todos <span class="ss-chip-count"><%= @counts.values.sum %></span><% end %>
     <% HelperTypes.plugins.select { |p| @counts.key?(p.key) }.each do |p| %>
-      <%= link_to site_helpers_path(@site, tipo: p.key, q: params[:q].presence), class: "ss-chip", "aria-current": (params[:tipo] == p.key).to_s do %><%= icon(p.icon, "size-4") %><%= p.title %> <span class="num opacity-70"><%= @counts[p.key] %></span><% end %>
+      <%= link_to site_helpers_path(@site, tipo: p.key, q: params[:q].presence), class: "ss-chip", "aria-current": (params[:tipo] == p.key).to_s do %><%= icon(p.icon, "size-4") %><%= p.title %> <span class="ss-chip-count"><%= @counts[p.key] %></span><% end %>
     <% end %>
   </nav>
 
   <% if @helpers.empty? %>
-    <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum helper<%= " com esses filtros" if filtered %>.</p></div>
+    <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum helper<%= " com esses filtros" if filtered %>.</p><% if filtered %><%= link_to "Limpar filtros", site_helpers_path(@site), class: "ss-btn ss-btn-ghost mt-3" %><% end %></div>
   <% else %>
     <% @helpers.each { |h| %><%= turbo_stream_from h, channel: PointsChannel %><% } %>
     <ul class="ss-card ss-rows" aria-label="Helpers">

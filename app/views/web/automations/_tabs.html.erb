@@ -1,6 +1,7 @@
 <%# locals: (site:, current:) -%>
-<%= render "web/sites/tabs", site: site, current: :automation %>
+<%= render "web/sites/tabs", site: site, current: :automation, css: "max-sm:!hidden" %>
 <nav class="ss-chips mb-4" aria-label="Automações e cenas">
+  <%= link_to site_path(site), class: "ss-chip shrink-0 sm:!hidden", "aria-label": "Voltar a #{site.name}" do %><%= icon("arrow-left", "size-4") %><%= site.name %><% end %>
   <% [ [ "Automações", site_automations_path(site), "lightning-bolt", :automations ], [ "Cenas", site_scenes_path(site), "sparkles", :scenes ],
        [ "Scripts", site_scripts_path(site), "play", :scripts ], [ "Blueprints", site_blueprints_path(site), "duplicate", :blueprints ],
        [ "Regras simples", rules_site_path(site), "clock", :rules ] ].each do |label, path, ico, key| %>
