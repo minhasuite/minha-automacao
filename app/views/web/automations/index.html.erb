@@ -44,13 +44,16 @@
             <p class="text-xs text-muted">Última execução: <%= last_run_text(a).downcase %></p>
             <% if a.last_error.present? %><p class="text-sm text-danger mt-1 flex gap-1"><%= icon("exclamation-circle", "size-4 shrink-0 mt-0.5") %><span><%= a.last_error %></span></p><% end %>
           </div>
-          <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
-            <%= link_to automation_automation_runs_path(a), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("view-list", "size-4") %>Execuções<% end %>
-            <% if can?(:manage) && a.published? %>
+          <%# Quem não edita abre as execuções pelo nome: sem botão repetido (a lista fica curta com 50+ automações). %>
+          <% if can?(:manage) %>
+          <div class="flex items-center justify-end gap-2 max-sm:ml-auto">
+            <%= link_to automation_automation_runs_path(a), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": "Execuções de #{a.name}", title: "Execuções" do %><%= icon("view-list", "size-4") %><span class="max-sm:hidden">Execuções</span><% end %>
+            <% if a.published? %>
               <%= button_to automation_path(a), method: :patch, params: { automation: { enabled: !a.enabled }, back: request.fullpath }, class: "ss-switch", form: { class: "contents" },
                             "aria-pressed": a.enabled.to_s, "aria-label": "#{a.enabled ? 'Desligar' : 'Ligar'} #{a.name}", title: (a.enabled ? "Desligar" : "Ligar") do %><% end %>
             <% end %>
           </div>
+          <% end %>
         </li>
       <% end %>
     </ul>

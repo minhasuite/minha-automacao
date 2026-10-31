@@ -4,7 +4,7 @@
 <% exposed = @items.count { |t, _| t.alexa_exposed } %>
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-  <%= form_with url: site_alexa_path(@site), method: :patch, class: "ss-card min-w-0", aria: { label: "Pontos e cenas para a Alexa" } do %>
+  <%= form_with url: site_alexa_path(@site), method: :patch, class: "ss-card min-w-0", aria: { label: "Pontos e cenas para a Alexa" }, data: { controller: "filter" } do %>
     <div class="ss-card-pad flex flex-wrap items-center justify-between gap-2 border-b border-line">
       <div>
         <h2 class="font-bold">Pontos e cenas</h2>
@@ -15,18 +15,24 @@
     <% if @items.empty? %>
       <p class="ss-card-pad text-sm text-muted">Nenhum ponto que a Alexa entende neste local (liga/desliga, intensidade, número, temperatura alvo, portão, script ou cena).</p>
     <% else %>
+      <div class="ss-card-pad border-b border-line">
+        <label for="ax-busca" class="ss-label">Procurar</label>
+        <input type="search" id="ax-busca" class="ss-input" placeholder="Nome do ponto, aparelho ou cena" autocomplete="off" data-filter-target="input" data-action="input->filter#apply">
+        <p class="text-sm text-muted mt-2" data-filter-target="empty" hidden>Nada com esse nome. <button type="button" class="font-semibold text-accent" data-action="filter#clear">Limpar busca</button></p>
+      </div>
       <ul class="ss-rows">
         <% @items.each do |t, ifaces| %>
           <% id = Alexa::SmartHome.endpoint_id(t) %>
           <% critical = t.risk == "critical" %>
-          <li class="flex-wrap">
+          <li class="flex-wrap" data-filter-target="item">
             <label class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
               <%= hidden_field_tag "items[#{id}][exposed]", "0", id: nil %>
               <%= check_box_tag "items[#{id}][exposed]", "1", t.alexa_exposed, id: "ax-#{id}", disabled: !admin, class: "size-5 accent-[var(--accent)]" %>
               <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= t.alexa_exposed ? 'ss-grad' : 'bg-accent-soft text-accent' %>"><%= icon(t.is_a?(Scene) ? "sparkles" : point_icon(t)) %></span>
               <span class="min-w-0">
-                <span class="block font-bold text-ink truncate"><%= t.name %></span>
-                <span class="block text-xs text-muted truncate"><%= [ t.is_a?(Scene) ? "Cena" : t.device.name, ifaces.map { |i| i.namespace.delete_prefix("Alexa.") }.join(", ") ].join(" · ") %></span>
+                <% title, context = t.is_a?(Scene) ? [ t.name, "Cena" ] : t.display_names %>
+                <span class="block font-bold text-ink truncate"><%= title %></span>
+                <span class="block text-xs text-muted truncate"><%= [ context, ifaces.map(&:label).join(", ") ].compact.join(" · ") %></span>
               </span>
             </label>
             <div class="flex items-center gap-2 w-full sm:w-auto">

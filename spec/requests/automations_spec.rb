@@ -147,7 +147,7 @@ RSpec.describe "Automações (DSL): web e API" do
       resident = member("resident")
       sign_in(resident)
       get "/locais/#{site.id}/automacoes"
-      expect(response.body).to include("Portão", "Execuções")
+      expect(response.body).to include("Portão", "/automacoes/#{a.id}/execucoes") # o nome abre as execuções
       expect(response.body).not_to include("Nova automação")
       get "/automacoes/#{a.id}/execucoes"
       expect(response).to have_http_status(:ok)

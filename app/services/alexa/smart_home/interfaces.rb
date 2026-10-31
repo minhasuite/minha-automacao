@@ -16,11 +16,13 @@ module Alexa
 
       class Base
         class << self
-          attr_reader :namespace, :category
+          attr_reader :namespace, :category, :label
 
-          def describe(namespace:, category:)
+          # `label`: o que a pessoa pode pedir, em português, para a tela.
+          def describe(namespace:, category:, label: nil)
             @namespace = namespace
             @category = category
+            @label = label || namespace.delete_prefix("Alexa.")
           end
 
           def applies?(_target) = false
@@ -55,7 +57,7 @@ module Alexa
       end
 
       class PowerController < Base
-        describe namespace: "Alexa.PowerController", category: "SWITCH"
+        describe namespace: "Alexa.PowerController", category: "SWITCH", label: "ligar e desligar"
         LIGHT = /luz|l[aâ]mpada|ilumina|spot|pendente|abajur|led|monitor/i
 
         def self.applies?(t) = point?(t) && t.capability == "onoff"
@@ -69,7 +71,7 @@ module Alexa
       end
 
       class BrightnessController < Base
-        describe namespace: "Alexa.BrightnessController", category: "LIGHT"
+        describe namespace: "Alexa.BrightnessController", category: "LIGHT", label: "brilho"
 
         def self.applies?(t) = point?(t) && t.capability == "dimmer"
         def self.capability(_t) = interface(properties: props("brightness"))
@@ -86,7 +88,7 @@ module Alexa
 
       # Número em % (ajuste genérico com unidade %).
       class PercentageController < Base
-        describe namespace: "Alexa.PercentageController", category: "OTHER"
+        describe namespace: "Alexa.PercentageController", category: "OTHER", label: "porcentagem"
 
         def self.applies?(t) = point?(t) && t.capability == "setpoint" && t.unit.to_s.strip == "%"
         def self.capability(_t) = interface(properties: props("percentage"))
@@ -103,7 +105,7 @@ module Alexa
 
       # Temperatura alvo (setpoint em °C): só o alvo, sem modos (básico).
       class ThermostatController < Base
-        describe namespace: "Alexa.ThermostatController", category: "THERMOSTAT"
+        describe namespace: "Alexa.ThermostatController", category: "THERMOSTAT", label: "temperatura"
 
         def self.applies?(t) = point?(t) && t.capability == "setpoint" && (t.device_class == "temperature" || t.unit.to_s.include?("C"))
         def self.capability(_t) = interface(properties: props("targetSetpoint"), configuration: { "supportsScheduling" => false })
@@ -129,7 +131,7 @@ module Alexa
 
       # Número qualquer (helper Número, ajuste): faixa do ponto.
       class RangeController < Base
-        describe namespace: "Alexa.RangeController", category: "OTHER"
+        describe namespace: "Alexa.RangeController", category: "OTHER", label: "valor"
         INSTANCE = "Ponto.Valor".freeze
 
         def self.applies?(t) = point?(t) && t.capability == "setpoint" && !PercentageController.applies?(t) && !ThermostatController.applies?(t)
@@ -161,7 +163,7 @@ module Alexa
       # Portão/fechadura (risco crítico): trancar = fechar. A Alexa pede o
       # código de voz para destrancar quando a pessoa liga isso no app dela.
       class LockController < Base
-        describe namespace: "Alexa.LockController", category: "SMARTLOCK"
+        describe namespace: "Alexa.LockController", category: "SMARTLOCK", label: "trancar"
         STATES = { "closed" => "LOCKED", "open" => "UNLOCKED", "opening" => "UNLOCKED" }.freeze
 
         def self.applies?(t) = point?(t) && t.capability == "gate"
@@ -176,7 +178,7 @@ module Alexa
 
       # Cena do local ou script (ponto `script`, comando run).
       class SceneController < Base
-        describe namespace: "Alexa.SceneController", category: "SCENE_TRIGGER"
+        describe namespace: "Alexa.SceneController", category: "SCENE_TRIGGER", label: "ativar"
 
         def self.applies?(t) = t.is_a?(Scene) || (point?(t) && t.capability == "script")
         def self.capability(_t) = interface(supportsDeactivation: false)

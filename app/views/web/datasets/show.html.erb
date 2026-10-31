@@ -16,16 +16,16 @@
   <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum registro<%= " com esses filtros" if @filters.present? || @days.positive? %>.</p>
     <p class="mt-1">A ação "Registrar dados" de uma automação grava aqui.</p></div>
 <% else %>
-  <section class="ss-card overflow-x-auto" aria-label="Registros">
-    <table class="ss-table">
+  <section class="ss-card sm:overflow-x-auto" aria-label="Registros">
+    <table class="ss-table ss-table-stack">
       <thead><tr><th>Quando</th><% @columns.each do |c| %><th><%= c %></th><% end %></tr></thead>
       <tbody>
         <% @records.each do |r| %>
           <tr>
-            <td class="num whitespace-nowrap"><%= l(r.created_at.in_time_zone(@site.timezone), format: "%d/%m/%Y %H:%M") %></td>
+            <td class="num whitespace-nowrap" data-label="Quando"><%= l(r.created_at.in_time_zone(@site.timezone), format: "%d/%m/%Y %H:%M") %></td>
             <% @columns.each do |c| %>
               <% v = r.data[c] %>
-              <td class="<%= 'num r' if v.is_a?(Numeric) %> max-w-xs truncate" title="<%= v.to_s.truncate(300) %>"><%= v == true ? "sim" : (v == false ? "não" : (v.is_a?(Hash) || v.is_a?(Array) ? v.to_json : v).to_s.truncate(120)) %></td>
+              <td class="<%= 'num r' if v.is_a?(Numeric) %> max-w-xs truncate" data-label="<%= c %>" title="<%= v.to_s.truncate(300) %>"><%= v == true ? "sim" : (v == false ? "não" : (v.is_a?(Hash) || v.is_a?(Array) ? v.to_json : v).to_s.truncate(120)) %></td>
             <% end %>
           </tr>
         <% end %>

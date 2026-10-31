@@ -58,7 +58,7 @@ RSpec.describe "F9: Alexa Smart Home" do
     it "tela: lista o que a Alexa entende, salva, pede confirmação no crítico e desvincula" do
       sign_in
       get "/locais/#{site.id}/alexa"
-      expect(response.body).to include("Expor para a Alexa", "Monitor 2", "Cinema", "PowerController", "Crítico", "Confirmo expor Portão", "código de voz")
+      expect(response.body).to include("Expor para a Alexa", "Monitor 2", "Cinema", "ligar e desligar", "Crítico", "Confirmo expor Portão", "código de voz")
       expect(response.body).not_to include(">Porta<") # sensor de abertura: sem interface
       patch "/locais/#{site.id}/alexa", params: { items: { lamp.id => { exposed: "0", name: "" }, hidden.id => { exposed: "1", name: "sirene" } } }
       expect(flash[:alert]).to include("confirmação")

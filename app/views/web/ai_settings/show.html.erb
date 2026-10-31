@@ -81,17 +81,17 @@
   <% if @calls.empty? %>
     <p class="ss-card-pad text-sm text-muted">Nenhuma chamada ainda. Cada chamada aparece aqui com o modelo, os tokens e o custo estimado (nunca o pedido nem a resposta).</p>
   <% else %>
-    <table class="ss-table mt-3">
+    <table class="ss-table ss-table-stack mt-3">
       <thead><tr><th>Quando</th><th>Origem</th><th class="hidden sm:table-cell">Modelo</th><th class="r hidden md:table-cell">Tokens</th><th class="r">Custo</th><th>Resultado</th></tr></thead>
       <tbody>
         <% @calls.each do |c| %>
           <tr>
-            <td class="num whitespace-nowrap"><%= l(c.created_at, format: "%d/%m %H:%M") %></td>
-            <td class="min-w-0"><span class="block font-semibold text-ink truncate max-w-[12rem]"><%= c.automation&.name || c.source_label %></span><span class="block text-xs text-muted"><%= [ c.source_label, c.site&.name ].compact.join(" · ") %></span></td>
+            <td class="num whitespace-nowrap" data-label="Quando"><%= l(c.created_at, format: "%d/%m %H:%M") %></td>
+            <td class="min-w-0" data-label="Origem"><span class="block font-semibold text-ink truncate max-w-[12rem]"><%= c.automation&.name || c.source_label %></span><span class="block text-xs text-muted"><%= [ c.source_label, c.site&.name ].compact.join(" · ") %></span></td>
             <td class="hidden sm:table-cell"><span class="block"><%= Ai.provider(c.provider)&.label || c.provider %></span><span class="block text-xs text-muted num"><%= c.model %></span></td>
             <td class="r num hidden md:table-cell"><%= number_with_delimiter(c.tokens) %></td>
-            <td class="r num"><%= usd(c.cost) %></td>
-            <td><span class="ss-badge <%= { 'ok' => 'ss-badge-success', 'error' => 'ss-badge-danger', 'blocked' => 'ss-badge-warn' }[c.status] %>" title="<%= c.error %>"><%= c.status_label %></span></td>
+            <td class="r num" data-label="Custo"><%= usd(c.cost) %></td>
+            <td data-label="Resultado"><span class="ss-badge <%= { 'ok' => 'ss-badge-success', 'error' => 'ss-badge-danger', 'blocked' => 'ss-badge-warn' }[c.status] %>" title="<%= c.error %>"><%= c.status_label %></span></td>
           </tr>
         <% end %>
       </tbody>

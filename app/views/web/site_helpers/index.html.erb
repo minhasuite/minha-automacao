@@ -31,15 +31,19 @@
       <% @helpers.each do |h| %>
         <% plugin = h.helper_type %>
         <li id="<%= dom_id(h) %>">
+          <% value_text = h.quality == "good" ? point_value_text(h) : (h.quality == "error" ? "Com erro" : "Sem sinal") %>
           <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= point_on?(h) ? 'ss-grad' : 'bg-accent-soft text-accent' %>"><%= icon(point_icon(h)) %></span>
-          <div class="min-w-0 flex-1">
-            <p class="font-bold text-ink truncate"><%= link_to h.name, point_path(h), class: "text-ink no-underline hover:text-accent" %></p>
+          <%# Celular: chave e lápis cabem ao lado do nome; campo largo (hora, número) desce para a linha de baixo. %>
+          <div class="min-w-0 flex-1 max-sm:basis-40">
+            <p class="font-bold text-ink truncate max-sm:whitespace-normal max-sm:line-clamp-2 max-sm:break-words"><%= link_to h.name, point_path(h), class: "text-ink no-underline hover:text-accent" %></p>
             <p class="text-xs text-muted truncate"><%= [ plugin&.title, h.area&.name, plugin&.summary(h) ].compact_blank.join(" · ") %></p>
+            <%# No celular o valor vem embaixo do nome (o nome não é espremido pelo valor). %>
+            <p class="sm:hidden text-sm font-bold truncate <%= h.quality == 'good' ? 'text-ink' : 'text-warn' %> <%= 'num' if h.value.is_a?(Numeric) %>"><%= value_text %></p>
           </div>
-          <p class="max-w-[45%] truncate text-right text-sm font-bold <%= h.quality == 'good' ? 'text-ink' : 'text-warn' %> <%= 'num' if h.value.is_a?(Numeric) %> shrink-0" aria-live="polite">
-            <%= h.quality == "good" ? point_value_text(h) : (h.quality == "error" ? "Com erro" : "Indisponível") %>
+          <p class="max-sm:hidden max-w-[45%] truncate text-right text-sm font-bold <%= h.quality == 'good' ? 'text-ink' : 'text-warn' %> <%= 'num' if h.value.is_a?(Numeric) %> shrink-0" aria-live="polite">
+            <%= value_text %>
           </p>
-          <div class="flex w-full items-center justify-end gap-1 sm:w-auto sm:shrink-0">
+          <div class="ml-auto flex items-center justify-end gap-1 shrink-0">
             <%= render "web/points/control", point: h %>
             <% if can?(:manage) %>
               <%= link_to edit_helper_path(h), class: "grid place-items-center size-9 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", title: "Editar", "aria-label": "Editar #{h.name}" do %><%= icon("pencil", "size-4") %><% end %>
