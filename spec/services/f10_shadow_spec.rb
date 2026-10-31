@@ -228,7 +228,8 @@ RSpec.describe "F10: modo sombra e comparador" do
     let(:files) do
       {
         "area_registry" => { "data" => { "areas" => [ { "id" => "sala", "name" => "Sala" }, { "id" => "quarto", "name" => "Quarto" } ] } },
-        "device_registry" => { "data" => { "devices" => [ { "id" => "d1", "identifiers" => [ %w[localtuya local_dev1] ], "area_id" => "sala", "name" => "Ap" },
+        "device_registry" => { "data" => { "devices" => [ { "id" => "d1nuvem", "identifiers" => [ %w[tuya dev1] ], "name" => "Ap na nuvem" },
+                                                          { "id" => "d1", "identifiers" => [ %w[localtuya local_dev1] ], "area_id" => "sala", "name" => "Ap" },
                                                           { "id" => "d2", "identifiers" => [ %w[tuya dev2] ], "area_id" => "quarto", "name" => "Tomada" } ] } },
         "entity_registry" => { "data" => { "entities" => [
           { "id" => "aaaabbbbccccdddd0000111122223333", "entity_id" => "switch.ap", "unique_id" => "local_dev1_1", "device_id" => "d1", "platform" => "localtuya" },
@@ -296,7 +297,8 @@ RSpec.describe "F10: modo sombra e comparador" do
       expect(Automation.where(site: site, enabled: true, shadow: false)).to be_empty
 
       again = Integrations::HomeAssistantImport.call(site, files.transform_values { |v| v.is_a?(String) ? v : v.to_json })
-      expect([ again.items.size, again.helpers, site.automations.count ]).to eq([ 0, 0, 2 ])
+      expect([ again.items.size, again.helpers, site.automations.count ]).to eq([ 1, 0, 2 ]) # o rascunho é refeito
+      expect(again.items.first["name"]).to eq("Sem par")
       expect(Command.count).to eq(0)
     end
   end

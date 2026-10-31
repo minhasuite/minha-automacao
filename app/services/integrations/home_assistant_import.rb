@@ -82,12 +82,14 @@ module Integrations
         end
         @r.devices_added += Integrations.adopt!(integration, picks) if picks.any?
       end
-      @devices = {}
-      @site.devices.where.not(external_id: [ nil, "" ]).find_each do |device|
-        ha = ha_device_for(device.external_id) or next
-        @devices[ha["id"]] = device
-        link!("device:#{ha['id']}", "device", device, ha["name_by_user"] || ha["name"])
-        area = @areas[ha["area_id"]]
+      # Um aparelho daqui pode ser vários no HA (ex.: a mesma tomada na
+      # integração de nuvem e na local): todos apontam para ele.
+      by_ext = @site.devices.where.not(external_id: [ nil, "" ]).index_by(&:external_id)
+      @devices = @ha_devices.filter_map { |ha| (d = ha_ids(ha).filter_map { |id| by_ext[id] }.first) && [ ha["id"], d ] }.to_h
+      by_id = @ha_devices.index_by { |d| d["id"] }
+      @devices.each { |ha_id, device| link!("device:#{ha_id}", "device", device, by_id[ha_id]["name_by_user"] || by_id[ha_id]["name"]) }
+      @devices.group_by { |_, d| d }.each do |device, pairs|
+        area = pairs.filter_map { |ha_id, _| @areas[by_id[ha_id]["area_id"]] }.first
         next unless area && device.area_id != area.id
 
         device.update!(area: area)
@@ -95,11 +97,9 @@ module Integrations
       end
     end
 
-    # Identificador do registro do HA = id daqui, ou termina em "_<id>" (local_x, us_x).
-    def ha_device_for(external_id)
-      ext = external_id.to_s
-      @ha_devices.find { |d| Array(d["identifiers"]).any? { |_, v| v.to_s == ext || v.to_s.end_with?("_#{ext}") } }
-    end
+    # Identificador do registro do HA = id daqui ou "<prefixo>_<id>" (local_x, us_x).
+    def ha_ids(ha) = Array(ha["identifiers"]).flat_map { |_, v| [ v.to_s, v.to_s.split("_", 2).last ] }.uniq
+    def ha_device_for(external_id) = @ha_devices.find { |d| ha_ids(d).include?(external_id.to_s) }
 
     # ---- 3. entidades -------------------------------------------------------------
 
@@ -217,7 +217,11 @@ module Integrations
     # → true se resolveu (criou ou já existia).
     def item!(domain, name, body, ext, last:)
       ext ||= "#{domain}:#{name}"
-      return true if ExternalRef.find_by(site_id: @site.id, source: SOURCE, external_id: ext)&.target
+      old = ExternalRef.find_by(site_id: @site.id, source: SOURCE, external_id: ext)&.target
+      return true if old && old.published?
+
+      # Rascunho de uma importação anterior (nunca rodou): refaz com o de-para de agora.
+      old&.then { |a| [ a, a.blueprint ].compact.each(&:destroy!) }
 
       attrs = Blueprints::HaImport.new("", nil, entities: true).convert(Blueprints::HaImport.as_blueprint(domain, name, body))
       values, unresolved = resolve(attrs["inputs"])
