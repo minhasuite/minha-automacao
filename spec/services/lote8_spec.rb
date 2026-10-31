@@ -177,6 +177,37 @@ RSpec.describe "Lote 8: recursos genéricos da migração" do
     end
   end
 
+  describe "Resumo do histórico de pontos" do
+    it "kWh por dia com a mediana dos dias anteriores, vezes que ligou e tempo ligado; roda em sombra" do
+      kwh = point("Medidor", "medidor", capability: "measure", unit: "kWh", device_class: "energy", writable: false, value: 30)
+      bomba = point("Bomba", "bomba", value: false)
+      zone = ActiveSupport::TimeZone[site.timezone]
+      today = Time.current.in_time_zone(zone).beginning_of_day
+      # acumulado: +1 kWh por dia nos 5 dias antes de ontem, +4 ontem
+      rows = (1..6).map { |d| { point_id: kwh.id, bucket: "1h", starts_at: (today - d.days + 12.hours).utc, min: 0, max: 0, avg: 0, sum: 0, count: 1 } }
+      acc = 10.0
+      rows.reverse.each_with_index { |r, i| r[:last] = (acc += (i == 5 ? 4 : 1)) }
+      rows << { point_id: kwh.id, bucket: "1h", starts_at: (today - 7.days + 12.hours).utc, min: 10, max: 10, avg: 10, sum: 10, count: 1, last: 10 }
+      rows << { point_id: bomba.id, bucket: "1h", starts_at: (today - 1.day + 1.hour).utc, min: 0, max: 1, avg: 0, sum: 0, count: 1, last: 1, on_seconds: 1800 }
+      ReadingRollup.insert_all!(rows.map { |r| { min: nil, max: nil, avg: nil, sum: nil, last: nil, on_seconds: nil }.merge(r) })
+      Reading.insert_all!([ { point_id: bomba.id, at: (today - 1.day + 1.hour).utc, value: 1 }, { point_id: bomba.id, at: (today - 1.day + 2.hours).utc, value: 0 },
+                            { point_id: bomba.id, at: (today - 2.days).utc, value: 1 } ])
+      run = run!([ { "type" => "points_history", "query" => "device_class=energy", "op" => "energy_kwh", "period" => "days", "last_days" => 7, "response_variable" => "h" },
+                   { "type" => "set", "var" => "lin", "value" => "{% for p in h.points %}{{ p.name }} {{ p.last }} {{ p.median_prev }} {{ p.prev_days }}{% endfor %}" },
+                   { "type" => "points_history", "query" => "name=Bomba", "op" => "changes", "period" => "days", "last_days" => 1, "response_variable" => "v" },
+                   { "type" => "points_history", "query" => "name=Bomba", "op" => "on_minutes", "period" => "last_month", "response_variable" => "m" },
+                   { "type" => "points_history", "query" => "name=Bomba", "op" => "changes", "period" => "this_month", "to" => "1", "response_variable" => "t" } ], shadow: true)
+      expect(run.status).to eq("done")
+      vars = run.state["vars"]
+      expect(vars["lin"]).to eq("Medidor 4.0 1.0 5")
+      expect(vars["v"]["total"]).to eq(1)
+      expect(vars["t"]["total"]).to be >= 1
+      expect(vars["m"]["total"]).to eq(0)
+      expect(Automations::Dsl.errors({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "points_history", "query" => "x=1", "op" => "changes", "period" => "days", "last_days" => 99 } ] }, site))
+        .to include(a_string_including("filtro desconhecido"), a_string_including("dias de 1 a 62"))
+    end
+  end
+
   describe "Echo: som, música e volume (G12)" do
     it "manda as operações da Alexa e valida o volume" do
       echo_dev = create(:device, site: site, driver: "alexa", name: "Echo", external_id: "G0C", address: { "device_type" => "A3EH", "customer_id" => "CUST" })

@@ -42,9 +42,14 @@ module Dashboards
       data
     end
 
+    # kWh por dia do local ({data → kWh}) de `from` a `to` (Lote 8: ação "Resumo do histórico de pontos").
+    def kwh_per_day(from, to)
+      kwh_by_hour(from - 1.hour, to).each_with_object(Hash.new(0.0)) { |(at, kwh), out| out[at.to_date] += kwh if at >= from && at < to }
+    end
+
     private
 
-    def period = PERIODS.key?(@w["period"]) ? @w["period"] : "month"
+    def period =PERIODS.key?(@w["period"]) ? @w["period"] : "month"
     def cycle_day = @w["cycle_day"].to_i.clamp(1, 28)
 
     # [início, fim) do período que contém `t`.

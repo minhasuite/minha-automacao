@@ -284,7 +284,8 @@ module Integrations
       old = ExternalRef.find_by(site_id: @site.id, source: SOURCE, external_id: ext)&.target
       # Publicada sem perda fica como está (pode ter sido revisada). Rascunho
       # ou com perda: refaz no lugar com o de-para e o conversor de agora.
-      return true if old&.published? && old.blueprint && Array(old.blueprint.unsupported).empty? && !old.draft?
+      # Lote 8: publicada e solta do blueprint = assumida à mão (refeita no MA); também fica.
+      return true if old&.published? && !old.draft? && (old.blueprint.nil? || Array(old.blueprint.unsupported).empty?)
 
       attrs = converter.convert(Blueprints::HaImport.as_blueprint(domain, name, body))
       values, unresolved = resolve(attrs["inputs"])
