@@ -1,4 +1,4 @@
-<%= render "web/shared/header", title: "Notificações", subtitle: "Avisos da empresa e da sua conta." do %>
+<%= render "web/shared/header", title: "Notificações", subtitle: "Avisos das automações e da sua conta." do %>
   <%= button_to read_all_notifications_path, method: :patch, class: "ss-btn ss-btn-ghost" do %><%= icon("check", "size-4") %>Marcar tudo como lido<% end %>
 <% end %>
 <% if @notifications.any? %>

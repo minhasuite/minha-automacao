@@ -8,8 +8,7 @@ module Web
     def index
       @site = Site.find(params[:site_id])
       authorize_site!(@site, :view)
-      scope = @site.devices.includes(:area, :integration).in_situation(params[:situacao].presence)
-                   .where("devices.external_id IS NULL OR devices.external_id NOT IN (?)", [ HelperTypes::DEVICE_ID, Scripts::DEVICE_ID ])
+      scope = @site.devices.includes(:area, :integration).in_situation(params[:situacao].presence).listed
       scope = scope.where(integration_id: params[:integracao]) if params[:integracao].present?
       scope = scope.where(area_id: params[:area].presence == "none" ? nil : params[:area]) if params[:area].present?
       if (q = params[:q].to_s.squish).present?

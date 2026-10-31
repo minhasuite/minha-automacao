@@ -11,7 +11,7 @@ module Web
     def show
       authorize_site!(@site, :view)
       @areas = @site.areas.includes(:devices).order(:position, :name)
-      @loose_devices = @site.devices.where(area_id: nil).order(:name)
+      @loose_devices = @site.devices.listed.where(area_id: nil).order(:name)
     end
 
     # Regras simples da F4 (agendas, espelhamentos, avisos e alertas), aba da

@@ -11,9 +11,9 @@ class Device < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  DRIVERS = { "virtual" => "Virtual (sem aparelho)", "tuya_local" => "Tuya local", "tuya_cloud" => "Tuya nuvem",
+  DRIVERS = { "virtual" => "Virtual", "tuya_local" => "Tuya local", "tuya_cloud" => "Tuya nuvem",
               "xiaomi_miot" => "Xiaomi", "alexa" => "Alexa", "mqtt" => "MQTT", "modbus_tcp" => "Modbus TCP",
-              "onvif" => "Câmera ONVIF", "go2rtc" => "Câmera (go2rtc)" }.freeze
+              "onvif" => "Câmera ONVIF", "go2rtc" => "Câmera" }.freeze
   STATUSES = %w[online offline error].freeze
 
   belongs_to :site
@@ -52,6 +52,9 @@ class Device < ApplicationRecord
   # nenhum contato; os demais seguem o último contato (status/erro).
   NEW_FOR = 7.days
   NEW_SQL = "COALESCE(devices.discovered_at > :since AND devices.last_seen_at IS NULL, false)".freeze
+
+  # Fora das listas: os virtuais internos de helpers e scripts (têm aba própria).
+  scope :listed, -> { where("devices.external_id IS NULL OR devices.external_id NOT IN (?)", [ HelperTypes::DEVICE_ID, Scripts::DEVICE_ID ]) }
 
   scope :in_situation, lambda { |s|
     case s
