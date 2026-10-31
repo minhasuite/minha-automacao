@@ -96,6 +96,19 @@ RSpec.describe "Lote 9: fechamento da migração" do
     expect(a.runs.last.steps.to_json).to include("fulano")
   end
 
+  it "em sombra, o \"teria feito\" guarda o valor resolvido do Liquid (o comparador vê o valor de verdade)" do
+    device = create(:device, site: site, driver: "virtual", name: "Aparelho")
+    modo = create(:point, site: site, device: device, name: "Modo", key: "modo", capability: "enum", data_type: "string", writable: true, options: %w[A B], value: "A")
+    origem = create(:point, site: site, device: device, name: "Origem", key: "origem", capability: "text", data_type: "string", writable: false, value: "B")
+    a = Automation.create!(site: site, name: "Copia", kind: "automation", mode: "parallel", shadow: true)
+    a.publish!({ "triggers" => [ { "type" => "manual" } ], "conditions" => [],
+                 "actions" => [ { "type" => "command", "point" => modo.id, "command" => "select", "value" => "{{ points[\"origem\"].value }}" } ] })
+    a.fire!({ "type" => "manual", "title" => "Teste" }, skip_conditions: true)
+    expect(ShadowAction.last.effects).to eq([ { "point_id" => modo.id, "command" => "select", "value" => "B" } ])
+    expect(origem.reload.value).to eq("B")
+    expect(Command.count).to eq(0)
+  end
+
   it "opções de seleção uma por linha (importador do HA) ou por vírgula" do
     p = Point.new(site: site)
     p.options_text = "Escritório\nCozinha\nSuíte KH"

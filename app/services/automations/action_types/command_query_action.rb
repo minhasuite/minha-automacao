@@ -29,7 +29,7 @@ module Automations
         []
       end
 
-      def self.shadow_effects(e, node) = list(e, node).map { |p| { "point_id" => p.id, "command" => node["command"], "value" => node["value"] }.compact }
+      def self.shadow_effects(e, node) = list(e, node).map { |p| { "point_id" => p.id, "command" => node["command"], "value" => effect_value(e, node["value"]) }.compact }
 
       def self.list(e, node) = targets(e.ctx.site, node, query: e.ctx.render(node["query"].to_s), finder: e.ctx.method(:query))
 

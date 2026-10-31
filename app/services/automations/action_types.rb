@@ -38,7 +38,16 @@ module Automations
         def shadow_safe?(_engine, _node) = control?
 
         def shadow_effects(e, node)
-          commanded_point_ids(node, e.ctx.site, []).compact.map { |id| { "point_id" => id, "command" => node["command"], "value" => node["value"] }.compact }
+          commanded_point_ids(node, e.ctx.site, []).compact.map do |id|
+            { "point_id" => e.ctx.point(id)&.id || id, "command" => node["command"], "value" => effect_value(e, node["value"]) }.compact
+          end
+        end
+
+        # Lote 9: o "teria feito" guarda o valor resolvido (Liquid) e o ponto de campo ("$x"), como o comando real.
+        def effect_value(e, value)
+          Dsl.template?(value) ? e.ctx.render(value) : value
+        rescue Context::Error
+          value
         end
 
         # Formato da resposta (texto para a documentação e o editor); nil = não devolve.
