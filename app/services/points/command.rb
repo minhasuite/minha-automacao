@@ -102,12 +102,15 @@ module Points
     end
 
     # Limpar cômodos: {rooms: [ids do mapa], mode:, suction:, water:, route:, times:} (ajustes opcionais).
+    # Lote 9 (valor por texto de automação): o mesmo em JSON, ou só os cômodos
+    # separados por vírgula, pelo id ou pelo nome no mapa ("5, Cozinha").
     def vacuum_args
       return true unless @command == "clean_rooms"
 
-      args = @value.is_a?(Hash) ? @value.stringify_keys : {}
+      args = room_args(@value)
       known = Array(@point.address["rooms"]).map { |r| r["id"].to_i }
-      rooms = Array(args["rooms"]).compact_blank.map { |r| Integer(r.to_s, exception: false) }
+      names = Array(@point.address["rooms"]).to_h { |r| [ r["name"].to_s.downcase, r["id"].to_i ] }
+      rooms = Array(args["rooms"]).compact_blank.map { |r| Integer(r.to_s.strip, exception: false) || names[r.to_s.strip.downcase] }
       raise Error.new(:invalid_value, "Escolha ao menos um cômodo.") if rooms.empty?
       raise Error.new(:invalid_value, "Cômodo desconhecido no mapa do robô.") unless rooms.all? { |r| known.include?(r) }
 
@@ -120,6 +123,15 @@ module Points
         @value[role] = args[role].to_s
       end
       @value
+    end
+
+    def room_args(value)
+      return value.stringify_keys if value.is_a?(Hash)
+
+      parsed = JSON.parse(value.to_s) if value.to_s.strip.start_with?("{")
+      parsed.is_a?(Hash) ? parsed : { "rooms" => value.to_s.split(",") }
+    rescue JSON::ParserError
+      {}
     end
 
     def speech

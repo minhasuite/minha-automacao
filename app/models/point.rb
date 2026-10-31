@@ -162,10 +162,11 @@ class Point < ApplicationRecord
     ((BigDecimal(value.to_s) - offset) / scale).round.to_i
   end
 
-  # Formulário web: "Casa, Fora, Férias" ↔ ["Casa", "Fora", "Férias"].
+  # Formulário web: "Casa, Fora, Férias" ↔ ["Casa", "Fora", "Férias"]. Lote 9:
+  # uma por linha também vale (o importador do HA manda assim).
   def options_text = option_values.join(", ")
   def options_text=(text)
-    self.options = text.to_s.split(",").map(&:strip).compact_blank
+    self.options = text.to_s.split(/[,\n]/).map(&:strip).compact_blank
   end
 
   private

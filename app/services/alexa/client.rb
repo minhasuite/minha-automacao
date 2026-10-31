@@ -86,6 +86,24 @@ module Alexa
       post("/api/behaviors/preview", { "behaviorId" => routine["automationId"], "sequenceJson" => seq, "status" => "ENABLED" })
     end
 
+    # Lote 9: o que foi dito às Echo desde `since` (histórico de voz da conta,
+    # o mesmo que o alexa_media lê para o `last_called`), mais novo primeiro:
+    # [{serial:, at:, text:}]. Só leitura; fica no site da loja (`www.`), com o
+    # token anti-CSRF da página de atividade.
+    VOICE_TEXT = %w[CUSTOMER_TRANSCRIPT ASR_REPLACEMENT_TEXT].freeze
+    VOICE_SKIP = %w[WAKE_WORD_ONLY DEVICE_ARBITRATION].freeze
+
+    def voice_history(since:, to: Time.current)
+      www = @host.sub(/\Aalexa\./, "www.")
+      page = request(Net::HTTP::Get.new("/alexa-privacy/apd/activity?disableGlobalNav=true&ref=activityHistory").tap { |r| r["Accept"] = "text/html" }, www, json: false)
+      token = page[/<meta name="csrf-token" content="([^"]+)"/, 1] or raise Integrations.auth(Error.new("Histórico de voz da Alexa sem acesso (entre de novo pela conta Amazon)."))
+      req = Net::HTTP::Post.new("/alexa-privacy/apd/rvh/customer-history-records-v2/?startTime=#{(since.to_f * 1000).to_i}&endTime=#{(to.to_f * 1000).to_i}&disableGlobalNav=false")
+      req["anti-csrftoken-a2z"] = token
+      req["Content-Type"] = "application/json; charset=UTF-8"
+      req.body = { "previousRequestToken" => nil }.to_json
+      Array(request(req, www)["customerHistoryRecords"]).filter_map { |r| voice_record(r) }.sort_by { |r| -r[:at].to_f }
+    end
+
     # Corpo do POST da sequência (público para os specs conferirem a montagem).
     def self.sequence_body(start_node)
       { "behaviorId" => "PREVIEW", "status" => "ENABLED",
@@ -93,6 +111,15 @@ module Alexa
     end
 
     private
+
+    # recordKey = "cliente#tipo#…#número de série" (posição 3, como no alexapy).
+    def voice_record(r)
+      serial = r["recordKey"].to_s.split("#")[3]
+      return if serial.blank? || VOICE_SKIP.include?(r["utteranceType"])
+
+      text = Array(r["voiceHistoryRecordItems"]).find { |i| VOICE_TEXT.include?(i["recordItemType"]) }&.dig("transcriptText")
+      { serial: serial, at: Time.zone.at(r["timestamp"].to_i / 1000.0), text: text.to_s }
+    end
 
     def target(device)
       { "deviceType" => device[:type], "deviceSerialNumber" => device[:serial], "locale" => LOCALE, "customerId" => device[:customer_id] }
@@ -120,19 +147,21 @@ module Alexa
       request(req)
     end
 
-    def request(req)
+    # `host`: o site da Alexa (padrão) ou o da loja (`www.`, histórico de voz); `json` falso = texto da página.
+    def request(req, host = @host, json: true)
       req["Cookie"] = @cookies.map { |k, v| "#{k}=#{v}" }.join("; ")
       req["csrf"] = @cookies["csrf"].to_s if req.request_body_permitted?
       req["User-Agent"] = USER_AGENT
-      req["Accept"] = "application/json"
+      req["Accept"] ||= "application/json"
       req["Referer"] = "https://#{@host}/spa/index.html"
-      res = Net::HTTP.start(@host, 443, use_ssl: true, open_timeout: 5, read_timeout: 15) { |h| h.request(req) }
+      res = Net::HTTP.start(host, 443, use_ssl: true, open_timeout: 5, read_timeout: 15) { |h| h.request(req) }
       if %w[401 403].include?(res.code)
-        return renew_and_retry(req) if @renew && !@renewed
+        return renew_and_retry(req, host, json) if @renew && !@renewed
 
         raise Integrations.auth(Error.new("Sessão da Alexa expirada ou recusada (#{res.code}). Entre de novo pela conta Amazon (Reconfigurar)."))
       end
       raise Error, "A Alexa respondeu #{res.code}." unless res.is_a?(Net::HTTPSuccess)
+      return res.body.to_s unless json
 
       res.body.present? ? JSON.parse(res.body) : {}
     rescue JSON::ParserError
@@ -141,10 +170,10 @@ module Alexa
       raise Error, "Sem conexão com a Alexa (#{e.class.name.demodulize})."
     end
 
-    def renew_and_retry(req)
+    def renew_and_retry(req, host, json)
       @renewed = true
       @cookies = @renew.call.to_h
-      request(req)
+      request(req, host, json: json)
     end
   end
 end

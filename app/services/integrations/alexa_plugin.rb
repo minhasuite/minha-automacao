@@ -41,6 +41,15 @@ module Integrations
 
     def self.custom_sync? = true
 
+    # Lote 9: última fala às Echo como atributo (Alexa::LastCalled), só onde alguém escuta.
+    def self.tick(now)
+      ActsAsTenant.without_tenant { Integration.where(driver: driver).to_a }.each do |integration|
+        ActsAsTenant.with_tenant(integration.tenant) { Alexa::LastCalled.refresh!(integration, now) }
+      rescue StandardError => e # rede ou sessão: tenta no próximo minuto, sem parar as outras integrações
+        Rails.logger.warn("[alexa] histórico de voz: #{e.message.truncate(160)}")
+      end
+    end
+
     def self.sync!(integration)
       r = Alexa::Import.discover!(integration)
       { found: r[:echos], fresh: r[:devices], removed: 0, keys: 0 }
