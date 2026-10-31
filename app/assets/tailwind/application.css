@@ -86,6 +86,8 @@
   h2 { font-size: 1.05rem; font-weight: 800; }
   a { color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Caixa de marcar/opção nativa: tamanho de toque e cor da marca (size-* vence). */
+  input[type=checkbox], input[type=radio] { width: 1.15rem; height: 1.15rem; flex-shrink: 0; accent-color: var(--accent); cursor: pointer; }
 }
 
 @layer components {
@@ -240,6 +242,8 @@
   .ss-switch[aria-pressed="true"] { background: var(--grad); box-shadow: none; }
   .ss-switch[aria-pressed="true"]::after { transform: translateX(1.25rem); }
   .ss-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Área de toque de 44px em volta da chave, sem mudar o desenho. */
+  .ss-switch::before { content: ""; position: absolute; inset: -.6rem -.2rem; }
   /* Lista de helpers: linha com ícone, nome, valor e o controle na mesma linha. */
   .ss-rows > li { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--line); }
   .ss-rows > li:last-child { border-bottom: 0; }
@@ -335,7 +339,32 @@ th.r .ss-sort { flex-direction: row-reverse; }
 .ss-actions { position: sticky; bottom: 1rem; z-index: 20; display: flex; gap: .5rem; width: fit-content; padding: .5rem; border-radius: 16px;
               background: color-mix(in srgb, var(--surface) 85%, transparent); backdrop-filter: blur(10px);
               border: 1px solid var(--line); box-shadow: var(--shadow-card); }
+/* Texto só para leitor de tela dentro de tabela rolável não estica a página. */
+.overflow-x-auto { position: relative; }
+/* Avisos (flash) flutuam no topo da tela: o "Salvo" aparece mesmo quando a
+   página volta rolada até o bloco editado. */
+#flash { position: fixed; z-index: 60; top: 4.25rem; right: 1rem; left: 1rem; display: grid; gap: .5rem; pointer-events: none; }
+#flash .ss-flash { margin: 0; pointer-events: auto; box-shadow: 0 18px 40px -16px rgba(20, 22, 40, .45); background-color: var(--surface); }
+#flash .ss-flash::before { content: ""; position: absolute; inset: 0; z-index: -1; background: currentColor; opacity: .1; }
+#flash .ss-flash { isolation: isolate; }
+@media (min-width: 640px) { #flash { top: 1rem; left: auto; width: 26rem; } }
+/* Escolha de ícone: grade de desenhos com rádio escondido. */
+.ss-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr)); gap: .35rem; max-height: 9.5rem; overflow-y: auto;
+            padding: .35rem; border-radius: var(--r-field); border: 1px solid var(--line); background: var(--surface); }
+.ss-icon-opt { position: relative; display: grid; place-items: center; height: 2.75rem; border-radius: 10px; color: var(--ink-2); cursor: pointer;
+               border: 1px solid transparent; }
+.ss-icon-opt:first-child { grid-column: span 2; }
+.ss-icon-opt:hover { background: var(--field); color: var(--accent); }
+.ss-icon-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.ss-icon-opt:has(input:checked) { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.ss-icon-opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Ação perigosa separada do resto do cartão. */
+.ss-danger-zone { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed color-mix(in srgb, var(--danger) 35%, var(--line)); }
 @media (max-width: 639px) {
+  /* Faixas que rolam de lado (seções, visões) somem na borda: mostra que tem mais. */
+  .ss-subnav, .dw-tabs { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent);
+                         mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent); padding-right: 2rem; scrollbar-width: none; }
+  .ss-subnav::-webkit-scrollbar { display: none; }
   .ss-filters { display: grid !important; grid-template-columns: 1fr 1fr; }
   .ss-filters > div:first-of-type { grid-column: span 2; }
   .ss-filters .ss-input { width: 100%; }

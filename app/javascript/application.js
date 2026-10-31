@@ -41,6 +41,15 @@ document.addEventListener("turbo:load", () => {
   if (d) { d.open = true; el.scrollIntoView({ block: "start" }) }
 })
 
+// Faixa de abas que rola de lado (celular): a aba atual aparece, não fica escondida à direita.
+document.addEventListener("turbo:load", () => {
+  document.querySelectorAll(".ss-subnav [aria-current], .dw-tabs [aria-current]").forEach((a) => {
+    const nav = a.parentElement
+    if (nav.scrollWidth <= nav.clientWidth) return
+    nav.scrollLeft += a.getBoundingClientRect().left - nav.getBoundingClientRect().left - (nav.clientWidth - a.offsetWidth) / 2
+  })
+})
+
 // Dashboards: o servidor avisa "o ponto X mudou" (stream do local, sem HTML) e
 // cada quadro de widget que depende dele (data-points) se recarrega sozinho,
 // renderizado com o papel de quem vê. Junta avisos seguidos em 250 ms.
