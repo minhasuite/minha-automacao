@@ -281,7 +281,7 @@ module Integrations
 
       automation = old ? refresh!(old, attrs, name, values, domain, ext) : create!(attrs, name, values, domain, ext)
       notes = attrs["unsupported"] + unresolved.map { |u| "sem de-para: #{u}" }
-      notes << "rascunho: não publicou (#{automation.errors_in(automation.draft).first})" if automation.draft?
+      notes << "rascunho: não publicou (#{automation.errors_in(automation.draft).first || 'falta entrada sem de-para'})" if automation.draft?
       link!(ext, domain, automation, name)
       @r.items << { "kind" => domain, "name" => name, "ref" => ext, "lossless" => notes.empty?, "notes" => notes, "enabled" => automation.enabled }
       true
@@ -291,7 +291,8 @@ module Integrations
     end
 
     def blueprint_attrs(attrs, name) = attrs.except("unsupported").merge("name" => name.truncate(120), "unsupported" => attrs["unsupported"])
-    def enabled?(automation, domain, ext) = domain == "automation" && automation.published? && states.dig(ext, "state") == "on"
+    # Ligada só se publicou nesta importação (sem rascunho pendente) e está ligada no HA.
+    def enabled?(automation, domain, ext) = domain == "automation" && automation.published? && !automation.draft? && states.dig(ext, "state") == "on"
 
     def create!(attrs, name, values, domain, ext)
       blueprint = @site.blueprints.create!(blueprint_attrs(attrs, name))
@@ -310,9 +311,11 @@ module Integrations
       blueprint = automation.blueprint
       blueprint ? blueprint.update!(blueprint_attrs(attrs, name)) : (blueprint = @site.blueprints.create!(blueprint_attrs(attrs, name)))
       definition, clean, errors = blueprint.instantiate(values.compact)
-      automation.update!(blueprint: blueprint, blueprint_inputs: clean, draft: definition, shadow: true, mode: blueprint.mode)
-      automation.publish!(definition) if errors.empty? && automation.errors_in(definition).empty?
-      automation.update!(enabled: enabled?(automation, domain, ext))
+      automation.assign_attributes(blueprint: blueprint, blueprint_inputs: clean, draft: definition, shadow: true, mode: blueprint.mode)
+      if errors.empty? && automation.errors_in(definition).empty? then automation.publish!(definition)
+      else automation.save!(validate: false) # a versão publicada pode ter ficado inválida (ponto sumiu); o rascunho novo fica para revisar
+      end
+      automation.update_column(:enabled, enabled?(automation, domain, ext)) # rubocop:disable Rails/SkipsModelValidations
       automation
     end
 

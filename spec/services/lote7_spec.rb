@@ -243,6 +243,15 @@ RSpec.describe "Lote 7: zerar os rascunhos da migração" do
       expect(site.automations.where(name: "Aviso").pluck(:id)).to eq([ aviso.id ])
       expect(aviso.reload).to have_attributes(version: 2, shadow: true, enabled: true, draft: nil)
       expect(Integrations::HomeAssistantImport.call(site, json).items).to be_empty
+
+      # A versão publicada ficou inválida (o ponto sumiu) e a entrada nova não tem par: o rascunho é refeito mesmo assim.
+      aviso.update_columns(definition: aviso.definition.merge("actions" => [ { "type" => "command", "point" => SecureRandom.uuid, "command" => "on" } ])) # rubocop:disable Rails/SkipsModelValidations
+      aviso.blueprint.update_columns(unsupported: [ "algo" ]) # rubocop:disable Rails/SkipsModelValidations
+      json["automations"] = json["automations"].sub("switch.luz_cozinha, to: 'on'", "switch.sem_par, to: 'on'")
+      last = Integrations::HomeAssistantImport.call(site, json)
+      expect(last.items.first["notes"]).to include("sem de-para: switch.sem_par", a_string_including("rascunho: não publicou (gatilhos 1"))
+      expect(aviso.reload).to have_attributes(version: 2, enabled: false)
+      expect(aviso.draft).to be_present
       expect(Command.count).to eq(0)
     end
   end
