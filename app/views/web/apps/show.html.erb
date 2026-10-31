@@ -14,7 +14,7 @@
 <% end %>
 
 <% if installed %>
-  <nav class="mb-4 flex gap-2 overflow-x-auto pb-1" aria-label="Seções do aplicativo">
+  <nav class="ss-chips mb-4" aria-label="Seções do aplicativo">
     <% [ [ "Informações", "info", "information-circle" ], [ "Configuração", "config", "cog" ], [ "Log", "log", "document-text" ] ].each do |name, key, ico| %>
       <%= link_to app_path(@app.key, aba: key), class: "ss-chip shrink-0", "aria-current": (@tab == key).to_s do %><%= icon(ico, "size-4") %><%= name %><% end %>
     <% end %>

@@ -348,6 +348,11 @@ th.r .ss-sort { flex-direction: row-reverse; }
 #flash .ss-flash::before { content: ""; position: absolute; inset: 0; z-index: -1; background: currentColor; opacity: .1; }
 #flash .ss-flash { isolation: isolate; }
 @media (min-width: 640px) { #flash { top: 1rem; left: auto; width: 26rem; } }
+/* Faixa de chips (filtros e sub-abas): rola de lado sem barra aparente. */
+.ss-chips { display: flex; gap: .5rem; overflow-x: auto; padding: .15rem .1rem .45rem; scrollbar-width: none; }
+.ss-chips::-webkit-scrollbar { display: none; }
+.ss-chips > * { flex-shrink: 0; }
+@media (min-width: 640px) { .ss-chips { flex-wrap: wrap; overflow: visible; } }
 /* Escolha de ícone: grade de desenhos com rádio escondido. */
 .ss-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr)); gap: .35rem; max-height: 9.5rem; overflow-y: auto;
             padding: .35rem; border-radius: var(--r-field); border: 1px solid var(--line); background: var(--surface); }
@@ -362,7 +367,7 @@ th.r .ss-sort { flex-direction: row-reverse; }
 .ss-danger-zone { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed color-mix(in srgb, var(--danger) 35%, var(--line)); }
 @media (max-width: 639px) {
   /* Faixas que rolam de lado (seções, visões) somem na borda: mostra que tem mais. */
-  .ss-subnav, .dw-tabs { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent);
+  .ss-subnav, .dw-tabs, .ss-chips { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent);
                          mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent); padding-right: 2rem; scrollbar-width: none; }
   .ss-subnav::-webkit-scrollbar { display: none; }
   .ss-filters { display: grid !important; grid-template-columns: 1fr 1fr; }

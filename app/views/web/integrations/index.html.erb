@@ -59,14 +59,14 @@
   <section id="adicionar" class="mt-8 scroll-mt-6" aria-labelledby="catalogo">
     <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
       <h2 id="catalogo" class="ss-section">Adicionar integração</h2>
-      <%= form_with url: site_integrations_path(@site, anchor: "adicionar"), method: :get, class: "flex gap-2", role: "search" do %>
+      <%= form_with url: site_integrations_path(@site, anchor: "adicionar"), method: :get, class: "flex w-full gap-2 sm:w-auto", role: "search" do %>
         <label for="q" class="sr-only">Procurar integração</label>
-        <%= search_field_tag :q, params[:q], class: "ss-input w-64", placeholder: "Procurar (Tuya, câmera, Zigbee…)" %>
+        <%= search_field_tag :q, params[:q], class: "ss-input min-w-0 flex-1 sm:w-64", placeholder: "Procurar (Tuya, câmera, Zigbee…)" %>
         <button class="ss-btn ss-btn-ghost" aria-label="Procurar"><%= icon("search", "size-4") %></button>
       <% end %>
     </div>
     <% if @catalog.empty? %>
-      <div class="ss-card ss-empty"><p>Nenhuma integração com "<%= params[:q] %>".</p></div>
+      <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma integração com "<%= params[:q] %>".</p><p class="mt-1">Tente outra palavra, como a marca ou o tipo de aparelho.</p><%= link_to "Ver todas", site_integrations_path(@site, anchor: "adicionar"), class: "ss-btn ss-btn-outline mt-4" %></div>
     <% else %>
       <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Catálogo de integrações">
         <% @catalog.each do |p| %>

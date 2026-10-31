@@ -43,7 +43,7 @@ document.addEventListener("turbo:load", () => {
 
 // Faixa de abas que rola de lado (celular): a aba atual aparece, não fica escondida à direita.
 document.addEventListener("turbo:load", () => {
-  document.querySelectorAll(".ss-subnav [aria-current], .dw-tabs [aria-current]").forEach((a) => {
+  document.querySelectorAll(":is(.ss-subnav, .dw-tabs, .ss-chips) [aria-current]:not([aria-current=false])").forEach((a) => {
     const nav = a.parentElement
     if (nav.scrollWidth <= nav.clientWidth) return
     nav.scrollLeft += a.getBoundingClientRect().left - nav.getBoundingClientRect().left - (nav.clientWidth - a.offsetWidth) / 2

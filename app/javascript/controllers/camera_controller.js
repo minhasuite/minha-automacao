@@ -8,7 +8,7 @@ export default class extends Controller {
 
   connect() {
     this.imgTarget.onload = () => this.show(this.imgTarget)
-    this.imgTarget.onerror = () => this.offline("Sem conexão")
+    this.imgTarget.onerror = () => this.offline("Sem imagem da câmera agora. Tentando de novo…")
     this.refresh()
     this.timer = setInterval(() => this.refresh(), this.intervalValue * 1000)
   }

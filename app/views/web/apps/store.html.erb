@@ -1,7 +1,7 @@
 <%= render "web/shared/header", title: "Loja de aplicativos", subtitle: "Cada aplicativo roda num container próprio, com versão fixa e só o que o catálogo prevê.", back: apps_path %>
 <%= render layout: "web/settings/frame", locals: { current: :apps } do %>
 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-  <nav class="flex gap-2 overflow-x-auto pb-1" aria-label="Categorias">
+  <nav class="ss-chips" aria-label="Categorias">
     <%= link_to "Todos", apps_store_path(q: params[:q]), class: "ss-chip shrink-0", "aria-current": params[:categoria].blank?.to_s %>
     <% AppCatalog.categories.each do |c| %>
       <%= link_to c, apps_store_path(q: params[:q], categoria: c), class: "ss-chip shrink-0", "aria-current": (params[:categoria] == c).to_s %>
