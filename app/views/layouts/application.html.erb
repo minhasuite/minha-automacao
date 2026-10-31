@@ -17,17 +17,18 @@
   <%= yield :head %>
   <script>try { if (localStorage.getItem("side") === "collapsed") document.documentElement.classList.add("ss-collapsed"); if (localStorage.getItem("privacy") === "on") document.documentElement.dataset.privacy = "on" } catch (_) {}</script>
 </head>
-<body class="min-h-screen" data-controller="theme menu privacy" data-action="keydown.p@window->privacy#key">
+<body class="min-h-screen" data-controller="theme menu privacy" data-action="keydown.p@window->privacy#key keydown.esc@window->menu#close">
+  <a href="#conteudo" class="ss-skip">Pular para o conteúdo</a>
   <%# Barra do topo no celular (escura, como a sidebar). %>
   <header class="ss-side lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 h-14 shadow-lg">
-    <button type="button" class="grid place-items-center size-9 rounded-xl hover:bg-white/10 border-0 bg-transparent text-current cursor-pointer" data-action="menu#open" aria-label="Abrir menu" aria-controls="side"><%= icon("menu") %></button>
+    <button type="button" class="grid place-items-center size-9 rounded-xl hover:bg-white/10 border-0 bg-transparent text-current cursor-pointer" data-action="menu#open" data-menu-target="toggle" aria-label="Abrir menu" aria-controls="side" aria-expanded="false"><%= icon("menu") %></button>
     <%= link_to root_path, class: "font-bold text-white no-underline flex-1" do %>Minha Automação<% end %>
     <%= render "web/shared/privacy_button", css: "grid place-items-center size-9 rounded-xl hover:bg-white/10" %>
   </header>
   <div class="ss-scrim lg:hidden" data-menu-target="scrim" data-action="click->menu#close"></div>
   <%= render "web/shared/sidebar" %>
   <div class="ss-main lg:pl-64 transition-[padding] duration-300">
-    <main class="min-w-0 px-4 py-6 lg:px-8 lg:py-8 <%= content_for?(:wide) ? "" : "max-w-7xl" %> mx-auto">
+    <main id="conteudo" tabindex="-1" class="outline-none min-w-0 px-4 py-6 lg:px-8 lg:py-8 <%= content_for?(:wide) ? "" : "max-w-7xl" %> mx-auto">
       <div id="flash"><%= render "web/shared/flash" %></div>
       <%= yield %>
     </main>

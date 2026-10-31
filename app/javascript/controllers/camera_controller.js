@@ -81,11 +81,13 @@ export default class extends Controller {
     this.imgTarget.hidden = el !== this.imgTarget
     this.videoTarget.hidden = el !== this.videoTarget
     this.statusTarget.hidden = true
+    this.element.dataset.state = "on"
   }
 
   offline(text) {
     if (this.pc) return
     this.imgTarget.hidden = true
+    this.element.dataset.state = "offline"
     this.status(text)
   }
 

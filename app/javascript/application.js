@@ -112,3 +112,21 @@ document.addEventListener("turbo:load", () => document.querySelectorAll("[data-m
 if ("serviceWorker" in navigator && window.isSecureContext) {
   navigator.serviceWorker.register("/service-worker.js", { scope: "/" }).catch(() => {})
 }
+
+// Menus em <details> (.ss-menu, .dw-pop): Esc fecha e devolve o foco ao botão,
+// clique fora fecha, e o summary diz se está aberto (aria-expanded).
+const MENUS = "details.ss-menu, details.dw-pop"
+document.addEventListener("toggle", (e) => {
+  if (e.target.matches?.(MENUS)) e.target.querySelector(":scope > summary")?.setAttribute("aria-expanded", e.target.open)
+}, true)
+document.addEventListener("turbo:load", () => document.querySelectorAll(MENUS).forEach((d) => d.querySelector(":scope > summary")?.setAttribute("aria-expanded", d.open)))
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return
+  const d = document.activeElement?.closest(`${MENUS}[open]`) || document.querySelector(`${MENUS}[open]`)
+  if (!d) return
+  d.open = false
+  d.querySelector(":scope > summary")?.focus()
+})
+document.addEventListener("click", (e) => {
+  document.querySelectorAll(`${MENUS}[open]`).forEach((d) => { if (!d.contains(e.target)) d.open = false })
+})

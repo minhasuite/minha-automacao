@@ -143,10 +143,22 @@
 
   /* Câmera (F8): quadro 16:9, "Ao vivo" e estado sem conexão por cima. */
   .dw-camera { padding: .8rem; }
-  .dw-camera-view { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; background: #0b0b12; }
+  .dw-camera-view { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; background: var(--field); }
+  /* Com imagem ou vídeo: fundo preto e texto claro por cima. */
+  .dw-camera-view:has(> :is(img, video):not([hidden])) { background: #0b0b12; }
   .dw-camera-view img, .dw-camera-view video { width: 100%; height: 100%; object-fit: contain; display: block; }
   .dw-camera-view [hidden] { display: none; }
-  .dw-camera-status { position: absolute; inset: 0; display: grid; place-items: center; padding: 1rem; text-align: center; color: rgba(255, 255, 255, .78); font-size: .85rem; font-weight: 600; }
+  .dw-camera-status { position: absolute; inset: 0; display: grid; place-items: center; padding: 1rem; text-align: center; color: var(--muted); font-size: .85rem; font-weight: 600; }
+  .dw-camera-view:has(> :is(img, video):not([hidden])) .dw-camera-status { color: #fff; background: rgba(11, 11, 18, .55); }
+  /* Sem imagem: faixa baixa com o aviso, não um quadro preto de 16:9. */
+  .dw-camera[data-state="offline"] .dw-camera-view { aspect-ratio: auto; }
+  .dw-camera[data-state="offline"] .dw-camera-status { position: static; display: flex; gap: .5rem; justify-content: center; align-items: center; min-height: 4.5rem; }
+  .dw-camera[data-state="offline"] .dw-camera-status::before { content: ""; width: 1.1rem; height: 1.1rem; flex-shrink: 0; background: currentColor;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='black' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M3 3l18 18M5 6h8a2 2 0 012 2v8'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='black' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M3 3l18 18M5 6h8a2 2 0 012 2v8'/%3E%3C/svg%3E") center / contain no-repeat; }
+  /* Carregando o primeiro quadro: brilho que passa no fundo. */
+  .dw-camera:not([data-state]) .dw-camera-view:not(:has(> :is(img, video):not([hidden]))) {
+      background: linear-gradient(100deg, var(--field) 40%, color-mix(in srgb, var(--surface) 65%, var(--field)) 50%, var(--field) 60%) 0 0 / 300% 100%;
+      animation: dw-shimmer 1.4s linear infinite; }
   .dw-camera-live { flex-shrink: 0; height: 2rem; padding: 0 .8rem; border-radius: 999px; font-size: .78rem; font-weight: 700; color: var(--ink-2); background: var(--field); cursor: pointer; }
   .dw-camera-live:hover { color: var(--accent); }
   .dw-camera-live[aria-pressed="true"] { background: var(--grad); color: #fff; }
@@ -189,7 +201,7 @@
   .dw-vac-room span { display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 .85rem; border-radius: 999px; font-size: .84rem; font-weight: 600;
                       color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); transition: background .2s ease, color .2s ease, border-color .2s ease; }
   .dw-vac-room:hover span { border-color: var(--accent); }
-  .dw-vac-room input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .dw-vac-room input:checked + span { background: var(--accent-solid); border-color: var(--accent); color: #fff; }
   .dw-vac-room input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
   .dw-vac-room input:disabled + span { opacity: .6; cursor: default; }
   .dw-vac-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: .6rem; margin-top: .9rem; }
@@ -212,3 +224,11 @@
   .dw-md ul { margin: .35rem 0; }
   .dw-md p + p, .dw-md ul + p, .dw-md p + ul { margin-top: .5rem; }
 }
+
+/* Widget ao vivo recarregando (o turbo-frame fica "busy"): faixa fina que corre
+   no topo do cartão, sem esconder o valor de antes. */
+turbo-frame[busy] > .dw-w { position: relative; }
+turbo-frame[busy] > .dw-w::after { content: ""; position: absolute; left: 14px; right: 14px; top: 1px; height: 2px; border-radius: 2px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent) 0 0 / 50% 100% no-repeat; animation: dw-scan 1s ease-in-out infinite; }
+@keyframes dw-scan { from { background-position: -100% 0; } to { background-position: 200% 0; } }
+@keyframes dw-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }

@@ -30,12 +30,14 @@
 
 :root {
   --accent: #5a45e8; --accent-hover: #4a37d1; --accent-soft: #eeebff;
+  /* Fundo sólido para texto branco (chip atual, balão, marcado): AA nos dois temas. */
+  --accent-solid: #5a45e8;
   --grad: linear-gradient(135deg, #5a45e8 0%, #7b5cff 52%, #3b82f6 100%);
   --grad-soft: linear-gradient(135deg, rgba(90, 69, 232, .10), rgba(59, 130, 246, .08));
   --ink: #1e1a38; --ink-2: #3f3a5c; --muted: #6e6a88; --line: #e8e5f4;
   --surface: #ffffff; --field: #f6f5fb; --page: #f6f5fb; --head: #faf9fe;
   --side: #17132e; --side-ink: #e9e6f7;
-  --success: #0f8a5f; --success-soft: #e3f6ee; --danger: #c43d4f; --danger-soft: #fbe9ec;
+  --success: #0b7a53; --success-soft: #e3f6ee; --danger: #b8324a; --danger-soft: #fbe9ec;
   --warn: #9a6200; --warn-soft: #fdf1d9;
   --r-card: 20px; --r-field: 12px;
   --shadow-card: 0 1px 2px rgba(30, 26, 56, .04), 0 8px 24px -12px rgba(30, 26, 56, .12);
@@ -47,7 +49,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --accent: #8f80ff; --accent-hover: #a596ff; --accent-soft: #241f45;
+    --accent: #8f80ff; --accent-hover: #a596ff; --accent-soft: #241f45; --accent-solid: #6d5cf6;
     --ink: #e7e4f6; --ink-2: #c9c5e0; --muted: #9a96b8; --line: #2a2745;
     --surface: #16142a; --field: #1d1a35; --page: #0e0d16; --head: #1a1832;
     --side: #0a0912; --side-ink: #d9d5ec;
@@ -62,7 +64,7 @@
 }
 
 [data-theme="dark"] {
-  --accent: #8f80ff; --accent-hover: #a596ff; --accent-soft: #241f45;
+  --accent: #8f80ff; --accent-hover: #a596ff; --accent-soft: #241f45; --accent-solid: #6d5cf6;
   --ink: #e7e4f6; --ink-2: #c9c5e0; --muted: #9a96b8; --line: #2a2745;
   --surface: #16142a; --field: #1d1a35; --page: #0e0d16; --head: #1a1832;
   --side: #0a0912; --side-ink: #d9d5ec;
@@ -88,6 +90,18 @@
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* Caixa de marcar/opção nativa: tamanho de toque e cor da marca (size-* vence). */
   input[type=checkbox], input[type=radio] { width: 1.15rem; height: 1.15rem; flex-shrink: 0; accent-color: var(--accent); cursor: pointer; }
+  /* Caixa de marcar e opção desenhadas (iguais no claro e no escuro), com o visto da marca. */
+  input:is([type=checkbox], [type=radio]):not(.sr-only) { appearance: none; margin: 0; display: inline-grid; place-content: center; vertical-align: middle;
+            background: var(--surface); border: 1.5px solid color-mix(in srgb, var(--muted) 60%, var(--line)); border-radius: 6px;
+            transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+  input[type=radio]:not(.sr-only) { border-radius: 999px; }
+  input:is([type=checkbox], [type=radio]):not(.sr-only):hover { border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring); }
+  input:is([type=checkbox], [type=radio]):not(.sr-only):checked { background: var(--accent-solid); border-color: var(--accent-solid); }
+  input[type=checkbox]:not(.sr-only)::before { content: ""; width: .7rem; height: .7rem; background: #fff; transform: scale(0); transition: transform .12s ease;
+            clip-path: polygon(14% 44%, 0 59%, 40% 100%, 100% 23%, 86% 9%, 40% 70%); }
+  input[type=radio]:not(.sr-only)::before { content: ""; width: .45rem; height: .45rem; border-radius: 999px; background: #fff; transform: scale(0); transition: transform .12s ease; }
+  input:is([type=checkbox], [type=radio]):not(.sr-only):checked::before { transform: scale(1); }
+  input:is([type=checkbox], [type=radio]):disabled { opacity: .5; cursor: not-allowed; }
 }
 
 @layer components {
@@ -232,7 +246,11 @@
              font-weight: 700; background: var(--surface); color: var(--ink-2); box-shadow: var(--shadow-card); text-decoration: none;
              white-space: nowrap; border: 1px solid transparent; transition: transform .15s, border-color .15s; }
   .ss-chip:hover { border-color: var(--accent); color: var(--accent); }
-  .ss-chip[aria-current="true"] { background: var(--accent); color: #fff; }
+  .ss-chip[aria-current="true"] { background: var(--accent-solid); color: #fff; box-shadow: 0 6px 16px -8px rgba(90, 69, 232, .7); }
+  .ss-chip:active { transform: scale(.97); }
+  /* Contador dentro do chip (filtros): pílula própria, legível no chip atual. */
+  .ss-chip-count { min-width: 1.35rem; padding: 0 .35rem; border-radius: 999px; font: 700 .7rem/1.35rem var(--font-mono); text-align: center;
+                   background: color-mix(in srgb, currentColor 14%, transparent); }
   .ss-rise { animation: ss-rise .45s cubic-bezier(.2, .8, .2, 1) both; }
   /* Chave liga/desliga (botão com aria-pressed). */
   .ss-switch { position: relative; flex-shrink: 0; width: 2.9rem; height: 1.65rem; border-radius: 999px; border: 0; cursor: pointer;
@@ -266,7 +284,7 @@
   .ss-drawer[data-open] { transform: none; }
   .ss-scrim { position: fixed; inset: 0; z-index: 45; background: rgba(14, 13, 22, .35); opacity: 0; pointer-events: none; transition: opacity .3s; }
   .ss-scrim[data-open] { opacity: 1; pointer-events: auto; }
-  .ss-bubble-me { margin-left: auto; max-width: 85%; background: var(--accent); color: #fff; padding: .7rem 1rem;
+  .ss-bubble-me { margin-left: auto; max-width: 85%; background: var(--accent-solid); color: #fff; padding: .7rem 1rem;
                   border-radius: 18px 18px 4px 18px; white-space: pre-line; }
   .ss-bubble-ai { max-width: 100%; background: var(--surface); padding: .9rem 1rem; border-radius: 4px 18px 18px 18px; box-shadow: var(--shadow-card); }
   .ss-bubble-ai p + p, .ss-bubble-ai p + ul, .ss-bubble-ai ul + p { margin-top: .5rem; }
@@ -395,3 +413,46 @@ th.r .ss-sort { flex-direction: row-reverse; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* ---- Rodada 2 de acabamento (Lista Clara) ---- */
+/* Pular para o conteúdo: primeiro Tab da página. */
+.ss-skip { position: fixed; left: 50%; transform: translateX(-50%); top: -4rem; z-index: 70; padding: .6rem 1rem; border-radius: 12px; background: var(--accent-solid); color: #fff;
+           font-weight: 700; text-decoration: none; transition: top .15s ease; }
+.ss-skip:focus { top: .5rem; }
+/* Seções do local e das configurações: a atual preenchida, não só contornada. */
+.ss-subnav a { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
+.ss-subnav a[aria-current="page"], .ss-subnav a[aria-current="page"]:hover { background: var(--accent-soft); color: var(--accent); font-weight: 700;
+            border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+/* <details> de mostrar/esconder: chevron da Lista Clara no lugar do triângulo nativo. */
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
+.ss-summary { display: flex; align-items: center; gap: .5rem; cursor: pointer; border-radius: 10px; }
+.ss-summary::before { content: ""; width: 1rem; height: 1rem; flex-shrink: 0; background: currentColor; opacity: .55; transform: rotate(-90deg);
+                      transition: transform .2s cubic-bezier(.2, .8, .2, 1); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='black' stroke-width='2.4'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='black' stroke-width='2.4'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") center / contain no-repeat; }
+details[open] > .ss-summary::before { transform: none; }
+.ss-summary:hover::before { opacity: 1; color: var(--accent); }
+.ss-summary.flex-wrap::before { align-self: center; }
+/* Ações em massa: a barra só aparece com algo marcado, flutua no rodapé e conta os marcados. */
+.ss-bulk-scope { counter-reset: marcados; }
+.ss-bulk-scope input[name="ids[]"]:checked { counter-increment: marcados; }
+.ss-bulk { position: sticky; bottom: 1rem; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .75rem; padding: .55rem .6rem .55rem 1rem;
+           border-radius: 16px; background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: blur(10px);
+           border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); box-shadow: 0 18px 40px -16px rgba(20, 22, 40, .45); animation: ss-rise .25s ease both; }
+.ss-bulk-scope:not(:has(input[name="ids[]"]:checked)) .ss-bulk { display: none; }
+.ss-bulk-count { font-weight: 800; color: var(--ink); margin-right: auto; font-size: .875rem; }
+.ss-bulk-count::before { content: counter(marcados) " "; color: var(--accent); }
+.ss-bulk .ss-input { width: auto; min-height: 2.25rem; padding-top: .3rem; padding-bottom: .3rem; }
+@media (max-width: 639px) { .ss-bulk { bottom: .75rem; } .ss-bulk .ss-input { flex: 1 1 8rem; } }
+/* Situação com ponto colorido antes do texto. */
+.ss-badge-dot::before { content: ""; width: .4rem; height: .4rem; border-radius: 999px; background: currentColor; }
+/* Linhas de lista com seta: a seta anda um pouco no hover. */
+.ss-go > svg:last-child { transition: transform .2s ease, color .2s ease; }
+.ss-go:hover > svg:last-child { transform: translateX(3px); color: var(--accent); }
+/* Ações em massa dos dispositivos: a área só aparece para "Mover para área". */
+.ss-bulk:not(:has(option[value="area"]:checked)) .ss-bulk-area { display: none; }
+.ss-chip[aria-current="true"] .ss-chip-count { background: rgba(14, 13, 22, .22); }
+/* Passos do editor (Quando → Só se → Então): número em círculo antes do título. */
+.ss-flow { counter-reset: passo; }
+.ss-flow-step { display: flex; align-items: center; gap: .6rem; counter-increment: passo; }
+.ss-flow-step::before { content: counter(passo); display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 999px; flex-shrink: 0;
+                        font: 800 .78rem/1 var(--font-mono); color: #fff; background: var(--accent-solid); box-shadow: 0 6px 14px -6px rgba(90, 69, 232, .7); }

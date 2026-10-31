@@ -73,7 +73,7 @@
   <% end %>
 </div>
 
-<section class="ss-card mt-6 overflow-x-auto" aria-labelledby="uso-t">
+<section class="ss-card mt-6 overflow-x-auto" aria-labelledby="uso-t" tabindex="0">
   <div class="ss-card-pad !pb-0 flex flex-wrap items-baseline justify-between gap-2">
     <h2 id="uso-t">Uso de IA e custos</h2>
     <p class="text-sm text-muted"><%= @by_source.map { |s, c| "#{AiCall::SOURCES[s]}: #{usd(c)}" }.join(" · ").presence || "Nenhum gasto neste mês." %></p>
