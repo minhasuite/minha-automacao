@@ -94,6 +94,14 @@ module Blueprints
     MAX_ITEMS = 100
     # Domínios do HA sem ponto equivalente aqui (não viram entrada no texto).
     NO_POINT = %w[sun zone person device_tracker update conversation ai_task tts stt automation].freeze
+    # Lote 7: integração do HA (domínio) → plugin daqui (recarregar, `integration_ok`)
+    # e → driver dos aparelhos daqui (consulta `integration=`). Dado sobre o HA, não sobre a casa.
+    HA_PLUGINS = { "tuya" => "tuya", "localtuya" => "tuya", "alexa_media" => "alexa", "xiaomi_home" => "xiaomi", "xiaomi_miot" => "xiaomi",
+                   "google" => "calendar", "met" => "weather", "mqtt" => "mqtt" }.freeze
+    HA_DRIVERS = { "tuya" => "tuya_cloud", "localtuya" => "tuya_local", "alexa_media" => "alexa", "xiaomi_home" => "xiaomi_miot",
+                   "xiaomi_miot" => "xiaomi_miot", "mqtt" => "mqtt" }.freeze
+    # Ações do HA que só anotam no diário → "Anotar" (fica no trace).
+    LOG_SERVICES = %w[logbook.log system_log.write].freeze
 
     # Blueprint, automação(ões) ou scripts do HA → lista de atributos de Blueprint.
     def self.import(text, source_url: nil)
@@ -155,13 +163,19 @@ module Blueprints
 
     # `entities`: entidade fixa citada em texto ou horário vira entrada (só nas
     # automações e scripts do HA; num blueprint de verdade fica anotada).
-    def initialize(text, source_url = nil, entities: false)
+    # Lote 7 (opcionais, do importador da instalação): `areas`/`labels` (id do
+    # HA → nome daqui), `entries` (id da integração do HA → domínio) e
+    # `rest_commands` (o `rest_command:` do configuration.yaml).
+    def initialize(text, source_url = nil, entities: false, areas: {}, labels: {}, entries: {}, rest_commands: {})
       @entities = entities
       @text = text.to_s
       @source_url = source_url
       @unsupported = []
       @inputs = {}
-      @jinja = Jinja.new(method(:entity_input))
+      @entries = entries.to_h
+      @rest = rest_commands.to_h
+      @consts = {}
+      @jinja = Jinja.new(method(:entity_input), areas: areas.to_h, labels: labels.to_h, entries: @entries)
     end
 
     # → atributos do Blueprint (com `unsupported`).
@@ -180,6 +194,8 @@ module Blueprints
       raise Error, "Domínio \"#{domain}\" não suportado (só automation e script)." unless %w[automation script].include?(domain)
 
       convert_inputs(bp["input"])
+      @consts = doc["variables"].is_a?(Hash) ? doc["variables"].select { |_, v| v.is_a?(String) && !v.include?("{") }.transform_keys(&:to_s) : {}
+      @jinja.consts = @consts
       definition = domain == "script" ? { "actions" => actions(doc["sequence"]) } : automation(doc)
       definition["actions"] = flow_variables(doc) + definition["actions"] if doc["variables"].is_a?(Hash) # variáveis da automação: no começo
       (doc.keys - %w[blueprint mode max max_exceeded trigger triggers condition conditions action actions sequence fields description alias icon
@@ -484,6 +500,9 @@ module Blueprints
         [ notify(data, domain == "notify" ? %w[in_app push] : %w[in_app]) ]
       elsif domain == "script" && (k = entity_input(service)) then service_script(a.merge("target" => { "entity_id" => { "!input" => k } }))
       elsif HELPER_DOMAINS.include?(domain) && HELPER_COMMANDS.key?(name) then helper_command(HELPER_COMMANDS[name], a)
+      elsif LOG_SERVICES.include?(service) then log_action(a)
+      elsif domain == "rest_command" && @rest[name].is_a?(Hash) then rest_command(@rest[name], a)
+      elsif service == "homeassistant.reload_config_entry" || name == "reload" then reload_action(a, domain)
       end
     end
 
@@ -514,7 +533,7 @@ module Blueprints
     def helper_command(command, a)
       data = a["data"].is_a?(Hash) ? a["data"] : {}
       value = data.values_at("value", "option", "datetime", "time", "date", "duration").compact.first
-      return note("valor com template do HA em #{command} (confira)") && nil if value.to_s.include?("{{")
+      value = text(value) || (return note("valor com template do HA em #{command} (confira)") && nil) if value.to_s.include?("{{")
 
       targets(a).map { |p| { "type" => "command", "point" => p, "command" => command, "value" => value }.compact }.presence
     end
@@ -545,7 +564,54 @@ module Blueprints
     def delay(v)
       return [ { "type" => "wait", "for" => duration(v) } ] unless v.to_s.include?("{{")
 
-      note("espera com template do HA") && []
+      expr = delay_expr(v) or return note("espera com template do HA") && []
+      [ { "type" => "wait", "expr" => expr } ]
+    end
+
+    # Lote 7: espera por template → "segundos por expressão" ({minutes: "{{ x }}"} = x * 60).
+    def delay_expr(v)
+      return @jinja.expr(v) if v.is_a?(String)
+      return unless v.is_a?(Hash)
+
+      parts = v.map do |unit, x|
+        mult = Jinja::SECONDS[unit.to_s] or return nil
+        e = (x.is_a?(Numeric) ? x.to_s : @jinja.expr(x.to_s)) or return nil
+        "(#{e}) * #{mult}"
+      end
+      parts.join(" + ").presence
+    end
+
+    # `logbook.log` / `system_log.write` → "Anotar" (linha no trace da execução).
+    def log_action(a)
+      data = a["data"].is_a?(Hash) ? a["data"] : {}
+      msg = [ data["name"], data["message"] ].compact.map(&:to_s).join(": ")
+      [ { "type" => "trace_note", "message" => (text(msg) || (note("texto com template do HA na anotação") && msg)).truncate(500) } ]
+    end
+
+    # `rest_command.x` → "Chamar HTTP" com o que está no configuration.yaml; os
+    # campos da chamada viram variáveis antes (o template do rest_command lê pelo nome).
+    def rest_command(spec, a)
+      data = a["data"].is_a?(Hash) ? a["data"] : {}
+      sets = flow_variables("variables" => data)
+      url = text(spec["url"].to_s) or return note("rest_command com URL que não traduz") && nil
+      body = spec["payload"] && (text(spec["payload"].to_s) or return note("rest_command com corpo que não traduz") && nil)
+      headers = (spec["headers"].is_a?(Hash) ? spec["headers"].map { |k, v| "#{k}: #{v}" } : [])
+      headers.unshift("Content-Type: #{spec['content_type']}") if spec["content_type"]
+      method = spec["method"].to_s.upcase.presence_in(Automations::ActionTypes::HttpAction::METHODS.keys) || "GET"
+      sets + [ { "type" => "http", "method" => method, "url" => url, "body" => body, "headers" => text(headers.join("\n")).presence,
+                 "timeout" => (spec["timeout"].to_i.clamp(1, 30) if spec["timeout"]), "continue_on_error" => (true if a["continue_on_error"]) }.compact ]
+    end
+
+    # `homeassistant.reload_config_entry` (pelo id da integração, direto ou numa
+    # variável constante) ou `<domínio>.reload` → "Recarregar integração" daqui.
+    def reload_action(a, domain)
+      if domain == "homeassistant"
+        id = a.dig("data", "entry_id").to_s
+        id = @consts[::Regexp.last_match(1)].to_s if id.match(/\A\{\{\s*(\w+)\s*\}\}\z/)
+        domain = @entries[id]
+      end
+      plugin = HA_PLUGINS[domain.to_s] or return
+      [ { "type" => "integration_reload", "integration" => plugin, "continue_on_error" => (true if a["continue_on_error"]) }.compact ]
     end
 
     def conditions(raw)

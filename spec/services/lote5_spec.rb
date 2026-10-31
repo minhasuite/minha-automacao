@@ -52,17 +52,17 @@ RSpec.describe "Lote 5: importador do HA, Jinja e gatilhos novos" do
     it "traduz texto para Liquid e calcula o resto com | calc" do
       expect(jinja.text("Às {{ now().strftime('%H:%M') }}: {{ states('sensor.t') }} e {{ msg | trim }}"))
         .to eq("Às {{ now | date: \"%H:%M\" }}: {{ points[\"[[sensor_t]]\"].text }} e {{ msg | strip }}")
-      expect(jinja.text("Há {{ 5 * repeat.index }} min ({{ repeat.index }}) {{ 'a' ~ x }}")).to eq("Há {{ \"(5 * repeat_index)\" | calc }} min ({{ repeat.index }}) a{{ x }}")
+      expect(jinja.text("Há {{ 5 * repeat.index }} min ({{ repeat.index }}) {{ 'a' ~ x }}")).to eq("Há {{ '(5 * repeat_index)' | calc }} min ({{ repeat.index }}) a{{ x }}")
       expect(jinja.text("{{ lista | join(', ') }} {{ x | default('-') }} {{ n | int }} {{ now().isoformat() }}"))
         .to eq("{{ lista | join: \", \" }} {{ x | default: \"-\" }} {{ n | floor }} {{ now | date: \"%Y-%m-%dT%H:%M:%S%:z\" }}")
       expect(jinja.text("sem template")).to eq("sem template")
     end
 
     it "devolve nil no que não cobre" do
-      [ "{{ state_attr('a.b', 'c') }}", "{{ x is defined }}", "{{ states.switch.a.last_changed }}", "{{ is_state('sun.sun', 'below_horizon') }}",
-        "{{ {'a': 1}.get(x) }}", "{{ x[0] }}", "texto {{ a }}", "{{ now() }}", "{{ 'a' ~ 'b' }}", "{{ '%02d' % n }}", "{{ f(a=1) }}", "{{ x | from_json }}" ]
+      # Lote 7 passou a traduzir state_attr, is defined, states.x.y.last_changed, dicionário, x[n], now() e {% %} (lote7_spec).
+      [ "{{ is_state('sun.sun', 'below_horizon') }}", "texto {{ a }}", "{{ 'a' ~ 'b' }}", "{{ '%02d' % n }}", "{{ f(a=1) }}", "{{ x | from_json }}" ]
         .each { |src| expect(jinja.expr(src)).to be_nil, src }
-      expect(jinja.text("{% if a %}x{% endif %}")).to be_nil
+      expect(jinja.text("{% macro m() %}x{% endmacro %}")).to be_nil
       expect(jinja.text("{{ x | regex_replace('a', 'b') }}")).to eq("{{ \"x\" | calc }}").or be_nil
     end
   end
@@ -169,7 +169,7 @@ RSpec.describe "Lote 5: importador do HA, Jinja e gatilhos novos" do
       expect(acts[3]).to eq("type" => "command", "point" => { "!input" => "script_boa_noite" }, "command" => "run", "value" => { "modo" => "rapido" })
       expect(acts[5]["then"]).to eq([ { "type" => "command", "point" => { "!input" => "switch_b" }, "command" => "on" } ])
       expect(acts[6]).to include("command" => "set", "value" => 3)
-      expect(acts[7]["message"]).to eq("Agora {{ points[\"[[sensor_t]]\"].text }} °C, {{ \"([[sensor_t]] + 1)\" | calc }}")
+      expect(acts[7]["message"]).to eq("Agora {{ points[\"[[sensor_t]]\"].text }} °C, {{ '([[sensor_t]] + 1)' | calc }}")
       expect(acts[8]).to eq("type" => "set", "var" => "alto", "expr" => "[[sensor_t]] > limite")
       expect(acts[9]).to eq("type" => "set", "var" => "frase", "value" => "Temp {{ points[\"[[sensor_t]]\"].text }}")
       expect(acts[10]).to eq("type" => "fire_event", "event" => "casa_pronta", "data" => { "quem" => "{{ trigger.id }}" })
@@ -191,24 +191,24 @@ RSpec.describe "Lote 5: importador do HA, Jinja e gatilhos novos" do
         conditions: [ { condition: time, after: input_datetime.x }, { condition: zone, entity_id: person.a, zone: zone.home } ]
         actions:
           - { type: blink, device_id: 5078843b2aa5c9bb02ed526af3fe2937, entity_id: 7e780edc4a7889218453ed03a30494ba, domain: light }
-          - delay: "{{ 5 }}"
+          - delay: "{{ x | from_json }}"
           - action: calendar.get_events
             target: { entity_id: calendar.c }
             data: { start_date_time: "{{ now() }}" }
           - action: input_select.select_option
             target: { entity_id: input_select.m }
-            data: { option: "{{ x }}" }
+            data: { option: "{{ x | from_json }}" }
           - action: script.y
             data: { a: "{{ x }}" }
-          - variables: { l: [ 1 ], t: "{{ state_attr('a.b', 'c') }}" }
+          - variables: { l: [ 1 ], t: "{{ x | from_json }}" }
           - event: "Nome Ruim"
           - event: ok_evento
-            event_data: { a: "{{ state_attr('a.b', 'c') }}" }
+            event_data: { a: "{{ x | from_json }}" }
           - wait_for_trigger: [ { trigger: state, entity_id: switch.a } ]
           - action: ai_task.generate_data
             data: { instructions: "x", structure: { a: { selector: { text: {} } } } }
           - action: notify.x
-            data: { message: "{{ state_attr('a.b', 'c') }}" }
+            data: { message: "{{ x | from_json }}" }
       YAML
       expect(bp["unsupported"]).to include("gatilho template", "horário input_datetime.x na condição", "condição zone", "ação de aparelho blink",
                                            "espera com template do HA", a_string_including("calendar.get_events com início/fim"),
