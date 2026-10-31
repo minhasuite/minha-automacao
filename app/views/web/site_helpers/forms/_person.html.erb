@@ -1,0 +1,21 @@
+<%# locals: (f:, point:) -%>
+<% a = point.address %>
+<% chosen = Array(a["sources"]) %>
+<% options = People.trackable(point.site).map { |p| [ "#{p.name} · #{p.device.name} (#{People.tracker_for(p).label})", p.id ] } %>
+<div><%= f.label :user_id, "Usuário (opcional)", class: "ss-label" %><%= f.select :user_id, User.where(disabled_at: nil).order(:name).pluck(:name, :id), { selected: a["user_id"], include_blank: "Sem usuário" }, class: "ss-input" %></div>
+<fieldset class="sm:col-span-2 min-w-0">
+  <legend class="ss-label">Fontes de rastreio, em ordem de prioridade</legend>
+  <% if options.empty? %>
+    <p class="text-sm text-muted">Nenhuma fonte ainda. Ligue a presença no app do celular (Mais → Sensores do celular) ou adicione a integração "Rastreador de rede".</p>
+  <% end %>
+  <ol class="grid gap-2">
+    <% [ chosen.size + 1, 3 ].max.clamp(1, HelperTypes::Person::MAX_SOURCES).times do |i| %>
+      <li class="flex items-center gap-2"><span class="text-xs text-muted num w-5"><%= i + 1 %>.</span>
+        <label for="src_<%= i %>" class="sr-only">Fonte <%= i + 1 %></label>
+        <%= select_tag "helper[sources][]", options_for_select(options, chosen[i]), include_blank: "—", id: "src_#{i}", class: "ss-input" %></li>
+    <% end %>
+  </ol>
+  <p class="text-xs text-muted mt-1">Vale a primeira que disser em qual zona a pessoa está. GPS diz a zona; Wi-Fi de casa e rede dizem "em casa". Sem nenhuma, fica "Fora".</p>
+</fieldset>
+<div class="sm:col-span-2"><%= f.label :home_ssids, "Redes Wi-Fi de casa (separadas por vírgula)", class: "ss-label" %><%= f.text_field :home_ssids, value: Array(a["home_ssids"]).join(", "), class: "ss-input", placeholder: "MinhaRede, MinhaRede-5G" %></div>
+<p class="sm:col-span-2 text-xs text-muted">A pessoa guarda só a zona. A localização exata fica no ponto do celular, aqui no servidor, pelo tempo de retenção da integração "App do celular".</p>

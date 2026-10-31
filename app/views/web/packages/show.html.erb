@@ -1,0 +1,26 @@
+<% m = @package.manifest %>
+<%= render "web/shared/header", title: @package.name, subtitle: [ "versão #{@package.version}", m["description"].to_s.truncate(160).presence ].compact.join(" · "), back: site_packages_path(@site) do %>
+  <% if can?(:manage) %>
+    <%= link_to check_package_path(@package), class: "ss-btn ss-btn-outline" do %><%= icon("refresh", "size-4") %>Procurar versão nova<% end %>
+    <%= button_to package_path(@package), method: :delete, class: "ss-btn ss-btn-ghost text-danger", form: { data: { turbo_confirm: "Remover o pacote e tudo o que ele pôs (blueprints, helpers, painéis, mapas)?", turbo_confirm_button: "Remover" } } do %><%= icon("trash", "size-4") %>Remover<% end %>
+  <% end %>
+<% end %>
+
+<section class="ss-card ss-card-pad mb-4 grid gap-1 text-sm" aria-label="Origem">
+  <p><span class="text-muted">Origem:</span> <span class="num break-all"><%= @package.source_url %></span></p>
+  <p><span class="text-muted">Instalado em:</span> <%= l(@package.created_at, format: :short) %> · <span class="text-muted">atualizado em</span> <%= l(@package.updated_at, format: :short) %></p>
+</section>
+
+<ul class="ss-card ss-rows" aria-label="Itens instalados">
+  <% @package.installed.each do |r| %>
+    <% type = Packages.item_type(r["type"]) %>
+    <% item = @package.items.find { |i| i["type"] == r["type"] && i["key"] == r["key"] } || {} %>
+    <li>
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-ink truncate"><%= type&.title(item) || r["key"] %></p>
+        <p class="text-xs text-muted truncate"><%= type&.label || r["type"] %> · <span class="num"><%= r["key"] %></span></p>
+      </div>
+      <% if r["id"] && (path = type&.path(r)) %><%= link_to "Abrir", path, class: "ss-btn ss-btn-ghost ss-btn-sm" %><% end %>
+    </li>
+  <% end %>
+</ul>

@@ -1,0 +1,11 @@
+<%# locals: (f:, point:) -%>
+<% a = point.address %>
+<% site = point.site %>
+<label class="ss-check sm:col-span-2"><%= f.check_box :home, { checked: a["home"] == true }, "1", "0" %>É a casa (usa a localização do cadastro do local<%= ": #{site.latitude}, #{site.longitude}" if site.latitude && site.longitude %>)</label>
+<fieldset class="sm:col-span-2 grid grid-cols-2 gap-2">
+  <legend class="ss-label">Centro <span class="font-normal">(ignorado na casa)</span></legend>
+  <div><%= f.label :latitude, "Latitude", class: "text-xs text-muted" %><%= f.text_field :latitude, value: a["latitude"], class: "ss-input num", inputmode: "decimal", placeholder: "-12,345678" %></div>
+  <div><%= f.label :longitude, "Longitude", class: "text-xs text-muted" %><%= f.text_field :longitude, value: a["longitude"], class: "ss-input num", inputmode: "decimal", placeholder: "-45,678901" %></div>
+</fieldset>
+<div><%= f.label :radius_m, "Raio (metros)", class: "ss-label" %><%= f.number_field :radius_m, value: a["radius_m"] || HelperTypes::Zone::DEFAULT_RADIUS, min: 20, max: 50_000, class: "ss-input num max-w-40" %></div>
+<p class="sm:col-span-2 text-xs text-muted">O valor da zona é quantas pessoas estão nela. Use os gatilhos "Pessoa entrou ou saiu de zona" e "Presença na zona" (o primeiro chegou, todos saíram) e a condição "Alguém na zona".</p>

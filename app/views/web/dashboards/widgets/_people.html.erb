@@ -1,0 +1,28 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<% d = w["data"] %>
+<% people = Array(d["people"]) %>
+<div class="dw-card">
+  <div class="flex items-center justify-between gap-2">
+    <p class="dw-card-title"><%= w["label"].presence || "Pessoas" %></p>
+    <% if people.any? %><span class="text-xs text-muted num"><%= d["home_count"] %> de <%= people.size %> em casa</span><% end %>
+  </div>
+  <% if people.empty? %>
+    <p class="text-sm text-muted">Nenhuma pessoa<%= " em #{w['zone']}" if w["zone"].present? %>. Crie em Helpers → Pessoa.</p>
+  <% else %>
+    <ul class="dw-people" aria-label="Pessoas">
+      <% people.each do |p| %>
+        <% off = p["quality"] != "good" %>
+        <li>
+          <span class="dw-avatar <%= 'dw-avatar-home' if p['home'] && !off %>" aria-hidden="true"><%= p["initials"] %></span>
+          <span class="min-w-0 flex-1">
+            <%= link_to p["name"], point_path(p["id"]), class: "block font-semibold text-ink truncate no-underline hover:text-accent", data: { turbo_frame: "_top" } %>
+            <span class="block text-xs text-muted truncate">
+              <%= off ? "Sem sinal" : (p["zone"].presence || "Sem leitura") %><% if p["since"] && !off %> · desde <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %>
+            </span>
+          </span>
+          <span class="dw-dot <%= off ? 'dw-dot-off' : (p['home'] ? 'dw-dot-home' : 'dw-dot-away') %>" title="<%= p['home'] ? 'Em casa' : 'Fora de casa' %>"></span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

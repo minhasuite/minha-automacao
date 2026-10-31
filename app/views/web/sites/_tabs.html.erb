@@ -4,7 +4,8 @@
        [ "Integrações", site_integrations_path(site), "link", :integrations ], [ "Automações e cenas", site_automations_path(site), "lightning-bolt", :automation ],
        [ "Helpers", site_helpers_path(site), "collection", :helpers ],
        [ "Dados", site_datasets_path(site), "table", :datasets ], [ "Alexa", site_alexa_path(site), "speakerphone", :alexa ],
-       [ "Alertas", alerts_path, "exclamation-circle", :alerts ] ].each do |label, path, ico, key| %>
+       [ "Alertas", alerts_path, "exclamation-circle", :alerts ], [ "Pacotes", site_packages_path(site), "archive", :packages ],
+       ([ "Ferramentas", dev_tools_site_path(site), "code", :dev_tools ] if DevTools.admin?(current_user)) ].compact.each do |label, path, ico, key| %>
     <%= link_to path, "aria-current": (key == current ? "page" : nil) do %><%= icon(ico, "size-4") %><%= label %><% end %>
   <% end %>
 </nav>

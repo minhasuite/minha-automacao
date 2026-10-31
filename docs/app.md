@@ -91,3 +91,16 @@ com ele aberto (leitura em segundo plano fica para a próxima rodada).
   `test/fixtures/api.json`, regravadas por `test/fixtures/capturar.rb`).
 - Contra o Dell: usuário de teste próprio (criar e apagar no fim); nunca a
   conta do dono, nunca comandar aparelho real além do combinado.
+
+## Pacote 3 no app
+
+- Sensores do celular: intervalo escolhido (5, 15, 30 ou 60 min com o app
+  aberto) e economia de bateria (localização pela rede; nenhuma com bateria
+  baixa fora da tomada). A resposta de `POST /mobile_devices/:id/sensors` traz
+  `zone` (zona onde a localização caiu), nunca a coordenada; a tela mostra
+  "Zona agora". Pessoas e zonas em `docs/presenca.md`.
+- Widgets `people` e `alarm` (teclado; o código vai no comando e não fica no
+  app). Painel de alarme em `docs/alarme.md`.
+- Microfone no Início: grava (AAC) e manda para `POST /sites/:id/assist`
+  (multipart `audio`, ou `text`), mostra o que entendeu e a resposta e toca a
+  fala (`audio_url`). Ver `docs/assistente.md`.

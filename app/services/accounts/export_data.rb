@@ -32,6 +32,7 @@ module Accounts
           automations: Automation.order(:created_at).map { |r| r.as_json(except: %w[tenant_id webhook_token]) },
           # Dados (Lote 2): conjuntos e registros; IA: contas sem a chave e o uso.
           datasets: Dataset.order(:created_at).map { |r| r.as_json(except: "tenant_id") },
+          packages: Package.order(:created_at).map { |r| r.as_json(except: "tenant_id") },
           dataset_records: DatasetRecord.order(:created_at).limit(100_000).map { |r| r.as_json(except: "tenant_id") },
           ai_accounts: AiAccount.order(:provider).map { |r| r.as_json(except: %w[tenant_id api_key]) },
           ai_calls: AiCall.order(:created_at).map { |r| r.as_json(except: "tenant_id") },

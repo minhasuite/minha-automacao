@@ -4,7 +4,7 @@
 class AiCall < ApplicationRecord
   acts_as_tenant :tenant
 
-  SOURCES = { "automacao" => "Automação", "pergunta" => "Perguntar à casa", "teste" => "Teste de conexão" }.freeze
+  SOURCES = { "automacao" => "Automação", "pergunta" => "Perguntar à casa", "teste" => "Teste de conexão", "voz" => "Assistente de voz" }.freeze
   STATUSES = { "ok" => "Ok", "error" => "Erro", "blocked" => "Bloqueada (limite)" }.freeze
 
   belongs_to :site, optional: true

@@ -663,6 +663,25 @@ CREATE TABLE public.notify_rules (
 
 
 --
+-- Name: packages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.packages (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    key character varying NOT NULL,
+    name character varying NOT NULL,
+    version character varying NOT NULL,
+    source_url character varying NOT NULL,
+    manifest jsonb DEFAULT '{}'::jsonb NOT NULL,
+    installed jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: point_links; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1957,6 +1976,14 @@ ALTER TABLE ONLY public.notify_rules
 
 
 --
+-- Name: packages packages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.packages
+    ADD CONSTRAINT packages_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: point_links point_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2867,6 +2894,20 @@ CREATE INDEX index_notify_rules_on_site_id ON public.notify_rules USING btree (s
 --
 
 CREATE INDEX index_notify_rules_on_tenant_id ON public.notify_rules USING btree (tenant_id);
+
+
+--
+-- Name: index_packages_on_site_id_and_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_packages_on_site_id_and_key ON public.packages USING btree (site_id, key);
+
+
+--
+-- Name: index_packages_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_packages_on_tenant_id ON public.packages USING btree (tenant_id);
 
 
 --
@@ -3981,6 +4022,14 @@ ALTER TABLE ONLY public.automation_versions
 
 
 --
+-- Name: packages fk_rails_85441767fa; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.packages
+    ADD CONSTRAINT fk_rails_85441767fa FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: notify_rules fk_rails_86a65c9929; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4341,6 +4390,14 @@ ALTER TABLE ONLY public.notify_rules
 
 
 --
+-- Name: packages fk_rails_f6e97f226b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.packages
+    ADD CONSTRAINT fk_rails_f6e97f226b FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: audit_events fk_rails_fcd253d0d8; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4387,6 +4444,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261101130003'),
 ('20261101000001'),
 ('20261031190001'),
 ('20261031170001'),

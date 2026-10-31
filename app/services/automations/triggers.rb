@@ -93,6 +93,7 @@ module Automations
     def event(site_id, name, payload, cause: nil)
       payload = payload.merge("event" => name)
       payload["data"] = payload.except("event") unless payload.key?("data") # "Esperar evento" e {{ trigger.data }} leem daqui
+      DevTools.broadcast(site_id, name, payload) # Pacote 3: aba Eventos das ferramentas
       plugins = TriggerTypes.plugins.select { |pl| pl.listens?(name) }
       if plugins.any?
         Automation.where(site_id: site_id, enabled: true)

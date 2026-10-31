@@ -1,0 +1,29 @@
+<%# locals: (f:, point:) -%>
+<% a = point.address %>
+<% sensors = point.site.points.includes(:device).where(capability: %w[contact motion tamper problem onoff gate]).where(helper: nil).ordered %>
+<div><%= f.label :code, a["code_digest"] ? "Código novo (vazio = manter)" : "Código (4 a 8 números)", class: "ss-label" %>
+  <%= f.password_field :code, value: nil, class: "ss-input num max-w-48", inputmode: "numeric", autocomplete: "new-password", pattern: "[0-9]{4,8}", required: a["code_digest"].nil? %></div>
+<div><%= f.label :trigger_time, "Tempo disparado", class: "ss-label" %><%= f.text_field :trigger_time, value: helper_duration(a["trigger_s"] || 180), class: "ss-input num max-w-40", placeholder: "3m" %>
+  <p class="text-xs text-muted mt-1">Depois volta ao modo armado. 0s = fica disparado até desarmar.</p></div>
+<label class="ss-check sm:col-span-2"><%= f.check_box :code_arm, { checked: a["code_arm"] == true }, "1", "0" %>Pedir o código também para armar</label>
+<% HelperTypes::AlarmPanel::MODES.each do |state, m| %>
+  <% conf = a.dig("modes", state) || {} %>
+  <% chosen = Array(conf["sensors"]) %>
+  <fieldset class="sm:col-span-2 min-w-0 rounded-xl p-3 ring-1 ring-inset ring-line grid gap-3 sm:grid-cols-2">
+    <legend class="px-1 ss-label">Modo <%= m[:label].downcase %></legend>
+    <label class="ss-check sm:col-span-2"><%= check_box_tag "helper[modes][#{state}][enabled]", "1", conf.present?, id: "mode_#{state}" %>Usar este modo</label>
+    <div><label for="exit_<%= state %>" class="ss-label">Atraso de saída</label><%= text_field_tag "helper[modes][#{state}][exit]", helper_duration(conf["exit_s"] || 0), id: "exit_#{state}", class: "ss-input num", placeholder: "60s" %></div>
+    <div><label for="entry_<%= state %>" class="ss-label">Atraso de entrada</label><%= text_field_tag "helper[modes][#{state}][entry]", helper_duration(conf["entry_s"] || 0), id: "entry_#{state}", class: "ss-input num", placeholder: "30s" %></div>
+    <div class="sm:col-span-2">
+      <p class="ss-label">Sensores que disparam</p>
+      <%= hidden_field_tag "helper[modes][#{state}][sensors][]", "", id: nil %>
+      <div class="max-h-56 overflow-y-auto grid gap-1 sm:grid-cols-2">
+        <% sensors.each do |s| %>
+          <label class="ss-check !font-normal min-w-0"><%= check_box_tag "helper[modes][#{state}][sensors][]", s.id, chosen.include?(s.id), id: "s_#{state}_#{s.id}" %><span class="truncate"><%= s.name %> <span class="text-muted">· <%= s.device.name %></span></span></label>
+        <% end %>
+      </div>
+      <% if sensors.empty? %><p class="text-sm text-muted">Nenhum sensor de abertura, movimento ou liga/desliga neste local.</p><% end %>
+    </div>
+  </fieldset>
+<% end %>
+<p class="sm:col-span-2 text-xs text-muted">O painel não aciona nada sozinho. Para tocar a sirene ou avisar, crie uma automação com o gatilho "Alarme mudou" para "Disparado". O código fica só como hash; nunca aparece em tela, log ou histórico de comandos.</p>

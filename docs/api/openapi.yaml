@@ -231,3 +231,26 @@ paths:
   /automation_runs/{id}: { get: { summary: "Execução com o trace: steps [{at, path, kind, title, result ok|false|error|simulated|waiting|timeout|skipped, detail, ms, checks [{label, result, values, children}]}]", responses: { "200": { description: AutomationRun } } } }
   /hooks/automations/{token}:
     post: { summary: "Webhook das automações (sem login; o token é a credencial). JSON até 10 KB vira trigger.data; 60/min por token. 404 se o token não existe ou a automação está desligada/sem gatilho webhook", security: [], responses: { "202": { description: "{run_id, status}" }, "404": { $ref: "#/components/responses/Error" }, "413": { $ref: "#/components/responses/Error" } } }
+  # ---- Pacote 3 (plataforma): pessoas e zonas, alarme, voz, pacotes e ferramentas. Pessoa, zona e painel de alarme são helpers
+  # (GET /sites/{id}/helpers?type=person|zone|alarm_panel; comando pelo POST /points/{id}/commands). docs/presenca.md, alarme.md, assistente.md, pacotes.md, ferramentas.md.
+  /sites/{id}/people:
+    get: { summary: "Pessoas do local (qualquer papel; chave: read): [{id, name, zone (nome da zona ou Fora), home, since, source (fonte que decidiu), user_id, quality}] e meta.zones [{id, name, home, count, radius_m}]. Nunca coordenadas", responses: { "200": { description: "Person[]" } } }
+  /sites/{id}/assist:
+    post: { summary: "Assistente de voz (só token do app): {text} ou multipart {audio} (STT da instalação), speak? → {heard, text, intent turn_on|turn_off|read_state|scene|ask|unknown, points[], audio_url?}. Intenção local pelos nomes, apelidos (Alexa) e áreas; senão Perguntar à casa. Comando por voz segue papel x risco, respeita a sombra e nunca comanda ponto crítico. 503 ai_unavailable se o STT falhar", responses: { "200": { description: "Resposta" }, "422": { $ref: "#/components/responses/Error" }, "503": { $ref: "#/components/responses/Error" } } }
+  /sites/{id}/packages:
+    get: { summary: "Pacotes instalados (chave: read): [{id, key, name, version, source_url, description, items, updated_at}]", responses: { "200": { description: "Package[]" } } }
+    post: { summary: "Instala ou atualiza pela {url} (repositório GitHub/GitLab com minha-automacao.json|yml na raiz ou URL do manifesto; technician+). Tudo ou nada; nunca executa código", responses: { "201": { description: Package }, "422": { $ref: "#/components/responses/Error" } } }
+  /sites/{id}/packages/preview:
+    post: { summary: "{url} → {source_url, manifest {key, name, version, description, author}, installed_version, errors[], plan [{type, type_label, key, label, action add|update|remove}]}; nada é gravado (technician+)", responses: { "200": { description: "Prévia" }, "422": { $ref: "#/components/responses/Error" } } }
+  /packages/{id}:
+    get: { summary: "Pacote com installed [{type, key, id}] e o manifesto em uso (chave: read)", responses: { "200": { description: Package } } }
+    patch: { summary: "Atualiza pela fonte (baixa de novo e instala; o que saiu do manifesto é removido) (technician+)", responses: { "200": { description: Package }, "422": { $ref: "#/components/responses/Error" } } }
+    delete: { summary: "Remove o pacote e o que ele pôs (blueprints, helpers, painéis, mapas) (technician+)", responses: { "204": { description: ok } } }
+  /sites/{id}/dev/states:
+    get: { summary: "Ferramentas (só administrador ou dono; chave não): pontos com ?q= (nome, chave, valor) e ?capability= → [{id, key, name, device, capability, helper, value, text, quality, attrs, changed_at, reported_at}] (até 200)", responses: { "200": { description: "State[]" }, "403": { $ref: "#/components/responses/Error" } } }
+  /sites/{id}/dev/states/{point_id}:
+    post: { summary: "Define o valor de um helper {value} pela regra do tipo (aparelho: 422; painel de alarme recusa)", responses: { "200": { description: State }, "422": { $ref: "#/components/responses/Error" } } }
+  /sites/{id}/dev/template:
+    post: { summary: "{template, mode liquid|expr} → {result} com o contexto do local; 422 invalid_template com a mensagem", responses: { "200": { description: "{result}" }, "422": { $ref: "#/components/responses/Error" } } }
+  /sites/{id}/dev/events:
+    post: { summary: "Dispara evento {event, data?} (gatilho Evento e Esperar evento); nome do sistema: 422. Escutar = aba Eventos da web (Turbo Stream)", responses: { "200": { description: "{event}" }, "422": { $ref: "#/components/responses/Error" } } }

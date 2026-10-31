@@ -6,7 +6,7 @@ module Dashboards
   # Resolver, o editor e a API perguntam ao plugin; os tipos da F5 continuam
   # em `Schema::WIDGETS`.
   module Widgets
-    PLUGINS = %w[MarkdownWidget WeatherWidget MediaWidget RemoteWidget].freeze
+    PLUGINS = %w[MarkdownWidget WeatherWidget MediaWidget RemoteWidget PeopleWidget AlarmWidget].freeze
 
     module_function
 

@@ -1,0 +1,23 @@
+<%# locals: (site:) -%>
+<%# Assistente de voz (Pacote 3): microfone → STT → intenção local ou "Perguntar à casa" → texto e fala. %>
+<div data-controller="assist" data-assist-url-value="<%= assist_path %>" data-assist-site-value="<%= site.id %>" class="contents">
+  <button type="button" class="dw-hero-btn" data-action="assist#open" title="Falar com a casa" aria-label="Falar com a casa"><%= icon("microphone", "size-4") %><span class="hidden sm:inline">Falar</span></button>
+  <dialog class="ss-dialog dw-assist" data-assist-target="dialog" aria-labelledby="assist-title">
+    <div class="flex items-center justify-between gap-2">
+      <h2 id="assist-title" class="text-lg font-bold text-ink">Falar com a casa</h2>
+      <button type="button" class="grid place-items-center size-9 rounded-lg text-muted hover:text-accent" data-action="assist#close" aria-label="Fechar"><%= icon("x", "size-5") %></button>
+    </div>
+    <p class="text-sm text-muted mt-1">"Ligar a luz da sala", "qual a temperatura do quarto", "ativar a cena cinema". O resto vai para o "Perguntar à casa".</p>
+    <div class="mt-4 grid place-items-center">
+      <button type="button" class="dw-mic" data-assist-target="mic" data-action="assist#toggle" aria-pressed="false" aria-label="Gravar"><%= icon("microphone", "size-7") %></button>
+      <p class="mt-2 text-xs text-muted text-center" data-assist-target="status" aria-live="polite">Toque para falar</p>
+    </div>
+    <form class="mt-4 flex gap-2" data-action="submit->assist#send">
+      <label for="assist-text" class="sr-only">Ou escreva</label>
+      <input id="assist-text" class="ss-input flex-1" data-assist-target="text" maxlength="300" placeholder="Ou escreva aqui" autocomplete="off">
+      <button class="ss-btn ss-btn-primary" aria-label="Enviar"><%= icon("chevron-right", "size-4") %></button>
+    </form>
+    <div class="mt-4 grid gap-2" data-assist-target="log" aria-live="polite"></div>
+    <audio data-assist-target="audio" class="hidden"></audio>
+  </dialog>
+</div>

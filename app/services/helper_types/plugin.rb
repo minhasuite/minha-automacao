@@ -59,6 +59,9 @@ module HelperTypes
 
       def sourced? = false
 
+      # Fim de um tempo agendado no HelperTimerJob (padrão: nada).
+      def finish_due!(_point, _stamp) = nil
+
       # Comando no helper comanda outros pontos (grupo)? Na sombra (F10), só o
       # helper que não comanda nada roda de verdade.
       def drives_points? = false
@@ -69,6 +72,9 @@ module HelperTypes
 
       # Resumo da configuração na lista ("0 a 100 °C, passo 1").
       def summary(_point) = nil
+
+      # Configuração que a API mostra (Pacote 3: sem segredo, como o hash do código).
+      def public_address(point) = point.address
 
       # Para os plugins: número do formulário ("2,5" → 2.5; vazio → nil).
       def number(raw) = raw.to_s.strip.empty? ? nil : Float(raw.to_s.tr(",", "."), exception: false)

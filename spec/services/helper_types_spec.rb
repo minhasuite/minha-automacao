@@ -21,7 +21,7 @@ RSpec.describe HelperTypes do
   end
 
   it "catálogo: todo plugin tem chave, título, ícone existente, descrição e partial" do
-    expect(described_class.keys).to eq(%w[toggle number select text datetime button counter timer group template statistics dataset_query utility_meter integral derivative threshold trend])
+    expect(described_class.keys).to eq(%w[toggle number select text datetime button counter timer group template statistics dataset_query utility_meter integral derivative threshold trend zone person alarm_panel])
     described_class.plugins.each do |p|
       expect([ p.title, p.description ]).to all(be_present)
       expect(HelperTypes::ICONS).to include(p.icon)

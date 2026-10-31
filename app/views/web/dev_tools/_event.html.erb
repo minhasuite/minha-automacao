@@ -1,0 +1,5 @@
+<%# locals: (name:, payload:, at:) -%>
+<li class="rounded-xl p-2 ring-1 ring-inset ring-line">
+  <p class="text-sm font-bold text-ink num"><%= name %> <span class="font-normal text-xs text-muted"><%= l(at, format: "%H:%M:%S") %></span></p>
+  <pre class="mt-1 text-xs text-muted whitespace-pre-wrap break-words"><%= JSON.pretty_generate(payload.to_h.except("event")).truncate(1500) %></pre>
+</li>

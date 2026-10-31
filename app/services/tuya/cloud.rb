@@ -25,6 +25,9 @@ module Tuya
     MAP = YAML.load_file(Rails.root.join("config/device_maps/tuya.yml")).freeze
     SKIP = Regexp.new(MAP["skip"])
     PROBLEM = Regexp.new(MAP["problem"])
+
+    # Mapa com o que os pacotes instalados somam (Pacote 3, DeviceMaps).
+    def self.map = DeviceMaps.apply("tuya", MAP)
     # Chaves do mapa que vão para o endereço do ponto (Points::Decode, PointHoldJob, ouvinte).
     ADDRESS_KEYS = %w[decode field match unmatched hold_s push_only color].freeze
     # Aparelho da nuvem vira `tuya_cloud`; o mesmo device_id já no local como
@@ -147,7 +150,7 @@ module Tuya
       writable = Array(get_hash("/v1.1/m/life/#{d['id']}/specifications")["functions"]).map { |f| f["code"] }
       room = (get_hash("/v1.0/m/thing/ha/#{d['id']}/room") rescue {})["name"]
       { "id" => d["id"], "kind" => "tuya_cloud", "match_drivers" => DRIVERS, "name" => d["name"].to_s.squish.presence || d["id"],
-        "manufacturer" => "Tuya", "model" => d["product_name"], "category" => MAP["categories"][d["category"]] || d["category"], "room" => room,
+        "manufacturer" => "Tuya", "model" => d["product_name"], "category" => self.class.map["categories"][d["category"]] || d["category"], "room" => room,
         "online" => d["online"] == true, "sub" => d["sub"] == true && !self.class.gateway?(d), "secret" => d["local_key"], "poll_s" => 0,
         "state" => self.class.state(d), "points" => (self.class.remote_points(d) + self.class.points(d["name"].to_s, relations, writable) + self.class.stream_points(d)).uniq { |p| p.dig("address", "dps") } }
     end
@@ -155,7 +158,7 @@ module Tuya
     # Lote 9: câmera com vídeo pela nuvem (`streams` no mapa) → ponto `stream`
     # sob demanda: o go2rtc recebe o endereço na hora de ver (Drivers::Go2rtc).
     def self.stream_points(d)
-      return [] unless Array(MAP["streams"]).include?(d["category"])
+      return [] unless Array(map["streams"]).include?(d["category"])
 
       [ { "name" => "Vídeo", "capability" => "stream", "data_type" => "string", "writable" => false, "history" => "none",
           "address" => { "dps" => "video", "on_demand" => true } } ]
@@ -171,7 +174,7 @@ module Tuya
     # Endereço RTSP de agora da câmera (o mesmo pedido do HA; vence em minutos).
     def stream_url(device_id) = post("/v1.0/m/ipc/#{device_id}/stream/actions/allocate", { "type" => "rtsp" }).to_h["url"].presence
 
-    def self.gateway?(d) = Array(MAP["gateways"]).include?(d["category"])
+    def self.gateway?(d) = Array(map["gateways"]).include?(d["category"])
 
     # Sub-dispositivo → hub. A API de compartilhamento não diz o pai: os
     # filhos do controle IR herdam a chave local dele e os do hub Zigbee
@@ -260,7 +263,7 @@ module Tuya
 
     # Código do mapa (`codes`) ou de uma família numerada (`patterns`; %{1} = o número).
     def self.known(code)
-      return MAP["codes"][code] if MAP["codes"][code]
+      return map["codes"][code] if map["codes"][code]
 
       Array(MAP["patterns"]).each do |p|
         m = code.match(Regexp.new(p["match"])) or next

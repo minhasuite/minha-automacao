@@ -21,6 +21,7 @@
       <h1 class="mt-1 text-white truncate"><%= home_view && @home ? "#{greeting}, #{current_user.name.split.first}" : view["title"] %></h1>
     </div>
     <div class="flex items-center gap-2">
+      <% if live %><%= render "web/assist/button", site: @site %><% end %>
       <% if (@dashboards || []).size > 1 || @sites.to_a.size > 1 %>
         <%= link_to site_dashboards_path(@site), class: "dw-hero-btn", title: "Outros painéis", "aria-label": "Outros painéis" do %><%= icon("view-boards", "size-4") %><span class="hidden sm:inline">Painéis</span><% end %>
       <% end %>

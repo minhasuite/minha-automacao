@@ -42,7 +42,12 @@ module Api
         device
       end
 
-      def payload(device) = DeviceSerializer.new(device).to_h.merge("points" => PointSerializer.new(device.points.ordered).to_h)
+      # Pacote 3: `zone` = zona onde a última localização caiu (nunca a coordenada).
+      def payload(device)
+        points = device.points.ordered.to_a
+        DeviceSerializer.new(device).to_h.merge("points" => PointSerializer.new(points).to_h,
+                                                "zone" => points.find { |p| p.device_class == "location" }&.attrs&.dig("zone"))
+      end
     end
   end
 end

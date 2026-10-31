@@ -501,6 +501,19 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   bridge do Docker o multicast não sai: `MDNS_SUBNET` liga a pergunta unicast
   por IP. Protobuf em `Proto`, WebSocket em `WsClient`. Detalhes em
   `docs/integracoes.md` (Pacote 1).
+- **Pacote 3 (plataforma, aberto/fechado)**: pessoa, zona e painel de alarme
+  são **helpers** (`person`, `zone`, `alarm_panel`); rastreador de presença =
+  classe em `People::TRACKERS`, sonda de rede em `NetworkTrackerPlugin::PROBES`,
+  modo de alarme em `AlarmPanel::MODES`, intenção de voz em `Assist::INTENTS`,
+  fonte e tipo de item de pacote em `Packages::SOURCES`/`ITEMS`, mapa somável
+  em `DeviceMaps::MERGEABLE` (Tuya/MIoT leem por `DeviceMaps.apply`). Código
+  do alarme só em bcrypt e fora da tabela de comandos (`Points::Command#value=`
+  no `new_value`; API mostra `public_address`). Coordenada exata só nos
+  atributos do "Presença" do celular, apagada pelo `MobileAppPlugin.tick`
+  (`location_keep_h`). Voz e Ferramentas comandam por `Shadow.for_site` e a
+  voz nunca comanda ponto/cena crítica. Pacote nunca executa nada.
+  Ferramentas: só `user.admin?`. Docs: `presenca.md`, `alarme.md`,
+  `assistente.md`, `pacotes.md`, `ferramentas.md`.
 - **Sombra (F10)**: `Shadow.active?` = marca da automação/cena, `sites.shadow`
   ou `tenants.settings["shadow"]`; a execução guarda `automation_runs.shadow`
   (herda de quem causou e da thread). Ação nova = **segurada** por padrão:

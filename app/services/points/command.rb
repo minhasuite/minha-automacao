@@ -61,6 +61,9 @@ module Points
     end
 
     attr_reader :point, :command, :value
+    # O plugin do helper pode trocar o argumento já validado (Pacote 3: o
+    # código do alarme confere e sai antes de o comando ser gravado).
+    attr_writer :value
 
     def initialize(point, command, value)
       @point = point

@@ -1,0 +1,37 @@
+<% m = @manifest %>
+<%= render "web/shared/header", title: m["name"].presence || "Pacote", subtitle: [ "versão #{m['version']}", (@existing ? "instalada: #{@existing.version}" : "novo"), m["description"].to_s.truncate(160).presence ].compact.join(" · "), back: site_packages_path(@site) %>
+
+<section class="ss-card ss-card-pad mb-4 grid gap-1 text-sm" aria-label="Origem">
+  <p><span class="text-muted">Origem:</span> <span class="num break-all"><%= @source %></span></p>
+  <% if m["author"].present? %><p><span class="text-muted">Autor:</span> <%= m["author"].to_s.truncate(80) %></p><% end %>
+  <% if @existing && !@newer.nil? %><p class="<%= @newer ? 'text-success' : 'text-muted' %>"><%= @newer ? "Há versão nova." : "Você já está na versão mais nova; dá para reinstalar." %></p><% end %>
+</section>
+
+<% if @errors.any? %>
+  <div class="ss-card ss-card-pad mb-4" role="alert">
+    <p class="font-bold text-danger">O manifesto tem problemas e não pode ser instalado</p>
+    <ul class="mt-2 grid gap-1 text-sm text-ink-2 list-disc pl-5"><% @errors.first(30).each do |e| %><li><%= e %></li><% end %></ul>
+  </div>
+<% end %>
+
+<% labels = { "add" => [ "Entra", "text-success" ], "update" => [ "Atualiza", "text-accent" ], "remove" => [ "Sai", "text-danger" ] } %>
+<ul class="ss-card ss-rows mb-4" aria-label="O que muda">
+  <% @plan.each do |i| %>
+    <li>
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-ink truncate"><%= i["label"] %></p>
+        <p class="text-xs text-muted truncate"><%= i["type_label"] || i["type"] %> · <span class="num"><%= i["key"] %></span></p>
+      </div>
+      <% text, css = labels.fetch(i["action"]) %>
+      <span class="text-sm font-bold <%= css %> shrink-0"><%= text %></span>
+    </li>
+  <% end %>
+</ul>
+
+<% if @errors.empty? %>
+  <%= form_with url: install_site_packages_path(@site), class: "flex flex-wrap gap-2" do %>
+    <%= hidden_field_tag :url, @url, id: nil %>
+    <button type="submit" class="ss-btn ss-btn-primary"><%= icon("download", "size-4") %><%= @existing ? "Atualizar para #{m['version']}" : "Instalar" %></button>
+    <%= link_to "Cancelar", site_packages_path(@site), class: "ss-btn ss-btn-ghost" %>
+  <% end %>
+<% end %>

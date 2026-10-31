@@ -1,0 +1,67 @@
+module Web
+  # Loja de pacotes do local (Pacote 3, Packages): instalar por URL com
+  # pré-visualização, ver o que entrou, procurar versão nova e remover.
+  # Ver: qualquer papel; instalar, atualizar e remover: técnico ou dono.
+  class PackagesController < ApplicationController
+    def index
+      @site = Site.find(params[:site_id])
+      authorize_site!(@site, :view)
+      @packages = @site.packages.ordered
+    end
+
+    def show
+      load_package(:view)
+    end
+
+    # URL → manifesto validado e o plano (o que entra), sem gravar nada.
+    def preview
+      @site = Site.find(params[:site_id])
+      authorize_site!(@site, :manage)
+      @url = params[:url].to_s.strip
+      @manifest, @source = Packages.fetch(@url)
+      @existing = @site.packages.find_by(key: @manifest["key"])
+      @errors = Packages.errors(@manifest, @site)
+      @plan = Packages.preview(@site, @manifest, @existing)
+      render :preview
+    rescue Packages::Error => e
+      redirect_to site_packages_path(@site, url: @url), alert: e.message
+    end
+
+    def install
+      @site = Site.find(params[:site_id])
+      authorize_site!(@site, :manage)
+      manifest, source = Packages.fetch(params[:url])
+      package = Packages.install!(@site, manifest, source)
+      redirect_to package_path(package), notice: "Pacote #{package.name} #{package.version} instalado."
+    rescue Packages::Error, ActiveRecord::RecordInvalid => e
+      redirect_to site_packages_path(@site, url: params[:url]), alert: e.message.truncate(300)
+    end
+
+    # Procura versão nova e mostra o plano da atualização.
+    def check
+      load_package(:manage)
+      @manifest, @source, @newer = Packages.check(@package)
+      @errors = Packages.errors(@manifest, @site)
+      @plan = Packages.preview(@site, @manifest, @package)
+      @existing = @package
+      @url = @package.source_url
+      render :preview
+    rescue Packages::Error => e
+      redirect_to package_path(@package), alert: e.message
+    end
+
+    def destroy
+      load_package(:manage)
+      Packages.uninstall!(@package)
+      redirect_to site_packages_path(@site), notice: "Pacote #{@package.name} removido com o que ele tinha posto."
+    end
+
+    private
+
+    def load_package(action)
+      @package = Package.find(params[:id])
+      @site = @package.site
+      authorize_site!(@site, action)
+    end
+  end
+end

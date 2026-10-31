@@ -21,8 +21,8 @@ module Integrations
                      read: ->(v, _i) { Float(v.to_s, exception: false)&.round&.clamp(0, 100) } },
       "charging" => { name: "Carregando", capability: "onoff", device_class: "battery_charging", read_only: true,
                       read: ->(v, _i) { ActiveModel::Type::Boolean.new.cast(v) } },
-      "wifi" => { name: "Wi-Fi", capability: "text", read: ->(v, _i) { v.to_s.delete('"').strip.first(64) } },
-      "location" => { name: "Presença", capability: "enum", options: [ HOME, AWAY ],
+      "wifi" => { name: "Wi-Fi", capability: "text", device_class: "wifi_ssid", read: ->(v, _i) { v.to_s.delete('"').strip.first(64) } },
+      "location" => { name: "Presença", capability: "enum", options: [ HOME, AWAY ], device_class: "location",
                       read: ->(v, i) { MobileAppPlugin.presence(i, v) }, attrs: ->(v, i) { MobileAppPlugin.location_attrs(i, v) } }
     }.freeze
 
@@ -39,8 +39,34 @@ module Integrations
 
     def self.configure(integration, form)
       radius = form[:home_radius_m].to_s.to_i
-      integration.settings = integration.settings.merge("account" => "Celulares com o app", "home_radius_m" => radius.between?(30, 5000) ? radius : HOME_RADIUS_M)
+      keep = form.key?(:location_keep_h) ? form[:location_keep_h].to_s.to_i.clamp(0, KEEP_MAX_H) : integration.settings.fetch("location_keep_h", KEEP_H)
+      integration.settings = integration.settings.merge("account" => "Celulares com o app", "home_radius_m" => radius.between?(30, 5000) ? radius : HOME_RADIUS_M,
+                                                        "location_keep_h" => keep)
       integration.save!
+    end
+
+    # Privacidade (Pacote 3): a coordenada exata fica só aqui, nos atributos
+    # do ponto "Presença" (sem histórico), e some depois de `location_keep_h`
+    # horas sem leitura nova (0 = só a zona e a distância ficam). A pessoa e a
+    # zona guardam só o nome da zona.
+    KEEP_H = 24
+    KEEP_MAX_H = 24 * 30
+    PRECISE = %w[latitude longitude accuracy].freeze
+
+    def self.tick(_now)
+      ActsAsTenant.without_tenant do
+        Integration.where(driver: driver).includes(:tenant).find_each do |i|
+          ActsAsTenant.with_tenant(i.tenant) { forget_old_locations!(i) }
+        end
+      end
+    end
+
+    def self.forget_old_locations!(integration)
+      keep = integration.settings.fetch("location_keep_h", KEEP_H).to_i
+      Point.where(device_id: integration.site.devices.where(integration_id: integration.id).select(:id))
+           .where("points.attrs ? 'latitude'").where(reported_at: ...(Time.current - keep.hours)).find_each do |p|
+        p.update_column(:attrs, p.attrs.except(*PRECISE)) # rubocop:disable Rails/SkipsModelValidations
+      end
     end
 
     # Sem varredura: os celulares é que mandam as leituras.
@@ -85,7 +111,7 @@ module Integrations
     end
 
     def self.point_for(device, field, s)
-      device.points.find_by("address->>'field' = ?", field) ||
+      device.points.find_by("address->>'field' = ?", field)&.tap { |p| p.update!(device_class: s[:device_class]) if p.device_class.nil? && s[:device_class] } ||
         device.points.create!(site: device.site, name: s[:name], capability: s[:capability], unit: s[:unit], device_class: s[:device_class],
                               options: s[:options] || [], history: "on_change", address: { "field" => field },
                               key: Integrations.unique_key(device.site, device, s[:name])).tap { |p| p.update!(writable: false) if s[:read_only] }
@@ -101,7 +127,10 @@ module Integrations
 
     def self.location_attrs(integration, loc)
       lat, lon = coords(loc)
-      { "latitude" => lat, "longitude" => lon, "accuracy" => accuracy(loc).round, "distance_m" => distance_to_site(integration, loc)&.round }.compact
+      zone = lat && People.zone_at(People.zones(integration.site), lat, lon, accuracy(loc))
+      precise = integration.settings.fetch("location_keep_h", KEEP_H).to_i.positive?
+      { "latitude" => (lat if precise), "longitude" => (lon if precise), "accuracy" => (accuracy(loc).round if precise),
+        "distance_m" => distance_to_site(integration, loc)&.round, "zone" => zone&.name || (AWAY if lat) }.compact
     end
 
     def self.coords(loc)

@@ -138,6 +138,19 @@ Rails.application.routes.draw do
       end
       # Helpers (F8e): catálogo de tipos (plugins), lista com valor e cadastro.
       resources :helpers, controller: "site_helpers", path: "helpers", except: :show, path_names: { new: "novo", edit: "editar" }, shallow: true
+      # Pacote 3: loja de pacotes declarativos e ferramentas de desenvolvedor (só administrador).
+      resources :packages, path: "pacotes", only: %i[index show destroy], shallow: true do
+        post :preview, on: :collection, path: "previa"
+        post :install, on: :collection, path: "instalar"
+        get :check, on: :member, path: "verificar"
+      end
+      member do
+        get "ferramentas", to: "dev_tools#show", as: :dev_tools
+        post "ferramentas/estado", to: "dev_tools#state", as: :dev_tools_state
+        post "ferramentas/modelo", to: "dev_tools#template", as: :dev_tools_template
+        post "ferramentas/acao", to: "dev_tools#command", as: :dev_tools_command
+        post "ferramentas/evento", to: "dev_tools#event", as: :dev_tools_event
+      end
       # Conjuntos de dados (Lote 2): o que as automações registram; lista com filtros e CSV.
       resources :datasets, path: "dados", path_names: { new: "novo", edit: "editar" }, shallow: true
       resources :areas, path: "areas", except: :index, shallow: true
@@ -170,6 +183,8 @@ Rails.application.routes.draw do
     # Perguntar à casa (Lote 2): só leitura, com os pontos do local como contexto.
     get "perguntar", to: "ask#show", as: :ask
     post "perguntar", to: "ask#create"
+    # Assistente de voz (Pacote 3): áudio ou texto → intenção local ou "Perguntar à casa".
+    post "assistente", to: "assist#create", as: :assist
     # Meus aparelhos (Lote 1): navegadores inscritos no Web Push.
     resources :push_subscriptions, path: "configuracoes/aparelhos", only: %i[index create destroy] do
       post :test, on: :collection, path: "teste"
@@ -246,6 +261,18 @@ Rails.application.routes.draw do
       end
 
       resources :commands, only: :show
+
+      # Pacote 3: pessoas, voz, pacotes e ferramentas de desenvolvedor.
+      get "sites/:site_id/people", to: "people#index"
+      post "sites/:site_id/assist", to: "assist#create"
+      get "sites/:site_id/packages", to: "packages#index"
+      post "sites/:site_id/packages/preview", to: "packages#preview"
+      post "sites/:site_id/packages", to: "packages#create"
+      resources :packages, only: %i[show update destroy]
+      get "sites/:site_id/dev/states", to: "dev_tools#states"
+      post "sites/:site_id/dev/states/:point_id", to: "dev_tools#set_state"
+      post "sites/:site_id/dev/template", to: "dev_tools#template"
+      post "sites/:site_id/dev/events", to: "dev_tools#fire_event"
 
       # Automação (F4).
       resources :sites, only: [] do

@@ -13,6 +13,9 @@ module Miio
 
     module_function
 
+    # Propriedades com o que os pacotes instalados somam (Pacote 3, DeviceMaps).
+    def props = DeviceMaps.apply("miot", { "properties" => PROPS })["properties"]
+
     def vacuum?(model) = model.to_s.include?(".vacuum.")
 
     def points(model)
@@ -23,7 +26,7 @@ module Miio
       list = services.flat_map do |s|
         Array(s["properties"]).filter_map do |p|
           kind = p["type"].to_s.split(":")[3]
-          spec = PROPS[kind] or next
+          spec = props[kind] or next
           next if spec["writable_only"] && !Array(p["access"]).include?("write")
 
           name = [ spec["name"], (s["description"] if services.count { |o| Array(o["properties"]).any? { |q| q["type"].to_s.split(":")[3] == kind } } > 1) ].compact.join(" ")

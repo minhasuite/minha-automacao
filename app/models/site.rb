@@ -23,6 +23,7 @@ class Site < ApplicationRecord
   has_many :blueprints, dependent: nil
   has_many :integrations, dependent: nil
   has_many :datasets, dependent: nil
+  has_many :packages, dependent: nil
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }

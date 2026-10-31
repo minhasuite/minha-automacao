@@ -21,7 +21,7 @@ class Blueprint < ApplicationRecord
   # Entrada dentro de texto ou expressão (Lote 5): `[[chave]]` vira a `key`
   # do ponto escolhido (ou o valor da entrada), ao criar a automação.
   INLINE_INPUT = /\[\[([a-z0-9_]+)\]\]/
-  SOURCES = { "builtin" => "Pronto", "ha" => "Importado do HA", "manual" => "Manual" }.freeze
+  SOURCES = { "builtin" => "Pronto", "ha" => "Importado do HA", "manual" => "Manual", "package" => "Pacote" }.freeze
 
   belongs_to :site
   has_many :automations, dependent: nil # o banco solta o vínculo (nullify)

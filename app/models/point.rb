@@ -180,6 +180,7 @@ class Point < ApplicationRecord
 
     update_column(:attrs, new_attrs.to_h) # rubocop:disable Rails/SkipsModelValidations
     Automations::Triggers.on_attrs_change(self, was)
+    HelperTypes.on_change(self) # Pacote 3: a pessoa lê a zona pelas coordenadas (atributos) do celular
   end
 
   def to_raw(value)
