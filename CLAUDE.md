@@ -89,7 +89,12 @@ sensores template da tela do HA na importação, item com perda refeito no lugar
 **Lote 8**: cor de lâmpada pelo mapa de dados (`Points::Color`), gatilho por
 atributo, ações "Comandar pontos por consulta" e "Resumo do histórico de
 pontos", eventos do robô deduzidos da leitura, som/música/volume na Echo e o
-importador do HA usando tudo isso.
+importador do HA usando tudo isso. + **F7**: API do app Flutter
+(`minha-automacao-app`): tempo real pelo `/cable` com o access token,
+`Site#points_stream`, `?view=app` nos pontos, quadro da câmera, resposta de
+aviso pela API, FCM só de dados no Android e a integração "App do celular"
+(`MobileAppPlugin`: bateria, carregando, Wi-Fi e presença como pontos;
+`docs/app.md`).
 
 ## Rodar
 
@@ -489,6 +494,13 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `f10_shadow_spec` (o teste percorre todas as ações registradas). Fonte de
   referência do comparador = plugin de integração com `reference` e
   `state_for`; de-para em `ExternalRef` (`source` = chave do plugin).
+- **App (F7)**: o app só desenha o que o servidor resolve; regra de
+  negócio (papel x risco, `can_command`, texto do valor) fica aqui. O
+  `/cable` aceita `?access_token=` (só token do app, `ApiToken.find_by_access`)
+  e o cliente manda `Origin` = endereço do servidor. Push FCM para Android é
+  só de dados (`Push::Fcm`): mudou o formato, mudou o `Notices.show` do app.
+  Aparelho do celular é da pessoa (`address.user_id`): só ela manda leitura
+  ou remove. Sensor novo = linha em `MobileAppPlugin::SENSORS`.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

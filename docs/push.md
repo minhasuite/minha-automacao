@@ -33,8 +33,11 @@ no local; `role:guest` = todos do local). Uma notificação por pessoa.
 - **Transporte de push** = módulo em `Push::TRANSPORTS` (`Browser`, `Fcm`):
   `configured?`, `capabilities`, `deliver(user, message)` e `clear(user, tag)`.
   `Push::Message#to_h(capabilities)` corta o que o transporte não suporta.
-  O FCM já é um transporte: quando o app F7 existir, ele só monta a
-  notificação com o `data` recebido.
+  O FCM leva ao app F7 (Android) uma mensagem **só de dados** (`type:
+  notification`, `title`, `body`, `actions` em JSON, `token`, `image`, `tag`,
+  `priority`, `group`, `url`, `notification_id`): o app monta a notificação,
+  inclusive fechado. iOS recebe a notificação do sistema + os dados. Detalhes
+  em `docs/app.md`.
 - Spec: `spec/services/lote1_spec.rb` registra um canal e um transporte falsos
   por `stub_const` e prova que funcionam sem mudar o núcleo.
 
@@ -46,8 +49,11 @@ A primeira resposta vale (`responded_at`/`response`) e vira o evento
 execução. Pelo service worker, `POST /push/resposta {token, action_id}` sem
 sessão: o token é assinado com a notificação e a pessoa
 (`Notification#action_token`, 7 dias), não serve para outra pessoa nem para
-outro aviso e só vale uma vez (409 depois). Pelo app, `PATCH
-/notificacoes/:id/responder` com a sessão.
+outro aviso e só vale uma vez (409 depois). O app usa o mesmo `POST
+/push/resposta` com o `token` que veio no FCM (botão tocado com o app
+fechado, sem sessão) e, na lista de avisos, `POST
+/api/v1/notifications/:id/respond {action_id}`. Na web, `PATCH
+/notificacoes/:id/responder`.
 
 ## Imagem
 

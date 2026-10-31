@@ -13,6 +13,9 @@ info:
 
     Base da suíte + F1 (locais, áreas, membros, dispositivos, pontos e comando no driver virtual).
     Mais F2 (comandos e histórico), F4 (primitivas de automação e alertas), F5 (dashboards) e F6 (automações com a DSL, docs/automacoes.md).
+    F7 (app Flutter, docs/app.md): tempo real pelo Action Cable em `/cable?access_token=<access>` (cabeçalho `Origin` = endereço
+    do servidor), assinando `{"channel":"PointsChannel","signed_stream_name": Site.points_stream}`; chega
+    `<turbo-stream action="point_changed" target="<point_id>">` e o app relê o que depende do ponto.
 servers:
   - url: https://minhaautomacao.minhasuite.com/api/v1
 security:
@@ -104,6 +107,7 @@ paths:
   /company/invites: { post: { summary: "Link de convite de uso único, 7 dias {role? member|admin, site_id?, site_role?} (só o dono). A pessoa abre o link e se cadastra direto nesta instalação", responses: { "201": { description: "{url, role, site_id, site_role, expires_at}" }, "403": { $ref: "#/components/responses/Error" } } } }
   /notifications: { get: { summary: "?unread=", responses: { "200": { description: "lista paginada; meta.unread_count" } } } }
   /notifications/{id}/read: { patch: { summary: Marca lida, responses: { "200": { description: ok } } } }
+  /notifications/{id}/respond: { post: { summary: "Botão do aviso {action_id} (F7). A primeira resposta vale e vira o evento notification_action. Notificação: {id, kind, title, body, data, read_at, created_at, actions[{id,title}] (vazio depois de respondida), responded_at, response_title, url, image_url (caminho relativo = neste servidor)}. Pelo push o app responde sem sessão em POST /push/resposta {token, action_id} com o token que veio no FCM", responses: { "200": { description: Notification }, "409": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } } }
   /notifications/read: { patch: { summary: "Marca todas {ids?}", responses: { "200": { description: "{marked, unread_count}" } } } }
   /device_tokens: { post: { summary: "Token FCM {token, platform android|ios}", responses: { "201": { description: ok } } } }
   /device_tokens/{token}: { delete: { summary: Remove, responses: { "204": { description: ok } } } }
@@ -121,7 +125,7 @@ paths:
   # pontos: technician+; editar/excluir o local e membros: owner. Comando: normal guest+, sensitive operator+,
   # critical resident+ (403 forbidden abaixo disso).
   /sites:
-    get: { summary: "Locais que a pessoa vê (paginado). Cada um traz my_role", responses: { "200": { description: "Site[]" } } }
+    get: { summary: "Locais que a pessoa vê (paginado). Cada um traz my_role e points_stream (nome assinado do stream de pontos para o /cable, F7)", responses: { "200": { description: "Site[]" } } }
     post: { summary: "Cria {name, kind home|store|plant, timezone?, address?, latitude?, longitude?, wallpaper?} (administrador da empresa)", responses: { "201": { description: Site }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } }
   /sites/{id}:
     get: { summary: Local, responses: { "200": { description: Site }, "404": { $ref: "#/components/responses/Error" } } }
@@ -140,7 +144,7 @@ paths:
     post: { summary: "Cria {name, area_id?, driver virtual|tuya_local|tuya_cloud|xiaomi_miot|alexa|mqtt|modbus_tcp|onvif|go2rtc, manufacturer?, model?, serial?, external_id?, address{}?, firmware?, disabled?} (technician+). Na F1 só o virtual executa comando", responses: { "201": { description: Device } } }
   /devices/{id}: { get: { summary: Dispositivo, responses: { "200": { description: Device } } }, patch: { summary: "Edita (technician+)", responses: { "200": { description: Device } } }, delete: { summary: "Exclui com os pontos (technician+)", responses: { "204": { description: ok } } } }
   /devices/{id}/points:
-    get: { summary: Pontos do dispositivo, responses: { "200": { description: "Point[]" } } }
+    get: { summary: "Pontos do dispositivo. ?view=app (F7): cada ponto como no dashboard resolvido {value, text, on, commands, actions, can_command (papel x risco), input, mode, device}", responses: { "200": { description: "Point[]" } } }
     post: { summary: "Cria {name, capability (§4.3 sem machine/counter), key? (gerada: dispositivo.ponto, única no local), area_id?, unit?, options[]? (obrigatório em enum), min?, max?, step?, writable?, address{}?, scale?, offset?, deadband?, history?, pulse_ms?, max_on_s?, confirm?, risk normal|sensitive|critical, expose{}?, hidden?, disabled?} (technician+)", responses: { "201": { description: Point }, "422": { $ref: "#/components/responses/Error" } } }
   /points/{id}: { get: { summary: "Ponto com value, quality, changed_at, reported_at", responses: { "200": { description: Point } } }, patch: { summary: "Edita (technician+)", responses: { "200": { description: Point } } }, delete: { summary: "Exclui (technician+)", responses: { "204": { description: ok } } } }
   /points/{id}/commands:
@@ -149,6 +153,14 @@ paths:
     post: { summary: "{value} grava o valor de um ponto de dispositivo virtual (Point#report!: automações, avisos e tempo real). Chave com permissão write. 422 not_virtual", responses: { "200": { description: Point }, "422": { $ref: "#/components/responses/Error" } } }
   /points/{id}/history:
     get: { summary: "?from&to (ISO 8601; padrão: últimas 24h) &resolution auto|raw|1h|1d. auto: até 2 dias cru, até 31 dias 1h, depois 1d; booleano sempre cru. Cru: [{at, value, value_text}] (a primeira linha é o valor vigente em from). Rollup: [{starts_at, min, max, avg, sum, last, count, on_seconds}]. meta {from, to, resolution, truncated} (máx. 5000). 400 invalid_parameter", responses: { "200": { description: "Reading[] ou Rollup[]" }, "400": { $ref: "#/components/responses/Error" } } }
+  /points/{id}/snapshot:
+    get: { summary: "Quadro JPEG da câmera (ponto stream de aparelho go2rtc), qualquer papel no local (F7). 503 camera_unavailable", responses: { "200": { description: "image/jpeg" }, "404": { $ref: "#/components/responses/Error" }, "503": { $ref: "#/components/responses/Error" } } }
+  # ---- App do celular (F7, G17; Integrations::MobileAppPlugin). O aparelho é da pessoa que registrou.
+  /sites/{id}/mobile_devices:
+    post: { summary: "Registra este celular no local {install_id ([A-Za-z0-9_-]{8,64}, gerado pelo app), name, model?, platform?} (qualquer papel). Idempotente por pessoa + install_id. → Device com points[]", responses: { "201": { description: Device }, "400": { $ref: "#/components/responses/Error" }, "404": { $ref: "#/components/responses/Error" } } }
+  /mobile_devices/{id}/sensors:
+    post: { summary: "Leituras {battery? (0..100), charging?, wifi? (SSID; vazio = fora do Wi-Fi), location? {latitude, longitude, accuracy}} → pontos Bateria, Carregando, Wi-Fi e Presença (Em casa|Fora pelo raio da integração, padrão 150 m; atributos latitude, longitude, accuracy, distance_m). Campo ausente fica como está. Só a pessoa dona", responses: { "200": { description: "Device com points[]" }, "404": { $ref: "#/components/responses/Error" } } }
+  /mobile_devices/{id}: { delete: { summary: "Remove o celular e os pontos dele (só a pessoa dona)", responses: { "204": { description: ok } } } }
   /commands/{id}:
     get: { summary: "Situação do comando (mesmo formato do 202)", responses: { "200": { description: Command }, "404": { $ref: "#/components/responses/Error" } } }
   # ---- Automação (F4). Ver: qualquer papel no local; criar/editar/excluir: technician+. JSON = linha do banco sem tenant_id. 422 validation_failed com details.
