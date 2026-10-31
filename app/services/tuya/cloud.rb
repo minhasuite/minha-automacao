@@ -26,7 +26,7 @@ module Tuya
     SKIP = Regexp.new(MAP["skip"])
     PROBLEM = Regexp.new(MAP["problem"])
     # Chaves do mapa que vão para o endereço do ponto (Points::Decode, PointHoldJob, ouvinte).
-    ADDRESS_KEYS = %w[decode field match unmatched hold_s push_only].freeze
+    ADDRESS_KEYS = %w[decode field match unmatched hold_s push_only color].freeze
     # Aparelho da nuvem vira `tuya_cloud`; o mesmo device_id já no local como
     # `tuya_local` (LocalTuya importado) casa com ele e continua local.
     DRIVERS = %w[tuya_cloud tuya_local].freeze
@@ -224,8 +224,19 @@ module Tuya
       end
       code_of = relations.to_h { |r| [ r["dpId"].to_s, r["statusCode"].to_s ] }
       specs.uniq { |s| s[:address]["dps"] }.map do |s|
-        s.merge(address: s[:address].merge("code" => code_of[s[:address]["dps"]])).transform_keys(&:to_s).compact
+        address = s[:address].merge("code" => code_of[s[:address]["dps"]])
+        address["color"] = color_siblings(address["color"], dp) if address["color"]
+        s.merge(address: address).transform_keys(&:to_s).compact
       end
+    end
+
+    # Cor (Lote 8): o código do dp irmão (temperatura, modo) ganha o dpId; o que o aparelho não tem sai.
+    def self.color_siblings(conf, dp)
+      conf.filter_map do |k, h|
+        next [ k, h ] unless h.is_a?(Hash) && h["code"]
+
+        (id = dp.call(h["code"])) && [ k, h.merge("dps" => id.to_s) ]
+      end.to_h
     end
 
     # Código do mapa (`codes`) ou de uma família numerada (`patterns`; %{1} = o número).
@@ -247,6 +258,7 @@ module Tuya
       return base.merge(capability: known["capability"], device_class: known["device_class"], writable: false) if known["decode"]
       # Evento (botão, campainha): dispara a cada empurrão; as opções do enum vão para o editor.
       return base.merge(capability: "event", options: Array(d["range"]).map(&:to_s).presence) if known["capability"] == "event"
+      return base.merge(capability: "color", writable: writable) if known["color"] # Lote 8: irmãos resolvidos em `points`
 
       sc = (10**-d["scale"].to_i).to_d
       case r["valueType"]

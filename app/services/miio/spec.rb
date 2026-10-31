@@ -27,7 +27,8 @@ module Miio
           next if spec["writable_only"] && !Array(p["access"]).include?("write")
 
           name = [ spec["name"], (s["description"] if services.count { |o| Array(o["properties"]).any? { |q| q["type"].to_s.split(":")[3] == kind } } > 1) ].compact.join(" ")
-          attrs = spec.except("writable_only").merge("name" => name, "address" => { "siid" => s["iid"], "piid" => p["iid"] })
+          attrs = spec.except("writable_only", "color").merge("name" => name, "address" => { "siid" => s["iid"], "piid" => p["iid"] })
+          attrs["address"]["color"] = color_siblings(spec["color"], s) if spec["color"]
           range = p["value-range"]
           attrs.merge!("scale" => (100.0 / range[1]).round(6), "min" => 1, "max" => 100) if attrs["capability"] == "dimmer" && range
           attrs
@@ -37,6 +38,16 @@ module Miio
     rescue StandardError => e
       Rails.logger.warn("[miot-spec] #{model}: #{e.message}")
       []
+    end
+
+    # Cor (Lote 8): a propriedade irmã (pelo nome do tipo) no mesmo serviço vira siid/piid; sem ela, sai.
+    def color_siblings(conf, service)
+      conf.filter_map do |k, h|
+        next [ k, h ] unless h.is_a?(Hash) && h["property"]
+
+        p = Array(service["properties"]).find { |q| q["type"].to_s.split(":")[3] == h["property"] } or next
+        [ k, h.except("property").merge("siid" => service["iid"], "piid" => p["iid"]) ]
+      end.to_h
     end
 
     # modelo → urn da versão mais nova (lista pública, guardada um dia).

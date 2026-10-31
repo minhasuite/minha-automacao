@@ -9,3 +9,19 @@ properties:
   battery-level: { name: Bateria, capability: measure, unit: "%", device_class: battery }
   electric-power: { name: Potência, capability: measure, unit: W, device_class: power }
   illumination: { name: Iluminância, capability: measure, unit: lx, device_class: illuminance }
+  # Lâmpada com cor (Lote 8): `color` diz o formato (Points::Color) e a
+  # propriedade irmã da temperatura, pelo nome, no mesmo serviço.
+  color: { name: Cor, capability: color, color: { hs: { format: rgb_int }, temp: { property: color-temperature } } }
+  color-temperature: { name: Temperatura de cor, capability: setpoint, unit: K }
+# Eventos do robô aspirador (siid/eiid da spec MIoT; Lote 8). O protocolo
+# local não empurra evento: cada um vira um ponto `event` que dispara quando a
+# situação do robô (propriedade siid/piid, código bruto) passa de um código de
+# `from` para um de `to` na leitura periódica. Evento novo = linha nova aqui.
+# eiid 101+ não existem na spec (início e erro, que o HA tira do estado).
+vacuum_events:
+  - { name: Mapa concluído, event: build_map_complete, siid: 2, eiid: 1, when: { siid: 2, piid: 2, from: [10, 18], to: [1, 2, 3, 4, 5, 6, 9, 12, 13, 14, 16, 17, 21] } }
+  - { name: Limpeza concluída, event: sweep_complete, siid: 2, eiid: 2, when: { siid: 2, piid: 2, from: [4, 6, 7, 16, 17, 21], to: [1, 2, 9, 12, 14] } }
+  - { name: Base esvaziou, event: dust_arrest_complete, siid: 2, eiid: 3, when: { siid: 2, piid: 2, from: [12, 14], to: [1, 2, 9] } }
+  - { name: Pano lavado, event: mop_wash_complete, siid: 2, eiid: 4, when: { siid: 2, piid: 2, from: [7], to: [4, 16, 17, 6, 2, 9] } }
+  - { name: Limpeza começou, event: clean_start, siid: 2, eiid: 101, when: { siid: 2, piid: 2, from: [1, 2, 9], to: [4, 16, 17] } }
+  - { name: Robô com erro, event: error, siid: 2, eiid: 102, when: { siid: 2, piid: 2, from: [1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14, 16, 17, 21], to: [15] } }

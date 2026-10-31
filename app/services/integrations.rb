@@ -72,6 +72,7 @@ module Integrations
 
   def reconcile(integration, list)
     keys = 0
+    added = 0
     list.each do |e|
       device = existing(integration.site, e) or next
       device.assign_attributes(integration_id: integration.id, removed_at: nil, external_id: device.external_id.presence || e["id"])
@@ -82,10 +83,26 @@ module Integrations
       host = e.dig("address", "host")
       device.address = device.address.merge("host" => host) if host.present? && device.address["host"] != host
       device.save! if device.changed?
+      added += add_points(device, e)
     end
     ids = list.map { |e| e["id"] }
     removed = Device.where(integration_id: integration.id, removed_at: nil).where.not(external_id: ids).update_all(removed_at: Time.current)
-    { removed: removed, keys: keys }
+    { removed: removed, keys: keys, points: added }
+  end
+
+  # Lote 8: ponto que o mapa de dados passou a trazer (cor, evento do robô)
+  # entra no aparelho já cadastrado. Casa pelo endereço (dp ou siid/piid/eiid);
+  # o que já existe não muda.
+  IDENTITY = %w[dps siid piid eiid].freeze
+  def add_points(device, e)
+    have = device.points.map { |p| p.address.slice(*IDENTITY).transform_values(&:to_s) }
+    Array(e["points"]).count do |p|
+      id = p["address"].to_h.slice(*IDENTITY).transform_values(&:to_s)
+      next false if id.empty? || have.include?(id)
+
+      device.points.create!(p.merge("site" => device.site, "key" => unique_key(device.site, device, p["name"])))
+      have << id
+    end
   end
 
   # Entrada com "match" => "host": aparelho cadastrado antes (sem external_id) casa pelo IP.

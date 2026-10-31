@@ -17,8 +17,8 @@ module Points
     COMMANDS = {
       "onoff" => %w[on off toggle], "dimmer" => %w[set], "setpoint" => %w[set], "enum" => %w[select],
       "text" => %w[set], "command" => %w[press], "gate" => %w[pulse], "datetime" => %w[set],
-      "vacuum" => %w[start pause stop home clean_rooms wash_mop dry_mop empty locate], "speaker" => %w[announce speak routine],
-      "script" => %w[run]
+      "vacuum" => %w[start pause stop home clean_rooms wash_mop dry_mop empty locate],
+      "speaker" => %w[announce speak routine sound play volume], "script" => %w[run], "color" => %w[set]
     }.freeze
     VACUUM_SETTINGS = %w[mode suction water route times].freeze
     MAX_SPEECH = 250
@@ -79,7 +79,8 @@ module Points
       when "text" then text
       when "gate" then @point.value == "open" ? "closed" : "open"
       when "vacuum" then vacuum_args && @point.value
-      when "speaker" then speech && @point.value
+      when "speaker" then (@command == "volume" ? volume : speech) && @point.value
+      when "color" then @value = Points::Color.normalize(@point, @value) # Lote 8
       end
     end
 
@@ -127,6 +128,14 @@ module Points
       raise Error.new(:invalid_value, "Texto longo demais (máximo #{MAX_SPEECH}).") if @value.length > MAX_SPEECH
 
       @value
+    end
+
+    # Volume da Echo (G12): 0 a 100.
+    def volume
+      n = Integer(@value.to_s.split(/[.,]/).first, exception: false)
+      raise Error.new(:invalid_value, "Volume de 0 a 100.") unless n&.between?(0, 100)
+
+      @value = n
     end
 
     def text

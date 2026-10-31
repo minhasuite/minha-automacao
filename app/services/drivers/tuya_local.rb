@@ -63,14 +63,15 @@ module Drivers
       device = point.device
       # Sem IP na rede mas ligado à conta da nuvem: vai pela nuvem (o local é a preferência, não a única via).
       return TuyaCloud.new.execute(point, command, value) if device.address["host"].blank? && point.address["code"].present? && device.integration
-      raw = point.to_raw(Points::Command.new(point, command, value).new_value)
+      new_value = Points::Command.new(point, command, value).new_value
+      dps = point.raw_writes(new_value)&.to_h { |a, raw| [ a["dps"].to_s, raw ] } || { dp => point.to_raw(new_value) }
 
       if (live = Tuya::Listener.connection(device.id))
-        live.write_dps(dp => raw) # o empurrão de status chega no ouvinte e atualiza o ponto
+        live.write_dps(dps) # o empurrão de status chega no ouvinte e atualiza o ponto
       else
         conn = self.class.connection_for(device).connect
         begin
-          conn.set(dp => raw)
+          conn.set(dps)
           self.class.report(device, conn.status) # estado completo: medição junto
         ensure
           conn.close

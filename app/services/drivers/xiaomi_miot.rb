@@ -17,7 +17,10 @@ module Drivers
     # Lê todas as propriedades dos pontos numa chamada e grava os valores.
     def self.poll(device, client: client_for(device))
       points = device.points.reject { |p| p.disabled || p.address["siid"].blank? || p.address["piid"].blank? }
-      values = client.get_properties(points.map { |p| [ p.address["siid"].to_i, p.address["piid"].to_i ] }.uniq)
+      by_key = points.group_by { |p| [ p.address["siid"].to_i, p.address["piid"].to_i ] }
+      values = client.get_properties(by_key.keys)
+      # Lote 8: código anterior de cada propriedade (o ponto de mapa que não repete texto), para os eventos deduzidos.
+      was = by_key.transform_values { |ps| Miio::Vacuum.raw_of(ps.find { |p| (m = p.address["map"]) && m.values.uniq.size == m.size } || ps.first) }
       now = Time.current
       device.update_columns(status: "online", last_seen_at: now)
       points.each do |p|
@@ -27,6 +30,7 @@ module Drivers
         value = Miio::Vacuum.decode(p, values[key])
         p.report!(value, at: now) unless value.nil?
       end
+      Miio::Vacuum.fire_events(device, was, values, now)
       values.size
     end
 
@@ -48,7 +52,8 @@ module Drivers
         raise Error, "Ponto sem siid/piid no endereço." if point.address["siid"].blank? || point.address["piid"].blank?
 
         new_value = Points::Command.new(point, command, value).new_value
-        client.set_properties([ [ [ point.address["siid"].to_i, point.address["piid"].to_i ], raw(point, new_value) ] ])
+        writes = point.raw_writes(new_value) || [ [ point.address, raw(point, new_value) ] ]
+        client.set_properties(writes.map { |a, r| [ [ a["siid"].to_i, a["piid"].to_i ], r ] })
       end
       self.class.poll(device, client: client)
     end

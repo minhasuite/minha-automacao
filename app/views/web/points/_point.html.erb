@@ -29,6 +29,8 @@
           <label for="<%= field_id %>" class="sr-only">Novo valor de <%= point.name %></label>
           <% if point.capability == "enum" %>
             <%= f.select :value, point.option_values, { selected: point.value }, class: "ss-input flex-1 min-w-0", id: field_id %>
+          <% elsif point.capability == "color" %>
+            <%= f.color_field :value, value: Points::Color.hex_of(point.value), class: "ss-input flex-1 min-w-0 h-11", id: field_id %>
           <% elsif point.numeric? %>
             <%= f.number_field :value, value: point.value, min: point.min, max: point.max, step: point.step || "any", class: "ss-input num flex-1 min-w-0", id: field_id, inputmode: "decimal", required: true %>
           <% else %>

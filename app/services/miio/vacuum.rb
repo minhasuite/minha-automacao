@@ -29,6 +29,7 @@ module Miio
       "route" => [ "Caminho", [ 2, 74 ], { 1 => "Rápido", 2 => "Padrão", 3 => "Profundo" } ],
       "times" => [ "Vezes", [ 2, 8 ], { 1 => "Uma vez", 2 => "Duas vezes", 3 => "Três vezes" } ]
     }.freeze
+    EVENTS = YAML.load_file(Rails.root.join("config/device_maps/miot.yml"))["vacuum_events"].to_a.freeze
     PARTS = { "Escova principal" => [ 12, 1 ], "Escova lateral" => [ 13, 1 ], "Filtro" => [ 14, 1 ], "Pano" => [ 9, 1 ], "Saco de pó" => [ 19, 1 ] }.freeze
 
     module_function
@@ -50,9 +51,32 @@ module Miio
         { name: "Área da limpeza", capability: "measure", unit: "m²", scale: 0.01, address: address(2, 6, "area") },
         { name: "Duração da limpeza", capability: "measure", unit: "min", scale: BigDecimal("1") / 60, address: address(2, 7, "duration") },
         *PARTS.map { |name, (s, p)| { name: name, capability: "measure", unit: "%", address: address(s, p, "part") } },
-        { name: "Detergente", capability: "measure", unit: "%", address: address(18, 1, "detergent") }
+        { name: "Detergente", capability: "measure", unit: "%", address: address(18, 1, "detergent") },
+        # Lote 8: limpeza em curso (JSON com os cômodos) e os eventos do mapa miot.yml.
+        { name: "Limpeza atual", capability: "text", writable: false, history: "on_change", address: address(2, 40, "cleaning_config") },
+        *EVENTS.map do |ev|
+          { name: ev["name"], capability: "event", writable: false, history: "on_change",
+            address: { "siid" => ev["siid"], "eiid" => ev["eiid"], "role" => "event", "event" => ev["event"], "when" => ev["when"] } }
+        end
       ]
     end
+
+    # Eventos que a leitura deduz da mudança de código ({"when" => {siid, piid, from, to}}).
+    # `was`/`now`: {[siid, piid] → código bruto} antes e depois da leitura.
+    def fire_events(device, was, now, at)
+      device.points.select { |p| p.address["when"].is_a?(Hash) && !p.disabled }.each do |p|
+        w = p.address["when"]
+        key = [ w["siid"].to_i, w["piid"].to_i ]
+        before, after = was[key], now[key]
+        next if before.nil? || after.nil? || before.to_s == after.to_s
+        next unless Array(w["from"]).map(&:to_s).include?(before.to_s) && Array(w["to"]).map(&:to_s).include?(after.to_s)
+
+        p.report!({ "event_type" => p.address["event"], "from" => before, "to" => after, "at" => at.iso8601 }, at: at)
+      end
+    end
+
+    # Código bruto que um ponto tem agora (mapa invertido), para comparar na próxima leitura.
+    def raw_of(point) = point.address["map"] ? point.address["map"].key(point.value)&.to_i : point.value
 
     # Valor bruto do MIoT → valor do ponto (nil = não sabe ler).
     def decode(point, raw)

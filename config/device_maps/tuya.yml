@@ -27,6 +27,11 @@ codes:
   add_ele: { name: Energia, unit: kWh, device_class: energy, state_class: total_increasing }
   temp_value: { name: Temperatura de cor }
   temp_value_v2: { name: Temperatura de cor }
+  # Lâmpada com cor (Lote 8): o ponto Cor recebe hs, rgb, #rrggbb ou kelvin
+  # (Points::Color). `color` diz o formato do dp e os dps irmãos (por código)
+  # da temperatura e do modo; código que o aparelho não tem fica de fora.
+  colour_data_v2: { name: Cor, capability: color, color: { hs: { format: hsv_json, s_max: 1000, v_max: 1000 }, temp: { code: temp_value_v2, raw_min: 0, raw_max: 1000, min_k: 2000, max_k: 6500 }, mode: { code: work_mode, hs: colour, temp: white } } }
+  colour_data: { name: Cor, capability: color, color: { hs: { format: hsv_json, s_max: 255, v_max: 255 }, temp: { code: temp_value, raw_min: 25, raw_max: 255, min_k: 2000, max_k: 6500 }, mode: { code: work_mode, hs: colour, temp: white } } }
   # Hub Zigbee: "alarm" = problema no hub.
   master_state: { name: Hub com problema, capability: problem, device_class: problem, decode: value, match: alarm, unmatched: false }
   # Fechadura (videolock/jtmspro/ms): só estado e eventos. Destravar pela
@@ -97,7 +102,7 @@ gateways: [wg2, wnykq, wfcon, alexa_yywg, gateway]
 problem: "alarm|fault|tamper"
 # Configuração, temporizador e acumulado: não viram ponto.
 # Calibração (_coe), formatação, reinício, PTZ e cadastro de senha também não.
-skip: "^(countdown|cycle_time|random_time|switch_inching|relay_status|light_mode|overcharge_switch|flash_scene|scene_data|colour_data|music_data|control_data|switch_type|factory_reset|switch_alarm_sound|alarm_active|sd_format|ptz_|device_restart|motion_area|unlock_method|temporary_password|synch_method|remote_no|link_mode|dormant_time|online_switch|alarm_reminder|lock_record|lock_local_record|device_info|password_offline|unlock_offline|unlock_double)|_coe$"
+skip: "^(countdown|cycle_time|random_time|switch_inching|relay_status|light_mode|overcharge_switch|flash_scene|scene_data|music_data|control_data|switch_type|factory_reset|switch_alarm_sound|alarm_active|sd_format|ptz_|device_restart|motion_area|unlock_method|temporary_password|synch_method|remote_no|link_mode|dormant_time|online_switch|alarm_reminder|lock_record|lock_local_record|device_info|password_offline|unlock_offline|unlock_double)|_coe$"
 # Categoria Tuya → nome na lista de encontrados.
 categories:
   dj: Lâmpada

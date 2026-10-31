@@ -44,7 +44,7 @@ RSpec.describe "Web: locais, áreas, dispositivos e pontos" do
     post "/dispositivos/#{device.id}/pontos", params: { point: { name: "Recado", capability: "text" } }
     post "/dispositivos/#{device.id}/pontos", params: { point: { name: "Campainha", capability: "command" } }
     post "/dispositivos/#{device.id}/pontos", params: { point: { name: "Temperatura", capability: "measure", unit: "°C" } }
-    post "/dispositivos/#{device.id}/pontos", params: { point: { name: "Cor", capability: "color" } }
+    post "/dispositivos/#{device.id}/pontos", params: { point: { name: "Cor", capability: "climate" } }
 
     get "/areas/#{area.id}"
     expect(response.body).to include("Luz", "Ligar", "Casa", "Aplicar", "Acionar", "Sem valor", "chega com os drivers")

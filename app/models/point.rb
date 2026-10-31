@@ -133,10 +133,26 @@ class Point < ApplicationRecord
   # Endereço com `decode` (mapa de dados): Points::Decode desembrulha antes (nil = ignorar).
   def from_raw(raw)
     return Points::Decode.call(address, raw) if address["decode"].present?
+    return Points::Color.decode(address, raw) if address["color"].present?
     return raw unless numeric? && raw.is_a?(Numeric)
 
     v = (BigDecimal(raw.to_s) * scale) + offset
     data_type == "integer" ? v.round.to_i : v.to_f
+  end
+
+  # Gravações no aparelho para um valor ([[endereço, bruto]]) quando não é um
+  # dp/propriedade só (Lote 8: cor = modo + cor ou temperatura). nil = o
+  # driver grava `to_raw(value)` no endereço do ponto, como sempre.
+  def raw_writes(value) = address["color"].present? ? Points::Color.writes(self, value) : nil
+
+  # Atributos novos (Lote 8): único caminho, dispara os gatilhos "Ponto
+  # mudou" com atributo (Automations::Triggers.on_attrs_change).
+  def report_attrs!(new_attrs)
+    was = attrs.to_h
+    return if new_attrs.to_h == was
+
+    update_column(:attrs, new_attrs.to_h) # rubocop:disable Rails/SkipsModelValidations
+    Automations::Triggers.on_attrs_change(self, was)
   end
 
   def to_raw(value)
