@@ -74,6 +74,8 @@ module PointsHelper
       calendar_text(v)
     elsif v.nil?
       "Sem valor"
+    elsif point.capability == "color" && v.is_a?(Hash)
+      v["mode"] == "temp" ? "Branco #{v['kelvin']} K" : Points::Color.hex_of(v).upcase # Lote 8
     elsif BOOL_TEXT.key?(point.capability)
       BOOL_TEXT[point.capability][v ? 0 : 1]
     elsif STATE_TEXT.key?(point.capability)

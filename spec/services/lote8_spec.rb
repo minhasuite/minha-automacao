@@ -45,6 +45,8 @@ RSpec.describe "Lote 8: recursos genéricos da migração" do
       sem_temp = point("Só cor", "so_cor", capability: "color", address: { "color" => { "hs" => { "format" => "rgb_int" } } })
       expect { Points::Command.new(sem_temp, "set", { "kelvin" => 3000 }).new_value }.to raise_error(Points::Command::Error, /não aceita temperatura/)
       expect(Points::Color.hex_of({ "mode" => "hs", "h" => 0, "s" => 100 })).to eq("#ff0000")
+      expect(ApplicationController.helpers.point_value_label(p, { "mode" => "temp", "kelvin" => 3000 })).to eq("Branco 3000 K")
+      expect(ApplicationController.helpers.point_value_label(p, { "mode" => "hs", "h" => 0, "s" => 100 })).to eq("#FF0000")
       expect(Points::Color.hex_of(nil)).to eq("#ffffff")
     end
 
