@@ -6,6 +6,9 @@ module Automations
     # Resposta: {events: [{summary, start, end, all_day, location}], count,
     # titles}; no texto `{% for e in agenda.events %}`, na expressão `agenda.count > 0`.
     class CalendarEventsAction < Base
+      # Só lê os eventos guardados no ponto.
+      def self.shadow_safe?(_e, _node) = true
+
       describe key: "calendar_events", label: "Ler eventos da agenda", defaults: { "within" => "24h", "response_variable" => "agenda" },
                fields: [ f("point", :point, "Agenda", required: true), f("start", :duration, "A partir de (ex.: 0m, -1h, 2h)"),
                          f("within", :duration, "Durante (ex.: 24h)", required: true), f("contains", :text, "Título contém (opcional)") ]

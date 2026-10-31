@@ -59,6 +59,10 @@ class Schedule < ApplicationRecord
   end
 
   def run!
+    Shadow.for_site(site) { run_now! }
+  end
+
+  def run_now!
     scene ? scene.activate!(source: "automation", user: nil) : Points::Command.call(point, command, value, source: "automation", user: nil)
   end
 

@@ -26,6 +26,8 @@ module SafeHttp
     method = method.to_s.upcase
     raise Error, "Método inválido." unless METHODS.include?(method)
 
+    Shadow.block!("HTTP #{method} #{URI.parse(url.to_s.strip).host rescue '?'}")
+
     uri = URI.parse(url.to_s.strip)
     raise Error, "Endereço precisa começar com http:// ou https://." unless uri.is_a?(URI::HTTP) && uri.host.present?
 

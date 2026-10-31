@@ -4,6 +4,8 @@ module Automations
     # durável como as outras esperas. Os dados do evento vão para a variável;
     # no tempo limite ela fica vazia.
     class WaitEventAction < Base
+      def self.shadow_safe?(_e, _node) = true
+
       describe key: "wait_event", label: "Esperar evento", defaults: { "timeout" => "10m", "response_variable" => "evento" },
                fields: [ f("event", :text, "Nome do evento", required: true), f("match", :kv, "Só quando os dados tiverem (campo: valor)"),
                          f("timeout", :duration, "Tempo limite", required: true), f("continue_on_timeout", :bool, "Seguir se o tempo acabar") ]

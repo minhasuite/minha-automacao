@@ -9,6 +9,12 @@ module Automations
   # Simulação (`dry_run`): comando não sai (o valor hipotético muda), aviso
   # não é enviado, espera não espera e "esperar condição" que não se cumpre
   # segue pelo tempo limite. O trace mostra o que aconteceria.
+  #
+  # Sombra (F10, `run.shadow`): roda de verdade (gatilho, condições, esperas,
+  # variáveis), mas a ação que o plugin não declara segura (`shadow_safe?`)
+  # roda como simulação e vira um ShadowAction ("teria feito"). A thread
+  # fica marcada (Shadow.within): qualquer comando ou aviso que escape é
+  # segurado embaixo (Shadow.intercept!/block!).
   class Engine
     class Failure < StandardError; end
 
@@ -123,7 +129,8 @@ module Automations
 
     attr_reader :ctx, :conditions, :program, :run
 
-    def dry_run? = @run.dry_run
+    def dry_run? = @run.dry_run || @simulating == true
+    def shadow? = @run.shadow && !@run.dry_run
 
     # ---- compilação (os plugins de ActionTypes emitem os passos) -------------
 
@@ -192,10 +199,10 @@ module Automations
 
     # Marca a execução corrente na thread (laço de pontos virtuais em cadeia)
     # e transforma erro em execução com falha.
-    def within
+    def within(&)
       previous = Thread.current[:automation_run]
       Thread.current[:automation_run] = @run
-      yield
+      shadow? ? Shadow.within(site_id: @run.site_id, run: @run, &) : yield
     rescue Failure, Points::Command::Error, Context::Error => e
       trace("error", "error", "Erro", "error", detail: e.message)
       finish("failed", e.message)
@@ -279,12 +286,32 @@ module Automations
     # tolerado" e a execução segue.
     def call_action(path, node)
       plugin = ActionTypes[node["type"]]
+      return shadow_call(plugin, path, node) if shadow? && !plugin.shadow_safe?(self, node)
+
       plugin.call(self, path, node)
     rescue Failure, Points::Command::Error, Context::Error, StandardError => e
       raise unless node["continue_on_error"] == true
 
       Rails.error.report(e, handled: true) unless e.is_a?(Failure) || e.is_a?(Points::Command::Error) || e.is_a?(Context::Error)
       [ "#{plugin.label}: erro tolerado", "tolerated", e.message.truncate(200) ]
+    end
+
+    # Sombra: a ação roda como simulação (título e detalhe do próprio plugin)
+    # e fica registrada com os pontos que comandaria. Se o plugin não tiver
+    # simulação, a rede de segurança segura (e já registra).
+    def shadow_call(plugin, path, node)
+      @simulating = true
+      title, _result, detail, checks = begin
+        plugin.call(self, path, node)
+      rescue Shadow::Blocked => e
+        return [ plugin.label, "shadow", e.message ]
+      ensure
+        @simulating = false
+      end
+      return [ title ] if title == :halt || title == :skip
+
+      Shadow.record!(Shadow.current, action: node["type"], title: title || plugin.label, detail: detail, effects: plugin.shadow_effects(self, node))
+      [ title, "shadow", [ "Em sombra: não executado", detail ].compact.join(". "), checks ]
     end
 
     def save(wait: nil, **attrs)

@@ -39,13 +39,19 @@ class Alert < ApplicationRecord
 
     steps = alert_rule.escalation
     step = steps[n] || steps.last
+    Shadow.for_site(site) { notify_step!(step, n) }
+    update!(level: n + 1)
+    schedule_step
+  end
+
+  def notify_step!(step, n)
     minutes = ((Time.current - (point.changed_at || opened_at)) / 60).floor
     Notifier.deliver!(step["channels"], kind: "alerta", title: alert_rule.name,
                                         body: "#{point.name}: #{ApplicationController.helpers.point_value_text(point)} há #{minutes} min",
                                         data: { alert_id: id, point_id: point_id, site_id: site_id, severity: alert_rule.severity },
                                         dedup_key: "alert:#{id}:#{n}")
-    update!(level: n + 1)
-    schedule_step
+  rescue Shadow::Blocked
+    nil
   end
 
   def ack!(user)

@@ -15,7 +15,7 @@ class Scene < ApplicationRecord
 
   normalizes :name, with: ->(v) { v.to_s.squish }
 
-  audited_attributes :name, :items, :alexa_exposed
+  audited_attributes :name, :items, :alexa_exposed, :shadow
 
   # Formulário e API: descarta linha sem ponto e guarda só as chaves conhecidas.
   def items=(list)
@@ -46,7 +46,14 @@ class Scene < ApplicationRecord
 
   # Aciona tudo; um ponto com problema não impede os outros. Devolve os
   # comandos criados e os erros ("Ponto: motivo").
+  # Em sombra (F10): cada comando fica registrado e nenhum sai.
   def activate!(source:, user: Current.user)
+    return Shadow.within(site_id: site_id, scene: self) { send_items(source, user) } if Shadow.active?(self)
+
+    send_items(source, user)
+  end
+
+  def send_items(source, user)
     by_id = points
     failures = []
     commands = items.filter_map do |i|

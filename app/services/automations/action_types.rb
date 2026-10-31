@@ -4,7 +4,13 @@ module Automations
   #   call(engine, path, node) → [título, resultado, detalhe, checks] para o
   #     trace, ou [:halt] (parou/esperando) / [:skip] (sem passo no trace);
   #   compile(engine, node, path) só se precisar de saltos (se/escolher/repetir);
-  #   commanded_point_ids(node, site, seen) se comandar pontos (papel x risco).
+  #   commanded_point_ids(node, site, seen) se comandar pontos (papel x risco);
+  #   shadow_safe?(engine, node) só se a ação puder rodar de verdade em sombra
+  #     (F10): não sai nada para fora (aparelho, aviso, rede, IA paga). O
+  #     padrão é falso (controle de fluxo é seguro): ação nova nasce segurada,
+  #     roda como simulação (`dry_run?` verdadeiro) e vira "teria feito";
+  #   shadow_effects(engine, node) → [{point_id, command, value}] do "teria
+  #     feito" (padrão: os `commanded_point_ids` com o comando do nó).
   # O motor (Automations::Engine) expõe ao plugin: ctx, run, dry_run?,
   # conditions, trace, finish, suspend, suspend_wait_for, emit, program e compile.
   module ActionTypes
@@ -29,6 +35,11 @@ module Automations
         def call(_engine, _path, _node) = raise(NotImplementedError)
         def commanded_point_ids(_node, _site, _seen) = []
         def control? = false
+        def shadow_safe?(_engine, _node) = control?
+
+        def shadow_effects(e, node)
+          commanded_point_ids(node, e.ctx.site, []).compact.map { |id| { "point_id" => id, "command" => node["command"], "value" => node["value"] }.compact }
+        end
 
         # Formato da resposta (texto para a documentação e o editor); nil = não devolve.
         def returns(format = nil)
@@ -56,6 +67,9 @@ module Automations
 
       def self.commanded_point_ids(node, _site, _seen) = [ node["point"] ]
 
+      # Helper que não comanda aparelho e ponto de script rodam na sombra.
+      def self.shadow_safe?(e, node) = (p = e.ctx.point(node["point"])) ? Shadow.internal?(p) : false
+
       def self.call(e, _path, node)
         p = e.ctx.point(node["point"]) or raise Engine::Failure, "Ponto removido do local."
         title = "#{Engine::COMMAND_LABELS.fetch(node['command'], node['command'])} #{p.name}#{" (#{node['value']})" unless node['value'].nil?}"
@@ -74,6 +88,11 @@ module Automations
 
     class SceneAction < Base
       describe key: "scene", label: "Acionar cena", fields: [ f("scene", :scene, "Cena", required: true) ]
+
+      def self.shadow_effects(e, node)
+        scene = e.ctx.site.scenes.find_by(id: node["scene"]) or return []
+        scene.items.map { |i| { "point_id" => i["point_id"], "command" => i["command"], "value" => i["value"] }.compact }
+      end
 
       def self.call(e, _path, node)
         scene = e.ctx.site.scenes.find_by(id: node["scene"]) or raise Engine::Failure, "Cena removida do local."
@@ -96,6 +115,9 @@ module Automations
       returns "as variáveis do script no fim (com esperar)"
 
       def self.rules(node) = node["response_variable"].present? && node["wait"] != true ? [ "para guardar a resposta, marque esperar o fim." ] : []
+
+      # A execução do script herda a sombra de quem chamou (`cause`).
+      def self.shadow_safe?(_e, _node) = true
 
       def self.commanded_point_ids(node, site, seen)
         script = site.scripts.find_by(id: node["script"]) if node["script"].is_a?(String)
@@ -259,6 +281,8 @@ module Automations
     end
 
     class SetAction < Base
+      def self.shadow_safe?(_e, _node) = true
+
       describe key: "set", label: "Definir variável",
                fields: [ f("var", :var, "Nome", required: true), f("expr", :expr, "Expressão (número/lógica)"), f("value", :template, "Ou texto") ]
 

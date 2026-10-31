@@ -54,6 +54,10 @@ module HelperTypes
       end
 
       def sourced? = false
+
+      # Comando no helper comanda outros pontos (grupo)? Na sombra (F10), só o
+      # helper que não comanda nada roda de verdade.
+      def drives_points? = false
       def refresh!(_point) = nil
 
       # Reinício sem "restaurar": volta ao inicial.

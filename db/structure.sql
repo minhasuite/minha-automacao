@@ -295,7 +295,8 @@ CREATE TABLE public.automation_runs (
     finished_at timestamp(6) without time zone,
     resume_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    shadow boolean DEFAULT false NOT NULL
 );
 
 
@@ -342,7 +343,8 @@ CREATE TABLE public.automations (
     icon character varying,
     blueprint_id uuid,
     blueprint_inputs jsonb,
-    blueprint_version integer
+    blueprint_version integer,
+    shadow boolean DEFAULT false NOT NULL
 );
 
 
@@ -527,6 +529,26 @@ CREATE TABLE public.events (
     payload jsonb DEFAULT '{}'::jsonb NOT NULL,
     source character varying,
     at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: external_refs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.external_refs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    source character varying NOT NULL,
+    external_id character varying NOT NULL,
+    kind character varying NOT NULL,
+    name character varying,
+    target_type character varying,
+    target_id uuid,
+    note character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -808,7 +830,8 @@ CREATE TABLE public.scenes (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     alexa_exposed boolean DEFAULT false NOT NULL,
-    alexa_name character varying
+    alexa_name character varying,
+    shadow boolean DEFAULT false NOT NULL
 );
 
 
@@ -866,6 +889,43 @@ CREATE TABLE public.service_api_keys (
 
 
 --
+-- Name: shadow_actions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.shadow_actions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    automation_id uuid,
+    automation_run_id uuid,
+    scene_id uuid,
+    action character varying NOT NULL,
+    title character varying NOT NULL,
+    detail character varying,
+    effects jsonb DEFAULT '[]'::jsonb NOT NULL,
+    executed boolean DEFAULT false NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: shadow_reports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.shadow_reports (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    source character varying NOT NULL,
+    window_from timestamp(6) without time zone NOT NULL,
+    window_to timestamp(6) without time zone NOT NULL,
+    summary jsonb DEFAULT '{}'::jsonb NOT NULL,
+    rows jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: site_memberships; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -897,7 +957,8 @@ CREATE TABLE public.sites (
     longitude numeric(9,6),
     wallpaper character varying,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    shadow boolean DEFAULT false NOT NULL
 );
 
 
@@ -1840,6 +1901,14 @@ ALTER TABLE ONLY public.events
 
 
 --
+-- Name: external_refs external_refs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.external_refs
+    ADD CONSTRAINT external_refs_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: feature_flags feature_flags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1941,6 +2010,22 @@ ALTER TABLE ONLY public.schema_migrations
 
 ALTER TABLE ONLY public.service_api_keys
     ADD CONSTRAINT service_api_keys_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: shadow_actions shadow_actions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shadow_actions
+    ADD CONSTRAINT shadow_actions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: shadow_reports shadow_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shadow_reports
+    ADD CONSTRAINT shadow_reports_pkey PRIMARY KEY (id);
 
 
 --
@@ -2666,6 +2751,20 @@ CREATE INDEX index_events_on_tenant_id ON public.events USING btree (tenant_id);
 
 
 --
+-- Name: index_external_refs_on_site_id_and_source_and_external_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_external_refs_on_site_id_and_source_and_external_id ON public.external_refs USING btree (site_id, source, external_id);
+
+
+--
+-- Name: index_external_refs_on_target_type_and_target_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_external_refs_on_target_type_and_target_id ON public.external_refs USING btree (target_type, target_id);
+
+
+--
 -- Name: index_feature_flags_on_key; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2936,6 +3035,34 @@ CREATE UNIQUE INDEX index_service_api_keys_on_token_digest ON public.service_api
 --
 
 CREATE INDEX index_service_api_keys_on_user_id ON public.service_api_keys USING btree (user_id);
+
+
+--
+-- Name: index_shadow_actions_on_automation_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_shadow_actions_on_automation_id ON public.shadow_actions USING btree (automation_id);
+
+
+--
+-- Name: index_shadow_actions_on_scene_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_shadow_actions_on_scene_id ON public.shadow_actions USING btree (scene_id);
+
+
+--
+-- Name: index_shadow_actions_on_site_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_shadow_actions_on_site_id_and_created_at ON public.shadow_actions USING btree (site_id, created_at);
+
+
+--
+-- Name: index_shadow_reports_on_site_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_shadow_reports_on_site_id_and_created_at ON public.shadow_reports USING btree (site_id, created_at);
 
 
 --
@@ -3406,6 +3533,14 @@ ALTER TABLE ONLY public.blueprints
 
 
 --
+-- Name: shadow_actions fk_rails_0e3356996d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shadow_actions
+    ADD CONSTRAINT fk_rails_0e3356996d FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: devices fk_rails_12ad68c8f1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3622,6 +3757,14 @@ ALTER TABLE ONLY public.push_subscriptions
 
 
 --
+-- Name: external_refs fk_rails_47beccf1f4; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.external_refs
+    ADD CONSTRAINT fk_rails_47beccf1f4 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: events fk_rails_4b008cd1c8; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3678,6 +3821,14 @@ ALTER TABLE ONLY public.taggings
 
 
 --
+-- Name: shadow_actions fk_rails_547b292d40; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shadow_actions
+    ADD CONSTRAINT fk_rails_547b292d40 FOREIGN KEY (automation_run_id) REFERENCES public.automation_runs(id) ON DELETE SET NULL;
+
+
+--
 -- Name: ai_usages fk_rails_57ac1b3dfd; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3699,6 +3850,22 @@ ALTER TABLE ONLY public.alerts
 
 ALTER TABLE ONLY public.events
     ADD CONSTRAINT fk_rails_6844d4946c FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: shadow_actions fk_rails_6a2ac2786f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shadow_actions
+    ADD CONSTRAINT fk_rails_6a2ac2786f FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
+-- Name: shadow_actions fk_rails_6aeffa9450; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shadow_actions
+    ADD CONSTRAINT fk_rails_6aeffa9450 FOREIGN KEY (automation_id) REFERENCES public.automations(id) ON DELETE CASCADE;
 
 
 --
@@ -3750,6 +3917,14 @@ ALTER TABLE ONLY public.points
 
 
 --
+-- Name: shadow_reports fk_rails_7b3f8030a1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shadow_reports
+    ADD CONSTRAINT fk_rails_7b3f8030a1 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: solid_queue_batch_executions fk_rails_7c5e073422; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3763,6 +3938,14 @@ ALTER TABLE ONLY public.solid_queue_batch_executions
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT fk_rails_7c99fe0556 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: shadow_reports fk_rails_7ea55c4528; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shadow_reports
+    ADD CONSTRAINT fk_rails_7ea55c4528 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -3923,6 +4106,14 @@ ALTER TABLE ONLY public.schedules
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT fk_rails_b080fb4855 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: external_refs fk_rails_b116eaa15e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.external_refs
+    ADD CONSTRAINT fk_rails_b116eaa15e FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -4158,6 +4349,14 @@ ALTER TABLE ONLY public.audit_events
 
 
 --
+-- Name: shadow_actions fk_rails_fd49348436; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shadow_actions
+    ADD CONSTRAINT fk_rails_fd49348436 FOREIGN KEY (scene_id) REFERENCES public.scenes(id) ON DELETE CASCADE;
+
+
+--
 -- Name: automation_runs fk_rails_fda4d9d75d; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4188,6 +4387,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261101000001'),
 ('20261031190001'),
 ('20261031170001'),
 ('20261031160001'),

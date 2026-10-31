@@ -4,6 +4,9 @@ module Automations
     # é um texto Liquid). Acorda o gatilho "Evento" e quem espera com "Esperar
     # evento" no mesmo local. Nomes do sistema ficam reservados.
     class FireEventAction < Base
+      # Evento interno: quem dispara junto herda a sombra (`cause`).
+      def self.shadow_safe?(_e, _node) = true
+
       describe key: "fire_event", label: "Disparar evento",
                fields: [ f("event", :text, "Nome do evento", required: true), f("data", :kv, "Dados (um por linha, campo: texto com {{ }})") ]
 

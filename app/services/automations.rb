@@ -13,9 +13,17 @@ module Automations
     return Rails.logger.warn("[automações] corrente longa demais em #{point.key}, parei") if depth >= MAX_DEPTH
 
     Thread.current[:automations_depth] = depth + 1
-    # Valor que volta junto com a conexão (estava indisponível) não aciona
-    # nada físico: no HA, o refresh do LocalTuya espelhava estado fantasma.
-    fresh = quality_was == "good"
+    Shadow.for_site(point.site) { primitives(point, fresh(quality_was), value_was) }
+  ensure
+    Thread.current[:automations_depth] = depth
+  end
+
+  # Valor que volta junto com a conexão (estava indisponível) não aciona
+  # nada físico: no HA, o refresh do LocalTuya espelhava estado fantasma.
+  def self.fresh(quality_was) = quality_was == "good"
+
+  # Local em sombra (F10): tudo aqui roda marcado (comando e aviso segurados).
+  def self.primitives(point, fresh, value_was)
     safely { AutoOffJob.schedule(point) }
     safely { PointLink.propagate(point) } if fresh
     safely { NotifyRule.fire(point) } if fresh
@@ -24,8 +32,6 @@ module Automations
     safely { HelperTypes.on_change(point) }
     # Automações da DSL (F6).
     safely { Triggers.on_change(point, value_was, fresh: fresh) }
-  ensure
-    Thread.current[:automations_depth] = depth
   end
 
   def self.safely

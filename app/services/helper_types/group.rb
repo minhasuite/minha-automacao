@@ -37,6 +37,7 @@ module HelperTypes
     end
 
     def self.sourced? = true
+    def self.drives_points? = true
     def self.members(point) = point.site.points.where(id: point.address["sources"]).to_a
 
     def self.refresh!(point)

@@ -40,6 +40,7 @@ module Ai
     end
 
     def call
+      Shadow.block!("IA (#{@source})")
       budget = Ai::Budget.for(@tenant)
       account = AiAccount.pick(@provider, default: budget.default_provider) or raise Ai::Client::Error, missing
       plugin = account.plugin

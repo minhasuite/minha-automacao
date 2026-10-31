@@ -6,6 +6,9 @@ module Automations
     # today, text}; no texto `{{ clima.text }}` ou `{% for d in clima.forecast %}`,
     # na expressão `clima.today.precipitation_probability > 60`.
     class WeatherForecastAction < Base
+      # Só lê o ponto de clima.
+      def self.shadow_safe?(_e, _node) = true
+
       describe key: "weather_forecast", label: "Ler previsão do tempo", defaults: { "kind" => "daily", "count" => 3, "response_variable" => "clima" },
                fields: [ f("point", :point, "Clima", required: true), f("kind", :select, "Previsão", required: true, options: Weather::KINDS),
                          f("count", :number, "Quantos dias ou horas (vazio = todos)") ]

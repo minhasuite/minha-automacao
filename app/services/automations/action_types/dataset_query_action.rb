@@ -6,6 +6,9 @@ module Automations
     # valor", "campo contém x", "campo > 3", um por linha, com Liquid).
     # Resposta: {value, rows, count}: `{% for r in dados.rows %}` no pedido da IA.
     class DatasetQueryAction < Base
+      # Só lê.
+      def self.shadow_safe?(_e, _node) = true
+
       describe key: "dataset_query", label: "Consultar dados", defaults: { "op" => "rows", "limit" => 30, "response_variable" => "dados" },
                fields: [ f("dataset", :dataset, "Conjunto de dados", required: true),
                          f("op", :select, "Consulta", required: true, options: -> { Datasets.choices }),

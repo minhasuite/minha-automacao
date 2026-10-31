@@ -32,7 +32,7 @@ class Site < ApplicationRecord
 
   normalizes :name, with: ->(v) { v.to_s.squish }
 
-  audited_attributes :name
+  audited_attributes :name, :shadow
 
   # Locais que a pessoa vê (membro com acesso válido, ou admin da empresa).
   def self.visible_to(user)

@@ -4,6 +4,8 @@ module Automations
     # durável como as outras esperas. A resposta ({action, title, user,
     # user_id, data}) vai para a variável; no tempo limite ela fica vazia.
     class WaitNotificationAction < Base
+      def self.shadow_safe?(_e, _node) = true
+
       describe key: "wait_notification", label: "Esperar resposta do aviso", defaults: { "timeout" => "10m", "response_variable" => "resposta" },
                fields: [ f("actions", :text, "Só os botões (ids separados por vírgula; vazio = qualquer)"),
                          f("timeout", :duration, "Tempo limite", required: true), f("continue_on_timeout", :bool, "Seguir se o tempo acabar") ]

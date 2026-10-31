@@ -67,6 +67,7 @@ module Notifier
   # `to` + `site`: destinatário (uma notificação por pessoa). `clear`: só
   # apaga o aviso com a `data["tag"]`. Devolve a primeira notificação criada.
   def deliver!(channels, to: nil, site: nil, clear: false, image: nil, **opts)
+    Shadow.block!("Avisar: #{opts[:title]}")
     users = to && site ? recipients(to, site) : [ opts.delete(:user) ]
     return clear!(users, opts.dig(:data, :tag) || opts.dig(:data, "tag")) if clear
 
@@ -87,6 +88,7 @@ module Notifier
   # `image`: blob do Active Storage (quadro de câmera), anexado a cada notificação.
   # `push: true` também entrega pelo canal push (uso direto, fora da ação "Avisar").
   def notify!(kind:, title:, user: nil, body: nil, data: {}, dedup_key: nil, push: true, image: nil)
+    Shadow.block!("Avisar: #{title}") if push
     return nil if dedup_key && Notification.exists?(dedup_key: dedup_key)
 
     data = data.to_h.stringify_keys

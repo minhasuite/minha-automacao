@@ -56,7 +56,7 @@ class Automation < ApplicationRecord
 
   normalizes :name, with: ->(v) { v.to_s.squish }
 
-  audited_attributes :name, :enabled, :mode, :version
+  audited_attributes :name, :enabled, :mode, :version, :shadow
 
   scope :ordered, -> { order(:name) }
 
@@ -203,8 +203,11 @@ class Automation < ApplicationRecord
     new_run(trigger, cause, depth, status)
   end
 
+  # Sombra (F10): a própria marca, o local, a instalação, quem causou ou a
+  # thread já em sombra (script chamado pelo ponto dentro de uma execução).
   def new_run(trigger, cause, depth, status)
-    runs.create!(tenant_id: tenant_id, site: site, version: version, trigger: trigger, status: status, cause_run: cause, depth: depth,
+    shadow = Shadow.active?(self) || cause&.shadow || Shadow.current.present?
+    runs.create!(tenant_id: tenant_id, site: site, version: version, trigger: trigger, status: status, cause_run: cause, depth: depth, shadow: shadow,
                  started_at: Time.current, steps: [ { "at" => Time.current.iso8601(3), "kind" => "trigger", "title" => trigger["title"] || "Disparo", "result" => "ok" } ])
   end
 

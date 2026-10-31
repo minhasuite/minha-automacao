@@ -31,6 +31,7 @@ module Points
       return existing if existing
 
       value = new(point, command.to_s, value).tap(&:new_value).value # valida (e normaliza) antes de criar
+      Shadow.intercept!(point, command.to_s, value, source) # F10: em sombra, aparelho não recebe nada
       record = ::Command.create!(site: point.site, point: point, command: command.to_s, value: value, source: source,
                                  user: user, client_uuid: client_uuid.presence, origin_point_id: origin&.id,
                                  automation_run_id: run&.id)

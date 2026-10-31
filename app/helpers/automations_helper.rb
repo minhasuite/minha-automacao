@@ -9,7 +9,8 @@ module AutomationsHelper
   }.freeze
   RESULT_STYLES = { "ok" => %w[check-circle text-success], "false" => %w[x-circle text-muted], "error" => %w[exclamation-circle text-danger],
                     "simulated" => %w[eye text-accent], "waiting" => %w[clock text-accent], "timeout" => %w[clock text-warn],
-                    "skipped" => %w[minus-circle text-warn], "tolerated" => %w[exclamation-circle text-warn] }.freeze
+                    "skipped" => %w[minus-circle text-warn], "tolerated" => %w[exclamation-circle text-warn],
+                    "shadow" => %w[moon text-accent] }.freeze
 
   def dsl_type_choices(kind) = Automations::Dsl.catalog(kind).map { |type, s| [ s.label, type ] }
 
