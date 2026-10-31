@@ -70,6 +70,30 @@ class Point < ApplicationRecord
   def capability_label = CAPABILITY_LABELS.fetch(capability, capability)
   def risk_label = RISKS.fetch(risk, risk)
   def effective_area_id = area_id || device&.area_id
+
+  # Nome para mostrar fora da página do aparelho (Início, listas, Alexa, app):
+  # [título, contexto]. Regra de exibição, não renomeia nada:
+  # - helper não leva o aparelho virtual que o guarda;
+  # - um nome já contido no outro ("PIS Ilum Interna" e "Iluminação Interna") não repete;
+  # - nome genérico do ponto (o rótulo da capacidade, "Interruptor 3", uma medição)
+  #   cede o título ao aparelho;
+  # - senão o ponto é o título e o aparelho, o contexto.
+  def display_names
+    dev = device&.name.to_s
+    return [ name, nil ] if helper.present? || dev.blank? || Point.covered?(name, dev) || Point.covered?(dev, name)
+    return [ dev, (name unless name.casecmp?(capability_label)) ] if generic_name?
+
+    [ name, dev ]
+  end
+
+  def generic_name? = name.casecmp?(capability_label) || capability == "measure" || name.match?(/\A\D{1,20}\s\d{1,2}\z/)
+
+  # Todas as palavras de `a` aparecem em `b` (sem acento e caixa; "Ilum" vale por "Iluminação").
+  def self.covered?(a, b)
+    wa, wb = [ a, b ].map { |s| I18n.transliterate(s.to_s).downcase.scan(/[a-z0-9]+/) }
+    wa.any? && wa.all? { |w| wb.any? { |x| x == w || ([ w.size, x.size ].min >= 3 && (x.start_with?(w) || w.start_with?(x))) } }
+  end
+
   def option_values = Array(options).map(&:to_s)
   def numeric? = data_type.in?(%w[integer decimal])
   def bool? = data_type == "bool"

@@ -142,8 +142,14 @@ A definição publicada (ou o rascunho com `?draft=1`, para quem edita) com:
 - `deps`: ids dos pontos cuja mudança muda o widget (o tempo real usa);
 - `points`: dicionário id → `{key, name, capability, unit, value, text, on,
   quality, changed_at, risk, confirm, writable, can_command, commands, options,
-  min, max, step, device, area_id}`. Gráfico: o app busca
-  `GET /points/:id/history`;
+  min, max, step, device, area_id, title, context, status_note, display_icon}`.
+  `title`/`context` seguem `Point#display_names` (regra de exibição: nome
+  genérico do ponto cede o título ao aparelho, nome contido no outro não
+  repete); `status_note` diz por que está sem sinal ou sem leitura;
+  `display_icon` é o ícone que a web usa. O `tile` traz `data.title` e
+  `data.context` (o rótulo automático "Aparelho · Ponto" do Início vira título
+  + contexto). Soma e média do `stat` ignoram ponto sem sinal. Gráfico: o app
+  busca `GET /points/:id/history`;
 - `role`, `can_edit`, `version`. Resposta com `ETag` (304 se nada mudou).
 
 O comando sai sempre por `POST /points/:id/commands` (papel × risco e

@@ -58,7 +58,8 @@ module Dashboards
       binds = [ w["bind"], *Array(w["binds"]) ].compact.filter_map { |ref| use(point(ref)) }
       deps = [ *binds, *visibility_refs(w["visible_if"]).filter_map { |ref| use(point(ref)) } ]
       case w["type"]
-      when "tile", "group", "chart", "camera" then [ { "point_ids" => binds.map(&:id), "missing" => binds.size < [ w["bind"], *Array(w["binds"]) ].compact.size }, deps ]
+      when "tile" then [ tile_names(w, binds.first).merge("point_ids" => binds.map(&:id), "missing" => binds.empty? && w["bind"].present?), deps ]
+      when "group", "chart", "camera" then [ { "point_ids" => binds.map(&:id), "missing" => binds.size < [ w["bind"], *Array(w["binds"]) ].compact.size }, deps ]
       when "vacuum" then vacuum(binds.first, deps)
       when "energy"
         tariff = use(point(w["tariff_point"]))
@@ -83,10 +84,20 @@ module Dashboards
       [ data, deps + Array(extra).each { |p| use(p) } ]
     end
 
+    # Título do tile: o rótulo próprio; o automático do Início ("Aparelho · Ponto",
+    # Generator#home_label) vira título + contexto pela regra de Point#display_names.
+    def tile_names(w, p)
+      return { "title" => w["label"].presence || p&.name } unless p && w["label"] == "#{p.device.name} · #{p.name}"
+
+      title, context = p.display_names
+      { "title" => title, "context" => context }
+    end
+
     def stat(w, binds, deps)
       list = w["query"] ? query(w["query"]) : binds
       agg = w["aggregate"] || (w["query"] ? "count" : "last")
-      nums = list.map(&:value).grep(Numeric)
+      # Soma e média são "agora": leitura de aparelho sem sinal não entra (senão "0 W agora" com tudo fora do ar).
+      nums = list.select { |p| agg == "count" || p.quality == "good" }.map(&:value).grep(Numeric)
       value = case agg
       when "count" then list.size
       when "sum" then nums.any? ? nums.sum.round(2) : nil
@@ -226,14 +237,17 @@ module Dashboards
     def self.point_json(p, role)
       helpers = ApplicationController.helpers
       on = p.value == true || p.value == "open"
-      p.slice(*POINT_FIELDS).merge(
+      title, context = p.display_names
+      json = p.slice(*POINT_FIELDS).merge(
         "value" => p.value, "text" => helpers.point_value_text(p), "on" => on, "area_id" => p.effective_area_id,
         "device" => p.device.name, "min" => p.min&.to_f, "max" => p.max&.to_f, "step" => p.step&.to_f,
         "commands" => (cmds = Points::Command.commands_for(p)), "actions" => Points::Command.actions_for(p),
         "mode" => p.address["mode"], "input" => helpers.point_input_type(p),
         "can_command" => p.writable && !p.disabled && !p.device.disabled && Drivers.supported?(p.device) && cmds.any? &&
-                         SiteMembership.allowed?(role, :command, risk: p.risk)
+                         SiteMembership.allowed?(role, :command, risk: p.risk),
+        "title" => title, "context" => context, "status_note" => helpers.point_status_note(p)
       ).stringify_keys
+      json.merge("display_icon" => helpers.dw_point_icon(json))
     end
 
     def helpers = ApplicationController.helpers

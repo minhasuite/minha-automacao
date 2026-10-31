@@ -66,9 +66,9 @@ module DashboardsHelper
 
   def dw_color_class(w, p = nil) = "dw-#{w['color'].presence || (p && dw_light?(p) ? 'amber' : 'accent')}"
 
-  # Linha de lista: medição com nome genérico ("Potência") leva o dispositivo na frente.
-  def dw_row_names(p) = p["capability"] == "measure" ? [ p["device"], p["name"] ] : [ p["name"], p["device"] ]
-  def dw_label(w, p) = w["label"].presence || p["name"]
+  # Linha de lista e tile: título e contexto pela regra de Point#display_names (resolver).
+  def dw_row_names(p) = [ p["title"] || p["name"], p.key?("title") ? p["context"] : p["device"] ]
+  def dw_label(w, p) = w.dig("data", "title").presence || w["label"].presence || p["name"]
 
   # Botão de comando de um widget: passa por PointsController#command (papel,
   # risco e Points::Command) e volta para o próprio quadro do widget.

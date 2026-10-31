@@ -52,7 +52,11 @@
   .dw-big { font-size: 1.2rem; font-weight: 600; color: var(--ink); }
   .dw-more { position: absolute; top: .4rem; right: .4rem; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 10px; color: var(--muted); }
   .dw-more:hover { background: var(--field); color: var(--accent); }
-  .dw-unavailable { opacity: .55; }
+  /* Sem sinal: fundo apagado e estado em vermelho, sem opacidade no texto (contraste AA). */
+  .dw-unavailable.dw-card { background: var(--field); box-shadow: none; }
+  .dw-unavailable .dw-ico, .dw-unavailable .ss-switch, .dw-unavailable .dw-switch { opacity: .5; }
+  .dw-unavailable .dw-name { color: var(--ink-2); }
+  .dw-unavailable .dw-state, .dw-unavailable > .shrink-0 { color: var(--danger); font-weight: 600; }
 
   /* Ligado: a cor do widget (roxo da marca; âmbar para luz). */
   .dw-on.dw-card { border-color: color-mix(in srgb, var(--accent) 38%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 11%, var(--surface)), var(--surface) 75%); }

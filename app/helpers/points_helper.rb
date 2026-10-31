@@ -89,6 +89,43 @@ module PointsHelper
     end
   end
 
+  # Ícone do aparelho pelo que os pontos dele fazem (o dispositivo não tem tipo próprio).
+  DEVICE_ICON_ORDER = %w[stream vacuum gate climate speaker dimmer onoff contact motion measure enum].freeze
+  def device_icon(device)
+    points = device.points.to_a
+    cap = DEVICE_ICON_ORDER.find { |c| points.any? { |p| p.capability == c } } or return "cube"
+    return "light-bulb" if cap.in?(%w[onoff dimmer]) && "#{device.name} #{points.map(&:name).join(' ')}".match?(Dashboards::Generator::LIGHT)
+    return "switch-horizontal" if cap == "onoff"
+
+    POINT_ICONS.fetch(cap, "cube")
+  end
+
+  # Situação do aparelho para a lista e o diagnóstico: [rótulo, tom, explicação].
+  # "Conectado" sem nenhum contato ainda vira "Sem contato" (ex.: não informa o estado sozinho).
+  DEVICE_TONES = { "online" => "success", "offline" => "danger", "error" => "danger", "new" => "accent", "removed" => "warn" }.freeze
+  def device_situation(device)
+    s = device.situation
+    note = { "offline" => "Não respondeu na última tentativa.", "error" => device.last_error.presence || "A última leitura ou comando deu erro." }[s]
+    if s == "online" && device.last_seen_at.nil? && !device.virtual?
+      reads = device.listen || (Polling.supported?(device) && device.poll_s.to_i.positive?)
+      return [ "Sem contato", "muted", reads ? "Aguardando o primeiro contato." : "Não informa o estado sozinho (leitura periódica desligada); aparece no primeiro comando." ]
+    end
+    [ Device::SITUATIONS[s], DEVICE_TONES.fetch(s, "muted"), note ]
+  end
+
+  # Por que o ponto está sem sinal ou sem valor (web e app). nil = nada a explicar.
+  def point_status_note(point)
+    if point.quality.in?(%w[unavailable error])
+      since = point.changed_at || point.reported_at
+      return "Sem sinal#{" (#{ago_text(since)})" if since}: o aparelho não respondeu. Comandos podem não chegar até ele voltar."
+    end
+    return unless point.value.nil? && point.helper.blank? && !point.capability.in?(%w[command script calendar stream])
+
+    dev = point.device
+    reads = dev.nil? || dev.virtual? || dev.listen || (Polling.supported?(dev) && dev.poll_s.to_i.positive?)
+    reads ? "Sem leitura ainda: aguardando o primeiro valor." : "Sem leitura ainda: este aparelho não informa o estado sozinho (leitura periódica desligada). O valor aparece depois do primeiro comando."
+  end
+
   # Agenda (F9): "Agora: Reunião" ou "Reunião · sex 14:00" (dia inteiro: só a data).
   def calendar_text(v)
     return "Nada nos próximos dias" unless v.is_a?(Hash) && v["start"]
