@@ -52,12 +52,24 @@ module Automations
       @recheck_at = [ @recheck_at, at ].compact.min
     end
 
-    def calc(expr)
+    # `locals`: variáveis do texto Liquid em volta (`assign`, item do `for`), Lote 7.
+    def calc(expr, locals = {})
+      saved = @vars
+      @vars = @vars.merge(locals) if locals.any?
       calculator = Expr.calculator(self)
       deps = calculator.dependencies(expr)
       plain(calculator.evaluate!(expr, deps.to_h { |name| [ name, variable(name) ] }))
     rescue Dentaku::Error, Dentaku::ParseError, Dentaku::TokenizerError, ZeroDivisionError, ArgumentError, TypeError => e
       raise Error, "Expressão \"#{expr.truncate(60)}\": #{e.message.truncate(120)}"
+    ensure
+      @vars = saved
+    end
+
+    # `defined('x')` (Lote 7, o `is defined` do HA): a variável, o caminho ou o ponto tem valor.
+    def defined?(name)
+      !variable(name.to_s).nil?
+    rescue Error
+      false
     end
 
     # `limit`: o pedido à IA (Lote 2) leva textos maiores que os 1000 de um aviso.
@@ -99,6 +111,9 @@ module Automations
       return builtin[name] if builtin.key?(name)
 
       return attr(name) if name.include?(".attrs.")
+      if name.end_with?(".changed_at") && (since = point(name.delete_suffix(".changed_at")))
+        return changed_at(since)&.to_i || 0 # Lote 7: segundos desde 1970 da última mudança
+      end
 
       p = point(name) or raise Error, "\"#{name}\" não é ponto deste local nem variável"
       v = value(p)
@@ -134,7 +149,7 @@ module Automations
     module CalcFilter
       def calc(input)
         ctx = @context.registers[:automation_context] or raise Liquid::Error, "calc fora de um texto do local"
-        ctx.calc(input.to_s)
+        ctx.calc(input.to_s, @context.scopes.reverse.reduce({}) { |h, s| h.merge(s) })
       rescue Error => e
         raise Liquid::Error, e.message
       end

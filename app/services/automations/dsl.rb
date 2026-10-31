@@ -19,6 +19,9 @@ module Automations
       def choices = options.respond_to?(:call) ? options.call : options
     end
 
+    # Texto Liquid no lugar de um valor (Lote 7: o valor do comando vindo de template do HA).
+    def self.template?(v) = v.is_a?(String) && (v.include?("{{") || v.include?("{%"))
+
     def self.f(name, kind, label, required: false, options: nil) = Field.new(name: name, kind: kind, label: label, required: required, options: options)
 
     DAYS = %w[Dom Seg Ter Qua Qui Sex Sáb].freeze
@@ -332,6 +335,7 @@ module Automations
 
       def command_error(node, command)
         point = @points[node["point"]] or return nil
+        return template_error(node["value"]) if Dsl.template?(node["value"]) # o valor só existe na execução
         Points::Command.new(point, command.to_s, node["value"]).new_value
         nil
       rescue Points::Command::Error => e

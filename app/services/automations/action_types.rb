@@ -16,7 +16,7 @@ module Automations
   module ActionTypes
     extend Block::Registry
 
-    PLUGINS = %w[CommandAction SceneAction ScriptAction NotifyAction SpeakAction WaitNotificationAction FireEventAction WaitEventAction HttpAction CalendarEventsAction WeatherForecastAction AiTaskAction AiDataAction SttAction TtsAction DatasetRecordAction DatasetQueryAction
+    PLUGINS = %w[CommandAction SceneAction ScriptAction NotifyAction SpeakAction WaitNotificationAction FireEventAction WaitEventAction HttpAction IntegrationReloadAction TraceNoteAction CalendarEventsAction WeatherForecastAction AiTaskAction AiDataAction SttAction TtsAction DatasetRecordAction DatasetQueryAction
                  WaitAction WaitForAction
                  IfAction ChooseAction RepeatAction SetAction ConditionAction StopAction].freeze
 
@@ -72,14 +72,15 @@ module Automations
 
       def self.call(e, _path, node)
         p = e.ctx.point(node["point"]) or raise Engine::Failure, "Ponto removido do local."
-        title = "#{Engine::COMMAND_LABELS.fetch(node['command'], node['command'])} #{p.name}#{" (#{node['value']})" unless node['value'].nil?}"
+        arg = Dsl.template?(node["value"]) ? e.ctx.render(node["value"]) : node["value"] # Lote 7: valor por texto Liquid
+        title = "#{Engine::COMMAND_LABELS.fetch(node['command'], node['command'])} #{p.name}#{" (#{arg})" unless arg.nil?}"
         if e.dry_run?
-          value = Points::Command.new(p, node["command"].to_s, node["value"]).new_value
+          value = Points::Command.new(p, node["command"].to_s, arg).new_value
           e.ctx.set_value(p, value)
           return [ title, "simulated", "Não enviado (simulação). Ficaria: #{e.ctx.point_text(p, value)}" ]
         end
 
-        c = Points::Command.call(p, node["command"], node["value"], source: "automation", user: nil, run: e.run)
+        c = Points::Command.call(p, node["command"], arg, source: "automation", user: nil, run: e.run)
         raise Engine::Failure, "#{p.name}: #{c.error}" if c.status == "failed"
 
         [ title, "ok", "Comando #{c.status_label.downcase}" ]
@@ -284,7 +285,7 @@ module Automations
       def self.shadow_safe?(_e, _node) = true
 
       describe key: "set", label: "Definir variável",
-               fields: [ f("var", :var, "Nome", required: true), f("expr", :expr, "Expressão (número/lógica)"), f("value", :template, "Ou texto") ]
+               fields: [ f("var", :var, "Nome", required: true), f("expr", :expr, "Expressão (número/lógica)"), f("value", :prompt, "Ou texto") ]
 
       def self.rules(node) = node["expr"].nil? == node["value"].nil? ? [ "informe a expressão ou o texto." ] : []
 
