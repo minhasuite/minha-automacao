@@ -37,10 +37,13 @@ module Automations
     class StateTrigger < Base
       describe key: "state", label: "Ponto mudou",
                fields: [ f("point", :point, "Ponto", required: true), f("from", :value, "De (opcional)"),
-                         f("to", :value, "Para (opcional)"), f("for", :duration, "Por pelo menos") ]
+                         f("to", :value, "Para (opcional)"), f("for", :duration, "Por pelo menos"),
+                         f("attribute", :text, "Atributo (opcional; vale o atributo em vez do valor)") ]
 
       def self.fires_on_change?(t, value, was) = (!t.key?("from") || was == t["from"]) && holds?(t, value)
       def self.holds?(t, value) = !t.key?("to") || value == t["to"]
+      # Lote 8: atributo (`points.attrs`) muda pelo Point#report_attrs!, sem carimbo de tempo próprio.
+      def self.rules(node) = node["attribute"].present? && node["for"].present? ? [ "\"por pelo menos\" não vale com atributo." ] : []
     end
 
     class NumericTrigger < Base

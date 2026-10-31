@@ -11,7 +11,11 @@ module Drivers
     ACTIONS = {
       "announce" => ->(client, target, text) { client.announce([ target ], text) },
       "speak" => ->(client, target, text) { client.speak(target, text) },
-      "routine" => ->(client, target, name) { client.run_routine(target, name) }
+      "routine" => ->(client, target, name) { client.run_routine(target, name) },
+      # G12 (Lote 8): som, música e volume.
+      "sound" => ->(client, target, id) { client.sound(target, id) },
+      "play" => ->(client, target, phrase) { client.play(target, phrase) },
+      "volume" => ->(client, target, level) { client.volume(target, level) }
     }.freeze
 
     def self.client_for(integration)

@@ -47,6 +47,29 @@ module Alexa
                                   "devices" => devices.map { |d| { "deviceSerialNumber" => d[:serial], "deviceTypeId" => d[:type] } } }))
     end
 
+    # G12 (Lote 8), mesmas operações do alexa_media: som da biblioteca da
+    # Alexa (`amzn_sfx_doorbell_chime_01`), busca de música no provedor e volume.
+    SOUND = /\A[a-z0-9_.:-]{3,120}\z/i
+    PROVIDERS = %w[AMAZON_MUSIC SPOTIFY APPLE_MUSIC DEEZER TUNEIN I_HEART_RADIO SIRIUSXM].freeze
+
+    def sound(device, sound_id)
+      raise Error, "Som inválido (use o id do som da Alexa, ex.: amzn_sfx_doorbell_chime_01)." unless sound_id.to_s.match?(SOUND)
+
+      sequence(node("Alexa.Sound", target(device).merge("soundStringId" => sound_id.to_s)))
+    end
+
+    # Texto "provedor: busca" (AMAZON_MUSIC padrão).
+    def play(device, phrase)
+      provider, search = phrase.to_s.split(":", 2).map(&:strip)
+      provider, search = "AMAZON_MUSIC", phrase unless search && PROVIDERS.include?(provider.upcase)
+      sequence(node("Alexa.Music.PlaySearchPhrase", target(device).merge("searchPhrase" => text(search), "sanitizedSearchPhrase" => text(search).downcase,
+                                                                          "musicProviderId" => provider.upcase)))
+    end
+
+    def volume(device, level)
+      sequence(node("Alexa.DeviceControls.Volume", target(device).merge("value" => level.to_i.clamp(0, 100))))
+    end
+
     # Rotinas da conta: [{"automationId", "name", "triggers", "sequence", ...}].
     def routines = Array(get("/api/behaviors/v2/automations?limit=2000"))
 
@@ -70,6 +93,10 @@ module Alexa
     end
 
     private
+
+    def target(device)
+      { "deviceType" => device[:type], "deviceSerialNumber" => device[:serial], "locale" => LOCALE, "customerId" => device[:customer_id] }
+    end
 
     def node(type, payload)
       { "@type" => "com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode", "type" => type, "operationPayload" => payload }

@@ -91,7 +91,7 @@ module HelperTypes
       else ctx.calc(expr).then { |n| n.is_a?(Numeric) ? n : Float(n.to_s, exception: false) }
       end
       attrs = point.address["attrs"].to_h.transform_values { |t| ctx.render(t, limit: 500) }
-      point.update_column(:attrs, attrs) if attrs != point.attrs
+      point.report_attrs!(attrs)
       point.report!(v)
     rescue Automations::Context::Error => e
       Rails.logger.info("[helpers] #{point.key}: #{e.message}")

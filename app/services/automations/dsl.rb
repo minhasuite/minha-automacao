@@ -120,7 +120,7 @@ module Automations
             node[fd.name] = point.id
           elsif fd.kind.in?(POINT_LIST_KINDS) && node[fd.name].is_a?(Array)
             node[fd.name] = node[fd.name].map { |ref| by_ref[ref.to_s]&.id || ref }
-          elsif fd.kind == :value && point && node[fd.name].is_a?(String)
+          elsif fd.kind == :value && point && node[fd.name].is_a?(String) && node["attribute"].blank? # atributo (Lote 8): texto como veio
             node[fd.name] = point.cast(node[fd.name])
           end
         end

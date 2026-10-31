@@ -15,11 +15,19 @@ module Automations
                    .where("state->'wait'->>'kind' = 'wait_for'").find_each { |r| Automations.safely { Engine.resume(r) } }
     end
 
-    def fire_point_triggers(point, value_was)
+    # Lote 8: atributo do ponto mudou (Point#report_attrs!): dispara os
+    # gatilhos de ponto com `attribute`, comparando o atributo antes e depois.
+    def on_attrs_change(point, attrs_was)
+      fire_point_triggers(point, nil, attrs_was: attrs_was.to_h)
+    end
+
+    def fire_point_triggers(point, value_was, attrs_was: nil)
       cause = cause_of(point)
       Automation.where(site_id: point.site_id, enabled: true).where("definition->'triggers' @> ?", [ { point: point.id } ].to_json).find_each do |a|
         a.definition["triggers"].each_with_index do |t, i|
-          next unless t["point"] == point.id && changed_into?(t, point.value, value_was, repeat: point.capability == "event")
+          next unless t["point"] == point.id && t["attribute"].present? == !attrs_was.nil?
+          next if attrs_was && !changed_into?(t, point.attrs.to_h[t["attribute"]], attrs_was[t["attribute"]])
+          next if attrs_was.nil? && !changed_into?(t, point.value, value_was, repeat: point.capability == "event")
 
           wait = Dsl.seconds(t["for"]).to_i
           next AutomationTriggerJob.set(wait: wait.seconds).perform_later(a.id, i, point.changed_at.iso8601(6)) if wait.positive?
