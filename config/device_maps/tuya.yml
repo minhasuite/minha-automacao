@@ -59,6 +59,29 @@ codes:
   floodlight_switch: { name: Holofote }
   motion_switch: { name: Detecção de movimento }
   basic_private: { name: Modo privacidade }
+  basic_flip: { name: Imagem invertida }
+  basic_osd: { name: Hora na imagem }
+  basic_indicator: { name: Luz indicadora }
+  basic_nightvision: { name: Visão noturna }
+  nightvision_mode: { name: Visão noturna }
+  basic_anti_flicker: { name: Antitremulação }
+  basic_device_volume: { name: Volume }
+  motion_sensitivity: { name: Sensibilidade de movimento }
+  motion_tracking: { name: Seguir movimento }
+  motion_record: { name: Gravar ao detectar movimento }
+  motion_timer_switch: { name: Agenda da detecção }
+  humanoid_filter: { name: Só pessoas }
+  ipc_object_outline: { name: Contorno de objetos }
+  ipc_auto_siren: { name: Sirene automática, risk: sensitive }
+  ipc_sharp: { name: Nitidez }
+  ipc_contrast: { name: Contraste }
+  ipc_bright: { name: Brilho da imagem }
+  decibel_switch: { name: Detecção de som }
+  decibel_sensitivity: { name: Sensibilidade de som }
+  record_switch: { name: Gravação }
+  record_mode: { name: Modo de gravação }
+  sd_status: { name: Cartão SD }
+  pir_sensitivity: { name: Sensibilidade }
   # Movimento: o dp chega como base64 de um JSON {cmd: "ipc_motion", ...}
   # empurrado pelo aparelho; vira verdadeiro e volta a falso depois de hold_s.
   # `push_only`: o estado completo repete a última mensagem e não conta.
