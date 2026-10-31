@@ -37,6 +37,8 @@ module Integrations
     }.freeze
     # Domínio do HA → capacidade daqui, quando o aparelho tem um ponto só dela.
     DOMAIN_CAPS = { "vacuum" => "vacuum", "media_player" => "speaker", "camera" => "stream" }.freeze
+    # Classe do sensor do HA → capacidade daqui (Lote 8), também quando o aparelho tem um ponto só dela.
+    CLASS_CAPS = { "motion" => "motion", "occupancy" => "motion", "presence" => "motion", "door" => "contact", "window" => "contact" }.freeze
 
     Result = Struct.new(:areas, :devices_added, :devices_moved, :entities, :unmapped, :helpers, :helpers_skipped, :scenes, :items, :tags, keyword_init: true)
     # Sensor template da tela do HA → tipo do sensor calculado daqui.
@@ -153,13 +155,22 @@ module Integrations
     end
 
     def point_for(e)
-      device = @devices[e["device_id"]] or return
       uid = e["unique_id"].to_s
+      device = @devices[e["device_id"]] || device_by_uid(uid) or return
       points = device.points.to_a
       by_code = points.select { |p| p.address["code"].present? && uid.end_with?(p.address["code"]) }.max_by { |p| p.address["code"].size }
       by_code || points.find { |p| p.address["dps"].present? && uid.end_with?("_#{p.address['dps']}") } ||
         (uid =~ /_p_(\d+)_(\d+)\z/ && points.find { |p| p.address["siid"].to_i == ::Regexp.last_match(1).to_i && p.address["piid"].to_i == ::Regexp.last_match(2).to_i }) ||
-        (cap = DOMAIN_CAPS[e["entity_id"].to_s.split(".").first]) && points.select { |p| p.capability == cap }.then { |l| l.first if l.one? }
+        (uid =~ /_e_(\d+)_(\d+)\z/ && points.find { |p| p.address["siid"].to_i == ::Regexp.last_match(1).to_i && p.address["eiid"].to_i == ::Regexp.last_match(2).to_i }) ||
+        (cap = DOMAIN_CAPS[e["entity_id"].to_s.split(".").first] || CLASS_CAPS[e["original_device_class"] || e["device_class"]]) &&
+          points.select { |p| p.capability == cap }.then { |l| l.first if l.one? }
+    end
+
+    # Lote 8: entidade sem aparelho no HA (integração própria, ex.: movimento
+    # da câmera) cujo `unique_id` começa pelo id do aparelho daqui.
+    def device_by_uid(uid)
+      @by_ext ||= @site.devices.where.not(external_id: [ nil, "" ]).to_a.sort_by { |d| -d.external_id.size }
+      @by_ext.find { |d| d.external_id.size >= 8 && uid.start_with?("#{d.external_id}_") }
     end
 
     # ---- 4. helpers ---------------------------------------------------------------
@@ -280,7 +291,7 @@ module Integrations
       return false if unresolved.any? { |u| u.start_with?("script.") } && !last
 
       automation = old ? refresh!(old, attrs, name, values, domain, ext) : create!(attrs, name, values, domain, ext)
-      notes = attrs["unsupported"] + unresolved.map { |u| "sem de-para: #{u}" }
+      notes = attrs["unsupported"] + unresolved.map { |u| "sem de-para: #{u}" } + attribute_notes(automation)
       notes << "rascunho: não publicou (#{automation.errors_in(automation.draft).first || 'falta entrada sem de-para'})" if automation.draft?
       link!(ext, domain, automation, name)
       @r.items << { "kind" => domain, "name" => name, "ref" => ext, "lossless" => notes.empty?, "notes" => notes, "enabled" => automation.enabled }
@@ -288,6 +299,14 @@ module Integrations
     rescue Blueprints::HaImport::Error, ActiveRecord::RecordInvalid, ArgumentError => e
       @r.items << { "kind" => domain, "name" => name, "ref" => ext, "lossless" => false, "notes" => [ "não importou: #{e.message.truncate(150)}" ] } if last
       last
+    end
+
+    # Lote 8: gatilho por atributo que o ponto daqui (ainda) não informa: converte, mas não dispara.
+    def attribute_notes(automation)
+      Array((automation.draft || automation.definition).to_h["triggers"]).filter_map do |t|
+        p = t["attribute"].present? && Point.find_by(id: t["point"])
+        "o ponto #{p.name} não informa o atributo #{t['attribute']} (o gatilho não dispara)" if p && !p.attrs.to_h.key?(t["attribute"])
+      end
     end
 
     def blueprint_attrs(attrs, name) = attrs.except("unsupported").merge("name" => name.truncate(120), "unsupported" => attrs["unsupported"])
@@ -325,16 +344,25 @@ module Integrations
       refs = ExternalRef.where(site_id: @site.id, source: SOURCE).mapped.pluck(:external_id, :target_type, :target_id)
       unresolved = []
       values = Array(inputs).to_h do |input|
-        label = input["label"].to_s
+        label, cap = input["label"].to_s.split("#", 2) # Lote 8: "light.x#color" = ponto irmão do aparelho
         prefix = label[/\AAparelho do HA (\h{8})/, 1]
-        hit = if prefix then refs.find { |ext, type, _| type == "Point" && ext.start_with?("entity:#{prefix}") } || device_point(prefix, input)
+        hit = if prefix then (refs.find { |ext, type, _| type == "Point" && ext.start_with?("entity:#{prefix}") } unless cap) || device_point(prefix, input)
         else refs.find { |ext, _, _| ext == label }
         end
+        hit = sibling(hit, input) if cap && hit && !prefix
         id = hit && (hit[1] == "Automation" ? Scripts.point_for(Automation.find(hit[2]))&.id : hit[2]) # script de lá → ponto do script daqui
         unresolved << label if id.nil? && %w[point scene].include?(input["type"])
         [ input["key"], id ]
       end
       [ values, unresolved ]
+    end
+
+    # Ponto irmão: o único do mesmo aparelho que passa no filtro da entrada.
+    def sibling(hit, input)
+      point = hit[1] == "Point" && Point.find_by(id: hit[2]) or return
+      caps = Array(input.dig("filter", "capability"))
+      list = Point.where(device_id: point.device_id).select { |p| caps.include?(p.capability) && p.writable }
+      [ nil, "Point", list.first.id ] if list.one?
     end
 
     # Aparelho inteiro como alvo: o único ponto dele que passa no filtro da entrada.

@@ -176,6 +176,8 @@ module Blueprints
       @inputs = {}
       @entries = entries.to_h
       @rest = rest_commands.to_h
+      @areas = areas.to_h
+      @labels = labels.to_h
       @consts = {}
       @jinja = Jinja.new(method(:entity_input), areas: areas.to_h, labels: labels.to_h, entries: @entries)
     end
@@ -437,10 +439,13 @@ module Blueprints
 
     def state_like(h, to_key, from_key)
       point = entity(h["entity_id"]) or return
-      note("estado de atributo (#{h['attribute']})") if h["attribute"]
-      out = { "point" => point }
-      out[to_key] = state_value(h[to_key]) if h.key?(to_key) && !h[to_key].is_a?(Array)
-      out[from_key] = state_value(h[from_key]) if from_key && h.key?(from_key) && !h[from_key].is_a?(Array)
+      # Lote 8: no gatilho o atributo vai junto (o valor dele, sem traduzir on/off); na condição fica anotado.
+      attr = h["attribute"].presence&.to_s
+      note("estado de atributo (#{attr})") if attr && !from_key
+      out = { "point" => point, "attribute" => (attr if from_key) }.compact
+      value = ->(v) { attr ? v : state_value(v) }
+      out[to_key] = value.call(h[to_key]) if h.key?(to_key) && !h[to_key].is_a?(Array)
+      out[from_key] = value.call(h[from_key]) if from_key && h.key?(from_key) && !h[from_key].is_a?(Array)
       out["for"] = duration(h["for"]) if h["for"]
       out.compact
     end
@@ -494,9 +499,8 @@ module Blueprints
       domain, name = service.split(".", 2)
       if service.match?(MIRROR) then mirror(a)
       elsif SERVICES.key?(service) then send(SERVICES[service], a)
-      elsif SWITCHES.include?(domain) && COMMANDS.key?(name)
-        note("dados extras em #{service} (brilho, cor...)") if a["data"].is_a?(Hash) && (a["data"].keys - %w[entity_id]).any?
-        targets(a).map { |p| { "type" => "command", "point" => p, "command" => COMMANDS[name] } }
+      elsif SWITCHES.include?(domain) && COMMANDS.key?(name) then switch_action(domain, name, a)
+      elsif domain == "media_player" && MEDIA.include?(name) then media_action(name, a)
       elsif domain == "notify" || service == "persistent_notification.create"
         data = a["data"].is_a?(Hash) ? a["data"] : {}
         [ notify(data, domain == "notify" ? %w[in_app push] : %w[in_app]) ]
@@ -507,6 +511,82 @@ module Blueprints
       elsif domain == "rest_command" && @rest[name].is_a?(Hash) then rest_command(@rest[name], a)
       elsif service == "homeassistant.reload_config_entry" || name == "reload" then reload_action(a, domain)
       end
+    end
+
+    # Liga/desliga/alterna (Lote 8): alvo por etiqueta ou área vira "Comandar
+    # pontos por consulta"; brilho e cor do `light.turn_on` viram "Ajustar" no
+    # ponto irmão (intensidade, cor) do mesmo aparelho.
+    def switch_action(domain, name, a)
+      data = a["data"].is_a?(Hash) ? a["data"] : {}
+      extra = data.keys - %w[entity_id transition] - LIGHT_DATA.keys
+      note("dados extras em #{domain}.#{name} (#{extra.join(', ')})") if extra.any?
+      points = targets(a)
+      out = points.map { |p| { "type" => "command", "point" => p, "command" => COMMANDS[name] } } + query_actions(domain, a, COMMANDS[name])
+      return out unless name == "turn_on"
+
+      out + data.slice(*LIGHT_DATA.keys).flat_map do |k, v|
+        next note("#{k} com template do HA (confira)") && [] if v.to_s.include?("{{")
+
+        cap, value = LIGHT_DATA[k].call(v)
+        points.filter_map { |p| (s = sibling(p, cap)) && { "type" => "command", "point" => s, "command" => "set", "value" => value } }
+      end
+    end
+
+    # Dado do light.turn_on → [capacidade do ponto irmão, valor do "Ajustar"].
+    LIGHT_DATA = {
+      "brightness_pct" => ->(v) { [ "dimmer", v.to_f.round.clamp(0, 100) ] },
+      "brightness" => ->(v) { [ "dimmer", (v.to_f * 100 / 255).round.clamp(0, 100) ] },
+      "rgb_color" => ->(v) { [ "color", { "rgb" => Array(v) } ] },
+      "hs_color" => ->(v) { [ "color", { "hs" => Array(v) } ] },
+      "color_temp_kelvin" => ->(v) { [ "color", { "kelvin" => v } ] },
+      "kelvin" => ->(v) { [ "color", { "kelvin" => v } ] },
+      "color_temp" => ->(v) { [ "color", { "mireds" => v } ] }
+    }.freeze
+
+    # Entrada irmã: o ponto de outra capacidade do mesmo aparelho (o
+    # importador da instalação resolve pelo "#capacidade" no rótulo).
+    def sibling(ref, cap)
+      return unless input_ref?(ref) && (base = @inputs[ref["!input"]])
+
+      k = "#{ref['!input']}_#{cap}".first(64)
+      @inputs[k] ||= base.except("filter", "default").merge("key" => k, "label" => "#{base['label']}##{cap}", "filter" => { "capability" => [ cap ], "writable" => true })
+      { "!input" => k }
+    end
+
+    # Alvo por etiqueta (`label_id`) ou área (`area_id`) → consulta (uma por tipo de alvo, como a união do HA).
+    def query_actions(domain, a, command)
+      t = a["target"].is_a?(Hash) ? a["target"] : {}
+      note("alvo por andar (floor_id)") if t["floor_id"]
+      cap = DOMAIN_CAPS[domain] if domain != "homeassistant"
+      labels = Array.wrap(t["label_id"]).map { |l| @labels.fetch(l, l).to_s.downcase }
+      areas = Array.wrap(t["area_id"]).map { |x| @areas.fetch(x, x).to_s }
+      note("alvo por área em #{domain}: aqui vale todo ponto liga/desliga da área (confira)") if areas.any? && domain == "light"
+      [ ([ "tag", labels ] if labels.any?), ([ "area", areas ] if areas.any?) ].compact.filter_map do |key, names|
+        next note("alvo com aspas no nome") && nil if names.join.match?(/["']/)
+
+        list = names.join(",")
+        query = [ "#{key}=#{list.include?(' ') ? "\"#{list}\"" : list}", ("capability=#{cap}" if cap) ].compact.join(" ")
+        { "type" => "command_query", "query" => query, "command" => command }
+      end
+    end
+
+    # media_player (G12, Lote 8): som, música, rotina e volume da Echo.
+    MEDIA = %w[play_media volume_set].freeze
+    MEDIA_TYPES = { "sound" => "sound", "routine" => "routine", "tts" => "speak", "announcement" => "announce" }.freeze
+
+    def media_action(name, a)
+      data = a["data"].is_a?(Hash) ? a["data"] : {}
+      command, value = if name == "volume_set" then [ "volume", data["volume_level"].to_s.include?("{{") ? nil : (data["volume_level"].to_f * 100).round ]
+      else
+        type = data["media_content_type"].to_s
+        id = data["media_content_id"].to_s
+        id = text(id) if id.include?("{{")
+        cmd = MEDIA_TYPES[type] || ("play" if Alexa::Client::PROVIDERS.include?(type.upcase))
+        [ cmd, cmd == "play" ? "#{type.upcase}: #{id}" : id ]
+      end
+      return note("media_player.#{name} (#{data['media_content_type'] || 'valor com template'})") && nil if command.nil? || value.blank?
+
+      targets(a).map { |p| { "type" => "command", "point" => p, "command" => command, "value" => value } }.presence
     end
 
     # `switch.turn_{{ trigger.to_state.state }}` (espelhar): se o gatilho ligou, liga; senão, desliga.
@@ -683,10 +763,23 @@ module Blueprints
     def flow_wait_trigger(a)
       ts = list(a["wait_for_trigger"])
       ev = (event_trigger(ts.first) if ts.size == 1 && ts.first.is_a?(Hash) && (ts.first["trigger"] || ts.first["platform"]) == "event")
+      return wait_state(ts.first, a) if ts.size == 1 && ts.first.is_a?(Hash) && (ts.first["trigger"] || ts.first["platform"]) == "state" && !ev
       return note("ação wait_for_trigger") && [] unless ev
 
       [ { "type" => "wait_event", "event" => ev["event"], "match" => ev["match"], "timeout" => (a["timeout"] ? duration(a["timeout"]) : "1h"),
           "continue_on_timeout" => (a["continue_on_timeout"] != false) }.compact ]
+    end
+
+    # Lote 8: esperar um estado (`to` [+ `for`]) = "Esperar condição" com
+    # "Ponto está ... há pelo menos" (o motor reconfere sozinho). Sem tempo
+    # limite no HA = o máximo daqui.
+    def wait_state(t, a)
+      return note("ação wait_for_trigger") && [] if !t.key?("to") || t["to"].is_a?(Array) || t["attribute"]
+
+      point = entity(t["entity_id"]) or return []
+      cond = { "type" => "state", "point" => point, "is" => state_value(t["to"]), "for" => (duration(t["for"]) if t["for"]) }.compact
+      [ { "type" => "wait_for", "conditions" => [ cond ], "timeout" => (a["timeout"] ? duration(a["timeout"]) : "168h"),
+          "continue_on_timeout" => (a["continue_on_timeout"] != false) } ]
     end
 
     def flow_wait_template(a)

@@ -298,13 +298,13 @@ RSpec.describe "F8f: plugins da DSL, scripts e blueprints" do
           { "key" => "no_motion_wait", "label" => "Wait time", "description" => "Time to leave the light on after last motion is detected.", "type" => "number", "default" => 120 }
         ])
         expect(attrs["definition"]["triggers"]).to eq([ { "type" => "state", "point" => { "!input" => "motion_entity" }, "to" => true, "from" => false } ])
-        expect(attrs["definition"]["actions"].pluck("type", "command")).to eq([ %w[command on], [ "wait", nil ], %w[command off] ])
-        expect(attrs["unsupported"]).to eq([ "ação wait_for_trigger" ])
+        expect(attrs["definition"]["actions"].pluck("type", "command")).to eq([ %w[command on], [ "wait_for", nil ], [ "wait", nil ], %w[command off] ]) # Lote 8
+        expect(attrs["unsupported"]).to eq([])
 
         bp = site.blueprints.create!(attrs)
         a = bp.create_automation!(name: "Do HA", values: { "motion_entity" => motion.id, "light_target" => lamp.id })
         expect(a.published?).to be true
-        expect(a.definition["actions"][1]).to eq("type" => "wait", "for" => 120)
+        expect(a.definition["actions"][2]).to eq("type" => "wait", "for" => 120)
       end
 
       it "converte entradas, gatilhos, condições e ações variadas e anota o resto" do
@@ -335,7 +335,7 @@ RSpec.describe "F8f: plugins da DSL, scripts e blueprints" do
         expect(attrs["mode"]).to eq("queued")
         expect(attrs["unsupported"]).to include("entrada alvo (selector area)", "entrada fan: várias entidades (aqui é um ponto só)",
                                                 "entidade fixa sensor.fixa (use uma entrada de ponto)", "gatilho mqtt", "gatilho time por entidade",
-                                                "condição template", "dados extras em fan.turn_on (brilho, cor...)",
+                                                "condição template", "dados extras em fan.turn_on (percentage)",
                                                 a_string_including("template do HA"), "ação scene.turn_on", "ação choose")
       end
 

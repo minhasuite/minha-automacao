@@ -480,6 +480,10 @@ module Blueprints
 
     def dentaku_filter(name, x, args)
       return dentaku(x) if NUMERIC_FILTERS.include?(name)
+      # Lote 8: `expand('a', 'b') | map(attribute='last_changed') | max` → o mais recente dos pontos.
+      if %w[max min].include?(name) && (x in [ :filter, "map", [ :call, [ :var, "expand" ], ents ], [ [ :kw, "attribute", [ :lit, "last_changed" | "last_updated" ] ] ] ])
+        return "#{name}(#{ents.map { |e| "#{entity_ref(e)}.changed_at" }.join(', ')})"
+      end
       return "round(#{[ dentaku(x), *args.map { |a| dentaku(a) } ].join(', ')})" if name == "round"
       if %w[count length].include?(name)
         q = query(x)

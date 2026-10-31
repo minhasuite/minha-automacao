@@ -254,9 +254,9 @@ RSpec.describe "F8f: Automações e cenas (web e API)" do
       post "/locais/#{site.id}/blueprints", params: { yaml: file_fixture("ha_motion_light.yaml").read }
       bp = within(tenant) { site.blueprints.find_by!(source: "ha") }
       expect(response).to redirect_to("/blueprints/#{bp.id}")
-      expect(flash[:notice]).to include("1 parte não suportada")
+      expect(flash[:notice]).to eq("Importado.") # Lote 8: o wait_for_trigger de estado converte
       get "/blueprints/#{bp.id}"
-      expect(response.body).to include("Não suportado", "não suportado: ação wait_for_trigger", "Motion Sensor", "Salvar e propagar")
+      expect(response.body).to include("Motion Sensor", "Salvar e propagar")
 
       stub_request(:get, "https://raw.githubusercontent.com/u/r/main/bp.yaml").to_return(body: file_fixture("ha_motion_light.yaml").read.sub("Motion-activated Light", "Via URL"))
       post "/locais/#{site.id}/blueprints", params: { url: "https://github.com/u/r/blob/main/bp.yaml" }
