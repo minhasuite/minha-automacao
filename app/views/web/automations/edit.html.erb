@@ -16,8 +16,10 @@
                     form: { data: { turbo_confirm: "Executar agora a versão #{@automation.version}#{', sem checar as condições' unless script}?#{' Comanda ponto crítico.' if run_risk == 'critical'}", turbo_confirm_button: "Executar" } } do %><%= icon(script ? "play" : "lightning-bolt", "size-4") %><%= script ? "Executar" : "Executar agora" %><% end %>
     <% end %>
   <% end %>
-  <%= button_to publish_automation_path(@automation), params: { confirm_critical: (critical ? "1" : nil) }.compact, class: "ss-btn ss-btn-primary", disabled: @errors.any? || (@automation.published? && !@automation.draft?),
+  <% why = (@errors.any? ? "Corrija o que falta para publicar" : ("Sem mudanças para publicar" if @automation.published? && !@automation.draft?)) %>
+  <%= button_to publish_automation_path(@automation), params: { confirm_critical: (critical ? "1" : nil) }.compact, class: "ss-btn ss-btn-primary", disabled: why.present?, title: why, "aria-describedby": ("publish-why" if why),
                 form: { data: { turbo_confirm: "Publicar o rascunho como versão #{@automation.version + 1}?#{' Comanda ponto crítico (portão, sirene...).' if critical}", turbo_confirm_button: "Publicar" } } do %><%= icon("upload", "size-4") %>Publicar<% end %>
+  <% if why %><p id="publish-why" class="basis-full text-right text-xs text-muted sm:basis-auto"><%= why %></p><% end %>
 <% end %>
 
 <% if flash[:webhook_url] %>
@@ -37,7 +39,7 @@
 <% end %>
 
 <div class="grid gap-6 lg:grid-cols-3 items-start">
-  <div class="lg:col-span-2 flex flex-col gap-4 min-w-0">
+  <div class="lg:col-span-2 flex flex-col gap-4 min-w-0 ss-flow">
     <% if @errors.any? %>
       <div class="rounded-xl bg-warn-soft p-3 text-sm" role="status">
         <p class="font-bold text-ink flex items-center gap-2"><%= icon("exclamation-circle", "size-5 text-warn") %>Falta para publicar</p>
@@ -52,7 +54,7 @@
 
     <% (script ? [ :actions ] : Automations::Dsl::KINDS).each do |kind| %>
       <section class="ss-card ss-card-pad" aria-labelledby="sec-<%= kind %>">
-        <h2 id="sec-<%= kind %>"><%= script ? "Sequência" : AutomationsHelper::KIND_TITLES[kind] %></h2>
+        <h2 id="sec-<%= kind %>" class="ss-flow-step"><%= script ? "Sequência" : AutomationsHelper::KIND_TITLES[kind] %></h2>
         <p class="text-sm text-muted mb-3"><%= script ? "Ações em ordem. Use os campos como {{ nome }} nos textos e expressões, ou $nome no ponto." : AutomationsHelper::KIND_HINTS[kind] %></p>
         <%= render "web/automations/list", list: Array(@draft[kind.to_s]), path: kind.to_s, kind: kind, points: by_id, automation: @automation %>
       </section>
@@ -90,7 +92,7 @@
     <% end %>
 
     <details class="ss-card ss-card-pad" <%= "open" if @automation.errors.any? %>>
-      <summary class="cursor-pointer font-bold text-ink">Nome e modo</summary>
+      <summary class="ss-summary font-bold text-ink">Nome e modo</summary>
       <div class="mt-3"><%= render "web/automations/settings", automation: @automation, site: @site %></div>
     </details>
 

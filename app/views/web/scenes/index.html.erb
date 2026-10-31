@@ -15,7 +15,7 @@
     <button type="submit" class="ss-btn ss-btn-ghost" aria-label="Procurar"><%= icon("search", "size-4") %></button>
   <% end %>
   <% if @scenes.empty? %>
-    <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma cena com esse nome.</p></div>
+    <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma cena com esse nome.</p><%= link_to "Limpar a busca", site_scenes_path(@site), class: "ss-btn ss-btn-ghost mt-3" %></div>
   <% else %>
     <ul class="ss-card ss-rows" aria-label="Cenas">
       <% @scenes.each do |s| %>

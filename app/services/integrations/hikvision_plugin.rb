@@ -2,7 +2,7 @@ module Integrations
   # DVR/NVR/câmera Hikvision pela ISAPI; as câmeras vão para o go2rtc.
   class HikvisionPlugin < Plugin
     describe key: "hikvision", title: "Câmeras / DVR", icon: "video-camera",
-             description: "DVR, NVR ou câmera Hikvision na rede: IP, usuário e senha. Acha os canais e coloca as câmeras no go2rtc."
+             description: "Gravador (DVR/NVR) ou câmera Hikvision da rede: endereço, usuário e senha. Acha os canais e mostra cada câmera, com ao vivo."
 
     def self.setup(site, form)
       return outcome(:form, alert: "Informe IP, usuário e senha do DVR.") if form[:host].blank? || form[:username].blank? || form[:password].blank?

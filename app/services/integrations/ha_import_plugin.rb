@@ -3,7 +3,7 @@ module Integrations
   # os aparelhos entram direto (Tuya::Import, idempotente pelo device_id).
   class HaImportPlugin < Plugin
     describe key: "ha_import", title: "Importar do Home Assistant", icon: "upload", driver: nil,
-             description: "Traz os aparelhos do LocalTuya do HA (arquivo core.config_entries), com chave e IP."
+             description: "Traz os aparelhos Tuya que já estavam no Home Assistant, com a chave e o endereço de cada um, a partir do arquivo de configuração dele."
 
     def self.setup(site, form)
       file = form[:arquivo] or return outcome(:form, alert: "Escolha o arquivo core.config_entries do Home Assistant.")

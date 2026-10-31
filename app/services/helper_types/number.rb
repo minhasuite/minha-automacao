@@ -1,7 +1,7 @@
 module HelperTypes
   # Número (input_number do HA): mínimo, máximo, passo, unidade, slider ou caixa.
   class Number < Plugin
-    MODES = { "slider" => "Slider", "box" => "Caixa de número" }.freeze
+    MODES = { "slider" => "Barra deslizante", "box" => "Caixa de número" }.freeze
 
     describe key: "number", title: "Número", icon: "calculator", capability: "setpoint",
              description: "Um valor ajustável com mínimo, máximo e passo: temperatura alvo, minutos de rega."

@@ -76,7 +76,7 @@
 
 <% if added.any? %>
   <details class="ss-card ss-card-pad mt-4">
-    <summary class="cursor-pointer font-semibold"><%= added.size %> já no local</summary>
+    <summary class="ss-summary font-semibold"><%= added.size %> já no local</summary>
     <p class="text-sm text-muted mt-2">Ligados a esta integração: a chave local e o IP se atualizam sozinhos a cada sincronização.</p>
     <%= link_to "Ver na lista de dispositivos", site_devices_path(@site, integracao: @integration.id), class: "ss-btn ss-btn-ghost ss-btn-sm mt-2" %>
   </details>

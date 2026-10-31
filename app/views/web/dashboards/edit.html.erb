@@ -5,7 +5,9 @@
 <% scenes = @site.scenes.order(:name).to_a %>
 <%= render "web/shared/header", title: "Editar #{@dashboard.name}", subtitle: [ @site.name, (@dashboard.auto? ? "automático: ao publicar, vira manual" : "versão #{@dashboard.version} publicada"), ("rascunho com mudanças" if @dashboard.draft?) ].compact.join(" · "), back: dashboard_path(@dashboard) do %>
   <%= link_to dashboard_path(@dashboard, rascunho: 1, view: view&.dig("id")), class: "ss-btn ss-btn-outline" do %><%= icon("eye", "size-4") %>Pré-visualizar<% end %>
-  <%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary", disabled: !@dashboard.draft? && !@dashboard.auto?, form: { data: { turbo_confirm: "Publicar o rascunho para todos que usam este painel?", turbo_confirm_button: "Publicar" } } do %><%= icon("upload", "size-4") %>Publicar<% end %>
+  <% why = ("Sem mudanças para publicar" unless @dashboard.draft? || @dashboard.auto?) %>
+  <%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary", disabled: why.present?, title: why, "aria-describedby": ("publish-why" if why), form: { data: { turbo_confirm: "Publicar o rascunho para todos que usam este painel?", turbo_confirm_button: "Publicar" } } do %><%= icon("upload", "size-4") %>Publicar<% end %>
+  <% if why %><p id="publish-why" class="basis-full text-right text-xs text-muted sm:basis-auto"><%= why %></p><% end %>
 <% end %>
 
 <div class="grid gap-6 lg:grid-cols-3 items-start">
@@ -34,7 +36,11 @@
             <%= hidden_field_tag :op, "update_view", id: nil %><%= hidden_field_tag :target, view["id"], id: nil %><%= hidden_field_tag :view_id, view["id"], id: nil %>
             <div class="flex-1 min-w-40"><label class="ss-label" for="vt">Nome da visão</label><%= text_field_tag :title, view["title"], class: "ss-input", id: "vt", maxlength: 60 %></div>
             <div class="basis-full"><%= render "web/shared/icon_picker", name: "icon", selected: view["icon"], icons: Dashboard::ICONS, id: "vi", label: "Ícone da visão" %></div>
-            <div class="w-40"><label class="ss-label" for="vp">Caminho</label><%= text_field_tag :path, view["path"], class: "ss-input num", id: "vp", maxlength: 40, placeholder: view["id"], pattern: "[a-z0-9][a-z0-9-]*", title: "Letras minúsculas, números e hífen" %></div>
+            <details class="basis-full" <%= "open" if view["path"].present? %>>
+              <summary class="ss-summary text-sm font-semibold text-ink-2 w-fit">Endereço da visão</summary>
+              <div class="mt-2 max-w-xs"><label class="ss-label" for="vp">Nome no link <span class="font-normal">(opcional)</span></label><%= text_field_tag :path, view["path"], class: "ss-input num", id: "vp", maxlength: 40, placeholder: "ex.: cozinha", pattern: "[a-z0-9][a-z0-9-]*", title: "Letras minúsculas, números e hífen", "aria-describedby": "vp-hint" %>
+                <p id="vp-hint" class="text-xs text-muted mt-1">Para abrir esta visão direto por um link curto. Só letras minúsculas, números e hífen.</p></div>
+            </details>
             <%= submit_tag "Salvar", class: "ss-btn ss-btn-ghost" %>
           <% end %>
           <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "view", target: view["id"], view_id: view["id"], name: "a visão #{view['title']}" %>

@@ -36,5 +36,5 @@
   </div>
   <%= render "web/shared/pagination", pagy: @pagy %>
 <% else %>
-  <div class="ss-card ss-empty">Nenhuma notificação.</div>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma notificação.</p><p class="mt-1">Os avisos das automações e da sua conta aparecem aqui. Para recebê-los no celular, ative o aviso no aparelho.</p><%= link_to push_subscriptions_path, class: "ss-btn ss-btn-ghost mt-3" do %><%= icon("bell", "size-4") %>Meus aparelhos<% end %></div>
 <% end %>

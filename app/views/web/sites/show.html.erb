@@ -18,8 +18,8 @@
     <p class="ss-section mb-3">Áreas</p>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <% @areas.each_with_index do |area, i| %>
-        <%= link_to area, class: "ss-card p-4 no-underline ss-rise flex items-center gap-3", style: "animation-delay: #{[ i, 7 ].min * 40}ms" do %>
-          <span class="ss-icon-tile text-accent"><%= icon("view-boards") %></span>
+        <%= link_to area, class: "ss-card ss-go p-4 no-underline ss-rise flex items-center gap-3", style: "animation-delay: #{[ i, 7 ].min * 40}ms" do %>
+          <span class="grid place-items-center size-10 shrink-0 rounded-xl text-white shadow-sm <%= dw_area_art("id" => area.id) %>"><%= icon(area.icon.presence || "view-boards") %></span>
           <span class="min-w-0 flex-1"><span class="block font-bold text-ink truncate"><%= area.name %></span>
             <span class="block text-sm text-muted"><%= area.kind_label %> · <%= count_label(area.devices.size, "dispositivo", "dispositivos") %></span></span>
           <%= icon("chevron-right", "size-4 text-muted") %>
@@ -31,7 +31,7 @@
     <p class="ss-section mt-6 mb-3">Sem área</p>
     <div class="ss-card divide-y divide-line overflow-hidden">
       <% @loose_devices.each do |d| %>
-        <%= link_to d, class: "px-4 py-3 no-underline flex items-center gap-3 hover:bg-field" do %>
+        <%= link_to d, class: "ss-go px-4 py-3 no-underline flex items-center gap-3 hover:bg-field transition-colors" do %>
           <span class="ss-icon-tile text-muted"><%= icon("cube") %></span>
           <span class="min-w-0 flex-1"><span class="block font-semibold text-ink truncate"><%= d.name %></span><span class="block text-xs text-muted"><%= d.driver_label %></span></span>
           <%= icon("chevron-right", "size-4 text-muted") %>

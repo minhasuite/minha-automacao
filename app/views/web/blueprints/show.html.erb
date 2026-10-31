@@ -31,7 +31,7 @@
     </section>
 
     <details class="ss-card ss-card-pad">
-      <summary class="cursor-pointer font-bold text-ink">Definição (JSON)</summary>
+      <summary class="ss-summary font-bold text-ink">Definição (JSON)</summary>
       <% json = JSON.pretty_generate(@blueprint.slice("name", "description", "mode", "inputs", "definition")) %>
       <% if can?(:manage) && !@blueprint.builtin? %>
         <%= form_with model: @blueprint, url: blueprint_path(@blueprint), method: :patch, class: "grid gap-3 mt-3" do %>

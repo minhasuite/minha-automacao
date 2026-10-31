@@ -13,7 +13,7 @@
 <% end %>
 <%= render layout: "web/settings/frame", locals: { current: :dashboards } do %>
 <% if @dashboards.empty? %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum painel ainda.</p><p class="mt-1">Crie um local primeiro: ele ganha o painel automático.</p></div>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum painel ainda.</p><p class="mt-1">Crie um local primeiro: ele ganha o painel automático.</p><%= link_to new_site_path, class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar local<% end %></div>
 <% else %>
   <div class="ss-card overflow-x-auto">
     <table class="ss-table">

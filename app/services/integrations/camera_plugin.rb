@@ -7,7 +7,7 @@ module Integrations
   # credenciais cifradas (e no aparelho adotado), nunca no endereço.
   class CameraPlugin < Plugin
     describe key: "camera", title: "Câmera RTSP / ONVIF", icon: "video-camera",
-             description: "Qualquer câmera IP na rede: cole o endereço RTSP ou informe o IP para achar os perfis pelo ONVIF. Quadro, ao vivo e movimento (ONVIF)."
+             description: "Qualquer câmera IP da rede: cole o endereço do vídeo ou informe o IP e ela é encontrada sozinha. Imagem, ao vivo e aviso de movimento."
 
     SCHEMES = %w[rtsp rtsps].freeze
 

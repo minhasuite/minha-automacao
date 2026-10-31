@@ -8,7 +8,7 @@
       <% automation.fields.each_with_index do |fd, i| %>
         <li class="rounded-2xl border border-line bg-page/40 p-3 min-w-0">
           <details>
-            <summary class="cursor-pointer flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <summary class="ss-summary flex-wrap !items-baseline gap-x-2 gap-y-0.5">
               <span class="font-semibold text-ink"><%= fd["label"] %></span>
               <code class="text-sm text-muted"><%= fd["name"] %></code>
               <span class="text-sm text-muted"><%= [ Automation::FIELD_TYPES[fd["type"]], ("obrigatório" if fd["required"]),

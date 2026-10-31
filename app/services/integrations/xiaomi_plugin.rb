@@ -2,7 +2,7 @@ module Integrations
   # Conta Xiaomi só para listar os aparelhos e buscar os tokens (controle local).
   class XiaomiPlugin < Plugin
     describe key: "xiaomi", title: "Xiaomi (Mi Home)", icon: "vacuum",
-             description: "Robô aspirador e aparelhos Mi Home. A conta só lista os aparelhos e busca o token de cada um; o controle fica na rede local."
+             description: "Robô aspirador e aparelhos Mi Home. A conta só serve para achar os aparelhos; o controle fica na rede de casa."
 
     def self.setup(site, form)
       i = new_integration(site, name: "Xiaomi", status: "pending")

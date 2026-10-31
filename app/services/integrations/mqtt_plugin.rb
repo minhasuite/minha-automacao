@@ -3,7 +3,7 @@ module Integrations
   # cadastro manual); a varredura só os liga ao card.
   class MqttPlugin < Plugin
     describe key: "mqtt", title: "MQTT", icon: "switch-horizontal",
-             description: "Sensores e aparelhos que falam MQTT no broker do servidor local."
+             description: "Sensores e aparelhos que conversam por MQTT com o servidor da casa. Aparecem sozinhos quando mandam o primeiro dado."
 
     def self.setup(site, _form)
       i = site.integrations.find_or_create_by!(driver: driver) { |n| n.assign_attributes(name: title, poll_s: Integration::SYNC_S) }
