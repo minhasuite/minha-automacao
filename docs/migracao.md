@@ -1,0 +1,126 @@
+# Migrar de outro sistema em sombra (F10)
+
+Migrar automação de casa, loja ou fábrica sem susto: o Minha Automação recebe
+a instalação inteira (aparelhos, áreas, helpers, automações, scripts e cenas)
+e roda **em sombra** ao lado do sistema antigo. As automações disparam com os
+eventos reais, mas nada sai: o que cada uma teria feito fica registrado, e um
+comparador mostra, automação por automação, a diferença para o que o sistema
+antigo fez de verdade. O corte acontece quando a comparação convence.
+
+## Modo sombra
+
+Vale em quatro níveis (o mais amplo ganha):
+
+| Nível | Onde liga | Efeito |
+|---|---|---|
+| Automação ou script | Editor → "Em sombra" (ou em lote na lista) | Só ela fica segurada |
+| Cena | Cadastro da cena → "Em sombra" | Acionar só registra as linhas |
+| Local | Automações e cenas → Sombra → "Pôr o local em sombra" (dono) | Tudo do local: automações, scripts, cenas e regras simples (espelho, agenda, aviso, alerta) |
+| Instalação | Configurações → Sistema → "Modo sombra da instalação" (dono) | Todos os locais |
+
+O que roda e o que é segurado numa execução em sombra:
+
+| Roda de verdade | Segurado ("teria feito") |
+|---|---|
+| Gatilho, condições, esperas, se/escolher/repetir, variáveis, parar | Comando em aparelho e cena |
+| Leituras: previsão do tempo, agenda, consultar dados | Avisar, Falar, Gerar fala, Transcrever |
+| Comando em helper que não comanda aparelho (liga/desliga, número, temporizador...) e chamar script (a execução do script herda a sombra) | Chamar HTTP, Pedir à IA, Gerar dados por IA |
+| Disparar e esperar evento interno | Registrar dados; comando em grupo (ele comanda os membros) |
+
+Decisão: helpers rodam porque são estado interno; assim cadeias como
+"liga o temporizador → quando acaba, desliga a bomba" acontecem em sombra
+(a segunda parte é segurada). O valor deles pode divergir do sistema antigo,
+que muda os helpers por conta própria.
+
+Como funciona por dentro:
+
+- Cada plugin de ação diz se é seguro em sombra (`shadow_safe?`). O padrão é
+  **não**: ação nova nasce segurada. A segurada roda como a simulação do
+  editor e vira um `ShadowAction` com os pontos que comandaria (`effects`).
+- Rede de segurança embaixo: com uma execução em sombra na thread,
+  `Points::Command.call` não cria o comando (registra e levanta
+  `Shadow::Blocked`), e `Notifier`, `SafeHttp` e `Ai::Request` levantam
+  `Shadow::Blocked`. Num local em sombra, todo comando de origem
+  `automation` (regras simples, desligar sozinho) também é segurado.
+- A execução guarda `shadow` (aparece no trace com o ícone de lua); quem é
+  disparado por ela (script, evento, fim de automação) herda a sombra.
+
+## Passo a passo (Home Assistant)
+
+1. **Ponha o local em sombra** antes de qualquer importação.
+2. **Conecte as integrações daqui** que veem os mesmos aparelhos (ex.: Tuya /
+   Smart Life por QR, Xiaomi, Alexa). Elas só leem até o corte.
+3. **Importe** com os arquivos do HA numa pasta temporária (nunca no repo):
+   `core.area_registry.json`, `core.device_registry.json`,
+   `core.entity_registry.json` (de `/config/.storage`), `states.json`
+   (`GET /api/states`), `automations.yaml`, `scripts.yaml` e `scenes.yaml`.
+
+   ```bash
+   bin/rails 'migracao:home_assistant[Casa,/tmp/ha]'
+   ```
+
+   O importador (`Integrations::HomeAssistantImport`) é idempotente pelo
+   de-para e faz, nesta ordem: áreas pelo nome; adiciona os aparelhos que as
+   integrações encontraram e ainda não estavam no local, na área do HA (e
+   move os já cadastrados para ela); liga cada entidade do HA ao ponto daqui
+   (aparelho pelo identificador do registro; ponto pelo código do dp, pelo
+   dps do LocalTuya, pela propriedade MIoT ou pelo único ponto da
+   capacidade); recria os helpers (`input_*`, `timer`, `counter`, grupos);
+   cenas; scripts e automações pelo importador de blueprints, com as
+   entradas resolvidas pelo de-para. Tudo nasce em sombra; automação fica
+   ligada só se estiver ligada no HA. Apague a pasta depois.
+4. **Confira** em Automações e cenas → Sombra: o de-para (o que ficou sem par)
+   e, na saída da importação, a lista "COM PERDA" (Jinja não traduzido,
+   entidade sem par, gatilho sem equivalente). Corrija no editor.
+5. **Ligue a comparação**: Integrações → Home Assistant (migração), com o
+   endereço e um token de acesso longo do HA (só GET). Libere o IP do HA em
+   Configurações → Sistema → Saída HTTP. A comparação roda a cada 6 h sobre
+   as últimas 24 h e há "Comparar agora". Sem token, dá para comparar com um
+   diário baixado à parte:
+   `bin/rails 'migracao:comparar[Casa,home_assistant,/tmp/logbook.json,6]'`.
+6. **Deixe rodar** alguns dias, cobrindo dia, noite e fim de semana.
+
+## Leitura do relatório
+
+| Resultado | Quer dizer |
+|---|---|
+| Igual | Mesmos disparos e mesmos efeitos |
+| MA a mais | Daqui disparou mais ou faria algo que lá não aconteceu |
+| MA a menos | Lá disparou mais ou fez algo que aqui não faria |
+| Diferente | Os dois lados fizeram coisas diferentes |
+| Sem par no MA | Disparou lá e não foi importada |
+| Sem disparo | Nenhum dos dois disparou na janela |
+
+Efeito = entidade e estado ("switch.x=on"). Do lado do HA contam só os
+domínios que recebem comando (sensor muda sozinho); efeito em entidade sem
+de-para aparece à parte. Do lado daqui, alternar, apertar e rodar casam com
+qualquer estado. Aviso, fala e HTTP não entram na conta (o HA não os registra
+no diário), mas estão na linha do tempo "teria feito".
+
+## Fonte de referência nova
+
+Um plugin de integração (`Integrations::PLUGINS`) que responde a:
+
+- `reference(integration, from, to, entries:)` →
+  `{id na origem → {"name", "runs", "effects" => [[entidade, estado]]}}`
+  (`entries` = dados já lidos, para testes e comparação offline);
+- `state_for(comando, valor)` → o estado que a origem mostraria ("*" = qualquer).
+
+O de-para é `ExternalRef` com `source` = chave do plugin (automação de lá →
+`Automation`, entidade de lá → `Point`). O comparador (`Shadow::Compare`) e a
+tela não mudam.
+
+## Corte (cutover)
+
+Por automação, quando a comparação dela estiver "Igual" há alguns dias:
+
+1. Desligue a automação no sistema antigo.
+2. Aqui, se o local estiver em sombra, primeiro marque "Em sombra" em todas
+   (lote → "Pôr em sombra") e tire o local da sombra; depois tire da sombra
+   só as que vão assumir.
+3. Acompanhe em Execuções e no aparelho.
+
+No dia do corte geral: desligue as automações do sistema antigo, tire a
+sombra (local e automações), troque a skill/integração de voz para a daqui,
+reaponte o app e os painéis, e mantenha o sistema antigo parado (não
+apagado) por uns dias para voltar se precisar.

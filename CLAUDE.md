@@ -77,7 +77,11 @@ iniciou", sensor calculado com `previous`, "a cada", data e hora e atributos
 (`points.attrs`), "para cada" no Repetir e voz (STT/TTS) como capacidade dos
 provedores de IA, com as ações "Transcrever áudio" e "Gerar fala". +
 **Lote 6**: Tuya na nuvem como no HA (Zigbee atrás do hub, comando por
-código do dp, MQTT em tempo real, eventos de botão; `docs/integracoes.md`).
+código do dp, MQTT em tempo real, eventos de botão; `docs/integracoes.md`). +
+**F10**: modo sombra (automação, script, cena, local e instalação), linha do
+tempo "teria feito", de-para de migração (`ExternalRef`), comparador com
+fonte de referência como plugin (Home Assistant) e importação do HA em
+sombra (`docs/migracao.md`).
 
 ## Rodar
 
@@ -241,7 +245,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   execução na thread ou comando com `automation_run_id` no ponto há < 10 s;
   própria automação ou corrente > 3 = "laço evitado". Comando sempre por
   `Points::Command` (`run:`), nunca direto no driver. Notificação `kind:
-  "automacao"`. No Dell nenhuma automação ativa sobre aparelho real até a F10.
+  "automacao"`. No Dell o local Casa fica em sombra (F10) até o corte.
 - **Gatilho, condição ou ação nova (F8f)**: cada tipo é um plugin
   (`Automations::Block`) registrado em `Automations::TriggerTypes::PLUGINS`,
   `ConditionTypes::PLUGINS` ou `ActionTypes::PLUGINS`; **nada de `case` por
@@ -441,6 +445,19 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `system_started` pelo `SolidQueue.on_start` (supervisor, uma vez por
   início). Sensor calculado "a cada" não depende das origens (`sources` vazio)
   e se refaz no `HelperTypes.tick` (RunSchedulesJob).
+- **Sombra (F10)**: `Shadow.active?` = marca da automação/cena, `sites.shadow`
+  ou `tenants.settings["shadow"]`; a execução guarda `automation_runs.shadow`
+  (herda de quem causou e da thread). Ação nova = **segurada** por padrão:
+  só declare `shadow_safe?` se ela não sai para fora (aparelho, aviso, rede,
+  IA paga); a segurada roda pelo caminho da simulação (`dry_run?`) e vira
+  `ShadowAction` (`shadow_effects` = pontos e comandos). Rede de segurança:
+  `Shadow.intercept!` no `Points::Command.call` e `Shadow.block!` no
+  `Notifier`, `SafeHttp` e `Ai::Request`; comando em helper que não comanda
+  ponto (`drives_points?` falso) e em ponto de script roda e fica registrado
+  (`executed`). Saída nova para fora = chamar `Shadow.block!` nela + spec no
+  `f10_shadow_spec` (o teste percorre todas as ações registradas). Fonte de
+  referência do comparador = plugin de integração com `reference` e
+  `state_for`; de-para em `ExternalRef` (`source` = chave do plugin).
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 
