@@ -102,6 +102,8 @@ module Blueprints
                    "xiaomi_miot" => "xiaomi_miot", "mqtt" => "mqtt" }.freeze
     # Ações do HA que só anotam no diário → "Anotar" (fica no trace).
     LOG_SERVICES = %w[logbook.log system_log.write].freeze
+    # Serviço do aspirador do HA → comando do ponto aspirador daqui (Points::Command).
+    VACUUM_COMMANDS = { "start" => "start", "pause" => "pause", "stop" => "stop", "return_to_base" => "home", "locate" => "locate" }.freeze
 
     # Blueprint, automação(ões) ou scripts do HA → lista de atributos de Blueprint.
     def self.import(text, source_url: nil)
@@ -500,6 +502,7 @@ module Blueprints
         [ notify(data, domain == "notify" ? %w[in_app push] : %w[in_app]) ]
       elsif domain == "script" && (k = entity_input(service)) then service_script(a.merge("target" => { "entity_id" => { "!input" => k } }))
       elsif HELPER_DOMAINS.include?(domain) && HELPER_COMMANDS.key?(name) then helper_command(HELPER_COMMANDS[name], a)
+      elsif domain == "vacuum" && VACUUM_COMMANDS.key?(name) then targets(a).map { |p| { "type" => "command", "point" => p, "command" => VACUUM_COMMANDS[name] } }.presence
       elsif LOG_SERVICES.include?(service) then log_action(a)
       elsif domain == "rest_command" && @rest[name].is_a?(Hash) then rest_command(@rest[name], a)
       elsif service == "homeassistant.reload_config_entry" || name == "reload" then reload_action(a, domain)

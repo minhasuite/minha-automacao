@@ -114,6 +114,8 @@ RSpec.describe "Lote 7: zerar os rascunhos da migração" do
             data: { entry_id: '{{ entrada }}' }
           - action: localtuya.reload
           - action: rest_command.sem_definicao
+          - action: vacuum.return_to_base
+            target: { entity_id: vacuum.robo }
       YAML
       acts = attrs["definition"]["actions"].drop(1) # a variável constante vem primeiro
       expect(attrs["definition"]["actions"].first).to eq("type" => "set", "var" => "entrada", "value" => "E1")
@@ -124,6 +126,7 @@ RSpec.describe "Lote 7: zerar os rascunhos da migração" do
       expect(acts[7]).to eq("type" => "http", "method" => "POST", "url" => "{{ url }}", "body" => "{{ corpo }}", "headers" => "Content-Type: text/plain",
                             "timeout" => 15, "continue_on_error" => true)
       expect(acts[8..9]).to eq([ { "type" => "integration_reload", "integration" => "alexa" }, { "type" => "integration_reload", "integration" => "tuya" } ])
+      expect(acts[10]).to eq("type" => "command", "point" => { "!input" => "vacuum_robo" }, "command" => "home")
       expect(attrs["unsupported"]).to eq([ "ação rest_command.sem_definicao" ])
     end
 
