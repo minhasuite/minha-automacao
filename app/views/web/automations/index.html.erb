@@ -28,6 +28,7 @@
     <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma automação com esses filtros.</p><p class="mt-1"><%= link_to "Limpar filtros", site_automations_path(@site) %></p></div>
   <% else %>
     <div class="ss-bulk-scope" data-controller="select-all">
+    <% site_shadow = Shadow.site?(@site) %>
     <ul class="ss-card ss-rows" aria-label="Automações">
       <% @automations.each do |a| %>
         <li id="automation-<%= a.id %>">
@@ -37,7 +38,8 @@
             <p class="font-bold text-ink break-words"><%= link_to a.name, (can?(:manage) ? edit_automation_path(a) : automation_automation_runs_path(a)), class: "text-ink no-underline hover:text-accent" %>
               <% unless a.enabled %> <span class="ss-badge ss-badge-warn"><%= a.published? ? "Desligada" : "Rascunho" %></span><% end %>
               <% if a.draft? && a.published? %> <span class="ss-badge">Rascunho com mudanças</span><% end %>
-              <% if a.blueprint_outdated? %> <span class="ss-badge ss-badge-accent">Blueprint mudou</span><% end %></p>
+              <% if a.blueprint_outdated? %> <span class="ss-badge ss-badge-accent">Blueprint mudou</span><% end %>
+              <% if a.shadow || site_shadow %> <span class="ss-badge ss-badge-accent"><%= icon("moon", "size-3 inline") %>Em sombra</span><% end %></p>
             <p class="text-sm text-muted break-words"><%= [ a.area&.name, a.mode_label.split(" (").first, *a.tags.map(&:name).sort ].compact.join(" · ") %></p>
             <p class="text-xs text-muted">Última execução: <%= last_run_text(a).downcase %></p>
             <% if a.last_error.present? %><p class="text-sm text-danger mt-1 flex gap-1"><%= icon("exclamation-circle", "size-4 shrink-0 mt-0.5") %><span><%= a.last_error %></span></p><% end %>
@@ -58,7 +60,7 @@
         <span class="ss-bulk-count">marcada(s)</span>
         <label class="ss-check text-sm text-ink-2"><input type="checkbox" data-action="select-all#toggle"> Marcar todas</label>
         <label class="sr-only" for="bulk-op">Ação nas marcadas</label>
-        <%= select_tag :op, options_for_select([ %w[Ligar enable], %w[Desligar disable], %w[Excluir delete] ]), id: "bulk-op", class: "ss-input" %>
+        <%= select_tag :op, options_for_select([ %w[Ligar enable], %w[Desligar disable], [ "Pôr em sombra", "shadow_on" ], [ "Tirar da sombra", "shadow_off" ], %w[Excluir delete] ]), id: "bulk-op", class: "ss-input" %>
         <%= button_tag "Aplicar nas marcadas", class: "ss-btn ss-btn-primary ss-btn-sm", data: { turbo_confirm: "Aplicar a ação nas automações marcadas? Excluir não tem volta.", turbo_confirm_button: "Aplicar" } %>
       <% end %>
     <% end %>

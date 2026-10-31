@@ -30,6 +30,14 @@
   </div>
 <% end %>
 
+<% if Shadow.active?(@automation) %>
+  <div class="rounded-xl bg-accent-soft p-3 mb-4 text-sm flex flex-wrap items-center gap-3" role="status">
+    <p class="flex-1 min-w-48 text-ink"><%= icon("moon", "size-5 inline text-accent") %>
+      <strong>Em sombra<%= " (o local inteiro)" if !@automation.shadow %>.</strong> Dispara com os eventos reais, mas nenhum aparelho recebe comando e nenhum aviso, fala, HTTP ou IA sai. O que ela teria feito fica na linha do tempo.</p>
+    <%= link_to site_shadow_path(@site, automacao: @automation.id), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("moon", "size-4") %>Ver o que teria feito<% end %>
+  </div>
+<% end %>
+
 <% if @automation.blueprint_outdated? %>
   <div class="rounded-xl bg-accent-soft p-3 mb-4 text-sm flex flex-wrap items-center gap-3" role="status">
     <p class="flex-1 min-w-48 text-ink"><%= icon("information-circle", "size-5 inline text-accent") %>

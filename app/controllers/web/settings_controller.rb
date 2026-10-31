@@ -24,7 +24,14 @@ module Web
 
     # Saída HTTP (ação "Chamar HTTP", agenda ICS): endereços internos liberados.
     def update_system
-      current_user.tenant.update!(http_allow_text: params[:http_allow])
+      tenant = current_user.tenant
+      if params.key?(:shadow) # F10: sombra da instalação inteira
+        on = ActiveModel::Type::Boolean.new.cast(params[:shadow])
+        tenant.update!(settings: tenant.settings.merge("shadow" => on))
+        return redirect_to(settings_system_path, notice: on ? "Instalação em sombra: nada comanda aparelho." : "Sombra da instalação desligada.")
+      end
+
+      tenant.update!(http_allow_text: params[:http_allow])
       redirect_to settings_system_path, notice: "Endereços liberados salvos."
     end
 

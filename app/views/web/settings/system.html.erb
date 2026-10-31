@@ -41,6 +41,19 @@
   <% end %>
 </section>
 
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="shadow-t">
+  <h2 id="shadow-t" class="flex items-center gap-2"><%= icon("moon", "size-5 text-accent") %>Modo sombra da instalação</h2>
+  <p class="text-sm text-muted mt-1">Para migrar de outro sistema com segurança: todas as automações, scripts, cenas e regras de todos os locais disparam com os eventos reais, mas nada sai (aparelho, aviso, fala, HTTP, IA). Cada local tem a própria sombra em Automações e cenas → Sombra.</p>
+  <% on = Shadow.global?(current_user.tenant) %>
+  <p class="mt-2"><span class="ss-badge <%= on ? 'ss-badge-accent' : '' %>"><%= on ? "Ligado" : "Desligado" %></span></p>
+  <% if owner %>
+    <%= button_to settings_system_path, method: :patch, params: { shadow: !on }, class: "ss-btn #{on ? 'ss-btn-outline' : 'ss-btn-primary'} mt-3",
+                  form: { data: { turbo_confirm: (on ? "Desligar a sombra da instalação? Vale então a sombra de cada local e de cada automação." : "Pôr a instalação inteira em sombra?"), turbo_confirm_button: "Confirmar" } } do %>
+      <%= on ? "Desligar a sombra" : "Ligar a sombra" %>
+    <% end %>
+  <% end %>
+</section>
+
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="plan-t">
   <h2 id="plan-t">Plano</h2>
   <% b = @billing %>

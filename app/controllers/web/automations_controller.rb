@@ -212,6 +212,9 @@ module Web
       when "disable"
         list.each { |a| a.update!(enabled: false) }
         "#{count(list.size)} desligada#{'s' if list.size != 1}."
+      when "shadow_on", "shadow_off"
+        list.each { |a| a.update!(shadow: params[:op] == "shadow_on") }
+        "#{count(list.size)} #{params[:op] == 'shadow_on' ? 'em sombra' : 'fora da sombra'}."
       when "delete"
         list.each(&:destroy!)
         "#{count(list.size)} excluída#{'s' if list.size != 1}."
@@ -268,7 +271,7 @@ module Web
     def back = url_from(params[:back].presence) || edit_automation_path(@automation)
 
     def automation_params
-      params.require(:automation).permit(:name, :description, :mode, :max_runs, :area_id, :enabled, :icon, :label_list).tap do |p|
+      params.require(:automation).permit(:name, :description, :mode, :max_runs, :area_id, :enabled, :icon, :label_list, :shadow).tap do |p|
         p[:area_id] = p[:area_id].presence if p.key?(:area_id)
       end
     end

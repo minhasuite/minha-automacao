@@ -1,0 +1,35 @@
+<% zone = @site.timezone %>
+<%= render "web/shared/header", title: "Comparação", subtitle: "#{@site.name} · #{@report.source} · #{l(@report.window_from.in_time_zone(zone), format: '%d/%m %H:%M')} a #{l(@report.window_to.in_time_zone(zone), format: '%d/%m %H:%M')}", back: site_shadow_path(@site) do %>
+  <%= link_to report_site_shadow_path(@site, @report.id, format: :csv), class: "ss-btn ss-btn-ghost", data: { turbo: false } do %><%= icon("download", "size-4") %>Exportar CSV<% end %>
+<% end %>
+
+<nav class="ss-chips mb-4" aria-label="Filtrar por resultado">
+  <%= link_to "Todas (#{@report.rows.size})", report_site_shadow_path(@site, @report.id), class: "ss-chip shrink-0", "aria-current": @status.nil?.to_s %>
+  <% ShadowReport::STATUSES.each do |key, label| %>
+    <% n = @report.summary[key].to_i %>
+    <% next if n.zero? %>
+    <%= link_to "#{label} (#{n})", report_site_shadow_path(@site, @report.id, status: key), class: "ss-chip shrink-0", "aria-current": (@status == key).to_s %>
+  <% end %>
+</nav>
+
+<% if @rows.empty? %>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nada nessa situação.</p></div>
+<% else %>
+  <ul class="ss-card ss-rows" aria-label="Automações comparadas">
+    <% @rows.each do |r| %>
+      <li>
+        <div class="min-w-0 flex-1 basis-56">
+          <p class="font-bold text-ink break-words">
+            <% if r["automation_id"] %><%= link_to r["name"], automation_automation_runs_path(r["automation_id"]), class: "text-ink no-underline hover:text-accent" %><% else %><%= r["name"] %><% end %>
+            <span class="ss-badge ss-badge-<%= ShadowReport::TONES[r['status']] %>"><%= ShadowReport.status_label(r["status"]) %></span></p>
+          <p class="text-xs text-muted break-words"><code><%= r["ref"] %></code></p>
+          <% if r["detail"].present? %><p class="text-sm text-ink-2 break-words mt-1"><%= r["detail"] %></p><% end %>
+        </div>
+        <dl class="grid grid-cols-2 gap-x-4 text-sm text-right shrink-0">
+          <dt class="text-muted">Referência</dt><dd class="num"><%= r["ref_runs"] %></dd>
+          <dt class="text-muted">Sombra</dt><dd class="num"><%= r["runs"] %></dd>
+        </dl>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

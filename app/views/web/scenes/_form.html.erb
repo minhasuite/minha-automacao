@@ -8,6 +8,8 @@
   <section class="ss-card ss-card-pad grid gap-4 sm:grid-cols-2">
     <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: "Chegada, Cinema, Boa noite", autofocus: record.new_record? %></div>
     <div class="sm:col-span-2"><%= render "web/shared/icon_picker", name: "scene[icon]", selected: record.icon, icons: HelperTypes::ICONS, id: "scene_icon" %></div>
+    <div class="sm:col-span-2"><label class="ss-check"><%= f.check_box :shadow %> Em sombra: acionar só registra o que faria, nada é enviado</label>
+      <% if Shadow.site?(site) %><p class="text-xs text-muted mt-1">O local inteiro está em sombra: vale mesmo desmarcado.</p><% end %></div>
   </section>
 
   <section class="ss-card ss-card-pad" aria-labelledby="scene-capture">

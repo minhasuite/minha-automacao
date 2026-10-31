@@ -71,6 +71,11 @@ Rails.application.routes.draw do
       resources :scenes, path: "cenas", except: :show, shallow: true do
         post :activate, on: :member, path: "acionar"
       end
+      # Sombra (F10): "teria feito", de-para da migração e comparações.
+      resource :shadow, path: "sombra", only: %i[show update], controller: "shadow" do
+        post :compare, path: "comparar"
+        get "relatorios/:report_id", action: :report, as: :report
+      end
       # Scripts (F8f): automação de `kind: "script"`; o editor, as versões e as
       # execuções são os das automações (rotas /automacoes/:id).
       resources :scripts, path: "scripts", only: %i[index new create], path_names: { new: "novo" }

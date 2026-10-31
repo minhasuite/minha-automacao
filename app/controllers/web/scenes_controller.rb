@@ -63,6 +63,6 @@ module Web
     end
 
     def back_path = url_from(params[:back].presence) || site_scenes_path(@site)
-    def permitted = [ :name, :icon, { items: %i[point_id command value] } ]
+    def permitted = [ :name, :icon, :shadow, { items: %i[point_id command value] } ]
   end
 end
