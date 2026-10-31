@@ -10,7 +10,8 @@
 # `new_value`) e o driver virtual entrega a ele (`execute`).
 module HelperTypes
   # Ordem = ordem do catálogo. Tipo novo: classe + uma linha aqui + partial.
-  PLUGINS = %w[Toggle Number Select Text Datetime Button Counter Timer Group Template Statistics DatasetQuery].freeze
+  PLUGINS = %w[Toggle Number Select Text Datetime Button Counter Timer Group Template Statistics DatasetQuery
+                UtilityMeter Integral Derivative Threshold Trend].freeze
   # `external_id` do dispositivo virtual que guarda os helpers do local.
   DEVICE_ID = "helpers".freeze
   # Ícones que o formulário oferece (arquivos de app/assets/images/icons).
@@ -71,6 +72,12 @@ module HelperTypes
         next unless (((local.hour * 60) + local.min) % (p.address["every"].to_i / 60)).zero?
 
         ActsAsTenant.with_tenant(p.tenant) { self.for(p)&.refresh!(p) }
+      rescue StandardError => e
+        Rails.error.report(e, handled: true)
+      end
+      # Pacote 2: tipos que andam pelo relógio (`clocked?`) recebem o minuto.
+      Point.where(helper: plugins.select(&:clocked?).map(&:key)).find_each do |p|
+        ActsAsTenant.with_tenant(p.tenant) { self.for(p).tick(p, now) }
       rescue StandardError => e
         Rails.error.report(e, handled: true)
       end

@@ -6,7 +6,7 @@ module HelperTypes
   # de verdade); o valor do grupo se refaz quando um membro muda.
   class Group < Plugin
     BOOL_MODES = { "any" => "Qualquer um ligado", "all" => "Todos ligados" }.freeze
-    NUM_MODES = { "mean" => "Média", "min" => "Mínimo", "max" => "Máximo", "sum" => "Soma" }.freeze
+    NUM_MODES = { "mean" => "Média", "median" => "Mediana", "min" => "Mínimo", "max" => "Máximo", "sum" => "Soma" }.freeze
     BOOL_CAPS = %w[onoff contact motion problem tamper].freeze
     NUM_CAPS = %w[measure setpoint dimmer counter].freeze
     MAX_MEMBERS = 50
@@ -53,7 +53,9 @@ module HelperTypes
     def self.aggregate(mode, nums)
       return if nums.empty?
 
-      { "mean" => nums.sum.to_f / nums.size, "min" => nums.min, "max" => nums.max }.fetch(mode) { nums.sum }.then { |v| v.is_a?(Float) ? v.round(3) : v }
+      sorted = nums.sort
+      median = (sorted[(sorted.size - 1) / 2] + sorted[sorted.size / 2]) / 2.0
+      { "mean" => nums.sum.to_f / nums.size, "median" => median, "min" => nums.min, "max" => nums.max }.fetch(mode) { nums.sum }.then { |v| v.is_a?(Float) ? v.round(3) : v }
     end
 
     # Comando no grupo: o mesmo comando em cada membro (alternar vira ligar/desligar para todos).

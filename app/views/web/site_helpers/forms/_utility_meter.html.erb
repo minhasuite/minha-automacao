@@ -1,0 +1,8 @@
+<%# locals: (f:, point:) -%>
+<%= render "web/site_helpers/forms/source_field", f: f, point: point, label: "Medidor de origem (valor acumulado: kWh, m³)" %>
+<div><%= f.label :cycle, "Ciclo", class: "ss-label" %><%= f.select :cycle, HelperTypes::UtilityMeter::CYCLES.invert, { selected: point.address["cycle"] || "month" }, class: "ss-input" %></div>
+<div><%= f.label :day, "Dia de fechamento (mês, trimestre, ano)", class: "ss-label" %><%= f.number_field :day, value: point.address["day"] || 1, min: 1, max: 28, step: 1, class: "ss-input num" %></div>
+<div class="sm:col-span-2"><%= f.label :cron, "Cron (só no ciclo Cron)", class: "ss-label" %><%= f.text_field :cron, value: point.address["cron"], class: "ss-input num", placeholder: "0 0 12 * *  (todo dia 12, 0h)" %>
+  <p class="text-xs text-muted mt-1">Minuto, hora, dia, mês e dia da semana, no fuso do local.</p></div>
+<div class="sm:col-span-2"><%= f.label :tariffs_text, "Tarifas (opcional)", class: "ss-label" %><%= f.text_field :tariffs_text, value: point.options.to_a.join(", "), class: "ss-input", placeholder: "Ponta, Fora de ponta" %>
+  <p class="text-xs text-muted mt-1">A primeira é a ativa no começo. Troque pela ação "Comandar ponto" → Trocar a tarifa (numa automação de horário). O consumo de cada tarifa fica no atributo <code>tariffs</code>; o ciclo anterior, em <code>last_period</code>. Se o aparelho zerar a contagem, nada se perde.</p></div>

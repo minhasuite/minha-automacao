@@ -28,10 +28,15 @@ padrão sim; não = volta ao inicial quando o worker sobe, `HelperTypes.boot!`).
 | `button` | Botão | `command` | — (valor = hora do aperto) | press |
 | `counter` | Contador | `counter` | `initial`, `step`, `min`/`max` opcionais (passa do limite = fica no limite) | increment, decrement, reset, set |
 | `timer` | Temporizador | `timer` | `duration_s`; contando: `finishes_at`; pausado: `remaining_s` | start (valor opcional "5m"), pause, cancel, finish |
-| `group` | Grupo | a dos membros (`measure` para números) | `sources` (membros do mesmo tipo), `mode`: `any`/`all` ou `mean`/`min`/`max`/`sum` | on, off, toggle (só grupo de liga/desliga; repassa a cada membro) |
+| `group` | Grupo | a dos membros (`measure` para números) | `sources` (membros do mesmo tipo), `mode`: `any`/`all` ou `mean`/`median`/`min`/`max`/`sum` | on, off, toggle (só grupo de liga/desliga; repassa a cada membro) |
 | `template` | Sensor calculado | `measure`, `onoff` (só leitura), `text` ou `datetime` | `kind` (`number`/`bool`/`text`/`timestamp`), `expr`, `sources` (pontos cuja chave aparece), `every?` (segundos), `attrs?` ({nome: Liquid}) | — |
-| `statistics` | Estatística | `measure` | `sources` (um ponto numérico), `func` (`mean`/`min`/`max`/`sum`), `window_s` | — |
+| `statistics` | Estatística | `measure` | `sources` (um ponto numérico), `func` (`mean`/`median`/`min`/`max`/`sum`), `window_s` | — |
 | `dataset_query` | Consulta (Lote 2) | `measure` (`text` no último valor de campo de texto) | `sources` (o conjunto de dados), `op` (tipo de consulta de um valor só), `field`, `window_s`, `filters` | — |
+| `utility_meter` | Medidor por ciclo (Pacote 2) | `measure` | `sources` (ponto acumulador), `cycle` (`none`/`hour`/`day`/`week`/`month`/`quarter`/`year`/`cron`), `day` (fechamento, 1 a 28), `cron?`; tarifas em `options` | reset (zerar o ciclo), select (trocar a tarifa) |
+| `integral` | Integral (Pacote 2) | `measure` | `sources`, `method` (`trapezoidal`/`left`/`right`), `prefix` (""/k/M/G), `time_unit` (s/min/h/d), `round`, `max_s?` | — |
+| `derivative` | Derivada (Pacote 2) | `measure` | `sources`, `prefix`, `time_unit`, `round`, `window_s` (0 = entre as duas últimas leituras) | — |
+| `threshold` | Limite (Pacote 2) | `onoff` (só leitura) | `sources`, `lower?`, `upper?`, `hysteresis` | — |
+| `trend` | Tendência (Pacote 2) | `onoff` (só leitura) | `sources`, `window_s`, `min_samples`, `max_samples`, `min_gradient` (por segundo), `invert` | — |
 
 - **Temporizador**: valor `idle` (Parado), `active` (Contando), `paused`
   (Pausado) ou `finished` (Terminou). O fim é um `HelperTimerJob` agendado no
@@ -59,6 +64,52 @@ padrão sim; não = volta ao inicial quando o worker sobe, `HelperTypes.boot!`).
   conjunto de dados (`docs/dados.md`). Refaz a cada linha gravada no conjunto
   (a mesma `address.sources`, com o id do conjunto); erro = "Com erro",
   conjunto excluído = indisponível.
+
+### Pacote 2: helpers de medição (como os do HA)
+
+Valem para todos: a origem é um ponto numérico do local; o estado interno
+do cálculo (último valor da origem, amostras, total sem arredondar) fica em
+`address.state`, gravado sem disparar nada, e o que a pessoa usa vai para o
+valor e para os atributos (`points.attrs`: Liquid `points["k"].attrs.x`,
+expressão `k.attrs.x`, widget Número). Origem que só muda de qualidade
+(caiu, voltou) também refaz o helper (`Point#report!` →
+`HelperTypes.on_change`). Trocar a origem no formulário zera o estado.
+
+- **Medidor por ciclo** (`utility_meter`): valor = consumo do ciclo. O ciclo
+  vira cron no fuso do local (`Fugit`, "0 0 12 * *" = mensal no dia 12);
+  `tick` a cada minuto fecha o ciclo: valor → atributo `last_period`, zera,
+  `period_start` novo. Origem que desce (aparelho reiniciou e zerou) = a
+  leitura nova inteira é consumo; fora do ar não conta e, na volta, a
+  diferença entra de uma vez. Tarifas: lista em `options`; atributo `tariff`
+  (a ativa, começa na primeira) e `tariffs` ({tarifa → consumo do ciclo}).
+  "Trocar a tarifa" lê a origem antes, então o que andou até ali fica na
+  tarifa anterior. "Zerar o ciclo" guarda o valor em `last_period`. O valor
+  não se escreve de fora (`POST /value` = 422).
+- **Integral** (`integral`): soma de Riemann sobre o tempo; W com prefixo k e
+  hora = kWh (unidade montada: prefixo + unidade da origem + tempo). O tempo
+  com a origem fora do ar não entra. "Intervalo máximo sem leitura": origem
+  parada esse tempo = o `tick` integra assim mesmo com o valor atual.
+- **Derivada** (`derivative`): (último − primeiro) / tempo na janela (sem
+  janela, entre as duas últimas leituras; leituras mais espaçadas que a
+  janela = as duas últimas). Unidade `<prefixo><unidade>/<tempo>`. Sem duas
+  amostras = vazio.
+- **Limite** (`threshold`): como o HA; só inferior = liga abaixo, só
+  superior = liga acima, os dois = liga na faixa; a histerese segura o estado
+  perto do limite. Atributo `position` (`below`/`above`/`in_range`). Origem
+  fora do ar = indisponível.
+- **Tendência** (`trend`): inclinação por mínimos quadrados das amostras da
+  janela (até `max_samples`), em unidades por segundo; liga acima de
+  `min_gradient` (invertido: abaixo de `-min_gradient`). Menos que
+  `min_samples` = indisponível. Atributos `gradient` e `samples`.
+- **Mín/máx/média/mediana/soma de vários pontos**: é o Grupo de números
+  (`group`, modo `median` novo); a mediana também entrou na Estatística.
+
+Tudo é ponto: entra nas leituras e nos rollups, é gatilho ("Ponto mudou",
+"Ponto entre limites", atributo) e condição nas automações e aparece nos
+widgets, sem código novo. Tipo que precisa do relógio declara `clocked?` e
+`tick(point, now)` (chamado pelo `HelperTypes.tick` a cada minuto). Spec em
+`spec/services/pacote2_helpers_spec.rb` (inclui um tipo falso com relógio
+registrado por `stub_const`).
 
 ## Automações, painéis e API
 

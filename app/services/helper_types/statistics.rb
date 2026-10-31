@@ -4,7 +4,7 @@ module HelperTypes
   # ponytail: só se refaz quando o ponto de origem muda; numa janela parada o
   # valor velho não "sai" sozinho. Se precisar, refazer também pelo relógio.
   class Statistics < Plugin
-    FUNCS = { "mean" => "Média", "min" => "Mínimo", "max" => "Máximo", "sum" => "Soma" }.freeze
+    FUNCS = { "mean" => "Média", "median" => "Mediana", "min" => "Mínimo", "max" => "Máximo", "sum" => "Soma" }.freeze
     MAX_WINDOW = 30.days.to_i
 
     describe key: "statistics", title: "Estatística", icon: "chart-bar", capability: "measure",

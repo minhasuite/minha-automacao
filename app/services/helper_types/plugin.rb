@@ -5,6 +5,10 @@ module HelperTypes
   # comando. Helper calculado (`sourced?`) guarda os pontos de origem em
   # `address["sources"]` e se refaz em `refresh!` quando um deles muda.
   class Plugin
+    # Fator do prefixo de unidade (k = mil) e segundos da unidade de tempo (integral e derivada).
+    PREFIXES = { "" => 1, "k" => 1e3, "M" => 1e6, "G" => 1e9 }.freeze
+    TIME_UNITS = { "s" => 1, "min" => 60, "h" => 3600, "d" => 86_400 }.freeze
+
     class << self
       attr_reader :key, :title, :icon, :description, :capability
 
@@ -70,6 +74,36 @@ module HelperTypes
       def number(raw) = raw.to_s.strip.empty? ? nil : Float(raw.to_s.tr(",", "."), exception: false)
 
       def invalid!(message) = raise(Points::Command::Error.new(:invalid_value, message))
+
+      # Pacote 2: helper que também anda pelo relógio (fim de ciclo, intervalo
+      # máximo sem leitura). `HelperTypes.tick` chama `tick` a cada minuto.
+      def clocked? = false
+      def tick(_point, _now) = nil
+
+      # Ponto de origem (o primeiro de `address.sources`).
+      def source(point) = point.site.points.find_by(id: point.address.dig("sources", 0))
+
+      # Leitura usável da origem: número com qualidade boa (nil = fora do ar ou sem valor).
+      def reading(src) = src&.quality == "good" && src.value.is_a?(Numeric) ? src.value.to_f : nil
+
+      # Origem numérica do formulário (ou a atual). Trocou de origem = o
+      # estado interno recomeça. nil (com erro no ponto) se não serve.
+      def numeric_source!(point, form)
+        src = point.site.points.find_by(id: form["source"].presence || point.address.dig("sources", 0))
+        unless src&.numeric? && src.id != point.id
+          point.errors.add(:base, "Escolha um ponto numérico de origem.")
+          return
+        end
+
+        point.address = point.address.except("state") if point.address.dig("sources", 0) != src.id
+        point.address = point.address.merge("sources" => [ src.id ])
+        src
+      end
+
+      # Estado interno do cálculo (último valor da origem, amostras): fica em
+      # `address["state"]`, gravado sem disparar nada; o que a pessoa vê vai para `attrs`.
+      def state(point) = point.address["state"].to_h
+      def save_state!(point, values) = point.update_column(:address, point.address.merge("state" => values)) # rubocop:disable Rails/SkipsModelValidations
     end
   end
 end
