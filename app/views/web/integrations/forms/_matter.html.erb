@@ -1,0 +1,14 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<% if integration.nil? %>
+  <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "Matter", maxlength: 80 %></div>
+<% end %>
+<div>
+  <%= f.label :url, "Endereço do Matter Server", class: "ss-label" %>
+  <%= f.text_field :url, class: "ss-input font-mono text-sm", value: s["url"], placeholder: "ws://192.168.0.10:5580/ws", autocomplete: "off", spellcheck: false %>
+</div>
+<div>
+  <%= f.label :code, "Comissionar aparelho (opcional)", class: "ss-label" %>
+  <%= f.text_field :code, class: "ss-input font-mono text-sm", value: nil, placeholder: "MT:Y.K9042C00KA0648G00 ou 3497-011-2332", autocomplete: "off", spellcheck: false %>
+</div>
+<p class="text-xs text-muted">O Matter Server é o mesmo do Home Assistant (no servidor da casa: serviço <code>matter-server</code>, perfil <code>matter</code>, porta 5580). O código de pareamento fica no aparelho ou na caixa; o aparelho precisa já estar na rede Wi-Fi ou Thread. Comissionar leva até 2 min.</p>

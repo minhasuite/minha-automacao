@@ -23,6 +23,8 @@ x-app: &app
     ACTIVE_STORAGE_SERVICE: local
     GO2RTC_URL: http://go2rtc:1984
     SUPERVISOR_URL: http://supervisor:8099
+    # Pacote 1: descoberta mDNS na rede bridge (pergunta unicast por IP; ex.: 192.168.68.0/22). Vazio = só multicast.
+    MDNS_SUBNET: ${MDNS_SUBNET:-}
   volumes:
     - storage:/app/storage
     - ./backups:/backups:ro # Sistema (Lote 4): data do último backup
@@ -154,6 +156,20 @@ services:
           sleep 86400
         done
 
+  # Matter (Pacote 1): o python-matter-server do HA, DESLIGADO por padrão
+  # (perfil `matter`: `docker compose --profile matter up -d matter-server`).
+  # Rede do host, como o HA exige (IPv6, mDNS e Thread pelo border router);
+  # o worker fala com ele em ws://<IP do servidor>:5580/ws (integração Matter).
+  matter-server:
+    image: ghcr.io/home-assistant-libs/python-matter-server:stable
+    restart: unless-stopped
+    profiles: ["matter"]
+    network_mode: host
+    security_opt:
+      - apparmor=unconfined # Bluetooth/D-Bus do comissionamento, como no HA
+    volumes:
+      - matter-data:/data
+
   # Acesso externo. Sem CF_TUNNEL_TOKEN no .env o serviço fica de fora
   # (perfil `tunnel`, ligado pelo bin/deploy-local quando o token existe).
   cloudflared:
@@ -171,6 +187,7 @@ volumes:
   pgdata:
   storage:
   mosquitto:
+  matter-data:
 
 networks:
   # Rede dos apps instalados pelo supervisor (manifesto com `network: apps`):

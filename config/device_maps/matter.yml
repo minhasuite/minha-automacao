@@ -1,0 +1,40 @@
+# Matter (Pacote 1): "cluster/atributo" → ponto, como o HA faz com o
+# python-matter-server. Endereço do ponto = {node, endpoint, cluster,
+# attribute}; valor = bruto × scale (Point#from_raw), depois do `convert`
+# (Matter::Map::CONVERT: not, bit0, lux, inverted_100ths). `commands`:
+# comando do ponto → comando Matter do cluster (`arg` = nome do campo do
+# valor bruto; `extra` = campos fixos). Atributo novo = linha nova aqui.
+attributes:
+  "6/0":
+    name: Liga/desliga
+    capability: onoff
+    commands:
+      "on": { name: "On" }
+      "off": { name: "Off" }
+      toggle: { name: Toggle }
+  "8/0":
+    name: Intensidade
+    capability: dimmer
+    scale: 0.393701 # 0–254 → 0–100
+    commands:
+      set: { name: MoveToLevelWithOnOff, arg: level, extra: { transitionTime: 0 } }
+  "1026/0": { name: Temperatura, capability: measure, unit: "°C", device_class: temperature, scale: 0.01 }
+  "1029/0": { name: Umidade, capability: measure, unit: "%", device_class: humidity, scale: 0.01 }
+  "1030/0": { name: Movimento, capability: motion, device_class: occupancy, convert: bit0 }
+  "69/0": { name: Abertura, capability: contact, device_class: door, convert: not } # true = contato fechado
+  "1024/0": { name: Iluminância, capability: measure, unit: lx, device_class: illuminance, convert: lux }
+  "47/12": { name: Bateria, capability: measure, unit: "%", device_class: battery, scale: 0.5 }
+  "144/8": { name: Potência, capability: measure, unit: W, device_class: power, scale: 0.001 } # mW
+  "258/14":
+    name: Posição
+    capability: setpoint
+    unit: "%"
+    min: 0
+    max: 100
+    convert: inverted_100ths # 0 = aberta no Matter; aqui 100 = aberta
+    commands:
+      set: { name: GoToLiftPercentage, arg: liftPercent100thsValue }
+# BasicInformation (endpoint 0): nome do aparelho.
+names: ["0/40/5", "0/40/3"]
+vendor: "0/40/1"
+model: "0/40/3"
