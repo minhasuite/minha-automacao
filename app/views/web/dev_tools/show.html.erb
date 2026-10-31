@@ -2,7 +2,7 @@
 <%= render "web/sites/tabs", site: @site, current: :dev_tools %>
 <nav class="ss-chips mb-4" aria-label="Ferramentas">
   <% Web::DevToolsController::TABS.each do |key, label| %>
-    <%= link_to label, dev_tools_site_path(@site, aba: key), class: "ss-chip no-underline", "aria-current": (key == @tab ? "page" : nil) %>
+    <%= link_to label, dev_tools_site_path(@site, aba: key), class: "ss-chip no-underline", "aria-current": (key == @tab).to_s %>
   <% end %>
 </nav>
 
