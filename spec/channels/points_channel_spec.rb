@@ -50,4 +50,18 @@ RSpec.describe ApplicationCable::Connection, type: :channel do
     expect { connect "/cable" }.to have_rejected_connection
     expect { connect "/cable", session: { user_id: user.id, pwd: "outra" } }.to have_rejected_connection
   end
+
+  it "conecta o app (F7) com o access token da API e recusa token inválido, vencido ou de pessoa desativada" do
+    _t, access, = ApiToken.issue(user)
+    connect "/cable", params: { access_token: access }
+    expect(connection.current_user).to eq(user)
+    expect { connect "/cable", params: { access_token: "x" } }.to have_rejected_connection
+
+    token, other, = ApiToken.issue(user)
+    token.update!(access_expires_at: 1.minute.ago)
+    expect { connect "/cable", params: { access_token: other } }.to have_rejected_connection
+
+    user.update!(disabled_at: Time.current)
+    expect { connect "/cable", params: { access_token: access } }.to have_rejected_connection
+  end
 end

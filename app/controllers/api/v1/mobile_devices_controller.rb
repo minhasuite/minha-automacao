@@ -1,0 +1,48 @@
+module Api
+  module V1
+    # App do celular (F7, G17; Integrations::MobileAppPlugin). O celular se
+    # registra no local (qualquer papel nele) e manda os sensores que a pessoa
+    # ligou. O aparelho é da pessoa: só ela manda leitura ou o remove. Chave de
+    # integração não entra aqui.
+    class MobileDevicesController < BaseController
+      INSTALL_ID = /\A[A-Za-z0-9_-]{8,64}\z/
+
+      # POST /sites/:site_id/mobile_devices { install_id, name, model?, platform? }
+      def create
+        site = Site.find(params[:site_id])
+        authorize_site!(site, :view)
+        install_id = params.require(:install_id).to_s
+        return render_error(:invalid_parameter, "install_id inválido.", status: :bad_request) unless install_id.match?(INSTALL_ID)
+
+        device = Integrations::MobileAppPlugin.register!(site, current_user, install_id: install_id, name: params.require(:name).to_s.first(80),
+                                                                             model: params[:model].to_s.first(80), platform: params[:platform].to_s.first(20))
+        render_data(payload(device), status: :created)
+      end
+
+      # POST /mobile_devices/:id/sensors { battery?, charging?, wifi?, location?: {latitude, longitude, accuracy} }
+      def sensors
+        device = own_device
+        Integrations::MobileAppPlugin.report!(device, params.permit(:battery, :charging, :wifi, location: %i[latitude longitude accuracy]).to_h)
+        render_data(payload(device.reload))
+      end
+
+      # DELETE /mobile_devices/:id — tira o celular (e os pontos dele) do local.
+      def destroy
+        own_device.destroy!
+        head :no_content
+      end
+
+      private
+
+      def own_device
+        device = Device.find(params[:id])
+        raise ActiveRecord::RecordNotFound unless Integrations::MobileAppPlugin.mobile?(device) && device.address["user_id"] == current_user.id
+
+        authorize_site!(device.site, :view)
+        device
+      end
+
+      def payload(device) = DeviceSerializer.new(device).to_h.merge("points" => PointSerializer.new(device.points.ordered).to_h)
+    end
+  end
+end

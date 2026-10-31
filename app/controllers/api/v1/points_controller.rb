@@ -5,10 +5,14 @@ module Api
     class PointsController < BaseController
       self.key_actions = { index: "read", show: "read", history: "read", command: "command", write_value: "write" }
 
+      # ?view=app: cada ponto como no dashboard resolvido (texto, comandos,
+      # can_command para o papel de quem pede), para o app desenhar os controles.
       def index
         device = Device.find(params[:device_id])
-        authorize_site!(device.site, :view)
-        records, meta = paginate(device.points.ordered)
+        role = authorize_site!(device.site, :view)
+        records, meta = paginate(device.points.includes(:device).ordered)
+        return render_data(records.map { |p| Dashboards::Resolver.point_json(p, role) }, meta: meta) if params[:view] == "app"
+
         render_data(PointSerializer.new(records).to_h, meta: meta)
       end
 
@@ -74,6 +78,20 @@ module Api
         render_data(items, meta: { from: h.from, to: h.to, resolution: h.resolution, truncated: h.truncated? })
       rescue ArgumentError => e
         render_error(:invalid_parameter, e.message, status: :bad_request)
+      end
+
+      # GET /points/:id/snapshot — quadro JPEG da câmera (ponto `stream` de
+      # aparelho go2rtc) para o app (F7), igual ao /cameras/:id/quadro da web.
+      # 503 camera_unavailable sem o go2rtc ou com a câmera fora.
+      def snapshot
+        point = Point.find(params[:id])
+        raise ActiveRecord::RecordNotFound unless point.capability == "stream" && point.device.driver == "go2rtc"
+
+        authorize_site!(point.site, :view)
+        response.headers["Cache-Control"] = "no-store"
+        send_data Drivers::Go2rtc.snapshot(point), type: "image/jpeg", disposition: "inline"
+      rescue Drivers::Go2rtc::Error => e
+        render_error(:camera_unavailable, e.message, status: :service_unavailable)
       end
 
       private

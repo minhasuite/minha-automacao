@@ -1,0 +1,7 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<div>
+  <%= f.label :home_radius_m, "Raio de \"em casa\" (metros)", class: "ss-label" %>
+  <%= f.number_field :home_radius_m, value: s["home_radius_m"] || Integrations::MobileAppPlugin::HOME_RADIUS_M, min: 30, max: 5000, class: "ss-input num" %>
+</div>
+<p class="text-sm text-ink-2">Não há conta: cada celular com o app Minha Automação vira um aparelho deste local, da pessoa que entrou nele. No app, em Mais → Sensores do celular, ela liga o que quer mandar: bateria, carregando, Wi-Fi e presença (em casa ou fora, pela localização do celular e a do cadastro do local). Use nos alertas, nas automações e nos painéis.</p>

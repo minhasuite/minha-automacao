@@ -219,6 +219,7 @@ Rails.application.routes.draw do
 
       resources :notifications, only: :index do
         patch :read, on: :member
+        post :respond, on: :member
         patch :read, on: :collection, action: :read_all
       end
       resources :device_tokens, only: %i[create destroy], param: :token, constraints: { token: %r{[^/]+} }
@@ -233,7 +234,12 @@ Rails.application.routes.draw do
             post :commands, on: :member, action: :command
             post :value, on: :member, action: :write_value
             get :history, on: :member
+            get :snapshot, on: :member
           end
+        end
+        # App do celular (F7, G17): o aparelho se registra e manda os sensores.
+        resources :mobile_devices, only: %i[create destroy], shallow: true do
+          post :sensors, on: :member
         end
       end
 

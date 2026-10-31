@@ -23,7 +23,7 @@ module Integrations
   module AuthError; end
 
   # Ordem = ordem do catálogo. Integração nova: classe + uma linha aqui.
-  PLUGINS = %w[TuyaPlugin XiaomiPlugin AlexaPlugin CameraPlugin HikvisionPlugin MqttPlugin Zigbee2mqttPlugin CalendarPlugin WeatherPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
+  PLUGINS = %w[TuyaPlugin XiaomiPlugin AlexaPlugin CameraPlugin HikvisionPlugin MqttPlugin Zigbee2mqttPlugin CalendarPlugin WeatherPlugin MobileAppPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
 
   module_function
 
@@ -172,7 +172,7 @@ module Integrations
   end
 
   def unique_key(site, device, name)
-    base = [ device.name, name ].map { |s| s.to_s.parameterize(separator: "_").presence || "ponto" }.join(".")
+    base = [ device.name, name ].map { |s| s.to_s.parameterize(separator: "_").tr("-", "_").presence || "ponto" }.join(".")
     key = base
     n = 1
     key = "#{base}_#{n += 1}" while site.points.exists?(key: key)

@@ -219,9 +219,15 @@ module Dashboards
       p
     end
 
-    def point_json(p)
+    def point_json(p) = self.class.point_json(p, role)
+
+    # O ponto como o app desenha (valor, texto, comandos e se este papel comanda);
+    # também é o `?view=app` de GET /devices/:id/points.
+    def self.point_json(p, role)
+      helpers = ApplicationController.helpers
+      on = p.value == true || p.value == "open"
       p.slice(*POINT_FIELDS).merge(
-        "value" => p.value, "text" => helpers.point_value_text(p), "on" => on?(p), "area_id" => p.effective_area_id,
+        "value" => p.value, "text" => helpers.point_value_text(p), "on" => on, "area_id" => p.effective_area_id,
         "device" => p.device.name, "min" => p.min&.to_f, "max" => p.max&.to_f, "step" => p.step&.to_f,
         "commands" => (cmds = Points::Command.commands_for(p)), "actions" => Points::Command.actions_for(p),
         "mode" => p.address["mode"], "input" => helpers.point_input_type(p),

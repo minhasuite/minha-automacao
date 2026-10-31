@@ -1,7 +1,10 @@
 module Push
   # Transporte FCM para os aparelhos do app nativo (DeviceToken), pelo
-  # FcmService. Leva a mesma Push::Message em `data` (o app F7 monta a
-  # notificação com botões, imagem, canal e grupo); token morto é apagado.
+  # FcmService. Leva a mesma Push::Message em `data`; token morto é apagado.
+  # Android (app F7): mensagem só de dados com `type: notification`, título e
+  # corpo — o app monta a notificação (botões que respondem por
+  # `POST /push/resposta` com o `token`, imagem, canal pela prioridade, tag e
+  # grupo), inclusive com o app fechado. iOS: notificação do sistema + dados.
   module Fcm
     module_function
 
@@ -12,8 +15,13 @@ module Push
       h = message.to_h(capabilities)
       data = h.except("title", "body", "data", "actions").merge(h["data"]).merge("kind" => message.notification.kind, "notification_id" => message.notification.id)
       data["actions"] = h["actions"].to_json if h["actions"]
+      data = data.compact
       user.device_tokens.find_each do |device|
-        result = FcmService.deliver(device.token, title: h["title"], body: h["body"], data: data.compact)
+        result = if device.platform == "android"
+                   FcmService.deliver_data(device.token, data: data.merge("type" => "notification", "title" => h["title"], "body" => h["body"]))
+        else
+                   FcmService.deliver(device.token, title: h["title"], body: h["body"], data: data)
+        end
         device.destroy if result == :unregistered
       end
     end

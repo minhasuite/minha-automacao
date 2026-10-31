@@ -153,12 +153,15 @@ RSpec.describe "Lote 1: avisos, push e respostas nas automações" do
       with_env("VAPID_PUBLIC_KEY" => nil, "VAPID_PRIVATE_KEY" => nil, "FCM_CREDENTIALS_JSON" => "{}") do
         expect(Push.transports).to eq([ Push::Fcm ])
         owner.device_tokens.create!(token: "tok", platform: "android")
-        allow(Push::FcmService).to receive_messages(deliver: :unregistered, deliver_data: true)
+        owner.device_tokens.create!(token: "tok2", platform: "ios")
+        allow(Push::FcmService).to receive_messages(deliver: true, deliver_data: :unregistered)
         n = Notifier.notify!(kind: "aviso", title: "Oi", push: false, data: { "actions" => [ { "id" => "a", "title" => "A" } ] })
         Push.deliver(n)
-        expect(Push::FcmService).to have_received(:deliver).with("tok", hash_including(title: "Oi", data: hash_including("actions", "token", "notification_id" => n.id)))
-        expect(owner.device_tokens.count).to eq(0)
-        owner.device_tokens.create!(token: "tok2", platform: "ios")
+        # Android: só dados (o app monta a notificação com os botões); iOS: notificação do sistema.
+        expect(Push::FcmService).to have_received(:deliver_data)
+          .with("tok", data: hash_including("type" => "notification", "title" => "Oi", "actions" => anything, "token" => anything, "notification_id" => n.id))
+        expect(Push::FcmService).to have_received(:deliver).with("tok2", hash_including(title: "Oi", data: hash_including("actions", "token", "notification_id" => n.id)))
+        expect(owner.device_tokens.pluck(:token)).to eq([ "tok2" ])
         Push::Fcm.clear(owner, "t")
         expect(Push::FcmService).to have_received(:deliver_data).with("tok2", data: { "type" => "clear", "tag" => "t" })
       end
