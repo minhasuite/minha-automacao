@@ -106,8 +106,9 @@ module PointsHelper
   def device_situation(device)
     s = device.situation
     note = { "offline" => "Não respondeu na última tentativa.", "error" => device.last_error.presence || "A última leitura ou comando deu erro." }[s]
-    if s == "online" && device.last_seen_at.nil? && !device.virtual?
-      reads = device.listen || (Polling.supported?(device) && device.poll_s.to_i.positive?)
+    # Só para driver que o servidor lê (os outros não marcam o contato e estariam bem).
+    if s == "online" && device.last_seen_at.nil? && Polling.supported?(device)
+      reads = device.listen || device.poll_s.to_i.positive?
       return [ "Sem contato", "muted", reads ? "Aguardando o primeiro contato." : "Não informa o estado sozinho (leitura periódica desligada); aparece no primeiro comando." ]
     end
     [ Device::SITUATIONS[s], DEVICE_TONES.fetch(s, "muted"), note ]
