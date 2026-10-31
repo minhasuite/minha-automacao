@@ -3,7 +3,8 @@
 namespace :migracao do
   HA_FILES = { "area_registry" => "core.area_registry.json", "device_registry" => "core.device_registry.json",
                "entity_registry" => "core.entity_registry.json", "states" => "states.json",
-               "automations" => "automations.yaml", "scripts" => "scripts.yaml", "scenes" => "scenes.yaml" }.freeze
+               "automations" => "automations.yaml", "scripts" => "scripts.yaml", "scenes" => "scenes.yaml",
+               "label_registry" => "core.label_registry.json", "config_entries" => "core.config_entries.json", "configuration" => "configuration.yaml" }.freeze
 
   def migracao_site(name) = ActsAsTenant.without_tenant { Site.find_by!(name: name) }
 
@@ -14,7 +15,7 @@ namespace :migracao do
     ActsAsTenant.with_tenant(site.tenant) do
       r = Integrations::HomeAssistantImport.call(site, files)
       puts "áreas novas: #{r.areas} · aparelhos adicionados: #{r.devices_added} · movidos de área: #{r.devices_moved}"
-      puts "entidades com par: #{r.entities} · sem par: #{r.unmapped.size} · helpers: #{r.helpers} (fora: #{r.helpers_skipped.size})"
+      puts "entidades com par: #{r.entities} · sem par: #{r.unmapped.size} · etiquetas novas: #{r.tags} · helpers: #{r.helpers} (fora: #{r.helpers_skipped.size})"
       r.helpers_skipped.each { |h| puts "  helper fora: #{h}" }
       r.scenes.each { |s| puts "cena #{s['name']}: #{s['items']} linha(s)#{", sem par: #{s['lost'].join(', ')}" if s['lost'].any?}" }
       r.items.each { |i| puts "#{i['kind']} #{i['lossless'] ? 'SEM PERDA' : 'COM PERDA'} #{i['enabled'] ? 'ligada' : '-'} #{i['name']}#{": #{i['notes'].join(' | ')}" if i['notes'].any?}" }

@@ -15,6 +15,13 @@ module Integrations
   #   5. cenas → cenas daqui; scripts e automações → blueprints (HaImport) e
   #      daí automações com as entradas resolvidas pelo de-para.
   # Tudo nasce em sombra; automação fica ligada só se estiver ligada no HA.
+  #
+  # Lote 7: as etiquetas do HA (`label_registry`) viram etiquetas dos pontos;
+  # os sensores template criados pela tela do HA (`config_entries`) viram
+  # sensor calculado quando o Jinja traduz (`label_entities`/`area_entities`
+  # → `count_points`); o conversor recebe as áreas, etiquetas, integrações e
+  # os `rest_command` do `configuration`; e o item em rascunho ou publicado
+  # com perda é refeito no lugar (mesmo id, mesma execução em sombra).
   class HomeAssistantImport
     SOURCE = "home_assistant".freeze
     # Helper do HA → [tipo daqui, formulário a partir dos atributos do estado].
@@ -31,14 +38,16 @@ module Integrations
     # Domínio do HA → capacidade daqui, quando o aparelho tem um ponto só dela.
     DOMAIN_CAPS = { "vacuum" => "vacuum", "media_player" => "speaker", "camera" => "stream" }.freeze
 
-    Result = Struct.new(:areas, :devices_added, :devices_moved, :entities, :unmapped, :helpers, :helpers_skipped, :scenes, :items, keyword_init: true)
+    Result = Struct.new(:areas, :devices_added, :devices_moved, :entities, :unmapped, :helpers, :helpers_skipped, :scenes, :items, :tags, keyword_init: true)
+    # Sensor template da tela do HA → tipo do sensor calculado daqui.
+    TEMPLATE_KINDS = { "binary_sensor" => "bool", "sensor" => "number" }.freeze
 
     def self.call(site, files) = new(site, files).call
 
     def initialize(site, files)
       @site = site
       @files = files.transform_keys(&:to_s)
-      @r = Result.new(areas: 0, devices_added: 0, devices_moved: 0, entities: 0, unmapped: [], helpers: 0, helpers_skipped: [], scenes: [], items: [])
+      @r = Result.new(areas: 0, devices_added: 0, devices_moved: 0, entities: 0, unmapped: [], helpers: 0, helpers_skipped: [], scenes: [], items: [], tags: 0)
     end
 
     def call
@@ -58,6 +67,24 @@ module Integrations
     def registry(name, key) = Array(json(name)&.dig("data", key))
     def states = @states ||= Array(json("states")).index_by { |s| s["entity_id"] }
     def link!(ext, kind, target, name = nil, note: nil) = ExternalRef.link!(@site, SOURCE, ext, kind: kind, target: target, name: name, note: note)
+    def entries = @entries ||= Array(json("config_entries")&.dig("data", "entries"))
+    def labels = @labels ||= Array(json("label_registry")&.dig("data", "labels")).to_h { |l| [ l["label_id"], l["name"].to_s ] }
+
+    # O `rest_command:` do configuration.yaml (os `!include`/`!secret` ficam vazios).
+    def rest_commands
+      text = @files["configuration"].to_s.gsub(/!(?:include\w*|secret|env_var)\b[^\n]*/, "null")
+      YAML.safe_load(text, aliases: false).to_h["rest_command"].to_h
+    rescue Psych::Exception
+      {}
+    end
+
+    # Conversor do HA com o que a instalação sabe (áreas, etiquetas, integrações, rest_command).
+    def converter(entity = nil)
+      opts = { areas: @areas.transform_values(&:name), labels: labels, entries: entries.to_h { |c| [ c["entry_id"], c["domain"] ] } }
+      return Blueprints::Jinja.new(entity, **opts) if entity
+
+      Blueprints::HaImport.new("", nil, entities: true, rest_commands: (@rest ||= rest_commands), **opts)
+    end
 
     # ---- 1. áreas ---------------------------------------------------------------
 
@@ -110,10 +137,19 @@ module Integrations
         point = point_for(e) or next
         link!(e["entity_id"], "entity", point, e["name"] || e["original_name"])
         link!("entity:#{e['id']}", "entity_registry", point) if e["id"].present?
+        tag!(point, e["labels"])
         @r.entities += 1
       end
       wanted = registry("entity_registry", "entities").select { |e| e["disabled_by"].blank? && e["device_id"] && @devices[e["device_id"]] }
       @r.unmapped = wanted.map { |e| e["entity_id"] } - ExternalRef.map_for(@site, SOURCE).keys
+    end
+
+    # Etiquetas do HA na entidade → etiquetas do ponto (pelo nome).
+    def tag!(point, ids)
+      Array(ids).filter_map { |id| labels[id].presence }.each do |name|
+        tag = Tag.find_or_create_by!(name: name.downcase)
+        @r.tags += 1 if Tagging.find_or_create_by!(tag: tag, taggable: point).previously_new_record?
+      end
     end
 
     def point_for(e)
@@ -136,6 +172,23 @@ module Integrations
         elsif s.dig("attributes", "entity_id").is_a?(Array) && %w[switch light fan].include?(domain) then group!(s)
         end
       end
+      entries.select { |c| c["domain"] == "template" }.each { |c| template!(c) }
+    end
+
+    # Sensor template da tela do HA → sensor calculado (só se o Jinja traduz).
+    def template!(c)
+      o = c["options"].to_h
+      kind = TEMPLATE_KINDS[o["template_type"]] or return
+      ext = registry("entity_registry", "entities").find { |e| e["config_entry_id"] == c["entry_id"] }&.dig("entity_id") || "template:#{c['entry_id']}"
+      return if ExternalRef.find_by(site_id: @site.id, source: SOURCE, external_id: ext)&.target
+
+      ids = ExternalRef.map_for(@site, SOURCE, "Point")
+      keys = Point.where(id: ids.values).pluck(:id, :key).to_h
+      expr = converter(->(e) { keys[ids[e]] }).expr(o["state"].to_s)&.gsub(/\[\[([^\]]+)\]\]/, '\1')
+      return @r.helpers_skipped << "#{ext}: template sem tradução" unless expr
+
+      helper!({ "entity_id" => ext, "attributes" => { "friendly_name" => o["name"].presence || c["title"] } }, "template",
+              { "kind" => kind, "expr" => expr, "unit" => o["unit_of_measurement"] })
     end
 
     def helper!(s, kind, form)
@@ -214,22 +267,21 @@ module Integrations
       registry("entity_registry", "entities").select { |e| e["platform"] == "automation" }.to_h { |e| [ e["unique_id"].to_s, e["entity_id"] ] }
     end
 
-    # → true se resolveu (criou ou já existia).
+    # → true se resolveu (criou, refez ou já existia).
     def item!(domain, name, body, ext, last:)
       ext ||= "#{domain}:#{name}"
       old = ExternalRef.find_by(site_id: @site.id, source: SOURCE, external_id: ext)&.target
-      return true if old && old.published?
+      # Publicada sem perda fica como está (pode ter sido revisada). Rascunho
+      # ou com perda: refaz no lugar com o de-para e o conversor de agora.
+      return true if old&.published? && old.blueprint && Array(old.blueprint.unsupported).empty? && !old.draft?
 
-      # Rascunho de uma importação anterior (nunca rodou): refaz com o de-para de agora.
-      old&.then { |a| [ a, a.blueprint ].compact.each(&:destroy!) }
-
-      attrs = Blueprints::HaImport.new("", nil, entities: true).convert(Blueprints::HaImport.as_blueprint(domain, name, body))
+      attrs = converter.convert(Blueprints::HaImport.as_blueprint(domain, name, body))
       values, unresolved = resolve(attrs["inputs"])
       return false if unresolved.any? { |u| u.start_with?("script.") } && !last
 
-      automation = create!(attrs, name, values, domain, ext)
+      automation = old ? refresh!(old, attrs, name, values, domain, ext) : create!(attrs, name, values, domain, ext)
       notes = attrs["unsupported"] + unresolved.map { |u| "sem de-para: #{u}" }
-      notes << "rascunho: não publicou (#{automation.errors_in(automation.draft).first})" unless automation.published?
+      notes << "rascunho: não publicou (#{automation.errors_in(automation.draft).first})" if automation.draft?
       link!(ext, domain, automation, name)
       @r.items << { "kind" => domain, "name" => name, "ref" => ext, "lossless" => notes.empty?, "notes" => notes, "enabled" => automation.enabled }
       true
@@ -238,17 +290,30 @@ module Integrations
       last
     end
 
+    def blueprint_attrs(attrs, name) = attrs.except("unsupported").merge("name" => name.truncate(120), "unsupported" => attrs["unsupported"])
+    def enabled?(automation, domain, ext) = domain == "automation" && automation.published? && states.dig(ext, "state") == "on"
+
     def create!(attrs, name, values, domain, ext)
-      blueprint = @site.blueprints.create!(attrs.except("unsupported").merge("name" => name.truncate(120), "unsupported" => attrs["unsupported"]))
+      blueprint = @site.blueprints.create!(blueprint_attrs(attrs, name))
       automation = blueprint.create_automation!(name: name, values: values.compact, publish: true)
-      on = domain == "automation" && automation.published? && states.dig(ext, "state") == "on"
-      automation.update!(shadow: true, enabled: on)
+      automation.update!(shadow: true, enabled: enabled?(automation, domain, ext))
       automation
     rescue ArgumentError
       # Falta entrada obrigatória: vira rascunho com o que deu.
       definition, clean, = blueprint.instantiate(values.compact)
       scope = domain == "script" ? @site.scripts : @site.automations
       scope.create!(name: name, mode: blueprint.mode, blueprint: blueprint, blueprint_inputs: clean, draft: definition, shadow: true)
+    end
+
+    # Refaz no lugar: o blueprint muda, o rascunho é refeito e publica se a DSL fechar.
+    def refresh!(automation, attrs, name, values, domain, ext)
+      blueprint = automation.blueprint
+      blueprint ? blueprint.update!(blueprint_attrs(attrs, name)) : (blueprint = @site.blueprints.create!(blueprint_attrs(attrs, name)))
+      definition, clean, errors = blueprint.instantiate(values.compact)
+      automation.update!(blueprint: blueprint, blueprint_inputs: clean, draft: definition, shadow: true, mode: blueprint.mode)
+      automation.publish!(definition) if errors.empty? && automation.errors_in(definition).empty?
+      automation.update!(enabled: enabled?(automation, domain, ext))
+      automation
     end
 
     # Entradas do blueprint → valores pelo de-para. Entrada de aparelho
