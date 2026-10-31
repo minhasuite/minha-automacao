@@ -1,0 +1,7 @@
+<%# locals: (f:, integration:) -%>
+<p class="text-sm text-ink-2">O Tasmota conversa com o broker MQTT do servidor da casa. Com a descoberta nativa ligada, cada aparelho aparece sozinho, com relés, brilho e sensores.</p>
+<ol class="list-decimal pl-5 text-sm text-ink-2 grid gap-1">
+  <li>No aparelho, em Configuration → MQTT, informe o IP do servidor, a porta 1883 e o usuário e a senha do broker.</li>
+  <li>No Console do aparelho, rode <code>SetOption19 0</code> (descoberta nativa do Tasmota, a padrão desde a versão 9.2).</li>
+</ol>
+<%= render "web/integrations/forms/mqtt", f: f, integration: integration %>

@@ -84,7 +84,7 @@ RSpec.describe "Driver mqtt e zigbee2mqtt" do
       expect(relay.reload.value).to be true
       expect(other.reload.value).to eq(12)
       expect(device.reload.status).to eq("online")
-      expect(described_class.topics).to contain_exactly("z/rele", "zigbee2mqtt/bridge/devices") # único local: descoberta ligada
+      expect(described_class.topics).to contain_exactly("z/rele", "zigbee2mqtt/bridge/devices", "tasmota/discovery/#") # único local: descoberta ligada
     end
 
     it "queda do broker deixa os pontos indisponíveis" do

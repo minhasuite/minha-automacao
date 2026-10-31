@@ -6,6 +6,10 @@ module Mqtt
   # as mensagens retidas devolvem o valor na volta. Sem MQTT_URL (VPS) não
   # liga, e o comando falha com "MQTT não configurado".
   class Listener
+    # Descobridores (Pacote 1): cada um diz os tópicos que assina (`topics`,
+    # curinga vale), se trata um tópico (`handles?`) e trata (`handle`).
+    # Descoberta nova = módulo em Mqtt + nome aqui.
+    DISCOVERY = %w[Z2m Tasmota].freeze
     SCAN_EVERY = 30
     MAX_BACKOFF = 60
 
@@ -61,17 +65,19 @@ module Mqtt
         @client = nil
       end
 
+      def discoverers = DISCOVERY.map { |name| Mqtt.const_get(name) }
+
       def topics
         wrap do
           list = Point.joins(:device).where(devices: { driver: "mqtt", disabled: false }).distinct.pluck(Arel.sql("points.address->>'topic'")).compact_blank
-          list << Z2m.devices_topic if Z2m.site
-          list.uniq
+          (list + discoverers.flat_map(&:topics)).uniq
         end
       end
 
       def handle(topic, payload)
         wrap do
-          next Z2m.discover!(Z2m.site, payload) if topic == Z2m.devices_topic && Z2m.site
+          discovery = discoverers.find { |x| x.handles?(topic) }
+          next discovery.handle(topic, payload) if discovery
 
           Point.joins(:device).where(devices: { driver: "mqtt", disabled: false }).where("points.address->>'topic' = ?", topic).includes(:device).find_each do |point|
             value = Drivers::Mqtt.value_for(point, payload)

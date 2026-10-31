@@ -1,0 +1,20 @@
+# Tasmota (Pacote 1): descoberta nativa (`tasmota/discovery/<MAC>/config` e
+# `/sensors`) → pontos MQTT. `sensors` = campo numérico do tele/SENSOR
+# (folha do JSON, ex.: ENERGY.Power) → nome, unidade e classe; campo fora da
+# lista vira medição com o próprio nome, salvo o `skip`. Campo novo = linha
+# nova aqui.
+sensors:
+  Power: { name: Potência, unit: W, device_class: power, state_class: measurement }
+  Total: { name: Energia, unit: kWh, device_class: energy, state_class: total_increasing }
+  Today: { name: Energia hoje, unit: kWh, device_class: energy, state_class: total_increasing }
+  Voltage: { name: Tensão, unit: V, device_class: voltage, state_class: measurement }
+  Current: { name: Corrente, unit: A, device_class: current, state_class: measurement }
+  Temperature: { name: Temperatura, unit: "°C", device_class: temperature, state_class: measurement }
+  Humidity: { name: Umidade, unit: "%", device_class: humidity, state_class: measurement }
+  DewPoint: { name: Ponto de orvalho, unit: "°C", device_class: temperature, state_class: measurement }
+  Pressure: { name: Pressão, unit: hPa, device_class: pressure, state_class: measurement }
+  Illuminance: { name: Iluminância, unit: lx, device_class: illuminance, state_class: measurement }
+  CarbonDioxide: { name: CO2, unit: ppm, device_class: carbon_dioxide, state_class: measurement }
+skip: [Yesterday, Factor, ApparentPower, ReactivePower, Period, TotalStartTime]
+# `rl` da configuração: 1 = relé, 2 = luz (onoff + Dimmer se lt_st > 0); 3 = persiana fica de fora.
+relay_types: { 1: relay, 2: light }

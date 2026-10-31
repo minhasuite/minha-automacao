@@ -3,7 +3,7 @@ module Drivers
   # Ponto ↔ tópico por `points.address`: `topic` (estado), `json_path` ("a.b";
   # vazio = o payload inteiro), `command_topic` (padrão `topic/set`),
   # `payload_on`/`payload_off` (padrão true/false). Número: bruto × scale +
-  # offset. O valor entra pelo `Mqtt::Listener` quando o aparelho publica o
+  # offset (`command_json_path` troca o caminho só no comando). O valor entra pelo `Mqtt::Listener` quando o aparelho publica o
   # estado; o comando só publica (o eco do estado atualiza o ponto), salvo
   # ponto sem tópico de estado, que é atualizado na hora.
   class Mqtt
@@ -27,7 +27,8 @@ module Drivers
       else
         point.to_raw(value)
       end
-      path = a["json_path"].presence or return raw.is_a?(String) ? raw : raw.to_json
+      # Pacote 1: `command_json_path` (mesmo vazio) vale para o comando; Tasmota lê o JSON e recebe "ON" puro.
+      path = (a.key?("command_json_path") ? a["command_json_path"] : a["json_path"]).presence or return raw.is_a?(String) ? raw : raw.to_json
       path.split(".").reverse.reduce(raw) { |acc, k| { k => acc } }.to_json
     end
 

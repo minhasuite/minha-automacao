@@ -1,0 +1,47 @@
+# Shelly (Pacote 1): componente do estado → pontos. Gen1 = chave do
+# GET /status (lista por índice); Gen2+ = tipo do componente do
+# Shelly.GetStatus ("switch:0" → switch). `field` = caminho no item
+# ("aenergy.total"); `cmd` = como o comando chega (Shelly::COMMANDS);
+# `map` = valor do aparelho → opção do ponto; `scale` vira a escala do ponto.
+# Componente ou campo novo = linha nova aqui.
+gen1:
+  relays:
+    - { field: ison, name: Liga/desliga, capability: onoff, cmd: relay }
+  lights:
+    - { field: ison, name: Luz, capability: onoff, cmd: light }
+    - { field: brightness, name: Brilho, capability: dimmer, cmd: light }
+  rollers:
+    - { field: current_pos, name: Posição, capability: setpoint, unit: "%", min: 0, max: 100, step: 1, cmd: roller }
+    - { field: state, name: Movimento, capability: enum, options: [open, close, stop], cmd: roller }
+  meters:
+    - { field: power, name: Potência, unit: W, device_class: power, state_class: measurement }
+    # Gen1 conta em watt-minuto.
+    - { field: total, name: Energia, unit: kWh, device_class: energy, state_class: total_increasing, scale: 0.0000166667 }
+  emeters:
+    - { field: power, name: Potência, unit: W, device_class: power, state_class: measurement }
+    - { field: voltage, name: Tensão, unit: V, device_class: voltage, state_class: measurement }
+    - { field: total, name: Energia, unit: kWh, device_class: energy, state_class: total_increasing, scale: 0.001 }
+gen2:
+  switch:
+    - { field: output, name: Liga/desliga, capability: onoff, cmd: switch }
+    - { field: apower, name: Potência, unit: W, device_class: power, state_class: measurement }
+    - { field: voltage, name: Tensão, unit: V, device_class: voltage, state_class: measurement }
+    - { field: current, name: Corrente, unit: A, device_class: current, state_class: measurement }
+    - { field: aenergy.total, name: Energia, unit: kWh, device_class: energy, state_class: total_increasing, scale: 0.001 }
+  light:
+    - { field: output, name: Luz, capability: onoff, cmd: light_rpc }
+    - { field: brightness, name: Brilho, capability: dimmer, cmd: light_rpc }
+  cover:
+    - { field: current_pos, name: Posição, capability: setpoint, unit: "%", min: 0, max: 100, step: 1, cmd: cover }
+    - { field: state, name: Movimento, capability: enum, options: [open, close, stop], cmd: cover,
+        map: { opening: open, open: open, closing: close, closed: close, stopped: stop, calibrating: stop } }
+    - { field: apower, name: Potência, unit: W, device_class: power, state_class: measurement }
+    - { field: aenergy.total, name: Energia, unit: kWh, device_class: energy, state_class: total_increasing, scale: 0.001 }
+  pm1:
+    - { field: apower, name: Potência, unit: W, device_class: power, state_class: measurement }
+    - { field: voltage, name: Tensão, unit: V, device_class: voltage, state_class: measurement }
+    - { field: aenergy.total, name: Energia, unit: kWh, device_class: energy, state_class: total_increasing, scale: 0.001 }
+  temperature:
+    - { field: tC, name: Temperatura, unit: "°C", device_class: temperature, state_class: measurement }
+  humidity:
+    - { field: rh, name: Umidade, unit: "%", device_class: humidity, state_class: measurement }

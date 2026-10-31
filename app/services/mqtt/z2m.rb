@@ -22,6 +22,11 @@ module Mqtt
     def base = ENV.fetch("Z2M_BASE_TOPIC", "zigbee2mqtt")
     def devices_topic = "#{base}/bridge/devices"
 
+    # Descobridor do Mqtt::Listener (Pacote 1).
+    def topics = site ? [ devices_topic ] : []
+    def handles?(topic) = topic == devices_topic
+    def handle(_topic, payload) = (s = site) && discover!(s, payload)
+
     def site
       return Site.find_by(id: ENV["Z2M_SITE_ID"]) if ENV["Z2M_SITE_ID"].present?
 

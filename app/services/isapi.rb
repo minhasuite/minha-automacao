@@ -49,15 +49,18 @@ module Isapi
     raise Error, "Sem conexão com #{settings['host']} (#{e.class.name.demodulize})."
   end
 
-  def digest(challenge, user, password, path)
+  # Digest MD5 (Hikvision) ou SHA-256 (Shelly Gen2, Pacote 1), pelo `algorithm` do desafio.
+  def digest(challenge, user, password, path, method: "GET")
     p = challenge.sub(/\ADigest\s+/, "").scan(/(\w+)="?([^",]*)"?/).to_h
+    hash = p["algorithm"].to_s.upcase == "SHA-256" ? Digest::SHA256 : Digest::MD5
     cnonce = SecureRandom.hex(8)
-    ha1 = Digest::MD5.hexdigest("#{user}:#{p['realm']}:#{password}")
-    ha2 = Digest::MD5.hexdigest("GET:#{path}")
+    ha1 = hash.hexdigest("#{user}:#{p['realm']}:#{password}")
+    ha2 = hash.hexdigest("#{method}:#{path}")
     qop = p["qop"].to_s.split(",").map(&:strip).include?("auth") ? "auth" : nil
-    response = Digest::MD5.hexdigest([ ha1, p["nonce"], *([ "00000001", cnonce, qop ] if qop), ha2 ].join(":"))
-    parts = { username: user, realm: p["realm"], nonce: p["nonce"], uri: path, response: response, opaque: p["opaque"] }
+    response = hash.hexdigest([ ha1, p["nonce"], *([ "00000001", cnonce, qop ] if qop), ha2 ].join(":"))
+    parts = { username: user, realm: p["realm"], nonce: p["nonce"], uri: path, response: response, opaque: p["opaque"],
+              algorithm: (p["algorithm"] if hash == Digest::SHA256) }
     parts.merge!(qop: qop, nc: "00000001", cnonce: cnonce) if qop
-    "Digest " + parts.compact.map { |k, v| k.in?(%i[qop nc]) ? "#{k}=#{v}" : %(#{k}="#{v}") }.join(", ")
+    "Digest " + parts.compact.map { |k, v| k.in?(%i[qop nc algorithm]) ? "#{k}=#{v}" : %(#{k}="#{v}") }.join(", ")
   end
 end

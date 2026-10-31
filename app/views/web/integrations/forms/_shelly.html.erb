@@ -1,0 +1,4 @@
+<%# locals: (f:, integration:) -%>
+<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::ShellyPlugin,
+           fields: [ [ :password, "Senha (só se a autenticação estiver ligada)", "usuário admin" ] ],
+           note: "Gen1 e Plus/Pro são reconhecidos sozinhos. O estado é lido a cada 30 s e logo depois de cada comando." %>
