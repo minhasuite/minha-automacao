@@ -274,3 +274,27 @@ pelo Mi Home.
   `amzn_sfx_doorbell_chime_01`), `play` ("PROVEDOR: busca", padrão Amazon
   Music) e `volume` (0 a 100) no ponto `speaker`, pela sessão própria
   (`Alexa::Client`). Testado só com WebMock.
+
+## Última fala na Echo e câmera de nuvem (Lote 9)
+
+- **Última fala às Echo** (`Alexa::LastCalled`): o histórico de voz da conta
+  (`Alexa::Client#voice_history`, só leitura, no site da loja com o token
+  anti-CSRF da página de atividade, como o `alexa_media`) vira atributos do
+  ponto `speaker`: `last_called` (verdadeiro na Echo que ouviu, falso nas
+  outras), `last_called_summary` (o que foi dito) e `last_called_timestamp`
+  (ms). Lido a cada minuto (`AlexaPlugin.tick`) **só** quando alguma automação
+  ligada do local tem gatilho por atributo numa Echo da conta; sem ninguém
+  escutando, nada sai para a Amazon. Uso: "Alexa, boa noite" em qualquer Echo
+  → gatilho `state` com `attribute: last_called_timestamp` e condição sobre
+  `trigger.attrs.last_called_summary`. Atraso de até 1 min.
+- **Câmera de nuvem sob demanda**: ponto `stream` com `address.on_demand`. O
+  plugin da integração do aparelho dá o endereço de agora
+  (`Plugin.stream_url(point)`) e o go2rtc recebe o stream na hora do quadro
+  ou do ao vivo (`Drivers::Go2rtc.prepare`); fica fora do `sync!` porque o
+  endereço vence. Tuya: categoria listada em `streams` no `tuya.yml` ganha o
+  ponto "Vídeo" na varredura; o endereço vem do `allocate` da API de
+  compartilhamento (o mesmo do HA). Integração nova com vídeo de nuvem =
+  `stream_url` no plugin.
+- **Limpar cômodos por texto**: o valor do `clean_rooms` pode ser JSON ou só
+  os cômodos separados por vírgula, pelo id ou pelo nome do mapa
+  ("5, Cozinha"), para vir de um campo de script ou de uma consulta.

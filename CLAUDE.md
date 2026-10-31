@@ -89,7 +89,10 @@ sensores template da tela do HA na importação, item com perda refeito no lugar
 **Lote 8**: cor de lâmpada pelo mapa de dados (`Points::Color`), gatilho por
 atributo, ações "Comandar pontos por consulta" e "Resumo do histórico de
 pontos", eventos do robô deduzidos da leitura, som/música/volume na Echo e o
-importador do HA usando tudo isso. + **F7**: API do app Flutter
+importador do HA usando tudo isso. + **Lote 9**: última fala às Echo como
+atributo (`Alexa::LastCalled`, só lê com alguém escutando), `trigger.attrs`,
+câmera de nuvem com vídeo sob demanda (`Plugin.stream_url`, Tuya) e
+"Limpar cômodos" por texto. + **F7**: API do app Flutter
 (`minha-automacao-app`): tempo real pelo `/cable` com o access token,
 `Site#points_stream`, `?view=app` nos pontos, quadro da câmera, resposta de
 aviso pela API, FCM só de dados no Android e a integração "App do celular"
@@ -478,6 +481,10 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   de ponto muda só por `Point#report_attrs!` (dispara o gatilho `state` com
   `attribute`; o valor do gatilho não é convertido). Ponto novo do mapa entra
   no aparelho já cadastrado pela varredura (`Integrations.add_points`).
+- **Lote 9 (aberto/fechado)**: vídeo de nuvem = `stream_url(point)` no
+  plugin da integração + ponto `stream` com `address.on_demand` (Tuya:
+  categoria em `streams` no `tuya.yml`). Atributos de Echo vêm do histórico
+  de voz só quando uma automação ligada escuta (`Alexa::LastCalled.listened?`).
   Comandar por consulta e resumo do histórico são plugins de ação; o `case`
   do `PointsHistoryAction#row` escolhe a opção da própria ação (op), não tipo
   daqui. Importador: item publicado e solto do blueprint não é refeito.

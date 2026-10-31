@@ -47,6 +47,7 @@ RSpec.describe "Lote 9: fechamento da migração" do
       a = listen!(echo, conditions: [ { "type" => "expr", "expr" => "timestamp * 1000 - trigger.attrs.last_called_timestamp < 120000" } ])
       expect { Integrations::AlexaPlugin.tick(Time.current) }.to change { a.runs.count }.by(1)
       expect(post).to have_been_requested.once
+      expect(a_request(:post, %r{www\.amazon\.com\.br}).with { |r| r.headers["Referer"].to_s.include?("alexa.amazon") }).not_to have_been_made # a loja recusa (403)
       expect(echo.reload.attrs).to eq("last_called" => true, "last_called_summary" => "boa noite", "last_called_timestamp" => ts)
       expect(outro.reload.attrs).to eq("last_called" => false)
       run = a.runs.last

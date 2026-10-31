@@ -153,7 +153,7 @@ module Alexa
       req["csrf"] = @cookies["csrf"].to_s if req.request_body_permitted?
       req["User-Agent"] = USER_AGENT
       req["Accept"] ||= "application/json"
-      req["Referer"] = "https://#{@host}/spa/index.html"
+      req["Referer"] = "https://#{@host}/spa/index.html" if host == @host # no site da loja, Referer da Alexa = 403
       res = Net::HTTP.start(host, 443, use_ssl: true, open_timeout: 5, read_timeout: 15) { |h| h.request(req) }
       if %w[401 403].include?(res.code)
         return renew_and_retry(req, host, json) if @renew && !@renewed

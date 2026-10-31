@@ -176,3 +176,17 @@ No dia do corte geral: desligue as automações do sistema antigo, tire a
 sombra (local e automações), troque a skill/integração de voz para a daqui,
 reaponte o app e os painéis, e mantenha o sistema antigo parado (não
 apagado) por uns dias para voltar se precisar.
+
+## Fechamento antes do corte (Lote 9)
+
+- Gatilho por atributo leva os atributos do ponto em `trigger.attrs` (o
+  `trigger.to_state.attributes` do HA).
+- A última fala às Echo vira atributo (`docs/integracoes.md`, Lote 9): o
+  "Alexa, boa noite" do `alexa_media` (`last_called_*`) funciona igual.
+- Seleção importada do HA vem com uma opção por linha (antes virava uma
+  opção só).
+- Itens refeitos à mão no local (soltos do blueprint) não são tocados pela
+  reimportação. O que sobra em rascunho depende do usuário: agendas Google
+  (login na integração Agenda) e celular (app do MA no celular, G17).
+- Webhook: o do HA (`/api/webhook/<id>`) não migra; a automação daqui tem
+  gatilho Webhook com token próprio e quem chamava precisa trocar a URL.
