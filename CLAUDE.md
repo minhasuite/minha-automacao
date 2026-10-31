@@ -75,7 +75,9 @@ id do gatilho) com o Jinja comum traduzido para expressão e Liquid
 (`Blueprints::Jinja`, entrada `[[chave]]` no texto), gatilho "Sistema
 iniciou", sensor calculado com `previous`, "a cada", data e hora e atributos
 (`points.attrs`), "para cada" no Repetir e voz (STT/TTS) como capacidade dos
-provedores de IA, com as ações "Transcrever áudio" e "Gerar fala".
+provedores de IA, com as ações "Transcrever áudio" e "Gerar fala". +
+**Lote 6**: Tuya na nuvem como no HA (Zigbee atrás do hub, comando por
+código do dp, MQTT em tempo real, eventos de botão; `docs/integracoes.md`).
 
 ## Rodar
 
@@ -351,8 +353,14 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (telas = partials `forms/_<key>` e `connect/_<key>`). Mapas de dp/propriedade
   → ponto em `config/device_maps/*.yml`. Varredura casa pelo `driver +
   external_id` (ou IP com `match: host`): nunca duplica, atualiza chave/IP,
-  marca `removed_at`. A nuvem só descobre; o controle é sempre local. Tuya da
-  nuvem não traz IP nem versão: IP na edição + Reconectar.
+  marca `removed_at`. Tuya (Lote 6): aparelho da conta é `tuya_cloud`
+  (comando por `address.code`, `Drivers::TuyaCloud`), sub-dispositivo do hub
+  adotável com `address.via`, tempo real pelo MQTT da conta
+  (`Tuya::CloudListener`, `TUYA_CLOUD_LISTENER=off`), `match_drivers` casa
+  com o `tuya_local` do mesmo device_id (não duplica; comando local, sem IP
+  vai pela nuvem). Estado depois da varredura/adoção pelo `Plugin.refresh`.
+  Ponto `event` dispara a cada aviso (clique repetido). Login QR próprio: não
+  derruba o HA. Nunca comande de teste fechadura, sirene ou AR pela nuvem.
 - **Helpers (F8e)**: helper = ponto (`points.helper` = tipo, configuração em
   `address`) do dispositivo virtual "Helpers" do local (`external_id:
   "helpers"`, fora da lista de dispositivos). Cada tipo é um plugin em

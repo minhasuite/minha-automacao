@@ -39,18 +39,29 @@ crítico) e as chaves de endereço `decode`/`field`/`match`/`hold_s`/
 de JSON com `cmd: ipc_motion`) vira ponto por `Points::Decode`
 (decodificador novo = uma linha em `DECODERS`), volta a falso sozinho
 depois de `hold_s` (`PointHoldJob`) e, com `push_only`, só conta quando o
-aparelho empurra (o estado completo repete a última mensagem).
+aparelho empurra (o estado completo repete a última mensagem). Lote 6:
+`patterns` (família numerada, ex.: `switch_modeN` → "Botão N"), `gateways`
+(categorias de hub), `read_only` (dp gravável que não vira comando, ex.:
+motor da fechadura), `state_class`, decodificador `value` com `unmatched`
+(enum → sim/não: `pir`/`none` → movimento, `master_state` alarm → problema)
+e capacidade `event` (botão, campainha, destravou por digital): o ponto de
+evento dispara gatilho a cada aviso, mesmo repetido (`Point#report!` e
+`Triggers.changed_into?` olham a capacidade, não o aparelho).
 
 ## Inventário, varredura e adoção (`Integrations`)
 
-Entrada: `{id, kind (driver do aparelho), name, manufacturer, model, category,
-room, online, sub, secret, address, poll_s, match, points: [atributos de
-ponto]}`, guardada cifrada em `integrations.inventory`.
+Entrada: `{id, kind (driver do aparelho), match_drivers, name, manufacturer,
+model, category, room, online, sub, secret, address, poll_s, match, state,
+points: [atributos de ponto]}`, guardada cifrada em `integrations.inventory`.
+`match_drivers` = drivers que são o mesmo aparelho (Tuya: `tuya_cloud` e
+`tuya_local`); `address.via` = id do hub do sub-dispositivo. Depois da
+varredura e da adoção o plugin grava o estado atual (`Plugin.refresh`).
 
 - `sync!` (botão "Sincronizar agora" → `SyncIntegrationJob`; periódica pelo
   `Polling`, `poll_s` padrão **6 h** nas contas novas): status `syncing` →
   `ok`/`error`.
-- Aparelho já cadastrado casa por `driver + external_id` (Tuya: device_id;
+- Aparelho já cadastrado casa por `driver + external_id` (com qualquer driver
+  de `match_drivers`; Tuya: device_id;
   Xiaomi: did; MQTT: ieee) ou, com `"match" => "host"`, pelo IP (DVR que veio
   do `go2rtc:importar`). **Nunca duplica**: liga à integração, troca a
   chave local/token se mudou e o IP (Xiaomi).
@@ -64,19 +75,50 @@ ponto]}`, guardada cifrada em `integrations.inventory`.
 
 ## Tipos
 
-- **Tuya / Smart Life** (`Tuya::Cloud`): o mesmo caminho da integração
+- **Tuya / Smart Life** (`Tuya::Cloud`, Lote 6): igual à integração
   oficial `tuya` do HA (tuya-device-sharing-sdk 0.2.x, client id do HA):
   código de usuário → `POST apigw.iotbing.com/v1.0/m/life/home-assistant/qrcode/tokens`
   → QR `tuyaSmart--qrLogin?token=…` → poll em `.../tokens/:token` → tokens.
-  Pedidos assinados (HMAC) e cifrados (AES-128-GCM); o access token se renova
-  sozinho. Por aparelho: `devices/:id/status` (mapa dpId → código/tipo),
-  `specifications` (o que é gravável) e o cômodo. Interruptor, lâmpada e
-  medição passam pela mesma tradução da importação do LocalTuya
-  (`Tuya::Import.specs_for`). A nuvem **não dá o IP da rede local** nem a
-  versão do protocolo: nascem `3.3` sem IP; preencha o IP na edição e use
-  **Reconectar** (tenta 3.3/3.4/3.5/3.1 e grava a que respondeu). Os 12
-  aparelhos importados do LocalTuya já têm IP e versão. Sub-aparelho de
-  gateway Zigbee aparece mas não é adotável (controle local exige o gateway).
+  Pedidos assinados (HMAC sobre os cabeçalhos + query cifrada + corpo
+  cifrado) e cifrados (AES-128-GCM, `{"encdata": …}`); o access token se
+  renova sozinho. Lista: `users/homes` → `ha/home/devices` (com `status`
+  = estado atual, `sub`, `local_key`); por aparelho `devices/:id/status`
+  (mapa dpId → código/tipo), `specifications` (o que é gravável) e o cômodo
+  (controle IR virtual responde texto vazio: vira `{}`).
+  - **Aparelho da nuvem = driver `tuya_cloud`**: comando por código do dp
+    (`POST /v1.1/m/thing/:id/commands` `{"commands": [{code, value}]}`, valor
+    bruto pela escala do ponto); o ponto leva `address.code`. Até o eco do
+    MQTT chegar, o ponto fica com o valor pedido.
+  - **Sub-dispositivos do hub** (Zigbee, IR) entram e são adotáveis, com
+    `address.via` = hub. A API não diz o pai: filho com a mesma chave local de
+    um hub (categoria em `gateways`) é dele; senão, o único hub sem filho na
+    própria chave (o hub Zigbee tem chave própria e os filhos dividem outra).
+  - **Tempo real** (`Tuya::CloudListener`, worker, `TUYA_CLOUD_LISTENER=off`
+    desliga): `POST /v1.0/m/life/ha/access/config` (linkId próprio) → MQTT
+    TLS na `url` com clientId/usuário/senha → assina `topic.devId.sub` de cada
+    aparelho da conta que está no local. `protocol` 4 = status (`dpId` ou
+    `code` → ponto, conta `push_only`); 20 = `online`/`offline`. Ao conectar
+    lê o estado de todos (2 pedidos); a credencial vence (`expireTime`, até
+    2 h) e reconecta; caiu = aparelhos `tuya_cloud` indisponíveis e espera
+    crescente até 60 s. Sem aparelho adotado não conecta. Reserva: a
+    varredura da conta (6 h) regrava o estado; não há leitura por aparelho
+    (`poll_s` 0).
+  - **Convivência com o LocalTuya**: o mesmo device_id já no local como
+    `tuya_local` (importado do HA) não duplica: a varredura liga à conta,
+    atualiza a chave, grava o `code` em cada ponto e o estado da nuvem; o
+    comando continua **local** (sem IP no aparelho, vai pela nuvem).
+  - **Fechadura** (`videolock`/`jtmspro`): só estado, bateria e eventos
+    (campainha, alarme, destravou por digital/senha/cartão…). Destravar pela
+    nuvem não existe na API de compartilhamento (o HA também não oferece); o
+    motor é `read_only` e de risco crítico. **Controle IR** (`wnykq`, TV e AR
+    virtuais): entram sem pontos, como no HA (a API de compartilhamento não
+    manda tecla IR). **Câmera** (`sp`): ajustes, sirene crítica e movimento;
+    o vídeo continua pelo go2rtc (RTSP/ONVIF).
+  - **Conectar no MA não derruba o HA**: cada login por QR gera um par de
+    tokens próprio (terminal próprio) e o MQTT usa linkId próprio; nada
+    renova ou revoga o token do HA. Conferido em 30/10/2026: depois do login no
+    MA a integração `tuya` do HA seguiu sem erro. Risco residual: a Tuya pode
+    limitar o número de sessões por conta (não visto).
 - **Xiaomi** (`Miio::Cloud`): login próprio (nunca o OAuth do `xiaomi_home`
   do HA). Senha (MD5 + `_sign`), captcha (imagem na tela, texto de volta) ou
   QR do Mi Home (`longPolling/loginUrl`), que é o caminho quando a Xiaomi
@@ -179,7 +221,9 @@ chave).
 **Smart Life:** no app, Eu → engrenagem → Conta e segurança → copiar o
 **Código de usuário**. No local: Integrações → Tuya / Smart Life → colar →
 Continuar → escanear o QR pelo app (botão de leitura no Início) → Autorizar.
-A tela vai sozinha para "Dispositivos encontrados"; marque e "Adicionar".
+A tela vai sozinha para "Dispositivos encontrados" (os Zigbee aparecem com
+"pelo hub …"); marque e "Adicionar". O que já veio do LocalTuya fica em "já
+no local" e continua local.
 
 **Alexa:** Integrações → Alexa (Amazon) → país da conta → Continuar →
 "Abrir o login da Amazon" (nova aba) → e-mail, senha e o código de duas
