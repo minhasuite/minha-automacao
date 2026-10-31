@@ -44,6 +44,53 @@ no local; `role:guest` = todos do local). Uma notificação por pessoa.
 - Spec: `spec/services/lote1_spec.rb` registra um canal e um transporte falsos
   por `stub_const` e prova que funcionam sem mudar o núcleo.
 
+## Mensageiros: Telegram, WhatsApp e gateway HTTP (Pacote 4)
+
+Canal `messenger:<id da integração>` (`Notifier::Channels::Messenger`):
+toda integração cujo plugin responde a `send_message(integração,
+notificação)` aparece nos canais do aviso como "<tipo>: <nome>". Mensageiro
+novo = plugin de integração com `send_message` (+ `webhook(integração,
+request)` se recebe respostas); nada muda no Notifier, na ação "Avisar" nem
+no editor. Uma mensagem por aviso (o destino é a conversa da integração).
+Falha = integração "Com erro" (os outros canais seguem). Cada um tem
+formulário em Integrações, "Enviar teste" no Reconfigurar e as credenciais
+cifradas (`integrations.credentials`).
+
+| | Telegram | WhatsApp (API oficial) | Gateway HTTP |
+|---|---|---|---|
+| Conta | bot da pessoa (token do @BotFather) | app da Meta da pessoa: token, Phone number ID, número que recebe | endereço, método, cabeçalhos e corpo em Liquid |
+| Texto + link | sim | sim | `{{ text }}`, `{{ url }}` |
+| Imagem do aviso | `sendPhoto` (envio do anexo) | mídia enviada à Meta (`/media`) | `{{ image_url }}` (assinada) ou `{{ image_base64 }}` |
+| Botões | teclado embutido | até 3 botões de resposta (título até 20) | — |
+| Respostas | leitura no worker (`getUpdates`, padrão) ou webhook | webhook da Meta | — |
+
+- **Telegram**: "Achar meu chat" lê o `getUpdates` (a pessoa manda uma
+  mensagem ao bot antes) e lista as conversas. Respostas: sem endereço
+  público, `Integrations::TelegramPlugin.listen` no worker faz espera longa
+  (20 s) e confirma pelo `offset` (`TELEGRAM_LISTENER=off` desliga); com
+  "Receber por webhook", `setWebhook` para `https://APP_HOST/mensageiros/:id`
+  com `secret_token` próprio (cabeçalho conferido). Só vale o botão tocado na
+  conversa configurada. O token vai no caminho da API: nunca aparece em erro.
+- **WhatsApp**: a Meta só aceita mensagem livre até 24 h depois da última
+  mensagem da pessoa para o número. Com "Modelo" (aprovado na Meta, texto com
+  o parâmetro 1) o aviso sai sempre, mas sem foto nem botões. Respostas: no app
+  da Meta, webhook `https://APP_HOST/mensageiros/:id`, token de verificação
+  mostrado no Reconfigurar, campo `messages`; o POST só vale com
+  `X-Hub-Signature-256` do segredo do app e do número configurado.
+- **Gateway HTTP**: Evolution API, CallMeBot, ntfy, Gotify ou qualquer API,
+  sem caso especial. Variáveis `title`, `message`, `text`, `url`,
+  `image_url`, `image_base64`, `buttons`; filtro `json` (`{{ text | json }}`)
+  e `url_encode`. Passa pelo `SafeHttp` (servidor na rede de casa: libere o
+  IP em Configurações → Sistema).
+- Botão do mensageiro → `Notifier::Channels::Messenger.respond` → mesma
+  `Notification#respond!` do push (uma vez; gatilho "Resposta de aviso").
+  Quem responde: quem ligou a integração (`settings.user_id`), senão a dona
+  do aviso, senão o dono da instalação.
+- `GET|POST /mensageiros/:id` (`MessengerWebhooksController`): sem sessão; o
+  plugin valida tudo, sem plugin com `webhook` = 404.
+- Spec: `spec/services/pacote4_messengers_spec.rb` (WebMock em tudo e um
+  mensageiro falso registrado por `stub_const`).
+
 ## Resposta aos botões
 
 A primeira resposta vale (`responded_at`/`response`) e vira o evento

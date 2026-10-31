@@ -508,6 +508,20 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   só de dados (`Push::Fcm`): mudou o formato, mudou o `Notices.show` do app.
   Aparelho do celular é da pessoa (`address.user_id`): só ela manda leitura
   ou remove. Sensor novo = linha em `MobileAppPlugin::SENSORS`.
+- **Pacote 2 (helpers de medição)**: medidor por ciclo, integral, derivada,
+  limite e tendência são plugins de `HelperTypes` (mediana entrou no Grupo e
+  na Estatística). Estado interno do cálculo em `address.state`
+  (`Plugin.state`/`save_state!`, sem disparar nada); o visível em `attrs`.
+  Tipo com relógio = `clocked?` + `tick(point, now)` (o `HelperTypes.tick`
+  chama). Ciclo do medidor = cron do `Fugit` no fuso do local. Ponto que só
+  muda de qualidade também refaz os helpers dependentes (`docs/helpers.md`).
+- **Pacote 4 (mensageiros)**: canal `messenger:<integração>`
+  (`Notifier::Channels::Messenger`) para todo plugin de integração com
+  `send_message`; Telegram, WhatsApp (Cloud API) e gateway HTTP são só
+  plugins. Respostas de botão por `webhook(integração, request)` em
+  `/mensageiros/:id` (o plugin valida) ou pela leitura do Telegram no worker
+  (`TELEGRAM_LISTENER=off`). Nunca mande mensagem de verdade de teste
+  (`docs/push.md`).
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

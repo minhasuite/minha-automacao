@@ -1,0 +1,15 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<% if integration.nil? %>
+  <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "Telegram", maxlength: 80 %></div>
+<% end %>
+<div>
+  <%= f.label :token, "Token do bot", class: "ss-label" %>
+  <%= f.password_field :token, class: "ss-input", autocomplete: "off", value: nil, required: integration.nil?, placeholder: integration ? "Deixe vazio para manter o guardado" : "123456:ABC..." %>
+  <p class="text-xs text-muted mt-1">No Telegram, fale com o @BotFather, mande /newbot e copie o token. Ele fica cifrado e só serve para o seu bot.</p>
+</div>
+<% if integration %>
+  <div><%= f.label :chat_id, "Chat (id da conversa)", class: "ss-label" %><%= f.text_field :chat_id, value: s["chat_id"], class: "ss-input num", placeholder: "Use Achar meu chat" %></div>
+  <label class="ss-check"><%= f.check_box :webhook, { checked: s["webhook"] == true }, "1", "0" %>Receber as respostas por webhook (precisa do endereço público com https)</label>
+  <p class="text-xs text-muted">Sem webhook, o servidor busca as respostas dos botões no Telegram sozinho (funciona sem endereço público).</p>
+<% end %>

@@ -1,0 +1,13 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<% keep = integration ? "Deixe vazio para manter o guardado" : nil %>
+<% if integration.nil? %>
+  <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "WhatsApp pela Evolution API", maxlength: 80 %></div>
+<% end %>
+<div class="grid grid-cols-[8rem_1fr] gap-2">
+  <div><%= f.label :method, "Método", class: "ss-label" %><%= f.select :method, Integrations::HttpMessengerPlugin::METHODS, { selected: s["method"] || "POST" }, class: "ss-input" %></div>
+  <div><%= f.label :url, "Endereço", class: "ss-label" %><%= f.text_field :url, class: "ss-input", autocomplete: "off", value: nil, required: integration.nil?, placeholder: keep || "https://api.callmebot.com/whatsapp.php?phone=...&text={{ text | url_encode }}&apikey=..." %></div>
+</div>
+<div><%= f.label :headers, "Cabeçalhos (um por linha, Nome: valor)", class: "ss-label" %><%= f.text_area :headers, rows: 2, class: "ss-input font-mono text-sm", value: nil, placeholder: keep || "apikey: sua-chave" %></div>
+<div><%= f.label :body, "Corpo (opcional)", class: "ss-label" %><%= f.text_area :body, rows: 4, class: "ss-input font-mono text-sm", value: nil, placeholder: keep || %({"number": "5585999999999", "text": {{ text | json }}}) %></div>
+<p class="text-xs text-muted">Variáveis: <code>title</code>, <code>message</code>, <code>text</code> (título, corpo e link), <code>url</code>, <code>image_url</code>, <code>image_base64</code> e <code>buttons</code>. Use <code>| json</code> para texto dentro de JSON e <code>| url_encode</code> no endereço. Tudo fica cifrado. Servidor na rede de casa: libere o IP em Configurações → Sistema.</p>

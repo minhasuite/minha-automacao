@@ -1,0 +1,16 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<% keep = integration ? "Deixe vazio para manter o guardado" : "" %>
+<% if integration.nil? %>
+  <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "WhatsApp", maxlength: 80 %></div>
+<% end %>
+<p class="text-sm text-ink-2">Da sua conta no Meta for Developers (app do tipo Empresa com o produto WhatsApp): token de acesso permanente (usuário do sistema), o Phone number ID e o número que recebe os avisos.</p>
+<div><%= f.label :token, "Token de acesso", class: "ss-label" %><%= f.password_field :token, class: "ss-input", autocomplete: "off", value: nil, required: integration.nil?, placeholder: keep %></div>
+<div><%= f.label :phone_id, "Phone number ID", class: "ss-label" %><%= f.text_field :phone_id, value: s["phone_id"], class: "ss-input num", required: true %></div>
+<div><%= f.label :to, "Número que recebe (com DDI e DDD)", class: "ss-label" %><%= f.telephone_field :to, value: s["to"], class: "ss-input num", required: true, placeholder: "5585999999999" %></div>
+<div class="grid grid-cols-2 gap-2">
+  <div><%= f.label :template, "Modelo (opcional)", class: "ss-label" %><%= f.text_field :template, value: s["template"], class: "ss-input", placeholder: "aviso_casa" %></div>
+  <div><%= f.label :language, "Idioma do modelo", class: "ss-label" %><%= f.text_field :language, value: s["language"], class: "ss-input", placeholder: "pt_BR" %></div>
+</div>
+<p class="text-xs text-muted">A Meta só aceita mensagem livre até 24 h depois da sua última mensagem para o número. Com um modelo aprovado (texto com o parâmetro 1), o aviso sai sempre, mas sem foto nem botões.</p>
+<div><%= f.label :app_secret, "Segredo do app (para os botões)", class: "ss-label" %><%= f.password_field :app_secret, class: "ss-input", autocomplete: "off", value: nil, placeholder: keep %></div>

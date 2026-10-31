@@ -11,7 +11,7 @@
 # Com `user`, só para a pessoa; sem, para os administradores da empresa.
 # `dedup_key` repetido = não cria de novo (devolve nil).
 module Notifier
-  CHANNELS = %w[InApp Push Alexa].freeze
+  CHANNELS = %w[InApp Push Alexa Messenger].freeze
   # Destinatário da ação "Avisar" (Lote 1): administradores (padrão), uma
   # pessoa (todos os aparelhos dela) ou quem tem pelo menos um papel no local
   # (`role:guest` = todos do local): `admins`, `user:<id>` ou `role:<papel>`.

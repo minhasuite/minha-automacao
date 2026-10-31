@@ -19,6 +19,8 @@ Rails.application.routes.draw do
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   post "push/resposta", to: "push#respond", as: :push_respond
   get "push/imagem", to: "push#image", as: :push_image
+  # Respostas de mensageiro (Pacote 4: Telegram, WhatsApp): o plugin da integração valida.
+  match "mensageiros/:id", to: "messenger_webhooks#receive", via: %i[get post], as: :messenger_webhook
 
   # Alexa Smart Home (F9): diretivas repassadas pela Lambda e tokens do account linking.
   post "alexa/smart_home", to: "alexa_smart_home#smart_home"

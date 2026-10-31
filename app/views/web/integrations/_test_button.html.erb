@@ -1,0 +1,5 @@
+<%# locals: (integration:) -%>
+<%= form_with scope: :integration, url: connect_integration_path(integration), method: :post do |f| %>
+  <%= f.hidden_field :test, value: "1" %>
+  <%= f.button class: "ss-btn ss-btn-outline w-fit", data: { turbo_submits_with: "Enviando…" } do %><%= icon("speakerphone", "size-4") %>Enviar teste<% end %>
+<% end %>
