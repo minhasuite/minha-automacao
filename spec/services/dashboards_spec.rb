@@ -44,6 +44,16 @@ RSpec.describe "Dashboards (serviços)" do
                                 "range inválido", "tap inválido", "color inválida", "min precisa", "features inválidas", "query.capability",
                                 "query.state", "widget precisa ser um objeto")
     end
+
+    it "limita só os widgets: visões e seções não contam nos #{Dashboards::Schema::MAX_WIDGETS}" do
+      tile = ->(i) { { "id" => "w#{i}", "type" => "tile", "bind" => "p" } }
+      max = described_class::MAX_WIDGETS
+      defn = { "schema_version" => 1, "views" => Array.new(10) { |v| { "id" => "v#{v}", "title" => "V", "sections" => [ { "id" => "s#{v}", "widgets" => [] } ] } } }
+      max.times { |i| defn["views"][i % 10]["sections"][0]["widgets"] << tile.(i) }
+      expect(described_class.errors(defn)).to eq([])
+      defn["views"][0]["sections"][0]["widgets"] << tile.(max)
+      expect(described_class.errors(defn)).to include("widgets demais (máximo #{max})")
+    end
   end
 
   describe Dashboards::Generator do

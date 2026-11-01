@@ -39,11 +39,13 @@ module Dashboards
 
       ids = []
       paths = []
+      boxes = 0 # visões e seções: dividem os ids, mas não contam no limite de widgets
       views.each_with_index do |view, vi|
         next e << "view #{vi + 1} precisa ser um objeto" unless view.is_a?(Hash)
 
         where = "view #{view['id'] || vi + 1}"
         check_id(view, where, ids, e)
+        boxes += 1
         e << "#{where}: título obrigatório" if view["title"].to_s.strip.empty?
         path(view, where, paths, e)
         Array(view["badges"]).each { |b| widget(b, "#{where} (selo)", ids, e) }
@@ -55,6 +57,7 @@ module Dashboards
 
           swhere = "seção #{section['id'] || si + 1}"
           check_id(section, swhere, ids, e)
+          boxes += 1
           span(section["span"], swhere, e)
           widgets = section["widgets"]
           next e << "#{swhere}: widgets precisa ser uma lista" unless widgets.is_a?(Array)
@@ -62,7 +65,7 @@ module Dashboards
           widgets.each { |w| widget(w, swhere, ids, e) }
         end
       end
-      e << "widgets demais (máximo #{MAX_WIDGETS})" if ids.size > MAX_WIDGETS
+      e << "widgets demais (máximo #{MAX_WIDGETS})" if ids.size - boxes > MAX_WIDGETS
       e
     end
 
