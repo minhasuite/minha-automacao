@@ -8,19 +8,6 @@ module Dashboards
     MAX_BYTES = 256.kilobytes
     MAX_WIDGETS = 400
 
-    # Tipo → props obrigatórias (os da F5). Tipo novo entra como plugin em
-    # `Dashboards::Widgets` (Lote 4); `types`/`labels` juntam os dois.
-    WIDGETS = {
-      "heading" => %w[title], "tile" => %w[bind], "group" => %w[binds],
-      "stat" => [], "gauge" => %w[bind], "chart" => %w[binds], "query_list" => %w[query],
-      "area_card" => %w[area], "scene_bar" => [], "alerts" => [], "camera" => %w[bind], "vacuum" => %w[bind],
-      "energy" => %w[binds]
-    }.freeze
-    WIDGET_LABELS = {
-      "tile" => "Ponto", "group" => "Grupo de pontos", "stat" => "Contador / número", "gauge" => "Medidor",
-      "chart" => "Gráfico", "query_list" => "Lista automática", "area_card" => "Área", "scene_bar" => "Cenas",
-      "alerts" => "Alertas ativos", "camera" => "Câmera", "vacuum" => "Robô aspirador", "energy" => "Consumo e custo", "heading" => "Título"
-    }.freeze
     SCREENS = %w[mobile tablet desktop].freeze
     TAPS = %w[toggle more_info navigate none].freeze
     FEATURES = %w[toggle select slider].freeze
@@ -37,8 +24,9 @@ module Dashboards
 
     module_function
 
-    def types = WIDGETS.merge(Widgets.plugins.to_h { |p| [ p.type, p.required ] })
-    def labels = WIDGET_LABELS.merge(Widgets.plugins.to_h { |p| [ p.type, p.label ] })
+    # Tipo → props obrigatórias e tipo → nome: só do registro (`Dashboards::Widgets`).
+    def types = Widgets.plugins.to_h { |p| [ p.type, p.required ] }
+    def labels = Widgets.plugins.to_h { |p| [ p.type, p.label ] }
 
     def errors(defn)
       e = []
@@ -97,22 +85,10 @@ module Dashboards
       e << "#{where}: aggregate inválido" if w.key?("aggregate") && !AGGREGATES.include?(w["aggregate"])
       e << "#{where}: range inválido" if w.key?("range") && !RANGES.include?(w["range"])
       e << "#{where}: color inválida" if w.key?("color") && !COLORS.include?(w["color"])
-      e << "#{where}: stat precisa de bind ou query" if type == "stat" && blank?(w["bind"]) && blank?(w["query"])
       e << "#{where}: live precisa ser true ou false" if w.key?("live") && ![ true, false ].include?(w["live"])
       e << "#{where}: snapshot_interval precisa ser de 2 a 300 segundos" if w.key?("snapshot_interval") && !(w["snapshot_interval"].is_a?(Integer) && w["snapshot_interval"].between?(2, 300))
       %w[min max].each { |k| e << "#{where}: #{k} precisa ser número" if w.key?(k) && !w[k].is_a?(Numeric) }
-      energy(w, where, e) if type == "energy"
-      Widgets[type]&.errors(w)&.each { |m| e << "#{where}: #{m}" }
-    end
-
-    # Consumo e custo (F9): período, dia de corte, tarifa (número ou ponto), meta e comparação.
-    def energy(w, where, e)
-      e << "#{where}: period inválido" if w.key?("period") && !Energy::PERIODS.key?(w["period"])
-      e << "#{where}: cycle_day precisa ser de 1 a 28" if w.key?("cycle_day") && !(w["cycle_day"].is_a?(Integer) && w["cycle_day"].between?(1, 28))
-      e << "#{where}: tariff precisa ser número maior ou igual a zero" if w.key?("tariff") && !(w["tariff"].is_a?(Numeric) && w["tariff"] >= 0)
-      e << "#{where}: tariff_point precisa ser texto" if w.key?("tariff_point") && !w["tariff_point"].is_a?(String)
-      e << "#{where}: goal precisa ser número maior que zero" if w.key?("goal") && !(w["goal"].is_a?(Numeric) && w["goal"].positive?)
-      e << "#{where}: compare precisa ser true ou false" if w.key?("compare") && ![ true, false ].include?(w["compare"])
+      Widgets[type].errors(w).each { |m| e << "#{where}: #{m}" }
     end
 
     # Caminho da visão (opcional): minúsculas, números e hífen; único no painel.

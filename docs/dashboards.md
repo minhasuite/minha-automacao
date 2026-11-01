@@ -107,16 +107,24 @@ nunca entra.
 
 ### Tipo novo de widget (aberto para extensão, Lote 4)
 
-Widget novo = classe em `app/services/dashboards/widgets/` (herda de
-`Dashboards::Widgets::Base`) + nome em `Dashboards::Widgets::PLUGINS` +
-partial `web/dashboards/widgets/_<tipo>`. A classe diz `describe type:,
-label:, icon:, required:, params:, bind:` e, se precisar, `errors(w)`
-(validação além das props), `data(resolver, w, binds)` (→ `[data, pontos
-extras]`, que viram dependência do tempo real), `attrs(params)` (formulário
-→ props) e `form` (partial com os campos próprios no editor,
-`data-for="<tipo>"`). O `Schema` (`types`/`labels`), o `Resolver`, o editor
-(tipo, seletor de ponto, campos) e a tela perguntam ao plugin; nenhum deles
-ganha `case` novo. Os tipos da F5 continuam em `Schema::WIDGETS`.
+Todos os tipos da tabela acima são plugins (os da F5 também). Widget novo =
+classe em `app/services/dashboards/widgets/` (herda de
+`Dashboards::Widgets::Base`) + nome em `Dashboards::Widgets::PLUGINS` (a
+ordem é a do seletor de tipo) + partial `web/dashboards/widgets/_<tipo>`. A
+classe diz `describe type:, label:, icon:, required:, params:, bind:, binds:,
+auto:` e, se precisar, `errors(w)` (validação além das props comuns),
+`data(resolver, w, binds)` (→ `[data, pontos extras]`, que viram dependência
+do tempo real; ponto que o widget desenha entra no `points` por
+`resolver.use(p)`; o resolver também dá `site`, `role`, `points`,
+`query(q)` e `definition`), `attrs(params, site)` (formulário → props),
+`permit` (campos que não são texto simples, ex. `{ "scenes" => [] }`),
+`auto_widget(ponto, id)` (o widget do painel automático para o ponto; o
+padrão usa `auto:`) e `form` (partial ou lista de partials com os campos
+próprios no editor, locals `w`, `uid`, `types` → `data-for="<%= types %>"`;
+partial de vários tipos, como o filtro `query` de `stat` e `query_list`,
+sai uma vez só). O `Schema` (`types`/`labels`), o `Resolver`, o editor
+(tipo, ícone, seletor de ponto, campos), o `Generator` e a tela perguntam ao
+registro; nenhum deles tem `case` por tipo.
 
 Ficam para depois (driver ainda não existe ou v1.1): `vacuum`,
 `timeline`, `health`, `calendar`, `select`/`slider`/`button`/`gate`

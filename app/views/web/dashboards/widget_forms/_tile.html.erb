@@ -1,0 +1,5 @@
+<%# locals: (w:, uid:, types:, **) -%>
+<div data-for="<%= types %>"><label class="ss-label" for="co-<%= uid %>">Cor quando ligado</label>
+  <%= select_tag "widget[color]", options_for_select({ "Roxo (padrão)" => "accent", "Âmbar (luz)" => "amber", "Verde" => "green", "Vermelho" => "red", "Azul" => "blue" }, w["color"]), class: "ss-input", id: "co-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="tp-<%= uid %>">Toque</label>
+  <%= select_tag "widget[tap]", options_for_select({ "Liga e desliga / ajusta" => "toggle", "Só abre o ponto" => "more_info" }, w["tap"]), class: "ss-input", id: "tp-#{uid}" %></div>

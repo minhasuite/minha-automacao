@@ -1,0 +1,5 @@
+<%# locals: (w:, uid:, types:, **) -%>
+<div data-for="<%= types %>"><div class="grid grid-cols-2 gap-2">
+  <div><label class="ss-label" for="mn-<%= uid %>">Mínimo</label><%= text_field_tag "widget[min]", w["min"], class: "ss-input num", id: "mn-#{uid}", inputmode: "decimal" %></div>
+  <div><label class="ss-label" for="mx-<%= uid %>">Máximo</label><%= text_field_tag "widget[max]", w["max"], class: "ss-input num", id: "mx-#{uid}", inputmode: "decimal" %></div>
+</div></div>

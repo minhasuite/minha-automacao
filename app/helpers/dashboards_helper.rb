@@ -3,9 +3,6 @@ module DashboardsHelper
   DEFAULT_SPAN = { "mobile" => 12, "tablet" => 6, "desktop" => 4 }.freeze
   SECTION_SPAN = { "mobile" => 12, "tablet" => 12, "desktop" => 12 }.freeze
   AREA_ARTS = 6
-  WIDGET_ICONS = { "tile" => "light-bulb", "group" => "view-list", "stat" => "calculator", "gauge" => "clock", "chart" => "chart-bar",
-                   "query_list" => "filter", "area_card" => "home", "scene_bar" => "sparkles", "alerts" => "exclamation-circle",
-                   "heading" => "document-text", "markdown" => "document-text" }.freeze
 
   # Largura no grid de 12 colunas por tela, em variáveis CSS (.dw-w).
   def dw_span_style(span, default = DEFAULT_SPAN)

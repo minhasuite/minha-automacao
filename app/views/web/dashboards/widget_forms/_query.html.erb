@@ -1,0 +1,16 @@
+<%# locals: (w:, uid:, types:, areas:, **) -%>
+<% q = w["query"] || {} %>
+<div data-for="<%= types %>"><label class="ss-label" for="qc-<%= uid %>">Quais pontos: tipo</label>
+  <%= select_tag "widget[query][capability]", options_for_select(Point::CAPABILITY_LABELS.invert, q["capability"]), include_blank: "Qualquer", class: "ss-input", id: "qc-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="qs-<%= uid %>">Estado</label>
+  <%= select_tag "widget[query][state]", options_for_select({ "Ligados / abertos" => "on", "Desligados / fechados" => "off" }, q["state"]), include_blank: "Qualquer", class: "ss-input", id: "qs-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="qa-<%= uid %>">Área</label>
+  <%= select_tag "widget[query][area]", options_from_collection_for_select(areas, :id, :name, q["area"]), include_blank: "Todas", class: "ss-input", id: "qa-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="qd-<%= uid %>">Medição</label>
+  <%= select_tag "widget[query][device_class]", options_for_select({ "Potência (W)" => "power", "Energia (kWh)" => "energy", "Temperatura" => "temperature", "Umidade" => "humidity", "Bateria" => "battery" }, q["device_class"]), include_blank: "Qualquer", class: "ss-input", id: "qd-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="qt-<%= uid %>">Etiqueta</label>
+  <%= text_field_tag "widget[query][tag]", q["tag"], class: "ss-input", id: "qt-#{uid}", placeholder: "iluminacao" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="qi-<%= uid %>">Sem mudar há (min)</label>
+  <%= number_field_tag "widget[query][unchanged_min]", q["unchanged_min"], min: 1, class: "ss-input num", id: "qi-#{uid}", placeholder: "60" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="qx-<%= uid %>">Deixar de fora nomes com</label>
+  <%= text_field_tag "widget[query][exclude]", q["exclude"], class: "ss-input", id: "qx-#{uid}", placeholder: "teste, reserva" %></div>

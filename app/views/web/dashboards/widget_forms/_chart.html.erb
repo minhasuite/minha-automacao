@@ -1,0 +1,3 @@
+<%# locals: (w:, uid:, types:, **) -%>
+<div data-for="<%= types %>"><label class="ss-label" for="rg-<%= uid %>">Período</label>
+  <%= select_tag "widget[range]", options_for_select({ "24 horas" => "24h", "7 dias" => "7d", "30 dias" => "30d" }, w["range"]), class: "ss-input", id: "rg-#{uid}" %></div>

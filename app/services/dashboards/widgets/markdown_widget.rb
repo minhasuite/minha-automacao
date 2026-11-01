@@ -18,9 +18,11 @@ module Dashboards
         [ "texto com Liquid inválido: #{e.message.delete_prefix('Liquid syntax error: ').truncate(120)}" ]
       end
 
+      def self.form = "web/dashboards/widget_forms/markdown"
+
       def self.data(r, w, _binds)
         text = w["text"].to_s
-        deps = text.scan(REF).filter_map { |a, b| r.point(a || b) }
+        deps = text.scan(REF).filter_map { |a, b| r.use(r.point(a || b)) }
         return [ { "text" => text }, deps ] unless text.include?("{{") || text.include?("{%")
 
         [ { "text" => Automations::Context.new(site: r.site).render(text, limit: MAX) }, deps ]

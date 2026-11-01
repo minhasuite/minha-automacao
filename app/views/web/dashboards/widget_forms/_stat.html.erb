@@ -1,0 +1,5 @@
+<%# locals: (w:, uid:, types:, **) -%>
+<div data-for="<%= types %>"><label class="ss-label" for="ag-<%= uid %>">Mostrar</label>
+  <%= select_tag "widget[aggregate]", options_for_select({ "Quantos são" => "count", "Soma" => "sum", "Média" => "avg", "Mínimo" => "min", "Máximo" => "max", "Valor do ponto" => "last" }, w["aggregate"]), class: "ss-input", id: "ag-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="at-<%= uid %>">Atributo <span class="font-normal">(opcional, no lugar do valor)</span></label>
+  <%= text_field_tag "widget[attribute]", w["attribute"], class: "ss-input num", id: "at-#{uid}", maxlength: 40, placeholder: "frase" %></div>

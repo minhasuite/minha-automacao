@@ -1,5 +1,4 @@
 <%# locals: (dashboard:, w:, op:, target:, view_id:, point_options:, areas:, scenes:) -%>
-<% q = w["query"] || {} %>
 <% span = DashboardsHelper::DEFAULT_SPAN.merge(w["span"] || {}) %>
 <% roles = Array(w.dig("visible_if", "role")) %>
 <% screens = Array(w.dig("visible_if", "screen")) %>
@@ -12,64 +11,16 @@
   <div><label class="ss-label" for="l-<%= uid %>">Rótulo <span class="font-normal">(opcional)</span></label>
     <%= text_field_tag "widget[label]", w["label"], class: "ss-input", id: "l-#{uid}", maxlength: 80, placeholder: "Usa o nome do ponto" %></div>
 
-  <%# Widgets plugin (Lote 4): mostrar os campos do tipo e o seletor de ponto (bind). %>
+  <%# Tipos de widget = plugins (Dashboards::Widgets): os campos de cada tipo aparecem quando ele está escolhido. %>
   <style><%= plugins.map { |pl| ".dw-wf:has(option[value=#{pl.type}]:checked) [data-for~=#{pl.type}]" }.join(", ") %> { display: block; }</style>
-  <div class="sm:col-span-2" data-for="tile gauge stat camera vacuum <%= plugins.select(&:bind?).map(&:type).join(" ") %>"><label class="ss-label" for="b-<%= uid %>">Ponto</label>
+  <div class="sm:col-span-2" data-for="<%= plugins.select(&:bind?).map(&:type).join(" ") %>"><label class="ss-label" for="b-<%= uid %>">Ponto</label>
     <%= select_tag "widget[bind]", grouped_options_for_select(point_options, w["bind"]), include_blank: "Escolha um ponto", class: "ss-input", id: "b-#{uid}" %></div>
-  <div class="sm:col-span-2" data-for="group chart energy"><label class="ss-label" for="bs-<%= uid %>">Pontos <span class="font-normal">(até 8; Ctrl/toque para marcar vários; no consumo, kWh ou W somados)</span></label>
+  <div class="sm:col-span-2" data-for="<%= plugins.select(&:binds?).map(&:type).join(" ") %>"><label class="ss-label" for="bs-<%= uid %>">Pontos <span class="font-normal">(até 8; Ctrl/toque para marcar vários; no consumo, kWh ou W somados)</span></label>
     <%= select_tag "widget[binds][]", grouped_options_for_select(point_options, w["binds"]), multiple: true, size: 6, class: "ss-input", id: "bs-#{uid}" %></div>
-  <div class="sm:col-span-2" data-for="heading"><label class="ss-label" for="h-<%= uid %>">Título</label>
-    <%= text_field_tag "widget[title]", w["title"], class: "ss-input", id: "h-#{uid}", maxlength: 80 %></div>
-  <div class="sm:col-span-2" data-for="markdown"><label class="ss-label" for="x-<%= uid %>">Texto <span class="font-normal">(aceita Liquid: {{ points["chave.do.ponto"].text }}, {% if %}; **negrito**, - lista)</span></label>
-    <%= text_area_tag "widget[text]", w["text"], class: "ss-input", id: "x-#{uid}", rows: 4, maxlength: 4000 %></div>
-  <% plugins.filter_map(&:form).each do |form| %><%= render form, w: w, uid: uid %><% end %>
-  <div data-for="stat query_list"><label class="ss-label" for="qc-<%= uid %>">Quais pontos: tipo</label>
-    <%= select_tag "widget[query][capability]", options_for_select(Point::CAPABILITY_LABELS.invert, q["capability"]), include_blank: "Qualquer", class: "ss-input", id: "qc-#{uid}" %></div>
-  <div data-for="stat query_list"><label class="ss-label" for="qs-<%= uid %>">Estado</label>
-    <%= select_tag "widget[query][state]", options_for_select({ "Ligados / abertos" => "on", "Desligados / fechados" => "off" }, q["state"]), include_blank: "Qualquer", class: "ss-input", id: "qs-#{uid}" %></div>
-  <div data-for="stat query_list"><label class="ss-label" for="qa-<%= uid %>">Área</label>
-    <%= select_tag "widget[query][area]", options_from_collection_for_select(areas, :id, :name, q["area"]), include_blank: "Todas", class: "ss-input", id: "qa-#{uid}" %></div>
-  <div data-for="stat query_list"><label class="ss-label" for="qd-<%= uid %>">Medição</label>
-    <%= select_tag "widget[query][device_class]", options_for_select({ "Potência (W)" => "power", "Energia (kWh)" => "energy", "Temperatura" => "temperature", "Umidade" => "humidity", "Bateria" => "battery" }, q["device_class"]), include_blank: "Qualquer", class: "ss-input", id: "qd-#{uid}" %></div>
-  <div data-for="stat query_list"><label class="ss-label" for="qt-<%= uid %>">Etiqueta</label>
-    <%= text_field_tag "widget[query][tag]", q["tag"], class: "ss-input", id: "qt-#{uid}", placeholder: "iluminacao" %></div>
-  <div data-for="stat query_list"><label class="ss-label" for="qi-<%= uid %>">Sem mudar há (min)</label>
-    <%= number_field_tag "widget[query][unchanged_min]", q["unchanged_min"], min: 1, class: "ss-input num", id: "qi-#{uid}", placeholder: "60" %></div>
-  <div data-for="stat query_list"><label class="ss-label" for="qx-<%= uid %>">Deixar de fora nomes com</label>
-    <%= text_field_tag "widget[query][exclude]", q["exclude"], class: "ss-input", id: "qx-#{uid}", placeholder: "teste, reserva" %></div>
-  <div data-for="query_list"><label class="ss-label" for="qo-<%= uid %>">Ordem</label>
-    <%= select_tag "widget[query][sort]", options_for_select({ "Nome" => "name", "Menor valor" => "value", "Maior valor" => "-value", "Mudou há mais tempo" => "changed_at", "Mudou por último" => "-changed_at" }, q["sort"]), include_blank: "Nome", class: "ss-input", id: "qo-#{uid}" %></div>
-  <div data-for="stat"><label class="ss-label" for="ag-<%= uid %>">Mostrar</label>
-    <%= select_tag "widget[aggregate]", options_for_select({ "Quantos são" => "count", "Soma" => "sum", "Média" => "avg", "Mínimo" => "min", "Máximo" => "max", "Valor do ponto" => "last" }, w["aggregate"]), class: "ss-input", id: "ag-#{uid}" %></div>
-  <div data-for="stat"><label class="ss-label" for="at-<%= uid %>">Atributo <span class="font-normal">(opcional, no lugar do valor)</span></label>
-    <%= text_field_tag "widget[attribute]", w["attribute"], class: "ss-input num", id: "at-#{uid}", maxlength: 40, placeholder: "frase" %></div>
-  <div data-for="query_list"><label class="ss-label" for="et-<%= uid %>">Texto quando vazio</label>
-    <%= text_field_tag "widget[empty_text]", w["empty_text"], class: "ss-input", id: "et-#{uid}", placeholder: "Tudo desligado." %></div>
-  <div data-for="chart"><label class="ss-label" for="rg-<%= uid %>">Período</label>
-    <%= select_tag "widget[range]", options_for_select({ "24 horas" => "24h", "7 dias" => "7d", "30 dias" => "30d" }, w["range"]), class: "ss-input", id: "rg-#{uid}" %></div>
-  <div data-for="energy"><label class="ss-label" for="pe-<%= uid %>">Período</label>
-    <%= select_tag "widget[period]", options_for_select(Dashboards::Energy::PERIODS.invert, w["period"] || "month"), class: "ss-input", id: "pe-#{uid}" %></div>
-  <div data-for="energy"><label class="ss-label" for="cd-<%= uid %>">Dia de corte <span class="font-normal">(só no ciclo)</span></label>
-    <%= number_field_tag "widget[cycle_day]", w["cycle_day"], in: 1..28, class: "ss-input num", id: "cd-#{uid}", placeholder: "1 a 28" %></div>
-  <div data-for="energy"><label class="ss-label" for="tf-<%= uid %>">Tarifa fixa (R$/kWh)</label>
-    <%= text_field_tag "widget[tariff]", w["tariff"], class: "ss-input num", id: "tf-#{uid}", inputmode: "decimal", placeholder: "0,95" %></div>
-  <div data-for="energy"><label class="ss-label" for="tp2-<%= uid %>">Ou tarifa de um ponto <span class="font-normal">(helper Número)</span></label>
-    <%= select_tag "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), include_blank: "Usar a tarifa fixa", class: "ss-input", id: "tp2-#{uid}" %></div>
-  <div data-for="energy"><label class="ss-label" for="gl-<%= uid %>">Meta (kWh no período, opcional)</label>
-    <%= text_field_tag "widget[goal]", w["goal"], class: "ss-input num", id: "gl-#{uid}", inputmode: "decimal" %></div>
-  <div data-for="energy" class="flex items-end"><label class="ss-check"><%= hidden_field_tag "widget[compare]", "0", id: nil %><%= check_box_tag "widget[compare]", "1", w["compare"], id: "cp-#{uid}" %>Comparar com o período anterior</label></div>
-  <div data-for="area_card"><label class="ss-label" for="ar-<%= uid %>">Área</label>
-    <%= select_tag "widget[area]", options_from_collection_for_select(areas, :id, :name, w["area"]), class: "ss-input", id: "ar-#{uid}" %></div>
-  <div class="sm:col-span-2" data-for="scene_bar"><label class="ss-label" for="sc-<%= uid %>">Cenas <span class="font-normal">(nenhuma marcada = todas)</span></label>
-    <%= select_tag "widget[scenes][]", options_from_collection_for_select(scenes, :id, :name, w["scenes"]), multiple: true, size: 4, class: "ss-input", id: "sc-#{uid}" %></div>
-  <div data-for="tile"><label class="ss-label" for="co-<%= uid %>">Cor quando ligado</label>
-    <%= select_tag "widget[color]", options_for_select({ "Roxo (padrão)" => "accent", "Âmbar (luz)" => "amber", "Verde" => "green", "Vermelho" => "red", "Azul" => "blue" }, w["color"]), class: "ss-input", id: "co-#{uid}" %></div>
-  <div data-for="tile"><label class="ss-label" for="tp-<%= uid %>">Toque</label>
-    <%= select_tag "widget[tap]", options_for_select({ "Liga e desliga / ajusta" => "toggle", "Só abre o ponto" => "more_info" }, w["tap"]), class: "ss-input", id: "tp-#{uid}" %></div>
-  <div data-for="gauge" class="grid grid-cols-2 gap-2">
-    <div><label class="ss-label" for="mn-<%= uid %>">Mínimo</label><%= text_field_tag "widget[min]", w["min"], class: "ss-input num", id: "mn-#{uid}", inputmode: "decimal" %></div>
-    <div><label class="ss-label" for="mx-<%= uid %>">Máximo</label><%= text_field_tag "widget[max]", w["max"], class: "ss-input num", id: "mx-#{uid}", inputmode: "decimal" %></div>
-  </div>
+  <%# Campos próprios do tipo (`form` do plugin); partial de vários tipos sai uma vez só. %>
+  <% plugins.flat_map { |pl| Array(pl.form).map { |form| [ form, pl.type ] } }.group_by(&:first).each do |form, pairs| %>
+    <%= render form, w: w, uid: uid, types: pairs.map(&:last).join(" "), point_options: point_options, areas: areas, scenes: scenes %>
+  <% end %>
 
   <fieldset class="sm:col-span-2">
     <legend class="ss-label">Largura (de 12 colunas)</legend>

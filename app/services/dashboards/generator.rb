@@ -46,7 +46,7 @@ module Dashboards
       end
       sections << section("s-home-security", "Segurança", "exclamation-circle", security.map { |p| tile(p, "ws", label: home_label(p), span: span(12, 6, 4)) }) if security.any?
       cameras = @points.select { |p| camera?(p) }
-      sections << section("s-home-cameras", "Câmeras", "video-camera", cameras.map { |p| camera(p, "wc") }) if cameras.any?
+      sections << section("s-home-cameras", "Câmeras", "video-camera", cameras.map { |p| tile(p, "wc", span: nil) }) if cameras.any?
       vacuums = @points.select { |p| vacuum?(p) }
       sections << section("s-home-vacuum", "Robô", "vacuum", vacuums.map { |p| tile(p, "wv", span: span(12, 12, 12)) }) if vacuums.any?
       sections << section("s-home-scenes", "Cenas", "sparkles", [ { "id" => "w-home-scenes", "type" => "scene_bar", "span" => span(12, 12, 12) } ]) if @site.scenes.exists?
@@ -83,12 +83,9 @@ module Dashboards
       { "id" => id, "title" => title, "icon" => icon, "area" => area, "sections" => sections }.compact
     end
 
+    # Ponto com widget próprio (câmera, robô, mídia, controle remoto) pergunta ao registro; o resto é `tile`.
     def tile(point, prefix, span:, label: nil)
-      return camera(point, prefix) if camera?(point)
-      return { "id" => "#{prefix}-#{point.id}", "type" => "vacuum", "bind" => point.id, "span" => span(12, 12, 12) } if vacuum?(point)
-      if (plugin = Widgets.for_capability(point.capability)) # Pacote 1: mídia, controle remoto
-        return { "id" => "#{prefix}-#{point.id}", "type" => plugin.type, "bind" => point.id, "span" => span(12, 12, 6) }
-      end
+      auto = Widgets.auto_widget(point, "#{prefix}-#{point.id}") and return auto
 
       w = { "id" => "#{prefix}-#{point.id}", "type" => "tile", "bind" => point.id, "span" => span }
       w["label"] = label if label && label != point.name
@@ -101,7 +98,6 @@ module Dashboards
 
     def camera?(p) = p.capability == "stream" && p.device.driver == "go2rtc"
     def vacuum?(p) = p.capability == "vacuum"
-    def camera(p, prefix) = { "id" => "#{prefix}-#{p.id}", "type" => "camera", "bind" => p.id, "live" => true, "span" => span(12, 6, 6) }
 
     def section(id, title, icon, widgets, span: nil)
       { "id" => id, "title" => title, "icon" => icon, "span" => span, "widgets" => widgets }.compact

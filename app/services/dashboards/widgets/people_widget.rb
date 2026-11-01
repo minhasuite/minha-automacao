@@ -9,6 +9,7 @@ module Dashboards
       def self.data(r, w, _binds)
         persons = People.persons(r.site).to_a
         persons = persons.select { |p| p.value == w["zone"] } if w["zone"].present?
+        persons.each { |p| r.use(p) }
         home = HelperTypes::Zone.home_of(People.zones(r.site))&.name
         list = persons.map do |p|
           { "id" => p.id, "name" => p.name, "zone" => p.value, "home" => p.value.present? && p.value == home,

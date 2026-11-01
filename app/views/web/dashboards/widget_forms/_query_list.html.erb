@@ -1,0 +1,6 @@
+<%# locals: (w:, uid:, types:, **) -%>
+<% q = w["query"] || {} %>
+<div data-for="<%= types %>"><label class="ss-label" for="qo-<%= uid %>">Ordem</label>
+  <%= select_tag "widget[query][sort]", options_for_select({ "Nome" => "name", "Menor valor" => "value", "Maior valor" => "-value", "Mudou há mais tempo" => "changed_at", "Mudou por último" => "-changed_at" }, q["sort"]), include_blank: "Nome", class: "ss-input", id: "qo-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="et-<%= uid %>">Texto quando vazio</label>
+  <%= text_field_tag "widget[empty_text]", w["empty_text"], class: "ss-input", id: "et-#{uid}", placeholder: "Tudo desligado." %></div>

@@ -176,35 +176,11 @@ module Web
 
     # Formulário do widget → JSON (só o que vale para o tipo; vazio some).
     def widget_attrs
-      p = params.fetch(:widget, {}).permit(:type, :label, :bind, :title, :text, :aggregate, :range, :color, :tap, :area, :min, :max, :empty_text,
-                                           :period, :cycle_day, :tariff, :tariff_point, :goal, :compare, :attribute, *Dashboards::Widgets.plugins.flat_map(&:params),
-                                           binds: [], scenes: [], roles: [], screens: [], query: %i[capability state tag area device_class quality integration unchanged_min exclude sort])
+      p = params.fetch(:widget, {}).permit(:type, :label, :bind, *Dashboards::Widgets.plugins.flat_map(&:permit).uniq,
+                                           binds: [], roles: [], screens: [], query: %i[capability state tag area device_class quality integration unchanged_min exclude sort])
       type = p[:type].presence_in(Dashboards::Schema.types.keys) || "tile"
       attrs = { "type" => type, "label" => p[:label].presence, "span" => span_param }
-      case type
-      when "tile" then attrs.merge!("bind" => p[:bind].presence, "tap" => p[:tap].presence, "color" => p[:color].presence, "features" => tile_features(p[:bind]))
-      when "group" then attrs["binds"] = Array(p[:binds]).compact_blank.first(8)
-      when "chart" then attrs.merge!("binds" => Array(p[:binds]).compact_blank.first(8), "range" => p[:range].presence || "24h")
-      when "camera" then attrs.merge!("bind" => p[:bind].presence, "live" => true)
-      when "vacuum" then attrs["bind"] = p[:bind].presence
-      when "gauge" then attrs.merge!("bind" => p[:bind].presence, "min" => number(p[:min]), "max" => number(p[:max]))
-      when "stat", "query_list"
-        query = p.fetch(:query, {}).to_h.compact_blank
-        attrs["query"] = query.presence
-        attrs["bind"] = p[:bind].presence if query.empty?
-        attrs["aggregate"] = query.empty? && p[:aggregate] == "count" ? "last" : p[:aggregate].presence if type == "stat"
-        attrs["attribute"] = p[:attribute].presence if type == "stat" && query.empty? # Lote 5 (G9): atributo do ponto
-        attrs["empty_text"] = p[:empty_text].presence if type == "query_list"
-      when "energy"
-        attrs.merge!("binds" => Array(p[:binds]).compact_blank.first(8), "period" => p[:period].presence_in(Dashboards::Energy::PERIODS.keys) || "month",
-                     "tariff_point" => p[:tariff_point].presence, "goal" => number(p[:goal]), "compare" => p[:compare] == "1" || nil)
-        attrs["cycle_day"] = p[:cycle_day].to_i.clamp(1, 28) if attrs["period"] == "cycle"
-        attrs["tariff"] = number(p[:tariff]) unless attrs["tariff_point"]
-      when "area_card" then attrs["area"] = p[:area].presence
-      when "scene_bar" then attrs["scenes"] = Array(p[:scenes]).compact_blank.presence
-      when "heading" then attrs["title"] = p[:title].presence || p[:label].presence
-      else attrs.merge!(Dashboards::Widgets[type]&.attrs(p) || {}) # widget plugin (Lote 4)
-      end
+      attrs.merge!(Dashboards::Widgets[type]&.attrs(p, @site) || {}) # o plugin do tipo diz as props
       roles = Array(p[:roles]).compact_blank
       screens = Array(p[:screens]).compact_blank & Dashboards::Schema::SCREENS
       visible = { "role" => (roles if roles.any? && roles.size < SiteMembership::ROLES.size),
@@ -213,21 +189,9 @@ module Web
       attrs.compact
     end
 
-    def tile_features(bind)
-      point = @site.points.find_by(id: bind) or return nil
-      return [ "slider" ] if point.capability.in?(%w[dimmer setpoint])
-
-      [ "select" ] if point.capability == "enum"
-    end
-
     def span_param
       s = params.fetch(:span, {}).permit(*Dashboards::Schema::SCREENS).to_h.transform_values(&:to_i).select { |_, n| n.between?(1, 12) }
       s.presence
-    end
-
-    def number(v)
-      n = Float(v.to_s.tr(",", "."), exception: false) if v.present?
-      n && n % 1 == 0 ? n.to_i : n
     end
   end
 end

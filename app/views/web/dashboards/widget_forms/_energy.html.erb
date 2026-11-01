@@ -1,0 +1,12 @@
+<%# locals: (w:, uid:, types:, point_options:, **) -%>
+<div data-for="<%= types %>"><label class="ss-label" for="pe-<%= uid %>">Período</label>
+  <%= select_tag "widget[period]", options_for_select(Dashboards::Energy::PERIODS.invert, w["period"] || "month"), class: "ss-input", id: "pe-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="cd-<%= uid %>">Dia de corte <span class="font-normal">(só no ciclo)</span></label>
+  <%= number_field_tag "widget[cycle_day]", w["cycle_day"], in: 1..28, class: "ss-input num", id: "cd-#{uid}", placeholder: "1 a 28" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="tf-<%= uid %>">Tarifa fixa (R$/kWh)</label>
+  <%= text_field_tag "widget[tariff]", w["tariff"], class: "ss-input num", id: "tf-#{uid}", inputmode: "decimal", placeholder: "0,95" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="tp2-<%= uid %>">Ou tarifa de um ponto <span class="font-normal">(helper Número)</span></label>
+  <%= select_tag "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), include_blank: "Usar a tarifa fixa", class: "ss-input", id: "tp2-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="gl-<%= uid %>">Meta (kWh no período, opcional)</label>
+  <%= text_field_tag "widget[goal]", w["goal"], class: "ss-input num", id: "gl-#{uid}", inputmode: "decimal" %></div>
+<div data-for="<%= types %>" class="flex items-end"><label class="ss-check"><%= hidden_field_tag "widget[compare]", "0", id: nil %><%= check_box_tag "widget[compare]", "1", w["compare"], id: "cp-#{uid}" %>Comparar com o período anterior</label></div>

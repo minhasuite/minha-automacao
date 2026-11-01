@@ -178,14 +178,8 @@
 @media (min-width: 1024px) { .dw-w { grid-column: span var(--d, 4) / span var(--d, 4); } }
 /* Formulário do widget: só os campos do tipo escolhido (sem JS). */
 /* Fora de @layer: senão o .flex/.grid dos utilitários mostra o campo em todo tipo. */
+/* O que aparece por tipo sai dos plugins (`<style>` em _widget_form). */
 .dw-wf [data-for] { display: none; }
-.dw-wf:has(option[value="tile"]:checked) [data-for~="tile"], .dw-wf:has(option[value="camera"]:checked) [data-for~="camera"], .dw-wf:has(option[value="vacuum"]:checked) [data-for~="vacuum"], .dw-wf:has(option[value="group"]:checked) [data-for~="group"],
-.dw-wf:has(option[value="stat"]:checked) [data-for~="stat"], .dw-wf:has(option[value="gauge"]:checked) [data-for~="gauge"],
-.dw-wf:has(option[value="chart"]:checked) [data-for~="chart"], .dw-wf:has(option[value="query_list"]:checked) [data-for~="query_list"],
-.dw-wf:has(option[value="area_card"]:checked) [data-for~="area_card"], .dw-wf:has(option[value="scene_bar"]:checked) [data-for~="scene_bar"],
-.dw-wf:has(option[value="heading"]:checked) [data-for~="heading"], .dw-wf:has(option[value="markdown"]:checked) [data-for~="markdown"],
-.dw-wf:has(option[value="energy"]:checked) [data-for~="energy"] { display: block; }
-.dw-wf:has(option[value="gauge"]:checked) div.grid[data-for~="gauge"] { display: grid; }
 /* Robô aspirador (F8): estado, comandos, cômodos em pílulas, ajustes e peças. */
 @layer components {
   .dw-vac-battery { flex-shrink: 0; padding: .25rem .6rem; border-radius: 999px; font-size: .78rem; font-weight: 700; color: var(--ink-2); background: var(--field); }
