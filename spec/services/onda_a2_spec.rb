@@ -9,14 +9,15 @@ RSpec.describe "Onda A2: serviços" do
     let(:docker) { FakeDocker.new }
     let(:app) { Supervisor::App.new(docker: docker, token: token, network: "ma-apps", project: "minha-automacao") }
 
-    def req(method, path)
-      status, _h, out = app.call(Rack::MockRequest.env_for(path, method: method, "HTTP_AUTHORIZATION" => "Bearer #{token}"))
+    def req(method, path, body = nil)
+      status, _h, out = app.call(Rack::MockRequest.env_for(path, method: method, input: body&.to_json, "HTTP_AUTHORIZATION" => "Bearer #{token}"))
       [ status, JSON.parse(out.join) ]
     end
 
     before do
       allow(Supervisor).to receive(:log)
-      sup = docker.add(labels: { "com.docker.compose.project" => "minha-automacao", "com.docker.compose.service" => "supervisor" })
+      sup = docker.add(labels: { "com.docker.compose.project" => "minha-automacao", "com.docker.compose.service" => "supervisor",
+                                 "com.docker.compose.project.working_dir" => "/opt/ma" })
       docker.inspect(sup)["Config"]["Image"] = "ghcr.io/minhasuite/minha-automacao:latest"
       docker.add(labels: { "com.docker.compose.project" => "minha-automacao", "com.docker.compose.service" => "web" })
     end
@@ -40,6 +41,18 @@ RSpec.describe "Onda A2: serviços" do
       expect(create[2]["HostConfig"]).to include("Privileged" => true, "PidMode" => "host")
       expect(req("GET", "/system/logs?service=web&lines=50").last.dig("data", "lines")).to include("linha 2 (50)")
       expect(req("GET", "/system/logs?service=db").first).to eq(422)
+    end
+
+    it "restaura à parte pelo bin/ma-restore (docker:cli, pasta do compose) e só um por vez" do
+      expect(req("POST", "/system/restore", file: "../x.sql.gz", source: "backups").first).to eq(422)
+      expect(req("POST", "/system/restore", file: "db.sql.gz", source: "etc").first).to eq(422)
+      expect(req("POST", "/system/restore", file: "minha_automacao-20261101.sql.gz", source: "storage").first).to eq(202)
+      create = docker.calls.find { |c| c[1] == "/containers/create" }
+      expect(create[2]["Env"]).to eq([ "DIR=/opt/ma", "FILE=minha_automacao-20261101.sql.gz", "SOURCE=storage" ])
+      expect(create[2]["Cmd"].last).to include("restore-status.json", "pg_dump")
+      expect(create[3][:name]).to start_with("minha-automacao-restore-")
+      expect(req("POST", "/system/restore", file: "outro.sql.gz", source: "backups").first).to eq(409)
+      expect(system("sh", "-n", Rails.root.join("bin/ma-restore").to_s)).to be(true)
     end
   end
 

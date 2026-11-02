@@ -1,0 +1,55 @@
+<%= render "web/shared/header", title: t("settings.title"), subtitle: t("backup_restore.subtitle") %>
+<%= render layout: "web/settings/frame", locals: { current: :backups } do %>
+<% st = @status %>
+<% if st["state"].present? %>
+  <% tone = { "running" => "accent", "done" => "success", "rolled_back" => "warn", "failed" => "danger" }.fetch(st["state"], "muted") %>
+  <section class="ss-card ss-card-pad mb-4 flex flex-wrap items-center justify-between gap-3" role="status" aria-live="polite" data-restore="<%= st["state"] %>"
+           <%= tag.attributes(data: { controller: "reload", reload_every_value: 5000 }) if st["state"] == "running" %>>
+    <div class="min-w-0">
+      <p class="font-bold text-ink"><%= t("backup_restore.states.#{st["state"]}", default: st["state"]) %><%= " · #{t("backup_restore.steps.#{st["step"]}", default: st["step"])}" if st["state"] == "running" %></p>
+      <p class="text-sm text-muted break-words"><%= st["file"] %><%= " · #{l(Time.zone.parse(st["at"]), format: :short)}" if st["at"].present? %><%= " · #{st["message"]}" if st["message"].present? %></p>
+    </div>
+    <span class="ss-badge ss-badge-<%= tone %>"><%= t("backup_restore.badges.#{st["state"]}", default: st["state"]) %></span>
+  </section>
+<% end %>
+
+<section class="ss-card ss-card-pad" aria-labelledby="rs-t">
+  <h2 id="rs-t" class="flex items-center gap-2"><%= icon("refresh", "size-5 text-accent") %><%= t("backup_restore.title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("backup_restore.pitch") %></p>
+  <% unless @available %><p class="text-sm text-warn mt-2"><%= t("backup_restore.no_supervisor") %></p><% end %>
+  <%= form_with url: settings_backups_path, multipart: true, class: "mt-4 grid gap-4", data: { turbo: false } do %>
+    <fieldset class="grid gap-2">
+      <legend class="ss-label"><%= t("backup_restore.choose") %></legend>
+      <% if @local.empty? && @offsite.empty? %><p class="text-sm text-muted"><%= t("backup_restore.none") %></p><% end %>
+      <% @local.first(10).each_with_index do |f, i| %>
+        <label class="flex items-center gap-3 rounded-xl border border-line p-3 cursor-pointer has-[:checked]:border-accent">
+          <input type="radio" name="pick" value="local:<%= f[:name] %>" <%= "checked" if i.zero? %>>
+          <span class="min-w-0 flex-1"><span class="block font-semibold text-ink break-all num"><%= f[:name] %></span>
+            <span class="text-xs text-muted"><%= t("backup_restore.here") %> · <%= l(f[:at], format: :short) %> · <%= number_to_human_size(f[:size]) %></span></span>
+        </label>
+      <% end %>
+      <% @offsite.first(10).each do |name| %>
+        <label class="flex items-center gap-3 rounded-xl border border-line p-3 cursor-pointer has-[:checked]:border-accent">
+          <input type="radio" name="pick" value="offsite:<%= name %>">
+          <span class="min-w-0 flex-1"><span class="block font-semibold text-ink break-all num"><%= name %></span>
+            <span class="text-xs text-muted"><%= t("backup_restore.away") %></span></span>
+        </label>
+      <% end %>
+    </fieldset>
+    <details class="rounded-xl border border-line p-3">
+      <summary class="font-semibold text-accent cursor-pointer"><%= t("backup_restore.upload") %></summary>
+      <div class="mt-3 grid gap-3 sm:grid-cols-2">
+        <div><label for="file" class="ss-label"><%= t("backup_restore.file") %></label><input id="file" type="file" name="file" accept=".gz,.enc" class="ss-input"></div>
+        <div><label for="passphrase" class="ss-label"><%= t("backup_restore.passphrase") %></label><input id="passphrase" type="password" name="passphrase" class="ss-input" autocomplete="off"></div>
+      </div>
+      <p class="text-xs text-muted mt-2"><%= t("backup_restore.upload_hint") %></p>
+    </details>
+    <div class="rounded-xl bg-danger/10 p-3 text-sm text-ink"><%= icon("exclamation-circle", "size-4 inline text-danger") %> <%= t("backup_restore.warning") %></div>
+    <div class="flex flex-wrap items-end gap-3">
+      <div><label for="confirm" class="ss-label"><%= t("backup_restore.type_word", word: t("backup_restore.word")) %></label>
+        <input id="confirm" name="confirm" class="ss-input w-48" autocomplete="off" required></div>
+      <button class="ss-btn ss-btn-danger" <%= "disabled" unless @available %>><%= icon("refresh", "size-4") %><%= t("backup_restore.submit") %></button>
+    </div>
+  <% end %>
+</section>
+<% end %>

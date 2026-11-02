@@ -9,7 +9,7 @@
 # estado fica em `tenants.settings["onboarding"]` ({done: [chaves], site_id,
 # finished_at}).
 module Onboarding
-  STEPS = %w[AccountStep HomeStep DiscoverStep AreasStep DashboardStep FamilyStep].freeze
+  STEPS = %w[AccountStep RestoreStep HomeStep DiscoverStep AreasStep DashboardStep FamilyStep].freeze
 
   # O que os passos compartilham: quem está configurando, o local criado e a
   # resposta da tela (aviso, convite gerado) quando o passo fica na mesma página.
@@ -41,7 +41,7 @@ module Onboarding
   end
 
   # Passos desta pessoa (o de conta some para quem já entrou com conta pronta).
-  def steps_for(ctx) = steps.reject { |s| s.skip?(ctx) }
+  def steps_for(ctx) = steps.reject { |s| s.side? || s.skip?(ctx) }
 
   def done?(ctx, key) = Array(state(ctx.tenant)["done"]).include?(key.to_s)
 

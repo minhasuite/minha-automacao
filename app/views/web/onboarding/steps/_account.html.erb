@@ -5,5 +5,6 @@
   <div><%= f.label :email, t("onboarding.account.email"), class: "ss-label" %><%= f.email_field :email, value: v[:email], class: "ss-input", required: true, autocomplete: "email", placeholder: t("onboarding.account.email_hint") %></div>
   <div><%= f.label :password, t("onboarding.account.password"), class: "ss-label" %><%= f.password_field :password, class: "ss-input", required: true, minlength: 8, autocomplete: "new-password" %></div>
   <p class="text-xs text-muted flex items-start gap-2"><%= icon("lock-closed", "size-4 shrink-0") %><%= t("onboarding.account.privacy") %></p>
+  <% if Onboarding.fresh_install? %><p class="text-sm"><%= link_to t("backup_restore.from_backup"), onboarding_step_path("restore"), class: "font-bold text-accent" %></p><% end %>
   <%= render "web/onboarding/nav", step: step, label: t("onboarding.account.submit") %>
 <% end %>

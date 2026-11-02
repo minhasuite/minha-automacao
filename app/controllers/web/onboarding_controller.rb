@@ -10,12 +10,12 @@ module Web
 
     def show
       @step = params[:step] ? Onboarding.step(params[:step]) : Onboarding.current(@ctx)
-      redirect_to(onboarding_path) unless @step && @steps.include?(@step) && @step.ready?(@ctx)
+      redirect_to(onboarding_path) unless open?(@step)
     end
 
     def update
       @step = Onboarding.step(params[:step])
-      return redirect_to(onboarding_path) unless @step && @steps.include?(@step) && @step.ready?(@ctx)
+      return redirect_to(onboarding_path) unless open?(@step)
 
       user_before = @ctx.user
       result = @step.save(@ctx, params.fetch(:onboarding, ActionController::Parameters.new))
@@ -59,6 +59,8 @@ module Web
     end
 
     private
+
+    def open?(step) = step && (@steps.include?(step) || step.side?) && step.ready?(@ctx)
 
     # Sem ninguém: só o passo de conta. Com sessão: só o dono, e só enquanto não concluiu.
     def load_flow

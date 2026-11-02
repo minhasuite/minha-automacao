@@ -1,0 +1,18 @@
+<%# locals: (ctx:, step:, available:, status:) -%>
+<% if status["state"] == "running" %>
+  <div class="ss-card ss-card-pad max-w-lg" role="status" aria-live="polite" data-controller="reload" data-reload-every-value="5000">
+    <p class="font-bold text-ink flex items-center gap-2"><span class="up-spin"></span><%= t("backup_restore.states.running") %></p>
+    <p class="text-sm text-muted mt-1"><%= t("backup_restore.onboarding_wait") %></p>
+  </div>
+<% else %>
+  <%= form_with url: onboarding_step_path(step.key), scope: :onboarding, multipart: true, class: "grid gap-4 max-w-lg", data: { turbo: false } do |f| %>
+    <% unless available %><p class="text-sm text-warn"><%= t("backup_restore.no_supervisor") %></p><% end %>
+    <div><%= f.label :file, t("backup_restore.file"), class: "ss-label" %><%= f.file_field :file, accept: ".gz,.enc", class: "ss-input", required: true %></div>
+    <div><%= f.label :passphrase, t("backup_restore.passphrase"), class: "ss-label" %><%= f.password_field :passphrase, class: "ss-input", autocomplete: "off" %></div>
+    <p class="text-xs text-muted"><%= t("backup_restore.upload_hint") %></p>
+    <div class="flex flex-wrap items-center gap-3">
+      <%= f.submit t("backup_restore.submit"), class: "ss-btn ss-btn-primary min-h-12", disabled: !available %>
+      <%= link_to t("backup_restore.fresh"), onboarding_step_path("account"), class: "text-sm font-bold text-accent" %>
+    </div>
+  <% end %>
+<% end %>

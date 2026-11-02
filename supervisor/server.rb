@@ -150,6 +150,7 @@ module Supervisor
       body = req.post? ? (JSON.parse(req.body.read.to_s.then { |x| x.empty? ? "{}" : x }) rescue {}) : {}
       case "#{req.request_method} #{req.path_info}"
       when "POST /system/update" then update_server(body["image"].to_s)
+      when "POST /system/restore" then restore_db(body["file"].to_s, body["source"].to_s)
       when "GET /system/remote" then json(200, data: remote_status)
       when "POST /system/remote" then remote_on(body["provider"].to_s, body["token"].to_s)
       when "DELETE /system/remote" then remote_off
@@ -215,20 +216,38 @@ module Supervisor
     def update_server(image)
       return json(422, error: "Imagem fora do produto.") unless image.match?(IMAGE_REF)
 
-      running = @docker.containers([ UPDATER_LABEL ]).any? { |c| @docker.inspect(c["Id"]).dig("State", "Running") }
-      return json(409, error: "Já existe uma atualização em andamento.") if running
+      return json(409, error: "Já existe uma atualização em andamento.") if updater_running?
 
-      dir = install_dir
       Supervisor.log("atualizar para #{image}")
       pull_or_local(image)
-      pull_or_local(UPDATER_IMAGE)
-      script = File.read(File.expand_path("../bin/ma-update", __dir__))
-      body = { "Image" => UPDATER_IMAGE, "Cmd" => [ "sh", "-c", script ], "WorkingDir" => dir,
-               "Env" => [ "DIR=#{dir}", "NEW_IMAGE=#{image}" ], "Labels" => { UPDATER_LABEL => "1" },
-               "HostConfig" => { "Binds" => [ "/var/run/docker.sock:/var/run/docker.sock", "#{dir}:#{dir}" ], "AutoRemove" => true } }
-      _, created = @docker.call(:post, "/containers/create", body: body, query: { name: "minha-automacao-updater-#{Time.now.to_i}" })
-      @docker.call(:post, "/containers/#{created['Id']}/start")
+      detached("ma-update", "NEW_IMAGE=#{image}")
       json(202, data: { image: image })
+    end
+
+    # ondaA2 A15: restaurar o banco de um backup (bin/ma-restore, à parte como a atualização).
+    RESTORE_FILE = /\A\w[\w.-]*\.sql\.gz\z/
+
+    def restore_db(file, source)
+      return json(422, error: "Arquivo inválido.") unless file.match?(RESTORE_FILE) && %w[backups storage].include?(source)
+      return json(409, error: "Já existe uma atualização ou restauração em andamento.") if updater_running?
+
+      Supervisor.log("restaurar #{file} (#{source})")
+      detached("ma-restore", "FILE=#{file}", "SOURCE=#{source}")
+      json(202, data: { file: file })
+    end
+
+    def updater_running? = @docker.containers([ UPDATER_LABEL ]).any? { |c| @docker.inspect(c["Id"]).dig("State", "Running") }
+
+    # Script de bin/ num container docker:cli com o socket e a pasta do compose (sobrevive ao compose subir de novo).
+    def detached(script_name, *env)
+      dir = install_dir
+      pull_or_local(UPDATER_IMAGE)
+      script = File.read(File.expand_path("../bin/#{script_name}", __dir__))
+      body = { "Image" => UPDATER_IMAGE, "Cmd" => [ "sh", "-c", script ], "WorkingDir" => dir,
+               "Env" => [ "DIR=#{dir}", *env ], "Labels" => { UPDATER_LABEL => "1" },
+               "HostConfig" => { "Binds" => [ "/var/run/docker.sock:/var/run/docker.sock", "#{dir}:#{dir}" ], "AutoRemove" => true } }
+      _, created = @docker.call(:post, "/containers/create", body: body, query: { name: "minha-automacao-#{script_name == 'ma-update' ? 'updater' : 'restore'}-#{Time.now.to_i}" })
+      @docker.call(:post, "/containers/#{created['Id']}/start")
     end
 
     # Imagem já na máquina (carregada sem internet, ou GHCR sem acesso) serve; só falha se não houver nenhuma.

@@ -21,6 +21,9 @@ module Onboarding
       # Fora da lista desta pessoa (padrão: nunca).
       def skip?(_ctx) = false
 
+      # Passo lateral: fora da ordem e da contagem, aberto só por link (ex.: restaurar backup).
+      def side? = false
+
       # Dá para abrir agora? (padrão: com o dono logado e o local já criado)
       def ready?(ctx) = ctx.user.present? && (!needs_site? || ctx.site.present?)
       def needs_site? = true

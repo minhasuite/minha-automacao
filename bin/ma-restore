@@ -1,0 +1,63 @@
+#!/bin/sh
+# Restauração do banco (ondaA2 A15). Roda como o bin/ma-update: container à
+# parte (imagem docker:cli, criado pelo supervisor) com o socket do Docker e
+# a pasta do compose no mesmo caminho. Guarda o banco atual, restaura o
+# backup escolhido (.sql.gz) e sobe de novo; se não responder, volta o banco
+# de antes. Andamento em backups/restore-status.json (o app lê em /backups).
+#   DIR=/opt/minha-automacao FILE=minha_automacao-20261101.sql.gz SOURCE=backups|storage
+# SOURCE=storage: o arquivo veio pela tela (enviado ou baixado da cópia de
+# fora e já aberto) e está em /app/storage/restore/ do web.
+set -u
+cd "$DIR" || exit 1
+STATUS=backups/restore-status.json
+STAMP=$(date +%Y%m%d-%H%M%S)
+SAFE="backups/antes-da-restauracao-$STAMP.sql.gz"
+
+status() { # estado, passo, mensagem
+  printf '{"state":"%s","step":"%s","file":"%s","at":"%s","backup":"%s","message":"%s"}\n' \
+    "$1" "$2" "$FILE" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(basename "$SAFE")" "$3" > "$STATUS.tmp" && mv "$STATUS.tmp" "$STATUS"
+}
+
+case "$FILE" in */* | .* | "") status failed check "Arquivo inválido."; exit 1 ;; esac
+if [ "${SOURCE:-backups}" = storage ]; then
+  docker compose cp "web:/app/storage/restore/$FILE" "backups/$FILE" || { status failed check "Não achei o arquivo enviado."; exit 1; }
+fi
+gunzip -t "backups/$FILE" 2>/dev/null || { status failed check "O arquivo não é um backup .sql.gz."; exit 1; }
+
+load() {
+  gunzip -c "$1" | docker compose exec -T db sh -c 'psql -q -U minha_automacao -d postgres -c "DROP DATABASE IF EXISTS minha_automacao WITH (FORCE)" -c "CREATE DATABASE minha_automacao" && psql -q -v ON_ERROR_STOP=1 -U minha_automacao minha_automacao' >/dev/null
+}
+
+healthy() { # até 5 minutos pelo /up de dentro do web
+  i=0
+  while [ $i -lt 60 ]; do
+    docker compose exec -T web curl -fsS -o /dev/null http://127.0.0.1:3000/up 2>/dev/null && return 0
+    i=$((i + 1)); sleep 5
+  done
+  return 1
+}
+
+status running backup ""
+if ! docker compose exec -T db sh -c 'pg_dump -U minha_automacao minha_automacao' | gzip > "$SAFE"; then
+  status failed backup "Não deu para guardar o banco atual; nada foi trocado."
+  exit 1
+fi
+
+status running restore ""
+docker compose stop web worker
+if load "backups/$FILE" && docker compose start web worker && healthy; then
+  [ "${SOURCE:-backups}" = storage ] && rm -f "backups/$FILE"
+  status done done ""
+  exit 0
+fi
+
+status running rollback ""
+docker compose stop web worker
+load "$SAFE"
+docker compose start web worker
+if healthy; then
+  status rolled_back done "O backup não subiu; voltou o banco de antes."
+else
+  status failed rollback "Não voltou sozinho. Veja docs/backup.md, seção Restaurar."
+fi
+exit 1

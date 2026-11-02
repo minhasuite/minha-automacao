@@ -234,6 +234,8 @@ Rails.application.routes.draw do
     post "configuracoes/saude/ignorar", to: "health#ignore", as: :settings_health_ignore
     post "configuracoes/saude/reparar", to: "health#repair", as: :settings_health_repair
     get "configuracoes/hardware", to: "hardware#show", as: :settings_hardware
+    get "configuracoes/backups", to: "backups#show", as: :settings_backups
+    post "configuracoes/backups", to: "backups#restore"
     get "configuracoes/seguranca", to: "security#show", as: :settings_security
     post "configuracoes/seguranca/totp", to: "security#enable_totp", as: :settings_security_totp
     delete "configuracoes/seguranca/totp", to: "security#disable_totp"

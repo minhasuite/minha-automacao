@@ -294,4 +294,77 @@ b [tuya] falha
       expect(user.passkeys.count).to eq(0)
     end
   end
+
+  describe "A15 restaurar backup pela tela e na primeira configuração" do
+    let(:dir) { Dir.mktmpdir }
+    let(:dump) { "-- PostgreSQL database dump\nCREATE TABLE teste ();\n" }
+
+    def gz(text) = StringIO.new(ActiveSupport::Gzip.compress(text))
+    def upload(io, name) = Rack::Test::UploadedFile.new(io, "application/gzip", true, original_filename: name)
+
+    before do
+      stub_const("ENV", ENV.to_h.merge("BACKUP_DIR" => dir))
+      allow(Backups::Restore).to receive(:dir).and_return(File.join(dir, "restore"))
+      File.binwrite(File.join(dir, "minha_automacao-20261101.sql.gz"), ActiveSupport::Gzip.compress(dump))
+      allow(Apps::Supervisor).to receive(:configured?).and_return(true)
+    end
+
+    after { FileUtils.rm_rf(dir) }
+
+    it "abre e confere o arquivo: .sql.gz, .enc com senha, senha errada e arquivo que não é dump" do
+      expect(Backups::Restore.upload!(gz(dump))).to match(/\Arestaurar-\d{8}-\d{6}\.sql\.gz\z/)
+      enc = StringIO.new.binmode
+      Backups.encrypt(gz(dump), enc, "senha-boa")
+      enc.rewind
+      name = Backups::Restore.upload!(enc, passphrase: "senha-boa")
+      expect(ActiveSupport::Gzip.decompress(File.binread(File.join(dir, "restore", name)))).to eq(dump)
+      enc.rewind
+      expect { Backups::Restore.upload!(enc, passphrase: "errada") }.to raise_error(Backups::Error, "Senha do backup errada ou arquivo corrompido.")
+      expect { Backups::Restore.upload!(gz("oi")) }.to raise_error(Backups::Error, /não é um backup/)
+      expect { Backups::Restore.upload!(StringIO.new("texto")) }.to raise_error(Backups::Error, /não é um backup/)
+    end
+
+    it "dono lista, confirma com a palavra e o supervisor restaura; enviado vai como storage" do
+      sign_in
+      get "/configuracoes/backups"
+      expect(response.body).to include("minha_automacao-20261101.sql.gz", "Digite RESTAURAR para confirmar")
+      post "/configuracoes/backups", params: { pick: "local:minha_automacao-20261101.sql.gz", confirm: "não" }
+      expect(flash[:alert]).to include("palavra de confirmação")
+      expect(Apps::Supervisor).to receive(:request).with(:post, "/system/restore", { file: "minha_automacao-20261101.sql.gz", source: "backups" }).and_return({})
+      post "/configuracoes/backups", params: { pick: "local:minha_automacao-20261101.sql.gz", confirm: "restaurar" }
+      expect(flash[:notice]).to include("Restauração começou")
+      expect(within(tenant) { AuditEvent.where(action: "backup.restore").count }).to eq(1)
+      post "/configuracoes/backups", params: { pick: "local:../../etc/passwd", confirm: "RESTAURAR" }
+      expect(flash[:alert]).to eq("Backup inválido.")
+
+      expect(Apps::Supervisor).to receive(:request).with(:post, "/system/restore", hash_including(source: "storage")).and_return({})
+      post "/configuracoes/backups", params: { file: upload(gz(dump), "casa.sql.gz"), confirm: "RESTAURAR" }
+      expect(flash[:notice]).to include("Restauração começou")
+
+      File.write(File.join(dir, "restore-status.json"), { state: "running", step: "restore", file: "x.sql.gz" }.to_json)
+      get "/configuracoes/backups"
+      expect(response.body).to include("Restaurando · restaurando")
+      post "/configuracoes/backups", params: { pick: "local:minha_automacao-20261101.sql.gz", confirm: "RESTAURAR" }
+      expect(flash[:alert]).to eq("Já existe uma restauração em andamento.")
+    end
+
+    it "instalação nova restaura antes de criar conta; depois o passo some" do
+      User.delete_all
+      get "/primeira-configuracao"
+      expect(response.body).to include("Já tem um backup? Restaure aqui")
+      get "/primeira-configuracao/restore"
+      expect(response.body).to include("Restaurar de um backup", "Começar do zero")
+      post "/primeira-configuracao/restore", params: { onboarding: {} }
+      expect(response.body).to include("Escolha o arquivo de backup.")
+      expect(Apps::Supervisor).to receive(:request).with(:post, "/system/restore", hash_including(source: "storage")).and_return({})
+      post "/primeira-configuracao/restore", params: { onboarding: { file: upload(gz(dump), "casa.sql.gz") } }
+      expect(response).to redirect_to("/primeira-configuracao/restore")
+    end
+
+    it "não aparece para admin nem com mais de uma instalação" do
+      sign_in(within(tenant) { create(:user, tenant: tenant, role: "admin") })
+      get "/configuracoes/backups"
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end

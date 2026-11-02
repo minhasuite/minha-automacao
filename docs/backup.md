@@ -187,3 +187,19 @@ local) por `stub_const` e mostra o contrato.
 - A cifra é AES-256-CBC (compatibilidade com o `openssl enc`), sem
   autenticação própria: um arquivo adulterado falha na abertura ou no
   `gunzip`, e o teste de restauração semanal é a prova de que a cópia abre.
+
+## Restaurar
+
+Configurações → Backups (dono, servidor de uma instalação) ou, numa
+instalação nova, o link "Já tem um backup?" da primeira configuração.
+
+- Escolha um dump local (`BACKUP_DIR`), uma cópia de fora (baixada e aberta
+  com `BACKUP_PASSPHRASE`) ou envie um arquivo `.sql.gz` / `.enc` (com a
+  senha). O app confere que é um dump do `pg_dump` e grava em
+  `storage/restore/`.
+- O supervisor roda `bin/ma-restore` à parte (como a atualização): guarda o
+  banco atual em `backups/antes-da-restauracao-*.sql.gz`, para web e worker,
+  restaura, sobe e espera o `/up`. Se não responder, volta o banco de antes.
+- Andamento em `backups/restore-status.json` (a tela acompanha).
+- Manual, se a tela não voltar: `gunzip -c backups/antes-da-restauracao-<data>.sql.gz | docker compose exec -T db psql -U minha_automacao minha_automacao`
+  depois de recriar o banco (veja o `load` do `bin/ma-restore`).
