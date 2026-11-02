@@ -15,7 +15,7 @@ RSpec.describe "F8f: plugins da DSL, scripts e blueprints" do
 
   describe "registro de gatilhos, condições e ações" do
     it "lista os tipos e monta o catálogo pelo plugin" do
-      expect(Automations::TriggerTypes.keys).to eq(%w[state numeric time sun calendar alert manual webhook notification_action event zone presence alarm detection time_pattern template mqtt system device geo_location])
+      expect(Automations::TriggerTypes.keys).to eq(%w[state numeric time sun calendar alert manual webhook notification_action event zone presence alarm detection time_pattern template mqtt system device geo_location conversation])
       expect(Automations::ConditionTypes.keys).to eq(%w[state numeric time sun calendar zone alarm expr and or not trigger device])
       expect(Automations::ActionTypes.keys).to include("command", "script", "wait_for", "repeat")
       expect(Automations::Dsl.catalog(:options).keys).to eq([ "option" ])
