@@ -18,7 +18,7 @@
           <div class="min-w-0 flex-1">
             <h2 id="int-<%= i.id %>" class="font-bold text-ink truncate"><%= i.name %></h2>
             <p class="text-sm text-muted truncate"><%= i.driver_label %></p>
-            <% if i.account %><p class="text-xs text-muted truncate" title="<%= i.account %>"><%= i.account %></p><% end %>
+            <% if i.account && reveal_sensitive? %><p class="text-xs text-muted truncate" title="<%= i.account %>"><%= i.account %></p><% end %>
           </div>
           <span class="ss-badge ss-badge-<%= tones.fetch(i.status, 'accent') %>"><%= i.status_label %></span>
         </div>
@@ -30,7 +30,7 @@
         <% if (n = @pending.fetch(i.id, 0)).positive? %>
           <%= link_to found_integration_path(i), class: "mt-3 ss-badge ss-badge-warn no-underline w-fit" do %><%= icon("sparkles", "size-3.5") %><%= n %> novo(s) para adicionar<% end %>
         <% end %>
-        <% if i.last_error.present? %><p class="mt-3 text-sm text-danger" role="status">Último erro: <%= i.last_error %></p><% end %>
+        <% if i.last_error.present? %><p class="mt-3 text-sm text-danger" role="status">Último erro: <%= reveal_sensitive? ? i.last_error : Sensitive.scrub(i.last_error) %></p><% end %>
         <p class="mt-3 text-sm text-muted"><%= i.poll_s.to_i.positive? ? "Sincroniza sozinha a cada #{duration_text(i.poll_s)}" : "Só sincroniza quando pedir" %>.</p>
         <div class="mt-auto pt-4 flex items-center gap-2">
           <%= link_to site_devices_path(@site, integracao: i.id), class: "ss-btn ss-btn-outline ss-btn-sm flex-1 justify-center" do %><%= icon("view-list", "size-4") %>Ver dispositivos<% end %>

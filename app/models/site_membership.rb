@@ -1,5 +1,7 @@
 # Papel da pessoa num local (ESQUEMA-V1 §4.1). ROLES em ordem crescente de poder.
-# Visitante com validade: `expires_at` vencido = sem acesso.
+# Visitante com validade: `expires_at` vencido = sem acesso. Leitor (`viewer`)
+# só vê os painéis que o papel dele vê: não comanda, não abre cadastro nem
+# configurações (os controllers liberados declaram `viewer_allowed?`).
 class SiteMembership < ApplicationRecord
   include Auditable
 
@@ -7,11 +9,11 @@ class SiteMembership < ApplicationRecord
 
   class Forbidden < StandardError; end
 
-  ROLES = %w[guest operator resident technician owner].freeze
-  ROLE_LABELS = { "guest" => "Visitante", "operator" => "Operador", "resident" => "Morador",
+  ROLES = %w[viewer guest operator resident technician owner].freeze
+  ROLE_LABELS = { "viewer" => "Leitor", "guest" => "Visitante", "operator" => "Operador", "resident" => "Morador",
                   "technician" => "Técnico", "owner" => "Dono" }.freeze
   # Papel mínimo para cada ação; comando depende do risco do ponto.
-  MIN_ROLE = { view: "guest", manage: "technician", admin: "owner" }.freeze
+  MIN_ROLE = { view: "viewer", manage: "technician", admin: "owner" }.freeze
   MIN_ROLE_BY_RISK = { "normal" => "guest", "sensitive" => "operator", "critical" => "resident" }.freeze
 
   belongs_to :site

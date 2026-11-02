@@ -12,7 +12,7 @@ module Api
         scope = site.points.helpers.ordered
         scope = scope.where(helper: params[:type]) if params[:type].present?
         records, meta = paginate(scope)
-        render_data(PointSerializer.new(records).to_h, meta: meta.merge(types: HelperTypes.plugins.map { |p| { key: p.key, title: p.title } }))
+        render_data(PointSerializer.new(records, params: { reveal: reveal_sensitive? }).to_h, meta: meta.merge(types: HelperTypes.plugins.map { |p| { key: p.key, title: p.title } }))
       end
     end
   end

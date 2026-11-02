@@ -34,6 +34,9 @@ module Api
 
       private
 
+      # O celular é da própria pessoa: o Leitor também registra o dele.
+      def viewer_allowed? = true
+
       def own_device
         device = Device.find(params[:id])
         raise ActiveRecord::RecordNotFound unless Integrations::MobileAppPlugin.mobile?(device) && device.address["user_id"] == current_user.id
@@ -45,8 +48,8 @@ module Api
       # Pacote 3: `zone` = zona onde a última localização caiu (nunca a coordenada).
       def payload(device)
         points = device.points.ordered.to_a
-        DeviceSerializer.new(device).to_h.merge("points" => PointSerializer.new(points).to_h,
-                                                "zone" => points.find { |p| p.device_class == "location" }&.attrs&.dig("zone"))
+        DeviceSerializer.new(device, params: { reveal: true }).to_h.merge("points" => PointSerializer.new(points, params: { reveal: true }).to_h, # o celular é da pessoa
+                                                                       "zone" => points.find { |p| p.device_class == "location" }&.attrs&.dig("zone"))
       end
     end
   end

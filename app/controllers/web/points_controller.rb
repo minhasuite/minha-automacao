@@ -54,6 +54,9 @@ module Web
 
     private
 
+    # Leitor (viewer) vê o painel e o que ele abre; comando e cadastro barram pelo papel.
+    def viewer_allowed? = true
+
     def respond(error)
       # Widget de dashboard: volta para o próprio quadro (recarrega só ele).
       if params[:dashboard_id].present? && params[:widget_id].present? && turbo_frame_request?

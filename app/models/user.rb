@@ -60,6 +60,14 @@ class User < ApplicationRecord
 
   def owner? = role == "owner"
   def admin? = role.in?(%w[owner admin])
+
+  # Só Leitor em todos os locais em que tem papel: vê painéis, nada de cadastro nem configurações.
+  def reader?
+    return false if admin?
+
+    roles = ActsAsTenant.with_tenant(tenant) { SiteMembership.where(user_id: id).active.pluck(:role) }
+    roles.any? && roles.all?("viewer")
+  end
   def role_label = ROLE_LABELS.fetch(role, role)
 
   private

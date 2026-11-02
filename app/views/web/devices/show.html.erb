@@ -28,14 +28,14 @@
       <% label, _tone, note = device_situation(@device) %>
       <div><dt class="text-muted">Situação</dt><dd class="font-semibold text-ink"><%= label %></dd><% if note && @device.last_error.blank? %><dd class="text-xs text-muted mt-0.5"><%= note %></dd><% end %></div>
       <div><dt class="text-muted">Último contato</dt><dd class="font-semibold text-ink"><%= @device.last_seen_at ? l(@device.last_seen_at, format: :short) : "Ainda não" %></dd></div>
-      <div><dt class="text-muted">IP</dt><dd class="font-semibold text-ink num"><%= @device.host.presence || "Não informado" %></dd></div>
+      <div><dt class="text-muted">IP</dt><dd class="font-semibold text-ink num"><%= @device.host.blank? ? "Não informado" : (reveal_sensitive? ? @device.host : Sensitive::MASK) %></dd></div>
       <div><dt class="text-muted">Versão do protocolo</dt><dd class="font-semibold text-ink num"><%= @device.protocol_version.presence || "—" %></dd></div>
       <div><dt class="text-muted">Integração</dt><dd class="font-semibold text-ink"><%= @device.integration ? link_to(@device.integration.name, site_integrations_path(@site)) : "Nenhuma" %></dd></div>
       <div><dt class="text-muted">Leitura</dt><dd class="font-semibold text-ink"><%= Polling.supported?(@device) ? poll_label(@device.poll_s).capitalize : "Não lê sozinho" %></dd></div>
       <div class="col-span-2"><dt class="text-muted">Fabricante / modelo</dt><dd class="font-semibold text-ink"><%= [ @device.manufacturer, @device.model ].compact_blank.join(" · ").presence || "—" %></dd></div>
     </dl>
     <% if @device.removed_at %><p class="mt-3 text-sm text-warn" role="status">Sumiu da conta da integração em <%= l(@device.removed_at, format: :short) %>. Nada foi apagado; remova aqui se não for voltar.</p><% end %>
-    <% if @device.last_error.present? %><p class="mt-3 text-sm text-danger" role="status">Último erro: <%= @device.last_error %></p><% end %>
+    <% if @device.last_error.present? %><p class="mt-3 text-sm text-danger" role="status">Último erro: <%= reveal_sensitive? ? @device.last_error : Sensitive.scrub(@device.last_error) %></p><% end %>
     <% if @device.tuya_local? && @device.host.blank? %><p class="mt-3 text-sm text-warn">Sem IP: a conta da Tuya não informa o IP da rede local. Preencha em Editar (veja no roteador) e use Reconectar.</p><% end %>
     <% if @problems.any? %>
       <p class="ss-section mt-4">Falhas recentes</p>

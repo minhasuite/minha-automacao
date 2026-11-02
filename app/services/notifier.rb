@@ -14,7 +14,8 @@ module Notifier
   CHANNELS = %w[InApp Push Alexa Messenger].freeze
   # Destinatário da ação "Avisar" (Lote 1): administradores (padrão), uma
   # pessoa (todos os aparelhos dela) ou quem tem pelo menos um papel no local
-  # (`role:guest` = todos do local): `admins`, `user:<id>` ou `role:<papel>`.
+  # (`role:guest` = todos do local; `role:viewer` inclui os leitores): `admins`, `user:<id>` ou `role:<papel>`.
+  ROLE_ALL = { "guest" => "Todos do local", "viewer" => "Todos do local, inclusive leitores" }.freeze
   UUID = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
   # Tudo o que um aviso pode pedir; o canal diz o que entrega.
   FEATURES = %i[text buttons image link tag priority ttl sticky group progress].freeze
@@ -45,7 +46,7 @@ module Notifier
 
   def recipient_choices(site)
     [ [ "Administradores", "admins" ] ] +
-      SiteMembership::ROLES.reverse.map { |r| [ r == "guest" ? "Todos do local" : "Quem é #{SiteMembership.role_label(r).downcase} ou mais no local", "role:#{r}" ] } +
+      SiteMembership::ROLES.reverse.map { |r| [ ROLE_ALL[r] || "Quem é #{SiteMembership.role_label(r).downcase} ou mais no local", "role:#{r}" ] } +
       User.where(tenant_id: site.tenant_id, disabled_at: nil).order(:name).select { |u| site.role_for(u) }.map { |u| [ "#{u.name} (todos os aparelhos)", "user:#{u.id}" ] }
   end
 

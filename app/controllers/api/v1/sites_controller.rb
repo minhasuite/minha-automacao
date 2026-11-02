@@ -36,6 +36,9 @@ module Api
 
       private
 
+      # Leitor (viewer) vê o painel e o que ele abre; comando e cadastro barram pelo papel.
+      def viewer_allowed? = true
+
       def set_site = @site = Site.find(params[:id])
       def serialize(obj) = SiteSerializer.new(obj, params: { user: current_user }).to_h
     end

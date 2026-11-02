@@ -10,27 +10,27 @@ module Api
         scope = site.devices.order(:name)
         scope = scope.where(area_id: params[:area_id]) if params[:area_id].present?
         records, meta = paginate(scope)
-        render_data(DeviceSerializer.new(records).to_h, meta: meta)
+        render_data(DeviceSerializer.new(records, params: { reveal: reveal_sensitive? }).to_h, meta: meta)
       end
 
       def show
         device = Device.find(params[:id])
         authorize_site!(device.site, :view)
-        render_data(DeviceSerializer.new(device).to_h)
+        render_data(DeviceSerializer.new(device, params: { reveal: reveal_sensitive? }).to_h)
       end
 
       def create
         site = Site.find(params[:site_id])
         authorize_site!(site, :manage)
         device = site.devices.create!(params.permit(*DeviceSerializer::EDITABLE))
-        render_data(DeviceSerializer.new(device).to_h, status: :created)
+        render_data(DeviceSerializer.new(device, params: { reveal: reveal_sensitive? }).to_h, status: :created)
       end
 
       def update
         device = Device.find(params[:id])
         authorize_site!(device.site, :manage)
         device.update!(params.permit(*DeviceSerializer::EDITABLE))
-        render_data(DeviceSerializer.new(device).to_h)
+        render_data(DeviceSerializer.new(device, params: { reveal: reveal_sensitive? }).to_h)
       end
 
       def destroy

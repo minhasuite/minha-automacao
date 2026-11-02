@@ -81,6 +81,9 @@ module Api
 
       private
 
+      # Leitor (viewer) vê o painel e o que ele abre; comando e cadastro barram pelo papel.
+      def viewer_allowed? = true
+
       def find(action)
         dashboard = Dashboard.find(params[:id])
         role = authorize_site!(dashboard.site, action)

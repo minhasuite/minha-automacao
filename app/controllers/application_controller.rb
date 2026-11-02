@@ -11,7 +11,7 @@ class ApplicationController < ActionController::Base
   before_action :require_login!
   before_action :set_tenant
 
-  helper_method :current_user, :can?
+  helper_method :current_user, :can?, :reveal_sensitive?
 
   rescue_from SiteMembership::Forbidden do |e|
     back_with_alert(e.message)

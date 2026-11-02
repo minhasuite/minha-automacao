@@ -12,11 +12,13 @@
   <nav class="ss-nav ss-side-scroll flex-1 overflow-y-auto px-2 py-4 space-y-1" aria-label="Principal">
     <%= nav_link "Início", root_path, icon: "lightning-bolt" %>
     <% Dashboard.sidebar_for(current_user).each do |d| %><%= nav_link d.name, dashboard_path(d), icon: d.icon_name %><% end %>
-    <%= nav_link "Locais", sites_path, icon: "home" %>
-    <%= nav_link "Alertas", alerts_path, icon: "exclamation-circle", badge: Alert.active.where(acked_at: nil, site_id: Site.visible_to(current_user).select(:id)).count %>
-    <%= nav_link "Perguntar à casa", ask_path, icon: "sparkles" %>
+    <% unless (reader = current_user.reader?) %>
+      <%= nav_link "Locais", sites_path, icon: "home" %>
+      <%= nav_link "Alertas", alerts_path, icon: "exclamation-circle", badge: Alert.active.where(acked_at: nil, site_id: Site.visible_to(current_user).select(:id)).count %>
+      <%= nav_link "Perguntar à casa", ask_path, icon: "sparkles" %>
+    <% end %>
     <%= nav_link "Notificações", notifications_path, icon: "bell", badge: Notification.for_user(current_user).unread.count %>
-    <%= nav_link "Configurações", settings_path, icon: "cog", class: "mt-3" %>
+    <%= nav_link reader ? "Minha conta" : "Configurações", reader ? settings_account_path : settings_path, icon: "cog", class: "mt-3" %>
   </nav>
   <div class="shrink-0 border-t border-white/10 p-2">
     <div class="flex items-center gap-3 rounded-lg px-2 py-2">

@@ -16,5 +16,10 @@ module Web
       @home = true
       render "web/dashboards/show"
     end
+
+    private
+
+    # Leitor (viewer) vê o painel e o que ele abre; comando e cadastro barram pelo papel.
+    def viewer_allowed? = true
   end
 end

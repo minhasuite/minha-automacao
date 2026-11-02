@@ -13,7 +13,7 @@ module Api
         records, meta = paginate(device.points.includes(:device).ordered)
         return render_data(records.map { |p| Dashboards::Resolver.point_json(p, role) }, meta: meta) if params[:view] == "app"
 
-        render_data(PointSerializer.new(records).to_h, meta: meta)
+        render_data(PointSerializer.new(records, params: { reveal: reveal_sensitive? }).to_h, meta: meta)
       end
 
       # GET /sites/:site_id/points?view=app[&commandable=1] — todos os pontos do
@@ -34,21 +34,21 @@ module Api
         role = authorize_site!(point.site, :view)
         return render_data(Dashboards::Resolver.point_json(point, role)) if params[:view] == "app"
 
-        render_data(PointSerializer.new(point).to_h)
+        render_data(PointSerializer.new(point, params: { reveal: reveal_sensitive? }).to_h)
       end
 
       def create
         device = Device.find(params[:device_id])
         authorize_site!(device.site, :manage)
         point = device.points.create!(params.permit(*PointSerializer::EDITABLE).merge(site_id: device.site_id))
-        render_data(PointSerializer.new(point).to_h, status: :created)
+        render_data(PointSerializer.new(point, params: { reveal: reveal_sensitive? }).to_h, status: :created)
       end
 
       def update
         point = Point.find(params[:id])
         authorize_site!(point.site, :manage)
         point.update!(params.permit(*PointSerializer::EDITABLE))
-        render_data(PointSerializer.new(point).to_h)
+        render_data(PointSerializer.new(point, params: { reveal: reveal_sensitive? }).to_h)
       end
 
       def destroy
@@ -79,7 +79,7 @@ module Api
         value = point.cast(params.require(:value).to_s)
         value = point.helper_type.check(point, value) if point.helper_type
         point.report!(value)
-        render_data(PointSerializer.new(point).to_h)
+        render_data(PointSerializer.new(point, params: { reveal: reveal_sensitive? }).to_h)
       rescue Points::Command::Error => e
         render_error(e.code, e.message, status: :unprocessable_content)
       end
@@ -110,6 +110,9 @@ module Api
       end
 
       private
+
+      # Leitor (viewer) vê o painel e o que ele abre; comando e cadastro barram pelo papel.
+      def viewer_allowed? = true
 
       def rollup(r)
         { starts_at: r.starts_at, min: r.min&.to_f, max: r.max&.to_f, avg: r.avg&.to_f, sum: r.sum&.to_f,
