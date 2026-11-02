@@ -607,4 +607,32 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect(DeviceAutomations.fires?(p, "teste", "x", nil)).to be true
     end
   end
+
+  describe "2.14 gatilho geo_location" do
+    let(:dev) { create(:device, site: site) }
+    let!(:lamp) { create(:point, site: site, device: dev, name: "Luz", key: "geo.luz", value: false) }
+    let!(:quake) { create(:point, site: site, device: dev, name: "Teste Terremoto", key: "geo.quake", capability: "measure", value: 4) }
+    let!(:zone) do
+      z = HelperTypes.build(site, HelperTypes::Zone)
+      HelperTypes.save(z, { "name" => "Teste Zona", "latitude" => "-15.8", "longitude" => "-47.9", "radius_m" => "1000" })
+      z
+    end
+
+    it "posição que cruza a borda dispara entrou/saiu; dentro não repete; origem filtra" do
+      a = site.automations.create!(name: "Teste geo")
+      a.publish!({ "triggers" => [ { "type" => "geo_location", "zone" => zone.id, "event" => "enter" } ],
+                   "conditions" => [], "actions" => [ { "type" => "command", "point" => lamp.id, "command" => "toggle" } ] })
+      a.update!(enabled: true)
+      quake.report_attrs!("latitude" => -10.0, "longitude" => -47.9)
+      expect(a.runs.count).to eq(0)
+      quake.report_attrs!("latitude" => -15.801, "longitude" => -47.9)
+      expect(a.runs.count).to eq(1)
+      expect(a.runs.last.trigger).to include("type" => "geo_location", "name" => "Teste Terremoto")
+      quake.report_attrs!("latitude" => -15.802, "longitude" => -47.9)
+      expect(a.runs.count).to eq(1)
+
+      t = { "zone" => zone.id, "event" => "enter", "source" => "usgs" }
+      expect(Automations::TriggerTypes::GeoLocationTrigger.fires_on_event?(t, { "zone" => zone.id, "move" => "enter", "source" => "mqtt" })).to be(false)
+    end
+  end
 end

@@ -20,6 +20,7 @@ module Automations
     # gatilhos de ponto com `attribute`, comparando o atributo antes e depois.
     def on_attrs_change(point, attrs_was)
       fire_point_triggers(point, nil, attrs_was: attrs_was.to_h)
+      TriggerTypes.plugins.each { |pl| Automations.safely { pl.attrs_changed(point, attrs_was.to_h) } }
     end
 
     def fire_point_triggers(point, value_was, attrs_was: nil)

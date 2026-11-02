@@ -13,7 +13,7 @@ module Automations
     extend Block::Registry
 
     PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger NotificationActionTrigger EventTrigger ZoneTrigger PresenceTrigger AlarmTrigger DetectionTrigger
-                 TimePatternTrigger TemplateTrigger MqttTrigger SystemTrigger DeviceTrigger].freeze
+                 TimePatternTrigger TemplateTrigger MqttTrigger SystemTrigger DeviceTrigger GeoLocationTrigger].freeze
 
     # Id do gatilho (Lote 5, `id` do HA): a execução leva em `trigger.id`, e a
     # condição "trigger.id = 'x'" diz qual gatilho disparou.
@@ -39,6 +39,8 @@ module Automations
         def true_now?(_t, _ctx) = false
         # Relógio com segundos: em quais segundos do minuto dispara (0 = no tick).
         def seconds(_t) = [ 0 ]
+        # Atributos de um ponto mudaram (Point#report_attrs!): posição nova etc.
+        def attrs_changed(_point, _was) = nil
       end
     end
 
