@@ -68,6 +68,7 @@ module DevTools
 
   # Quem está com a aba Eventos aberta vê cada evento chegando (Turbo Stream).
   def broadcast(site_id, name, payload)
+    WsApi.broadcast(site_id, name, payload) # ondaA2 A17: quem assinou pela API WebSocket
     html = ApplicationController.render(partial: "web/dev_tools/event", locals: { name: name, payload: payload, at: Time.current })
     Turbo::StreamsChannel.broadcast_prepend_to(stream(site_id), target: "dev-events", html: html)
   rescue StandardError => e
