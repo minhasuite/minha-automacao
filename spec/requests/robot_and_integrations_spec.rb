@@ -59,6 +59,7 @@ RSpec.describe "Robô no painel e tela de integrações (F8)" do
 
     stub_request(:get, "https://alexa.amazon.com.br/api/devices-v2/device?cached=true")
       .to_return({ body: { devices: [ { accountName: "Echo Sala", deviceFamily: "ECHO", serialNumber: "S", online: true } ] }.to_json }, { status: 401 })
+    stub_request(:get, %r{\Ahttps://alexa\.amazon\.com\.br/api/(devices/deviceType|dnd|np)/}).to_return(body: "{}") # G12: estado da Echo
     expect { post "/integracoes/#{integration.id}/sincronizar" }.to have_enqueued_job(SyncIntegrationJob).with(integration.id)
     expect(within(tenant) { integration.reload.status }).to eq("syncing")
     SyncIntegrationJob.perform_now(integration.id)

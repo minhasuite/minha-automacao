@@ -548,6 +548,21 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `/mensageiros/:id` (o plugin valida) ou pela leitura do Telegram no worker
   (`TELEGRAM_LISTENER=off`). Nunca mande mensagem de verdade de teste
   (`docs/push.md`).
+- **Corte (aberto/fechado)**: verificação de saúde = classe `< Health::Check`
+  (`describe key:, label:, icon:`, `items(tenant)` → `Health::Item`) + nome em
+  `Health::CHECKS` (tela Configurações → Saúde, só administradores; erro vira
+  aviso diário pelo `HealthCheckJob`). Requisito da troca = linha em
+  `Cutover::REQUIREMENTS` (`rake cutover:check`, `docs/cutover.md`). Cópia
+  fora de casa (G20) = `Backups` (cifra no formato do `openssl enc`) + destino
+  em `Backups::DESTINATIONS` (SSH e S3; `docs/backup.md`); sem
+  `BACKUP_OFFSITE_URL`/`BACKUP_PASSPHRASE` fica desligada. Papel por local
+  `viewer` (Leitor): só passa no controller que declara `viewer_allowed?`
+  (painel, ponto, câmera; na API painéis, pontos, locais e o próprio
+  celular); `User#reader?` esconde menu e Configurações. Dado sensível (IP,
+  usuário, URL, token, MAC) só para técnico/dono: `Sensitive` (chave nova em
+  `KEYS`), serializers com `params: { reveal: }` (padrão é ocultar) e
+  `reveal_sensitive?` na tela. Echo: ponto novo = linha em
+  `Alexa::State::POINTS`.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

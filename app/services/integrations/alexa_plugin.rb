@@ -50,8 +50,10 @@ module Integrations
       end
     end
 
+    # Varredura (e leitura periódica): lista de Echo e o estado delas (G12: mídia, volume, "não perturbe").
     def self.sync!(integration)
       r = Alexa::Import.discover!(integration)
+      Alexa::State.refresh!(integration)
       { found: r[:echos], fresh: r[:devices], removed: 0, keys: 0 }
     end
   end

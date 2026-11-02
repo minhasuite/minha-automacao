@@ -287,6 +287,19 @@ pelo Mi Home.
   escutando, nada sai para a Amazon. Uso: "Alexa, boa noite" em qualquer Echo
   → gatilho `state` com `attribute: last_called_timestamp` e condição sobre
   `trigger.attrs.last_called_summary`. Atraso de até 1 min.
+- **Echo completo (G12, corte)** (`Alexa::State`): na varredura/leitura
+  periódica da integração, as mesmas leituras do `alexa_media`
+  (`/api/devices/deviceType/dsn/audio/v1/allDeviceVolumes`,
+  `/api/dnd/device-status-list` e `/api/np/player` de cada Echo ligada) viram
+  pontos genéricos de cada Echo, além do "Falar" (`speaker`): **Mídia**
+  (capacidade `media`: estado tocando/pausado/parado, título, artista, álbum,
+  provedor, capa, volume e mudo; comandos `resume pause next previous volume
+  play_media` por `/api/np/command` e pela sequência de música), **Não
+  perturbe** (onoff; `PUT /api/dnd/status`) e **Último chamado** (onoff só
+  leitura, marcado pelo `Alexa::LastCalled`; um gatilho nesse ponto também
+  liga a leitura do histórico de voz). Ponto novo da Echo = linha em
+  `Alexa::State::POINTS`. Testado só com fixture (WebMock): nenhum Echo real
+  foi comandado.
 - **Câmera de nuvem sob demanda**: ponto `stream` com `address.on_demand`. O
   plugin da integração do aparelho dá o endereço de agora
   (`Plugin.stream_url(point)`) e o go2rtc recebe o stream na hora do quadro

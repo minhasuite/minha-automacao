@@ -64,6 +64,7 @@ RSpec.describe Polling do
     integration = site.integrations.create!(driver: "alexa", name: "Alexa", credentials: { "csrf" => "C" }.to_json)
     stub_request(:get, "https://alexa.amazon.com.br/api/devices-v2/device?cached=true")
       .to_return({ body: { devices: [ { accountName: "Echo Sala", deviceFamily: "ECHO", serialNumber: "S", online: true } ] }.to_json }, { status: 500 })
+    stub_request(:get, %r{\Ahttps://alexa\.amazon\.com\.br/api/(devices/deviceType|dnd|np)/}).to_return(body: "{}") # G12: estado da Echo
     described_class.run_due
     expect(integration.reload).to have_attributes(status: "ok", polled_at: be_present)
     expect(site.devices.find_by!(driver: "alexa").name).to eq("Echo Sala")

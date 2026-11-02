@@ -70,6 +70,28 @@ module Alexa
       sequence(node("Alexa.DeviceControls.Volume", target(device).merge("value" => level.to_i.clamp(0, 100))))
     end
 
+    # G12 (Echo completo), as mesmas leituras do alexa_media: volume de todas
+    # as Echo, "não perturbe" de todas e o que toca numa (`playerInfo`).
+    PLAYER = { "resume" => "PlayCommand", "pause" => "PauseCommand", "next" => "NextCommand", "previous" => "PreviousCommand" }.freeze
+
+    # [{"dsn", "deviceType", "speakerVolume", "speakerMuted"}]
+    def volumes = Array(get("/api/devices/deviceType/dsn/audio/v1/allDeviceVolumes")["volumes"])
+
+    # [{"deviceSerialNumber", "deviceType", "enabled"}]
+    def dnd_list = Array(get("/api/dnd/device-status-list")["doNotDisturbDeviceStatusList"])
+
+    # {"state" => "PLAYING"|"PAUSED"|nil, "infoText" => {"title", "subText1", "subText2"}, "provider", "mainArt", "volume"}
+    def player(device) = get("/api/np/player?#{device_query(device)}&screenWidth=2560")["playerInfo"].to_h
+
+    def player_command(device, command)
+      type = PLAYER.fetch(command) { raise Error, "Comando de mídia desconhecido: #{command}" }
+      post("/api/np/command?#{device_query(device)}", { "type" => type })
+    end
+
+    def dnd(device, enabled)
+      put("/api/dnd/status", { "deviceSerialNumber" => device[:serial], "deviceType" => device[:type], "enabled" => enabled ? true : false })
+    end
+
     # Rotinas da conta: [{"automationId", "name", "triggers", "sequence", ...}].
     def routines = Array(get("/api/behaviors/v2/automations?limit=2000"))
 
@@ -121,6 +143,8 @@ module Alexa
       { serial: serial, at: Time.zone.at(r["timestamp"].to_i / 1000.0), text: text.to_s }
     end
 
+    def device_query(device) = URI.encode_www_form("deviceSerialNumber" => device[:serial], "deviceType" => device[:type])
+
     def target(device)
       { "deviceType" => device[:type], "deviceSerialNumber" => device[:serial], "locale" => LOCALE, "customerId" => device[:customer_id] }
     end
@@ -140,12 +164,14 @@ module Alexa
 
     def get(path) = request(Net::HTTP::Get.new(path))
 
-    def post(path, body)
-      req = Net::HTTP::Post.new(path)
+    def post(path, body, klass: Net::HTTP::Post)
+      req = klass.new(path)
       req["Content-Type"] = "application/json; charset=UTF-8"
       req.body = body.to_json
       request(req)
     end
+
+    def put(path, body) = post(path, body, klass: Net::HTTP::Put)
 
     # `host`: o site da Alexa (padrão) ou o da loja (`www.`, histórico de voz); `json` falso = texto da página.
     def request(req, host = @host, json: true)

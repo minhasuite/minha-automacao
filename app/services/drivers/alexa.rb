@@ -15,7 +15,15 @@ module Drivers
       # G12 (Lote 8): som, música e volume.
       "sound" => ->(client, target, id) { client.sound(target, id) },
       "play" => ->(client, target, phrase) { client.play(target, phrase) },
-      "volume" => ->(client, target, level) { client.volume(target, level) }
+      "volume" => ->(client, target, level) { client.volume(target, level) },
+      # G12: ponto `media` (tocar/pausar/próxima/anterior, tocar busca) e "não perturbe" (onoff).
+      "resume" => ->(client, target, _) { client.player_command(target, "resume") },
+      "pause" => ->(client, target, _) { client.player_command(target, "pause") },
+      "next" => ->(client, target, _) { client.player_command(target, "next") },
+      "previous" => ->(client, target, _) { client.player_command(target, "previous") },
+      "play_media" => ->(client, target, phrase) { client.play(target, phrase) },
+      "on" => ->(client, target, _) { client.dnd(target, true) },
+      "off" => ->(client, target, _) { client.dnd(target, false) }
     }.freeze
 
     def self.client_for(integration)
@@ -39,6 +47,7 @@ module Drivers
       client = @client || self.class.client_for(integration)
       target = self.class.target(point.device)
       ACTIONS.fetch(command).call(client, target, text)
+      point.report!(command == "on") if point.capability == "onoff" # "não perturbe": a Amazon não manda o eco
       integration&.ok!
     rescue ::Alexa::Client::Error => e
       integration&.error!(e.message)
