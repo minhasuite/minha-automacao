@@ -288,7 +288,7 @@ pt-BR:
       download: "Não consegui baixar: %{error}"
       object: "O manifesto precisa ser um objeto."
       invalid: "Manifesto inválido: %{error}"
-      format: "format precisa ser %{format}."
+      format: "format precisa ser %{expected}."
       key: "key inválida (letras minúsculas, números, - e _)."
       name: "name obrigatório."
       version: "version inválida (ex.: 1.2.0)."

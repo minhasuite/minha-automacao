@@ -47,7 +47,7 @@ module HelperTypes
                 open_sensors: "Sensores abiertos: %{names}.", no_code: "El panel no tiene código.", wrong_code: "Código incorrecto.",
                 commands_only: "El panel solo cambia con comandos (armar y desarmar con código).", summary: "modos: %{modes}" }
 
-    def self.mode_label(state) = text("modes.#{state}")
+    def self.mode_label(state) = text("modes.#{state}", default: MODES.dig(state, :label))
     def self.states = BASE_STATES.to_h { |k, _| [ k, text("states.#{k}") ] }.merge(MODES.to_h { |k, _| [ k, text(:armed, mode: mode_label(k).downcase) ] })
     def self.mode_commands = MODES.to_h { |state, m| [ m[:command], state ] }
 

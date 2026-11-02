@@ -15,7 +15,7 @@ module Onboarding
       end
 
       def title = I18n.t("onboarding.#{key}.title")
-      def subtitle = I18n.t("onboarding.#{key}.subtitle")
+      def subtitle = I18n.t("onboarding.#{key}.subtitle", default: "")
       def partial = "web/onboarding/steps/#{key}"
 
       # Fora da lista desta pessoa (padrão: nunca).

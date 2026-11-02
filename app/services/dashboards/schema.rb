@@ -47,7 +47,7 @@ module Dashboards
       views.each_with_index do |view, vi|
         next e << msg(:view_object, n: vi + 1) unless view.is_a?(Hash)
 
-        where = msg(:at_view, id: view['id'] || vi + 1)
+        where = msg(:at_view, id: view["id"] || vi + 1)
         check_id(view, where, ids, e)
         boxes += 1
         e << msg(:title_required, where: where) if view["title"].to_s.strip.empty?
@@ -60,7 +60,7 @@ module Dashboards
         sections.each_with_index do |section, si|
           next e << msg(:section_object, where: where, n: si + 1) unless section.is_a?(Hash)
 
-          swhere = msg(:at_section, id: section['id'] || si + 1)
+          swhere = msg(:at_section, id: section["id"] || si + 1)
           check_id(section, swhere, ids, e)
           boxes += 1
           span(section["span"], swhere, e)
@@ -77,7 +77,7 @@ module Dashboards
     def widget(w, where, ids, e)
       return e << msg(:widget_object, where: where) unless w.is_a?(Hash)
 
-      where = msg(:at_widget, id: w['id'] || '?', where: where)
+      where = msg(:at_widget, id: w["id"] || "?", where: where)
       check_id(w, where, ids, e)
       type = w["type"]
       required = types[type] or return e << msg(:unknown_type, where: where, type: type.inspect)
@@ -133,7 +133,7 @@ module Dashboards
       e << msg(:visible_numeric, where: where) if value.key?("numeric") &&
                                                                                  !(numeric.is_a?(Hash) && numeric["point"].is_a?(String) && (numeric.keys - %w[point above below]).empty? &&
                                                                                    %w[above below].any? { |k| numeric.key?(k) } && numeric.values_at("above", "below").compact.all?(Numeric))
-      e << msg(:visible_screen, where: where, screens: SCREENS.join(', ')) if value.key?("screen") && !(value["screen"].is_a?(Array) && value["screen"].any? && (value["screen"] - SCREENS).empty?)
+      e << msg(:visible_screen, where: where, screens: SCREENS.join(", ")) if value.key?("screen") && !(value["screen"].is_a?(Array) && value["screen"].any? && (value["screen"] - SCREENS).empty?)
       if value.key?("any")
         list = value["any"]
         next_level = list.is_a?(Array) && list.size.between?(1, MAX_ANY) && !nested

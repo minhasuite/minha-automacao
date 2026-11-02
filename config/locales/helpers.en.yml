@@ -288,7 +288,7 @@ en:
       download: "Couldn't download it: %{error}"
       object: "The manifest must be an object."
       invalid: "Invalid manifest: %{error}"
-      format: "format must be %{format}."
+      format: "format must be %{expected}."
       key: "invalid key (lowercase letters, numbers, - and _)."
       name: "name is required."
       version: "invalid version (e.g. 1.2.0)."

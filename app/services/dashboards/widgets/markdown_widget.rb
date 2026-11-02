@@ -18,7 +18,7 @@ module Dashboards
         Liquid::Template.parse(w["text"].to_s, error_mode: :strict)
         []
       rescue Liquid::Error => e
-        [ text(:bad_liquid, error: e.message.delete_prefix('Liquid syntax error: ').truncate(120)) ]
+        [ text(:bad_liquid, error: e.message.delete_prefix("Liquid syntax error: ").truncate(120)) ]
       end
 
       def self.form = "web/dashboards/widget_forms/markdown"

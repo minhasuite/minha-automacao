@@ -60,7 +60,7 @@ module Packages
   def errors(manifest, site)
     m = manifest.to_h
     list = []
-    list << I18n.t("packages.errors.format", format: FORMAT) unless m["format"] == FORMAT
+    list << I18n.t("packages.errors.format", expected: FORMAT) unless m["format"] == FORMAT
     list << I18n.t("packages.errors.key") unless m["key"].is_a?(String) && KEY.match?(m["key"])
     list << I18n.t("packages.errors.name") unless m["name"].is_a?(String) && m["name"].strip.present?
     list << I18n.t("packages.errors.version") unless m["version"].is_a?(String) && VERSION.match?(m["version"])

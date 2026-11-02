@@ -288,7 +288,7 @@ es:
       download: "No se pudo descargar: %{error}"
       object: "El manifiesto debe ser un objeto."
       invalid: "Manifiesto no válido: %{error}"
-      format: "format debe ser %{format}."
+      format: "format debe ser %{expected}."
       key: "key no válida (minúsculas, números, - y _)."
       name: "name es obligatorio."
       version: "version no válida (ej.: 1.2.0)."
