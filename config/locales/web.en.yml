@@ -203,6 +203,7 @@ en:
       plan: Plan
       account: My account
       push: My devices
+      labels: Labels
     title: Settings
     account:
       subtitle: 'My account: name, e-mail, password, theme and language.'

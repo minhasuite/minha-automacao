@@ -13,8 +13,10 @@ module Web
       authorize_site!(@site, :view)
       scope = @site.scenes.order(:name)
       scope = scope.where("scenes.name ILIKE ?", "%#{Scene.sanitize_sql_like(params[:q].to_s.strip)}%") if params[:q].present?
+      scope = scope.labeled(params[:rotulo]) if params[:rotulo].present?
+      @labels = Scene.labels_in(@site.scenes)
       @total = @site.scenes.count
-      @scenes = scope.to_a
+      @scenes = scope.includes(:tags).to_a
     end
 
     def create
@@ -63,6 +65,6 @@ module Web
     end
 
     def back_path = url_from(params[:back].presence) || site_scenes_path(@site)
-    def permitted = [ :name, :icon, :shadow, { items: %i[point_id command value] } ]
+    def permitted = [ :name, :icon, :shadow, :label_list, :category, { items: %i[point_id command value] } ]
   end
 end

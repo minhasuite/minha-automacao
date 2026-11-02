@@ -4,6 +4,7 @@
   <div class="sm:col-span-2"><%= f.label :name, t("site_helpers.form.name"), class: "ss-label" %><%= f.text_field :name, value: point.name, class: "ss-input", required: true, maxlength: 80, autofocus: point.new_record?, placeholder: t("site_helpers.form.name_ph") %></div>
   <div class="sm:col-span-2"><%= render "web/shared/icon_picker", name: "helper[icon]", selected: point.icon, icons: HelperTypes::ICONS, id: "helper_icon", blank: t("site_helpers.form.icon_default") %></div>
   <div><%= f.label :area_id, t("site_helpers.form.area"), class: "ss-label" %><%= f.select :area_id, point.site.areas.order(:name).pluck(:name, :id), { selected: point.area_id, include_blank: t("site_helpers.form.no_area") }, class: "ss-input" %></div>
+  <%= fields_for :helper, point do |o| %><%= render "web/shared/organize_fields", f: o, record: point, categories: category_options(point.site.points.helpers) %><% end %>
   <%= render "web/site_helpers/forms/#{plugin.key}", f: f, point: point %>
   <% unless plugin.sourced? %>
     <label class="ss-check sm:col-span-2"><%= f.check_box :restore, { checked: point.address.fetch("restore", true) != false }, "1", "0" %><%= t("site_helpers.form.restore") %></label>

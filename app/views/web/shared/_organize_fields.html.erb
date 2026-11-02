@@ -1,0 +1,15 @@
+<%# locals: (f:, record:, categories: nil, span: "sm:col-span-2") -%>
+<%# ondaA1 (A2): rótulos (todos os modelos) e categoria (listas que agrupam). -%>
+<% list_id = "labels-#{record.class.name.underscore}" %>
+<div class="<%= categories ? '' : span %>">
+  <%= f.label :label_list, "Rótulos (separados por vírgula)", class: "ss-label" %>
+  <%= f.text_field :label_list, class: "ss-input", maxlength: 300, placeholder: "iluminação, noite", list: list_id, autocomplete: "off" %>
+  <datalist id="<%= list_id %>"><% Tag.order(:name).limit(200).pluck(:name).each do |n| %><option value="<%= n %>"></option><% end %></datalist>
+</div>
+<% if categories %>
+  <div>
+    <%= f.label :category, "Categoria", class: "ss-label" %>
+    <%= f.text_field :category, class: "ss-input", maxlength: 60, placeholder: "Iluminação, Segurança", list: "#{list_id}-cat", autocomplete: "off" %>
+    <datalist id="<%= list_id %>-cat"><% categories.each do |c| %><option value="<%= c %>"></option><% end %></datalist>
+  </div>
+<% end %>

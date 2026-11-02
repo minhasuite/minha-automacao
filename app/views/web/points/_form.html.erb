@@ -26,6 +26,7 @@
       <label class="ss-check"><%= f.check_box :disabled %> <%= t("devices.disabled") %></label>
     </div>
   </details>
+  <%= render "web/shared/organize_fields", f: f, record: point, span: "md:col-span-3" %>
   <div class="md:col-span-3 flex flex-wrap gap-2">
     <%= f.submit point.new_record? ? t("points.form.create") : t("points.form.save"), class: "ss-btn ss-btn-primary" %>
     <%= link_to t("shared.cancel"), device, class: "ss-btn ss-btn-ghost" %>

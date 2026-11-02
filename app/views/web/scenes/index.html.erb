@@ -12,20 +12,24 @@
 <% else %>
   <%= form_with url: site_scenes_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do %>
     <div class="min-w-48 flex-1"><label for="q" class="ss-label"><%= t("automations.common.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("automations.scenes.search_placeholder") %></div>
+    <% if @labels.any? %><div><label for="rotulo" class="ss-label"><%= t("automations.index.label") %></label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: t("automations.index.all_m"), class: "ss-input", data: { autosubmit: true } %></div><% end %>
     <button type="submit" class="ss-btn ss-btn-ghost" aria-label="<%= t("automations.common.search") %>"><%= icon("search", "size-4") %></button>
   <% end %>
   <% if @scenes.empty? %>
     <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.scenes.no_match") %></p><%= link_to t("automations.scripts_page.clear"), site_scenes_path(@site), class: "ss-btn ss-btn-ghost mt-3" %></div>
   <% else %>
-    <ul class="ss-card ss-rows" aria-label="<%= t("automations.tabs.scenes") %>">
-      <% @scenes.each do |s| %>
+    <% groups = category_groups(@scenes) %>
+    <% groups.each do |category, items| %>
+    <%= render layout: "web/shared/category_group", locals: { name: category, count: items.size, grouped: groups.size > 1 || category } do %>
+    <ul class="ss-card ss-rows" aria-label="<%= t("automations.tabs.scenes") %><%= " · #{category}" if category %>">
+      <% items.each do |s| %>
         <% risk = s.risk %>
         <li id="scene-<%= s.id %>">
           <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(s.icon.presence_in(HelperTypes::ICONS) || "sparkles") %></span>
           <div class="min-w-0 flex-1 basis-40">
             <p class="font-bold text-ink break-words"><%= can?(:manage) ? link_to(s.name, edit_scene_path(s), class: "text-ink no-underline hover:text-accent") : s.name %>
               <% if risk != "normal" %> <span class="ss-badge ss-badge-warn"><%= Point::RISKS[risk] %></span><% end %></p>
-            <p class="text-sm text-muted"><%= t("automations.scenes.points", count: s.items.size) %></p>
+            <p class="text-sm text-muted"><%= t("automations.scenes.points", count: s.items.size) %> <%= label_chips(s) %></p>
           </div>
           <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
             <% if can?(:command, risk: risk) %>
@@ -36,5 +40,7 @@
         </li>
       <% end %>
     </ul>
+    <% end %>
+    <% end %>
   <% end %>
 <% end %>

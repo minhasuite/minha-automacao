@@ -1,6 +1,7 @@
 # Área do local, hierárquica (andar → cômodo; linha → célula).
 class Area < ApplicationRecord
   include Auditable
+  include Labelable
 
   acts_as_tenant :tenant
 

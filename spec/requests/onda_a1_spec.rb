@@ -26,4 +26,27 @@ RSpec.describe "Web ondaA1: paridade HA" do
     get "/locais/#{site.id}/areas/novo?kind=floor"
     expect(response.body).to include("Nível do andar")
   end
+
+  it "A2: categorias agrupam as listas, rótulos filtram e a tela de rótulos edita cor e junta nomes" do
+    a1, a2 = within(tenant) do
+      [ site.automations.create!(name: "Acender varanda", category: "Iluminação", label_list: "noite"),
+        site.automations.create!(name: "Alarme", category: "Segurança") ]
+    end
+    get "/locais/#{site.id}/automacoes"
+    expect(response.body).to include("ss-group", "Iluminação", "Segurança", "noite")
+    get "/locais/#{site.id}/automacoes", params: { categoria: "Segurança" }
+    expect(response.body).to include("Alarme")
+    expect(response.body).not_to include("Acender varanda")
+    patch "/automacoes/#{a2.id}", params: { automation: { label_list: "Noite, alarme" } }
+    expect(within(tenant) { a2.reload.label_names }).to eq(%w[alarme noite])
+
+    tag = within(tenant) { Tag.find_by!(name: "alarme") }
+    get "/configuracoes/rotulos"
+    expect(response.body).to include("alarme", "noite", "automações e scripts")
+    patch "/configuracoes/rotulos/#{tag.id}", params: { tag: { name: "noite", color: "#ff0000" } }
+    expect(within(tenant) { [ Tag.exists?(tag.id), a2.reload.label_names, a1.reload.label_names ] }).to eq([ false, [ "noite" ], [ "noite" ] ])
+    noite = within(tenant) { Tag.find_by!(name: "noite") }
+    patch "/configuracoes/rotulos/#{noite.id}", params: { tag: { name: "noite", color: "#00aa00" } }
+    expect(within(tenant) { noite.reload.color }).to eq("#00aa00")
+  end
 end

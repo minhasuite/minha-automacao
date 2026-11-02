@@ -9,8 +9,10 @@ module Web
       authorize_site!(@site, :view)
       scope = @site.scripts.includes(:area).ordered
       scope = scope.where("automations.name ILIKE ?", "%#{Automation.sanitize_sql_like(params[:q].to_s.strip)}%") if params[:q].present?
+      scope = scope.labeled(params[:rotulo]) if params[:rotulo].present?
+      @labels = Automation.labels_in(@site.scripts)
       @total = @site.scripts.count
-      @scripts = scope.to_a
+      @scripts = scope.includes(:tags).to_a
     end
 
     def new

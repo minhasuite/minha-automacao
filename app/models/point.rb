@@ -3,6 +3,7 @@
 class Point < ApplicationRecord
   include Auditable
   include AlexaExposable
+  include Labelable
 
   acts_as_tenant :tenant
 
@@ -56,6 +57,7 @@ class Point < ApplicationRecord
   validate :range_order
 
   normalizes :name, with: ->(v) { v.to_s.squish }
+  normalizes :category, with: ->(v) { v.to_s.squish.presence }
   normalizes :key, with: ->(v) { v.to_s.strip.downcase.presence }
   normalizes :unit, :icon, :device_class, :confirm, :state_class, :data_type, with: ->(v) { v.to_s.strip.presence }
 

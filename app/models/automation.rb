@@ -18,6 +18,7 @@
 # o "Executar". Mesmas versões, modos e execuções (trace) das automações.
 # Criada por blueprint: `blueprint` + `blueprint_inputs` (+ a versão usada).
 class Automation < ApplicationRecord
+  include Labelable
   include Auditable
 
   acts_as_tenant :tenant
@@ -36,8 +37,6 @@ class Automation < ApplicationRecord
   belongs_to :site
   belongs_to :area, optional: true
   belongs_to :blueprint, optional: true
-  has_many :taggings, as: :taggable, dependent: :delete_all
-  has_many :tags, through: :taggings
   has_many :versions, -> { order(version: :desc) }, class_name: "AutomationVersion", dependent: nil # cascade no banco
   has_many :runs, class_name: "AutomationRun", dependent: nil
 
@@ -55,6 +54,7 @@ class Automation < ApplicationRecord
   validate { errors.add(:area, :other_site) if area && area.site_id != site_id }
 
   normalizes :name, with: ->(v) { v.to_s.squish }
+  normalizes :category, with: ->(v) { v.to_s.squish.presence }
 
   audited_attributes :name, :enabled, :mode, :version, :shadow
 
@@ -69,13 +69,6 @@ class Automation < ApplicationRecord
   def errors_in(defn) = Automations::Dsl.errors(defn, site, fields: (fields if script?))
   def blueprint_outdated? = blueprint.present? && blueprint_version.to_i < blueprint.version
 
-  # Rótulos ("iluminação, noite"): Tag/Tagging de sempre.
-  def label_list = tags.map(&:name).sort.join(", ")
-
-  def label_list=(text)
-    names = text.to_s.split(",").map { |n| n.squish.downcase }.compact_blank.uniq.first(10)
-    self.tags = names.map { |n| Tag.find_or_create_by!(name: n) }
-  end
   def published? = version.positive?
   def draft? = draft.present?
   def working_draft = draft || (published? ? definition : (script? ? { "actions" => [] } : Automations::Dsl.empty))

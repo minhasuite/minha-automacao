@@ -203,6 +203,7 @@ pt-BR:
       plan: Plano
       account: Minha conta
       push: Meus aparelhos
+      labels: Rótulos
     title: Configurações
     account:
       subtitle: 'Minha conta: nome, e-mail, senha, tema e idioma.'

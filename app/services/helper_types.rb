@@ -33,7 +33,8 @@ module HelperTypes
   def save(point, form)
     plugin = self.for(point)
     form = form.to_h.stringify_keys
-    point.assign_attributes(form.slice("name", "icon", "area_id").transform_values(&:presence))
+    point.assign_attributes(form.slice("name", "icon", "area_id", "category").transform_values(&:presence))
+    point.label_list = form["label_list"] if form.key?("label_list") # ondaA1 (A2)
     point.icon = nil unless point.icon.nil? || ICONS.include?(point.icon)
     point.address = point.address.merge("restore" => form.key?("restore") ? ActiveModel::Type::Boolean.new.cast(form["restore"]) : point.address.fetch("restore", true))
     plugin.assign(point, form)

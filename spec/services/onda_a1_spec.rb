@@ -57,4 +57,46 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect(bp["definition"]["actions"]).to eq([ { "type" => "command_query", "query" => "floor=\"Andar de cima\" capability=onoff", "command" => "off" } ])
     end
   end
+
+  describe "A2 rótulos e categorias" do
+    let(:room) { create(:area, site: site, name: "Sala") }
+    let(:dev) { create(:device, site: site, area: room) }
+    let!(:lamp) { create(:point, site: site, device: dev, name: "Luz", value: true) }
+    let!(:other) { create(:point, site: site, device: create(:device, site: site), name: "Outra", value: true) }
+
+    it "rótulo em ponto, aparelho, área e cena; o do aparelho e o da área valem para os pontos na consulta" do
+      dev.update!(label_list: "Iluminação, Noite")
+      room.update!(label_list: "térreo")
+      other.update!(label_list: "externo")
+      scene = site.scenes.create!(name: "Cinema", label_list: "noite", category: "  Lazer ", items: [ { "point_id" => lamp.id, "command" => "off" } ])
+      expect(dev.reload.label_names).to eq(%w[iluminação noite])
+      expect(scene.reload).to have_attributes(label_list: "noite", category: "Lazer")
+      q = ->(text) { Points::Query.new(site).call(text).map(&:name) }
+      expect(q.call("tag=iluminação")).to eq([ "Luz" ])
+      expect(q.call("tag=térreo")).to eq([ "Luz" ])
+      expect(q.call("tag=externo")).to eq([ "Outra" ])
+      expect(Scene.labeled("noite")).to eq([ scene ])
+      expect(Scene.labels_in(site.scenes)).to eq([ "noite" ])
+    end
+
+    it "modelo novo ganha rótulo só com `include Labelable` (plugin falso)" do
+      fake = Class.new(ApplicationRecord) do
+        self.table_name = "scenes"
+        acts_as_tenant :tenant
+        include Labelable
+        def self.name = "TesteRotulado"
+      end
+      stub_const("TesteRotulado", fake)
+      rec = TesteRotulado.create!(site_id: site.id, name: "Teste rótulo", items: [])
+      rec.update!(label_list: "a, b, a")
+      expect(rec.reload.label_names).to eq(%w[a b])
+      expect(TesteRotulado.labeled("b").pluck(:id)).to eq([ rec.id ])
+    end
+
+    it "helper com categoria e rótulos pelo formulário" do
+      point = HelperTypes.build(site, HelperTypes.plugin("toggle"))
+      expect(HelperTypes.save(point, "name" => "Teste férias", "category" => "Modos", "label_list" => "casa")).to be true
+      expect(point.reload).to have_attributes(category: "Modos", label_list: "casa")
+    end
+  end
 end

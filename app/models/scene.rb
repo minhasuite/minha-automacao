@@ -4,6 +4,7 @@
 class Scene < ApplicationRecord
   include Auditable
   include AlexaExposable
+  include Labelable
 
   acts_as_tenant :tenant
 
@@ -14,6 +15,7 @@ class Scene < ApplicationRecord
   validate :items_fit
 
   normalizes :name, with: ->(v) { v.to_s.squish }
+  normalizes :category, with: ->(v) { v.to_s.squish.presence }
 
   audited_attributes :name, :items, :alexa_exposed, :shadow
 

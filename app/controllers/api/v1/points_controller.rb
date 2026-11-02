@@ -10,7 +10,7 @@ module Api
       def index
         device = Device.find(params[:device_id])
         role = authorize_site!(device.site, :view)
-        records, meta = paginate(device.points.includes(:device).ordered)
+        records, meta = paginate(device.points.includes(:device, :tags).ordered)
         return render_data(records.map { |p| Dashboards::Resolver.point_json(p, role) }, meta: meta) if params[:view] == "app"
 
         render_data(PointSerializer.new(records, params: { reveal: reveal_sensitive? }).to_h, meta: meta)
@@ -22,7 +22,7 @@ module Api
       def site_index
         site = Site.find(params[:site_id])
         role = authorize_site!(site, :view)
-        records, meta = paginate(site.points.includes(:device).ordered)
+        records, meta = paginate(site.points.includes(:device, :tags).ordered)
         list = records.map { |p| Dashboards::Resolver.point_json(p, role) }
         list = list.select { |p| p["can_command"] } if bool(params[:commandable])
         render_data(list, meta: meta)

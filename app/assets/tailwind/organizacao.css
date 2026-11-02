@@ -1,0 +1,55 @@
+/* ondaA1 (paridade HA, grupos 1 e 2): categorias recolhíveis, rótulos com
+   cor, tela Expor, editor YAML, listas de tarefas e calendário local. Só
+   tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
+@layer components {
+  /* ---- Categorias e rótulos -------------------------------------------- */
+  .ss-group > summary { list-style: none; }
+  .ss-group > summary::-webkit-details-marker { display: none; }
+  .ss-group-head { display: flex; align-items: center; gap: .55rem; padding: .35rem .25rem .6rem; cursor: pointer; user-select: none; border-radius: var(--r-field); }
+  .ss-group-head:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .ss-group-caret { color: var(--muted); transition: transform .18s ease; }
+  .ss-group[open] .ss-group-caret { transform: rotate(90deg); }
+  .ss-label-chip { --chip: var(--accent); display: inline-flex; align-items: center; gap: .3rem; padding: .1rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 600;
+    color: var(--ink); background: color-mix(in srgb, var(--chip) 14%, transparent); border: 1px solid color-mix(in srgb, var(--chip) 35%, transparent); }
+  .ss-label-chip::before { content: ""; width: .45rem; height: .45rem; border-radius: 999px; background: var(--chip); }
+
+  /* ---- Expor a assistentes --------------------------------------------- */
+  .oa-expose { display: grid; gap: 0; }
+  .oa-expose-row { display: grid; grid-template-columns: auto minmax(0, 1fr) repeat(var(--cols, 3), minmax(3.6rem, auto)); align-items: center; gap: .75rem; padding: .7rem 1rem; border-top: 1px solid var(--line); }
+  .oa-expose-row:first-child { border-top: 0; }
+  .oa-expose-head { font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); background: var(--field); }
+  .oa-expose-cell { display: grid; place-items: center; }
+  .oa-expose-cell input { width: 1.15rem; height: 1.15rem; accent-color: var(--accent-solid); }
+  .oa-aliases { font-size: .75rem; color: var(--muted); }
+  @media (max-width: 640px) {
+    .oa-expose-row { grid-template-columns: auto minmax(0, 1fr); }
+    .oa-expose-head .oa-expose-cell { display: none; }
+    .oa-expose-cells { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+    .oa-expose-cell { display: inline-flex; gap: .35rem; font-size: .8rem; color: var(--muted); }
+    .oa-expose-cell span.sr-only { position: static; width: auto; height: auto; clip: auto; margin: 0; overflow: visible; white-space: normal; }
+  }
+  @media (min-width: 641px) { .oa-expose-cells { display: contents; } }
+
+  /* ---- Editor YAML ----------------------------------------------------- */
+  .oa-code { font-family: var(--font-mono); font-size: .82rem; line-height: 1.55; min-height: 22rem; tab-size: 2; white-space: pre; overflow: auto; }
+
+  /* ---- Listas de tarefas ----------------------------------------------- */
+  .oa-todo { display: grid; gap: .1rem; }
+  .oa-todo-item { display: flex; align-items: center; gap: .75rem; padding: .6rem .25rem; border-top: 1px solid var(--line); }
+  .oa-todo-item:first-child { border-top: 0; }
+  .oa-todo-item.is-done .oa-todo-text { color: var(--muted); text-decoration: line-through; }
+  .oa-todo-check { width: 1.25rem; height: 1.25rem; border-radius: 999px; border: 2px solid var(--line); display: grid; place-items: center; flex: none; background: transparent; cursor: pointer; color: transparent; }
+  .oa-todo-item.is-done .oa-todo-check { background: var(--accent-solid); border-color: transparent; color: #fff; }
+  .oa-todo-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .oa-due { font-size: .72rem; color: var(--muted); }
+  .oa-due.is-late { color: var(--danger); font-weight: 600; }
+
+  /* ---- Calendário local ------------------------------------------------ */
+  .oa-cal-day { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); gap: .9rem; padding: .85rem 1rem; border-top: 1px solid var(--line); }
+  .oa-cal-day:first-child { border-top: 0; }
+  .oa-cal-date { text-align: center; line-height: 1.1; }
+  .oa-cal-date b { display: block; font-size: 1.5rem; color: var(--ink); }
+  .oa-cal-date span { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .oa-cal-event { display: flex; gap: .6rem; align-items: baseline; padding: .2rem 0; }
+  .oa-cal-time { font-size: .78rem; font-weight: 700; color: var(--accent); min-width: 5.5rem; }
+}

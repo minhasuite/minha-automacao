@@ -6,6 +6,7 @@
   <div><%= f.label :level, "Nível do andar", class: "ss-label" %><%= f.number_field :level, class: "ss-input", min: -10, max: 200, placeholder: "0 = térreo, -1 = subsolo" %>
     <p class="text-xs text-muted mt-1">Só para andar: ordena os andares e agrupa as áreas de dentro.</p></div>
   <div><%= f.label :parent_id, t("areas.form.parent"), class: "ss-label" %><%= f.select :parent_id, site.areas.where.not(id: area.id).order(:name).pluck(:name, :id), { include_blank: t("areas.form.no_parent") }, class: "ss-input" %></div>
+  <%= render "web/shared/organize_fields", f: f, record: area, span: "md:col-span-2" %>
   <div class="md:col-span-2 flex flex-wrap gap-2">
     <%= f.submit area.new_record? ? t("areas.form.create") : t("areas.form.save"), class: "ss-btn ss-btn-primary" %>
     <%= link_to t("shared.cancel"), area.new_record? ? site : area, class: "ss-btn ss-btn-ghost" %>

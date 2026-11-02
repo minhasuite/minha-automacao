@@ -12,7 +12,9 @@ module Web
       if (q = params[:q].to_s.squish).present?
         scope = scope.where("points.name ILIKE :q OR points.key ILIKE :q", q: "%#{Point.sanitize_sql_like(q)}%")
       end
-      @pagy, @helpers = pagy(scope.ordered, limit: 50)
+      scope = scope.labeled(params[:rotulo]) if params[:rotulo].present?
+      @labels = Point.labels_in(@site.points.helpers)
+      @pagy, @helpers = pagy(scope.includes(:tags).reorder(Arel.sql("points.category IS NULL, lower(points.category)")).ordered, limit: 50)
       @counts = @site.points.helpers.group(:helper).count
     end
 
@@ -67,6 +69,6 @@ module Web
     end
 
     # Campos comuns + os que a partial do tipo manda (o plugin lê o que conhece).
-    def form = params.fetch(:helper, {}).permit(:name, :icon, :area_id, :restore, *@plugin.fields).to_h
+    def form = params.fetch(:helper, {}).permit(:name, :icon, :area_id, :restore, :label_list, :category, *@plugin.fields).to_h
   end
 end

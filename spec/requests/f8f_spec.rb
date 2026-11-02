@@ -32,7 +32,7 @@ RSpec.describe "F8f: Automações e cenas (web e API)" do
       within(tenant) { site.automations.create!(name: "Rascunho") }
 
       get "/locais/#{site.id}/automacoes"
-      expect(response.body).to include("Automações e cenas", "Cenas", "Scripts", "Blueprints", "Regras simples", "Sala acende", "Marcar todas", "iluminação · noite")
+      expect(response.body).to include("Automações e cenas", "Cenas", "Scripts", "Blueprints", "Regras simples", "Sala acende", "Marcar todas", "ss-label-chip\">iluminação", "ss-label-chip\">noite")
       get "/locais/#{site.id}/automacoes", params: { q: "sala" }
       expect(response.body).to include("Sala acende").and(not_include_text("Outra"))
       get "/locais/#{site.id}/automacoes", params: { rotulo: "noite", area: area.id, estado: "desativadas" }

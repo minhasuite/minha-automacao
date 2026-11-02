@@ -12,20 +12,24 @@
 <% else %>
   <%= form_with url: site_scripts_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do %>
     <div class="min-w-48 flex-1"><label for="q" class="ss-label"><%= t("automations.common.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("automations.scripts_page.search_placeholder") %></div>
+    <% if @labels.any? %><div><label for="rotulo" class="ss-label"><%= t("automations.index.label") %></label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: t("automations.index.all_m"), class: "ss-input", data: { autosubmit: true } %></div><% end %>
     <button type="submit" class="ss-btn ss-btn-ghost" aria-label="<%= t("automations.common.search") %>"><%= icon("search", "size-4") %></button>
   <% end %>
   <% if @scripts.empty? %>
     <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.scripts_page.no_match") %></p><%= link_to t("automations.scripts_page.clear"), site_scripts_path(@site), class: "ss-btn ss-btn-ghost mt-3" %></div>
   <% else %>
-    <ul class="ss-card ss-rows" aria-label="Scripts">
-      <% @scripts.each do |s| %>
+    <% groups = category_groups(@scripts) %>
+    <% groups.each do |category, items| %>
+    <%= render layout: "web/shared/category_group", locals: { name: category, count: items.size, grouped: groups.size > 1 || category } do %>
+    <ul class="ss-card ss-rows" aria-label="Scripts<%= " de #{category}" if category %>">
+      <% items.each do |s| %>
         <li id="script-<%= s.id %>">
           <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(s.icon.presence_in(HelperTypes::ICONS) || "play") %></span>
           <div class="min-w-0 flex-1 basis-48">
             <p class="font-bold text-ink break-words"><%= link_to s.name, (can?(:manage) ? edit_automation_path(s) : automation_automation_runs_path(s)), class: "text-ink no-underline hover:text-accent" %>
               <% unless s.published? %> <span class="ss-badge ss-badge-warn"><%= t("automations.index.draft") %></span><% end %>
               <% if s.draft? && s.published? %> <span class="ss-badge"><%= t("automations.index.draft_changes") %></span><% end %></p>
-            <p class="text-sm text-muted break-words"><%= [ s.area&.name, t("automations.scripts_page.fields", count: s.fields.size), s.mode_label.split(" (").first ].compact.join(" · ") %></p>
+            <p class="text-sm text-muted break-words"><%= [ s.area&.name, t("automations.scripts_page.fields", count: s.fields.size), s.mode_label.split(" (").first ].compact.join(" · ") %> <%= label_chips(s) %></p>
             <p class="text-xs text-muted"><%= t("automations.index.last_run", text: last_run_text(s).downcase) %></p>
             <% if s.last_error.present? %><p class="text-sm text-danger mt-1 flex gap-1"><%= icon("exclamation-circle", "size-4 shrink-0 mt-0.5") %><span><%= s.last_error %></span></p><% end %>
           </div>
@@ -43,5 +47,7 @@
         </li>
       <% end %>
     </ul>
+    <% end %>
+    <% end %>
   <% end %>
 <% end %>

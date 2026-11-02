@@ -20,7 +20,8 @@ module Points
       # ondaA1 (A1): no andar (o próprio andar e as áreas dentro dele), pelo nome ou id.
       "floor" => ->(q, p, v) { list(v).any? { |f| q.floor_ids(f).include?(p.effective_area_id) } },
       "quality" => ->(_q, p, v) { list(v).include?(p.quality) },
-      "tag" => ->(q, p, v) { list(v).any? { |t| q.tagged(t).include?(p.id) } },
+      # ondaA1 (A2): o rótulo do aparelho e da área vale para os pontos deles.
+      "tag" => ->(q, p, v) { list(v).any? { |t| (tagged = q.tagged(t)).include?(p.id) || tagged.include?(p.device_id) || tagged.include?(p.effective_area_id) } },
       "state" => ->(q, p, v) { list(v).include?(q.on?(p) ? "on" : "off") },
       "is" => ->(q, p, v) { list(v).include?(q.value(p).to_s) },
       "integration" => ->(_q, p, v) { list(v).include?(p.device&.driver) },
@@ -106,7 +107,7 @@ module Points
         floor ? Area.subtree_ids(rows.map { |r| r.first(2) }, floor.first) : Set.new
       end
     end
-    def tagged(name) = (@tags ||= {})[name.to_s.downcase] ||= Tagging.joins(:tag).where(tags: { name: name.to_s.downcase }, taggable_type: "Point").pluck(:taggable_id).to_set
+    def tagged(name) = (@tags ||= {})[name.to_s.downcase] ||= Tagging.joins(:tag).where(tags: { name: name.to_s.downcase }, taggable_type: %w[Point Device Area]).pluck(:taggable_id).to_set
 
     # Liquid: `{{ "tag=bateria below=30" | points_where | map: "name" | join: ", " }}`.
     # Cada ponto vem como no `points[...]` das automações.

@@ -8,6 +8,7 @@
 # `credential` = local_key (cifrada), `listen` liga o ouvinte persistente.
 class Device < ApplicationRecord
   include Auditable
+  include Labelable
 
   acts_as_tenant :tenant
 

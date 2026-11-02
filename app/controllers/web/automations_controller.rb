@@ -13,7 +13,8 @@ module Web
       authorize_site!(@site, :view)
       @total = @site.automations.count
       @automations = filtered(@site.automations.includes(:area, :tags).ordered).to_a
-      @labels = Tag.joins(:taggings).where(taggings: { taggable_type: "Automation", taggable_id: @site.automations.select(:id) }).distinct.order(:name).pluck(:name)
+      @labels = Automation.labels_in(@site.automations)
+      @categories = helpers.category_options(@site.automations)
     end
 
     def new
@@ -199,7 +200,8 @@ module Web
       scope = scope.where("automations.name ILIKE ?", "%#{Automation.sanitize_sql_like(params[:q].to_s.strip)}%") if params[:q].present?
       scope = scope.where(enabled: STATES[params[:estado]]) if STATES.key?(params[:estado])
       scope = scope.where(area_id: params[:area]) if params[:area].present?
-      scope = scope.where(id: Tagging.joins(:tag).where(taggable_type: "Automation", tags: { name: params[:rotulo] }).select(:taggable_id)) if params[:rotulo].present?
+      scope = scope.labeled(params[:rotulo]) if params[:rotulo].present?
+      scope = scope.where(category: params[:categoria]) if params[:categoria].present?
       scope
     end
 
@@ -269,7 +271,7 @@ module Web
     def back = url_from(params[:back].presence) || edit_automation_path(@automation)
 
     def automation_params
-      params.require(:automation).permit(:name, :description, :mode, :max_runs, :area_id, :enabled, :icon, :label_list, :shadow).tap do |p|
+      params.require(:automation).permit(:name, :description, :mode, :max_runs, :area_id, :enabled, :icon, :label_list, :category, :shadow).tap do |p|
         p[:area_id] = p[:area_id].presence if p.key?(:area_id)
       end
     end

@@ -77,7 +77,7 @@ module Web
 
     def point_params
       params.require(:point).permit(:name, :key, :capability, :unit, :area_id, :min, :max, :step, :options_text, :risk, :confirm,
-                                    :device_class, :scale, :offset, :pulse_ms, :max_on_s, :writable, :hidden, :disabled)
+                                    :device_class, :scale, :offset, :pulse_ms, :max_on_s, :writable, :hidden, :disabled, :label_list)
     end
   end
 end

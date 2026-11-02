@@ -1,0 +1,27 @@
+<%= render "web/shared/header", title: t("settings.title"), subtitle: "Rótulos: agrupam e miram pontos, aparelhos, áreas, cenas, automações e scripts" %>
+<%= render layout: "web/settings/frame", locals: { current: :labels } do %>
+  <% if @tags.empty? %>
+    <div class="ss-card ss-empty">
+      <p class="font-bold text-ink">Nenhum rótulo ainda.</p>
+      <p class="mt-1 max-w-lg mx-auto">Escreva o rótulo no formulário de um ponto, aparelho, área, cena, automação, script ou helper ("iluminação", "noite"). Ele vira filtro nas listas e alvo nas ações (consulta <code>tag=iluminação</code>).</p>
+    </div>
+  <% else %>
+    <ul class="ss-card ss-rows" aria-label="Rótulos">
+      <% @tags.each do |tg| %>
+        <% use = @usage[tg.id] %>
+        <li id="<%= dom_id(tg) %>">
+          <span class="ss-label-chip" style="<%= "--chip: #{tg.color}" if tg.color %>"><%= tg.name %></span>
+          <p class="min-w-0 flex-1 basis-40 text-sm text-muted"><%= use.any? ? use.map { |type, n| "#{n} #{Web::TagsController::KINDS.fetch(type, type)}" }.join(" · ") : "Sem uso" %></p>
+          <%= form_with model: tg, url: tag_path(tg), method: :patch, class: "flex flex-wrap items-center gap-2" do |f| %>
+            <label class="sr-only" for="<%= dom_id(tg, :name) %>">Nome de <%= tg.name %></label>
+            <%= f.text_field :name, class: "ss-input w-40", id: dom_id(tg, :name), maxlength: 40 %>
+            <label class="sr-only" for="<%= dom_id(tg, :color) %>">Cor de <%= tg.name %></label>
+            <%= f.color_field :color, value: tg.color.presence || "#5a45e8", class: "h-10 w-12 rounded-lg border border-line bg-transparent", id: dom_id(tg, :color) %>
+            <%= f.submit "Salvar", class: "ss-btn ss-btn-outline ss-btn-sm" %>
+          <% end %>
+          <%= button_to tag_path(tg), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": "Excluir #{tg.name}", form: { class: "contents", data: { turbo_confirm: "Excluir o rótulo #{tg.name}? Ele sai de tudo que o usa.", turbo_confirm_button: "Excluir" } } do %><%= icon("trash", "size-4") %><% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>

@@ -21,6 +21,7 @@
     <div class="md:col-span-2"><label class="ss-check"><%= f.check_box :listen %> <%= t("devices.form.listen") %></label>
       <p class="text-xs text-muted mt-1"><%= t("devices.form.listen_hint") %></p></div>
   <% end %>
+  <%= render "web/shared/organize_fields", f: f, record: device, span: "md:col-span-2" %>
   <div class="md:col-span-2 flex flex-wrap gap-2">
     <%= f.submit device.new_record? ? t("devices.form.create") : t("devices.form.save"), class: "ss-btn ss-btn-primary" %>
     <%= link_to t("devices.form.cancel"), device.new_record? ? (device.area || site) : device, class: "ss-btn ss-btn-ghost" %>

@@ -6,6 +6,7 @@
              [ t("settings.nav.apps"), apps_path, "cube", :apps, current_user.owner? ],
              [ t("settings.nav.ai"), settings_ai_path, "sparkles", :ai, current_user.admin? ],
              [ t("settings.nav.health"), settings_health_path, "shield-check", :health, current_user.admin? ],
+             [ t("settings.nav.labels"), tags_path, "tag", :labels, current_user.admin? ],
              [ t("settings.nav.system"), settings_system_path, "cog", :system, !reader ],
              [ t("settings.nav.remote"), settings_remote_path, "globe", :remote, current_user.admin? ],
              [ t("settings.nav.plan"), settings_plan_path, "badge-check", :plan, current_user.admin? ],

@@ -345,7 +345,8 @@ CREATE TABLE public.automations (
     blueprint_id uuid,
     blueprint_inputs jsonb,
     blueprint_version integer,
-    shadow boolean DEFAULT false NOT NULL
+    shadow boolean DEFAULT false NOT NULL,
+    category character varying
 );
 
 
@@ -763,7 +764,8 @@ CREATE TABLE public.points (
     helper character varying,
     alexa_exposed boolean DEFAULT false NOT NULL,
     alexa_name character varying,
-    attrs jsonb DEFAULT '{}'::jsonb NOT NULL
+    attrs jsonb DEFAULT '{}'::jsonb NOT NULL,
+    category character varying
 );
 
 
@@ -867,7 +869,8 @@ CREATE TABLE public.scenes (
     updated_at timestamp(6) without time zone NOT NULL,
     alexa_exposed boolean DEFAULT false NOT NULL,
     alexa_name character varying,
-    shadow boolean DEFAULT false NOT NULL
+    shadow boolean DEFAULT false NOT NULL,
+    category character varying
 );
 
 
@@ -4514,6 +4517,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102200002'),
 ('20261102200001'),
 ('20261102100001'),
 ('20261101130003'),
