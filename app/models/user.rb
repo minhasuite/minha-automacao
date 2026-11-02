@@ -13,7 +13,7 @@ class User < ApplicationRecord
   has_many :push_subscriptions, dependent: :delete_all
 
   ROLES = %w[owner admin member].freeze
-  ROLE_LABELS = { "owner" => "Dono", "admin" => "Administrador", "member" => "Membro" }.freeze
+  ROLE_LABELS = LocalizedLabel.for("labels.user_roles", ROLES)
 
   normalizes :email, with: ->(e) { e.to_s.strip.downcase }
   normalizes :name, with: ->(n) { n.to_s.squish }

@@ -28,11 +28,11 @@ module Scripts
 
   # Driver virtual, comando `run` (valor opcional = {campo => valor}).
   def execute(point, value)
-    script = Automation.find_by(id: point.address["script_id"], kind: "script") or raise invalid("Script removido.")
-    raise invalid("Publique o script antes de executar.") unless script.published?
+    script = Automation.find_by(id: point.address["script_id"], kind: "script") or raise invalid(I18n.t("automations.scripts.removed"))
+    raise invalid(I18n.t("automations.scripts.unpublished")) unless script.published?
 
     run = script.run_script!(script.field_values(value.is_a?(Hash) ? value : {}), title: "Executar (#{Current.user&.name || 'painel'})", user: Current.user)
-    raise invalid("Já está rodando (#{script.mode_label.split(' (').first.downcase}).") unless run
+    raise invalid(I18n.t("automations.scripts.running", mode: script.mode_label.split(" (").first.downcase)) unless run
     raise invalid("#{script.name}: #{run.error}") if run.status == "failed"
 
     run

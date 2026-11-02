@@ -1,6 +1,6 @@
-<% content_for :title, "Convite — Minha Automação" %>
+<% content_for :title, t("invites.page_title") %>
 <div class="text-center">
-  <h1 class="text-2xl">Convite inválido</h1>
-  <p class="text-sm text-muted mt-2">Este link já foi usado, venceu ou foi cancelado. Peça um novo a quem convidou você.</p>
-  <%= link_to "Entrar", login_path, class: "ss-btn ss-btn-primary mt-6" %>
+  <h1 class="text-2xl"><%= t("invites.invalid") %></h1>
+  <p class="text-sm text-muted mt-2"><%= t("invites.invalid_hint") %></p>
+  <%= link_to t("invites.sign_in"), login_path, class: "ss-btn ss-btn-primary mt-6" %>
 </div>

@@ -1,7 +1,7 @@
-<%= render "web/shared/header", title: "Editar local", subtitle: @site.name, back: site_path(@site) %>
+<%= render "web/shared/header", title: t("sites.edit.title"), subtitle: @site.name, back: site_path(@site) %>
 <%= render "web/sites/form", site: @site %>
 <section class="ss-card ss-card-pad mt-4 max-w-3xl">
-  <h2>Excluir local</h2>
-  <p class="text-sm text-muted mt-1">Apaga o local com todas as áreas, dispositivos e pontos. Não dá para desfazer.</p>
-  <%= button_to site_path(@site), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm: "Excluir o local #{@site.name} e tudo que há nele?" } } do %><%= icon("trash", "size-4") %>Excluir local<% end %>
+  <h2><%= t("sites.edit.delete") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("sites.edit.delete_hint") %></p>
+  <%= button_to site_path(@site), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm: t("sites.edit.delete_confirm", name: @site.name) } } do %><%= icon("trash", "size-4") %><%= t("sites.edit.delete") %><% end %>
 </section>

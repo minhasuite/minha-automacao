@@ -20,7 +20,7 @@ module Web
       @area = @site.areas.new(area_params)
       return render(:new, status: :unprocessable_content) unless @area.save
 
-      redirect_to @area, notice: "Área criada."
+      redirect_to @area, notice: t("notices.area_created")
     end
 
     def edit = load_for(:manage)
@@ -29,13 +29,13 @@ module Web
       load_for(:manage)
       return render(:edit, status: :unprocessable_content) unless @area.update(area_params)
 
-      redirect_to @area, notice: "Área atualizada."
+      redirect_to @area, notice: t("notices.area_updated")
     end
 
     def destroy
       load_for(:manage)
       @area.destroy!
-      redirect_to @site, notice: "Área excluída. Os dispositivos dela ficaram sem área."
+      redirect_to @site, notice: t("notices.area_deleted")
     end
 
     private

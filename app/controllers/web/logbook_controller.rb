@@ -7,7 +7,7 @@ module Web
     FILTERS = [ :site_id, :period, :from, :until, :area_id, :device_id, :point_id, :user_id, :q, :before, :day, { sources: [] } ].freeze
 
     def show
-      return redirect_to(sites_path, notice: "Crie um local para ver o diário.") unless pick_site
+      return redirect_to(sites_path, notice: t("notices.need_site_logbook")) unless pick_site
 
       @filter = Logbook::Filter.new(site: @site, role: @site_role, params: params.permit(*FILTERS))
       @items, @next = Logbook.call(@filter)

@@ -11,9 +11,7 @@ class Device < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  DRIVERS = { "virtual" => "Virtual", "tuya_local" => "Tuya local", "tuya_cloud" => "Tuya nuvem",
-              "xiaomi_miot" => "Xiaomi", "alexa" => "Alexa", "mqtt" => "MQTT", "modbus_tcp" => "Modbus TCP",
-              "onvif" => "Câmera ONVIF", "go2rtc" => "Câmera" }.freeze
+  DRIVERS = LocalizedLabel.for("labels.drivers", %w[virtual tuya_local tuya_cloud xiaomi_miot alexa mqtt modbus_tcp onvif go2rtc])
   STATUSES = %w[online offline error].freeze
 
   belongs_to :site
@@ -48,8 +46,7 @@ class Device < ApplicationRecord
 
   # Situação da lista de dispositivos (filtro): removido da conta > com erro >
   # sem resposta > novo (7 dias) > respondendo.
-  SITUATIONS = { "online" => "Conectado", "offline" => "Sem sinal", "error" => "Com erro", "new" => "Novo",
-                 "removed" => "Removido da conta" }.freeze
+  SITUATIONS = LocalizedLabel.for("labels.device_situations", %w[online offline error new removed])
   # "Novo" = adotado de uma varredura de conta (`discovered_at`) e ainda sem
   # nenhum contato; os demais seguem o último contato (status/erro).
   NEW_FOR = 7.days
@@ -102,6 +99,6 @@ class Device < ApplicationRecord
   end
 
   def area_in_same_site
-    errors.add(:area, "precisa ser deste local") if area && area.site_id != site_id
+    errors.add(:area, :other_site) if area && area.site_id != site_id
   end
 end

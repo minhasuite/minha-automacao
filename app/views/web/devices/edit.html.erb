@@ -1,7 +1,7 @@
-<%= render "web/shared/header", title: "Editar dispositivo", subtitle: @device.name, back: device_path(@device) %>
+<%= render "web/shared/header", title: t("devices.edit_title"), subtitle: @device.name, back: device_path(@device) %>
 <%= render "web/devices/form", site: @site, device: @device %>
 <section class="ss-card ss-card-pad mt-4 max-w-3xl">
-  <h2>Excluir dispositivo</h2>
-  <p class="text-sm text-muted mt-1">Apaga o dispositivo e os pontos dele.</p>
-  <%= button_to device_path(@device), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm: "Excluir o dispositivo #{@device.name} e os pontos dele?" } } do %><%= icon("trash", "size-4") %>Excluir dispositivo<% end %>
+  <h2><%= t("devices.delete") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("devices.delete_hint") %></p>
+  <%= button_to device_path(@device), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm: t("devices.delete_confirm", name: @device.name) } } do %><%= icon("trash", "size-4") %><%= t("devices.delete") %><% end %>
 </section>

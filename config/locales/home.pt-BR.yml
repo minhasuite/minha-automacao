@@ -1,0 +1,693 @@
+# Textos das telas da casa e da conta (locais, áreas, pontos, histórico,
+# pessoas, convites, avisos legais, e-mails) e rótulos das constantes dos
+# modelos (LocalizedLabel). Chave nova = nos três idiomas (spec/i18n_spec.rb confere).
+pt-BR:
+  activerecord:
+    errors:
+      messages:
+        other_site: precisa ser deste local
+        options_list: precisa ser uma lista de opções
+        options_empty: não pode ficar vazia numa seleção
+        above_min: precisa ser maior que o mínimo
+        already_linked: já está ligado a esta origem
+        other_point: precisa ser outro ponto
+        fire_target: precisa ser liga/desliga, portão ou botão
+        mirror_only: só vale para espelhar ou inverter
+        onoff_or_sensor: precisa ser liga/desliga ou sensor
+        onoff_writable: precisa ser liga/desliga e receber comando
+        onoff_source: exige origem liga/desliga
+        link_loop: Forma um laço com outro espelhamento deste local.
+        same_company: precisa ser da empresa
+        https: precisa ser https
+  labels:
+    site_kinds:
+      home: Casa
+      store: Loja
+      plant: Fábrica
+    area_kinds:
+      room: Cômodo
+      floor: Andar
+      outdoor: Área externa
+      line: Linha
+      cell: Célula
+      warehouse: Depósito
+    device_situations:
+      online: Conectado
+      offline: Sem sinal
+      error: Com erro
+      new: Novo
+      removed: Removido da conta
+    capabilities:
+      onoff: Liga/desliga
+      dimmer: Intensidade
+      color: Cor
+      gate: Portão
+      contact: Sensor de abertura
+      motion: Sensor de movimento
+      tamper: Violação
+      problem: Problema
+      measure: Medição
+      enum: Seleção
+      setpoint: Valor ajustável
+      command: Botão
+      text: Texto
+      vacuum: Robô aspirador
+      speaker: Alto-falante
+      stream: Câmera
+      climate: Clima
+      event: Evento
+      counter: Contador
+      timer: Temporizador
+      datetime: Data e hora
+      script: Script
+      calendar: Agenda
+      weather: Clima
+      media: Mídia
+      remote: Controle remoto
+      detection: Detecção
+    risks:
+      normal: Normal
+      sensitive: Sensível
+      critical: Crítico
+    link_modes:
+      mirror: Espelhar
+      invert: Inverter
+      trigger: Acionar
+    site_roles:
+      viewer: Leitor
+      guest: Visitante
+      operator: Operador
+      resident: Morador
+      technician: Técnico
+      owner: Dono
+    user_roles:
+      owner: Dono
+      admin: Administrador
+      member: Membro
+    periods:
+      1h: 1 h
+      6h: 6 h
+      24h: 24 h
+      7d: 7 dias
+      30d: 30 dias
+      365d: 1 ano
+    commands:
+      "on": Ligar
+      "off": Desligar
+      toggle: Alternar
+      set: Ajustar
+      select: Selecionar
+      press: Acionar
+      pulse: Acionar
+      start: Iniciar limpeza
+      pause: Pausar
+      stop: Parar
+      home: Voltar à base
+      clean_rooms: Limpar cômodos
+      wash_mop: Lavar o pano
+      dry_mop: Secar o pano
+      empty: Esvaziar
+      locate: Localizar
+      announce: Anunciar
+      speak: Falar
+      routine: Rotina
+      increment: Incrementar
+      decrement: Decrementar
+      reset: Zerar
+      cancel: Cancelar
+      finish: Terminar
+      run: Executar
+      sound: Tocar som
+      play: Tocar
+      volume: Volume
+    qualities:
+      good: Normal
+      stale: Desatualizado
+      unavailable: Indisponível
+      error: Com erro
+    point_audit:
+      create: Ponto criado
+      update: Cadastro alterado
+      destroy: Ponto excluído
+    command_statuses:
+      pending: Pendente
+      sent: Enviado
+      confirmed: Confirmado
+      failed: Falhou
+      expired: Expirado
+    command_sources:
+      web: web
+      api: app/API
+      automation: automação
+      alexa: Alexa
+      voice: voz
+      push: botão do aviso
+      bridge: ponte (Matter)
+    media:
+      "off": Desligada
+      "on": Ligada
+      idle: Parada
+      playing: Tocando
+      paused: Pausada
+      buffering: Carregando
+      standby: Em espera
+    bool:
+      onoff: { "on": Ligado, "off": Desligado }
+      contact: { "on": Aberto, "off": Fechado }
+      motion: { "on": Movimento, "off": Parado }
+      tamper: { "on": Violado, "off": Normal }
+      problem: { "on": Problema, "off": Normal }
+    states:
+      gate: { open: Aberto, closed: Fechado, opening: Abrindo, unknown: Desconhecido }
+      vacuum: { docked: Na base, cleaning: Limpando, returning: Voltando para a base, paused: Pausado, idle: Parado, error: Com erro }
+      speaker: { online: Pronta, offline: Fora do ar }
+      timer: { idle: Parado, active: Contando, paused: Pausado, finished: Terminou }
+    actions:
+      increment: Mais
+      decrement: Menos
+      reset: Zerar
+      start: Iniciar
+      pause: Pausar
+      cancel: Cancelar
+      finish: Terminar
+    device_bulk:
+      area: Mover para a área
+      poll_on: Ligar a leitura periódica
+      poll_off: Desligar a leitura periódica
+      remove: Remover
+    command_choices:
+      "on": Ligar
+      "off": Desligar
+      toggle: Alternar
+      pulse: Pulsar (portão)
+      press: Apertar (botão)
+      set: Ajustar valor
+      select: Selecionar opção
+      start: Iniciar limpeza (robô)
+      pause: Pausar (robô)
+      stop: Parar (robô)
+      home: Voltar à base (robô)
+      wash_mop: Lavar o pano (robô)
+      dry_mop: Secar o pano (robô)
+      empty: Esvaziar (robô)
+      announce: Anunciar (Echo)
+      speak: Falar (Echo)
+      routine: Rotina da Alexa (Echo)
+      run: Executar (script)
+    usages:
+      dashboard: Painel
+      automation: Automação
+      script: Script
+      scene: Cena
+      link: Espelhamento
+      notify: Aviso
+      alert: Alerta
+      schedule: Agenda
+      helper: Helper
+    drivers:
+      virtual: Virtual
+      tuya_local: Tuya local
+      tuya_cloud: Tuya nuvem
+      xiaomi_miot: Xiaomi
+      alexa: Alexa
+      mqtt: MQTT
+      modbus_tcp: Modbus TCP
+      onvif: Câmera ONVIF
+      go2rtc: Câmera
+  shared:
+    not_found: Não encontrado
+    not_found_hint: Este registro não existe ou não é da sua empresa.
+    back_home: Voltar ao início
+    pagination: Paginação
+    page_info: "%{count} registros · página %{page} de %{pages}"
+    previous: Anterior
+    next: Próxima
+    icon: Ícone
+    icon_default: Padrão
+    confirm:
+      title: Tem certeza?
+      back: Voltar
+      ok: Confirmar
+    palette:
+      label: Buscar e executar
+      input: Buscar ou mandar
+      hint: 'Buscar ou mandar: apagar sala, ativar cena…'
+      navigate: navegar
+      run: abrir ou executar
+      anywhere: abre de qualquer tela
+    cancel: Cancelar
+    edit: Editar
+    edit_name: Editar %{name}
+    optional: Opcional
+    choose: Escolha
+    nothing_yet: Nada por aqui ainda.
+    by: por %{name}
+    duration:
+      s: "%{n} s"
+      h: "%{n} h"
+      min: "%{n} min"
+    ago:
+      now: agora
+      text: há %{time}
+    count:
+      areas:
+        one: "%{count} área"
+        other: "%{count} áreas"
+      devices:
+        one: "%{count} dispositivo"
+        other: "%{count} dispositivos"
+  sites:
+    index:
+      title: Locais
+      subtitle: 'Casas, lojas e fábricas: cada local tem suas áreas, dispositivos e pontos.'
+      new: Novo local
+      none: Nenhum local ainda.
+      none_hint: Crie a sua casa, loja ou fábrica para começar.
+      first: Criar meu primeiro local
+      ask_owner: Peça ao dono da empresa para dar acesso a um local.
+    new:
+      subtitle: Casa, loja ou fábrica. Depois você cria as áreas e os dispositivos.
+    edit:
+      title: Editar local
+      delete: Excluir local
+      delete_hint: Apaga o local com todas as áreas, dispositivos e pontos. Não dá para desfazer.
+      delete_confirm: Excluir o local %{name} e tudo que há nele?
+    form:
+      name: Nome
+      name_hint: Casa da praia
+      kind: Tipo
+      address: Endereço
+      timezone: Fuso horário
+      latitude: Latitude
+      longitude: Longitude
+      coords_hint: Latitude e longitude servem para as agendas de nascer e pôr do sol.
+      create: Criar local
+      save: Salvar local
+    tabs:
+      label: Seções do local
+      areas: Áreas
+      dashboards: Painéis
+      devices: Dispositivos
+      integrations: Integrações
+      automation: Automações e cenas
+      helpers: Helpers
+      datasets: Dados
+      alerts: Alertas
+      packages: Pacotes
+      dev_tools: Ferramentas
+    rules:
+      subtitle: '%{site} · regras simples: agendas, espelhamentos, avisos e alertas'
+      active_alerts: Alertas ativos
+    show:
+      your_role: 'Seu papel: %{role}'
+      empty: Este local ainda está vazio.
+      empty_hint: Crie as áreas (sala, cozinha, garagem) e depois os dispositivos de cada uma.
+      first_area: Criar a primeira área
+  areas:
+    new:
+      title: Nova área
+    edit:
+      title: Editar área
+      delete: Excluir área
+      delete_hint: Os dispositivos dela continuam no local, sem área.
+      delete_confirm: Excluir a área %{name}?
+    form:
+      name_hint: Sala, Cozinha, Garagem
+      parent: Dentro de
+      no_parent: Nenhuma (área principal)
+      create: Criar área
+      save: Salvar área
+    show:
+      empty: Nenhum dispositivo nesta área.
+      empty_hint: Um dispositivo virtual serve para testar e para guardar estados (modo da casa, férias, alarme armado).
+      add_device: Adicionar dispositivo
+      details: Detalhes
+      no_points: Sem pontos.
+  devices:
+    edit_title: Editar dispositivo
+    delete: Excluir dispositivo
+    delete_hint: Apaga o dispositivo e os pontos dele.
+    delete_confirm: Excluir o dispositivo %{name} e os pontos dele?
+  points:
+    turn_on: Ligar
+    turn_off: Desligar
+    run: Executar
+    press: Apertar
+    fire: Acionar
+    choose: Escolher %{name}
+    adjust: Ajustar %{name}
+    new_value: Novo valor de %{name}
+    apply: Aplicar
+    actions: Ações de %{name}
+    no_signal: Sem sinal
+    no_control: O controle deste tipo chega com os drivers.
+    confirm: Acionar %{name}?
+    poll:
+      none: sem leitura periódica
+      every: leitura a cada %{time}
+    value:
+      fired: Acionado %{at}
+      ready: Pronto
+      none: Sem valor
+      white: Branco %{k} K
+      buttons:
+        one: "%{count} botão(ões) aprendido(s)"
+        other: "%{count} botão(ões) aprendido(s)"
+    situation:
+      offline: Não respondeu na última tentativa.
+      error: A última leitura ou comando deu erro.
+      no_contact: Sem contato
+      waiting: Aguardando o primeiro contato.
+      silent: Não informa o estado sozinho (leitura periódica desligada); aparece no primeiro comando.
+    status:
+      no_signal: "Sem sinal%{ago}: o aparelho não respondeu. Comandos podem não chegar até ele voltar."
+      waiting: 'Sem leitura ainda: aguardando o primeiro valor.'
+      silent: 'Sem leitura ainda: este aparelho não informa o estado sozinho (leitura periódica desligada). O valor aparece depois do primeiro comando.'
+    calendar:
+      nothing: Nada nos próximos dias
+      now: 'Agora: %{summary}'
+      today: hoje
+      tomorrow: amanhã
+    timeline:
+      via: pelo %{source}
+      became: Ficou %{state}
+      before: 'antes: %{state}'
+    form:
+      name_hint: Luz do teto
+      unit: Unidade
+      risk: Risco
+      risk_hint: Sensível pede operador ou acima; crítico, morador ou acima. Ambos pedem confirmação.
+      device_area: A do dispositivo
+      min: Mínimo
+      max: Máximo
+      step: Passo
+      options: Opções (para seleção, separadas por vírgula)
+      options_hint: Casa, Fora, Férias
+      confirm: Texto de confirmação
+      confirm_hint: Abrir o portão?
+      advanced: Avançado
+      key: Chave (única no local)
+      key_hint: gerada pelo nome
+      device_class: Classe
+      scale: Escala (calibração)
+      offset: Deslocamento (calibração)
+      pulse: Pulso (ms)
+      max_on: Desliga sozinho após (s)
+      writable: Recebe comando
+      hidden: Escondido
+      create: Criar ponto
+      save: Salvar ponto
+    edit:
+      title: Editar ponto
+      delete: Excluir ponto
+      delete_hint: Automações e painéis que usam este ponto vão parar de funcionar.
+      delete_confirm: Excluir o ponto %{name}?
+    show:
+      history: Histórico
+      range: Período do gráfico
+      on_for_html: Ligado por <strong class="num">%{time}</strong> no período.
+      raw: Leituras cruas de %{from} a %{to}.
+      hourly: Médias por hora de %{from} a %{to}.
+      daily: Médias por dia de %{from} a %{to}.
+      no_readings: Sem leituras neste período.
+      no_chart: Este tipo de ponto não tem gráfico; veja os últimos acontecimentos abaixo.
+      automation: Automação deste ponto
+      auto_off: Desligar sozinho
+      pulse: 'pulso: desliga %{s} s depois de ligar'
+      max_on: desliga depois de %{time} ligado
+      any_path: ", ligado por qualquer caminho."
+      no_auto_off: Não desliga sozinho. Use pulso para o que só precisa de um toque (liga e desliga em segundos) ou um tempo máximo ligado (uma bomba ou um aquecedor).
+      tune: Ajustar
+      timeline: Últimos acontecimentos
+  point_links:
+    form:
+      source: Quando este ponto mudar
+      target: Comandar este
+      mode: Como
+      mode_hint: 'Espelhar: fica igual. Inverter: fica o contrário. Acionar: liga, pulsa o portão ou aperta o botão (o pulso do destino desliga sozinho).'
+      trigger_value: Acionar quando ficar (só no modo Acionar)
+      trigger_value_hint: vazio = ligado
+      bidirectional: Nos dois sentidos (os dois são interruptores)
+      enabled: Ativo
+      save: Salvar espelhamento
+  history:
+    subtitle: 'Compare pontos no tempo: números em linhas sobrepostas, liga/desliga e estados em faixas.'
+    csv: Exportar CSV
+    period: Período
+    shortcuts: Atalhos de período
+    previous: Período anterior
+    next: Próximo período
+    until: até
+    zoom_in: Aproximar
+    zoom_out: Afastar
+    pick_dates: Escolher datas
+    from: De
+    to: Até
+    points: Pontos
+    remove: Tirar %{name}
+    none_chosen: Nenhum escolhido ainda.
+    pick_points: Escolher pontos
+    up_to: (até %{n})
+    filter_name: Filtrar por nome
+    filter_points: Filtrar pontos
+    show: Mostrar
+    number: número
+    bands: faixas
+    no_match: Nenhum ponto com esse nome.
+    chart: Gráfico %{unit}
+    no_unit: Sem unidade
+    readings: Leituras
+    hourly: Média por hora (faixa = mín. a máx.)
+    daily: Média por dia (faixa = mín. a máx.)
+    drag: Arraste no gráfico para aproximar o trecho.
+    no_readings: Sem leituras nesse período.
+    no_readings_short: Sem leituras
+    timeline: Linha do tempo
+    empty: Escolha os pontos para comparar.
+    empty_hint: 'Temperatura com o ar ligado, consumo com a bomba, porta com movimento: tudo no mesmo tempo.'
+  logbook:
+    title: Diário
+    subtitle: 'Tudo o que aconteceu em %{site}: mudanças, comandos, automações, cenas, alertas e acessos.'
+    today: Hoje
+    yesterday: Ontem
+    day_format: "%A, %d de %B"
+    loading: Carregando mais…
+    start: Início do período.
+    bigger: Ver um período maior
+    search: Buscar
+    search_hint: Buscar ponto, aparelho, automação ou cena
+    more_filters: Mais filtros
+    device: Dispositivo
+    point: Ponto
+    person: Pessoa
+    all: Todos
+    what: O que mostrar
+    none_checked: Sem nenhum tipo marcado, mostra todos.
+    empty: Nada aconteceu neste período.
+    empty_filtered: Nada aconteceu neste período com esses filtros.
+    empty_hint: Tente um período maior ou tire algum filtro.
+  maps:
+    title: Mapa
+    subtitle: Onde estão as pessoas de %{site}, as zonas e o caminho de hoje. Só moradores, técnicos e o dono veem.
+    aria: Mapa com %{people} pessoa(s) e %{zones} zona(s)
+    failed: Não deu para carregar o mapa (sem internet?).
+    no_center: Sem lugar para centralizar o mapa.
+    no_center_hint: Cadastre a localização do local (Editar local) ou crie uma zona nos Helpers.
+    people: Pessoas
+    no_people: Nenhuma pessoa. Crie em Helpers → Pessoa, com o app do celular como fonte.
+    no_reading: Sem leitura
+    since: desde
+    phone: Localização do celular
+    zone_position: Posição da zona (aproximada)
+    no_position: Sem posição no mapa
+    track:
+      one: "%{count} ponto hoje"
+      other: "%{count} pontos hoje"
+    zones: Zonas
+    no_zones: Nenhuma zona com localização.
+    zone_info: raio %{radius} m · %{count} pessoa(s)
+    js:
+      people: pessoa(s)
+      approx: posição da zona
+  people:
+    subtitle: 'Pessoas: quem entra nesta instalação e o que pode em cada local.'
+    invite_link: Link de convite
+    invite_link_hint: Copie e mande para a pessoa. Ele aparece só agora, vale 7 dias e uma vez só.
+    invite_link_label: Link do convite
+    copy: Copiar
+    role: Papel
+    you: você
+    sites:
+      one: "%{count} local"
+      other: "%{count} locais"
+    disabled: Desativada
+    active: Ativa
+    create_title: Criar a conta
+    create_hint: Você define o e-mail e a senha inicial e passa para a pessoa.
+    email: E-mail
+    initial_password: Senha inicial (mínimo 8)
+    install_role: Papel na instalação
+    site: Local
+    no_site: Nenhum por enquanto
+    site_role: Papel no local
+    create: Criar conta
+    invite_title: Convidar por link
+    invite_hint: A pessoa abre o link, cria a própria senha e já entra aqui. Uso único, vale 7 dias.
+    generate: Gerar link
+    pending: Convites pendentes
+    role_in: '%{role} em %{site}'
+    valid_until: vale até %{at}
+    cancel_invite: Cancelar este convite? O link para de funcionar.
+    role_hint: Dono e administrador mandam em todos os locais. Membro só entra nos locais abaixo, com o papel de cada um.
+    save_role: Salvar papel
+    per_site: Papel em cada local
+    admin_everywhere: Como %{role}, é dono em todos os locais.
+    no_access: Sem acesso
+    save_sites: Salvar locais
+    actions: Ações
+    enable_confirm: Reativar %{name}?
+    disable_confirm: Desativar %{name}? A pessoa sai da web e do app na hora.
+    enable: Reativar
+    disable: Desativar
+    remove_confirm: Remover %{name} da instalação? A conta é apagada.
+    remove: Remover
+  invites:
+    page_title: Convite — Minha Automação
+    invalid: Convite inválido
+    invalid_hint: Este link já foi usado, venceu ou foi cancelado. Peça um novo a quem convidou você.
+    sign_in: Entrar
+    title: Você foi convidado
+    hint: Crie sua conta para entrar. O convite vale até %{date}.
+    hint_site: Crie sua conta para entrar em %{site}. O convite vale até %{date}.
+    name: Seu nome
+    email_hint: seu@email.com
+    password: Senha (mínimo 8)
+    submit: Criar conta e entrar
+    have_account: Já tem conta?
+  push:
+    subtitle: 'Meus aparelhos: onde os avisos chegam como push.'
+    this_device: Este aparelho
+    checking: Verificando este navegador...
+    name: Nome do aparelho (opcional)
+    name_hint: Meu celular
+    subscribe: Receber avisos neste aparelho
+    subscribed: Aparelhos inscritos
+    test: Enviar teste
+    browser: Navegador
+    web_push: Web Push · inscrito em %{at}
+    last_sent: último envio %{at}
+    remove: Remover %{name}
+    remove_confirm: Remover %{name}? Ele para de receber avisos.
+    app: App Minha Automação (%{platform})
+    native: App nativo · desde %{at}
+    none: Nenhum aparelho ainda. Inscreva este navegador acima.
+    how: Como receber no celular
+    how_android_html: '<strong>Android (Chrome):</strong> abra este endereço pelo acesso externo (https), toque no menu e em "Instalar app" ou "Adicionar à tela inicial". Abra pelo ícone, venha até aqui e toque em "Receber avisos neste aparelho".'
+    how_ios_html: '<strong>iPhone (iOS 16.4 ou mais novo):</strong> no Safari, toque em Compartilhar e em "Adicionar à Tela de Início". O push só funciona abrindo pelo ícone da tela inicial; no Safari comum o botão não aparece.'
+    how_https: 'O push exige https: pelo endereço da rede de casa (http://192.168...) o navegador não deixa inscrever.'
+    js:
+      https: 'O push exige https: abra pelo acesso externo para inscrever este aparelho.'
+      unsupported: Este navegador não recebe push. No iPhone, adicione à Tela de Início e abra pelo ícone.
+      no_keys: O push está desligado no servidor (faltam as chaves VAPID).
+      blocked: Notificações bloqueadas nas configurações do navegador.
+      subscribed: Este aparelho já recebe os avisos. Inscrever de novo atualiza o nome.
+      not_subscribed: Este aparelho ainda não recebe os avisos.
+      denied: Permissão de notificação negada.
+      not_saved: O servidor não guardou a inscrição. Tente de novo.
+      failed: 'Não foi possível inscrever:'
+  settings_dashboards:
+    subtitle: 'Painéis de todos os locais: o que aparece no menu, quem vê e as visões de cada um.'
+    new: Novo painel
+    in: Em %{site}
+    none: Nenhum painel ainda.
+    none_hint: 'Crie um local primeiro: ele ganha o painel automático.'
+    dashboard: Painel
+    views: Visões
+    in_menu: No menu
+    who: Quem vê
+    auto: automático
+    version: versão %{n}
+    draft: rascunho
+    site_default: padrão do local
+    your_home: abre no seu Início
+    auto_views: Automáticas
+    "yes": Sim
+    "no": Não
+    duplicate: Duplicar %{name}
+    delete: Excluir %{name}
+    delete_confirm: Excluir o painel %{name}?
+    delete_button: Excluir
+    open: Abrir
+  legal:
+    updated: 'Última atualização: %{date}'
+    privacy: Privacidade
+    terms: Termos
+    deletion: Exclusão de dados
+    contact: 'contato:'
+    reset:
+      title: Redefinir senha
+      password: Nova senha (mínimo 8 caracteres)
+      save: Salvar senha
+      done: Senha alterada. Entre no app com a senha nova.
+      failed: Não deu certo. Peça um novo link.
+  mailers:
+    password_reset:
+      subject: 'Minha Automação: redefinir sua senha'
+  notices:
+    viewer_only: Leitor só vê os painéis.
+    forbidden: Seu papel neste local não permite isso.
+    site_created: Local criado. Agora crie as áreas (cômodos, andares).
+    site_updated: Local atualizado.
+    site_deleted: Local excluído.
+    site_admin_only: Só administrador ou dono da empresa cria locais.
+    area_created: Área criada.
+    area_updated: Área atualizada.
+    area_deleted: Área excluída. Os dispositivos dela ficaram sem área.
+    point_created: Ponto criado.
+    point_updated: Ponto atualizado.
+    point_deleted: Ponto excluído.
+    need_site_history: Crie um local para ver o histórico.
+    need_site_logbook: Crie um local para ver o diário.
+    need_site_map: Crie um local para ver o mapa.
+    map_forbidden: Seu papel neste local não mostra onde as pessoas estão.
+    person_created: "%{name} pode entrar com o e-mail e a senha que você definiu."
+    role_updated: Papel atualizado.
+    sites_updated: Locais atualizados.
+    person_removed: "%{name} foi removida da instalação."
+    people_admin_only: Só administrador ou dono vê as pessoas.
+    owner_locked: O dono não pode ser alterado, desativado nem removido aqui.
+    invite_canceled: Convite cancelado.
+    push_removed: Aparelho removido.
+    push_off: Push desligado no servidor (faltam as chaves VAPID).
+    push_test: Teste enviado para os seus aparelhos.
+    allowed_saved: Endereços liberados salvos.
+    type_reset: Digite ZERAR para confirmar.
+    data_wiped: Dados da instalação apagados.
+    type_delete: Digite EXCLUIR para confirmar.
+    account_deleted: Conta excluída.
+    too_many_minutes: Muitas tentativas. Espere alguns minutos.
+    reset_sent: Se o e-mail tiver conta, enviamos um link para redefinir a senha.
+    choose_device: Escolha ao menos um dispositivo.
+    choose_action: Escolha a ação.
+    bulk_done: "%{action}: %{count} dispositivo(s)."
+    no_reading: Este dispositivo não tem leitura.
+    reconnecting: Reconectando. O resultado aparece no diagnóstico em instantes.
+    device_created: Dispositivo criado. Adicione os pontos dele.
+    device_updated: Dispositivo atualizado.
+    device_deleted: Dispositivo excluído.
+    read_requested: Leitura pedida. Os valores chegam em instantes.
+  rules:
+    both_ways: nos dois sentidos
+    when_becomes: quando ficar %{value}
+    scene: cena %{name}
+    every_change: a cada mudança
+    for_min: por %{n} min
+    repeat: ", repete a cada %{n} min"
+    steps:
+      one: "%{count} etapa"
+      other: "%{count} etapas"
+    and: " e "
+  shadow_labels:
+    blocked: Segurado na rede
+    command: Comando
+    none: sem disparos

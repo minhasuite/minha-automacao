@@ -3,10 +3,8 @@
 class Command < ApplicationRecord
   acts_as_tenant :tenant
 
-  STATUSES = { "pending" => "Pendente", "sent" => "Enviado", "confirmed" => "Confirmado",
-               "failed" => "Falhou", "expired" => "Expirado" }.freeze
-  SOURCES = { "web" => "web", "api" => "app/API", "automation" => "automação", "alexa" => "Alexa", "voice" => "voz", "push" => "botão do aviso",
-              "bridge" => "ponte (Matter)" }.freeze
+  STATUSES = LocalizedLabel.for("labels.command_statuses", %w[pending sent confirmed failed expired])
+  SOURCES = LocalizedLabel.for("labels.command_sources", %w[web api automation alexa voice push bridge])
   # Comando que não saiu nesse tempo não sai mais (portão abrindo 5 min depois).
   TTL = 1.minute
   RETENTION_DAYS = 365

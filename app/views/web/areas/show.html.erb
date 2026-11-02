@@ -1,15 +1,15 @@
 <%= render "web/shared/header", title: @area.name, subtitle: "#{@area.kind_label} · #{@site.name}", back: site_path(@site) do %>
   <% if can?(:manage) %>
-    <%= link_to new_site_device_path(@site, area_id: @area.id), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo dispositivo<% end %>
-    <%= link_to edit_area_path(@area), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar<% end %>
+    <%= link_to new_site_device_path(@site, area_id: @area.id), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("devices.new") %><% end %>
+    <%= link_to edit_area_path(@area), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %><%= t("shared.edit") %><% end %>
   <% end %>
 <% end %>
 
 <% if @devices.empty? %>
   <div class="ss-card ss-empty">
-    <p class="font-bold text-ink">Nenhum dispositivo nesta área.</p>
-    <p class="mt-1">Um dispositivo virtual serve para testar e para guardar estados (modo da casa, férias, alarme armado).</p>
-    <% if can?(:manage) %><%= link_to new_site_device_path(@site, area_id: @area.id), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Adicionar dispositivo<% end %><% end %>
+    <p class="font-bold text-ink"><%= t("areas.show.empty") %></p>
+    <p class="mt-1"><%= t("areas.show.empty_hint") %></p>
+    <% if can?(:manage) %><%= link_to new_site_device_path(@site, area_id: @area.id), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("areas.show.add_device") %><% end %><% end %>
   </div>
 <% else %>
   <div class="space-y-6">
@@ -19,14 +19,14 @@
           <%= link_to device, class: "flex items-center gap-2 no-underline min-w-0" do %>
             <span class="ss-section truncate"><%= device.name %></span><span class="ss-badge"><%= device.driver_label %></span>
           <% end %>
-          <%= link_to device, class: "text-sm font-semibold text-muted no-underline hover:text-accent flex items-center gap-1" do %>Detalhes<%= icon("chevron-right", "size-4") %><% end %>
+          <%= link_to device, class: "text-sm font-semibold text-muted no-underline hover:text-accent flex items-center gap-1" do %><%= t("areas.show.details") %><%= icon("chevron-right", "size-4") %><% end %>
         </div>
         <% points = device.points.reject(&:hidden).sort_by(&:name) %>
         <% if points.any? %>
           <% points.each { |p| %><%= turbo_stream_from p, channel: PointsChannel %><% } %>
           <div class="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-3 lg:grid-cols-3"><%= render partial: "web/points/point", collection: points, as: :point %></div>
         <% else %>
-          <p class="ss-card p-4 text-sm text-muted">Sem pontos. <%= link_to("Adicionar ponto", new_device_point_path(device), class: "font-semibold text-accent") if can?(:manage) %></p>
+          <p class="ss-card p-4 text-sm text-muted"><%= t("areas.show.no_points") %> <%= link_to(t("devices.add_point"), new_device_point_path(device), class: "font-semibold text-accent") if can?(:manage) %></p>
         <% end %>
       </section>
     <% end %>

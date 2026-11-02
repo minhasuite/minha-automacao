@@ -1,34 +1,34 @@
-<%= render "web/shared/header", title: @site.name, subtitle: [ @site.kind_label, @site.address.presence, "Seu papel: #{SiteMembership.role_label(@site_role)}" ].compact.join(" · "), back: sites_path do %>
+<%= render "web/shared/header", title: @site.name, subtitle: [ @site.kind_label, @site.address.presence, t("sites.show.your_role", role: SiteMembership.role_label(@site_role)) ].compact.join(" · "), back: sites_path do %>
   <% if can?(:manage) %>
-    <%= link_to new_site_area_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Nova área<% end %>
-    <%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("cube", "size-4") %>Novo dispositivo<% end %>
+    <%= link_to new_site_area_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("areas.new.title") %><% end %>
+    <%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("cube", "size-4") %><%= t("devices.new") %><% end %>
   <% end %>
-  <% if can?(:admin) %><%= link_to edit_site_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar<% end %><% end %>
+  <% if can?(:admin) %><%= link_to edit_site_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %><%= t("shared.edit") %><% end %><% end %>
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :areas %>
 
 <% if @areas.empty? && @loose_devices.empty? %>
   <div class="ss-card ss-empty">
-    <p class="font-bold text-ink">Este local ainda está vazio.</p>
-    <p class="mt-1">Crie as áreas (sala, cozinha, garagem) e depois os dispositivos de cada uma.</p>
-    <% if can?(:manage) %><%= link_to new_site_area_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar a primeira área<% end %><% end %>
+    <p class="font-bold text-ink"><%= t("sites.show.empty") %></p>
+    <p class="mt-1"><%= t("sites.show.empty_hint") %></p>
+    <% if can?(:manage) %><%= link_to new_site_area_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("sites.show.first_area") %><% end %><% end %>
   </div>
 <% else %>
   <% if @areas.any? %>
-    <p class="ss-section mb-3">Áreas</p>
+    <p class="ss-section mb-3"><%= t("sites.tabs.areas") %></p>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <% @areas.each_with_index do |area, i| %>
         <%= link_to area, class: "ss-card ss-go p-4 no-underline ss-rise flex items-center gap-3", style: "animation-delay: #{[ i, 7 ].min * 40}ms" do %>
           <span class="grid place-items-center size-10 shrink-0 rounded-xl text-white shadow-sm <%= dw_area_art("id" => area.id) %>"><%= icon(area.icon.presence || "view-boards") %></span>
           <span class="min-w-0 flex-1"><span class="block font-bold text-ink truncate"><%= area.name %></span>
-            <span class="block text-sm text-muted"><%= area.kind_label %> · <%= count_label(area.devices.size, "dispositivo", "dispositivos") %></span></span>
+            <span class="block text-sm text-muted"><%= area.kind_label %> · <%= t("shared.count.devices", count: area.devices.size) %></span></span>
           <%= icon("chevron-right", "size-4 text-muted") %>
         <% end %>
       <% end %>
     </div>
   <% end %>
   <% if @loose_devices.any? %>
-    <p class="ss-section mt-6 mb-3">Sem área</p>
+    <p class="ss-section mt-6 mb-3"><%= t("devices.no_area") %></p>
     <div class="ss-card divide-y divide-line overflow-hidden">
       <% @loose_devices.each do |d| %>
         <%= link_to d, class: "ss-go px-4 py-3 no-underline flex items-center gap-3 hover:bg-field transition-colors" do %>

@@ -3,15 +3,10 @@ module Points
   # como terminou), eventos (qualidade) e mudanças de cadastro (auditoria).
   class Timeline
     Item = Struct.new(:at, :kind, :title, :detail, :user, :tone, keyword_init: true)
-    COMMAND_LABELS = { "on" => "Ligar", "off" => "Desligar", "toggle" => "Alternar", "set" => "Ajustar",
-                       "select" => "Selecionar", "press" => "Acionar", "pulse" => "Acionar", "start" => "Iniciar limpeza",
-                       "pause" => "Pausar", "stop" => "Parar", "home" => "Voltar à base", "clean_rooms" => "Limpar cômodos",
-                       "wash_mop" => "Lavar o pano", "dry_mop" => "Secar o pano", "empty" => "Esvaziar", "locate" => "Localizar",
-                       "announce" => "Anunciar", "speak" => "Falar", "routine" => "Rotina", "increment" => "Incrementar", "decrement" => "Decrementar",
-                       "reset" => "Zerar", "cancel" => "Cancelar", "finish" => "Terminar", "run" => "Executar",
-                       "sound" => "Tocar som", "play" => "Tocar", "volume" => "Volume" }.freeze
-    QUALITY_LABELS = { "good" => "Normal", "stale" => "Desatualizado", "unavailable" => "Indisponível", "error" => "Com erro" }.freeze
-    AUDIT_LABELS = { "create" => "Ponto criado", "update" => "Cadastro alterado", "destroy" => "Ponto excluído" }.freeze
+    COMMAND_LABELS = LocalizedLabel.for("labels.commands", %w[on off toggle set select press pulse start pause stop home clean_rooms wash_mop dry_mop
+                                                              empty locate announce speak routine increment decrement reset cancel finish run sound play volume])
+    QUALITY_LABELS = LocalizedLabel.for("labels.qualities", %w[good stale unavailable error])
+    AUDIT_LABELS = LocalizedLabel.for("labels.point_audit", %w[create update destroy])
     TONES = { "confirmed" => "success", "failed" => "danger", "expired" => "warn" }.freeze
 
     def self.call(point, limit: 20) = new(point, limit).call
@@ -39,14 +34,14 @@ module Points
       label = COMMAND_LABELS.fetch(c.command, c.command)
       label = "#{label} #{c.value}" if c.value.present?
       Item.new(at: c.created_at, kind: "command", title: label, user: user&.name,
-               detail: [ "pelo #{c.source_label}", c.status_label.downcase, c.error ].compact.join(" · "),
+               detail: [ I18n.t("points.timeline.via", source: c.source_label), c.status_label.downcase, c.error ].compact.join(" · "),
                tone: TONES.fetch(c.status, "muted"))
     end
 
     def event_item(e)
       to = e.payload["to"]
-      Item.new(at: e.at, kind: "event", title: "Ficou #{QUALITY_LABELS.fetch(to, to).downcase}",
-               detail: "antes: #{QUALITY_LABELS.fetch(e.payload['from'], e.payload['from']).downcase}",
+      Item.new(at: e.at, kind: "event", title: I18n.t("points.timeline.became", state: QUALITY_LABELS.fetch(to, to).to_s.downcase),
+               detail: I18n.t("points.timeline.before", state: QUALITY_LABELS.fetch(e.payload["from"], e.payload["from"]).to_s.downcase),
                tone: to == "good" ? "success" : "warn")
     end
 

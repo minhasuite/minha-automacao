@@ -1,5 +1,5 @@
-<%= render "web/shared/header", title: "Diário", subtitle: "Tudo o que aconteceu em #{@site.name}: mudanças, comandos, automações, cenas, alertas e acessos." do %>
-  <%= link_to history_path(site_id: @site.id), class: "ss-btn ss-btn-ghost" do %><%= icon("chart-bar", "size-4") %>Histórico<% end %>
+<%= render "web/shared/header", title: t("logbook.title"), subtitle: t("logbook.subtitle", site: @site.name) do %>
+  <%= link_to history_path(site_id: @site.id), class: "ss-btn ss-btn-ghost" do %><%= icon("chart-bar", "size-4") %><%= t("points.show.history") %><% end %>
 <% end %>
 <%= render "web/shared/site_switch", sites: @sites, site: @site, path: logbook_path %>
 <% f = @filter %>
@@ -8,48 +8,48 @@
   <%= hidden_field_tag :site_id, @site.id, id: nil %>
   <div class="lb-search">
     <%= icon("search", "size-5 text-muted") %>
-    <%= search_field_tag :q, f.q, class: "ss-input", placeholder: "Buscar ponto, aparelho, automação ou cena", "aria-label": "Buscar" %>
-    <button class="ss-btn ss-btn-primary"><%= icon("filter", "size-4") %>Filtrar</button>
+    <%= search_field_tag :q, f.q, class: "ss-input", placeholder: t("logbook.search_hint"), "aria-label": t("logbook.search") %>
+    <button class="ss-btn ss-btn-primary"><%= icon("filter", "size-4") %><%= t("devices.filter") %></button>
   </div>
-  <fieldset class="lb-chips" aria-label="Período">
+  <fieldset class="lb-chips" aria-label="<%= t("history.period") %>">
     <% Logbook::PERIOD_LABELS.each do |k, label| %>
       <label class="ss-chip"><%= radio_button_tag :period, k, f.period == k && !f.custom_dates?, class: "sr-only" %><%= label %></label>
     <% end %>
     <span class="lb-dates">
-      <label class="sr-only" for="lb-from">De</label><%= date_field_tag :from, (f.from.to_date if f.custom_dates?), class: "ss-input num", id: "lb-from" %>
-      <span class="text-muted text-sm">até</span>
-      <label class="sr-only" for="lb-until">Até</label><%= date_field_tag :until, params[:until], class: "ss-input num", id: "lb-until" %>
+      <label class="sr-only" for="lb-from"><%= t("history.from") %></label><%= date_field_tag :from, (f.from.to_date if f.custom_dates?), class: "ss-input num", id: "lb-from" %>
+      <span class="text-muted text-sm"><%= t("history.until") %></span>
+      <label class="sr-only" for="lb-until"><%= t("history.to") %></label><%= date_field_tag :until, params[:until], class: "ss-input num", id: "lb-until" %>
     </span>
   </fieldset>
   <details class="lb-more" <%= "open" if f.narrowed? || f.user_id || f.keys.size < sources.size %>>
-    <summary><%= icon("chevron-down", "size-4") %>Mais filtros</summary>
+    <summary><%= icon("chevron-down", "size-4") %><%= t("logbook.more_filters") %></summary>
     <div class="lb-grid">
-      <div><label class="ss-label" for="lb-area">Área</label>
-        <%= select_tag :area_id, options_from_collection_for_select(@site.areas.order(:name), :id, :name, f.area_id), include_blank: "Todas", class: "ss-input", id: "lb-area" %></div>
-      <div><label class="ss-label" for="lb-device">Dispositivo</label>
-        <%= select_tag :device_id, options_from_collection_for_select(@site.devices.order(:name), :id, :name, f.device_id), include_blank: "Todos", class: "ss-input", id: "lb-device" %></div>
-      <div><label class="ss-label" for="lb-point">Ponto</label>
-        <%= select_tag :point_id, options_for_select(point_choices(@site), f.point_id), include_blank: "Todos", class: "ss-input", id: "lb-point" %></div>
-      <div><label class="ss-label" for="lb-user">Pessoa</label>
-        <%= select_tag :user_id, options_from_collection_for_select(Logbook.people(@site), :id, :name, f.user_id), include_blank: "Todas", class: "ss-input", id: "lb-user" %></div>
+      <div><label class="ss-label" for="lb-area"><%= t("devices.area") %></label>
+        <%= select_tag :area_id, options_from_collection_for_select(@site.areas.order(:name), :id, :name, f.area_id), include_blank: t("devices.all"), class: "ss-input", id: "lb-area" %></div>
+      <div><label class="ss-label" for="lb-device"><%= t("logbook.device") %></label>
+        <%= select_tag :device_id, options_from_collection_for_select(@site.devices.order(:name), :id, :name, f.device_id), include_blank: t("logbook.all"), class: "ss-input", id: "lb-device" %></div>
+      <div><label class="ss-label" for="lb-point"><%= t("logbook.point") %></label>
+        <%= select_tag :point_id, options_for_select(point_choices(@site), f.point_id), include_blank: t("logbook.all"), class: "ss-input", id: "lb-point" %></div>
+      <div><label class="ss-label" for="lb-user"><%= t("logbook.person") %></label>
+        <%= select_tag :user_id, options_from_collection_for_select(Logbook.people(@site), :id, :name, f.user_id), include_blank: t("devices.all"), class: "ss-input", id: "lb-user" %></div>
     </div>
-    <fieldset class="lb-chips mt-3" aria-label="O que mostrar">
+    <fieldset class="lb-chips mt-3" aria-label="<%= t("logbook.what") %>">
       <% sources.each do |s| %>
         <label class="ss-chip"><%= check_box_tag "sources[]", s.key, f.keys.include?(s.key) && f.keys.size < sources.size, class: "sr-only", id: "lb-s-#{s.key}" %><%= icon(s.icon, "size-4") %><%= s.label %></label>
       <% end %>
     </fieldset>
-    <p class="text-xs text-muted mt-2">Sem nenhum tipo marcado, mostra todos.</p>
+    <p class="text-xs text-muted mt-2"><%= t("logbook.none_checked") %></p>
   </details>
 <% end %>
 
 <%= turbo_frame_tag "logbook", data: { turbo_action: "advance" } do %>
   <% if @items.empty? %>
     <div class="ss-card ss-empty">
-      <p class="font-bold text-ink">Nada aconteceu neste período<%= " com esses filtros" if f.narrowed? || f.user_id %>.</p>
-      <p class="mt-1">Tente um período maior ou tire algum filtro.</p>
+      <p class="font-bold text-ink"><%= f.narrowed? || f.user_id ? t("logbook.empty_filtered") : t("logbook.empty") %></p>
+      <p class="mt-1"><%= t("logbook.empty_hint") %></p>
     </div>
   <% else %>
-    <div class="lb-list ss-card" role="feed" aria-busy="false" aria-label="Diário">
+    <div class="lb-list ss-card" role="feed" aria-busy="false" aria-label="<%= t("logbook.title") %>">
       <%= render "page", items: @items, next_cursor: @next, filter: f, zone: @zone, day: nil, frame: nil %>
     </div>
   <% end %>

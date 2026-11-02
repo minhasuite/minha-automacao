@@ -30,7 +30,7 @@ export default class extends Controller {
     const bounds = []
     d.zones.forEach((z) => {
       const c = L.circle([z.lat, z.lon], { radius: z.radius, color: z.home ? accent : color(3), weight: 2, fillOpacity: 0.12 }).addTo(this.map)
-      c.bindTooltip(`${esc(z.name)} · ${z.count} pessoa(s)`)
+      c.bindTooltip(`${esc(z.name)} · ${z.count} ${esc(d.texts?.people ?? "pessoa(s)")}`)
       this.marks[z.id] = c
       bounds.push([z.lat, z.lon])
     })
@@ -45,7 +45,7 @@ export default class extends Controller {
         html: `<span class="mp-avatar ${p.home ? "mp-home" : ""} ${p.precise ? "" : "mp-approx"}" style="--mp-c: ${color(i)}">${esc(p.initials)}</span>`
       })
       const m = L.marker([p.lat, p.lon], { icon, title: p.name }).addTo(this.map)
-      m.bindPopup(`<strong>${esc(p.name)}</strong><br>${esc(p.zone || "Sem leitura")}${p.precise ? "" : " (posição da zona)"}`)
+      m.bindPopup(`<strong>${esc(p.name)}</strong><br>${esc(p.zone || d.texts?.no_reading || "")}${p.precise ? "" : ` (${esc(d.texts?.approx ?? "")})`}`)
       if (p.precise && p.accuracy) L.circle([p.lat, p.lon], { radius: p.accuracy, color: color(i), weight: 1, fillOpacity: 0.08, interactive: false }).addTo(this.map)
       this.marks[p.id] = m
       bounds.push([p.lat, p.lon])

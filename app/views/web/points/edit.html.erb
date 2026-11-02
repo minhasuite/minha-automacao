@@ -1,7 +1,7 @@
-<%= render "web/shared/header", title: "Editar ponto", subtitle: "#{@point.name} · #{@device.name}", back: device_path(@device) %>
+<%= render "web/shared/header", title: t("points.edit.title"), subtitle: "#{@point.name} · #{@device.name}", back: device_path(@device) %>
 <%= render "web/points/form", device: @device, point: @point %>
 <section class="ss-card ss-card-pad mt-4 max-w-4xl">
-  <h2>Excluir ponto</h2>
-  <p class="text-sm text-muted mt-1">Automações e painéis que usam este ponto vão parar de funcionar.</p>
-  <%= button_to point_path(@point), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm: "Excluir o ponto #{@point.name}?" } } do %><%= icon("trash", "size-4") %>Excluir ponto<% end %>
+  <h2><%= t("points.edit.delete") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("points.edit.delete_hint") %></p>
+  <%= button_to point_path(@point), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm: t("points.edit.delete_confirm", name: @point.name) } } do %><%= icon("trash", "size-4") %><%= t("points.edit.delete") %><% end %>
 </section>

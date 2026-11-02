@@ -5,8 +5,7 @@
 class ShadowReport < ApplicationRecord
   acts_as_tenant :tenant
 
-  STATUSES = { "same" => "Igual", "extra" => "MA a mais", "missing" => "MA a menos", "different" => "Diferente",
-               "unmapped" => "Sem par no MA", "idle" => "Sem disparo" }.freeze
+  STATUSES = LocalizedLabel.for("automations.labels.shadow_statuses", %w[same extra missing different unmapped idle])
   TONES = { "same" => "success", "extra" => "warn", "missing" => "warn", "different" => "danger", "unmapped" => "muted", "idle" => "muted" }.freeze
 
   belongs_to :site
@@ -18,7 +17,7 @@ class ShadowReport < ApplicationRecord
   def to_csv
     require "csv"
     CSV.generate(col_sep: ";") do |csv|
-      csv << [ "Automação", "Referência", "Status", "Disparos na referência", "Disparos na sombra", "Só na referência", "Só na sombra", "Detalhe" ]
+      csv << I18n.t("automations.shadow.csv_header")
       rows.each do |r|
         csv << [ r["name"], r["ref"], self.class.status_label(r["status"]), r["ref_runs"], r["runs"], Array(r["missing"]).join(", "),
                  Array(r["extra"]).join(", "), r["detail"] ]

@@ -3,7 +3,7 @@ module Web
   class PasswordsController < ApplicationController
     skip_before_action :require_login!
     layout "auth"
-    rate_limit to: 5, within: 15.minutes, only: :create, with: -> { redirect_to forgot_password_path, alert: "Muitas tentativas. Espere alguns minutos." }
+    rate_limit to: 5, within: 15.minutes, only: :create, with: -> { redirect_to forgot_password_path, alert: I18n.t("notices.too_many_minutes") }
 
     def new; end
 
@@ -14,7 +14,7 @@ module Web
       elsif user
         Rails.logger.warn("[auth] redefinição pedida (user=#{user.id}) sem SMTP configurado: e-mail não enviado")
       end
-      redirect_to login_path, notice: "Se o e-mail tiver conta, enviamos um link para redefinir a senha."
+      redirect_to login_path, notice: t("notices.reset_sent")
     end
   end
 end

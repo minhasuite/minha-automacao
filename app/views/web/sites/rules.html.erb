@@ -1,5 +1,5 @@
-<%= render "web/shared/header", title: "Automações e cenas", subtitle: "#{@site.name} · regras simples: agendas, espelhamentos, avisos e alertas" do %>
-  <%= link_to alerts_path, class: "ss-btn ss-btn-ghost" do %><%= icon("exclamation-circle", "size-4") %>Alertas ativos<% end %>
+<%= render "web/shared/header", title: t("sites.tabs.automation"), subtitle: t("sites.rules.subtitle", site: @site.name) do %>
+  <%= link_to alerts_path, class: "ss-btn ss-btn-ghost" do %><%= icon("exclamation-circle", "size-4") %><%= t("sites.rules.active_alerts") %><% end %>
 <% end %>
 <%= render "web/automations/tabs", site: @site, current: :rules %>
 <%= render "web/automation/lists", site: @site %>

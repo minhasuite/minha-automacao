@@ -3,6 +3,9 @@ class PasswordMailer < ApplicationMailer
   def reset(user, token)
     @user = user
     @url = Rails.application.routes.url_helpers.reset_password_page_url(token: token)
-    mail(to: user.email, subject: "Minha Automação: redefinir sua senha")
+    # No idioma escolhido pela pessoa (Minha conta); sem escolha, o padrão.
+    I18n.with_locale(Localized.valid(user.dashboard_prefs&.dig("locale")) || I18n.default_locale) do
+      mail(to: user.email, subject: t("mailers.password_reset.subject"))
+    end
   end
 end

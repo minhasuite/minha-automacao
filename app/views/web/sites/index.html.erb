@@ -1,5 +1,5 @@
-<%= render "web/shared/header", title: "Locais", subtitle: "Casas, lojas e fábricas: cada local tem suas áreas, dispositivos e pontos." do %>
-  <% if current_user.admin? %><%= link_to new_site_path, class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo local<% end %><% end %>
+<%= render "web/shared/header", title: t("sites.index.title"), subtitle: t("sites.index.subtitle") do %>
+  <% if current_user.admin? %><%= link_to new_site_path, class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("sites.index.new") %><% end %><% end %>
 <% end %>
 <% if @sites.any? %>
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -7,12 +7,12 @@
   </div>
 <% else %>
   <div class="ss-card ss-empty">
-    <p class="font-bold text-ink">Nenhum local ainda.</p>
+    <p class="font-bold text-ink"><%= t("sites.index.none") %></p>
     <% if current_user.admin? %>
-      <p class="mt-1">Crie a sua casa, loja ou fábrica para começar.</p>
-      <%= link_to new_site_path, class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar meu primeiro local<% end %>
+      <p class="mt-1"><%= t("sites.index.none_hint") %></p>
+      <%= link_to new_site_path, class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("sites.index.first") %><% end %>
     <% else %>
-      <p class="mt-1">Peça ao dono da empresa para dar acesso a um local.</p>
+      <p class="mt-1"><%= t("sites.index.ask_owner") %></p>
     <% end %>
   </div>
 <% end %>

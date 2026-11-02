@@ -1,10 +1,10 @@
 <%# locals: (pagy:) -%>
 <% if pagy.pages > 1 %>
-  <nav class="mt-4 flex items-center justify-between text-sm text-muted" aria-label="Paginação">
-    <span><%= pagy.count %> registros · página <%= pagy.page %> de <%= pagy.pages %></span>
+  <nav class="mt-4 flex items-center justify-between text-sm text-muted" aria-label="<%= t("shared.pagination") %>">
+    <span><%= t("shared.page_info", count: pagy.count, page: pagy.page, pages: pagy.pages) %></span>
     <span class="flex gap-2">
-      <% if pagy.prev %><%= link_to url_for(request.query_parameters.merge(page: pagy.prev)), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("chevron-left", "size-4") %>Anterior<% end %><% end %>
-      <% if pagy.next %><%= link_to url_for(request.query_parameters.merge(page: pagy.next)), class: "ss-btn ss-btn-ghost ss-btn-sm" do %>Próxima<%= icon("chevron-right", "size-4") %><% end %><% end %>
+      <% if pagy.prev %><%= link_to url_for(request.query_parameters.merge(page: pagy.prev)), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("chevron-left", "size-4") %><%= t("shared.previous") %><% end %><% end %>
+      <% if pagy.next %><%= link_to url_for(request.query_parameters.merge(page: pagy.next)), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= t("shared.next") %><%= icon("chevron-right", "size-4") %><% end %><% end %>
     </span>
   </nav>
 <% end %>

@@ -7,8 +7,8 @@ module SiteAuthorization
 
   def authorize_site!(site, action, risk: nil)
     @site_role = site.role_for(current_user) or raise ActiveRecord::RecordNotFound
-    raise SiteMembership::Forbidden, "Seu papel neste local não permite isso." unless SiteMembership.allowed?(@site_role, action, risk: risk)
-    raise SiteMembership::Forbidden, "Leitor só vê os painéis." if @site_role == "viewer" && !viewer_allowed?
+    raise SiteMembership::Forbidden, I18n.t("notices.forbidden") unless SiteMembership.allowed?(@site_role, action, risk: risk)
+    raise SiteMembership::Forbidden, I18n.t("notices.viewer_only") if @site_role == "viewer" && !viewer_allowed?
 
     @site_role
   end

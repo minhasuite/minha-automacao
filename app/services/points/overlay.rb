@@ -6,7 +6,7 @@ module Points
   class Overlay
     MAX = 12
     RANGES = { "1h" => 1.hour, "6h" => 6.hours, "24h" => 24.hours, "7d" => 7.days, "30d" => 30.days }.freeze
-    RANGE_LABELS = { "1h" => "1 h", "6h" => "6 h", "24h" => "24 h", "7d" => "7 dias", "30d" => "30 dias" }.freeze
+    RANGE_LABELS = LocalizedLabel.for("labels.periods", %w[1h 6h 24h 7d 30d])
     MIN_SPAN = 5.minutes
     MAX_SPAN = 366.days
 

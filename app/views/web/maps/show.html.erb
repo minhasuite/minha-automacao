@@ -1,19 +1,19 @@
-<%= render "web/shared/header", title: "Mapa", subtitle: "Onde estão as pessoas de #{@site.name}, as zonas e o caminho de hoje. Só moradores, técnicos e o dono veem." %>
+<%= render "web/shared/header", title: t("maps.title"), subtitle: t("maps.subtitle", site: @site.name) %>
 <%= render "web/shared/site_switch", sites: @sites, site: @site, path: map_path %>
 <% people = @map["people"] %>
 <div class="mp-layout" <% if @map["center"] %>data-controller="map" data-map-data-value="<%= @map.to_json %>"<% end %>>
-  <section class="ss-card mp-main" aria-label="Mapa">
+  <section class="ss-card mp-main" aria-label="<%= t("maps.title") %>">
     <% if @map["center"] %>
       <%= render "web/maps/canvas", map: @map, height: 560, controller: false %>
     <% else %>
-      <div class="ss-empty"><p class="font-bold text-ink">Sem lugar para centralizar o mapa.</p><p class="mt-1">Cadastre a localização do local (Editar local) ou crie uma zona nos Helpers.</p></div>
+      <div class="ss-empty"><p class="font-bold text-ink"><%= t("maps.no_center") %></p><p class="mt-1"><%= t("maps.no_center_hint") %></p></div>
     <% end %>
   </section>
   <aside class="mp-side">
     <section class="ss-card ss-card-pad" aria-labelledby="mp-people">
-      <h2 id="mp-people" class="mb-3">Pessoas</h2>
+      <h2 id="mp-people" class="mb-3"><%= t("maps.people") %></h2>
       <% if people.empty? %>
-        <p class="text-sm text-muted">Nenhuma pessoa. Crie em Helpers → Pessoa, com o app do celular como fonte.</p>
+        <p class="text-sm text-muted"><%= t("maps.no_people") %></p>
       <% else %>
         <ul class="mp-list">
           <% people.each_with_index do |p, i| %>
@@ -23,8 +23,8 @@
                 <span class="mp-avatar <%= 'mp-home' if p['home'] && !off %>" style="--mp-c: var(--s<%= i % 6 %>)"><%= p["initials"] %></span>
                 <span class="min-w-0 flex-1 text-left">
                   <span class="block font-semibold text-ink truncate"><%= p["name"] %></span>
-                  <span class="block text-xs text-muted truncate"><%= off ? "Sem sinal" : (p["zone"].presence || "Sem leitura") %><% if p["since"] && !off %> · desde <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %></span>
-                  <span class="block text-xs text-muted"><%= p["precise"] ? "Localização do celular#{" (± #{p['accuracy']} m)" if p['accuracy']}" : (p["lat"] ? "Posição da zona (aproximada)" : "Sem posição no mapa") %><%= " · #{p['track'].size} pontos hoje" if p["track"].size > 1 %></span>
+                  <span class="block text-xs text-muted truncate"><%= off ? t("points.no_signal") : (p["zone"].presence || t("maps.no_reading")) %><% if p["since"] && !off %> · <%= t("maps.since") %> <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %></span>
+                  <span class="block text-xs text-muted"><%= p["precise"] ? "#{t('maps.phone')}#{" (± #{p['accuracy']} m)" if p['accuracy']}" : (p["lat"] ? t("maps.zone_position") : t("maps.no_position")) %><%= " · #{t('maps.track', count: p['track'].size)}" if p["track"].size > 1 %></span>
                 </span>
               </button>
             </li>
@@ -33,16 +33,16 @@
       <% end %>
     </section>
     <section class="ss-card ss-card-pad" aria-labelledby="mp-zones">
-      <h2 id="mp-zones" class="mb-3">Zonas</h2>
+      <h2 id="mp-zones" class="mb-3"><%= t("maps.zones") %></h2>
       <% if @map["zones"].empty? %>
-        <p class="text-sm text-muted">Nenhuma zona com localização.</p>
+        <p class="text-sm text-muted"><%= t("maps.no_zones") %></p>
       <% else %>
         <ul class="mp-list">
           <% @map["zones"].each do |z| %>
             <li><button type="button" class="mp-person" data-action="map#focus" data-map-id-param="<%= z['id'] %>">
               <span class="mp-zone-ico <%= 'mp-home' if z['home'] %>"><%= icon(z["home"] ? "home" : "location-marker", "size-4") %></span>
               <span class="min-w-0 flex-1 text-left"><span class="block font-semibold text-ink truncate"><%= z["name"] %></span>
-                <span class="block text-xs text-muted num">raio <%= z["radius"] %> m · <%= z["count"] %> pessoa(s)</span></span></button></li>
+                <span class="block text-xs text-muted num"><%= t("maps.zone_info", radius: z["radius"], count: z["count"]) %></span></span></button></li>
           <% end %>
         </ul>
       <% end %>

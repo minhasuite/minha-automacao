@@ -5,7 +5,7 @@ class Site < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  KINDS = { "home" => "Casa", "store" => "Loja", "plant" => "Fábrica" }.freeze
+  KINDS = LocalizedLabel.for("labels.site_kinds", %w[home store plant])
 
   has_many :areas, dependent: nil # cascade no banco
   has_many :devices, dependent: nil

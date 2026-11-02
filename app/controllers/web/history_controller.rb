@@ -6,7 +6,7 @@ module Web
     include SitePick
 
     def show
-      return redirect_to(sites_path, notice: "Crie um local para ver o histórico.") unless pick_site
+      return redirect_to(sites_path, notice: t("notices.need_site_history")) unless pick_site
 
       @zone = ActiveSupport::TimeZone[@site.timezone] || Time.zone
       @from, @to = Time.use_zone(@zone) { Points::Overlay.window(params) }

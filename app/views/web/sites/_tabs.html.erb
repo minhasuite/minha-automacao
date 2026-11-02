@@ -1,12 +1,12 @@
 <%# locals: (site:, current:, css: nil) -%>
-<nav class="ss-subnav lg:!flex-row lg:!flex-wrap lg:!static lg:!mb-6 <%= css %>" aria-label="Seções do local">
-  <% [ [ "Áreas", site_path(site), "home", :areas ], [ "Painéis", site_dashboards_path(site), "view-boards", :dashboards ], [ "Dispositivos", site_devices_path(site), "cube", :devices ],
-       [ "Integrações", site_integrations_path(site), "link", :integrations ], [ "Automações e cenas", site_automations_path(site), "lightning-bolt", :automation ],
-       [ "Helpers", site_helpers_path(site), "collection", :helpers ],
-       [ "Dados", site_datasets_path(site), "table", :datasets ], [ "Alexa", site_alexa_path(site), "speakerphone", :alexa ],
+<nav class="ss-subnav lg:!flex-row lg:!flex-wrap lg:!static lg:!mb-6 <%= css %>" aria-label="<%= t("sites.tabs.label") %>">
+  <% [ [ t("sites.tabs.areas"), site_path(site), "home", :areas ], [ t("sites.tabs.dashboards"), site_dashboards_path(site), "view-boards", :dashboards ], [ t("sites.tabs.devices"), site_devices_path(site), "cube", :devices ],
+       [ t("sites.tabs.integrations"), site_integrations_path(site), "link", :integrations ], [ t("sites.tabs.automation"), site_automations_path(site), "lightning-bolt", :automation ],
+       [ t("sites.tabs.helpers"), site_helpers_path(site), "collection", :helpers ],
+       [ t("sites.tabs.datasets"), site_datasets_path(site), "table", :datasets ], [ "Alexa", site_alexa_path(site), "speakerphone", :alexa ],
        *Bridges.plugins.map { |b| [ b.title, site_bridge_path(site, b.key), b.icon, :"bridge_#{b.key}" ] },
-       [ "Alertas", alerts_path, "exclamation-circle", :alerts ], [ "Pacotes", site_packages_path(site), "archive", :packages ],
-       ([ "Ferramentas", dev_tools_site_path(site), "code", :dev_tools ] if DevTools.admin?(current_user)) ].compact.each do |label, path, ico, key| %>
+       [ t("sites.tabs.alerts"), alerts_path, "exclamation-circle", :alerts ], [ t("sites.tabs.packages"), site_packages_path(site), "archive", :packages ],
+       ([ t("sites.tabs.dev_tools"), dev_tools_site_path(site), "code", :dev_tools ] if DevTools.admin?(current_user)) ].compact.each do |label, path, ico, key| %>
     <%= link_to path, "aria-current": (key == current ? "page" : nil) do %><%= icon(ico, "size-4") %><%= label %><% end %>
   <% end %>
 </nav>

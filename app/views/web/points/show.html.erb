@@ -7,8 +7,8 @@
 
   <section class="ss-card ss-card-pad lg:col-span-2" aria-labelledby="chart-title">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 id="chart-title">Histórico</h2>
-      <nav class="flex gap-2" aria-label="Período do gráfico">
+      <h2 id="chart-title"><%= t("points.show.history") %></h2>
+      <nav class="flex gap-2" aria-label="<%= t("points.show.range") %>">
         <% Points::History::RANGES.each_key do |range| %>
           <%= link_to range, point_path(@point, range: range), class: "ss-chip no-underline", "aria-current": (range == @range ? "true" : nil) %>
         <% end %>
@@ -30,48 +30,48 @@
           <span><%= l(@history.from, format: :short) %></span><span><%= l(@history.to, format: :short) %></span>
         </div>
         <% if chart[:on_seconds] %>
-          <p class="text-sm text-ink-2 mt-3">Ligado por <strong class="num"><%= duration_text(chart[:on_seconds]) %></strong> no período.</p>
+          <p class="text-sm text-ink-2 mt-3"><%= t("points.show.on_for_html", time: duration_text(chart[:on_seconds])) %></p>
         <% end %>
-        <p class="sr-only"><%= @history.raw? ? "Leituras cruas" : "Médias por #{@history.resolution == '1h' ? 'hora' : 'dia'}" %> de <%= l(@history.from, format: :short) %> a <%= l(@history.to, format: :short) %>.</p>
+        <p class="sr-only"><%= t(@history.raw? ? "points.show.raw" : (@history.resolution == "1h" ? "points.show.hourly" : "points.show.daily"), from: l(@history.from, format: :short), to: l(@history.to, format: :short)) %></p>
       </div>
     <% elsif @point.numeric? || @point.bool? %>
-      <p class="text-sm text-muted mt-4">Sem leituras neste período.</p>
+      <p class="text-sm text-muted mt-4"><%= t("points.show.no_readings") %></p>
     <% else %>
-      <p class="text-sm text-muted mt-4">Este tipo de ponto não tem gráfico; veja os últimos acontecimentos abaixo.</p>
+      <p class="text-sm text-muted mt-4"><%= t("points.show.no_chart") %></p>
     <% end %>
   </section>
 </div>
 
-<p class="ss-section mt-6 mb-3">Automação deste ponto</p>
+<p class="ss-section mt-6 mb-3"><%= t("points.show.automation") %></p>
 <% if @point.capability == "onoff" && @point.writable %>
   <section class="ss-card ss-card-pad mb-4 flex flex-wrap items-center gap-3" aria-labelledby="auto-off-title">
     <div class="min-w-0 flex-1">
-      <h2 id="auto-off-title">Desligar sozinho</h2>
+      <h2 id="auto-off-title"><%= t("points.show.auto_off") %></h2>
       <p class="text-sm text-muted mt-1">
         <% if @point.pulse_ms || @point.max_on_s %>
-          <%= [ ("pulso: desliga #{number_with_precision(@point.pulse_ms / 1000.0, precision: 1, strip_insignificant_zeros: true)} s depois de ligar" if @point.pulse_ms),
-                ("desliga depois de #{duration_text(@point.max_on_s)} ligado" if @point.max_on_s) ].compact.join(" · ") %>, ligado por qualquer caminho.
+          <%= [ (t("points.show.pulse", s: number_with_precision(@point.pulse_ms / 1000.0, precision: 1, strip_insignificant_zeros: true)) if @point.pulse_ms),
+                (t("points.show.max_on", time: duration_text(@point.max_on_s)) if @point.max_on_s) ].compact.join(" · ") %><%= t("points.show.any_path") %>
         <% else %>
-          Não desliga sozinho. Use pulso para o que só precisa de um toque (liga e desliga em segundos) ou um tempo máximo ligado (uma bomba ou um aquecedor).
+          <%= t("points.show.no_auto_off") %>
         <% end %>
       </p>
     </div>
-    <% if can?(:manage) %><%= link_to edit_point_path(@point), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("clock", "size-4") %>Ajustar<% end %><% end %>
+    <% if can?(:manage) %><%= link_to edit_point_path(@point), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("clock", "size-4") %><%= t("points.show.tune") %><% end %><% end %>
   </section>
 <% end %>
 <%= render "web/automation/lists", site: @site, point: @point %>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="timeline-title">
-  <h2 id="timeline-title">Últimos acontecimentos</h2>
+  <h2 id="timeline-title"><%= t("points.show.timeline") %></h2>
   <% if @timeline.empty? %>
-    <p class="text-sm text-muted mt-2">Nada por aqui ainda.</p>
+    <p class="text-sm text-muted mt-2"><%= t("shared.nothing_yet") %></p>
   <% else %>
     <ul class="mt-3 divide-y divide-line">
       <% @timeline.each do |item| %>
         <li class="flex items-start gap-3 py-3">
           <span class="grid place-items-center size-8 shrink-0 rounded-lg bg-field <%= PointsHelper::TONE_CLASSES.fetch(item.tone) %>"><%= icon({ "command" => "lightning-bolt", "event" => "exclamation-circle", "audit" => "pencil" }.fetch(item.kind), "size-4") %></span>
           <div class="min-w-0 flex-1">
-            <p class="font-semibold text-ink"><%= item.title %><% if item.user %> <span class="font-normal text-muted">por <%= item.user %></span><% end %></p>
+            <p class="font-semibold text-ink"><%= item.title %><% if item.user %> <span class="font-normal text-muted"><%= t("shared.by", name: item.user) %></span><% end %></p>
             <% if item.detail %><p class="text-sm text-muted"><%= item.detail %></p><% end %>
           </div>
           <time class="text-xs text-muted num shrink-0" datetime="<%= item.at.iso8601 %>"><%= l(item.at, format: :short) %></time>

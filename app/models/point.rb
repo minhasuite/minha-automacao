@@ -18,15 +18,7 @@ class Point < ApplicationRecord
     # integ: detecção de câmera com IA (Frigate, Reolink, UniFi Protect…), genérica: {kind, label, score, zones, at…}.
     "detection" => "json"
   }.freeze
-  CAPABILITY_LABELS = {
-    "onoff" => "Liga/desliga", "dimmer" => "Intensidade", "color" => "Cor", "gate" => "Portão",
-    "contact" => "Sensor de abertura", "motion" => "Sensor de movimento", "tamper" => "Violação",
-    "problem" => "Problema", "measure" => "Medição", "enum" => "Seleção", "setpoint" => "Valor ajustável",
-    "command" => "Botão", "text" => "Texto", "vacuum" => "Robô aspirador", "speaker" => "Alto-falante",
-    "stream" => "Câmera", "climate" => "Clima", "event" => "Evento",
-    "counter" => "Contador", "timer" => "Temporizador", "datetime" => "Data e hora", "script" => "Script", "calendar" => "Agenda", "weather" => "Clima",
-    "media" => "Mídia", "remote" => "Controle remoto", "detection" => "Detecção"
-  }.freeze
+  CAPABILITY_LABELS = LocalizedLabel.for("labels.capabilities", CAPABILITIES.keys)
   # Só leitura por natureza (o resto nasce gravável).
   READ_ONLY = %w[contact motion tamper problem measure stream event calendar weather detection].freeze
   # Contam a cada aviso, mesmo repetido (botão, campainha, nova detecção).
@@ -34,7 +26,7 @@ class Point < ApplicationRecord
   DATA_TYPES = %w[bool integer decimal enum string json timestamp].freeze
   STATE_CLASSES = %w[measurement total total_increasing].freeze
   HISTORY = %w[none on_change interval].freeze
-  RISKS = { "normal" => "Normal", "sensitive" => "Sensível", "critical" => "Crítico" }.freeze
+  RISKS = LocalizedLabel.for("labels.risks", %w[normal sensitive critical])
   QUALITIES = %w[good stale unavailable error].freeze
 
   belongs_to :site
@@ -138,16 +130,16 @@ class Point < ApplicationRecord
     like = ids.map { |v| "%#{sanitize_sql_like(v)}%" }
     point_ids = points.pluck(:id)
     [
-      [ "Painel", site.dashboards.where("definition::text LIKE ANY (ARRAY[?])", like) ],
-      [ "Automação", site.automations.where("definition::text LIKE ANY (ARRAY[?])", like) ],
-      [ "Script", site.scripts.where("definition::text LIKE ANY (ARRAY[?])", like) ],
-      [ "Cena", site.scenes.where("items::text LIKE ANY (ARRAY[?])", like) ],
-      [ "Espelhamento", site.point_links.where(source_point_id: point_ids).or(site.point_links.where(target_point_id: point_ids)) ],
-      [ "Aviso", site.notify_rules.where(point_id: point_ids) ],
-      [ "Alerta", site.alert_rules.where(point_id: point_ids) ],
-      [ "Agenda", site.schedules.where(point_id: point_ids) ],
-      [ "Helper", HelperTypes.dependents(site.id, point_ids) ]
-    ].flat_map { |label, scope| scope.map { |r| [ label, r ] } }
+      [ :dashboard, site.dashboards.where("definition::text LIKE ANY (ARRAY[?])", like) ],
+      [ :automation, site.automations.where("definition::text LIKE ANY (ARRAY[?])", like) ],
+      [ :script, site.scripts.where("definition::text LIKE ANY (ARRAY[?])", like) ],
+      [ :scene, site.scenes.where("items::text LIKE ANY (ARRAY[?])", like) ],
+      [ :link, site.point_links.where(source_point_id: point_ids).or(site.point_links.where(target_point_id: point_ids)) ],
+      [ :notify, site.notify_rules.where(point_id: point_ids) ],
+      [ :alert, site.alert_rules.where(point_id: point_ids) ],
+      [ :schedule, site.schedules.where(point_id: point_ids) ],
+      [ :helper, HelperTypes.dependents(site.id, point_ids) ]
+    ].flat_map { |kind, scope| label = I18n.t("labels.usages.#{kind}"); scope.map { |r| [ label, r ] } }
   end
 
   # Texto do formulário ("true", "25,5", "open") → valor no tipo do ponto.
@@ -213,16 +205,16 @@ class Point < ApplicationRecord
   end
 
   def same_site
-    errors.add(:device, "precisa ser deste local") if device && device.site_id != site_id
-    errors.add(:area, "precisa ser deste local") if area && area.site_id != site_id
+    errors.add(:device, :other_site) if device && device.site_id != site_id
+    errors.add(:area, :other_site) if area && area.site_id != site_id
   end
 
   def options_list
-    errors.add(:options, "precisa ser uma lista de opções") unless options.is_a?(Array) && options.all? { |o| o.is_a?(String) && o.present? }
-    errors.add(:options, "não pode ficar vazia numa seleção") if capability == "enum" && option_values.empty?
+    errors.add(:options, :options_list) unless options.is_a?(Array) && options.all? { |o| o.is_a?(String) && o.present? }
+    errors.add(:options, :options_empty) if capability == "enum" && option_values.empty?
   end
 
   def range_order
-    errors.add(:max, "precisa ser maior que o mínimo") if min && max && max <= min
+    errors.add(:max, :above_min) if min && max && max <= min
   end
 end

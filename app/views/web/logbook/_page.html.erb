@@ -5,7 +5,7 @@
     <% at = i.at.in_time_zone(zone) %>
     <% if at.to_date.iso8601 != day %>
       <% day = at.to_date.iso8601 %>
-      <h2 class="lb-day"><%= at.to_date == Date.current ? "Hoje" : (at.to_date == Date.yesterday ? "Ontem" : l(at.to_date, format: "%A, %d de %B").capitalize) %></h2>
+      <h2 class="lb-day"><%= at.to_date == Date.current ? t("logbook.today") : (at.to_date == Date.yesterday ? t("logbook.yesterday") : l(at.to_date, format: t("logbook.day_format")).capitalize) %></h2>
     <% end %>
     <% href = case i.ref&.dig(:type)
               when "point" then point_path(i.ref[:id])
@@ -20,17 +20,17 @@
           <% if href %><%= link_to i.title, href, class: "lb-link", data: { turbo_frame: "_top" } %><% else %><span><%= i.title %></span><% end %>
           <% if i.state.present? %><span class="lb-state"><%= i.state %></span><% end %>
         </p>
-        <% meta = [ i.detail, (i.user && "por #{i.user}") ].compact_blank %>
+        <% meta = [ i.detail, (i.user && t("shared.by", name: i.user)) ].compact_blank %>
         <% if meta.any? %><p class="lb-meta"><%= meta.join(" · ") %></p><% end %>
       </div>
     </article>
   <% end %>
   <% if next_cursor %>
     <%= turbo_frame_tag frame_id.(next_cursor), src: logbook_path(filter.to_params(next_cursor).merge(site_id: filter.site.id, day: day)), loading: :lazy, target: "_top" do %>
-      <p class="lb-loading" role="status"><span class="lb-spin" aria-hidden="true"></span>Carregando mais…</p>
+      <p class="lb-loading" role="status"><span class="lb-spin" aria-hidden="true"></span><%= t("logbook.loading") %></p>
     <% end %>
   <% else %>
-    <p class="lb-end">Início do período. <%= link_to "Ver um período maior", logbook_path(filter.to_params.except(:from, :until).merge(site_id: filter.site.id, period: "365d")), data: { turbo_frame: "_top" } if filter.period != "365d" && !filter.custom_dates? %></p>
+    <p class="lb-end"><%= t("logbook.start") %> <%= link_to t("logbook.bigger"), logbook_path(filter.to_params.except(:from, :until).merge(site_id: filter.site.id, period: "365d")), data: { turbo_frame: "_top" } if filter.period != "365d" && !filter.custom_dates? %></p>
   <% end %>
 <% end %>
 <% if frame %>

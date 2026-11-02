@@ -1,0 +1,693 @@
+# Pantallas de la casa y de la cuenta (lugares, áreas, puntos, historial,
+# personas, invitaciones, páginas legales, correos) y etiquetas de las
+# constantes de los modelos (LocalizedLabel). Clave nueva = en los tres idiomas.
+es:
+  activerecord:
+    errors:
+      messages:
+        other_site: debe ser de este lugar
+        options_list: debe ser una lista de opciones
+        options_empty: no puede quedar vacía en una selección
+        above_min: debe ser mayor que el mínimo
+        already_linked: ya está vinculado a este origen
+        other_point: debe ser otro punto
+        fire_target: debe ser un encendido/apagado, portón o botón
+        mirror_only: solo vale para espejar o invertir
+        onoff_or_sensor: debe ser un encendido/apagado o un sensor
+        onoff_writable: debe ser un encendido/apagado que reciba comandos
+        onoff_source: requiere un origen de encendido/apagado
+        link_loop: Forma un bucle con otro espejado de este lugar.
+        same_company: debe ser de la empresa
+        https: debe ser https
+  labels:
+    site_kinds:
+      home: Casa
+      store: Tienda
+      plant: Fábrica
+    area_kinds:
+      room: Ambiente
+      floor: Piso
+      outdoor: Área exterior
+      line: Línea
+      cell: Celda
+      warehouse: Depósito
+    device_situations:
+      online: Conectado
+      offline: Sin señal
+      error: Con error
+      new: Nuevo
+      removed: Quitado de la cuenta
+    capabilities:
+      onoff: Encendido/apagado
+      dimmer: Intensidad
+      color: Color
+      gate: Portón
+      contact: Sensor de apertura
+      motion: Sensor de movimiento
+      tamper: Manipulación
+      problem: Problema
+      measure: Medición
+      enum: Selección
+      setpoint: Valor ajustable
+      command: Botón
+      text: Texto
+      vacuum: Robot aspirador
+      speaker: Altavoz
+      stream: Cámara
+      climate: Climatización
+      event: Evento
+      counter: Contador
+      timer: Temporizador
+      datetime: Fecha y hora
+      script: Script
+      calendar: Agenda
+      weather: Clima
+      media: Multimedia
+      remote: Control remoto
+      detection: Detección
+    risks:
+      normal: Normal
+      sensitive: Sensible
+      critical: Crítico
+    link_modes:
+      mirror: Espejar
+      invert: Invertir
+      trigger: Accionar
+    site_roles:
+      viewer: Lector
+      guest: Visitante
+      operator: Operador
+      resident: Residente
+      technician: Técnico
+      owner: Dueño
+    user_roles:
+      owner: Dueño
+      admin: Administrador
+      member: Miembro
+    periods:
+      1h: 1 h
+      6h: 6 h
+      24h: 24 h
+      7d: 7 días
+      30d: 30 días
+      365d: 1 año
+    commands:
+      "on": Encender
+      "off": Apagar
+      toggle: Alternar
+      set: Ajustar
+      select: Seleccionar
+      press: Accionar
+      pulse: Accionar
+      start: Iniciar limpieza
+      pause: Pausar
+      stop: Detener
+      home: Volver a la base
+      clean_rooms: Limpiar ambientes
+      wash_mop: Lavar el paño
+      dry_mop: Secar el paño
+      empty: Vaciar
+      locate: Localizar
+      announce: Anunciar
+      speak: Hablar
+      routine: Rutina
+      increment: Aumentar
+      decrement: Disminuir
+      reset: Poner en cero
+      cancel: Cancelar
+      finish: Terminar
+      run: Ejecutar
+      sound: Reproducir sonido
+      play: Reproducir
+      volume: Volumen
+    qualities:
+      good: Normal
+      stale: Desactualizado
+      unavailable: No disponible
+      error: Con error
+    point_audit:
+      create: Punto creado
+      update: Registro modificado
+      destroy: Punto eliminado
+    command_statuses:
+      pending: Pendiente
+      sent: Enviado
+      confirmed: Confirmado
+      failed: Falló
+      expired: Vencido
+    command_sources:
+      web: web
+      api: app/API
+      automation: automatización
+      alexa: Alexa
+      voice: voz
+      push: botón del aviso
+      bridge: puente (Matter)
+    media:
+      "off": Apagada
+      "on": Encendida
+      idle: Detenida
+      playing: Reproduciendo
+      paused: En pausa
+      buffering: Cargando
+      standby: En espera
+    bool:
+      onoff: { "on": Encendido, "off": Apagado }
+      contact: { "on": Abierto, "off": Cerrado }
+      motion: { "on": Movimiento, "off": Sin movimiento }
+      tamper: { "on": Manipulado, "off": Normal }
+      problem: { "on": Problema, "off": Normal }
+    states:
+      gate: { open: Abierto, closed: Cerrado, opening: Abriendo, unknown: Desconocido }
+      vacuum: { docked: En la base, cleaning: Limpiando, returning: Volviendo a la base, paused: En pausa, idle: Detenido, error: Con error }
+      speaker: { online: Lista, offline: Fuera de línea }
+      timer: { idle: Detenido, active: Contando, paused: En pausa, finished: Terminó }
+    actions:
+      increment: Más
+      decrement: Menos
+      reset: Poner en cero
+      start: Iniciar
+      pause: Pausar
+      cancel: Cancelar
+      finish: Terminar
+    device_bulk:
+      area: Mover al área
+      poll_on: Activar la lectura periódica
+      poll_off: Desactivar la lectura periódica
+      remove: Quitar
+    command_choices:
+      "on": Encender
+      "off": Apagar
+      toggle: Alternar
+      pulse: Pulsar (portón)
+      press: Presionar (botón)
+      set: Ajustar valor
+      select: Seleccionar opción
+      start: Iniciar limpieza (robot)
+      pause: Pausar (robot)
+      stop: Detener (robot)
+      home: Volver a la base (robot)
+      wash_mop: Lavar el paño (robot)
+      dry_mop: Secar el paño (robot)
+      empty: Vaciar (robot)
+      announce: Anunciar (Echo)
+      speak: Hablar (Echo)
+      routine: Rutina de Alexa (Echo)
+      run: Ejecutar (script)
+    usages:
+      dashboard: Panel
+      automation: Automatización
+      script: Script
+      scene: Escena
+      link: Espejado
+      notify: Aviso
+      alert: Alerta
+      schedule: Agenda
+      helper: Helper
+    drivers:
+      virtual: Virtual
+      tuya_local: Tuya local
+      tuya_cloud: Tuya nube
+      xiaomi_miot: Xiaomi
+      alexa: Alexa
+      mqtt: MQTT
+      modbus_tcp: Modbus TCP
+      onvif: Cámara ONVIF
+      go2rtc: Cámara
+  shared:
+    not_found: No encontrado
+    not_found_hint: Este registro no existe o no es de tu empresa.
+    back_home: Volver al inicio
+    pagination: Paginación
+    page_info: "%{count} registros · página %{page} de %{pages}"
+    previous: Anterior
+    next: Siguiente
+    icon: Ícono
+    icon_default: Predeterminado
+    confirm:
+      title: ¿Estás seguro?
+      back: Volver
+      ok: Confirmar
+    palette:
+      label: Buscar y ejecutar
+      input: Buscar u ordenar
+      hint: 'Buscar u ordenar: apagar la sala, activar escena…'
+      navigate: navegar
+      run: abrir o ejecutar
+      anywhere: se abre desde cualquier pantalla
+    cancel: Cancelar
+    edit: Editar
+    edit_name: Editar %{name}
+    optional: Opcional
+    choose: Elige
+    nothing_yet: Todavía no hay nada aquí.
+    by: por %{name}
+    duration:
+      s: "%{n} s"
+      h: "%{n} h"
+      min: "%{n} min"
+    ago:
+      now: ahora
+      text: hace %{time}
+    count:
+      areas:
+        one: "%{count} área"
+        other: "%{count} áreas"
+      devices:
+        one: "%{count} dispositivo"
+        other: "%{count} dispositivos"
+  sites:
+    index:
+      title: Lugares
+      subtitle: 'Casas, tiendas y fábricas: cada lugar tiene sus áreas, dispositivos y puntos.'
+      new: Nuevo lugar
+      none: Todavía no hay lugares.
+      none_hint: Crea tu casa, tienda o fábrica para empezar.
+      first: Crear mi primer lugar
+      ask_owner: Pídele al dueño de la empresa que te dé acceso a un lugar.
+    new:
+      subtitle: Casa, tienda o fábrica. Después creas las áreas y los dispositivos.
+    edit:
+      title: Editar lugar
+      delete: Eliminar lugar
+      delete_hint: Borra el lugar con todas sus áreas, dispositivos y puntos. No se puede deshacer.
+      delete_confirm: ¿Eliminar el lugar %{name} y todo lo que contiene?
+    form:
+      name: Nombre
+      name_hint: Casa de playa
+      kind: Tipo
+      address: Dirección
+      timezone: Zona horaria
+      latitude: Latitud
+      longitude: Longitud
+      coords_hint: La latitud y la longitud sirven para las agendas de amanecer y atardecer.
+      create: Crear lugar
+      save: Guardar lugar
+    tabs:
+      label: Secciones del lugar
+      areas: Áreas
+      dashboards: Paneles
+      devices: Dispositivos
+      integrations: Integraciones
+      automation: Automatizaciones y escenas
+      helpers: Helpers
+      datasets: Datos
+      alerts: Alertas
+      packages: Paquetes
+      dev_tools: Herramientas
+    rules:
+      subtitle: '%{site} · reglas simples: agendas, espejados, avisos y alertas'
+      active_alerts: Alertas activas
+    show:
+      your_role: 'Tu rol: %{role}'
+      empty: Este lugar todavía está vacío.
+      empty_hint: Crea las áreas (sala, cocina, garaje) y después los dispositivos de cada una.
+      first_area: Crear la primera área
+  areas:
+    new:
+      title: Nueva área
+    edit:
+      title: Editar área
+      delete: Eliminar área
+      delete_hint: Sus dispositivos siguen en el lugar, sin área.
+      delete_confirm: ¿Eliminar el área %{name}?
+    form:
+      name_hint: Sala, Cocina, Garaje
+      parent: Dentro de
+      no_parent: Ninguna (área principal)
+      create: Crear área
+      save: Guardar área
+    show:
+      empty: No hay dispositivos en esta área.
+      empty_hint: Un dispositivo virtual sirve para probar y para guardar estados (modo de la casa, vacaciones, alarma armada).
+      add_device: Agregar dispositivo
+      details: Detalles
+      no_points: Sin puntos.
+  devices:
+    edit_title: Editar dispositivo
+    delete: Eliminar dispositivo
+    delete_hint: Borra el dispositivo y sus puntos.
+    delete_confirm: ¿Eliminar el dispositivo %{name} y sus puntos?
+  points:
+    turn_on: Encender
+    turn_off: Apagar
+    run: Ejecutar
+    press: Presionar
+    fire: Accionar
+    choose: Elegir %{name}
+    adjust: Ajustar %{name}
+    new_value: Nuevo valor de %{name}
+    apply: Aplicar
+    actions: Acciones de %{name}
+    no_signal: Sin señal
+    no_control: El control de este tipo llega con los drivers.
+    confirm: ¿Accionar %{name}?
+    poll:
+      none: sin lectura periódica
+      every: lectura cada %{time}
+    value:
+      fired: Accionado %{at}
+      ready: Listo
+      none: Sin valor
+      white: Blanco %{k} K
+      buttons:
+        one: "%{count} botón aprendido"
+        other: "%{count} botones aprendidos"
+    situation:
+      offline: No respondió en el último intento.
+      error: La última lectura o comando dio error.
+      no_contact: Sin contacto
+      waiting: Esperando el primer contacto.
+      silent: No informa su estado por sí solo (lectura periódica desactivada); aparece en el primer comando.
+    status:
+      no_signal: "Sin señal%{ago}: el dispositivo no respondió. Es posible que los comandos no le lleguen hasta que vuelva."
+      waiting: 'Todavía sin lectura: esperando el primer valor.'
+      silent: 'Todavía sin lectura: este dispositivo no informa su estado por sí solo (lectura periódica desactivada). El valor aparece después del primer comando.'
+    calendar:
+      nothing: Nada en los próximos días
+      now: 'Ahora: %{summary}'
+      today: hoy
+      tomorrow: mañana
+    timeline:
+      via: por %{source}
+      became: Quedó %{state}
+      before: 'antes: %{state}'
+    form:
+      name_hint: Luz del techo
+      unit: Unidad
+      risk: Riesgo
+      risk_hint: Sensible requiere operador o superior; crítico, residente o superior. Ambos piden confirmación.
+      device_area: La del dispositivo
+      min: Mínimo
+      max: Máximo
+      step: Paso
+      options: Opciones (para selección, separadas por coma)
+      options_hint: Casa, Fuera, Vacaciones
+      confirm: Texto de confirmación
+      confirm_hint: ¿Abrir el portón?
+      advanced: Avanzado
+      key: Clave (única en el lugar)
+      key_hint: generada a partir del nombre
+      device_class: Clase
+      scale: Escala (calibración)
+      offset: Desplazamiento (calibración)
+      pulse: Pulso (ms)
+      max_on: Se apaga solo después de (s)
+      writable: Recibe comandos
+      hidden: Oculto
+      create: Crear punto
+      save: Guardar punto
+    edit:
+      title: Editar punto
+      delete: Eliminar punto
+      delete_hint: Las automatizaciones y paneles que usan este punto dejarán de funcionar.
+      delete_confirm: ¿Eliminar el punto %{name}?
+    show:
+      history: Historial
+      range: Período del gráfico
+      on_for_html: Encendido durante <strong class="num">%{time}</strong> en el período.
+      raw: Lecturas sin procesar de %{from} a %{to}.
+      hourly: Promedios por hora de %{from} a %{to}.
+      daily: Promedios por día de %{from} a %{to}.
+      no_readings: Sin lecturas en este período.
+      no_chart: Este tipo de punto no tiene gráfico; mira los últimos eventos abajo.
+      automation: Automatización de este punto
+      auto_off: Apagarse solo
+      pulse: 'pulso: se apaga %{s} s después de encenderse'
+      max_on: se apaga después de %{time} encendido
+      any_path: ", sin importar cómo se encendió."
+      no_auto_off: No se apaga solo. Usa pulso para lo que solo necesita un toque (enciende y apaga en segundos) o un tiempo máximo encendido (una bomba o un calentador).
+      tune: Ajustar
+      timeline: Últimos eventos
+  point_links:
+    form:
+      source: Cuando este punto cambie
+      target: Controlar este
+      mode: Cómo
+      mode_hint: 'Espejar: queda igual. Invertir: queda al revés. Accionar: enciende, pulsa el portón o presiona el botón (el pulso del destino lo apaga solo).'
+      trigger_value: Accionar cuando quede (solo en modo Accionar)
+      trigger_value_hint: vacío = encendido
+      bidirectional: En los dos sentidos (ambos son interruptores)
+      enabled: Activo
+      save: Guardar espejado
+  history:
+    subtitle: 'Compara puntos en el tiempo: números en líneas superpuestas, encendido/apagado y estados en franjas.'
+    csv: Exportar CSV
+    period: Período
+    shortcuts: Atajos de período
+    previous: Período anterior
+    next: Período siguiente
+    until: a
+    zoom_in: Acercar
+    zoom_out: Alejar
+    pick_dates: Elegir fechas
+    from: Desde
+    to: Hasta
+    points: Puntos
+    remove: Quitar %{name}
+    none_chosen: Todavía no elegiste ninguno.
+    pick_points: Elegir puntos
+    up_to: (hasta %{n})
+    filter_name: Filtrar por nombre
+    filter_points: Filtrar puntos
+    show: Mostrar
+    number: número
+    bands: franjas
+    no_match: Ningún punto con ese nombre.
+    chart: Gráfico %{unit}
+    no_unit: Sin unidad
+    readings: Lecturas
+    hourly: Promedio por hora (franja = mín. a máx.)
+    daily: Promedio por día (franja = mín. a máx.)
+    drag: Arrastra sobre el gráfico para acercar el tramo.
+    no_readings: Sin lecturas en ese período.
+    no_readings_short: Sin lecturas
+    timeline: Línea de tiempo
+    empty: Elige los puntos para comparar.
+    empty_hint: 'Temperatura con el aire encendido, consumo con la bomba, puerta con movimiento: todo en el mismo tiempo.'
+  logbook:
+    title: Diario
+    subtitle: 'Todo lo que pasó en %{site}: cambios, comandos, automatizaciones, escenas, alertas e ingresos.'
+    today: Hoy
+    yesterday: Ayer
+    day_format: "%A, %d de %B"
+    loading: Cargando más…
+    start: Inicio del período.
+    bigger: Ver un período más largo
+    search: Buscar
+    search_hint: Buscar punto, dispositivo, automatización o escena
+    more_filters: Más filtros
+    device: Dispositivo
+    point: Punto
+    person: Persona
+    all: Todos
+    what: Qué mostrar
+    none_checked: Sin ningún tipo marcado, se muestra todo.
+    empty: No pasó nada en este período.
+    empty_filtered: No pasó nada en este período con estos filtros.
+    empty_hint: Prueba un período más largo o quita algún filtro.
+  maps:
+    title: Mapa
+    subtitle: Dónde están las personas de %{site}, las zonas y el recorrido de hoy. Solo lo ven residentes, técnicos y el dueño.
+    aria: Mapa con %{people} persona(s) y %{zones} zona(s)
+    failed: No se pudo cargar el mapa (¿sin internet?).
+    no_center: No hay dónde centrar el mapa.
+    no_center_hint: Registra la ubicación del lugar (Editar lugar) o crea una zona en Helpers.
+    people: Personas
+    no_people: No hay personas. Crea una en Helpers → Persona, con la app del celular como fuente.
+    no_reading: Sin lectura
+    since: desde
+    phone: Ubicación del celular
+    zone_position: Posición de la zona (aproximada)
+    no_position: Sin posición en el mapa
+    track:
+      one: "%{count} punto hoy"
+      other: "%{count} puntos hoy"
+    zones: Zonas
+    no_zones: Ninguna zona con ubicación.
+    zone_info: radio %{radius} m · %{count} persona(s)
+    js:
+      people: persona(s)
+      approx: posición de la zona
+  people:
+    subtitle: 'Personas: quién entra en esta instalación y qué puede hacer en cada lugar.'
+    invite_link: Enlace de invitación
+    invite_link_hint: Cópialo y envíalo a la persona. Solo aparece ahora, vale 7 días y se usa una sola vez.
+    invite_link_label: Enlace de la invitación
+    copy: Copiar
+    role: Rol
+    you: tú
+    sites:
+      one: "%{count} lugar"
+      other: "%{count} lugares"
+    disabled: Desactivada
+    active: Activa
+    create_title: Crear la cuenta
+    create_hint: Tú defines el correo y la contraseña inicial y se los pasas a la persona.
+    email: Correo
+    initial_password: Contraseña inicial (mínimo 8)
+    install_role: Rol en la instalación
+    site: Lugar
+    no_site: Ninguno por ahora
+    site_role: Rol en el lugar
+    create: Crear cuenta
+    invite_title: Invitar con un enlace
+    invite_hint: La persona abre el enlace, crea su propia contraseña y entra. Uso único, vale 7 días.
+    generate: Generar enlace
+    pending: Invitaciones pendientes
+    role_in: '%{role} en %{site}'
+    valid_until: vale hasta %{at}
+    cancel_invite: ¿Cancelar esta invitación? El enlace deja de funcionar.
+    role_hint: El dueño y el administrador mandan en todos los lugares. El miembro solo entra en los lugares de abajo, con el rol de cada uno.
+    save_role: Guardar rol
+    per_site: Rol en cada lugar
+    admin_everywhere: Como %{role}, es dueño en todos los lugares.
+    no_access: Sin acceso
+    save_sites: Guardar lugares
+    actions: Acciones
+    enable_confirm: ¿Reactivar a %{name}?
+    disable_confirm: ¿Desactivar a %{name}? La persona sale de la web y de la app en el acto.
+    enable: Reactivar
+    disable: Desactivar
+    remove_confirm: ¿Quitar a %{name} de la instalación? La cuenta se borra.
+    remove: Quitar
+  invites:
+    page_title: Invitación — Minha Automação
+    invalid: Invitación no válida
+    invalid_hint: Este enlace ya se usó, venció o fue cancelado. Pide uno nuevo a quien te invitó.
+    sign_in: Ingresar
+    title: Te invitaron
+    hint: Crea tu cuenta para entrar. La invitación vale hasta el %{date}.
+    hint_site: Crea tu cuenta para entrar en %{site}. La invitación vale hasta el %{date}.
+    name: Tu nombre
+    email_hint: tu@correo.com
+    password: Contraseña (mínimo 8)
+    submit: Crear cuenta y entrar
+    have_account: ¿Ya tienes cuenta?
+  push:
+    subtitle: 'Mis dispositivos: dónde llegan los avisos como push.'
+    this_device: Este dispositivo
+    checking: Verificando este navegador...
+    name: Nombre del dispositivo (opcional)
+    name_hint: Mi celular
+    subscribe: Recibir avisos en este dispositivo
+    subscribed: Dispositivos suscritos
+    test: Enviar prueba
+    browser: Navegador
+    web_push: Web Push · suscrito el %{at}
+    last_sent: último envío %{at}
+    remove: Quitar %{name}
+    remove_confirm: ¿Quitar %{name}? Dejará de recibir avisos.
+    app: App Minha Automação (%{platform})
+    native: App nativa · desde %{at}
+    none: Todavía no hay dispositivos. Suscribe este navegador arriba.
+    how: Cómo recibirlos en el celular
+    how_android_html: '<strong>Android (Chrome):</strong> abre esta dirección por el acceso externo (https), toca el menú y "Instalar app" o "Agregar a la pantalla principal". Ábrela desde el ícono, vuelve aquí y toca "Recibir avisos en este dispositivo".'
+    how_ios_html: '<strong>iPhone (iOS 16.4 o más reciente):</strong> en Safari, toca Compartir y "Agregar a inicio". El push solo funciona abriendo desde el ícono de la pantalla de inicio; en Safari común el botón no aparece.'
+    how_https: 'El push exige https: desde la dirección de la red de casa (http://192.168...) el navegador no permite suscribirse.'
+    js:
+      https: 'El push exige https: abre por el acceso externo para suscribir este dispositivo.'
+      unsupported: Este navegador no recibe push. En iPhone, agrégalo a la pantalla de inicio y ábrelo desde el ícono.
+      no_keys: El push está desactivado en el servidor (faltan las claves VAPID).
+      blocked: Notificaciones bloqueadas en la configuración del navegador.
+      subscribed: Este dispositivo ya recibe los avisos. Suscribirse de nuevo actualiza el nombre.
+      not_subscribed: Este dispositivo todavía no recibe los avisos.
+      denied: Permiso de notificación denegado.
+      not_saved: El servidor no guardó la suscripción. Inténtalo de nuevo.
+      failed: 'No se pudo suscribir:'
+  settings_dashboards:
+    subtitle: 'Paneles de todos los lugares: qué aparece en el menú, quién los ve y las vistas de cada uno.'
+    new: Nuevo panel
+    in: En %{site}
+    none: Todavía no hay paneles.
+    none_hint: 'Crea un lugar primero: recibe el panel automático.'
+    dashboard: Panel
+    views: Vistas
+    in_menu: En el menú
+    who: Quién lo ve
+    auto: automático
+    version: versión %{n}
+    draft: borrador
+    site_default: predeterminado del lugar
+    your_home: se abre en tu Inicio
+    auto_views: Automáticas
+    "yes": Sí
+    "no": "No"
+    duplicate: Duplicar %{name}
+    delete: Eliminar %{name}
+    delete_confirm: ¿Eliminar el panel %{name}?
+    delete_button: Eliminar
+    open: Abrir
+  legal:
+    updated: 'Última actualización: %{date}'
+    privacy: Privacidad
+    terms: Términos
+    deletion: Eliminación de datos
+    contact: 'contacto:'
+    reset:
+      title: Restablecer contraseña
+      password: Nueva contraseña (mínimo 8 caracteres)
+      save: Guardar contraseña
+      done: Contraseña cambiada. Ingresa a la app con la contraseña nueva.
+      failed: No funcionó. Pide un enlace nuevo.
+  mailers:
+    password_reset:
+      subject: 'Minha Automação: restablece tu contraseña'
+  notices:
+    viewer_only: El lector solo ve los paneles.
+    forbidden: Tu rol en este lugar no permite eso.
+    site_created: Lugar creado. Ahora crea las áreas (ambientes, pisos).
+    site_updated: Lugar actualizado.
+    site_deleted: Lugar eliminado.
+    site_admin_only: Solo el administrador o el dueño de la empresa crea lugares.
+    area_created: Área creada.
+    area_updated: Área actualizada.
+    area_deleted: Área eliminada. Sus dispositivos quedaron sin área.
+    point_created: Punto creado.
+    point_updated: Punto actualizado.
+    point_deleted: Punto eliminado.
+    need_site_history: Crea un lugar para ver el historial.
+    need_site_logbook: Crea un lugar para ver el diario.
+    need_site_map: Crea un lugar para ver el mapa.
+    map_forbidden: Tu rol en este lugar no muestra dónde están las personas.
+    person_created: "%{name} puede entrar con el correo y la contraseña que definiste."
+    role_updated: Rol actualizado.
+    sites_updated: Lugares actualizados.
+    person_removed: "%{name} fue quitada de la instalación."
+    people_admin_only: Solo el administrador o el dueño ve a las personas.
+    owner_locked: El dueño no se puede modificar, desactivar ni quitar aquí.
+    invite_canceled: Invitación cancelada.
+    push_removed: Dispositivo quitado.
+    push_off: Push desactivado en el servidor (faltan las claves VAPID).
+    push_test: Prueba enviada a tus dispositivos.
+    allowed_saved: Direcciones permitidas guardadas.
+    type_reset: Escribe ZERAR para confirmar.
+    data_wiped: Datos de la instalación borrados.
+    type_delete: Escribe EXCLUIR para confirmar.
+    account_deleted: Cuenta eliminada.
+    too_many_minutes: Demasiados intentos. Espera unos minutos.
+    reset_sent: Si el correo tiene cuenta, enviamos un enlace para restablecer la contraseña.
+    choose_device: Elige al menos un dispositivo.
+    choose_action: Elige la acción.
+    bulk_done: "%{action}: %{count} dispositivo(s)."
+    no_reading: Este dispositivo no tiene lectura.
+    reconnecting: Reconectando. El resultado aparece en el diagnóstico en unos instantes.
+    device_created: Dispositivo creado. Agrega sus puntos.
+    device_updated: Dispositivo actualizado.
+    device_deleted: Dispositivo eliminado.
+    read_requested: Lectura solicitada. Los valores llegan en unos instantes.
+  rules:
+    both_ways: en los dos sentidos
+    when_becomes: cuando quede %{value}
+    scene: escena %{name}
+    every_change: en cada cambio
+    for_min: durante %{n} min
+    repeat: ", se repite cada %{n} min"
+    steps:
+      one: "%{count} etapa"
+      other: "%{count} etapas"
+    and: " y "
+  shadow_labels:
+    blocked: Retenido en la red
+    command: Comando
+    none: sin disparos

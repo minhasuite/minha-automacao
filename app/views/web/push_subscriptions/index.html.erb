@@ -1,22 +1,22 @@
-<%= render "web/shared/header", title: "Configurações", subtitle: "Meus aparelhos: onde os avisos chegam como push." %>
+<%= render "web/shared/header", title: t("settings.title"), subtitle: t("push.subtitle") %>
 <%= render layout: "web/settings/frame", locals: { current: :push } do %>
 <section class="ss-card ss-card-pad" aria-labelledby="este-t" data-controller="push" data-push-key-value="<%= Push::Browser.public_key %>"
-         data-push-url-value="<%= push_subscriptions_path %>">
-  <h2 id="este-t">Este aparelho</h2>
-  <p class="text-sm text-muted mt-1" data-push-target="status">Verificando este navegador...</p>
+         data-push-url-value="<%= push_subscriptions_path %>" data-push-texts-value="<%= t("push.js").to_json %>">
+  <h2 id="este-t"><%= t("push.this_device") %></h2>
+  <p class="text-sm text-muted mt-1" data-push-target="status"><%= t("push.checking") %></p>
   <div class="mt-3 flex flex-wrap items-end gap-2">
     <div class="min-w-0 flex-1 sm:flex-none sm:w-64">
-      <label class="ss-label" for="push-name">Nome do aparelho (opcional)</label>
-      <input id="push-name" type="text" class="ss-input" maxlength="60" placeholder="Meu celular" data-push-target="name">
+      <label class="ss-label" for="push-name"><%= t("push.name") %></label>
+      <input id="push-name" type="text" class="ss-input" maxlength="60" placeholder="<%= t("push.name_hint") %>" data-push-target="name">
     </div>
-    <button type="button" class="ss-btn ss-btn-primary" data-action="push#subscribe" data-push-target="button" disabled><%= icon("bell", "size-4") %>Receber avisos neste aparelho</button>
+    <button type="button" class="ss-btn ss-btn-primary" data-action="push#subscribe" data-push-target="button" disabled><%= icon("bell", "size-4") %><%= t("push.subscribe") %></button>
   </div>
 </section>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="lista-t">
   <div class="flex flex-wrap items-center justify-between gap-3">
-    <h2 id="lista-t">Aparelhos inscritos</h2>
-    <%= button_to test_push_subscriptions_path, class: "ss-btn ss-btn-outline ss-btn-sm", disabled: @subscriptions.empty? && @apps.empty? do %><%= icon("speakerphone", "size-4") %>Enviar teste<% end %>
+    <h2 id="lista-t"><%= t("push.subscribed") %></h2>
+    <%= button_to test_push_subscriptions_path, class: "ss-btn ss-btn-outline ss-btn-sm", disabled: @subscriptions.empty? && @apps.empty? do %><%= icon("speakerphone", "size-4") %><%= t("push.test") %><% end %>
   </div>
   <% if @subscriptions.any? || @apps.any? %>
     <ul class="mt-3 divide-y divide-line">
@@ -24,34 +24,34 @@
         <li class="py-3 flex items-center gap-3 min-w-0">
           <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon("bell", "size-5") %></span>
           <div class="min-w-0 flex-1">
-            <p class="font-semibold text-ink break-words"><%= s.name.presence || "Navegador" %></p>
-            <p class="text-xs text-muted">Web Push · inscrito em <%= l(s.created_at, format: :short) %><%= " · último envio #{l(s.last_used_at, format: :short)}" if s.last_used_at %></p>
+            <p class="font-semibold text-ink break-words"><%= s.name.presence || t("push.browser") %></p>
+            <p class="text-xs text-muted"><%= t("push.web_push", at: l(s.created_at, format: :short)) %><%= " · #{t('push.last_sent', at: l(s.last_used_at, format: :short))}" if s.last_used_at %></p>
           </div>
-          <%= button_to push_subscription_path(s), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm px-2 text-danger", "aria-label": "Remover #{s.name}",
-                        form: { data: { turbo_confirm: "Remover #{s.name.presence || 'este aparelho'}? Ele para de receber avisos." } } do %><%= icon("trash", "size-4") %><% end %>
+          <%= button_to push_subscription_path(s), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm px-2 text-danger", "aria-label": t("push.remove", name: s.name),
+                        form: { data: { turbo_confirm: t("push.remove_confirm", name: s.name.presence || t("push.this_device").downcase) } } do %><%= icon("trash", "size-4") %><% end %>
         </li>
       <% end %>
       <% @apps.each do |d| %>
         <li class="py-3 flex items-center gap-3 min-w-0">
           <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-field text-muted"><%= icon("cube", "size-5") %></span>
           <div class="min-w-0 flex-1">
-            <p class="font-semibold text-ink">App Minha Automação (<%= d.platform == "ios" ? "iPhone" : "Android" %>)</p>
-            <p class="text-xs text-muted">App nativo · desde <%= l(d.created_at, format: :short) %></p>
+            <p class="font-semibold text-ink"><%= t("push.app", platform: d.platform == "ios" ? "iPhone" : "Android") %></p>
+            <p class="text-xs text-muted"><%= t("push.native", at: l(d.created_at, format: :short)) %></p>
           </div>
         </li>
       <% end %>
     </ul>
   <% else %>
-    <p class="text-sm text-muted mt-2">Nenhum aparelho ainda. Inscreva este navegador acima.</p>
+    <p class="text-sm text-muted mt-2"><%= t("push.none") %></p>
   <% end %>
 </section>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="como-t">
-  <h2 id="como-t">Como receber no celular</h2>
+  <h2 id="como-t"><%= t("push.how") %></h2>
   <ul class="mt-2 grid gap-2 text-sm text-ink-2 list-disc pl-5">
-    <li><strong>Android (Chrome):</strong> abra este endereço pelo acesso externo (https), toque no menu e em "Instalar app" ou "Adicionar à tela inicial". Abra pelo ícone, venha até aqui e toque em "Receber avisos neste aparelho".</li>
-    <li><strong>iPhone (iOS 16.4 ou mais novo):</strong> no Safari, toque em Compartilhar e em "Adicionar à Tela de Início". O push só funciona abrindo pelo ícone da tela inicial; no Safari comum o botão não aparece.</li>
-    <li>O push exige https: pelo endereço da rede de casa (http://192.168...) o navegador não deixa inscrever.</li>
+    <li><%= t("push.how_android_html") %></li>
+    <li><%= t("push.how_ios_html") %></li>
+    <li><%= t("push.how_https") %></li>
   </ul>
 </section>
 <% end %>

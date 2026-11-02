@@ -169,7 +169,7 @@ module DashboardsHelper
   def dw_confirm(p)
     return {} if p["confirm"].blank? && p["risk"] == "normal"
 
-    { turbo_confirm: p["confirm"].presence || "Acionar #{p['name']}?", turbo_confirm_title: Point::RISKS.fetch(p["risk"], "Confirmar") }
+    { turbo_confirm: p["confirm"].presence || t("points.confirm", name: p["name"]), turbo_confirm_title: Point::RISKS.fetch(p["risk"], t("shared.confirm.ok")).to_s }
   end
 
   def dw_number(v, unit = nil)

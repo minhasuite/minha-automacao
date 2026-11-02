@@ -4,8 +4,7 @@ class Area < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  KINDS = { "room" => "Cômodo", "floor" => "Andar", "outdoor" => "Área externa",
-            "line" => "Linha", "cell" => "Célula", "warehouse" => "Depósito" }.freeze
+  KINDS = LocalizedLabel.for("labels.area_kinds", %w[room floor outdoor line cell warehouse])
 
   belongs_to :site
   belongs_to :parent, class_name: "Area", optional: true
@@ -27,6 +26,6 @@ class Area < ApplicationRecord
   def parent_in_same_site
     return unless parent
 
-    errors.add(:parent, "precisa ser deste local") if parent.site_id != site_id || parent_id == id
+    errors.add(:parent, :other_site) if parent.site_id != site_id || parent_id == id
   end
 end

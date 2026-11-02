@@ -22,15 +22,15 @@ module Web
 
     def destroy
       current_user.push_subscriptions.find(params[:id]).destroy!
-      redirect_to push_subscriptions_path, notice: "Aparelho removido."
+      redirect_to push_subscriptions_path, notice: t("notices.push_removed")
     end
 
     def test
-      return redirect_to(push_subscriptions_path, alert: "Push desligado no servidor (faltam as chaves VAPID).") if Push.transports.empty?
+      return redirect_to(push_subscriptions_path, alert: t("notices.push_off")) if Push.transports.empty?
 
       Notifier.notify!(kind: "sistema", user: current_user, title: "Teste de aviso", body: "Se você leu isto no aparelho, o push está funcionando.",
                        data: { "url" => push_subscriptions_path, "tag" => "teste-push" })
-      redirect_to push_subscriptions_path, notice: "Teste enviado para os seus aparelhos."
+      redirect_to push_subscriptions_path, notice: t("notices.push_test")
     end
   end
 end

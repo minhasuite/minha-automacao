@@ -1,5 +1,5 @@
 <div class="ss-card ss-empty">
-  <h1 class="text-ink">Não encontrado</h1>
-  <p class="mt-2">Este registro não existe ou não é da sua empresa.</p>
-  <%= link_to "Voltar ao início", root_path, class: "ss-btn ss-btn-ghost mt-4" %>
+  <h1 class="text-ink"><%= t("shared.not_found") %></h1>
+  <p class="mt-2"><%= t("shared.not_found_hint") %></p>
+  <%= link_to t("shared.back_home"), root_path, class: "ss-btn ss-btn-ghost mt-4" %>
 </div>

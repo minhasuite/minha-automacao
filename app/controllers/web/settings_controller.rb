@@ -44,7 +44,7 @@ module Web
       end
 
       tenant.update!(http_allow_text: params[:http_allow])
-      redirect_to settings_system_path, notice: "Endereços liberados salvos."
+      redirect_to settings_system_path, notice: t("notices.allowed_saved")
     end
 
     def account; end
@@ -69,14 +69,14 @@ module Web
     end
 
     def wipe
-      return redirect_to(settings_system_path, alert: "Digite ZERAR para confirmar.") unless params[:confirm] == "ZERAR"
+      return redirect_to(settings_system_path, alert: t("notices.type_reset")) unless params[:confirm] == "ZERAR"
 
       Accounts::WipeData.call(current_user.tenant)
-      redirect_to settings_system_path, notice: "Dados da instalação apagados."
+      redirect_to settings_system_path, notice: t("notices.data_wiped")
     end
 
     def destroy_account
-      return redirect_to(settings_account_path, alert: "Digite EXCLUIR para confirmar.") unless params[:confirm] == "EXCLUIR"
+      return redirect_to(settings_account_path, alert: t("notices.type_delete")) unless params[:confirm] == "EXCLUIR"
 
       tenant = current_user.tenant
       if tenant.users.where.not(id: current_user.id).exists?
@@ -85,7 +85,7 @@ module Web
         Accounts::DestroyCompany.call(tenant)
       end
       reset_session
-      redirect_to login_path, notice: "Conta excluída."
+      redirect_to login_path, notice: t("notices.account_deleted")
     end
 
     private

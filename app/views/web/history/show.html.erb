@@ -1,76 +1,76 @@
 <% ids = @selected.map(&:id) %>
 <% span = @to - @from %>
 <% now = Time.current %>
-<%= render "web/shared/header", title: "Histórico", subtitle: "Compare pontos no tempo: números em linhas sobrepostas, liga/desliga e estados em faixas." do %>
-  <%= link_to logbook_path(site_id: @site.id), class: "ss-btn ss-btn-ghost" do %><%= icon("view-list", "size-4") %>Diário<% end %>
+<%= render "web/shared/header", title: t("points.show.history"), subtitle: t("history.subtitle") do %>
+  <%= link_to logbook_path(site_id: @site.id), class: "ss-btn ss-btn-ghost" do %><%= icon("view-list", "size-4") %><%= t("logbook.title") %><% end %>
   <% if ids.any? %>
-    <%= link_to history_path(site_id: @site.id, point_ids: ids, from: @from.iso8601, to: @to.iso8601, format: :csv), class: "ss-btn ss-btn-outline", data: { turbo: false } do %><%= icon("download", "size-4") %>Exportar CSV<% end %>
+    <%= link_to history_path(site_id: @site.id, point_ids: ids, from: @from.iso8601, to: @to.iso8601, format: :csv), class: "ss-btn ss-btn-outline", data: { turbo: false } do %><%= icon("download", "size-4") %><%= t("history.csv") %><% end %>
   <% end %>
 <% end %>
 <%= render "web/shared/site_switch", sites: @sites, site: @site, path: history_path %>
 
-<section class="ss-card ss-card-pad hx-toolbar mb-4" aria-label="Período">
-  <nav class="lb-chips" aria-label="Atalhos de período">
+<section class="ss-card ss-card-pad hx-toolbar mb-4" aria-label="<%= t("history.period") %>">
+  <nav class="lb-chips" aria-label="<%= t("history.shortcuts") %>">
     <% Points::Overlay::RANGES.each do |k, d| %>
       <%= link_to Points::Overlay::RANGE_LABELS[k], history_path(site_id: @site.id, point_ids: ids, range: k), class: "ss-chip no-underline",
                   "aria-current": ((span - d).abs < 1.minute && (now - @to) < 1.minute ? "true" : nil) %>
     <% end %>
   </nav>
   <div class="hx-zoom">
-    <%= link_to hx_path(@site, ids, @from - span, @to - span), class: "ss-btn ss-btn-ghost ss-btn-sm", title: "Período anterior", "aria-label": "Período anterior" do %><%= icon("chevron-left", "size-4") %><% end %>
-    <p class="hx-window num"><%= l(@from.in_time_zone(@zone), format: "%d/%m %H:%M") %> <span class="text-muted">até</span> <%= l(@to.in_time_zone(@zone), format: "%d/%m %H:%M") %></p>
+    <%= link_to hx_path(@site, ids, @from - span, @to - span), class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("history.previous"), "aria-label": t("history.previous") do %><%= icon("chevron-left", "size-4") %><% end %>
+    <p class="hx-window num"><%= l(@from.in_time_zone(@zone), format: "%d/%m %H:%M") %> <span class="text-muted"><%= t("history.until") %></span> <%= l(@to.in_time_zone(@zone), format: "%d/%m %H:%M") %></p>
     <% if now - @to > 1.minute %>
-      <%= link_to hx_path(@site, ids, @from + span, [ @to + span, now ].min), class: "ss-btn ss-btn-ghost ss-btn-sm", title: "Próximo período", "aria-label": "Próximo período" do %><%= icon("chevron-right", "size-4") %><% end %>
+      <%= link_to hx_path(@site, ids, @from + span, [ @to + span, now ].min), class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("history.next"), "aria-label": t("history.next") do %><%= icon("chevron-right", "size-4") %><% end %>
     <% else %>
       <span class="ss-btn ss-btn-ghost ss-btn-sm opacity-40" aria-hidden="true"><%= icon("chevron-right", "size-4") %></span>
     <% end %>
     <span class="hx-sep" aria-hidden="true"></span>
-    <%= link_to hx_path(@site, ids, @from + (span / 4), @to - (span / 4)), class: "ss-btn ss-btn-ghost ss-btn-sm", title: "Aproximar" do %><%= icon("zoom-in", "size-4") %><span class="max-sm:sr-only">Aproximar</span><% end %>
-    <%= link_to hx_path(@site, ids, @from - (span / 2), [ @to + (span / 2), now ].min), class: "ss-btn ss-btn-ghost ss-btn-sm", title: "Afastar" do %><%= icon("zoom-out", "size-4") %><span class="max-sm:sr-only">Afastar</span><% end %>
+    <%= link_to hx_path(@site, ids, @from + (span / 4), @to - (span / 4)), class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("history.zoom_in") do %><%= icon("zoom-in", "size-4") %><span class="max-sm:sr-only"><%= t("history.zoom_in") %></span><% end %>
+    <%= link_to hx_path(@site, ids, @from - (span / 2), [ @to + (span / 2), now ].min), class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("history.zoom_out") do %><%= icon("zoom-out", "size-4") %><span class="max-sm:sr-only"><%= t("history.zoom_out") %></span><% end %>
   </div>
   <details class="lb-more">
-    <summary><%= icon("calendar", "size-4") %>Escolher datas</summary>
+    <summary><%= icon("calendar", "size-4") %><%= t("history.pick_dates") %></summary>
     <%= form_with url: history_path, method: :get, class: "hx-dates" do %>
       <%= hidden_field_tag :site_id, @site.id, id: nil %>
       <% ids.each do |id| %><%= hidden_field_tag "point_ids[]", id, id: nil %><% end %>
-      <div><label class="ss-label" for="hx-from">De</label><%= datetime_local_field_tag :from, @from.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "ss-input num", id: "hx-from" %></div>
-      <div><label class="ss-label" for="hx-to">Até</label><%= datetime_local_field_tag :to, @to.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "ss-input num", id: "hx-to" %></div>
-      <button class="ss-btn ss-btn-primary self-end">Aplicar</button>
+      <div><label class="ss-label" for="hx-from"><%= t("history.from") %></label><%= datetime_local_field_tag :from, @from.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "ss-input num", id: "hx-from" %></div>
+      <div><label class="ss-label" for="hx-to"><%= t("history.to") %></label><%= datetime_local_field_tag :to, @to.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "ss-input num", id: "hx-to" %></div>
+      <button class="ss-btn ss-btn-primary self-end"><%= t("points.apply") %></button>
     <% end %>
   </details>
 </section>
 
 <section class="ss-card ss-card-pad mb-4" aria-labelledby="hx-points-title">
   <div class="flex flex-wrap items-center gap-2">
-    <h2 id="hx-points-title" class="mr-2">Pontos</h2>
+    <h2 id="hx-points-title" class="mr-2"><%= t("history.points") %></h2>
     <% @selected.each_with_index do |p, i| %>
       <span class="hx-pill"><span class="hx-dot" style="background: <%= hx_color(i) %>"></span><%= Logbook.point_title(p) %>
-        <%= link_to history_path(site_id: @site.id, point_ids: ids - [ p.id ], from: @from.iso8601, to: @to.iso8601), class: "hx-x", title: "Tirar #{p.name}", "aria-label": "Tirar #{p.name}" do %><%= icon("x", "size-3.5") %><% end %></span>
+        <%= link_to history_path(site_id: @site.id, point_ids: ids - [ p.id ], from: @from.iso8601, to: @to.iso8601), class: "hx-x", title: t("history.remove", name: p.name), "aria-label": t("history.remove", name: p.name) do %><%= icon("x", "size-3.5") %><% end %></span>
     <% end %>
-    <% if @selected.empty? %><span class="text-sm text-muted">Nenhum escolhido ainda.</span><% end %>
+    <% if @selected.empty? %><span class="text-sm text-muted"><%= t("history.none_chosen") %></span><% end %>
   </div>
   <details class="lb-more" <%= "open" if @selected.empty? %>>
-    <summary><%= icon("plus", "size-4") %>Escolher pontos <span class="text-muted font-normal">(até <%= Points::Overlay::MAX %>)</span></summary>
+    <summary><%= icon("plus", "size-4") %><%= t("history.pick_points") %> <span class="text-muted font-normal"><%= t("history.up_to", n: Points::Overlay::MAX) %></span></summary>
     <%= form_with url: history_path, method: :get, data: { controller: "filter" } do %>
       <%= hidden_field_tag :site_id, @site.id, id: nil %>
       <%= hidden_field_tag :from, @from.iso8601, id: nil %><%= hidden_field_tag :to, @to.iso8601, id: nil %>
       <div class="lb-search mt-3">
         <%= icon("search", "size-5 text-muted") %>
-        <input type="search" class="ss-input" placeholder="Filtrar por nome" aria-label="Filtrar pontos" data-filter-target="input" data-action="input->filter#apply">
-        <button class="ss-btn ss-btn-primary">Mostrar</button>
+        <input type="search" class="ss-input" placeholder="<%= t("history.filter_name") %>" aria-label="<%= t("history.filter_points") %>" data-filter-target="input" data-action="input->filter#apply">
+        <button class="ss-btn ss-btn-primary"><%= t("history.show") %></button>
       </div>
-      <% groups = @site.points.where(hidden: false, disabled: false).where.not(capability: %w[stream calendar command]).includes(:device, :area, device: :area).ordered.group_by { |p| p.area&.name || p.device.area&.name || "Sem área" } %>
+      <% groups = @site.points.where(hidden: false, disabled: false).where.not(capability: %w[stream calendar command]).includes(:device, :area, device: :area).ordered.group_by { |p| p.area&.name || p.device.area&.name || t("devices.no_area") } %>
       <div class="hx-pick">
-        <% groups.sort_by { |k, _| k == "Sem área" ? "~" : k }.each do |area, pts| %>
+        <% groups.sort_by { |k, _| k == t("devices.no_area") ? "~" : k }.each do |area, pts| %>
           <fieldset><legend class="ss-section"><%= area %></legend>
             <% pts.each do |p| %>
               <label class="hx-opt" data-filter-target="item"><%= check_box_tag "point_ids[]", p.id, ids.include?(p.id), id: "hx-p-#{p.id}" %>
-                <span class="min-w-0"><span class="block truncate font-semibold text-ink"><%= p.name %></span><span class="block truncate text-xs text-muted"><%= p.device.name %> · <%= p.numeric? ? (p.unit.presence || "número") : "faixas" %></span></span></label>
+                <span class="min-w-0"><span class="block truncate font-semibold text-ink"><%= p.name %></span><span class="block truncate text-xs text-muted"><%= p.device.name %> · <%= p.numeric? ? (p.unit.presence || t("history.number")) : t("history.bands") %></span></span></label>
             <% end %>
           </fieldset>
         <% end %>
       </div>
-      <p class="text-sm text-muted" data-filter-target="empty" hidden>Nenhum ponto com esse nome.</p>
+      <p class="text-sm text-muted" data-filter-target="empty" hidden><%= t("history.no_match") %></p>
     <% end %>
   </details>
 </section>
@@ -80,10 +80,10 @@
   <% ticks = hx_ticks(@from, @to, @zone) %>
   <% @overlay.charts.each do |unit, series| %>
     <% chart = hx_line_chart(series, @from, @to, index) %>
-    <section class="ss-card ss-card-pad mb-4" aria-label="Gráfico <%= unit.presence || 'sem unidade' %>">
+    <section class="ss-card ss-card-pad mb-4" aria-label="<%= t("history.chart", unit: unit.presence || t("history.no_unit").downcase) %>">
       <div class="flex items-center justify-between gap-2 mb-2">
-        <h2><%= unit.presence || "Sem unidade" %></h2>
-        <span class="text-xs text-muted"><%= series.first.resolution == "raw" ? "Leituras" : "Média por #{series.first.resolution == '1h' ? 'hora' : 'dia'} (faixa = mín. a máx.)" %></span>
+        <h2><%= unit.presence || t("history.no_unit") %></h2>
+        <span class="text-xs text-muted"><%= series.first.resolution == "raw" ? t("history.readings") : t(series.first.resolution == "1h" ? "history.hourly" : "history.daily") %></span>
       </div>
       <% if chart %>
         <div class="hx-chart" data-controller="history-chart" data-history-chart-from-value="<%= (@from.to_f * 1000).round %>"
@@ -98,9 +98,9 @@
           </div>
           <div class="hx-axis num"><% ticks.each do |t| %><span><%= t %></span><% end %></div>
         </div>
-        <p class="text-xs text-muted mt-2 max-sm:hidden">Arraste no gráfico para aproximar o trecho.</p>
+        <p class="text-xs text-muted mt-2 max-sm:hidden"><%= t("history.drag") %></p>
       <% else %>
-        <p class="text-sm text-muted">Sem leituras nesse período.</p>
+        <p class="text-sm text-muted"><%= t("history.no_readings") %></p>
       <% end %>
       <ul class="dw-legend mt-3">
         <% series.each do |s| %>
@@ -111,12 +111,12 @@
   <% end %>
   <% if @overlay.timelines.any? %>
     <section class="ss-card ss-card-pad mb-4" aria-labelledby="hx-tl-title">
-      <h2 id="hx-tl-title" class="mb-3">Linha do tempo</h2>
+      <h2 id="hx-tl-title" class="mb-3"><%= t("history.timeline") %></h2>
       <div class="hx-tl">
         <% @overlay.timelines.each do |s| %>
           <div class="hx-tl-row">
             <p class="hx-tl-name"><span class="hx-dot" style="background: <%= hx_color(index[s.point.id]) %>"></span><span class="truncate"><%= Logbook.point_title(s.point) %></span></p>
-            <div class="hx-tl-bar"><%= s.rows.any? ? hx_bands(s, @from, @to) : tag.span("Sem leituras", class: "text-xs text-muted") %></div>
+            <div class="hx-tl-bar"><%= s.rows.any? ? hx_bands(s, @from, @to) : tag.span(t("history.no_readings_short"), class: "text-xs text-muted") %></div>
             <p class="hx-tl-now num"><%= point_value_text(s.point) %></p>
           </div>
         <% end %>
@@ -126,7 +126,7 @@
   <% end %>
 <% else %>
   <div class="ss-card ss-empty">
-    <p class="font-bold text-ink">Escolha os pontos para comparar.</p>
-    <p class="mt-1">Temperatura com o ar ligado, consumo com a bomba, porta com movimento: tudo no mesmo tempo.</p>
+    <p class="font-bold text-ink"><%= t("history.empty") %></p>
+    <p class="mt-1"><%= t("history.empty_hint") %></p>
   </div>
 <% end %>

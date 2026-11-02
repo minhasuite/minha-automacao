@@ -13,7 +13,7 @@ class PointLink < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  MODES = { "mirror" => "Espelhar", "invert" => "Inverter", "trigger" => "Acionar" }.freeze
+  MODES = LocalizedLabel.for("labels.link_modes", %w[mirror invert trigger])
   # Comando do modo trigger por capacidade do destino.
   FIRE = { "onoff" => "on", "gate" => "pulse", "command" => "press" }.freeze
   ECHO_WINDOW = 15.seconds
@@ -26,7 +26,7 @@ class PointLink < ApplicationRecord
   before_validation { self.trigger_value = source_point.cast(trigger_value) if source_point && trigger_value.is_a?(String) }
 
   validates :mode, inclusion: { in: MODES.keys }
-  validates :target_point_id, uniqueness: { scope: :source_point_id, message: "já está ligado a esta origem" }
+  validates :target_point_id, uniqueness: { scope: :source_point_id, message: :already_linked }
   validate :points_fit
   validate :no_cycle
 
@@ -71,15 +71,15 @@ class PointLink < ApplicationRecord
   def points_fit
     return unless source_point && target_point
 
-    errors.add(:target_point, "precisa ser outro ponto") if source_point_id == target_point_id
-    errors.add(:target_point, "precisa ser deste local") if target_point.site_id != site_id || source_point.site_id != site_id
+    errors.add(:target_point, :other_point) if source_point_id == target_point_id
+    errors.add(:target_point, :other_site) if target_point.site_id != site_id || source_point.site_id != site_id
     if mode == "trigger"
-      errors.add(:target_point, "precisa ser liga/desliga, portão ou botão") unless FIRE.key?(target_point.capability) && target_point.writable
-      errors.add(:bidirectional, "só vale para espelhar ou inverter") if bidirectional
+      errors.add(:target_point, :fire_target) unless FIRE.key?(target_point.capability) && target_point.writable
+      errors.add(:bidirectional, :mirror_only) if bidirectional
     else
-      errors.add(:source_point, "precisa ser liga/desliga ou sensor") unless source_point.bool?
-      errors.add(:target_point, "precisa ser liga/desliga e receber comando") unless target_point.capability == "onoff" && target_point.writable
-      errors.add(:bidirectional, "exige origem liga/desliga") if bidirectional && !(source_point.capability == "onoff" && source_point.writable)
+      errors.add(:source_point, :onoff_or_sensor) unless source_point.bool?
+      errors.add(:target_point, :onoff_writable) unless target_point.capability == "onoff" && target_point.writable
+      errors.add(:bidirectional, :onoff_source) if bidirectional && !(source_point.capability == "onoff" && source_point.writable)
     end
   end
 
@@ -96,7 +96,7 @@ class PointLink < ApplicationRecord
     seen = Set.new
     stack = [ target_point_id ]
     while (node = stack.pop)
-      return errors.add(:base, "Forma um laço com outro espelhamento deste local.") if node == source_point_id
+      return errors.add(:base, :link_loop) if node == source_point_id
       next unless seen.add?(node)
 
       stack.concat(edges[node])

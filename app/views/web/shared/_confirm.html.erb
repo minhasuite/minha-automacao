@@ -3,11 +3,11 @@
   <form method="dialog" class="p-6">
     <div class="flex gap-4">
       <span class="grid place-items-center size-11 shrink-0 rounded-2xl bg-warn-soft text-warn"><%= icon("exclamation-circle") %></span>
-      <div><p class="font-bold text-lg" data-title>Tem certeza?</p><p class="mt-1 text-ink-2" data-message></p></div>
+      <div><p class="font-bold text-lg" data-title><%= t("shared.confirm.title") %></p><p class="mt-1 text-ink-2" data-message></p></div>
     </div>
     <div class="mt-6 flex justify-end gap-2">
-      <button value="cancel" class="ss-btn ss-btn-ghost" autofocus>Voltar</button>
-      <button value="ok" class="ss-btn ss-btn-primary">Confirmar</button>
+      <button value="cancel" class="ss-btn ss-btn-ghost" autofocus><%= t("shared.confirm.back") %></button>
+      <button value="ok" class="ss-btn ss-btn-primary"><%= t("shared.confirm.ok") %></button>
     </div>
   </form>
 </dialog>

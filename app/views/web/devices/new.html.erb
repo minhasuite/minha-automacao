@@ -1,2 +1,2 @@
-<%= render "web/shared/header", title: "Novo dispositivo", subtitle: @site.name, back: (@device.area ? area_path(@device.area) : site_path(@site)) %>
+<%= render "web/shared/header", title: t("devices.new"), subtitle: @site.name, back: (@device.area ? area_path(@device.area) : site_path(@site)) %>
 <%= render "web/devices/form", site: @site, device: @device %>

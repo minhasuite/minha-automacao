@@ -41,12 +41,12 @@ module Web
         SiteMembership.create!(site: site, user: user, role: p[:site_role]) if site && p[:site_role].present?
         user
       end
-      redirect_to person_path(person), notice: "#{person.name} pode entrar com o e-mail e a senha que você definiu."
+      redirect_to person_path(person), notice: t("notices.person_created", name: person.name)
     end
 
     def update
       @person.update!(role: params.require(:person)[:role].presence_in(User::ROLES - %w[owner]) || @person.role)
-      redirect_to person_path(@person), notice: "Papel atualizado."
+      redirect_to person_path(@person), notice: t("notices.role_updated")
     end
 
     # Papel por local: { roles: { site_id => papel | "" (sem acesso) } }.
@@ -63,7 +63,7 @@ module Web
           SiteMembership.create!(site: site, user: @person, role: role)
         end
       end
-      redirect_to person_path(@person), notice: "Locais atualizados."
+      redirect_to person_path(@person), notice: t("notices.sites_updated")
     end
 
     def toggle
@@ -73,7 +73,7 @@ module Web
 
     def destroy
       @person.destroy!
-      redirect_to people_path, notice: "#{@person.name} foi removida da instalação."
+      redirect_to people_path, notice: t("notices.person_removed", name: @person.name)
     end
 
     private
@@ -81,11 +81,11 @@ module Web
     def load_person = @person = current_user.tenant.users.find(params[:id])
 
     def require_admin!
-      redirect_to root_path, alert: "Só administrador ou dono vê as pessoas." unless current_user.admin?
+      redirect_to root_path, alert: t("notices.people_admin_only") unless current_user.admin?
     end
 
     def protect_owner!
-      redirect_to person_path(@person), alert: "O dono não pode ser alterado, desativado nem removido aqui." if @person.owner? || @person == current_user
+      redirect_to person_path(@person), alert: t("notices.owner_locked") if @person.owner? || @person == current_user
     end
   end
 end

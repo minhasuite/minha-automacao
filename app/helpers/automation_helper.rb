@@ -1,11 +1,8 @@
 # Telas das primitivas de automação (F4).
 module AutomationHelper
-  COMMAND_CHOICES = { "Ligar" => "on", "Desligar" => "off", "Alternar" => "toggle", "Pulsar (portão)" => "pulse",
-                      "Apertar (botão)" => "press", "Ajustar valor" => "set", "Selecionar opção" => "select",
-                      "Iniciar limpeza (robô)" => "start", "Pausar (robô)" => "pause", "Parar (robô)" => "stop",
-                      "Voltar à base (robô)" => "home", "Lavar o pano (robô)" => "wash_mop", "Secar o pano (robô)" => "dry_mop",
-                      "Esvaziar (robô)" => "empty", "Anunciar (Echo)" => "announce", "Falar (Echo)" => "speak", "Rotina da Alexa (Echo)" => "routine",
-                      "Executar (script)" => "run" }.freeze
+  # rótulo (no idioma da tela) → comando.
+  COMMAND_CHOICES = %w[on off toggle pulse press set select start pause stop home wash_mop dry_mop empty announce speak routine run]
+                    .to_h { |c| [ LocalizedLabel.new("labels.command_choices.#{c}"), c ] }.freeze
 
   def point_choices(site, writable: false)
     scope = site.points.includes(:device).ordered
@@ -36,28 +33,28 @@ module AutomationHelper
 
   def link_detail(link)
     parts = [ link.mode_label ]
-    parts << "nos dois sentidos" if link.bidirectional
-    parts << "quando ficar #{point_value_label(link.source_point, link.trigger_value.nil? || link.trigger_value)}" if link.mode == "trigger"
+    parts << t("rules.both_ways") if link.bidirectional
+    parts << t("rules.when_becomes", value: point_value_label(link.source_point, link.trigger_value.nil? || link.trigger_value)) if link.mode == "trigger"
     parts.join(" · ")
   end
 
   def schedule_detail(schedule)
-    action = schedule.scene ? "cena #{schedule.scene.name}" : [ command_label(schedule.command), schedule.value, schedule.point.name ].compact.join(" ")
+    action = schedule.scene ? t("rules.scene", name: schedule.scene.name) : [ command_label(schedule.command), schedule.value, schedule.point.name ].compact.join(" ")
     "#{schedule.when_label} · #{action}"
   end
 
   def notify_detail(rule)
-    on = rule.to_value.nil? ? "a cada mudança" : "quando ficar #{point_value_label(rule.point, rule.to_value)}"
+    on = rule.to_value.nil? ? t("rules.every_change") : t("rules.when_becomes", value: point_value_label(rule.point, rule.to_value))
     "#{on} · #{channels_label(rule.channels)}"
   end
 
   def alert_rule_detail(rule)
     value = rule.value.is_a?(Numeric) ? rule.value : point_value_label(rule.point, rule.value)
     cond = "#{rule.point.name} #{rule.operator_label} #{value}"
-    cond += " por #{rule.for_min} min" if rule.for_s.positive?
-    repeat = rule.repeat_s ? ", repete a cada #{rule.repeat_min} min" : ""
-    "#{cond} · #{rule.severity_label} · #{count_label(rule.escalation.size, 'etapa', 'etapas')}#{repeat}"
+    cond += " #{t('rules.for_min', n: rule.for_min)}" if rule.for_s.positive?
+    repeat = rule.repeat_s ? t("rules.repeat", n: rule.repeat_min) : ""
+    "#{cond} · #{rule.severity_label} · #{t('rules.steps', count: rule.escalation.size)}#{repeat}"
   end
 
-  def channels_label(channels) = channels.map { |c| Notifier.channel_label(c) }.join(" e ").downcase
+  def channels_label(channels) = channels.map { |c| Notifier.channel_label(c) }.join(t("rules.and")).downcase
 end

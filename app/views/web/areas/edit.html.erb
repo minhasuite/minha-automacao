@@ -1,7 +1,7 @@
-<%= render "web/shared/header", title: "Editar área", subtitle: "#{@area.name} · #{@site.name}", back: area_path(@area) %>
+<%= render "web/shared/header", title: t("areas.edit.title"), subtitle: "#{@area.name} · #{@site.name}", back: area_path(@area) %>
 <%= render "web/areas/form", site: @site, area: @area %>
 <section class="ss-card ss-card-pad mt-4 max-w-3xl">
-  <h2>Excluir área</h2>
-  <p class="text-sm text-muted mt-1">Os dispositivos dela continuam no local, sem área.</p>
-  <%= button_to area_path(@area), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm: "Excluir a área #{@area.name}?" } } do %><%= icon("trash", "size-4") %>Excluir área<% end %>
+  <h2><%= t("areas.edit.delete") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("areas.edit.delete_hint") %></p>
+  <%= button_to area_path(@area), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm: t("areas.edit.delete_confirm", name: @area.name) } } do %><%= icon("trash", "size-4") %><%= t("areas.edit.delete") %><% end %>
 </section>

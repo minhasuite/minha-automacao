@@ -18,10 +18,10 @@
         <p class="text-xs text-muted truncate"><%= point.capability_label %><%= " · #{point.risk_label}" unless point.risk == "normal" %></p>
       </div>
       <% if can?(:manage) %>
-        <%= link_to edit_point_path(point), data: { turbo_frame: "_top" }, class: "grid place-items-center size-8 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", title: "Editar ponto", "aria-label": "Editar #{point.name}" do %><%= icon("pencil", "size-4") %><% end %>
+        <%= link_to edit_point_path(point), data: { turbo_frame: "_top" }, class: "grid place-items-center size-8 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", title: t("points.edit.title"), "aria-label": t("shared.edit_name", name: point.name) do %><%= icon("pencil", "size-4") %><% end %>
       <% end %>
     </div>
-    <p class="text-xl sm:text-2xl font-bold <%= off_line ? "text-danger" : (point.value.is_a?(Numeric) ? "num text-ink" : (point.value.nil? ? "text-muted" : "text-ink")) %>" aria-live="polite"><%= off_line ? "Sem sinal" : point_value_text(point) %></p>
+    <p class="text-xl sm:text-2xl font-bold <%= off_line ? "text-danger" : (point.value.is_a?(Numeric) ? "num text-ink" : (point.value.nil? ? "text-muted" : "text-ink")) %>" aria-live="polite"><%= off_line ? t("points.no_signal") : point_value_text(point) %></p>
     <% if (note = point_status_note(point)) %><p class="-mt-2 text-xs text-muted"><%= note %></p><% end %>
     <% if error %><p class="text-sm font-semibold text-danger" role="alert"><%= error %></p><% end %>
     <% if point.writable && !point.disabled && Points::Command.commands_for(point).any? && can?(:command, risk: point.risk) %>
@@ -29,14 +29,14 @@
       <% if point.helper_type %>
         <%= render "web/points/control", point: point %>
       <% elsif point.capability == "onoff" %>
-        <%= button_to command_point_path(point), params: { command: on ? "off" : "on" }, class: "ss-btn #{on ? 'ss-btn-outline' : 'ss-btn-primary'} w-full", form: { data: confirm }, "aria-pressed": on do %><%= icon(on ? "x-circle" : "lightning-bolt", "size-4") %><%= on ? "Desligar" : "Ligar" %><% end %>
+        <%= button_to command_point_path(point), params: { command: on ? "off" : "on" }, class: "ss-btn #{on ? 'ss-btn-outline' : 'ss-btn-primary'} w-full", form: { data: confirm }, "aria-pressed": on do %><%= icon(on ? "x-circle" : "lightning-bolt", "size-4") %><%= on ? t("points.turn_off") : t("points.turn_on") %><% end %>
       <% elsif point.capability.in?(%w[gate command]) %>
-        <%= button_to command_point_path(point), params: { command: point.capability == "gate" ? "pulse" : "press" }, class: "ss-btn ss-btn-primary w-full", form: { data: confirm } do %><%= icon("lightning-bolt", "size-4") %>Acionar<% end %>
+        <%= button_to command_point_path(point), params: { command: point.capability == "gate" ? "pulse" : "press" }, class: "ss-btn ss-btn-primary w-full", form: { data: confirm } do %><%= icon("lightning-bolt", "size-4") %><%= t("points.fire") %><% end %>
       <% else %>
         <%= form_with url: command_point_path(point), class: "flex gap-2", data: confirm do |f| %>
           <%= f.hidden_field :command, value: point.capability == "enum" ? "select" : "set", id: nil %>
           <% field_id = "value_#{point.id}" %>
-          <label for="<%= field_id %>" class="sr-only">Novo valor de <%= point.name %></label>
+          <label for="<%= field_id %>" class="sr-only"><%= t("points.new_value", name: point.name) %></label>
           <% if point.capability == "enum" %>
             <%= f.select :value, point.option_values, { selected: point.value }, class: "ss-input flex-1 min-w-0", id: field_id %>
           <% elsif point.capability == "color" %>
@@ -46,11 +46,11 @@
           <% else %>
             <%= f.text_field :value, value: point.value, maxlength: 255, class: "ss-input flex-1 min-w-0", id: field_id %>
           <% end %>
-          <%= f.submit "Aplicar", class: "ss-btn ss-btn-primary" %>
+          <%= f.submit t("points.apply"), class: "ss-btn ss-btn-primary" %>
         <% end %>
       <% end %>
     <% elsif point.writable && !point.disabled && Points::Command.commands_for(point).empty? %>
-      <p class="text-xs text-muted">O controle deste tipo chega com os drivers.</p>
+      <p class="text-xs text-muted"><%= t("points.no_control") %></p>
     <% end %>
   </div>
   <% end %>

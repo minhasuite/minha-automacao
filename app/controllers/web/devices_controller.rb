@@ -2,8 +2,7 @@ module Web
   # Dispositivos do local: lista no estilo do HA (filtros, busca, ações em
   # massa) e a página do dispositivo com pontos, diagnóstico e onde é usado.
   class DevicesController < ApplicationController
-    BULK = { "area" => "Mover para a área", "poll_on" => "Ligar a leitura periódica", "poll_off" => "Desligar a leitura periódica",
-             "remove" => "Remover" }.freeze
+    BULK = LocalizedLabel.for("labels.device_bulk", %w[area poll_on poll_off remove])
 
     def index
       @site = Site.find(params[:site_id])
@@ -28,7 +27,7 @@ module Web
       authorize_site!(@site, :manage)
       devices = @site.devices.where(id: Array(params[:ids]))
       back = site_devices_path(@site, **params.permit(:integracao, :area, :situacao, :q).to_h.symbolize_keys)
-      return redirect_to(back, alert: "Escolha ao menos um dispositivo.") if devices.none?
+      return redirect_to(back, alert: t("notices.choose_device")) if devices.none?
 
       count = devices.count
       case params[:acao]
@@ -36,9 +35,9 @@ module Web
       when "poll_on" then devices.update_all(poll_s: 1800)
       when "poll_off" then devices.update_all(poll_s: 0)
       when "remove" then devices.find_each(&:destroy!)
-      else return redirect_to(back, alert: "Escolha a ação.")
+      else return redirect_to(back, alert: t("notices.choose_action"))
       end
-      redirect_to back, notice: "#{BULK[params[:acao]]}: #{count} dispositivo(s)."
+      redirect_to back, notice: t("notices.bulk_done", action: BULK[params[:acao]], count: count)
     end
 
     def show
@@ -51,10 +50,10 @@ module Web
     # "Reconectar": uma leitura pela fila; Tuya tenta as outras versões do protocolo.
     def reconnect
       load_for(:command, risk: "sensitive")
-      return redirect_to(@device, alert: "Este dispositivo não tem leitura.") unless Polling.supported?(@device)
+      return redirect_to(@device, alert: t("notices.no_reading")) unless Polling.supported?(@device)
 
       PollDeviceJob.perform_later(@device.id, reconnect: true)
-      redirect_to @device, notice: "Reconectando. O resultado aparece no diagnóstico em instantes."
+      redirect_to @device, notice: t("notices.reconnecting")
     end
 
     def new
@@ -69,7 +68,7 @@ module Web
       @device = @site.devices.new(device_params)
       return render(:new, status: :unprocessable_content) unless @device.save
 
-      redirect_to @device, notice: "Dispositivo criado. Adicione os pontos dele."
+      redirect_to @device, notice: t("notices.device_created")
     end
 
     def edit = load_for(:manage)
@@ -78,23 +77,23 @@ module Web
       load_for(:manage)
       return render(:edit, status: :unprocessable_content) unless @device.update(device_params)
 
-      redirect_to @device, notice: "Dispositivo atualizado."
+      redirect_to @device, notice: t("notices.device_updated")
     end
 
     def destroy
       load_for(:manage)
       @device.destroy!
-      redirect_to(@device.area || @site, notice: "Dispositivo excluído.")
+      redirect_to(@device.area || @site, notice: t("notices.device_deleted"))
     end
 
     # "Atualizar agora": uma leitura fora da vez, pela fila (só leitura).
     # Operador para cima (quem pode mandar comando sensível).
     def refresh
       load_for(:command, risk: "sensitive")
-      return redirect_to(@device, alert: "Este dispositivo não tem leitura.") unless Polling.supported?(@device)
+      return redirect_to(@device, alert: t("notices.no_reading")) unless Polling.supported?(@device)
 
       PollDeviceJob.perform_later(@device.id)
-      redirect_to @device, notice: "Leitura pedida. Os valores chegam em instantes."
+      redirect_to @device, notice: t("notices.read_requested")
     end
 
     private

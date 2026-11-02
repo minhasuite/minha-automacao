@@ -1,47 +1,47 @@
 <% owner = current_user.owner? %>
 <% locked = !owner || @person.owner? || @person == current_user %>
 <%= render "web/shared/header", title: @person.name, subtitle: "#{@person.email} · #{@person.role_label}", back: people_path,
-                                badge: tag.span(@person.disabled? ? "Desativada" : "Ativa", class: "ss-badge ss-badge-#{@person.disabled? ? 'danger' : 'success'}") %>
+                                badge: tag.span(@person.disabled? ? t("people.disabled") : t("people.active"), class: "ss-badge ss-badge-#{@person.disabled? ? 'danger' : 'success'}") %>
 <%= render layout: "web/settings/frame", locals: { current: :people } do %>
 <section class="ss-card ss-card-pad" aria-labelledby="papel-t">
-  <h2 id="papel-t">Papel na instalação</h2>
-  <p class="text-sm text-muted mt-1">Dono e administrador mandam em todos os locais. Membro só entra nos locais abaixo, com o papel de cada um.</p>
+  <h2 id="papel-t"><%= t("people.install_role") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("people.role_hint") %></p>
   <% if locked %>
     <p class="mt-3"><span class="ss-badge ss-badge-accent"><%= @person.role_label %></span></p>
   <% else %>
     <%= form_with scope: :person, url: person_path(@person), method: :patch, class: "mt-3 flex flex-wrap items-end gap-2" do |f| %>
-      <div><%= f.label :role, "Papel", class: "ss-label" %><%= f.select :role, User::ROLES.excluding("owner").map { |r| [ User::ROLE_LABELS[r], r ] }, { selected: @person.role }, class: "ss-input" %></div>
-      <%= f.submit "Salvar papel", class: "ss-btn ss-btn-ghost" %>
+      <div><%= f.label :role, t("people.role"), class: "ss-label" %><%= f.select :role, User::ROLES.excluding("owner").map { |r| [ User::ROLE_LABELS[r], r ] }, { selected: @person.role }, class: "ss-input" %></div>
+      <%= f.submit t("people.save_role"), class: "ss-btn ss-btn-ghost" %>
     <% end %>
   <% end %>
 </section>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="locais-t">
-  <h2 id="locais-t">Papel em cada local</h2>
+  <h2 id="locais-t"><%= t("people.per_site") %></h2>
   <% if @person.admin? %>
-    <p class="text-sm text-muted mt-1">Como <%= @person.role_label.downcase %>, é dono em todos os locais.</p>
+    <p class="text-sm text-muted mt-1"><%= t("people.admin_everywhere", role: @person.role_label.downcase) %></p>
   <% else %>
     <%= form_with url: sites_person_path(@person), method: :patch, class: "mt-3" do %>
       <ul class="divide-y divide-line">
         <% @sites.each do |s| %>
           <li class="py-2 flex flex-wrap items-center justify-between gap-3">
             <label for="role-<%= s.id %>" class="font-semibold text-ink"><%= s.name %> <span class="text-xs text-muted font-normal"><%= s.kind_label %></span></label>
-            <%= select_tag "roles[#{s.id}]", options_for_select([ [ "Sem acesso", "" ] ] + SiteMembership::ROLES.map { |r| [ SiteMembership.role_label(r), r ] }, @memberships[s.id]&.role),
+            <%= select_tag "roles[#{s.id}]", options_for_select([ [ t("people.no_access"), "" ] ] + SiteMembership::ROLES.map { |r| [ SiteMembership.role_label(r), r ] }, @memberships[s.id]&.role),
                            class: "ss-input w-44", id: "role-#{s.id}", disabled: !owner %>
           </li>
         <% end %>
       </ul>
-      <% if owner %><div class="mt-3"><%= submit_tag "Salvar locais", class: "ss-btn ss-btn-primary", name: nil %></div><% end %>
+      <% if owner %><div class="mt-3"><%= submit_tag t("people.save_sites"), class: "ss-btn ss-btn-primary", name: nil %></div><% end %>
     <% end %>
   <% end %>
 </section>
 
 <% unless locked %>
-  <section class="ss-card ss-card-pad mt-4 flex flex-wrap gap-2" aria-label="Ações">
-    <%= button_to toggle_person_path(@person), class: "ss-btn ss-btn-outline", form: { data: { turbo_confirm: @person.disabled? ? "Reativar #{@person.name}?" : "Desativar #{@person.name}? A pessoa sai da web e do app na hora." } } do %>
-      <%= icon(@person.disabled? ? "check-circle" : "minus-circle", "size-4") %><%= @person.disabled? ? "Reativar" : "Desativar" %>
+  <section class="ss-card ss-card-pad mt-4 flex flex-wrap gap-2" aria-label="<%= t("people.actions") %>">
+    <%= button_to toggle_person_path(@person), class: "ss-btn ss-btn-outline", form: { data: { turbo_confirm: @person.disabled? ? t("people.enable_confirm", name: @person.name) : t("people.disable_confirm", name: @person.name) } } do %>
+      <%= icon(@person.disabled? ? "check-circle" : "minus-circle", "size-4") %><%= @person.disabled? ? t("people.enable") : t("people.disable") %>
     <% end %>
-    <%= button_to person_path(@person), method: :delete, class: "ss-btn ss-btn-danger", form: { data: { turbo_confirm: "Remover #{@person.name} da instalação? A conta é apagada.", turbo_confirm_button: "Remover" } } do %><%= icon("trash", "size-4") %>Remover<% end %>
+    <%= button_to person_path(@person), method: :delete, class: "ss-btn ss-btn-danger", form: { data: { turbo_confirm: t("people.remove_confirm", name: @person.name), turbo_confirm_button: t("people.remove") } } do %><%= icon("trash", "size-4") %><%= t("people.remove") %><% end %>
   </section>
 <% end %>
 <% end %>

@@ -6,6 +6,6 @@
   </div>
   <div class="min-w-0">
     <p class="font-bold text-lg text-ink truncate"><%= site.name %></p>
-    <p class="text-sm text-muted"><%= count_label(site.areas.size, "área", "áreas") %> · <%= count_label(site.devices.size, "dispositivo", "dispositivos") %></p>
+    <p class="text-sm text-muted"><%= t("shared.count.areas", count: site.areas.size) %> · <%= t("shared.count.devices", count: site.devices.size) %></p>
   </div>
 <% end %>

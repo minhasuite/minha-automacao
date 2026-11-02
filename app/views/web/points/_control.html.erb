@@ -8,36 +8,36 @@
   <div class="flex flex-wrap items-center justify-end gap-2">
     <% if cmds.include?("toggle") %>
       <% on = point_on?(point) %>
-      <%= button_to command_point_path(point), params: { command: "toggle" }, class: "ss-switch", form: { data: confirm }, "aria-pressed": on.to_s, "aria-label": "#{on ? 'Desligar' : 'Ligar'} #{point.name}", title: on ? "Desligar" : "Ligar" do %><% end %>
+      <%= button_to command_point_path(point), params: { command: "toggle" }, class: "ss-switch", form: { data: confirm }, "aria-pressed": on.to_s, "aria-label": "#{on ? t('points.turn_off') : t('points.turn_on')} #{point.name}", title: on ? t("points.turn_off") : t("points.turn_on") do %><% end %>
     <% elsif cmds.include?("run") %>
-      <%= button_to command_point_path(point), params: { command: "run" }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: confirm } do %><%= icon("play", "size-4") %>Executar<% end %>
+      <%= button_to command_point_path(point), params: { command: "run" }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: confirm } do %><%= icon("play", "size-4") %><%= t("points.run") %><% end %>
     <% elsif cmds.include?("press") %>
-      <%= button_to command_point_path(point), params: { command: "press" }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: confirm } do %><%= icon("lightning-bolt", "size-4") %>Apertar<% end %>
+      <%= button_to command_point_path(point), params: { command: "press" }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: confirm } do %><%= icon("lightning-bolt", "size-4") %><%= t("points.press") %><% end %>
     <% elsif cmds.include?("select") %>
       <%= form_with url: command_point_path(point), data: confirm do %>
         <%= hidden_field_tag :command, "select", id: nil %>
-        <label for="<%= fid %>" class="sr-only">Escolher <%= point.name %></label>
+        <label for="<%= fid %>" class="sr-only"><%= t("points.choose", name: point.name) %></label>
         <%= select_tag :value, options_for_select(point.option_values, point.value), id: fid, class: "ss-input !py-1.5 min-w-36", data: { autosubmit: true } %>
       <% end %>
     <% elsif cmds.include?("set") && point.numeric? && point.address["mode"] != "box" && point.min && point.max %>
       <%= form_with url: command_point_path(point), data: confirm, class: "flex items-center gap-2" do %>
         <%= hidden_field_tag :command, "set", id: nil %>
-        <label for="<%= fid %>" class="sr-only">Ajustar <%= point.name %></label>
+        <label for="<%= fid %>" class="sr-only"><%= t("points.adjust", name: point.name) %></label>
         <input type="range" id="<%= fid %>" name="value" class="dw-range w-36 sm:w-48" data-autosubmit min="<%= point.min %>" max="<%= point.max %>" step="<%= point.step || 'any' %>" value="<%= point.value %>">
       <% end %>
     <% elsif cmds.include?("set") && actions.empty? %>
       <%= form_with url: command_point_path(point), data: confirm, class: "flex items-center gap-2" do %>
         <%= hidden_field_tag :command, "set", id: nil %>
-        <label for="<%= fid %>" class="sr-only">Novo valor de <%= point.name %></label>
+        <label for="<%= fid %>" class="sr-only"><%= t("points.new_value", name: point.name) %></label>
         <% type = point_input_type(point) %>
         <input type="<%= type %>" id="<%= fid %>" name="value" class="ss-input !py-1.5 <%= type == 'number' ? 'num w-28' : 'w-44' %>" <%= "required" unless type.in?(%w[text password]) %>
                value="<%= point.value unless type == 'password' %>" <% if type == "number" %>min="<%= point.min %>" max="<%= point.max %>" step="<%= point.step || 'any' %>"<% end %>
                <% if type.in?(%w[text password]) %>maxlength="<%= (point.max || 255).to_i %>"<% end %>>
-        <button class="ss-btn ss-btn-ghost ss-btn-sm" title="Aplicar" aria-label="Aplicar <%= point.name %>"><%= icon("check", "size-4") %></button>
+        <button class="ss-btn ss-btn-ghost ss-btn-sm" title="<%= t("points.apply") %>" aria-label="<%= t("points.apply") %> <%= point.name %>"><%= icon("check", "size-4") %></button>
       <% end %>
     <% end %>
     <% if actions.any? %>
-      <span class="ss-step" role="group" aria-label="Ações de <%= point.name %>">
+      <span class="ss-step" role="group" aria-label="<%= t("points.actions", name: point.name) %>">
         <% actions.each do |c| %>
           <% ico, label = PointsHelper::ACTION_BUTTONS.fetch(c, [ "lightning-bolt", c ]) %>
           <%= button_to command_point_path(point), params: { command: c }, form: { data: confirm }, title: label, "aria-label": "#{label} #{point.name}" do %><%= icon(ico, "size-4") %><% end %>

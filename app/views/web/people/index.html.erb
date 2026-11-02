@@ -1,30 +1,30 @@
 <% owner = current_user.owner? %>
 <% role_opts = User::ROLES.excluding("owner").map { |r| [ User::ROLE_LABELS[r], r ] } %>
 <% site_role_opts = SiteMembership::ROLES.excluding("owner").map { |r| [ SiteMembership.role_label(r), r ] } %>
-<%= render "web/shared/header", title: "Configurações", subtitle: "Pessoas: quem entra nesta instalação e o que pode em cada local." %>
+<%= render "web/shared/header", title: t("settings.title"), subtitle: t("people.subtitle") %>
 <%= render layout: "web/settings/frame", locals: { current: :people } do %>
 <% if @invite_url %>
   <section class="ss-card ss-card-grad p-4 mb-4" role="status" aria-labelledby="link-t">
-    <h2 id="link-t" class="flex items-center gap-2"><%= icon("link", "size-4") %>Link de convite</h2>
-    <p class="text-sm text-muted mt-1">Copie e mande para a pessoa. Ele aparece só agora, vale 7 dias e uma vez só.</p>
+    <h2 id="link-t" class="flex items-center gap-2"><%= icon("link", "size-4") %><%= t("people.invite_link") %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("people.invite_link_hint") %></p>
     <div class="mt-3 flex gap-2" data-controller="clipboard">
-      <label for="invite-url" class="sr-only">Link do convite</label>
+      <label for="invite-url" class="sr-only"><%= t("people.invite_link_label") %></label>
       <input id="invite-url" class="ss-input num" value="<%= @invite_url %>" readonly data-clipboard-target="source">
-      <button type="button" class="ss-btn ss-btn-primary" data-action="clipboard#copy"><%= icon("duplicate", "size-4") %>Copiar</button>
+      <button type="button" class="ss-btn ss-btn-primary" data-action="clipboard#copy"><%= icon("duplicate", "size-4") %><%= t("people.copy") %></button>
     </div>
   </section>
 <% end %>
 
-<section class="ss-card overflow-x-auto" aria-label="Pessoas">
+<section class="ss-card overflow-x-auto" aria-label="<%= t("maps.people") %>">
   <table class="ss-table">
-    <thead><tr><th>Pessoa</th><th class="hidden sm:table-cell">Papel</th><th class="hidden md:table-cell">Locais</th><th>Situação</th></tr></thead>
+    <thead><tr><th><%= t("logbook.person") %></th><th class="hidden sm:table-cell"><%= t("people.role") %></th><th class="hidden md:table-cell"><%= t("sites.index.title") %></th><th><%= t("devices.status") %></th></tr></thead>
     <tbody>
       <% @people.each do |u| %>
         <tr>
-          <td><%= link_to person_path(u), class: "no-underline text-ink hover:text-accent" do %><span class="block font-semibold"><%= u.name %><%= " (você)" if u == current_user %></span><span class="block text-xs text-muted break-all"><%= u.email %></span><% end %></td>
+          <td><%= link_to person_path(u), class: "no-underline text-ink hover:text-accent" do %><span class="block font-semibold"><%= u.name %><%= " (#{t('people.you')})" if u == current_user %></span><span class="block text-xs text-muted break-all"><%= u.email %></span><% end %></td>
           <td class="hidden sm:table-cell"><span class="ss-badge"><%= u.role_label %></span></td>
-          <td class="hidden md:table-cell text-ink-2"><%= u.admin? ? "Todos" : count_label(SiteMembership.active.where(user_id: u.id).count, "local", "locais") %></td>
-          <td><span class="ss-badge ss-badge-<%= u.disabled? ? 'danger' : 'success' %>"><%= u.disabled? ? "Desativada" : "Ativa" %></span></td>
+          <td class="hidden md:table-cell text-ink-2"><%= u.admin? ? t("logbook.all") : t("people.sites", count: SiteMembership.active.where(user_id: u.id).count) %></td>
+          <td><span class="ss-badge ss-badge-<%= u.disabled? ? 'danger' : 'success' %>"><%= u.disabled? ? t("people.disabled") : t("people.active") %></span></td>
         </tr>
       <% end %>
     </tbody>
@@ -34,35 +34,35 @@
 <% if owner %>
   <div class="mt-4 grid gap-4 xl:grid-cols-2">
     <section class="ss-card ss-card-pad" aria-labelledby="nova-t">
-      <h2 id="nova-t">Criar a conta</h2>
-      <p class="text-sm text-muted mt-1">Você define o e-mail e a senha inicial e passa para a pessoa.</p>
+      <h2 id="nova-t"><%= t("people.create_title") %></h2>
+      <p class="text-sm text-muted mt-1"><%= t("people.create_hint") %></p>
       <%= form_with scope: :person, url: people_path, class: "mt-3 grid gap-3 sm:grid-cols-2" do |f| %>
-        <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true %></div>
-        <div><%= f.label :email, "E-mail", class: "ss-label" %><%= f.email_field :email, class: "ss-input", required: true, autocomplete: "off" %></div>
-        <div><%= f.label :password, "Senha inicial (mínimo 8)", class: "ss-label" %><%= f.password_field :password, class: "ss-input", required: true, minlength: 8, autocomplete: "new-password" %></div>
-        <div><%= f.label :role, "Papel na instalação", class: "ss-label" %><%= f.select :role, role_opts, { selected: "member" }, class: "ss-input" %></div>
-        <div><%= f.label :site_id, "Local", class: "ss-label" %><%= f.select :site_id, @sites.map { |s| [ s.name, s.id ] }, { include_blank: "Nenhum por enquanto" }, class: "ss-input" %></div>
-        <div><%= f.label :site_role, "Papel no local", class: "ss-label" %><%= f.select :site_role, site_role_opts, { selected: "resident" }, class: "ss-input" %></div>
-        <div class="sm:col-span-2"><%= f.submit "Criar conta", class: "ss-btn ss-btn-primary" %></div>
+        <div><%= f.label :name, t("sites.form.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true %></div>
+        <div><%= f.label :email, t("people.email"), class: "ss-label" %><%= f.email_field :email, class: "ss-input", required: true, autocomplete: "off" %></div>
+        <div><%= f.label :password, t("people.initial_password"), class: "ss-label" %><%= f.password_field :password, class: "ss-input", required: true, minlength: 8, autocomplete: "new-password" %></div>
+        <div><%= f.label :role, t("people.install_role"), class: "ss-label" %><%= f.select :role, role_opts, { selected: "member" }, class: "ss-input" %></div>
+        <div><%= f.label :site_id, t("people.site"), class: "ss-label" %><%= f.select :site_id, @sites.map { |s| [ s.name, s.id ] }, { include_blank: t("people.no_site") }, class: "ss-input" %></div>
+        <div><%= f.label :site_role, t("people.site_role"), class: "ss-label" %><%= f.select :site_role, site_role_opts, { selected: "resident" }, class: "ss-input" %></div>
+        <div class="sm:col-span-2"><%= f.submit t("people.create"), class: "ss-btn ss-btn-primary" %></div>
       <% end %>
     </section>
 
     <section class="ss-card ss-card-pad" aria-labelledby="convite-t">
-      <h2 id="convite-t">Convidar por link</h2>
-      <p class="text-sm text-muted mt-1">A pessoa abre o link, cria a própria senha e já entra aqui. Uso único, vale 7 dias.</p>
+      <h2 id="convite-t"><%= t("people.invite_title") %></h2>
+      <p class="text-sm text-muted mt-1"><%= t("people.invite_hint") %></p>
       <%= form_with scope: :invite, url: invite_people_path, class: "mt-3 grid gap-3 sm:grid-cols-2", data: { turbo: false } do |f| %>
-        <div><%= f.label :role, "Papel na instalação", class: "ss-label", for: "inv-role" %><%= f.select :role, role_opts, { selected: "member" }, class: "ss-input", id: "inv-role" %></div>
-        <div><%= f.label :site_id, "Local", class: "ss-label", for: "inv-site" %><%= f.select :site_id, @sites.map { |s| [ s.name, s.id ] }, { include_blank: "Nenhum por enquanto" }, class: "ss-input", id: "inv-site" %></div>
-        <div><%= f.label :site_role, "Papel no local", class: "ss-label", for: "inv-srole" %><%= f.select :site_role, site_role_opts, { selected: "resident" }, class: "ss-input", id: "inv-srole" %></div>
-        <div class="sm:col-span-2"><%= f.submit "Gerar link", class: "ss-btn ss-btn-primary" %></div>
+        <div><%= f.label :role, t("people.install_role"), class: "ss-label", for: "inv-role" %><%= f.select :role, role_opts, { selected: "member" }, class: "ss-input", id: "inv-role" %></div>
+        <div><%= f.label :site_id, t("people.site"), class: "ss-label", for: "inv-site" %><%= f.select :site_id, @sites.map { |s| [ s.name, s.id ] }, { include_blank: t("people.no_site") }, class: "ss-input", id: "inv-site" %></div>
+        <div><%= f.label :site_role, t("people.site_role"), class: "ss-label", for: "inv-srole" %><%= f.select :site_role, site_role_opts, { selected: "resident" }, class: "ss-input", id: "inv-srole" %></div>
+        <div class="sm:col-span-2"><%= f.submit t("people.generate"), class: "ss-btn ss-btn-primary" %></div>
       <% end %>
       <% if @invites.any? %>
-        <h3 class="ss-label mt-5">Convites pendentes</h3>
+        <h3 class="ss-label mt-5"><%= t("people.pending") %></h3>
         <ul class="divide-y divide-line">
           <% @invites.each do |i| %>
             <li class="py-2 flex items-center justify-between gap-3 text-sm">
-              <span><%= User::ROLE_LABELS[i.role] %><%= " · #{SiteMembership.role_label(i.site_role)} em #{i.site.name}" if i.site %> <span class="text-muted">· vale até <%= l(i.expires_at, format: :short) %></span></span>
-              <%= button_to "Cancelar", invite_path(i), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm: "Cancelar este convite? O link para de funcionar." } } %>
+              <span><%= User::ROLE_LABELS[i.role] %><%= " · #{t('people.role_in', role: SiteMembership.role_label(i.site_role), site: i.site.name)}" if i.site %> <span class="text-muted">· <%= t("people.valid_until", at: l(i.expires_at, format: :short)) %></span></span>
+              <%= button_to t("shared.cancel"), invite_path(i), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm: t("people.cancel_invite") } } %>
             </li>
           <% end %>
         </ul>

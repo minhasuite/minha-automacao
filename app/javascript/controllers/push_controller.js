@@ -5,24 +5,26 @@ import { Controller } from "@hotwired/stimulus"
 // localhost) e, no iPhone, com a PWA aberta pela tela inicial.
 export default class extends Controller {
   static targets = ["status", "button", "name"]
-  static values = { key: String, url: String }
+  // Textos no idioma da tela (`data-push-texts-value`, push.js em config/locales/home.*.yml).
+  static values = { key: String, url: String, texts: Object }
 
   async connect() {
-    if (!window.isSecureContext) return this.state("O push exige https: abra pelo acesso externo para inscrever este aparelho.")
+    const t = this.textsValue
+    if (!window.isSecureContext) return this.state(t.https)
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      return this.state("Este navegador não recebe push. No iPhone, adicione à Tela de Início e abra pelo ícone.")
+      return this.state(t.unsupported)
     }
-    if (!this.keyValue) return this.state("O push está desligado no servidor (faltam as chaves VAPID).")
-    if (Notification.permission === "denied") return this.state("Notificações bloqueadas nas configurações do navegador.")
+    if (!this.keyValue) return this.state(t.no_keys)
+    if (Notification.permission === "denied") return this.state(t.blocked)
     const reg = await navigator.serviceWorker.ready
     const sub = await reg.pushManager.getSubscription()
-    this.state(sub ? "Este aparelho já recebe os avisos. Inscrever de novo atualiza o nome." : "Este aparelho ainda não recebe os avisos.", true)
+    this.state(sub ? t.subscribed : t.not_subscribed, true)
   }
 
   async subscribe() {
     this.buttonTarget.disabled = true
     try {
-      if ((await Notification.requestPermission()) !== "granted") return this.state("Permissão de notificação negada.", true)
+      if ((await Notification.requestPermission()) !== "granted") return this.state(this.textsValue.denied, true)
       const reg = await navigator.serviceWorker.ready
       const sub = (await reg.pushManager.getSubscription()) ||
         (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: this.decode(this.keyValue) }))
@@ -32,10 +34,10 @@ export default class extends Controller {
         headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content },
         body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys, name: this.nameTarget.value })
       })
-      if (!res.ok) return this.state("O servidor não guardou a inscrição. Tente de novo.", true)
+      if (!res.ok) return this.state(this.textsValue.not_saved, true)
       Turbo.visit(location.href, { action: "replace" })
     } catch (e) {
-      this.state(`Não foi possível inscrever: ${e.message}`, true)
+      this.state(`${this.textsValue.failed} ${e.message}`, true)
     }
   }
 

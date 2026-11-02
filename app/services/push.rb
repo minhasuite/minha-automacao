@@ -6,7 +6,7 @@
 # nome aqui; o Notifier e o SendPushJob não mudam.
 module Push
   TRANSPORTS = %w[Browser Fcm].freeze
-  PRIORITIES = { "normal" => "Normal", "high" => "Alta", "critical" => "Crítica (fica até tocar, não agrupa)" }.freeze
+  PRIORITIES = LocalizedLabel.for("automations.notifier.priorities", %w[normal high critical])
   DEFAULT_TTL = 1.day.to_i
 
   module_function

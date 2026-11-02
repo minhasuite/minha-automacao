@@ -5,7 +5,7 @@
 class PushSubscription < ApplicationRecord
   belongs_to :user
 
-  validates :endpoint, presence: true, uniqueness: true, format: { with: %r{\Ahttps://\S+\z}, message: "precisa ser https" }
+  validates :endpoint, presence: true, uniqueness: true, format: { with: %r{\Ahttps://\S+\z}, message: :https }
   validates :p256dh_key, :auth_key, presence: true
 
   scope :ordered, -> { order(created_at: :desc) }

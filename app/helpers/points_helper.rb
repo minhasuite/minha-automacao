@@ -9,23 +9,20 @@ module PointsHelper
                   "script" => "play", "calendar" => "calendar", "weather" => "sun", "media" => "desktop-computer",
                   "remote" => "status-online", "detection" => "user-circle" }.freeze
   # Pacote 1: situação da mídia (`value.state`, nomes do HA).
-  MEDIA_TEXT = { "off" => "Desligada", "on" => "Ligada", "idle" => "Parada", "playing" => "Tocando", "paused" => "Pausada",
-                 "buffering" => "Carregando", "standby" => "Em espera" }.freeze
-  BOOL_TEXT = { "onoff" => %w[Ligado Desligado], "contact" => %w[Aberto Fechado], "motion" => %w[Movimento Parado],
-                "tamper" => %w[Violado Normal], "problem" => %w[Problema Normal] }.freeze
-  GATE_TEXT = { "open" => "Aberto", "closed" => "Fechado", "opening" => "Abrindo", "unknown" => "Desconhecido" }.freeze
+  MEDIA_TEXT = LocalizedLabel.for("labels.media", %w[off on idle playing paused buffering standby])
+  BOOL_TEXT = %w[onoff contact motion tamper problem].to_h { |c| [ c, LocalizedLabel.for("labels.bool.#{c}", %w[on off]).values ] }.freeze
+  GATE_TEXT = LocalizedLabel.for("labels.states.gate", %w[open closed opening unknown])
   # Estados de texto por capacidade (portão, robô, Echo).
   STATE_TEXT = {
     "gate" => GATE_TEXT,
-    "vacuum" => { "docked" => "Na base", "cleaning" => "Limpando", "returning" => "Voltando para a base", "paused" => "Pausado",
-                  "idle" => "Parado", "error" => "Com erro" },
-    "speaker" => { "online" => "Pronta", "offline" => "Fora do ar" },
-    "timer" => { "idle" => "Parado", "active" => "Contando", "paused" => "Pausado", "finished" => "Terminou" },
+    "vacuum" => LocalizedLabel.for("labels.states.vacuum", %w[docked cleaning returning paused idle error]),
+    "speaker" => LocalizedLabel.for("labels.states.speaker", %w[online offline]),
+    "timer" => LocalizedLabel.for("labels.states.timer", %w[idle active paused finished]),
     "weather" => Weather::CONDITIONS.transform_values(&:first)
   }.freeze
   # Botões de ação (Points::Command.actions_for): comando → [ícone, rótulo].
-  ACTION_BUTTONS = { "increment" => %w[plus Mais], "decrement" => %w[minus Menos], "reset" => %w[refresh Zerar],
-                     "start" => %w[play Iniciar], "pause" => %w[pause Pausar], "cancel" => %w[x Cancelar], "finish" => %w[check Terminar] }.freeze
+  ACTION_BUTTONS = { "increment" => "plus", "decrement" => "minus", "reset" => "refresh", "start" => "play", "pause" => "pause", "cancel" => "x",
+                     "finish" => "check" }.to_h { |c, ico| [ c, [ ico, LocalizedLabel.new("labels.actions.#{c}") ] ] }.freeze
 
   TONE_CLASSES = { "success" => "text-success", "danger" => "text-danger", "warn" => "text-warn", "muted" => "text-muted" }.freeze
 
@@ -38,18 +35,18 @@ module PointsHelper
   def duration_text(seconds)
     h, rest = seconds.to_i.divmod(3600)
     m, s = rest.divmod(60)
-    return "#{s} s" if h.zero? && m.zero?
+    return I18n.t("shared.duration.s", n: s) if h.zero? && m.zero?
 
-    [ ("#{h} h" if h.positive?), ("#{m} min" if m.positive?) ].compact.join(" ")
+    [ (I18n.t("shared.duration.h", n: h) if h.positive?), (I18n.t("shared.duration.min", n: m) if m.positive?) ].compact.join(" ")
   end
 
   # "há 7 min", "há 1 h 5 min"; mais de um dia = data curta.
   def ago_text(time)
     secs = (Time.current - time).to_i
-    return "agora" if secs < 60
+    return I18n.t("shared.ago.now") if secs < 60
     return l(time, format: :short) if secs >= 86_400
 
-    "há #{duration_text(secs / 60 * 60)}"
+    I18n.t("shared.ago.text", time: duration_text(secs / 60 * 60))
   end
 
   # Segundos → "1h30m" (campo de duração dos helpers).
@@ -63,9 +60,9 @@ module PointsHelper
 
   # Intervalo da leitura periódica (segundos) em texto.
   def poll_label(seconds)
-    return "sem leitura periódica" if seconds.to_i <= 0
+    return I18n.t("points.poll.none") if seconds.to_i <= 0
 
-    "leitura a cada #{duration_text(seconds)}"
+    I18n.t("points.poll.every", time: duration_text(seconds))
   end
 
   def point_value_text(point)
@@ -73,7 +70,7 @@ module PointsHelper
     if (text = point.helper_type&.value_text(point))
       text
     elsif point.capability == "command"
-      point.reported_at ? "Acionado #{l(point.reported_at, format: :short)}" : "Pronto"
+      point.reported_at ? I18n.t("points.value.fired", at: l(point.reported_at, format: :short)) : I18n.t("points.value.ready")
     elsif point.capability == "calendar"
       calendar_text(v)
     elsif point.capability == "detection"
@@ -81,19 +78,19 @@ module PointsHelper
     elsif point.capability == "climate" && v.is_a?(Hash)
       climate_text(v) # integ2: resumo do ar-condicionado
     elsif v.nil?
-      "Sem valor"
+      I18n.t("points.value.none")
     elsif point.capability == "color" && v.is_a?(Hash)
-      v["mode"] == "temp" ? "Branco #{v['kelvin']} K" : Points::Color.hex_of(v).upcase # Lote 8
+      v["mode"] == "temp" ? I18n.t("points.value.white", k: v["kelvin"]) : Points::Color.hex_of(v).upcase # Lote 8
     elsif BOOL_TEXT.key?(point.capability)
-      BOOL_TEXT[point.capability][v ? 0 : 1]
+      BOOL_TEXT[point.capability][v ? 0 : 1].to_s
     elsif STATE_TEXT.key?(point.capability)
-      STATE_TEXT[point.capability].fetch(v.to_s, v.to_s)
+      STATE_TEXT[point.capability].fetch(v.to_s, v.to_s).to_s
     elsif v.is_a?(Numeric)
       [ number_with_precision(v, precision: 2, strip_insignificant_zeros: true), point.unit ].compact.join(" ")
     elsif v.is_a?(Hash) && v.key?("state")
-      [ MEDIA_TEXT.fetch(v["state"].to_s, v["state"].to_s.humanize), v["title"].presence ].compact.join(" · ")
+      [ MEDIA_TEXT.fetch(v["state"].to_s, v["state"].to_s.humanize).to_s, v["title"].presence ].compact.join(" · ")
     elsif v.is_a?(Hash) && v.key?("buttons")
-      "#{v['buttons'].to_i} botão(ões) aprendido(s)"
+      I18n.t("points.value.buttons", count: v["buttons"].to_i)
     elsif v.is_a?(Hash) || v.is_a?(Array)
       v.to_json.truncate(40)
     else
@@ -117,36 +114,36 @@ module PointsHelper
   DEVICE_TONES = { "online" => "success", "offline" => "danger", "error" => "danger", "new" => "accent", "removed" => "warn" }.freeze
   def device_situation(device)
     s = device.situation
-    note = { "offline" => "Não respondeu na última tentativa.", "error" => device.last_error.presence || "A última leitura ou comando deu erro." }[s]
+    note = { "offline" => I18n.t("points.situation.offline"), "error" => device.last_error.presence || I18n.t("points.situation.error") }[s]
     # Só para driver que o servidor lê (os outros não marcam o contato e estariam bem).
     if s == "online" && device.last_seen_at.nil? && Polling.supported?(device)
       reads = device.listen || device.poll_s.to_i.positive?
-      return [ "Sem contato", "muted", reads ? "Aguardando o primeiro contato." : "Não informa o estado sozinho (leitura periódica desligada); aparece no primeiro comando." ]
+      return [ I18n.t("points.situation.no_contact"), "muted", reads ? I18n.t("points.situation.waiting") : I18n.t("points.situation.silent") ]
     end
-    [ Device::SITUATIONS[s], DEVICE_TONES.fetch(s, "muted"), note ]
+    [ Device::SITUATIONS[s].to_s, DEVICE_TONES.fetch(s, "muted"), note ]
   end
 
   # Por que o ponto está sem sinal ou sem valor (web e app). nil = nada a explicar.
   def point_status_note(point)
     if point.quality.in?(%w[unavailable error])
       since = point.changed_at || point.reported_at
-      return "Sem sinal#{" (#{ago_text(since)})" if since}: o aparelho não respondeu. Comandos podem não chegar até ele voltar."
+      return I18n.t("points.status.no_signal", ago: (" (#{ago_text(since)})" if since))
     end
     return unless point.value.nil? && point.helper.blank? && !point.capability.in?(%w[command script calendar stream])
 
     dev = point.device
     reads = dev.nil? || dev.virtual? || dev.listen || (Polling.supported?(dev) && dev.poll_s.to_i.positive?)
-    reads ? "Sem leitura ainda: aguardando o primeiro valor." : "Sem leitura ainda: este aparelho não informa o estado sozinho (leitura periódica desligada). O valor aparece depois do primeiro comando."
+    reads ? I18n.t("points.status.waiting") : I18n.t("points.status.silent")
   end
 
   # Agenda (F9): "Agora: Reunião" ou "Reunião · sex 14:00" (dia inteiro: só a data).
   def calendar_text(v)
-    return "Nada nos próximos dias" unless v.is_a?(Hash) && v["start"]
-    return "Agora: #{v['summary']}" if v["now"]
+    return I18n.t("points.calendar.nothing") unless v.is_a?(Hash) && v["start"]
+    return I18n.t("points.calendar.now", summary: v["summary"]) if v["now"]
 
     at = Time.zone.parse(v["start"])
-    when_text = if at.to_date == Date.current then "hoje"
-    elsif at.to_date == Date.current + 1 then "amanhã"
+    when_text = if at.to_date == Date.current then I18n.t("points.calendar.today")
+    elsif at.to_date == Date.current + 1 then I18n.t("points.calendar.tomorrow")
     else l(at, format: "%a %d/%m")
     end
     "#{v['summary']} · #{when_text}#{l(at, format: ' %H:%M') unless v['all_day']}"
@@ -175,6 +172,6 @@ module PointsHelper
   def point_confirm_data(point)
     return {} if point.confirm.blank? && point.risk == "normal"
 
-    { turbo_confirm: point.confirm.presence || "Acionar #{point.name}?", turbo_confirm_title: point.risk_label }
+    { turbo_confirm: point.confirm.presence || I18n.t("points.confirm", name: point.name), turbo_confirm_title: point.risk_label.to_s }
   end
 end

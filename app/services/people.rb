@@ -49,9 +49,10 @@ module People
 
   module Trackers
     class Base
-      class << self
-        attr_reader :label
+      extend PluginTexts
+      translates :label
 
+      class << self
         def describe(label:) = (@label = label)
         def applies?(_point) = false
         # → nome da zona, People::AWAY ou nil (sem opinião agora).
@@ -65,6 +66,7 @@ module People
     # depois que a coordenada exata some pela retenção.
     class Gps < Base
       describe label: "Localização (GPS)"
+      texts en: { label: "Location (GPS)" }, es: { label: "Ubicación (GPS)" }
 
       def self.applies?(point) = point.attrs.to_h.key?("latitude") || point.device_class == "location"
 
@@ -82,6 +84,7 @@ module People
     # diz nada (pode estar só no 4G dentro de casa).
     class WifiSsid < Base
       describe label: "Wi-Fi de casa"
+      texts en: { label: "Home Wi-Fi" }, es: { label: "Wi-Fi de casa" }
 
       def self.applies?(point) = point.device_class == "wifi_ssid"
 
@@ -96,6 +99,7 @@ module People
     # Conectado na rede (rastreador de rede, ping): ligado = em casa; desligado = fora.
     class Connected < Base
       describe label: "Conectado na rede"
+      texts en: { label: "Connected to the network" }, es: { label: "Conectado a la red" }
 
       def self.applies?(point) = point.device_class.in?(%w[presence connectivity]) && point.bool?
 

@@ -14,7 +14,7 @@ module Logbook
   SOURCES = %w[Changes Commands Runs Scenes Alerts Quality Audit Logins].freeze
   PAGE = 40
   PERIODS = { "24h" => 24.hours, "7d" => 7.days, "30d" => 30.days, "365d" => 365.days }.freeze
-  PERIOD_LABELS = { "24h" => "24 h", "7d" => "7 dias", "30d" => "30 dias", "365d" => "1 ano" }.freeze
+  PERIOD_LABELS = LocalizedLabel.for("labels.periods", %w[24h 7d 30d 365d])
 
   # `state`: texto do valor novo (chip na tela); `ref`: {type, id} do que abrir.
   Item = Struct.new(:at, :source, :icon, :tone, :title, :state, :detail, :user, :point_id, :ref, keyword_init: true) do
@@ -121,8 +121,11 @@ module Logbook
 
   module Sources
     class Base
+      extend PluginTexts
+      translates :label
+
       class << self
-        attr_reader :key, :label, :icon, :role
+        attr_reader :key, :icon, :role
 
         def describe(key:, label:, icon:, role: :view)
           @key = key
@@ -140,6 +143,7 @@ module Logbook
     # numérico vai para o Histórico, não para o Diário).
     class Changes < Base
       describe key: "changes", label: "Mudanças", icon: "switch-horizontal"
+      texts en: { label: "Changes" }, es: { label: "Cambios" }
 
       def self.fetch(f)
         return [] if f.user_id
@@ -158,6 +162,7 @@ module Logbook
     # Comandos (de pessoas, automações, Alexa, voz) e como terminaram.
     class Commands < Base
       describe key: "commands", label: "Comandos", icon: "lightning-bolt"
+      texts "pt-BR" => { via: "pelo %{source}" }, en: { label: "Commands", via: "via %{source}" }, es: { label: "Comandos", via: "por %{source}" }
       TONES = { "confirmed" => "success", "failed" => "danger", "expired" => "warn" }.freeze
 
       def self.fetch(f)
@@ -168,7 +173,7 @@ module Logbook
           action = Points::Timeline::COMMAND_LABELS.fetch(c.command, c.command)
           action = "#{action} #{c.value}" if c.value.present? && !c.value.is_a?(Hash)
           item(at: c.created_at, title: Logbook.point_title(c.point), state: action, user: c.user&.name, tone: TONES.fetch(c.status, "muted"),
-               detail: [ "pelo #{c.source_label}", c.status_label.downcase, c.error ].compact.join(" · "), point_id: c.point_id,
+               detail: [ text(:via, source: c.source_label), c.status_label.downcase, c.error ].compact.join(" · "), point_id: c.point_id,
                ref: { type: "point", id: c.point_id })
         end
       end
@@ -177,6 +182,9 @@ module Logbook
     # Execuções de automação e de script (a busca olha o nome delas).
     class Runs < Base
       describe key: "runs", label: "Automações e scripts", icon: "sparkles"
+      texts "pt-BR" => { script: "Script", automation: "Automação", shadow: "em sombra" },
+            en: { label: "Automations and scripts", script: "Script", automation: "Automation", shadow: "in shadow mode" },
+            es: { label: "Automatizaciones y scripts", script: "Script", automation: "Automatización", shadow: "en modo sombra" }
 
       def self.fetch(f)
         return [] if f.user_id || f.area_id || f.device_id || f.point_id
@@ -184,9 +192,9 @@ module Logbook
         scope = AutomationRun.real.where(site_id: f.site.id, started_at: f.window).includes(:automation).order(started_at: :desc).limit(f.limit)
         scope = scope.joins(:automation).where("automations.name ILIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(f.q)}%") if f.q
         scope.map do |r|
-          kind = r.automation.kind == "script" ? "Script" : "Automação"
+          kind = text(r.automation.kind == "script" ? :script : :automation)
           item(at: r.started_at, title: r.automation.name, state: r.status_label, tone: r.tone == "info" ? "muted" : r.tone,
-               detail: [ kind, ("em sombra" if r.shadow), r.error&.truncate(120) ].compact.join(" · "), ref: { type: "automation_run", id: r.id })
+               detail: [ kind, (text(:shadow) if r.shadow), r.error&.truncate(120) ].compact.join(" · "), ref: { type: "automation_run", id: r.id })
         end
       end
     end
@@ -194,7 +202,12 @@ module Logbook
     # Cenas acionadas (evento `scene` gravado pelo `Scene#activate!`).
     class Scenes < Base
       describe key: "scenes", label: "Cenas", icon: "color-swatch"
-      SOURCE = { "web" => "pela web", "api" => "pelo app", "automation" => "por automação", "alexa" => "pela Alexa", "voice" => "por voz" }.freeze
+      texts "pt-BR" => { fired: "Acionada", shadow: "em sombra",
+                         source: { web: "pela web", api: "pelo app", automation: "por automação", alexa: "pela Alexa", voice: "por voz" } },
+            en: { label: "Scenes", fired: "Activated", shadow: "in shadow mode",
+                  source: { web: "on the web", api: "in the app", automation: "by an automation", alexa: "by Alexa", voice: "by voice" } },
+            es: { label: "Escenas", fired: "Activada", shadow: "en modo sombra",
+                  source: { web: "por la web", api: "por la app", automation: "por una automatización", alexa: "por Alexa", voice: "por voz" } }
 
       def self.fetch(f)
         return [] if f.area_id || f.device_id || f.point_id
@@ -205,8 +218,8 @@ module Logbook
         events = scope.to_a
         users = User.where(id: events.filter_map { |e| e.payload["user_id"] }).index_by(&:id)
         events.map do |e|
-          item(at: e.at, title: e.payload["name"].to_s, state: "Acionada", user: users[e.payload["user_id"]]&.name, tone: "success",
-               detail: [ SOURCE[e.source], ("em sombra" if e.payload["shadow"]) ].compact.join(" · ").presence, ref: { type: "scene", id: e.payload["scene_id"] })
+          item(at: e.at, title: e.payload["name"].to_s, state: text(:fired), user: users[e.payload["user_id"]]&.name, tone: "success",
+               detail: [ (text("source.#{e.source}") if e.source.present?), (text(:shadow) if e.payload["shadow"]) ].compact.join(" · ").presence, ref: { type: "scene", id: e.payload["scene_id"] })
         end
       end
     end
@@ -214,18 +227,21 @@ module Logbook
     # Alertas: abriu, alguém deu ciente, fechou.
     class Alerts < Base
       describe key: "alerts", label: "Alertas", icon: "exclamation-circle"
+      texts "pt-BR" => { opened: "Abriu", closed: "Fechou", acked: "Ciente" },
+            en: { label: "Alerts", opened: "Opened", closed: "Closed", acked: "Acknowledged" },
+            es: { label: "Alertas", opened: "Se abrió", closed: "Se cerró", acked: "Visto" }
 
       def self.fetch(f)
         base = Alert.where(site_id: f.site.id).includes(:alert_rule, :acked_by, point: :device)
         base = base.where(point_id: f.points.select(:id)) if f.narrowed?
         list = []
         unless f.user_id
-          list += base.where(opened_at: f.window).order(opened_at: :desc).limit(f.limit).map { |a| row(a, a.opened_at, "Abriu", "danger") }
-          list += base.where(resolved_at: f.window).order(resolved_at: :desc).limit(f.limit).map { |a| row(a, a.resolved_at, "Fechou", "success") }
+          list += base.where(opened_at: f.window).order(opened_at: :desc).limit(f.limit).map { |a| row(a, a.opened_at, text(:opened), "danger") }
+          list += base.where(resolved_at: f.window).order(resolved_at: :desc).limit(f.limit).map { |a| row(a, a.resolved_at, text(:closed), "success") }
         end
         acked = base.where(acked_at: f.window)
         acked = acked.where(acked_by_id: f.user_id) if f.user_id
-        list + acked.order(acked_at: :desc).limit(f.limit).map { |a| row(a, a.acked_at, "Ciente", "warn", a.acked_by&.name) }
+        list + acked.order(acked_at: :desc).limit(f.limit).map { |a| row(a, a.acked_at, text(:acked), "warn", a.acked_by&.name) }
       end
 
       def self.row(a, at, state, tone, user = nil)
@@ -236,6 +252,7 @@ module Logbook
     # Ponto que ficou sem sinal, com erro ou voltou.
     class Quality < Base
       describe key: "quality", label: "Conexão", icon: "status-offline"
+      texts "pt-BR" => { before: "antes: %{state}" }, en: { label: "Connection", before: "before: %{state}" }, es: { label: "Conexión", before: "antes: %{state}" }
 
       def self.fetch(f)
         return [] if f.user_id
@@ -245,7 +262,7 @@ module Logbook
         scope.select(&:point).map do |e|
           to = e.payload["to"]
           item(at: e.at, title: Logbook.point_title(e.point), state: Points::Timeline::QUALITY_LABELS.fetch(to, to), tone: to == "good" ? "success" : "warn",
-               detail: "antes: #{Points::Timeline::QUALITY_LABELS.fetch(e.payload['from'], e.payload['from']).downcase}", point_id: e.point_id,
+               detail: text(:before, state: Points::Timeline::QUALITY_LABELS.fetch(e.payload["from"], e.payload["from"]).to_s.downcase), point_id: e.point_id,
                ref: { type: "point", id: e.point_id })
         end
       end
@@ -254,14 +271,26 @@ module Logbook
     # Cadastro (criou, mudou, excluiu) do que é do local. Técnico e dono.
     class Audit < Base
       describe key: "audit", label: "Cadastro", icon: "pencil", role: :manage
-      TYPES = { "Point" => "Ponto", "Device" => "Dispositivo", "Area" => "Área", "Automation" => "Automação", "Scene" => "Cena",
-                "Dashboard" => "Painel", "Schedule" => "Agenda", "NotifyRule" => "Aviso", "AlertRule" => "Regra de alerta",
-                "PointLink" => "Espelhamento", "Integration" => "Integração", "SiteMembership" => "Acesso", "Blueprint" => "Blueprint" }.freeze
+      TYPES = %w[Point Device Area Automation Scene Dashboard Schedule NotifyRule AlertRule PointLink Integration SiteMembership Blueprint].freeze
       HIDDEN = %w[version draft definition updated_at created_at].freeze
-      ACTIONS = { "create" => "Criado", "update" => "Alterado", "destroy" => "Excluído" }.freeze
+      texts "pt-BR" => { site: "Local",
+                         types: { Point: "Ponto", Device: "Dispositivo", Area: "Área", Automation: "Automação", Scene: "Cena", Dashboard: "Painel",
+                                  Schedule: "Agenda", NotifyRule: "Aviso", AlertRule: "Regra de alerta", PointLink: "Espelhamento",
+                                  Integration: "Integração", SiteMembership: "Acesso", Blueprint: "Blueprint" },
+                         actions: { create: "Criado", update: "Alterado", destroy: "Excluído" } },
+            en: { label: "Setup", site: "Place",
+                  types: { Point: "Point", Device: "Device", Area: "Area", Automation: "Automation", Scene: "Scene", Dashboard: "Dashboard",
+                           Schedule: "Schedule", NotifyRule: "Notification", AlertRule: "Alert rule", PointLink: "Mirroring",
+                           Integration: "Integration", SiteMembership: "Access", Blueprint: "Blueprint" },
+                  actions: { create: "Created", update: "Changed", destroy: "Deleted" } },
+            es: { label: "Registro", site: "Lugar",
+                  types: { Point: "Punto", Device: "Dispositivo", Area: "Área", Automation: "Automatización", Scene: "Escena", Dashboard: "Panel",
+                           Schedule: "Agenda", NotifyRule: "Aviso", AlertRule: "Regla de alerta", PointLink: "Espejado",
+                           Integration: "Integración", SiteMembership: "Acceso", Blueprint: "Blueprint" },
+                  actions: { create: "Creado", update: "Modificado", destroy: "Eliminado" } }
 
       def self.fetch(f)
-        types = f.narrowed? ? { "Point" => f.points.select(:id) } : TYPES.keys.to_h { |t| [ t, t.constantize.where(site_id: f.site.id).select(:id) ] }
+        types = f.narrowed? ? { "Point" => f.points.select(:id) } : TYPES.to_h { |t| [ t, t.constantize.where(site_id: f.site.id).select(:id) ] }
         scope = types.map { |t, ids| AuditEvent.where(auditable_type: t, auditable_id: ids) }.reduce(:or)
         scope = scope.or(AuditEvent.where(auditable_type: "Site", auditable_id: f.site.id)) unless f.narrowed?
         scope = scope.where(tenant_id: f.site.tenant_id, created_at: f.window).where.not(action: "login").order(created_at: :desc).limit(f.limit)
@@ -273,8 +302,8 @@ module Logbook
           klass&.column_names&.include?("name") ? klass.where(id: list.map(&:auditable_id)).pluck(:id, :name) : []
         end.to_h
         events.map do |e|
-          kind = TYPES.fetch(e.auditable_type, "Local")
-          item(at: e.created_at, title: names[e.auditable_id] || e.details["name"] || kind, state: ACTIONS.fetch(e.action, e.action),
+          kind = TYPES.include?(e.auditable_type) ? text("types.#{e.auditable_type}") : text(:site)
+          item(at: e.created_at, title: names[e.auditable_id] || e.details["name"] || kind, state: text("actions.#{e.action}", default: e.action),
                user: users[e.user_id]&.name, detail: [ kind, (e.details.keys - HIDDEN).first(4).map { |k| e.auditable_type.safe_constantize&.human_attribute_name(k)&.downcase || k }.join(", ").presence ].compact.join(" · "),
                point_id: (e.auditable_id if e.auditable_type == "Point"), ref: (e.auditable_type == "Point" && e.action != "destroy" ? { type: "point", id: e.auditable_id } : nil))
         end
@@ -284,7 +313,9 @@ module Logbook
     # Entradas na web e no app das pessoas com acesso ao local. Só o dono.
     class Logins < Base
       describe key: "logins", label: "Entradas", icon: "login", role: :admin
-      VIA = { "web" => "na web", "app" => "no app" }.freeze
+      texts "pt-BR" => { entered: "Entrou", via: { web: "na web", app: "no app" } },
+            en: { label: "Sign-ins", entered: "Signed in", via: { web: "on the web", app: "in the app" } },
+            es: { label: "Ingresos", entered: "Ingresó", via: { web: "en la web", app: "en la app" } }
 
       def self.fetch(f)
         return [] if f.narrowed?
@@ -293,7 +324,7 @@ module Logbook
         users = users.where(id: f.user_id) if f.user_id
         names = users.pluck(:id, :name).to_h
         AuditEvent.where(action: "login", user_id: names.keys, created_at: f.window).order(created_at: :desc).limit(f.limit).map do |e|
-          item(at: e.created_at, title: names[e.user_id].to_s, state: "Entrou", detail: VIA[e.details["via"]])
+          item(at: e.created_at, title: names[e.user_id].to_s, state: text(:entered), detail: (text("via.#{e.details['via']}") if e.details["via"].present?))
         end
       end
     end

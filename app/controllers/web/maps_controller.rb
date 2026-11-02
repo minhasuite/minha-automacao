@@ -5,9 +5,9 @@ module Web
     include SitePick
 
     def show
-      return redirect_to(sites_path, notice: "Crie um local para ver o mapa.") unless pick_site
+      return redirect_to(sites_path, notice: t("notices.need_site_map")) unless pick_site
 
-      raise SiteMembership::Forbidden, "Seu papel neste local não mostra onde as pessoas estão." unless Maps.allowed_role?(@site_role)
+      raise SiteMembership::Forbidden, t("notices.map_forbidden") unless Maps.allowed_role?(@site_role)
 
       @sites = @sites.select { |s| Maps.allowed_role?(s.role_for(current_user)) }
       @map = Maps.data(@site)

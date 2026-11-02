@@ -5,7 +5,7 @@ module Web
     before_action :set_site, only: %i[show edit update destroy]
 
     def index
-      return redirect_to(root_path, alert: "Leitor só vê os painéis.") if current_user.reader?
+      return redirect_to(root_path, alert: t("notices.viewer_only")) if current_user.reader?
 
       @sites = Site.visible_to(current_user).includes(:areas, :devices).order(:name)
     end
@@ -31,7 +31,7 @@ module Web
       @site = Site.new(site_params)
       return render(:new, status: :unprocessable_content) unless @site.save
 
-      redirect_to @site, notice: "Local criado. Agora crie as áreas (cômodos, andares)."
+      redirect_to @site, notice: t("notices.site_created")
     end
 
     def edit = authorize_site!(@site, :admin)
@@ -40,13 +40,13 @@ module Web
       authorize_site!(@site, :admin)
       return render(:edit, status: :unprocessable_content) unless @site.update(site_params)
 
-      redirect_to @site, notice: "Local atualizado."
+      redirect_to @site, notice: t("notices.site_updated")
     end
 
     def destroy
       authorize_site!(@site, :admin)
       @site.destroy!
-      redirect_to sites_path, notice: "Local excluído."
+      redirect_to sites_path, notice: t("notices.site_deleted")
     end
 
     private
@@ -55,7 +55,7 @@ module Web
     def site_params = params.require(:site).permit(:name, :kind, :address, :timezone, :latitude, :longitude)
 
     def require_admin!
-      redirect_to sites_path, alert: "Só administrador ou dono da empresa cria locais." unless current_user.admin?
+      redirect_to sites_path, alert: t("notices.site_admin_only") unless current_user.admin?
     end
   end
 end

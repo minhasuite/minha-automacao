@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="<%= I18n.locale %>">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= content_for(:title) %> — Minha Automação</title>
@@ -16,12 +16,12 @@
   <nav>Minha Automação</nav>
   <main>
     <h1><%= content_for(:title) %></h1>
-    <% if @updated_on %><p class="meta">Última atualização: <%= @updated_on.strftime("%d/%m/%Y") %></p><% end %>
+    <% if @updated_on %><p class="meta"><%= t("legal.updated", date: l(@updated_on)) %></p><% end %>
     <%= yield %>
   </main>
   <footer>
-    <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a> · <a href="/exclusao">Exclusão de dados</a> ·
-    contato: <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a>
+    <a href="/privacidade"><%= t("legal.privacy") %></a> · <a href="/termos"><%= t("legal.terms") %></a> · <a href="/exclusao"><%= t("legal.deletion") %></a> ·
+    <%= t("legal.contact") %> <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a>
   </footer>
 </body>
 </html>

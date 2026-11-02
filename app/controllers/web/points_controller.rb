@@ -23,7 +23,7 @@ module Web
       @point = @device.points.new(point_params.merge(site: @site))
       return render(:new, status: :unprocessable_content) unless @point.save
 
-      redirect_to @device, notice: "Ponto criado."
+      redirect_to @device, notice: t("notices.point_created")
     end
 
     def edit = load_for(:manage)
@@ -32,13 +32,13 @@ module Web
       load_for(:manage)
       return render(:edit, status: :unprocessable_content) unless @point.update(point_params)
 
-      redirect_to @point.device, notice: "Ponto atualizado."
+      redirect_to @point.device, notice: t("notices.point_updated")
     end
 
     def destroy
       load_for(:manage)
       @point.destroy!
-      redirect_to @point.device, notice: "Ponto excluído."
+      redirect_to @point.device, notice: t("notices.point_deleted")
     end
 
     def command

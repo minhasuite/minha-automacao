@@ -1,2 +1,2 @@
-<%= render "web/shared/header", title: "Novo ponto", subtitle: @device.name, back: device_path(@device) %>
+<%= render "web/shared/header", title: t("devices.new_point"), subtitle: @device.name, back: device_path(@device) %>
 <%= render "web/points/form", device: @device, point: @point %>

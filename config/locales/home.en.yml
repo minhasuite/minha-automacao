@@ -1,0 +1,693 @@
+# Home and account screens (places, areas, points, history, people, invites,
+# legal pages, e-mails) and model constant labels (LocalizedLabel).
+# New key = in all three languages (spec/i18n_spec.rb checks).
+en:
+  activerecord:
+    errors:
+      messages:
+        other_site: must belong to this place
+        options_list: must be a list of options
+        options_empty: can't be empty for a selection
+        above_min: must be greater than the minimum
+        already_linked: is already linked to this source
+        other_point: must be a different point
+        fire_target: must be an on/off, gate or button
+        mirror_only: only works for mirror or invert
+        onoff_or_sensor: must be an on/off or a sensor
+        onoff_writable: must be an on/off that accepts commands
+        onoff_source: requires an on/off source
+        link_loop: Creates a loop with another mirroring in this place.
+        same_company: must belong to the company
+        https: must be https
+  labels:
+    site_kinds:
+      home: Home
+      store: Store
+      plant: Factory
+    area_kinds:
+      room: Room
+      floor: Floor
+      outdoor: Outdoor area
+      line: Line
+      cell: Cell
+      warehouse: Warehouse
+    device_situations:
+      online: Connected
+      offline: No signal
+      error: Error
+      new: New
+      removed: Removed from account
+    capabilities:
+      onoff: On/off
+      dimmer: Brightness
+      color: Color
+      gate: Gate
+      contact: Door/window sensor
+      motion: Motion sensor
+      tamper: Tamper
+      problem: Problem
+      measure: Measurement
+      enum: Selection
+      setpoint: Adjustable value
+      command: Button
+      text: Text
+      vacuum: Robot vacuum
+      speaker: Speaker
+      stream: Camera
+      climate: Climate
+      event: Event
+      counter: Counter
+      timer: Timer
+      datetime: Date and time
+      script: Script
+      calendar: Calendar
+      weather: Weather
+      media: Media
+      remote: Remote control
+      detection: Detection
+    risks:
+      normal: Normal
+      sensitive: Sensitive
+      critical: Critical
+    link_modes:
+      mirror: Mirror
+      invert: Invert
+      trigger: Trigger
+    site_roles:
+      viewer: Viewer
+      guest: Guest
+      operator: Operator
+      resident: Resident
+      technician: Technician
+      owner: Owner
+    user_roles:
+      owner: Owner
+      admin: Administrator
+      member: Member
+    periods:
+      1h: 1 h
+      6h: 6 h
+      24h: 24 h
+      7d: 7 days
+      30d: 30 days
+      365d: 1 year
+    commands:
+      "on": Turn on
+      "off": Turn off
+      toggle: Toggle
+      set: Set
+      select: Select
+      press: Trigger
+      pulse: Trigger
+      start: Start cleaning
+      pause: Pause
+      stop: Stop
+      home: Return to dock
+      clean_rooms: Clean rooms
+      wash_mop: Wash the mop
+      dry_mop: Dry the mop
+      empty: Empty the bin
+      locate: Locate
+      announce: Announce
+      speak: Speak
+      routine: Routine
+      increment: Increase
+      decrement: Decrease
+      reset: Reset
+      cancel: Cancel
+      finish: Finish
+      run: Run
+      sound: Play a sound
+      play: Play
+      volume: Volume
+    qualities:
+      good: Normal
+      stale: Outdated
+      unavailable: Unavailable
+      error: Error
+    point_audit:
+      create: Point created
+      update: Setup changed
+      destroy: Point deleted
+    command_statuses:
+      pending: Pending
+      sent: Sent
+      confirmed: Confirmed
+      failed: Failed
+      expired: Expired
+    command_sources:
+      web: web
+      api: app/API
+      automation: automation
+      alexa: Alexa
+      voice: voice
+      push: notification button
+      bridge: bridge (Matter)
+    media:
+      "off": "Off"
+      "on": "On"
+      idle: Idle
+      playing: Playing
+      paused: Paused
+      buffering: Loading
+      standby: Standby
+    bool:
+      onoff: { "on": "On", "off": "Off" }
+      contact: { "on": Open, "off": Closed }
+      motion: { "on": Motion, "off": Clear }
+      tamper: { "on": Tampered, "off": Normal }
+      problem: { "on": Problem, "off": Normal }
+    states:
+      gate: { open: Open, closed: Closed, opening: Opening, unknown: Unknown }
+      vacuum: { docked: Docked, cleaning: Cleaning, returning: Returning to dock, paused: Paused, idle: Idle, error: Error }
+      speaker: { online: Ready, offline: Offline }
+      timer: { idle: Idle, active: Running, paused: Paused, finished: Finished }
+    actions:
+      increment: More
+      decrement: Less
+      reset: Reset
+      start: Start
+      pause: Pause
+      cancel: Cancel
+      finish: Finish
+    device_bulk:
+      area: Move to area
+      poll_on: Turn on periodic reading
+      poll_off: Turn off periodic reading
+      remove: Remove
+    command_choices:
+      "on": Turn on
+      "off": Turn off
+      toggle: Toggle
+      pulse: Pulse (gate)
+      press: Press (button)
+      set: Set value
+      select: Select option
+      start: Start cleaning (robot)
+      pause: Pause (robot)
+      stop: Stop (robot)
+      home: Return to dock (robot)
+      wash_mop: Wash the mop (robot)
+      dry_mop: Dry the mop (robot)
+      empty: Empty the bin (robot)
+      announce: Announce (Echo)
+      speak: Speak (Echo)
+      routine: Alexa routine (Echo)
+      run: Run (script)
+    usages:
+      dashboard: Dashboard
+      automation: Automation
+      script: Script
+      scene: Scene
+      link: Mirroring
+      notify: Notification
+      alert: Alert
+      schedule: Schedule
+      helper: Helper
+    drivers:
+      virtual: Virtual
+      tuya_local: Tuya local
+      tuya_cloud: Tuya cloud
+      xiaomi_miot: Xiaomi
+      alexa: Alexa
+      mqtt: MQTT
+      modbus_tcp: Modbus TCP
+      onvif: ONVIF camera
+      go2rtc: Camera
+  shared:
+    not_found: Not found
+    not_found_hint: This record doesn't exist or doesn't belong to your company.
+    back_home: Back to home
+    pagination: Pagination
+    page_info: "%{count} records · page %{page} of %{pages}"
+    previous: Previous
+    next: Next
+    icon: Icon
+    icon_default: Default
+    confirm:
+      title: Are you sure?
+      back: Go back
+      ok: Confirm
+    palette:
+      label: Search and run
+      input: Search or command
+      hint: 'Search or command: turn off living room, activate scene…'
+      navigate: navigate
+      run: open or run
+      anywhere: opens from any screen
+    cancel: Cancel
+    edit: Edit
+    edit_name: Edit %{name}
+    optional: Optional
+    choose: Choose
+    nothing_yet: Nothing here yet.
+    by: by %{name}
+    duration:
+      s: "%{n} s"
+      h: "%{n} h"
+      min: "%{n} min"
+    ago:
+      now: just now
+      text: "%{time} ago"
+    count:
+      areas:
+        one: "%{count} area"
+        other: "%{count} areas"
+      devices:
+        one: "%{count} device"
+        other: "%{count} devices"
+  sites:
+    index:
+      title: Places
+      subtitle: 'Homes, stores and factories: each place has its own areas, devices and points.'
+      new: New place
+      none: No places yet.
+      none_hint: Create your home, store or factory to get started.
+      first: Create my first place
+      ask_owner: Ask the company owner to give you access to a place.
+    new:
+      subtitle: Home, store or factory. Then you add the areas and the devices.
+    edit:
+      title: Edit place
+      delete: Delete place
+      delete_hint: Deletes the place with all its areas, devices and points. This can't be undone.
+      delete_confirm: Delete the place %{name} and everything in it?
+    form:
+      name: Name
+      name_hint: Beach house
+      kind: Type
+      address: Address
+      timezone: Time zone
+      latitude: Latitude
+      longitude: Longitude
+      coords_hint: Latitude and longitude are used for sunrise and sunset schedules.
+      create: Create place
+      save: Save place
+    tabs:
+      label: Place sections
+      areas: Areas
+      dashboards: Dashboards
+      devices: Devices
+      integrations: Integrations
+      automation: Automations and scenes
+      helpers: Helpers
+      datasets: Data
+      alerts: Alerts
+      packages: Packages
+      dev_tools: Tools
+    rules:
+      subtitle: '%{site} · simple rules: schedules, mirroring, notifications and alerts'
+      active_alerts: Active alerts
+    show:
+      your_role: 'Your role: %{role}'
+      empty: This place is still empty.
+      empty_hint: Create the areas (living room, kitchen, garage) and then the devices in each one.
+      first_area: Create the first area
+  areas:
+    new:
+      title: New area
+    edit:
+      title: Edit area
+      delete: Delete area
+      delete_hint: Its devices stay in the place, without an area.
+      delete_confirm: Delete the area %{name}?
+    form:
+      name_hint: Living room, Kitchen, Garage
+      parent: Inside
+      no_parent: None (main area)
+      create: Create area
+      save: Save area
+    show:
+      empty: No devices in this area.
+      empty_hint: A virtual device is handy for testing and for keeping states (home mode, vacation, alarm armed).
+      add_device: Add device
+      details: Details
+      no_points: No points.
+  devices:
+    edit_title: Edit device
+    delete: Delete device
+    delete_hint: Deletes the device and its points.
+    delete_confirm: Delete the device %{name} and its points?
+  points:
+    turn_on: Turn on
+    turn_off: Turn off
+    run: Run
+    press: Press
+    fire: Trigger
+    choose: Choose %{name}
+    adjust: Adjust %{name}
+    new_value: New value for %{name}
+    apply: Apply
+    actions: "%{name} actions"
+    no_signal: No signal
+    no_control: Control for this type comes with the drivers.
+    confirm: Trigger %{name}?
+    poll:
+      none: no periodic reading
+      every: reads every %{time}
+    value:
+      fired: Triggered %{at}
+      ready: Ready
+      none: No value
+      white: White %{k} K
+      buttons:
+        one: "%{count} button learned"
+        other: "%{count} buttons learned"
+    situation:
+      offline: Didn't answer on the last try.
+      error: The last reading or command failed.
+      no_contact: No contact
+      waiting: Waiting for the first contact.
+      silent: Doesn't report its state on its own (periodic reading off); shows up after the first command.
+    status:
+      no_signal: "No signal%{ago}: the device didn't answer. Commands may not reach it until it's back."
+      waiting: 'No reading yet: waiting for the first value.'
+      silent: "No reading yet: this device doesn't report its state on its own (periodic reading off). The value shows up after the first command."
+    calendar:
+      nothing: Nothing in the next few days
+      now: 'Now: %{summary}'
+      today: today
+      tomorrow: tomorrow
+    timeline:
+      via: via %{source}
+      became: Became %{state}
+      before: 'before: %{state}'
+    form:
+      name_hint: Ceiling light
+      unit: Unit
+      risk: Risk
+      risk_hint: Sensitive requires operator or higher; critical, resident or higher. Both ask for confirmation.
+      device_area: Same as the device
+      min: Minimum
+      max: Maximum
+      step: Step
+      options: Options (for a selection, comma separated)
+      options_hint: Home, Away, Vacation
+      confirm: Confirmation text
+      confirm_hint: Open the gate?
+      advanced: Advanced
+      key: Key (unique in the place)
+      key_hint: generated from the name
+      device_class: Class
+      scale: Scale (calibration)
+      offset: Offset (calibration)
+      pulse: Pulse (ms)
+      max_on: Turns off by itself after (s)
+      writable: Accepts commands
+      hidden: Hidden
+      create: Create point
+      save: Save point
+    edit:
+      title: Edit point
+      delete: Delete point
+      delete_hint: Automations and dashboards that use this point will stop working.
+      delete_confirm: Delete the point %{name}?
+    show:
+      history: History
+      range: Chart period
+      on_for_html: On for <strong class="num">%{time}</strong> in this period.
+      raw: Raw readings from %{from} to %{to}.
+      hourly: Hourly averages from %{from} to %{to}.
+      daily: Daily averages from %{from} to %{to}.
+      no_readings: No readings in this period.
+      no_chart: This type of point has no chart; see the latest events below.
+      automation: Automation for this point
+      auto_off: Turn off by itself
+      pulse: 'pulse: turns off %{s} s after turning on'
+      max_on: turns off after %{time} on
+      any_path: ", however it was turned on."
+      no_auto_off: Doesn't turn off by itself. Use a pulse for things that just need a tap (on and off within seconds) or a maximum on time (a pump or a heater).
+      tune: Adjust
+      timeline: Latest events
+  point_links:
+    form:
+      source: When this point changes
+      target: Control this one
+      mode: How
+      mode_hint: 'Mirror: stays the same. Invert: does the opposite. Trigger: turns on, pulses the gate or presses the button (the target pulse turns it off by itself).'
+      trigger_value: Trigger when it becomes (Trigger mode only)
+      trigger_value_hint: empty = on
+      bidirectional: Both ways (both are switches)
+      enabled: Active
+      save: Save mirroring
+  history:
+    subtitle: 'Compare points over time: numbers as overlapping lines, on/off and states as bands.'
+    csv: Export CSV
+    period: Period
+    shortcuts: Period shortcuts
+    previous: Previous period
+    next: Next period
+    until: to
+    zoom_in: Zoom in
+    zoom_out: Zoom out
+    pick_dates: Choose dates
+    from: From
+    to: To
+    points: Points
+    remove: Remove %{name}
+    none_chosen: None chosen yet.
+    pick_points: Choose points
+    up_to: (up to %{n})
+    filter_name: Filter by name
+    filter_points: Filter points
+    show: Show
+    number: number
+    bands: bands
+    no_match: No point with that name.
+    chart: "%{unit} chart"
+    no_unit: No unit
+    readings: Readings
+    hourly: Hourly average (band = min. to max.)
+    daily: Daily average (band = min. to max.)
+    drag: Drag on the chart to zoom into a range.
+    no_readings: No readings in this period.
+    no_readings_short: No readings
+    timeline: Timeline
+    empty: Choose the points to compare.
+    empty_hint: 'Temperature with the AC on, power use with the pump, door with motion: all on the same timeline.'
+  logbook:
+    title: Logbook
+    subtitle: 'Everything that happened at %{site}: changes, commands, automations, scenes, alerts and sign-ins.'
+    today: Today
+    yesterday: Yesterday
+    day_format: "%A, %B %d"
+    loading: Loading more…
+    start: Start of the period.
+    bigger: See a longer period
+    search: Search
+    search_hint: Search point, device, automation or scene
+    more_filters: More filters
+    device: Device
+    point: Point
+    person: Person
+    all: All
+    what: What to show
+    none_checked: With no type checked, everything is shown.
+    empty: Nothing happened in this period.
+    empty_filtered: Nothing happened in this period with these filters.
+    empty_hint: Try a longer period or remove a filter.
+  maps:
+    title: Map
+    subtitle: Where the people of %{site} are, the zones and today's path. Only residents, technicians and the owner can see it.
+    aria: Map with %{people} person(s) and %{zones} zone(s)
+    failed: Couldn't load the map (no internet?).
+    no_center: Nowhere to center the map.
+    no_center_hint: Set the place's location (Edit place) or create a zone in Helpers.
+    people: People
+    no_people: No people. Create one in Helpers → Person, using the phone app as the source.
+    no_reading: No reading
+    since: since
+    phone: Phone location
+    zone_position: Zone position (approximate)
+    no_position: No position on the map
+    track:
+      one: "%{count} point today"
+      other: "%{count} points today"
+    zones: Zones
+    no_zones: No zones with a location.
+    zone_info: radius %{radius} m · %{count} person(s)
+    js:
+      people: person(s)
+      approx: zone position
+  people:
+    subtitle: 'People: who can sign in to this installation and what they can do in each place.'
+    invite_link: Invite link
+    invite_link_hint: Copy it and send it to the person. It only shows up now, lasts 7 days and works once.
+    invite_link_label: Invite link
+    copy: Copy
+    role: Role
+    you: you
+    sites:
+      one: "%{count} place"
+      other: "%{count} places"
+    disabled: Disabled
+    active: Active
+    create_title: Create the account
+    create_hint: You set the e-mail and the initial password and hand them to the person.
+    email: E-mail
+    initial_password: Initial password (at least 8)
+    install_role: Role in the installation
+    site: Place
+    no_site: None for now
+    site_role: Role in the place
+    create: Create account
+    invite_title: Invite with a link
+    invite_hint: The person opens the link, creates their own password and is in. Single use, valid for 7 days.
+    generate: Generate link
+    pending: Pending invites
+    role_in: '%{role} at %{site}'
+    valid_until: valid until %{at}
+    cancel_invite: Cancel this invite? The link stops working.
+    role_hint: Owners and administrators control every place. Members only get into the places below, with the role set for each one.
+    save_role: Save role
+    per_site: Role in each place
+    admin_everywhere: As %{role}, they're the owner of every place.
+    no_access: No access
+    save_sites: Save places
+    actions: Actions
+    enable_confirm: Re-enable %{name}?
+    disable_confirm: Disable %{name}? They're signed out of the web and the app right away.
+    enable: Re-enable
+    disable: Disable
+    remove_confirm: Remove %{name} from the installation? The account is deleted.
+    remove: Remove
+  invites:
+    page_title: Invite — Minha Automação
+    invalid: Invalid invite
+    invalid_hint: This link was already used, expired or was canceled. Ask whoever invited you for a new one.
+    sign_in: Sign in
+    title: You've been invited
+    hint: Create your account to get in. The invite is valid until %{date}.
+    hint_site: Create your account to get into %{site}. The invite is valid until %{date}.
+    name: Your name
+    email_hint: you@email.com
+    password: Password (at least 8)
+    submit: Create account and sign in
+    have_account: Already have an account?
+  push:
+    subtitle: 'My devices: where notifications arrive as push.'
+    this_device: This device
+    checking: Checking this browser...
+    name: Device name (optional)
+    name_hint: My phone
+    subscribe: Get notifications on this device
+    subscribed: Subscribed devices
+    test: Send test
+    browser: Browser
+    web_push: Web Push · subscribed on %{at}
+    last_sent: last sent %{at}
+    remove: Remove %{name}
+    remove_confirm: Remove %{name}? It will stop getting notifications.
+    app: Minha Automação app (%{platform})
+    native: Native app · since %{at}
+    none: No devices yet. Subscribe this browser above.
+    how: How to get them on your phone
+    how_android_html: '<strong>Android (Chrome):</strong> open this address through the external access (https), tap the menu and "Install app" or "Add to home screen". Open it from the icon, come back here and tap "Get notifications on this device".'
+    how_ios_html: '<strong>iPhone (iOS 16.4 or newer):</strong> in Safari, tap Share and "Add to Home Screen". Push only works when opened from the home screen icon; in regular Safari the button doesn''t show up.'
+    how_https: "Push requires https: from the home network address (http://192.168...) the browser won't let you subscribe."
+    js:
+      https: 'Push requires https: open it through the external access to subscribe this device.'
+      unsupported: This browser doesn't support push. On iPhone, add it to the Home Screen and open it from the icon.
+      no_keys: Push is turned off on the server (the VAPID keys are missing).
+      blocked: Notifications are blocked in the browser settings.
+      subscribed: This device already gets notifications. Subscribing again updates the name.
+      not_subscribed: This device doesn't get notifications yet.
+      denied: Notification permission denied.
+      not_saved: The server didn't save the subscription. Try again.
+      failed: "Couldn't subscribe:"
+  settings_dashboards:
+    subtitle: 'Dashboards from every place: what shows in the menu, who sees it and the views of each one.'
+    new: New dashboard
+    in: In %{site}
+    none: No dashboards yet.
+    none_hint: 'Create a place first: it gets the automatic dashboard.'
+    dashboard: Dashboard
+    views: Views
+    in_menu: In the menu
+    who: Who sees it
+    auto: automatic
+    version: version %{n}
+    draft: draft
+    site_default: place default
+    your_home: opens on your Home
+    auto_views: Automatic
+    "yes": "Yes"
+    "no": "No"
+    duplicate: Duplicate %{name}
+    delete: Delete %{name}
+    delete_confirm: Delete the dashboard %{name}?
+    delete_button: Delete
+    open: Open
+  legal:
+    updated: 'Last updated: %{date}'
+    privacy: Privacy
+    terms: Terms
+    deletion: Data deletion
+    contact: 'contact:'
+    reset:
+      title: Reset password
+      password: New password (at least 8 characters)
+      save: Save password
+      done: Password changed. Sign in to the app with the new password.
+      failed: That didn't work. Ask for a new link.
+  mailers:
+    password_reset:
+      subject: 'Minha Automação: reset your password'
+  notices:
+    viewer_only: Viewers can only see dashboards.
+    forbidden: Your role in this place doesn't allow that.
+    site_created: Place created. Now create the areas (rooms, floors).
+    site_updated: Place updated.
+    site_deleted: Place deleted.
+    site_admin_only: Only a company administrator or owner can create places.
+    area_created: Area created.
+    area_updated: Area updated.
+    area_deleted: Area deleted. Its devices are now without an area.
+    point_created: Point created.
+    point_updated: Point updated.
+    point_deleted: Point deleted.
+    need_site_history: Create a place to see the history.
+    need_site_logbook: Create a place to see the logbook.
+    need_site_map: Create a place to see the map.
+    map_forbidden: Your role in this place doesn't show where people are.
+    person_created: "%{name} can sign in with the e-mail and password you set."
+    role_updated: Role updated.
+    sites_updated: Places updated.
+    person_removed: "%{name} was removed from the installation."
+    people_admin_only: Only an administrator or the owner can see people.
+    owner_locked: The owner can't be changed, disabled or removed here.
+    invite_canceled: Invite canceled.
+    push_removed: Device removed.
+    push_off: Push is turned off on the server (the VAPID keys are missing).
+    push_test: Test sent to your devices.
+    allowed_saved: Allowed addresses saved.
+    type_reset: Type ZERAR to confirm.
+    data_wiped: Installation data deleted.
+    type_delete: Type EXCLUIR to confirm.
+    account_deleted: Account deleted.
+    too_many_minutes: Too many attempts. Wait a few minutes.
+    reset_sent: If the e-mail has an account, we sent a link to reset the password.
+    choose_device: Choose at least one device.
+    choose_action: Choose the action.
+    bulk_done: "%{action}: %{count} device(s)."
+    no_reading: This device can't be read.
+    reconnecting: Reconnecting. The result shows up in the diagnostics in a moment.
+    device_created: Device created. Add its points.
+    device_updated: Device updated.
+    device_deleted: Device deleted.
+    read_requested: Reading requested. The values arrive in a moment.
+  rules:
+    both_ways: both ways
+    when_becomes: when it becomes %{value}
+    scene: scene %{name}
+    every_change: on every change
+    for_min: for %{n} min
+    repeat: ", repeats every %{n} min"
+    steps:
+      one: "%{count} step"
+      other: "%{count} steps"
+    and: " and "
+  shadow_labels:
+    blocked: Held at the network
+    command: Command
+    none: no triggers

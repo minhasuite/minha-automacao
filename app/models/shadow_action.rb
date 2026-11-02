@@ -12,6 +12,6 @@ class ShadowAction < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc) }
 
-  def origin_name = automation&.name || scene&.name || "Regra do local"
-  def origin_kind = automation&.kind_label || (scene ? "Cena" : "Primitiva")
+  def origin_name = automation&.name || scene&.name || I18n.t("automations.shadow.origin_rule")
+  def origin_kind = automation&.kind_label || I18n.t(scene ? "automations.shadow.origin_scene" : "automations.shadow.origin_primitive")
 end

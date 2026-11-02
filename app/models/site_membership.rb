@@ -10,8 +10,7 @@ class SiteMembership < ApplicationRecord
   class Forbidden < StandardError; end
 
   ROLES = %w[viewer guest operator resident technician owner].freeze
-  ROLE_LABELS = { "viewer" => "Leitor", "guest" => "Visitante", "operator" => "Operador", "resident" => "Morador",
-                  "technician" => "Técnico", "owner" => "Dono" }.freeze
+  ROLE_LABELS = LocalizedLabel.for("labels.site_roles", ROLES)
   # Papel mínimo para cada ação; comando depende do risco do ponto.
   MIN_ROLE = { view: "viewer", manage: "technician", admin: "owner" }.freeze
   MIN_ROLE_BY_RISK = { "normal" => "guest", "sensitive" => "operator", "critical" => "resident" }.freeze
@@ -38,6 +37,6 @@ class SiteMembership < ApplicationRecord
   private
 
   def user_in_same_tenant
-    errors.add(:user, "precisa ser da empresa") if user && user.tenant_id != tenant_id
+    errors.add(:user, :same_company) if user && user.tenant_id != tenant_id
   end
 end

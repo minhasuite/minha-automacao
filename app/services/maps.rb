@@ -23,7 +23,8 @@ module Maps
         "home" => HelperTypes::Zone.home?(z), "count" => z.value.to_i }
     end
     people = People.persons(site).map { |p| person(p, zones, track) }
-    { "zones" => zones, "people" => people, "center" => center(site, zones, people) }
+    { "zones" => zones, "people" => people, "center" => center(site, zones, people),
+      "texts" => { "people" => I18n.t("maps.js.people"), "no_reading" => I18n.t("maps.no_reading"), "approx" => I18n.t("maps.js.approx") } }
   end
 
   def person(p, zones, track)
