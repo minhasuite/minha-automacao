@@ -20,7 +20,7 @@
       <div><label for="estado" class="ss-label"><%= t("automations.index.state") %></label><%= select_tag :estado, options_for_select([ [ t("automations.index.active"), "ativas" ], [ t("automations.index.inactive"), "desativadas" ] ], params[:estado]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div>
       <div><label for="area" class="ss-label"><%= t("automations.index.area") %></label><%= select_tag :area, options_for_select(@site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, params[:area]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div>
       <div><label for="rotulo" class="ss-label"><%= t("automations.index.label") %></label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: t("automations.index.all_m"), class: "ss-input", data: { autosubmit: true } %></div>
-      <% if @categories.any? %><div><label for="categoria" class="ss-label">Categoria</label><%= select_tag :categoria, options_for_select(@categories, params[:categoria]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div><% end %>
+      <% if @categories.any? %><div><label for="categoria" class="ss-label"><%= t("automations.index.category") %></label><%= select_tag :categoria, options_for_select(@categories, params[:categoria]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div><% end %>
     </div>
     <button type="submit" class="ss-btn ss-btn-ghost hidden sm:inline-flex" aria-label="<%= t("automations.common.search") %>"><%= icon("search", "size-4") %></button>
   <% end %>

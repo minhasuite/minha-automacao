@@ -440,3 +440,114 @@ en:
     compare: Compare plans
     no_payment: Changing plans from this page comes with payments. To change now, contact support.
     exceeded: Your plan doesn't include more %{what}. See Settings → Plan.
+  agenda:
+    show:
+      title: "Calendar"
+      subtitle: "%{site} · every calendar (Google, ICS and local ones) for the next 31 days"
+      new_local: "New local calendar"
+      upcoming: "Upcoming events"
+      empty: "Nothing in the next 31 days."
+      empty_hint: "Create a local calendar or connect Google Calendar / ICS in Integrations."
+      all_day: "All day"
+      new_event: "New event"
+      calendar: "Calendar"
+      summary: "Title"
+      summary_ph: "Recycling pickup"
+      start: "Start"
+      finish: "End"
+      repeat: "Repeat"
+      location: "Location (optional)"
+      create: "Create event"
+      events_of: "%{name} events"
+      no_events: "No events."
+      delete: "Delete %{name}"
+      delete_confirm: "Delete %{name}?"
+    flash:
+      created: "Event created in %{name}."
+      deleted: "Event deleted."
+  exposures:
+    show:
+      title: "Expose to assistants"
+      subtitle: "%{site} · what voice, Alexa and the bridges can see, on a single screen"
+      search: "Search"
+      search_ph: "Name or alias"
+      area: "Area or floor"
+      all_f: "All"
+      label: "Label"
+      all_m: "All"
+      show: "Show"
+      only_exposed: "Exposed only"
+      empty: "No points match these filters."
+      clear: "Clear filters"
+      table: "Exposure by assistant"
+      point: "Point"
+      column_title: "Check or uncheck all in %{target}"
+      column_all: "All in %{target}"
+      critical: "Critical"
+      aliases: "Aliases: %{list}"
+      cell: "%{point} in %{target}"
+      not_applicable: "%{target} doesn't understand this kind of point"
+      confirm: "I confirm exposing critical points (gate, lock, siren)"
+      save: "Save exposure"
+      hint: "Assist is this app's local voice. Alexa and the bridges need to discover devices again after saving. Spoken name and aliases are on the point's page."
+    flash:
+      nothing: "Nothing changed."
+      saved:
+        one: "Exposure saved (%{count} change)."
+        other: "Exposure saved (%{count} changes)."
+  tags:
+    index:
+      subtitle: "Labels: group and target points, devices, areas, scenes, automations and scripts"
+      empty: "No labels yet."
+      empty_hint_html: "Type the label in the form of a point, device, area, scene, automation, script or helper (\"lighting\", \"night\"). It becomes a filter in the lists and a target in actions (query <code>tag=lighting</code>)."
+      list: "Labels"
+      unused: "Unused"
+      name_of: "Name of %{name}"
+      color_of: "Color of %{name}"
+      save: "Save"
+      delete: "Delete %{name}"
+      delete_button: "Delete"
+      delete_confirm: "Delete the label %{name}? It will be removed from everything that uses it."
+    kinds:
+      Point:
+        one: "%{count} point"
+        other: "%{count} points"
+      Device:
+        one: "%{count} device"
+        other: "%{count} devices"
+      Area:
+        one: "%{count} area"
+        other: "%{count} areas"
+      Automation:
+        one: "%{count} automation or script"
+        other: "%{count} automations and scripts"
+      Scene:
+        one: "%{count} scene"
+        other: "%{count} scenes"
+    flash:
+      merged: "Label merged into %{name}."
+      saved: "Label saved."
+      deleted: "Label deleted (removed from everything that used it)."
+  todo_lists:
+    index:
+      title: "Lists"
+      subtitle: "%{site} · shopping, chores: on screen, by voice and by automation"
+      new: "New list"
+      empty: "No lists yet."
+      empty_hint: "Create a shopping list and say \"add milk to the shopping list\". Automations can add too (\"out of pet food\": notify and put it on the list)."
+      first: "Create the first one"
+      pending:
+        one: "%{count} to do"
+        other: "%{count} to do"
+      new_item: "New item in %{name}"
+      add_ph: "Add item"
+      add: "Add"
+      empty_list: "Empty list."
+      items_of: "%{name} items"
+      reopen: "Reopen %{name}"
+      complete: "Complete %{name}"
+      due: "· due %{date}"
+      remove: "Remove %{name}"
+      clear_done:
+        one: "Clear %{count} completed"
+        other: "Clear %{count} completed"

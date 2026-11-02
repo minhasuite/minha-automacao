@@ -183,6 +183,8 @@ es:
       center_note: "(se ignora en la casa)"
       radius: "Radio (metros)"
       hint: "El valor de la zona es cuántas personas están en ella. Usa los disparadores \"Persona entró o salió de una zona\" y \"Presencia en la zona\" (llegó el primero, salieron todos) y la condición \"Alguien en la zona\"."
+    local_calendar_note: "Los eventos están en la pantalla Agenda del lugar y en la acción \"Crear evento en la agenda\"."
+    todo_note: "Los ítems están en la pantalla Listas del lugar, en la voz y en las automatizaciones (comandos \"Agregar ítem\", \"Completar ítem\")."
   datasets:
     key: "clave %{key}"
     free: "campos libres"

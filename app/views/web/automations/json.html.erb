@@ -1,4 +1,4 @@
-<%= render "web/shared/header", title: t("automations.json.title"), subtitle: t("automations.json.subtitle", name: @automation.name), back: edit_automation_path(@automation) %>
+<%= render "web/shared/header", title: t(@yaml ? "automations.json.title_yaml" : "automations.json.title"), subtitle: t("automations.json.subtitle", name: @automation.name), back: edit_automation_path(@automation) %>
 <nav class="ss-chips mb-3" aria-label="<%= t("automations.json.format") %>">
   <%= link_to "JSON", json_automation_path(@automation), class: "ss-chip", "aria-current": (!@yaml).to_s %>
   <%= link_to "YAML", json_automation_path(@automation, formato: "yaml"), class: "ss-chip", "aria-current": @yaml.to_s %>
@@ -6,7 +6,7 @@
 <%= form_with url: json_automation_path(@automation, formato: (@yaml ? "yaml" : nil)), method: :patch, class: "ss-card ss-card-pad grid gap-3" do %>
   <% if @errors.present? %>
     <div class="rounded-xl bg-danger-soft text-danger p-3 text-sm" role="alert">
-      <p class="font-bold"><%= t("automations.json.not_saved") %></p>
+      <p class="font-bold"><%= t(@yaml ? "automations.json.not_saved_yaml" : "automations.json.not_saved") %></p>
       <ul class="list-disc pl-5 mt-1"><% @errors.first(10).each do |e| %><li><%= e %></li><% end %></ul>
     </div>
   <% end %>

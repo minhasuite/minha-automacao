@@ -413,6 +413,7 @@ en:
       apply: "Apply to selected"
       apply_confirm: "Apply the action to the selected automations? Deleting can't be undone."
       apply_button: "Apply"
+      category: "Category"
     kind_titles:
       triggers: "When"
       conditions: "Only if"
@@ -589,6 +590,8 @@ en:
       now: "now %{value}"
       current: "Current value"
     json:
+      yaml_not_object: "The YAML must be an object (triggers, conditions, actions)."
+      yaml_invalid: "Invalid YAML: %{error}"
       format: "Format"
       yaml_hint: "Write in this format or paste the YAML of a Home Assistant automation or script (its \"Edit in YAML\"): it is converted on the spot, with entities turned into points and HA templates accepted."
       converted: "Converted from HA; check: %{list}."
@@ -597,6 +600,8 @@ en:
       not_saved: "The JSON wasn't saved:"
       definition: "Definition: triggers, conditions, actions"
       save: "Validate and save to draft"
+      title_yaml: "Draft YAML"
+      not_saved_yaml: "The YAML wasn't saved:"
     new:
       script: "New script"
     runs:

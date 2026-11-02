@@ -11,18 +11,22 @@ module Automations
 
     module_function
 
-    def dump(definition, site) = Dsl.with_keys(definition, site).to_yaml.delete_prefix("---\n")
+    # Na ordem em que se lê (quando, só se, então), como o HA mostra.
+    def dump(definition, site)
+      d = Dsl.with_keys(definition, site)
+      d.slice("triggers", "conditions", "actions").merge(d).to_yaml.delete_prefix("---\n")
+    end
 
     # Texto → [definição daqui, notas do que não converteu].
     def load(text, site, script: false)
       doc = YAML.safe_load(text.to_s, aliases: false)
-      raise Error, "O YAML precisa ser um objeto (triggers, conditions, actions)." unless doc.is_a?(Hash)
+      raise Error, I18n.t("automations.json.yaml_not_object") unless doc.is_a?(Hash)
       return [ doc, [] ] unless ha?(doc)
 
       bp = Blueprints::HaImport.new("", nil, entities: true).convert(Blueprints::HaImport.as_blueprint(script ? "script" : "automation", doc["alias"] || "YAML", doc))
       [ resolve(bp["definition"], bp["inputs"], site), bp["unsupported"] ]
     rescue Psych::Exception => e
-      raise Error, "YAML inválido: #{e.message.truncate(160)}"
+      raise Error, I18n.t("automations.json.yaml_invalid", error: e.message.truncate(160))
     rescue Blueprints::HaImport::Error => e
       raise Error, e.message
     end

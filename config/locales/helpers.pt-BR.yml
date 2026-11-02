@@ -183,6 +183,8 @@ pt-BR:
       center_note: "(ignorado na casa)"
       radius: "Raio (metros)"
       hint: "O valor da zona é quantas pessoas estão nela. Use os gatilhos \"Pessoa entrou ou saiu de zona\" e \"Presença na zona\" (o primeiro chegou, todos saíram) e a condição \"Alguém na zona\"."
+    local_calendar_note: "Os eventos ficam na tela Agenda do local e na ação \"Criar evento na agenda\"."
+    todo_note: "Os itens ficam na tela Listas do local, na voz e nas automações (comandos \"Adicionar item\", \"Concluir item\")."
   datasets:
     key: "chave %{key}"
     free: "campos livres"

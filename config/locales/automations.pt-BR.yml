@@ -413,6 +413,7 @@ pt-BR:
       apply: "Aplicar nas marcadas"
       apply_confirm: "Aplicar a ação nas automações marcadas? Excluir não tem volta."
       apply_button: "Aplicar"
+      category: "Categoria"
     kind_titles:
       triggers: "Quando"
       conditions: "Só se"
@@ -589,6 +590,8 @@ pt-BR:
       now: "agora %{value}"
       current: "Valor atual"
     json:
+      yaml_not_object: "O YAML precisa ser um objeto (triggers, conditions, actions)."
+      yaml_invalid: "YAML inválido: %{error}"
       format: "Formato"
       yaml_hint: "Escreva no formato daqui ou cole o YAML de uma automação ou script do Home Assistant (o \"Editar em YAML\" de lá): ele é convertido na hora, com as entidades viradas pontos e os templates do HA aceitos."
       converted: "Convertido do HA; confira: %{list}."
@@ -597,6 +600,8 @@ pt-BR:
       not_saved: "O JSON não foi salvo:"
       definition: "Definição: triggers, conditions, actions"
       save: "Validar e salvar no rascunho"
+      title_yaml: "YAML do rascunho"
+      not_saved_yaml: "O YAML não foi salvo:"
     new:
       script: "Novo script"
     runs:

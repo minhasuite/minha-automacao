@@ -21,7 +21,7 @@ module Web
       authorize_site!(@site, :manage)
       cal = local_calendar(params.dig(:event, :point_id))
       HelperTypes::LocalCalendar.add_event!(cal, params.require(:event).permit(:summary, :start, :end, :all_day, :location, :repeat).to_h)
-      redirect_to site_agenda_path(@site), notice: "Evento criado em #{cal.name}."
+      redirect_to site_agenda_path(@site), notice: t("agenda.flash.created", name: cal.name)
     rescue ArgumentError => e
       redirect_to site_agenda_path(@site), alert: e.message
     end
@@ -30,7 +30,7 @@ module Web
       authorize_site!(@site, :manage)
       cal = local_calendar(params[:point_id])
       HelperTypes::LocalCalendar.remove_event!(cal, params[:uid])
-      redirect_to site_agenda_path(@site), notice: "Evento apagado."
+      redirect_to site_agenda_path(@site), notice: t("agenda.flash.deleted")
     end
 
     private

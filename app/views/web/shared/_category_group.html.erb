@@ -2,7 +2,7 @@
 <%# ondaA1 (A2): bloco recolhível de uma categoria (sem categorias, só o conteúdo). -%>
 <% if grouped %>
   <details class="ss-group mb-4" open>
-    <summary class="ss-group-head"><%= icon("chevron-right", "size-4 ss-group-caret") %><span class="font-bold text-ink"><%= name || "Sem categoria" %></span><span class="ss-badge"><%= count %></span></summary>
+    <summary class="ss-group-head"><%= icon("chevron-right", "size-4 ss-group-caret") %><span class="font-bold text-ink"><%= name || t("shared.organize.no_category") %></span><span class="ss-badge"><%= count %></span></summary>
     <%= yield %>
   </details>
 <% else %>

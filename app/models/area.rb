@@ -53,9 +53,9 @@ class Area < ApplicationRecord
   # "Térreo", "1º andar", "Subsolo 1" quando o andar não tem nome próprio de nível.
   def level_label
     return if level.nil?
-    return "Térreo" if level.zero?
+    return I18n.t("areas.levels.ground") if level.zero?
 
-    level.negative? ? "Subsolo #{-level}" : "#{level}º andar"
+    level.negative? ? I18n.t("areas.levels.basement", n: -level) : I18n.t("areas.levels.floor", n: level)
   end
 
   private

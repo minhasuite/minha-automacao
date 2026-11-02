@@ -413,6 +413,7 @@ es:
       apply: "Aplicar a las marcadas"
       apply_confirm: "¿Aplicar la acción a las automatizaciones marcadas? Eliminar no se puede deshacer."
       apply_button: "Aplicar"
+      category: "Categoría"
     kind_titles:
       triggers: "Cuando"
       conditions: "Solo si"
@@ -589,6 +590,8 @@ es:
       now: "ahora %{value}"
       current: "Valor actual"
     json:
+      yaml_not_object: "El YAML debe ser un objeto (triggers, conditions, actions)."
+      yaml_invalid: "YAML no válido: %{error}"
       format: "Formato"
       yaml_hint: "Escribe en el formato de aquí o pega el YAML de una automatización o script de Home Assistant (su \"Editar en YAML\"): se convierte al momento, con las entidades convertidas en puntos y las plantillas de HA aceptadas."
       converted: "Convertido de HA; revisa: %{list}."
@@ -597,6 +600,8 @@ es:
       not_saved: "El JSON no se guardó:"
       definition: "Definición: triggers, conditions, actions"
       save: "Validar y guardar en el borrador"
+      title_yaml: "YAML del borrador"
+      not_saved_yaml: "El YAML no se guardó:"
     new:
       script: "Nuevo script"
     runs:

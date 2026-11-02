@@ -43,7 +43,7 @@ module Web
         end
       end
       back = params[:back].to_s.start_with?("/") ? params[:back] : site_exposure_path(@site)
-      redirect_to back, **(errors.any? ? { alert: errors.first(3).to_sentence } : { notice: changed.zero? ? "Nada mudou." : "Exposição salva (#{changed} mudança#{'s' if changed != 1})." })
+      redirect_to back, **(errors.any? ? { alert: errors.first(3).to_sentence } : { notice: changed.zero? ? t("exposures.flash.nothing") : t("exposures.flash.saved", count: changed) })
     end
   end
 end

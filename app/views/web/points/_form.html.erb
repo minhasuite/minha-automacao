@@ -5,7 +5,7 @@
   <div><%= f.label :capability, t("sites.form.kind"), class: "ss-label" %><%= f.select :capability, Point::CAPABILITY_LABELS.invert, {}, class: "ss-input" %></div>
   <div><%= f.label :unit, t("points.form.unit"), class: "ss-label" %><%= f.text_field :unit, class: "ss-input", placeholder: "°C, W, %" %></div>
   <% if (units = Units.compatible(point.unit)).any? %>
-    <div><%= f.label :display_unit, "Mostrar em", class: "ss-label" %><%= f.select :display_unit, units, { include_blank: "Unidade do local (#{Units.display_unit(point.dup.tap { |p| p.display_unit = nil })})" }, class: "ss-input" %></div>
+    <div><%= f.label :display_unit, t("points.form.display_unit"), class: "ss-label" %><%= f.select :display_unit, units, { include_blank: t("points.form.display_unit_default", unit: Units.display_unit(point.dup.tap { |p| p.display_unit = nil })) }, class: "ss-input" %></div>
   <% end %>
   <div><%= f.label :risk, t("points.form.risk"), class: "ss-label" %><%= f.select :risk, Point::RISKS.invert, {}, class: "ss-input" %>
     <p class="text-xs text-muted mt-1"><%= t("points.form.risk_hint") %></p></div>

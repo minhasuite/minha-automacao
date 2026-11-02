@@ -26,6 +26,8 @@ module AutomationsHelper
     when :duration then Automations::Dsl.duration_label(Automations::Dsl.seconds(v))
     when :days then Array(v).map { |d| Automations::Dsl.days[d.to_i] }.join("/")
     when :select then fd.choices.fetch(v, v)
+    when :device_trigger then (p = points[node["point"]]) ? DeviceAutomations.triggers_for(p).fetch(v.to_s, v.to_s) : v.to_s
+    when :device_condition then (p = points[node["point"]]) ? DeviceAutomations.conditions_for(p).fetch(v.to_s, v.to_s) : v.to_s
     when :bool then v ? t("automations.helper.yes") : t("automations.helper.no")
     when :channels then Array(v).map { |c| Notifier.channel_label(c) }.join(t("automations.helper.and")).downcase
     when :recipient then (s = points.values.first&.site) ? Notifier.recipient_label(v, s) : v.to_s

@@ -183,6 +183,8 @@ en:
       center_note: "(ignored for home)"
       radius: "Radius (meters)"
       hint: "The zone's value is how many people are in it. Use the \"Person entered or left a zone\" and \"Presence in zone\" triggers (first one arrived, everyone left) and the \"Someone in the zone\" condition."
+    local_calendar_note: "Events are on the place's Calendar screen and in the \"Create calendar event\" action."
+    todo_note: "Items are on the place's Lists screen, in voice and in automations (\"Add item\", \"Complete item\" commands)."
   datasets:
     key: "key %{key}"
     free: "free-form fields"

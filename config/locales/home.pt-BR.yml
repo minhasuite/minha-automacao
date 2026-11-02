@@ -257,6 +257,14 @@ pt-BR:
       devices:
         one: "%{count} dispositivo"
         other: "%{count} dispositivos"
+    organize:
+      labels: "Rótulos (separados por vírgula)"
+      labels_ph: "iluminação, noite"
+      category: "Categoria"
+      category_ph: "Iluminação, Segurança"
+      aliases: "Apelidos (outros nomes para a voz e a busca)"
+      aliases_ph: "abajur, luz de leitura"
+      no_category: "Sem categoria"
   sites:
     index:
       title: Locais
@@ -284,6 +292,16 @@ pt-BR:
       coords_hint: Latitude e longitude servem para as agendas de nascer e pôr do sol.
       create: Criar local
       save: Salvar local
+      unit_system: "Sistema de unidades"
+      unit_systems:
+        metric: "Métrico (°C, km, L, kg)"
+        imperial: "Imperial (°F, mi, gal, lb)"
+      currency: "Moeda"
+      elevation: "Elevação (m)"
+      country: "País (código)"
+      language: "Idioma do local (voz e avisos)"
+      language_blank: "O de cada pessoa"
+      units_hint: "As unidades só mudam o que aparece: o valor guardado, o histórico e as automações seguem na unidade do aparelho."
     tabs:
       label: Seções do local
       areas: Áreas
@@ -307,6 +325,10 @@ pt-BR:
       empty: Este local ainda está vazio.
       empty_hint: Crie as áreas (sala, cozinha, garagem) e depois os dispositivos de cada uma.
       first_area: Criar a primeira área
+      new_floor: "Novo andar"
+      outside_floors: "Fora dos andares"
+      floor_empty: "Nenhuma área neste andar."
+      create_here: "Criar área aqui"
   areas:
     new:
       title: Nova área
@@ -321,12 +343,22 @@ pt-BR:
       no_parent: Nenhuma (área principal)
       create: Criar área
       save: Salvar área
+      level: "Nível do andar"
+      level_ph: "0 = térreo, -1 = subsolo"
+      level_hint: "Só para andar: ordena os andares e agrupa as áreas de dentro."
     show:
       empty: Nenhum dispositivo nesta área.
       empty_hint: Um dispositivo virtual serve para testar e para guardar estados (modo da casa, férias, alarme armado).
       add_device: Adicionar dispositivo
       details: Detalhes
       no_points: Sem pontos.
+      floor_children: "Áreas deste andar"
+      children: "Áreas dentro"
+      new_here: "Nova área aqui"
+    levels:
+      ground: "Térreo"
+      basement: "Subsolo %{n}"
+      floor: "%{n}º andar"
   devices:
     edit_title: Editar dispositivo
     delete: Excluir dispositivo
@@ -401,6 +433,8 @@ pt-BR:
       hidden: Escondido
       create: Criar ponto
       save: Salvar ponto
+      display_unit: "Mostrar em"
+      display_unit_default: "Unidade do local (%{unit})"
     edit:
       title: Editar ponto
       delete: Excluir ponto

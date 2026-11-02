@@ -2,20 +2,20 @@
 <%# ondaA1 (A2): rótulos (todos os modelos) e categoria (listas que agrupam). -%>
 <% list_id = "labels-#{record.class.name.underscore}" %>
 <div class="<%= categories ? '' : span %>">
-  <%= f.label :label_list, "Rótulos (separados por vírgula)", class: "ss-label" %>
-  <%= f.text_field :label_list, class: "ss-input", maxlength: 300, placeholder: "iluminação, noite", list: list_id, autocomplete: "off" %>
+  <%= f.label :label_list, t("shared.organize.labels"), class: "ss-label" %>
+  <%= f.text_field :label_list, class: "ss-input", maxlength: 300, placeholder: t("shared.organize.labels_ph"), list: list_id, autocomplete: "off" %>
   <datalist id="<%= list_id %>"><% Tag.order(:name).limit(200).pluck(:name).each do |n| %><option value="<%= n %>"></option><% end %></datalist>
 </div>
 <% if categories %>
   <div>
-    <%= f.label :category, "Categoria", class: "ss-label" %>
-    <%= f.text_field :category, class: "ss-input", maxlength: 60, placeholder: "Iluminação, Segurança", list: "#{list_id}-cat", autocomplete: "off" %>
+    <%= f.label :category, t("shared.organize.category"), class: "ss-label" %>
+    <%= f.text_field :category, class: "ss-input", maxlength: 60, placeholder: t("shared.organize.category_ph"), list: "#{list_id}-cat", autocomplete: "off" %>
     <datalist id="<%= list_id %>-cat"><% categories.each do |c| %><option value="<%= c %>"></option><% end %></datalist>
   </div>
 <% end %>
 <% if record.respond_to?(:alias_list) %>
   <div class="<%= span %>">
-    <%= f.label :alias_list, "Apelidos (outros nomes para a voz e a busca)", class: "ss-label" %>
-    <%= f.text_field :alias_list, class: "ss-input", maxlength: 600, placeholder: "abajur, luz de leitura" %>
+    <%= f.label :alias_list, t("shared.organize.aliases"), class: "ss-label" %>
+    <%= f.text_field :alias_list, class: "ss-input", maxlength: 600, placeholder: t("shared.organize.aliases_ph") %>
   </div>
 <% end %>

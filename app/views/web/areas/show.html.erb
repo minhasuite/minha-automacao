@@ -6,12 +6,12 @@
 <% end %>
 
 <% if @children.any? %>
-  <p class="ss-section mb-3"><%= @area.floor? ? "Áreas deste andar" : "Áreas dentro" %></p>
+  <p class="ss-section mb-3"><%= t(@area.floor? ? "areas.show.floor_children" : "areas.show.children") %></p>
   <div class="flex flex-wrap gap-2 mb-6">
     <% @children.each do |c| %>
       <%= link_to c, class: "ss-chip no-underline flex items-center gap-1" do %><%= icon(c.icon.presence || "view-boards", "size-4") %><%= c.name %><% end %>
     <% end %>
-    <% if can?(:manage) %><%= link_to new_site_area_path(@site, parent_id: @area.id), class: "ss-chip no-underline text-accent flex items-center gap-1" do %><%= icon("plus", "size-4") %>Nova área aqui<% end %><% end %>
+    <% if can?(:manage) %><%= link_to new_site_area_path(@site, parent_id: @area.id), class: "ss-chip no-underline text-accent flex items-center gap-1" do %><%= icon("plus", "size-4") %><%= t("areas.show.new_here") %><% end %><% end %>
   </div>
 <% end %>
 <% if @devices.empty? && @children.any? %>

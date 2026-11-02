@@ -257,6 +257,14 @@ es:
       devices:
         one: "%{count} dispositivo"
         other: "%{count} dispositivos"
+    organize:
+      labels: "Etiquetas (separadas por coma)"
+      labels_ph: "iluminación, noche"
+      category: "Categoría"
+      category_ph: "Iluminación, Seguridad"
+      aliases: "Apodos (otros nombres para la voz y la búsqueda)"
+      aliases_ph: "lámpara, luz de lectura"
+      no_category: "Sin categoría"
   sites:
     index:
       title: Lugares
@@ -284,6 +292,16 @@ es:
       coords_hint: La latitud y la longitud sirven para las agendas de amanecer y atardecer.
       create: Crear lugar
       save: Guardar lugar
+      unit_system: "Sistema de unidades"
+      unit_systems:
+        metric: "Métrico (°C, km, L, kg)"
+        imperial: "Imperial (°F, mi, gal, lb)"
+      currency: "Moneda"
+      elevation: "Elevación (m)"
+      country: "País (código)"
+      language: "Idioma del lugar (voz y avisos)"
+      language_blank: "El de cada persona"
+      units_hint: "Las unidades solo cambian lo que se muestra: el valor guardado, el historial y las automatizaciones siguen en la unidad del aparato."
     tabs:
       label: Secciones del lugar
       areas: Áreas
@@ -307,6 +325,10 @@ es:
       empty: Este lugar todavía está vacío.
       empty_hint: Crea las áreas (sala, cocina, garaje) y después los dispositivos de cada una.
       first_area: Crear la primera área
+      new_floor: "Nuevo piso"
+      outside_floors: "Fuera de los pisos"
+      floor_empty: "Ninguna área en este piso."
+      create_here: "Crear un área aquí"
   areas:
     new:
       title: Nueva área
@@ -321,12 +343,22 @@ es:
       no_parent: Ninguna (área principal)
       create: Crear área
       save: Guardar área
+      level: "Nivel del piso"
+      level_ph: "0 = planta baja, -1 = sótano"
+      level_hint: "Solo para pisos: ordena los pisos y agrupa las áreas de dentro."
     show:
       empty: No hay dispositivos en esta área.
       empty_hint: Un dispositivo virtual sirve para probar y para guardar estados (modo de la casa, vacaciones, alarma armada).
       add_device: Agregar dispositivo
       details: Detalles
       no_points: Sin puntos.
+      floor_children: "Áreas de este piso"
+      children: "Áreas dentro"
+      new_here: "Nueva área aquí"
+    levels:
+      ground: "Planta baja"
+      basement: "Sótano %{n}"
+      floor: "Piso %{n}"
   devices:
     edit_title: Editar dispositivo
     delete: Eliminar dispositivo
@@ -401,6 +433,8 @@ es:
       hidden: Oculto
       create: Crear punto
       save: Guardar punto
+      display_unit: "Mostrar en"
+      display_unit_default: "Unidad del lugar (%{unit})"
     edit:
       title: Editar punto
       delete: Eliminar punto

@@ -257,6 +257,14 @@ en:
       devices:
         one: "%{count} device"
         other: "%{count} devices"
+    organize:
+      labels: "Labels (comma-separated)"
+      labels_ph: "lighting, night"
+      category: "Category"
+      category_ph: "Lighting, Security"
+      aliases: "Aliases (other names for voice and search)"
+      aliases_ph: "table lamp, reading light"
+      no_category: "Uncategorized"
   sites:
     index:
       title: Places
@@ -284,6 +292,16 @@ en:
       coords_hint: Latitude and longitude are used for sunrise and sunset schedules.
       create: Create place
       save: Save place
+      unit_system: "Unit system"
+      unit_systems:
+        metric: "Metric (°C, km, L, kg)"
+        imperial: "Imperial (°F, mi, gal, lb)"
+      currency: "Currency"
+      elevation: "Elevation (m)"
+      country: "Country (code)"
+      language: "Place language (voice and notifications)"
+      language_blank: "Each person's own"
+      units_hint: "Units only change what is shown: the stored value, the history and automations stay in the device's unit."
     tabs:
       label: Place sections
       areas: Areas
@@ -307,6 +325,10 @@ en:
       empty: This place is still empty.
       empty_hint: Create the areas (living room, kitchen, garage) and then the devices in each one.
       first_area: Create the first area
+      new_floor: "New floor"
+      outside_floors: "Not on a floor"
+      floor_empty: "No areas on this floor."
+      create_here: "Create an area here"
   areas:
     new:
       title: New area
@@ -321,12 +343,22 @@ en:
       no_parent: None (main area)
       create: Create area
       save: Save area
+      level: "Floor level"
+      level_ph: "0 = ground floor, -1 = basement"
+      level_hint: "Floors only: sorts the floors and groups the areas inside them."
     show:
       empty: No devices in this area.
       empty_hint: A virtual device is handy for testing and for keeping states (home mode, vacation, alarm armed).
       add_device: Add device
       details: Details
       no_points: No points.
+      floor_children: "Areas on this floor"
+      children: "Areas inside"
+      new_here: "New area here"
+    levels:
+      ground: "Ground floor"
+      basement: "Basement %{n}"
+      floor: "Floor %{n}"
   devices:
     edit_title: Edit device
     delete: Delete device
@@ -401,6 +433,8 @@ en:
       hidden: Hidden
       create: Create point
       save: Save point
+      display_unit: "Show in"
+      display_unit_default: "Place unit (%{unit})"
     edit:
       title: Edit point
       delete: Delete point

@@ -440,3 +440,114 @@ pt-BR:
     compare: Comparar planos
     no_payment: A troca de plano pela tela chega com o pagamento. Para mudar agora, fale com o suporte.
     exceeded: O seu plano não inclui mais %{what}. Veja Configurações → Plano.
+  agenda:
+    show:
+      title: "Agenda"
+      subtitle: "%{site} · todas as agendas (Google, ICS e as locais) dos próximos 31 dias"
+      new_local: "Nova agenda local"
+      upcoming: "Próximos eventos"
+      empty: "Nada nos próximos 31 dias."
+      empty_hint: "Crie uma agenda local ou ligue o Google Agenda / ICS em Integrações."
+      all_day: "Dia todo"
+      new_event: "Novo evento"
+      calendar: "Agenda"
+      summary: "Título"
+      summary_ph: "Coleta do lixo reciclável"
+      start: "Início"
+      finish: "Fim"
+      repeat: "Repetir"
+      location: "Local (opcional)"
+      create: "Criar evento"
+      events_of: "Eventos de %{name}"
+      no_events: "Sem eventos."
+      delete: "Apagar %{name}"
+      delete_confirm: "Apagar %{name}?"
+    flash:
+      created: "Evento criado em %{name}."
+      deleted: "Evento apagado."
+  exposures:
+    show:
+      title: "Expor a assistentes"
+      subtitle: "%{site} · o que a voz, a Alexa e as pontes enxergam, numa tela só"
+      search: "Procurar"
+      search_ph: "Nome ou apelido"
+      area: "Área ou andar"
+      all_f: "Todas"
+      label: "Rótulo"
+      all_m: "Todos"
+      show: "Mostrar"
+      only_exposed: "Só expostos"
+      empty: "Nenhum ponto com esses filtros."
+      clear: "Limpar filtros"
+      table: "Exposição por assistente"
+      point: "Ponto"
+      column_title: "Marcar ou desmarcar todos em %{target}"
+      column_all: "Todos em %{target}"
+      critical: "Crítico"
+      aliases: "Apelidos: %{list}"
+      cell: "%{point} em %{target}"
+      not_applicable: "%{target} não entende este tipo de ponto"
+      confirm: "Confirmo expor pontos críticos (portão, fechadura, sirene)"
+      save: "Salvar exposição"
+      hint: "Assist é a voz local deste app. A Alexa e as pontes pedem para descobrir aparelhos de novo depois de salvar. Nome falado e apelidos ficam na página do ponto."
+    flash:
+      nothing: "Nada mudou."
+      saved:
+        one: "Exposição salva (%{count} mudança)."
+        other: "Exposição salva (%{count} mudanças)."
+  tags:
+    index:
+      subtitle: "Rótulos: agrupam e miram pontos, aparelhos, áreas, cenas, automações e scripts"
+      empty: "Nenhum rótulo ainda."
+      empty_hint_html: "Escreva o rótulo no formulário de um ponto, aparelho, área, cena, automação, script ou helper (\"iluminação\", \"noite\"). Ele vira filtro nas listas e alvo nas ações (consulta <code>tag=iluminação</code>)."
+      list: "Rótulos"
+      unused: "Sem uso"
+      name_of: "Nome de %{name}"
+      color_of: "Cor de %{name}"
+      save: "Salvar"
+      delete: "Excluir %{name}"
+      delete_button: "Excluir"
+      delete_confirm: "Excluir o rótulo %{name}? Ele sai de tudo que o usa."
+    kinds:
+      Point:
+        one: "%{count} ponto"
+        other: "%{count} pontos"
+      Device:
+        one: "%{count} aparelho"
+        other: "%{count} aparelhos"
+      Area:
+        one: "%{count} área"
+        other: "%{count} áreas"
+      Automation:
+        one: "%{count} automação ou script"
+        other: "%{count} automações e scripts"
+      Scene:
+        one: "%{count} cena"
+        other: "%{count} cenas"
+    flash:
+      merged: "Rótulo juntado com %{name}."
+      saved: "Rótulo salvo."
+      deleted: "Rótulo excluído (sai de tudo que o usava)."
+  todo_lists:
+    index:
+      title: "Listas"
+      subtitle: "%{site} · compras, tarefas da casa: pela tela, pela voz e por automação"
+      new: "Nova lista"
+      empty: "Nenhuma lista ainda."
+      empty_hint: "Crie a lista de compras e diga \"adicione leite à lista de compras\". Automação também adiciona (\"faltou ração\": avisa e põe na lista)."
+      first: "Criar a primeira"
+      pending:
+        one: "%{count} a fazer"
+        other: "%{count} a fazer"
+      new_item: "Novo item em %{name}"
+      add_ph: "Adicionar item"
+      add: "Adicionar"
+      empty_list: "Lista vazia."
+      items_of: "Itens de %{name}"
+      reopen: "Reabrir %{name}"
+      complete: "Concluir %{name}"
+      due: "· até %{date}"
+      remove: "Remover %{name}"
+      clear_done:
+        one: "Limpar %{count} concluído"
+        other: "Limpar %{count} concluídos"
