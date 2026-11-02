@@ -51,7 +51,12 @@ module Integrations
     # zona guardam só o nome da zona.
     KEEP_H = 24
     KEEP_MAX_H = 24 * 30
-    PRECISE = %w[latitude longitude accuracy].freeze
+    PRECISE = %w[latitude longitude accuracy track].freeze
+    # Trajeto do dia (Mapa): só com a coordenada exata guardada, só de hoje,
+    # um ponto a cada TRACK_STEP_M andados, no máximo TRACK_MAX; some junto
+    # com a coordenada (`forget_old_locations!`).
+    TRACK_MAX = 288
+    TRACK_STEP_M = 30
 
     def self.tick(_now)
       ActsAsTenant.without_tenant do
@@ -104,7 +109,7 @@ module Integrations
 
         point = point_for(device, field, s)
         point.report!(value)
-        point.report_attrs!(s[:attrs].call(values[field], integration)) if s[:attrs]
+        point.report_attrs!(with_track(point, s[:attrs].call(values[field], integration))) if s[:attrs]
       end
       device.update_columns(last_seen_at: Time.current) # rubocop:disable Rails/SkipsModelValidations
       integration.ok!
@@ -123,6 +128,18 @@ module Integrations
       d = distance_to_site(integration, loc) or return
       radius = (integration.settings["home_radius_m"] || HOME_RADIUS_M).to_f
       d - accuracy(loc) <= radius ? HOME : AWAY
+    end
+
+    def self.with_track(point, attrs)
+      return attrs unless attrs["latitude"] && attrs["longitude"]
+
+      zone = ActiveSupport::TimeZone[point.site.timezone] || Time.zone
+      today = Time.current.in_time_zone(zone).beginning_of_day.to_i
+      track = Array(point.attrs.to_h["track"]).select { |_, _, t| t.to_i >= today }
+      last = track.last
+      moved = last.nil? || People.distance(last[0], last[1], attrs["latitude"], attrs["longitude"]) >= TRACK_STEP_M
+      track += [ [ attrs["latitude"], attrs["longitude"], Time.current.to_i ] ] if moved
+      attrs.merge("track" => track.last(TRACK_MAX))
     end
 
     def self.location_attrs(integration, loc)

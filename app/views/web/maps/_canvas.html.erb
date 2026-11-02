@@ -1,0 +1,6 @@
+<%# locals: (map:, height:, compact: false, controller: true) -%>
+<div class="mp-map <%= 'mp-compact' if compact %>" style="--mp-h: <%= height %>px" <% if controller %>data-controller="map" data-map-data-value="<%= map.except('point_ids').to_json %>"<% end %>
+     role="region" aria-label="Mapa com <%= map['people'].size %> pessoa(s) e <%= map['zones'].size %> zona(s)">
+  <div class="mp-canvas" data-map-target="canvas"></div>
+  <p class="mp-fallback" data-map-target="fallback" hidden><%= icon("exclamation-circle", "size-5") %>Não deu para carregar o mapa (sem internet?).</p>
+</div>
