@@ -11,7 +11,7 @@
 # de quem fala, a sombra do local e nunca comanda ponto crítico.
 module Assist
   INTENTS = %w[
-    Nevermind
+    Conversation Nevermind
     Timers::Start Timers::Cancel Timers::Pause Timers::Resume Timers::Status
     Lists::Add Lists::Complete Lists::Read
     Weather Clock::Time Clock::Date Climate::GetTemperature
@@ -69,7 +69,7 @@ module Assist
       slots = i.respond_to?(:match) ? i.match(ctx, norm) : (i.pattern.match(norm) if ctx.language == "pt-BR")
       next unless slots
 
-      reply = i.handle(ctx, slots) and return [ reply, (slots if slots.is_a?(Hash)) ]
+      reply = i.handle(ctx, slots) and return [ reply, (slots.reject { |k, _| k.start_with?("_") } if slots.is_a?(Hash)) ]
     end
     nil
   end
@@ -82,7 +82,7 @@ module Assist
     intents.each do |i|
       next unless i.respond_to?(:match)
 
-      slots = i.match(ctx, norm) and return [ i, slots ]
+      slots = i.match(ctx, norm) and return [ i, slots.reject { |k, _| k.start_with?("_") } ]
     end
     nil
   end

@@ -35,6 +35,15 @@ O formato do HA (hassil): `[opcional]`, `(um|outro)` e `{slot}`;
 `Assist::Sentences` vira Regexp sobre a frase normalizada. Palavra literal
 casa inteira; slot de número (`numbers:`) só aceita algarismos.
 
+## Frases do usuário (gatilho por frase)
+
+Gatilho de automação "Frase dita ao assistente" (`conversation`, o do HA):
+uma frase-modelo por linha, em qualquer idioma, com `{slot}`. A intenção
+`Conversation` vem antes das nativas: casa, dispara a automação
+(`{{ trigger.sentence }}`, `{{ trigger.slots.x }}`) e responde a resposta do
+gatilho com `{slot}` trocado. Papel x risco pelo maior risco do que a
+automação comanda; crítico nunca por voz.
+
 ## Segurança
 
 - Comando por voz usa `source: "voice"` e o usuário que falou; segue o papel

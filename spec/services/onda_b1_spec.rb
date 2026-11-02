@@ -146,6 +146,39 @@ RSpec.describe "ondaB1: paridade HA (voz e Assist)" do
     end
   end
 
+  describe "B2 frases personalizadas e gatilho por frase" do
+    def auto(trigger, actions: [ { "type" => "command", "point" => luz.id, "command" => "on" } ])
+      a = site.automations.create!(name: "Teste frase #{SecureRandom.hex(3)}")
+      a.publish!({ "triggers" => [ trigger ], "actions" => actions })
+      a.update!(enabled: true)
+      a
+    end
+
+    it "frase do usuário com {slot} dispara a automação antes das nativas e responde com o slot" do
+      a = auto({ "type" => "conversation", "command" => "(boa noite|hora de dormir) [{quem}]
+modo festa", "response" => "Boa noite, {quem}!" })
+      r = say("Boa noite, Ana")
+      expect(r).to include("intent" => "conversation", "text" => "Boa noite, ana!", "slots" => { "quem" => "ana" })
+      run = a.runs.order(:created_at).last
+      expect(run.trigger).to include("type" => "conversation", "sentence" => "Boa noite, Ana", "slots" => { "quem" => "ana" })
+      expect(luz.reload.value).to be true
+      expect(say("modo festa")["text"]).to eq("Boa noite, !")
+      a.update!(enabled: false)
+      expect(say("modo festa")["intent"]).not_to eq("conversation")
+    end
+
+    it "valida a frase no editor e recusa por voz o que comanda crítico" do
+      plugin = Automations::TriggerTypes::ConversationTrigger
+      expect(plugin.rules({ "command" => "ligar [a {x}" })).to eq([ "frase 1: Colchetes ou parênteses sem par." ])
+      expect(plugin.rules({ "command" => "" })).to be_present
+      expect(plugin.title({ "command" => "abrir tudo" })).to eq("Frase \"abrir tudo\"")
+      portao = create(:point, site: site, device: create(:device, site: site, name: "Garagem"), name: "Portão", risk: "critical", value: false)
+      auto({ "type" => "conversation", "command" => "abre te sesamo" }, actions: [ { "type" => "command", "point" => portao.id, "command" => "on" } ])
+      expect(say("abre-te sésamo")["text"]).to eq("Por voz não posso rodar #{Automation.last.name}.")
+      expect(portao.reload.value).to be false
+    end
+  end
+
   describe "B3 Assist multilíngue" do
     it "en e es: liga, brilho, timer, lista e respostas no idioma da frase" do
       expect(say("turn on the living room light", language: "en")).to include("intent" => "turn_on", "text" => "Turned on Luz.", "language" => "en")
