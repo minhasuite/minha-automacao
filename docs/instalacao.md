@@ -13,7 +13,10 @@ O `install.sh` (na raiz do repo, versionado):
 
 1. confere o sistema e o processador (64 bits);
 2. instala o Docker pelo `get.docker.com` se faltar (com o plugin Compose);
-3. cria `/opt/minha-automacao` e baixa o `docker-compose.local.yml` como `docker-compose.yml`;
+3. baixa a imagem (`MA_TAG`, padrão `latest-stable` = última versão numerada),
+   cria `/opt/minha-automacao` e tira o `docker-compose.local.yml` de dentro da
+   imagem como `docker-compose.yml` (o mesmo que a atualização faz; não depende
+   do repositório);
 4. gera os segredos **na própria máquina** (`.env`, `chmod 600`): `SECRET_KEY_BASE`,
    senhas do banco e do MQTT, chaves do Active Record Encryption, `SUPERVISOR_TOKEN`,
    par VAPID do Web Push; grava `APP_HOST` (IP da máquina), `WEB_PORT` e `IMAGE`;
@@ -22,14 +25,32 @@ O `install.sh` (na raiz do repo, versionado):
    (conta do dono → casa → descoberta → áreas → painel → família e app).
 
 Rodar de novo é seguro (não troca segredo nem apaga dado). Variáveis opcionais:
-`MA_DIR`, `MA_TAG` (padrão `latest`), `MA_PORT` (padrão 80), `MA_REPO_RAW`
-(de onde vem o compose), `MA_IMAGE`.
+`MA_DIR`, `MA_TAG` (padrão `latest-stable`; ex.: `v0.9.0`), `MA_PORT` (padrão 80),
+`MA_IMAGE` (repositório da imagem). Imagem já carregada na máquina (`docker load`,
+sem internet, como no roteiro da imagem pronta) também serve: o instalador, o
+supervisor e o `bin/ma-update` usam a local quando o registro não responde.
 
-Requisitos do lado do produto: a imagem `ghcr.io/minhasuite/minha-automacao`
-precisa ser **pública** no GHCR (ou a máquina precisa de `docker login ghcr.io`)
-e o compose precisa estar acessível em `MA_REPO_RAW` (repo público ou um
-espelho, ex.: `https://get.minhasuite.com/automacao`). O `bin/deploy-local`
-continua sendo o caminho do desenvolvedor (imagem enviada pelo SSH, sem GHCR).
+**Acesso ao GHCR (o 403 do `sha-*`)**: o pacote `ghcr.io/minhasuite/minha-automacao`
+herda a visibilidade do repositório, que é **privado**; pull anônimo responde
+`unauthorized`/403 (conferido em 2026-11-02, inclusive no `sha-<sha>` de um deploy
+antigo). Para vender, o dono da organização precisa deixar o **pacote público**
+(GitHub → organização → Packages → minha-automacao → Package settings → Change
+visibility → Public; não há API para isso). O código continua privado; só a
+imagem fica legível. Enquanto isso, a máquina precisa de `docker login ghcr.io`
+com um token `read:packages` antes do `install.sh` (não recomendado para cliente:
+o token fica na máquina), e o supervisor não manda credencial no pull (a
+atualização pela tela só funciona com pacote público ou imagem já carregada).
+O `install.sh` em si e as releases também estão no repo privado: publicar o
+script num endereço público (ex.: `https://get.minhasuite.com/automacao`) e pôr
+`UPDATE_TOKEN` (leitura de releases) no `.env` até o repo/espelho de releases
+ser público. O `bin/deploy-local` continua sendo o caminho do desenvolvedor
+(imagem enviada pelo SSH, sem GHCR).
+
+**Testado em máquina limpa** (2026-11-02, containers com systemd e Docker dentro,
+no lugar de VMs): Debian 13 e Ubuntu 24.04 — Docker instalado pelo script,
+`/up` 200, raiz → `/primeira-configuracao` ("Crie a conta do dono"); atualização
+pela rota do supervisor de uma versão para a seguinte (`done`) e para uma versão
+que não sobe (`rolled_back`, `/up` 200 na anterior).
 
 ## Atualizar (um clique)
 
@@ -41,10 +62,15 @@ imagem em `IMAGE` e o commit em `APP_VERSION`) e a mais nova publicada.
   se o repo for privado). A tag da release é a tag da imagem no GHCR. Fonte
   nova (GHCR direto, servidor próprio) = módulo com `key` e `latest` + nome em
   `SOURCES`.
-- **Publicar uma versão**: empurrar a imagem com a tag (`docker tag ...:sha-<sha>
-  ...:v1.2.0 && docker push`) e criar a release `v1.2.0` no GitHub com as notas.
-  O CI hoje publica `latest` e `sha-<sha>`; publicar a tag da release pelo CI é
-  o próximo passo (um job em `on: release`).
+- **Publicar uma versão**: `git tag -a v1.2.0 -m "Resumo da versão" && git push
+  origin v1.2.0`. O CI (`ci-cd.yml`) roda a qualidade, constrói a imagem com a
+  versão gravada (`RELEASE_TAG`), publica `:v1.2.0` e `:latest-stable` e só
+  então cria a release `v1.2.0` (notas = mensagem da tag + commits desde a tag
+  anterior). Sem deploy na VPS (o master continua publicando `:latest`/`:sha-*`
+  e fazendo o deploy da demonstração). Só tags `vX.Y.Z` disparam.
+- A versão instalada mostrada é a `RELEASE_TAG` da imagem (ou a tag de `IMAGE`
+  em imagens do master): quem instalou `latest-stable` não vê "atualização
+  disponível" da própria versão.
 - **Atualizar agora** (só o dono) → `POST /system/update` no supervisor, que
   baixa a imagem e cria um container à parte (`docker:27.5-cli`, com o socket do
   Docker e a pasta do compose no mesmo caminho) rodando o `bin/ma-update`:
