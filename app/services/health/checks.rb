@@ -120,7 +120,13 @@ module Health
         version = ENV["APP_VERSION"].presence&.first(12) || "desenvolvimento"
         [ item(key: "version", status: "ok", title: "Versão", detail: "#{version} · Ruby #{RUBY_VERSION} · Rails #{Rails.version}"),
           item(key: "uptime", status: "ok", title: "No ar desde", at: BOOTED_AT,
-               detail: "#{I18n.l(BOOTED_AT, format: :short)} (#{ActiveSupport::Duration.build((Time.current - BOOTED_AT).round).inspect})") ]
+               detail: "#{I18n.l(BOOTED_AT, format: :short)} (#{uptime(Time.current - BOOTED_AT)})") ]
+      end
+
+      def self.uptime(seconds)
+        d, rest = seconds.to_i.divmod(86_400)
+        h, rest = rest.divmod(3600)
+        [ ("#{d} d" if d.positive?), ("#{h} h" if d.positive? || h.positive?), "#{rest / 60} min" ].compact.join(" ")
       end
     end
 

@@ -50,6 +50,8 @@ RSpec.describe "Corte: saúde, Leitor e dados sensíveis" do
       post "/pontos/#{lamp.id}/comando", params: { command: "on" }
       expect(within(tenant) { Command.count }).to eq(0)
 
+      get "/locais"
+      expect(response).to redirect_to("/")
       get "/locais/#{site.id}"
       expect(flash[:alert]).to eq("Leitor só vê os painéis.")
       get "/dispositivos/#{device.id}"

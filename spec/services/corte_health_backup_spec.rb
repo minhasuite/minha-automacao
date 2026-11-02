@@ -194,6 +194,7 @@ RSpec.describe "Corte: saúde, backup externo e troca" do
       expect(r[1].items.map(&:status)).to eq(%w[ok ok ok])
       expect(r[2].items.first.detail).to include("2 divergência(s)")
       expect(Health::Item.new(key: 1, status: "ok", title: "x").key).to eq("1")
+      expect([ Health::Checks::Runtime.uptime(90_061), Health::Checks::Runtime.uptime(59) ]).to eq([ "1 d 1 h 1 min", "0 min" ])
       expect { Health::Item.new(key: 1, status: "talvez", title: "x") }.to raise_error(ArgumentError)
     end
 

@@ -5,6 +5,8 @@ module Web
     before_action :set_site, only: %i[show edit update destroy]
 
     def index
+      return redirect_to(root_path, alert: "Leitor só vê os painéis.") if current_user.reader?
+
       @sites = Site.visible_to(current_user).includes(:areas, :devices).order(:name)
     end
 
