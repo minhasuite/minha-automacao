@@ -1,0 +1,29 @@
+<% rows = DevTools::Statistics.list(@site) %>
+<p class="text-sm text-muted mb-3 max-w-3xl"><%= t("dev_tools.stats.intro") %></p>
+<% if rows.empty? %>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("dev_tools.stats.none") %></p></div>
+<% else %>
+  <ul class="ss-card ss-rows" aria-label="<%= t("dev_tools.tabs.estatisticas") %>">
+    <% rows.each do |r| %>
+      <li class="!items-start flex-wrap gap-3" data-stat="<%= r.point.id %>">
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-ink truncate"><%= link_to r.point.name, point_path(r.point), class: "text-ink no-underline hover:text-accent" %>
+            <% if r.issue %><span class="ss-badge ss-badge-warn ml-1"><%= t("dev_tools.stats.issues.#{r.issue}") %></span><% end %></p>
+          <p class="text-xs text-muted num truncate"><%= r.point.key %><%= " · #{r.point.unit}" if r.point.unit.present? %> · <%= t("dev_tools.stats.hours", n: r.hours) %> · <%= l(r.first_at, format: :short) %> → <%= l(r.last_at, format: :short) %></p>
+        </div>
+        <div class="flex flex-wrap items-end gap-2">
+          <%= form_with url: dev_tools_stats_adjust_site_path(@site), class: "flex flex-wrap items-end gap-1" do %>
+            <%= hidden_field_tag :point_id, r.point.id, id: nil %>
+            <div><label for="at_<%= r.point.id %>" class="ss-label !text-xs"><%= t("dev_tools.stats.hour") %></label>
+              <input id="at_<%= r.point.id %>" type="datetime-local" step="3600" name="at" class="ss-input !py-1 text-sm" required></div>
+            <div><label for="sum_<%= r.point.id %>" class="ss-label !text-xs"><%= t("dev_tools.stats.sum") %></label>
+              <input id="sum_<%= r.point.id %>" name="sum" inputmode="decimal" class="ss-input !py-1 w-24 text-sm" required></div>
+            <button class="ss-btn ss-btn-ghost ss-btn-sm" aria-label="<%= t("dev_tools.stats.adjust_of", name: r.point.name) %>"><%= icon("check", "size-4") %><%= t("dev_tools.stats.adjust") %></button>
+          <% end %>
+          <%= button_to dev_tools_stats_purge_site_path(@site, point_id: r.point.id), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger",
+                        form: { data: { turbo_confirm: t("dev_tools.stats.confirm", name: r.point.name), turbo_confirm_button: t("dev_tools.stats.purge") } } do %><%= icon("trash", "size-4") %><%= t("dev_tools.stats.purge") %><% end %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

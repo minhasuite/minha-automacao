@@ -4,7 +4,7 @@ module Web
   # sombra) e Eventos (escutar e disparar). Só administrador ou dono.
   class DevToolsController < ApplicationController
     # Aba → rótulo em pt-BR (na tela: t("dev_tools.tabs.<aba>")).
-    TABS = { "estados" => "Estados", "modelo" => "Modelo", "acao" => "Ação", "eventos" => "Eventos" }.freeze
+    TABS = { "estados" => "Estados", "modelo" => "Modelo", "acao" => "Ação", "eventos" => "Eventos", "estatisticas" => "Estatísticas" }.freeze
 
     before_action :load_site
 
@@ -46,6 +46,20 @@ module Web
       redirect_to dev_tools_site_path(@site, aba: "eventos"), notice: t("dev_tools.fired", name: name)
     rescue ArgumentError => e
       redirect_to dev_tools_site_path(@site, aba: "eventos"), alert: e.message
+    end
+
+    def stats_adjust
+      point = @site.points.find(params[:point_id])
+      at = DevTools::Statistics.adjust!(point, params[:at], params[:sum])
+      redirect_to dev_tools_site_path(@site, aba: "estatisticas"), notice: t("dev_tools.stats.adjusted", name: point.name, at: l(at, format: :short))
+    rescue ArgumentError => e
+      redirect_to dev_tools_site_path(@site, aba: "estatisticas"), alert: e.message
+    end
+
+    def stats_purge
+      point = @site.points.find(params[:point_id])
+      n = DevTools::Statistics.purge!(point)
+      redirect_to dev_tools_site_path(@site, aba: "estatisticas"), notice: t("dev_tools.stats.purged", name: point.name, n: n)
     end
 
     private

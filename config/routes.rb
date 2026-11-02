@@ -188,6 +188,8 @@ Rails.application.routes.draw do
         post "ferramentas/modelo", to: "dev_tools#template", as: :dev_tools_template
         post "ferramentas/acao", to: "dev_tools#command", as: :dev_tools_command
         post "ferramentas/evento", to: "dev_tools#event", as: :dev_tools_event
+        post "ferramentas/estatisticas", to: "dev_tools#stats_adjust", as: :dev_tools_stats_adjust
+        delete "ferramentas/estatisticas/:point_id", to: "dev_tools#stats_purge", as: :dev_tools_stats_purge
       end
       # Conjuntos de dados (Lote 2): o que as automações registram; lista com filtros e CSV.
       resources :datasets, path: "dados", path_names: { new: "novo", edit: "editar" }, shallow: true

@@ -67,6 +67,9 @@
     <div class="sm:col-span-2"><button type="submit" class="ss-btn ss-btn-primary"><%= icon("play", "size-4") %><%= t("dev_tools.run") %></button></div>
   <% end %>
 
+<% elsif @tab == "estatisticas" %>
+  <%= render "web/dev_tools/statistics" %>
+
 <% else %>
   <div class="grid gap-4 lg:grid-cols-2">
     <%= form_with url: dev_tools_event_site_path(@site), class: "ss-card ss-card-pad grid gap-3" do %>

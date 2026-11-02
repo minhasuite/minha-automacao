@@ -68,6 +68,9 @@ class RollupReadingsJob < ApplicationJob
     rows
   end
 
+  public
+
+  # Público: a ferramenta de estatísticas refaz o dia depois de ajustar uma hora.
   def daily(from, to)
     zone = Time.zone.tzinfo.name
     run(<<~SQL, from, to)

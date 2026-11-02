@@ -1,0 +1,21 @@
+en:
+  dev_tools:
+    tabs:
+      estatisticas: "Statistics"
+    stats:
+      intro: "Hourly and daily summaries used by long charts and Energy. Fix a wrong sum (the day is rebuilt) or delete the summary of a point that no longer records."
+      none: "No statistics in this site yet"
+      hours: "%{n} h"
+      hour: "Hour"
+      sum: "Sum"
+      adjust: "Adjust"
+      adjust_of: "Adjust the sum of %{name}"
+      purge: "Delete"
+      confirm: "Delete all statistics of %{name}? Raw readings are kept."
+      adjusted: "%{name}: sum of %{at} adjusted."
+      purged: "%{name}: %{n} summary(ies) deleted."
+      bad_hour: "Invalid hour."
+      bad_sum: "Invalid sum."
+      no_hour: "There is no summary at that hour."
+      issues:
+        orphan: "No longer recorded"

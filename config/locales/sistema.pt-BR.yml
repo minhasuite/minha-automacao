@@ -1,0 +1,21 @@
+pt-BR:
+  dev_tools:
+    tabs:
+      estatisticas: "Estatísticas"
+    stats:
+      intro: "Resumos por hora e por dia que os gráficos longos e a Energia usam. Corrija uma soma errada (o dia é refeito) ou apague o resumo de um ponto que não grava mais."
+      none: "Nenhuma estatística neste local ainda"
+      hours: "%{n} h"
+      hour: "Hora"
+      sum: "Soma"
+      adjust: "Ajustar"
+      adjust_of: "Ajustar a soma de %{name}"
+      purge: "Apagar"
+      confirm: "Apagar todas as estatísticas de %{name}? As leituras brutas ficam."
+      adjusted: "%{name}: soma de %{at} ajustada."
+      purged: "%{name}: %{n} resumo(s) apagado(s)."
+      bad_hour: "Hora inválida."
+      bad_sum: "Soma inválida."
+      no_hour: "Não há resumo nessa hora."
+      issues:
+        orphan: "Não grava mais"
