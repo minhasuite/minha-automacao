@@ -23,7 +23,7 @@ module Dashboards
 
     def call
       views = Array(@definition["views"]).map do |view|
-        view.merge("badges" => Array(view["badges"]).filter_map { |w| resolve(w) },
+        view.merge({ "theme_now" => theme_now(view) }.compact).merge("badges" => Array(view["badges"]).filter_map { |w| resolve(w) },
                    "sections" => Array(view["sections"]).map { |s| s.merge("widgets" => Array(s["widgets"]).filter_map { |w| resolve(w) }) })
       end
       { "id" => dashboard.id, "site_id" => @site.id, "name" => dashboard.name, "kind" => dashboard.kind, "auto" => dashboard.auto,
@@ -62,6 +62,15 @@ module Dashboards
     end
 
     private
+
+    # app3: o tema que vale agora na visão (painel + visão, noite no fuso do
+    # local), já com as cores, para o app desenhar sem repetir a regra.
+    def theme_now(view)
+      t = Themes.resolve(@definition, view, @site) or return
+      th = t["theme"]
+      { "key" => th.key, "label" => th.label, "accent" => th.accent, "accent2" => th.accent2, "glass" => t["glass"],
+        "night" => t["night"], "image" => t["image"], "blur" => t["blur"] }.compact
+    end
 
     def resolve(w)
       return if w.dig("visible_if", "role") && !(role == "owner" || w.dig("visible_if", "role").include?(role))

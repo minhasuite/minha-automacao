@@ -26,5 +26,6 @@ module Integrations
 
     def self.inventory(integration) = Frigate.inventory(integration.settings["url"])
     def self.snapshot(point) = Frigate.snapshot(point)
+    def self.event_snapshots? = true
   end
 end

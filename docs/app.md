@@ -121,3 +121,25 @@ com ele aberto (leitura em segundo plano fica para a próxima rodada).
 - Editor do painel no app: reordena seções e widgets, tira e põe widgets do
   catálogo e salva rascunho ou publica.
 - Spec: `spec/requests/app2_spec.rb`.
+
+## App 0.3 (app3)
+
+- Telas nativas de Diário (`/sites/:id/logbook`), Histórico
+  (`/sites/:id/history`) e Mapa (`/sites/:id/map`), as mesmas da web.
+- Painel: widgets `energy_flow`, `energy_breakdown`, `energy_compare`,
+  `floorplan` e `map` desenhados no app (cada um por
+  `WidgetRegistry.register`). Tema: cada visão do `GET /dashboards/:id` traz
+  `theme_now` ({key, label, accent, accent2, glass, night, image, blur}), o
+  tema que vale agora (painel + visão, o de noite das 18h às 6h no fuso do
+  local); o app pinta pelas cores que vierem, então tema novo no servidor
+  (`Dashboards::Themes::PLUGINS`) já aparece sem versão nova do app.
+- Alertas de detecção: `GET /sites/:id/detections` (lista com quadro, filtro
+  por tipo e câmera, cursor `before`). O quadro de uma detecção antiga sai de
+  `/points/:id/snapshot?event=<id>` quando o plugin guarda por evento
+  (`Integrations::Plugin.event_snapshots?`, hoje o Frigate); nos outros, só a
+  detecção de agora tem quadro. O app avisa (notificação local com o quadro)
+  quando uma detecção chega pelo tempo real com o app aberto ou em segundo
+  plano; com o app fechado, o aviso vem da automação "Câmera detectou" +
+  "Avisar" com quadro (push).
+- Spec: `spec/requests/app3_spec.rb` (plugin de câmera falso e tema falso por
+  `stub_const`).

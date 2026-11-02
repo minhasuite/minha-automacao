@@ -312,6 +312,7 @@ Rails.application.routes.draw do
       get "sites/:site_id/points", to: "points#site_index" # app2: widgets, atalhos e controles do Android
       # Diário, Histórico de vários pontos e Mapa (paridade com o HA).
       get "sites/:site_id/logbook", to: "logbook#index"
+      get "sites/:site_id/detections", to: "detections#index"
       get "sites/:site_id/history", to: "history#index"
       get "sites/:site_id/map", to: "maps#index"
       post "sites/:site_id/assist", to: "assist#create"

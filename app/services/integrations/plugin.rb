@@ -59,6 +59,10 @@ module Integrations
       # o da detecção de agora); nil = o plugin não tem (o go2rtc assume).
       def snapshot(_point) = nil
 
+      # app3: true = o `snapshot` devolve o quadro de uma detecção antiga pelo
+      # `id` do valor (Frigate guarda por evento); false = só o quadro de agora.
+      def event_snapshots? = false
+
       # A cada minuto (Integrations.tick); padrão: nada.
       def tick(_now) = nil
 

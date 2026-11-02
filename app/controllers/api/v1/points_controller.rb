@@ -104,6 +104,8 @@ module Api
         raise ActiveRecord::RecordNotFound unless own || (point.capability == "stream" && point.device.driver == "go2rtc")
 
         authorize_site!(point.site, :view)
+        # app3: `?event=<id>` = quadro de uma detecção antiga (plugin com event_snapshots?); só na memória.
+        point.value = point.value.merge("id" => params[:event]) if own && point.value.is_a?(Hash) && params[:event].to_s.match?(DetectionsController::EVENT_ID)
         jpeg = own ? Integrations.snapshot(point) : Drivers::Go2rtc.snapshot(point)
         return render_error(:camera_unavailable, "Sem quadro desta detecção.", status: :service_unavailable) if jpeg.nil?
 
