@@ -27,7 +27,8 @@ x-app: &app
     MDNS_SUBNET: ${MDNS_SUBNET:-}
   volumes:
     - storage:/app/storage
-    - ./backups:/backups:ro # Sistema (Lote 4): data do último backup
+    - ./backups:/backups:ro # Sistema (Lote 4): data do último backup; G20: o worker cifra e manda para fora
+    - ./secrets:/secrets:ro # G20: chave SSH do destino da cópia externa (docs/backup.md)
 
 services:
   db:

@@ -31,5 +31,17 @@ production:
   readings_maintenance:
     class: ReadingsMaintenanceJob
     schedule: every day at 3am America/Sao_Paulo
+  # G20: cópia cifrada fora de casa (só com BACKUP_OFFSITE_URL; manda o dump novo, se houver) e o teste de restauração.
+  backup_offsite:
+    class: BackupOffsiteJob
+    schedule: every hour at minute 20
+  backup_restore_test:
+    class: BackupOffsiteJob
+    args: ["restore"]
+    schedule: every sunday at 5am America/Sao_Paulo
+  # Saúde do sistema: avisa os administradores do que está com erro (um aviso por problema por dia).
+  health_check:
+    class: HealthCheckJob
+    schedule: every 10 minutes
 
 development: {}

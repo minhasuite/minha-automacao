@@ -20,6 +20,9 @@ module Integrations
       "backup_at" => { name: "Último backup", capability: "datetime", read: ->(_site) { SystemPlugin.last_backup&.iso8601 } },
       "backup_late" => { name: "Backup atrasado", capability: "problem", device_class: "problem",
                          read: ->(_site) { (at = SystemPlugin.last_backup) && at < BACKUP_LATE.ago } },
+      # G20: só com a cópia externa configurada (sem ela, não cria o ponto).
+      "offsite_backup_late" => { name: "Backup externo atrasado ou com falha", capability: "problem", device_class: "problem",
+                                 read: ->(_site) { !Backups.offsite_ok? if Backups.configured? } },
       "integrations_error" => { name: "Integrações com erro", capability: "measure", read: ->(site) { site.integrations.where(status: "error").count } },
       "integrations_error_names" => { name: "Integrações com erro (nomes)", capability: "text",
                                       read: ->(site) { site.integrations.where(status: "error").order(:name).pluck(:name).join(", ") } },

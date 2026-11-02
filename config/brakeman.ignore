@@ -1,6 +1,12 @@
 {
   "ignored_warnings": [
     {
+      "warning_type": "Command Injection",
+      "fingerprint": "3ba388231936b159e5d2ca5c758e2a75540f1e044b75bd83e0e9b50c14570a6a",
+      "file": "app/services/backups.rb",
+      "note": "G20: o interpolado vai só no ambiente do psql (PGDATABASE = ma_restore_<hex aleatório>); o comando é fixo e sem shell."
+    },
+    {
       "warning_type": "SSL Verification Bypass",
       "fingerprint": "7946fa1643a7fcb0738f94a29c879263a49f087b73884fd7c5e106ce4d844087",
       "file": "app/services/ws_client.rb",

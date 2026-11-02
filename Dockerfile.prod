@@ -1,7 +1,8 @@
 # Imagem de produção (build no job `build` do ci-cd.yml).
 # Web + API. Sem Node: CSS pelo binário do Tailwind e JS por importmap.
 # libvips para o Active Storage; DejaVu para acento em PDF; ping para o
-# rastreador de rede (Pacote 3, só leitura).
+# rastreador de rede (Pacote 3, só leitura); openssh-client para a cópia de
+# backup fora de casa por SSH (G20).
 FROM ruby:3.3.10-slim
 
 ENV RAILS_ENV=production \
@@ -10,7 +11,7 @@ ENV RAILS_ENV=production \
     BUNDLE_DEPLOYMENT="1"
 
 RUN apt-get update -qq && apt-get install -y --no-install-recommends \
-  build-essential libpq-dev libyaml-dev libvips42 postgresql-client curl fonts-dejavu-core iputils-ping \
+  build-essential libpq-dev libyaml-dev libvips42 postgresql-client curl fonts-dejavu-core iputils-ping openssh-client \
   && rm -rf /var/lib/apt/lists/*
 
 RUN gem install bundler -v 2.5.22
