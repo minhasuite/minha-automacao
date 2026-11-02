@@ -7,6 +7,8 @@ module Integrations
   class EsphomePlugin < LanPlugin
     describe key: "esphome", title: "ESPHome", icon: "chip",
              description: "Placas ESP32/ESP8266 com ESPHome na rede de casa: sensores, relés, luzes, cortinas e botões, em tempo real. Ache na rede ou informe o IP e a chave da API."
+    texts en: { title: "ESPHome", description: "ESP32/ESP8266 boards running ESPHome on your home network: sensors, relays, lights, covers and buttons, in real time. Find it on the network or enter the IP and API key." },
+          es: { title: "ESPHome", description: "Placas ESP32/ESP8266 con ESPHome en la red de casa: sensores, relés, luces, cortinas y botones, en tiempo real. Encuéntrala en la red o ingresa la IP y la clave de la API." }
     port 6053
     secrets :encryption_key, :password
     mdns "_esphomelib._tcp"

@@ -8,6 +8,9 @@ module Integrations
   class CameraPlugin < Plugin
     describe key: "camera", title: "Câmera RTSP / ONVIF", icon: "video-camera",
              description: "Qualquer câmera IP da rede: cole o endereço do vídeo ou informe o IP e ela é encontrada sozinha. Imagem, ao vivo e aviso de movimento."
+    texts "pt-BR" => { read_failed: "Não deu para ler a câmera: %{error}", need_ip: "Informe o IP da câmera.", need_url: "Informe o endereço RTSP (rtsp://IP:porta/caminho)." },
+          en: { title: "RTSP / ONVIF camera", description: "Any IP camera on your network: paste the video address or enter the IP and it's found on its own. Snapshot, live view and motion alerts.", read_failed: "Couldn't read the camera: %{error}", need_ip: "Enter the camera's IP.", need_url: "Enter the RTSP address (rtsp://IP:port/path)." },
+          es: { title: "Cámara RTSP / ONVIF", description: "Cualquier cámara IP de la red: pega la dirección del video o ingresa la IP y se encuentra sola. Imagen, en vivo y aviso de movimiento.", read_failed: "No se pudo leer la cámara: %{error}", need_ip: "Ingresa la IP de la cámara.", need_url: "Ingresa la dirección RTSP (rtsp://IP:puerto/ruta)." }
 
     SCHEMES = %w[rtsp rtsps].freeze
 
@@ -26,7 +29,7 @@ module Integrations
       r = Integrations.sync!(integration)
       outcome(:found, integration: integration, notice: "#{r[:found]} câmera(s) lida(s).")
     rescue Integrations::Error => e
-      outcome(:found, integration: integration, alert: "Não deu para ler a câmera: #{e.message}")
+      outcome(:found, integration: integration, alert: text(:read_failed, error: e.message))
     end
 
     # Formulário → settings (sem senha) ou nil se faltar algo.
@@ -57,7 +60,7 @@ module Integrations
 
     def self.url_password(url) = (u = parse(url)) && u.password && CGI.unescape(u.password)
 
-    def self.form_error(form) = form[:mode] == "onvif" ? "Informe o IP da câmera." : "Informe o endereço RTSP (rtsp://IP:porta/caminho)."
+    def self.form_error(form) = text(form[:mode] == "onvif" ? :need_ip : :need_url)
 
     def self.inventory(integration)
       s = integration.settings

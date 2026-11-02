@@ -1,3 +1,3 @@
 <%# locals: (f:, integration:) -%>
 <%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::TizenPlugin,
-           note: %{Na primeira leitura a TV pergunta se permite o acesso: aceite no controle em até 30 s. A 8002 é a conexão cifrada (padrão); a 8001 é a antiga.} %>
+           note: t("integrations.forms.tizen.note") %>

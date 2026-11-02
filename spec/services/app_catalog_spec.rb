@@ -6,6 +6,20 @@ RSpec.describe AppCatalog do
                                         "image" => "org/teste", "version" => "1.0.0", "network" => "bridge" }.merge(extra))
   end
 
+  it "todo manifesto traz en e es para categoria, descrição e rótulo/ajuda das opções" do
+    missing = described_class.all.flat_map do |m|
+      AppCatalog::LOCALES.flat_map do |l|
+        texts = m.data.dig("i18n", l) || {}
+        own = %w[category description].reject { |f| texts[f].present? }
+        opts = m.options.flat_map { |o| %w[label help].select { |f| o[f] && texts.dig("options", o["key"], f).blank? }.map { |f| "options.#{o['key']}.#{f}" } }
+        (own + opts).map { |f| "#{m.key} #{l}.#{f}" }
+      end
+    end
+    expect(missing).to eq([])
+    I18n.with_locale(:en) { expect(described_class.find("node_red").category).to eq("Automation") }
+    expect(described_class.find("node_red").category).to eq("Automação")
+  end
+
   it "carrega todos os manifestos do catálogo, com ícone que existe e porta única" do
     keys = described_class.all.map(&:key)
     expect(keys).to include("mosquitto", "go2rtc", "zigbee2mqtt", "node_red", "esphome", "frigate", "music_assistant", "code_server", "uptime_kuma")

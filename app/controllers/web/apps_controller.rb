@@ -30,31 +30,31 @@ module Web
 
     def install
       Apps::Supervisor.install(@app.key, options: option_params, boot: params[:boot] == "1", watchdog: params[:watchdog] == "1")
-      done("install", "Instalando #{@app.name}: baixar a imagem pode levar alguns minutos.")
+      done("install", t("apps.flash.installing", name: @app.name))
     end
 
     def update
       body = params.key?(:options) ? { options: option_params } : { boot: params[:boot] == "1", watchdog: params[:watchdog] == "1" }
       Apps::Supervisor.configure(@app.key, **body)
-      done("configure", "Configuração de #{@app.name} salva.", tab: (body.key?(:options) ? "config" : nil), details: body.except(:options))
+      done("configure", t("apps.flash.configured", name: @app.name), tab: (body.key?(:options) ? "config" : nil), details: body.except(:options))
     end
 
     def act
       action = params[:do].presence_in(%w[start stop restart]) or return redirect_to(app_path(@app.key))
       Apps::Supervisor.act(@app.key, action)
-      done(action, { "start" => "#{@app.name} iniciado.", "stop" => "#{@app.name} parado.", "restart" => "#{@app.name} reiniciado." }[action])
+      done(action, t("apps.flash.#{action}", name: @app.name))
     end
 
     def upgrade
       Apps::Supervisor.upgrade(@app.key)
-      done("upgrade", "Atualizando #{@app.name} para #{@app.version}.", details: { version: @app.version })
+      done("upgrade", t("apps.flash.upgrading", name: @app.name, version: @app.version), details: { version: @app.version })
     end
 
     def destroy
       keep = params[:keep_data] == "1"
       Apps::Supervisor.uninstall(@app.key, keep_data: keep)
       audit!("uninstall", keep_data: keep)
-      redirect_to apps_path, notice: "#{@app.name} desinstalado#{' (dados guardados)' if keep}."
+      redirect_to apps_path, notice: t(keep ? "apps.flash.uninstalled_kept" : "apps.flash.uninstalled", name: @app.name)
     end
 
     def logs
@@ -81,7 +81,7 @@ module Web
     end
 
     def fetch_statuses
-      return [ {}, "Os aplicativos rodam no servidor local; aqui você vê só o catálogo." ] unless Apps::Supervisor.configured?
+      return [ {}, t("apps.local_hint") ] unless Apps::Supervisor.configured?
 
       [ Apps::Supervisor.statuses, nil ]
     rescue Apps::Supervisor::Error => e

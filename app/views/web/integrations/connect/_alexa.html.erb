@@ -1,13 +1,13 @@
 <%# locals: (integration:, login_url: nil) -%>
 <% if login_url %>
   <section class="ss-card ss-card-pad grid gap-3" aria-labelledby="alexa-login-title">
-    <h2 id="alexa-login-title" class="font-bold">Entrar com a conta Amazon</h2>
+    <h2 id="alexa-login-title" class="font-bold"><%= t("integrations.connect.alexa.title") %></h2>
     <ol class="list-decimal pl-5 text-sm text-ink-2 grid gap-1">
-      <li>Abra o login da Amazon (nova aba) e entre com e-mail, senha e o código de verificação, se pedir.</li>
-      <li>No fim a Amazon mostra uma página de erro ou "página não encontrada": é esperado.</li>
-      <li>Copie o endereço inteiro dessa página (barra do navegador) e cole em "Endereço da página depois de entrar".</li>
+      <li><%= t("integrations.connect.alexa.step1") %></li>
+      <li><%= t("integrations.connect.alexa.step2") %></li>
+      <li><%= t("integrations.connect.alexa.step3") %></li>
     </ol>
-    <%= link_to login_url, target: "_blank", rel: "noopener noreferrer", class: "ss-btn ss-btn-primary w-fit" do %><%= icon("external-link", "size-4") %>Abrir o login da Amazon<% end %>
-    <p class="text-xs text-muted">A senha nunca passa por aqui. No celular, abra o link no navegador (não no app da Amazon) para conseguir copiar o endereço.</p>
+    <%= link_to login_url, target: "_blank", rel: "noopener noreferrer", class: "ss-btn ss-btn-primary w-fit" do %><%= icon("external-link", "size-4") %><%= t("integrations.connect.alexa.open") %><% end %>
+    <p class="text-xs text-muted"><%= t("integrations.connect.alexa.note") %></p>
   </section>
 <% end %>

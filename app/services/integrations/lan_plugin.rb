@@ -9,6 +9,9 @@ module Integrations
   # tiver), `probe(integration)` → entrada (formato de `Integrations`) e a
   # partial do formulário (pode só renderizar `forms/lan`).
   class LanPlugin < Plugin
+    texts "pt-BR" => { no_host: "Informe o IP ou o nome do aparelho na rede.", read_failed: "Não deu para ler o aparelho: %{error}" },
+          en: { no_host: "Enter the device's IP or network name.", read_failed: "Couldn't read the device: %{error}" },
+          es: { no_host: "Ingresa la IP o el nombre del aparato en la red.", read_failed: "No se pudo leer el aparato: %{error}" }
     # Erros de rede que viram "Não deu para ler o aparelho" (e não 500).
     NET_ERRORS = [ SystemCallError, IOError, SocketError, Timeout::Error, OpenSSL::SSL::SSLError, JSON::ParserError, EOFError ].freeze
 
@@ -32,7 +35,7 @@ module Integrations
 
       def setup(site, form)
         host = form[:host].to_s.strip
-        return outcome(:form, alert: "Informe o IP ou o nome do aparelho na rede.") if host.blank?
+        return outcome(:form, alert: text(:no_host)) if host.blank?
 
         login(new_integration(site, name: form[:name].to_s.squish.presence || "#{title} #{host}"), form)
       end
@@ -48,7 +51,7 @@ module Integrations
         r = Integrations.sync!(integration)
         outcome(:found, integration: integration, notice: "#{r[:found]} aparelho(s) lido(s).")
       rescue Integrations::Error => e
-        outcome(:found, integration: integration, alert: "Não deu para ler o aparelho: #{e.message}")
+        outcome(:found, integration: integration, alert: text(:read_failed, error: e.message))
       end
 
       # Achado na rede (primeira configuração): cria e varre na fila; TV que

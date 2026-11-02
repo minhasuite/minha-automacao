@@ -18,11 +18,17 @@ module AppCatalog
   TYPES = %w[string integer boolean enum device].freeze
   NETWORKS = %w[apps bridge].freeze
   KEYS = %w[name category icon description image version system network ports volumes options env
-            server_env web_ui health shm_mb].freeze
+            server_env web_ui health shm_mb i18n].freeze
+  # Idiomas além do pt-BR que o manifesto traz em `i18n:` (category,
+  # description e options.<chave>.label/help); falta = cai no pt-BR.
+  LOCALES = %w[en es].freeze
 
   class Invalid < StandardError; end
 
   module_function
+
+  # Idioma da tela no Rails; o supervisor (sem I18n) usa o pt-BR.
+  def locale = defined?(I18n) ? I18n.locale.to_s : "pt-BR"
 
   def all = @all ||= Dir[File.join(DIR, "*.yml")].sort.map { |f| Manifest.load(f) }
   def find(key) = all.find { |m| m.key == key.to_s }
@@ -47,7 +53,11 @@ module AppCatalog
       validate!
     end
 
-    %w[name category icon description image version network shm_mb web_ui health].each { |k| define_method(k) { data[k] } }
+    %w[name icon image version network shm_mb web_ui health].each { |k| define_method(k) { data[k] } }
+    def category = text("category")
+    def description = text("description")
+    def text(field) = data.dig("i18n", AppCatalog.locale, field) || data[field]
+    def option_text(opt, field) = data.dig("i18n", AppCatalog.locale, "options", opt["key"], field) || opt[field]
     def system_service = data["system"]
     def system? = !system_service.nil?
     def ports = data.fetch("ports", [])

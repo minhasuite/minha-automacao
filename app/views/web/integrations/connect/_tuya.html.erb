@@ -1,17 +1,17 @@
 <%# locals: (integration:, qr_svg: nil) -%>
 <section class="ss-card ss-card-pad grid gap-3 justify-items-center text-center" aria-labelledby="qr-title"
          data-controller="poll" data-poll-url-value="<%= status_integration_path(integration) %>">
-  <h2 id="qr-title" class="font-bold">Escaneie com o app Smart Life</h2>
+  <h2 id="qr-title" class="font-bold"><%= t("integrations.connect.tuya.title") %></h2>
   <% if qr_svg %>
-    <div class="rounded-2xl bg-white p-3 w-64 max-w-full" role="img" aria-label="QR code de login da Tuya"><%= qr_svg %></div>
+    <div class="rounded-2xl bg-white p-3 w-64 max-w-full" role="img" aria-label="<%= t("integrations.connect.tuya.qr") %>"><%= qr_svg %></div>
     <ol class="list-decimal pl-5 text-sm text-ink-2 text-left grid gap-1">
-      <li>No app, toque no <strong>+</strong> ou no ícone de leitura no alto da tela <strong>Início</strong>.</li>
-      <li>Aponte para o QR e confirme <strong>Autorizar</strong>.</li>
-      <li>Esta tela segue sozinha para os aparelhos encontrados.</li>
+      <li><%= t("integrations.connect.tuya.step1_html") %></li>
+      <li><%= t("integrations.connect.tuya.step2_html") %></li>
+      <li><%= t("integrations.connect.qr_next") %></li>
     </ol>
-    <p class="text-sm text-muted inline-flex items-center gap-2" role="status"><span class="ss-dots" aria-hidden="true"></span>Esperando a confirmação no app…</p>
-    <%= link_to "Gerar outro QR", connect_integration_path(integration), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+    <p class="text-sm text-muted inline-flex items-center gap-2" role="status"><span class="ss-dots" aria-hidden="true"></span><%= t("integrations.connect.tuya.waiting") %></p>
+    <%= link_to t("integrations.connect.new_qr"), connect_integration_path(integration), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
   <% else %>
-    <p class="text-sm text-danger">Não deu para gerar o QR. Confira o código de usuário ao lado e tente de novo.</p>
+    <p class="text-sm text-danger"><%= t("integrations.connect.tuya.qr_failed") %></p>
   <% end %>
 </section>

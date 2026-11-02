@@ -24,13 +24,13 @@ module Web
 
         t.errors.full_messages.to_sentence
       end
-      redirect_to site_alexa_path(@site), **(errors.any? ? { alert: errors.first(3).to_sentence } : { notice: "Exposição salva. Diga \"Alexa, descobrir dispositivos\"." })
+      redirect_to site_alexa_path(@site), **(errors.any? ? { alert: errors.first(3).to_sentence } : { notice: t("alexa.flash.saved") })
     end
 
     # Gera (ou refaz) o segredo do cliente; as URLs de retorno vêm da Amazon.
     def client
       authorize_site!(@site, :admin)
-      return redirect_to(site_alexa_path(@site), alert: "Só o dono da instalação.") unless current_user.owner?
+      return redirect_to(site_alexa_path(@site), alert: t("alexa.flash.owner_only")) unless current_user.owner?
 
       tenant = current_user.tenant
       if params[:generate].present?
@@ -38,17 +38,17 @@ module Web
         @items = candidates
         @links = []
         @tenant = tenant
-        flash.now[:notice] = "Cliente gerado. Copie o segredo agora: ele não aparece de novo."
+        flash.now[:notice] = t("alexa.flash.client_generated")
         return render(:show)
       end
       tenant.update_alexa_redirects!(params[:redirect_uris])
-      redirect_to site_alexa_path(@site), notice: "URLs de retorno salvas."
+      redirect_to site_alexa_path(@site), notice: t("alexa.flash.urls_saved")
     end
 
     def unlink
       authorize_site!(@site, :admin)
       ApiToken.active.alexa.where(site_id: @site.id).find(params[:token_id]).revoke!
-      redirect_to site_alexa_path(@site), notice: "Vínculo desfeito: a Alexa perde o acesso a este local."
+      redirect_to site_alexa_path(@site), notice: t("alexa.flash.unlinked")
     end
 
     private

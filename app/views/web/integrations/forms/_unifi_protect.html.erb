@@ -1,4 +1,4 @@
 <%# locals: (f:, integration:) -%>
 <%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::UnifiProtectPlugin,
-           plain: [ [ :username, "Usuário local do console", "crie um usuário só para o Minha Automação" ] ], fields: [ [ :password, "Senha", "" ] ],
-           note: "Use um usuário local (não a conta Ubiquiti na nuvem) com acesso só de leitura ao Protect. O certificado do console não é conferido." %>
+           plain: [ [ :username, t("integrations.forms.unifi_protect.username"), t("integrations.forms.unifi_protect.username_hint") ] ], fields: [ [ :password, t("integrations.forms.common.password"), "" ] ],
+           note: t("integrations.forms.unifi_protect.note") %>

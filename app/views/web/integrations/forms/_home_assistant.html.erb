@@ -1,11 +1,11 @@
 <%# locals: (f:, integration:) -%>
-<p class="text-sm text-ink-2">Para migrar em sombra: o Minha Automação lê o diário do Home Assistant (só leitura) e compara, automação por automação, com o que as automações em sombra daqui teriam feito. Crie um token de acesso longo no seu perfil do Home Assistant e libere o IP dele em Configurações → Sistema → Saída HTTP.</p>
+<p class="text-sm text-ink-2"><%= t("integrations.forms.home_assistant.intro") %></p>
 <div>
-  <%= f.label :url, "Endereço do Home Assistant", class: "ss-label" %>
+  <%= f.label :url, t("integrations.forms.home_assistant.url"), class: "ss-label" %>
   <%= f.url_field :url, value: integration&.settings&.dig("url"), class: "ss-input", placeholder: "http://192.168.0.10:8123", required: integration.nil? %>
 </div>
 <div>
-  <%= f.label :token, "Token de acesso longo", class: "ss-label" %>
-  <%= f.password_field :token, class: "ss-input", autocomplete: "off", value: nil, placeholder: (integration ? "Deixe vazio para manter o guardado" : ""), required: integration.nil? %>
+  <%= f.label :token, t("integrations.forms.home_assistant.token"), class: "ss-label" %>
+  <%= f.password_field :token, class: "ss-input", autocomplete: "off", value: nil, placeholder: (integration ? t("integrations.forms.common.keep") : ""), required: integration.nil? %>
 </div>
-<p class="text-xs text-muted">O token fica cifrado e só faz leituras (GET). A comparação roda a cada 6 h sobre as últimas 24 h; o resultado fica em Automações e cenas → Sombra.</p>
+<p class="text-xs text-muted"><%= t("integrations.forms.home_assistant.note") %></p>

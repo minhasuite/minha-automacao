@@ -1,4 +1,4 @@
 <%# locals: (f:, integration:) -%>
-<p class="text-sm text-ink-2">Escolha o arquivo <code>/config/.storage/core.config_entries</code> do Home Assistant. Os aparelhos do LocalTuya entram com IP, versão e chave local, na área "Importados do HA". Rodar de novo não duplica: atualiza a chave e o IP.</p>
-<div><%= f.label :arquivo, "Arquivo core.config_entries", class: "ss-label" %><%= f.file_field :arquivo, class: "ss-input", required: true, accept: "application/json,.json,*/*" %></div>
-<p class="text-xs text-muted">O arquivo tem segredos de outras integrações: ele é lido aqui e descartado, só o LocalTuya fica.</p>
+<p class="text-sm text-ink-2"><%= t("integrations.forms.ha_import.intro_html") %></p>
+<div><%= f.label :arquivo, t("integrations.forms.ha_import.file"), class: "ss-label" %><%= f.file_field :arquivo, class: "ss-input", required: true, accept: "application/json,.json,*/*" %></div>
+<p class="text-xs text-muted"><%= t("integrations.forms.ha_import.note") %></p>

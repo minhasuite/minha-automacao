@@ -7,7 +7,8 @@ class Integration < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  STATUSES = { "pending" => "Aguardando login", "ok" => "Conectada", "error" => "Com erro", "syncing" => "Sincronizando" }.freeze
+  # Rótulos em integrations.statuses.<status> (config/locales/integrations.*.yml).
+  STATUSES = %w[pending ok error syncing].freeze
   SYNC_S = 6 * 3600 # varredura da conta: padrão 6 h
 
   belongs_to :site
@@ -18,7 +19,7 @@ class Integration < ApplicationRecord
 
   validates :name, presence: true
   validates :driver, inclusion: { in: ->(_) { Integrations.drivers } }
-  validates :status, inclusion: { in: STATUSES.keys }
+  validates :status, inclusion: { in: STATUSES }
 
   validates :poll_s, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
 
@@ -33,7 +34,7 @@ class Integration < ApplicationRecord
   # Tipo (nome, ícone, assistente, varredura) vem do plugin registrado.
   def plugin = Integrations.for_driver(driver)
   def driver_label = plugin&.title || driver
-  def status_label = STATUSES.fetch(status, status)
+  def status_label = STATUSES.include?(status) ? I18n.t(status, scope: "integrations.statuses") : status
   def icon_name = plugin&.icon || "link"
   def account = settings["account"].presence
 

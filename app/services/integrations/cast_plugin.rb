@@ -4,6 +4,8 @@ module Integrations
   class CastPlugin < MediaLanPlugin
     describe key: "cast", title: "Chromecast / Google Cast", icon: "desktop-computer",
              description: "Chromecast, Google TV e caixas com Google Cast da rede: o que está tocando, volume, pausar e tocar um endereço."
+    texts en: { title: "Chromecast / Google Cast", description: "Chromecast, Google TV and Google Cast boxes on your network: what's playing, volume, pause and play a URL." },
+          es: { title: "Chromecast / Google Cast", description: "Chromecast, Google TV y cajas con Google Cast de la red: lo que se reproduce, volumen, pausa y reproducir una dirección." }
     port Drivers::Cast::PORT
     mdns "_googlecast._tcp"
 

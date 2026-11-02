@@ -1,10 +1,10 @@
 <%# locals: (integration:) -%>
 <section class="ss-card ss-card-pad grid gap-3">
-  <h2 class="font-bold">Teste e respostas</h2>
+  <h2 class="font-bold"><%= t("integrations.connect.whatsapp.title") %></h2>
   <%= render "web/integrations/test_button", integration: integration %>
-  <p class="text-sm text-ink-2">Para os botões responderem às automações, no app da Meta → WhatsApp → Configuração, cadastre o webhook (precisa do endereço público com https) e assine o campo <code>messages</code>:</p>
+  <p class="text-sm text-ink-2"><%= t("integrations.connect.whatsapp.hint_html") %></p>
   <dl class="grid gap-1 text-sm">
-    <div><dt class="text-muted">URL de retorno</dt><dd class="font-semibold break-all"><%= ENV["APP_HOST"].present? ? messenger_webhook_url(integration, host: ENV["APP_HOST"], protocol: "https") : "Configure o endereço público (APP_HOST)" %></dd></div>
-    <div><dt class="text-muted">Token de verificação</dt><dd class="font-semibold break-all num"><%= integration.secrets["verify_token"] %></dd></div>
+    <div><dt class="text-muted"><%= t("integrations.connect.whatsapp.callback") %></dt><dd class="font-semibold break-all"><%= ENV["APP_HOST"].present? ? messenger_webhook_url(integration, host: ENV["APP_HOST"], protocol: "https") : t("integrations.connect.whatsapp.no_host") %></dd></div>
+    <div><dt class="text-muted"><%= t("integrations.connect.whatsapp.verify_token") %></dt><dd class="font-semibold break-all num"><%= integration.secrets["verify_token"] %></dd></div>
   </dl>
 </section>

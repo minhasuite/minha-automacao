@@ -12,3 +12,11 @@ volumes:
 web_ui: { port: 8095 }
 env:
   TZ: America/Sao_Paulo
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Media
+    description: Brings your music libraries and services together and plays them on the speakers around the house. No automatic device discovery (it doesn't run on the host network).
+  es:
+    category: Multimedia
+    description: Reúne tus bibliotecas y servicios de música y los reproduce en los parlantes de la casa. Sin descubrimiento automático de aparatos (no corre en la red del host).

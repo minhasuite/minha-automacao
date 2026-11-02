@@ -6,10 +6,13 @@ module Integrations
   class TuyaPlugin < Plugin
     describe key: "tuya", title: "Tuya / Smart Life", icon: "light-bulb",
              description: "Aparelhos do app Smart Life, inclusive os Zigbee do hub. Entra pelo QR code, como no Home Assistant; o que também está na rede local continua local."
+    texts "pt-BR" => { need_code: "Informe o código de usuário do app." },
+          en: { title: "Tuya / Smart Life", description: "Devices from the Smart Life app, including Zigbee ones on the hub. Signs in with a QR code, just like Home Assistant; anything also on the local network stays local.", need_code: "Enter the app's user code." },
+          es: { title: "Tuya / Smart Life", description: "Aparatos de la app Smart Life, incluso los Zigbee del hub. Entra con código QR, como en Home Assistant; lo que también está en la red local sigue siendo local.", need_code: "Ingresa el código de usuario de la app." }
 
     def self.setup(site, form)
       code = form[:user_code].to_s.strip
-      return outcome(:form, alert: "Informe o código de usuário do app.") if code.blank?
+      return outcome(:form, alert: text(:need_code)) if code.blank?
 
       i = new_integration(site, name: "Smart Life", status: "pending", credentials: { "user_code" => code }.to_json)
       i.save!

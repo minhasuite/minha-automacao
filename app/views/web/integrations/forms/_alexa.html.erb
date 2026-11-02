@@ -1,23 +1,23 @@
 <%# locals: (f:, integration:) -%>
 <% if integration.nil? %>
-  <p class="text-sm text-ink-2">Você entra com a sua conta Amazon na página da própria Amazon (senha e verificação em duas etapas ficam lá). As Echo da conta aparecem sozinhas e a sessão se renova sem precisar entrar de novo.</p>
+  <p class="text-sm text-ink-2"><%= t("integrations.forms.alexa.intro") %></p>
   <div>
-    <%= f.label :domain, "Amazon do país da conta", class: "ss-label" %>
+    <%= f.label :domain, t("integrations.forms.alexa.domain"), class: "ss-label" %>
     <%= f.select :domain, Alexa::Auth::DOMAINS, { selected: Alexa::Auth::DEFAULT_DOMAIN }, class: "ss-input" %>
   </div>
 <% else %>
   <div>
-    <%= f.label :return_url, "Endereço da página depois de entrar", class: "ss-label" %>
+    <%= f.label :return_url, t("integrations.forms.alexa.return_url"), class: "ss-label" %>
     <%= f.text_area :return_url, rows: 3, class: "ss-input font-mono text-xs", autocomplete: "off", spellcheck: false,
                     placeholder: "https://www.amazon.com.br/ap/maplanding?...openid.oa2.authorization_code=..." %>
   </div>
-  <p class="text-xs text-muted">O endereço tem um código de uso único que vale poucos minutos. Fica só o necessário para renovar a sessão, cifrado no banco.</p>
+  <p class="text-xs text-muted"><%= t("integrations.forms.alexa.return_hint") %></p>
 <% end %>
 <details class="text-sm">
-  <summary class="ss-summary text-ink-2">Avançado: colar cookies de uma sessão já logada</summary>
+  <summary class="ss-summary text-ink-2"><%= t("integrations.forms.alexa.advanced") %></summary>
   <div class="grid gap-2 mt-2">
-    <p class="text-xs text-muted">Só se o login acima não servir. Arquivo de cookies (formato alexapy) ou um objeto JSON {nome: valor}. Esse modo não se renova: quando a Amazon recusar, o card fica "Com erro".</p>
-    <%= f.label :cookies, "Cookies da sessão", class: "ss-label" %>
+    <p class="text-xs text-muted"><%= t("integrations.forms.alexa.cookies_hint") %></p>
+    <%= f.label :cookies, t("integrations.forms.alexa.cookies"), class: "ss-label" %>
     <%= f.text_area :cookies, rows: 4, class: "ss-input font-mono text-xs", autocomplete: "off", spellcheck: false %>
   </div>
 </details>

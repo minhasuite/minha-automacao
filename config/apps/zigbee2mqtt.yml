@@ -39,3 +39,25 @@ options:
     default: ember
     env: ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER
     help: ember para Sonoff ZBDongle-E (EFR32); zstack para ZBDongle-P (CC2652).
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Network and MQTT
+    description: Controls Zigbee devices through the USB coordinator and publishes everything to MQTT; paired devices show up in your places on their own.
+    options:
+      serial_port:
+        label: USB coordinator
+        help: 'On the server: ls /dev/serial/by-id/ (e.g. /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00-port0).'
+      adapter:
+        label: Coordinator type
+        help: ember for Sonoff ZBDongle-E (EFR32); zstack for ZBDongle-P (CC2652).
+  es:
+    category: Red y MQTT
+    description: Controla aparatos Zigbee mediante el coordinador USB y publica todo en MQTT; los aparatos vinculados aparecen solos en los lugares.
+    options:
+      serial_port:
+        label: Coordinador USB
+        help: 'En el servidor: ls /dev/serial/by-id/ (ej.: /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00-port0).'
+      adapter:
+        label: Tipo de coordinador
+        help: ember para Sonoff ZBDongle-E (EFR32); zstack para ZBDongle-P (CC2652).

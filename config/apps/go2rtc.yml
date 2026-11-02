@@ -6,3 +6,11 @@ description: Servidor de vídeo das câmeras (RTSP para WebRTC). Os streams são
 image: alexxit/go2rtc
 version: "1.9.9"
 system: go2rtc
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Cameras
+    description: Video server for the cameras (RTSP to WebRTC). Streams are created automatically from the registered cameras.
+  es:
+    category: Cámaras
+    description: Servidor de video de las cámaras (RTSP a WebRTC). Los streams se crean solos a partir de las cámaras registradas.

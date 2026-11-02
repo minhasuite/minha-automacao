@@ -16,6 +16,9 @@ module Integrations
 
     describe key: "whatsapp", title: "WhatsApp (API oficial)", icon: "device-mobile",
              description: "Avisos no WhatsApp pela API oficial da Meta, com a sua conta: texto, foto e botões de resposta."
+    texts "pt-BR" => { required: "Informe o token, o id do número (Phone number ID) e o número que recebe os avisos.", connected: "WhatsApp conectado. Mande o teste para conferir.", refused: "A Meta recusou: %{error}", test_text: "Teste do Minha Automação: os avisos chegam aqui.", test_sent: "Mensagem de teste enviada.", test_failed: "O teste falhou: %{error}" },
+          en: { title: "WhatsApp (official API)", description: "Alerts in WhatsApp through Meta's official API, with your account: text, photo and reply buttons.", required: "Enter the token, the number id (Phone number ID) and the number that receives the alerts.", connected: "WhatsApp connected. Send the test to check it.", refused: "Meta refused: %{error}", test_text: "Minha Automação test: alerts will arrive here.", test_sent: "Test message sent.", test_failed: "The test failed: %{error}" },
+          es: { title: "WhatsApp (API oficial)", description: "Avisos en WhatsApp por la API oficial de Meta, con tu cuenta: texto, foto y botones de respuesta.", required: "Ingresa el token, el id del número (Phone number ID) y el número que recibe los avisos.", connected: "WhatsApp conectado. Envía la prueba para verificarlo.", refused: "Meta lo rechazó: %{error}", test_text: "Prueba de Minha Automação: los avisos llegan aquí.", test_sent: "Mensaje de prueba enviado.", test_failed: "La prueba falló: %{error}" }
 
     def self.setup(site, form)
       integration = new_integration(site, name: form[:name].presence || "WhatsApp", poll_s: 0)
@@ -32,7 +35,7 @@ module Integrations
       check(integration)
     end
 
-    def self.required_alert = "Informe o token, o id do número (Phone number ID) e o número que recebe os avisos."
+    def self.required_alert = text(:required)
 
     def self.configure(integration, form)
       s = integration.settings.merge("user_id" => integration.settings["user_id"] || Current.user&.id)
@@ -48,16 +51,16 @@ module Integrations
 
     def self.check(integration)
       sync!(integration)
-      outcome(:connect, integration: integration, notice: "WhatsApp conectado. Mande o teste para conferir.")
+      outcome(:connect, integration: integration, notice: text(:connected))
     rescue Integrations::Error => e
-      outcome(:connect, integration: integration, alert: "A Meta recusou: #{e.message}")
+      outcome(:connect, integration: integration, alert: text(:refused, error: e.message))
     end
 
     def self.test!(integration)
-      send_text(integration, "Teste do Minha Automação: os avisos chegam aqui.")
-      outcome(:connect, integration: integration, notice: "Mensagem de teste enviada.")
+      send_text(integration, text(:test_text))
+      outcome(:connect, integration: integration, notice: text(:test_sent))
     rescue Integrations::Error => e
-      outcome(:connect, integration: integration, alert: "O teste falhou: #{e.message}")
+      outcome(:connect, integration: integration, alert: text(:test_failed, error: e.message))
     end
 
     def self.custom_sync? = true

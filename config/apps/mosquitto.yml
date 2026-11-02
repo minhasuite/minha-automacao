@@ -7,3 +7,11 @@ description: Broker MQTT do servidor. Os aparelhos MQTT e o Zigbee2MQTT conversa
 image: eclipse-mosquitto
 version: "2.0.20"
 system: mosquitto
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Network and MQTT
+    description: The server's MQTT broker. MQTT devices and Zigbee2MQTT talk through it.
+  es:
+    category: Red y MQTT
+    description: Broker MQTT del servidor. Los aparatos MQTT y Zigbee2MQTT se comunican a través de él.

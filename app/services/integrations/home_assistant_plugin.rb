@@ -10,6 +10,9 @@ module Integrations
   class HomeAssistantPlugin < Plugin
     describe key: "home_assistant", title: "Home Assistant (migração)", icon: "switch-horizontal",
              description: "Compara o que as automações em sombra teriam feito com o que o Home Assistant fez de verdade. Só leitura."
+    texts "pt-BR" => { need: "Informe o endereço do Home Assistant e um token de acesso longo.", need_url: "Informe o endereço do Home Assistant.", connected: "Home Assistant conectado. A comparação roda a cada 6 h e em Sombra → Comparar agora.", no_answer: "Salvo, mas o Home Assistant não respondeu: %{error}" },
+          en: { title: "Home Assistant (migration)", description: "Compares what the shadow automations would have done with what Home Assistant actually did. Read-only.", need: "Enter the Home Assistant address and a long-lived access token.", need_url: "Enter the Home Assistant address.", connected: "Home Assistant connected. The comparison runs every 6 h and from Shadow → Compare now.", no_answer: "Saved, but Home Assistant didn't respond: %{error}" },
+          es: { title: "Home Assistant (migración)", description: "Compara lo que las automatizaciones en sombra habrían hecho con lo que Home Assistant hizo de verdad. Solo lectura.", need: "Ingresa la dirección de Home Assistant y un token de acceso de larga duración.", need_url: "Ingresa la dirección de Home Assistant.", connected: "Home Assistant conectado. La comparación corre cada 6 h y en Sombra → Comparar ahora.", no_answer: "Guardado, pero Home Assistant no respondió: %{error}" }
 
     # Domínios cujas mudanças contam como efeito de uma automação (os
     # sensores mudam por conta própria e o HA os atribui ao contexto).
@@ -23,13 +26,13 @@ module Integrations
 
     def self.setup(site, form)
       integration = new_integration(site, name: title, poll_s: 0)
-      configure(integration, form) or return outcome(:form, alert: "Informe o endereço do Home Assistant e um token de acesso longo.")
+      configure(integration, form) or return outcome(:form, alert: text(:need))
       integration.save!
       check(integration)
     end
 
     def self.login(integration, form)
-      configure(integration, form) or return outcome(:connect, integration: integration, alert: "Informe o endereço do Home Assistant.")
+      configure(integration, form) or return outcome(:connect, integration: integration, alert: text(:need_url))
       integration.save!
       check(integration)
     end
@@ -45,9 +48,9 @@ module Integrations
 
     def self.check(integration)
       sync!(integration)
-      outcome(:index, notice: "Home Assistant conectado. A comparação roda a cada 6 h e em Sombra → Comparar agora.")
+      outcome(:index, notice: text(:connected))
     rescue Integrations::Error => e
-      outcome(:index, alert: "Salvo, mas o Home Assistant não respondeu: #{e.message}")
+      outcome(:index, alert: text(:no_answer, error: e.message))
     end
 
     def self.custom_sync? = true

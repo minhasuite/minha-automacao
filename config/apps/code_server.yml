@@ -18,3 +18,17 @@ options:
     secret: true
     required: true
     env: PASSWORD
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Tools
+    description: VS Code in the browser to edit files and scripts. It only edits the app's own folder, not the server configuration.
+    options:
+      password:
+        label: Access password
+  es:
+    category: Herramientas
+    description: VS Code en el navegador para editar archivos y scripts. Solo edita la carpeta de la propia app, no la configuración del servidor.
+    options:
+      password:
+        label: Contraseña de acceso

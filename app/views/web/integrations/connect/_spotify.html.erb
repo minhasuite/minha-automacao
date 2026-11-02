@@ -1,9 +1,9 @@
 <%# locals: (integration:, auth_url: nil, redirect_uri: nil) -%>
 <section class="ss-card ss-card-pad grid gap-3">
-  <h2 class="font-bold">Entrar com o Spotify</h2>
-  <p class="text-sm text-ink-2">O Spotify pede para autorizar ver e controlar o que toca. Depois volta para cá e a conta vira um ponto de mídia.</p>
-  <p class="text-xs text-muted">No painel do app do Spotify, a URI de retorno precisa ser exatamente <strong class="font-mono break-all"><%= redirect_uri || integrations_oauth_callback_url %></strong>.</p>
+  <h2 class="font-bold"><%= t("integrations.connect.spotify.title") %></h2>
+  <p class="text-sm text-ink-2"><%= t("integrations.connect.spotify.hint") %></p>
+  <p class="text-xs text-muted"><%= t("integrations.connect.spotify.redirect_html", uri: tag.strong(redirect_uri || integrations_oauth_callback_url, class: "font-mono break-all")) %></p>
   <% if auth_url %>
-    <div><%= link_to auth_url, class: "ss-btn ss-btn-primary", data: { turbo: false } do %><%= icon("music-note", "size-4") %>Entrar com o Spotify<% end %></div>
+    <div><%= link_to auth_url, class: "ss-btn ss-btn-primary", data: { turbo: false } do %><%= icon("music-note", "size-4") %><%= t("integrations.connect.spotify.title") %><% end %></div>
   <% end %>
 </section>

@@ -23,6 +23,6 @@ class BridgeExposure < ApplicationRecord
     return unless point&.risk == "critical"
     return if ActiveModel::Type::Boolean.new.cast(risk_confirmed)
 
-    errors.add(:base, "#{point.name} (risco crítico) precisa da confirmação")
+    errors.add(:base, :confirm_critical, name: point.name)
   end
 end

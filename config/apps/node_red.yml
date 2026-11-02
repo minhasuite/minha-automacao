@@ -17,3 +17,17 @@ options:
     env: TZ
     default: America/Sao_Paulo
     pattern: '\A[A-Za-z_]+(/[A-Za-z_]+)?\z'
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Automation
+    description: Visual flow editor to connect services and protocols. Talks to the server's MQTT (host mosquitto).
+    options:
+      tz:
+        label: Time zone
+  es:
+    category: Automatización
+    description: Editor visual de flujos para integrar servicios y protocolos. Se comunica con el MQTT del servidor (host mosquitto).
+    options:
+      tz:
+        label: Zona horaria

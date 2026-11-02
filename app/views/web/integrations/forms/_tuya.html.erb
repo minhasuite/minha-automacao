@@ -1,9 +1,9 @@
 <%# locals: (f:, integration:) -%>
 <ol class="list-decimal pl-5 text-sm text-ink-2 grid gap-1">
-  <li>No celular, abra o app <strong>Smart Life</strong> (ou Tuya Smart).</li>
-  <li>Toque em <strong>Eu</strong> e depois na engrenagem (<strong>Configurações</strong>) no alto.</li>
-  <li>Entre em <strong>Conta e segurança</strong> e copie o <strong>Código de usuário</strong> (diferencia maiúsculas).</li>
-  <li>Cole aqui. Na próxima tela aparece um QR code para escanear com o próprio app.</li>
+  <li><%= t("integrations.forms.tuya.step1_html") %></li>
+  <li><%= t("integrations.forms.tuya.step2_html") %></li>
+  <li><%= t("integrations.forms.tuya.step3_html") %></li>
+  <li><%= t("integrations.forms.tuya.step4") %></li>
 </ol>
-<div><%= f.label :user_code, "Código de usuário", class: "ss-label" %><%= f.text_field :user_code, class: "ss-input num", required: true, autocomplete: "off", value: integration&.secrets&.dig("user_code") %></div>
-<p class="text-xs text-muted">Como no Home Assistant: os aparelhos da conta, inclusive os Zigbee do hub, entram com estado em tempo real e comando pela nuvem da Tuya. O que já está na rede local (LocalTuya) continua sendo comandado direto na rede. Conectar aqui não desconecta o Home Assistant.</p>
+<div><%= f.label :user_code, t("integrations.forms.tuya.user_code"), class: "ss-label" %><%= f.text_field :user_code, class: "ss-input num", required: true, autocomplete: "off", value: integration&.secrets&.dig("user_code") %></div>
+<p class="text-xs text-muted"><%= t("integrations.forms.tuya.note") %></p>

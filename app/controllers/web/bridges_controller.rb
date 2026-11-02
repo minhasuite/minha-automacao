@@ -26,14 +26,14 @@ module Web
 
         e.errors.full_messages.to_sentence
       end
-      redirect_to site_bridge_path(@site, @bridge.key), **(errors.any? ? { alert: errors.first(3).to_sentence } : { notice: "Exposição salva. O serviço da ponte atualiza em segundos." })
+      redirect_to site_bridge_path(@site, @bridge.key), **(errors.any? ? { alert: errors.first(3).to_sentence } : { notice: t("bridges.flash.saved") })
     end
 
     # Chave de integração do serviço (ler e comandar só este local). Aparece uma vez.
     def service_key
       authorize_site!(@site, :admin)
-      _, @key = ServiceApiKey.issue(current_user, name: "Ponte #{@bridge.title} (#{@site.name})", scopes: %w[read command], site_ids: [ @site.id ])
-      flash.now[:notice] = "Chave gerada. Copie agora: ela não aparece de novo."
+      _, @key = ServiceApiKey.issue(current_user, name: "#{t("bridges.title", name: @bridge.title)} (#{@site.name})", scopes: %w[read command], site_ids: [ @site.id ])
+      flash.now[:notice] = t("bridges.flash.key_generated")
       prepare
       render :show
     end

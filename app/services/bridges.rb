@@ -68,7 +68,7 @@ module Bridges
       end
 
       def type_for(point) = self::TYPES.find { |_k, t| t[:applies].call(point) }&.first
-      def label(type) = self::TYPES.dig(type, :label) || type
+      def label(type) = text("types.#{type}", default: self::TYPES.dig(type, :label) || type)
       def state(type, point) = self::TYPES.fetch(type)[:state].call(point, point.value)
       def listen(type) = self::TYPES.fetch(type)[:commands].to_h.keys
 

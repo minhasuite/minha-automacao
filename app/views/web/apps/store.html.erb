@@ -1,24 +1,24 @@
-<%= render "web/shared/header", title: "Loja de aplicativos", subtitle: "Cada aplicativo roda num container próprio, com versão fixa e só o que o catálogo prevê.", back: apps_path %>
+<%= render "web/shared/header", title: t("apps.store"), subtitle: t("apps.store_subtitle"), back: apps_path %>
 <%= render layout: "web/settings/frame", locals: { current: :apps } do %>
 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-  <nav class="ss-chips" aria-label="Categorias">
-    <%= link_to "Todos", apps_store_path(q: params[:q]), class: "ss-chip shrink-0", "aria-current": params[:categoria].blank?.to_s %>
+  <nav class="ss-chips" aria-label="<%= t("apps.categories") %>">
+    <%= link_to t("apps.all"), apps_store_path(q: params[:q]), class: "ss-chip shrink-0", "aria-current": params[:categoria].blank?.to_s %>
     <% AppCatalog.categories.each do |c| %>
       <%= link_to c, apps_store_path(q: params[:q], categoria: c), class: "ss-chip shrink-0", "aria-current": (params[:categoria] == c).to_s %>
     <% end %>
   </nav>
   <%= form_with url: apps_store_path, method: :get, class: "flex gap-2", role: "search" do %>
     <%= hidden_field_tag :categoria, params[:categoria] if params[:categoria].present? %>
-    <label for="q" class="sr-only">Procurar aplicativo</label>
-    <%= search_field_tag :q, params[:q], class: "ss-input w-56", placeholder: "Procurar (câmera, MQTT…)" %>
-    <button class="ss-btn ss-btn-ghost" aria-label="Procurar"><%= icon("search", "size-4") %></button>
+    <label for="q" class="sr-only"><%= t("apps.search_label") %></label>
+    <%= search_field_tag :q, params[:q], class: "ss-input w-56", placeholder: t("apps.search_hint") %>
+    <button class="ss-btn ss-btn-ghost" aria-label="<%= t("integrations.index.search") %>"><%= icon("search", "size-4") %></button>
   <% end %>
 </div>
 <% if @offline %><p class="text-sm text-muted mb-3" role="status"><%= icon("information-circle", "size-4 inline") %> <%= @offline %></p><% end %>
 <% if @apps.empty? %>
-  <div class="ss-card ss-empty"><p>Nenhum aplicativo com "<%= params[:q] %>".</p></div>
+  <div class="ss-card ss-empty"><p><%= t("apps.no_match", q: params[:q]) %></p></div>
 <% else %>
-  <ul class="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3" aria-label="Catálogo de aplicativos">
+  <ul class="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3" aria-label="<%= t("apps.catalog") %>">
     <% @apps.each do |app| %>
       <li>
         <%= link_to app_path(app.key), class: "ss-card ss-card-link p-4 no-underline flex items-start gap-3 h-full" do %>
@@ -26,8 +26,8 @@
           <span class="min-w-0 flex-1">
             <span class="flex flex-wrap items-center gap-2">
               <span class="font-bold text-ink"><%= app.name %></span>
-              <% if @statuses.dig(app.key, "installed") %><span class="ss-badge ss-badge-success">Instalado</span><% end %>
-              <% if app.system? %><span class="ss-badge">Do sistema</span><% end %>
+              <% if @statuses.dig(app.key, "installed") %><span class="ss-badge ss-badge-success"><%= t("apps.installed") %></span><% end %>
+              <% if app.system? %><span class="ss-badge"><%= t("apps.system_badge") %></span><% end %>
             </span>
             <span class="block text-xs text-muted mt-0.5"><%= app.category %> · <%= app.version %></span>
             <span class="block text-sm text-muted mt-1"><%= app.description %></span>

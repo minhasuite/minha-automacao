@@ -1,14 +1,14 @@
-<% content_for :title, "Vincular a Alexa — Minha Automação" %>
+<% content_for :title, t("oauth.page_title") %>
 <div class="text-center">
   <span class="mx-auto grid place-items-center size-12 rounded-2xl bg-accent-soft text-accent"><%= icon("speakerphone", "size-6") %></span>
-  <h1 class="text-2xl mt-4">Vincular a Alexa</h1>
-  <p class="text-sm text-muted mt-1">A Alexa vai poder ver e comandar, com o seu papel, só o que está marcado "Expor para a Alexa" no local escolhido.</p>
+  <h1 class="text-2xl mt-4"><%= t("oauth.title") %></h1>
+  <p class="text-sm text-muted mt-1"><%= t("oauth.hint") %></p>
 </div>
 <%= form_with url: oauth_authorize_path, class: "mt-6 space-y-4" do |f| %>
   <% %w[client_id redirect_uri state response_type scope].each do |k| %><%= hidden_field_tag k, params[k], id: nil %><% end %>
-  <div><%= f.label :site_id, "Local", class: "ss-label" %>
+  <div><%= f.label :site_id, t("oauth.site"), class: "ss-label" %>
     <%= f.select :site_id, @sites.map { |s| [ s.name, s.id ] }, {}, class: "ss-input" %></div>
-  <p class="text-xs text-muted">Entrou como <strong><%= current_user.email %></strong>. Para desfazer, use "Desvincular" na tela Expor para a Alexa ou tire a skill no app da Alexa.</p>
-  <%= f.submit "Permitir", class: "ss-btn ss-btn-primary w-full min-h-12" %>
-  <%= f.submit "Não permitir", name: "deny", class: "ss-btn ss-btn-ghost w-full" %>
+  <p class="text-xs text-muted"><%= t("oauth.signed_in_html", email: tag.strong(current_user.email)) %></p>
+  <%= f.submit t("oauth.allow"), class: "ss-btn ss-btn-primary w-full min-h-12" %>
+  <%= f.submit t("oauth.deny"), name: "deny", class: "ss-btn ss-btn-ghost w-full" %>
 <% end %>

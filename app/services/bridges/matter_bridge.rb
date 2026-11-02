@@ -10,6 +10,11 @@ module Bridges
   class MatterBridge < Base
     describe key: "matter", title: "Matter", icon: "chip",
              description: "Apple Casa (Siri), Google Home e Alexa veem os pontos escolhidos como aparelhos Matter e comandam pela rede de casa, sem nuvem."
+    texts "pt-BR" => { types: { door_lock: "Fechadura", window_covering: "Cortina", thermostat: "Termostato", extended_color_light: "Luz colorida", dimmable_light: "Luz com intensidade", on_off_light: "Luz", on_off_plug: "Tomada", contact_sensor: "Sensor de abertura", occupancy_sensor: "Sensor de presença", temperature_sensor: "Temperatura", humidity_sensor: "Umidade" } },
+          en: { title: "Matter", description: "Apple Home (Siri), Google Home and Alexa see the chosen points as Matter devices and control them over your home network, no cloud.",
+                types: { door_lock: "Lock", window_covering: "Cover", thermostat: "Thermostat", extended_color_light: "Color light", dimmable_light: "Dimmable light", on_off_light: "Light", on_off_plug: "Plug", contact_sensor: "Contact sensor", occupancy_sensor: "Occupancy sensor", temperature_sensor: "Temperature", humidity_sensor: "Humidity" } },
+          es: { title: "Matter", description: "Apple Casa (Siri), Google Home y Alexa ven los puntos elegidos como aparatos Matter y los controlan por la red de casa, sin nube.",
+                types: { door_lock: "Cerradura", window_covering: "Cortina", thermostat: "Termostato", extended_color_light: "Luz de color", dimmable_light: "Luz regulable", on_off_light: "Luz", on_off_plug: "Enchufe", contact_sensor: "Sensor de apertura", occupancy_sensor: "Sensor de presencia", temperature_sensor: "Temperatura", humidity_sensor: "Humedad" } }
 
     LIGHT = Alexa::SmartHome::Interfaces::PowerController::LIGHT
     COVER = /cortina|persiana|janela|toldo|blind|shade|curtain/i

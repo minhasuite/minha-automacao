@@ -8,6 +8,9 @@ module Integrations
   class WeatherPlugin < Plugin
     describe key: "weather", title: "Clima", icon: "sun",
              description: "Condição, temperatura e previsão de 7 dias para o local, em pontos, automações e no widget de clima."
+    texts "pt-BR" => { connected: "Clima conectado", updated: "Clima atualizado", location_alert: "Informe a latitude e a longitude do local (cadastro do local) ou nesta integração.", read_ok: "%{notice}: %{condition}.", read_failed: "Clima salvo, mas a leitura falhou: %{error}", needs_key: "%{provider} precisa de uma chave." },
+          en: { title: "Weather", description: "Conditions, temperature and 7-day forecast for the place, in points, automations and the weather widget.", connected: "Weather connected", updated: "Weather updated", location_alert: "Enter the place's latitude and longitude (in the place settings) or in this integration.", read_ok: "%{notice}: %{condition}.", read_failed: "Weather saved, but reading failed: %{error}", needs_key: "%{provider} needs a key." },
+          es: { title: "Clima", description: "Condición, temperatura y pronóstico de 7 días para el lugar, en puntos, automatizaciones y el widget de clima.", connected: "Clima conectado", updated: "Clima actualizado", location_alert: "Ingresa la latitud y la longitud del lugar (en el registro del lugar) o en esta integración.", read_ok: "%{notice}: %{condition}.", read_failed: "Clima guardado, pero la lectura falló: %{error}", needs_key: "%{provider} necesita una clave." }
 
     POLL_S = 30 * 60
 
@@ -15,16 +18,16 @@ module Integrations
       integration = new_integration(site, name: form[:name].presence || "Clima", poll_s: POLL_S)
       configure(integration, form) or return outcome(:form, alert: location_alert)
       integration.save!
-      read(integration, "Clima conectado")
+      read(integration, text(:connected))
     end
 
     def self.login(integration, form)
       configure(integration, form) or return outcome(:connect, integration: integration, alert: location_alert)
       integration.save!
-      read(integration, "Clima atualizado")
+      read(integration, text(:updated))
     end
 
-    def self.location_alert = "Informe a latitude e a longitude do local (cadastro do local) ou nesta integração."
+    def self.location_alert = text(:location_alert)
 
     # Provedor, chave e localização do formulário. false = sem localização.
     def self.configure(integration, form)
@@ -55,9 +58,9 @@ module Integrations
 
     def self.read(integration, notice)
       Integrations.sync!(integration)
-      outcome(:index, notice: "#{notice}: #{Weather.label(device_for(integration).points.find_by(capability: 'weather')&.value).downcase}.")
+      outcome(:index, notice: text(:read_ok, notice: notice, condition: Weather.label(device_for(integration).points.find_by(capability: "weather")&.value).downcase))
     rescue Integrations::Error => e
-      outcome(:index, alert: "Clima salvo, mas a leitura falhou: #{e.message}")
+      outcome(:index, alert: text(:read_failed, error: e.message))
     end
 
     def self.custom_sync? = true
@@ -65,7 +68,7 @@ module Integrations
     def self.sync!(integration)
       lat, lon = location(integration) || raise(Integrations::Error, location_alert)
       provider = Weather.provider(integration.settings["provider"])
-      raise Integrations::Error, "#{provider.label} precisa de uma chave." if provider.needs_key && integration.secrets["api_key"].blank?
+      raise Integrations::Error, text(:needs_key, provider: provider.label) if provider.needs_key && integration.secrets["api_key"].blank?
 
       data = provider.fetch(lat: lat, lon: lon, zone: integration.site.timezone, api_key: integration.secrets["api_key"])
       device = device_for(integration)

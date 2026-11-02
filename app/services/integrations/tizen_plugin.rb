@@ -5,6 +5,8 @@ module Integrations
   class TizenPlugin < MediaLanPlugin
     describe key: "tizen", title: "TV Samsung (Tizen)", icon: "desktop-computer",
              description: "TV Samsung na rede: ligada ou não, volume, mudo, pausar e desligar. Na primeira vez, permita o acesso na tela da TV."
+    texts en: { title: "Samsung TV (Tizen)", description: "Samsung TV on your network: on or off, volume, mute, pause and power off. The first time, allow access on the TV screen." },
+          es: { title: "TV Samsung (Tizen)", description: "TV Samsung en la red: encendida o no, volumen, silencio, pausa y apagar. La primera vez, permite el acceso en la pantalla de la TV." }
     port Drivers::Tizen::PORT
     ssdp "urn:samsung.com:device:RemoteControlReceiver:1"
     PAIR_S = 30

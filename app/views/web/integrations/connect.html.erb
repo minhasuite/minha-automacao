@@ -1,12 +1,12 @@
-<%= render "web/shared/header", title: "Conectar #{@integration.name}", subtitle: [ @plugin.title, @integration.account ].compact.join(" · "), back: site_integrations_path(@site) %>
+<%= render "web/shared/header", title: t("integrations.connect.title", name: @integration.name), subtitle: [ @plugin.title, @integration.account ].compact.join(" · "), back: site_integrations_path(@site) %>
 <div class="grid gap-4 lg:grid-cols-2 lg:items-start max-w-5xl">
   <% if lookup_context.exists?("web/integrations/connect/#{@plugin.key}", [], true) %>
     <%= render "web/integrations/connect/#{@plugin.key}", integration: @integration, **@locals %>
   <% end %>
   <%= form_with scope: :integration, url: connect_integration_path(@integration), method: :post, multipart: true, class: "ss-card ss-card-pad grid gap-4",
-                data: { turbo_submits_with: "Conectando…" } do |f| %>
-    <h2 class="font-bold">Dados da conta</h2>
+                data: { turbo_submits_with: t("integrations.common.connecting") } do |f| %>
+    <h2 class="font-bold"><%= t("integrations.connect.account") %></h2>
     <%= render "web/integrations/forms/#{@plugin.key}", f: f, integration: @integration %>
-    <div><%= f.submit "Conectar", class: "ss-btn ss-btn-primary" %></div>
+    <div><%= f.submit t("integrations.connect.submit"), class: "ss-btn ss-btn-primary" %></div>
   <% end %>
 </div>

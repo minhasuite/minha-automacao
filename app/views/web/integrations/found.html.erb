@@ -1,70 +1,70 @@
 <% pending = @entries.reject { |e| @known.include?(e["id"]) } %>
 <% added = @entries.select { |e| @known.include?(e["id"]) } %>
 <% names = @entries.to_h { |e| [ e["id"], e["name"] ] } %>
-<%= render "web/shared/header", title: "Dispositivos encontrados", subtitle: "#{@integration.name} · #{@integration.driver_label}#{" · #{@integration.account}" if @integration.account}", back: site_integrations_path(@site) do %>
+<%= render "web/shared/header", title: t("integrations.found.title"), subtitle: "#{@integration.name} · #{@integration.driver_label}#{" · #{@integration.account}" if @integration.account}", back: site_integrations_path(@site) do %>
   <% if can?(:manage) %>
-    <%= button_to sync_integration_path(@integration), class: "ss-btn ss-btn-ghost", form: { data: { turbo_submits_with: "Pedindo…" } } do %><%= icon("refresh", "size-4") %>Sincronizar agora<% end %>
+    <%= button_to sync_integration_path(@integration), class: "ss-btn ss-btn-ghost", form: { data: { turbo_submits_with: t("integrations.common.asking") } } do %><%= icon("refresh", "size-4") %><%= t("integrations.common.sync_now") %><% end %>
   <% end %>
 <% end %>
 
 <% if @integration.status == "syncing" %>
   <div class="ss-card ss-card-pad mb-4 flex items-center gap-3" role="status" data-controller="poll" data-poll-url-value="<%= status_integration_path(@integration, sync: 1) %>">
     <span class="ss-dots" aria-hidden="true"></span>
-    <p class="text-sm"><strong>Varrendo a conta.</strong> Com muitos aparelhos leva alguns minutos; a lista aparece sozinha.</p>
+    <p class="text-sm"><%= t("integrations.found.scanning_html") %></p>
   </div>
 <% elsif @integration.last_error.present? %>
   <%# Credencial → Reconfigurar; rede ou servidor fora → Tentar de novo (só a varredura, sem novo login). %>
   <div class="ss-card ss-card-pad mb-4 grid gap-3 text-sm" role="alert">
-    <p class="text-danger">Não deu para ler a conta: <%= @integration.last_error %></p>
+    <p class="text-danger"><%= t("integrations.found.read_failed") %> <%= @integration.last_error %></p>
     <div class="flex flex-wrap gap-2">
       <% if can?(:manage) %>
         <% if @integration.auth_error? && @integration.plugin&.reconfigurable? %>
-          <%= link_to "Reconfigurar", connect_integration_path(@integration), class: "ss-btn ss-btn-primary ss-btn-sm" %>
+          <%= link_to t("integrations.common.reconfigure"), connect_integration_path(@integration), class: "ss-btn ss-btn-primary ss-btn-sm" %>
         <% elsif !@integration.auth_error? %>
-          <%= button_to sync_integration_path(@integration), class: "ss-btn ss-btn-primary ss-btn-sm", form: { data: { turbo_submits_with: "Pedindo…" } } do %><%= icon("refresh", "size-4") %>Tentar de novo<% end %>
+          <%= button_to sync_integration_path(@integration), class: "ss-btn ss-btn-primary ss-btn-sm", form: { data: { turbo_submits_with: t("integrations.common.asking") } } do %><%= icon("refresh", "size-4") %><%= t("integrations.common.retry") %><% end %>
         <% end %>
       <% end %>
-      <%= link_to "Voltar às integrações", site_integrations_path(@site), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+      <%= link_to t("integrations.found.back"), site_integrations_path(@site), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
     </div>
   </div>
 <% end %>
 
 <% if pending.empty? && @integration.status != "syncing" %>
   <div class="ss-card ss-empty">
-    <p class="font-bold text-ink">Nada novo para adicionar.</p>
-    <p class="mt-1"><%= @entries.empty? ? "A conta ainda não tem aparelhos lidos." : "Tudo o que a conta tem já está no local." %></p>
+    <p class="font-bold text-ink"><%= t("integrations.found.nothing_new") %></p>
+    <p class="mt-1"><%= @entries.empty? ? t("integrations.found.none_read") : t("integrations.found.all_added") %></p>
   </div>
 <% elsif pending.any? %>
-  <%= form_with url: adopt_integration_path(@integration), method: :post, class: "ss-card overflow-hidden", data: { turbo_submits_with: "Adicionando…" } do %>
+  <%= form_with url: adopt_integration_path(@integration), method: :post, class: "ss-card overflow-hidden", data: { turbo_submits_with: t("integrations.found.adding") } do %>
     <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-line">
-      <p class="text-sm"><strong class="num"><%= pending.size %></strong> aparelho(s) novo(s). Marque os que quer e a área de cada um (vem do cômodo da conta).</p>
+      <p class="text-sm"><%= t("integrations.found.pending_html", n: pending.size) %></p>
       <% if can?(:manage) %>
         <div class="flex gap-2">
-          <button type="submit" class="ss-btn ss-btn-outline ss-btn-sm">Adicionar selecionados</button>
-          <button type="submit" name="all" value="1" class="ss-btn ss-btn-primary ss-btn-sm"><%= icon("plus", "size-4") %>Adicionar todos</button>
+          <button type="submit" class="ss-btn ss-btn-outline ss-btn-sm"><%= t("integrations.found.add_selected") %></button>
+          <button type="submit" name="all" value="1" class="ss-btn ss-btn-primary ss-btn-sm"><%= icon("plus", "size-4") %><%= t("integrations.found.add_all") %></button>
         </div>
       <% end %>
     </div>
     <div class="overflow-x-auto">
       <table class="ss-table">
-        <thead><tr><th class="w-8"><span class="sr-only">Escolher</span></th><th>Aparelho</th><th class="hidden md:table-cell">Tipo</th><th class="hidden md:table-cell">Cômodo na conta</th><th class="hidden md:table-cell">Pontos</th><th>Área</th></tr></thead>
+        <thead><tr><th class="w-8"><span class="sr-only"><%= t("integrations.found.pick") %></span></th><th><%= t("integrations.found.device") %></th><th class="hidden md:table-cell"><%= t("integrations.found.type") %></th><th class="hidden md:table-cell"><%= t("integrations.found.room") %></th><th class="hidden md:table-cell"><%= t("integrations.found.points") %></th><th><%= t("integrations.found.area") %></th></tr></thead>
         <tbody>
           <% pending.each do |e| %>
             <% cid = "pick-#{e['id'].to_s.parameterize}" %>
             <tr>
-              <td><input type="checkbox" name="pick[]" value="<%= e['id'] %>" id="<%= cid %>" checked aria-label="Adicionar <%= e['name'] %>"></td>
+              <td><input type="checkbox" name="pick[]" value="<%= e['id'] %>" id="<%= cid %>" checked aria-label="<%= t("integrations.found.add_one", name: e['name']) %>"></td>
               <td>
                 <label for="<%= cid %>" class="font-semibold text-ink"><%= e["name"] %></label>
-                <span class="block text-xs text-muted"><%= [ e["manufacturer"], e["model"] ].compact_blank.join(" · ") %><%= " · IP #{e.dig('address', 'host')}" if e.dig("address", "host").present? %><%= " · pelo hub #{names[e.dig('address', 'via')]}" if names[e.dig("address", "via")] %></span>
-                <span class="block text-xs text-muted md:hidden"><%= [ e["category"], e["room"], ("fora do ar" if e["online"] == false) ].compact_blank.join(" · ") %></span>
+                <span class="block text-xs text-muted"><%= [ e["manufacturer"], e["model"] ].compact_blank.join(" · ") %><%= " · #{t("integrations.found.ip", ip: e.dig('address', 'host'))}" if e.dig("address", "host").present? %><%= " · #{t("integrations.found.via_hub", hub: names[e.dig('address', 'via')])}" if names[e.dig("address", "via")] %></span>
+                <span class="block text-xs text-muted md:hidden"><%= [ e["category"], e["room"], (t("integrations.found.offline_short") if e["online"] == false) ].compact_blank.join(" · ") %></span>
               </td>
-              <td class="hidden md:table-cell"><span class="ss-chip"><%= e["category"].presence || "—" %></span><% if e["online"] == false %> <span class="ss-badge ss-badge-warn">Fora do ar</span><% end %></td>
+              <td class="hidden md:table-cell"><span class="ss-chip"><%= e["category"].presence || "—" %></span><% if e["online"] == false %> <span class="ss-badge ss-badge-warn"><%= t("integrations.found.offline") %></span><% end %></td>
               <td class="hidden md:table-cell"><%= e["room"].presence || "—" %></td>
               <td class="num hidden md:table-cell"><%= Array(e["points"]).size %></td>
               <td>
                 <% suggested = Integrations.suggest_area(@site, e["room"], @areas) %>
-                <% options = [ [ "Sem área", "" ] ] + @areas.map { |a| [ a.name, a.id ] } + (suggested.to_s.start_with?("new:") ? [ [ "Nova: #{suggested.delete_prefix('new:')}", suggested ] ] : []) %>
-                <%= select_tag "area[#{e['id']}]", options_for_select(options, suggested), class: "ss-input ss-btn-sm min-w-32", "aria-label": "Área de #{e['name']}" %>
+                <% options = [ [ t("integrations.found.no_area"), "" ] ] + @areas.map { |a| [ a.name, a.id ] } + (suggested.to_s.start_with?("new:") ? [ [ t("integrations.found.new_area", name: suggested.delete_prefix('new:')), suggested ] ] : []) %>
+                <%= select_tag "area[#{e['id']}]", options_for_select(options, suggested), class: "ss-input ss-btn-sm min-w-32", "aria-label": t("integrations.found.area_of", name: e['name']) %>
               </td>
             </tr>
           <% end %>
@@ -76,8 +76,8 @@
 
 <% if added.any? %>
   <details class="ss-card ss-card-pad mt-4">
-    <summary class="ss-summary font-semibold"><%= added.size %> já no local</summary>
-    <p class="text-sm text-muted mt-2">Ligados a esta integração: a chave local e o IP se atualizam sozinhos a cada sincronização.</p>
-    <%= link_to "Ver na lista de dispositivos", site_devices_path(@site, integracao: @integration.id), class: "ss-btn ss-btn-ghost ss-btn-sm mt-2" %>
+    <summary class="ss-summary font-semibold"><%= t("integrations.found.added", n: added.size) %></summary>
+    <p class="text-sm text-muted mt-2"><%= t("integrations.found.added_hint") %></p>
+    <%= link_to t("integrations.found.see_list"), site_devices_path(@site, integracao: @integration.id), class: "ss-btn ss-btn-ghost ss-btn-sm mt-2" %>
   </details>
 <% end %>

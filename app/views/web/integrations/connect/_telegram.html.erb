@@ -1,16 +1,16 @@
 <%# locals: (integration:, chats: [], searched: false) -%>
 <section class="ss-card ss-card-pad grid gap-3">
-  <h2 class="font-bold">Achar meu chat</h2>
-  <p class="text-sm text-ink-2">Abra a conversa com <%= integration.account ? "@#{integration.account}" : "o seu bot" %> no Telegram, mande qualquer mensagem (ou /start) e toque em Achar meu chat. Para um grupo, ponha o bot no grupo e mande uma mensagem lá.</p>
-  <div><%= link_to connect_integration_path(integration, find: 1), class: "ss-btn ss-btn-outline w-fit" do %><%= icon("search", "size-4") %>Achar meu chat<% end %></div>
+  <h2 class="font-bold"><%= t("integrations.connect.telegram.find") %></h2>
+  <p class="text-sm text-ink-2"><%= t("integrations.connect.telegram.hint", bot: integration.account ? "@#{integration.account}" : t("integrations.connect.telegram.your_bot")) %></p>
+  <div><%= link_to connect_integration_path(integration, find: 1), class: "ss-btn ss-btn-outline w-fit" do %><%= icon("search", "size-4") %><%= t("integrations.connect.telegram.find") %><% end %></div>
   <% if searched && chats.empty? %>
-    <p class="text-sm text-muted">Nenhuma mensagem nova para o bot. Mande uma e tente de novo.</p>
+    <p class="text-sm text-muted"><%= t("integrations.connect.telegram.none") %></p>
   <% end %>
   <% chats.each do |c| %>
     <%= form_with scope: :integration, url: connect_integration_path(integration), method: :post, class: "flex flex-wrap items-center gap-2" do |f| %>
       <%= f.hidden_field :chat_id, value: c["id"] %>
       <span class="text-sm font-semibold"><%= c["name"].presence || c["id"] %></span><span class="text-xs text-muted num"><%= c["id"] %></span>
-      <%= f.submit "Usar esta conversa", class: "ss-btn ss-btn-primary ss-btn-sm" %>
+      <%= f.submit t("integrations.connect.telegram.use"), class: "ss-btn ss-btn-primary ss-btn-sm" %>
     <% end %>
   <% end %>
   <% if integration.settings["chat_id"].present? %>

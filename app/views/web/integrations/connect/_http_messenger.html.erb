@@ -1,6 +1,6 @@
 <%# locals: (integration:) -%>
 <section class="ss-card ss-card-pad grid gap-3">
-  <h2 class="font-bold">Teste</h2>
-  <p class="text-sm text-ink-2">Manda "Teste do Minha Automação" pelo gateway, com o modelo guardado.</p>
+  <h2 class="font-bold"><%= t("integrations.connect.test.title") %></h2>
+  <p class="text-sm text-ink-2"><%= t("integrations.connect.test.http_hint") %></p>
   <%= render "web/integrations/test_button", integration: integration %>
 </section>

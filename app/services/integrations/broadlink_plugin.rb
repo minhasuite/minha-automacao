@@ -5,6 +5,9 @@ module Integrations
   class BroadlinkPlugin < LanPlugin
     describe key: "broadlink", title: "Broadlink (IR/RF)", icon: "status-online",
              description: "Controle remoto universal Broadlink (RM mini, RM4): aprende os botões dos controles da casa e manda de novo pelo painel e pelas automações."
+    texts "pt-BR" => { locked: "Aparelho bloqueado: desbloqueie no app Broadlink (Propriedades → Bloquear aparelho)." },
+          en: { title: "Broadlink (IR/RF)", description: "Broadlink universal remote (RM mini, RM4): learns the buttons of your remotes and replays them from dashboards and automations.", locked: "Device locked: unlock it in the Broadlink app (Properties → Lock device)." },
+          es: { title: "Broadlink (IR/RF)", description: "Control remoto universal Broadlink (RM mini, RM4): aprende los botones de los controles de la casa y los repite desde los paneles y las automatizaciones.", locked: "Aparato bloqueado: desbloquéalo en la app Broadlink (Propiedades → Bloquear aparato)." }
     port ::Broadlink::PORT
 
     def self.discovers? = true
@@ -18,7 +21,7 @@ module Integrations
     def self.probe(integration)
       host = host_of(integration)
       info = ::Broadlink.hello(host, port_of(integration))
-      raise Integrations::Error, "Aparelho bloqueado: desbloqueie no app Broadlink (Propriedades → Bloquear aparelho)." if info["locked"]
+      raise Integrations::Error, text(:locked) if info["locked"]
 
       model = ::Broadlink.model(info["devtype"])
       address = { "host" => host, "port" => port_of(integration), "mac" => info["mac"], "devtype" => info["devtype"] }

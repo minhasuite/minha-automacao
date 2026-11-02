@@ -6,9 +6,12 @@ module Integrations
   class AlexaPlugin < Plugin
     describe key: "alexa", title: "Alexa (Amazon)", icon: "speakerphone",
              description: "Echo da conta Amazon para falar avisos, anunciar e rodar rotinas. Entra com a conta Amazon (com verificação em duas etapas) e renova a sessão sozinho."
+    texts "pt-BR" => { connected: "Conta da Alexa conectada.", updated: "Conta da Alexa atualizada.", paste_url: "Cole o endereço da página da Amazon depois de entrar.", connected_renew: "Conta da Alexa conectada. A sessão se renova sozinha.", login_failed: "Não deu para entrar: %{error}", connect_failed: "Não deu para conectar: %{error}" },
+          en: { title: "Alexa (Amazon)", description: "Echo devices on your Amazon account to speak alerts, make announcements and run routines. Signs in with your Amazon account (with two-step verification) and renews the session on its own.", connected: "Alexa account connected.", updated: "Alexa account updated.", paste_url: "Paste the Amazon page address after signing in.", connected_renew: "Alexa account connected. The session renews on its own.", login_failed: "Couldn't sign in: %{error}", connect_failed: "Couldn't connect: %{error}" },
+          es: { title: "Alexa (Amazon)", description: "Echo de la cuenta de Amazon para decir avisos, hacer anuncios y ejecutar rutinas. Entra con la cuenta de Amazon (con verificación en dos pasos) y renueva la sesión sola.", connected: "Cuenta de Alexa conectada.", updated: "Cuenta de Alexa actualizada.", paste_url: "Pega la dirección de la página de Amazon después de entrar.", connected_renew: "Cuenta de Alexa conectada. La sesión se renueva sola.", login_failed: "No se pudo iniciar sesión: %{error}", connect_failed: "No se pudo conectar: %{error}" }
 
     def self.setup(site, form)
-      return import(site, form, "Conta da Alexa conectada.") if form[:cookies].present?
+      return import(site, form, text(:connected)) if form[:cookies].present?
 
       integration = site.integrations.find_or_initialize_by(driver: driver)
       integration.assign_attributes(name: integration.name.presence || "Alexa", status: integration.new_record? ? "pending" : integration.status,
@@ -19,15 +22,15 @@ module Integrations
 
     # Reconfigurar / passo de login: endereço da página final da Amazon, ou cookies colados.
     def self.login(integration, form)
-      return import(integration.site, form, "Conta da Alexa atualizada.", integration) if form[:cookies].present?
-      return outcome(:connect, integration: integration, alert: "Cole o endereço da página da Amazon depois de entrar.") if form[:return_url].blank?
+      return import(integration.site, form, text(:updated), integration) if form[:cookies].present?
+      return outcome(:connect, integration: integration, alert: text(:paste_url)) if form[:return_url].blank?
 
       Alexa::Auth.finish!(integration, form[:return_url])
       Alexa::Import.discover!(integration)
-      outcome(:index, notice: "Conta da Alexa conectada. A sessão se renova sozinha.")
+      outcome(:index, notice: text(:connected_renew))
     rescue Alexa::Client::Error => e
       integration.error!(e)
-      outcome(:connect, integration: integration, alert: "Não deu para entrar: #{e.message}")
+      outcome(:connect, integration: integration, alert: text(:login_failed, error: e.message))
     end
 
     def self.connect_locals(integration, _params) = { login_url: Alexa::Auth.start!(integration) }
@@ -36,7 +39,7 @@ module Integrations
       Alexa::Import.call(site, form[:cookies].to_s)
       outcome(:index, notice: notice)
     rescue Alexa::Client::Error, Drivers::Alexa::Error, JSON::ParserError, TypeError => e
-      outcome(integration ? :connect : :form, integration: integration, alert: "Não deu para conectar: #{e.message}")
+      outcome(integration ? :connect : :form, integration: integration, alert: text(:connect_failed, error: e.message))
     end
 
     def self.custom_sync? = true

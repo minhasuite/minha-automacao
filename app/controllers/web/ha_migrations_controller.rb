@@ -13,7 +13,7 @@ module Web
     def connect
       plugin = Integrations::HomeAssistantPlugin
       integration = Integrations::HaMigration.integration(@site) || plugin.new_integration(@site, name: plugin.title, poll_s: 0)
-      return back_to_form("Informe o endereço do Home Assistant e um token de acesso longo.") unless plugin.configure(integration, params)
+      return back_to_form(t("ha_migration.flash.missing")) unless plugin.configure(integration, params)
 
       integration.save!
       plugin.get(integration, "/api/") # testa na hora: endereço bloqueado ou token recusado voltam já
@@ -23,7 +23,7 @@ module Web
       redirect_to site_ha_migration_path(@site)
     rescue Integrations::Error => e
       integration&.error!(e) if integration&.persisted?
-      back_to_form("O Home Assistant não respondeu: #{e.message}")
+      back_to_form(t("ha_migration.flash.no_answer", error: e.message))
     end
 
     def import

@@ -27,11 +27,11 @@ module Web
     def load_client
       tenant = current_user.tenant
       unless params[:client_id].present? && tenant.alexa_client_id == params[:client_id] && (params[:response_type].nil? || params[:response_type] == "code")
-        return render(plain: "Cliente da Alexa desconhecido nesta instalação.", status: :bad_request)
+        return render(plain: t("oauth.unknown_client"), status: :bad_request)
       end
 
       @redirect_uri = tenant.alexa_redirect_uris.find { |u| u == params[:redirect_uri] } or
-        render(plain: "URL de retorno não cadastrada em Expor para a Alexa.", status: :bad_request)
+        render(plain: t("oauth.bad_redirect"), status: :bad_request)
     end
 
     def add_query(**extra)

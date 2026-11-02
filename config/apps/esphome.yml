@@ -23,3 +23,21 @@ options:
     type: string
     secret: true
     env: PASSWORD
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Devices
+    description: Builds and updates ESP32/ESP8266 firmware from YAML, with over-the-air updates. No mDNS discovery (the app doesn't run on the host network).
+    options:
+      username:
+        label: Dashboard username
+      password:
+        label: Dashboard password
+  es:
+    category: Dispositivos
+    description: Crea y actualiza firmwares de ESP32/ESP8266 por YAML, con actualización por la red. Sin descubrimiento mDNS (la app no corre en la red del host).
+    options:
+      username:
+        label: Usuario del panel
+      password:
+        label: Contraseña del panel

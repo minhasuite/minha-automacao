@@ -2,20 +2,19 @@
 <% s = integration&.secrets || {} %>
 <% if s["captcha"].present? %>
   <div class="rounded-xl border border-line p-3 grid gap-2">
-    <p class="text-sm font-semibold text-ink">A Xiaomi pediu a verificação: digite o que aparece na imagem e a senha de novo.</p>
-    <img src="data:image/jpeg;base64,<%= s['captcha'] %>" alt="Imagem de verificação da Xiaomi" class="h-14 w-fit rounded bg-white">
-    <div><%= f.label :captcha, "Texto da imagem", class: "ss-label" %><%= f.text_field :captcha, class: "ss-input", autocomplete: "off", required: true %></div>
+    <p class="text-sm font-semibold text-ink"><%= t("integrations.forms.xiaomi.captcha_intro") %></p>
+    <img src="data:image/jpeg;base64,<%= s['captcha'] %>" alt="<%= t("integrations.forms.xiaomi.captcha_alt") %>" class="h-14 w-fit rounded bg-white">
+    <div><%= f.label :captcha, t("integrations.forms.xiaomi.captcha"), class: "ss-label" %><%= f.text_field :captcha, class: "ss-input", autocomplete: "off", required: true %></div>
   </div>
 <% end %>
 <div class="grid gap-4 md:grid-cols-2">
-  <div><%= f.label :username, "E-mail, telefone ou ID da conta Xiaomi", class: "ss-label" %><%= f.text_field :username, class: "ss-input", autocomplete: "username", value: s["username"] %></div>
-  <div><%= f.label :password, "Senha", class: "ss-label" %><%= f.password_field :password, class: "ss-input", autocomplete: "current-password" %></div>
-  <div><%= f.label :region, "Servidor da conta", class: "ss-label" %><%= f.select :region, Miio::Cloud::REGIONS.invert, { selected: s["region"].to_s }, class: "ss-input" %></div>
+  <div><%= f.label :username, t("integrations.forms.xiaomi.username"), class: "ss-label" %><%= f.text_field :username, class: "ss-input", autocomplete: "username", value: s["username"] %></div>
+  <div><%= f.label :password, t("integrations.forms.common.password"), class: "ss-label" %><%= f.password_field :password, class: "ss-input", autocomplete: "current-password" %></div>
+  <div><%= f.label :region, t("integrations.forms.xiaomi.region"), class: "ss-label" %><%= f.select :region, Miio::Cloud::REGIONS.invert, { selected: s["region"].to_s }, class: "ss-input" %></div>
 </div>
-<p class="text-xs text-muted">Login próprio, separado do Home Assistant. A conta só lista os aparelhos e o token de cada um; o controle é local.
-  Se a Xiaomi pedir verificação em duas etapas, entre pelo QR code do app Mi Home.</p>
+<p class="text-xs text-muted"><%= t("integrations.forms.xiaomi.help") %></p>
 <% if integration %>
-  <%= link_to connect_integration_path(integration, modo: "qr"), class: "ss-btn ss-btn-outline w-fit" do %><%= icon("photograph", "size-4") %>Entrar com o QR code do Mi Home<% end %>
+  <%= link_to connect_integration_path(integration, modo: "qr"), class: "ss-btn ss-btn-outline w-fit" do %><%= icon("photograph", "size-4") %><%= t("integrations.forms.xiaomi.qr") %><% end %>
 <% else %>
-  <button type="submit" name="integration[modo]" value="qr" formnovalidate class="ss-btn ss-btn-outline w-fit"><%= icon("photograph", "size-4") %>Entrar com o QR code do Mi Home</button>
+  <button type="submit" name="integration[modo]" value="qr" formnovalidate class="ss-btn ss-btn-outline w-fit"><%= icon("photograph", "size-4") %><%= t("integrations.forms.xiaomi.qr") %></button>
 <% end %>

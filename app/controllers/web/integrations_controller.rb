@@ -47,12 +47,12 @@ module Web
 
     # Volta do login externo (OAuth): o `state` assinado diz a integração (ou o Drive do backup).
     def oauth_callback
-      id = Integrations.from_oauth_state(params[:state]) or return redirect_to(root_path, alert: "Login expirado: comece de novo.")
+      id = Integrations.from_oauth_state(params[:state]) or return redirect_to(root_path, alert: t("integrations.flash.login_expired"))
       return backup_drive_callback(id) if id.to_s.start_with?("backup_drive:")
 
       params[:id] = id
       load_for(:manage)
-      return follow(@plugin.outcome(:connect, integration: @integration, alert: "Login cancelado.")) if params[:error].present?
+      return follow(@plugin.outcome(:connect, integration: @integration, alert: t("integrations.flash.login_cancelled"))) if params[:error].present?
 
       follow(@plugin.oauth_callback(@integration, { code: params[:code], redirect_uri: integrations_oauth_callback_url }))
     end
@@ -81,26 +81,26 @@ module Web
       areas = params.fetch(:area, {}).to_unsafe_h
       ids = params[:all].present? ? Integrations.pending(@integration).map { |e| e["id"] } : Array(params[:pick])
       count = Integrations.adopt!(@integration, ids.to_h { |id| [ id, areas[id] ] })
-      redirect_to site_devices_path(@site, integracao: @integration.id), notice: "#{count} dispositivo(s) adicionado(s), com os pontos."
+      redirect_to site_devices_path(@site, integracao: @integration.id), notice: t("integrations.flash.adopted", n: count)
     end
 
     def sync
       load_for(:manage)
       Integrations.start_sync!(@integration)
-      redirect_to found_integration_path(@integration), notice: "Sincronizando: a lista chega em instantes."
+      redirect_to found_integration_path(@integration), notice: t("integrations.flash.syncing")
     end
 
     # Intervalo da varredura da conta (minutos; vazio ou 0 = só manual).
     def update
       load_for(:manage)
       ok = @integration.update(params.require(:integration).permit(:poll_min))
-      redirect_to site_integrations_path(@site), **(ok ? { notice: "Intervalo salvo." } : { alert: @integration.errors.full_messages.to_sentence })
+      redirect_to site_integrations_path(@site), **(ok ? { notice: t("integrations.flash.interval_saved") } : { alert: @integration.errors.full_messages.to_sentence })
     end
 
     def destroy
       load_for(:manage)
       @integration.destroy!
-      redirect_to site_integrations_path(@site), notice: "Integração removida. Os dispositivos continuam no local."
+      redirect_to site_integrations_path(@site), notice: t("integrations.flash.removed")
     end
 
     private
@@ -118,12 +118,12 @@ module Web
     def backup_drive_callback(state)
       drive = Backups::Destinations::GoogleDrive
       raise ActiveRecord::RecordNotFound unless state == drive.state_for(current_user) && drive.manageable_by?(current_user)
-      return redirect_to(settings_health_path, alert: "Conexão com o Google Drive cancelada.") if params[:error].present?
+      return redirect_to(settings_health_path, alert: t("integrations.flash.drive_cancelled")) if params[:error].present?
 
       drive.connect!(params[:code], integrations_oauth_callback_url)
-      redirect_to settings_health_path, notice: "Google Drive conectado: as próximas cópias vão para lá."
+      redirect_to settings_health_path, notice: t("integrations.flash.drive_connected")
     rescue Integrations::Error, Backups::Error, SafeHttp::Error => e
-      redirect_to settings_health_path, alert: "Google Drive: #{e.message}"
+      redirect_to settings_health_path, alert: t("integrations.flash.drive_error", error: e.message)
     end
 
     # Pacote 1: só lista o que se anuncia na rede (mDNS); nada é cadastrado.

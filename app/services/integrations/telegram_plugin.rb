@@ -16,16 +16,19 @@ module Integrations
 
     describe key: "telegram", title: "Telegram", icon: "speakerphone",
              description: "Avisos no Telegram pelo seu bot: texto, foto da câmera e botões que respondem às automações."
+    texts "pt-BR" => { need_token: "Cole o token do seu bot (do @BotFather).", need_token_short: "Cole o token do seu bot.", bot_connected: "Bot @%{bot} conectado. Agora ache o seu chat.", ready: "Telegram pronto: use \"%{name}\" nos avisos.", refused: "O Telegram recusou: %{error}", need_chat: "Ache o seu chat antes do teste.", test_text: "Teste do Minha Automação: os avisos chegam aqui.", test_sent: "Mensagem de teste enviada.", test_failed: "O teste falhou: %{error}", webhook_host: "Webhook precisa do endereço público (APP_HOST).", no_chat: "Sem chat: use Achar meu chat." },
+          en: { title: "Telegram", description: "Alerts in Telegram through your bot: text, camera snapshot and buttons that answer automations.", need_token: "Paste your bot's token (from @BotFather).", need_token_short: "Paste your bot's token.", bot_connected: "Bot @%{bot} connected. Now find your chat.", ready: "Telegram ready: use \"%{name}\" in alerts.", refused: "Telegram refused: %{error}", need_chat: "Find your chat before testing.", test_text: "Minha Automação test: alerts will arrive here.", test_sent: "Test message sent.", test_failed: "The test failed: %{error}", webhook_host: "The webhook needs the public address (APP_HOST).", no_chat: "No chat: use Find my chat." },
+          es: { title: "Telegram", description: "Avisos en Telegram por tu bot: texto, foto de la cámara y botones que responden a las automatizaciones.", need_token: "Pega el token de tu bot (de @BotFather).", need_token_short: "Pega el token de tu bot.", bot_connected: "Bot @%{bot} conectado. Ahora encuentra tu chat.", ready: "Telegram listo: usa \"%{name}\" en los avisos.", refused: "Telegram lo rechazó: %{error}", need_chat: "Encuentra tu chat antes de la prueba.", test_text: "Prueba de Minha Automação: los avisos llegan aquí.", test_sent: "Mensaje de prueba enviado.", test_failed: "La prueba falló: %{error}", webhook_host: "El webhook necesita la dirección pública (APP_HOST).", no_chat: "Sin chat: usa Encontrar mi chat." }
 
     def self.setup(site, form)
       integration = new_integration(site, name: form[:name].presence || title, poll_s: 0)
-      configure(integration, form) or return outcome(:form, alert: "Cole o token do seu bot (do @BotFather).")
+      configure(integration, form) or return outcome(:form, alert: text(:need_token))
       integration.save!
       check(integration)
     end
 
     def self.login(integration, form)
-      configure(integration, form) or return outcome(:connect, integration: integration, alert: "Cole o token do seu bot.")
+      configure(integration, form) or return outcome(:connect, integration: integration, alert: text(:need_token_short))
       integration.save!
       return test!(integration) if form[:test].present?
 
@@ -44,20 +47,20 @@ module Integrations
     # Testa o token (getMe), liga ou desliga o webhook e diz o próximo passo.
     def self.check(integration)
       sync!(integration)
-      return outcome(:connect, integration: integration, notice: "Bot @#{integration.account} conectado. Agora ache o seu chat.") if integration.settings["chat_id"].blank?
+      return outcome(:connect, integration: integration, notice: text(:bot_connected, bot: integration.account)) if integration.settings["chat_id"].blank?
 
-      outcome(:index, notice: "Telegram pronto: use \"#{integration.plugin.title}: #{integration.name}\" nos avisos.")
+      outcome(:index, notice: text(:ready, name: "#{integration.plugin.title}: #{integration.name}"))
     rescue Integrations::Error => e
-      outcome(:connect, integration: integration, alert: "O Telegram recusou: #{e.message}")
+      outcome(:connect, integration: integration, alert: text(:refused, error: e.message))
     end
 
     def self.test!(integration)
-      return outcome(:connect, integration: integration, alert: "Ache o seu chat antes do teste.") if integration.settings["chat_id"].blank?
+      return outcome(:connect, integration: integration, alert: text(:need_chat)) if integration.settings["chat_id"].blank?
 
-      call(integration, "sendMessage", "chat_id" => integration.settings["chat_id"], "text" => "Teste do Minha Automação: os avisos chegam aqui.")
-      outcome(:connect, integration: integration, notice: "Mensagem de teste enviada.")
+      call(integration, "sendMessage", "chat_id" => integration.settings["chat_id"], "text" => text(:test_text))
+      outcome(:connect, integration: integration, notice: text(:test_sent))
     rescue Integrations::Error => e
-      outcome(:connect, integration: integration, alert: "O teste falhou: #{e.message}")
+      outcome(:connect, integration: integration, alert: text(:test_failed, error: e.message))
     end
 
     def self.custom_sync? = true
@@ -77,7 +80,7 @@ module Integrations
     # Webhook ligado: setWebhook com segredo próprio; desligado: deleteWebhook (o worker lê).
     def self.webhook!(integration)
       return call(integration, "deleteWebhook") unless integration.settings["webhook"]
-      raise Integrations::Error, "Webhook precisa do endereço público (APP_HOST)." if ENV["APP_HOST"].blank?
+      raise Integrations::Error, text(:webhook_host) if ENV["APP_HOST"].blank?
 
       secret = integration.secrets["webhook_secret"].presence || SecureRandom.hex(24)
       integration.merge_secrets!("webhook_secret" => secret)
@@ -97,7 +100,7 @@ module Integrations
     def self.messenger_capabilities = %i[text buttons image link]
 
     def self.send_message(integration, notification)
-      chat = integration.settings["chat_id"].presence or raise Integrations::Error, "Sem chat: use Achar meu chat."
+      chat = integration.settings["chat_id"].presence or raise Integrations::Error, text(:no_chat)
       text = Notifier::Channels::Messenger.text(notification)
       buttons = Notifier::Channels::Messenger.buttons(notification)
       markup = { "inline_keyboard" => [ buttons.map { |ref, title| { "text" => title, "callback_data" => ref } } ] }.to_json if buttons.any?

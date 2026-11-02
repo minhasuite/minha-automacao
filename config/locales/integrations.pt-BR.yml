@@ -1,0 +1,605 @@
+# Textos das telas de integrações. Chave nova = nos três idiomas (spec/i18n_spec.rb confere).
+pt-BR:
+  activerecord:
+    errors:
+      models:
+        bridge_exposure:
+          confirm_critical: '%{name} (risco crítico) precisa da confirmação'
+        service_api_key:
+          attributes:
+            scopes:
+              pick_one: escolha ao menos uma permissão
+              unknown: tem permissão desconhecida
+            site_ids:
+              foreign: tem local que não é desta instalação
+              pick_one: escolha ao menos um local
+  alexa:
+    auth_url: URL de autorização
+    confirm: 'Confirmo expor %{name}: qualquer pessoa perto de uma Echo vinculada poderá acionar.'
+    empty: Nenhum ponto que a Alexa entende neste local (liga/desliga, intensidade, número, temperatura alvo, portão, script ou cena).
+    flash:
+      client_generated: 'Cliente gerado. Copie o segredo agora: ele não aparece de novo.'
+      owner_only: Só o dono da instalação.
+      saved: Exposição salva. Diga "Alexa, descobrir dispositivos".
+      unlinked: 'Vínculo desfeito: a Alexa perde o acesso a este local.'
+      urls_saved: URLs de retorno salvas.
+    items: Pontos e cenas
+    items_label: Pontos e cenas para a Alexa
+    links: Contas da Alexa vinculadas
+    new_client: Gerar cliente
+    new_secret: Gerar novo segredo
+    new_secret_confirm: O segredo antigo deixa de valer. A skill precisa do novo.
+    no_links: Nenhuma. Vincule pela skill no app da Alexa (passo a passo em docs/alexa-skill.md).
+    not_generated: ainda não gerado
+    redirect_uris: URLs de retorno da Amazon (Alexa Redirect URLs)
+    save_urls: Salvar URLs
+    scene: Cena
+    search_hint: Nome do ponto, aparelho ou cena
+    secret_once: Client Secret (só agora)
+    since: desde %{date}
+    spoken: 'Nome falado: %{name}'
+    spoken_of: Nome falado de %{name}
+    subtitle: '%{site} · o que a skill Smart Home pode ver e comandar ("Alexa, liga a luz da sala")'
+    title: Expor para a Alexa
+    token_url: URL do token
+    unlink: Desvincular
+    unlink_confirm: A Alexa perde o acesso a este local.
+    used_ago: usada %{ago} atrás
+    voice_code: A Alexa pede o código de voz para abrir (ligue no app da Alexa).
+  api_keys:
+    active: Chaves ativas
+    allowed_sites: Locais permitidos
+    copy: Copiar
+    copy_now: 'Copie agora e guarde no outro sistema: ela não aparece de novo.'
+    create: Criar chave
+    created: Chave %{name} criada
+    created_on: criada em %{date}
+    empty: Nenhuma chave ativa.
+    empty_hint: Crie uma abaixo para um sistema externo ler ou mandar valores para os pontos.
+    expired: vencida
+    flash:
+      revoked: Chave %{name} revogada.
+    key: Chave
+    last_used: Último uso
+    name_hint: minhas-vendas (e-ink de preços)
+    never: Nunca
+    new: Nova chave
+    revoke: Revogar
+    revoke_confirm: Revogar a chave %{name}? O sistema que usa para de funcionar na hora.
+    scopes:
+      command: Comandar
+      read: Ler
+      write: Escrever valor em pontos
+    scopes_help_html: 'Ler: locais, dispositivos, pontos e histórico. Comandar: ligar/desligar e demais comandos (o risco do ponto continua valendo). Escrever valor: grava o valor de um ponto virtual com <code>POST /api/v1/points/:id/value</code>.'
+    scopes_label: Permissões
+    sites: Locais
+    subtitle: 'Chaves de integração: outro sistema fala com a API pelo cabeçalho X-Api-Key, só nos locais e com as permissões da chave.'
+    title: Configurações
+    validity:
+      '30': 30 dias
+      '365': 1 ano
+      '90': 90 dias
+      none: Sem validade
+    validity_label: Validade
+  apps:
+    all: Todos
+    behavior: Comportamento
+    boot: Iniciar com o servidor
+    boot_hint: Sobe sozinho quando o servidor liga (e volta se cair).
+    busy: '%{what}… a página atualiza sozinha.'
+    catalog: Catálogo de aplicativos
+    catalog_only: Os aplicativos rodam no servidor de casa; aqui você vê só o catálogo.
+    categories: Categorias
+    config_hint: Salvar recria o container com as opções novas; os dados ficam.
+    empty: Nenhum aplicativo instalado.
+    empty_hint: Na loja há Node-RED, ESPHome, Frigate, Uptime Kuma e outros, prontos para instalar.
+    flash:
+      configured: Configuração de %{name} salva.
+      installing: 'Instalando %{name}: baixar a imagem pode levar alguns minutos.'
+      restart: '%{name} reiniciado.'
+      start: '%{name} iniciado.'
+      stop: '%{name} parado.'
+      uninstalled: '%{name} desinstalado.'
+      uninstalled_kept: '%{name} desinstalado (dados guardados).'
+      upgrading: Atualizando %{name} para %{version}.
+    in_catalog: No catálogo
+    install: Instalar
+    installed: Instalado
+    installed_label: Aplicativos instalados
+    installing: Instalando…
+    keep_data: Manter os dados (reinstalar depois volta como estava)
+    keep_secret: Em branco mantém a atual
+    last_failed: 'Última operação falhou:'
+    loading: Carregando…
+    local_hint: Os aplicativos rodam no servidor local; aqui você vê só o catálogo.
+    local_only: Disponível no servidor local
+    log_hint: Últimas 200 linhas, atualiza a cada 5 s
+    manage: Gerenciar
+    memory: Memória
+    no_lines: Sem linhas no log.
+    no_match: Nenhum aplicativo com "%{q}".
+    no_options: 'Este aplicativo não tem opções: a configuração fica na interface dele.'
+    no_ui: Sem interface
+    open_ui: Abrir interface
+    port: porta %{port}
+    restart: Reiniciar
+    restart_confirm: Reiniciar %{name}? Fica fora por alguns segundos.
+    save_restart: Salvar e reiniciar
+    saving: Salvando…
+    search_hint: Procurar (câmera, MQTT…)
+    search_label: Procurar aplicativo
+    sections: Seções do aplicativo
+    start: Iniciar
+    state:
+      error: Com erro
+      not_installed: Não instalado
+      running: Rodando
+      stopped: Parado
+    stop: Parar
+    store: Loja de aplicativos
+    store_subtitle: Cada aplicativo roda num container próprio, com versão fixa e só o que o catálogo prevê.
+    subtitle: 'Aplicativos: serviços extras que rodam no servidor de casa para a instalação inteira.'
+    system: do sistema
+    system_badge: Do sistema
+    system_config: Configurado pelo servidor (compose e .env); não muda por aqui.
+    system_long: do sistema (roda no compose do servidor)
+    tabs:
+      config: Configuração
+      info: Informações
+      log: Log
+    ui: Interface
+    ui_hint: A interface abre pela porta %{port} do servidor, só na rede de casa, com o login do próprio aplicativo.
+    uninstall: Desinstalar
+    uninstall_confirm: Desinstalar %{name}?
+    update_available: 'Atualização disponível: %{version}'
+    update_from_to: 'Atualização disponível: %{from} → %{to}'
+    upgrade: Atualizar
+    upgrade_confirm: Atualizar %{name} para %{version}? O app reinicia; os dados ficam.
+    version: Versão
+    watchdog_hint: Reinicia se o app cair ou ficar sem responder.
+  bridges:
+    apps: '%{n} app(s)'
+    clear: Limpar busca
+    confirm: 'Confirmo expor %{name}: quem tiver acesso à casa no app pareado poderá acionar.'
+    count_html: '%{n} de %{total} expostos. Tudo começa desligado.'
+    critical: Crítico
+    empty: Nenhum ponto que a ponte entende neste local (liga/desliga, intensidade, cor, cortina, temperatura alvo, sensores e fechadura).
+    exposed: Pontos expostos
+    exposed_on: Pontos expostos na ponte %{name}
+    flash:
+      key_generated: 'Chave gerada. Copie agora: ela não aparece de novo.'
+      saved: Exposição salva. O serviço da ponte atualiza em segundos.
+    generate: Gerar chave
+    key: Chave do serviço
+    key_hint: O serviço da ponte lê os pontos expostos e manda os comandos com esta chave (só este local, ler e comandar).
+    key_once: MA_API_KEY (só agora)
+    name_in_app: 'Nome no app: %{name}'
+    name_of: Nome de %{name} na ponte
+    no_match: Nada com esse nome.
+    old_keys: Chaves antigas continuam valendo até serem revogadas em Configurações → Chaves de API.
+    or_code: ou digite o código
+    pair: Parear
+    pair_help: 'No Apple Casa: Adicionar acessório. No Google Home: Adicionar → Matter. Na Alexa: Adicionar dispositivo → Matter. Dá para parear em mais de um app (no app pareado, "Ativar pareamento" gera outro código).'
+    paired: Pareada
+    qr: QR code de pareamento Matter
+    search: Procurar
+    search_hint: Nome do ponto ou aparelho
+    service_down: Serviço fora do ar
+    start_html: Ligue o serviço no servidor da casa (<code>docker compose --profile matter-bridge up -d matter-bridge</code>) com a chave abaixo em <code>MA_API_KEY</code>. O QR aparece aqui em segundos.
+    title: Ponte %{name}
+    waiting: Esperando pareamento
+  ha_migration:
+    blueprints: Viraram blueprints
+    blueprints_hint: Cada automação e script do HA virou um blueprint daqui, com a automação criada a partir dele.
+    came:
+      areas: áreas novas
+      automations: automações
+      devices: aparelhos adicionados
+      entities: entidades ligadas
+      helpers: helpers
+      scenes: cenas
+      scripts: scripts
+    connect_hint: 'Só leitura: o MA lê a configuração pela API do HA e não muda nada lá.'
+    connect_read: Conectar e ler
+    connect_title: Conecte o seu Home Assistant
+    disabled: desligada
+    done_hint_html: 'Tudo em modo sombra: as automações rodam no "teria feito" e nada comanda até você liberar em %{link}.'
+    done_title: Pronto! A casa do HA está aqui.
+    enabled: ligada
+    enabled_ha: ligada no HA
+    flash:
+      missing: Informe o endereço do Home Assistant e um token de acesso longo.
+      no_answer: 'O Home Assistant não respondeu: %{error}'
+    groups:
+      automations: Automações
+      scenes: Cenas
+      scripts: Scripts
+    help1_html: No HA, abra o seu perfil (canto de baixo, à esquerda) → aba <strong>Segurança</strong>.
+    help2_html: Em <strong>Tokens de acesso de longa duração</strong>, crie um com o nome "Minha Automação" e copie.
+    help3: HA na rede de casa? Libere o endereço em Configurações → Sistema (lista de liberados).
+    helper_kinds:
+      counter: contador
+      input_boolean: liga/desliga
+      input_button: botão
+      input_datetime: data e hora
+      input_number: número
+      input_select: seleção
+      input_text: texto
+      timer: temporizador
+    helpers: Helpers
+    import_again: Importar de novo
+    import_shadow: Importar em modo sombra
+    importing: Importando
+    kind_automation: automação
+    kind_script: script
+    left_out: Ficou de fora
+    left_out_hint: 'E por quê. Resolva e rode de novo: o que já veio não duplica.'
+    lossless: Sem perda.
+    missing_html: '<strong>%{n} aparelho(s) do HA</strong> ainda não estão aqui. Adicione a integração equivalente (Tuya, Xiaomi, MQTT/Zigbee…) antes, ou importe agora e repita depois: a importação é idempotente.'
+    none: nenhum
+    none_chosen: Nenhuma automação ou script escolhido.
+    nothing_left: Nada ficou de fora.
+    phases:
+      areas: Áreas
+      automations: Automações
+      devices: Aparelhos
+      entities: Entidades
+      helpers: Helpers
+      scenes: Cenas
+      scripts: Scripts
+    reading: Lendo o Home Assistant…
+    reading_hint: Áreas, aparelhos, entidades, helpers, cenas, scripts e automações. Leva alguns segundos.
+    restart: Recomeçar
+    see_shadow: Ver o "teria feito"
+    shadow: Sombra
+    stats:
+      areas_html: áreas<br>%{n} novas
+      automations_html: automações<br>e scripts
+      devices_html: aparelhos já<br>reconhecidos aqui
+      entities_html: entidades<br>ativas
+      helpers: helpers
+    steps:
+      check: Conferir
+      connect: Conectar
+      import: Importar
+      review: Revisar e escolher
+    steps_label: Passos
+    stopped: 'A importação parou:'
+    subtitle: 'Traga áreas, aparelhos, helpers, cenas, scripts e automações em poucos minutos. Tudo entra em modo sombra: nada comanda até você liberar.'
+    title: Migre do Home Assistant
+    token: Token de acesso longo
+    token_saved: (já guardado; cole outro para trocar)
+    url: Endereço do HA
+  integrations:
+    common:
+      asking: Pedindo…
+      cancel: Cancelar
+      connecting: Conectando…
+      continue: Continuar
+      reconfigure: Reconfigurar
+      remove: Remover
+      retry: Tentar de novo
+      save: Salvar
+      send_test: Enviar teste
+      sending: Enviando…
+      sync_now: Sincronizar agora
+    connect:
+      account: Dados da conta
+      alexa:
+        note: A senha nunca passa por aqui. No celular, abra o link no navegador (não no app da Amazon) para conseguir copiar o endereço.
+        open: Abrir o login da Amazon
+        step1: Abra o login da Amazon (nova aba) e entre com e-mail, senha e o código de verificação, se pedir.
+        step2: 'No fim a Amazon mostra uma página de erro ou "página não encontrada": é esperado.'
+        step3: Copie o endereço inteiro dessa página (barra do navegador) e cole em "Endereço da página depois de entrar".
+        title: Entrar com a conta Amazon
+      google:
+        hint: O Google pede para autorizar a leitura das agendas (só leitura). Depois volta para cá e as agendas viram pontos.
+        title: Entrar com o Google
+      new_qr: Gerar outro QR
+      qr_next: Esta tela segue sozinha para os aparelhos encontrados.
+      spotify:
+        hint: O Spotify pede para autorizar ver e controlar o que toca. Depois volta para cá e a conta vira um ponto de mídia.
+        redirect_html: No painel do app do Spotify, a URI de retorno precisa ser exatamente %{uri}.
+        title: Entrar com o Spotify
+      submit: Conectar
+      telegram:
+        find: Achar meu chat
+        hint: Abra a conversa com %{bot} no Telegram, mande qualquer mensagem (ou /start) e toque em Achar meu chat. Para um grupo, ponha o bot no grupo e mande uma mensagem lá.
+        none: Nenhuma mensagem nova para o bot. Mande uma e tente de novo.
+        use: Usar esta conversa
+        your_bot: o seu bot
+      test:
+        http_hint: Manda "Teste do Minha Automação" pelo gateway, com o modelo guardado.
+        title: Teste
+      title: Conectar %{name}
+      tuya:
+        qr: QR code de login da Tuya
+        qr_failed: Não deu para gerar o QR. Confira o código de usuário ao lado e tente de novo.
+        step1_html: No app, toque no <strong>+</strong> ou no ícone de leitura no alto da tela <strong>Início</strong>.
+        step2_html: Aponte para o QR e confirme <strong>Autorizar</strong>.
+        title: Escaneie com o app Smart Life
+        waiting: Esperando a confirmação no app…
+      whatsapp:
+        callback: URL de retorno
+        hint_html: 'Para os botões responderem às automações, no app da Meta → WhatsApp → Configuração, cadastre o webhook (precisa do endereço público com https) e assine o campo <code>messages</code>:'
+        no_host: Configure o endereço público (APP_HOST)
+        title: Teste e respostas
+        verify_token: Token de verificação
+      xiaomi:
+        qr: QR code de login da Xiaomi
+        step1_html: No Mi Home, toque em <strong>+</strong> e em <strong>Ler código</strong> (ou use a câmera do celular logado na conta).
+        step2: Confirme o login no app.
+        tfa_hint: 'Por senha, a conta exige um código extra. O jeito mais simples é entrar pelo QR code: o próprio app Mi Home confirma o login, sem código.'
+        tfa_title: A Xiaomi pediu verificação em duas etapas
+        title: Escaneie com o app Mi Home
+        use_qr: Entrar com o QR code
+        waiting: Esperando a confirmação…
+    flash:
+      adopted: '%{n} dispositivo(s) adicionado(s), com os pontos.'
+      drive_cancelled: Conexão com o Google Drive cancelada.
+      drive_connected: 'Google Drive conectado: as próximas cópias vão para lá.'
+      drive_error: 'Google Drive: %{error}'
+      interval_saved: Intervalo salvo.
+      login_cancelled: Login cancelado.
+      login_expired: 'Login expirado: comece de novo.'
+      removed: Integração removida. Os dispositivos continuam no local.
+      syncing: 'Sincronizando: a lista chega em instantes.'
+    forms:
+      adb:
+        note: 'Na TV: Configurações → Sobre → toque 7 vezes em "Build" para liberar o modo desenvolvedor e ligue a "Depuração de rede" (ou "Depuração ADB"). Na primeira leitura a TV pergunta "Permitir depuração?": marque "Sempre permitir" e aceite em até 30 s.'
+      alexa:
+        advanced: 'Avançado: colar cookies de uma sessão já logada'
+        cookies: Cookies da sessão
+        cookies_hint: 'Só se o login acima não servir. Arquivo de cookies (formato alexapy) ou um objeto JSON {nome: valor}. Esse modo não se renova: quando a Amazon recusar, o card fica "Com erro".'
+        domain: Amazon do país da conta
+        intro: Você entra com a sua conta Amazon na página da própria Amazon (senha e verificação em duas etapas ficam lá). As Echo da conta aparecem sozinhas e a sessão se renova sem precisar entrar de novo.
+        return_hint: O endereço tem um código de uso único que vale poucos minutos. Fica só o necessário para renovar a sessão, cifrado no banco.
+        return_url: Endereço da página depois de entrar
+      broadlink:
+        note: 'Use "Procurar na rede" ou informe o IP. O aparelho precisa estar desbloqueado no app Broadlink. Depois de adicionar, aprenda cada botão no ponto Controle: escreva o nome, toque em Aprender e aperte o botão do controle original apontado para o Broadlink.'
+      calendar:
+        google: Conta Google
+        google_help: 'Conta Google: use o botão "Entrar com o Google" ao lado.'
+        google_off: precisa do cliente OAuth do Google no servidor (docs)
+        google_on: entra com o Google e lê todas as agendas
+        how: Como ler a agenda
+        ics: Link iCal (.ics)
+        ics_help_html: 'No Google Agenda (computador): Configurações → a agenda → Integrar agenda → <strong>Endereço secreto no formato iCal</strong>. O link dá acesso à agenda: ele fica guardado cifrado e nunca aparece de novo. Leitura a cada 15 min (mude em Intervalo no card).'
+        ics_hint: funciona já, sem login
+        keep: Deixe vazio para manter os links guardados
+        name_hint: Agenda da família
+        urls: Links iCal (um por linha)
+      camera:
+        help: 'Usuário e senha podem vir na própria URL (rtsp://usuario:senha@IP/...): o sistema separa e guarda a senha cifrada, nunca no endereço. Prefira o substream (menor) e câmeras com RTSP sobre TCP. Movimento só pelo ONVIF, quando a câmera tem eventos.'
+        how: Como achar o vídeo
+        ip: IP da câmera
+        keep_url: Deixe vazio para manter o endereço guardado
+        name_hint: Câmera da garagem
+        onvif_hint: acha os perfis de vídeo e o sensor de movimento sozinho
+        onvif_mode: modo ONVIF
+        onvif_port: Porta ONVIF
+        onvif_port_hint: 80 (muitas usam 8000 ou 2020)
+        rtsp: Endereço RTSP
+        rtsp_hint: qualquer câmera que tenha RTSP
+        rtsp_mode: modo RTSP
+      cast:
+        note: 'Nada de senha: o Chromecast aceita qualquer um da rede. Use "Procurar na rede" para achar o IP.'
+      common:
+        host: IP ou nome na rede
+        keep: Deixe vazio para manter o guardado
+        keep_short: deixe vazio para manter
+        name: Nome
+        password: Senha
+        port: Porta
+        token: Token
+        username: Usuário
+      esphome:
+        key: Chave de criptografia da API (se tiver)
+        key_hint: 'base64 do api: encryption: key'
+        note: 'A chave fica no YAML do ESPHome, em api: encryption: key. Sem chave nem senha, deixe os dois vazios. A chave e a senha ficam cifradas.'
+        password: Senha da API (antiga, se tiver)
+      frigate:
+        help_html: Use a porta sem login do Frigate (5000) na rede de casa. Com o Frigate e o servidor no mesmo broker MQTT, a detecção chega na hora; sem broker, é lida a cada 10 s. Cada câmera vira um aparelho com o ponto <strong>Detecção</strong> (pessoa, veículo, animal, zona) para o gatilho "Câmera detectou" e o aviso com o quadro.
+        topic: Tópico MQTT (opcional)
+        url: Endereço do Frigate
+      ha_import:
+        file: Arquivo core.config_entries
+        intro_html: 'Escolha o arquivo <code>/config/.storage/core.config_entries</code> do Home Assistant. Os aparelhos do LocalTuya entram com IP, versão e chave local, na área "Importados do HA". Rodar de novo não duplica: atualiza a chave e o IP.'
+        note: 'O arquivo tem segredos de outras integrações: ele é lido aqui e descartado, só o LocalTuya fica.'
+      hikvision:
+        help: 'Lê os canais pela ISAPI (Hikvision) e usa o substream de cada um. Cuidado com a senha: o DVR bloqueia o usuário depois de algumas tentativas erradas.'
+        host: IP do DVR ou da câmera
+        http_port: Porta HTTP
+      home_assistant:
+        intro: 'Para migrar em sombra: o Minha Automação lê o diário do Home Assistant (só leitura) e compara, automação por automação, com o que as automações em sombra daqui teriam feito. Crie um token de acesso longo no seu perfil do Home Assistant e libere o IP dele em Configurações → Sistema → Saída HTTP.'
+        note: O token fica cifrado e só faz leituras (GET). A comparação roda a cada 6 h sobre as últimas 24 h; o resultado fica em Automações e cenas → Sombra.
+        token: Token de acesso longo
+        url: Endereço do Home Assistant
+      http_messenger:
+        body: Corpo (opcional)
+        headers: 'Cabeçalhos (um por linha, Nome: valor)'
+        headers_hint: 'apikey: sua-chave'
+        help_html: 'Variáveis: <code>title</code>, <code>message</code>, <code>text</code> (título, corpo e link), <code>url</code>, <code>image_url</code>, <code>image_base64</code> e <code>buttons</code>. Use <code>| json</code> para texto dentro de JSON e <code>| url_encode</code> no endereço. Tudo fica cifrado. Servidor na rede de casa: libere o IP em Configurações → Sistema.'
+        method: Método
+        name_hint: WhatsApp pela Evolution API
+        url: Endereço
+      hue:
+        key: Chave da aplicação (opcional)
+        key_hint: deixe vazio para parear pelo botão
+        note: 'Para parear: aperte o botão redondo do Hue Bridge e, em até 30 s, clique em Adicionar. A chave fica guardada cifrada. Luzes, cor, movimento e temperatura entram como pontos.'
+      matter:
+        code: Comissionar aparelho (opcional)
+        code_hint: MT:Y.K9042C00KA0648G00 ou 3497-011-2332
+        help_html: 'O Matter Server é o mesmo do Home Assistant (no servidor da casa: serviço <code>matter-server</code>, perfil <code>matter</code>, porta 5580). O código de pareamento fica no aparelho ou na caixa; o aparelho precisa já estar na rede Wi-Fi ou Thread. Comissionar leva até 2 min.'
+        url: Endereço do Matter Server
+      mobile_app:
+        intro: 'Não há conta: cada celular com o app Minha Automação vira um aparelho deste local, da pessoa que entrou nele. No app, em Mais → Sensores do celular, ela liga o que quer mandar: bateria, carregando, Wi-Fi e presença (em casa ou fora, pela localização do celular e a do cadastro do local). Use nos alertas, nas automações e nos painéis.'
+        keep_h: Guardar a localização exata por (horas)
+        keep_hint: A coordenada fica só neste servidor, sem histórico, e some depois desse tempo sem leitura nova. 0 = guarda só a zona e a distância de casa.
+        radius: Raio de "em casa" (metros)
+      mqtt:
+        intro: 'Usa o broker MQTT do servidor local (Mosquitto). Não há conta para entrar: o card mostra os aparelhos MQTT do local e eles aparecem sozinhos quando publicam.'
+        'off': Este servidor não tem broker MQTT (só o servidor da casa tem).
+        'on': Broker configurado neste servidor.
+      network_tracker:
+        away: Fora depois de
+        help: 'Só lê: um teste por endereço a cada minuto. Cada endereço vira um aparelho com o ponto "Conectado", que serve de fonte para uma Pessoa (Helpers → Pessoa). Celular dorme e some da rede: por isso "fora" só depois do tempo acima sem resposta. Dê IP fixo ao celular no roteador.'
+        hosts: 'Endereços (um por linha: Nome = IP ou nome na rede)'
+        hosts_hint: Celular da Ana = 192.168.0.23
+        method: Como testar
+        name_hint: Rastreador de rede
+        port: Porta (TCP)
+      reolink:
+        note: Câmera ou NVR (um aparelho por canal). Porta 443 usa HTTPS. A detecção de pessoa, veículo e animal é a do próprio aparelho, lida a cada 5 s.
+        password_hint: a do app Reolink
+      shelly:
+        note: Gen1 e Plus/Pro são reconhecidos sozinhos. O estado é lido a cada 30 s e logo depois de cada comando.
+        password: Senha (só se a autenticação estiver ligada)
+        password_hint: usuário admin
+      spotify:
+        help_html: Crie um app em developer.spotify.com/dashboard (Web API), cadastre a URI de retorno %{uri} e copie o Client ID e o Client Secret para cá. Eles ficam guardados cifrados.
+      switchbot:
+        from_app: do app SwitchBot
+        help: 'No app SwitchBot: Perfil → Preferências → toque 10 vezes em "Versão do app" → Opções de desenvolvedor. O estado é lido a cada 5 min (limite da conta) e o comando vai pela nuvem da SwitchBot.'
+        secret: Segredo (secret key)
+      system:
+        intro: 'Não há conta: o servidor vira um aparelho "Sistema" com pontos de disco, último backup, integrações com erro, automações (ligadas, execuções e falhas em 24 h) e pontos sem sinal, lidos a cada 5 min. Use nos alertas, nas automações e no painel de manutenção.'
+      tasmota:
+        intro: O Tasmota conversa com o broker MQTT do servidor da casa. Com a descoberta nativa ligada, cada aparelho aparece sozinho, com relés, brilho e sensores.
+        step1: No aparelho, em Configuration → MQTT, informe o IP do servidor, a porta 1883 e o usuário e a senha do broker.
+        step2_html: No Console do aparelho, rode <code>SetOption19 0</code> (descoberta nativa do Tasmota, a padrão desde a versão 9.2).
+      telegram:
+        chat: Chat (id da conversa)
+        chat_hint: Use Achar meu chat
+        token: Token do bot
+        token_hint: No Telegram, fale com o @BotFather, mande /newbot e copie o token. Ele fica cifrado e só serve para o seu bot.
+        webhook: Receber as respostas por webhook (precisa do endereço público com https)
+        webhook_hint: Sem webhook, o servidor busca as respostas dos botões no Telegram sozinho (funciona sem endereço público).
+      tizen:
+        note: 'Na primeira leitura a TV pergunta se permite o acesso: aceite no controle em até 30 s. A 8002 é a conexão cifrada (padrão); a 8001 é a antiga.'
+      tuya:
+        note: 'Como no Home Assistant: os aparelhos da conta, inclusive os Zigbee do hub, entram com estado em tempo real e comando pela nuvem da Tuya. O que já está na rede local (LocalTuya) continua sendo comandado direto na rede. Conectar aqui não desconecta o Home Assistant.'
+        step1_html: No celular, abra o app <strong>Smart Life</strong> (ou Tuya Smart).
+        step2_html: Toque em <strong>Eu</strong> e depois na engrenagem (<strong>Configurações</strong>) no alto.
+        step3_html: Entre em <strong>Conta e segurança</strong> e copie o <strong>Código de usuário</strong> (diferencia maiúsculas).
+        step4: Cole aqui. Na próxima tela aparece um QR code para escanear com o próprio app.
+        user_code: Código de usuário
+      unifi_protect:
+        note: Use um usuário local (não a conta Ubiquiti na nuvem) com acesso só de leitura ao Protect. O certificado do console não é conferido.
+        username: Usuário local do console
+        username_hint: crie um usuário só para o Minha Automação
+      weather:
+        api_key: Chave do provedor (só se ele pedir)
+        help: Lê a condição, a temperatura e a previsão de 7 dias a cada 30 min (mude em Intervalo no card). Os pontos ficam num aparelho "Clima" do local.
+        keep: Deixe vazio para manter a guardada
+        location: Localização
+        location_blank: vazio = a do local
+        name_hint: Clima
+        provider: Provedor
+      webos:
+        note: 'Na primeira leitura a TV mostra um pedido de acesso: aceite no controle em até 1 minuto. Ligar pela rede só funciona com "Ligar via Wi-Fi/LAN" ativo na TV. Porta 3001 = conexão cifrada (TVs mais novas).'
+      whatsapp:
+        app_secret: Segredo do app (para os botões)
+        intro: 'Da sua conta no Meta for Developers (app do tipo Empresa com o produto WhatsApp): token de acesso permanente (usuário do sistema), o Phone number ID e o número que recebe os avisos.'
+        language: Idioma do modelo
+        template: Modelo (opcional)
+        template_hint: A Meta só aceita mensagem livre até 24 h depois da sua última mensagem para o número. Com um modelo aprovado (texto com o parâmetro 1), o aviso sai sempre, mas sem foto nem botões.
+        to: Número que recebe (com DDI e DDD)
+        token: Token de acesso
+      wled:
+        note: Liga, brilho (0 a 255), cor do segmento principal e os efeitos do aparelho. O estado é lido a cada 30 s e logo depois de cada comando.
+      xiaomi:
+        captcha: Texto da imagem
+        captcha_alt: Imagem de verificação da Xiaomi
+        captcha_intro: 'A Xiaomi pediu a verificação: digite o que aparece na imagem e a senha de novo.'
+        help: Login próprio, separado do Home Assistant. A conta só lista os aparelhos e o token de cada um; o controle é local. Se a Xiaomi pedir verificação em duas etapas, entre pelo QR code do app Mi Home.
+        qr: Entrar com o QR code do Mi Home
+        region: Servidor da conta
+        username: E-mail, telefone ou ID da conta Xiaomi
+      yeelight:
+        note: No app Yeelight, ligue o "Controle pela LAN" da lâmpada. Uma integração por lâmpada (informe o IP).
+      zigbee2mqtt:
+        intro_html: O zigbee2mqtt roda no servidor da casa e conversa pelo mesmo broker MQTT. Ele fica <strong>desligado até o coordenador USB chegar</strong>; depois de ligado, cada aparelho pareado aparece sozinho, com os pontos.
+        step1_html: Ligue o coordenador no servidor e instale o aplicativo Zigbee2MQTT em Configurações → Aplicativos, com o caminho do coordenador (<code>/dev/serial/by-id/…</code>).
+        step2: Pareie os aparelhos pelo frontend do zigbee2mqtt (permitir entrada).
+    found:
+      add_all: Adicionar todos
+      add_one: Adicionar %{name}
+      add_selected: Adicionar selecionados
+      added: '%{n} já no local'
+      added_hint: 'Ligados a esta integração: a chave local e o IP se atualizam sozinhos a cada sincronização.'
+      adding: Adicionando…
+      all_added: Tudo o que a conta tem já está no local.
+      area: Área
+      area_of: Área de %{name}
+      back: Voltar às integrações
+      device: Aparelho
+      ip: IP %{ip}
+      new_area: 'Nova: %{name}'
+      no_area: Sem área
+      none_read: A conta ainda não tem aparelhos lidos.
+      nothing_new: Nada novo para adicionar.
+      offline: Fora do ar
+      offline_short: fora do ar
+      pending_html: <strong class="num">%{n}</strong> aparelho(s) novo(s). Marque os que quer e a área de cada um (vem do cômodo da conta).
+      pick: Escolher
+      points: Pontos
+      read_failed: 'Não deu para ler a conta:'
+      room: Cômodo na conta
+      scanning_html: <strong>Varrendo a conta.</strong> Com muitos aparelhos leva alguns minutos; a lista aparece sozinha.
+      see_list: Ver na lista de dispositivos
+      title: Dispositivos encontrados
+      type: Tipo
+      via_hub: pelo hub %{hub}
+    index:
+      add: Adicionar integração
+      auto_sync: Sincroniza sozinha a cada %{every}.
+      catalog: Catálogo de integrações
+      devices: Dispositivos
+      empty: Nenhuma integração neste local.
+      empty_hint: 'Escolha uma no catálogo abaixo: a conta é varrida e os aparelhos aparecem para adicionar.'
+      interval: Intervalo (min)
+      interval_placeholder: 0 = manual
+      last_error: 'Último erro:'
+      manual_sync: Só sincroniza quando pedir.
+      migrate_ha: Migrar do Home Assistant
+      more: Mais ações
+      more_of: Mais ações de %{name}
+      no_match: Nenhuma integração com "%{q}".
+      no_match_hint: Tente outra palavra, como a marca ou o tipo de aparelho.
+      not_yet: Ainda não
+      pending: '%{n} novo(s) para adicionar'
+      points: Pontos
+      remove_confirm: Remover a integração %{name}? Os dispositivos continuam no local.
+      search: Procurar
+      search_label: Procurar integração
+      search_placeholder: Procurar (Tuya, câmera, Zigbee…)
+      see_all: Ver todas
+      see_devices: Ver dispositivos
+      subtitle: '%{site} · contas e serviços que trazem os aparelhos'
+      synced: Sincronizada
+      title: Integrações
+    new:
+      lan: Na rede de casa
+      lan_hint: Procura os aparelhos que se anunciam na rede. Nada é adicionado sozinho.
+      none_found: Nenhum aparelho respondeu. Informe o endereço abaixo.
+      search_lan: Procurar na rede
+      title: Adicionar %{name}
+      use: Usar
+    plugin:
+      no_oauth: Esta integração não usa login externo.
+    statuses:
+      error: Com erro
+      ok: Conectada
+      pending: Aguardando login
+      syncing: Sincronizando
+  oauth:
+    allow: Permitir
+    bad_redirect: URL de retorno não cadastrada em Expor para a Alexa.
+    deny: Não permitir
+    hint: A Alexa vai poder ver e comandar, com o seu papel, só o que está marcado "Expor para a Alexa" no local escolhido.
+    page_title: Vincular a Alexa — Minha Automação
+    signed_in_html: Entrou como %{email}. Para desfazer, use "Desvincular" na tela Expor para a Alexa ou tire a skill no app da Alexa.
+    site: Local
+    title: Vincular a Alexa
+    unknown_client: Cliente da Alexa desconhecido nesta instalação.

@@ -1,12 +1,12 @@
 <%# locals: (f:, integration:) -%>
 <% s = integration&.settings || {} %>
 <div>
-  <%= f.label :home_radius_m, "Raio de \"em casa\" (metros)", class: "ss-label" %>
+  <%= f.label :home_radius_m, t("integrations.forms.mobile_app.radius"), class: "ss-label" %>
   <%= f.number_field :home_radius_m, value: s["home_radius_m"] || Integrations::MobileAppPlugin::HOME_RADIUS_M, min: 30, max: 5000, class: "ss-input num" %>
 </div>
 <div>
-  <%= f.label :location_keep_h, "Guardar a localização exata por (horas)", class: "ss-label" %>
+  <%= f.label :location_keep_h, t("integrations.forms.mobile_app.keep_h"), class: "ss-label" %>
   <%= f.number_field :location_keep_h, value: s.fetch("location_keep_h", Integrations::MobileAppPlugin::KEEP_H), min: 0, max: Integrations::MobileAppPlugin::KEEP_MAX_H, class: "ss-input num" %>
-  <p class="text-xs text-muted mt-1">A coordenada fica só neste servidor, sem histórico, e some depois desse tempo sem leitura nova. 0 = guarda só a zona e a distância de casa.</p>
+  <p class="text-xs text-muted mt-1"><%= t("integrations.forms.mobile_app.keep_hint") %></p>
 </div>
-<p class="text-sm text-ink-2">Não há conta: cada celular com o app Minha Automação vira um aparelho deste local, da pessoa que entrou nele. No app, em Mais → Sensores do celular, ela liga o que quer mandar: bateria, carregando, Wi-Fi e presença (em casa ou fora, pela localização do celular e a do cadastro do local). Use nos alertas, nas automações e nos painéis.</p>
+<p class="text-sm text-ink-2"><%= t("integrations.forms.mobile_app.intro") %></p>

@@ -10,6 +10,9 @@ module Integrations
   class SystemPlugin < Plugin
     describe key: "system", title: "Sistema", icon: "cog",
              description: "Disco, último backup, integrações com erro, automações que falharam e pontos sem sinal, como pontos."
+    texts "pt-BR" => { added: "Sistema adicionado: %{n} pontos." },
+          en: { title: "System", description: "Disk, last backup, integrations with errors, failed automations and points with no signal, as points.", added: "System added: %{n} points." },
+          es: { title: "Sistema", description: "Disco, último respaldo, integraciones con error, automatizaciones que fallaron y puntos sin señal, como puntos.", added: "Sistema agregado: %{n} puntos." }
 
     POLL_S = 5 * 60
     BACKUP_LATE = 26.hours
@@ -38,7 +41,7 @@ module Integrations
       integration = site.integrations.find_or_create_by!(driver: driver) { |i| i.assign_attributes(name: title, poll_s: POLL_S) }
       integration.update!(settings: integration.settings.merge("account" => "Este servidor"))
       Integrations.sync!(integration)
-      outcome(:index, notice: "Sistema adicionado: #{device_for(integration).points.count} pontos.")
+      outcome(:index, notice: text(:added, n: device_for(integration).points.count))
     end
 
     def self.reconfigurable? = false

@@ -4,6 +4,8 @@ module Integrations
   class WebosPlugin < MediaLanPlugin
     describe key: "webos", title: "TV LG (webOS)", icon: "desktop-computer",
              description: "TV LG na rede: volume, app aberto, pausar, desligar e abrir um endereço. Na primeira vez, aceite o pedido na tela da TV."
+    texts en: { title: "LG TV (webOS)", description: "LG TV on your network: volume, open app, pause, power off and open a URL. The first time, accept the request on the TV screen." },
+          es: { title: "TV LG (webOS)", description: "TV LG en la red: volumen, app abierta, pausa, apagar y abrir una dirección. La primera vez, acepta la solicitud en la pantalla de la TV." }
     port Drivers::Webos::PORT
     ssdp "urn:lge-com:service:webos-second-screen:1"
     PAIR_S = 60

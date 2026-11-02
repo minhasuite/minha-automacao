@@ -10,8 +10,8 @@ require "digest"
 class ServiceApiKey < ApplicationRecord
   belongs_to :user
 
-  SCOPES = { "read" => "Ler", "command" => "Comandar", "write" => "Escrever valor em pontos" }.freeze
-  KNOWN_SCOPES = SCOPES.keys.freeze
+  # Rótulos em api_keys.scopes.<chave> (config/locales/integrations.*.yml).
+  KNOWN_SCOPES = %w[read command write].freeze
 
   validates :name, presence: true
   validate :scopes_known
@@ -47,14 +47,14 @@ class ServiceApiKey < ApplicationRecord
   private
 
   def scopes_known
-    errors.add(:scopes, "escolha ao menos uma permissão") if scopes.empty?
-    errors.add(:scopes, "tem permissão desconhecida") unless (scopes - KNOWN_SCOPES).empty?
+    errors.add(:scopes, :pick_one) if scopes.empty?
+    errors.add(:scopes, :unknown) unless (scopes - KNOWN_SCOPES).empty?
   end
 
   def sites_of_the_installation
-    return errors.add(:site_ids, "escolha ao menos um local") if site_ids.empty?
+    return errors.add(:site_ids, :pick_one) if site_ids.empty?
 
     known = ActsAsTenant.without_tenant { Site.where(tenant_id: user&.tenant_id, id: site_ids).count }
-    errors.add(:site_ids, "tem local que não é desta instalação") unless known == site_ids.size
+    errors.add(:site_ids, :foreign) unless known == site_ids.size
   end
 end

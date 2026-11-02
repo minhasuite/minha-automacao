@@ -6,6 +6,8 @@ module Integrations
   class AdbPlugin < MediaLanPlugin
     describe key: "adb", title: "Android TV / Fire TV (ADB)", icon: "desktop-computer",
              description: "TV ou caixa Android com a depuração pela rede ligada: liga, desliga, volume, pausar e app aberto. Na primeira vez, permita na tela da TV."
+    texts en: { title: "Android TV / Fire TV (ADB)", description: "Android TV or box with network debugging on: power, volume, pause and the open app. The first time, allow it on the TV screen." },
+          es: { title: "Android TV / Fire TV (ADB)", description: "TV o caja Android con la depuración por red activada: encender, apagar, volumen, pausa y app abierta. La primera vez, permítelo en la pantalla de la TV." }
     port Drivers::Adb::PORT
     PAIR_S = 30
 

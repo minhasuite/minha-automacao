@@ -14,3 +14,11 @@ volumes:
 web_ui: { port: 8971 }
 env:
   TZ: America/Sao_Paulo
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Cameras
+    description: Camera recorder with person and object detection (CPU detector). Camera setup lives in Frigate's own editor.
+  es:
+    category: Cámaras
+    description: Grabador de cámaras con detección de personas y objetos (detector en la CPU). La configuración de las cámaras está en el editor del propio Frigate.

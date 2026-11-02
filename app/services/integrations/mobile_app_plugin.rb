@@ -11,6 +11,9 @@ module Integrations
   class MobileAppPlugin < Plugin
     describe key: "mobile_app", title: "App do celular", icon: "device-mobile",
              description: "Bateria, carregando, Wi-Fi e presença (em casa ou fora) de cada celular com o app, como pontos."
+    texts "pt-BR" => { ready: "App do celular pronto. No celular: instale o app, entre e ligue os sensores em Mais → Sensores do celular.", updated: "App do celular atualizado." },
+          en: { title: "Phone app", description: "Battery, charging, Wi-Fi and presence (home or away) of each phone with the app, as points.", ready: "Phone app ready. On the phone: install the app, sign in and turn on the sensors under More → Phone sensors.", updated: "Phone app updated." },
+          es: { title: "App del celular", description: "Batería, cargando, Wi-Fi y presencia (en casa o fuera) de cada celular con la app, como puntos.", ready: "App del celular lista. En el celular: instala la app, inicia sesión y activa los sensores en Más → Sensores del celular.", updated: "App del celular actualizada." }
 
     HOME_RADIUS_M = 150
     HOME = "Em casa".freeze
@@ -29,12 +32,12 @@ module Integrations
     def self.setup(site, form)
       integration = site.integrations.find_by(driver: driver) || new_integration(site, poll_s: 0)
       configure(integration, form)
-      outcome(:index, notice: "App do celular pronto. No celular: instale o app, entre e ligue os sensores em Mais → Sensores do celular.")
+      outcome(:index, notice: text(:ready))
     end
 
     def self.login(integration, form)
       configure(integration, form)
-      outcome(:index, notice: "App do celular atualizado.")
+      outcome(:index, notice: text(:updated))
     end
 
     def self.configure(integration, form)

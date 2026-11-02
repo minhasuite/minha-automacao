@@ -7,13 +7,16 @@ module Integrations
   class SpotifyPlugin < Plugin
     describe key: "spotify", title: "Spotify", icon: "music-note",
              description: "O que toca no Spotify da conta, com tocar, pausar, volume e tocar playlist. Usa o app que você cria no painel do Spotify."
+    texts "pt-BR" => { need: "Informe o Client ID e o Client Secret do app do Spotify.", connected: "Spotify conectado.", refused: "O Spotify recusou: %{error}" },
+          en: { title: "Spotify", description: "What's playing on your Spotify account, with play, pause, volume and play a playlist. Uses the app you create in the Spotify dashboard.", need: "Enter the Spotify app's Client ID and Client Secret.", connected: "Spotify connected.", refused: "Spotify refused: %{error}" },
+          es: { title: "Spotify", description: "Lo que suena en el Spotify de la cuenta, con reproducir, pausar, volumen y reproducir una playlist. Usa la app que creas en el panel de Spotify.", need: "Ingresa el Client ID y el Client Secret de la app de Spotify.", connected: "Spotify conectado.", refused: "Spotify lo rechazó: %{error}" }
 
     SUPPORTS = %w[resume pause next previous volume play_media].freeze
     POLL_S = 30
 
     def self.setup(site, form)
       id, secret = form[:client_id].to_s.strip, form[:client_secret].to_s.strip
-      return outcome(:form, alert: "Informe o Client ID e o Client Secret do app do Spotify.") if id.blank? || secret.blank?
+      return outcome(:form, alert: text(:need)) if id.blank? || secret.blank?
 
       integration = new_integration(site, name: form[:name].to_s.squish.presence || "Spotify", status: "pending")
       integration.credentials = { "client_id" => id, "client_secret" => secret }.to_json
@@ -34,10 +37,10 @@ module Integrations
     def self.oauth_callback(integration, params)
       integration.merge_secrets!(Spotify.exchange(integration, params[:code], params[:redirect_uri]))
       sync!(integration)
-      outcome(:index, notice: "Spotify conectado.")
+      outcome(:index, notice: text(:connected))
     rescue Integrations::Error, SafeHttp::Error => e
       integration.error!(e.message)
-      outcome(:connect, integration: integration, alert: "O Spotify recusou: #{e.message}")
+      outcome(:connect, integration: integration, alert: text(:refused, error: e.message))
     end
 
     def self.custom_sync? = true

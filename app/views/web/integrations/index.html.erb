@@ -1,14 +1,14 @@
 <% tones = { "ok" => "success", "error" => "danger", "pending" => "warn", "syncing" => "accent" } %>
-<%= render "web/shared/header", title: "Integrações", subtitle: "#{@site.name} · contas e serviços que trazem os aparelhos", back: site_path(@site) do %>
-  <% if can?(:manage) %><a href="#adicionar" class="ss-btn ss-btn-primary"><%= icon("plus", "size-4") %>Adicionar integração</a><% end %>
-  <% if can?(:manage) %><%= link_to site_ha_migration_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("switch-horizontal", "size-4") %>Migrar do Home Assistant<% end %><% end %>
+<%= render "web/shared/header", title: t("integrations.index.title"), subtitle: t("integrations.index.subtitle", site: @site.name), back: site_path(@site) do %>
+  <% if can?(:manage) %><a href="#adicionar" class="ss-btn ss-btn-primary"><%= icon("plus", "size-4") %><%= t("integrations.index.add") %></a><% end %>
+  <% if can?(:manage) %><%= link_to site_ha_migration_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("switch-horizontal", "size-4") %><%= t("integrations.index.migrate_ha") %><% end %><% end %>
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :integrations %>
 
 <% if @integrations.empty? %>
   <div class="ss-card ss-empty">
-    <p class="font-bold text-ink">Nenhuma integração neste local.</p>
-    <p class="mt-1">Escolha uma no catálogo abaixo: a conta é varrida e os aparelhos aparecem para adicionar.</p>
+    <p class="font-bold text-ink"><%= t("integrations.index.empty") %></p>
+    <p class="mt-1"><%= t("integrations.index.empty_hint") %></p>
   </div>
 <% else %>
   <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -24,29 +24,29 @@
           <span class="ss-badge ss-badge-<%= tones.fetch(i.status, 'accent') %>"><%= i.status_label %></span>
         </div>
         <dl class="mt-4 grid grid-cols-3 gap-3 text-sm">
-          <div><dt class="text-muted">Dispositivos</dt><dd class="font-semibold text-ink num"><%= @device_counts.fetch(i.id, 0) %></dd></div>
-          <div><dt class="text-muted">Pontos</dt><dd class="font-semibold text-ink num"><%= @point_counts.fetch(i.id, 0) %></dd></div>
-          <div><dt class="text-muted">Sincronizada</dt><dd class="font-semibold text-ink"><% if i.last_ok_at %><time datetime="<%= i.last_ok_at.iso8601 %>" title="<%= l(i.last_ok_at, format: :short) %>"><%= ago_text(i.last_ok_at) %></time><% else %>Ainda não<% end %></dd></div>
+          <div><dt class="text-muted"><%= t("integrations.index.devices") %></dt><dd class="font-semibold text-ink num"><%= @device_counts.fetch(i.id, 0) %></dd></div>
+          <div><dt class="text-muted"><%= t("integrations.index.points") %></dt><dd class="font-semibold text-ink num"><%= @point_counts.fetch(i.id, 0) %></dd></div>
+          <div><dt class="text-muted"><%= t("integrations.index.synced") %></dt><dd class="font-semibold text-ink"><% if i.last_ok_at %><time datetime="<%= i.last_ok_at.iso8601 %>" title="<%= l(i.last_ok_at, format: :short) %>"><%= ago_text(i.last_ok_at) %></time><% else %><%= t("integrations.index.not_yet") %><% end %></dd></div>
         </dl>
         <% if (n = @pending.fetch(i.id, 0)).positive? %>
-          <%= link_to found_integration_path(i), class: "mt-3 ss-badge ss-badge-warn no-underline w-fit" do %><%= icon("sparkles", "size-3.5") %><%= n %> novo(s) para adicionar<% end %>
+          <%= link_to found_integration_path(i), class: "mt-3 ss-badge ss-badge-warn no-underline w-fit" do %><%= icon("sparkles", "size-3.5") %><%= t("integrations.index.pending", n: n) %><% end %>
         <% end %>
-        <% if i.last_error.present? %><p class="mt-3 text-sm text-danger" role="status">Último erro: <%= reveal_sensitive? ? i.last_error : Sensitive.scrub(i.last_error) %></p><% end %>
-        <p class="mt-3 text-sm text-muted"><%= i.poll_s.to_i.positive? ? "Sincroniza sozinha a cada #{duration_text(i.poll_s)}" : "Só sincroniza quando pedir" %>.</p>
+        <% if i.last_error.present? %><p class="mt-3 text-sm text-danger" role="status"><%= t("integrations.index.last_error") %> <%= reveal_sensitive? ? i.last_error : Sensitive.scrub(i.last_error) %></p><% end %>
+        <p class="mt-3 text-sm text-muted"><%= i.poll_s.to_i.positive? ? t("integrations.index.auto_sync", every: duration_text(i.poll_s)) : t("integrations.index.manual_sync") %></p>
         <div class="mt-auto pt-4 flex items-center gap-2">
-          <%= link_to site_devices_path(@site, integracao: i.id), class: "ss-btn ss-btn-outline ss-btn-sm flex-1 justify-center" do %><%= icon("view-list", "size-4") %>Ver dispositivos<% end %>
+          <%= link_to site_devices_path(@site, integracao: i.id), class: "ss-btn ss-btn-outline ss-btn-sm flex-1 justify-center" do %><%= icon("view-list", "size-4") %><%= t("integrations.index.see_devices") %><% end %>
           <% if can?(:manage) %>
             <details class="ss-menu">
-              <summary class="ss-btn ss-btn-ghost ss-btn-sm" title="Mais ações" aria-label="Mais ações de <%= i.name %>"><%= icon("dots-horizontal", "size-4") %></summary>
+              <summary class="ss-btn ss-btn-ghost ss-btn-sm" title="<%= t("integrations.index.more") %>" aria-label="<%= t("integrations.index.more_of", name: i.name) %>"><%= icon("dots-horizontal", "size-4") %></summary>
               <div class="ss-menu-list">
-                <%= button_to sync_integration_path(i), form: { data: { turbo_submits_with: "Pedindo…" } } do %><%= icon("refresh", "size-4") %>Sincronizar agora<% end %>
-                <% if i.plugin&.reconfigurable? %><%= link_to connect_integration_path(i) do %><%= icon("pencil", "size-4") %>Reconfigurar<% end %><% end %>
+                <%= button_to sync_integration_path(i), form: { data: { turbo_submits_with: t("integrations.common.asking") } } do %><%= icon("refresh", "size-4") %><%= t("integrations.common.sync_now") %><% end %>
+                <% if i.plugin&.reconfigurable? %><%= link_to connect_integration_path(i) do %><%= icon("pencil", "size-4") %><%= t("integrations.common.reconfigure") %><% end %><% end %>
                 <%= form_with model: i, url: integration_path(i), method: :patch, class: "px-2 py-1.5 flex items-end gap-2" do |f| %>
-                  <div class="flex-1"><%= f.label :poll_min, "Intervalo (min)", class: "ss-label", for: "poll-#{i.id}" %><%= f.number_field :poll_min, min: 0, step: "any", class: "ss-input num", id: "poll-#{i.id}", placeholder: "0 = manual" %></div>
-                  <%= f.submit "Salvar", class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+                  <div class="flex-1"><%= f.label :poll_min, t("integrations.index.interval"), class: "ss-label", for: "poll-#{i.id}" %><%= f.number_field :poll_min, min: 0, step: "any", class: "ss-input num", id: "poll-#{i.id}", placeholder: t("integrations.index.interval_placeholder") %></div>
+                  <%= f.submit t("integrations.common.save"), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
                 <% end %>
                 <hr>
-                <%= button_to integration_path(i), method: :delete, class: "ss-menu-danger", form: { data: { turbo_confirm: "Remover a integração #{i.name}? Os dispositivos continuam no local.", turbo_confirm_button: "Remover" } } do %><%= icon("trash", "size-4") %>Remover<% end %>
+                <%= button_to integration_path(i), method: :delete, class: "ss-menu-danger", form: { data: { turbo_confirm: t("integrations.index.remove_confirm", name: i.name), turbo_confirm_button: t("integrations.common.remove") } } do %><%= icon("trash", "size-4") %><%= t("integrations.common.remove") %><% end %>
               </div>
             </details>
           <% end %>
@@ -59,17 +59,17 @@
 <% if can?(:manage) %>
   <section id="adicionar" class="mt-8 scroll-mt-6" aria-labelledby="catalogo">
     <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
-      <h2 id="catalogo" class="ss-section">Adicionar integração</h2>
+      <h2 id="catalogo" class="ss-section"><%= t("integrations.index.add") %></h2>
       <%= form_with url: site_integrations_path(@site, anchor: "adicionar"), method: :get, class: "flex w-full gap-2 sm:w-auto", role: "search" do %>
-        <label for="q" class="sr-only">Procurar integração</label>
-        <%= search_field_tag :q, params[:q], class: "ss-input min-w-0 flex-1 sm:w-64", placeholder: "Procurar (Tuya, câmera, Zigbee…)" %>
-        <button class="ss-btn ss-btn-ghost" aria-label="Procurar"><%= icon("search", "size-4") %></button>
+        <label for="q" class="sr-only"><%= t("integrations.index.search_label") %></label>
+        <%= search_field_tag :q, params[:q], class: "ss-input min-w-0 flex-1 sm:w-64", placeholder: t("integrations.index.search_placeholder") %>
+        <button class="ss-btn ss-btn-ghost" aria-label="<%= t("integrations.index.search") %>"><%= icon("search", "size-4") %></button>
       <% end %>
     </div>
     <% if @catalog.empty? %>
-      <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma integração com "<%= params[:q] %>".</p><p class="mt-1">Tente outra palavra, como a marca ou o tipo de aparelho.</p><%= link_to "Ver todas", site_integrations_path(@site, anchor: "adicionar"), class: "ss-btn ss-btn-outline mt-4" %></div>
+      <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("integrations.index.no_match", q: params[:q]) %></p><p class="mt-1"><%= t("integrations.index.no_match_hint") %></p><%= link_to t("integrations.index.see_all"), site_integrations_path(@site, anchor: "adicionar"), class: "ss-btn ss-btn-outline mt-4" %></div>
     <% else %>
-      <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Catálogo de integrações">
+      <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="<%= t("integrations.index.catalog") %>">
         <% @catalog.each do |p| %>
           <li>
             <%= link_to new_site_integration_path(@site, tipo: p.key), class: "ss-card ss-card-link p-4 no-underline flex items-start gap-3 h-full" do %>
