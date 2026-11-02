@@ -44,22 +44,25 @@ module Integrations
     # Sensor template da tela do HA → tipo do sensor calculado daqui.
     TEMPLATE_KINDS = { "binary_sensor" => "bool", "sensor" => "number" }.freeze
 
-    def self.call(site, files) = new(site, files).call
+    # Passos na ordem (o assistente "Migre do HA" mostra o progresso por eles).
+    STEPS = { areas!: "Áreas", devices!: "Aparelhos", entities!: "Entidades", helpers!: "Helpers", scenes!: "Cenas",
+              scripts!: "Scripts", automations!: "Automações" }.freeze
 
-    def initialize(site, files)
+    # `progress`: chamado antes de cada passo com (índice, rótulo, total).
+    def self.call(site, files, progress: nil) = new(site, files, progress: progress).call
+
+    def initialize(site, files, progress: nil)
       @site = site
       @files = files.transform_keys(&:to_s)
+      @progress = progress
       @r = Result.new(areas: 0, devices_added: 0, devices_moved: 0, entities: 0, unmapped: [], helpers: 0, helpers_skipped: [], scenes: [], items: [], tags: 0)
     end
 
     def call
-      areas!
-      devices!
-      entities!
-      helpers!
-      scenes!
-      run_items!("script", "scripts")
-      run_items!("automation", "automations")
+      STEPS.each_with_index do |(step, label), i|
+        @progress&.call(i, label, STEPS.size)
+        send(step)
+      end
       @r
     end
 
@@ -254,6 +257,9 @@ module Integrations
       end
       [ items, lost ]
     end
+
+    def scripts! = run_items!("script", "scripts")
+    def automations! = run_items!("automation", "automations")
 
     # Scripts (várias voltas: um script que chama outro espera o outro existir) e automações.
     def run_items!(domain, file)

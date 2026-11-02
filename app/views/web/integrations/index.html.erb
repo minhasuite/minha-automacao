@@ -1,6 +1,7 @@
 <% tones = { "ok" => "success", "error" => "danger", "pending" => "warn", "syncing" => "accent" } %>
 <%= render "web/shared/header", title: "Integrações", subtitle: "#{@site.name} · contas e serviços que trazem os aparelhos", back: site_path(@site) do %>
   <% if can?(:manage) %><a href="#adicionar" class="ss-btn ss-btn-primary"><%= icon("plus", "size-4") %>Adicionar integração</a><% end %>
+  <% if can?(:manage) %><%= link_to site_ha_migration_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("switch-horizontal", "size-4") %>Migrar do Home Assistant<% end %><% end %>
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :integrations %>
 

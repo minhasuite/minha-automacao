@@ -1,0 +1,194 @@
+{
+ "rest": {
+  "/api/states": [
+   {
+    "entity_id": "automation.liga",
+    "state": "on",
+    "attributes": {
+     "id": "100",
+     "friendly_name": "Liga"
+    }
+   },
+   {
+    "entity_id": "automation.sem_par",
+    "state": "off",
+    "attributes": {
+     "id": "200",
+     "friendly_name": "Sem par"
+    }
+   },
+   {
+    "entity_id": "script.apagar",
+    "state": "off",
+    "attributes": {
+     "friendly_name": "Apagar"
+    }
+   },
+   {
+    "entity_id": "scene.noite",
+    "state": "unknown",
+    "attributes": {
+     "id": "1",
+     "friendly_name": "Noite"
+    }
+   },
+   {
+    "entity_id": "input_boolean.modo",
+    "state": "off",
+    "attributes": {
+     "friendly_name": "Modo"
+    }
+   },
+   {
+    "entity_id": "timer.rega",
+    "state": "idle",
+    "attributes": {
+     "friendly_name": "Rega",
+     "duration": "0:05:00"
+    }
+   },
+   {
+    "entity_id": "switch.ap",
+    "state": "off",
+    "attributes": {
+     "friendly_name": "Ap"
+    }
+   },
+   {
+    "entity_id": "switch.tomada",
+    "state": "off",
+    "attributes": {
+     "friendly_name": "Tomada"
+    }
+   }
+  ],
+  "/api/config/automation/config/100": {
+   "id": "100",
+   "alias": "Liga",
+   "triggers": [
+    {
+     "trigger": "state",
+     "entity_id": "input_boolean.modo",
+     "to": "on"
+    }
+   ],
+   "actions": [
+    {
+     "action": "switch.turn_on",
+     "target": {
+      "entity_id": "switch.ap"
+     }
+    },
+    {
+     "action": "script.apagar"
+    }
+   ]
+  },
+  "/api/config/automation/config/200": {
+   "id": "200",
+   "alias": "Sem par",
+   "triggers": [
+    {
+     "trigger": "state",
+     "entity_id": "switch.inexistente"
+    }
+   ],
+   "actions": [
+    {
+     "action": "shell_command.x"
+    }
+   ]
+  },
+  "/api/config/script/config/apagar": {
+   "alias": "Apagar",
+   "sequence": [
+    {
+     "action": "switch.turn_off",
+     "target": {
+      "entity_id": "switch.ap"
+     }
+    }
+   ]
+  },
+  "/api/config/scene/config/1": {
+   "id": "1",
+   "name": "Noite",
+   "entities": {
+    "switch.ap": "off",
+    "switch.sumiu": "on"
+   }
+  }
+ },
+ "ws": {
+  "config/area_registry/list": [
+   {
+    "id": "sala",
+    "name": "Sala"
+   },
+   {
+    "id": "quarto",
+    "name": "Quarto"
+   }
+  ],
+  "config/device_registry/list": [
+   {
+    "id": "d1",
+    "identifiers": [
+     [
+      "localtuya",
+      "local_dev1"
+     ]
+    ],
+    "area_id": "sala",
+    "name": "Ap"
+   },
+   {
+    "id": "d2",
+    "identifiers": [
+     [
+      "tuya",
+      "dev2"
+     ]
+    ],
+    "area_id": "quarto",
+    "name": "Tomada do quarto"
+   }
+  ],
+  "config/entity_registry/list": [
+   {
+    "id": "e1",
+    "entity_id": "switch.ap",
+    "unique_id": "local_dev1_1",
+    "device_id": "d1",
+    "platform": "localtuya"
+   },
+   {
+    "id": "e2",
+    "entity_id": "switch.tomada",
+    "unique_id": "tuya.dev2switch_1",
+    "device_id": "d2",
+    "platform": "tuya"
+   },
+   {
+    "id": "e3",
+    "entity_id": "automation.liga",
+    "unique_id": "100",
+    "platform": "automation"
+   },
+   {
+    "id": "e4",
+    "entity_id": "automation.sem_par",
+    "unique_id": "200",
+    "platform": "automation"
+   }
+  ],
+  "config/label_registry/list": [],
+  "config_entries/get": [
+   {
+    "entry_id": "x1",
+    "domain": "localtuya",
+    "title": "LocalTuya"
+   }
+  ]
+ }
+}

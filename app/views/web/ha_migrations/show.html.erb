@@ -1,0 +1,146 @@
+<% s = @state %>
+<% status = s["status"] %>
+<% step = { nil => 1, "failed" => (s["phase"] == "import" ? 3 : 1), "fetching" => 2, "preview" => 2, "importing" => 3, "done" => 4 }.fetch(status, 1) %>
+<% steps = [ [ "Conectar", "link" ], [ "Revisar e escolher", "clipboard-list" ], [ "Importar", "download" ], [ "Conferir", "badge-check" ] ] %>
+<%= render "web/shared/header", title: "Migre do Home Assistant", subtitle: "Traga áreas, aparelhos, helpers, cenas, scripts e automações em poucos minutos. Tudo entra em modo sombra: nada comanda até você liberar.", back: site_integrations_path(@site) %>
+
+<ol class="mg-steps" aria-label="Passos">
+  <% steps.each_with_index do |(label, ico), i| %>
+    <li class="<%= 'mg-done' if i + 1 < step %> <%= 'mg-now' if i + 1 == step %>" <%= 'aria-current="step"'.html_safe if i + 1 == step %>>
+      <span class="mg-dot"><%= i + 1 < step ? icon("check", "size-4") : icon(ico, "size-4") %></span><span class="mg-label"><%= label %></span>
+    </li>
+  <% end %>
+</ol>
+
+<% if status.nil? || (status == "failed" && s["phase"] != "import") %>
+  <section class="ss-card ss-card-pad mg-panel ss-rise" aria-labelledby="mg-connect">
+    <h2 id="mg-connect">Conecte o seu Home Assistant</h2>
+    <p class="text-sm text-muted mt-1">Só leitura: o MA lê a configuração pela API do HA e não muda nada lá.</p>
+    <% if status == "failed" %>
+      <p class="mg-error" role="alert"><%= icon("exclamation-circle", "size-5 shrink-0") %><%= s["error"] %></p>
+    <% end %>
+    <%= form_with url: connect_site_ha_migration_path(@site), class: "grid gap-4 mt-4 sm:grid-cols-2" do %>
+      <div class="sm:col-span-2"><label class="ss-label" for="mg-url">Endereço do HA</label>
+        <%= url_field_tag :url, @integration&.settings&.dig("url"), class: "ss-input", id: "mg-url", placeholder: "http://192.168.0.10:8123", required: true %></div>
+      <div class="sm:col-span-2"><label class="ss-label" for="mg-token">Token de acesso longo</label>
+        <%= password_field_tag :token, nil, class: "ss-input num", id: "mg-token", autocomplete: "off", placeholder: (@integration&.secrets&.dig("token").present? ? "(já guardado; cole outro para trocar)" : "eyJhbGciOi…"), required: @integration&.secrets&.dig("token").blank? %></div>
+      <ol class="mg-help sm:col-span-2">
+        <li>No HA, abra o seu perfil (canto de baixo, à esquerda) → aba <strong>Segurança</strong>.</li>
+        <li>Em <strong>Tokens de acesso de longa duração</strong>, crie um com o nome "Minha Automação" e copie.</li>
+        <li>HA na rede de casa? Libere o endereço em Configurações → Sistema (lista de liberados).</li>
+      </ol>
+      <div class="sm:col-span-2"><button class="ss-btn ss-btn-primary"><%= icon("link", "size-4") %>Conectar e ler</button></div>
+    <% end %>
+  </section>
+
+<% elsif status == "fetching" %>
+  <section class="ss-card ss-card-pad mg-panel mg-wait" data-controller="reload" data-reload-every-value="2000" role="status">
+    <span class="mg-orb" aria-hidden="true"></span>
+    <h2>Lendo o Home Assistant…</h2>
+    <p class="text-sm text-muted">Áreas, aparelhos, entidades, helpers, cenas, scripts e automações. Leva alguns segundos.</p>
+  </section>
+
+<% elsif status == "preview" %>
+  <% p = s["preview"] %>
+  <%= form_with url: import_site_ha_migration_path(@site), class: "mg-review" do %>
+    <div class="mg-stats">
+      <div class="mg-stat"><span><%= icon("view-boards", "size-5") %></span><strong class="num"><%= p.dig("areas", "total") %></strong><small>áreas<br><%= p.dig("areas", "new") %> novas</small></div>
+      <div class="mg-stat"><span><%= icon("cube", "size-5") %></span><strong class="num"><%= p.dig("devices", "matched") %>/<%= p.dig("devices", "total") %></strong><small>aparelhos já<br>reconhecidos aqui</small></div>
+      <div class="mg-stat"><span><%= icon("collection", "size-5") %></span><strong class="num"><%= p["entities"] %></strong><small>entidades<br>ativas</small></div>
+      <div class="mg-stat"><span><%= icon("calculator", "size-5") %></span><strong class="num"><%= p["helpers"].values.sum %></strong><small>helpers</small></div>
+      <div class="mg-stat"><span><%= icon("sparkles", "size-5") %></span><strong class="num"><%= p["automations"].size + p["scripts"].size %></strong><small>automações<br>e scripts</small></div>
+    </div>
+    <% if p.dig("devices", "matched") < p.dig("devices", "total") %>
+      <p class="mg-note"><%= icon("information-circle", "size-5 shrink-0") %><span><strong><%= p.dig("devices", "total") - p.dig("devices", "matched") %> aparelho(s) do HA</strong> ainda não estão aqui. Adicione a integração equivalente (Tuya, Xiaomi, MQTT/Zigbee…) antes, ou importe agora e repita depois: a importação é idempotente.</span></p>
+    <% end %>
+
+    <section class="ss-card ss-card-pad">
+      <label class="ss-check font-semibold"><%= check_box_tag :helpers, "1", true, id: "mg-helpers" %><% names = { "input_boolean" => "liga/desliga", "input_number" => "número", "input_select" => "seleção", "input_text" => "texto", "input_datetime" => "data e hora",
+             "input_button" => "botão", "timer" => "temporizador", "counter" => "contador" } %>
+      Helpers <span class="font-normal text-muted">(<%= p["helpers"].map { |d, n| "#{n} #{names.fetch(d, d)}" }.join(", ").presence || "nenhum" %>)</span></label>
+    </section>
+    <% { "automations" => "Automações", "scripts" => "Scripts", "scenes" => "Cenas" }.each do |key, title| %>
+      <% list = p[key] %>
+      <% next if list.empty? %>
+      <details class="ss-card mg-group" open>
+        <summary><span class="font-bold text-ink"><%= title %></span><span class="ss-chip-count"><%= list.size %></span><span class="text-xs text-muted ml-auto">todas marcadas</span></summary>
+        <div class="mg-items">
+          <% list.each do |it| %>
+            <label class="hx-opt"><%= check_box_tag "#{key}[]", it["id"], true, id: "mg-#{key}-#{it['id'].parameterize}" %>
+              <span class="min-w-0 flex-1 truncate font-semibold text-ink"><%= it["name"] %></span>
+              <% if key == "automations" %><span class="ss-badge <%= it['enabled'] ? 'ss-badge-success' : '' %>"><%= it["enabled"] ? "ligada no HA" : "desligada" %></span><% end %></label>
+          <% end %>
+        </div>
+      </details>
+    <% end %>
+    <div class="mg-actions">
+      <button class="ss-btn ss-btn-primary"><%= icon("download", "size-4") %>Importar em modo sombra</button>
+      <%= button_to "Recomeçar", reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-ghost", form: { class: "contents" } %>
+    </div>
+  <% end %>
+
+<% elsif status == "importing" || (status == "failed" && s["phase"] == "import") %>
+  <% pr = s["progress"] || {} %>
+  <% pct = pr["total"] ? ((pr["i"].to_i + 0.5) / pr["total"] * 100).round : 4 %>
+  <section class="ss-card ss-card-pad mg-panel mg-wait" <%= 'data-controller="reload" data-reload-every-value="1500"'.html_safe if status == "importing" %> role="status">
+    <% if status == "importing" %>
+      <span class="mg-orb" aria-hidden="true"></span>
+      <h2>Importando<%= ": #{pr['label']}" if pr["label"] %></h2>
+      <div class="mg-bar" role="progressbar" aria-valuenow="<%= pct %>" aria-valuemin="0" aria-valuemax="100"><span style="width: <%= pct %>%"></span></div>
+      <ul class="mg-phases">
+        <% Integrations::HomeAssistantImport::STEPS.values.each_with_index do |label, i| %>
+          <li class="<%= 'mg-done' if pr['i'] && i < pr['i'] %> <%= 'mg-now' if pr['i'] == i %>"><%= icon(pr["i"] && i < pr["i"] ? "check-circle" : "clock", "size-4") %><%= label %></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mg-error" role="alert"><%= icon("exclamation-circle", "size-5 shrink-0") %>A importação parou: <%= s["error"] %></p>
+      <%= button_to "Recomeçar", reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-primary mt-3" %>
+    <% end %>
+  </section>
+
+<% elsif status == "done" %>
+  <% r = s["report"] %>
+  <% c = r["came"] %>
+  <section class="ss-card ss-card-pad mg-panel mg-hero ss-rise">
+    <span class="mg-check"><%= icon("check", "size-7") %></span>
+    <div>
+      <h2>Pronto! A casa do HA está aqui.</h2>
+      <p class="text-sm text-muted mt-1">Tudo em modo sombra: as automações rodam no "teria feito" e nada comanda até você liberar em <%= link_to "Sombra", site_shadow_path(@site) %>.</p>
+    </div>
+  </section>
+  <div class="mg-stats">
+    <% [ [ "view-boards", c["areas"], "áreas novas" ], [ "cube", c["devices_added"], "aparelhos adicionados" ], [ "collection", c["entities"], "entidades ligadas" ],
+         [ "calculator", c["helpers"], "helpers" ], [ "color-swatch", c["scenes"], "cenas" ], [ "sparkles", c["automations"], "automações" ], [ "play", c["scripts"], "scripts" ] ].each do |ico, n, label| %>
+      <div class="mg-stat"><span><%= icon(ico, "size-5") %></span><strong class="num"><%= n %></strong><small><%= label %></small></div>
+    <% end %>
+  </div>
+  <div class="grid gap-4 lg:grid-cols-2 mt-4">
+    <section class="ss-card ss-card-pad" aria-labelledby="mg-bp">
+      <h2 id="mg-bp">Viraram blueprints <span class="ss-chip-count"><%= r["blueprints"].size %></span></h2>
+      <p class="text-sm text-muted mt-1">Cada automação e script do HA virou um blueprint daqui, com a automação criada a partir dele.</p>
+      <ul class="mg-report">
+        <% r["blueprints"].each do |b| %>
+          <li class="<%= b['lossless'] ? 'mg-ok' : 'mg-warn' %>"><%= icon(b["lossless"] ? "check-circle" : "exclamation-circle", "size-5 shrink-0") %>
+            <div class="min-w-0"><p class="font-semibold text-ink"><%= b["name"] %> <span class="text-xs text-muted font-normal"><%= b["kind"] == "script" ? "script" : "automação" %><%= " · ligada" if b["enabled"] %></span></p>
+              <% if b["notes"].any? %><p class="text-xs text-muted"><%= b["notes"].join(" · ") %></p><% else %><p class="text-xs text-muted">Sem perda.</p><% end %></div></li>
+        <% end %>
+        <% if r["blueprints"].empty? %><li class="text-sm text-muted">Nenhuma automação ou script escolhido.</li><% end %>
+      </ul>
+    </section>
+    <section class="ss-card ss-card-pad" aria-labelledby="mg-left">
+      <h2 id="mg-left">Ficou de fora <span class="ss-chip-count"><%= r["left_out"].size %></span></h2>
+      <p class="text-sm text-muted mt-1">E por quê. Resolva e rode de novo: o que já veio não duplica.</p>
+      <ul class="mg-report">
+        <% r["left_out"].first(100).each do |l| %>
+          <li class="mg-warn"><%= icon("minus-circle", "size-5 shrink-0") %><div class="min-w-0"><p class="font-semibold text-ink break-words"><%= l["what"] %></p><p class="text-xs text-muted"><%= l["why"] %></p></div></li>
+        <% end %>
+        <% if r["left_out"].empty? %><li class="mg-ok"><%= icon("check-circle", "size-5 shrink-0") %><p class="text-sm">Nada ficou de fora.</p></li><% end %>
+      </ul>
+    </section>
+  </div>
+  <div class="mg-actions">
+    <%= link_to site_shadow_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("eye", "size-4") %>Ver o "teria feito"<% end %>
+    <%= link_to site_automations_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("sparkles", "size-4") %>Automações<% end %>
+    <%= button_to "Importar de novo", reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-ghost", form: { class: "contents" } %>
+  </div>
+<% end %>
