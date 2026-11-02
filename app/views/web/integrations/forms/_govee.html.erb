@@ -1,3 +1,3 @@
 <%# locals: (f:, integration:) -%>
 <%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::GoveePlugin,
-           note: "No app Govee Home, abra o aparelho → Configurações → ligue \"Controle LAN\". Liga, brilho e cor vão direto na rede (UDP), sem nuvem; o estado é lido a cada 30 s." %>
+           note: t("integrations.forms.govee.note") %>

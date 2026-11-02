@@ -345,6 +345,44 @@ en:
       removed: Integration removed. Its devices stay in this place.
       syncing: 'Syncing: the list will be here in a moment.'
     forms:
+      ble_proxy:
+        key: "API encryption key"
+        key_hint: "api: encryption: key from the YAML"
+        password: "API password (legacy)"
+        password_hint: "only if you use one"
+        note: "An ESP32 board with \"bluetooth_proxy:\" in ESPHome. MA listens to advertisements for 10 s and lists the sensors it understands: BTHome (unencrypted), Xiaomi thermometers with pvvx or ATC firmware, and Govee H5072/H5075. Readings arrive every 5 min."
+      sonos:
+        note: "One Sonos speaker per integration (find it on the network or enter its IP). What's playing, volume and mute are read every minute and right after each command, no cloud."
+      daikin:
+        note: "A Daikin Wi-Fi adapter (BRP069/BRP072) on the same network. Power, mode, target temperature, fan and room temperature, read every minute."
+      midea:
+        device_id: "Device ID"
+        device_id_hint: "e.g. 151732605161920"
+        token: "Token (128 characters)"
+        key: "Key (64 characters)"
+        from_discover: "from msmart-ng discover"
+        note: "For Midea Wi-Fi ACs (V3 protocol). The ID, token and key are pulled once from your account with msmart-ng (\"msmart-ng discover\"); after that everything runs locally. The token and key are stored encrypted."
+      zwave_js:
+        url: "Z-Wave JS server address"
+        note: "The server from the Z-Wave JS add-on, Z-Wave JS UI (with \"WS Server\" turned on) or the zwave-js-server container, with your Z-Wave stick. Nodes show up ready to add, with the relays, dimmers, sensors, meters and thermostats of each one. Including new nodes is still done in Z-Wave JS UI."
+      growatt:
+        token: "API token"
+        from: "from ShineServer"
+        note: "Get the token from ShineServer (or ask your installer or Growatt support); it is stored encrypted. Each plant becomes a device with power and energy, read every 5 min, ready for the \"Solar production\" role in the energy dashboards."
+      lg_thinq:
+        token: "Personal access token (PAT)"
+        from: "from connect-pat.lgthinq.com"
+        country: "Account country"
+        note: "Sign in at connect-pat.lgthinq.com with your LG account, create a token with permission to view and control devices, and paste it here (it is stored encrypted). The account's ACs show up ready to add; their state is read every 2 min."
+      sunspec:
+        unit: "Modbus unit (ID)"
+        note: "Turn on Modbus TCP (SunSpec) on the inverter or data manager (port 502). Read-only, every 30 s: power and energy produced feed the energy dashboards (\"Solar production\" role)."
+      govee:
+        note: "In the Govee Home app, open the device → Settings → turn on \"LAN Control\". Power, brightness and color go straight over the network (UDP), no cloud; state is read every 30 s."
+      dirigera:
+        token: "Token (optional)"
+        token_hint: "leave blank to pair with the button"
+        note: "To pair: click Add, press the action button under the Dirigera and click Add again within 1 minute. The token is stored encrypted. Devices come in with their room from the IKEA Home smart app."
       adb:
         note: 'On the TV: Settings → About → tap "Build" 7 times to unlock developer mode, then turn on "Network debugging" (or "ADB debugging"). On the first read the TV asks "Allow debugging?": check "Always allow" and accept within 30 s.'
       alexa:

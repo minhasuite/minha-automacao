@@ -3,6 +3,8 @@ module Integrations
   class SonosPlugin < MediaLanPlugin
     describe key: "sonos", title: "Sonos", icon: "volume-up",
              description: "Caixas Sonos da rede de casa, sem nuvem: o que está tocando, volume, mudo, tocar, pausar, avançar e tocar um endereço."
+    texts en: { title: "Sonos", description: "Sonos speakers on your home network, no cloud: what's playing, volume, mute, play, pause, skip and play a URL." },
+          es: { title: "Sonos", description: "Parlantes Sonos de la red de casa, sin nube: lo que está sonando, volumen, silencio, reproducir, pausar, avanzar y reproducir una dirección." }
     port Drivers::Sonos::PORT
     mdns "_sonos._tcp"
 

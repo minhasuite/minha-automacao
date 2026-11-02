@@ -1,4 +1,4 @@
 <%# locals: (f:, integration:) -%>
 <%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::BleProxyPlugin,
-           fields: [ [ :encryption_key, "Chave de criptografia da API", "api: encryption: key do YAML" ], [ :password, "Senha da API (antiga)", "só se usar" ] ],
-           note: "Placa ESP32 com \"bluetooth_proxy:\" no ESPHome. O MA ouve os anúncios por 10 s e lista os sensores que entende: BTHome (sem criptografia), termômetros Xiaomi com firmware pvvx ou ATC e Govee H5072/H5075. As leituras chegam a cada 5 min." %>
+           fields: [ [ :encryption_key, t("integrations.forms.ble_proxy.key"), t("integrations.forms.ble_proxy.key_hint") ], [ :password, t("integrations.forms.ble_proxy.password"), t("integrations.forms.ble_proxy.password_hint") ] ],
+           note: t("integrations.forms.ble_proxy.note") %>

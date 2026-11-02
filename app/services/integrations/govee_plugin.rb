@@ -4,6 +4,8 @@ module Integrations
   class GoveePlugin < LanPlugin
     describe key: "govee", title: "Govee", icon: "light-bulb",
              description: "Lâmpadas e fitas Govee com Controle LAN ligado no app: liga, brilho e cor, direto na rede de casa, sem nuvem."
+    texts en: { title: "Govee", description: "Govee bulbs and strips with LAN Control turned on in the app: power, brightness and color, straight over your home network, no cloud." },
+          es: { title: "Govee", description: "Bombillas y tiras Govee con el Control LAN activado en la app: encendido, brillo y color, directo en la red de casa, sin nube." }
     port Drivers::Govee::PORT
 
     def self.discovers? = true

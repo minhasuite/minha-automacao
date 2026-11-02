@@ -345,6 +345,44 @@ es:
       removed: Integración quitada. Los dispositivos siguen en el lugar.
       syncing: 'Sincronizando: la lista llega en un momento.'
     forms:
+      ble_proxy:
+        key: "Clave de cifrado de la API"
+        key_hint: "api: encryption: key del YAML"
+        password: "Contraseña de la API (antigua)"
+        password_hint: "solo si la usas"
+        note: "Placa ESP32 con \"bluetooth_proxy:\" en ESPHome. MA escucha los anuncios durante 10 s y lista los sensores que entiende: BTHome (sin cifrado), termómetros Xiaomi con firmware pvvx o ATC y Govee H5072/H5075. Las lecturas llegan cada 5 min."
+      sonos:
+        note: "Un parlante Sonos por integración (búscalo en la red o ingresa la IP). Lo que está sonando, el volumen y el silencio se leen cada minuto y justo después de cada comando, sin nube."
+      daikin:
+        note: "Adaptador Wi-Fi Daikin (BRP069/BRP072) en la misma red. Encendido, modo, temperatura objetivo, ventilación y temperatura ambiente, leídos cada minuto."
+      midea:
+        device_id: "ID del aparato"
+        device_id_hint: "ej.: 151732605161920"
+        token: "Token (128 caracteres)"
+        key: "Clave (64 caracteres)"
+        from_discover: "de msmart-ng discover"
+        note: "Para aires con Wi-Fi de Midea (protocolo V3). El ID, el token y la clave se obtienen una sola vez de la cuenta con msmart-ng (\"msmart-ng discover\"); después todo es local. El token y la clave se guardan cifrados."
+      zwave_js:
+        url: "Dirección del servidor Z-Wave JS"
+        note: "El servidor del add-on Z-Wave JS, de Z-Wave JS UI (con el \"WS Server\" activado) o el contenedor zwave-js-server, con el stick Z-Wave. Los nodos aparecen para agregar con los relés, dimmers, sensores, medidores y termostatos de cada uno. La inclusión de nodos nuevos sigue en Z-Wave JS UI."
+      growatt:
+        token: "Token de la API"
+        from: "de ShineServer"
+        note: "El token se obtiene de ShineServer (o pídelo al instalador o al soporte de Growatt) y se guarda cifrado. Cada planta se convierte en un aparato con potencia y energía, leídas cada 5 min, listas para el rol \"Generación solar\" de los paneles de energía."
+      lg_thinq:
+        token: "Token de acceso personal (PAT)"
+        from: "de connect-pat.lgthinq.com"
+        country: "País de la cuenta"
+        note: "Entra en connect-pat.lgthinq.com con la cuenta LG, crea un token con permisos para ver y controlar aparatos y pégalo aquí (se guarda cifrado). Los aires de la cuenta aparecen para agregar; el estado se lee cada 2 min."
+      sunspec:
+        unit: "Unidad Modbus (ID)"
+        note: "Activa Modbus TCP (SunSpec) en el inversor o en el data manager (puerto 502). Solo lectura, cada 30 s: la potencia y la energía generada entran en los paneles de energía (rol \"Generación solar\")."
+      govee:
+        note: "En la app Govee Home, abre el aparato → Configuración → activa \"Control LAN\". Encendido, brillo y color van directo por la red (UDP), sin nube; el estado se lee cada 30 s."
+      dirigera:
+        token: "Token (opcional)"
+        token_hint: "déjalo vacío para vincular con el botón"
+        note: "Para vincular: haz clic en Agregar, presiona el botón de acción debajo del Dirigera y vuelve a hacer clic en Agregar en menos de 1 minuto. El token se guarda cifrado. Los aparatos entran con la habitación de la app IKEA Home smart."
       adb:
         note: 'En la TV: Configuración → Acerca de → toca 7 veces "Build" para activar el modo desarrollador y enciende la "Depuración por red" (o "Depuración ADB"). En la primera lectura la TV pregunta "¿Permitir depuración?": marca "Permitir siempre" y acepta en menos de 30 s.'
       alexa:

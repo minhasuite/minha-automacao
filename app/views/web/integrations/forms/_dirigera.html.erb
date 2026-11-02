@@ -1,4 +1,4 @@
 <%# locals: (f:, integration:) -%>
 <%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::DirigeraPlugin,
-           fields: [ [ :token, "Token (opcional)", "deixe vazio para parear pelo botão" ] ],
-           note: "Para parear: clique em Adicionar, aperte o botão de ação embaixo do Dirigera e clique em Adicionar de novo em até 1 minuto. O token fica cifrado. Os aparelhos entram com o cômodo do app IKEA Home smart." %>
+           fields: [ [ :token, t("integrations.forms.dirigera.token"), t("integrations.forms.dirigera.token_hint") ] ],
+           note: t("integrations.forms.dirigera.note") %>
