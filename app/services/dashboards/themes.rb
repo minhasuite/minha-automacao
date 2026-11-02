@@ -44,8 +44,11 @@ module Dashboards
     end
 
     class Base
+      extend PluginTexts
+      translates :label
+
       class << self
-        attr_reader :key, :label, :accent, :accent2, :wallpaper, :glass
+        attr_reader :key, :accent, :accent2, :wallpaper, :glass
 
         # accent/accent2: as duas cores do degradê da marca (botões, ligado,
         # hero); wallpaper: fundo CSS sem imagem; glass: cartões de vidro.

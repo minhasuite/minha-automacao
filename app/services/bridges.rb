@@ -52,10 +52,13 @@ module Bridges
   def status_key(bridge, tenant) = "bridge:#{bridge.key}:#{tenant.id}"
 
   class Base
+    extend PluginTexts
+    translates :title, :description
+
     TYPES = {}.freeze
 
     class << self
-      attr_reader :key, :title, :icon, :description
+      attr_reader :key, :icon
 
       def describe(key:, title:, icon:, description:)
         @key = key

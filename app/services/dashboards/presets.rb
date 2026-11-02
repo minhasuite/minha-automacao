@@ -29,12 +29,15 @@ module Dashboards
     end
 
     class Base
+      extend PluginTexts
+      translates :title, :description
+
       # Campo do formulário: `kind` :point (um), :points (vários, até 8),
       # :number ou :text; `filter` escolhe os pontos que aparecem.
       Field = Struct.new(:key, :label, :kind, :hint, :filter, keyword_init: true)
 
       class << self
-        attr_reader :key, :title, :icon, :description
+        attr_reader :key, :icon
 
         def describe(key:, title:, icon:, description:)
           @key = key

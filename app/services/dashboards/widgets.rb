@@ -20,8 +20,11 @@ module Dashboards
     def auto_widget(point, id) = plugins.lazy.filter_map { |p| p.auto_widget(point, id) }.first
 
     class Base
+      extend PluginTexts
+      translates :label
+
       class << self
-        attr_reader :type, :label, :icon
+        attr_reader :type, :icon
 
         # required: props obrigatórias; params: campos do editor (texto simples);
         # bind: true = o editor mostra o seletor de um ponto; binds: true = o

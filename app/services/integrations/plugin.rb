@@ -10,12 +10,15 @@ module Integrations
   # encontrados, :connect = passo de login, :index, :devices ou :form =
   # formulário de novo com o erro), com a integração e o aviso.
   class Plugin
+    extend PluginTexts
+    translates :title, :description
+
     Outcome = Data.define(:to, :integration, :notice, :alert, :params) do
       def initialize(to:, integration: nil, notice: nil, alert: nil, params: {}) = super
     end
 
     class << self
-      attr_reader :key, :title, :icon, :description, :driver
+      attr_reader :key, :icon, :driver
 
       def describe(key:, title:, icon:, description:, driver: key)
         @key = key

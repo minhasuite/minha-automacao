@@ -7,6 +7,9 @@ module Automations
   # tem `case` por tipo. O registro de cada lista fica em TriggerTypes,
   # ConditionTypes e ActionTypes (`PLUGINS`).
   class Block
+    extend PluginTexts
+    translates :label
+
     # Busca no registro (`extend Block::Registry` + `PLUGINS` com os nomes das classes).
     module Registry
       def plugins = self::PLUGINS.map { |name| const_get(name) }
@@ -16,7 +19,7 @@ module Automations
     end
 
     class << self
-      attr_reader :key, :label
+      attr_reader :key
 
       def describe(key:, label:, fields: [], defaults: {})
         @key = key

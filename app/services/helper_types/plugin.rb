@@ -5,12 +5,15 @@ module HelperTypes
   # comando. Helper calculado (`sourced?`) guarda os pontos de origem em
   # `address["sources"]` e se refaz em `refresh!` quando um deles muda.
   class Plugin
+    extend PluginTexts
+    translates :title, :description
+
     # Fator do prefixo de unidade (k = mil) e segundos da unidade de tempo (integral e derivada).
     PREFIXES = { "" => 1, "k" => 1e3, "M" => 1e6, "G" => 1e9 }.freeze
     TIME_UNITS = { "s" => 1, "min" => 60, "h" => 3600, "d" => 86_400 }.freeze
 
     class << self
-      attr_reader :key, :title, :icon, :description, :capability
+      attr_reader :key, :icon, :capability
 
       def describe(key:, title:, icon:, description:, capability:)
         @key = key
