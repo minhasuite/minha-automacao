@@ -1,7 +1,7 @@
 module Search
   # Pontos (pelo nome, aparelho ou área). Com verbo ("apagar Sala"), a ação
   # liga/desliga/alterna o ponto que aceita o comando e que o papel comanda;
-  # dimmer sem liga/desliga vai a 0 ou 100.
+  # luz em dimmer sem liga/desliga vai a 0 ou 100.
   class PointsSource < Source
     COMMAND = { "off" => "Desligar", "on" => "Ligar", "toggle" => "Alternar" }.freeze
     DIMMER = { "off" => 0, "on" => 100 }.freeze
@@ -16,12 +16,15 @@ module Search
            .first(LIMIT).map { |p| result(p, q, ctx, areas) }
     end
 
+    # Dimmer de luz (pela regra de nome do painel automático); cortina não "apaga".
+    def self.light?(p) = p.capability == "dimmer" && "#{p.name} #{p.device.name}".match?(Dashboards::Generator::LIGHT)
+
     # [comando, valor] para o verbo, ou nil se o ponto não faz.
     def self.command(p, verb)
       cmds = Points::Command.commands_for(p)
       return [ verb, nil ] if cmds.include?(verb)
 
-      [ "set", DIMMER[verb] ] if p.capability == "dimmer" && cmds.include?("set") && DIMMER.key?(verb)
+      [ "set", DIMMER[verb] ] if light?(p) && cmds.include?("set") && DIMMER.key?(verb)
     end
 
     def self.result(p, q, ctx, areas)

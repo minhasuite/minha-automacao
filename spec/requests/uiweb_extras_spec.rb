@@ -56,6 +56,13 @@ RSpec.describe "Quiosque, busca global e temas" do
       expect(within(tenant) { Search.call("configura", user) }.map(&:title)).to include("Configurações")
       expect(within(tenant) { Search.call("teste sala", user) }.map(&:kind)).to include("Área")
       expect(within(tenant) { Search.call("", user) }).to eq([])
+
+      within(tenant) do
+        create(:point, device: create(:device, site: site, name: "Teste Pendente"), name: "Luz", capability: "dimmer", value: 50, writable: true)
+        create(:point, device: create(:device, site: site, name: "Teste Cortina"), name: "Posição", capability: "dimmer", value: 50, writable: true)
+      end
+      expect(within(tenant) { Search.call("apagar teste pendente", user) }.first.action[:params]).to eq(command: "set", value: 0)
+      expect(within(tenant) { Search.call("apagar teste cortina", user) }).to eq([]) # cortina não "apaga"
     end
 
     it "quem não comanda não ganha a ação" do
