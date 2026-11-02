@@ -58,6 +58,16 @@ module Api
         render_data(summary(dashboard))
       end
 
+      # GET /dashboards/:id/definition (técnico ou dono): o rascunho em edição
+      # (ou a publicada) e o catálogo de widgets dos plugins, para o editor do app.
+      def definition
+        dashboard, = find(:manage)
+        catalog = Dashboards::Widgets.plugins.map do |p|
+          { type: p.type, label: p.label, icon: p.icon, required: p.required, bind: p.bind?, binds: p.binds?, params: p.params }
+        end
+        render_data({ definition: dashboard.working_draft, has_draft: dashboard.draft?, version: dashboard.version }, meta: { catalog: catalog })
+      end
+
       def versions
         dashboard, = find(:manage)
         render_data(dashboard.versions.includes(:author).map { |v| { version: v.version, author: v.author&.name, created_at: v.created_at, definition: v.definition } })

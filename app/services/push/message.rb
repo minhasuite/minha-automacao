@@ -1,7 +1,8 @@
 module Push
   # O que um aviso leva ao aparelho de uma pessoa: título, corpo, ícone,
   # imagem (URL assinada e com validade), tag, prioridade, validade, fixo,
-  # grupo, botões e o que abrir ao tocar. `to_h(capabilities)` corta o que o
+  # grupo, botões, progresso (0–100: notificação contínua que se atualiza
+  # no lugar pela tag) e o que abrir ao tocar. `to_h(capabilities)` corta o que o
   # transporte não suporta (Notifier::FEATURES). Com botões, leva o token de
   # resposta dessa pessoa (Notification#action_token): a resposta pelo service
   # worker vale uma vez e só para ela.
@@ -35,6 +36,7 @@ module Push
         "actions" => buttons&.map { |a| { "action" => a["id"], "title" => a["title"] } }.presence,
         "data" => { "id" => notification.id, "url" => (can.(:link) && notification.open_url) || "/notificacoes",
                     "priority" => (priority if can.(:priority)), "group" => (data["group"].presence if can.(:group)),
+                    "progress" => (data["progress"] if can.(:progress)),
                     "token" => (notification.action_token(user) if buttons.present?) }.compact }.compact
     end
   end

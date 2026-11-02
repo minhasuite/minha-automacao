@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+# Anuncia o servidor na rede de casa por mDNS (`_minhaautomacao._tcp`): o app
+# acha o endereço no primeiro uso, sem digitar. Só Ruby puro (sem Rails nem
+# banco); roda no serviço `mdns` do docker-compose.local.yml, na rede do host
+# (o multicast da casa não chega na bridge do Docker). Responde perguntas pelo
+# serviço, pela instância e pelo host com PTR + SRV + TXT + A (Mdns.answer).
+#
+#   MDNS_NAME  nome que aparece no app (padrão "Minha Automação")
+#   APP_HOST   IP do servidor na rede (senão, o primeiro IPv4 privado)
+#   WEB_PORT   porta da web no host (padrão 80)
+require "socket"
+require "ipaddr"
+require_relative "../app/services/mdns"
+
+name = ENV.fetch("MDNS_NAME", "Minha Automação")
+port = Integer(ENV.fetch("WEB_PORT", "80"))
+ip = ENV["APP_HOST"].to_s[/\A\d+\.\d+\.\d+\.\d+\z/] || Socket.ip_address_list.find(&:ipv4_private?)&.ip_address
+abort "[mdns] sem IPv4 da rede de casa (defina APP_HOST)" unless ip
+
+sock = UDPSocket.new
+sock.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, true)
+sock.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEPORT, true) if defined?(Socket::SO_REUSEPORT) # avahi do host também usa a 5353
+sock.bind("0.0.0.0", Mdns::PORT)
+sock.setsockopt(Socket::IPPROTO_IP, Socket::IP_ADD_MEMBERSHIP, IPAddr.new(Mdns::ADDR).hton + IPAddr.new(ip).hton)
+sock.setsockopt(Socket::IPPROTO_IP, Socket::IP_MULTICAST_IF, IPAddr.new(ip).hton)
+sock.setsockopt(Socket::IPPROTO_IP, Socket::IP_MULTICAST_TTL, 255)
+$stdout.sync = true
+puts "[mdns] anunciando \"#{name}\" em #{ip}:#{port}"
+
+loop do
+  data, from = sock.recvfrom(9000)
+  reply = Mdns.answer(data, name: name, ip: ip, port: port, txt: { "path" => "/", "v" => "1" }) or next
+  # Pergunta da porta 5353 = mDNS normal (resposta no grupo); outra porta = unicast legado.
+  from[1] == Mdns::PORT ? sock.send(reply, 0, Mdns::ADDR, Mdns::PORT) : sock.send(reply, 0, from[3], from[1])
+rescue SystemCallError => e
+  warn "[mdns] #{e.message}"
+end

@@ -7,8 +7,8 @@ module Push
   module Browser
     module_function
 
-    # Web Push não tem grupo de notificações: o `group` do aviso é ignorado.
-    def capabilities = Notifier::FEATURES - %i[group]
+    # Web Push não tem grupo nem barra de progresso: `group` e `progress` são ignorados.
+    def capabilities = Notifier::FEATURES - %i[group progress]
     def public_key = ENV["VAPID_PUBLIC_KEY"].to_s
     def configured? = public_key.present? && ENV["VAPID_PRIVATE_KEY"].present?
 

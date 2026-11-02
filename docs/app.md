@@ -20,6 +20,9 @@ não conhece nenhuma casa, aparelho ou automação; desenha o painel resolvido
 | Alertas e avisos | `GET /alerts`, `POST /alerts/:id/ack`, `GET /notifications` (com `actions`, `url`, `image_url`), `POST /notifications/:id/respond {action_id}` |
 | Push | `POST/DELETE /device_tokens` (FCM) |
 | Sensores do celular | `POST /sites/:id/mobile_devices`, `POST /mobile_devices/:id/sensors`, `DELETE /mobile_devices/:id` |
+| Pontos do local (widgets, atalhos e controles do Android) | `GET /sites/:id/points?view=app[&commandable=1]`, `GET /points/:id?view=app` |
+| Editor do painel no app (técnico/dono) | `GET /dashboards/:id/definition` (rascunho + `meta.catalog` dos plugins de widget), `PUT /dashboards/:id {definition, publish}` |
+| Descoberta na rede de casa | mDNS `_minhaautomacao._tcp` (serviço `mdns` do compose local, `bin/mdns-announce`) |
 
 ## Tempo real
 
@@ -104,3 +107,17 @@ com ele aberto (leitura em segundo plano fica para a próxima rodada).
 - Microfone no Início: grava (AAC) e manda para `POST /sites/:id/assist`
   (multipart `audio`, ou `text`), mostra o que entendeu e a resposta e toca a
   fala (`audio_url`). Ver `docs/assistente.md`.
+
+## App 0.2 (app2)
+
+- Primeiro uso: o login procura `_minhaautomacao._tcp` na rede (mDNS) e
+  oferece o servidor achado; o anúncio é o serviço `mdns` do
+  `docker-compose.local.yml` (rede do host, só UDP 5353). Biometria opcional.
+- Android: widget de ponto/cena na tela inicial, 3 atalhos no painel rápido e
+  os controles do menu de energia. Tudo pela API com o token do app (papel x
+  risco no servidor; ponto com risco ou `confirm` abre o app para confirmar,
+  e nos controles o Android pede a confirmação).
+- Avisos: botão que comanda um ponto e barra de progresso (`docs/push.md`).
+- Editor do painel no app: reordena seções e widgets, tira e põe widgets do
+  catálogo e salva rascunho ou publica.
+- Spec: `spec/requests/app2_spec.rb`.

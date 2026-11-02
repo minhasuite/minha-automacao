@@ -17,7 +17,7 @@ module Notifier
   # (`role:guest` = todos do local): `admins`, `user:<id>` ou `role:<papel>`.
   UUID = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
   # Tudo o que um aviso pode pedir; o canal diz o que entrega.
-  FEATURES = %i[text buttons image link tag priority ttl sticky group].freeze
+  FEATURES = %i[text buttons image link tag priority ttl sticky group progress].freeze
 
   module_function
 

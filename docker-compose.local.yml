@@ -170,6 +170,18 @@ services:
     volumes:
       - matter-data:/data
 
+  # Descoberta pelo app: anuncia `_minhaautomacao._tcp` na rede de casa
+  # (bin/mdns-announce, Ruby puro). Rede do host porque o multicast não chega
+  # na bridge; só UDP 5353, sem banco e sem segredo. Parar não afeta o resto.
+  mdns:
+    image: ${IMAGE:-ghcr.io/minhasuite/minha-automacao:latest}
+    restart: unless-stopped
+    network_mode: host
+    command: ruby bin/mdns-announce
+    environment:
+      APP_HOST: ${APP_HOST:-192.168.68.199}
+      WEB_PORT: ${WEB_PORT:-80}
+
   # Acesso externo. Sem CF_TUNNEL_TOKEN no .env o serviço fica de fora
   # (perfil `tunnel`, ligado pelo bin/deploy-local quando o token existe).
   cloudflared:

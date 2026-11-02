@@ -99,10 +99,13 @@ module Automations
     end
 
     # "sim: Sim" e "nao: Agora não", um por linha → [{id, title}] (linha sem ":" usa o texto como id e título).
+    # "fechar: Fechar -> garagem.portao pulse" → o botão também comanda o ponto (+ valor opcional).
     def buttons(raw)
       raw.to_s.lines.filter_map do |line|
+        line, cmd = line.split(" -> ", 2)
         id, title = line.include?(":") ? line.split(":", 2).map(&:strip) : [ line.strip.parameterize(separator: "_"), line.strip ]
-        { "id" => id.downcase, "title" => title } if id.present? && title.present?
+        point, command, value = cmd.to_s.strip.split(/\s+/, 3)
+        { "id" => id.downcase, "title" => title, "point" => point, "command" => command, "value" => value }.compact if id.present? && title.present?
       end.presence
     end
 

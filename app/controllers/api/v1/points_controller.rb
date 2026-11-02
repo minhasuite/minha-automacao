@@ -3,7 +3,7 @@ module Api
     # Pontos do dispositivo e comandos. Cadastro: técnico ou dono. Comando: o
     # papel mínimo depende do risco do ponto (SiteMembership::MIN_ROLE_BY_RISK).
     class PointsController < BaseController
-      self.key_actions = { index: "read", show: "read", history: "read", command: "command", write_value: "write" }
+      self.key_actions = { index: "read", site_index: "read", show: "read", history: "read", command: "command", write_value: "write" }
 
       # ?view=app: cada ponto como no dashboard resolvido (texto, comandos,
       # can_command para o papel de quem pede), para o app desenhar os controles.
@@ -16,9 +16,24 @@ module Api
         render_data(PointSerializer.new(records).to_h, meta: meta)
       end
 
+      # GET /sites/:site_id/points?view=app[&commandable=1] — todos os pontos do
+      # local como o app desenha (widgets da tela inicial, atalhos e controles
+      # do Android escolhem daqui); `commandable` = só os que este papel comanda.
+      def site_index
+        site = Site.find(params[:site_id])
+        role = authorize_site!(site, :view)
+        records, meta = paginate(site.points.includes(:device).ordered)
+        list = records.map { |p| Dashboards::Resolver.point_json(p, role) }
+        list = list.select { |p| p["can_command"] } if bool(params[:commandable])
+        render_data(list, meta: meta)
+      end
+
+      # `?view=app`: o ponto como o app desenha (o widget da tela inicial relê por aqui).
       def show
         point = Point.find(params[:id])
-        authorize_site!(point.site, :view)
+        role = authorize_site!(point.site, :view)
+        return render_data(Dashboards::Resolver.point_json(point, role)) if params[:view] == "app"
+
         render_data(PointSerializer.new(point).to_h)
       end
 

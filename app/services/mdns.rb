@@ -67,6 +67,30 @@ module Mdns
     packets
   end
 
+  # O próprio servidor na rede de casa (app2): o app acha o endereço sem
+  # digitar. bin/mdns-announce escuta a 5353 e responde com isto.
+  SERVICE = "_minhaautomacao._tcp.local".freeze
+
+  # Pergunta (pacote) por este serviço, pela instância ou pelo host → resposta
+  # com PTR + SRV + TXT + A; qualquer outra pergunta → nil.
+  def answer(packet, name:, ip:, port:, host: "minha-automacao", txt: {})
+    q = Resolv::DNS::Message.decode(packet)
+    inst = "#{name}.#{SERVICE}"
+    fqdn = "#{host}.local"
+    return unless q.qr.zero? && q.question.any? { |n, _| [ SERVICE, inst, fqdn ].any? { |x| n.to_s.casecmp?(x) } }
+
+    msg = Resolv::DNS::Message.new(q.id)
+    msg.qr = 1
+    msg.aa = 1
+    msg.add_answer(SERVICE, 120, IN::PTR.new(Resolv::DNS::Name.create("#{inst}.")))
+    msg.add_answer(inst, 120, IN::SRV.new(0, 0, port, Resolv::DNS::Name.create("#{fqdn}.")))
+    msg.add_answer(inst, 120, IN::TXT.new(*txt.map { |k, v| "#{k}=#{v}" }))
+    msg.add_answer(fqdn, 120, IN::A.new(ip))
+    msg.encode
+  rescue Resolv::DNS::DecodeError
+    nil
+  end
+
   # Pacotes [dados, ip de origem] → serviços encontrados.
   def parse_all(type, packets)
     found = {}

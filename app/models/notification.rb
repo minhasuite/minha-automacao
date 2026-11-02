@@ -2,7 +2,8 @@
 # sem `user` vai para os administradores da empresa. O push sai pelo Notifier
 # (Push::TRANSPORTS). `dedup_key` impede repetir o mesmo alerta.
 #
-# Lote 1: o aviso pode ter botões (`data["actions"]`, até 3 {id, title}),
+# Lote 1: o aviso pode ter botões (`data["actions"]`, até 3 {id, title}; com
+# `point_id` + `command` (+ `value`) o botão também comanda o ponto),
 # imagem (anexo `image`, com validade de IMAGE_TTL, ou `data["image_url"]`),
 # link ao tocar (`data["url"]`) e opções de push (`priority`, `tag`, `ttl`,
 # `sticky`, `group`). A resposta vale uma vez (`responded_at`/`response`) e
@@ -70,9 +71,26 @@ class Notification < ApplicationRecord
     return false unless taken == 1
 
     reload
+    run_command(action, user)
     site_id = data["site_id"]
     Automations::Triggers.event(site_id, "notification_action", event_payload(action, user)) if site_id
     true
+  end
+
+  # Botão com comando (`point_id`, `command`, `value`): manda o comando como a
+  # pessoa que tocou, com a mesma regra de papel x risco da API. Tocar no
+  # botão é a confirmação; sem permissão ou com erro, só não manda (a
+  # resposta e o evento seguem valendo).
+  def run_command(action, user)
+    return if action["point_id"].blank? || action["command"].blank?
+
+    point = Point.find_by(id: action["point_id"]) or return
+    role = point.site.role_for(user)
+    return unless role && SiteMembership.allowed?(role, :command, risk: point.risk)
+
+    Points::Command.call(point, action["command"], action["value"], source: "push", user: user)
+  rescue Points::Command::Error => e # inclui o modo sombra (Shadow::Blocked)
+    Rails.logger.info("[aviso] botão #{action['id']}: #{e.message}")
   end
 
   def event_payload(action, user)

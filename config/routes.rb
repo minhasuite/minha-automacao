@@ -264,6 +264,7 @@ Rails.application.routes.draw do
 
       # Pacote 3: pessoas, voz, pacotes e ferramentas de desenvolvedor.
       get "sites/:site_id/people", to: "people#index"
+      get "sites/:site_id/points", to: "points#site_index" # app2: widgets, atalhos e controles do Android
       post "sites/:site_id/assist", to: "assist#create"
       get "sites/:site_id/packages", to: "packages#index"
       post "sites/:site_id/packages/preview", to: "packages#preview"
@@ -295,6 +296,7 @@ Rails.application.routes.draw do
           post :publish, on: :member
           post :revert, on: :member
           get :versions, on: :member
+          get :definition, on: :member
         end
       end
       resources :alerts, only: %i[index show] do

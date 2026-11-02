@@ -12,11 +12,12 @@ module Automations
 
       describe key: "notify", label: "Avisar", defaults: { "channels" => Notifier.default_channels, "title" => "Aviso" },
                fields: [ f("channels", :channels, "Canais"), f("to", :recipient, "Para"), f("title", :template, "Título", required: true),
-                         f("message", :template, "Mensagem"), f("buttons", :buttons, "Botões (até 3, um por linha: id: Título)"),
+                         f("message", :template, "Mensagem"), f("buttons", :buttons, "Botões (até 3, um por linha: id: Título; para comandar um ponto: id: Título -> ponto comando [valor])"),
                          f("camera", :camera, "Imagem: quadro da câmera agora"), f("image_url", :template, "Ou imagem por URL (https://... ou /...)"),
                          f("url", :template, "Ao tocar, abrir (/paineis/..., /locais/... ou https://...)"),
                          f("priority", :select, "Prioridade", options: Push::PRIORITIES), f("tag", :template, "Tag (substitui o aviso anterior com a mesma)"),
                          f("group", :text, "Grupo"), f("ttl", :duration, "Validade no push (ex.: 1h)"), f("sticky", :bool, "Fixo (fica até tocar)"),
+                         f("progress", :template, "Progresso 0–100 no app (contínuo, atualiza no lugar pela tag)"),
                          f("clear", :bool, "Só apagar o aviso com esta tag") ]
 
       def self.rules(node)
@@ -26,6 +27,9 @@ module Automations
         if buttons && !(buttons.is_a?(Array) && buttons.size.between?(1, Notification::MAX_ACTIONS) &&
                         buttons.all? { |b| b.is_a?(Hash) && BUTTON_ID.match?(b["id"].to_s) && b["title"].to_s.strip.size.between?(1, 40) })
           msgs << "botões: até #{Notification::MAX_ACTIONS}, cada um com id (letras minúsculas, números, _ ou -) e título de até 40 letras."
+        end
+        if buttons.is_a?(Array) && buttons.any? { |b| b.is_a?(Hash) && (b["command"].present? ^ b["point"].present?) }
+          msgs << "botão que comanda precisa de ponto e comando."
         end
         msgs << "botões com id repetido." if buttons.is_a?(Array) && buttons.map { |b| b.is_a?(Hash) && b["id"] }.uniq.size != buttons.size
         msgs
@@ -54,10 +58,25 @@ module Automations
 
       def self.data_for(e, node)
         r = e.run
-        { "automation_id" => r.automation_id, "run_id" => r.id, "site_id" => r.site_id, "actions" => node["buttons"].presence,
+        { "automation_id" => r.automation_id, "run_id" => r.id, "site_id" => r.site_id, "actions" => buttons(e, node["buttons"]),
           "url" => (e.ctx.render(node["url"]).strip.presence if node["url"]), "image_url" => (e.ctx.render(node["image_url"]).strip.presence if node["image_url"]),
           "tag" => (e.ctx.render(node["tag"]).strip.presence if node["tag"]), "priority" => node["priority"], "group" => node["group"].presence,
-          "ttl" => (Dsl.seconds(node["ttl"]) if node["ttl"]), "sticky" => (true if node["sticky"] == true) }.compact
+          "ttl" => (Dsl.seconds(node["ttl"]) if node["ttl"]), "sticky" => (true if node["sticky"] == true),
+          "progress" => (progress(e.ctx.render(node["progress"])) if node["progress"].present?) }.compact
+      end
+
+      # Botão com `point` (chave ou id) e `command`: leva o id do ponto (Notification#run_command).
+      def self.buttons(e, list)
+        Array(list).map do |b|
+          point = b["point"].presence && e.ctx.point(b["point"])
+          point ? b.except("point").merge("point_id" => point.id) : b.except("point", "command", "value")
+        end.presence
+      end
+
+      # "42", "42.7", "120" → 0..100 (texto que não é número = sem barra).
+      def self.progress(text)
+        n = Float(text.to_s.strip.tr(",", "."), exception: false)
+        n&.round&.clamp(0, 100)
       end
 
       # Quadro da câmera capturado agora e guardado (expira com o aviso). Câmera

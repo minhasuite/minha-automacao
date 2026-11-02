@@ -17,7 +17,14 @@ suporta.
 | validade | `ttl` | — | TTL do Web Push | leva | ignora |
 | fixo | `sticky` | — | fica até tocar (`requireInteraction`) | leva | ignora |
 | grupo | `group` | — | **não existe na Web**: ignorado | leva | ignora |
+| progresso | `progress` (Liquid → 0–100, ex.: `{{ points["robo.progresso"].value }}`) | — | **não existe na Web**: ignorado | barra contínua; com `tag` atualiza no lugar; 100 encerra | ignora |
 | apagar | `clear` + `tag` | marca como lido | fecha a notificação | dado `clear` | — |
+
+Botão que comanda (app2): `fechar: Fechar -> garagem.portao pulse` no editor
+(ou `{id, title, point, command, value}` no JSON). Ao tocar, o servidor manda
+o comando como a pessoa, com a regra de papel x risco da API (origem "botão
+do aviso"); sem permissão a resposta vale, mas o comando não sai. Vale para o
+app, a PWA e o sino, porque tudo passa por `Notification#respond!`.
 
 Destinatário (`to`): `admins` (padrão, dono e administradores), `user:<id>`
 (todos os aparelhos da pessoa) ou `role:<papel>` (quem tem pelo menos o papel
