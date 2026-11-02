@@ -260,6 +260,26 @@ CREATE TABLE public.areas (
 
 
 --
+-- Name: assist_timers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.assist_timers (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    user_id uuid,
+    satellite_id uuid,
+    name character varying,
+    duration_s integer NOT NULL,
+    status character varying DEFAULT 'active'::character varying NOT NULL,
+    ends_at timestamp(6) without time zone,
+    remaining_s integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: audit_events; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -702,6 +722,23 @@ CREATE TABLE public.packages (
 
 
 --
+-- Name: passkeys; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.passkeys (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    name character varying NOT NULL,
+    credential_id character varying NOT NULL,
+    public_key text NOT NULL,
+    sign_count bigint DEFAULT 0 NOT NULL,
+    last_used_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: point_links; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -827,8 +864,8 @@ PARTITION BY RANGE (at);
 --
 
 CREATE TABLE public.readings_2026_10 (
-    point_id uuid CONSTRAINT readings_point_id_not_null NOT NULL,
-    at timestamp(6) without time zone CONSTRAINT readings_at_not_null NOT NULL,
+    point_id uuid NOT NULL,
+    at timestamp(6) without time zone NOT NULL,
     value numeric,
     value_text text
 );
@@ -839,8 +876,8 @@ CREATE TABLE public.readings_2026_10 (
 --
 
 CREATE TABLE public.readings_2026_11 (
-    point_id uuid CONSTRAINT readings_point_id_not_null NOT NULL,
-    at timestamp(6) without time zone CONSTRAINT readings_at_not_null NOT NULL,
+    point_id uuid NOT NULL,
+    at timestamp(6) without time zone NOT NULL,
     value numeric,
     value_text text
 );
@@ -851,8 +888,8 @@ CREATE TABLE public.readings_2026_11 (
 --
 
 CREATE TABLE public.readings_default (
-    point_id uuid CONSTRAINT readings_point_id_not_null NOT NULL,
-    at timestamp(6) without time zone CONSTRAINT readings_at_not_null NOT NULL,
+    point_id uuid NOT NULL,
+    at timestamp(6) without time zone NOT NULL,
     value numeric,
     value_text text
 );
@@ -1544,6 +1581,22 @@ CREATE TABLE public.subscriptions (
 
 
 --
+-- Name: system_logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.system_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    level character varying NOT NULL,
+    source character varying NOT NULL,
+    message text NOT NULL,
+    digest character varying NOT NULL,
+    count integer DEFAULT 1 NOT NULL,
+    first_at timestamp(6) without time zone NOT NULL,
+    last_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: taggings; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1610,7 +1663,11 @@ CREATE TABLE public.users (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     dashboard_prefs jsonb DEFAULT '{}'::jsonb NOT NULL,
-    disabled_at timestamp(6) without time zone
+    disabled_at timestamp(6) without time zone,
+    otp_secret text,
+    otp_enabled_at timestamp(6) without time zone,
+    otp_last_step bigint,
+    otp_recovery jsonb DEFAULT '[]'::jsonb NOT NULL
 );
 
 
@@ -1845,6 +1902,14 @@ ALTER TABLE ONLY public.areas
 
 
 --
+-- Name: assist_timers assist_timers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_timers
+    ADD CONSTRAINT assist_timers_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: audit_events audit_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2018,6 +2083,14 @@ ALTER TABLE ONLY public.notify_rules
 
 ALTER TABLE ONLY public.packages
     ADD CONSTRAINT packages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: passkeys passkeys_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.passkeys
+    ADD CONSTRAINT passkeys_pkey PRIMARY KEY (id);
 
 
 --
@@ -2234,6 +2307,14 @@ ALTER TABLE ONLY public.solid_queue_semaphores
 
 ALTER TABLE ONLY public.subscriptions
     ADD CONSTRAINT subscriptions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: system_logs system_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.system_logs
+    ADD CONSTRAINT system_logs_pkey PRIMARY KEY (id);
 
 
 --
@@ -2483,6 +2564,20 @@ CREATE INDEX index_areas_on_site_id ON public.areas USING btree (site_id);
 --
 
 CREATE INDEX index_areas_on_tenant_id ON public.areas USING btree (tenant_id);
+
+
+--
+-- Name: index_assist_timers_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_timers_on_site_id ON public.assist_timers USING btree (site_id);
+
+
+--
+-- Name: index_assist_timers_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_timers_on_tenant_id ON public.assist_timers USING btree (tenant_id);
 
 
 --
@@ -2966,6 +3061,20 @@ CREATE UNIQUE INDEX index_packages_on_site_id_and_key ON public.packages USING b
 --
 
 CREATE INDEX index_packages_on_tenant_id ON public.packages USING btree (tenant_id);
+
+
+--
+-- Name: index_passkeys_on_credential_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_passkeys_on_credential_id ON public.passkeys USING btree (credential_id);
+
+
+--
+-- Name: index_passkeys_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_passkeys_on_user_id ON public.passkeys USING btree (user_id);
 
 
 --
@@ -3487,6 +3596,20 @@ CREATE INDEX index_subscriptions_on_user_id ON public.subscriptions USING btree 
 
 
 --
+-- Name: index_system_logs_on_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_system_logs_on_digest ON public.system_logs USING btree (digest);
+
+
+--
+-- Name: index_system_logs_on_last_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_system_logs_on_last_at ON public.system_logs USING btree (last_at);
+
+
+--
 -- Name: index_taggings_on_tag_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3589,30 +3712,6 @@ ALTER INDEX public.index_readings_on_point_id_and_at ATTACH PARTITION public.rea
 --
 
 ALTER INDEX public.index_readings_on_point_id_and_at ATTACH PARTITION public.readings_default_point_id_at_idx;
-
-
---
--- Name: bridge_exposures fk_rails_219d1b64ce; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.bridge_exposures
-    ADD CONSTRAINT fk_rails_219d1b64ce FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
-
-
---
--- Name: bridge_exposures fk_rails_911bda919e; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.bridge_exposures
-    ADD CONSTRAINT fk_rails_911bda919e FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
-
-
---
--- Name: bridge_exposures fk_rails_c1a474917b; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.bridge_exposures
-    ADD CONSTRAINT fk_rails_c1a474917b FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
 
 
 --
@@ -3725,6 +3824,14 @@ ALTER TABLE ONLY public.ai_accounts
 
 ALTER TABLE ONLY public.alert_rules
     ADD CONSTRAINT fk_rails_20afd75383 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
+-- Name: bridge_exposures fk_rails_219d1b64ce; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bridge_exposures
+    ADD CONSTRAINT fk_rails_219d1b64ce FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -3877,6 +3984,14 @@ ALTER TABLE ONLY public.blueprints
 
 ALTER TABLE ONLY public.push_subscriptions
     ADD CONSTRAINT fk_rails_43d43720fc FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: assist_timers fk_rails_476d8cfcbf; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_timers
+    ADD CONSTRAINT fk_rails_476d8cfcbf FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -4144,11 +4259,27 @@ ALTER TABLE ONLY public.dashboard_versions
 
 
 --
+-- Name: bridge_exposures fk_rails_911bda919e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bridge_exposures
+    ADD CONSTRAINT fk_rails_911bda919e FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: subscriptions fk_rails_933bdff476; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscriptions
     ADD CONSTRAINT fk_rails_933bdff476 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: assist_timers fk_rails_95c638fef9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_timers
+    ADD CONSTRAINT fk_rails_95c638fef9 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 --
@@ -4296,6 +4427,14 @@ ALTER TABLE ONLY public.solid_queue_batch_executions
 
 
 --
+-- Name: bridge_exposures fk_rails_c1a474917b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bridge_exposures
+    ADD CONSTRAINT fk_rails_c1a474917b FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
+
+
+--
 -- Name: active_storage_attachments fk_rails_c3b3935057; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4341,6 +4480,14 @@ ALTER TABLE ONLY public.ai_calls
 
 ALTER TABLE ONLY public.datasets
     ADD CONSTRAINT fk_rails_cf1a97a02e FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
+-- Name: assist_timers fk_rails_d0d7db251f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_timers
+    ADD CONSTRAINT fk_rails_d0d7db251f FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -4512,6 +4659,14 @@ ALTER TABLE ONLY public.automation_runs
 
 
 --
+-- Name: passkeys fk_rails_onda_a2_passkeys_user; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.passkeys
+    ADD CONSTRAINT fk_rails_onda_a2_passkeys_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: readings readings_point_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4523,67 +4678,10 @@ ALTER TABLE public.readings
 -- PostgreSQL database dump complete
 --
 
---
--- Name: system_logs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.system_logs (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    level character varying NOT NULL,
-    source character varying NOT NULL,
-    message text NOT NULL,
-    digest character varying NOT NULL,
-    count integer DEFAULT 1 NOT NULL,
-    first_at timestamp(6) without time zone NOT NULL,
-    last_at timestamp(6) without time zone NOT NULL
-);
-
-ALTER TABLE ONLY public.system_logs
-    ADD CONSTRAINT system_logs_pkey PRIMARY KEY (id);
-
-CREATE UNIQUE INDEX index_system_logs_on_digest ON public.system_logs USING btree (digest);
-
-CREATE INDEX index_system_logs_on_last_at ON public.system_logs USING btree (last_at);
-
-
---
--- Name: passkeys; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.passkeys (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
-    name character varying NOT NULL,
-    credential_id character varying NOT NULL,
-    public_key text NOT NULL,
-    sign_count bigint DEFAULT 0 NOT NULL,
-    last_used_at timestamp(6) without time zone,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-ALTER TABLE ONLY public.passkeys
-    ADD CONSTRAINT passkeys_pkey PRIMARY KEY (id);
-
-CREATE UNIQUE INDEX index_passkeys_on_credential_id ON public.passkeys USING btree (credential_id);
-
-CREATE INDEX index_passkeys_on_user_id ON public.passkeys USING btree (user_id);
-
-ALTER TABLE ONLY public.passkeys
-    ADD CONSTRAINT fk_rails_onda_a2_passkeys_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
-
-ALTER TABLE public.users ADD COLUMN otp_secret text;
-
-ALTER TABLE public.users ADD COLUMN otp_enabled_at timestamp(6) without time zone;
-
-ALTER TABLE public.users ADD COLUMN otp_last_step bigint;
-
-ALTER TABLE public.users ADD COLUMN otp_recovery jsonb DEFAULT '[]'::jsonb NOT NULL;
-
-
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102400001'),
 ('20261102300002'),
 ('20261102300001'),
 ('20261102200005'),

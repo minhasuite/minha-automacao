@@ -182,6 +182,7 @@ es:
         unmapped: "Sin par en MA"
         idle: "Sin disparos"
       system_events:
+        assist_timer_finished: "Temporizador por voz terminó"
         automation_finished: "Automatización o script terminó"
         notification_action: "Respuesta de aviso"
         script_finished: "Script terminó"

@@ -1,45 +1,95 @@
-# Voz local (Pacote 3; o Assist do HA): frase (digitada ou transcrita pelo
-# STT da instalação) → intenção local resolvida pelos nomes e apelidos dos
-# pontos, áreas e cenas, sem IA. Não reconheceu: cai no "Perguntar à casa"
-# (Ai::Ask, só leitura). A resposta é texto e, se pedir, fala (TTS).
+# Voz local (Pacote 3, ondaB1; o Assist do HA): frase (digitada ou transcrita
+# pelo STT do pipeline) → intenção local resolvida pelos nomes e apelidos dos
+# pontos, áreas e cenas, sem IA, em pt-BR, en e es. Não reconheceu: o agente
+# do pipeline decide (Perguntar à casa só leitura, ou a IA com ferramentas,
+# Assist::Llm). A resposta é texto e, se pedir, fala (TTS).
 #
-# Intenção nova = classe em Assist::Intents com `pattern` (regex sobre a
-# frase normalizada) e `handle(ctx, match)` → Reply ou nil (não é comigo) +
-# nome em `INTENTS`. Comando por voz respeita o papel x risco de quem fala,
-# a sombra do local e nunca comanda ponto crítico (portão, fechadura).
+# Intenção = plugin (Assist::Intent) em `INTENTS`, com frases-modelo por
+# idioma no formato do HA (`[opcional]`, `(a|b)`, `{slot}`; Assist::Sentences)
+# e `handle(ctx, slots)` → Reply ou nil (não é comigo). A mesma intenção vira
+# ferramenta da IA e do servidor MCP. Comando por voz respeita o papel x risco
+# de quem fala, a sombra do local e nunca comanda ponto crítico.
 module Assist
-  INTENTS = %w[AddToList ReadList TurnOnOff ReadState ActivateScene].freeze
+  INTENTS = %w[
+    Nevermind
+    Timers::Start Timers::Cancel Timers::Pause Timers::Resume Timers::Status
+    Lists::Add Lists::Complete Lists::Read
+    Weather Clock::Time Clock::Date Climate::GetTemperature
+    Light::Brightness Light::Color Climate::SetTemperature
+    Cover::Open Cover::Close Cover::Position
+    Media::Pause Media::Resume Media::Next Media::Previous Media::Volume Media::Play
+    Vacuum::Start Vacuum::Dock Broadcast
+    OnOff::On OnOff::Off OnOff::Toggle
+    State::Is State::Which State::Read Scene
+  ].freeze
+  LANGUAGES = %w[pt-BR en es].freeze
   MAX_TEXT = 300
 
   Reply = Data.define(:text, :intent, :points) do
     def initialize(text:, intent:, points: []) = super
   end
 
-  # Quem pergunta e onde (o papel decide o que a voz pode comandar).
-  Ctx = Data.define(:site, :user, :role, :heard) do
-    def initialize(site:, user:, role:, heard: "") = super
+  # Quem pergunta, onde (área do satélite) e em que idioma.
+  Ctx = Data.define(:site, :user, :role, :heard, :language, :area, :satellite) do
+    def initialize(site:, user:, role:, heard: "", language: "pt-BR", area: nil, satellite: nil) = super
   end
 
   module_function
 
   def intents = INTENTS.map { |n| Intents.const_get(n) }
 
-  # → { text:, intent:, heard:, points:, audio_url? }
-  def call(site:, user:, text:, speak: false)
-    heard = text.to_s.squish.first(MAX_TEXT)
-    raise ArgumentError, "Fale ou escreva o que quer." if heard.empty?
+  # "pt", "pt_BR", "en-US" → um dos LANGUAGES (o da tela, se não vier).
+  def language(raw = nil)
+    s = raw.to_s.tr("_", "-").downcase
+    LANGUAGES.find { |l| l.downcase == s } || LANGUAGES.find { |l| l[0, 2] == s[0, 2] } || (raw.nil? ? language(I18n.locale) : "pt-BR")
+  end
 
-    ctx = Ctx.new(site: site, user: user, role: site.role_for(user), heard: heard)
-    norm = normalize(heard)
-    reply = intents.lazy.filter_map { |i| (m = i.pattern.match(norm)) && i.handle(ctx, m) }.first || ask(ctx, heard)
-    out = { "heard" => heard, "text" => reply.text, "intent" => reply.intent, "points" => reply.points.map(&:id) }
-    out["audio_url"] = speech(site, reply.text) if speak
-    out
+  # → { text:, intent:, heard:, points:, slots:, audio_url? }
+  # `agent`: "local" (padrão: intenções + Perguntar à casa), "local_llm"
+  # (intenções e, se não reconhecer, a IA com ferramentas) ou "llm".
+  def call(site:, user:, text:, speak: false, language: nil, area: nil, satellite: nil, agent: "local", llm_provider: nil, conversation_id: nil)
+    heard = text.to_s.squish.first(MAX_TEXT)
+    raise ArgumentError, I18n.t("assist.empty") if heard.empty?
+
+    lang = language(language || site.language.presence)
+    I18n.with_locale(lang) do
+      ctx = Ctx.new(site: site, user: user, role: site.role_for(user), heard: heard, language: lang, area: area || satellite&.area, satellite: satellite)
+      reply, slots = agent == "llm" ? [] : recognize(ctx, normalize(heard))
+      reply ||= agent.to_s.include?("llm") ? Llm.call(ctx, heard, provider: llm_provider, conversation_id: conversation_id) : ask(ctx, heard)
+      out = { "heard" => heard, "text" => reply.text, "intent" => reply.intent, "points" => reply.points.map(&:id), "language" => lang, "slots" => slots.to_h }
+      out["audio_url"] = speech(site, reply.text) if speak && reply.text.present?
+      out
+    end
+  end
+
+  # Primeira intenção que reconhece a frase e aceita (handle não nil): [Reply, slots].
+  # Plugin antigo (só `pattern` em pt) recebe o MatchData.
+  def recognize(ctx, norm)
+    intents.each do |i|
+      slots = i.respond_to?(:match) ? i.match(ctx, norm) : (i.pattern.match(norm) if ctx.language == "pt-BR")
+      next unless slots
+
+      reply = i.handle(ctx, slots) and return [ reply, (slots if slots.is_a?(Hash)) ]
+    end
+    nil
+  end
+
+  # Só reconhecer, sem executar (depuração e teste de frase): [intenção, slots] ou nil.
+  def understand(site, text, language: nil)
+    lang = language(language || site.language.presence)
+    ctx = Ctx.new(site: site, user: nil, role: nil, heard: text.to_s, language: lang)
+    norm = normalize(text)
+    intents.each do |i|
+      next unless i.respond_to?(:match)
+
+      slots = i.match(ctx, norm) and return [ i, slots ]
+    end
+    nil
   end
 
   # Áudio (bytes do microfone) → texto pelo STT da instalação.
-  def transcribe(site:, audio:, media_type:)
-    res = Ai::Audio.transcribe(tenant: site.tenant, site: site, audio: audio, media_type: media_type, language: "pt", source: "voz")
+  def transcribe(site:, audio:, media_type:, language: "pt")
+    res = Ai::Audio.transcribe(tenant: site.tenant, site: site, audio: audio, media_type: media_type, language: language.to_s[0, 2], source: "voz")
     res.data.to_s.dup.force_encoding(Encoding::UTF_8).scrub.squish
   end
 
@@ -54,26 +104,39 @@ module Assist
   def ask(ctx, heard)
     Reply.new(text: Ai::Ask.call(site: ctx.site, question: heard), intent: "ask")
   rescue Ai::Client::Error => e
-    Reply.new(text: "Não entendi e não consegui perguntar à IA (#{e.message.truncate(80)}). Tente \"ligar a luz da sala\".", intent: "unknown")
+    Reply.new(text: Intent.text(:unknown, error: e.message.truncate(80)), intent: "unknown")
   end
 
-  # Sem acento, minúsculas, sem pontuação e sem artigo no começo.
+  # Sem acento, minúsculas, sem pontuação.
+  # "22,5" fica "22.5" (o ponto só sobrevive entre dígitos).
   def normalize(text)
-    I18n.transliterate(text.to_s).downcase.gsub(/[^a-z0-9 ]/, " ").squish
+    I18n.transliterate(text.to_s).downcase.gsub(/(?<=\d)[.,](?=\d)/, "_").gsub(/[^a-z0-9_ ]/, " ").tr("_", ".").squish
   end
 
-  STOP = /\A(?:(?:o|a|os|as|do|da|dos|das|de|no|na|nos|nas|em|um|uma|todas?|todos?)\s+)+/
+  # Artigos e "todos" no começo (pt, en, es) e cortesia no fim.
+  STOP = /\A(?:(?:o|a|os|as|do|da|dos|das|de|no|na|nos|nas|em|um|uma|todas?|todos?|the|all|el|la|los|las|del|un|unos|unas|my|meu|minha|mi)\s+)+/
+  TAIL = /\s+(?:por favor|agora|pra mim|para mim|please|now|ahora)\z/
 
-  def clean(phrase) = normalize(phrase).sub(STOP, "").sub(/\s+(?:por favor|agora|pra mim)\z/, "").strip
+  def clean(phrase) = normalize(phrase).sub(TAIL, "").sub(STOP, "").strip
+  def stem(word) = word.length > 3 ? word.sub(/ces\z/, "z").sub(/(?:es|s)\z/, "") : word
 
   # Pontos que a frase nomeia: o nome, o apelido falado (Alexa), "nome da
-  # área" ou a área inteira. Exato ganha de "contém".
-  def find_points(site, phrase, scope: nil)
+  # área" ou a área inteira. Exato ganha de "contém". Com a área do satélite,
+  # o que estiver nela ganha ("acenda a luz" sem dizer o cômodo).
+  def find_points(site, phrase, scope: nil, area: nil)
     want = clean(phrase)
     return [] if want.empty?
 
+    found = match_points(site, want, scope)
+    return found unless area && found.size > 1
+
+    here = found.select { |p| area.subtree_ids.include?(p.effective_area_id) }
+    here.presence || found
+  end
+
+  def match_points(site, want, scope)
     # ondaA1 (A3): só o exposto ao Assist (tela Expor) e os apelidos do ponto e da área.
-    points = (scope || site.points).where(disabled: false, hidden: false).includes(:area, device: :area).reject { |p| p.expose.to_h["assist"] == false }
+    points = exposed(scope || site.points)
     names = ->(p) { [ p.name, p.alexa_name, *p.aliases, p.display_names.compact.join(" "), *area_names(p) ].compact.map { |n| clean(n) }.uniq }
     exact = points.select { |p| names.call(p).include?(want) }
     return exact if exact.any?
@@ -82,119 +145,91 @@ module Assist
     area = site.areas.to_a.find { |a| a.all_names.any? { |n| clean(n) == want } }
     return points.select { |p| area.subtree_ids.include?(p.effective_area_id) } if area
 
-    words = want.split
-    points.select { |p| names.call(p).any? { |n| words.all? { |w| n.split.include?(w) } } }
+    words = want.split.map { |w| stem(w) }
+    points.select { |p| names.call(p).any? { |n| (have = n.split.map { |w| stem(w) }) && words.all? { |w| have.include?(w) } } }
   end
 
+  def exposed(scope) = scope.where(disabled: false, hidden: false).includes(:area, device: %i[area points]).reject { |p| p.expose.to_h["assist"] == false }
+
+  # Nome falado com a área, nos três idiomas ("luz da sala", "kitchen light", "luz de la cocina").
   def area_names(p)
     area = p.area || p.device&.area or return []
-    area.all_names.flat_map { |a| [ "#{p.name} da #{a}", "#{p.name} do #{a}", "#{p.name} #{a}" ] }
+    links = [ "da", "do", "de", "na", "no", "in", "in the", "on the", "del", "de la", "en", "en la", "en el" ]
+    area.all_names.product([ p.name, *p.aliases ]).flat_map { |a, n| [ "#{n} #{a}", "#{a} #{n}", *links.map { |l| "#{n} #{l} #{a}" } ] }
+  end
+
+  # Pontos de uma capacidade a partir do nome dito: o próprio ponto ou o
+  # irmão do mesmo aparelho ("brilho da luz da sala" → o dimmer da lâmpada).
+  # Sem nome: os da área do satélite ou, sem área, os do local.
+  def targets(ctx, phrase, capabilities, command: nil)
+    caps = Array(capabilities)
+    list = phrase.present? ? named(ctx, phrase, caps) : nearby(ctx, exposed(ctx.site.points.where(capability: caps)))
+    list = list.uniq.select { |p| p.writable && Points::Command.commands_for(p).include?(command) } if command
+    list.uniq
+  end
+
+  def named(ctx, phrase, caps)
+    find_points(ctx.site, phrase, area: ctx.area).flat_map { |p| caps.include?(p.capability) ? [ p ] : exposed(p.device.points.where(capability: caps)) }
+  end
+
+  # Os da área do satélite, se houver; senão todos.
+  def nearby(ctx, all)
+    here = ctx.area ? all.select { |p| ctx.area.subtree_ids.include?(p.effective_area_id) } : []
+    here.presence || all
   end
 
   # O trecho da frase normalizada (sem acento) como foi dito ("pão", não
   # "pao"): mesma posição em palavras, porque a normalização é palavra a palavra.
-  def original(heard, start, piece)
-    words = heard.to_s.downcase.gsub(/[^[:alnum:] ]/, " ").split
-    return piece unless words.size == normalize(heard).split.size
+  def original(heard, piece)
+    words = heard.to_s.gsub(/[^[:alnum:] ]/, " ").split
+    norm = normalize(heard).split
+    return piece unless words.size == norm.size
 
-    from = normalize(heard)[0...start].split.size
-    words[from, piece.split.size].join(" ")
+    want = piece.to_s.split
+    from = (0..(norm.size - want.size)).find { |i| norm[i, want.size] == want } or return piece
+    words[from, want.size].join(" ").downcase
   end
 
   # Lista de tarefas pelo nome ("compras" acha "Lista de compras") ou apelido.
+  LIST_PREFIX = /\A(?:lista|list|shopping list)\s+(?:de\s+|da\s+|do\s+|of\s+)?/
+
   def find_list(site, phrase)
-    want = clean(phrase).sub(/\Alista\s+(?:de\s+|da\s+|do\s+)?/, "")
+    want = clean(phrase).sub(LIST_PREFIX, "").sub(/\s+(?:list|lista)\z/, "")
     lists = site.points.helpers.where(helper: HelperTypes::TodoList.key).to_a
     lists.find { |l| l.all_names.any? { |n| clean(n) == want } } ||
-      lists.find { |l| l.all_names.any? { |n| clean(n).sub(/\Alista\s+(?:de\s+|da\s+|do\s+)?/, "") == want } }
+      lists.find { |l| l.all_names.any? { |n| clean(n).sub(LIST_PREFIX, "") == want } } ||
+      (lists.first if want.in?(%w[compras shopping mercado supermercado]) && lists.one?)
   end
 
   def can_command?(ctx, point) = point.risk != "critical" && SiteMembership.allowed?(ctx.role, :command, risk: point.risk)
   def value_text(point) = ApplicationController.helpers.point_value_text(point)
-  def list(names) = names.size > 1 ? "#{names[0..-2].join(', ')} e #{names.last}" : names.first.to_s
+  def list(names) = names.to_sentence
 
-  module Intents
-    # "ligar a luz da sala", "desligue a sala", "apagar a varanda".
-    class TurnOnOff
-      ON = %w[ligar liga ligue acender acende acenda].freeze
-      OFF = %w[desligar desliga desligue apagar apaga apague].freeze
+  # "50", "50%", "22,5", "cinco" → número (ou nil).
+  WORDS = { "zero" => 0, "um" => 1, "uma" => 1, "one" => 1, "uno" => 1, "dois" => 2, "duas" => 2, "two" => 2, "dos" => 2, "tres" => 3, "three" => 3,
+            "quatro" => 4, "four" => 4, "cuatro" => 4, "cinco" => 5, "five" => 5, "seis" => 6, "six" => 6, "sete" => 7, "seven" => 7, "siete" => 7,
+            "oito" => 8, "eight" => 8, "ocho" => 8, "nove" => 9, "nine" => 9, "nueve" => 9, "dez" => 10, "ten" => 10, "diez" => 10,
+            "quinze" => 15, "fifteen" => 15, "quince" => 15, "vinte" => 20, "twenty" => 20, "veinte" => 20, "trinta" => 30, "thirty" => 30,
+            "treinta" => 30, "quarenta" => 40, "cinquenta" => 50, "fifty" => 50, "cincuenta" => 50, "cem" => 100, "hundred" => 100, "cien" => 100 }.freeze
 
-      def self.pattern = /\A(#{(ON + OFF).join('|')})\s+(.+)\z/
+  def number(text)
+    s = text.to_s.strip.tr(",", ".").delete_suffix("%").strip
+    s.match?(/\A\d+(?:\.\d+)?\z/) ? s.to_f : WORDS[normalize(text)]
+  end
 
-      def self.handle(ctx, m)
-        command = ON.include?(m[1]) ? "on" : "off"
-        points = Assist.find_points(ctx.site, m[2]).select { |p| p.writable && Points::Command.commands_for(p).include?(command) }
-        return if points.empty?
+  # "5 minutos", "1 hora e 30 minutos", "meia hora", "30 seconds" → segundos.
+  UNITS = { /\A(?:h|hr|hrs|horas?|hours?)\z/ => 3600, /\A(?:m|min|mins|minutos?|minutes?)\z/ => 60, /\A(?:s|seg|segs|segundos?|seconds?|secs?)\z/ => 1 }.freeze
 
-        allowed, denied = points.partition { |p| Assist.can_command?(ctx, p) }
-        return Reply.new(text: "Por voz não posso comandar #{Assist.list(denied.map(&:name))}.", intent: "turn_#{command}") if allowed.empty?
-
-        failed = []
-        Shadow.for_site(ctx.site) do
-          allowed.each do |p|
-            c = Points::Command.call(p, command, nil, source: "voice", user: ctx.user)
-            failed << p.name if c.error
-          rescue Points::Command::Error => e
-            failed << "#{p.name} (#{e.message})"
-          end
-        end
-        ok = allowed.map(&:name) - failed.map { |f| f.sub(/ \(.*/, "") }
-        text = [ ("#{command == 'on' ? 'Liguei' : 'Desliguei'} #{Assist.list(ok)}." if ok.any?), ("Não consegui: #{Assist.list(failed)}." if failed.any?),
-                 ("Sem permissão por voz: #{Assist.list(denied.map(&:name))}." if denied.any?) ].compact.join(" ")
-        Reply.new(text: text, intent: "turn_#{command}", points: allowed)
-      end
+  def seconds(text)
+    s = normalize(text)
+    total = 0
+    total += 1800 if s.match?(/\b(?:meia hora|half an hour|media hora)\b/)
+    total += 1800 if s.match?(/\bhoras? e meia\b|\bhoras? y media\b|\band a half hours?\b/)
+    s.scan(/(\d+|[a-z]+)\s+([a-z]+)/).each do |n, unit|
+      mult = UNITS.find { |re, _| re.match?(unit) }&.last or next
+      value = n.match?(/\A\d+\z/) ? n.to_i : WORDS[n] or next
+      total += value * mult
     end
-
-    # ondaA1 (A11): "adicione leite à lista de compras", "coloca pão na lista".
-    class AddToList
-      def self.pattern = /\A(?:adicionar|adicione|adiciona|colocar|coloque|coloca|incluir|inclua|inclui|por|ponha|poe)\s+(.+?)\s+(?:a|na|no|em)\s+(?:minha\s+)?(?:lista\s+(?:de\s+|da\s+|do\s+)?)?(.+)\z/
-
-      def self.handle(ctx, m)
-        list = Assist.find_list(ctx.site, m[2]) or return
-        return Reply.new(text: "Por voz não posso mexer em #{list.name}.", intent: "todo_add") unless SiteMembership.allowed?(ctx.role, :command, risk: list.risk)
-
-        item = Assist.original(ctx.heard, m.begin(1), m[1]).sub(/\A(?:o|a|os|as|um|uma)\s+/i, "")
-        Points::Command.call(list, "add_item", item, source: "voice", user: ctx.user)
-        Reply.new(text: "Coloquei #{item} em #{list.name}.", intent: "todo_add", points: [ list ])
-      end
-    end
-
-    # "o que tem na lista de compras", "ler a lista de tarefas".
-    class ReadList
-      def self.pattern = /\A(?:o\s+que\s+tem|que\s+tem|ler|leia|le)\s+(?:na|a|no|o)?\s*(?:lista\s+(?:de\s+|da\s+|do\s+)?)?(.+)\z/
-
-      def self.handle(ctx, m)
-        list = Assist.find_list(ctx.site, m[1]) or return
-        items = HelperTypes::TodoList.items(list).reject { |i| i["status"] == "completed" }.pluck("summary")
-        Reply.new(text: items.empty? ? "#{list.name} está vazia." : "Em #{list.name}: #{Assist.list(items.first(20))}.", intent: "todo_read", points: [ list ])
-      end
-    end
-
-    # "qual a temperatura da sala", "como está a porta da frente", "quanto está o consumo".
-    class ReadState
-      def self.pattern = /\A(?:qual|quanto|como|quantos|quantas)\s+(?:e|esta|ta|estao|marca)?\s*(.+?)\s*\z/
-
-      def self.handle(ctx, m)
-        points = Assist.find_points(ctx.site, m[1]).first(5)
-        return if points.empty?
-
-        text = points.map { |p| "#{p.display_names.compact.join(' ')}: #{p.quality == 'good' ? Assist.value_text(p) : 'sem sinal'}" }.join(". ")
-        Reply.new(text: "#{text}.", intent: "read_state", points: points)
-      end
-    end
-
-    # "ativar a cena cinema", "acionar cena boa noite" (cena do local).
-    class ActivateScene
-      def self.pattern = /\A(?:ativar|ative|ativa|acionar|acione|aciona|executar|execute)\s+(?:(?:a|o)\s+)?(?:cena\s+)?(.+)\z/
-
-      def self.handle(ctx, m)
-        want = Assist.clean(m[1])
-        scene = ctx.site.scenes.to_a.find { |s| Assist.clean(s.name) == want } or return
-        return Reply.new(text: "Por voz não posso acionar a cena #{scene.name}.", intent: "scene") unless scene.risk != "critical" && SiteMembership.allowed?(ctx.role, :command, risk: scene.risk)
-
-        _commands, failures = scene.activate!(source: "voice", user: ctx.user)
-        Reply.new(text: failures.any? ? "Cena #{scene.name} com falhas: #{failures.to_sentence}." : "Cena #{scene.name} acionada.", intent: "scene")
-      end
-    end
+    total.positive? ? total : nil
   end
 end

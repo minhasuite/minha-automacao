@@ -118,7 +118,7 @@ module Automations
 
     # Eventos do sistema (Lote 4, G6): nome → rótulo. A ação "Disparar evento"
     # não pode usar estes nomes nem os dos plugins de gatilho.
-    SYSTEM_EVENTS = LocalizedLabel.for("automations.labels.system_events", %w[automation_finished notification_action script_finished system_started system_stopping])
+    SYSTEM_EVENTS = LocalizedLabel.for("automations.labels.system_events", %w[assist_timer_finished automation_finished notification_action script_finished system_started system_stopping])
 
     EVENT_NAME = /\A[a-z0-9][a-z0-9_.:-]{0,59}\z/
 

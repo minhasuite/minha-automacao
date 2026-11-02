@@ -33,7 +33,7 @@ validações dos modelos e os textos dos plugins. App Flutter: `lib/l10n` do app
 - Textos gravados no banco na hora (nomes padrão de pontos criados pelas
   integrações, passos do trace de automação, notas de importação do HA,
   títulos de disparo): ficam no idioma de quem gerou.
-- Gramática do assistente de voz e verbos da busca (só pt, com alguns verbos
-  en/es na busca), manifesto PWA, erros da API `/api/v1` e erros técnicos de
+- Verbos da busca (só pt, com alguns verbos en/es; a voz já tem frases e
+  respostas nos três idiomas desde a ondaB1), manifesto PWA, erros da API `/api/v1` e erros técnicos de
   drivers/supervisor/backups.
 - Broadcast Turbo renderizado fora de uma requisição sai em pt-BR.

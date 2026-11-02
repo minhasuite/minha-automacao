@@ -1,0 +1,64 @@
+# ondaB1: Assist (voz) — intenções, pipelines, satélites, depuração e MCP.
+pt-BR:
+  assist:
+    empty: "Fale ou escreva o que quer."
+    timers:
+      one: "1 timer"
+      other: "%{count} timers"
+    duration:
+      hours:
+        one: "1 hora"
+        other: "%{count} horas"
+      minutes:
+        one: "1 minuto"
+        other: "%{count} minutos"
+      seconds:
+        one: "1 segundo"
+        other: "%{count} segundos"
+    sentences:
+      errors:
+        empty: "Escreva a frase."
+        brackets: "Colchetes ou parênteses sem par."
+        invalid: "Frase inválida."
+en:
+  assist:
+    empty: "Say or type what you want."
+    timers:
+      one: "1 timer"
+      other: "%{count} timers"
+    duration:
+      hours:
+        one: "1 hour"
+        other: "%{count} hours"
+      minutes:
+        one: "1 minute"
+        other: "%{count} minutes"
+      seconds:
+        one: "1 second"
+        other: "%{count} seconds"
+    sentences:
+      errors:
+        empty: "Type the sentence."
+        brackets: "Unmatched brackets or parentheses."
+        invalid: "Invalid sentence."
+es:
+  assist:
+    empty: "Di o escribe lo que quieres."
+    timers:
+      one: "1 temporizador"
+      other: "%{count} temporizadores"
+    duration:
+      hours:
+        one: "1 hora"
+        other: "%{count} horas"
+      minutes:
+        one: "1 minuto"
+        other: "%{count} minutos"
+      seconds:
+        one: "1 segundo"
+        other: "%{count} segundos"
+    sentences:
+      errors:
+        empty: "Escribe la frase."
+        brackets: "Corchetes o paréntesis sin pareja."
+        invalid: "Frase no válida."

@@ -11,15 +11,29 @@ provedor `tts`, fala.
    rede de casa, escreva o texto) e manda para `POST /assistente`.
    App: botão de microfone no Início → `POST /api/v1/sites/:id/assist`.
 2. `Assist.transcribe` (áudio → texto) e `Assist.call(site:, user:, text:, speak:)`.
-3. Intenções de `Assist::INTENTS`, na ordem, sobre a frase normalizada (sem
-   acento, minúsculas):
-   - `TurnOnOff`: "ligar/acender/desligar/apagar X";
-   - `ReadState`: "qual/quanto/como (está) X";
-   - `ActivateScene`: "ativar/acionar (a cena) X".
-   X é resolvido por `Assist.find_points`: nome, apelido falado (Alexa),
-   "ponto da área", área inteira e, por último, todas as palavras.
+3. Intenções de `Assist::INTENTS` (ondaB1), na ordem, sobre a frase
+   normalizada (sem acento, minúsculas), no idioma do pedido, do local ou da
+   tela (pt-BR, en, es): ligar/desligar/alternar, brilho (número ou
+   mais/menos), cor, temperatura (ajustar e "qual a temperatura"), cortina
+   (abrir, fechar, posição), mídia (pausar, continuar, próxima, anterior,
+   volume, tocar), robô (limpar, voltar à base), timers (criar, quanto falta,
+   pausar, continuar, cancelar; `AssistTimer`, fim = evento
+   `assist_timer_finished`), listas (adicionar, marcar, ler), estado (ler,
+   sim/não, quais/quantos), cena ou script, hora, data, tempo, anúncio nas
+   caixas e "deixa pra lá".
+   O alvo é resolvido por `Assist.find_points`: nome, apelidos, apelido
+   falado (Alexa), "ponto da área" nos três idiomas, área ou andar inteiro e,
+   por último, todas as palavras (plural vira singular). Com a área do
+   satélite, o que está nela ganha. Brilho, cor e ajuste usam o ponto irmão
+   do mesmo aparelho (`Assist.targets`).
 4. Nenhuma reconheceu: "Perguntar à casa" (`Ai::Ask`, só leitura). Sem IA
    configurada, responde que não entendeu.
+
+## Frases-modelo
+
+O formato do HA (hassil): `[opcional]`, `(um|outro)` e `{slot}`;
+`Assist::Sentences` vira Regexp sobre a frase normalizada. Palavra literal
+casa inteira; slot de número (`numbers:`) só aceita algarismos.
 
 ## Segurança
 
@@ -32,6 +46,9 @@ provedor `tts`, fala.
 
 ## Estender
 
-Intenção nova = classe em `Assist::Intents` com `pattern` (regex) e
-`handle(ctx, match)` → `Assist::Reply` ou nil + nome em `INTENTS`. Prova com
-`stub_const` em `spec/services/pacote3_platform_spec.rb`.
+Intenção nova = subclasse de `Assist::Intent` com
+`describe key:, description:, sentences: {"pt-BR" => [...], "en" => [...], "es" => [...]}, slots:, numbers:`,
+`handle(ctx, slots)` → `Reply` ou nil (a próxima tenta), textos en/es por
+`texts`, e o nome em `INTENTS`. A mesma intenção vira ferramenta da IA e do
+MCP (`tool`). Prova com `stub_const` em `spec/services/onda_b1_spec.rb`.
+Plugin antigo (só `pattern`, em pt) continua valendo.

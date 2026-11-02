@@ -182,6 +182,7 @@ en:
         unmapped: "No match in MA"
         idle: "Not triggered"
       system_events:
+        assist_timer_finished: "Voice timer finished"
         automation_finished: "Automation or script finished"
         notification_action: "Notification reply"
         script_finished: "Script finished"
