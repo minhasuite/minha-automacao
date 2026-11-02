@@ -351,6 +351,8 @@ module Automations
       def expr_error(v)
         return e(:not_text) unless v.is_a?(String) && v.size <= 500
 
+        v = HaTemplates.expr(v, @site) || v if v.include?("{{") # ondaA1 (A9)
+
         Expr.calculator.ast(v)
         nil
       rescue Dentaku::Error, Dentaku::ParseError, Dentaku::TokenizerError => ex
@@ -365,6 +367,8 @@ module Automations
 
       def template_error(v, max = 500)
         return e(:template_size, max: max) unless v.is_a?(String) && v.size <= max
+
+        v = HaTemplates.text(v, @site) || v # ondaA1 (A9): Jinja do HA vale
 
         Liquid::Template.parse(v, error_mode: :strict)
         nil

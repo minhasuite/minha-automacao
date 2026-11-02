@@ -54,6 +54,7 @@ module Automations
 
     # `locals`: variáveis do texto Liquid em volta (`assign`, item do `for`), Lote 7.
     def calc(expr, locals = {})
+      expr = HaTemplates.expr(expr, site) || expr if expr.to_s.include?("{{") # ondaA1 (A9): Jinja do HA
       saved = @vars
       @vars = @vars.merge(locals) if locals.any?
       calculator = Expr.calculator(self)
@@ -76,6 +77,7 @@ module Automations
     def render(template, limit: 1000)
       return "" if template.blank?
 
+      template = HaTemplates.text(template.to_s, site) || template # ondaA1 (A9): Jinja do HA vira Liquid
       Liquid::Template.parse(template.to_s, error_mode: :strict)
             .render!(assigns, { strict_filters: true, filters: [ Points::Query::LiquidFilter, CalcFilter ], registers: { automation_context: self } }).truncate(limit)
     rescue Liquid::Error => e

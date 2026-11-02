@@ -494,4 +494,38 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect(Time.zone.parse(e["end"]) - Time.zone.parse(e["start"])).to eq(1800)
     end
   end
+
+  describe "A9 templates do HA na hora" do
+    let(:room) { create(:area, site: site, name: "Sala de estar") }
+    let(:dev) { create(:device, site: site, area: room) }
+    let!(:temp) { create(:point, site: site, device: dev, name: "Temperatura", key: "sensor.temp", capability: "measure", unit: "°C", value: 30.5) }
+    let!(:lamp) { create(:point, site: site, device: dev, name: "Luz", key: "sala.luz", value: true) }
+
+    before { ExternalRef.link!(site, "home_assistant", "light.sala", kind: "entity", target: lamp) }
+
+    it "texto e expressão com o Jinja do HA rodam como no HA (entidade pela chave ou pelo de-para)" do
+      ctx = Automations::Context.new(site: site)
+      expect(ctx.render("Agora: {{ states('sensor.temp') }}")).to eq("Agora: 30,5 °C") # o texto do ponto, com a unidade
+      expect(ctx.render("{% if is_state('light.sala', 'on') %}acesa{% else %}apagada{% endif %}")).to eq("acesa")
+      expect(ctx.calc("{{ states('sensor.temp') | float > 28 }}")).to be true
+      expect(ctx.calc("{{ iif(is_state('light.sala', 'on'), 1, 0) }}")).to eq(1)
+      expect(ctx.calc("{{ has_value('sensor.temp') }}")).to be true
+      expect(ctx.calc("{{ area_entities('sala_de_estar') | count }}")).to eq(2)
+      expect(ctx.render("{{ trigger.point }}")).to eq("") # Liquid válido não muda
+      expect(DevTools.render(site, "{{ states('sensor.temp') | float + 1 }}", mode: "expr")).to eq([ 31.5, nil ])
+    end
+
+    it "a validação aceita o Jinja do HA e o gatilho template usa direto" do
+      d = { "triggers" => [ { "type" => "template", "expr" => "{{ states('sensor.temp') | float > 31 }}" } ],
+            "actions" => [ { "type" => "notify", "message" => "Quente: {{ states('sensor.temp') }}" } ] }
+      expect(Automations::Dsl.errors(d, site).grep(/expressão|texto/)).to be_empty
+      a = site.automations.create!(name: "Teste jinja")
+      a.publish!({ "triggers" => d["triggers"], "actions" => [ { "type" => "command", "point" => lamp.id, "command" => "off" } ] })
+      a.update!(enabled: true)
+      temp.report!(30)
+      temp.report!(32)
+      expect(a.runs.count).to eq(1)
+      expect(lamp.reload.value).to be false
+    end
+  end
 end

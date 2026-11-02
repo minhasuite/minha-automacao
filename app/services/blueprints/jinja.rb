@@ -507,7 +507,9 @@ module Blueprints
       in [ "as_timestamp" | "as_local" | "as_datetime", 1 ] then timestamp_of(args[0])
       in [ "timedelta", _ ] then timedelta(args)
       in [ "config_entry_attr", 2 ] then config_entry(args)
-      in [ "float" | "int", 1 ] then dentaku(args[0])
+      in [ "float" | "int", 1 | 2 ] then dentaku(args[0]) # ondaA1 (A9): o padrão do float(x, 0) não muda a conta
+      in [ "has_value", 1 ] then "defined('#{entity_ref(args[0])}')"
+      in [ "bool", 1 ] then dentaku(args[0])
       in [ "min" | "max" | "abs", _ ] then "#{name}(#{args.map { |a| dentaku(a) }.join(', ')})"
       else fail!
       end
