@@ -10,6 +10,10 @@ module Integrations
           en: { title: "Z-Wave JS", description: "Z-Wave devices through the Z-Wave JS server (the same one Home Assistant uses): relays, dimmers, sensors, meters and thermostats.", bad_url: "The server address must start with ws:// or wss:// (e.g. ws://192.168.0.10:3000).", found: "%{n} node(s) found on the Z-Wave JS server.", read_failed: "Couldn't reach Z-Wave JS: %{error}" },
           es: { title: "Z-Wave JS", description: "Aparatos Z-Wave mediante el servidor Z-Wave JS (el mismo de Home Assistant): relés, dimmers, sensores, medidores y termostatos.", bad_url: "La dirección del servidor debe empezar con ws:// o wss:// (ej.: ws://192.168.0.10:3000).", found: "%{n} nodo(s) en el servidor Z-Wave JS.", read_failed: "No se pudo conectar con Z-Wave JS: %{error}" }
 
+    # Bastões Z-Wave comuns (os mesmos do manifesto do HA): Aeotec, Zooz/Silabs 700/800, Nortek.
+    usb({ vid: "0658", pid: "0200" }, { vid: "10C4", pid: "EA60", description: "*700*" }, { vid: "10C4", pid: "EA60", description: "*800*" },
+        { vid: "10C4", pid: "8A2A", description: "*z-wave*" }, { vid: "1A86", pid: "55D4", description: "*800*" })
+
     def self.setup(site, form) = login(new_integration(site, name: form[:name].to_s.squish.presence || "Z-Wave JS"), form)
 
     def self.login(integration, form)

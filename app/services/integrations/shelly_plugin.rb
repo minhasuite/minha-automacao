@@ -10,6 +10,7 @@ module Integrations
     port 80
     secrets :password
     mdns "_shelly._tcp"
+    dhcp({ hostname: "shelly*" })
 
     def self.probe(integration) = Shelly.inventory_entry(integration)
   end

@@ -7,6 +7,7 @@ module Integrations
           es: { title: "WLED", description: "Tiras y paneles LED con WLED en la red de casa: encendido, brillo, color y efectos, directo en el aparato." }
     port 80
     mdns "_wled._tcp"
+    dhcp({ hostname: "wled-*" })
 
     def self.probe(integration) = Drivers::Wled.entry(integration)
   end

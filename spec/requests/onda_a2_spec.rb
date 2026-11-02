@@ -47,4 +47,38 @@ RSpec.describe "Onda A2: sistema" do
       expect(ReadingRollup.where(point_id: old.id)).to exist
     end
   end
+
+  describe "A13 hardware e rede do host" do
+    let(:host) do
+      { "hostname" => "casa", "os" => "Debian GNU/Linux 12", "kernel" => "6.1.0", "arch" => "x86_64", "cpu" => "Intel N100", "cpus" => 4,
+        "memory_mb" => 8000, "memory_free_mb" => 5000, "uptime_s" => 90_000, "gateway" => "192.168.0.1", "dns" => [ "192.168.0.1" ],
+        "interfaces" => [ { "name" => "enp1s0", "mac" => "aa:bb:cc:dd:ee:ff", "state" => "up", "ipv4" => [ "192.168.0.5" ], "ipv6" => [] } ],
+        "neighbors" => [ {} ], "serial" => [ { "id" => "usb-zig", "path" => "/dev/serial/by-id/usb-zig", "vid" => "10C4", "pid" => "EA60", "product" => "Teste Zigbee" } ],
+        "usb" => [ { "vid" => "8087", "pid" => "0026", "manufacturer" => "Intel", "product" => "Bluetooth" } ] }
+    end
+
+    it "mostra máquina, rede e USB ao dono; reinicia com auditoria; sem supervisor explica" do
+      sign_in
+      get "/configuracoes/hardware"
+      expect(response.body).to include("Hardware e rede", "Esta instalação roda sem o supervisor")
+
+      allow(Apps::Supervisor).to receive(:configured?).and_return(true)
+      allow(Apps::Supervisor).to receive(:request).with(:get, "/system/host").and_return("data" => host)
+      get "/configuracoes/hardware", params: { atualizar: 1 }
+      expect(response.body).to include("Debian GNU/Linux 12", "Intel N100 · 4 núcleos", "enp1s0", "192.168.0.5", "Teste Zigbee", "10C4:EA60", "Outros aparelhos USB (1)")
+
+      expect(Apps::Supervisor).to receive(:request).with(:post, "/system/host/reboot").and_return({})
+      post "/configuracoes/hardware/reboot"
+      expect(flash[:notice]).to eq("Reiniciando a máquina.")
+      expect(within(tenant) { AuditEvent.where(action: "host.reboot").count }).to eq(1)
+      post "/configuracoes/hardware/formatar"
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "só o dono" do
+      sign_in(within(tenant) { create(:user, tenant: tenant, role: "admin") })
+      get "/configuracoes/hardware"
+      expect(response).to redirect_to("/")
+    end
+  end
 end

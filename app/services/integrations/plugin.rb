@@ -79,11 +79,23 @@ module Integrations
         @mdns
       end
 
-      # Encontrados na rede → [{"name", "host", "port", "txt"}] (padrão: mDNS do `mdns`).
-      def discover = (mdns ? Mdns.browse(mdns) : []) + (ssdp ? Ssdp.search(ssdp) : [])
+      # Encontrados na rede → [{"name", "host", "port", "txt"}] (padrão: mDNS do `mdns`,
+      # SSDP do `ssdp` e, pelo host, vizinhos do `dhcp` e portas do `usb`; um por endereço).
+      def discover
+        list = (mdns ? Mdns.browse(mdns) : []) + (ssdp ? Ssdp.search(ssdp) : []) + Host.dhcp(dhcp) + Host.usb(usb)
+        list.uniq { |e| e["host"] || e.dig("txt", "path") }
+      end
 
-      # Mostra "Procurar na rede": plugin com `mdns` ou com descoberta própria (Broadlink: hello UDP).
-      def discovers? = mdns.present? || ssdp.present?
+      # Mostra "Procurar na rede": plugin com `mdns`, `ssdp`, `dhcp`, `usb` ou com descoberta própria (Broadlink: hello UDP).
+      def discovers? = mdns.present? || ssdp.present? || dhcp.any? || usb.any?
+
+      # ondaA2 A19: como o `dhcp` do manifesto do HA, casamentos com o vizinho
+      # da rede: `dhcp({ hostname: "shelly*" }, { mac: "A4CF12" })` (glob no nome
+      # que o roteador deu, prefixo do MAC).
+      def dhcp(*matchers) = matchers.empty? ? (@dhcp || []) : (@dhcp = matchers)
+
+      # E o `usb`: porta serial do host por `{ vid:, pid:, description: "*zigbee*" }`.
+      def usb(*matchers) = matchers.empty? ? (@usb || []) : (@usb = matchers)
 
       # Produto: tipo SSDP/UPnP que acha o aparelho (TVs: "urn:lge-com:service:webos-second-screen:1").
       def ssdp(st = nil)
