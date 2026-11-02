@@ -10,13 +10,13 @@ module Api
       def create
         site = Site.find(params[:site_id])
         authorize_site!(site, :view)
-        text = params[:text].to_s
-        if (audio = params[:audio]).respond_to?(:read)
-          return render_error(:invalid_parameter, "Áudio grande demais (até 10 MB).", status: :unprocessable_content) if audio.size > MAX_AUDIO
+        audio = params[:audio] if params[:audio].respond_to?(:read)
+        return render_error(:invalid_parameter, "Áudio grande demais (até 10 MB).", status: :unprocessable_content) if audio && audio.size > MAX_AUDIO
 
-          text = Assist.transcribe(site: site, audio: audio.read, media_type: audio.content_type.to_s)
-        end
-        render_data(Assist.call(site: site, user: current_user, text: text, speak: bool(params[:speak])))
+        # ondaB1 (B5): pelo pipeline do local (ou `pipeline_id`), com o registro da execução.
+        render_data(Assist::Pipeline.run(site: site, user: current_user, text: params[:text].to_s, audio: audio&.read, media_type: audio&.content_type.to_s,
+                                         speak: bool(params[:speak]), pipeline: AssistPipeline.for(site, params[:pipeline_id]),
+                                         conversation_id: params[:conversation_id].presence, source: "app"))
       rescue ArgumentError => e
         render_error(:invalid_parameter, e.message, status: :unprocessable_content)
       rescue Ai::Client::Error => e

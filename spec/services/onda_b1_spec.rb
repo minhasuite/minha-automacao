@@ -185,6 +185,7 @@ modo festa", "response" => "Boa noite, {quem}!" })
       seen = []
       klass = Class.new(Ai::Providers::Base) do
         describe key: "teste_llm", label: "Teste IA", default_model: "t-1", capabilities: %i[text structured], key_required: false
+        texts en: { label: "Test AI" }, es: { label: "IA de prueba" }
         define_method(:complete) do |system:, user:, schema:, **|
           seen << { system: system, user: user, schema: schema }
           Ai::Providers::Base::Result.new(data: answers.shift || { "say" => "fim", "calls" => [] }, usage: { input: 1, output: 1 })
@@ -222,6 +223,54 @@ modo festa", "response" => "Boa noite, {quem}!" })
       expect(seen.last[:user]).to include("Por voz não posso comandar Luz.", "ferramenta desconhecida")
       AiAccount.delete_all
       expect(say("acende a sala", agent: "llm")["intent"]).to eq("unknown")
+    end
+  end
+
+  describe "B5 pipelines e depuração" do
+    # Motor de voz falso (STT e TTS), registrado sem mudar o núcleo.
+    def fake_engine!
+      klass = Class.new(Assist::Engines::Base) do
+        describe key: "teste_voz", label: "Voz de teste", kinds: %i[stt tts], fields: [ [ "voice", :text ] ]
+        texts en: { label: "Test voice" }, es: { label: "Voz de prueba" }
+        def self.check(cfg, _kind) = cfg["voice"] == "ruim" ? [ "voz ruim" ] : []
+        def self.transcribe(_cfg, audio:, language:, **) = "#{audio} #{language == 'en' ? 'living room' : 'sala'}"
+        def self.speak(cfg, text:, **) = { data: "#{cfg['voice']}:#{text}", media_type: "audio/wav" }
+      end
+      stub_const("Assist::Engines::TesteVoz", klass)
+      stub_const("Assist::Engines::PLUGINS", Assist::Engines::PLUGINS + %w[TesteVoz])
+      klass
+    end
+
+    it "STT → intenção → TTS pelo motor do pipeline, com cada etapa registrada" do
+      fake_engine!
+      pl = AssistPipeline.create!(site: site, name: "Teste casa", stt: { "engine" => "teste_voz" }, tts: { "engine" => "teste_voz", "voice" => "ana" }, preferred: true)
+      out = Assist::Pipeline.run(site: site, user: owner, audio: "ligar a luz da", media_type: "audio/wav", speak: true, keep_audio: true)
+      expect(out).to include("heard" => "ligar a luz da sala", "text" => "Liguei Luz.")
+      expect(out["audio"][:data]).to eq("ana:Liguei Luz.")
+      expect(out["audio_url"]).to include("/rails/active_storage/")
+      run = AssistRun.find(out["run_id"])
+      expect(run).to have_attributes(pipeline: pl, source: "web", heard: "ligar a luz da sala", intent: "turn_on", reply: "Liguei Luz.", error: nil)
+      expect(run.stages.pluck("stage")).to eq(%w[stt intent tts])
+      expect(run.stages.first).to include("engine" => "teste_voz", "text" => "ligar a luz da sala")
+      expect(run.stages.all? { |st| st["ms"].is_a?(Integer) }).to be true
+    end
+
+    it "idioma e agente do pipeline; preferido único; motor desconhecido ou mal configurado não salva; erro fica no registro" do
+      fake_engine!
+      en = AssistPipeline.create!(site: site, name: "Teste en", language: "en", stt: { "engine" => "teste_voz" }, preferred: true)
+      AssistPipeline.create!(site: site, name: "Teste pt", preferred: true)
+      expect(en.reload.preferred).to be false
+      expect(Assist::Pipeline.run(site: site, user: owner, audio: "turn on the light in the", pipeline: en)["text"]).to eq("Turned on Luz.")
+      expect(AssistPipeline.new(site: site, name: "x", stt: { "engine" => "nada" })).not_to be_valid
+      expect(AssistPipeline.new(site: site, name: "y", tts: { "engine" => "teste_voz", "voice" => "ruim" }).tap(&:valid?).errors[:tts]).to include("voz ruim")
+      expect { Assist::Pipeline.run(site: site, user: owner, text: " ") }.to raise_error(ArgumentError)
+      expect(AssistRun.order(:created_at).last.error).to eq("Fale ou escreva o que quer.")
+    end
+
+    it "guarda só as últimas execuções do local" do
+      stub_const("AssistRun::KEEP", 2)
+      3.times { |i| Assist::Pipeline.run(site: site, user: owner, text: "que horas são #{i}") }
+      expect(AssistRun.where(site: site).count).to eq(2)
     end
   end
 

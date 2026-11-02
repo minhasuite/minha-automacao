@@ -1,0 +1,46 @@
+<%# locals: (site:) -%>
+<p class="text-sm text-muted mb-4 max-w-3xl"><%= t("assist_settings.runs.pitch", keep: AssistRun::KEEP) %></p>
+<% if @runs.empty? %>
+  <div class="ss-card ss-empty"><%= icon("microphone", "size-8 text-muted") %><p class="font-bold text-ink mt-2"><%= t("assist_settings.runs.empty") %></p><p class="mt-1 text-sm"><%= t("assist_settings.runs.empty_hint") %></p></div>
+<% else %>
+  <ol class="grid gap-3" aria-label="<%= t("assist_settings.runs.label") %>">
+    <% @runs.each do |r| %>
+      <% total = [ r.stages.sum { |s| s["ms"].to_i }, 1 ].max %>
+      <li class="ss-card vz-run <%= 'vz-run-error' if r.error %>">
+        <details>
+          <summary class="vz-run-head">
+            <span class="vz-run-src" title="<%= t("assist_settings.sources.#{r.source}") %>"><%= icon({ "satellite" => "status-online", "app" => "device-mobile", "mcp" => "code", "api" => "link" }.fetch(r.source, "desktop-computer"), "size-4") %></span>
+            <span class="min-w-0 flex-1">
+              <span class="vz-run-heard"><%= r.heard.presence || t("assist_settings.runs.no_text") %></span>
+              <span class="vz-run-reply"><%= r.error || r.reply.presence || "—" %></span>
+            </span>
+            <span class="vz-run-meta">
+              <% if r.intent %><span class="ss-badge <%= r.intent == 'unknown' ? 'ss-badge-warn' : 'ss-badge-accent' %>"><%= r.intent %></span><% end %>
+              <% if r.error %><span class="ss-badge ss-badge-danger"><%= t("assist_settings.runs.error") %></span><% end %>
+              <time class="text-xs text-muted num" datetime="<%= r.created_at.iso8601 %>"><%= l(r.created_at, format: "%d/%m %H:%M:%S") %></time>
+            </span>
+          </summary>
+          <div class="vz-run-bar" role="img" aria-label="<%= t("assist_settings.runs.bar", ms: r.duration_ms.to_i) %>">
+            <% r.stages.each do |s| %><span class="vz-seg vz-seg-<%= s["stage"] %> <%= 'vz-seg-error' if s["error"] %>" style="flex-grow: <%= [ s["ms"].to_i, total / 50, 1 ].max %>"></span><% end %>
+          </div>
+          <dl class="vz-run-stages">
+            <% r.stages.each do |s| %>
+              <div class="vz-run-stage">
+                <dt><span class="vz-dot vz-seg-<%= s["stage"] %>"></span><%= t("assist_settings.stages.#{s['stage']}", default: s["stage"]) %></dt>
+                <dd>
+                  <span class="num"><%= t("assist_settings.runs.ms", ms: s["ms"].to_i) %></span>
+                  <% if s["engine"] %> · <%= Assist::Engines[s["engine"]]&.label || s["engine"] %><% end %>
+                  <% if s["text"] %> · “<%= s["text"] %>”<% end %>
+                  <% if s["intent"] %> · <code><%= s["intent"] %></code><% end %>
+                  <% if s["slots"].present? %> · <%= s["slots"].map { |k, v| "#{k}=#{v}" }.join(", ") %><% end %>
+                  <% if s["error"] %><span class="block text-danger"><%= s["error"] %></span><% end %>
+                </dd>
+              </div>
+            <% end %>
+            <div class="vz-run-stage"><dt><%= t("assist_settings.runs.who") %></dt><dd><%= [ r.user&.name, r.pipeline&.name, t("assist_settings.sources.#{r.source}"), r.language ].compact.join(" · ") %></dd></div>
+          </dl>
+        </details>
+      </li>
+    <% end %>
+  </ol>
+<% end %>

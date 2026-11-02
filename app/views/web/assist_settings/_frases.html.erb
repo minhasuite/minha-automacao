@@ -1,0 +1,58 @@
+<%# locals: (site:) -%>
+<div class="grid gap-4 lg:grid-cols-2">
+  <section class="ss-card ss-card-pad" aria-labelledby="tst-t">
+    <h2 id="tst-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("search", "size-5") %><%= t("assist_settings.sentences.try") %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("assist_settings.sentences.try_hint") %></p>
+    <%= form_with url: site_assist_settings_path(site), method: :get, class: "mt-3 grid gap-3 sm:grid-cols-[1fr_9rem_auto] items-end" do %>
+      <%= hidden_field_tag :aba, "frases", id: nil %>
+      <div><label for="tx" class="ss-label"><%= t("assist_settings.sentences.text") %></label><%= text_field_tag :texto, @heard, id: "tx", class: "ss-input", maxlength: 300, placeholder: t("assist_settings.sentences.text_ph") %></div>
+      <div><label for="lg" class="ss-label"><%= t("assist_settings.pipelines.language") %></label><%= select_tag :idioma, options_for_select(Assist::LANGUAGES.map { |l| [ t("assist_settings.languages.#{l.tr('-', '_')}"), l ] }, @language), id: "lg", class: "ss-input" %></div>
+      <button class="ss-btn ss-btn-primary"><%= t("assist_settings.sentences.check") %></button>
+    <% end %>
+    <% if @heard %>
+      <div class="vz-result <%= @understood ? 'vz-result-ok' : 'vz-result-miss' %>" role="status">
+        <% if @understood %>
+          <% intent, slots = @understood %>
+          <p class="font-bold text-ink flex items-center gap-2"><%= icon("check-circle", "size-5") %><code><%= intent.key %></code></p>
+          <p class="text-sm text-muted"><%= intent.description %></p>
+          <% if slots.any? %><ul class="ss-chips mt-2"><% slots.each do |k, v| %><li class="ss-chip"><b><%= k %></b>&nbsp;<%= v %></li><% end %></ul><% end %>
+        <% else %>
+          <p class="font-bold text-ink flex items-center gap-2"><%= icon("question-mark-circle", "size-5") %><%= t("assist_settings.sentences.none") %></p>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+  <section class="ss-card ss-card-pad" aria-labelledby="tpl-t">
+    <h2 id="tpl-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("code", "size-5") %><%= t("assist_settings.sentences.template") %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("assist_settings.sentences.template_hint") %></p>
+    <%= form_with url: site_assist_settings_path(site), method: :get, class: "mt-3 grid gap-3" do %>
+      <%= hidden_field_tag :aba, "frases", id: nil %>
+      <div><label for="md" class="ss-label"><%= t("assist_settings.sentences.model") %></label><%= text_field_tag :modelo, @template, id: "md", class: "ss-input num", maxlength: 300, placeholder: t("assist_settings.sentences.model_ph") %></div>
+      <div><label for="ex" class="ss-label"><%= t("assist_settings.sentences.sample") %></label><%= text_field_tag :exemplo, @sample, id: "ex", class: "ss-input", maxlength: 300, placeholder: t("assist_settings.sentences.sample_ph") %></div>
+      <div><button class="ss-btn ss-btn-outline"><%= t("assist_settings.sentences.check") %></button></div>
+    <% end %>
+    <% if @template %>
+      <div class="vz-result <%= @template_match ? 'vz-result-ok' : 'vz-result-miss' %>" role="status">
+        <% if @template_error %><p class="text-danger"><%= @template_error %></p>
+        <% elsif @template_match %>
+          <p class="font-bold text-ink flex items-center gap-2"><%= icon("check-circle", "size-5") %><%= t("assist_settings.sentences.matches") %></p>
+          <% if @template_match.any? %><ul class="ss-chips mt-2"><% @template_match.each do |k, v| %><li class="ss-chip"><b><%= k %></b>&nbsp;<%= v %></li><% end %></ul><% end %>
+        <% else %><p class="font-bold text-ink"><%= t("assist_settings.sentences.no_match") %></p><% end %>
+      </div>
+    <% end %>
+    <p class="text-xs text-muted mt-3"><%= t("assist_settings.sentences.own_html", link: link_to(t("assist_settings.sentences.automations"), site_automations_path(site))) %></p>
+  </section>
+</div>
+
+<h2 class="mt-6 mb-3"><%= t("assist_settings.sentences.catalog", language: t("assist_settings.languages.#{@language.tr('-', '_')}")) %></h2>
+<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+  <% Assist.intents.select { |i| i.respond_to?(:sentences) && i.sentences(@language).any? }.each do |i| %>
+    <details class="ss-card vz-intent">
+      <summary>
+        <span class="min-w-0"><code class="vz-intent-key"><%= i.key %></code><span class="block text-sm text-muted"><%= i.description %></span></span>
+        <span class="flex items-center gap-1 flex-none"><% if i.tool? %><span class="ss-badge" title="<%= t("assist_settings.sentences.tool_hint") %>"><%= icon("sparkles", "size-3") %><%= t("assist_settings.sentences.tool") %></span><% end %><%= icon("chevron-down", "size-4 text-muted") %></span>
+      </summary>
+      <ul class="vz-sentences"><% i.sentences(@language).each do |s| %><li><code><%= s %></code></li><% end %></ul>
+    </details>
+  <% end %>
+</div>

@@ -260,6 +260,50 @@ CREATE TABLE public.areas (
 
 
 --
+-- Name: assist_pipelines; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.assist_pipelines (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    name character varying NOT NULL,
+    language character varying DEFAULT 'pt-BR'::character varying NOT NULL,
+    agent character varying DEFAULT 'local'::character varying NOT NULL,
+    llm_provider character varying,
+    stt jsonb DEFAULT '{}'::jsonb NOT NULL,
+    tts jsonb DEFAULT '{}'::jsonb NOT NULL,
+    wake jsonb DEFAULT '{}'::jsonb NOT NULL,
+    preferred boolean DEFAULT false NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: assist_runs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.assist_runs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    pipeline_id uuid,
+    user_id uuid,
+    satellite_id uuid,
+    source character varying NOT NULL,
+    language character varying,
+    heard character varying,
+    intent character varying,
+    reply text,
+    stages jsonb DEFAULT '[]'::jsonb NOT NULL,
+    error character varying,
+    duration_ms integer,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: assist_timers; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1902,6 +1946,22 @@ ALTER TABLE ONLY public.areas
 
 
 --
+-- Name: assist_pipelines assist_pipelines_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_pipelines
+    ADD CONSTRAINT assist_pipelines_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: assist_runs assist_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_runs
+    ADD CONSTRAINT assist_runs_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: assist_timers assist_timers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2564,6 +2624,34 @@ CREATE INDEX index_areas_on_site_id ON public.areas USING btree (site_id);
 --
 
 CREATE INDEX index_areas_on_tenant_id ON public.areas USING btree (tenant_id);
+
+
+--
+-- Name: index_assist_pipelines_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_pipelines_on_site_id ON public.assist_pipelines USING btree (site_id);
+
+
+--
+-- Name: index_assist_pipelines_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_pipelines_on_tenant_id ON public.assist_pipelines USING btree (tenant_id);
+
+
+--
+-- Name: index_assist_runs_on_site_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_runs_on_site_id_and_created_at ON public.assist_runs USING btree (site_id, created_at DESC);
+
+
+--
+-- Name: index_assist_runs_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_runs_on_tenant_id ON public.assist_runs USING btree (tenant_id);
 
 
 --
@@ -4075,6 +4163,14 @@ ALTER TABLE ONLY public.ai_usages
 
 
 --
+-- Name: assist_runs fk_rails_57be696fc2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_runs
+    ADD CONSTRAINT fk_rails_57be696fc2 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: alerts fk_rails_61df1056f3; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4176,6 +4272,14 @@ ALTER TABLE ONLY public.solid_queue_batch_executions
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT fk_rails_7c99fe0556 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: assist_runs fk_rails_7d7ca98c0e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_runs
+    ADD CONSTRAINT fk_rails_7d7ca98c0e FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -4315,6 +4419,14 @@ ALTER TABLE ONLY public.active_storage_variant_records
 
 
 --
+-- Name: assist_runs fk_rails_9a628a9d5a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_runs
+    ADD CONSTRAINT fk_rails_9a628a9d5a FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: solid_queue_claimed_executions fk_rails_9cfe4d4944; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4384,6 +4496,14 @@ ALTER TABLE ONLY public.external_refs
 
 ALTER TABLE ONLY public.devices
     ADD CONSTRAINT fk_rails_b386e7e412 FOREIGN KEY (integration_id) REFERENCES public.integrations(id) ON DELETE SET NULL;
+
+
+--
+-- Name: assist_pipelines fk_rails_b41d64a951; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_pipelines
+    ADD CONSTRAINT fk_rails_b41d64a951 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -4563,6 +4683,14 @@ ALTER TABLE ONLY public.point_links
 
 
 --
+-- Name: assist_pipelines fk_rails_e044a4cc6c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_pipelines
+    ADD CONSTRAINT fk_rails_e044a4cc6c FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: areas fk_rails_e17994ac11; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4600,6 +4728,14 @@ ALTER TABLE ONLY public.dashboards
 
 ALTER TABLE ONLY public.commands
     ADD CONSTRAINT fk_rails_ead6accc90 FOREIGN KEY (automation_run_id) REFERENCES public.automation_runs(id) ON DELETE SET NULL;
+
+
+--
+-- Name: assist_runs fk_rails_f0a13a53a9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_runs
+    ADD CONSTRAINT fk_rails_f0a13a53a9 FOREIGN KEY (pipeline_id) REFERENCES public.assist_pipelines(id) ON DELETE SET NULL;
 
 
 --
@@ -4681,6 +4817,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102400002'),
 ('20261102400001'),
 ('20261102300002'),
 ('20261102300001'),

@@ -173,6 +173,11 @@ Rails.application.routes.draw do
       end
       # ondaA1 (A3): tela Expor (Assist, Alexa e pontes numa tela só, em massa).
       resource :exposure, controller: "exposures", path: "expor", only: %i[show update]
+      # ondaB1: assistente de voz do local (pipelines, depuração, frases, satélites, MCP).
+      get "assistente", to: "assist_settings#show", as: :assist_settings
+      post "assistente/pipelines", to: "assist_settings#create_pipeline", as: :assist_pipelines
+      patch "assistente/pipelines/:id", to: "assist_settings#update_pipeline", as: :assist_pipeline
+      delete "assistente/pipelines/:id", to: "assist_settings#destroy_pipeline"
       # Alexa Smart Home (F9): o que expor, nome falado, vínculos e cliente OAuth.
       resource :alexa, controller: "alexa", path: "alexa", only: %i[show update] do
         post :client, path: "cliente"

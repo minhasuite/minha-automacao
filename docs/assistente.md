@@ -55,6 +55,24 @@ ferramentas (`Assist::Llm`); "llm": só a IA. Qualquer provedor de
 voltas. O modelo vê só os pontos expostos ao Assist. `conversation_id`
 continua a conversa (últimas falas em cache por 5 min).
 
+## Pipelines e depuração
+
+Local → Assistente de voz (`/locais/:id/assistente`, técnico ou dono):
+- **Pipelines** (`AssistPipeline`): nome, idioma, agente, IA, e o motor de
+  cada etapa (STT, TTS, palavra de ativação) do registro `Assist::Engines`
+  (`installation` = a IA da instalação; Wyoming na B6). O preferido atende o
+  botão Falar, o app e os satélites sem pipeline. `pipeline_id` no pedido
+  escolhe outro.
+- **Depuração** (`AssistRun`): as últimas 100 execuções do local com cada
+  etapa (motor, tempo, texto, intenção, slots, erro). Áudio nunca é guardado.
+- **Frases**: testa uma frase (qual intenção e slots, sem executar), testa uma
+  frase-modelo contra um exemplo e lista as frases nativas no idioma.
+
+`Assist::Pipeline.run` é a entrada única (web, app, satélite, MCP).
+Motor novo = subclasse de `Assist::Engines::Base` (`describe key:, label:,
+kinds:, fields:` + `transcribe`/`speak`/`detect`/`check`) e o nome em
+`Assist::Engines::PLUGINS`; prova com `stub_const` no spec da ondaB1.
+
 ## Segurança
 
 - Comando por voz usa `source: "voice"` e o usuário que falou; segue o papel

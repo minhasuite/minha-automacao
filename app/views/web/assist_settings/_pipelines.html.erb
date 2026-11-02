@@ -1,0 +1,8 @@
+<%# locals: (site:) -%>
+<p class="text-sm text-muted mb-4 max-w-3xl"><%= t("assist_settings.pipelines.pitch") %></p>
+<div class="grid gap-4 xl:grid-cols-2">
+  <% @pipelines.each do |pl| %>
+    <%= render "pipeline_form", site: site, pipeline: pl %>
+  <% end %>
+  <%= render "pipeline_form", site: site, pipeline: AssistPipeline.new(site: site, name: (t("assist_settings.pipelines.default_name") if @pipelines.empty?), language: Assist.language(site.language.presence), preferred: @pipelines.empty?) %>
+</div>

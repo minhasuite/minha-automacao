@@ -90,8 +90,8 @@ module Assist
   end
 
   # Áudio (bytes do microfone) → texto pelo STT da instalação.
-  def transcribe(site:, audio:, media_type:, language: "pt")
-    res = Ai::Audio.transcribe(tenant: site.tenant, site: site, audio: audio, media_type: media_type, language: language.to_s[0, 2], source: "voz")
+  def transcribe(site:, audio:, media_type:, language: "pt", provider: nil)
+    res = Ai::Audio.transcribe(tenant: site.tenant, site: site, audio: audio, media_type: media_type, language: language.to_s[0, 2], provider: provider, source: "voz")
     res.data.to_s.dup.force_encoding(Encoding::UTF_8).scrub.squish
   end
 

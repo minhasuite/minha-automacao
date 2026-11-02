@@ -1,0 +1,65 @@
+<%# locals: (site:, pipeline:) -%>
+<% pl = pipeline %>
+<% id = pl.persisted? ? pl.id : "novo" %>
+<section class="ss-card ss-card-pad vz-pipe <%= 'vz-pipe-new' unless pl.persisted? %>" aria-labelledby="pl-<%= id %>">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h2 id="pl-<%= id %>" class="text-base font-bold text-ink flex items-center gap-2">
+      <%= icon(pl.persisted? ? "volume-up" : "plus", "size-5") %><%= pl.persisted? ? pl.name : t("assist_settings.pipelines.new") %>
+    </h2>
+    <% if pl.preferred? && pl.persisted? %><span class="ss-badge ss-badge-accent"><%= icon("star", "size-3") %><%= t("assist_settings.pipelines.preferred") %></span><% end %>
+  </div>
+  <% if pl.persisted? %>
+    <ol class="vz-flow" aria-label="<%= t("assist_settings.pipelines.flow") %>">
+      <% [ [ :wake, "bell" ], [ :stt, "microphone" ], [ :agent, "sparkles" ], [ :tts, "volume-up" ] ].each do |kind, ico| %>
+        <% label = kind == :agent ? AssistPipeline::AGENTS[pl.agent] : (pl.engine(kind)&.label || (kind == :wake ? t("assist_settings.pipelines.none") : Assist::Engines::Installation.label)) %>
+        <li class="vz-flow-step"><span class="vz-flow-ico"><%= icon(ico, "size-4") %></span><span class="min-w-0"><span class="vz-flow-kind"><%= t("assist_settings.kinds.#{kind}") %></span><span class="vz-flow-val"><%= label %></span></span></li>
+      <% end %>
+    </ol>
+  <% end %>
+  <%= form_with model: pl, scope: :pipeline, url: pl.persisted? ? site_assist_pipeline_path(site, pl) : site_assist_pipelines_path(site), method: pl.persisted? ? :patch : :post,
+                class: "mt-4 grid gap-3 sm:grid-cols-2", data: { controller: "assist-engines" } do |f| %>
+    <div><%= f.label :name, t("assist_settings.pipelines.name"), class: "ss-label", for: "pn-#{id}" %><%= f.text_field :name, id: "pn-#{id}", class: "ss-input", maxlength: 60, required: true %></div>
+    <div><%= f.label :language, t("assist_settings.pipelines.language"), class: "ss-label", for: "pg-#{id}" %>
+      <%= f.select :language, Assist::LANGUAGES.map { |l| [ t("assist_settings.languages.#{l.tr('-', '_')}"), l ] }, {}, id: "pg-#{id}", class: "ss-input" %></div>
+    <div><%= f.label :agent, t("assist_settings.pipelines.agent"), class: "ss-label", for: "pa-#{id}" %>
+      <%= f.select :agent, AssistPipeline::AGENTS.invert.to_a, {}, id: "pa-#{id}", class: "ss-input" %></div>
+    <div><%= f.label :llm_provider, t("assist_settings.pipelines.llm"), class: "ss-label", for: "pp-#{id}" %>
+      <%= f.select :llm_provider, Ai.choices(:structured).invert.to_a, { include_blank: t("assist_settings.pipelines.llm_default") }, id: "pp-#{id}", class: "ss-input" %></div>
+    <% %i[stt tts wake].each do |kind| %>
+      <% engines = Assist::Engines.for(kind) %>
+      <% next if engines.empty? %>
+      <% current = pl.send(kind).to_h %>
+      <fieldset class="sm:col-span-2 vz-engine">
+        <legend class="ss-label"><%= t("assist_settings.kinds.#{kind}") %></legend>
+        <%= select_tag "pipeline[#{kind}_engine]", options_for_select(engines.map { |e| [ e.label, e.key ] }, current["engine"]),
+                       include_blank: (kind == :wake ? t("assist_settings.pipelines.none") : t("assist_settings.pipelines.installation_default")), id: "pe-#{kind}-#{id}",
+                       class: "ss-input", data: { action: "assist-engines#pick" }, "aria-label": t("assist_settings.kinds.#{kind}") %>
+        <% engines.each do |e| %>
+          <div class="vz-engine-fields" data-engine="<%= e.key %>" <%= "hidden" unless current["engine"] == e.key %>>
+            <% if e.hint %><p class="text-xs text-muted vz-engine-hint"><%= e.hint %></p><% end %>
+            <% e.fields.each do |name, type| %>
+              <% fid = "pf-#{kind}-#{e.key}-#{name}-#{id}" %>
+              <% value = current["engine"] == e.key ? current[name] : nil %>
+              <div>
+                <label for="<%= fid %>" class="ss-label"><%= t("assist_settings.fields.#{name}") %></label>
+                <% if type == :provider %>
+                  <%= select_tag "pipeline[#{kind}][#{e.key}][#{name}]", options_for_select(Ai.choices(kind).invert.to_a, value), include_blank: t("assist_settings.pipelines.llm_default"), id: fid, class: "ss-input" %>
+                <% else %>
+                  <%= text_field_tag "pipeline[#{kind}][#{e.key}][#{name}]", value, id: fid, class: "ss-input #{'num' if type == :number}", inputmode: (type == :number ? "numeric" : nil), maxlength: 120 %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </fieldset>
+    <% end %>
+    <label class="ss-check text-sm sm:col-span-2"><%= f.check_box :preferred, id: "pr-#{id}" %> <%= t("assist_settings.pipelines.make_preferred") %></label>
+    <div class="sm:col-span-2 flex flex-wrap gap-2">
+      <%= f.submit pl.persisted? ? t("assist_settings.save") : t("assist_settings.pipelines.create"), class: "ss-btn ss-btn-primary", name: nil %>
+    </div>
+  <% end %>
+  <% if pl.persisted? %>
+    <%= button_to t("assist_settings.remove"), site_assist_pipeline_path(site, pl), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm mt-2 text-danger",
+                  form: { data: { turbo_confirm: t("assist_settings.pipelines.confirm_remove", name: pl.name) } } %>
+  <% end %>
+</section>

@@ -1,64 +1,334 @@
 # ondaB1: Assist (voz) — intenções, pipelines, satélites, depuração e MCP.
 pt-BR:
   assist:
-    empty: "Fale ou escreva o que quer."
+    empty: Fale ou escreva o que quer.
     timers:
-      one: "1 timer"
-      other: "%{count} timers"
+      one: 1 timer
+      other: '%{count} timers'
     duration:
       hours:
-        one: "1 hora"
-        other: "%{count} horas"
+        one: 1 hora
+        other: '%{count} horas'
       minutes:
-        one: "1 minuto"
-        other: "%{count} minutos"
+        one: 1 minuto
+        other: '%{count} minutos'
       seconds:
-        one: "1 segundo"
-        other: "%{count} segundos"
+        one: 1 segundo
+        other: '%{count} segundos'
     sentences:
       errors:
-        empty: "Escreva a frase."
-        brackets: "Colchetes ou parênteses sem par."
-        invalid: "Frase inválida."
+        empty: Escreva a frase.
+        brackets: Colchetes ou parênteses sem par.
+        invalid: Frase inválida.
+  sites:
+    tabs:
+      assist: Assistente de voz
+  assist_settings:
+    title: Assistente de voz
+    subtitle: 'Como %{site} ouve, entende e responde: pipelines, depuração e frases.'
+    save: Salvar
+    remove: Remover
+    tabs:
+      label: Seções do assistente
+      pipelines: Pipelines
+      depuracao: Depuração
+      frases: Frases
+    flash:
+      created: Pipeline criado.
+      saved: Pipeline salvo.
+      removed: Pipeline removido.
+    agents:
+      local: Local (intenções + Perguntar à casa)
+      local_llm: Local, depois IA com ferramentas
+      llm: Só IA com ferramentas
+    kinds:
+      wake: Palavra de ativação
+      stt: Voz para texto
+      agent: Agente
+      tts: Texto para fala
+    languages:
+      pt_BR: Português (Brasil)
+      en: Inglês
+      es: Espanhol
+    fields:
+      provider: Provedor
+      voice: Voz
+    pipelines:
+      pitch: Cada pipeline junta idioma, agente e os motores de voz. O preferido atende o botão Falar, o app e os satélites sem pipeline próprio. O motor de cada etapa é um plugin.
+      default_name: Casa
+      new: Novo pipeline
+      preferred: Preferido
+      flow: Etapas do pipeline
+      none: Nenhuma
+      name: Nome
+      language: Idioma
+      agent: Agente de conversa
+      llm: IA (para o agente com IA)
+      llm_default: O padrão da instalação
+      installation_default: IA da instalação (padrão)
+      make_preferred: Usar como preferido deste local
+      create: Criar pipeline
+      confirm_remove: Remover o pipeline %{name}?
+    runs:
+      pitch: As últimas %{keep} execuções do assistente neste local, com cada etapa e o tempo. O áudio nunca é guardado.
+      empty: Nenhuma execução ainda
+      empty_hint: Fale ou escreva no botão Falar do painel; cada pedido aparece aqui.
+      label: Execuções do assistente
+      no_text: (sem texto)
+      error: Erro
+      bar: Tempo total %{ms} ms
+      ms: '%{ms} ms'
+      who: Quem e onde
+    sources:
+      web: Web
+      app: App
+      satellite: Satélite
+      api: API
+      mcp: MCP
+    stages:
+      wake: Ativação
+      stt: Voz para texto
+      intent: Intenção
+      tts: Fala
+    sentences:
+      try: Testar uma frase
+      try_hint: Mostra qual intenção entenderia e o que ela pegou, sem executar nada.
+      text: Frase
+      text_ph: deixe a luz da sala em 50%
+      check: Testar
+      none: 'Nenhuma intenção reconheceu: iria para o agente (Perguntar à casa ou IA).'
+      template: Testar uma frase-modelo
+      template_hint: 'O formato do HA: [opcional], (um|outro) e {slot}. Use nas automações com o gatilho "Frase dita ao assistente".'
+      model: Frase-modelo
+      model_ph: (ligar|acender) [a|o] {nome}
+      sample: Exemplo falado
+      sample_ph: acender a varanda
+      matches: Casa com o exemplo
+      no_match: Não casa com o exemplo.
+      own_html: Suas frases ficam nas %{link}, com o gatilho "Frase dita ao assistente".
+      automations: automações
+      catalog: Intenções nativas (%{language})
+      tool: IA
+      tool_hint: Também é ferramenta da IA e do servidor MCP.
 en:
   assist:
-    empty: "Say or type what you want."
+    empty: Say or type what you want.
     timers:
-      one: "1 timer"
-      other: "%{count} timers"
+      one: 1 timer
+      other: '%{count} timers'
     duration:
       hours:
-        one: "1 hour"
-        other: "%{count} hours"
+        one: 1 hour
+        other: '%{count} hours'
       minutes:
-        one: "1 minute"
-        other: "%{count} minutes"
+        one: 1 minute
+        other: '%{count} minutes'
       seconds:
-        one: "1 second"
-        other: "%{count} seconds"
+        one: 1 second
+        other: '%{count} seconds'
     sentences:
       errors:
-        empty: "Type the sentence."
-        brackets: "Unmatched brackets or parentheses."
-        invalid: "Invalid sentence."
+        empty: Type the sentence.
+        brackets: Unmatched brackets or parentheses.
+        invalid: Invalid sentence.
+  sites:
+    tabs:
+      assist: Voice assistant
+  assist_settings:
+    title: Voice assistant
+    subtitle: 'How %{site} listens, understands and answers: pipelines, debugging and sentences.'
+    save: Save
+    remove: Remove
+    tabs:
+      label: Assistant sections
+      pipelines: Pipelines
+      depuracao: Debug
+      frases: Sentences
+    flash:
+      created: Pipeline created.
+      saved: Pipeline saved.
+      removed: Pipeline removed.
+    agents:
+      local: Local (intents + Ask the house)
+      local_llm: Local, then AI with tools
+      llm: AI with tools only
+    kinds:
+      wake: Wake word
+      stt: Speech to text
+      agent: Agent
+      tts: Text to speech
+    languages:
+      pt_BR: Portuguese (Brazil)
+      en: English
+      es: Spanish
+    fields:
+      provider: Provider
+      voice: Voice
+    pipelines:
+      pitch: Each pipeline combines language, agent and voice engines. The preferred one serves the Talk button, the app and satellites without their own pipeline. Each stage's engine is a plugin.
+      default_name: Home
+      new: New pipeline
+      preferred: Preferred
+      flow: Pipeline stages
+      none: None
+      name: Name
+      language: Language
+      agent: Conversation agent
+      llm: AI (for the AI agent)
+      llm_default: Installation default
+      installation_default: Installation AI (default)
+      make_preferred: Use as this site's preferred
+      create: Create pipeline
+      confirm_remove: Remove the pipeline %{name}?
+    runs:
+      pitch: The last %{keep} assistant runs on this site, with each stage and its time. Audio is never stored.
+      empty: No runs yet
+      empty_hint: Talk or type in the dashboard's Talk button; each request shows up here.
+      label: Assistant runs
+      no_text: (no text)
+      error: Error
+      bar: Total time %{ms} ms
+      ms: '%{ms} ms'
+      who: Who and where
+    sources:
+      web: Web
+      app: App
+      satellite: Satellite
+      api: API
+      mcp: MCP
+    stages:
+      wake: Wake
+      stt: Speech to text
+      intent: Intent
+      tts: Speech
+    sentences:
+      try: Try a sentence
+      try_hint: Shows which intent would understand it and what it picked up, without running anything.
+      text: Sentence
+      text_ph: set the living room light to 50%
+      check: Test
+      none: 'No intent recognized it: it would go to the agent (Ask the house or AI).'
+      template: Test a sentence template
+      template_hint: 'The HA format: [optional], (one|other) and {slot}. Use it in automations with the "Sentence said to the assistant" trigger.'
+      model: Sentence template
+      model_ph: (turn|switch) on [the] {name}
+      sample: Spoken example
+      sample_ph: turn on the porch
+      matches: Matches the example
+      no_match: Doesn't match the example.
+      own_html: Your sentences live in %{link}, with the "Sentence said to the assistant" trigger.
+      automations: automations
+      catalog: Built-in intents (%{language})
+      tool: AI
+      tool_hint: Also a tool for the AI and the MCP server.
 es:
   assist:
-    empty: "Di o escribe lo que quieres."
+    empty: Di o escribe lo que quieres.
     timers:
-      one: "1 temporizador"
-      other: "%{count} temporizadores"
+      one: 1 temporizador
+      other: '%{count} temporizadores'
     duration:
       hours:
-        one: "1 hora"
-        other: "%{count} horas"
+        one: 1 hora
+        other: '%{count} horas'
       minutes:
-        one: "1 minuto"
-        other: "%{count} minutos"
+        one: 1 minuto
+        other: '%{count} minutos'
       seconds:
-        one: "1 segundo"
-        other: "%{count} segundos"
+        one: 1 segundo
+        other: '%{count} segundos'
     sentences:
       errors:
-        empty: "Escribe la frase."
-        brackets: "Corchetes o paréntesis sin pareja."
-        invalid: "Frase no válida."
+        empty: Escribe la frase.
+        brackets: Corchetes o paréntesis sin pareja.
+        invalid: Frase no válida.
+  sites:
+    tabs:
+      assist: Asistente de voz
+  assist_settings:
+    title: Asistente de voz
+    subtitle: 'Cómo %{site} escucha, entiende y responde: pipelines, depuración y frases.'
+    save: Guardar
+    remove: Quitar
+    tabs:
+      label: Secciones del asistente
+      pipelines: Pipelines
+      depuracao: Depuración
+      frases: Frases
+    flash:
+      created: Pipeline creado.
+      saved: Pipeline guardado.
+      removed: Pipeline quitado.
+    agents:
+      local: Local (intenciones + Preguntar a la casa)
+      local_llm: Local, después IA con herramientas
+      llm: Solo IA con herramientas
+    kinds:
+      wake: Palabra de activación
+      stt: Voz a texto
+      agent: Agente
+      tts: Texto a voz
+    languages:
+      pt_BR: Portugués (Brasil)
+      en: Inglés
+      es: Español
+    fields:
+      provider: Proveedor
+      voice: Voz
+    pipelines:
+      pitch: Cada pipeline junta idioma, agente y los motores de voz. El preferido atiende el botón Hablar, la app y los satélites sin pipeline propio. El motor de cada etapa es un plugin.
+      default_name: Casa
+      new: Nuevo pipeline
+      preferred: Preferido
+      flow: Etapas del pipeline
+      none: Ninguna
+      name: Nombre
+      language: Idioma
+      agent: Agente de conversación
+      llm: IA (para el agente con IA)
+      llm_default: El predeterminado de la instalación
+      installation_default: IA de la instalación (predeterminado)
+      make_preferred: Usar como preferido de este lugar
+      create: Crear pipeline
+      confirm_remove: ¿Quitar el pipeline %{name}?
+    runs:
+      pitch: Las últimas %{keep} ejecuciones del asistente en este lugar, con cada etapa y su tiempo. El audio nunca se guarda.
+      empty: Todavía no hay ejecuciones
+      empty_hint: Habla o escribe en el botón Hablar del panel; cada pedido aparece aquí.
+      label: Ejecuciones del asistente
+      no_text: (sin texto)
+      error: Error
+      bar: Tiempo total %{ms} ms
+      ms: '%{ms} ms'
+      who: Quién y dónde
+    sources:
+      web: Web
+      app: App
+      satellite: Satélite
+      api: API
+      mcp: MCP
+    stages:
+      wake: Activación
+      stt: Voz a texto
+      intent: Intención
+      tts: Voz
+    sentences:
+      try: Probar una frase
+      try_hint: Muestra qué intención la entendería y qué tomó, sin ejecutar nada.
+      text: Frase
+      text_ph: pon la luz de la sala al 50%
+      check: Probar
+      none: 'Ninguna intención la reconoció: iría al agente (Preguntar a la casa o IA).'
+      template: Probar una frase modelo
+      template_hint: 'El formato de HA: [opcional], (uno|otro) y {slot}. Úsalo en las automatizaciones con el disparador "Frase dicha al asistente".'
+      model: Frase modelo
+      model_ph: (enciende|prende) [la|el] {nombre}
+      sample: Ejemplo hablado
+      sample_ph: enciende la terraza
+      matches: Coincide con el ejemplo
+      no_match: No coincide con el ejemplo.
+      own_html: Tus frases están en las %{link}, con el disparador "Frase dicha al asistente".
+      automations: automatizaciones
+      catalog: Intenciones integradas (%{language})
+      tool: IA
+      tool_hint: También es herramienta de la IA y del servidor MCP.

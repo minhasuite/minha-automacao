@@ -61,6 +61,7 @@ export default class extends Controller {
   async post(body) {
     body.append("site_id", this.siteValue)
     body.append("speak", "1")
+    if (this.conversation) body.append("conversation_id", this.conversation)
     this.statusTarget.textContent = this.t("thinking")
     try {
       const res = await fetch(this.urlValue, {
@@ -68,6 +69,7 @@ export default class extends Controller {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || this.t("failed"))
+      this.conversation = data.conversation_id
       this.add(data.heard, "dw-assist-me")
       this.add(data.text, "dw-assist-house")
       this.statusTarget.textContent = this.t("idle")

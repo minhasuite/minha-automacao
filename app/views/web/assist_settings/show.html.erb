@@ -1,0 +1,8 @@
+<%= render "web/shared/header", title: t("assist_settings.title"), subtitle: t("assist_settings.subtitle", site: @site.name) %>
+<%= render "web/sites/tabs", site: @site, current: :assist %>
+<nav class="vz-tabs" aria-label="<%= t("assist_settings.tabs.label") %>">
+  <% Web::AssistSettingsController::TABS.each do |tab| %>
+    <%= link_to t("assist_settings.tabs.#{tab}"), site_assist_settings_path(@site, aba: tab), class: "vz-tab", "aria-current": (tab == @tab ? "page" : nil) %>
+  <% end %>
+</nav>
+<%= render @tab, site: @site %>

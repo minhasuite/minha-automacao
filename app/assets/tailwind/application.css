@@ -3,6 +3,7 @@
 @import "./paridade.css";
 @import "./produto.css";
 @import "./organizacao.css";
+@import "./voz.css";
 
 /* Lista Clara (design system da suíte) no Tailwind 4: tokens em variável CSS,
    tema escuro por [data-theme="dark"] ou preferência do sistema. Cor solta
