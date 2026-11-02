@@ -145,6 +145,8 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
+          # O checkout traz a tag como leve (sem a mensagem): busca a anotada de novo.
+          git fetch -q --force origin "refs/tags/$TAG:refs/tags/$TAG"
           prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$TAG^" 2>/dev/null || true)
           {
             git tag -l --format='%(contents)' "$TAG" | sed '/BEGIN PGP/,$d'
