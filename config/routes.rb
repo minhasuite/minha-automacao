@@ -153,6 +153,16 @@ Rails.application.routes.draw do
           post :adopt, path: "adicionar"
         end
       end
+      # ondaA1 (A11): listas de tarefas e agenda local do local.
+      resources :todo_lists, controller: "todo_lists", path: "listas", only: %i[index] do
+        post :items, on: :member, path: "itens", action: :add
+        patch "itens/:uid", on: :member, action: :toggle, as: :toggle_item
+        delete "itens/:uid", on: :member, action: :remove, as: :remove_item
+        delete :completed, on: :member, path: "concluidos", action: :clear
+      end
+      resource :agenda, controller: "agenda", path: "agenda", only: %i[show create] do
+        delete "eventos/:point_id/:uid", action: :destroy, as: :event
+      end
       # ondaA1 (A3): tela Expor (Assist, Alexa e pontes numa tela só, em massa).
       resource :exposure, controller: "exposures", path: "expor", only: %i[show update]
       # Alexa Smart Home (F9): o que expor, nome falado, vínculos e cliente OAuth.

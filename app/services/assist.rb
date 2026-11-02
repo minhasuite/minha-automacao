@@ -8,7 +8,7 @@
 # nome em `INTENTS`. Comando por voz respeita o papel x risco de quem fala,
 # a sombra do local e nunca comanda ponto crítico (portão, fechadura).
 module Assist
-  INTENTS = %w[TurnOnOff ReadState ActivateScene].freeze
+  INTENTS = %w[AddToList ReadList TurnOnOff ReadState ActivateScene].freeze
   MAX_TEXT = 300
 
   Reply = Data.define(:text, :intent, :points) do
@@ -16,7 +16,9 @@ module Assist
   end
 
   # Quem pergunta e onde (o papel decide o que a voz pode comandar).
-  Ctx = Data.define(:site, :user, :role)
+  Ctx = Data.define(:site, :user, :role, :heard) do
+    def initialize(site:, user:, role:, heard: "") = super
+  end
 
   module_function
 
@@ -27,7 +29,7 @@ module Assist
     heard = text.to_s.squish.first(MAX_TEXT)
     raise ArgumentError, "Fale ou escreva o que quer." if heard.empty?
 
-    ctx = Ctx.new(site: site, user: user, role: site.role_for(user))
+    ctx = Ctx.new(site: site, user: user, role: site.role_for(user), heard: heard)
     norm = normalize(heard)
     reply = intents.lazy.filter_map { |i| (m = i.pattern.match(norm)) && i.handle(ctx, m) }.first || ask(ctx, heard)
     out = { "heard" => heard, "text" => reply.text, "intent" => reply.intent, "points" => reply.points.map(&:id) }
@@ -89,6 +91,24 @@ module Assist
     area.all_names.flat_map { |a| [ "#{p.name} da #{a}", "#{p.name} do #{a}", "#{p.name} #{a}" ] }
   end
 
+  # O trecho da frase normalizada (sem acento) como foi dito ("pão", não
+  # "pao"): mesma posição em palavras, porque a normalização é palavra a palavra.
+  def original(heard, start, piece)
+    words = heard.to_s.downcase.gsub(/[^[:alnum:] ]/, " ").split
+    return piece unless words.size == normalize(heard).split.size
+
+    from = normalize(heard)[0...start].split.size
+    words[from, piece.split.size].join(" ")
+  end
+
+  # Lista de tarefas pelo nome ("compras" acha "Lista de compras") ou apelido.
+  def find_list(site, phrase)
+    want = clean(phrase).sub(/\Alista\s+(?:de\s+|da\s+|do\s+)?/, "")
+    lists = site.points.helpers.where(helper: HelperTypes::TodoList.key).to_a
+    lists.find { |l| l.all_names.any? { |n| clean(n) == want } } ||
+      lists.find { |l| l.all_names.any? { |n| clean(n).sub(/\Alista\s+(?:de\s+|da\s+|do\s+)?/, "") == want } }
+  end
+
   def can_command?(ctx, point) = point.risk != "critical" && SiteMembership.allowed?(ctx.role, :command, risk: point.risk)
   def value_text(point) = ApplicationController.helpers.point_value_text(point)
   def list(names) = names.size > 1 ? "#{names[0..-2].join(', ')} e #{names.last}" : names.first.to_s
@@ -122,6 +142,31 @@ module Assist
         text = [ ("#{command == 'on' ? 'Liguei' : 'Desliguei'} #{Assist.list(ok)}." if ok.any?), ("Não consegui: #{Assist.list(failed)}." if failed.any?),
                  ("Sem permissão por voz: #{Assist.list(denied.map(&:name))}." if denied.any?) ].compact.join(" ")
         Reply.new(text: text, intent: "turn_#{command}", points: allowed)
+      end
+    end
+
+    # ondaA1 (A11): "adicione leite à lista de compras", "coloca pão na lista".
+    class AddToList
+      def self.pattern = /\A(?:adicionar|adicione|adiciona|colocar|coloque|coloca|incluir|inclua|inclui|por|ponha|poe)\s+(.+?)\s+(?:a|na|no|em)\s+(?:minha\s+)?(?:lista\s+(?:de\s+|da\s+|do\s+)?)?(.+)\z/
+
+      def self.handle(ctx, m)
+        list = Assist.find_list(ctx.site, m[2]) or return
+        return Reply.new(text: "Por voz não posso mexer em #{list.name}.", intent: "todo_add") unless SiteMembership.allowed?(ctx.role, :command, risk: list.risk)
+
+        item = Assist.original(ctx.heard, m.begin(1), m[1]).sub(/\A(?:o|a|os|as|um|uma)\s+/i, "")
+        Points::Command.call(list, "add_item", item, source: "voice", user: ctx.user)
+        Reply.new(text: "Coloquei #{item} em #{list.name}.", intent: "todo_add", points: [ list ])
+      end
+    end
+
+    # "o que tem na lista de compras", "ler a lista de tarefas".
+    class ReadList
+      def self.pattern = /\A(?:o\s+que\s+tem|que\s+tem|ler|leia|le)\s+(?:na|a|no|o)?\s*(?:lista\s+(?:de\s+|da\s+|do\s+)?)?(.+)\z/
+
+      def self.handle(ctx, m)
+        list = Assist.find_list(ctx.site, m[1]) or return
+        items = HelperTypes::TodoList.items(list).reject { |i| i["status"] == "completed" }.pluck("summary")
+        Reply.new(text: items.empty? ? "#{list.name} está vazia." : "Em #{list.name}: #{Assist.list(items.first(20))}.", intent: "todo_read", points: [ list ])
       end
     end
 

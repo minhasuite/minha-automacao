@@ -65,6 +65,7 @@ pt-BR:
       media: Mídia
       remote: Controle remoto
       detection: Detecção
+      todo: Lista de tarefas
     risks:
       normal: Normal
       sensitive: Sensível
@@ -293,6 +294,8 @@ pt-BR:
       helpers: Helpers
       datasets: Dados
       exposure: Expor
+      todo: Listas
+      agenda: Agenda
       alerts: Alertas
       packages: Pacotes
       dev_tools: Ferramentas

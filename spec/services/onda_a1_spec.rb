@@ -433,4 +433,65 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       end
     end
   end
+
+  describe "A11 listas de tarefas e agenda local" do
+    def helper(type, name)
+      point = HelperTypes.build(site, HelperTypes.plugin(type))
+      raise point.errors.full_messages.to_sentence unless HelperTypes.save(point, "name" => name)
+
+      point.reload
+    end
+
+    it "lista: adiciona, conclui, reabre, remove e limpa; o valor é quantos faltam" do
+      l = helper("todo", "Lista de compras")
+      cmd = ->(c, v = nil) { Points::Command.call(l, c, v, source: "web", user: nil).tap { l.reload } }
+      cmd.call("add_item", "Leite")
+      cmd.call("add_item", "Pão")
+      expect(l.value).to eq(2)
+      cmd.call("complete_item", "leite")
+      expect(l.value).to eq(1)
+      expect(HelperTypes::TodoList.items(l).map { |i| i.values_at("summary", "status") }).to eq([ %w[Leite completed], %w[Pão needs_action] ])
+      cmd.call("reopen_item", "Leite")
+      cmd.call("complete_item", "Leite")
+      cmd.call("clear_completed")
+      expect(HelperTypes::TodoList.items(l).pluck("summary")).to eq([ "Pão" ])
+      expect(cmd.call("remove_item", "Café").error).to include("não está")
+      expect(Points::Command.commands_for(l)).to include("add_item", "complete_item")
+    end
+
+    it "voz: adiciona e lê a lista pelo nome curto" do
+      l = helper("todo", "Lista de compras")
+      expect(Assist.call(site: site, user: owner, text: "adicione leite à lista de compras")["text"]).to eq("Coloquei leite em Lista de compras.")
+      expect(Assist.call(site: site, user: owner, text: "coloca pão na lista de compras")["intent"]).to eq("todo_add")
+      expect(Assist.call(site: site, user: owner, text: "o que tem na lista de compras")["text"]).to eq("Em Lista de compras: leite e pão.")
+      expect(l.reload.value).to eq(2)
+    end
+
+    it "agenda local: evento com repetição vira os eventos da janela (como ICS) e serve ao gatilho de agenda" do
+      cal = helper("local_calendar", "Agenda da casa")
+      travel_to(Time.zone.parse("2026-11-02 08:00 -03:00")) do
+        HelperTypes::LocalCalendar.add_event!(cal, "summary" => "Lixo reciclável", "start" => "2026-11-03 19:00", "end" => "2026-11-03 20:00", "repeat" => "weekly")
+        HelperTypes::LocalCalendar.add_event!(cal, "summary" => "Feriado", "start" => "2026-11-15", "all_day" => "1")
+      end
+      ev = Calendars.events(cal.reload)
+      expect(ev.count { |e| e["summary"] == "Lixo reciclável" }).to be >= 4
+      expect(ev.find { |e| e["summary"] == "Feriado" }).to include("all_day" => true)
+      expect(cal.value).to include("summary" => "Lixo reciclável")
+      expect { HelperTypes::LocalCalendar.add_event!(cal, "summary" => "", "start" => "2026-11-03 19:00") }.to raise_error(ArgumentError)
+      uid = cal.address["local"].first["uid"]
+      HelperTypes::LocalCalendar.remove_event!(cal, uid)
+      expect(Calendars.events(cal.reload).pluck("summary").uniq).to eq([ "Feriado" ])
+    end
+
+    it "automação cria evento na agenda local" do
+      cal = helper("local_calendar", "Agenda da casa")
+      a = site.automations.create!(name: "Teste agenda")
+      a.publish!({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "calendar_create", "point" => cal.id, "summary" => "Revisar {{ site.name }}", "start" => "2026-11-10 09:00", "duration" => "30m" } ] })
+      run = a.fire!({ "type" => "manual" }, skip_conditions: true)
+      expect(run.status).to eq("done")
+      e = cal.reload.address["local"].first
+      expect(e["summary"]).to eq("Revisar #{site.name}")
+      expect(Time.zone.parse(e["end"]) - Time.zone.parse(e["start"])).to eq(1800)
+    end
+  end
 end

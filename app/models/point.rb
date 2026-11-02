@@ -18,7 +18,9 @@ class Point < ApplicationRecord
     "climate" => "json", "event" => "json", "counter" => "integer", "timer" => "enum", "datetime" => "string",
     "script" => nil, "calendar" => "json", "weather" => "enum", "media" => "json", "remote" => "json",
     # integ: detecção de câmera com IA (Frigate, Reolink, UniFi Protect…), genérica: {kind, label, score, zones, at…}.
-    "detection" => "json"
+    "detection" => "json",
+    # ondaA1 (A11): lista de tarefas (valor = quantos itens faltam; itens em attrs).
+    "todo" => "integer"
   }.freeze
   CAPABILITY_LABELS = LocalizedLabel.for("labels.capabilities", CAPABILITIES.keys)
   # Só leitura por natureza (o resto nasce gravável).

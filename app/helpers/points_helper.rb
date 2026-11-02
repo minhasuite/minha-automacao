@@ -7,7 +7,7 @@ module PointsHelper
                   "text" => "document-text", "vacuum" => "vacuum", "speaker" => "speakerphone", "stream" => "video-camera",
                   "climate" => "sun", "event" => "bell", "counter" => "plus", "timer" => "clock", "datetime" => "calendar",
                   "script" => "play", "calendar" => "calendar", "weather" => "sun", "media" => "desktop-computer",
-                  "remote" => "status-online", "detection" => "user-circle" }.freeze
+                  "remote" => "status-online", "detection" => "user-circle", "todo" => "clipboard-list" }.freeze
   # Pacote 1: situação da mídia (`value.state`, nomes do HA).
   MEDIA_TEXT = LocalizedLabel.for("labels.media", %w[off on idle playing paused buffering standby])
   BOOL_TEXT = %w[onoff contact motion tamper problem].to_h { |c| [ c, LocalizedLabel.for("labels.bool.#{c}", %w[on off]).values ] }.freeze

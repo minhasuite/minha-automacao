@@ -65,6 +65,7 @@ en:
       media: Media
       remote: Remote control
       detection: Detection
+      todo: To-do list
     risks:
       normal: Normal
       sensitive: Sensitive
@@ -293,6 +294,8 @@ en:
       helpers: Helpers
       datasets: Data
       exposure: Expose
+      todo: Lists
+      agenda: Calendar
       alerts: Alerts
       packages: Packages
       dev_tools: Tools

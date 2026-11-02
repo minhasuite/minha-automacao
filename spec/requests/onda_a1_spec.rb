@@ -88,4 +88,25 @@ RSpec.describe "Web ondaA1: paridade HA" do
     expect(within(tenant) { h.label_list }).to eq("sala")
     expect(h.address).to include("kind" => "lowpass", "window" => 4)
   end
+
+  it "A11: tela Listas adiciona e marca; tela Agenda cria e apaga evento local" do
+    post "/locais/#{site.id}/helpers", params: { tipo: "todo", helper: { name: "Teste compras" } }
+    post "/locais/#{site.id}/helpers", params: { tipo: "local_calendar", helper: { name: "Teste agenda" } }
+    l, cal = within(tenant) { [ site.points.find_by!(name: "Teste compras"), site.points.find_by!(name: "Teste agenda") ] }
+    post "/locais/#{site.id}/listas/#{l.id}/itens", params: { summary: "Arroz" }
+    get "/locais/#{site.id}/listas"
+    expect(response.body).to include("Teste compras", "Arroz", "1 a fazer")
+    uid = within(tenant) { HelperTypes::TodoList.items(l.reload).first["uid"] }
+    patch "/locais/#{site.id}/listas/#{l.id}/itens/#{uid}"
+    expect(within(tenant) { l.reload.value }).to eq(0)
+    delete "/locais/#{site.id}/listas/#{l.id}/concluidos"
+    expect(within(tenant) { HelperTypes::TodoList.items(l.reload) }).to be_empty
+
+    post "/locais/#{site.id}/agenda", params: { event: { point_id: cal.id, summary: "Teste aula", start: 1.day.from_now.change(hour: 10).strftime("%Y-%m-%dT%H:%M"), repeat: "weekly" } }
+    get "/locais/#{site.id}/agenda"
+    expect(response.body).to include("Teste aula", "Novo evento", "Toda semana")
+    ev = within(tenant) { cal.reload.address["local"].first }
+    delete "/locais/#{site.id}/agenda/eventos/#{cal.id}/#{ev['uid']}"
+    expect(within(tenant) { cal.reload.address["local"] }).to be_empty
+  end
 end

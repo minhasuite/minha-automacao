@@ -1,0 +1,56 @@
+<%= render "web/shared/header", title: "Listas", subtitle: "#{@site.name} · compras, tarefas da casa: pela tela, pela voz e por automação" do %>
+  <% if can?(:manage) %><%= link_to new_site_helper_path(@site, tipo: "todo"), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Nova lista<% end %><% end %>
+<% end %>
+<%= render "web/sites/tabs", site: @site, current: :todo %>
+<% if @lists.empty? %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink">Nenhuma lista ainda.</p>
+    <p class="mt-1 max-w-lg mx-auto">Crie a lista de compras e diga "adicione leite à lista de compras". Automação também adiciona ("faltou ração": avisa e põe na lista).</p>
+    <% if can?(:manage) %><%= link_to new_site_helper_path(@site, tipo: "todo"), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar a primeira<% end %><% end %>
+  </div>
+<% else %>
+  <div class="grid gap-4 lg:grid-cols-2 items-start">
+    <% @lists.each do |l| %>
+      <% items = HelperTypes::TodoList.items(l) %>
+      <% pending, done = items.partition { |i| i["status"] != "completed" } %>
+      <section class="ss-card ss-card-pad" id="lista-<%= l.id %>" aria-labelledby="t-<%= l.id %>">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h2 id="t-<%= l.id %>" class="flex items-center gap-2 min-w-0"><span class="ss-icon-tile text-accent"><%= icon(point_icon(l)) %></span><span class="truncate"><%= l.name %></span></h2>
+          <span class="ss-badge"><%= pending.size %> a fazer</span>
+        </div>
+        <% if can?(:command, risk: l.risk) %>
+          <%= form_with url: items_site_todo_list_path(@site, l), class: "flex gap-2 mb-2" do %>
+            <label class="sr-only" for="novo-<%= l.id %>">Novo item em <%= l.name %></label>
+            <%= text_field_tag :summary, nil, id: "novo-#{l.id}", class: "ss-input flex-1 min-w-0", placeholder: "Adicionar item", maxlength: 255, required: true %>
+            <%= button_tag type: "submit", class: "ss-btn ss-btn-primary", "aria-label": "Adicionar" do %><%= icon("plus", "size-4") %><% end %>
+          <% end %>
+        <% end %>
+        <% if items.empty? %>
+          <p class="text-sm text-muted py-3">Lista vazia.</p>
+        <% else %>
+          <ul class="oa-todo" aria-label="Itens de <%= l.name %>">
+            <% (pending + done).each do |i| %>
+              <% is_done = i["status"] == "completed" %>
+              <li class="oa-todo-item <%= 'is-done' if is_done %>">
+                <% if can?(:command, risk: l.risk) %>
+                  <%= button_to toggle_item_site_todo_list_path(@site, l, i["uid"]), method: :patch, class: "oa-todo-check", form: { class: "contents" },
+                                "aria-label": (is_done ? "Reabrir #{i['summary']}" : "Concluir #{i['summary']}"), "aria-pressed": is_done.to_s do %><%= icon("check", "size-3") %><% end %>
+                <% else %>
+                  <span class="oa-todo-check" aria-hidden="true"><%= icon("check", "size-3") %></span>
+                <% end %>
+                <span class="oa-todo-text"><%= i["summary"] %>
+                  <% if i["due"].present? %><% late = !is_done && (Date.parse(i["due"]) rescue nil)&.past? %><span class="oa-due <%= 'is-late' if late %>"> · até <%= i["due"] %></span><% end %></span>
+                <% if can?(:command, risk: l.risk) %>
+                  <%= button_to remove_item_site_todo_list_path(@site, l, i["uid"]), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm px-2", form: { class: "contents" }, "aria-label": "Remover #{i['summary']}" do %><%= icon("x", "size-4") %><% end %>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+          <% if done.any? && can?(:command, risk: l.risk) %>
+            <%= button_to completed_site_todo_list_path(@site, l), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm mt-3", form: { class: "contents" } do %><%= icon("trash", "size-4") %>Limpar <%= done.size %> concluído(s)<% end %>
+          <% end %>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
+<% end %>
