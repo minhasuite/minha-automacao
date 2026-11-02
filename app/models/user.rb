@@ -11,6 +11,8 @@ class User < ApplicationRecord
   has_many :service_api_keys, dependent: :delete_all
   has_many :device_tokens, dependent: :delete_all
   has_many :push_subscriptions, dependent: :delete_all
+  has_many :passkeys, dependent: :delete_all
+  encrypts :otp_secret
 
   ROLES = %w[owner admin member].freeze
   ROLE_LABELS = LocalizedLabel.for("labels.user_roles", ROLES)

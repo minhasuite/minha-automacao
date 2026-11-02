@@ -4546,9 +4546,45 @@ CREATE UNIQUE INDEX index_system_logs_on_digest ON public.system_logs USING btre
 CREATE INDEX index_system_logs_on_last_at ON public.system_logs USING btree (last_at);
 
 
+--
+-- Name: passkeys; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.passkeys (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    name character varying NOT NULL,
+    credential_id character varying NOT NULL,
+    public_key text NOT NULL,
+    sign_count bigint DEFAULT 0 NOT NULL,
+    last_used_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+ALTER TABLE ONLY public.passkeys
+    ADD CONSTRAINT passkeys_pkey PRIMARY KEY (id);
+
+CREATE UNIQUE INDEX index_passkeys_on_credential_id ON public.passkeys USING btree (credential_id);
+
+CREATE INDEX index_passkeys_on_user_id ON public.passkeys USING btree (user_id);
+
+ALTER TABLE ONLY public.passkeys
+    ADD CONSTRAINT fk_rails_onda_a2_passkeys_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE public.users ADD COLUMN otp_secret text;
+
+ALTER TABLE public.users ADD COLUMN otp_enabled_at timestamp(6) without time zone;
+
+ALTER TABLE public.users ADD COLUMN otp_last_step bigint;
+
+ALTER TABLE public.users ADD COLUMN otp_recovery jsonb DEFAULT '[]'::jsonb NOT NULL;
+
+
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102300002'),
 ('20261102300001'),
 ('20261102200005'),
 ('20261102200004'),

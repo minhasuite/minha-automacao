@@ -1,0 +1,13 @@
+<% content_for :title, "#{t("security.login.title")} — Minha Automação" %>
+<div class="text-center">
+  <span class="inline-flex size-12 items-center justify-center rounded-full bg-accent/10 text-accent"><%= icon("shield-check", "size-6") %></span>
+  <h1 class="text-2xl mt-2"><%= t("security.login.title") %></h1>
+  <p class="text-sm text-muted mt-1"><%= t("security.login.lead") %></p>
+</div>
+<%= form_with url: login_mfa_path, class: "mt-6 space-y-4" do %>
+  <div><label for="code" class="ss-label"><%= t("security.totp.code") %></label>
+    <input id="code" name="code" class="ss-input num text-center text-xl tracking-widest" inputmode="numeric" autocomplete="one-time-code" required autofocus></div>
+  <button class="ss-btn ss-btn-primary w-full min-h-12"><%= t("security.login.submit") %></button>
+<% end %>
+<p class="mt-4 text-xs text-muted text-center"><%= t("security.login.recovery_hint") %></p>
+<p class="mt-4 text-sm text-center"><%= link_to t("security.login.back"), login_path, class: "text-accent font-bold" %></p>

@@ -32,6 +32,11 @@ Rails.application.routes.draw do
   get "entrar", to: "web/sessions#new", as: :login
   post "entrar", to: "web/sessions#create"
   post "entrar/google", to: "web/sessions#google", as: :google_login
+  # ondaA2 A16: segunda etapa e entrar com passkey.
+  get "entrar/codigo", to: "web/sessions#mfa", as: :login_mfa
+  post "entrar/codigo", to: "web/sessions#verify_mfa"
+  get "entrar/passkey", to: "web/sessions#passkey_options", as: :login_passkey
+  post "entrar/passkey", to: "web/sessions#passkey"
   get "criar-conta", to: "web/sessions#new_signup", as: :signup
   post "criar-conta", to: "web/sessions#signup"
   delete "sair", to: "web/sessions#destroy", as: :logout
@@ -229,6 +234,13 @@ Rails.application.routes.draw do
     post "configuracoes/saude/ignorar", to: "health#ignore", as: :settings_health_ignore
     post "configuracoes/saude/reparar", to: "health#repair", as: :settings_health_repair
     get "configuracoes/hardware", to: "hardware#show", as: :settings_hardware
+    get "configuracoes/seguranca", to: "security#show", as: :settings_security
+    post "configuracoes/seguranca/totp", to: "security#enable_totp", as: :settings_security_totp
+    delete "configuracoes/seguranca/totp", to: "security#disable_totp"
+    post "configuracoes/seguranca/recuperacao", to: "security#recovery", as: :settings_security_recovery
+    get "configuracoes/seguranca/passkeys/opcoes", to: "security#passkey_options", as: :settings_passkey_options
+    post "configuracoes/seguranca/passkeys", to: "security#create_passkey", as: :settings_passkeys
+    delete "configuracoes/seguranca/passkeys/:id", to: "security#destroy_passkey", as: :settings_passkey
     get "configuracoes/logs", to: "logs#show", as: :settings_logs
     delete "configuracoes/logs", to: "logs#destroy"
     post "configuracoes/hardware/:acao", to: "hardware#power", as: :settings_hardware_power

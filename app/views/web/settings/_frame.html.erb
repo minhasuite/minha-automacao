@@ -13,6 +13,7 @@
              [ t("settings.nav.remote"), settings_remote_path, "globe", :remote, current_user.admin? ],
              [ t("settings.nav.plan"), settings_plan_path, "badge-check", :plan, current_user.admin? ],
              [ t("settings.nav.account"), settings_account_path, "user-group", :account, true ],
+             [ t("security.nav"), settings_security_path, "shield-check", :security, true ],
              [ t("settings.nav.push"), push_subscriptions_path, "bell", :push, true ] ] %>
 <div class="lg:grid lg:grid-cols-[13rem_1fr] lg:gap-6 lg:items-start">
   <nav class="ss-subnav" aria-label="<%= t("settings.nav.label") %>">

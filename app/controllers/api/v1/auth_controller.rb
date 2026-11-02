@@ -18,10 +18,13 @@ module Api
         issue(user, :created)
       end
 
-      # POST /auth/login { email, password, device_name? }
+      # POST /auth/login { email, password, otp?, device_name? } — com duas etapas
+      # ligada, sem `otp` responde 401 mfa_required (o app pede o código e repete).
       def login
         user = User.find_by(email: params[:email].to_s.strip.downcase)
         if user&.password_digest.present? && !user.disabled? && user.authenticate(params[:password].to_s)
+          return if mfa_refused?(user)
+
           issue(user, :created)
         else
           BCrypt::Password.create("timing") unless user # iguala o tempo de resposta
@@ -36,6 +39,7 @@ module Api
 
         user = User.from_google!(params[:id_token])
         return render_error(:account_disabled, "Esta conta está desativada.", status: :forbidden) if user.disabled?
+        return if mfa_refused?(user)
 
         issue(user, :created)
       rescue Google::Auth::IDTokens::VerificationError
@@ -95,6 +99,14 @@ module Api
       def forgot_throttled?(email)
         count = Rails.cache.increment("password_forgot/#{Digest::SHA256.hexdigest(email)}", 1, expires_in: 1.hour)
         count.to_i > FORGOT_PER_EMAIL_HOUR
+      end
+
+      def mfa_refused?(user)
+        return false unless Mfa.required?(user)
+        return false if params[:otp].present? && Mfa.verify(user, params[:otp])
+
+        params[:otp].blank? ? render_error(:mfa_required, "Informe o código de verificação.", status: :unauthorized) : render_error(:invalid_otp, "Código de verificação inválido.", status: :unauthorized)
+        true
       end
 
       def issue(user, status)

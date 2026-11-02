@@ -1,0 +1,77 @@
+<%= render "web/shared/header", title: t("settings.title"), subtitle: t("security.subtitle") %>
+<%= render layout: "web/settings/frame", locals: { current: :security } do %>
+<% on = Mfa::Totp.enabled?(@user) %>
+<% if @codes %>
+  <section class="ss-card ss-card-pad border-2 border-accent" aria-labelledby="codes-t" data-security="codes">
+    <h2 id="codes-t" class="flex items-center gap-2"><%= icon("lock-closed", "size-5 text-accent") %><%= t("security.recovery.title") %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("security.recovery.save") %></p>
+    <ul class="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 num text-sm font-bold">
+      <% @codes.each do |c| %><li class="bg-field rounded-lg px-2 py-1.5 text-center"><%= c %></li><% end %>
+    </ul>
+    <div class="mt-3" data-controller="clipboard">
+      <textarea class="sr-only" data-clipboard-target="source" aria-hidden="true" tabindex="-1" readonly><%= @codes.join("\n") %></textarea>
+      <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="clipboard#copy"><%= icon("duplicate", "size-4") %><span><%= t("security.recovery.copy") %></span></button>
+    </div>
+  </section>
+<% end %>
+
+<section class="ss-card ss-card-pad <%= "mt-4" if @codes %>" aria-labelledby="totp-t" data-security="totp">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 id="totp-t" class="flex items-center gap-2"><%= icon("device-mobile", "size-5 text-accent") %><%= t("security.totp.title") %></h2>
+    <span class="ss-badge <%= on ? "ss-badge-success" : "ss-badge-muted" %>"><%= on ? t("security.on") : t("security.off") %></span>
+  </div>
+  <p class="text-sm text-muted mt-1"><%= t("security.totp.pitch") %></p>
+  <% if on %>
+    <p class="text-sm text-ink mt-3"><%= t("security.recovery.left", count: Array(@user.otp_recovery).size) %></p>
+    <div class="mt-3 flex flex-wrap items-end gap-3">
+      <%= button_to t("security.recovery.renew"), settings_security_recovery_path, class: "ss-btn ss-btn-outline", form: { data: { turbo_confirm: t("security.recovery.renew_confirm") } } %>
+      <%= form_with url: settings_security_totp_path, method: :delete, class: "flex flex-wrap items-end gap-2" do %>
+        <div><label for="off-code" class="ss-label"><%= t("security.totp.code") %></label>
+          <input id="off-code" name="code" class="ss-input num w-36" inputmode="numeric" autocomplete="one-time-code" required></div>
+        <button class="ss-btn ss-btn-danger"><%= t("security.totp.disable") %></button>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="mt-3 grid gap-4 sm:grid-cols-[12rem_1fr] items-start">
+      <div class="bg-white rounded-xl p-2 w-48 max-w-full" role="img" aria-label="<%= t("security.totp.qr") %>"><%= qr_svg(Mfa::Totp.uri(@secret, @user.email)) %></div>
+      <div class="min-w-0">
+        <ol class="text-sm text-ink list-decimal pl-5 space-y-1">
+          <li><%= t("security.totp.step1") %></li>
+          <li><%= t("security.totp.step2") %> <code class="num text-xs bg-field rounded px-1 break-all"><%= @secret.scan(/.{1,4}/).join(" ") %></code></li>
+          <li><%= t("security.totp.step3") %></li>
+        </ol>
+        <%= form_with url: settings_security_totp_path, class: "mt-3 flex flex-wrap items-end gap-2" do %>
+          <div><label for="on-code" class="ss-label"><%= t("security.totp.code") %></label>
+            <input id="on-code" name="code" class="ss-input num w-36" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></div>
+          <button class="ss-btn ss-btn-primary"><%= icon("shield-check", "size-4") %><%= t("security.totp.enable") %></button>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</section>
+
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="pk-t" data-security="passkeys"
+         data-controller="passkey" data-passkey-options-value="<%= settings_passkey_options_path %>" data-passkey-url-value="<%= settings_passkeys_path %>">
+  <h2 id="pk-t" class="flex items-center gap-2"><%= icon("finger-print", "size-5 text-accent") %><%= t("security.passkeys.title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("security.passkeys.pitch") %></p>
+  <% if @user.passkeys.any? %>
+    <ul class="mt-3 divide-y divide-line">
+      <% @user.passkeys.order(:created_at).each do |p| %>
+        <li class="py-2 flex flex-wrap items-center justify-between gap-2">
+          <div class="min-w-0"><p class="font-semibold text-ink break-words"><%= p.name %></p>
+            <p class="text-xs text-muted"><%= t("security.passkeys.added_at", at: l(p.created_at, format: :short)) %><%= " · #{t('security.passkeys.used_at', at: l(p.last_used_at, format: :short))}" if p.last_used_at %></p></div>
+          <%= button_to settings_passkey_path(p), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("security.passkeys.remove_of", name: p.name),
+                        form: { data: { turbo_confirm: t("security.passkeys.remove_confirm", name: p.name) } } do %><%= icon("trash", "size-4") %><%= t("security.passkeys.remove") %><% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <form class="mt-3 flex flex-wrap items-end gap-2" data-action="passkey#register">
+    <div><label for="pk-name" class="ss-label"><%= t("security.passkeys.name") %></label>
+      <input id="pk-name" class="ss-input" data-passkey-target="name" maxlength="60" placeholder="<%= t("security.passkeys.name_ph") %>"></div>
+    <button class="ss-btn ss-btn-primary"><%= icon("plus", "size-4") %><%= t("security.passkeys.add") %></button>
+  </form>
+  <p class="text-sm text-danger mt-2" data-passkey-target="error" role="alert" hidden></p>
+  <p class="text-sm text-muted mt-2" data-passkey-target="unsupported" hidden><%= t("security.passkeys.unsupported") %></p>
+</section>
+<% end %>

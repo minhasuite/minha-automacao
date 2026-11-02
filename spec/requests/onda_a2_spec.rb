@@ -188,4 +188,110 @@ b [tuya] falha
       expect(response).to have_http_status(:not_found)
     end
   end
+
+  describe "A16 duas etapas (TOTP) e passkeys" do
+    def totp_now(secret) = Mfa::Totp.code(secret, Time.now.to_i / 30)
+
+    it "TOTP segue a RFC 6238 e a base32" do
+      secret = Mfa::Totp.base32("12345678901234567890")
+      expect(secret).to eq("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ")
+      expect(Mfa::Totp.code(secret, 59 / 30)).to eq("287082")
+      expect(Mfa::Totp.unbase32(secret)).to eq("12345678901234567890")
+      expect(Mfa::Totp.uri(secret, "a@b.c")).to start_with("otpauth://totp/Minha%20Automa%C3%A7%C3%A3o%3Aa%40b.c?secret=GEZD")
+    end
+
+    it "liga pelo QR, pede o código no login (web e API), aceita recuperação uma vez e desliga" do
+      sign_in
+      get "/configuracoes/seguranca"
+      secret = response.body[/<code[^>]*>([A-Z2-7 ]+)<\/code>/, 1].delete(" ")
+      post "/configuracoes/seguranca/totp", params: { code: "000000" }
+      expect(flash[:alert]).to eq("Código inválido.")
+      post "/configuracoes/seguranca/totp", params: { code: totp_now(secret) }
+      follow_redirect!
+      codes = response.body.scan(/<li class="bg-field[^>]*>([a-z0-9-]{11})<\/li>/).flatten
+      expect(codes.size).to eq(10)
+      expect(user.reload.otp_enabled_at).to be_present
+
+      delete "/sair"
+      sign_in
+      expect(response).to redirect_to("/entrar/codigo")
+      get "/"
+      expect(response).to redirect_to(%r{/entrar})
+      post "/entrar/codigo", params: { code: "123456" }
+      expect(response).to have_http_status(:unprocessable_content)
+      post "/entrar/codigo", params: { code: totp_now(secret) }
+      expect(response).to redirect_to("/")
+      delete "/sair"
+      sign_in
+      post "/entrar/codigo", params: { code: totp_now(secret) }
+      expect(response).to have_http_status(:unprocessable_content) # o mesmo código não vale de novo
+      post "/entrar/codigo", params: { code: codes.first }
+      expect(response).to redirect_to("/")
+      expect(user.reload.otp_recovery.size).to eq(9)
+
+      post "/api/v1/auth/login", params: { email: user.email, password: "12345678" }
+      expect(response.parsed_body.dig("error", "code")).to eq("mfa_required")
+      post "/api/v1/auth/login", params: { email: user.email, password: "12345678", otp: codes.first }
+      expect(response.parsed_body.dig("error", "code")).to eq("invalid_otp")
+      post "/api/v1/auth/login", params: { email: user.email, password: "12345678", otp: codes.second }
+      expect(response).to have_http_status(:created)
+
+      delete "/configuracoes/seguranca/totp", params: { code: codes.third }
+      expect(user.reload.otp_enabled_at).to be_nil
+      expect(Mfa.required?(user)).to be(false)
+    end
+
+    it "fator de MFA de plugin falso entra sem mudar o núcleo" do
+      fake = Module.new do
+        def self.enabled?(u) = u.name.start_with?("Teste")
+        def self.verify!(_u, code) = code == "424242"
+      end
+      stub_const("Mfa::TesteSms", fake)
+      stub_const("Mfa::FACTORS", Mfa::FACTORS + [ "TesteSms" ])
+      user.update!(name: "Teste Ana")
+      sign_in
+      expect(response).to redirect_to("/entrar/codigo")
+      post "/entrar/codigo", params: { code: "424242" }
+      expect(response).to redirect_to("/")
+    end
+
+    it "passkey: cadastra logado e entra sem senha; assinatura errada ou contador repetido não entram" do
+      key = OpenSSL::PKey::EC.generate("prime256v1")
+      rp = "www.example.com"
+      auth = ->(count) { Digest::SHA256.digest(rp) + [ 0x05 ].pack("C") + [ count ].pack("N") }
+      client = ->(type, ch) { { type: type, challenge: ch, origin: "http://#{rp}" }.to_json }
+      b = ->(x) { Passkeys.b64(x) }
+
+      sign_in
+      get "/configuracoes/seguranca/passkeys/opcoes"
+      opts = response.parsed_body
+      expect(opts.dig("rp", "id")).to eq(rp)
+      post "/configuracoes/seguranca/passkeys", as: :json, params: { id: "cred-1", name: "Teste Chave", clientDataJSON: b.(client.("webauthn.create", opts["challenge"])),
+                                                                     authenticatorData: b.(auth.(0)), publicKey: b.(key.public_to_der) }
+      expect(response.parsed_body["redirect"]).to eq("/configuracoes/seguranca")
+      expect(user.passkeys.pluck(:name)).to eq([ "Teste Chave" ])
+
+      delete "/sair"
+      login = lambda do |count, signer = key|
+        get "/entrar/passkey"
+        cd = client.("webauthn.get", response.parsed_body["challenge"])
+        ad = auth.(count)
+        post "/entrar/passkey", as: :json, params: { id: "cred-1", clientDataJSON: b.(cd), authenticatorData: b.(ad),
+                                                     signature: b.(signer.sign("SHA256", ad + Digest::SHA256.digest(cd))) }
+      end
+      login.(1, OpenSSL::PKey::EC.generate("prime256v1"))
+      expect(response).to have_http_status(:unauthorized)
+      login.(1)
+      expect(response.parsed_body["redirect"]).to eq("/")
+      get "/configuracoes/seguranca"
+      expect(response.body).to include("Teste Chave", "usada")
+      delete "/sair"
+      login.(1)
+      expect(response).to have_http_status(:unauthorized)
+
+      sign_in
+      delete "/configuracoes/seguranca/passkeys/#{user.passkeys.first.id}"
+      expect(user.passkeys.count).to eq(0)
+    end
+  end
 end
