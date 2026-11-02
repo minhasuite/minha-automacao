@@ -93,6 +93,29 @@ ou `key` do ponto.
 | `weather` (plugin) | `bind` (ponto `weather` da integração Clima), `forecast` (`daily` padrão, `hourly`, `none`) | condição, temperatura, sensação, umidade, vento e chance de chuva de agora, e 5 dias ou 8 horas de previsão |
 | `media` (plugin, Pacote 1) | `bind` (ponto `media`; serve também para o `speaker` da Echo) | situação, título, artista/app, ligar/desligar, anterior/tocar-pausar/próxima, volume −/mudo/+, barra de volume e "Tocar" (`play_media`); só aparecem os controles que o ponto aceita (`Points::Command.commands_for`, cortado pelo `address.supports`). O painel automático e a página do ponto usam este widget para a capacidade `media` (`describe auto:`) |
 | `remote` (plugin, Pacote 1) | `bind` (ponto `remote`) | um botão por código aprendido (`send`) e "Aprender botão" (`learn`, até 20 s) para quem comanda |
+| `energy_flow` (plugin) | `grid`, `solar`, `battery`, `battery_soc`, `home` (pontos de potência, id ou chave; rede ou solar obrigatório), `grid_invert`, `battery_invert` | fluxo de energia de agora: rede, solar e bateria para a casa, linhas animadas na direção e na velocidade da potência (`EnergyFlowWidget.split`, na ordem do HA: solar → casa → bateria → rede); rede positiva = comprando, bateria positiva = descarregando; sem `home`, a casa é o que sobra; "% da casa sem a rede" |
+| `energy_breakdown` (plugin) | `binds` (opcional; vazio = todos os pontos de energia/potência do local, sem helpers), `period` (`today`/`week`/`month`), `limit` (3–20, padrão 8), `tariff` ou `tariff_point` | consumo por aparelho: ranking em kWh com custo e fatia; por aparelho vale o ponto kWh e, sem ele, o de W; o resto vira "Outros" |
+| `energy_compare` (plugin) | `binds`, `tariff` ou `tariff_point` | hoje, esta semana e este mês contra o mesmo trecho do período anterior, com barras, variação e custo |
+| `map` (plugin) | `track` (padrão true), `height` (180–800 px) | mapa (Leaflet + OpenStreetMap) com pessoas, zonas e o trajeto do dia; só morador para cima recebe os dados (`Maps::MIN_ROLE`; os outros veem o aviso, sem coordenada no JSON) |
+
+Tarifa por horário (tarifa branca): `tariff_point` apontando para um helper
+**Tarifa de energia** faz o custo dos widgets de energia sair hora a hora
+pelo preço daquela hora (`price_at`); com número ou helper Número, kWh × preço.
+
+### Painel pronto (predefinições)
+
+Painéis do local → **Painel pronto** (`/locais/:id/paineis/prontos`, técnico
+ou dono) monta um painel publicado a partir de pontos escolhidos, só com
+widgets comuns. A **Energia** pede rede, solar, bateria, carga da bateria,
+medidores de consumo, tarifa (helper ou fixa) e meta, e cria: Agora
+(`energy_flow` e `energy` do mês com meta, projeção e comparação),
+Comparação (`energy` de hoje e `energy_compare`), Por aparelho
+(`energy_breakdown`) e Potência (`chart` de 24 h). Predefinição nova =
+classe em `Dashboards::Presets` (herda de `Base`: `describe key:, title:,
+icon:, description:`, `fields` com `kind` `:point`/`:points`/`:number`/`:text`
+e `filter`, `errors(site, form)` e `build(site, form)` → definição) + nome em
+`PLUGINS`; a tela e a criação não mudam (spec com `stub_const` em
+`spec/requests/paridade_energia_spec.rb`).
 
 `query` (Lote 4: `Points::Query`, o mesmo das expressões e do Liquid):
 `capability` (uma ou lista), `state` (`on`: verdadeiro, `open`; `off`: o

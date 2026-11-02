@@ -97,7 +97,9 @@ câmera de nuvem com vídeo sob demanda (`Plugin.stream_url`, Tuya) e
 `Site#points_stream`, `?view=app` nos pontos, quadro da câmera, resposta de
 aviso pela API, FCM só de dados no Android e a integração "App do celular"
 (`MobileAppPlugin`: bateria, carregando, Wi-Fi e presença como pontos;
-`docs/app.md`).
+`docs/app.md`). + **Paridade HA (vendas)**: Diário e Histórico da
+instalação, painel de Energia por plugins (tarifa branca, fluxo, ranking,
+comparação, painel pronto), Mapa e o assistente "Migre do HA em 10 minutos".
 
 ## Rodar
 
@@ -563,6 +565,19 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `KEYS`), serializers com `params: { reveal: }` (padrão é ocultar) e
   `reveal_sensitive?` na tela. Echo: ponto novo = linha em
   `Alexa::State::POINTS`.
+- **Paridade com o HA (roadmap de vendas, compat)**: Diário = fontes em
+  `Logbook::SOURCES` (`describe` + `fetch(filtro)`; cadastro técnico+,
+  entradas só dono; cena acionada vira evento `scene`, entrada na web/app
+  vira AuditEvent `login`), Histórico de vários pontos pelo
+  `Points::Overlay` (`docs/diario-historico.md`). Energia: helper `tariff`
+  (tarifa branca; widget de energia com `tariff_point` nele cobra hora a
+  hora pelo `price_at`), widgets `energy_flow`/`energy_breakdown`/
+  `energy_compare` e predefinição de painel em `Dashboards::Presets`.
+  Mapa: `Maps` (só morador para cima, `Maps::MIN_ROLE`), widget `map`,
+  Leaflet 1.9.4 por importmap (só carrega com mapa na tela), trajeto no
+  atributo `track` do "Presença" do app (some com a coordenada). Assistente
+  "Migre do HA" (`Integrations::HaMigration`, `HaMigrationJob`) por cima
+  do `HomeAssistantImport` (progresso por `STEPS`); spec só com HA falso.
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

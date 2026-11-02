@@ -36,6 +36,14 @@ valor **ou os atributos** de uma fonte mudam (`Point#report_attrs!` chama
 
 - Widget **Pessoas** (`people`): todas as pessoas (ou só as de `zone`), com a zona e desde quando.
 - `GET /api/v1/sites/:id/people`: pessoas e `meta.zones` (contagem). Nunca coordenadas.
+- **Mapa** (`/mapa`, widget `map`, `GET /api/v1/sites/:id/map`): zonas em
+  círculo, pessoas pela coordenada exata do rastreador (ou no centro da zona
+  em que estão, marcado como aproximado) e o **trajeto do dia** (atributo
+  `track` do "Presença" do app: um ponto a cada 30 m andados, só de hoje, até
+  288). Leaflet 1.9.4 por importmap e tiles do OpenStreetMap, carregados só
+  quando há mapa na tela. Só **morador para cima** vê (`Maps::MIN_ROLE`):
+  visitante e operador recebem 403 na tela e na API e o widget vem sem
+  coordenada; chave de integração não lê.
 
 ## Privacidade
 
@@ -44,7 +52,8 @@ valor **ou os atributos** de uma fonte mudam (`Point#report_attrs!` chama
 - Configurações da integração "App do celular": **Guardar a localização exata
   por (horas)** (padrão 24, até 720). Depois disso sem leitura nova, o
   `MobileAppPlugin.tick` (a cada minuto) apaga latitude, longitude e precisão;
-  ficam a distância de casa e a zona. `0` = nunca grava a coordenada.
+  ficam a distância de casa e a zona. `0` = nunca grava a coordenada. O
+  trajeto do dia (`track`) só existe com a coordenada exata e some junto.
 - Pessoa e zona guardam só o nome da zona e o nome da fonte que decidiu.
 - A API de pontos não mostra atributos; o app do celular manda a localização
   só com a permissão da pessoa (Mais → Sensores do celular).

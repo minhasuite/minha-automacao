@@ -6,29 +6,6 @@ require "rails_helper"
 RSpec.describe "Assistente Migre do HA" do
   include ActiveJob::TestHelper
 
-  # HA falso: responde pelos caminhos REST e comandos WebSocket da fixture.
-  class FakeHaTransport
-    attr_reader :calls
-
-    def initialize(fixture, fail_on: nil)
-      @fx = fixture
-      @fail_on = fail_on
-      @calls = []
-    end
-
-    def get(path)
-      @calls << path
-      raise Integrations::Error, "HTTP 500" if path == @fail_on
-
-      @fx["rest"].fetch(path) { raise Integrations::Error, "HTTP 404" }
-    end
-
-    def ws(type)
-      @calls << type
-      @fx["ws"].fetch(type)
-    end
-  end
-
   let(:user) { create(:user) }
   let(:tenant) { user.tenant }
   let!(:site) { within(tenant) { create(:site, name: "Casa Teste") } }
@@ -131,7 +108,7 @@ RSpec.describe "Assistente Migre do HA" do
     integration = within(tenant) { plugin.new_integration(site, name: "HA", poll_s: 0).tap { |i| plugin.configure(i, { url: "http://ha.teste:8123", token: "tk" }) && i.save! } }
     msgs = [ { "type" => "auth_required" }, { "type" => "auth_ok" }, { "id" => 1, "type" => "result", "success" => true, "result" => [ { "id" => "sala" } ] } ]
     sent = []
-    ws = double("ws")
+    ws = instance_double(WsClient)
     allow(ws).to receive(:read_json) { msgs.shift }
     allow(ws).to receive(:send_json) { |m| sent << m }
     allow(WsClient).to receive(:open).with("ws://ha.teste:8123/api/websocket", timeout: 15).and_yield(ws)

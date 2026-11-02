@@ -45,6 +45,36 @@ Como funciona por dentro:
 - A execução guarda `shadow` (aparece no trace com o ícone de lua); quem é
   disparado por ela (script, evento, fim de automação) herda a sombra.
 
+## Assistente "Migre do HA em 10 minutos"
+
+Integrações → **Migrar do Home Assistant** (`/locais/:id/migrar-do-ha`,
+técnico ou dono), por cima do `HomeAssistantImport`:
+
+1. **Conectar**: endereço do HA e um token de acesso longo (perfil do HA →
+   Segurança). Ficam na integração `home_assistant` (a mesma do comparador;
+   token cifrado). HA na rede de casa precisa estar na lista de liberados do
+   `SafeHttp` (Configurações → Sistema). Testa `GET /api/` na hora.
+2. **Revisar e escolher** (`HaMigrationJob` `fetch`): lê só para leitura
+   (`Integrations::HaMigration.fetch`: REST `/api/states` e
+   `/api/config/{automation,script,scene}/config/<id>`; WebSocket
+   `config/{area,device,entity,label}_registry/list` e `config_entries/get`)
+   e mostra áreas, aparelhos já reconhecidos, entidades, helpers, automações
+   (ligada ou desligada no HA), scripts e cenas, cada item com caixa de
+   marcar. Nada é gravado aqui; os arquivos não ficam guardados.
+3. **Importar** (`HaMigrationJob` `import`): lê de novo, filtra pelo
+   escolhido (`HaMigration.select`) e roda o importador com o progresso por
+   passo (`HomeAssistantImport::STEPS`). Tudo em sombra.
+4. **Conferir**: o que veio (contagens), o que virou blueprint (com ou sem
+   perda e as notas) e o que ficou de fora e por quê (aparelho do HA sem
+   equivalente, entidade sem ponto, helper que não converteu, entidade de
+   cena perdida, item que não importou). Rodar de novo não duplica.
+
+O estado fica em `integrations.settings["migration"]` (`status`:
+`fetching`/`preview`/`importing`/`done`/`failed`). Spec com um HA falso no
+lugar do transporte (`spec/support/fake_ha_transport.rb`, fixture
+`spec/fixtures/files/ha_migracao.json`); nunca conecta num HA de verdade.
+O `/api/states` passa pelo limite de 2 MB do `SafeHttp`.
+
 ## Passo a passo (Home Assistant)
 
 1. **Ponha o local em sombra** antes de qualquer importação.

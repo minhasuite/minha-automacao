@@ -65,6 +65,13 @@ padrão sim; não = volta ao inicial quando o worker sobe, `HelperTypes.boot!`).
   (a mesma `address.sources`, com o id do conjunto); erro = "Com erro",
   conjunto excluído = indisponível.
 
+- **Tarifa de energia** (`tariff`): preço base do kWh e faixas por horário,
+  uma por linha (`Ponta 18:00-21:00 = 1,35`; nome opcional, pode passar da
+  meia-noite), só em dias úteis por padrão (tarifa branca). O valor é o
+  preço de agora (R$/kWh; o relógio dos helpers refaz a cada minuto) e o
+  atributo `band` é a faixa; `HelperTypes::Tariff.price_at(ponto, hora)`
+  serve aos widgets de energia (custo hora a hora). Feriado conta como dia útil.
+
 ### Pacote 2: helpers de medição (como os do HA)
 
 Valem para todos: a origem é um ponto numérico do local; o estado interno
