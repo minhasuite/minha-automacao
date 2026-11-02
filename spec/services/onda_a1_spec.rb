@@ -528,4 +528,48 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect(lamp.reload.value).to be false
     end
   end
+
+  describe "A8 editor em YAML compatível com o HA" do
+    let(:dev) { create(:device, site: site) }
+    let!(:mov) { create(:point, site: site, device: dev, name: "Movimento", key: "sala.movimento", capability: "motion", value: false) }
+    let!(:lamp) { create(:point, site: site, device: dev, name: "Luz", key: "sala.luz", value: false) }
+
+    before { ExternalRef.link!(site, "home_assistant", "light.sala", kind: "entity", target: lamp) }
+
+    it "o rascunho daqui vai e volta em YAML" do
+      d = { "triggers" => [ { "type" => "state", "point" => mov.id, "to" => true } ], "conditions" => [], "actions" => [ { "type" => "command", "point" => lamp.id, "command" => "on" } ] }
+      text = Automations::Yaml.dump(d, site)
+      expect(text).to include("point: sala.movimento")
+      back, notes = Automations::Yaml.load(text, site)
+      expect(Automations::Dsl.normalize(back, site)).to eq(d)
+      expect(notes).to be_empty
+    end
+
+    it "YAML do HA colado vira a DSL, com a entidade virando ponto e o template do HA aceito" do
+      ha = <<~YAML
+        alias: Movimento acende
+        mode: restart
+        triggers:
+          - trigger: state
+            entity_id: binary_sensor.sala_movimento
+            to: "on"
+        conditions:
+          - condition: template
+            value_template: "{{ is_state('light.sala', 'off') }}"
+        actions:
+          - action: light.turn_on
+            target: { entity_id: light.sala }
+          - delay: { minutes: 2 }
+          - action: light.turn_off
+            target: { entity_id: light.sala }
+      YAML
+      d, _notes = Automations::Yaml.load(ha, site)
+      expect(d["actions"].first).to include("type" => "command", "point" => "sala.luz", "command" => "on")
+      expect(d["actions"][1]).to include("type" => "wait", "for" => "2m")
+      expect(d["conditions"].first["expr"]).to include("sala.luz")
+      expect(d["triggers"].first["point"]).to eq("binary_sensor.sala_movimento") # sem ponto ligado: a validação aponta
+      expect { Automations::Yaml.load("- a\n- b", site) }.to raise_error(Automations::Yaml::Error)
+      expect { Automations::Yaml.load("a: [", site) }.to raise_error(Automations::Yaml::Error, /YAML inválido/)
+    end
+  end
 end

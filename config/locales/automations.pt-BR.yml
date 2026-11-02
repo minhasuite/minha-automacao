@@ -587,6 +587,9 @@ pt-BR:
       now: "agora %{value}"
       current: "Valor atual"
     json:
+      format: "Formato"
+      yaml_hint: "Escreva no formato daqui ou cole o YAML de uma automação ou script do Home Assistant (o \"Editar em YAML\" de lá): ele é convertido na hora, com as entidades viradas pontos e os templates do HA aceitos."
+      converted: "Convertido do HA; confira: %{list}."
       title: "JSON do rascunho"
       subtitle: "%{name} · DSL de automação (docs/automacoes.md). Pontos pela chave; validado antes de salvar."
       not_saved: "O JSON não foi salvo:"

@@ -129,22 +129,27 @@ module Web
       redirect_to edit_automation_path(@automation, anchor: "campos"), alert: t("automations.flash.bad_default", error: e.message)
     end
 
+    # ondaA1 (A8): o mesmo editor em YAML (`formato=yaml`), que também aceita
+    # o YAML de automação ou script do HA colado (Automations::Yaml).
     def json
       load_automation(:manage)
-      @text = JSON.pretty_generate(Automations::Dsl.with_keys(@automation.working_draft, @site))
+      @yaml = params[:formato] == "yaml"
+      @text = @yaml ? Automations::Yaml.dump(@automation.working_draft, @site) : JSON.pretty_generate(Automations::Dsl.with_keys(@automation.working_draft, @site))
     end
 
     def update_json
       load_automation(:manage)
+      @yaml = params[:formato] == "yaml"
       @text = params[:definition].to_s
-      parsed = Automations::Dsl.normalize(JSON.parse(@text), @site)
+      raw, notes = @yaml ? Automations::Yaml.load(@text, @site, script: @automation.script?) : [ JSON.parse(@text), [] ]
+      parsed = Automations::Dsl.normalize(raw, @site)
       @errors = @automation.errors_in(parsed)
       return render(:json, status: :unprocessable_content) if @errors.any?
 
       @automation.update!(draft: parsed)
-      redirect_to edit_automation_path(@automation), notice: t("automations.flash.json_saved")
-    rescue JSON::ParserError => e
-      @errors = [ t("automations.flash.bad_json", error: e.message.truncate(160)) ]
+      redirect_to edit_automation_path(@automation), notice: [ t("automations.flash.json_saved"), (t("automations.json.converted", list: notes.first(5).join("; ")) if notes.any?) ].compact.join(" ")
+    rescue JSON::ParserError, Automations::Yaml::Error => e
+      @errors = [ e.is_a?(JSON::ParserError) ? t("automations.flash.bad_json", error: e.message.truncate(160)) : e.message ]
       render :json, status: :unprocessable_content
     end
 

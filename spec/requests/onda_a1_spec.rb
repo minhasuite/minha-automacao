@@ -109,4 +109,20 @@ RSpec.describe "Web ondaA1: paridade HA" do
     delete "/locais/#{site.id}/agenda/eventos/#{cal.id}/#{ev['uid']}"
     expect(within(tenant) { cal.reload.address["local"] }).to be_empty
   end
+
+  it "A8: aba YAML do editor mostra o rascunho e aceita o YAML do HA" do
+    a, lamp = within(tenant) do
+      dev = create(:device, site: site, name: "Teste aparelho")
+      lamp = create(:point, site: site, device: dev, name: "Teste luz", key: "teste.luz", value: false)
+      [ site.automations.create!(name: "Teste yaml"), lamp ]
+    end
+    get "/automacoes/#{a.id}/json", params: { formato: "yaml" }
+    expect(response.body).to include("YAML", "Home Assistant")
+    yaml = { "triggers" => [ { "trigger" => "time", "at" => "07:30:00" } ], "actions" => [ { "action" => "switch.turn_on", "target" => { "entity_id" => "teste.luz" } } ] }.to_yaml
+    patch "/automacoes/#{a.id}/json", params: { formato: "yaml", definition: yaml }
+    expect(response).to redirect_to("/automacoes/#{a.id}/editar")
+    expect(within(tenant) { a.reload.draft }).to eq("triggers" => [ { "type" => "time", "at" => "07:30" } ], "conditions" => [], "actions" => [ { "type" => "command", "point" => lamp.id, "command" => "on" } ])
+    patch "/automacoes/#{a.id}/json", params: { formato: "yaml", definition: "a: [" }
+    expect(response.body).to include("YAML inválido")
+  end
 end
