@@ -118,11 +118,18 @@ jobs:
           repo=ghcr.io/minhasuite/minha-automacao
           if [ "${{ github.ref_type }}" = tag ]; then
             release="${{ github.ref_name }}"; tags=("$release" latest-stable)
+            # O cache do podman do runner ignora a mudança de --build-arg e reaproveitaria a
+            # camada do build do master (RELEASE_TAG vazio): um arquivo no contexto muda o COPY.
+            echo "$release" > RELEASE
           else
             release=""; tags=(latest "sha-${{ github.sha }}")
           fi
           docker build -f Dockerfile.prod --build-arg "GIT_SHA=${{ github.sha }}" --build-arg "RELEASE_TAG=$release" \
             "${tags[@]/#/-t$repo:}" .
+          if [ -n "$release" ]; then
+            got=$(docker run --rm --entrypoint printenv "$repo:$release" RELEASE_TAG || true)
+            [ "$got" = "$release" ] || { echo "imagem saiu com RELEASE_TAG='$got'"; exit 1; }
+          fi
           for t in 1 2 3; do
             ok=1
             for tag in "${tags[@]}"; do docker push "$repo:$tag" || { ok=0; break; }; done
