@@ -32,10 +32,11 @@ module Dashboards
       elapsed = @now - from
       projection = elapsed >= 1.hour ? (used / elapsed * (to - from)).round(2) : nil
       tariff = tariff_value
+      cost = cost(hourly, from, @now, used)
       goal = @w["goal"].is_a?(Numeric) && @w["goal"].positive? ? @w["goal"].to_f : nil
       data = { "period" => period, "period_label" => period_label(from, to), "from" => from.iso8601, "to" => to.iso8601,
-               "kwh" => used.round(2), "projection_kwh" => projection, "tariff" => tariff,
-               "cost" => tariff && (used * tariff).round(2), "projection_cost" => tariff && projection && (projection * tariff).round(2),
+               "kwh" => used.round(2), "projection_kwh" => projection, "tariff" => tariff, "tariff_band" => (@tariff_point.attrs.to_h["band"] if tou?),
+               "cost" => cost, "projection_cost" => cost && projection && (used.positive? ? (cost / used * projection).round(2) : 0.0),
                "goal" => goal, "goal_ratio" => goal && ((projection || used) / goal).round(3), "bars" => bars(hourly, from, to),
                "point_ids" => @points.map(&:id), "missing" => @points.empty? }
       compare(data, from, elapsed) if @w["compare"]
@@ -85,6 +86,29 @@ module Dashboards
     end
 
     def sum(hourly, from, to) = hourly.sum { |at, kwh| at >= from && at < to ? kwh : 0 }
+
+    # Tarifa por horário (helper Tarifa, tarifa branca): o ponto da tarifa
+    # responde `price_at` e o custo sai hora a hora; senão, kWh × preço.
+    def tou? = @tariff_point&.helper_type.respond_to?(:price_at)
+
+    def cost(hourly, from, to, kwh)
+      return unless (t = tariff_value)
+      return (kwh * t).round(2) unless tou?
+
+      plugin = @tariff_point.helper_type
+      hourly.sum { |at, k| at >= from && at < to ? k * plugin.price_at(@tariff_point, at) : 0 }.round(2)
+    end
+
+    public
+
+    # Custo de `from` a `to` com a mesma tarifa do widget (ranking e comparação).
+    def cost_between(from, to)
+      hourly = kwh_by_hour(from - 1.hour, [ to, @now ].min)
+      kwh = sum(hourly, from, to)
+      [ kwh.round(3), cost(hourly, from, to, kwh) ]
+    end
+
+    private
 
     # {início da hora → kWh} somando os pontos, de `from` até `to` (o trecho
     # atual vem do valor do ponto).

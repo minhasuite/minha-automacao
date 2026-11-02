@@ -1,0 +1,54 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<% d = w["data"] %>
+<% f = d["flows"] || {} %>
+<% has = d["has"] || {} %>
+<% watts = d["watts"] || {} %>
+<% power = ->(v) { v.nil? ? "—" : (v.abs >= 1000 ? "#{number_with_precision(v.abs / 1000.0, precision: 2, strip_insignificant_zeros: true, separator: ',')} kW" : "#{v.abs.round} W") } %>
+<% idle = Dashboards::Widgets::EnergyFlowWidget::IDLE_W %>
+<% dur = ->(v) { (3.2 - (Math.log10([ v, 1 ].max) * 0.7)).clamp(0.45, 3).round(2) } %>
+<% paths = [
+     [ "grid_home", "M48,120 L252,120", "ef-c-grid", has["grid"] ],
+     [ "solar_home", "M150,38 Q150,120 252,120", "ef-c-solar", has["solar"] ],
+     [ "solar_grid", "M150,38 Q150,120 48,120", "ef-c-solar", has["solar"] && has["grid"] ],
+     [ "solar_battery", "M150,38 L150,202", "ef-c-solar", has["solar"] && has["battery"] ],
+     [ "battery_home", "M150,202 Q150,120 252,120", "ef-c-battery", has["battery"] ],
+     [ "grid_battery", "M48,120 Q150,120 150,202", "ef-c-grid", has["grid"] && has["battery"] ]
+   ] %>
+<div class="dw-card ef-card">
+  <div class="flex items-center justify-between gap-2">
+    <p class="dw-card-title"><%= w["label"].presence || "Energia agora" %></p>
+    <span class="dw-ico dw-ico-sm" style="color: var(--amber)"><%= icon("lightning-bolt") %></span>
+  </div>
+  <% if d["missing"] %>
+    <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %>Escolha o ponto de potência da rede ou do solar.</p>
+  <% else %>
+    <div class="ef-stage" role="img" aria-label="Casa consumindo <%= power.(f['home']) %><%= ", rede #{watts['grid'].to_f.negative? ? 'recebendo' : 'fornecendo'} #{power.(watts['grid'])}" if has['grid'] %><%= ", solar gerando #{power.(watts['solar'])}" if has['solar'] %>">
+      <svg viewBox="0 0 300 240" class="ef-lines" aria-hidden="true">
+        <% paths.each do |key, path, color, on| %>
+          <% next unless on %>
+          <path d="<%= path %>" class="ef-track" />
+          <% if f[key].to_f > idle %><path d="<%= path %>" class="ef-flow <%= color %>" style="--ef-dur: <%= dur.(f[key].to_f) %>s" /><% end %>
+        <% end %>
+      </svg>
+      <% if has["solar"] %>
+        <div class="ef-node ef-solar"><span class="ef-ring"><%= icon("sun", "size-5") %></span><strong class="num"><%= power.(watts["solar"]) %></strong><small>Solar</small></div>
+      <% end %>
+      <% if has["grid"] %>
+        <% g = watts["grid"] %>
+        <div class="ef-node ef-grid"><span class="ef-ring"><%= icon("lightning-bolt", "size-5") %></span><strong class="num"><%= power.(g) %></strong>
+          <small><%= g.nil? ? "Rede" : (g.negative? ? "Vendendo" : "Comprando") %></small></div>
+      <% end %>
+      <div class="ef-node ef-home"><span class="ef-ring"><%= icon("home", "size-5") %></span><strong class="num"><%= power.(f["home"]) %></strong><small>Casa</small></div>
+      <% if has["battery"] %>
+        <% b = watts["battery"] %>
+        <div class="ef-node ef-battery"><span class="ef-ring"><%= icon("battery", "size-5") %></span>
+          <strong class="num"><%= d["soc"] ? "#{d['soc']}%" : power.(b) %></strong>
+          <small><%= b.nil? || b.abs <= idle ? "Bateria" : (b.negative? ? "Carregando #{power.(b)}" : "Usando #{power.(b)}") %></small></div>
+      <% end %>
+    </div>
+    <% if has["solar"] && f["home"].to_f.positive? %>
+      <% share = ((f["solar_home"].to_f + f["battery_home"].to_f) / f["home"].to_f * 100).round.clamp(0, 100) %>
+      <p class="ef-foot"><span class="dw-meter" role="img" aria-label="<%= share %>% da casa sem a rede"><span style="width: <%= share %>%"></span></span><span class="num"><%= share %>%</span> da casa sem a rede agora</p>
+    <% end %>
+  <% end %>
+</div>

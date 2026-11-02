@@ -90,6 +90,10 @@ Rails.application.routes.draw do
         get :use, on: :member, path: "usar"
         post :use, on: :member, path: "usar", action: :instantiate
       end
+      # Painel pronto (Dashboards::Presets, ex.: Energia): antes de /paineis/:id.
+      get "paineis/prontos", to: "dashboard_presets#index", as: :dashboard_presets
+      get "paineis/prontos/:key", to: "dashboard_presets#new", as: :dashboard_preset
+      post "paineis/prontos/:key", to: "dashboard_presets#create"
       # Dashboards (F5): editor e versões só para técnico ou dono.
       resources :dashboards, path: "paineis", path_names: { new: "novo", edit: "editar" }, shallow: true do
         member do

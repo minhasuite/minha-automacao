@@ -11,7 +11,7 @@
 module HelperTypes
   # Ordem = ordem do catálogo. Tipo novo: classe + uma linha aqui + partial.
   PLUGINS = %w[Toggle Number Select Text Datetime Button Counter Timer Group Template Statistics DatasetQuery
-                UtilityMeter Integral Derivative Threshold Trend Zone Person AlarmPanel].freeze
+                UtilityMeter Integral Derivative Threshold Trend Zone Person AlarmPanel Tariff].freeze
   # `external_id` do dispositivo virtual que guarda os helpers do local.
   DEVICE_ID = "helpers".freeze
   # Ícones que o formulário oferece (arquivos de app/assets/images/icons).

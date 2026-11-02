@@ -1,0 +1,10 @@
+<%# locals: (w:, uid:, types:, point_options:, **) -%>
+<div data-for="<%= types %>"><label class="ss-label" for="pb-<%= uid %>">Período</label>
+  <%= select_tag "widget[period]", options_for_select(Dashboards::Widgets::EnergyBreakdownWidget::PERIODS.invert, w["period"] || "month"), class: "ss-input", id: "pb-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="lb2-<%= uid %>">Quantos aparelhos <span class="font-normal">(o resto vira "Outros")</span></label>
+  <%= number_field_tag "widget[limit]", w["limit"], in: 3..20, class: "ss-input num", id: "lb2-#{uid}", placeholder: "8" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="tf-<%= uid %>">Tarifa fixa (R$/kWh)</label>
+  <%= text_field_tag "widget[tariff]", w["tariff"], class: "ss-input num", id: "tf-#{uid}", inputmode: "decimal", placeholder: "0,95" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="tp3-<%= uid %>">Ou a tarifa de um ponto <span class="font-normal">(helper Tarifa ou Número)</span></label>
+  <%= select_tag "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), include_blank: "Usar a tarifa fixa", class: "ss-input", id: "tp3-#{uid}" %></div>
+<p data-for="<%= types %>" class="text-xs text-muted sm:col-span-2">Sem pontos escolhidos acima, entram todos os de energia e potência do local, agrupados por aparelho.</p>

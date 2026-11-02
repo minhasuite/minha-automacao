@@ -1,0 +1,31 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<% d = w["data"] %>
+<% kwh = ->(v) { "#{number_with_precision(v, precision: v.to_f < 10 ? 2 : 1, strip_insignificant_zeros: true, delimiter: '.', separator: ',')} kWh" } %>
+<% money = ->(v) { number_to_currency(v, unit: "R$ ", separator: ",", delimiter: ".") } %>
+<div class="dw-card">
+  <div class="dw-energy-head">
+    <div class="min-w-0">
+      <p class="dw-card-title"><%= w["label"].presence || "Consumo por aparelho" %></p>
+      <p class="text-xs text-muted"><%= d["period_label"] %> · <span class="num"><%= kwh.(d["total_kwh"]) %></span><%= " · #{money.(d['total_cost'])}" if d["total_cost"] %></p>
+    </div>
+    <span class="dw-ico dw-ico-sm" style="color: var(--amber)"><%= icon("chart-bar") %></span>
+  </div>
+  <% if d["rows"].empty? %>
+    <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %><%= d["empty"] ? "Nenhum ponto de energia (kWh) ou potência (W) no local." : "Sem consumo registrado no período." %></p>
+  <% else %>
+    <% top = d["rows"].first["kwh"].to_f %>
+    <ol class="ef-rank">
+      <% d["rows"].each_with_index do |r, i| %>
+        <li style="--ef-i: <%= i %>">
+          <span class="ef-rank-n num"><%= i + 1 %></span>
+          <div class="min-w-0 flex-1">
+            <p class="ef-rank-top"><span class="truncate font-semibold text-ink"><%= r["name"] %></span>
+              <span class="num text-sm shrink-0"><strong class="text-ink"><%= kwh.(r["kwh"]) %></strong><span class="text-muted"> · <%= number_with_precision(r["pct"], precision: 0) %>%</span></span></p>
+            <div class="ef-rank-bar" role="img" aria-label="<%= r['pct'] %>% do total"><span style="width: <%= top.positive? ? [ (r['kwh'] / top * 100).round(1), 2 ].max : 0 %>%"></span></div>
+            <% if r["cost"] %><p class="text-xs text-muted num mt-0.5"><%= money.(r["cost"]) %></p><% end %>
+          </div>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</div>

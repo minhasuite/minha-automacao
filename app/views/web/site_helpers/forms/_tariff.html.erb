@@ -1,0 +1,9 @@
+<%# locals: (f:, point:) -%>
+<% a = point.address %>
+<div><%= f.label :base, "Preço base do kWh (R$)", class: "ss-label" %><%= f.text_field :base, value: a["base"]&.then { |v| format("%.4g", v).tr(".", ",") }, class: "ss-input num max-w-40", inputmode: "decimal", placeholder: "0,65", required: true %></div>
+<label class="ss-check self-end"><%= f.check_box :weekdays_only, { checked: a.fetch("weekdays_only", true) }, "1", "0" %>Faixas só em dias úteis (fim de semana = preço base)</label>
+<div class="sm:col-span-2"><%= f.label :bands, "Faixas por horário (uma por linha, opcional)", class: "ss-label" %>
+  <%= f.text_area :bands, value: Array(a["bands"]).map { |b| "#{"#{b['label']} " if b['label']}#{b['from']}-#{b['to']} = #{format('%.4g', b['price']).tr('.', ',')}" }.join("\n"),
+                  rows: 4, class: "ss-input num", placeholder: HelperTypes::Tariff::WHITE %>
+  <p class="text-xs text-muted mt-1">Tarifa branca: copie o exemplo acima com os preços da sua distribuidora. Sem faixas, o preço é fixo.</p>
+</div>

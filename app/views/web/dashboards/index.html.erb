@@ -1,5 +1,6 @@
 <%= render "web/shared/header", title: "Painéis", subtitle: "#{@site.name} · escolha o que abre no seu Início.", back: site_path(@site) do %>
   <% if can?(:manage) %><%= link_to new_site_dashboard_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo painel<% end %><% end %>
+  <% if can?(:manage) %><%= link_to site_dashboard_presets_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("lightning-bolt", "size-4") %>Painel pronto<% end %><% end %>
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :dashboards %>
 

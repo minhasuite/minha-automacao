@@ -105,3 +105,50 @@
     .hx-tl-now { text-align: left; }
   }
 }
+
+@layer components {
+  /* ---- Energia (widgets energy_flow, energy_breakdown, energy_compare) --- */
+  .ef-card { display: flex; flex-direction: column; }
+  .ef-stage { position: relative; width: 100%; max-width: 26rem; margin: .4rem auto 0; aspect-ratio: 300 / 240; }
+  .ef-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .ef-track { fill: none; stroke: var(--line); stroke-width: 2.5; stroke-linecap: round; }
+  .ef-flow { fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 1 11; animation: ef-flow var(--ef-dur, 1.5s) linear infinite;
+             filter: drop-shadow(0 0 3px currentColor); }
+  .ef-c-grid { stroke: var(--s3); color: var(--s3); }
+  .ef-c-solar { stroke: var(--amber); color: var(--amber); }
+  .ef-c-battery { stroke: var(--s2); color: var(--s2); }
+  @keyframes ef-flow { to { stroke-dashoffset: -24; } }
+  .ef-node { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: .05rem; text-align: center; width: 6.5rem; }
+  .ef-node strong { font-size: .85rem; color: var(--ink); line-height: 1.15; }
+  .ef-node small { font-size: .68rem; color: var(--muted); line-height: 1.1; }
+  .ef-ring { display: grid; place-items: center; width: 2.9rem; height: 2.9rem; margin-bottom: .15rem; border-radius: 999px; background: var(--surface);
+             border: 2.5px solid currentColor; box-shadow: 0 6px 18px -8px currentColor; }
+  .ef-solar { left: 50%; top: 15.8%; color: var(--amber); }
+  .ef-grid { left: 16%; top: 50%; color: var(--s3); }
+  .ef-home { left: 84%; top: 50%; color: var(--accent); }
+  .ef-battery { left: 50%; top: 84.2%; color: var(--s2); }
+  .ef-home .ef-ring { width: 3.4rem; height: 3.4rem; background: var(--accent-soft); }
+  .ef-foot { display: flex; align-items: center; gap: .5rem; margin: .6rem 0 0; font-size: .78rem; color: var(--muted); }
+  .ef-foot .dw-meter { flex: 1; margin: 0; }
+  .ef-rank { list-style: none; margin: .7rem 0 0; padding: 0; display: grid; gap: .65rem; }
+  .ef-rank li { display: flex; align-items: flex-start; gap: .65rem; animation: ss-rise .45s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--ef-i) * 45ms); }
+  .ef-rank-n { flex: none; display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: .55rem; background: var(--field); font-size: .75rem; font-weight: 700; color: var(--ink-2); }
+  .ef-rank li:first-child .ef-rank-n { background: var(--amber-grad); color: #fff; }
+  .ef-rank-top { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin: 0; }
+  .ef-rank-bar { height: .45rem; margin-top: .3rem; border-radius: 999px; background: var(--field); overflow: hidden; }
+  .ef-rank-bar span { display: block; height: 100%; border-radius: inherit; background: var(--amber-grad); transform-origin: left; animation: ef-grow .7s cubic-bezier(.2, .8, .2, 1) both; }
+  @keyframes ef-grow { from { transform: scaleX(0); } }
+  .ef-cmp { display: grid; gap: .9rem; margin-top: .7rem; }
+  .ef-cmp-row p { margin: 0; }
+  .ef-cmp-bars { display: grid; gap: .2rem; margin: .35rem 0 .3rem; }
+  .ef-cmp-bars span { display: block; height: .5rem; border-radius: 999px; min-width: 2px; transform-origin: left; animation: ef-grow .7s cubic-bezier(.2, .8, .2, 1) both; }
+  .ef-cmp-now { background: var(--amber-grad); }
+  .ef-cmp-prev { background: color-mix(in srgb, var(--muted) 30%, transparent); }
+  .ef-delta { display: inline-flex; align-items: center; gap: .2rem; padding: .05rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 700; }
+  .ef-up { background: var(--danger-soft); color: var(--danger); }
+  .ef-down { background: var(--success-soft); color: var(--success); }
+  @media (prefers-reduced-motion: reduce) {
+    .ef-flow { animation: none; stroke-dasharray: none; }
+    .ef-rank li, .ef-rank-bar span, .ef-cmp-bars span { animation: none; }
+  }
+}
