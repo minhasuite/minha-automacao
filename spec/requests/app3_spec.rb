@@ -71,6 +71,16 @@ RSpec.describe "API do app 0.3.0 (app3)" do
     end
   end
 
+  it "Diário pela API sem limit usa a página padrão (não 1 item)" do
+    lamp = within(tenant) { create(:point, device: create(:device, site: site, name: "Teste Luz"), site: site, name: "Luz", capability: "onoff", writable: true) }
+    within(tenant) { [ 30, 20, 10 ].each { |m| travel_to(m.minutes.ago) { lamp.report!(m == 20) } } }
+    get "/api/v1/sites/#{site.id}/logbook", headers: auth_headers(user)
+    expect(data.size).to be >= 3
+    expect(json["meta"]["next_before"]).to be_nil
+    get "/api/v1/sites/#{site.id}/logbook", headers: auth_headers(user), params: { limit: 2 }
+    expect(data.size).to eq(2)
+  end
+
   describe "tema de agora no painel" do
     let(:dashboard) { within(tenant) { Dashboard.ensure_for(site).first } }
 
