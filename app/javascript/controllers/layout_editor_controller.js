@@ -24,10 +24,10 @@ export default class extends Controller {
     this.resizeStart = this.resizeStart.bind(this)
     this.element.addEventListener("pointerdown", this.resizeStart)
     this.element.addEventListener("click", (e) => this.edit(e))
-    this.labels()
     this.fit = this.fit.bind(this)
     addEventListener("resize", this.fit)
-    this.fit()
+    // Começa na tela do próprio aparelho (no celular, o layout do celular).
+    this.screen({ params: { screen: innerWidth < 640 ? "mobile" : innerWidth < 1024 ? "tablet" : "desktop" } })
   }
 
   disconnect() {
