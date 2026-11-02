@@ -73,4 +73,19 @@ RSpec.describe "Web ondaA1: paridade HA" do
     get "/locais/#{site.id}/editar"
     expect(response.body).to include("Sistema de unidades", "Imperial")
   end
+
+  it "A10: os helpers novos aparecem no catálogo, abrem o formulário e salvam" do
+    temp = within(tenant) { create(:point, site: site, device: create(:device, site: site), name: "Teste temperatura", capability: "measure", unit: "°C", value: 20) }
+    get "/locais/#{site.id}/helpers/novo"
+    expect(response.body).to include("Termostato", "Bayesiano", "Risco de mofo", "Período do dia")
+    %w[history_stats times_of_day random filter switch_as_x generic_thermostat generic_hygrostat mold_indicator bayesian compensation].each do |k|
+      get "/locais/#{site.id}/helpers/novo", params: { tipo: k }
+      expect(response).to have_http_status(:ok), k
+    end
+    post "/locais/#{site.id}/helpers", params: { tipo: "filter", helper: { name: "Teste filtro", source: temp.id, kind: "lowpass", window: "4", decimals: "1", category: "Clima", label_list: "sala" } }
+    h = within(tenant) { site.points.find_by!(name: "Teste filtro") }
+    expect(h).to have_attributes(helper: "filter", category: "Clima")
+    expect(within(tenant) { h.label_list }).to eq("sala")
+    expect(h.address).to include("kind" => "lowpass", "window" => 4)
+  end
 end

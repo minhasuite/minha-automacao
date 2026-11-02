@@ -1,0 +1,34 @@
+<%# locals: (f:, point:) -%>
+<%# ondaA1 (A10): formulário montado pelo plugin (`form_spec`): [campo, tipo, opções]. Rótulo e dica vêm dos textos do plugin ("form.<campo>", "hint.<campo>"). -%>
+<% plugin = point.helper_type %>
+<% a = point.address %>
+<% plugin.form_spec.each do |name, kind, opts| %>
+  <% opts ||= {} %>
+  <% label = plugin.text("form.#{name}") %>
+  <% value = opts[:value] ? opts[:value].call(point) : a[name.to_s] %>
+  <% wide = opts[:wide] || %i[point source textarea].include?(kind) %>
+  <div class="<%= 'sm:col-span-2' if wide %>">
+    <% case kind %>
+    <% when :source, :point %>
+      <% list = point.site.points.includes(:device).where.not(id: point.id).ordered.to_a %>
+      <% list = list.select(&:numeric?) if kind == :source %>
+      <% list = list.select { |p| opts[:filter].call(p) } if opts[:filter] %>
+      <% chosen = opts[:index] ? Array(a["sources"])[opts[:index]] : value %>
+      <%= f.label name, label, class: "ss-label" %>
+      <%= f.select name, list.map { |p| [ "#{p.name} · #{p.device.name}#{" (#{p.unit})" if p.unit.present?}", p.id ] }, { selected: chosen, include_blank: opts[:required] == false ? "—" : t("helper_forms.pick_numeric") }, class: "ss-input", required: opts[:required] != false %>
+    <% when :select %>
+      <%= f.label name, label, class: "ss-label" %>
+      <%= f.select name, opts[:choices].call.map { |k, v| [ v, k ] }, { selected: value }, class: "ss-input" %>
+    <% when :bool %>
+      <label class="ss-check mt-6"><%= f.check_box name, { checked: value == true }, "1", "0" %><%= label %></label>
+    <% when :textarea %>
+      <%= f.label name, label, class: "ss-label" %>
+      <%= f.text_area name, value: value, rows: 4, class: "ss-input font-mono text-sm", placeholder: opts[:placeholder] %>
+    <% else %>
+      <%= f.label name, label, class: "ss-label" %>
+      <%= f.text_field name, value: value, class: "ss-input #{'num' if kind == :number}", inputmode: (kind == :number ? "decimal" : nil), placeholder: opts[:placeholder] %>
+    <% end %>
+    <% hint = plugin.text("hint.#{name}", default: "") %>
+    <% if hint.present? %><p class="text-xs text-muted mt-1"><%= hint %></p><% end %>
+  </div>
+<% end %>

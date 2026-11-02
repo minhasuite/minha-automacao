@@ -32,6 +32,10 @@ module HelperTypes
         @fields || []
       end
 
+      # ondaA1 (A10): campos do formulário genérico (web/site_helpers/forms/_generic):
+      # [[campo, tipo, opções]]; tipo :source, :point, :number, :text, :select, :bool ou :textarea.
+      def form_spec = []
+
       # Formulário (hash de texto) → atributos do ponto.
       def assign(_point, _form) = nil
 

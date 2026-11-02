@@ -328,4 +328,109 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect(Automations::Dsl.errors({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "mqtt_publish", "topic" => "casa/#" } ] }, site).join).to include("+ nem #")
     end
   end
+
+  describe "A10 helpers que faltavam" do
+    let(:dev) { create(:device, site: site) }
+    let!(:temp) { create(:point, site: site, device: dev, name: "Temperatura", key: "sala.temp", capability: "measure", unit: "°C", value: 20.0) }
+    let!(:umid) { create(:point, site: site, device: dev, name: "Umidade", key: "sala.umid", capability: "measure", unit: "%", value: 60.0) }
+    let!(:fora) { create(:point, site: site, device: dev, name: "Fora", key: "fora.temp", capability: "measure", unit: "°C", value: 10.0) }
+    let!(:rele) { create(:point, site: site, device: dev, name: "Relé", key: "sala.rele", value: false) }
+
+    def helper(type, form = {})
+      point = HelperTypes.build(site, HelperTypes.plugin(type))
+      ok = HelperTypes.save(point, { "name" => "Teste #{type}" }.merge(form))
+      raise "não salvou: #{point.errors.full_messages}" unless ok
+
+      point.reload
+    end
+
+    it "estatística do histórico: horas, fração e vezes num valor" do
+      t0 = Time.zone.parse("2026-11-02 08:00")
+      travel_to(t0) { rele.report!(true) }
+      travel_to(t0 + 1.hour) { rele.report!(false) }
+      travel_to(t0 + 2.hours) { rele.report!(true) }
+      h = travel_to(t0 + 3.hours) { helper("history_stats", "source" => rele.id, "state" => "on", "kind" => "time", "period" => "last_24h") }
+      expect(h.value).to eq(2.0)
+      HelperTypes::HistoryStats.refresh!(h.tap { |x| x.address["kind"] = "count" }, t0 + 3.hours)
+      expect(h.reload.value).to eq(2)
+    end
+
+    it "período do dia vira a meia-noite e liga pelo relógio" do
+      h = travel_to(Time.zone.parse("2026-11-02 12:00 -03:00")) { helper("times_of_day", "after" => "22:00", "before" => "06:00") }
+      expect(h.value).to be false
+      HelperTypes::TimesOfDay.tick(h, Time.zone.parse("2026-11-02 23:30 -03:00"))
+      expect(h.reload.value).to be true
+      expect(HelperTypes.save(HelperTypes.build(site, HelperTypes::TimesOfDay), "name" => "Teste sol", "after" => "sunset-30m", "before" => "06:00")).to be false # local sem latitude
+    end
+
+    it "aleatório fica na faixa e sorteia de novo pelo comando" do
+      h = helper("random", "min_value" => "1", "max_value" => "3")
+      expect(h.value).to be_between(1, 3)
+      Points::Command.call(h, "press", nil, source: "web", user: nil)
+      expect(h.reload.value).to be_between(1, 3)
+    end
+
+    it "filtro: média móvel, passa-baixa e descarte de pico" do
+      m = helper("filter", "source" => temp.id, "kind" => "moving_average", "window" => "3")
+      [ 21.0, 22.0, 23.0 ].each { |v| temp.report!(v) }
+      expect(m.reload.value).to eq(22.0)
+      o = helper("filter", "source" => temp.id, "kind" => "outlier", "window" => "5", "radius" => "2")
+      temp.report!(23.5)
+      temp.report!(90.0)
+      expect(o.reload.value).to be < 30
+    end
+
+    it "mudar o tipo de um interruptor: aparece como luz, espelha e repassa o comando (com inverter)" do
+      s = helper("switch_as_x", "source" => rele.id, "kind" => "light", "invert" => "1")
+      expect(s).to have_attributes(device_class: "light", value: true)
+      Points::Command.call(s, "off", nil, source: "web", user: nil)
+      expect(rele.reload.value).to be true
+      rele.report!(false)
+      expect(s.reload.value).to be true
+    end
+
+    it "termostato liga e desliga com a tolerância; higrostato pela umidade" do
+      t = helper("generic_thermostat", "source" => temp.id, "switch" => rele.id, "mode" => "heat", "tolerance" => "0.5", "target" => "22")
+      temp.report!(21.0)
+      expect(rele.reload.value).to be true
+      expect(t.reload.attrs).to include("current" => 21.0, "action" => "heating")
+      temp.report!(22.2) # dentro da tolerância: fica como está
+      expect(rele.reload.value).to be true
+      temp.report!(22.6)
+      expect(rele.reload.value).to be false
+      Points::Command.call(t.reload, "set", 25, source: "web", user: nil)
+      expect(rele.reload.value).to be true
+      rele.report!(false)
+      g = helper("generic_hygrostat", "source" => umid.id, "switch" => rele.id, "mode" => "dry", "tolerance" => "3", "target" => "50")
+      umid.report!(60.0)
+      expect(rele.reload.value).to be true
+      expect(g.reload.attrs["action"]).to eq("drying")
+    end
+
+    it "risco de mofo, bayesiano e compensação" do
+      mold = helper("mold_indicator", "source" => temp.id, "humidity" => umid.id, "outdoor" => fora.id, "calibration" => "0.5")
+      expect(mold.value).to be > 60
+      expect(mold.attrs.keys).to include("dewpoint", "critical_temp")
+
+      b = helper("bayesian", "prior" => "0.3", "threshold" => "0.6", "observations" => "sala.rele = on ; 0.9 ; 0.1\nsala.temp = 20 ; 0.7 ; 0.4")
+      rele.report!(true)
+      expect(b.reload.value).to be true
+      expect(b.attrs["probability"]).to be > 0.6
+      expect(HelperTypes.save(HelperTypes.build(site, HelperTypes::Bayesian), "name" => "Teste ruim", "observations" => "nada")).to be false
+
+      c = helper("compensation", "source" => temp.id, "pairs" => "10: 11\n20: 21\n30: 31", "degree" => "1")
+      temp.report!(25.0)
+      expect(c.reload.value).to eq(26.0)
+      expect(HelperTypes::Compensation.fit([ [ 0, 1 ], [ 1, 3 ], [ 2, 9 ] ], 2).map { |x| x.round(3) }).to eq([ 2.0, 0.0, 1.0 ])
+    end
+
+    it "todos os tipos novos têm formulário e textos em en/es" do
+      %w[history_stats times_of_day random filter switch_as_x generic_thermostat generic_hygrostat mold_indicator bayesian compensation].each do |k|
+        plugin = HelperTypes.plugin(k)
+        expect(plugin).to be_present
+        expect(plugin.texts["en"]).to include("title")
+        expect(Rails.root.join("app/views/web/site_helpers/forms/_#{k}.html.erb")).to exist
+      end
+    end
+  end
 end
