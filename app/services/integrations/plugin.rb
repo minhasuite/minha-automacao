@@ -103,6 +103,31 @@ module Integrations
         @ssdp
       end
 
+      # ondaA2 A12: diagnóstico para baixar (o "Baixar diagnóstico" do HA):
+      # integração, aparelhos e pontos, nunca a credencial, e endereço, token,
+      # IP, MAC e URL trocados por "oculto" (Sensitive.mask). O plugin junta o
+      # que for dele em `diagnostics_extra` (saneado do mesmo jeito).
+      def diagnostics(integration)
+        devices = integration.devices.where(removed_at: nil).includes(:points).order(:name)
+        data = {
+          "generated_at" => Time.current.iso8601, "version" => Updates.current_tag, "plugin" => { "key" => key, "title" => title },
+          "integration" => integration.slice(:driver, :name, :status, :last_error, :poll_s).merge(
+            "last_ok_at" => integration.last_ok_at&.iso8601, "polled_at" => integration.polled_at&.iso8601, "settings" => integration.settings
+          ),
+          "devices" => devices.map do |d|
+            d.slice(:name, :manufacturer, :model, :firmware, :status, :driver, :last_error, :address).merge(
+              "last_seen_at" => d.last_seen_at&.iso8601,
+              "points" => d.points.sort_by(&:key).map { |p| p.slice(:key, :capability, :data_type, :value, :quality, :unit, :writable, :disabled, :attrs) }
+            )
+          end,
+          "extra" => diagnostics_extra(integration)
+        }
+        # E-mail da conta também sai (o JSON não tem aspas nem barra dentro do e-mail).
+        JSON.parse(JSON.generate(Sensitive.mask(data.deep_stringify_keys)).gsub(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/, Sensitive::MASK))
+      end
+
+      def diagnostics_extra(_integration) = {}
+
       # Primeira configuração: adiciona um aparelho achado na rede sem formulário
       # (→ integração, com a varredura na fila) ou nil = precisa do assistente.
       def add_found(_site, _entry) = nil

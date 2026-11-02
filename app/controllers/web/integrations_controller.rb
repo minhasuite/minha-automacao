@@ -76,6 +76,13 @@ module Web
       @areas = @site.areas.order(:name).to_a
     end
 
+    # ondaA2 A12: JSON saneado para anexar num pedido de ajuda.
+    def diagnostics
+      load_for(:manage)
+      json = JSON.pretty_generate((@plugin || Integrations::Plugin).diagnostics(@integration))
+      send_data json, type: "application/json", filename: "diagnostico-#{@integration.driver}-#{Time.current.strftime('%Y%m%d-%H%M')}.json"
+    end
+
     def adopt
       load_for(:manage)
       areas = params.fetch(:area, {}).to_unsafe_h

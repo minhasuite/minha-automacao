@@ -41,6 +41,7 @@
               <div class="ss-menu-list">
                 <%= button_to sync_integration_path(i), form: { data: { turbo_submits_with: t("integrations.common.asking") } } do %><%= icon("refresh", "size-4") %><%= t("integrations.common.sync_now") %><% end %>
                 <% if i.plugin&.reconfigurable? %><%= link_to connect_integration_path(i) do %><%= icon("pencil", "size-4") %><%= t("integrations.common.reconfigure") %><% end %><% end %>
+                <%= link_to diagnostics_integration_path(i), data: { turbo: false } do %><%= icon("download", "size-4") %><%= t("repairs.diagnostics") %><% end %>
                 <%= form_with model: i, url: integration_path(i), method: :patch, class: "px-2 py-1.5 flex items-end gap-2" do |f| %>
                   <div class="flex-1"><%= f.label :poll_min, t("integrations.index.interval"), class: "ss-label", for: "poll-#{i.id}" %><%= f.number_field :poll_min, min: 0, step: "any", class: "ss-input num", id: "poll-#{i.id}", placeholder: t("integrations.index.interval_placeholder") %></div>
                   <%= f.submit t("integrations.common.save"), class: "ss-btn ss-btn-ghost ss-btn-sm" %>

@@ -43,11 +43,22 @@
       </div>
       <ul class="mt-3 divide-y divide-line">
         <% r.items.each do |i| %>
-          <li class="py-2 flex items-start gap-3">
+          <li class="py-2 flex items-start gap-3 <%= "opacity-60" if i.ignored %>">
             <%= icon({ "ok" => "check-circle", "warn" => "exclamation-circle", "error" => "x-circle" }[i.status], "size-5 shrink-0 mt-0.5 #{{ 'ok' => 'text-success', 'warn' => 'text-warn', 'error' => 'text-danger' }[i.status]}") %>
             <div class="min-w-0">
               <p class="text-sm font-semibold text-ink break-words"><%= i.title %><span class="sr-only"> (<%= Health.label(i.status) %>)</span></p>
               <% if i.detail.present? %><p class="text-sm text-muted break-words"><%= i.detail %></p><% end %>
+              <% if i.problem? %>
+                <div class="mt-1.5 flex flex-wrap items-center gap-2" data-repair="<%= r.check.key %>:<%= i.key %>">
+                  <% if i.ignored %><span class="ss-badge ss-badge-muted"><%= t("repairs.ignored_badge") %></span><% end %>
+                  <% if i.fix && !i.ignored %><%= link_to i.fix[:url], class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("pencil", "size-4") %><%= i.fix[:label] %><% end %><% end %>
+                  <% if r.check.repairs? && !i.ignored %>
+                    <%= button_to settings_health_repair_path(check: r.check.key, item: i.key), class: "ss-btn ss-btn-primary ss-btn-sm" do %><%= icon("refresh", "size-4") %><%= t("repairs.fix") %><% end %>
+                  <% end %>
+                  <%= button_to settings_health_ignore_path(ref: "#{r.check.key}:#{i.key}", on: i.ignored ? "0" : "1"), class: "ss-btn ss-btn-ghost ss-btn-sm",
+                                "aria-label": t(i.ignored ? "repairs.show_of" : "repairs.ignore_of", title: i.title) do %><%= t(i.ignored ? "repairs.show" : "repairs.ignore") %><% end %>
+                </div>
+              <% end %>
             </div>
           </li>
         <% end %>

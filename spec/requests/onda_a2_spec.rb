@@ -1,5 +1,7 @@
 require "rails_helper"
 
+RSpec::Matchers.define_negated_matcher :not_include, :include unless RSpec::Matchers.method_defined?(:not_include)
+
 # Onda A2 (paridade HA, grupo 7): sistema.
 RSpec.describe "Onda A2: sistema" do
   let(:user) { create(:user, role: "owner") }
@@ -79,6 +81,111 @@ RSpec.describe "Onda A2: sistema" do
       sign_in(within(tenant) { create(:user, tenant: tenant, role: "admin") })
       get "/configuracoes/hardware"
       expect(response).to redirect_to("/")
+    end
+  end
+
+  describe "A12 reparos, diagnóstico e logs" do
+    let!(:integ) do
+      within(tenant) do
+        Integration.create!(site: site, driver: "zwave_js", name: "Teste Z-Wave", status: "error", last_error: "recusou em 192.168.0.20",
+                            settings: { "url" => "ws://192.168.0.20:3000", "account" => "ana@exemplo.com.br", "token" => "segredo" }, credentials: "cred-secreta")
+      end
+    end
+
+    before { sign_in }
+
+    it "problema com caminho guiado, correção de um clique e ignorar" do
+      get "/configuracoes/saude"
+      expect(response.body).to include("Reconfigurar", "/integracoes/#{integ.id}/conectar", "Corrigir", "Ignorar")
+      post "/configuracoes/saude/reparar", params: { check: "integrations", item: integ.id }
+      expect(flash[:notice]).to eq("Teste Z-Wave: varredura pedida.")
+      expect(integ.reload.status).to eq("syncing")
+      integ.update_columns(status: "error")
+
+      post "/configuracoes/saude/ignorar", params: { ref: "integrations:#{integ.id}" }
+      result = Health.run(tenant.reload, only: "integrations").first
+      expect(result.status).to eq("ok")
+      expect(result.items.first.ignored).to be(true)
+      Health.alert!(tenant)
+      expect(within(tenant) { Notification.where("title LIKE ?", "%Teste Z-Wave%") }).to be_empty
+      get "/configuracoes/saude"
+      expect(response.body).to include("Ignorado", "Mostrar de novo")
+      post "/configuracoes/saude/ignorar", params: { ref: "integrations:#{integ.id}", on: "0" }
+      expect(Health.run(tenant.reload, only: "integrations").first.status).to eq("error")
+      post "/configuracoes/saude/reparar", params: { check: "devices", item: "x" }
+      expect(flash[:alert]).to eq("Esse problema não tem correção automática.")
+    end
+
+    it "verificação de plugin falso com reparo próprio, sem mudar o núcleo" do
+      fake = Class.new(Health::Check) do
+        describe key: "teste", label: "Teste", icon: "chip"
+        def self.items(_t) = [ item(key: "k1", status: "warn", title: "Teste quebrado", fix: { label: "Abrir", url: "/teste" }) ]
+        def self.repair(_t, key) = "consertado #{key}"
+      end
+      stub_const("Health::Checks::Teste", fake)
+      stub_const("Health::CHECKS", Health::CHECKS + [ "Teste" ])
+      get "/configuracoes/saude"
+      expect(response.body).to include("Teste quebrado", "Abrir", "data-repair=\"teste:k1\"")
+      post "/configuracoes/saude/reparar", params: { check: "teste", item: "k1" }
+      expect(flash[:notice]).to eq("consertado k1")
+    end
+
+    it "diagnóstico em JSON sem credencial, endereço, token nem e-mail" do
+      within(tenant) do
+        dev = create(:device, site: site, name: "Teste Nó 2", integration: integ, address: { "host" => "192.168.0.21" }, firmware: "1.2")
+        create(:point, site: site, device: dev, name: "Teste Relé", key: "rele")
+      end
+      get "/integracoes/#{integ.id}/diagnostico"
+      expect(response.headers["Content-Disposition"]).to include("diagnostico-zwave_js-")
+      body = response.body
+      data = JSON.parse(body)
+      expect(data.dig("plugin", "key")).to eq("zwave_js")
+      expect(data["devices"].first).to include("name" => "Teste Nó 2", "firmware" => "1.2", "address" => { "host" => "oculto" })
+      expect(data["devices"].first["points"].first["key"]).to eq("rele")
+      expect(body).not_to include("192.168.0.2", "segredo", "cred-secreta", "ana@exemplo")
+    end
+
+    it "logs: agrupa, filtra por nível e fonte, baixa e limpa; o completo vem do supervisor" do
+      3.times { |n| SystemLog.record!("warn", "[tuya] sem resposta em #{n} s") }
+      SystemLog.record!("error", "Falhou geral")
+      expect(SystemLog.count).to eq(2)
+      expect(SystemLog.find_by(source: "tuya").count).to eq(3)
+
+      get "/configuracoes/logs"
+      expect(response.body).to include("sem resposta em 2 s", "3 vezes", "Falhou geral")
+      get "/configuracoes/logs", params: { nivel: "error" }
+      expect(response.body).to include("Falhou geral").and(not_include("sem resposta"))
+      get "/configuracoes/logs", params: { fonte: "tuya", q: "resposta" }
+      expect(response.body).to include("sem resposta").and(not_include("Falhou geral"))
+      get "/configuracoes/logs.text", params: { fonte: "tuya" }
+      expect(response.body).to match(/WARN \[tuya\] \(3x\) \[tuya\] sem resposta/)
+
+      get "/configuracoes/logs", params: { aba: "completo" }
+      expect(response.body).to include("só roda no servidor local")
+      allow(Apps::Supervisor).to receive(:configured?).and_return(true)
+      allow(Apps::Supervisor).to receive(:request).with(:get, "/system/logs?service=worker&lines=500").and_return("data" => { "lines" => "a ok
+b [tuya] falha
+" })
+      get "/configuracoes/logs", params: { aba: "completo", servico: "worker", q: "tuya" }
+      expect(response.body).to include("b [tuya] falha").and(not_include("a ok"))
+
+      delete "/configuracoes/logs"
+      expect(SystemLog.count).to eq(0)
+    end
+
+    it "o Sink passa só aviso ou pior, numa thread" do
+      sink = SystemLog::Sink.new
+      sink.info("[x] nada")
+      sink.warn("[mqtt] caiu")
+      sink.error(RuntimeError.new("boom"))
+      20.times { break if SystemLog.count == 2; sleep 0.05 }
+      expect(SystemLog.pluck(:source, :level)).to contain_exactly(%w[mqtt warn], %w[core error])
+    end
+
+    it "logs não aparecem para quem não é dono nem com mais de uma instalação" do
+      create(:user)
+      get "/configuracoes/logs"
+      expect(response).to have_http_status(:not_found)
     end
   end
 end

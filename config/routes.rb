@@ -150,6 +150,7 @@ Rails.application.routes.draw do
           get :status, path: "estado"
           post :sync, path: "sincronizar"
           get :found, path: "encontrados"
+          get :diagnostics, path: "diagnostico"
           post :adopt, path: "adicionar"
         end
       end
@@ -225,7 +226,11 @@ Rails.application.routes.draw do
     get "configuracoes/plano", to: "licenses#show", as: :settings_plan
     # Saúde do sistema (registro Health::CHECKS) e o que falta para a troca (Cutover).
     get "configuracoes/saude", to: "health#show", as: :settings_health
+    post "configuracoes/saude/ignorar", to: "health#ignore", as: :settings_health_ignore
+    post "configuracoes/saude/reparar", to: "health#repair", as: :settings_health_repair
     get "configuracoes/hardware", to: "hardware#show", as: :settings_hardware
+    get "configuracoes/logs", to: "logs#show", as: :settings_logs
+    delete "configuracoes/logs", to: "logs#destroy"
     post "configuracoes/hardware/:acao", to: "hardware#power", as: :settings_hardware_power
     # Backup no Google Drive: conectar volta por integrations#oauth_callback.
     delete "configuracoes/saude/google-drive", to: "health#disconnect_drive", as: :settings_health_drive

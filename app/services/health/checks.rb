@@ -5,9 +5,9 @@ module Health
     # Contas de serviço (Alexa, Tuya, Xiaomi...): status, último ok e erro.
     class Integrations < Check
       describe key: "integrations", label: "Integrações", icon: "link"
-      texts "pt-BR" => { empty: "Nenhuma integração" },
-            en: { label: "Integrations", empty: "No integrations" },
-            es: { label: "Integraciones", empty: "Ninguna integración" }
+      texts "pt-BR" => { empty: "Nenhuma integração", reconfigure: "Reconfigurar", synced: "%{name}: varredura pedida." },
+            en: { label: "Integrations", empty: "No integrations", reconfigure: "Reconfigure", synced: "%{name}: scan requested." },
+            es: { label: "Integraciones", empty: "Ninguna integración", reconfigure: "Reconfigurar", synced: "%{name}: escaneo solicitado." }
 
       def self.items(tenant)
         list = Integration.includes(:site).order(:name).to_a
@@ -15,9 +15,17 @@ module Health
 
         list.map do |i|
           status = { "error" => "error", "pending" => "warn" }.fetch(i.status, "ok")
-          item(key: i.id, status: status, title: "#{i.name} (#{i.site.name})", at: i.last_ok_at,
+          fix = { label: text(:reconfigure), url: Rails.application.routes.url_helpers.connect_integration_path(i) } if status != "ok" && i.plugin&.reconfigurable?
+          item(key: i.id, status: status, title: "#{i.name} (#{i.site.name})", at: i.last_ok_at, fix: fix,
                detail: [ i.status_label, (text(:last_ok, at: I18n.l(i.last_ok_at, format: :short)) if i.last_ok_at), i.last_error ].compact.join(" · "))
         end
+      end
+
+      # Um clique: varrer de novo a conta (o mesmo "Sincronizar agora" da lista).
+      def self.repair(_tenant, key)
+        integration = Integration.find_by(id: key) or return nil
+        ::Integrations.start_sync!(integration)
+        text(:synced, name: integration.name)
       end
     end
 
@@ -25,11 +33,11 @@ module Health
     class Devices < Check
       describe key: "devices", label: "Aparelhos e pontos", icon: "chip"
       texts "pt-BR" => { offline: "%{site}: aparelhos sem sinal", all_ok: "Todos respondendo", stale: "%{site}: aparelhos sem atualizar",
-                         fresh: "Leituras em dia", points: "%{site}: pontos sem sinal", unavailable: "%{n} ponto(s) indisponível(is)", more: " e mais %{n}" },
+                         fresh: "Leituras em dia", points: "%{site}: pontos sem sinal", unavailable: "%{n} ponto(s) indisponível(is)", more: " e mais %{n}", see: "Ver aparelhos" },
             en: { label: "Devices and points", offline: "%{site}: devices offline", all_ok: "All responding", stale: "%{site}: devices not updating",
-                  fresh: "Readings up to date", points: "%{site}: points offline", unavailable: "%{n} point(s) unavailable", more: " and %{n} more" },
+                  fresh: "Readings up to date", points: "%{site}: points offline", unavailable: "%{n} point(s) unavailable", more: " and %{n} more", see: "See devices" },
             es: { label: "Dispositivos y puntos", offline: "%{site}: dispositivos sin señal", all_ok: "Todos responden", stale: "%{site}: dispositivos sin actualizar",
-                  fresh: "Lecturas al día", points: "%{site}: puntos sin señal", unavailable: "%{n} punto(s) no disponible(s)", more: " y %{n} más" }
+                  fresh: "Lecturas al día", points: "%{site}: puntos sin señal", unavailable: "%{n} punto(s) no disponible(s)", more: " y %{n} más", see: "Ver dispositivos" }
       OFFLINE_ALERT = 1.hour
 
       def self.items(_tenant)
@@ -39,9 +47,10 @@ module Health
           stale = devices.where("poll_s > 0 AND last_seen_at < now() - make_interval(secs => poll_s * 3)").order(:name).to_a
           points = site.points.where(quality: "unavailable", disabled: false, hidden: false).count
           long = offline.any? { |d| d.last_seen_at.nil? || d.last_seen_at < OFFLINE_ALERT.ago }
-          [ item(key: "#{site.id}:offline", status: offline.empty? ? "ok" : (long ? "error" : "warn"), title: text(:offline, site: site.name),
+          see = { label: text(:see), url: Rails.application.routes.url_helpers.site_devices_path(site) }
+          [ item(key: "#{site.id}:offline", status: offline.empty? ? "ok" : (long ? "error" : "warn"), title: text(:offline, site: site.name), fix: (see if offline.any?),
                  detail: offline.empty? ? text(:all_ok) : "#{offline.size}: #{names(offline)}"),
-            item(key: "#{site.id}:stale", status: stale.empty? ? "ok" : "warn", title: text(:stale, site: site.name),
+            item(key: "#{site.id}:stale", status: stale.empty? ? "ok" : "warn", title: text(:stale, site: site.name), fix: (see if stale.any?),
                  detail: stale.empty? ? text(:fresh) : "#{stale.size}: #{names(stale)}"),
             item(key: "#{site.id}:points", status: points.zero? ? "ok" : "warn", title: text(:points, site: site.name),
                  detail: points.zero? ? text(:none) : text(:unavailable, n: points)) ]

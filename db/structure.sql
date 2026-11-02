@@ -4523,9 +4523,33 @@ ALTER TABLE public.readings
 -- PostgreSQL database dump complete
 --
 
+--
+-- Name: system_logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.system_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    level character varying NOT NULL,
+    source character varying NOT NULL,
+    message text NOT NULL,
+    digest character varying NOT NULL,
+    count integer DEFAULT 1 NOT NULL,
+    first_at timestamp(6) without time zone NOT NULL,
+    last_at timestamp(6) without time zone NOT NULL
+);
+
+ALTER TABLE ONLY public.system_logs
+    ADD CONSTRAINT system_logs_pkey PRIMARY KEY (id);
+
+CREATE UNIQUE INDEX index_system_logs_on_digest ON public.system_logs USING btree (digest);
+
+CREATE INDEX index_system_logs_on_last_at ON public.system_logs USING btree (last_at);
+
+
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102300001'),
 ('20261102200005'),
 ('20261102200004'),
 ('20261102200003'),
