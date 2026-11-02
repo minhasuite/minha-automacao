@@ -86,7 +86,8 @@ module PointsHelper
     elsif STATE_TEXT.key?(point.capability)
       STATE_TEXT[point.capability].fetch(v.to_s, v.to_s).to_s
     elsif v.is_a?(Numeric)
-      [ number_with_precision(v, precision: 2, strip_insignificant_zeros: true), point.unit ].compact.join(" ")
+      v, unit = Units.for_display(point, v) # ondaA1 (A4): unidade do local ou a escolhida para o ponto
+      [ number_with_precision(v, precision: 2, strip_insignificant_zeros: true), unit ].compact.join(" ")
     elsif v.is_a?(Hash) && v.key?("state")
       [ MEDIA_TEXT.fetch(v["state"].to_s, v["state"].to_s.humanize).to_s, v["title"].presence ].compact.join(" · ")
     elsif v.is_a?(Hash) && v.key?("buttons")

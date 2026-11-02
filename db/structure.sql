@@ -767,7 +767,8 @@ CREATE TABLE public.points (
     alexa_name character varying,
     attrs jsonb DEFAULT '{}'::jsonb NOT NULL,
     category character varying,
-    aliases character varying[] DEFAULT '{}'::character varying[] NOT NULL
+    aliases character varying[] DEFAULT '{}'::character varying[] NOT NULL,
+    display_unit character varying
 );
 
 
@@ -999,7 +1000,12 @@ CREATE TABLE public.sites (
     wallpaper character varying,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    shadow boolean DEFAULT false NOT NULL
+    shadow boolean DEFAULT false NOT NULL,
+    unit_system character varying DEFAULT 'metric'::character varying NOT NULL,
+    currency character varying DEFAULT 'BRL'::character varying NOT NULL,
+    elevation integer,
+    country character varying DEFAULT 'BR'::character varying,
+    language character varying
 );
 
 
@@ -4519,6 +4525,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102200004'),
 ('20261102200003'),
 ('20261102200002'),
 ('20261102200001'),

@@ -4,6 +4,9 @@
   <div class="md:col-span-2"><%= f.label :name, t("sites.form.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: t("points.form.name_hint"), autofocus: true %></div>
   <div><%= f.label :capability, t("sites.form.kind"), class: "ss-label" %><%= f.select :capability, Point::CAPABILITY_LABELS.invert, {}, class: "ss-input" %></div>
   <div><%= f.label :unit, t("points.form.unit"), class: "ss-label" %><%= f.text_field :unit, class: "ss-input", placeholder: "°C, W, %" %></div>
+  <% if (units = Units.compatible(point.unit)).any? %>
+    <div><%= f.label :display_unit, "Mostrar em", class: "ss-label" %><%= f.select :display_unit, units, { include_blank: "Unidade do local (#{Units.display_unit(point.dup.tap { |p| p.display_unit = nil })})" }, class: "ss-input" %></div>
+  <% end %>
   <div><%= f.label :risk, t("points.form.risk"), class: "ss-label" %><%= f.select :risk, Point::RISKS.invert, {}, class: "ss-input" %>
     <p class="text-xs text-muted mt-1"><%= t("points.form.risk_hint") %></p></div>
   <div><%= f.label :area_id, t("devices.area"), class: "ss-label" %><%= f.select :area_id, device.site.areas.order(:name).pluck(:name, :id), { include_blank: t("points.form.device_area") }, class: "ss-input" %></div>

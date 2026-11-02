@@ -66,4 +66,11 @@ RSpec.describe "Web ondaA1: paridade HA" do
     patch "/locais/#{site.id}/expor", params: { confirm: "1", x: { pts[1].id => { alexa: "1" } } }
     expect(within(tenant) { pts[1].reload.alexa_exposed }).to be true
   end
+
+  it "A4: formulário do local salva unidades, moeda, elevação, país e idioma" do
+    patch "/locais/#{site.id}", params: { site: { unit_system: "imperial", currency: "eur", elevation: 900, country: "pt", language: "es" } }
+    expect(within(tenant) { site.reload.attributes.values_at("unit_system", "currency", "elevation", "country", "language") }).to eq([ "imperial", "EUR", 900, "PT", "es" ])
+    get "/locais/#{site.id}/editar"
+    expect(response.body).to include("Sistema de unidades", "Imperial")
+  end
 end

@@ -1,10 +1,10 @@
 class SiteSerializer < ApplicationSerializer
-  EDITABLE = %i[name kind timezone address latitude longitude wallpaper].freeze
+  EDITABLE = %i[name kind timezone address latitude longitude wallpaper unit_system currency elevation country language].freeze
 
   attributes :id, :name, :kind, :timezone, :address
   attribute(:latitude) { |s| decimal(s.latitude) }
   attribute(:longitude) { |s| decimal(s.longitude) }
-  attributes :wallpaper
+  attributes :wallpaper, :unit_system, :currency, :elevation, :country, :language
   # Papel de quem pediu (params[:user]).
   attribute(:my_role) { |s| params[:user] && s.role_for(params[:user]) }
   # Tempo real do app (F7): nome assinado do stream `[site, :points]` para

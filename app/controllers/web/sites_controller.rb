@@ -52,7 +52,7 @@ module Web
     private
 
     def set_site = @site = Site.find(params[:id])
-    def site_params = params.require(:site).permit(:name, :kind, :address, :timezone, :latitude, :longitude)
+    def site_params = params.require(:site).permit(:name, :kind, :address, :timezone, :latitude, :longitude, :unit_system, :currency, :elevation, :country, :language)
 
     def require_admin!
       redirect_to sites_path, alert: t("notices.site_admin_only") unless current_user.admin?

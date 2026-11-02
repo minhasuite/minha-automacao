@@ -10,6 +10,14 @@
     <div><%= f.label :longitude, t("sites.form.longitude"), class: "ss-label" %><%= f.number_field :longitude, step: "any", min: -180, max: 180, class: "ss-input num", placeholder: "-47.88" %></div>
   </div>
   <p class="md:col-span-2 -mt-2 text-xs text-muted"><%= t("sites.form.coords_hint") %></p>
+  <div><%= f.label :unit_system, "Sistema de unidades", class: "ss-label" %><%= f.select :unit_system, Units::SYSTEMS.map { |k, s| [ s[:label], k ] }, {}, class: "ss-input" %></div>
+  <div class="grid grid-cols-2 gap-2">
+    <div><%= f.label :currency, "Moeda", class: "ss-label" %><%= f.text_field :currency, class: "ss-input uppercase", maxlength: 3, placeholder: "BRL" %></div>
+    <div><%= f.label :elevation, "Elevação (m)", class: "ss-label" %><%= f.number_field :elevation, class: "ss-input num", min: -500, max: 9000, placeholder: "1100" %></div>
+  </div>
+  <div><%= f.label :country, "País (código)", class: "ss-label" %><%= f.text_field :country, class: "ss-input uppercase", maxlength: 2, placeholder: "BR" %></div>
+  <div><%= f.label :language, "Idioma do local (voz e avisos)", class: "ss-label" %><%= f.select :language, [ [ "Português (Brasil)", "pt-BR" ], [ "English", "en" ], [ "Español", "es" ] ], { include_blank: "O de cada pessoa" }, class: "ss-input" %></div>
+  <p class="md:col-span-2 -mt-2 text-xs text-muted">As unidades só mudam o que aparece: o valor guardado, o histórico e as automações seguem na unidade do aparelho.</p>
   <div class="md:col-span-2 flex flex-wrap gap-2">
     <%= f.submit site.new_record? ? t("sites.form.create") : t("sites.form.save"), class: "ss-btn ss-btn-primary" %>
     <%= link_to t("shared.cancel"), site.new_record? ? sites_path : site, class: "ss-btn ss-btn-ghost" %>

@@ -59,8 +59,9 @@ class Point < ApplicationRecord
 
   normalizes :name, with: ->(v) { v.to_s.squish }
   normalizes :category, with: ->(v) { v.to_s.squish.presence }
+  validates :display_unit, inclusion: { in: ->(p) { Units.compatible(p.unit) }, message: "não converte da unidade do ponto" }, allow_nil: true
   normalizes :key, with: ->(v) { v.to_s.strip.downcase.presence }
-  normalizes :unit, :icon, :device_class, :confirm, :state_class, :data_type, with: ->(v) { v.to_s.strip.presence }
+  normalizes :unit, :display_unit, :icon, :device_class, :confirm, :state_class, :data_type, with: ->(v) { v.to_s.strip.presence }
 
   audited_attributes :name, :key, :risk, :capability, :alexa_exposed
 

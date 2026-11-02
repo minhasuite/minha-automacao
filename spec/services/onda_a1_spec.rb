@@ -130,4 +130,32 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect(t.exposed?(lamp.reload)).to be true
     end
   end
+
+  describe "A4 unidades e configuração do local" do
+    let(:dev) { create(:device, site: site) }
+    let!(:temp) { create(:point, site: site, device: dev, name: "Temperatura", capability: "measure", unit: "°C", value: 25.0) }
+    let(:helpers) { ApplicationController.helpers }
+
+    before { Current.unit_systems = nil }
+
+    it "converte só na tela: métrico, imperial e a unidade escolhida no ponto" do
+      expect(helpers.point_value_text(temp)).to eq("25 °C")
+      site.update!(unit_system: "imperial", currency: "usd", elevation: 1100, country: "us", language: "en")
+      Current.unit_systems = nil
+      expect(helpers.point_value_text(temp)).to eq("77 °F")
+      expect(site.reload).to have_attributes(currency: "USD", country: "US")
+      temp.update!(display_unit: "K")
+      expect(helpers.point_value_text(temp)).to eq("298,15 K")
+      expect(temp.reload.value).to eq(25.0)
+      expect(temp.update(display_unit: "kg")).to be false
+      expect(Units.convert(10, "km/h", "mph").round(3)).to eq(6.214)
+      expect(site.update(unit_system: "lunar")).to be false
+    end
+
+    it "grandeza nova entra só pela tabela (plugin falso)" do
+      stub_const("Units::DIMENSIONS", Units::DIMENSIONS.merge("teste" => { "x" => [ 1, 0 ], "y" => [ 2, 0 ] }))
+      expect(Units.compatible("x")).to eq(%w[x y])
+      expect(Units.convert(4, "x", "y")).to eq(2)
+    end
+  end
 end

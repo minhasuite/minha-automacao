@@ -30,6 +30,13 @@ class Site < ApplicationRecord
   validates :timezone, inclusion: { in: ActiveSupport::TimeZone::MAPPING.values }
   validates :latitude, numericality: { in: -90..90 }, allow_nil: true
   validates :longitude, numericality: { in: -180..180 }, allow_nil: true
+  # ondaA1 (A4): configuração geral como a do HA.
+  validates :unit_system, inclusion: { in: ->(_) { Units::SYSTEMS.keys } }
+  validates :currency, format: { with: /\A[A-Z]{3}\z/ }
+  validates :elevation, numericality: { only_integer: true, in: -500..9000 }, allow_nil: true
+  validates :country, format: { with: /\A[A-Z]{2}\z/ }, allow_blank: true
+  validates :language, inclusion: { in: ->(_) { I18n.available_locales.map(&:to_s) } }, allow_blank: true
+  normalizes :currency, :country, with: ->(v) { v.to_s.strip.upcase.presence }
 
   normalizes :name, with: ->(v) { v.to_s.squish }
 
