@@ -296,6 +296,8 @@ module Automations
         when :script_fields then script_fields_error(node, v)
         when :alert_rule then e(:alert_rule) unless v.is_a?(String) && @site.alert_rules.exists?(id: v)
         when :command then command_error(node, v)
+        when :device_trigger then e(:device_event) unless (p = @points[node["point"]]).nil? || DeviceAutomations.triggers_for(p).key?(v.to_s)
+        when :device_condition then e(:device_event) unless (p = @points[node["point"]]).nil? || DeviceAutomations.conditions_for(p).key?(v.to_s)
         when :value then nil
         else list(v, fd.kind, "#{where} › #{fd.label.downcase}") && nil
         end

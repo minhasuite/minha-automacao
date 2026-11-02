@@ -7,7 +7,7 @@ module Automations
   module ConditionTypes
     extend Block::Registry
 
-    PLUGINS = %w[StateCondition NumericCondition TimeCondition SunCondition CalendarCondition ZoneCondition AlarmCondition ExprCondition AndCondition OrCondition NotCondition TriggerCondition].freeze
+    PLUGINS = %w[StateCondition NumericCondition TimeCondition SunCondition CalendarCondition ZoneCondition AlarmCondition ExprCondition AndCondition OrCondition NotCondition TriggerCondition DeviceCondition].freeze
 
     class Base < Block
       def self.check(_ev, _c) = raise(NotImplementedError)

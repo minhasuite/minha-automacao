@@ -129,6 +129,7 @@ pt-BR:
         script_fields: "precisam ser um objeto {campo: valor}"
         unknown_field: "campo desconhecido %{fields}"
         missing: "falta %{field}"
+        device_event: "escolha o que o aparelho faz (salve o ponto antes)"
         not_text: "precisa ser texto"
         expr: "expressão inválida (%{error})"
         not_list: "precisa ser uma lista"
@@ -553,6 +554,7 @@ pt-BR:
       default_blank: "Padrão"
       pick_point: "Escolha o ponto"
     field:
+      pick_point_first: "Escolha o ponto e salve"
       pick_script: "Escolha o script e salve o bloco para ver os campos."
       no_fields: "Este script não tem campos."
       no_value: "Sem valor"

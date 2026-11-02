@@ -572,4 +572,39 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect { Automations::Yaml.load("a: [", site) }.to raise_error(Automations::Yaml::Error, /YAML inválido/)
     end
   end
+
+  describe "A6 automação de dispositivo" do
+    let(:dev) { create(:device, site: site, name: "Teste sala") }
+    let!(:mov) { create(:point, site: site, device: dev, name: "Movimento", capability: "motion", value: false) }
+    let!(:botao) { create(:point, site: site, device: dev, name: "Botão", capability: "event", options: %w[single double long]) }
+    let!(:lamp) { create(:point, site: site, device: dev, name: "Luz", value: false) }
+
+    it "oferece em palavras o que cada ponto faz (do mapa: as opções do botão)" do
+      expect(DeviceAutomations.triggers_for(mov)).to eq("detected" => "Movimento detectado", "cleared" => "Movimento parou")
+      expect(DeviceAutomations.triggers_for(botao).keys).to eq(%w[press press:single press:double press:long])
+      expect(DeviceAutomations.conditions_for(lamp).keys).to eq(%w[is_on is_off])
+    end
+
+    it "gatilho de aparelho (clique duplo) e condição de aparelho comandam a luz" do
+      a = site.automations.create!(name: "Teste botão")
+      a.publish!({ "triggers" => [ { "type" => "device", "point" => botao.id, "event" => "press:double" } ],
+                   "conditions" => [ { "type" => "device", "point" => lamp.id, "state" => "is_off" } ],
+                   "actions" => [ { "type" => "command", "point" => lamp.id, "command" => "on" } ] })
+      a.update!(enabled: true)
+      botao.report!("single")
+      expect(a.runs.count).to eq(0)
+      botao.report!("double")
+      expect(lamp.reload.value).to be true
+      botao.report!("double") # botão repete o mesmo valor: dispara, mas a condição (desligada) barra
+      expect(a.runs.order(:created_at).pluck(:status)).to eq(%w[done skipped])
+      expect(Automations::Dsl.errors({ "triggers" => [ { "type" => "device", "point" => mov.id, "event" => "press:single" } ], "actions" => [ { "type" => "stop" } ] }, site).join).to include("aparelho")
+    end
+
+    it "capacidade nova entra só pela tabela (plugin falso)" do
+      stub_const("DeviceAutomations::TRIGGERS", DeviceAutomations::TRIGGERS.merge("text" => { "teste" => ->(v, _) { v == "x" } }))
+      p = create(:point, site: site, device: dev, name: "Teste texto", capability: "text")
+      expect(DeviceAutomations.triggers_for(p).keys).to eq([ "teste" ])
+      expect(DeviceAutomations.fires?(p, "teste", "x", nil)).to be true
+    end
+  end
 end

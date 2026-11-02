@@ -129,6 +129,7 @@ en:
         script_fields: "must be an object {field: value}"
         unknown_field: "unknown field %{fields}"
         missing: "%{field} is missing"
+        device_event: "choose what the device does (save the point first)"
         not_text: "must be text"
         expr: "invalid expression (%{error})"
         not_list: "must be a list"
@@ -553,6 +554,7 @@ en:
       default_blank: "Default"
       pick_point: "Choose the point"
     field:
+      pick_point_first: "Choose the point and save"
       pick_script: "Choose the script and save the block to see its fields."
       no_fields: "This script has no fields."
       no_value: "No value"

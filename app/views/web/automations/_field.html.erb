@@ -57,6 +57,10 @@
       <% else %>
         <%= text_field_tag name, v, class: "ss-input", id: id, placeholder: (fd.name == "value" ? "" : t("automations.field.any")) %>
       <% end %>
+    <% elsif case_kind.in?(%i[device_trigger device_condition]) %>
+      <% point = points[node["point"]] %>
+      <% opts = case_kind == :device_trigger ? DeviceAutomations.triggers_for(point) : DeviceAutomations.conditions_for(point) %>
+      <%= select_tag name, options_for_select(opts.invert, v), include_blank: (point ? false : t("automations.field.pick_point_first")), class: "ss-input", id: id %>
     <% elsif case_kind == :command %>
       <% point = points[node["point"]] %>
       <%= select_tag name, options_for_select(command_options(point), v), class: "ss-input", id: id %>
