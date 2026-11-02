@@ -9,7 +9,8 @@ module Mqtt
     # Descobridores (Pacote 1): cada um diz os tópicos que assina (`topics`,
     # curinga vale), se trata um tópico (`handles?`) e trata (`handle`).
     # Descoberta nova = módulo em Mqtt + nome aqui.
-    DISCOVERY = %w[Z2m Tasmota].freeze
+    # integ: "Frigate" = ::Frigate (eventos de detecção e contagem por câmera).
+    DISCOVERY = %w[Z2m Tasmota Frigate].freeze
     SCAN_EVERY = 30
     MAX_BACKOFF = 60
 

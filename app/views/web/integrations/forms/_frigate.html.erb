@@ -1,0 +1,14 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<% if integration.nil? %>
+  <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "Frigate", maxlength: 80 %></div>
+<% end %>
+<div>
+  <%= f.label :url, "Endereço do Frigate", class: "ss-label" %>
+  <%= f.text_field :url, class: "ss-input font-mono text-sm", value: s["url"], placeholder: "http://192.168.0.10:5000", autocomplete: "off", spellcheck: false %>
+</div>
+<div>
+  <%= f.label :topic, "Tópico MQTT (opcional)", class: "ss-label" %>
+  <%= f.text_field :topic, class: "ss-input font-mono text-sm", value: s["topic"], placeholder: "frigate", autocomplete: "off", spellcheck: false %>
+</div>
+<p class="text-xs text-muted">Use a porta sem login do Frigate (5000) na rede de casa. Com o Frigate e o servidor no mesmo broker MQTT, a detecção chega na hora; sem broker, é lida a cada 10 s. Cada câmera vira um aparelho com o ponto <strong>Detecção</strong> (pessoa, veículo, animal, zona) para o gatilho "Câmera detectou" e o aviso com o quadro.</p>

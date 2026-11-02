@@ -25,6 +25,7 @@ module Integrations
   # Ordem = ordem do catálogo. Integração nova: classe + uma linha aqui.
   PLUGINS = %w[TuyaPlugin XiaomiPlugin AlexaPlugin CameraPlugin HikvisionPlugin MqttPlugin Zigbee2mqttPlugin
                EsphomePlugin ShellyPlugin TasmotaPlugin MatterPlugin CastPlugin WebosPlugin TizenPlugin AdbPlugin BroadlinkPlugin SpotifyPlugin
+               FrigatePlugin ReolinkPlugin UnifiProtectPlugin HuePlugin WledPlugin YeelightPlugin SwitchbotPlugin
                CalendarPlugin WeatherPlugin MobileAppPlugin NetworkTrackerPlugin TelegramPlugin WhatsappPlugin HttpMessengerPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
 
   module_function
@@ -46,6 +47,9 @@ module Integrations
   def plugin(key) = plugins.find { |p| p.key == key.to_s }
   def for_driver(driver) = plugins.find { |p| p.driver == driver.to_s }
   def drivers = plugins.filter_map(&:driver).uniq
+
+  # Quadro de um ponto de câmera pelo plugin do aparelho (integ); nil = não tem.
+  def snapshot(point) = for_driver(point.device.driver)&.snapshot(point)
 
   # Marca "Sincronizando" e põe a varredura na fila.
   def start_sync!(integration)

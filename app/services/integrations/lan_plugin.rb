@@ -24,6 +24,12 @@ module Integrations
         @secrets || []
       end
 
+      # integ: campos do formulário guardados às claras em settings (usuário, tópico).
+      def plain(*fields)
+        @plain = fields.map(&:to_s) if fields.any?
+        @plain || []
+      end
+
       def setup(site, form)
         host = form[:host].to_s.strip
         return outcome(:form, alert: "Informe o IP ou o nome do aparelho na rede.") if host.blank?
@@ -34,7 +40,8 @@ module Integrations
       def login(integration, form)
         s = integration.settings
         host = form[:host].to_s.strip.presence || s["host"]
-        integration.settings = s.merge("host" => host, "port" => (form[:port].presence || s["port"] || port)&.to_i, "account" => host).compact
+        integration.settings = s.merge("host" => host, "port" => (form[:port].presence || s["port"] || port)&.to_i, "account" => host)
+                                .merge(plain.to_h { |k| [ k, form[k].to_s.strip ] }.compact_blank).compact
         values = secrets.to_h { |k| [ k, form[k].to_s.strip ] }.compact_blank
         integration.credentials = integration.secrets.merge(values).to_json if values.any?
         integration.save!

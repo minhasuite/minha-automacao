@@ -100,12 +100,16 @@ module Api
       # 503 camera_unavailable sem o go2rtc ou com a câmera fora.
       def snapshot
         point = Point.find(params[:id])
-        raise ActiveRecord::RecordNotFound unless point.capability == "stream" && point.device.driver == "go2rtc"
+        own = point.capability == "detection" # integ: quadro da detecção pelo plugin da câmera
+        raise ActiveRecord::RecordNotFound unless own || (point.capability == "stream" && point.device.driver == "go2rtc")
 
         authorize_site!(point.site, :view)
+        jpeg = own ? Integrations.snapshot(point) : Drivers::Go2rtc.snapshot(point)
+        return render_error(:camera_unavailable, "Sem quadro desta detecção.", status: :service_unavailable) if jpeg.nil?
+
         response.headers["Cache-Control"] = "no-store"
-        send_data Drivers::Go2rtc.snapshot(point), type: "image/jpeg", disposition: "inline"
-      rescue Drivers::Go2rtc::Error => e
+        send_data jpeg, type: "image/jpeg", disposition: "inline"
+      rescue Drivers::Go2rtc::Error, Integrations::Error => e
         render_error(:camera_unavailable, e.message, status: :service_unavailable)
       end
 

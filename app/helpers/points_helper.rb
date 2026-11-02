@@ -7,7 +7,7 @@ module PointsHelper
                   "text" => "document-text", "vacuum" => "vacuum", "speaker" => "speakerphone", "stream" => "video-camera",
                   "climate" => "sun", "event" => "bell", "counter" => "plus", "timer" => "clock", "datetime" => "calendar",
                   "script" => "play", "calendar" => "calendar", "weather" => "sun", "media" => "desktop-computer",
-                  "remote" => "status-online" }.freeze
+                  "remote" => "status-online", "detection" => "user-circle" }.freeze
   # Pacote 1: situação da mídia (`value.state`, nomes do HA).
   MEDIA_TEXT = { "off" => "Desligada", "on" => "Ligada", "idle" => "Parada", "playing" => "Tocando", "paused" => "Pausada",
                  "buffering" => "Carregando", "standby" => "Em espera" }.freeze
@@ -76,6 +76,8 @@ module PointsHelper
       point.reported_at ? "Acionado #{l(point.reported_at, format: :short)}" : "Pronto"
     elsif point.capability == "calendar"
       calendar_text(v)
+    elsif point.capability == "detection"
+      Detections.text(v)
     elsif v.nil?
       "Sem valor"
     elsif point.capability == "color" && v.is_a?(Hash)

@@ -14,7 +14,9 @@ class Point < ApplicationRecord
     "measure" => "decimal", "enum" => "enum", "setpoint" => "decimal", "command" => nil,
     "text" => "string", "vacuum" => "enum", "speaker" => "json", "stream" => "string",
     "climate" => "json", "event" => "json", "counter" => "integer", "timer" => "enum", "datetime" => "string",
-    "script" => nil, "calendar" => "json", "weather" => "enum", "media" => "json", "remote" => "json"
+    "script" => nil, "calendar" => "json", "weather" => "enum", "media" => "json", "remote" => "json",
+    # integ: detecção de câmera com IA (Frigate, Reolink, UniFi Protect…), genérica: {kind, label, score, zones, at…}.
+    "detection" => "json"
   }.freeze
   CAPABILITY_LABELS = {
     "onoff" => "Liga/desliga", "dimmer" => "Intensidade", "color" => "Cor", "gate" => "Portão",
@@ -23,10 +25,12 @@ class Point < ApplicationRecord
     "command" => "Botão", "text" => "Texto", "vacuum" => "Robô aspirador", "speaker" => "Alto-falante",
     "stream" => "Câmera", "climate" => "Clima", "event" => "Evento",
     "counter" => "Contador", "timer" => "Temporizador", "datetime" => "Data e hora", "script" => "Script", "calendar" => "Agenda", "weather" => "Clima",
-    "media" => "Mídia", "remote" => "Controle remoto"
+    "media" => "Mídia", "remote" => "Controle remoto", "detection" => "Detecção"
   }.freeze
   # Só leitura por natureza (o resto nasce gravável).
-  READ_ONLY = %w[contact motion tamper problem measure stream event calendar weather].freeze
+  READ_ONLY = %w[contact motion tamper problem measure stream event calendar weather detection].freeze
+  # Contam a cada aviso, mesmo repetido (botão, campainha, nova detecção).
+  REPEATING = %w[event detection].freeze
   DATA_TYPES = %w[bool integer decimal enum string json timestamp].freeze
   STATE_CLASSES = %w[measurement total total_increasing].freeze
   HISTORY = %w[none on_change interval].freeze
@@ -105,7 +109,7 @@ class Point < ApplicationRecord
   # leitura de histórico, o evento de qualidade e avisa as telas abertas.
   def report!(new_value, quality: "good", at: Time.current)
     # Evento (botão, campainha) conta a cada aviso, mesmo repetido ("clique" de novo).
-    value_changed = new_value != value || (capability == "event" && !new_value.nil?)
+    value_changed = new_value != value || (capability.in?(REPEATING) && !new_value.nil?)
     value_was = value
     quality_was = self.quality
     self.changed_at = at if value_changed

@@ -81,7 +81,7 @@
     <% elsif case_kind == :recipient %>
       <%= select_tag name, options_for_select(Notifier.recipient_choices(site), v), class: "ss-input", id: id %>
     <% elsif case_kind == :camera %>
-      <%= select_tag name, options_for_select(points.values.uniq.select { |p| p.capability == "stream" }.map { |p| [ "#{p.device.name}: #{p.name}", p.id ] }, v), include_blank: "Sem imagem de câmera", class: "ss-input", id: id %>
+      <%= select_tag name, options_for_select(points.values.uniq.select { |p| p.capability.in?(%w[stream detection]) }.map { |p| [ "#{p.device.name}: #{p.name}", p.id ] }, v), include_blank: "Sem imagem de câmera", class: "ss-input", id: id %>
     <% elsif case_kind == :buttons %>
       <%= text_area_tag name, Array(v).map { |b| "#{b["id"]}: #{b["title"]}#{" -> #{[ b["point"], b["command"], b["value"] ].compact.join(" ")}" if b["point"]}" }.join("\n"), class: "ss-input", id: id, rows: 3, maxlength: 600, placeholder: "sim: Sim (um por linha)" %>
     <% elsif case_kind == :script %>

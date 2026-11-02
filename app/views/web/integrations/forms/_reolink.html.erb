@@ -1,0 +1,4 @@
+<%# locals: (f:, integration:) -%>
+<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::ReolinkPlugin,
+           plain: [ [ :username, "Usuário", "admin" ] ], fields: [ [ :password, "Senha", "a do app Reolink" ] ],
+           note: "Câmera ou NVR (um aparelho por canal). Porta 443 usa HTTPS. A detecção de pessoa, veículo e animal é a do próprio aparelho, lida a cada 5 s." %>

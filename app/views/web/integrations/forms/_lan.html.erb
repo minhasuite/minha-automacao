@@ -1,4 +1,4 @@
-<%# locals: (f:, integration:, plugin:, fields: [], note: nil) -%>
+<%# locals: (f:, integration:, plugin:, fields: [], plain: [], note: nil) -%>
 <%# Pacote 1: formulário comum dos aparelhos da rede (LanPlugin): nome, endereço, porta e os segredos do plugin.
     fields: [[campo, rótulo, dica]] guardados cifrados; vazio no Reconfigurar mantém o guardado. %>
 <% s = integration&.settings || {} %>
@@ -9,6 +9,9 @@
   <div><%= f.label :host, "IP ou nome na rede", class: "ss-label" %><%= f.text_field :host, class: "ss-input num", value: params[:host].presence || s["host"], placeholder: "192.168.0.50", autocomplete: "off", spellcheck: false %></div>
   <div><%= f.label :port, "Porta", class: "ss-label" %><%= f.number_field :port, class: "ss-input num", value: params[:port].presence || s["port"], placeholder: plugin.port %></div>
 </div>
+<% plain.each do |key, label, hint| %>
+  <div><%= f.label key, label, class: "ss-label" %><%= f.text_field key, class: "ss-input", value: params[key].presence || s[key.to_s], placeholder: hint, autocomplete: "off", spellcheck: false %></div>
+<% end %>
 <% fields.each do |key, label, hint| %>
   <div>
     <%= f.label key, label, class: "ss-label" %>

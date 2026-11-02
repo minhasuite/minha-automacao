@@ -27,7 +27,7 @@ module Automations
         a.definition["triggers"].each_with_index do |t, i|
           next unless t["point"] == point.id && t["attribute"].present? == !attrs_was.nil?
           next if attrs_was && !changed_into?(t, point.attrs.to_h[t["attribute"]], attrs_was[t["attribute"]])
-          next if attrs_was.nil? && !changed_into?(t, point.value, value_was, repeat: point.capability == "event")
+          next if attrs_was.nil? && !changed_into?(t, point.value, value_was, repeat: point.capability.in?(Point::REPEATING))
 
           wait = Dsl.seconds(t["for"]).to_i
           next AutomationTriggerJob.set(wait: wait.seconds).perform_later(a.id, i, point.changed_at.iso8601(6)) if wait.positive?

@@ -12,7 +12,7 @@ module Automations
   module TriggerTypes
     extend Block::Registry
 
-    PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger NotificationActionTrigger EventTrigger ZoneTrigger PresenceTrigger AlarmTrigger].freeze
+    PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger NotificationActionTrigger EventTrigger ZoneTrigger PresenceTrigger AlarmTrigger DetectionTrigger].freeze
 
     # Id do gatilho (Lote 5, `id` do HA): a execução leva em `trigger.id`, e a
     # condição "trigger.id = 'x'" diz qual gatilho disparou.

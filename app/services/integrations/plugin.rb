@@ -55,6 +55,10 @@ module Integrations
       # (`address.on_demand`: câmera de nuvem cujo endereço vence); nil = sem vídeo.
       def stream_url(_point) = nil
 
+      # integ: quadro (JPEG) de um ponto de câmera do plugin (detecção com IA:
+      # o da detecção de agora); nil = o plugin não tem (o go2rtc assume).
+      def snapshot(_point) = nil
+
       # A cada minuto (Integrations.tick); padrão: nada.
       def tick(_now) = nil
 

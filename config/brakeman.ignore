@@ -17,6 +17,12 @@
       "fingerprint": "a1d0dbe676735014b65363b44b19fc6c3abe31bc7c453998ae8181961070d378",
       "file": "app/services/drivers/cast.rb",
       "note": "Pacote 1: aparelho da rede de casa (TV, Chromecast, Shelly) com certificado próprio; o endereço é o IP que o técnico cadastrou."
+    },
+    {
+      "warning_type": "SSL Verification Bypass",
+      "fingerprint": "9792bb34a750602d2916c14668d6895d5d1cd59b9b8635efba733892bd3b8824",
+      "file": "app/services/lan_http.rb",
+      "note": "integ: só com insecure: true, para aparelho da rede de casa com certificado próprio (UniFi, Hue, Reolink HTTPS)."
     }
   ],
   "brakeman_version": "8.1.0"

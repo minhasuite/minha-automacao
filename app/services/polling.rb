@@ -9,7 +9,10 @@ module Polling
   GAP = 2
   DEVICES = { "tuya_local" => "Drivers::TuyaLocal", "xiaomi_miot" => "Drivers::XiaomiMiot",
               "esphome" => "Drivers::Esphome", "shelly" => "Drivers::Shelly", "matter" => "Drivers::Matter", "broadlink" => "Drivers::Broadlink",
-              "cast" => "Drivers::Cast", "webos" => "Drivers::Webos", "tizen" => "Drivers::Tizen", "adb" => "Drivers::Adb", "spotify" => "Drivers::Spotify" }.freeze
+              "cast" => "Drivers::Cast", "webos" => "Drivers::Webos", "tizen" => "Drivers::Tizen", "adb" => "Drivers::Adb", "spotify" => "Drivers::Spotify",
+              # integ: câmeras com IA (só leitura) e luz e casa.
+              "frigate" => "Frigate", "reolink" => "Reolink", "unifi_protect" => "UnifiProtect",
+              "hue" => "Drivers::Hue", "wled" => "Drivers::Wled", "yeelight" => "Drivers::Yeelight", "switchbot" => "Drivers::Switchbot" }.freeze
   # Integração de conta: varredura (`Integrations.sync!`; Alexa = lista de Echo).
   DUE = "COALESCE(poll_s, 0) > 0 AND (polled_at IS NULL OR polled_at <= now() - make_interval(secs => poll_s))".freeze
 

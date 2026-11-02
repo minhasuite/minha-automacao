@@ -284,7 +284,7 @@ module Automations
         when :kv then "precisam ser {campo: texto}" unless v.is_a?(Hash) && v.size <= Dataset::MAX_FIELDS && v.all? { |k, x| k.is_a?(String) && x.is_a?(String) && x.size <= 500 }
         when :channels then "canal inválido" unless Notifier.valid_channels?(v)
         when :recipient then recipient_error(v)
-        when :camera then camera_error(v)
+        when :camera then camera_error(v, detection: true)
         when :buttons then nil # regras do plugin
         when :scene then "cena não existe neste local" unless v.is_a?(String) && @site.scenes.exists?(id: v)
         when :script then "script não existe neste local" unless v.is_a?(String) && @site.scripts.exists?(id: v)
@@ -303,9 +303,10 @@ module Automations
         "pessoa não existe" if v.start_with?("user:") && !User.exists?(id: v.delete_prefix("user:"), tenant_id: @site.tenant_id)
       end
 
-      def camera_error(id)
+      # integ: no "Avisar", a detecção com IA também dá o quadro (o da detecção).
+      def camera_error(id, detection: false)
         point = @points[id] or return "câmera não existe neste local"
-        "#{point.name} não é câmera" unless point.capability == "stream"
+        "#{point.name} não é câmera" unless point.capability == "stream" || (detection && point.capability == "detection")
       end
 
       def point_error(id, writable)

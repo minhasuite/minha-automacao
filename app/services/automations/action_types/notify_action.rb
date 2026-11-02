@@ -85,9 +85,9 @@ module Automations
         return unless node["camera"]
 
         point = e.ctx.point(node["camera"]) or return [ nil, "câmera removida" ]
-        jpeg = Drivers::Go2rtc.snapshot(point)
+        jpeg = Integrations.snapshot(point) || Drivers::Go2rtc.snapshot(point) # integ: detecção com IA traz o quadro do plugin
         [ ActiveStorage::Blob.create_and_upload!(io: StringIO.new(jpeg), filename: "#{point.key}-#{Time.current.to_i}.jpg", content_type: "image/jpeg"), "com quadro de #{point.name}" ]
-      rescue Drivers::Go2rtc::Error => ex
+      rescue Drivers::Go2rtc::Error, Integrations::Error => ex
         [ nil, "sem imagem: #{ex.message}" ]
       end
     end
