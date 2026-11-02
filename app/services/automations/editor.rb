@@ -54,6 +54,13 @@ module Automations
       path.sub(/\d+\z/, j.to_s)
     end
 
+    # ondaA1 (A7): liga/desliga o bloco (`enabled: false`) sem apagar.
+    def toggle(path)
+      node = dig(path)
+      node["enabled"] == false ? node.delete("enabled") : node["enabled"] = false
+      path
+    end
+
     def remove(path)
       list, i = parent(path)
       list.delete_at(i)

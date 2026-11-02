@@ -257,6 +257,7 @@ module Web
       when "update" then editor.update(target, params.fetch(:block, {}).permit(*Automations::Dsl.form_fields, **Automations::Dsl.array_form_fields, fields: {}).to_h)
       when "move" then editor.move(target, params[:dir])
       when "remove" then editor.remove(target) && nil
+      when "toggle" then editor.toggle(target)
       else raise KeyError, "op"
       end
     end

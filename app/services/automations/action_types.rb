@@ -18,7 +18,8 @@ module Automations
 
     PLUGINS = %w[CommandAction CommandQueryAction SceneAction ScriptAction NotifyAction SpeakAction WaitNotificationAction FireEventAction WaitEventAction HttpAction IntegrationReloadAction TraceNoteAction CalendarEventsAction WeatherForecastAction AiTaskAction AiDataAction SttAction TtsAction DatasetRecordAction DatasetQueryAction PointsHistoryAction
                  WaitAction WaitForAction
-                 IfAction ChooseAction RepeatAction SetAction ConditionAction StopAction].freeze
+                 IfAction ChooseAction RepeatAction SetAction ConditionAction StopAction
+                 ParallelAction SequenceAction SnapshotAction MqttPublishAction].freeze
 
     # Toda ação que faz algo (não as de controle) aceita "Seguir se der erro"
     # (Lote 1, `continue_on_error` do HA): a falha vira "erro tolerado" no trace.

@@ -28,12 +28,13 @@ module Mqtt
       end
 
       # Usa a conexão do ouvinte; sem ela (outro processo, ouvinte parado), uma curta.
-      def publish(topic, payload)
+      def publish(topic, payload, retain: false)
         url = Drivers::Mqtt.url or raise Drivers::Mqtt::Error, "MQTT não configurado neste servidor."
+        args = [ topic, payload, (true if retain) ].compact
         if @client&.connected?
-          @client.publish(topic, payload)
+          @client.publish(*args)
         else
-          MQTT::Client.connect(url) { |c| c.publish(topic, payload) }
+          MQTT::Client.connect(url) { |c| c.publish(*args) }
         end
       rescue MQTT::Exception, SystemCallError, SocketError, Timeout::Error => e
         raise Drivers::Mqtt::Error, "Sem conexão com o broker MQTT: #{e.message}"

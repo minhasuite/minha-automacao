@@ -44,11 +44,24 @@ module Automations
       wait = run.state["wait"] || {}
       return unless run.status == "waiting" && wait["kind"] == "event" && match?(wait["match"], payload)
 
+      done, payload = branches_done?(wait, payload)
+      return unless done
+
       ctx = Context.new(site: run.site, trigger: run.trigger, vars: run.state["vars"])
       new(run, run.automation.definition_for(run.version), ctx).resume_with(payload)
     end
 
     def self.match?(filter, payload) = filter.to_h.all? { |k, v| v.blank? || Array(v).include?(payload[k]) }
+
+    # "Em paralelo" (ondaA1, A7): a espera `all_of` só retoma quando todos os
+    # ramos terminaram; ramo com falha faz a execução falhar.
+    def self.branches_done?(wait, payload)
+      ids = wait["all_of"] or return [ true, payload ]
+      return [ false, payload ] if AutomationRun.where(id: ids, finished_at: nil).exists?
+
+      error = AutomationRun.where(id: ids, status: "failed").pick(:error)
+      [ true, payload.merge("error" => error).compact ]
+    end
 
     def initialize(run, definition, ctx)
       @run = run
@@ -56,8 +69,11 @@ module Automations
       @ctx = ctx
       @conditions = Conditions.new(ctx)
       @program = []
-      compile(definition["actions"], "actions")
       state = run.state
+      # ondaA1 (A7): ramo do "Em paralelo" = execução filha que compila só o bloco dela.
+      @root = state["root"]
+      @parent_id = state["parent_id"]
+      @root ? compile_node(dig_path(definition, @root), @root) : compile(definition["actions"], "actions")
       @pc = state["pc"].to_i
       @counters = state["counters"] || {}
       @seq = state["seq"].to_i
@@ -139,11 +155,49 @@ module Automations
       @program.size - 1
     end
 
+    # `enabled: false` (ondaA1, A7; o `enabled` do HA): o bloco fica no
+    # lugar, mas não entra no programa.
     def compile(actions, path)
-      Array(actions).each_with_index do |a, i|
-        plugin = ActionTypes[a["type"]] or raise Failure, "Ação desconhecida: #{a['type']}"
-        plugin.compile(self, a, "#{path}.#{i}")
+      Array(actions).each_with_index { |a, i| compile_node(a, "#{path}.#{i}") }
+    end
+
+    def compile_node(a, path)
+      return if a["enabled"] == false
+
+      plugin = ActionTypes[a["type"]] or raise Failure, "Ação desconhecida: #{a['type']}"
+      plugin.compile(self, a, path)
+    end
+
+    # ---- "Em paralelo" (ondaA1, A7) -------------------------------------------
+
+    # Execução filha para o bloco em `root` ("actions.2.actions.0"), com as
+    # variáveis daqui; roda já, até terminar ou esperar.
+    def spawn_branch(root, title)
+      @run.automation.runs.create!(tenant_id: @run.tenant_id, site_id: @run.site_id, version: @run.version, trigger: @run.trigger, status: "running",
+                                   cause_run_id: @run.id, depth: @run.depth, shadow: @run.shadow, started_at: Time.current,
+                                   state: { "root" => root, "parent_id" => @run.id, "vars" => @ctx.vars },
+                                   steps: [ { "at" => Time.current.iso8601(3), "kind" => "trigger", "title" => title, "result" => "ok" } ])
+    end
+
+    def run_branch = within { run_program }
+
+    # Roda os ramos; se todos acabaram, segue (ou falha com o erro do ramo);
+    # senão espera o evento "parallel_branch_finished" de todos.
+    def join_branches(path, children, title, wait_text, done_text)
+      children.each { |c| Engine.new(c, @definition, Context.new(site: @run.site, trigger: @run.trigger, vars: @ctx.vars.deep_dup)).run_branch }
+      ids = children.map(&:id)
+      unless AutomationRun.where(id: ids, finished_at: nil).exists?
+        error = AutomationRun.where(id: ids, status: "failed").pick(:error)
+        raise Failure, error if error
+
+        return [ title, "ok", done_text ]
       end
+
+      trace(path, "parallel", title, "waiting", detail: wait_text)
+      # ponytail: ramo que termina entre a consulta acima e o suspend (outro job) só retoma no tempo limite; tranca por execução se aparecer.
+      suspend(Time.current + Dsl::MAX_DURATION, "kind" => "event", "event" => "parallel_branch_finished", "match" => { "parent_id" => @run.id },
+                                                  "all_of" => ids, "path" => path, "got" => done_text, "stop_on_timeout" => true)
+      [ :halt ]
     end
 
     def suspend_wait_for(path, deadline)
@@ -162,6 +216,10 @@ module Automations
       return :halt if @run.finished_at
 
       save(status: status, error: error&.truncate(255), finished_at: Time.current, resume_at: nil)
+      if @parent_id # ramo do "Em paralelo": avisa quem espera, sem o fim da automação
+        Triggers.event(@run.site_id, "parallel_branch_finished", { "parent_id" => @parent_id, "run_id" => @run.id, "status" => status }) unless dry_run?
+        return :halt
+      end
       unless dry_run?
         @run.automation.after_run(@run)
         # Quem chamou o script e espera a resposta (ação "Executar script" com esperar).
@@ -185,6 +243,10 @@ module Automations
     end
 
     private
+
+    def dig_path(definition, path)
+      path.split(".").reduce(definition) { |o, k| k.match?(/\A\d+\z/) ? Array(o)[k.to_i] : o.to_h[k] } || raise(Failure, "O ramo não existe mais nesta versão.")
+    end
 
     def node_at(path) = @program.find { |op| op[0] == :act && op[1] == path }&.dig(2) || raise(Failure, "A espera não existe mais nesta versão.")
 
@@ -315,7 +377,8 @@ module Automations
     end
 
     def save(wait: nil, **attrs)
-      @run.update!(attrs.merge(state: { "pc" => @pc, "vars" => @ctx.vars, "counters" => @counters, "seq" => @seq, "wait" => wait }.compact))
+      @run.update!(attrs.merge(state: { "pc" => @pc, "vars" => @ctx.vars, "counters" => @counters, "seq" => @seq, "wait" => wait,
+                                        "root" => @root, "parent_id" => @parent_id }.compact))
     end
 
     def close_wait(result)

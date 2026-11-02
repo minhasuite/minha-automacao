@@ -252,7 +252,8 @@ module Automations
 
         where = "#{where} (#{s.label})"
         names = s.fields.map(&:name)
-        extra = node.keys - names - %w[type id]
+        extra = node.keys - names - %w[type id enabled]
+        @errors << "#{where}: enabled precisa ser verdadeiro ou falso." if node.key?("enabled") && ![ true, false ].include?(node["enabled"])
         @errors << e(:unknown_field_at, where: where, fields: extra.join(", ")) if extra.any?
         s.fields.each do |fd|
           v = node[fd.name]

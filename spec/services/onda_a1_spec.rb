@@ -248,4 +248,84 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect(bp["definition"]["triggers"][1]["expr"]).to include("> 28")
     end
   end
+
+  describe "A7 ações que faltavam" do
+    let(:dev) { create(:device, site: site) }
+    let!(:a_luz) { create(:point, site: site, device: dev, name: "Luz A", key: "a.luz", value: false) }
+    let!(:b_luz) { create(:point, site: site, device: dev, name: "Luz B", key: "b.luz", value: false) }
+
+    def run_with(actions, triggers: [ { "type" => "manual" } ], conditions: [])
+      a = site.automations.create!(name: "Teste #{SecureRandom.hex(3)}")
+      a.publish!({ "triggers" => triggers, "conditions" => conditions, "actions" => actions })
+      [ a, a.fire!({ "type" => "manual", "title" => "Teste" }, skip_conditions: conditions.empty?) ]
+    end
+
+    it "bloco desativado (enabled: false) fica no lugar e não roda; o editor liga e desliga" do
+      _a, run = run_with([ { "type" => "command", "point" => a_luz.id, "command" => "on", "enabled" => false },
+                           { "type" => "command", "point" => b_luz.id, "command" => "on" } ])
+      expect(run.status).to eq("done")
+      expect([ a_luz.reload.value, b_luz.reload.value ]).to eq([ false, true ])
+      ok, checks = Automations::Conditions.new(Automations::Context.new(site: site)).check([ { "type" => "expr", "expr" => "1 = 2", "enabled" => false } ])
+      expect([ ok, checks ]).to eq([ true, [] ])
+      editor = Automations::Editor.new({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "stop" } ] }, site)
+      editor.toggle("actions.0")
+      expect(editor.definition["actions"][0]["enabled"]).to be false
+      editor.toggle("actions.0")
+      expect(editor.definition["actions"][0]).not_to have_key("enabled")
+      expect(Automations::Dsl.errors({ "triggers" => [ { "type" => "manual", "enabled" => "x" } ], "actions" => [ { "type" => "stop" } ] }, site).join).to include("enabled")
+    end
+
+    it "em paralelo: cada ramo é uma execução própria e a automação só segue quando todos terminam" do
+      a, run = run_with([
+        { "type" => "parallel", "actions" => [
+          { "type" => "sequence", "actions" => [ { "type" => "wait", "for" => "1m" }, { "type" => "command", "point" => a_luz.id, "command" => "on" } ] },
+          { "type" => "command", "point" => b_luz.id, "command" => "on" }
+        ] },
+        { "type" => "set", "var" => "fim", "value" => "ok" }
+      ])
+      expect(run.reload.status).to eq("waiting")
+      expect(b_luz.reload.value).to be true
+      expect(a_luz.reload.value).to be false
+      branches = a.runs.where(cause_run_id: run.id).order(:created_at).to_a
+      expect(branches.map(&:status)).to eq(%w[waiting done])
+      travel(2.minutes) { Automations::Engine.resume(branches.first.reload, branches.first.state["seq"]) }
+      expect(a_luz.reload.value).to be true
+      expect(run.reload.status).to eq("done")
+      expect(run.state["vars"]).to include("fim" => "ok")
+      expect(run.steps.map { |s| s["title"] }.join(" ")).to include("Em paralelo: 2 ramos")
+    end
+
+    it "em paralelo: ramo que falha faz a automação falhar; simulação roda os ramos em sequência" do
+      _a, run = run_with([ { "type" => "parallel", "actions" => [ { "type" => "stop", "reason" => "quebrou", "error" => true }, { "type" => "command", "point" => b_luz.id, "command" => "on" } ] } ])
+      expect(run.reload).to have_attributes(status: "failed", error: "quebrou")
+      a = site.automations.create!(name: "Teste simulação")
+      a.publish!({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "parallel", "actions" => [ { "type" => "command", "point" => a_luz.id, "command" => "on" }, { "type" => "command", "point" => b_luz.id, "command" => "off" } ] } ] })
+      sim = a.simulate!(trigger: { "type" => "manual" }, skip_conditions: true)
+      expect(sim.steps.count { |s| s["result"] == "simulated" }).to eq(2)
+      expect(Automations::Dsl.errors({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "parallel", "actions" => [ { "type" => "stop" } ] } ] }, site).join).to include("2 a 10")
+    end
+
+    it "salvar e restaurar o estado (scene.create): a luz pisca e volta como estava" do
+      a_luz.report!(true)
+      _a, run = run_with([
+        { "type" => "snapshot", "mode" => "save", "name" => "antes", "points" => [ a_luz.id ], "query" => "name=\"Luz B\"" },
+        { "type" => "command", "point" => a_luz.id, "command" => "off" },
+        { "type" => "command", "point" => b_luz.id, "command" => "on" },
+        { "type" => "snapshot", "mode" => "restore", "name" => "antes" }
+      ])
+      expect(run.status).to eq("done")
+      expect([ a_luz.reload.value, b_luz.reload.value ]).to eq([ true, false ])
+      scene = site.scenes.find_by!(name: "Instantâneo: antes")
+      expect(scene).to have_attributes(category: "Instantâneos")
+      _b, bad = run_with([ { "type" => "snapshot", "mode" => "restore", "name" => "nunca" } ])
+      expect(bad.error).to include("não existe")
+    end
+
+    it "publicar no MQTT com Liquid e retido" do
+      expect(Mqtt::Listener).to receive(:publish).with("casa/a/luz", "on", retain: true)
+      _a, run = run_with([ { "type" => "mqtt_publish", "topic" => "casa/a/luz", "payload" => "{{ 'on' }}", "retain" => true } ])
+      expect(run.status).to eq("done")
+      expect(Automations::Dsl.errors({ "triggers" => [ { "type" => "manual" } ], "actions" => [ { "type" => "mqtt_publish", "topic" => "casa/#" } ] }, site).join).to include("+ nem #")
+    end
+  end
 end

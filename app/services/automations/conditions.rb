@@ -11,7 +11,7 @@ module Automations
     end
 
     def check(list, mode = "and")
-      checks = Array(list).map { |c| one(c) }
+      checks = Array(list).reject { |c| c.is_a?(Hash) && c["enabled"] == false }.map { |c| one(c) } # ondaA1 (A7)
       results = checks.pluck("result")
       ok = case mode
       when "or" then results.any?

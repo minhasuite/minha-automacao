@@ -494,6 +494,9 @@ pt-BR:
       new_type: "Tipo do bloco novo"
       add: "Adicionar"
     block:
+      disabled: "Desativado"
+      enable: "Ativar o bloco"
+      disable: "Desativar o bloco (fica aqui, mas não roda)"
       tap_to_fill: "toque para preencher"
       returns: "Devolve na variável:"
       save: "Salvar bloco"

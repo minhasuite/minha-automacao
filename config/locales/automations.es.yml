@@ -494,6 +494,9 @@ es:
       new_type: "Tipo del bloque nuevo"
       add: "Agregar"
     block:
+      disabled: "Desactivado"
+      enable: "Activar el bloque"
+      disable: "Desactivar el bloque (queda aquí, pero no corre)"
       tap_to_fill: "toca para completar"
       returns: "Devuelve en la variable:"
       save: "Guardar bloque"

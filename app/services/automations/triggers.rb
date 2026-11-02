@@ -26,7 +26,7 @@ module Automations
       cause = cause_of(point)
       Automation.where(site_id: point.site_id, enabled: true).where("definition->'triggers' @> ?", [ { point: point.id } ].to_json).find_each do |a|
         a.definition["triggers"].each_with_index do |t, i|
-          next unless t["point"] == point.id && t["attribute"].present? == !attrs_was.nil?
+          next unless t["enabled"] != false && t["point"] == point.id && t["attribute"].present? == !attrs_was.nil?
           next if attrs_was && !changed_into?(t, point.attrs.to_h[t["attribute"]], attrs_was[t["attribute"]])
           next if attrs_was.nil? && !changed_into?(t, point.value, value_was, repeat: point.capability.in?(Point::REPEATING))
 
@@ -57,7 +57,7 @@ module Automations
       list.each do |a|
         ActsAsTenant.with_tenant(a.tenant) do
           a.definition["triggers"].each_with_index do |t, i|
-            next unless clock?(t, a.site, now)
+            next unless t["enabled"] != false && clock?(t, a.site, now)
 
             secs = TriggerTypes[t["type"]].seconds(t)
             Automations.safely { a.fire!(with_id(t, clock_info(t, now))) } if secs.include?(0)
@@ -106,7 +106,7 @@ module Automations
     def alert(alert, event)
       Automation.where(site_id: alert.site_id, enabled: true)
                 .where("definition->'triggers' @> ?", [ { type: "alert", rule: alert.alert_rule_id } ].to_json).find_each do |a|
-        next unless a.definition["triggers"].any? { |t| t["type"] == "alert" && t["rule"] == alert.alert_rule_id && t["on"] == event }
+        next unless a.definition["triggers"].any? { |t| t["enabled"] != false && t["type"] == "alert" && t["rule"] == alert.alert_rule_id && t["on"] == event }
 
         Automations.safely do
           a.fire!({ "type" => "alert", "title" => I18n.t("automations.labels.alert_title", name: alert.alert_rule.name, event: Dsl.alert_events[event].downcase),
@@ -140,7 +140,7 @@ module Automations
                   .where(([ "definition->'triggers' @> ?" ] * plugins.size).join(" OR "), *plugins.map { |pl| [ { type: pl.key } ].to_json }).find_each do |a|
           next if name == "automation_finished" && cause&.automation_id == a.id # o próprio fim não dispara de novo
 
-          t = a.definition["triggers"].find { |tr| (pl = TriggerTypes[tr["type"]]) && pl.listens?(name) && pl.fires_on_event?(tr, payload) } or next
+          t = a.definition["triggers"].find { |tr| tr["enabled"] != false && (pl = TriggerTypes[tr["type"]]) && pl.listens?(name) && pl.fires_on_event?(tr, payload) } or next
           Automations.safely { a.fire!(with_id(t, TriggerTypes[t["type"]].event_info(t, payload)), cause: cause) }
         end
       end

@@ -494,6 +494,9 @@ en:
       new_type: "New block type"
       add: "Add"
     block:
+      disabled: "Disabled"
+      enable: "Enable the block"
+      disable: "Disable the block (stays here, but does not run)"
       tap_to_fill: "tap to fill in"
       returns: "Returns in the variable:"
       save: "Save block"
