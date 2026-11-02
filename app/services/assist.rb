@@ -55,8 +55,10 @@ module Assist
     I18n.with_locale(lang) do
       ctx = Ctx.new(site: site, user: user, role: site.role_for(user), heard: heard, language: lang, area: area || satellite&.area, satellite: satellite)
       reply, slots = agent == "llm" ? [] : recognize(ctx, normalize(heard))
-      reply ||= agent.to_s.include?("llm") ? Llm.call(ctx, heard, provider: llm_provider, conversation_id: conversation_id) : ask(ctx, heard)
+      conversation_id = conversation_id.presence || SecureRandom.uuid if agent.to_s.include?("llm")
+      reply ||= conversation_id ? Llm.call(ctx, heard, provider: llm_provider, conversation_id: conversation_id) : ask(ctx, heard)
       out = { "heard" => heard, "text" => reply.text, "intent" => reply.intent, "points" => reply.points.map(&:id), "language" => lang, "slots" => slots.to_h }
+      out["conversation_id"] = conversation_id if conversation_id
       out["audio_url"] = speech(site, reply.text) if speak && reply.text.present?
       out
     end

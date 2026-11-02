@@ -179,6 +179,52 @@ modo festa", "response" => "Boa noite, {quem}!" })
     end
   end
 
+  describe "B4 IA com ferramentas (papel x risco)" do
+    # Provedor falso: responde em sequência o que a lista manda e guarda o que viu.
+    def fake_llm!(*answers)
+      seen = []
+      klass = Class.new(Ai::Providers::Base) do
+        describe key: "teste_llm", label: "Teste IA", default_model: "t-1", capabilities: %i[text structured], key_required: false
+        define_method(:complete) do |system:, user:, schema:, **|
+          seen << { system: system, user: user, schema: schema }
+          Ai::Providers::Base::Result.new(data: answers.shift || { "say" => "fim", "calls" => [] }, usage: { input: 1, output: 1 })
+        end
+      end
+      stub_const("Ai::Providers::TesteLlm", klass)
+      stub_const("Ai::PROVIDERS", Ai::PROVIDERS + %w[TesteLlm])
+      AiAccount.create!(provider: "teste_llm")
+      seen
+    end
+
+    it "chama a intenção como ferramenta, devolve o resultado ao modelo e responde; vê só o exposto" do
+      luz_quarto.update!(expose: { "assist" => false })
+      seen = fake_llm!({ "say" => "", "calls" => [ { "tool" => "turn_on", "args" => { name: "luz da sala" }.to_json } ] },
+                       { "say" => "Pronto, acendi a sala.", "calls" => [] })
+      r = say("deixa a sala clarinha", agent: "local_llm")
+      expect(r).to include("intent" => "llm", "text" => "Pronto, acendi a sala.", "points" => [ luz.id ])
+      expect(r["conversation_id"]).to be_present
+      expect(luz.reload.value).to be true
+      expect(seen.first[:system]).to include("turn_on(name, area)", "Luz Lâmpada (Sala)")
+      expect(seen.first[:system]).not_to include("Abajur")
+      expect(seen.last[:user]).to include("Ferramenta turn_on", "Liguei Luz.")
+      expect(Command.last).to have_attributes(source: "voice", user_id: owner.id)
+      expect(AiCall.where(source: "voz", provider: "teste_llm").count).to eq(2)
+    end
+
+    it "convidado: a ferramenta recusa o sensível e o crítico; sem IA, cai no não entendi" do
+      guest = create(:user, tenant: tenant, role: "member")
+      create(:site_membership, site: site, user: guest, role: "guest")
+      luz.update!(risk: "sensitive")
+      seen = fake_llm!({ "say" => "", "calls" => [ { "tool" => "turn_on", "args" => '{"name":"luz da sala"}' }, { "tool" => "rm_rf", "args" => "{}" } ] },
+                       { "say" => "Não tenho permissão.", "calls" => [] })
+      expect(say("acende a sala", user: guest, agent: "llm")["text"]).to eq("Não tenho permissão.")
+      expect(luz.reload.value).to be false
+      expect(seen.last[:user]).to include("Por voz não posso comandar Luz.", "ferramenta desconhecida")
+      AiAccount.delete_all
+      expect(say("acende a sala", agent: "llm")["intent"]).to eq("unknown")
+    end
+  end
+
   describe "B3 Assist multilíngue" do
     it "en e es: liga, brilho, timer, lista e respostas no idioma da frase" do
       expect(say("turn on the living room light", language: "en")).to include("intent" => "turn_on", "text" => "Turned on Luz.", "language" => "en")

@@ -44,6 +44,17 @@ uma frase-modelo por linha, em qualquer idioma, com `{slot}`. A intenção
 gatilho com `{slot}` trocado. Papel x risco pelo maior risco do que a
 automação comanda; crítico nunca por voz.
 
+## IA que controla a casa (agente do pipeline)
+
+Agente "local" (padrão): intenções e, se nenhuma reconhecer, o "Perguntar à
+casa" só leitura. "local_llm": intenções e, se não reconhecer, a IA com
+ferramentas (`Assist::Llm`); "llm": só a IA. Qualquer provedor de
+`Ai::PROVIDERS` com saída estruturada serve: o modelo devolve
+`{say, calls: [{tool, args}]}`, cada ferramenta é uma intenção
+(`Assist::Intent.tool`) e roda com o papel x risco de quem fala, até 3
+voltas. O modelo vê só os pontos expostos ao Assist. `conversation_id`
+continua a conversa (últimas falas em cache por 5 min).
+
 ## Segurança
 
 - Comando por voz usa `source: "voice"` e o usuário que falou; segue o papel
