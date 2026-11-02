@@ -45,6 +45,16 @@ RSpec.describe "Produto: sistema, acesso remoto e plano" do
       expect(up).to have_been_requested.once
     end
 
+    it "a versão gravada na imagem (RELEASE_TAG) vale mais que a tag do .env (latest-stable)" do
+      with_env("IMAGE" => "ghcr.io/minhasuite/minha-automacao:latest-stable", "RELEASE_TAG" => "v1.1.0") do
+        expect(Updates.current_tag).to eq("v1.1.0")
+        expect(Updates.available?({ "tag" => "v1.1.0" })).to be(false)
+      end
+      with_env("IMAGE" => "ghcr.io/minhasuite/minha-automacao:latest-stable", "RELEASE_TAG" => "") do
+        expect(Updates.current_tag).to eq("latest-stable")
+      end
+    end
+
     it "acompanha o andamento pelo arquivo do bin/ma-update" do
       file = Rails.root.join("tmp/teste-update-status.json")
       with_env("UPDATE_STATUS_FILE" => file.to_s) do
@@ -94,6 +104,20 @@ RSpec.describe "Produto: sistema, acesso remoto e plano" do
       expect(create["Cmd"].last).to include("pg_dump", "rolled_back", "healthy")
       expect(req("POST", "/system/update", { image: "ghcr.io/minhasuite/minha-automacao:v1.1.0" }).first).to eq(409)
       expect(req("GET", "/system/nada").first).to eq(404)
+    end
+
+    it "sem acesso ao registro, usa a imagem que já está na máquina; sem ela, não começa" do
+      docker.add(labels: { "com.docker.compose.project" => "minha-automacao", "com.docker.compose.service" => "supervisor",
+                           "com.docker.compose.project.working_dir" => "/opt/minha-automacao" })
+      allow(docker).to receive(:pull).and_raise(Supervisor::Error, "denied")
+      expect(req("POST", "/system/update", { image: "ghcr.io/minhasuite/minha-automacao:v1.1.0" }).first).to eq(202)
+
+      docker.calls.clear
+      allow(docker).to receive(:call).and_wrap_original do |m, method, path, **kw|
+        path.start_with?("/images/") ? [ 404, {} ] : m.call(method, path, **kw)
+      end
+      docker.containers([ Supervisor::App::UPDATER_LABEL ]).each { |c| docker.inspect(c["Id"])["State"]["Running"] = false }
+      expect(req("POST", "/system/update", { image: "ghcr.io/minhasuite/minha-automacao:v1.2.0" }).first).not_to eq(202)
     end
 
     it "liga e desliga o túnel; o manual do compose tem prioridade" do

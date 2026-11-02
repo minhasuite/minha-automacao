@@ -173,8 +173,8 @@ module Supervisor
 
       dir = install_dir
       Supervisor.log("atualizar para #{image}")
-      @docker.pull(image)
-      @docker.pull(UPDATER_IMAGE)
+      pull_or_local(image)
+      pull_or_local(UPDATER_IMAGE)
       script = File.read(File.expand_path("../bin/ma-update", __dir__))
       body = { "Image" => UPDATER_IMAGE, "Cmd" => [ "sh", "-c", script ], "WorkingDir" => dir,
                "Env" => [ "DIR=#{dir}", "NEW_IMAGE=#{image}" ], "Labels" => { UPDATER_LABEL => "1" },
@@ -182,6 +182,13 @@ module Supervisor
       _, created = @docker.call(:post, "/containers/create", body: body, query: { name: "minha-automacao-updater-#{Time.now.to_i}" })
       @docker.call(:post, "/containers/#{created['Id']}/start")
       json(202, data: { image: image })
+    end
+
+    # Imagem já na máquina (carregada sem internet, ou GHCR sem acesso) serve; só falha se não houver nenhuma.
+    def pull_or_local(ref)
+      @docker.pull(ref)
+    rescue Error
+      raise unless @docker.call(:get, "/images/#{ref}/json").first == 200
     end
 
     # Túnel do acesso remoto ligado pela tela (o do compose, perfil `tunnel`, é o manual).

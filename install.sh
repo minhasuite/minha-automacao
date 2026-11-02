@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 # Instalador do Minha Automação: um comando, numa máquina com Debian, Ubuntu
-# ou Raspberry Pi OS (64 bits). Instala o Docker (se faltar), baixa o compose,
-# gera os segredos (ficam só nesta máquina, em $DIR/.env, chmod 600) e sobe.
+# ou Raspberry Pi OS (64 bits). Instala o Docker (se faltar), baixa a imagem
+# (o compose vem de dentro dela, como na atualização pela tela), gera os
+# segredos (ficam só nesta máquina, em $DIR/.env, chmod 600) e sobe.
 # No fim, abra o endereço que ele mostra: a primeira configuração cria a conta
 # do dono. Rodar de novo é seguro: não troca segredo nem apaga dado.
 #
 #   curl -fsSL https://raw.githubusercontent.com/minhasuite/minha-automacao/master/install.sh | sudo bash
 #
-# Variáveis (opcionais): MA_DIR (/opt/minha-automacao), MA_TAG (latest),
-# MA_PORT (80), MA_REPO_RAW (de onde vem o compose), MA_IMAGE (imagem).
+# Variáveis (opcionais): MA_DIR (/opt/minha-automacao), MA_TAG (latest-stable =
+# última versão numerada; ex.: v0.9.0), MA_PORT (80), MA_IMAGE (repositório da imagem).
+# Imagem já carregada na máquina (`docker load`, sem internet) também serve.
 set -euo pipefail
 
 DIR="${MA_DIR:-/opt/minha-automacao}"
-TAG="${MA_TAG:-latest}"
+TAG="${MA_TAG:-latest-stable}"
 PORT="${MA_PORT:-80}"
-RAW="${MA_REPO_RAW:-https://raw.githubusercontent.com/minhasuite/minha-automacao/master}"
 IMAGE="${MA_IMAGE:-ghcr.io/minhasuite/minha-automacao}:$TAG"
 
 say() { printf '\n\033[1;35m==>\033[0m %s\n' "$*"; }
@@ -36,10 +37,15 @@ fi
 docker compose version >/dev/null 2>&1 || die "o Docker Compose (plugin) não está disponível."
 systemctl enable --now docker >/dev/null 2>&1 || true
 
+say "Baixando $IMAGE"
+docker pull -q "$IMAGE" >/dev/null || docker image inspect "$IMAGE" >/dev/null 2>&1 \
+  || die "não deu para baixar $IMAGE (sem internet, versão inexistente ou pacote do GHCR sem leitura pública: veja docs/instalacao.md)."
+
 say "Pasta $DIR"
 mkdir -p "$DIR/backups" "$DIR/secrets"
 cd "$DIR"
-curl -fsSL "$RAW/docker-compose.local.yml" -o docker-compose.yml.new || die "não deu para baixar o compose de $RAW."
+docker run --rm --entrypoint cat "$IMAGE" /app/docker-compose.local.yml > docker-compose.yml.new && [ -s docker-compose.yml.new ] \
+  || die "a imagem $IMAGE não tem o docker-compose.local.yml."
 mv docker-compose.yml.new docker-compose.yml
 
 say "Segredos (só nesta máquina)"
@@ -65,10 +71,10 @@ grep -q '^APP_HOST=' .env || echo "APP_HOST=${IP:-127.0.0.1}" >> .env
 grep -q '^WEB_PORT=' .env || echo "WEB_PORT=$PORT" >> .env
 sed -i '/^IMAGE=/d' .env && echo "IMAGE=$IMAGE" >> .env
 
-say "Baixando e subindo ($IMAGE)"
+say "Subindo"
 profiles=()
 grep -q '^CF_TUNNEL_TOKEN=.' .env && profiles+=(--profile tunnel)
-docker compose "${profiles[@]}" pull -q
+docker compose "${profiles[@]}" pull -q --ignore-pull-failures # a imagem do produto já está aqui
 docker compose "${profiles[@]}" up -d --remove-orphans
 
 say "Esperando o servidor responder"

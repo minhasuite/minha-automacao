@@ -22,7 +22,8 @@ module Updates
 
   # Imagem que está rodando (o .env do servidor tem IMAGE=...; a VPS não).
   def current_image = ENV["IMAGE"].presence || "#{IMAGE_REPO}:latest"
-  def current_tag = current_image.split(":").last
+  # A versão gravada na imagem pelo CI (RELEASE_TAG) vale mais que a tag do .env (`latest-stable`).
+  def current_tag = ENV["RELEASE_TAG"].presence || current_image.split(":").last
   def current_commit = ENV["APP_VERSION"].presence&.first(7)
 
   # Última versão publicada → {"tag", "name", "notes", "url", "published_at"} ou nil (cache de 6 h).

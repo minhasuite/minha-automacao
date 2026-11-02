@@ -44,7 +44,7 @@ if ! docker compose exec -T db sh -c 'pg_dump -U minha_automacao minha_automacao
 fi
 
 status running pull ""
-docker pull -q "$NEW_IMAGE" >/dev/null || { status failed pull "Não deu para baixar a imagem nova; nada foi trocado."; exit 1; }
+docker pull -q "$NEW_IMAGE" >/dev/null || docker image inspect "$NEW_IMAGE" >/dev/null 2>&1 || { status failed pull "Não deu para baixar a imagem nova; nada foi trocado."; exit 1; }
 
 # O compose da versão nova vem dentro da imagem; o atual fica guardado para a volta.
 cp docker-compose.yml "backups/docker-compose-$STAMP.yml"

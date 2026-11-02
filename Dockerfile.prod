@@ -28,7 +28,10 @@ RUN bundle exec bootsnap precompile app/ lib/ && \
 # Qual commit é esta imagem: vira a `versao` de todo erro reportado ao meulog.
 # Não entra no compose (variável vazia lá sobrescreveria este ENV).
 ARG GIT_SHA=""
-ENV APP_VERSION=${GIT_SHA} GIT_SHA=${GIT_SHA}
+# Versão numerada (tag vX.Y.Z do CI): a tela de atualização compara com a
+# última release mesmo quando o .env aponta para `latest-stable`.
+ARG RELEASE_TAG=""
+ENV APP_VERSION=${GIT_SHA} GIT_SHA=${GIT_SHA} RELEASE_TAG=${RELEASE_TAG}
 
 EXPOSE 3000
 CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
