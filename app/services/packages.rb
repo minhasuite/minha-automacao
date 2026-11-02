@@ -21,7 +21,7 @@ module Packages
   VERSION = /\A\d+(\.\d+){0,3}([-+.][0-9A-Za-z.]+)?\z/
   FILES = %w[minha-automacao.json minha-automacao.yml minha-automacao.yaml].freeze
   SOURCES = %w[GithubRepo GitlabRepo ManifestUrl].freeze
-  ITEMS = %w[DeviceMapItem BlueprintItem DashboardItem HelperItem].freeze
+  ITEMS = %w[DeviceMapItem BlueprintItem DashboardItem HelperItem CardItem].freeze
 
   module_function
 
@@ -287,6 +287,29 @@ module Packages
 
       def self.uninstall!(site, ref) = site.points.helpers.find_by(id: ref["id"])&.destroy!
       def self.path(ref) = routes.edit_helper_path(ref["id"])
+    end
+  end
+end
+
+module Packages
+  module Items
+    # ondaA2 A20: card de painel de terceiros (JS), conferido pelo SHA-256 e
+    # isolado num iframe sandbox (Cards). O registro é o próprio hash.
+    class CardItem < Base
+      describe key: "card", label: "Card de painel"
+      texts "pt-BR" => { url: "url precisa ser https e terminar em .js.", element: "element precisa ser o nome do elemento do card (ex.: meu-card)." },
+            en: { label: "Dashboard card", url: "url must be https and end in .js.", element: "element must be the card element name (e.g. my-card)." },
+            es: { label: "Tarjeta de panel", url: "url debe ser https y terminar en .js.", element: "element debe ser el nombre del elemento de la tarjeta (ej.: mi-tarjeta)." }
+
+      def self.errors(_site, item)
+        list = []
+        list << text(:url) unless item["url"].to_s.match?(%r{\Ahttps://\S+\.js(\?\S*)?\z})
+        list << I18n.t("cards.errors.sha") unless Cards.hex(item["sha256"])
+        list << text(:element) unless item["element"].to_s.match?(Cards::ELEMENT)
+        list
+      end
+
+      def self.install!(_site, item, _package, _old_id) = Cards.fetch!(item["url"], item["sha256"])
     end
   end
 end

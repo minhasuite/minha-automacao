@@ -66,3 +66,22 @@ instalar/remover).
 - Mapa novo: arquivo + linha em `DeviceMaps::FILES` e `MERGEABLE`, e o serviço lendo por `DeviceMaps.apply`.
 
 Provas com `stub_const` e fixtures (WebMock) em `spec/services/pacote3_platform_spec.rb`.
+
+## Card de painel (`card`, ondaA2)
+
+Card de terceiros em JavaScript (como os "custom cards" do HACS):
+
+```json
+{ "type": "card", "key": "meu-card", "name": "Meu card", "url": "https://cdn.exemplo.com/meu-card.js",
+  "sha256": "sha256-<base64>", "element": "meu-card" }
+```
+
+- `sha256`: hash do arquivo (hexa ou o formato do atributo `integrity`). O
+  arquivo é baixado uma vez, conferido e guardado pelo hash; se não bater,
+  o pacote não instala.
+- No painel, o widget "Card de terceiros" roda o card num iframe `sandbox`
+  (origem opaca: sem cookie, sem acesso à página nem à API) com `integrity`
+  no script. O card recebe `setConfig(config)` e `hass.states` só dos
+  pontos escolhidos (entity_id = chave do ponto), como no HA; cards que só
+  mostram estado funcionam sem mudança. Comandar a partir do card não existe
+  (de propósito: o código de terceiros não fala com a casa).

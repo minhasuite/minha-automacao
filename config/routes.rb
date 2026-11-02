@@ -30,6 +30,8 @@ Rails.application.routes.draw do
 
   # ---- Web (Hotwire, sessão em cookie) --------------------------------------
   get "entrar", to: "web/sessions#new", as: :login
+  # ondaA2 A20: JS dos cards de terceiros pelo hash (público, imutável; o iframe sandbox não manda cookie).
+  get "cartoes/:sha.js", to: "cards#show", constraints: { sha: /\h{64}/ }, format: false
   post "entrar", to: "web/sessions#create"
   post "entrar/google", to: "web/sessions#google", as: :google_login
   # ondaA2 A16: segunda etapa e entrar com passkey.

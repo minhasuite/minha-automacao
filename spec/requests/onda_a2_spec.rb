@@ -419,4 +419,54 @@ b [tuya] falha
       expect(within(tenant) { Firmware.check!(z) }).to be_nil
     end
   end
+
+  describe "A20 cards de terceiros com hash e isolamento" do
+    let(:js) { "customElements.define('teste-card', class extends HTMLElement { set hass(h) { this.textContent = h.states['luz'].state } })" }
+    let(:sha) { Digest::SHA256.hexdigest(js) }
+    let(:dir) { Dir.mktmpdir }
+    let(:manifest) do
+      { "format" => 1, "key" => "teste-cards", "name" => "Teste Cards", "version" => "1.0.0",
+        "items" => [ { "type" => "card", "key" => "teste", "name" => "Teste Card", "url" => "https://cdn.exemplo.com/teste-card.js", "sha256" => sha, "element" => "teste-card" } ] }
+    end
+    let!(:lamp) { within(tenant) { create(:point, site: site, device: device, name: "Teste Luz", key: "luz", value: true) } }
+
+    before do
+      allow(Cards).to receive(:dir).and_return(dir)
+      allow(SafeHttp).to receive(:check!).and_return("203.0.113.7")
+      stub_request(:get, "https://cdn.exemplo.com/teste-card.js").to_return(body: js)
+    end
+
+    after { FileUtils.rm_rf(dir) }
+
+    it "instala conferindo o hash, serve pelo hash sem login e recusa arquivo trocado" do
+      bad = manifest.deep_dup.tap { |m| m["items"][0]["sha256"] = "0" * 64 }
+      expect { within(tenant) { Packages.install!(site, bad, "https://cdn.exemplo.com/x.json") } }.to raise_error(Packages::Error, /não bate com o sha256/)
+      expect(within(tenant) { Packages.errors(manifest.deep_merge("items" => [ { "type" => "card", "key" => "xx", "url" => "http://a/b.js", "sha256" => "x", "element" => "x" } ]), site) })
+        .to include(a_string_matching(/https/), a_string_matching(/sha256/), a_string_matching(/element/))
+
+      within(tenant) { Packages.install!(site, manifest.deep_merge("items" => [ manifest["items"][0].merge("sha256" => Cards.integrity(sha)) ]), "https://cdn.exemplo.com/x.json") }
+      expect(within(tenant) { Cards.available(site) }).to eq([ { "ref" => "teste-cards/teste", "name" => "Teste Card", "sha" => sha, "element" => "teste-card" } ])
+      get "/cartoes/#{sha}.js"
+      expect(response.body).to eq(js)
+      expect(response.headers).to include("Access-Control-Allow-Origin" => "*", "X-Content-Type-Options" => "nosniff")
+      File.write(File.join(dir, "#{sha}.js"), "alert(1)")
+      get "/cartoes/#{sha}.js"
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "widget roda o card num iframe sandbox com integrity e o estado no formato do HA" do
+      within(tenant) { Packages.install!(site, manifest, "https://cdn.exemplo.com/x.json") }
+      r = Struct.new(:site, :used) { def use(p) = (used << p) && p }.new(site, [])
+      w = { "type" => "custom_card", "card" => "teste-cards/teste", "config" => '{"title":"Oi"}', "height" => "300" }
+      data, = within(tenant) { Dashboards::Widgets::CustomCardWidget.data(r, w, [ lamp ]) }
+      expect(data["config"]).to eq("title" => "Oi", "type" => "custom:teste-card", "entities" => [ "luz" ])
+      expect(data["states"]["luz"]).to include("state" => "on", "attributes" => hash_including("friendly_name" => "Teste Luz"))
+      html = ApplicationController.render(partial: "web/dashboards/widgets/custom_card", locals: { w: w.merge("data" => data), points: {}, dashboard: nil, live: false })
+      expect(html).to include('sandbox="allow-scripts"', "integrity=&quot;#{Cards.integrity(sha)}&quot;", "/cartoes/#{sha}.js", "height: 300px")
+      expect(html).not_to include("allow-same-origin")
+      expect(Dashboards::Widgets::CustomCardWidget.errors(w.merge("config" => "{x"))).to eq([ "config precisa ser um objeto JSON." ])
+      missing, = within(tenant) { Dashboards::Widgets::CustomCardWidget.data(r, w.merge("card" => "nada/nada"), []) }
+      expect(missing).to eq("missing" => true)
+    end
+  end
 end

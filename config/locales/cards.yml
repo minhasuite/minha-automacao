@@ -1,0 +1,24 @@
+pt-BR:
+  cards:
+    missing: "Card não instalado neste local (veja a loja de pacotes)."
+    errors:
+      sha: "sha256 precisa ser o hash SHA-256 do arquivo (64 hexa ou sha256-base64)."
+      download: "Não deu para baixar o card (%{status})."
+      too_big: "Card maior que 512 KB."
+      mismatch: "O arquivo baixado não bate com o sha256 do pacote (esperado %{want}…, veio %{got}…)."
+en:
+  cards:
+    missing: "Card not installed in this site (see the package store)."
+    errors:
+      sha: "sha256 must be the SHA-256 hash of the file (64 hex or sha256-base64)."
+      download: "Couldn't download the card (%{status})."
+      too_big: "Card larger than 512 KB."
+      mismatch: "The downloaded file does not match the package sha256 (expected %{want}…, got %{got}…)."
+es:
+  cards:
+    missing: "Tarjeta no instalada en este sitio (vea la tienda de paquetes)."
+    errors:
+      sha: "sha256 debe ser el hash SHA-256 del archivo (64 hexa o sha256-base64)."
+      download: "No se pudo descargar la tarjeta (%{status})."
+      too_big: "Tarjeta mayor que 512 KB."
+      mismatch: "El archivo descargado no coincide con el sha256 del paquete (esperado %{want}…, llegó %{got}…)."

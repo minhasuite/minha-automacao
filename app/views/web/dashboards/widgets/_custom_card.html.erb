@@ -1,0 +1,12 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<% d = w["data"] || {} %>
+<div class="dw-card" data-custom-card="<%= w["card"] %>">
+  <% if w["label"].present? %><p class="dw-card-title"><%= w["label"] %></p><% end %>
+  <% if d["missing"] %>
+    <p class="text-sm text-muted"><%= t("cards.missing") %></p>
+  <% else %>
+    <%# Origem opaca (sandbox sem allow-same-origin): o card não lê cookie nem a página; só recebe o estado abaixo. %>
+    <iframe sandbox="allow-scripts" srcdoc="<%= Cards.srcdoc(d, request.base_url) %>" title="<%= d["name"] %>" loading="lazy" referrerpolicy="no-referrer"
+            class="w-full rounded-xl border-0" style="height: <%= d["height"] || 220 %>px"></iframe>
+  <% end %>
+</div>
