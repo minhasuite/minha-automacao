@@ -115,6 +115,7 @@ module Supervisor
       req = Rack::Request.new(rack_env)
       return json(200, ok: true) if req.path_info == "/health"
       return json(401, error: "Não autorizado.") unless authorized?(req)
+      return system_route(req) if req.path_info.start_with?("/system/")
 
       route(req)
     rescue AppCatalog::Invalid, Error => e
@@ -136,6 +137,81 @@ module Supervisor
         Supervisor.log("watchdog: reiniciando #{info.dig('Config', 'Labels', AppCatalog::LABEL)}")
         @docker.call(:post, "/containers/#{c['Id']}/restart")
       end
+    end
+
+    # ---- Produto: atualização do servidor e acesso remoto ----------------
+    UPDATER_IMAGE = "docker:27.5-cli".freeze # docker + compose; roda o bin/ma-update fora deste container
+    IMAGE_REF = %r{\A#{Regexp.escape(ENV.fetch("UPDATE_IMAGE_REPO", "ghcr.io/minhasuite/minha-automacao"))}:[\w][\w.-]{0,63}\z}
+    UPDATER_LABEL = "minha-automacao.updater".freeze
+    REMOTE_LABEL = "minha-automacao.remote".freeze
+    REMOTE_IMAGES = { "cloudflare" => "cloudflare/cloudflared:2025.10.0" }.freeze
+
+    def system_route(req)
+      body = req.post? ? (JSON.parse(req.body.read.to_s.then { |x| x.empty? ? "{}" : x }) rescue {}) : {}
+      case "#{req.request_method} #{req.path_info}"
+      when "POST /system/update" then update_server(body["image"].to_s)
+      when "GET /system/remote" then json(200, data: remote_status)
+      when "POST /system/remote" then remote_on(body["provider"].to_s, body["token"].to_s)
+      when "DELETE /system/remote" then remote_off
+      else json(404, error: "Não encontrado.")
+      end
+    end
+
+    # Pasta do compose no servidor (label do próprio supervisor): o atualizador monta a mesma.
+    def install_dir
+      me = @docker.containers([ "com.docker.compose.project=#{@project}", "com.docker.compose.service=supervisor" ]).first or raise(Error, "Supervisor fora do compose.")
+      @docker.inspect(me["Id"]).dig("Config", "Labels", "com.docker.compose.project.working_dir") or raise(Error, "Pasta do compose desconhecida.")
+    end
+
+    # Baixa a imagem nova e entrega o resto ao bin/ma-update num container à
+    # parte: subir o compose recria este supervisor, o atualizador não pode morrer junto.
+    def update_server(image)
+      return json(422, error: "Imagem fora do produto.") unless image.match?(IMAGE_REF)
+
+      running = @docker.containers([ UPDATER_LABEL ]).any? { |c| @docker.inspect(c["Id"]).dig("State", "Running") }
+      return json(409, error: "Já existe uma atualização em andamento.") if running
+
+      dir = install_dir
+      Supervisor.log("atualizar para #{image}")
+      @docker.pull(image)
+      @docker.pull(UPDATER_IMAGE)
+      script = File.read(File.expand_path("../bin/ma-update", __dir__))
+      body = { "Image" => UPDATER_IMAGE, "Cmd" => [ "sh", "-c", script ], "WorkingDir" => dir,
+               "Env" => [ "DIR=#{dir}", "NEW_IMAGE=#{image}" ], "Labels" => { UPDATER_LABEL => "1" },
+               "HostConfig" => { "Binds" => [ "/var/run/docker.sock:/var/run/docker.sock", "#{dir}:#{dir}" ], "AutoRemove" => true } }
+      _, created = @docker.call(:post, "/containers/create", body: body, query: { name: "minha-automacao-updater-#{Time.now.to_i}" })
+      @docker.call(:post, "/containers/#{created['Id']}/start")
+      json(202, data: { image: image })
+    end
+
+    # Túnel do acesso remoto ligado pela tela (o do compose, perfil `tunnel`, é o manual).
+    def remote_status
+      manual = @docker.containers([ "com.docker.compose.project=#{@project}", "com.docker.compose.service=cloudflared" ]).first
+      c = @docker.containers([ REMOTE_LABEL ]).first
+      info = c && @docker.inspect(c["Id"])
+      { manual: !manual.nil?, provider: info&.dig("Config", "Labels", REMOTE_LABEL), state: info&.dig("State", "Status"),
+        started_at: info&.dig("State", "StartedAt") }
+    end
+
+    def remote_on(provider, token)
+      image = REMOTE_IMAGES[provider] or return json(422, error: "Provedor desconhecido.")
+      return json(422, error: "Token inválido.") unless token.match?(/\A[A-Za-z0-9_.=+\/-]{20,4096}\z/)
+      return json(409, error: "Já existe um túnel configurado no servidor (.env).") if remote_status[:manual]
+
+      remote_off
+      @docker.pull(image)
+      body = { "Image" => image, "Cmd" => %w[tunnel --no-autoupdate run], "Env" => [ "TUNNEL_TOKEN=#{token}" ],
+               "Labels" => { REMOTE_LABEL => provider },
+               "HostConfig" => { "RestartPolicy" => { "Name" => "unless-stopped" }, "NetworkMode" => "#{@project}_default" } }
+      _, created = @docker.call(:post, "/containers/create", body: body, query: { name: "minha-automacao-remote" })
+      @docker.call(:post, "/containers/#{created['Id']}/start")
+      Supervisor.log("acesso remoto ligado (#{provider})")
+      json(200, data: remote_status)
+    end
+
+    def remote_off
+      @docker.containers([ REMOTE_LABEL ]).each { |c| @docker.call(:delete, "/containers/#{c['Id']}", query: { force: 1 }) }
+      json(200, data: remote_status)
     end
 
     private

@@ -4,7 +4,7 @@ module Web
   # externo); mais "Minha conta". Sem dados de empresa na tela: o tenant
   # continua por dentro (acts_as_tenant).
   class SettingsController < ApplicationController
-    before_action :require_owner!, only: %i[wipe update_system]
+    before_action :require_owner!, only: %i[wipe update_system update_server]
     # Leitor só tem a própria conta (e os aparelhos de push).
     before_action :deny_reader!, except: %i[show account update_account destroy_account]
 
@@ -22,6 +22,16 @@ module Web
     def system
       Licencas::Sync.throttled(current_user.tenant)
       @billing = Billing::Status.call(current_user.tenant, current_user)
+      @release = Updates.latest(force: params[:verificar].present?)
+      @update = Updates.status
+    end
+
+    # Produto: atualiza o servidor para a versão publicada (supervisor + bin/ma-update).
+    def update_server
+      Updates.start!(params[:tag])
+      redirect_to settings_system_path, notice: t("updates.started")
+    rescue Updates::Error => e
+      redirect_to settings_system_path, alert: e.message
     end
 
     # Saída HTTP (ação "Chamar HTTP", agenda ICS): endereços internos liberados.
@@ -43,14 +53,14 @@ module Web
       attrs = params.require(:account).permit(:name, :email)
       if params.dig(:account, :password).present?
         unless current_user.password_digest.blank? || current_user.authenticate(params.dig(:account, :current_password).to_s)
-          return redirect_to(settings_account_path, alert: "Senha atual incorreta.")
+          return redirect_to(settings_account_path, alert: t("flash.wrong_password"))
         end
 
         attrs[:password] = params.dig(:account, :password)
       end
       current_user.update!(attrs)
       sign_in!(current_user) if attrs[:password]
-      redirect_to settings_account_path, notice: "Conta atualizada."
+      redirect_to settings_account_path, notice: t("flash.account_saved")
     end
 
     def export

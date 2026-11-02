@@ -1,0 +1,57 @@
+en:
+  activerecord:
+    models:
+      user: User
+      tenant: Company
+      site: Place
+      area: Area
+      device: Device
+      point: Point
+    attributes:
+      user:
+        email: E-mail
+        password: Password
+        name: Name
+        role: Role
+      tenant:
+        name: Company name
+      site:
+        name: Name
+        kind: Type
+        timezone: Time zone
+        latitude: Latitude
+        longitude: Longitude
+      area:
+        name: Name
+        kind: Type
+        parent: Parent area
+      site_membership:
+        role: Role
+        user: Person
+      device:
+        name: Name
+        driver: Driver
+        status: Status
+        area: Area
+      point:
+        name: Name
+        key: Key
+        capability: Type
+        data_type: Value type
+        state_class: State class
+        history: History
+        risk: Risk
+        quality: Quality
+        scale: Scale
+        offset: Offset
+        options: Options
+        max: Maximum
+        min: Minimum
+        device: Device
+        area: Area
+        pulse_ms: Pulse
+        max_on_s: Maximum on time
+        history_interval_s: History interval
+        retention_days: Retention
+      tag:
+        name: Name

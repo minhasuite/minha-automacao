@@ -1,6 +1,6 @@
-<%= render "web/shared/header", title: "Painéis", subtitle: "#{@site.name} · escolha o que abre no seu Início.", back: site_path(@site) do %>
-  <% if can?(:manage) %><%= link_to new_site_dashboard_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Novo painel<% end %><% end %>
-  <% if can?(:manage) %><%= link_to site_dashboard_presets_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("lightning-bolt", "size-4") %>Painel pronto<% end %><% end %>
+<%= render "web/shared/header", title: t("dashboards.title"), subtitle: t("dashboards.subtitle", site: @site.name), back: site_path(@site) do %>
+  <% if can?(:manage) %><%= link_to new_site_dashboard_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("dashboards.new") %><% end %><% end %>
+  <% if can?(:manage) %><%= link_to site_dashboard_presets_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("lightning-bolt", "size-4") %><%= t("dashboards.preset") %><% end %><% end %>
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :dashboards %>
 
@@ -12,18 +12,18 @@
         <span class="grid place-items-center size-11 shrink-0 rounded-xl ss-grad"><%= icon("view-boards") %></span>
         <div class="min-w-0 flex-1">
           <p class="font-bold text-ink truncate"><%= link_to d.name, dashboard_path(d), class: "text-ink no-underline hover:text-accent" %></p>
-          <p class="text-xs text-muted"><%= d.kind_label %> · <%= d.auto? ? "automático" : "versão #{d.version}" %><%= " · rascunho" if d.draft? %></p>
+          <p class="text-xs text-muted"><%= d.kind_label %> · <%= d.auto? ? t("dashboards.auto") : t("dashboards.version", n: d.version) %><%= " · #{t("dashboards.draft")}" if d.draft? %></p>
         </div>
       </div>
       <div class="flex flex-wrap gap-1.5">
-        <% if d.site_default %><span class="ss-badge ss-badge-accent">Padrão do local</span><% end %>
-        <% if mine %><span class="ss-badge ss-badge-success">Abre no seu Início</span><% end %>
-        <% if d.roles.any? %><span class="ss-badge">Só <%= d.roles.map { |r| SiteMembership.role_label(r).downcase }.to_sentence %></span><% end %>
+        <% if d.site_default %><span class="ss-badge ss-badge-accent"><%= t("dashboards.site_default") %></span><% end %>
+        <% if mine %><span class="ss-badge ss-badge-success"><%= t("dashboards.mine") %></span><% end %>
+        <% if d.roles.any? %><span class="ss-badge"><%= t("dashboards.only") %> <%= d.roles.map { |r| SiteMembership.role_label(r).downcase }.to_sentence %></span><% end %>
       </div>
       <div class="flex flex-wrap gap-2 mt-auto">
-        <%= link_to "Abrir", dashboard_path(d), class: "ss-btn ss-btn-outline ss-btn-sm" %>
-        <% unless mine %><%= button_to "Abrir no meu Início", prefer_dashboard_path(d), class: "ss-btn ss-btn-ghost ss-btn-sm" %><% end %>
-        <% if can?(:manage) %><%= link_to edit_dashboard_path(d), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("pencil", "size-4") %>Editar<% end %><% end %>
+        <%= link_to t("dashboards.open"), dashboard_path(d), class: "ss-btn ss-btn-outline ss-btn-sm" %>
+        <% unless mine %><%= button_to t("dashboards.prefer"), prefer_dashboard_path(d), class: "ss-btn ss-btn-ghost ss-btn-sm" %><% end %>
+        <% if can?(:manage) %><%= link_to edit_dashboard_path(d), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("pencil", "size-4") %><%= t("dashboards.edit") %><% end %><% end %>
       </div>
     </article>
   <% end %>

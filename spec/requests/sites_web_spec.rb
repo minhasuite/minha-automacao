@@ -9,6 +9,9 @@ RSpec.describe "Web: locais, áreas, dispositivos e pontos" do
   it "do Início vazio ao ponto virtual ligado pela tela" do
     sign_in
     get "/"
+    expect(response).to redirect_to("/primeira-configuracao") # produto: assistente primeiro
+    Onboarding.finish!(tenant)
+    get "/"
     expect(response.body).to include("Criar meu primeiro local")
     get "/locais"
     expect(response.body).to include("Nenhum local ainda")

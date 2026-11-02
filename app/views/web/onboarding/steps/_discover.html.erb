@@ -1,0 +1,14 @@
+<%# locals: (ctx:, step:) -%>
+<%= form_with url: onboarding_step_path(step.key), scope: :onboarding, data: { turbo_submits_with: t("onboarding.saving") } do %>
+  <%# A procura roda quando a tela abre (turbo-frame): enquanto isso, o radar. %>
+  <turbo-frame id="ob-found" src="<%= onboarding_discover_path %>" loading="eager">
+    <div class="ob-radar-wrap" role="status">
+      <div class="ob-radar" aria-hidden="true"><span></span><span></span><span></span><i></i></div>
+      <p class="font-bold text-ink mt-4"><%= t("onboarding.discover.searching") %></p>
+      <p class="text-sm text-muted mt-1 ob-ticker" aria-hidden="true">
+        <% Integrations.plugins.select(&:discovers?).first(6).each_with_index do |p, i| %><span style="animation-delay: <%= i * 0.9 %>s"><%= p.title %></span><% end %>
+      </p>
+    </div>
+  </turbo-frame>
+  <%= render "web/onboarding/nav", step: step, label: t("onboarding.discover.submit") %>
+<% end %>

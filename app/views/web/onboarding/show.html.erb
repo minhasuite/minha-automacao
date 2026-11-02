@@ -1,0 +1,12 @@
+<% i = @steps.index(@step) %>
+<article class="ob-card ss-card" aria-labelledby="ob-title">
+  <div class="ob-art" aria-hidden="true"><%= render "web/onboarding/art", art: @step.art %></div>
+  <div class="ob-content">
+    <p class="ss-kicker text-accent!"><%= t("onboarding.step_of", n: i + 1, total: @steps.size) %></p>
+    <h1 id="ob-title" class="mt-1 text-3xl! [text-wrap:balance]"><%= @step.title %></h1>
+    <p class="mt-2 text-muted max-w-xl"><%= @step.subtitle %></p>
+    <div class="mt-6"><%= render @step.partial, ctx: @ctx, step: @step, **@step.locals(@ctx) %></div>
+  </div>
+</article>
+<%# "Agora não" fica fora do formulário do passo (formulário não aninha); o botão do rodapé aponta para cá. %>
+<% if @step.optional? %><%= form_with url: onboarding_skip_path(@step.key), id: "ob-skip", class: "hidden" do %><% end %><% end %>

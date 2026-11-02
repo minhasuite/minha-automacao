@@ -1,0 +1,40 @@
+<%# locals: (ctx:, step:, areas:, devices:, suggested:) -%>
+<%= form_with url: onboarding_step_path(step.key), scope: :onboarding, data: { controller: "onboarding-board", turbo_submits_with: t("onboarding.saving") } do |f| %>
+  <% if suggested.any? %>
+    <fieldset>
+      <legend class="ss-label"><%= t("onboarding.areas.suggestions") %></legend>
+      <div class="flex flex-wrap gap-2">
+        <% suggested.each do |k| %>
+          <label class="ob-chip"><%= check_box_tag "onboarding[suggested][]", k, areas.empty? && k.in?(%w[living kitchen bedroom bathroom]), id: "sug-#{k}" %><%= t("onboarding.areas.suggested.#{k}") %></label>
+        <% end %>
+      </div>
+    </fieldset>
+  <% end %>
+  <div class="mt-3 flex flex-wrap items-end gap-2">
+    <div class="min-w-48 flex-1"><%= label_tag "onboarding_custom", t("onboarding.areas.custom"), class: "ss-label" %><%= text_field_tag "onboarding[custom]", nil, id: "onboarding_custom", class: "ss-input", placeholder: t("onboarding.areas.custom_hint") %></div>
+    <button type="submit" name="onboarding[create]" value="1" class="ss-btn ss-btn-outline"><%= icon("plus", "size-4") %><%= t("onboarding.areas.create") %></button>
+  </div>
+
+  <h2 class="mt-6 text-base!"><%= t("onboarding.areas.board") %></h2>
+  <% if devices.empty? %>
+    <p class="text-sm text-muted mt-1"><%= t("onboarding.areas.no_devices") %></p>
+  <% else %>
+    <p class="text-sm text-muted mt-1"><%= t("onboarding.areas.board_hint") %></p>
+    <div class="ob-board mt-3">
+      <% ([ nil ] + areas).each do |area| %>
+        <section class="ob-col" data-onboarding-board-target="column" data-area="<%= area&.id %>" data-action="dragover->onboarding-board#over dragleave->onboarding-board#leave drop->onboarding-board#drop" aria-label="<%= area&.name || t("onboarding.areas.loose") %>">
+          <h3 class="ob-col-title"><%= icon(area ? "home" : "inbox", "size-4") %><%= area&.name || t("onboarding.areas.loose") %></h3>
+          <% devices.select { |d| d.area_id == area&.id }.each do |d| %>
+            <div class="ob-device" draggable="true" data-onboarding-board-target="card" data-action="dragstart->onboarding-board#start dragend->onboarding-board#end">
+              <span class="ob-grip" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
+              <span class="min-w-0 flex-1 truncate font-semibold text-sm text-ink"><%= d.name %></span>
+              <%= select_tag "onboarding[device_area][#{d.id}]", options_for_select([ [ t("onboarding.areas.loose"), "" ] ] + areas.map { |a| [ a.name, a.id ] }, d.area_id),
+                             class: "ob-device-select", "aria-label": t("onboarding.areas.move", name: d.name), data: { action: "onboarding-board#pick" } %>
+            </div>
+          <% end %>
+        </section>
+      <% end %>
+    </div>
+  <% end %>
+  <%= render "web/onboarding/nav", step: step %>
+<% end %>

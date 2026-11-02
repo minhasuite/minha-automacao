@@ -24,6 +24,7 @@ class User < ApplicationRecord
   validates :role, inclusion: { in: ROLES }
   validates :password, length: { minimum: 8, maximum: 72 }, allow_nil: true
   validate :has_some_credential
+  validate :within_plan, on: :create
 
   generates_token_for :password_recovery, expires_in: 30.minutes do
     password_digest.to_s.last(10)
@@ -71,6 +72,11 @@ class User < ApplicationRecord
   def role_label = ROLE_LABELS.fetch(role, role)
 
   private
+
+  # Produto: limite de pessoas do plano (Licensing).
+  def within_plan
+    errors.add(:base, Licensing.message("users")) if tenant&.persisted? && !Licensing.allowed?(tenant, "users")
+  end
 
   def has_some_credential
     errors.add(:password, :blank) if password_digest.blank? && google_uid.blank?

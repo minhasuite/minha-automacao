@@ -1,0 +1,57 @@
+es:
+  activerecord:
+    models:
+      user: Usuario
+      tenant: Empresa
+      site: Lugar
+      area: Área
+      device: Aparato
+      point: Punto
+    attributes:
+      user:
+        email: Correo
+        password: Contraseña
+        name: Nombre
+        role: Rol
+      tenant:
+        name: Razón social
+      site:
+        name: Nombre
+        kind: Tipo
+        timezone: Zona horaria
+        latitude: Latitud
+        longitude: Longitud
+      area:
+        name: Nombre
+        kind: Tipo
+        parent: Área superior
+      site_membership:
+        role: Rol
+        user: Persona
+      device:
+        name: Nombre
+        driver: Driver
+        status: Estado
+        area: Área
+      point:
+        name: Nombre
+        key: Clave
+        capability: Tipo
+        data_type: Tipo de valor
+        state_class: Clase de estado
+        history: Historial
+        risk: Riesgo
+        quality: Calidad
+        scale: Escala
+        offset: Desplazamiento
+        options: Opciones
+        max: Máximo
+        min: Mínimo
+        device: Aparato
+        area: Área
+        pulse_ms: Pulso
+        max_on_s: Tiempo máximo encendido
+        history_interval_s: Intervalo del historial
+        retention_days: Retención
+      tag:
+        name: Nombre

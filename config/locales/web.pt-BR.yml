@@ -1,0 +1,441 @@
+# Textos das telas (produto). Chave nova = nos três idiomas (spec/i18n_spec.rb confere).
+pt-BR:
+  flash:
+    owner_only: Só o dono pode fazer isso.
+    locale_saved: Idioma alterado.
+    too_many: Muitas tentativas. Espere um minuto.
+    bad_login: E-mail ou senha inválidos.
+    welcome: Bem-vindo ao Minha Automação!
+    bye: Até logo!
+    account_saved: Conta atualizada.
+    wrong_password: Senha atual incorreta.
+    google_off: Login com Google indisponível.
+    google_disabled: Esta conta está desativada.
+    google_failed: Não foi possível entrar com o Google. Tente de novo.
+  layout:
+    theme: Tema
+    language: Idioma
+    change: Trocar
+    skip: Pular para o conteúdo
+    open_menu: Abrir menu
+    close_menu: Fechar menu
+    collapse: Recolher menu
+    expand: Expandir menu
+    search: Buscar
+    back: Voltar
+    close: Fechar
+    menu: Menu
+    main_nav: Principal
+    values: Valores
+    values_toggle: Esconder ou mostrar valores
+    logout: Sair
+    tagline_html: Sua casa,<br>no automático.
+    pitch: Aparelhos, sensores, cenas e avisos num lugar só, com app de verdade no celular.
+  nav:
+    home: Início
+    sites: Locais
+    logbook: Diário
+    history: Histórico
+    map: Mapa
+    alerts: Alertas
+    ask: Perguntar à casa
+    notifications: Notificações
+    settings: Configurações
+    account: Minha conta
+    unread: '%{count} não lidas'
+  greeting:
+    morning: Bom dia
+    afternoon: Boa tarde
+    evening: Boa noite
+  sessions:
+    title: Entrar
+    heading: Bem-vindo de volta
+    lead: Entre para acompanhar sua automação
+    email: E-mail
+    email_hint: seu@email.com
+    password: Senha
+    forgot: Esqueci a senha
+    submit: Entrar
+    no_account: Não tem conta?
+    create_free: Criar conta grátis
+    or: ou
+  signup:
+    title: Criar conta
+    heading: Crie sua conta
+    lead: Grátis, em menos de um minuto
+    name: Seu nome
+    password: Senha (mínimo 8)
+    submit: Criar conta
+    have_account: Já tem conta?
+    sign_in: Entrar
+    terms_html: Ao criar a conta você aceita os %{terms} e a %{privacy}.
+    terms: termos
+    privacy: privacidade
+  passwords:
+    title: Esqueci a senha
+    heading: Esqueceu a senha?
+    lead: Mandamos um link para o seu e-mail. Ele vale 30 minutos.
+    submit: Enviar link
+    back: Voltar para o login
+  welcome:
+    kicker: Minha Automação
+    title: Vamos montar a sua casa.
+    admin: Crie o local, as áreas (sala, cozinha, garagem) e os dispositivos. Comece com pontos virtuais para testar sem aparelho nenhum. O painel do Início se monta sozinho a partir deles.
+    create: Criar meu primeiro local
+    wizard: Primeira configuração guiada
+    member: Você ainda não tem acesso a nenhum local. Peça ao dono da empresa.
+    label: Boas-vindas
+  onboarding:
+    title: Primeira configuração
+    progress: Progresso da configuração
+    step_of: Passo %{n} de %{total}
+    back: Voltar
+    skip: Agora não
+    next: Continuar
+    saving: Salvando…
+    finished: Tudo pronto! Sua casa está no ar.
+    account:
+      title: Crie a conta do dono
+      subtitle: 'É a primeira vez do Minha Automação aqui. A conta do dono cuida de tudo: pessoas, aparelhos e plano.'
+      name: Seu nome
+      email: E-mail
+      email_hint: voce@email.com
+      password: Senha (mínimo 8)
+      privacy: Tudo fica neste servidor, na sua casa. Nada vai para a nuvem sem você pedir.
+      submit: Criar conta e continuar
+      taken: Esta instalação já tem dono. Entre com a sua conta.
+      tenant_name: Casa de %{name}
+    home:
+      title: Sua casa
+      subtitle: 'Dê um nome e diga onde fica: o fuso acerta os horários e a localização traz o clima e o nascer do sol.'
+      default_name: Minha casa
+      name: Nome do local
+      kind: Tipo
+      kinds:
+        home: Casa
+        store: Loja
+        plant: Fábrica
+      timezone: Fuso horário
+      location: Localização
+      location_hint: Use a do navegador ou digite a latitude e a longitude.
+      locate: Usar minha localização
+      located: Localização encontrada.
+      locate_failed: Não deu para pegar a localização. Digite abaixo ou pule.
+      latitude: Latitude
+      longitude: Longitude
+      weather: Ligar o clima
+      weather_hint: Previsão e temperatura de fora pela localização, sem chave nem conta.
+      weather_name: Clima
+    discover:
+      title: Procurando aparelhos
+      subtitle: Olhamos a rede de casa com todas as integrações ao mesmo tempo. Marque o que quer adicionar.
+      searching: Procurando na rede…
+      found:
+        one: 1 aparelho encontrado
+        other: '%{count} aparelhos encontrados'
+      none: Nada respondeu na rede.
+      none_hint: 'Sem problema: dá para adicionar pela conta do fabricante (Tuya, Xiaomi, Alexa…) em Integrações depois.'
+      added_badge: Já adicionado
+      note: TVs pedem para aceitar na tela na primeira vez. O que precisar de chave fica com erro em Integrações, com o botão Reconfigurar.
+      again: Procurar de novo
+      submit: Adicionar e continuar
+      added:
+        one: '1 aparelho adicionado: a leitura começa em instantes.'
+        other: '%{count} aparelhos adicionados: a leitura começa em instantes.'
+    areas:
+      title: Cômodos
+      subtitle: Crie as áreas da casa e arraste cada aparelho para o seu lugar. O painel se organiza por elas.
+      suggestions: Sugestões
+      suggested:
+        living: Sala
+        kitchen: Cozinha
+        bedroom: Quarto
+        bathroom: Banheiro
+        office: Escritório
+        balcony: Varanda
+        garage: Garagem
+        outdoor: Área externa
+      custom: Outras (separe por vírgula)
+      custom_hint: Quarto das crianças, Lavanderia
+      create: Criar áreas
+      created:
+        zero: Nenhuma área nova.
+        one: 1 área criada.
+        other: '%{count} áreas criadas.'
+      board: Arraste os aparelhos
+      board_hint: Arraste o cartão para a área ou escolha na lista do cartão.
+      no_devices: Ainda não há aparelhos. Eles aparecem aqui quando você adicionar.
+      loose: Sem área
+      move: Área de %{name}
+    dashboard:
+      title: Seu painel
+      subtitle: O painel se monta sozinho com as áreas e os aparelhos. Escolha o visual.
+      theme: Tema
+      ready:
+        one: Pronto com 1 visão
+        other: Pronto com %{count} visões
+      auto_note: 'Ele continua automático: aparelho novo entra sozinho. Para mexer à vontade, use Editar no Início.'
+      pick: Escolha um tema.
+      submit: Usar este visual
+    family:
+      title: Família e app
+      subtitle: Chame quem mora com você e leve a casa no bolso.
+      invite_title: Convidar a família
+      invite_text: Gere um link de uso único (vale 7 dias). Quem abrir cria a própria conta como morador.
+      invite_button: Gerar link de convite
+      invite_link: Link de convite
+      copy: Copiar
+      invite_note: O link aparece só agora. Para outro, use Configurações → Pessoas.
+      app_title: Instalar o app
+      app_text: 'Aponte a câmera do celular: abre o Minha Automação, e dá para instalar na tela inicial e receber avisos.'
+      submit: Concluir
+  settings:
+    nav:
+      label: Seções das configurações
+      dashboards: Painéis
+      people: Pessoas
+      api_keys: Chaves de integração
+      apps: Aplicativos
+      ai: IA
+      health: Saúde
+      system: Sistema
+      remote: Acesso remoto
+      plan: Plano
+      account: Minha conta
+      push: Meus aparelhos
+    title: Configurações
+    account:
+      subtitle: 'Minha conta: nome, e-mail, senha, tema e idioma.'
+      name: Nome
+      current_password: Senha atual
+      new_password: Nova senha
+      save: Salvar conta
+      light: Claro
+      dark: Escuro
+      system: Do sistema
+      push_text: Receba os avisos no celular e no computador, mesmo com o app fechado.
+      push_manage: Gerenciar aparelhos
+      delete_title: Excluir minha conta
+      delete_text: Sai da instalação. Se você é a última pessoa, a instalação inteira é apagada.
+      delete_confirm: Excluir sua conta? Se você é a última pessoa, a instalação inteira é apagada.
+      delete_type: Digite EXCLUIR
+      delete_aria: Confirmação para excluir
+      delete_button: Excluir conta
+    system:
+      subtitle: 'Sistema: atualização, cópia dos dados e acesso de fora de casa.'
+      backup_title: Backup e exportar
+      backup_text_html: O servidor de casa guarda uma cópia do banco todo dia (os últimos 7 dias ficam em <code>backups/</code> no servidor). Aqui você baixa os dados em JSON quando quiser.
+      export: Exportar dados (JSON)
+      wipe_title: Zerar dados
+      wipe_text: 'Apaga locais, aparelhos, automações, painéis e avisos. As pessoas e o plano ficam. Não dá para desfazer: exporte antes.'
+      wipe_confirm: Apagar os dados da instalação? As pessoas e o plano ficam.
+      wipe_type: Digite ZERAR
+      wipe_button: Zerar dados
+      external_title: Acesso externo
+      using: Endereço que você está usando
+      public: Endereço público
+      not_set: Não configurado
+      external_text: O acesso de fora de casa passa por um túnel seguro; nenhuma porta do roteador fica aberta. O app do celular usa o mesmo endereço público.
+      http_title: Saída HTTP
+      http_text_html: 'A ação "Chamar HTTP" e as agendas por link só falam com endereços da internet. Para chamar um sistema da rede de casa, libere o endereço aqui: um por linha, nome exato ou faixa (<code>192.168.68.0/24</code>).'
+      http_label: Endereços internos liberados
+      save: Salvar
+      http_none: Nenhum endereço interno liberado.
+      shadow_title: Modo sombra da instalação
+      shadow_text: 'Para migrar de outro sistema com segurança: todas as automações, scripts, cenas e regras de todos os locais disparam com os eventos reais, mas nada sai (aparelho, aviso, fala, HTTP, IA). Cada local tem a própria sombra em Automações e cenas → Sombra.'
+      'on': Ligado
+      'off': Desligado
+      shadow_off_confirm: Desligar a sombra da instalação? Vale então a sombra de cada local e de cada automação.
+      shadow_on_confirm: Pôr a instalação inteira em sombra?
+      confirm: Confirmar
+      shadow_off: Desligar a sombra
+      shadow_on: Ligar a sombra
+      ai_plan: Assinatura da IA
+      trial: teste grátis
+      valid_until: vale até
+      renews: renova em
+      ai_plan_text: Tudo que não usa IA é grátis. A assinatura libera a IA e é feita pelo app Minha Automação no celular (Google Play)
+      trial_days: ', com %{n} dias grátis'
+  devices:
+    title: Dispositivos
+    subtitle: '%{site} · todos os aparelhos do local'
+    new: Novo dispositivo
+    search: Procurar
+    search_hint: Nome, modelo, fabricante ou área
+    integration: Integração
+    all: Todas
+    area: Área
+    no_area: Sem área
+    status: Situação
+    filter: Filtrar
+    none: Nenhum dispositivo.
+    none_filtered: Nenhum dispositivo com esses filtros.
+    none_hint: Adicione uma integração para trazer os aparelhos da conta, ou cadastre um à mão.
+    add_integration: Adicionar integração
+    add_manual: Cadastrar à mão
+    clear: Limpar filtros
+    check_all: Marcar todas
+    check: Marcar %{name}
+    name: Nome
+    maker: Fabricante / modelo
+    points: Pontos
+    bulk: Ações nos marcados
+    checked: marcado(s)
+    with_checked: Com os marcados
+    with_checked_hint: Com os marcados…
+    move_area: Mover para a área
+    bulk_confirm: Aplicar a ação nos dispositivos marcados? Remover apaga também os pontos e o histórico.
+    apply: Aplicar
+    disabled: Desativado
+    asking: Pedindo…
+    refresh: Atualizar agora
+    reconnecting: Reconectando…
+    reconnect: Reconectar
+    new_point: Novo ponto
+    edit: Editar
+    no_points: Nenhum ponto ainda.
+    no_points_hint: 'Ponto é o que se lê ou comanda: um relé, uma lâmpada, um sensor, uma seleção.'
+    add_point: Adicionar ponto
+    diagnostics: Diagnóstico
+    last_seen: Último contato
+    not_yet: Ainda não
+    not_informed: Não informado
+    protocol: Versão do protocolo
+    no_integration: Nenhuma
+    reading: Leitura
+    no_reading: Não lê sozinho
+    removed: Sumiu da conta da integração em %{at}. Nada foi apagado; remova aqui se não for voltar.
+    last_error: 'Último erro:'
+    tuya_no_ip: 'Sem IP: a conta da Tuya não informa o IP da rede local. Preencha em Editar (veja no roteador) e use Reconectar.'
+    failures: Falhas recentes
+    no_answer: sem resposta
+    usages: Onde é usado
+    no_usages: Nenhum painel, automação, cena, espelhamento, aviso, alerta, agenda ou helper usa os pontos deste dispositivo.
+    form:
+      name_hint: Interruptor da sala
+      driver: Driver
+      driver_hint: 'Executam comandos: virtual e Tuya local. Os outros chegam pelas integrações.'
+      maker: Fabricante
+      model: Modelo
+      serial: Número de série
+      poll: Ler o estado a cada (minutos)
+      poll_hint: vazio ou 0 = não ler
+      poll_note: 'Só leitura, um aparelho por vez. Padrão: 30 minutos.'
+      disabled: Desativado (não recebe comando)
+      host: IP na rede local
+      tuya_version: Versão do protocolo Tuya
+      tuya_discover: Descobrir (Reconectar)
+      listen: Manter conexão com o aparelho (o botão físico atualiza a tela)
+      listen_hint: 'Deixe desligado enquanto outro sistema controla este aparelho: muitos aceitam uma conexão só.'
+      create: Criar dispositivo
+      save: Salvar dispositivo
+      cancel: Cancelar
+  dashboards:
+    title: Painéis
+    subtitle: '%{site} · escolha o que abre no seu Início.'
+    new: Novo painel
+    preset: Painel pronto
+    auto: automático
+    version: versão %{n}
+    draft: rascunho
+    site_default: Padrão do local
+    mine: Abre no seu Início
+    only: Só
+    open: Abrir
+    prefer: Abrir no meu Início
+    edit: Editar
+    new_subtitle: Comece do zero ou de uma cópia do painel automático.
+    name_hint: Painel da cozinha
+    kind: Tipo
+    copy_auto: Começar com uma cópia do automático
+    create: Criar painel
+    preview: Pré-visualização do rascunho.
+    preview_note: Quem usa o painel ainda vê a versão %{n}.
+    back_editor: Voltar ao editor
+    publish_confirm: Publicar o rascunho para todos?
+    publish: Publicar
+    others: Outros painéis
+    edit_dashboard: Editar painel
+    summary: Resumo
+    views: Visões do painel
+    empty: Esta visão ainda está vazia.
+    empty_hint: Abra o editor e adicione seções e widgets.
+    section: Seção
+  updates:
+    title: Atualização
+    current: Versão instalada
+    latest: Versão mais nova
+    unknown: Não deu para consultar agora.
+    available: Atualização disponível
+    up_to_date: Em dia
+    steps:
+      backup: Backup do banco
+      pull: Baixando a versão nova
+      restart: Reiniciando e conferindo
+      rollback: Voltando para a versão anterior
+    running_note: A tela pode sumir por um minuto enquanto o servidor reinicia; ela volta sozinha.
+    result:
+      done: Atualizado para %{to}.
+      rolled_back: A atualização para %{to} não deu certo e voltou para a versão anterior.
+      failed: A atualização para %{to} falhou.
+    notes: O que mudou
+    confirm: Atualizar para %{tag}? Antes sai um backup do banco; se a versão nova não responder, volta sozinho.
+    now: Atualizar agora
+    unsupported: A atualização com um clique só existe no servidor local (com o supervisor).
+    check: Verificar agora
+    how: Antes de trocar, o servidor faz backup do banco; se o /up não responder em 5 minutos, volta para a versão anterior sozinho.
+    bad_tag: Versão inválida.
+    started: Atualização começou. Acompanhe aqui.
+  remote:
+    subtitle: 'Acesso remoto: ver e comandar a casa de fora, sem abrir porta no roteador.'
+    intro: 'Escolha como a casa é vista de fora. O túnel sai do servidor para o provedor: nenhuma porta do roteador fica aberta.'
+    state:
+      manual: Configurado no servidor
+      'on': Ligado
+      starting: Ligando…
+      'off': Desligado
+    offline: O supervisor não respondeu agora; o estado pode estar desatualizado.
+    manual_note: Este servidor já tem um túnel configurado à mão (arquivo .env). Ele continua valendo; a tela não mexe nele.
+    address: 'Endereço:'
+    off_confirm: Desligar o acesso remoto? O app fora de casa para de funcionar.
+    turn_off: Desligar
+    keep_secret: deixe vazio para manter o atual
+    save: Salvar
+    turn_on: Ligar
+    relay_title: Acesso MinhaSuite
+    relay_text: Um endereço seu (suacasa.minhasuite.com) sem conta em outro serviço, incluído nos planos Plus e Pro.
+    soon: Em breve
+    unknown: Provedor desconhecido.
+    bad_url: O endereço público precisa começar com https://.
+    no_supervisor: O acesso remoto pela tela só existe no servidor local (com o supervisor).
+    enabled: Acesso remoto ligado.
+    disabled: Acesso remoto desligado.
+    cloudflare:
+      label: Cloudflare Tunnel
+      description: Crie o túnel no painel da Cloudflare (Zero Trust → Networks → Tunnels), aponte o hostname público para http://web:3000 e cole o token aqui.
+      bad_token: Token do túnel inválido.
+      fields:
+        token: Token do túnel
+        url: Endereço público (opcional)
+  plan:
+    subtitle: 'Plano: o que a instalação inclui e quanto já usa.'
+    current: Seu plano
+    names:
+      free: Grátis
+      plus: Plus
+      pro: Pro
+    limits:
+      devices: aparelhos
+      users: pessoas
+      history_days: histórico
+      cloud_backup: backup na nuvem
+      remote_access: acesso remoto
+    included: Incluído
+    not_included: Não incluído
+    unlimited: Ilimitado
+    days:
+      one: 1 dia
+      other: '%{count} dias'
+    compare: Comparar planos
+    no_payment: A troca de plano pela tela chega com o pagamento. Para mudar agora, fale com o suporte.
+    exceeded: O seu plano não inclui mais %{what}. Veja Configurações → Plano.

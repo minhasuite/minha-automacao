@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="<%= I18n.locale %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,13 +19,13 @@
 </head>
 <% body_theme = @body_theme || {} %>
 <body class="min-h-screen<%= " ss-kiosk" if kiosk %> <%= body_theme["class"] %>" style="<%= body_theme["style"] %>" data-controller="theme menu privacy" data-action="keydown.p@window->privacy#key keydown.esc@window->menu#close">
-  <a href="#conteudo" class="ss-skip">Pular para o conteúdo</a>
+  <a href="#conteudo" class="ss-skip"><%= t("layout.skip") %></a>
   <% unless kiosk %>
   <%# Barra do topo no celular (escura, como a sidebar). %>
   <header class="ss-side lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 h-14 shadow-lg">
-    <button type="button" class="grid place-items-center size-9 rounded-xl hover:bg-white/10 border-0 bg-transparent text-current cursor-pointer" data-action="menu#open" data-menu-target="toggle" aria-label="Abrir menu" aria-controls="side" aria-expanded="false"><%= icon("menu") %></button>
+    <button type="button" class="grid place-items-center size-9 rounded-xl hover:bg-white/10 border-0 bg-transparent text-current cursor-pointer" data-action="menu#open" data-menu-target="toggle" aria-label="<%= t("layout.open_menu") %>" aria-controls="side" aria-expanded="false"><%= icon("menu") %></button>
     <%= link_to root_path, class: "font-bold text-white no-underline flex-1" do %>Minha Automação<% end %>
-    <button type="button" class="grid place-items-center size-9 rounded-xl hover:bg-white/10 border-0 bg-transparent text-current cursor-pointer" data-palette-open aria-label="Buscar"><%= icon("search") %></button>
+    <button type="button" class="grid place-items-center size-9 rounded-xl hover:bg-white/10 border-0 bg-transparent text-current cursor-pointer" data-palette-open aria-label="<%= t("layout.search") %>"><%= icon("search") %></button>
     <%= render "web/shared/privacy_button", css: "grid place-items-center size-9 rounded-xl hover:bg-white/10" %>
   </header>
   <div class="ss-scrim lg:hidden" data-menu-target="scrim" data-action="click->menu#close"></div>

@@ -1,0 +1,27 @@
+<%# locals: (found:) -%>
+<turbo-frame id="ob-found">
+  <% if found.empty? %>
+    <div class="ob-empty" role="status">
+      <%= render "web/shared/empty_art", art: "search", title: t("onboarding.discover.none"), text: t("onboarding.discover.none_hint") %>
+    </div>
+  <% else %>
+    <p class="text-sm font-semibold text-ink mb-3" role="status"><%= t("onboarding.discover.found", count: found.size) %></p>
+    <ul class="ob-found" role="list">
+      <% found.each_with_index do |e, i| %>
+        <li class="ss-rise" style="animation-delay: <%= [ i, 10 ].min * 60 %>ms">
+          <label class="ob-found-item<%= ' is-added' if e['added'] %>">
+            <%= check_box_tag "onboarding[pick][]", e.slice("plugin", "name", "host", "port").to_json, !e["added"], disabled: e["added"], id: "pick-#{i}" %>
+            <span class="ob-found-ico"><%= icon(e["icon"], "size-5") %></span>
+            <span class="min-w-0 flex-1">
+              <span class="block font-semibold text-ink truncate"><%= e["name"] %></span>
+              <span class="block text-xs text-muted truncate"><%= e["title"] %> · <span class="num"><%= [ e["host"], e["port"] ].compact.join(":") %></span></span>
+            </span>
+            <% if e["added"] %><span class="ss-badge ss-badge-success"><%= t("onboarding.discover.added_badge") %></span><% end %>
+          </label>
+        </li>
+      <% end %>
+    </ul>
+    <p class="text-xs text-muted mt-3"><%= t("onboarding.discover.note") %></p>
+  <% end %>
+  <%= link_to onboarding_discover_path, class: "ss-btn ss-btn-ghost ss-btn-sm mt-3" do %><%= icon("refresh", "size-4") %><%= t("onboarding.discover.again") %><% end %>
+</turbo-frame>

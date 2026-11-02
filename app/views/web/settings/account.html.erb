@@ -1,35 +1,39 @@
-<%= render "web/shared/header", title: "Configurações", subtitle: "Minha conta: nome, e-mail, senha e tema." %>
+<%= render "web/shared/header", title: t("settings.title"), subtitle: t("settings.account.subtitle") %>
 <%= render layout: "web/settings/frame", locals: { current: :account } do %>
 <section class="ss-card ss-card-pad" aria-labelledby="conta-t">
-  <h2 id="conta-t">Minha conta</h2>
+  <h2 id="conta-t"><%= t("settings.nav.account") %></h2>
   <%= form_with scope: :account, url: settings_account_path, method: :patch, class: "mt-3 grid gap-4 md:grid-cols-2" do |f| %>
-    <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, value: current_user.name, class: "ss-input", required: true %></div>
-    <div><%= f.label :email, "E-mail", class: "ss-label" %><%= f.email_field :email, value: current_user.email, class: "ss-input", required: true %></div>
-    <div><%= f.label :current_password, "Senha atual", class: "ss-label" %><%= f.password_field :current_password, class: "ss-input", autocomplete: "current-password" %></div>
-    <div><%= f.label :password, "Nova senha", class: "ss-label" %><%= f.password_field :password, class: "ss-input", minlength: 8, autocomplete: "new-password" %></div>
-    <div class="md:col-span-2"><%= f.submit "Salvar conta", class: "ss-btn ss-btn-primary" %></div>
+    <div><%= f.label :name, t("settings.account.name"), class: "ss-label" %><%= f.text_field :name, value: current_user.name, class: "ss-input", required: true %></div>
+    <div><%= f.label :email, t("sessions.email"), class: "ss-label" %><%= f.email_field :email, value: current_user.email, class: "ss-input", required: true %></div>
+    <div><%= f.label :current_password, t("settings.account.current_password"), class: "ss-label" %><%= f.password_field :current_password, class: "ss-input", autocomplete: "current-password" %></div>
+    <div><%= f.label :password, t("settings.account.new_password"), class: "ss-label" %><%= f.password_field :password, class: "ss-input", minlength: 8, autocomplete: "new-password" %></div>
+    <div class="md:col-span-2"><%= f.submit t("settings.account.save"), class: "ss-btn ss-btn-primary" %></div>
   <% end %>
   <div class="mt-4 flex flex-wrap gap-2 items-center">
-    <span class="text-sm font-semibold text-muted">Tema:</span>
-    <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#set" data-theme-theme-param="light">Claro</button>
-    <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#set" data-theme-theme-param="dark">Escuro</button>
-    <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#set" data-theme-theme-param="system">Do sistema</button>
+    <span class="text-sm font-semibold text-muted"><%= t("layout.theme") %>:</span>
+    <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#set" data-theme-theme-param="light"><%= t("settings.account.light") %></button>
+    <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#set" data-theme-theme-param="dark"><%= t("settings.account.dark") %></button>
+    <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#set" data-theme-theme-param="system"><%= t("settings.account.system") %></button>
+  </div>
+  <div class="mt-4 flex flex-wrap gap-2 items-center">
+    <span class="text-sm font-semibold text-muted"><%= t("layout.language") %>:</span>
+    <%= render "web/shared/locale_picker" %>
   </div>
 </section>
 
 <section class="ss-card ss-card-pad mt-4 flex flex-wrap items-center justify-between gap-3" aria-labelledby="aparelhos-t">
   <div class="min-w-0">
-    <h2 id="aparelhos-t">Meus aparelhos</h2>
-    <p class="text-sm text-muted mt-1">Receba os avisos no celular e no computador, mesmo com o app fechado.</p>
+    <h2 id="aparelhos-t"><%= t("settings.nav.push") %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("settings.account.push_text") %></p>
   </div>
-  <%= link_to push_subscriptions_path, class: "ss-btn ss-btn-outline" do %><%= icon("bell", "size-4") %>Gerenciar aparelhos<% end %>
+  <%= link_to push_subscriptions_path, class: "ss-btn ss-btn-outline" do %><%= icon("bell", "size-4") %><%= t("settings.account.push_manage") %><% end %>
 </section>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="excluir-t">
-  <h2 id="excluir-t">Excluir minha conta</h2>
-  <p class="text-sm text-muted mt-1">Sai da instalação. Se você é a última pessoa, a instalação inteira é apagada.</p>
-  <%= form_with url: settings_account_path, method: :delete, class: "mt-3 flex gap-2", data: { turbo_confirm: "Excluir sua conta? Se você é a última pessoa, a instalação inteira é apagada." } do %>
-    <%= text_field_tag :confirm, nil, placeholder: "Digite EXCLUIR", class: "ss-input w-36", "aria-label": "Confirmação para excluir" %><%= submit_tag "Excluir conta", class: "ss-btn ss-btn-danger", name: nil %>
+  <h2 id="excluir-t"><%= t("settings.account.delete_title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("settings.account.delete_text") %></p>
+  <%= form_with url: settings_account_path, method: :delete, class: "mt-3 flex gap-2", data: { turbo_confirm: t("settings.account.delete_confirm") } do %>
+    <%= text_field_tag :confirm, nil, placeholder: t("settings.account.delete_type"), class: "ss-input w-36", "aria-label": t("settings.account.delete_aria") %><%= submit_tag t("settings.account.delete_button"), class: "ss-btn ss-btn-danger", name: nil %>
   <% end %>
 </section>
 <% end %>

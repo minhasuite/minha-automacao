@@ -6,6 +6,7 @@ module Integrations
     describe key: "tizen", title: "TV Samsung (Tizen)", icon: "desktop-computer",
              description: "TV Samsung na rede: ligada ou não, volume, mudo, pausar e desligar. Na primeira vez, permita o acesso na tela da TV."
     port Drivers::Tizen::PORT
+    ssdp "urn:samsung.com:device:RemoteControlReceiver:1"
     PAIR_S = 30
 
     def self.probe(integration)

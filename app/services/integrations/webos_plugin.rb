@@ -5,6 +5,7 @@ module Integrations
     describe key: "webos", title: "TV LG (webOS)", icon: "desktop-computer",
              description: "TV LG na rede: volume, app aberto, pausar, desligar e abrir um endereço. Na primeira vez, aceite o pedido na tela da TV."
     port Drivers::Webos::PORT
+    ssdp "urn:lge-com:service:webos-second-screen:1"
     PAIR_S = 60
 
     def self.probe(integration)

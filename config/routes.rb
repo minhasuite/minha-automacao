@@ -38,6 +38,14 @@ Rails.application.routes.draw do
   get "convite/:token", to: "web/invites#show", as: :invite_link
   post "convite/:token", to: "web/invites#accept"
   get "esqueci-a-senha", to: "web/passwords#new", as: :forgot_password
+  # Produto: idioma da tela e a primeira configuração (passos em Onboarding::STEPS).
+  patch "idioma", to: "web/locales#update", as: :locale
+  get "primeira-configuracao", to: "web/onboarding#show", as: :onboarding
+  get "primeira-configuracao/descobrir", to: "web/onboarding#discover", as: :onboarding_discover
+  post "primeira-configuracao/concluir", to: "web/onboarding#finish", as: :onboarding_finish
+  get "primeira-configuracao/:step", to: "web/onboarding#show", as: :onboarding_step
+  post "primeira-configuracao/:step", to: "web/onboarding#update"
+  post "primeira-configuracao/:step/pular", to: "web/onboarding#skip", as: :onboarding_skip
   post "esqueci-a-senha", to: "web/passwords#create"
 
   scope module: :web do
@@ -193,6 +201,12 @@ Rails.application.routes.draw do
     get "configuracoes/exportar", to: "settings#export", as: :settings_export
     post "configuracoes/zerar", to: "settings#wipe", as: :settings_wipe
     get "configuracoes/paineis", to: "settings#dashboards", as: :settings_dashboards
+    # Produto: atualização do servidor, acesso remoto (provedores) e plano (licença).
+    post "configuracoes/sistema/atualizar", to: "settings#update_server", as: :settings_update
+    get "configuracoes/acesso-remoto", to: "remote_access#show", as: :settings_remote
+    patch "configuracoes/acesso-remoto", to: "remote_access#update"
+    delete "configuracoes/acesso-remoto", to: "remote_access#destroy"
+    get "configuracoes/plano", to: "licenses#show", as: :settings_plan
     # Saúde do sistema (registro Health::CHECKS) e o que falta para a troca (Cutover).
     get "configuracoes/saude", to: "health#show", as: :settings_health
     # Backup no Google Drive: conectar volta por integrations#oauth_callback.

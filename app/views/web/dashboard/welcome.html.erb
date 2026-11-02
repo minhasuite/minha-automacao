@@ -1,12 +1,13 @@
 <%= render "web/shared/header", title: "#{greeting}, #{current_user.name.split.first}", subtitle: "#{l(Date.current, format: :long).upcase_first} · #{current_user.tenant.trade_name.presence || current_user.tenant.name}" %>
 
-<section class="ss-hero ss-rise p-6 flex flex-col gap-3 max-w-3xl" aria-label="Boas-vindas">
-  <p class="ss-kicker">Minha Automação</p>
-  <p class="text-2xl font-bold">Vamos montar a sua casa.</p>
+<section class="ss-hero ss-rise p-6 flex flex-col gap-3 max-w-3xl" aria-label="<%= t("welcome.label") %>">
+  <p class="ss-kicker"><%= t("welcome.kicker") %></p>
+  <p class="text-2xl font-bold"><%= t("welcome.title") %></p>
   <% if current_user.admin? %>
-    <p class="text-sm opacity-90">Crie o local, as áreas (sala, cozinha, garagem) e os dispositivos. Comece com pontos virtuais para testar sem aparelho nenhum. O painel do Início se monta sozinho a partir deles.</p>
-    <div><%= link_to new_site_path, class: "ss-btn bg-white text-accent font-bold" do %><%= icon("plus", "size-4") %>Criar meu primeiro local<% end %></div>
+    <p class="text-sm opacity-90"><%= t("welcome.admin") %></p>
+    <div class="flex flex-wrap gap-2"><%= link_to new_site_path, class: "ss-btn bg-white text-accent font-bold" do %><%= icon("plus", "size-4") %><%= t("welcome.create") %><% end %>
+      <% if current_user.owner? %><%= link_to onboarding_path, class: "ss-btn bg-white/15 text-white font-bold" do %><%= icon("sparkles", "size-4") %><%= t("welcome.wizard") %><% end %><% end %></div>
   <% else %>
-    <p class="text-sm opacity-90">Você ainda não tem acesso a nenhum local. Peça ao dono da empresa.</p>
+    <p class="text-sm opacity-90"><%= t("welcome.member") %></p>
   <% end %>
 </section>

@@ -1,0 +1,56 @@
+<%= render "web/shared/header", title: t("settings.title"), subtitle: t("remote.subtitle") %>
+<% owner = current_user.owner? %>
+<% st = @status %>
+<% live = st["live"] || {} %>
+<%= render layout: "web/settings/frame", locals: { current: :remote } do %>
+<section class="ss-card ss-card-pad" aria-labelledby="remote-t">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h2 id="remote-t" class="flex items-center gap-2"><%= icon("globe", "size-5 text-accent") %><%= t("settings.nav.remote") %></h2>
+      <p class="text-sm text-muted mt-1 max-w-2xl"><%= t("remote.intro") %></p>
+    </div>
+    <% state, tone = if live["manual"] then [ t("remote.state.manual"), "success" ]
+                     elsif st["enabled"] && live["state"] == "running" then [ t("remote.state.on"), "success" ]
+                     elsif st["enabled"] then [ t("remote.state.starting"), "warn" ]
+                     else [ t("remote.state.off"), "" ] end %>
+    <span class="ss-badge ss-badge-dot <%= "ss-badge-#{tone}" if tone.present? %>" role="status"><%= state %></span>
+  </div>
+  <% if st["offline"] %><p class="text-sm text-warn mt-3"><%= t("remote.offline") %></p><% end %>
+  <% if live["manual"] %><p class="text-sm text-muted mt-3"><%= t("remote.manual_note") %></p><% end %>
+  <% if st["enabled"] && st["url"] %>
+    <p class="mt-3 text-sm"><%= t("remote.address") %> <%= link_to st["url"], st["url"], class: "font-semibold text-accent break-all", target: "_blank", rel: "noopener" %></p>
+  <% end %>
+  <% if owner && st["enabled"] %>
+    <%= button_to settings_remote_path, method: :delete, class: "ss-btn ss-btn-danger mt-4",
+                  form: { data: { turbo_confirm: t("remote.off_confirm"), turbo_confirm_button: t("remote.turn_off") } } do %><%= icon("x-circle", "size-4") %><%= t("remote.turn_off") %><% end %>
+  <% end %>
+</section>
+
+<% RemoteAccess.providers.each do |p| %>
+  <section class="ss-card ss-card-pad mt-4" aria-labelledby="rp-<%= p.key %>">
+    <h2 id="rp-<%= p.key %>" class="flex items-center gap-2"><%= icon(p.icon, "size-5 text-accent") %><%= p.label %></h2>
+    <p class="text-sm text-muted mt-1 max-w-2xl"><%= p.description %></p>
+    <% if owner && !live["manual"] %>
+      <%= form_with url: settings_remote_path(provider: p.key), method: :patch, scope: :remote, class: "mt-3 grid gap-3 max-w-xl", data: { turbo_submits_with: t("onboarding.saving") } do |f| %>
+        <% p.fields.each do |fd| %>
+          <div>
+            <%= f.label fd["key"], t("remote.#{p.key}.fields.#{fd['key']}"), class: "ss-label" %>
+            <% if fd["secret"] %>
+              <%= f.password_field fd["key"], class: "ss-input num", autocomplete: "off", placeholder: (t("remote.keep_secret") if st["provider"] == p.key) %>
+            <% else %>
+              <%= f.text_field fd["key"], value: (st["url"] if st["provider"] == p.key), class: "ss-input num", placeholder: "https://casa.exemplo.com" %>
+            <% end %>
+          </div>
+        <% end %>
+        <div><%= f.submit st["enabled"] && st["provider"] == p.key ? t("remote.save") : t("remote.turn_on"), class: "ss-btn ss-btn-primary" %></div>
+      <% end %>
+    <% end %>
+  </section>
+<% end %>
+
+<section class="ss-card ss-card-pad mt-4 ss-card-grad" aria-labelledby="relay-t">
+  <h2 id="relay-t" class="flex items-center gap-2"><%= icon("sparkles", "size-5 text-accent") %><%= t("remote.relay_title") %></h2>
+  <p class="text-sm text-muted mt-1 max-w-2xl"><%= t("remote.relay_text") %></p>
+  <span class="ss-badge mt-2"><%= t("remote.soon") %></span>
+</section>
+<% end %>

@@ -1,0 +1,81 @@
+#!/bin/sh
+# Atualização do servidor (produto). Roda num container à parte (imagem
+# docker:cli, criado pelo supervisor) com o socket do Docker e a pasta do
+# compose montada no mesmo caminho: backup do banco, troca IMAGE= no .env,
+# sobe o compose e espera o /up. Se não responder, volta para a imagem
+# anterior (e, se nem assim subir, restaura o backup). Andamento em
+# backups/update-status.json (o app lê em /backups).
+#   DIR=/opt/minha-automacao NEW_IMAGE=ghcr.io/minhasuite/minha-automacao:v1.2.0
+set -u
+cd "$DIR" || exit 1
+STATUS=backups/update-status.json
+OLD=$(grep '^IMAGE=' .env | tail -1 | cut -d= -f2-)
+[ -n "$OLD" ] || OLD="ghcr.io/minhasuite/minha-automacao:latest"
+STAMP=$(date +%Y%m%d-%H%M%S)
+DUMP="backups/antes-da-atualizacao-$STAMP.sql.gz"
+
+status() { # estado, passo, mensagem
+  printf '{"state":"%s","step":"%s","from":"%s","to":"%s","at":"%s","backup":"%s","message":"%s"}\n' \
+    "$1" "$2" "$OLD" "$NEW_IMAGE" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(basename "$DUMP")" "$3" > "$STATUS.tmp" && mv "$STATUS.tmp" "$STATUS"
+}
+
+PROFILES=""
+grep -q '^CF_TUNNEL_TOKEN=.' .env && PROFILES="--profile tunnel"
+
+up() {
+  sed -i '/^IMAGE=/d' .env && echo "IMAGE=$1" >> .env
+  # shellcheck disable=SC2086
+  docker compose $PROFILES up -d --remove-orphans --quiet-pull
+}
+
+healthy() { # até 5 minutos pelo /up de dentro do web
+  i=0
+  while [ $i -lt 60 ]; do
+    docker compose exec -T web curl -fsS -o /dev/null http://127.0.0.1:3000/up 2>/dev/null && return 0
+    i=$((i + 1)); sleep 5
+  done
+  return 1
+}
+
+status running backup ""
+if ! docker compose exec -T db sh -c 'pg_dump -U minha_automacao minha_automacao' | gzip > "$DUMP"; then
+  status failed backup "Backup do banco falhou; nada foi trocado."
+  exit 1
+fi
+
+status running pull ""
+docker pull -q "$NEW_IMAGE" >/dev/null || { status failed pull "Não deu para baixar a imagem nova; nada foi trocado."; exit 1; }
+
+# O compose da versão nova vem dentro da imagem; o atual fica guardado para a volta.
+cp docker-compose.yml "backups/docker-compose-$STAMP.yml"
+if docker run --rm --entrypoint cat "$NEW_IMAGE" /app/docker-compose.local.yml > docker-compose.yml.new 2>/dev/null && [ -s docker-compose.yml.new ]; then
+  mv docker-compose.yml.new docker-compose.yml
+else
+  rm -f docker-compose.yml.new
+fi
+
+status running restart ""
+if up "$NEW_IMAGE" && healthy; then
+  status done done ""
+  find backups \( -name 'antes-da-atualizacao-*.sql.gz' -o -name 'docker-compose-*.yml' \) -mtime +30 -delete
+  exit 0
+fi
+
+status running rollback ""
+cp "backups/docker-compose-$STAMP.yml" docker-compose.yml
+up "$OLD"
+if healthy; then
+  status rolled_back done "A versão nova não respondeu; voltou para a anterior."
+  exit 1
+fi
+
+# Nem a anterior subiu (migração do banco já aplicada): restaura o backup e tenta de novo.
+docker compose stop web worker
+gunzip -c "$DUMP" | docker compose exec -T db sh -c 'psql -q -U minha_automacao -d postgres -c "DROP DATABASE IF EXISTS minha_automacao WITH (FORCE)" -c "CREATE DATABASE minha_automacao" && psql -q -U minha_automacao minha_automacao' >/dev/null
+up "$OLD"
+if healthy; then
+  status rolled_back done "A versão nova não respondeu; voltou para a anterior com o backup do banco."
+else
+  status failed rollback "Não voltou sozinho. Veja docs/instalacao.md, seção Atualização."
+fi
+exit 1

@@ -1,0 +1,27 @@
+<%# locals: (ctx:, step:, dashboard:, views:, themes:, current:) -%>
+<%= form_with url: onboarding_step_path(step.key), scope: :onboarding, data: { turbo_submits_with: t("onboarding.saving") } do |f| %>
+  <fieldset>
+    <legend class="ss-label"><%= t("onboarding.dashboard.theme") %></legend>
+    <div class="ob-themes">
+      <% themes.each do |th| %>
+        <label class="ob-theme" style="--t1: <%= th.accent %>; --t2: <%= th.accent2 %>">
+          <%= f.radio_button :theme, th.key, checked: th.key == current, class: "sr-only" %>
+          <span class="ob-theme-mock" aria-hidden="true">
+            <span class="ob-theme-hero"></span>
+            <span class="ob-theme-row"><i></i><i></i><i></i></span>
+            <span class="ob-theme-row"><i></i><i></i></span>
+          </span>
+          <span class="ob-theme-name"><%= th.label %><span class="ob-theme-check"><%= icon("check", "size-4") %></span></span>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+  <div class="mt-5 rounded-2xl bg-field p-4">
+    <p class="font-semibold text-ink flex items-center gap-2"><%= icon("view-boards", "size-5 text-accent") %><%= t("onboarding.dashboard.ready", count: views.size) %></p>
+    <div class="mt-2 flex flex-wrap gap-1.5">
+      <% views.first(8).each do |v| %><span class="ss-chip"><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %></span><% end %>
+    </div>
+    <p class="text-xs text-muted mt-2"><%= t("onboarding.dashboard.auto_note") %></p>
+  </div>
+  <%= render "web/onboarding/nav", step: step, label: t("onboarding.dashboard.submit") %>
+<% end %>

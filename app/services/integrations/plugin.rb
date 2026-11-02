@@ -73,10 +73,20 @@ module Integrations
       end
 
       # Encontrados na rede → [{"name", "host", "port", "txt"}] (padrão: mDNS do `mdns`).
-      def discover = mdns ? Mdns.browse(mdns) : []
+      def discover = (mdns ? Mdns.browse(mdns) : []) + (ssdp ? Ssdp.search(ssdp) : [])
 
       # Mostra "Procurar na rede": plugin com `mdns` ou com descoberta própria (Broadlink: hello UDP).
-      def discovers? = mdns.present?
+      def discovers? = mdns.present? || ssdp.present?
+
+      # Produto: tipo SSDP/UPnP que acha o aparelho (TVs: "urn:lge-com:service:webos-second-screen:1").
+      def ssdp(st = nil)
+        @ssdp = st if st
+        @ssdp
+      end
+
+      # Primeira configuração: adiciona um aparelho achado na rede sem formulário
+      # (→ integração, com a varredura na fila) ou nil = precisa do assistente.
+      def add_found(_site, _entry) = nil
 
       # A primeira varredura vem do login (polled_at agora: a periódica não corre antes dele).
       def new_integration(site, **attrs) = site.integrations.new(driver: driver, name: title, poll_s: Integration::SYNC_S, polled_at: Time.current, **attrs)

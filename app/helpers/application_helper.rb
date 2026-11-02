@@ -28,12 +28,12 @@ module ApplicationHelper
 
   def phone_text(p) = p.to_s.sub(/\A(\d{2})(\d{4,5})(\d{4})\z/, '(\1) \2-\3').presence
 
-  def greeting = [ "Bom dia", "Boa tarde", "Boa noite" ][Time.current.hour < 12 ? 0 : Time.current.hour < 18 ? 1 : 2]
+  def greeting = t(%w[greeting.morning greeting.afternoon greeting.evening][Time.current.hour < 12 ? 0 : Time.current.hour < 18 ? 1 : 2])
 
   def nav_link(label, path, icon: nil, badge: nil, **opts)
     link_to path, "aria-current": (nav_current?(path) ? "page" : nil), title: label, **opts do
       safe_join([ (icon(icon, "") if icon), tag.span(label, class: "ss-side-label truncate flex-1"),
-                  (tag.span(badge > 99 ? "99+" : badge, class: "ss-nav-badge", "aria-label": "#{badge} não lidas") if badge.to_i.positive?) ].compact)
+                  (tag.span(badge > 99 ? "99+" : badge, class: "ss-nav-badge", "aria-label": t("nav.unread", count: badge)) if badge.to_i.positive?) ].compact)
     end
   end
 

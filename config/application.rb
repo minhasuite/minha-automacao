@@ -37,7 +37,9 @@ module MinhaAutomacao
     # são datas do Brasil, não do servidor em UTC). O banco grava em UTC.
     config.time_zone = "America/Sao_Paulo"
     config.i18n.default_locale = :"pt-BR"
-    config.i18n.available_locales = [ :"pt-BR", :en ]
+    # Produto: telas em pt-BR, en e es (config/locales/web.*.yml; a pessoa
+    # escolhe, o padrão é o idioma do navegador). Chave nova = nos três.
+    config.i18n.available_locales = [ :"pt-BR", :en, :es ]
     config.i18n.fallbacks = [ :en ]
 
     # UUID em toda tabela (inclusive as do Active Storage).

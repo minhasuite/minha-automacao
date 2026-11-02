@@ -1,0 +1,9 @@
+<%# locals: (step:, label: nil) -%>
+<%# Rodapé dos passos: voltar, "Agora não" (passo opcional) e continuar (submete o formulário do passo). %>
+<% prev = @steps[0...@steps.index(step)].reverse.find { |s| s.ready?(@ctx) } %>
+<div class="ob-nav">
+  <% if prev %><%= link_to onboarding_step_path(prev.key), class: "ss-btn ss-btn-ghost" do %><%= icon("arrow-left", "size-4") %><%= t("onboarding.back") %><% end %><% end %>
+  <span class="flex-1"></span>
+  <% if step.optional? %><button type="submit" form="ob-skip" class="ss-btn ss-btn-ghost"><%= t("onboarding.skip") %></button><% end %>
+  <button type="submit" class="ss-btn ss-btn-primary min-h-12 px-6"><%= label || t("onboarding.next") %><%= icon("chevron-right", "size-4") %></button>
+</div>

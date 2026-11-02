@@ -5,6 +5,7 @@ class ApplicationController < ActionController::Base
   include Pagy::Backend
   include SiteAuthorization
   include KioskMode
+  include Localized
 
   allow_browser versions: :modern
   set_current_tenant_through_filter
@@ -49,6 +50,8 @@ class ApplicationController < ActionController::Base
 
   def require_login!
     return Current.user = current_user if current_user
+    # Instalação nova, sem ninguém: a primeira configuração cria o dono.
+    return redirect_to(onboarding_path) if Onboarding.fresh_install?
 
     redirect_to login_path(return_to: request.fullpath.presence_in([ request.fullpath ]))
   end
@@ -58,7 +61,7 @@ class ApplicationController < ActionController::Base
   end
 
   def require_owner!
-    redirect_to root_path, alert: "Só o dono pode fazer isso." unless current_user.owner?
+    redirect_to root_path, alert: t("flash.owner_only") unless current_user.owner?
   end
 
   # Erro de formulário: volta para a página anterior com o aviso.

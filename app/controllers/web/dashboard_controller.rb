@@ -4,6 +4,8 @@ module Web
     # Início", senão o padrão do local, senão o automático); sem local, o
     # convite para criar o primeiro.
     def show
+      return redirect_to(onboarding_path) if Onboarding.pending?(current_user)
+
       @sites = Site.visible_to(current_user).order(:name).to_a
       @site = @sites.find { |s| s.id == params[:local] } || @sites.find { |s| s.id == current_user.dashboard_prefs["site"] } || @sites.first
       return render(:welcome) unless @site

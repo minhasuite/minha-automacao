@@ -1,0 +1,32 @@
+<%# locals: (ctx:, step:, site:, weather:) -%>
+<% v = params[:onboarding] || {} %>
+<%= form_with url: onboarding_step_path(step.key), scope: :onboarding, class: "grid gap-4 grid-cols-2", data: { controller: "onboarding-home", turbo_submits_with: t("onboarding.saving"), onboarding_home_found_value: t("onboarding.home.located"), onboarding_home_denied_value: t("onboarding.home.locate_failed") } do |f| %>
+  <div class="col-span-2"><%= f.label :name, t("onboarding.home.name"), class: "ss-label" %><%= f.text_field :name, value: v[:name] || site.name, class: "ss-input", required: true, autofocus: true %></div>
+  <fieldset class="col-span-2">
+    <legend class="ss-label"><%= t("onboarding.home.kind") %></legend>
+    <div class="grid grid-cols-3 gap-2">
+      <% { "home" => "home", "store" => "shopping-bag", "plant" => "office-building" }.each do |kind, ico| %>
+        <label class="ob-choice">
+          <%= f.radio_button :kind, kind, checked: (v[:kind] || site.kind) == kind, class: "sr-only" %>
+          <span class="ob-choice-ico"><%= icon(ico, "size-6") %></span><span class="font-semibold text-sm"><%= t("onboarding.home.kinds.#{kind}") %></span>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+  <div class="col-span-2">
+    <%= f.label :timezone, t("onboarding.home.timezone"), class: "ss-label" %>
+    <%= f.select :timezone, ActiveSupport::TimeZone.all.map { |z| [ z.to_s, z.tzinfo.name ] }.uniq(&:last), { selected: v[:timezone] || site.timezone || "America/Sao_Paulo" },
+                 class: "ss-input", data: { onboarding_home_target: "zone", fresh: ctx.site.nil? } %>
+  </div>
+  <div class="col-span-2 ob-locate">
+    <div class="min-w-[12rem] flex-1">
+      <p class="font-semibold text-ink flex items-center gap-2"><%= icon("location-marker", "size-5 text-accent") %><%= t("onboarding.home.location") %></p>
+      <p class="text-sm text-muted mt-0.5" data-onboarding-home-target="status" role="status"><%= t("onboarding.home.location_hint") %></p>
+    </div>
+    <button type="button" class="ss-btn ss-btn-outline" data-action="onboarding-home#locate"><%= icon("location-marker", "size-4") %><%= t("onboarding.home.locate") %></button>
+  </div>
+  <div><%= f.label :latitude, t("onboarding.home.latitude"), class: "ss-label" %><%= f.text_field :latitude, value: v[:latitude] || site.latitude, class: "ss-input num", inputmode: "decimal", placeholder: "-15.79", data: { onboarding_home_target: "lat" } %></div>
+  <div><%= f.label :longitude, t("onboarding.home.longitude"), class: "ss-label" %><%= f.text_field :longitude, value: v[:longitude] || site.longitude, class: "ss-input num", inputmode: "decimal", placeholder: "-47.88", data: { onboarding_home_target: "lon" } %></div>
+  <label class="col-span-2 ss-check"><%= f.check_box :weather, { checked: weather }, "1", "0" %><span><strong class="text-ink"><%= t("onboarding.home.weather") %></strong> <span class="text-muted text-sm"><%= t("onboarding.home.weather_hint") %></span></span></label>
+  <div class="col-span-2"><%= render "web/onboarding/nav", step: step %></div>
+<% end %>

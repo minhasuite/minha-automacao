@@ -1,4 +1,4 @@
-<% content_for :title, @home ? "Início" : @dashboard.name %>
+<% content_for :title, @home ? t("nav.home") : @dashboard.name %>
 <% live = !@preview %>
 <% points = @resolved["points"] %>
 <% view = @view %>
@@ -9,9 +9,9 @@
 <% if @preview %>
   <div class="ss-card ss-card-grad p-4 mb-4 flex flex-wrap items-center gap-3" role="status">
     <span class="ss-icon-tile text-accent"><%= icon("eye") %></span>
-    <p class="flex-1 min-w-0"><strong class="text-ink">Pré-visualização do rascunho.</strong> <span class="text-muted">Quem usa o painel ainda vê a versão <%= @dashboard.version %>.</span></p>
-    <%= link_to "Voltar ao editor", edit_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
-    <%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary ss-btn-sm", form: { data: { turbo_confirm: "Publicar o rascunho para todos?", turbo_confirm_button: "Publicar" } } do %><%= icon("upload", "size-4") %>Publicar<% end %>
+    <p class="flex-1 min-w-0"><strong class="text-ink"><%= t("dashboards.preview") %></strong> <span class="text-muted"><%= t("dashboards.preview_note", n: @dashboard.version) %></span></p>
+    <%= link_to t("dashboards.back_editor"), edit_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+    <%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary ss-btn-sm", form: { data: { turbo_confirm: t("dashboards.publish_confirm"), turbo_confirm_button: t("dashboards.publish") } } do %><%= icon("upload", "size-4") %><%= t("dashboards.publish") %><% end %>
   </div>
 <% end %>
 
@@ -24,22 +24,22 @@
     <div class="flex items-center gap-2">
       <% if live && can?(:command, risk: "normal") %><%= render "web/assist/button", site: @site %><% end %>
       <% if (@dashboards || []).size > 1 || @sites.to_a.size > 1 %>
-        <%= link_to site_dashboards_path(@site), class: "dw-hero-btn", title: "Outros painéis", "aria-label": "Outros painéis" do %><%= icon("view-boards", "size-4") %><span class="hidden sm:inline">Painéis</span><% end %>
+        <%= link_to site_dashboards_path(@site), class: "dw-hero-btn", title: t("dashboards.others"), "aria-label": t("dashboards.others") do %><%= icon("view-boards", "size-4") %><span class="hidden sm:inline"><%= t("dashboards.title") %></span><% end %>
       <% end %>
       <% if @resolved["can_edit"] && live && !kiosk %>
-        <%= link_to edit_dashboard_path(@dashboard, view: view["id"]), class: "dw-hero-btn", title: "Editar painel", "aria-label": "Editar painel" do %><%= icon("pencil", "size-4") %><span class="hidden sm:inline">Editar</span><% end %>
+        <%= link_to edit_dashboard_path(@dashboard, view: view["id"]), class: "dw-hero-btn", title: t("dashboards.edit_dashboard"), "aria-label": t("dashboards.edit_dashboard") do %><%= icon("pencil", "size-4") %><span class="hidden sm:inline"><%= t("dashboards.edit") %></span><% end %>
       <% end %>
     </div>
   </div>
   <% if view["badges"].present? %>
-    <div class="mt-4 flex flex-wrap gap-2" aria-label="Resumo">
+    <div class="mt-4 flex flex-wrap gap-2" aria-label="<%= t("dashboards.summary") %>">
       <% view["badges"].each do |b| %><%= render "web/dashboards/widget", w: b, points: points, dashboard: @dashboard, badge: true, live: live %><% end %>
     </div>
   <% end %>
 </section>
 
 <% if @resolved["views"].size > 1 %>
-  <nav class="dw-tabs" aria-label="Visões do painel">
+  <nav class="dw-tabs" aria-label="<%= t("dashboards.views") %>">
     <% @resolved["views"].each do |v| %>
       <%= link_to dw_view_path(@dashboard, v, home: @home).then { |p| @preview ? dashboard_path(@dashboard, view: v["path"].presence || v["id"], rascunho: 1) : p }, class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
     <% end %>
@@ -48,14 +48,14 @@
 
 <% if view["sections"].all? { |s| s["widgets"].empty? } %>
   <div class="ss-card ss-empty mt-4">
-    <%= render "web/shared/empty_art", art: "board", title: "Esta visão ainda está vazia.", text: ("Abra o editor e adicione seções e widgets." if @resolved["can_edit"]) %>
-    <% if @resolved["can_edit"] %><%= link_to "Editar painel", edit_dashboard_path(@dashboard, view: view["id"]), class: "ss-btn ss-btn-primary" %><% end %>
+    <%= render "web/shared/empty_art", art: "board", title: t("dashboards.empty"), text: (t("dashboards.empty_hint") if @resolved["can_edit"]) %>
+    <% if @resolved["can_edit"] %><%= link_to t("dashboards.edit_dashboard"), edit_dashboard_path(@dashboard, view: view["id"]), class: "ss-btn ss-btn-primary" %><% end %>
   </div>
 <% else %>
   <div class="dw-grid dw-sections mt-5">
     <% view["sections"].each_with_index do |s, i| %>
       <% next if s["widgets"].empty? %>
-      <section class="dw-w ss-rise" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>; animation-delay: <%= [ i, 6 ].min * 50 %>ms" aria-label="<%= s['title'] || 'Seção' %>">
+      <section class="dw-w ss-rise" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>; animation-delay: <%= [ i, 6 ].min * 50 %>ms" aria-label="<%= s['title'] || t("dashboards.section") %>">
         <% if s["title"].present? %><h2 class="dw-sec-title"><%= icon(s["icon"], "size-4") if s["icon"].present? %><%= s["title"] %></h2><% end %>
         <div class="dw-grid">
           <% s["widgets"].each do |w| %><%= render "web/dashboards/widget", w: w, points: points, dashboard: @dashboard, badge: false, live: live %><% end %>

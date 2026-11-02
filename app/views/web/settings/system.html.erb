@@ -1,67 +1,123 @@
-<%= render "web/shared/header", title: "Configurações", subtitle: "Sistema: plano, cópia dos dados e acesso de fora de casa." %>
+<%= render "web/shared/header", title: t("settings.title"), subtitle: t("settings.system.subtitle") %>
 <% owner = current_user.owner? %>
 <%= render layout: "web/settings/frame", locals: { current: :system } do %>
-<section class="ss-card ss-card-pad" aria-labelledby="backup-t">
-  <h2 id="backup-t">Backup e exportar</h2>
-  <p class="text-sm text-muted mt-1">O servidor de casa guarda uma cópia do banco todo dia (os últimos 7 dias ficam em <code>backups/</code> no servidor). Aqui você baixa os dados em JSON quando quiser.</p>
+<% up = @update || {} %>
+<% running = up["state"] == "running" %>
+<section class="ss-card ss-card-pad" aria-labelledby="update-t" <%= tag.attributes(data: { controller: "reload", reload_every_value: 5000 }) if running %>>
+  <h2 id="update-t" class="flex items-center gap-2"><%= icon("refresh", "size-5 text-accent") %><%= t("updates.title") %></h2>
+  <div class="up-hero mt-3">
+    <div class="min-w-0 flex-1">
+      <p class="text-xs font-semibold text-muted"><%= t("updates.current") %></p>
+      <p class="up-ver"><%= Updates.current_tag %><% if Updates.current_commit %> <span class="text-xs text-muted">(<%= Updates.current_commit %>)</span><% end %></p>
+    </div>
+    <div class="min-w-0 flex-1">
+      <p class="text-xs font-semibold text-muted"><%= t("updates.latest") %></p>
+      <% if @release %>
+        <p class="up-ver"><%= @release["tag"] %></p>
+        <% if @release["published_at"] %><p class="text-xs text-muted"><%= l(Time.zone.parse(@release["published_at"]).to_date, format: :long) %></p><% end %>
+      <% else %>
+        <p class="text-sm text-muted"><%= t("updates.unknown") %></p>
+      <% end %>
+    </div>
+    <span class="ss-badge <%= Updates.available?(@release) ? 'ss-badge-accent' : 'ss-badge-success' %>"><%= Updates.available?(@release) ? t("updates.available") : t("updates.up_to_date") %></span>
+  </div>
+
+  <% if running %>
+    <% steps = %w[backup pull restart] %>
+    <% now = steps.index(up["step"]) || (up["step"] == "rollback" ? steps.size : 0) %>
+    <ol class="up-steps" role="status" aria-live="polite">
+      <% steps.each_with_index do |s, i| %>
+        <li class="<%= i < now ? 'is-done' : (i == now ? 'is-now' : '') %>"><%= i < now ? icon("check-circle", "size-4") : (i == now ? tag.span(class: "up-spin") : icon("clock", "size-4")) %><%= t("updates.steps.#{s}") %></li>
+      <% end %>
+      <% if up["step"] == "rollback" %><li class="is-now"><span class="up-spin"></span><%= t("updates.steps.rollback") %></li><% end %>
+    </ol>
+    <p class="text-sm text-muted mt-2"><%= t("updates.running_note") %></p>
+  <% elsif up["state"].present? %>
+    <% tone = { "done" => "text-success", "rolled_back" => "text-warn", "failed" => "text-danger" }[up["state"]] %>
+    <p class="text-sm mt-3 <%= tone %>" role="status"><%= t("updates.result.#{up['state']}", to: up["to"].to_s.split(":").last, default: up["state"]) %><%= " #{up['message']}" if up["message"].present? %></p>
+  <% end %>
+
+  <% if @release && @release["notes"].present? && Updates.available?(@release) %>
+    <details class="mt-3"><summary class="text-sm font-semibold text-accent cursor-pointer"><%= t("updates.notes") %></summary>
+      <div class="text-sm text-ink-2 mt-2 whitespace-pre-line"><%= @release["notes"] %></div></details>
+  <% end %>
+
+  <div class="mt-4 flex flex-wrap gap-2">
+    <% if owner && Updates.available?(@release) && !running %>
+      <% if Updates.supported? %>
+        <%= button_to settings_update_path, params: { tag: @release["tag"] }, class: "ss-btn ss-btn-primary",
+                      form: { data: { turbo_confirm: t("updates.confirm", tag: @release["tag"]), turbo_confirm_button: t("updates.now") } } do %><%= icon("download", "size-4") %><%= t("updates.now") %><% end %>
+      <% else %>
+        <p class="text-sm text-muted"><%= t("updates.unsupported") %></p>
+      <% end %>
+    <% end %>
+    <%= link_to settings_system_path(verificar: 1), class: "ss-btn ss-btn-ghost" do %><%= icon("search", "size-4") %><%= t("updates.check") %><% end %>
+  </div>
+  <p class="text-xs text-muted mt-3"><%= t("updates.how") %></p>
+</section>
+
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="backup-t">
+  <h2 id="backup-t"><%= t("settings.system.backup_title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("settings.system.backup_text_html") %></p>
   <div class="mt-3 flex flex-wrap gap-3">
-    <%= link_to settings_export_path, class: "ss-btn ss-btn-ghost", data: { turbo: false } do %><%= icon("download", "size-4") %>Exportar dados (JSON)<% end %>
+    <%= link_to settings_export_path, class: "ss-btn ss-btn-ghost", data: { turbo: false } do %><%= icon("download", "size-4") %><%= t("settings.system.export") %><% end %>
   </div>
   <% if owner %>
     <div class="ss-danger-zone">
-      <h3 class="font-bold text-danger text-sm">Zerar dados</h3>
-      <p class="text-sm text-muted mt-1">Apaga locais, aparelhos, automações, painéis e avisos. As pessoas e o plano ficam. Não dá para desfazer: exporte antes.</p>
-      <%= form_with url: settings_wipe_path, class: "mt-3 flex flex-wrap gap-2", data: { turbo_confirm: "Apagar os dados da instalação? As pessoas e o plano ficam." } do %>
-        <%= text_field_tag :confirm, nil, placeholder: "Digite ZERAR", class: "ss-input w-40", "aria-label": "Digite ZERAR para confirmar" %><%= submit_tag "Zerar dados", class: "ss-btn ss-btn-danger", name: nil %>
+      <h3 class="font-bold text-danger text-sm"><%= t("settings.system.wipe_title") %></h3>
+      <p class="text-sm text-muted mt-1"><%= t("settings.system.wipe_text") %></p>
+      <%= form_with url: settings_wipe_path, class: "mt-3 flex flex-wrap gap-2", data: { turbo_confirm: t("settings.system.wipe_confirm") } do %>
+        <%= text_field_tag :confirm, nil, placeholder: t("settings.system.wipe_type"), class: "ss-input w-40", "aria-label": t("settings.system.wipe_type") %><%= submit_tag t("settings.system.wipe_button"), class: "ss-btn ss-btn-danger", name: nil %>
       <% end %>
     </div>
   <% end %>
 </section>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="ext-t">
-  <h2 id="ext-t">Acesso externo</h2>
+  <h2 id="ext-t"><%= t("settings.system.external_title") %></h2>
   <dl class="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
-    <div><dt class="text-muted">Endereço que você está usando</dt><dd class="font-semibold text-ink break-all"><%= request.base_url %></dd></div>
-    <div><dt class="text-muted">Endereço público</dt><dd class="font-semibold text-ink break-all"><%= ENV["APP_HOST"].presence ? "https://#{ENV['APP_HOST']}" : "Não configurado" %></dd></div>
+    <div><dt class="text-muted"><%= t("settings.system.using") %></dt><dd class="font-semibold text-ink break-all"><%= request.base_url %></dd></div>
+    <div><dt class="text-muted"><%= t("settings.system.public") %></dt><dd class="font-semibold text-ink break-all"><%= ENV["APP_HOST"].presence ? "https://#{ENV['APP_HOST']}" : t("settings.system.not_set") %></dd></div>
   </dl>
-  <p class="text-sm text-muted mt-3">O acesso de fora de casa passa por um túnel seguro (Cloudflare) configurado no servidor; nenhuma porta do roteador fica aberta. O app do celular usa o mesmo endereço público.</p>
+  <p class="text-sm text-muted mt-3"><%= t("settings.system.external_text") %></p>
+  <% if current_user.admin? %><%= link_to settings_remote_path, class: "ss-btn ss-btn-ghost mt-3" do %><%= icon("globe", "size-4") %><%= t("settings.nav.remote") %><% end %><% end %>
 </section>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="http-t">
-  <h2 id="http-t">Saída HTTP</h2>
-  <p class="text-sm text-muted mt-1">A ação "Chamar HTTP" e as agendas por link só falam com endereços da internet. Para chamar um sistema da rede de casa, libere o endereço aqui: um por linha, nome exato ou faixa (<code>192.168.68.0/24</code>).</p>
+  <h2 id="http-t"><%= t("settings.system.http_title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("settings.system.http_text_html") %></p>
   <% if owner %>
     <%= form_with url: settings_system_path, method: :patch, class: "mt-3 grid gap-2 max-w-xl" do %>
-      <%= label_tag :http_allow, "Endereços internos liberados", class: "ss-label" %>
+      <%= label_tag :http_allow, t("settings.system.http_label"), class: "ss-label" %>
       <%= text_area_tag :http_allow, current_user.tenant.http_allow_text, rows: 3, class: "ss-input num", placeholder: "192.168.68.10\nmeu-gestor.local" %>
-      <div><%= submit_tag "Salvar", class: "ss-btn ss-btn-primary", name: nil %></div>
+      <div><%= submit_tag t("settings.system.save"), class: "ss-btn ss-btn-primary", name: nil %></div>
     <% end %>
   <% else %>
-    <p class="text-sm mt-2"><%= current_user.tenant.http_allow.presence&.join(", ") || "Nenhum endereço interno liberado." %></p>
+    <p class="text-sm mt-2"><%= current_user.tenant.http_allow.presence&.join(", ") || t("settings.system.http_none") %></p>
   <% end %>
 </section>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="shadow-t">
-  <h2 id="shadow-t" class="flex items-center gap-2"><%= icon("moon", "size-5 text-accent") %>Modo sombra da instalação</h2>
-  <p class="text-sm text-muted mt-1">Para migrar de outro sistema com segurança: todas as automações, scripts, cenas e regras de todos os locais disparam com os eventos reais, mas nada sai (aparelho, aviso, fala, HTTP, IA). Cada local tem a própria sombra em Automações e cenas → Sombra.</p>
+  <h2 id="shadow-t" class="flex items-center gap-2"><%= icon("moon", "size-5 text-accent") %><%= t("settings.system.shadow_title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("settings.system.shadow_text") %></p>
   <% on = Shadow.global?(current_user.tenant) %>
-  <p class="mt-2"><span class="ss-badge <%= on ? 'ss-badge-accent' : '' %>"><%= on ? "Ligado" : "Desligado" %></span></p>
+  <p class="mt-2"><span class="ss-badge <%= on ? 'ss-badge-accent' : '' %>"><%= on ? t("settings.system.on") : t("settings.system.off") %></span></p>
   <% if owner %>
     <%= button_to settings_system_path, method: :patch, params: { shadow: !on }, class: "ss-btn #{on ? 'ss-btn-outline' : 'ss-btn-primary'} mt-3",
-                  form: { data: { turbo_confirm: (on ? "Desligar a sombra da instalação? Vale então a sombra de cada local e de cada automação." : "Pôr a instalação inteira em sombra?"), turbo_confirm_button: "Confirmar" } } do %>
-      <%= on ? "Desligar a sombra" : "Ligar a sombra" %>
+                  form: { data: { turbo_confirm: (on ? t("settings.system.shadow_off_confirm") : t("settings.system.shadow_on_confirm")), turbo_confirm_button: t("settings.system.confirm") } } do %>
+      <%= on ? t("settings.system.shadow_off") : t("settings.system.shadow_on") %>
     <% end %>
   <% end %>
 </section>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="plan-t">
-  <h2 id="plan-t">Plano</h2>
+  <h2 id="plan-t"><%= t("settings.system.ai_plan") %></h2>
   <% b = @billing %>
   <p class="mt-1">
     <span class="ss-badge ss-badge-accent"><%= Plans::NAMES[b[:plan]] %></span>
-    <% if b[:status] == "trial" %><span class="text-sm text-muted">teste grátis</span><% end %>
-    <% if b[:expires_at] %><span class="text-sm text-muted"><%= b[:auto_renewing] == false || b[:status] == "canceled" ? "vale até" : "renova em" %> <%= l(b[:expires_at].to_date) %></span><% end %>
+    <% if b[:status] == "trial" %><span class="text-sm text-muted"><%= t("settings.system.trial") %></span><% end %>
+    <% if b[:expires_at] %><span class="text-sm text-muted"><%= b[:auto_renewing] == false || b[:status] == "canceled" ? t("settings.system.valid_until") : t("settings.system.renews") %> <%= l(b[:expires_at].to_date) %></span><% end %>
   </p>
-  <p class="text-sm text-muted mt-1">Tudo que não usa IA é grátis. A assinatura libera a IA e é feita pelo app Minha Automação no celular (Google Play)<%= ", com #{Plans::TRIAL_DAYS} dias grátis" if b[:trial_eligible] %>.</p>
+  <p class="text-sm text-muted mt-1"><%= t("settings.system.ai_plan_text") %><%= t("settings.system.trial_days", n: Plans::TRIAL_DAYS) if b[:trial_eligible] %>.</p>
 </section>
 <% end %>

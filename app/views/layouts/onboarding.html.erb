@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="<%= I18n.locale %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= [ @step&.title, t("onboarding.title"), "Minha Automação" ].compact.join(" — ") %></title>
+  <meta name="view-transition" content="same-origin">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= render "web/shared/pwa_head" %>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<%# Primeira configuração (produto): tela cheia, passos no topo, ilustração e formulário no cartão. %>
+<body class="ob-page min-h-screen" data-controller="theme">
+  <div class="ob-blobs" aria-hidden="true"><span></span><span></span><span></span></div>
+  <header class="ob-top">
+    <span class="flex items-center gap-2.5 font-bold text-ink">
+      <span class="grid place-items-center size-9 rounded-xl ss-grad text-white"><%= icon("lightning-bolt", "size-5") %></span>
+      <span class="max-sm:sr-only">Minha Automação</span>
+    </span>
+    <div class="flex items-center gap-2">
+      <%= render "web/shared/locale_picker" %>
+      <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#toggle" aria-label="<%= t("layout.theme") %>"><%= icon("moon", "size-4") %></button>
+    </div>
+  </header>
+  <main class="ob-main" id="conteudo">
+    <% if @steps && @step %>
+      <% done = Array(Onboarding.state(@ctx.tenant)["done"]) %>
+      <ol class="ob-steps" aria-label="<%= t("onboarding.progress") %>">
+        <% @steps.each_with_index do |s, i| %>
+          <% state = s == @step ? "current" : (done.include?(s.key) ? "done" : "todo") %>
+          <li class="ob-step ob-step-<%= state %>" <%= 'aria-current="step"'.html_safe if state == "current" %>>
+            <% if state == "done" && s.ready?(@ctx) %>
+              <%= link_to onboarding_step_path(s.key), class: "ob-dot", title: s.title do %><%= icon("check", "size-4") %><% end %>
+            <% else %>
+              <span class="ob-dot"><%= state == "done" ? icon("check", "size-4") : icon(s.icon, "size-4") %></span>
+            <% end %>
+            <span class="ob-step-label"><span class="sr-only"><%= t("onboarding.step_of", n: i + 1, total: @steps.size) %>: </span><%= s.title %></span>
+          </li>
+        <% end %>
+      </ol>
+    <% end %>
+    <div class="w-full max-w-5xl"><%= render "web/shared/flash" %></div>
+    <%= yield %>
+  </main>
+</body>
+</html>

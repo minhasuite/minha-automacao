@@ -99,7 +99,13 @@ aviso pela API, FCM só de dados no Android e a integração "App do celular"
 (`MobileAppPlugin`: bateria, carregando, Wi-Fi e presença como pontos;
 `docs/app.md`). + **Paridade HA (vendas)**: Diário e Histórico da
 instalação, painel de Energia por plugins (tarifa branca, fluxo, ranking,
-comparação, painel pronto), Mapa e o assistente "Migre do HA em 10 minutos".
+comparação, painel pronto), Mapa e o assistente "Migre do HA em 10 minutos". +
+**Produto (vendas)**: primeira configuração (`Onboarding::STEPS`), telas em
+pt-BR/en/es (`config/locales/web.*.yml`, `Localized`), instalador `install.sh`,
+atualização com um clique (`Updates`, `bin/ma-update`, supervisor
+`/system/update`; `docs/instalacao.md`), acesso remoto por provedores
+(`RemoteAccess`; `docs/remote-access.md`) e planos com limites (`Licensing`;
+`docs/planos.md`).
 
 ## Rodar
 
@@ -115,6 +121,16 @@ docker compose -f .devcontainer/docker-compose.yml exec -T app bash -c \
 rodar spec que renderiza layout. Cobertura mínima 90%.
 
 ## Decisões que não se deduzem do código
+
+- **Produto (vendas)**: passo novo da primeira configuração = classe em
+  `app/services/onboarding/steps/` (`save` → nil, `:stay` ou erro) + nome em
+  `Onboarding::STEPS` + partial `web/onboarding/steps/_<key>`; estado em
+  `tenants.settings["onboarding"]`. Sem ninguém cadastrado, tudo leva à
+  primeira configuração; dono sem local também, até concluir ou pular.
+  **Texto de tela novo vai para `config/locales/web.{pt-BR,en,es}.yml`** (o
+  `spec/i18n_spec.rb` exige as mesmas chaves); idioma da pessoa em
+  `users.dashboard_prefs["locale"]`. Licença do produto (`Licensing`, free/
+  plus/pro) não é a assinatura da IA (`Plans`); sem licença gravada = `pro`.
 
 - **Papéis** (`User::ROLES`): `owner` (Dono: tudo, inclusive plano, chaves de
   integração, zerar e convidar administrador), `admin` (Administrador:

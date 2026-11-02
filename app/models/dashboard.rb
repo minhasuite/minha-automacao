@@ -61,7 +61,8 @@ class Dashboard < ApplicationRecord
     end
   end
   def visible_to?(role) = roles.empty? || role == "owner" || roles.include?(role)
-  def published = auto? ? Dashboards::Generator.call(site) : definition
+  # Automático: gerado a cada leitura, com o tema escolhido (primeira configuração) guardado em `definition`.
+  def published = auto? ? Dashboards::Generator.call(site).merge(definition.to_h.slice("theme")) : definition
   def working_draft = draft || published
   def draft? = draft.present?
 

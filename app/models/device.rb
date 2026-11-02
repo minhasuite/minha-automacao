@@ -28,6 +28,7 @@ class Device < ApplicationRecord
   validates :driver, inclusion: { in: ->(_) { DRIVERS.keys | Drivers::REGISTRY.keys | Integrations.drivers } }
   validates :status, inclusion: { in: STATUSES }
   validate :area_in_same_site
+  validate :within_plan, on: :create
 
   normalizes :name, with: ->(v) { v.to_s.squish }
 
@@ -92,6 +93,13 @@ class Device < ApplicationRecord
   def usages = Point.usages(site, points)
 
   private
+
+  # Produto: limite de aparelhos do plano (Licensing); helpers e scripts não contam.
+  def within_plan
+    return if tenant.nil? || external_id.in?([ HelperTypes::DEVICE_ID, Scripts::DEVICE_ID ])
+
+    errors.add(:base, Licensing.message("devices")) unless Licensing.allowed?(tenant, "devices")
+  end
 
   def area_in_same_site
     errors.add(:area, "precisa ser deste local") if area && area.site_id != site_id

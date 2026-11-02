@@ -164,8 +164,10 @@ RSpec.describe "Dashboards: web e API" do
       expect(response).to have_http_status(:not_found)
     end
 
-    it "sem local mostra as boas-vindas" do
-      sign_in(create(:user))
+    it "sem local mostra as boas-vindas (dono que dispensou a primeira configuração)" do
+      u = create(:user)
+      Onboarding.finish!(u.tenant)
+      sign_in(u)
       get "/"
       expect(response.body).to include("Vamos montar a sua casa")
     end

@@ -51,6 +51,18 @@ module Integrations
         outcome(:found, integration: integration, alert: "Não deu para ler o aparelho: #{e.message}")
       end
 
+      # Achado na rede (primeira configuração): cria e varre na fila; TV que
+      # pede pareamento não segura a tela. Chave/senha faltando = "Com erro",
+      # e o Reconfigurar da integração resolve.
+      def add_found(site, entry)
+        host = entry["host"].to_s.strip.presence or return
+        integration = new_integration(site, name: entry["name"].to_s.squish.presence || "#{title} #{host}")
+        integration.settings = { "host" => host, "port" => (entry["port"].presence || port)&.to_i, "account" => host }.compact
+        integration.save!
+        Integrations.start_sync!(integration)
+        integration
+      end
+
       def inventory(integration) = [ probe(integration) ]
       def probe(_integration) = raise(NotImplementedError)
 

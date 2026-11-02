@@ -1,4 +1,4 @@
 <%# locals: (css:, label: nil) -%>
-<button type="button" class="<%= css %> border-0 bg-transparent text-white/70 cursor-pointer" data-action="privacy#toggle" title="Esconder ou mostrar valores (P)" aria-label="Esconder ou mostrar valores">
+<button type="button" class="<%= css %> border-0 bg-transparent text-white/70 cursor-pointer" data-action="privacy#toggle" title="<%= t("layout.values_toggle") %> (P)" aria-label="<%= t("layout.values_toggle") %>">
   <span class="ss-eye-on"><%= icon("eye", "size-4") %></span><span class="ss-eye-off"><%= icon("eye-off", "size-4") %></span><%= label %>
 </button>

@@ -1,0 +1,441 @@
+# Textos das telas (produto). Chave nova = nos três idiomas (spec/i18n_spec.rb confere).
+en:
+  flash:
+    owner_only: Only the owner can do that.
+    locale_saved: Language changed.
+    too_many: Too many attempts. Wait a minute.
+    bad_login: Invalid e-mail or password.
+    welcome: Welcome to Minha Automação!
+    bye: See you soon!
+    account_saved: Account updated.
+    wrong_password: Current password is wrong.
+    google_off: Google sign-in is not available.
+    google_disabled: This account is disabled.
+    google_failed: Could not sign in with Google. Try again.
+  layout:
+    theme: Theme
+    language: Language
+    change: Change
+    skip: Skip to content
+    open_menu: Open menu
+    close_menu: Close menu
+    collapse: Collapse menu
+    expand: Expand menu
+    search: Search
+    back: Back
+    close: Close
+    menu: Menu
+    main_nav: Main
+    values: Values
+    values_toggle: Hide or show values
+    logout: Sign out
+    tagline_html: Your home,<br>on autopilot.
+    pitch: Devices, sensors, scenes and alerts in one place, with a real app on your phone.
+  nav:
+    home: Home
+    sites: Places
+    logbook: Logbook
+    history: History
+    map: Map
+    alerts: Alerts
+    ask: Ask the house
+    notifications: Notifications
+    settings: Settings
+    account: My account
+    unread: '%{count} unread'
+  greeting:
+    morning: Good morning
+    afternoon: Good afternoon
+    evening: Good evening
+  sessions:
+    title: Sign in
+    heading: Welcome back
+    lead: Sign in to follow your automation
+    email: E-mail
+    email_hint: you@email.com
+    password: Password
+    forgot: Forgot password
+    submit: Sign in
+    no_account: No account?
+    create_free: Create a free account
+    or: or
+  signup:
+    title: Create account
+    heading: Create your account
+    lead: Free, in less than a minute
+    name: Your name
+    password: Password (at least 8)
+    submit: Create account
+    have_account: Already have an account?
+    sign_in: Sign in
+    terms_html: By creating the account you accept the %{terms} and the %{privacy}.
+    terms: terms
+    privacy: privacy policy
+  passwords:
+    title: Forgot password
+    heading: Forgot your password?
+    lead: We will e-mail you a link. It is valid for 30 minutes.
+    submit: Send link
+    back: Back to sign in
+  welcome:
+    kicker: Minha Automação
+    title: Let's set up your home.
+    admin: Create the place, the areas (living room, kitchen, garage) and the devices. Start with virtual points to test without any device. The Home dashboard builds itself from them.
+    create: Create my first place
+    wizard: Guided first setup
+    member: You don't have access to any place yet. Ask the owner.
+    label: Welcome
+  onboarding:
+    title: First setup
+    progress: Setup progress
+    step_of: Step %{n} of %{total}
+    back: Back
+    skip: Not now
+    next: Continue
+    saving: Saving…
+    finished: All set! Your home is live.
+    account:
+      title: Create the owner account
+      subtitle: 'This is Minha Automação''s first run here. The owner account manages everything: people, devices and plan.'
+      name: Your name
+      email: E-mail
+      email_hint: you@email.com
+      password: Password (at least 8)
+      privacy: Everything stays on this server, at your home. Nothing goes to the cloud unless you ask.
+      submit: Create account and continue
+      taken: This installation already has an owner. Sign in with your account.
+      tenant_name: '%{name}''s home'
+    home:
+      title: Your home
+      subtitle: 'Name it and tell us where it is: the time zone sets the schedules and the location brings weather and sunrise.'
+      default_name: My home
+      name: Place name
+      kind: Type
+      kinds:
+        home: Home
+        store: Store
+        plant: Factory
+      timezone: Time zone
+      location: Location
+      location_hint: Use the browser's or type latitude and longitude.
+      locate: Use my location
+      located: Location found.
+      locate_failed: Could not get the location. Type it below or skip.
+      latitude: Latitude
+      longitude: Longitude
+      weather: Turn on weather
+      weather_hint: Forecast and outdoor temperature from the location, no key or account.
+      weather_name: Weather
+    discover:
+      title: Finding devices
+      subtitle: We scan your home network with every integration at once. Tick what you want to add.
+      searching: Searching the network…
+      found:
+        one: 1 device found
+        other: '%{count} devices found'
+      none: Nothing answered on the network.
+      none_hint: 'No problem: you can add them through the maker''s account (Tuya, Xiaomi, Alexa…) in Integrations later.'
+      added_badge: Already added
+      note: TVs ask you to accept on screen the first time. Anything that needs a key shows an error in Integrations, with a Reconfigure button.
+      again: Search again
+      submit: Add and continue
+      added:
+        one: '1 device added: reading starts in a moment.'
+        other: '%{count} devices added: reading starts in a moment.'
+    areas:
+      title: Rooms
+      subtitle: Create the areas of your home and drag each device to its place. The dashboard is organized by them.
+      suggestions: Suggestions
+      suggested:
+        living: Living room
+        kitchen: Kitchen
+        bedroom: Bedroom
+        bathroom: Bathroom
+        office: Office
+        balcony: Balcony
+        garage: Garage
+        outdoor: Outdoor
+      custom: Others (comma separated)
+      custom_hint: Kids' room, Laundry
+      create: Create areas
+      created:
+        zero: No new areas.
+        one: 1 area created.
+        other: '%{count} areas created.'
+      board: Drag the devices
+      board_hint: Drag the card to the area or pick it in the card's list.
+      no_devices: No devices yet. They show up here once you add them.
+      loose: No area
+      move: Area of %{name}
+    dashboard:
+      title: Your dashboard
+      subtitle: The dashboard builds itself from your areas and devices. Pick the look.
+      theme: Theme
+      ready:
+        one: Ready with 1 view
+        other: Ready with %{count} views
+      auto_note: 'It stays automatic: new devices show up by themselves. To customize freely, use Edit on Home.'
+      pick: Pick a theme.
+      submit: Use this look
+    family:
+      title: Family and app
+      subtitle: Invite the people you live with and carry your home in your pocket.
+      invite_title: Invite your family
+      invite_text: Create a single-use link (valid for 7 days). Whoever opens it creates their own account as a resident.
+      invite_button: Create invite link
+      invite_link: Invite link
+      copy: Copy
+      invite_note: The link is shown only now. For another one, use Settings → People.
+      app_title: Install the app
+      app_text: 'Point your phone camera: it opens Minha Automação, which you can install on the home screen to get alerts.'
+      submit: Finish
+  settings:
+    nav:
+      label: Settings sections
+      dashboards: Dashboards
+      people: People
+      api_keys: Integration keys
+      apps: Apps
+      ai: AI
+      health: Health
+      system: System
+      remote: Remote access
+      plan: Plan
+      account: My account
+      push: My devices
+    title: Settings
+    account:
+      subtitle: 'My account: name, e-mail, password, theme and language.'
+      name: Name
+      current_password: Current password
+      new_password: New password
+      save: Save account
+      light: Light
+      dark: Dark
+      system: System
+      push_text: Get alerts on your phone and computer, even with the app closed.
+      push_manage: Manage devices
+      delete_title: Delete my account
+      delete_text: Leaves the installation. If you are the last person, the whole installation is deleted.
+      delete_confirm: Delete your account? If you are the last person, the whole installation is deleted.
+      delete_type: Type EXCLUIR
+      delete_aria: Delete confirmation
+      delete_button: Delete account
+    system:
+      subtitle: 'System: updates, data copy and access from outside.'
+      backup_title: Backup and export
+      backup_text_html: The home server keeps a database copy every day (the last 7 days stay in <code>backups/</code> on the server). Here you download your data as JSON whenever you want.
+      export: Export data (JSON)
+      wipe_title: Erase data
+      wipe_text: 'Deletes places, devices, automations, dashboards and alerts. People and plan stay. It can''t be undone: export first.'
+      wipe_confirm: Erase the installation data? People and plan stay.
+      wipe_type: Type ZERAR
+      wipe_button: Erase data
+      external_title: External access
+      using: Address you are using
+      public: Public address
+      not_set: Not set
+      external_text: Access from outside goes through a secure tunnel; no router port is opened. The phone app uses the same public address.
+      http_title: Outgoing HTTP
+      http_text_html: 'The "Call HTTP" action and calendars by link only talk to internet addresses. To call a system on your home network, allow the address here: one per line, exact name or range (<code>192.168.68.0/24</code>).'
+      http_label: Allowed internal addresses
+      save: Save
+      http_none: No internal address allowed.
+      shadow_title: Installation shadow mode
+      shadow_text: 'To migrate from another system safely: every automation, script, scene and rule of every place fires on real events, but nothing goes out (device, notice, speech, HTTP, AI). Each place has its own shadow in Automations and scenes → Shadow.'
+      'on': 'On'
+      'off': 'Off'
+      shadow_off_confirm: Turn off installation shadow? Each place's and automation's shadow then applies.
+      shadow_on_confirm: Put the whole installation in shadow?
+      confirm: Confirm
+      shadow_off: Turn shadow off
+      shadow_on: Turn shadow on
+      ai_plan: AI subscription
+      trial: free trial
+      valid_until: valid until
+      renews: renews on
+      ai_plan_text: Everything that doesn't use AI is free. The subscription unlocks AI and is made in the Minha Automação phone app (Google Play)
+      trial_days: ', with %{n} free days'
+  devices:
+    title: Devices
+    subtitle: '%{site} · every device in this place'
+    new: New device
+    search: Search
+    search_hint: Name, model, maker or area
+    integration: Integration
+    all: All
+    area: Area
+    no_area: No area
+    status: Status
+    filter: Filter
+    none: No devices.
+    none_filtered: No devices match these filters.
+    none_hint: Add an integration to bring the devices from your account, or add one by hand.
+    add_integration: Add integration
+    add_manual: Add by hand
+    clear: Clear filters
+    check_all: Select all
+    check: Select %{name}
+    name: Name
+    maker: Maker / model
+    points: Points
+    bulk: Actions on selected
+    checked: selected
+    with_checked: With selected
+    with_checked_hint: With selected…
+    move_area: Move to area
+    bulk_confirm: Apply the action to the selected devices? Removing also deletes points and history.
+    apply: Apply
+    disabled: Disabled
+    asking: Asking…
+    refresh: Refresh now
+    reconnecting: Reconnecting…
+    reconnect: Reconnect
+    new_point: New point
+    edit: Edit
+    no_points: No points yet.
+    no_points_hint: 'A point is what you read or control: a relay, a lamp, a sensor, a selection.'
+    add_point: Add point
+    diagnostics: Diagnostics
+    last_seen: Last contact
+    not_yet: Not yet
+    not_informed: Not set
+    protocol: Protocol version
+    no_integration: None
+    reading: Reading
+    no_reading: Not read automatically
+    removed: Disappeared from the integration account on %{at}. Nothing was deleted; remove it here if it won't come back.
+    last_error: 'Last error:'
+    tuya_no_ip: 'No IP: the Tuya account does not report the local IP. Fill it in Edit (check your router) and use Reconnect.'
+    failures: Recent failures
+    no_answer: no answer
+    usages: Where it is used
+    no_usages: No dashboard, automation, scene, mirror, notice, alert, schedule or helper uses this device's points.
+    form:
+      name_hint: Living room switch
+      driver: Driver
+      driver_hint: 'Run commands: virtual and local Tuya. The others come through integrations.'
+      maker: Maker
+      model: Model
+      serial: Serial number
+      poll: Read the state every (minutes)
+      poll_hint: empty or 0 = don't read
+      poll_note: 'Read only, one device at a time. Default: 30 minutes.'
+      disabled: Disabled (receives no commands)
+      host: Local network IP
+      tuya_version: Tuya protocol version
+      tuya_discover: Detect (Reconnect)
+      listen: Keep a connection to the device (the physical button updates the screen)
+      listen_hint: 'Leave it off while another system controls this device: many accept a single connection.'
+      create: Create device
+      save: Save device
+      cancel: Cancel
+  dashboards:
+    title: Dashboards
+    subtitle: '%{site} · choose what opens on your Home.'
+    new: New dashboard
+    preset: Ready-made dashboard
+    auto: automatic
+    version: version %{n}
+    draft: draft
+    site_default: Place default
+    mine: Opens on your Home
+    only: Only
+    open: Open
+    prefer: Open on my Home
+    edit: Edit
+    new_subtitle: Start from scratch or from a copy of the automatic dashboard.
+    name_hint: Kitchen dashboard
+    kind: Type
+    copy_auto: Start with a copy of the automatic one
+    create: Create dashboard
+    preview: Draft preview.
+    preview_note: People using the dashboard still see version %{n}.
+    back_editor: Back to editor
+    publish_confirm: Publish the draft for everyone?
+    publish: Publish
+    others: Other dashboards
+    edit_dashboard: Edit dashboard
+    summary: Summary
+    views: Dashboard views
+    empty: This view is still empty.
+    empty_hint: Open the editor and add sections and widgets.
+    section: Section
+  updates:
+    title: Updates
+    current: Installed version
+    latest: Newest version
+    unknown: Could not check right now.
+    available: Update available
+    up_to_date: Up to date
+    steps:
+      backup: Database backup
+      pull: Downloading the new version
+      restart: Restarting and checking
+      rollback: Rolling back to the previous version
+    running_note: The page may go away for a minute while the server restarts; it comes back by itself.
+    result:
+      done: Updated to %{to}.
+      rolled_back: The update to %{to} failed and rolled back to the previous version.
+      failed: The update to %{to} failed.
+    notes: What's new
+    confirm: Update to %{tag}? A database backup is made first; if the new version doesn't answer, it rolls back by itself.
+    now: Update now
+    unsupported: One-click updates only exist on the local server (with the supervisor).
+    check: Check now
+    how: Before switching, the server backs up the database; if /up doesn't answer within 5 minutes, it rolls back by itself.
+    bad_tag: Invalid version.
+    started: Update started. Follow it here.
+  remote:
+    subtitle: 'Remote access: see and control your home from outside, without opening router ports.'
+    intro: 'Choose how your home is reached from outside. The tunnel goes out from the server to the provider: no router port is opened.'
+    state:
+      manual: Configured on the server
+      'on': 'On'
+      starting: Starting…
+      'off': 'Off'
+    offline: The supervisor didn't answer now; the status may be out of date.
+    manual_note: This server already has a hand-configured tunnel (.env file). It keeps working; this page doesn't touch it.
+    address: 'Address:'
+    off_confirm: Turn off remote access? The app stops working outside home.
+    turn_off: Turn off
+    keep_secret: leave empty to keep the current one
+    save: Save
+    turn_on: Turn on
+    relay_title: MinhaSuite access
+    relay_text: Your own address (yourhome.minhasuite.com) with no account elsewhere, included in Plus and Pro plans.
+    soon: Coming soon
+    unknown: Unknown provider.
+    bad_url: The public address must start with https://.
+    no_supervisor: Remote access from this page only exists on the local server (with the supervisor).
+    enabled: Remote access on.
+    disabled: Remote access off.
+    cloudflare:
+      label: Cloudflare Tunnel
+      description: Create the tunnel in the Cloudflare dashboard (Zero Trust → Networks → Tunnels), point the public hostname to http://web:3000 and paste the token here.
+      bad_token: Invalid tunnel token.
+      fields:
+        token: Tunnel token
+        url: Public address (optional)
+  plan:
+    subtitle: 'Plan: what the installation includes and how much it uses.'
+    current: Your plan
+    names:
+      free: Free
+      plus: Plus
+      pro: Pro
+    limits:
+      devices: devices
+      users: people
+      history_days: history
+      cloud_backup: cloud backup
+      remote_access: remote access
+    included: Included
+    not_included: Not included
+    unlimited: Unlimited
+    days:
+      one: 1 day
+      other: '%{count} days'
+    compare: Compare plans
+    no_payment: Changing plans from this page comes with payments. To change now, contact support.
+    exceeded: Your plan doesn't include more %{what}. See Settings → Plan.

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="<%= I18n.locale %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,8 +20,8 @@
         <span class="grid place-items-center size-10 rounded-2xl bg-white/15 ring-1 ring-white/25"><%= icon("lightning-bolt", "size-5") %></span>Minha Automação
       <% end %>
       <div class="max-w-md">
-        <p class="text-4xl font-bold leading-tight tracking-tight">Sua casa,<br>no automático.</p>
-        <p class="mt-4 text-white/80 leading-relaxed">Aparelhos, sensores, cenas e avisos num lugar só, com app de verdade no celular.</p>
+        <p class="text-4xl font-bold leading-tight tracking-tight"><%= t("layout.tagline_html") %></p>
+        <p class="mt-4 text-white/80 leading-relaxed"><%= t("layout.pitch") %></p>
       </div>
       <p class="text-xs text-white/70">© <%= Date.current.year %> Minha Automação · MinhaSuite</p>
     </aside>
@@ -30,6 +30,7 @@
         <span class="grid place-items-center size-9 rounded-xl ss-grad"><%= icon("lightning-bolt", "size-5") %></span>Minha Automação
       <% end %>
       <div class="w-full max-w-md">
+        <div class="flex justify-end mb-3"><%= render "web/shared/locale_picker" %></div>
         <%= render "web/shared/flash" %>
         <div class="ss-card p-7 sm:p-10 ss-rise"><%= yield %></div>
       </div>

@@ -6,6 +6,7 @@ RSpec.describe "Web (sessão em cookie)" do
   def sign_in(u = user) = post("/entrar", params: { email: u.email, password: "12345678" })
 
   it "sem login vai para /entrar; com login abre Início, Notificações e Configurações" do
+    user # instalação com alguém (sem ninguém, vai para a primeira configuração)
     get "/"
     expect(response).to redirect_to(%r{/entrar})
     get "/entrar"
@@ -15,6 +16,7 @@ RSpec.describe "Web (sessão em cookie)" do
     expect(response).to have_http_status(:unprocessable_content)
     sign_in
     expect(response).to redirect_to("/")
+    Onboarding.finish!(user.tenant)
     %w[/ /notificacoes /configuracoes/paineis].each do |path|
       get path
       expect(response).to have_http_status(:ok)
