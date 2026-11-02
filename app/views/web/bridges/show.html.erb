@@ -1,0 +1,91 @@
+<%= render "web/shared/header", title: "Ponte #{@bridge.title}", subtitle: "#{@site.name} · #{@bridge.description}", back: site_path(@site) %>
+<%= render "web/sites/tabs", site: @site, current: :"bridge_#{@bridge.key}" %>
+<% admin = can?(:admin) %>
+
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+  <%= form_with url: site_bridge_path(@site, @bridge.key), method: :patch, class: "ss-card min-w-0", aria: { label: "Pontos expostos na ponte #{@bridge.title}" }, data: { controller: "filter" } do %>
+    <div class="ss-card-pad flex flex-wrap items-center justify-between gap-2 border-b border-line">
+      <div>
+        <h2 class="font-bold">Pontos expostos</h2>
+        <p class="text-sm text-muted"><span class="num"><%= @exposed.size %></span> de <span class="num"><%= @items.size %></span> expostos. Tudo começa desligado.</p>
+      </div>
+      <% if admin && @items.any? %><%= submit_tag "Salvar", class: "ss-btn ss-btn-primary", name: nil %><% end %>
+    </div>
+    <% if @items.empty? %>
+      <p class="ss-card-pad text-sm text-muted">Nenhum ponto que a ponte entende neste local (liga/desliga, intensidade, cor, cortina, temperatura alvo, sensores e fechadura).</p>
+    <% else %>
+      <div class="ss-card-pad border-b border-line">
+        <label for="br-busca" class="ss-label">Procurar</label>
+        <input type="search" id="br-busca" class="ss-input" placeholder="Nome do ponto ou aparelho" autocomplete="off" data-filter-target="input" data-action="input->filter#apply">
+        <p class="text-sm text-muted mt-2" data-filter-target="empty" hidden>Nada com esse nome. <button type="button" class="font-semibold text-accent" data-action="filter#clear">Limpar busca</button></p>
+      </div>
+      <ul class="ss-rows">
+        <% @items.each do |p, type| %>
+          <% e = @exposed[p.id] %>
+          <% critical = p.risk == "critical" %>
+          <li class="flex-wrap" data-filter-target="item">
+            <label class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
+              <%= hidden_field_tag "items[#{p.id}][exposed]", "0", id: nil %>
+              <%= check_box_tag "items[#{p.id}][exposed]", "1", e.present?, id: "br-#{p.id}", disabled: !admin, class: "size-5 accent-[var(--accent)]" %>
+              <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= e ? 'ss-grad' : 'bg-accent-soft text-accent' %>"><%= icon(point_icon(p)) %></span>
+              <span class="min-w-0">
+                <% title, context = p.display_names %>
+                <span class="block font-bold text-ink truncate"><%= title %></span>
+                <span class="block text-xs text-muted truncate"><%= [ context, @bridge.label(type) ].compact.join(" · ") %></span>
+              </span>
+            </label>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <% if critical %><span class="ss-badge ss-badge-danger shrink-0">Crítico</span><% end %>
+              <%= text_field_tag "items[#{p.id}][name]", e&.name, placeholder: "Nome no app: #{p.name}", maxlength: 60, disabled: !admin,
+                                 class: "ss-input text-sm sm:w-56", "aria-label": "Nome de #{p.name} na ponte" %>
+            </div>
+            <% if critical && admin && e.nil? %>
+              <label class="ss-check w-full text-sm text-danger">
+                <%= check_box_tag "items[#{p.id}][confirm]", "1", false, id: "brc-#{p.id}" %>
+                Confirmo expor <%= p.name %>: quem tiver acesso à casa no app pareado poderá acionar.
+              </label>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <% if admin %><div class="ss-card-pad border-t border-line"><%= submit_tag "Salvar", class: "ss-btn ss-btn-primary", name: nil %></div><% end %>
+    <% end %>
+  <% end %>
+
+  <div class="grid gap-4">
+    <section class="ss-card ss-card-pad" aria-labelledby="pair-t">
+      <div class="flex items-center justify-between gap-2">
+        <h2 id="pair-t" class="font-bold">Parear</h2>
+        <% if @status.nil? %>
+          <span class="ss-badge ss-badge-muted">Serviço fora do ar</span>
+        <% elsif ActiveModel::Type::Boolean.new.cast(@status["commissioned"]) %>
+          <span class="ss-badge ss-badge-success">Pareada<%= " · #{@status['fabrics']} app(s)" if @status["fabrics"].to_i.positive? %></span>
+        <% else %>
+          <span class="ss-badge ss-badge-warn">Esperando pareamento</span>
+        <% end %>
+      </div>
+      <% if @status && @status["qr"].present? %>
+        <div class="mt-3 mx-auto w-48 rounded-xl bg-white p-2" role="img" aria-label="QR code de pareamento Matter">
+          <%= RQRCode::QRCode.new(@status["qr"]).as_svg(module_size: 4, standalone: true, use_path: true, viewbox: true).html_safe %>
+        </div>
+        <p class="mt-2 text-center text-sm text-muted">ou digite o código</p>
+        <p class="text-center font-mono text-lg font-bold tracking-wider num"><%= @status["manual"].to_s.gsub(/\D/, "").sub(/\A(\d{4})(\d{3})(\d{4})/, '\1-\2-\3') %></p>
+        <p class="mt-2 text-xs text-muted">No Apple Casa: Adicionar acessório. No Google Home: Adicionar → Matter. Na Alexa: Adicionar dispositivo → Matter. Dá para parear em mais de um app (no app pareado, "Ativar pareamento" gera outro código).</p>
+      <% elsif @status.nil? %>
+        <p class="mt-2 text-sm text-muted">Ligue o serviço no servidor da casa (<code>docker compose --profile matter-bridge up -d matter-bridge</code>) com a chave abaixo em <code>MA_API_KEY</code>. O QR aparece aqui em segundos.</p>
+      <% end %>
+    </section>
+
+    <section class="ss-card ss-card-pad" aria-labelledby="key-t">
+      <h2 id="key-t" class="font-bold">Chave do serviço</h2>
+      <p class="text-sm text-muted mt-1">O serviço da ponte lê os pontos expostos e manda os comandos com esta chave (só este local, ler e comandar).</p>
+      <% if @key %>
+        <div class="mt-2 rounded-xl bg-accent-soft p-2"><p class="text-xs text-muted">MA_API_KEY (só agora)</p><p class="font-mono text-xs break-all"><%= @key %></p></div>
+      <% end %>
+      <% if admin %>
+        <%= button_to "Gerar chave", service_key_site_bridge_path(@site, @bridge.key), class: "ss-btn ss-btn-ghost mt-3", form: { data: { turbo: false } } %>
+        <p class="text-xs text-muted mt-2">Chaves antigas continuam valendo até serem revogadas em Configurações → Chaves de API.</p>
+      <% end %>
+    </section>
+  </div>
+</div>

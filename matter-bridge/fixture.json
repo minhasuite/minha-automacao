@@ -1,0 +1,29 @@
+{
+  "devices": [
+    { "id": "00000000-0000-4000-8000-000000000001", "type": "on_off_light", "name": "Luz da sala", "reachable": true,
+      "state": { "onOff": { "onOff": false } }, "listen": ["onOff.onOff"] },
+    { "id": "00000000-0000-4000-8000-000000000002", "type": "on_off_plug", "name": "Bomba", "reachable": true,
+      "state": { "onOff": { "onOff": true } }, "listen": ["onOff.onOff"] },
+    { "id": "00000000-0000-4000-8000-000000000003", "type": "dimmable_light", "name": "Abajur", "reachable": true,
+      "state": { "onOff": { "onOff": true }, "levelControl": { "currentLevel": 127 } }, "listen": ["onOff.onOff", "levelControl.currentLevel"] },
+    { "id": "00000000-0000-4000-8000-000000000004", "type": "extended_color_light", "name": "Fita LED", "reachable": true,
+      "state": { "onOff": { "onOff": true }, "levelControl": { "currentLevel": 254 }, "colorControl": { "currentHue": 85, "currentSaturation": 254 } },
+      "listen": ["onOff.onOff", "levelControl.currentLevel", "colorControl.currentHue", "colorControl.currentSaturation"] },
+    { "id": "00000000-0000-4000-8000-000000000005", "type": "window_covering", "name": "Persiana", "reachable": true,
+      "state": { "windowCovering": { "currentPositionLiftPercent100ths": 7000, "targetPositionLiftPercent100ths": 7000 } },
+      "listen": ["windowCovering.targetPositionLiftPercent100ths"] },
+    { "id": "00000000-0000-4000-8000-000000000006", "type": "thermostat", "name": "Ar do quarto", "reachable": true,
+      "state": { "thermostat": { "occupiedHeatingSetpoint": 2300, "occupiedCoolingSetpoint": 2300, "localTemperature": 2650 } },
+      "listen": ["thermostat.occupiedHeatingSetpoint", "thermostat.occupiedCoolingSetpoint"] },
+    { "id": "00000000-0000-4000-8000-000000000007", "type": "door_lock", "name": "Portão", "reachable": true,
+      "state": { "doorLock": { "lockState": 1 } }, "listen": ["doorLock.lockState"] },
+    { "id": "00000000-0000-4000-8000-000000000008", "type": "contact_sensor", "name": "Porta da cozinha", "reachable": true,
+      "state": { "booleanState": { "stateValue": true } }, "listen": [] },
+    { "id": "00000000-0000-4000-8000-000000000009", "type": "occupancy_sensor", "name": "Movimento da garagem", "reachable": true,
+      "state": { "occupancySensing": { "occupancy": { "occupied": false } } }, "listen": [] },
+    { "id": "00000000-0000-4000-8000-000000000010", "type": "temperature_sensor", "name": "Temperatura", "reachable": true,
+      "state": { "temperatureMeasurement": { "measuredValue": 2650 } }, "listen": [] },
+    { "id": "00000000-0000-4000-8000-000000000011", "type": "humidity_sensor", "name": "Umidade", "reachable": false,
+      "state": { "relativeHumidityMeasurement": { "measuredValue": 5500 } }, "listen": [] }
+  ]
+}

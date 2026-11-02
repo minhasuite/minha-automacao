@@ -372,6 +372,22 @@ CREATE TABLE public.blueprints (
 
 
 --
+-- Name: bridge_exposures; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bridge_exposures (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    point_id uuid NOT NULL,
+    bridge character varying NOT NULL,
+    name character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: commands; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1856,6 +1872,14 @@ ALTER TABLE ONLY public.blueprints
 
 
 --
+-- Name: bridge_exposures bridge_exposures_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bridge_exposures
+    ADD CONSTRAINT bridge_exposures_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: commands commands_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2593,6 +2617,27 @@ CREATE UNIQUE INDEX index_blueprints_on_site_id_and_source ON public.blueprints 
 --
 
 CREATE INDEX index_blueprints_on_tenant_id ON public.blueprints USING btree (tenant_id);
+
+
+--
+-- Name: index_bridge_exposures_on_point_id_and_bridge; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_bridge_exposures_on_point_id_and_bridge ON public.bridge_exposures USING btree (point_id, bridge);
+
+
+--
+-- Name: index_bridge_exposures_on_site_id_and_bridge; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_bridge_exposures_on_site_id_and_bridge ON public.bridge_exposures USING btree (site_id, bridge);
+
+
+--
+-- Name: index_bridge_exposures_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_bridge_exposures_on_tenant_id ON public.bridge_exposures USING btree (tenant_id);
 
 
 --
@@ -3534,6 +3579,30 @@ ALTER INDEX public.index_readings_on_point_id_and_at ATTACH PARTITION public.rea
 
 
 --
+-- Name: bridge_exposures fk_rails_219d1b64ce; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bridge_exposures
+    ADD CONSTRAINT fk_rails_219d1b64ce FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: bridge_exposures fk_rails_911bda919e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bridge_exposures
+    ADD CONSTRAINT fk_rails_911bda919e FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
+-- Name: bridge_exposures fk_rails_c1a474917b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bridge_exposures
+    ADD CONSTRAINT fk_rails_c1a474917b FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
+
+
+--
 -- Name: automation_versions fk_rails_002e3d5c41; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4444,6 +4513,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102100001'),
 ('20261101130003'),
 ('20261101000001'),
 ('20261031190001'),

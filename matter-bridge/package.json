@@ -1,0 +1,16 @@
+{
+  "name": "minha-automacao-matter-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ponte Matter do Minha Automação (matter.js): expõe os pontos escolhidos para Apple Casa, Google Home e Alexa.",
+  "type": "module",
+  "main": "index.js",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test test.js"
+  },
+  "dependencies": {
+    "@matter/main": "0.17.9"
+  }
+}

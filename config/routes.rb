@@ -150,6 +150,10 @@ Rails.application.routes.draw do
         post :client, path: "cliente"
         delete "vinculos/:token_id", action: :unlink, as: :unlink
       end
+      # integ: pontes de exposição (Matter…): o que expor, pareamento e chave do serviço.
+      resources :bridges, controller: "bridges", path: "pontes", only: %i[show update], param: :key do
+        post :service_key, on: :member, path: "chave"
+      end
       # Helpers (F8e): catálogo de tipos (plugins), lista com valor e cadastro.
       resources :helpers, controller: "site_helpers", path: "helpers", except: :show, path_names: { new: "novo", edit: "editar" }, shallow: true
       # Pacote 3: loja de pacotes declarativos e ferramentas de desenvolvedor (só administrador).
@@ -283,6 +287,11 @@ Rails.application.routes.draw do
       end
 
       resources :commands, only: :show
+
+      # integ: serviço da ponte (matter-bridge) lê os expostos, manda a situação e os comandos.
+      get "bridges/:key", to: "bridges#index"
+      put "bridges/:key/status", to: "bridges#status"
+      post "bridges/:key/commands", to: "bridges#command"
 
       # Pacote 3: pessoas, voz, pacotes e ferramentas de desenvolvedor.
       get "sites/:site_id/people", to: "people#index"

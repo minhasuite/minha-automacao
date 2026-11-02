@@ -171,6 +171,24 @@ services:
     volumes:
       - matter-data:/data
 
+  # integ: Ponte Matter (expor), DESLIGADA por padrão (perfil `matter-bridge`:
+  # `docker compose --profile matter-bridge up -d --build matter-bridge`).
+  # matter.js em Node (pasta matter-bridge/): publica os pontos escolhidos na
+  # aba "Matter" do local para Apple Casa, Google Home e Alexa. Rede do host
+  # (mDNS e IPv6 do Matter, porta 5540); fala com o web por HTTP com a chave
+  # gerada na aba (MATTER_BRIDGE_KEY no .env). O pareamento fica no volume.
+  matter-bridge:
+    build: ./matter-bridge
+    image: minha-automacao-matter-bridge:local
+    restart: unless-stopped
+    profiles: ["matter-bridge"]
+    network_mode: host
+    environment:
+      MA_URL: http://127.0.0.1:${WEB_PORT:-80}
+      MA_API_KEY: ${MATTER_BRIDGE_KEY:-}
+    volumes:
+      - matter-bridge-data:/data
+
   # Descoberta pelo app: anuncia `_minhaautomacao._tcp` na rede de casa
   # (bin/mdns-announce, Ruby puro). Rede do host porque o multicast não chega
   # na bridge; só UDP 5353, sem banco e sem segredo. Parar não afeta o resto.
@@ -201,6 +219,7 @@ volumes:
   storage:
   mosquitto:
   matter-data:
+  matter-bridge-data:
 
 networks:
   # Rede dos apps instalados pelo supervisor (manifesto com `network: apps`):
