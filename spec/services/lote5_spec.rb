@@ -149,7 +149,7 @@ RSpec.describe "Lote 5: importador do HA, Jinja e gatilhos novos" do
 
       expect(b["unsupported"]).to eq([])
       t = b["definition"]["triggers"]
-      expect(t[0]).to eq("type" => "event", "event" => "system_started")
+      expect(t[0]).to eq("type" => "system", "event" => "start") # ondaA1: gatilho Sistema
       expect(t[1]).to eq("type" => "time", "at_point" => { "!input" => "input_datetime_acordar" }, "id" => "hora")
       expect(t[2..4]).to eq([ { "type" => "time", "at" => "09:00", "days" => [ 1, 5 ] }, { "type" => "time", "at" => "07:00" }, { "type" => "time", "at" => "08:30" } ])
       expect(t[5]).to eq("type" => "calendar", "point" => { "!input" => "calendar_trabalho" }, "event" => "start", "offset" => "-15m")
@@ -210,13 +210,13 @@ RSpec.describe "Lote 5: importador do HA, Jinja e gatilhos novos" do
           - action: notify.x
             data: { message: "{{ x | from_json }}" }
       YAML
-      expect(bp["unsupported"]).to include("gatilho template", "horário input_datetime.x na condição", "condição zone", "ação de aparelho blink",
+      expect(bp["unsupported"]).to include("horário input_datetime.x na condição", "condição zone", "ação de aparelho blink",
                                            "espera com template do HA", a_string_including("calendar.get_events com início/fim"),
                                            "valor com template do HA em select (confira)", "campos do script com template do HA (confira)",
                                            "variável l com lista ou objeto", "variáveis com template do HA (confira o texto)", "evento Nome Ruim",
                                            "dado do evento com template do HA", "ação wait_for_trigger", a_string_including("ai_task: estrutura"),
                                            a_string_including("texto com template do HA no aviso"))
-      expect(bp["definition"]["triggers"]).to eq([ { "type" => "state", "point" => { "!input" => "switch_a" } } ])
+      expect(bp["definition"]["triggers"]).to eq([ { "type" => "template", "expr" => "true" }, { "type" => "state", "point" => { "!input" => "switch_a" } } ]) # ondaA1: gatilho template
     end
 
     it "a automação criada do blueprint troca [[entrada]] pela chave do ponto e escolhe a cena" do

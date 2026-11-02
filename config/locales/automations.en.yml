@@ -185,6 +185,7 @@ en:
         notification_action: "Notification reply"
         script_finished: "Script finished"
         system_started: "System started"
+        system_stopping: "System shutting down"
       alert_title: "Alert %{name}: %{event}"
       input_types:
         point: "Point"

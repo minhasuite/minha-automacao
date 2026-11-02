@@ -15,8 +15,8 @@ RSpec.describe "F8f: plugins da DSL, scripts e blueprints" do
 
   describe "registro de gatilhos, condições e ações" do
     it "lista os tipos e monta o catálogo pelo plugin" do
-      expect(Automations::TriggerTypes.keys).to eq(%w[state numeric time sun calendar alert manual webhook notification_action event zone presence alarm detection])
-      expect(Automations::ConditionTypes.keys).to eq(%w[state numeric time sun calendar zone alarm expr and or not])
+      expect(Automations::TriggerTypes.keys).to eq(%w[state numeric time sun calendar alert manual webhook notification_action event zone presence alarm detection time_pattern template mqtt system])
+      expect(Automations::ConditionTypes.keys).to eq(%w[state numeric time sun calendar zone alarm expr and or not trigger])
       expect(Automations::ActionTypes.keys).to include("command", "script", "wait_for", "repeat")
       expect(Automations::Dsl.catalog(:options).keys).to eq([ "option" ])
       expect(Automations::Dsl.form_fields).to include("point", "script", "timeout")
@@ -319,7 +319,8 @@ RSpec.describe "F8f: plugins da DSL, scripts e blueprints" do
         d = attrs["definition"]
         expect(d["triggers"]).to eq([
           { "type" => "numeric", "point" => { "!input" => "temp" }, "above" => { "!input" => "limite" }, "for" => "1m" },
-          { "type" => "time", "at" => { "!input" => "hora" } }, { "type" => "sun", "event" => "sunset", "offset" => "-15m" }
+          { "type" => "time", "at" => { "!input" => "hora" } }, { "type" => "sun", "event" => "sunset", "offset" => "-15m" },
+          { "type" => "mqtt", "topic" => "x" } # ondaA1 (A5): gatilho MQTT
         ])
         expect(d["conditions"]).to eq([
           { "type" => "state", "point" => { "!input" => "door" }, "is" => false },
@@ -334,7 +335,7 @@ RSpec.describe "F8f: plugins da DSL, scripts e blueprints" do
         ])
         expect(attrs["mode"]).to eq("queued")
         expect(attrs["unsupported"]).to include("entrada alvo (selector area)", "entrada fan: várias entidades (aqui é um ponto só)",
-                                                "entidade fixa sensor.fixa (use uma entrada de ponto)", "gatilho mqtt", "gatilho time por entidade",
+                                                "entidade fixa sensor.fixa (use uma entrada de ponto)", "gatilho time por entidade",
                                                 "condição template", "dados extras em fan.turn_on (percentage)",
                                                 a_string_including("template do HA"), "ação scene.turn_on", "ação choose")
       end

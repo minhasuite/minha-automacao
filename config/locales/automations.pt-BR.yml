@@ -185,6 +185,7 @@ pt-BR:
         notification_action: "Resposta de aviso"
         script_finished: "Script terminou"
         system_started: "Sistema iniciou"
+        system_stopping: "Sistema vai desligar"
       alert_title: "Alerta %{name}: %{event}"
       input_types:
         point: "Ponto"

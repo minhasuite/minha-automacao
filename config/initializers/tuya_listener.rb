@@ -17,6 +17,8 @@ Rails.application.config.after_initialize do
   SolidQueue.on_worker_start { HelperTypes.boot! } if defined?(SolidQueue)
   # Gatilho "Sistema iniciou" (Lote 5, G7): uma vez por início do supervisor.
   SolidQueue.on_start { SystemStartedJob.perform_later } if defined?(SolidQueue)
+  # ondaA1 (A5): gatilho "Sistema vai desligar" (na hora, antes de o processo sair).
+  SolidQueue.on_stop { Automations::Triggers.system_stopping! } if defined?(SolidQueue)
   # Respostas de botão do Telegram sem webhook (Pacote 4); TELEGRAM_LISTENER=off desliga.
   SolidQueue.on_worker_start { Integrations::TelegramPlugin.listen } if defined?(SolidQueue) && ENV["TELEGRAM_LISTENER"] != "off"
 end

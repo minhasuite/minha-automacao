@@ -347,7 +347,8 @@ CREATE TABLE public.automations (
     blueprint_inputs jsonb,
     blueprint_version integer,
     shadow boolean DEFAULT false NOT NULL,
-    category character varying
+    category character varying,
+    trigger_state jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 
@@ -4525,6 +4526,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102200005'),
 ('20261102200004'),
 ('20261102200003'),
 ('20261102200002'),

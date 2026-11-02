@@ -35,7 +35,7 @@ RSpec.describe "Lote 5: telas" do
     expect(response.body).to include("Noite", "Escolha")
     post "/blueprints/#{bp.id}/usar", params: { name: "Noite ao iniciar", inputs: { scene_noite: scene.id } }
     a = within(tenant) { site.automations.find_by!(name: "Noite ao iniciar") }
-    expect(a.definition).to eq("triggers" => [ { "type" => "event", "event" => "system_started" } ], "conditions" => [], "actions" => [ { "type" => "scene", "scene" => scene.id } ])
+    expect(a.definition).to eq("triggers" => [ { "type" => "system", "event" => "start" } ], "conditions" => [], "actions" => [ { "type" => "scene", "scene" => scene.id } ])
   end
 
   it "helper calculado com a cada e atributos, e o widget Número com atributo" do

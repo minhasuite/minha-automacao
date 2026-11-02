@@ -316,7 +316,7 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       expect(list[1]["definition"]["triggers"]).to eq([ { "type" => "state", "point" => { "!input" => "binary_sensor_porta" }, "to" => true, "for" => "2m" } ])
       expect(list[1]["inputs"].first.dig("filter", "capability")).to eq(%w[contact motion problem tamper])
       expect(list[2]["unsupported"]).to include("ação shell_command.algo")
-      expect(list[2]["definition"]["triggers"]).to eq([ { "type" => "event", "event" => "system_started" }, { "type" => "time", "every" => "30m" }, { "type" => "event", "event" => "mobile_app_notification_action", "match" => { "action" => "OK" } },
+      expect(list[2]["definition"]["triggers"]).to eq([ { "type" => "system", "event" => "start" }, { "type" => "time", "every" => "30m" }, { "type" => "event", "event" => "mobile_app_notification_action", "match" => { "action" => "OK" } },
                                                         { "type" => "webhook" } ])
 
       scripts = Blueprints::HaImport.import("boa_noite:\n  alias: Boa noite\n  sequence:\n    - service: light.turn_off\n      entity_id: light.sala\n")

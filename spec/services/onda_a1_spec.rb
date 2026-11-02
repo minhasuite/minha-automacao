@@ -158,4 +158,94 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect(Units.convert(4, "x", "y")).to eq(2)
     end
   end
+
+  describe "A5 gatilhos que faltavam" do
+    let(:dev) { create(:device, site: site) }
+    let!(:lamp) { create(:point, site: site, device: dev, name: "Luz", key: "sala.luz", value: false) }
+    let!(:temp) { create(:point, site: site, device: dev, name: "Temperatura", key: "sala.temp", capability: "measure", value: 20) }
+
+    def auto(triggers, conditions: [], actions: [ { "type" => "command", "point" => lamp.id, "command" => "toggle" } ])
+      a = site.automations.create!(name: "Teste #{SecureRandom.hex(3)}")
+      a.publish!({ "triggers" => triggers, "conditions" => conditions, "actions" => actions })
+      a.update!(enabled: true)
+      a
+    end
+
+    it "padrão de tempo: /5 nos minutos, hora fixa e segundos pelo job" do
+      a = auto([ { "type" => "time_pattern", "minutes" => "/5" } ])
+      Automations::Triggers.tick(Time.zone.parse("2026-11-02 10:07"))
+      expect(a.runs.count).to eq(0)
+      Automations::Triggers.tick(Time.zone.parse("2026-11-02 10:10"))
+      expect(a.runs.count).to eq(1)
+      b = auto([ { "type" => "time_pattern", "hours" => "8" } ])
+      Automations::Triggers.tick(Time.zone.parse("2026-11-02 08:01"))
+      expect(b.runs.count).to eq(0)
+      c = auto([ { "type" => "time_pattern", "seconds" => "/20" } ])
+      expect { Automations::Triggers.tick(Time.zone.parse("2026-11-02 08:01")) }.to have_enqueued_job(AutomationTickJob).exactly(2).times
+      expect(c.runs.count).to eq(1) # o segundo 0 no próprio tick
+      AutomationTickJob.perform_now(c.id, 0, "2026-11-02T08:01:20Z")
+      expect(c.runs.count).to eq(2)
+      expect(Automations::Dsl.errors({ "triggers" => [ { "type" => "time_pattern", "minutes" => "/0" } ], "actions" => [ { "type" => "stop" } ] }, site).join).to include("/N")
+    end
+
+    it "template: dispara na virada de falso para verdadeiro, não enquanto continua" do
+      a = auto([ { "type" => "template", "expr" => "sala.temp > 28" } ])
+      temp.report!(25)
+      expect(a.runs.count).to eq(0)
+      temp.report!(30)
+      expect(a.runs.count).to eq(1)
+      temp.report!(31)
+      expect(a.runs.count).to eq(1)
+      temp.report!(20)
+      temp.report!(29)
+      expect(a.runs.count).to eq(2)
+    end
+
+    it "MQTT com curinga e conteúdo; sistema iniciou/vai desligar; condição disparado por" do
+      a = auto([ { "type" => "mqtt", "topic" => "casa/+/botao", "payload" => "single", "id" => "botao" }, { "type" => "system", "event" => "shutdown", "id" => "fim" } ],
+               actions: [ { "type" => "if", "conditions" => [ { "type" => "trigger", "ids" => "botao" } ], "then" => [ { "type" => "command", "point" => lamp.id, "command" => "on" } ] } ])
+      expect(Automations::TriggerTypes::MqttTrigger.topics).to include("casa/+/botao")
+      Automations::TriggerTypes::MqttTrigger.receive("casa/sala/botao", "double")
+      expect(a.runs.count).to eq(0)
+      Automations::TriggerTypes::MqttTrigger.receive("casa/sala/botao", "single")
+      expect(a.runs.last.trigger).to include("topic" => "casa/sala/botao", "id" => "botao")
+      expect(lamp.reload.value).to be true
+      lamp.report!(false)
+      Automations::Triggers.system_stopping!
+      expect(a.runs.count).to eq(2)
+      expect(lamp.reload.value).to be false # o "se" só liga quando foi o botão
+      expect(Automations::TriggerTypes::MqttTrigger.matches?("casa/#", "casa/a/b")).to be true
+      expect(Automations::TriggerTypes::MqttTrigger.matches?("casa/+", "casa/a/b")).to be false
+    end
+
+    it "gatilho novo que vale enquanto algo é verdade entra só pelo registro (plugin falso)" do
+      plugin = Class.new(Automations::TriggerTypes::Base) do
+        describe key: "teste_ligada", label: "Teste: luz ligada"
+        texts en: { label: "Test: light on" }, es: { label: "Prueba: luz encendida" }
+        def self.reevaluate? = true
+        def self.true_now?(_t, ctx) = ctx.points["sala.luz"].value == true
+      end
+      stub_const("Automations::TriggerTypes::TesteLigada", plugin)
+      stub_const("Automations::TriggerTypes::PLUGINS", [ *Automations::TriggerTypes::PLUGINS, "TesteLigada" ])
+      a = auto([ { "type" => "teste_ligada" } ], actions: [ { "type" => "stop" } ])
+      temp.report!(1)
+      lamp.report!(true)
+      expect(a.runs.count).to eq(1)
+    end
+
+    it "importa do HA: time_pattern com segundos, template, mqtt e homeassistant shutdown" do
+      importer = Blueprints::HaImport.new("", nil, entities: true)
+      bp = importer.convert(Blueprints::HaImport.as_blueprint("automation", "X", YAML.safe_load(<<~YAML)))
+        triggers:
+          - { trigger: time_pattern, seconds: "/30" }
+          - { trigger: template, value_template: "{{ states('sensor.temp') | float > 28 }}" }
+          - { trigger: mqtt, topic: "zigbee2mqtt/botao", payload: "single" }
+          - { trigger: homeassistant, event: shutdown }
+        actions: [ { delay: 1 } ]
+      YAML
+      types = bp["definition"]["triggers"].map { |t| t["type"] }
+      expect(types).to eq(%w[time_pattern template mqtt system])
+      expect(bp["definition"]["triggers"][1]["expr"]).to include("> 28")
+    end
+  end
 end

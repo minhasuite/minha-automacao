@@ -12,7 +12,8 @@ module Automations
   module TriggerTypes
     extend Block::Registry
 
-    PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger NotificationActionTrigger EventTrigger ZoneTrigger PresenceTrigger AlarmTrigger DetectionTrigger].freeze
+    PLUGINS = %w[StateTrigger NumericTrigger TimeTrigger SunTrigger CalendarTrigger AlertTrigger ManualTrigger WebhookTrigger NotificationActionTrigger EventTrigger ZoneTrigger PresenceTrigger AlarmTrigger DetectionTrigger
+                 TimePatternTrigger TemplateTrigger MqttTrigger SystemTrigger].freeze
 
     # Id do gatilho (Lote 5, `id` do HA): a execução leva em `trigger.id`, e a
     # condição "trigger.id = 'x'" diz qual gatilho disparou.
@@ -31,6 +32,13 @@ module Automations
         def listens?(name) = event.present? && event == name
         def fires_on_event?(_t, _payload) = false
         def event_info(t, _payload) = { "type" => t["type"], "title" => title(t) }
+        # ondaA1 (A5): gatilho que vale enquanto algo é verdade (template):
+        # reavaliado a cada valor novo de ponto do local e a cada minuto;
+        # dispara na virada falso → verdadeiro (Triggers.reevaluate).
+        def reevaluate? = false
+        def true_now?(_t, _ctx) = false
+        # Relógio com segundos: em quais segundos do minuto dispara (0 = no tick).
+        def seconds(_t) = [ 0 ]
       end
     end
 

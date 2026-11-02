@@ -340,7 +340,9 @@ module Blueprints
       when "time_pattern" then time_pattern(t)
       when "webhook" then { "type" => "webhook" }
       when "event" then event_trigger(t)
-      when "homeassistant" then ({ "type" => "event", "event" => "system_started" } if t["event"] == "start")
+      when "homeassistant" then ({ "type" => "system", "event" => t["event"].to_s } if %w[start shutdown].include?(t["event"].to_s))
+      when "template" then (e = @jinja.expr(t["value_template"].to_s)) && { "type" => "template", "expr" => e }
+      when "mqtt" then { "type" => "mqtt", "topic" => t["topic"].to_s, "payload" => (t["payload"].to_s if t["payload"]) }.compact
       when "calendar" then calendar_trigger(t)
       when "device" then device_block(t)
       end
@@ -390,7 +392,8 @@ module Blueprints
       return { "type" => "time", "every" => "#{t['minutes'].to_s.delete_prefix('/')}m" } if t["minutes"].to_s.match?(%r{\A/\d+\z}) && t["hours"].blank?
       return { "type" => "time", "every" => "#{t['hours'].to_s.delete_prefix('/')}h" } if t["hours"].to_s.match?(%r{\A/\d+\z}) && t["minutes"].to_s.in?(%w[0 00])
 
-      nil
+      # ondaA1 (A5): o resto vira o "Padrão de tempo" (segundos inclusive).
+      { "type" => "time_pattern", "hours" => t["hours"]&.to_s, "minutes" => t["minutes"]&.to_s, "seconds" => t["seconds"]&.to_s }.compact
     end
 
     # Evento com nome (G6): os dados do filtro só os que são texto simples.

@@ -71,11 +71,12 @@ module Mqtt
       def topics
         wrap do
           list = Point.joins(:device).where(devices: { driver: "mqtt", disabled: false }).distinct.pluck(Arel.sql("points.address->>'topic'")).compact_blank
-          (list + discoverers.flat_map(&:topics)).uniq
+          (list + discoverers.flat_map(&:topics) + Automations::TriggerTypes::MqttTrigger.topics).uniq
         end
       end
 
       def handle(topic, payload)
+        wrap { Automations::TriggerTypes::MqttTrigger.receive(topic, payload) } # ondaA1 (A5): gatilho MQTT
         wrap do
           discovery = discoverers.find { |x| x.handles?(topic) }
           next discovery.handle(topic, payload) if discovery

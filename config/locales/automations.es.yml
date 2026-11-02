@@ -185,6 +185,7 @@ es:
         notification_action: "Respuesta de aviso"
         script_finished: "Script terminó"
         system_started: "Sistema iniciado"
+        system_stopping: "El sistema se apagará"
       alert_title: "Alerta %{name}: %{event}"
       input_types:
         point: "Punto"

@@ -11,6 +11,7 @@ module Automations
     # as primitivas da F4), mas as esperas por condição olham de novo.
     def on_change(point, value_was, fresh: true)
       fire_point_triggers(point, value_was) if fresh
+      reevaluate(point.site_id) if fresh
       AutomationRun.where(site_id: point.site_id, status: "waiting", dry_run: false)
                    .where("state->'wait'->>'kind' = 'wait_for'").find_each { |r| Automations.safely { Engine.resume(r) } }
     end
@@ -55,9 +56,49 @@ module Automations
       end
       list.each do |a|
         ActsAsTenant.with_tenant(a.tenant) do
-          a.definition["triggers"].each do |t|
-            Automations.safely { a.fire!(with_id(t, clock_info(t, now))) } if clock?(t, a.site, now)
+          a.definition["triggers"].each_with_index do |t, i|
+            next unless clock?(t, a.site, now)
+
+            secs = TriggerTypes[t["type"]].seconds(t)
+            Automations.safely { a.fire!(with_id(t, clock_info(t, now))) } if secs.include?(0)
+            (secs - [ 0 ]).each { |s| AutomationTickJob.set(wait_until: now.beginning_of_minute + s).perform_later(a.id, i, (now.beginning_of_minute + s).iso8601) }
           end
+        end
+      end
+      ActsAsTenant.without_tenant { Automation.where(enabled: true).where(reevaluating_sql).distinct.pluck(:site_id) }.each { |sid| reevaluate(sid, now) }
+    end
+
+    # Segundo dentro do minuto (AutomationTickJob): o gatilho ainda existe?
+    def fire_tick(automation, index, at)
+      t = automation.definition.dig("triggers", index) or return
+      automation.fire!(with_id(t, clock_info(t, Time.zone.parse(at)))) if automation.enabled && TriggerTypes[t["type"]]&.clock
+    end
+
+    def reevaluating_sql
+      types = TriggerTypes.plugins.select(&:reevaluate?).map(&:key)
+      return "false" if types.empty?
+
+      ActiveRecord::Base.sanitize_sql([ ([ "definition->'triggers' @> ?" ] * types.size).join(" OR "), *types.map { |k| [ { type: k } ].to_json } ])
+    end
+
+    # ondaA1 (A5): gatilhos que valem enquanto algo é verdade (template).
+    # Guarda o último resultado em `trigger_state` e dispara na virada.
+    def reevaluate(site_id, now = Time.current)
+      list = ActsAsTenant.without_tenant { Automation.where(site_id: site_id, enabled: true).where(reevaluating_sql).includes(:tenant, :site).to_a }
+      list.each do |a|
+        ActsAsTenant.with_tenant(a.tenant) do
+          ctx = Context.new(site: a.site)
+          state = a.trigger_state.to_h.dup
+          a.definition["triggers"].each_with_index do |t, i|
+            plugin = TriggerTypes[t["type"]]
+            next unless plugin&.reevaluate? && t["enabled"] != false
+
+            now_true = plugin.true_now?(t, ctx)
+            was = state[i.to_s]
+            state[i.to_s] = now_true
+            Automations.safely { a.fire!(with_id(t, clock_info(t, now))) } if now_true && was == false
+          end
+          a.update_column(:trigger_state, state) if state != a.trigger_state # rubocop:disable Rails/SkipsModelValidations
         end
       end
     end
@@ -76,7 +117,7 @@ module Automations
 
     # Eventos do sistema (Lote 4, G6): nome → rótulo. A ação "Disparar evento"
     # não pode usar estes nomes nem os dos plugins de gatilho.
-    SYSTEM_EVENTS = LocalizedLabel.for("automations.labels.system_events", %w[automation_finished notification_action script_finished system_started])
+    SYSTEM_EVENTS = LocalizedLabel.for("automations.labels.system_events", %w[automation_finished notification_action script_finished system_started system_stopping])
 
     EVENT_NAME = /\A[a-z0-9][a-z0-9_.:-]{0,59}\z/
 
@@ -111,9 +152,14 @@ module Automations
     # Lote 5 (G7, `homeassistant: start` do HA): o servidor subiu (o
     # supervisor do Solid Queue, uma vez por início). Cada local recebe o
     # evento "system_started".
-    def system_started!
+    def system_started! = system_event!("system_started")
+
+    # ondaA1 (A5, `homeassistant: shutdown`): o supervisor do Solid Queue vai parar.
+    def system_stopping! = system_event!("system_stopping")
+
+    def system_event!(name)
       ActsAsTenant.without_tenant { Site.includes(:tenant).to_a }.each do |site|
-        ActsAsTenant.with_tenant(site.tenant) { Automations.safely { event(site.id, "system_started", { "at" => Time.current.iso8601 }) } }
+        ActsAsTenant.with_tenant(site.tenant) { Automations.safely { event(site.id, name, { "at" => Time.current.iso8601 }) } }
       end
     end
 
