@@ -33,11 +33,69 @@ falha" da integração Sistema (para alertas e automações). O estado fica em
 | `BACKUP_S3_ACCESS_KEY_ID` / `BACKUP_S3_SECRET_ACCESS_KEY` | S3: chave com acesso só ao bucket |
 | `BACKUP_S3_REGION` | S3: região (padrão `auto`, o do R2) |
 | `BACKUP_DIR` | Pasta dos dumps (padrão `/backups`) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google Drive: o cliente OAuth (o mesmo da Google Agenda). O token **não** vai no `.env`: conecta-se pela tela |
 
-Sem `BACKUP_OFFSITE_URL` **e** `BACKUP_PASSPHRASE` a cópia fica desligada e a
-tela de saúde mostra "Não configurada".
+Sem destino (`BACKUP_OFFSITE_URL` ou Google Drive conectado) **e**
+`BACKUP_PASSPHRASE` a cópia fica desligada e a tela de saúde mostra "Não
+configurada". Com o Google Drive conectado, ele é o destino (vence o
+`BACKUP_OFFSITE_URL`); desconectado, volta o do `.env`.
 
 ## Ligar (coordenador)
+
+### Destino no Google Drive (conta Gmail pessoal)
+
+O app usa o escopo `https://www.googleapis.com/auth/drive.file`: só enxerga
+os arquivos que ele mesmo cria (não lê o resto do Drive). Por ser um escopo
+**não sensível**, o app OAuth pode ser publicado sem a verificação do Google.
+As cópias ficam na pasta **"Minha Automação – Backups"** (criada na primeira
+cópia), a retenção apaga as antigas dessa pasta e o teste de restauração
+baixa a mais nova de lá.
+
+1. Em <https://console.cloud.google.com/> crie (ou escolha) um projeto, por
+   exemplo `minha-automacao`. Se a Google Agenda já usa um cliente OAuth,
+   use o mesmo projeto e o mesmo cliente.
+2. **APIs e serviços → Biblioteca**: ative a **Google Drive API**.
+3. **Google Auth Platform → Público-alvo** (antiga "Tela de consentimento
+   OAuth"): tipo **Externo**, nome do app, e-mail de suporte e do
+   desenvolvedor. Em **Status da publicação**, clique em **Publicar app**
+   (**Em produção**). Em "Teste" o refresh token expira em 7 dias e o backup
+   para sozinho. Com só escopos não sensíveis, publicar não pede verificação.
+4. **Acesso a dados** (escopos): adicione
+   `https://www.googleapis.com/auth/drive.file` (e
+   `.../auth/calendar.readonly`, se usar a agenda).
+5. **Clientes → Criar cliente**: tipo **Aplicativo da Web**. Em **URIs de
+   redirecionamento autorizados**, exatamente:
+
+   ```
+   https://casa-automacao.minhasuite.com/integracoes/oauth/retorno
+   ```
+
+   (é o mesmo retorno da Google Agenda; em outro servidor, troque o host).
+6. Copie o ID e a chave secreta do cliente para o `.env` do servidor:
+
+   ```
+   GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=...
+   BACKUP_PASSPHRASE=<openssl rand -base64 48>
+   ```
+
+   e rode `bin/deploy-local`.
+7. Entre no app como **dono** da instalação da casa (a primeira do
+   servidor: a cópia é do banco inteiro) e vá em **Configurações → Saúde**.
+   No quadro **Backup no Google Drive**, clique em **Conectar Google Drive**,
+   escolha a conta e permita. O app pede `access_type=offline` e
+   `prompt=consent`, então o Google manda o refresh token. Ele fica cifrado
+   (Active Record Encryption, as mesmas chaves `AR_ENCRYPTION_*` das
+   credenciais das integrações) em `storage/backup-gdrive.json`, ao lado do
+   estado do backup.
+8. O quadro mostra a conta, a última cópia e quanto as cópias ocupam no
+   Drive. **Desconectar** apaga o token daqui e o revoga no Google (as cópias
+   que já estão no Drive ficam lá).
+
+Se o Google não mandar o refresh token (a conta já tinha autorizado antes),
+tire o acesso do app em <https://myaccount.google.com/permissions> e conecte
+de novo. Se o token for revogado ou expirar, a cópia falha, a tela de saúde
+mostra o erro e é só conectar de novo.
 
 ### Destino na VPS por SSH
 
@@ -86,6 +144,9 @@ docker compose exec worker bin/rails runner 'Backups.restore_test!; puts Backups
 
 ## Restaurar de verdade (sem o app)
 
+Do Google Drive, baixe o `.enc` mais novo da pasta "Minha Automação –
+Backups" pelo navegador e siga abaixo.
+
 A cópia é o formato do `openssl enc`, então abre em qualquer máquina com
 OpenSSL 1.1.1+:
 
@@ -114,6 +175,10 @@ Classe em `app/services/backups/destinations.rb` (ou arquivo próprio) com
 local) por `stub_const` e mostra o contrato.
 
 ## Riscos conhecidos
+
+- Google Drive: o envio é resumable num PUT só (sem retomar no meio); se a
+  conexão cair, a cópia é refeita na hora seguinte. A listagem lê uma página
+  (1000 arquivos) da pasta, folgada para a retenção.
 
 - O `psql` da imagem (Debian) é mais velho que o servidor 18; o teste de
   restauração tira as linhas `\restrict`/`\unrestrict` do dump (meta-comandos

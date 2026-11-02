@@ -45,9 +45,11 @@ module Web
       follow(@plugin.login(@integration, form))
     end
 
-    # Volta do login externo (OAuth): o `state` assinado diz a integração.
+    # Volta do login externo (OAuth): o `state` assinado diz a integração (ou o Drive do backup).
     def oauth_callback
       id = Integrations.from_oauth_state(params[:state]) or return redirect_to(root_path, alert: "Login expirado: comece de novo.")
+      return backup_drive_callback(id) if id.to_s.start_with?("backup_drive:")
+
       params[:id] = id
       load_for(:manage)
       return follow(@plugin.outcome(:connect, integration: @integration, alert: "Login cancelado.")) if params[:error].present?
@@ -111,6 +113,18 @@ module Web
     end
 
     def form = params.fetch(:integration, {})
+
+    # Google Drive do backup (Configurações → Saúde): só quem pediu e pode ligar.
+    def backup_drive_callback(state)
+      drive = Backups::Destinations::GoogleDrive
+      raise ActiveRecord::RecordNotFound unless state == drive.state_for(current_user) && drive.manageable_by?(current_user)
+      return redirect_to(settings_health_path, alert: "Conexão com o Google Drive cancelada.") if params[:error].present?
+
+      drive.connect!(params[:code], integrations_oauth_callback_url)
+      redirect_to settings_health_path, notice: "Google Drive conectado: as próximas cópias vão para lá."
+    rescue Integrations::Error, Backups::Error, SafeHttp::Error => e
+      redirect_to settings_health_path, alert: "Google Drive: #{e.message}"
+    end
 
     # Pacote 1: só lista o que se anuncia na rede (mDNS); nada é cadastrado.
     def discover

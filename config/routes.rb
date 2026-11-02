@@ -191,6 +191,8 @@ Rails.application.routes.draw do
     get "configuracoes/paineis", to: "settings#dashboards", as: :settings_dashboards
     # Saúde do sistema (registro Health::CHECKS) e o que falta para a troca (Cutover).
     get "configuracoes/saude", to: "health#show", as: :settings_health
+    # Backup no Google Drive: conectar volta por integrations#oauth_callback.
+    delete "configuracoes/saude/google-drive", to: "health#disconnect_drive", as: :settings_health_drive
     # IA da instalação (Lote 2): provedores (chave cifrada), teste, padrão, limite e uso.
     get "configuracoes/ia", to: "ai_settings#show", as: :settings_ai
     patch "configuracoes/ia", to: "ai_settings#update"

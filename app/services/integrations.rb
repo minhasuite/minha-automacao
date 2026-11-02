@@ -34,8 +34,12 @@ module Integrations
   # A cada minuto (RunSchedulesJob): plugin que precisa do relógio (agenda).
   def tick(now = Time.current) = plugins.each { |p| p.tick(now) }
 
-  # `state` do OAuth de um plugin (F9): id da integração assinado, 15 min.
-  def oauth_state(integration) = Rails.application.message_verifier(:integration_oauth).generate(integration.id, expires_in: 15.minutes)
+  # `state` do OAuth (F9), assinado, 15 min: id da integração ou um texto de
+  # outro dono do retorno (ex.: "backup_drive:<usuário>", o Drive do backup).
+  def oauth_state(target)
+    payload = target.is_a?(Integration) ? target.id : target
+    Rails.application.message_verifier(:integration_oauth).generate(payload, expires_in: 15.minutes)
+  end
   def from_oauth_state(state) = Rails.application.message_verifier(:integration_oauth).verified(state.to_s)
 
   def plugins = PLUGINS.map { |name| const_get(name) }

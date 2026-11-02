@@ -9,6 +9,31 @@
   <span class="ss-badge ss-badge-<%= Health::TONES[@status] %>"><%= overall %></span>
 </section>
 
+<% if @drive %>
+  <% at = @drive[:status]["uploaded_at"].presence && Time.zone.parse(@drive[:status]["uploaded_at"]) %>
+  <section class="ss-card ss-card-pad mt-4 flex flex-wrap items-center justify-between gap-3" aria-labelledby="drive-t" data-health="google-drive">
+    <div class="min-w-0">
+      <h2 id="drive-t" class="flex items-center gap-2 font-bold"><%= icon("download", "size-5 text-accent") %>Backup no Google Drive</h2>
+      <% if @drive[:connected] %>
+        <p class="text-sm text-ink mt-1 break-words">Conectado<%= " como #{@drive[:email]}" if @drive[:email] %>. As cópias cifradas vão para a pasta “<%= Backups::Destinations::GoogleDrive::FOLDER %>”.</p>
+        <p class="text-sm text-muted break-words">
+          <%= at ? "Última cópia: #{l(at, format: :short)}" : "Nenhuma cópia ainda (sai na próxima hora cheia)" %>
+          <% if (used = @drive[:status]["destination"].to_s[/\AGoogle Drive: .* · (.+)\z/, 1]) %> · No Drive: <%= used %><% end %>
+        </p>
+        <% unless Backups.passphrase %><p class="text-sm text-warn mt-1">Falta a senha da cifra (BACKUP_PASSPHRASE) no servidor: sem ela nada é enviado.</p><% end %>
+      <% else %>
+        <p class="text-sm text-muted mt-1">Guarde a cópia diária fora de casa no seu Google Drive. O app só enxerga os arquivos que ele mesmo cria.</p>
+      <% end %>
+    </div>
+    <% if @drive[:connected] %>
+      <%= button_to settings_health_drive_path, method: :delete, class: "ss-btn ss-btn-ghost",
+                    form: { data: { turbo_confirm: "Desconectar o Google Drive? As cópias que já estão lá continuam lá.", turbo_confirm_button: "Desconectar" } } do %>Desconectar<% end %>
+    <% else %>
+      <%= link_to "Conectar Google Drive", @drive[:auth_url], class: "ss-btn ss-btn-primary", data: { turbo: false } %>
+    <% end %>
+  </section>
+<% end %>
+
 <div class="mt-4 grid gap-4 xl:grid-cols-2">
   <% @results.each do |r| %>
     <section class="ss-card ss-card-pad min-w-0" aria-labelledby="hc-<%= r.check.key %>" data-health="<%= r.check.key %>">

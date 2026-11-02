@@ -15,8 +15,10 @@ module Calendars
     def client_secret = ENV["GOOGLE_CLIENT_SECRET"].presence
     def configured? = client_id.present? && client_secret.present?
 
-    def auth_url(redirect_uri, state)
-      query = { client_id: client_id, redirect_uri: redirect_uri, response_type: "code", scope: SCOPE,
+    # Também serve ao backup no Drive (outro escopo). `access_token` aceita
+    # qualquer dono de `secrets`/`merge_secrets!`, não só a integração.
+    def auth_url(redirect_uri, state, scope: SCOPE)
+      query = { client_id: client_id, redirect_uri: redirect_uri, response_type: "code", scope: scope,
                 access_type: "offline", prompt: "consent", state: state }
       "#{AUTH}?#{URI.encode_www_form(query)}"
     end
