@@ -76,7 +76,7 @@
   .hx-plot { position: relative; height: 15rem; border-radius: .9rem; background: var(--field); overflow: hidden; touch-action: pan-y; cursor: crosshair; user-select: none; }
   .hx-svg { display: block; width: 100%; height: 100%; }
   .hx-grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 4; }
-  .hx-x { grid-column: 2; display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); }
+  .hx-axis { grid-column: 2; display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); }
   .hx-cursor { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink-2); opacity: .45; pointer-events: none; }
   .hx-brush { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--accent) 18%, transparent); border-inline: 1px solid var(--accent); pointer-events: none; }
   .hx-tip { position: absolute; top: .6rem; min-width: 11rem; max-width: 18rem; padding: .55rem .7rem; border-radius: .75rem; background: var(--surface);
@@ -91,7 +91,7 @@
   .hx-tl-bar { height: 1.6rem; border-radius: .5rem; background: var(--field); overflow: hidden; display: flex; align-items: center; }
   .hx-tl-bar > span { padding-left: .6rem; }
   .hx-tl-now { margin: 0; font-size: .78rem; color: var(--muted); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .hx-tl-row .hx-x { grid-column: auto; }
+  .hx-tl-row .hx-axis { grid-column: auto; }
   .hx-band-svg { display: block; width: 100%; height: 100%; }
   .hx-band-svg rect { transition: opacity .15s; }
   .hx-band-svg rect:hover { opacity: .8; }
@@ -119,8 +119,9 @@
   .ef-c-battery { stroke: var(--s2); color: var(--s2); }
   @keyframes ef-flow { to { stroke-dashoffset: -24; } }
   .ef-node { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: .05rem; text-align: center; width: 6.5rem; }
-  .ef-node strong { font-size: .85rem; color: var(--ink); line-height: 1.15; }
-  .ef-node small { font-size: .68rem; color: var(--muted); line-height: 1.1; }
+  .ef-node strong, .ef-node small { padding: 0 .35rem; border-radius: .4rem; background: var(--surface); }
+  .ef-node strong { font-size: .85rem; color: var(--ink); line-height: 1.2; }
+  .ef-node small { font-size: .68rem; color: var(--muted); line-height: 1.2; }
   .ef-ring { display: grid; place-items: center; width: 2.9rem; height: 2.9rem; margin-bottom: .15rem; border-radius: 999px; background: var(--surface);
              border: 2.5px solid currentColor; box-shadow: 0 6px 18px -8px currentColor; }
   .ef-solar { left: 50%; top: 15.8%; color: var(--amber); }

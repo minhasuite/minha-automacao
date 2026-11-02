@@ -44,7 +44,7 @@
   <div class="flex flex-wrap items-center gap-2">
     <h2 id="hx-points-title" class="mr-2">Pontos</h2>
     <% @selected.each_with_index do |p, i| %>
-      <span class="hx-pill"><span class="hx-dot" style="background: <%= hx_color(i) %>"></span><%= p.name %>
+      <span class="hx-pill"><span class="hx-dot" style="background: <%= hx_color(i) %>"></span><%= Logbook.point_title(p) %>
         <%= link_to history_path(site_id: @site.id, point_ids: ids - [ p.id ], from: @from.iso8601, to: @to.iso8601), class: "hx-x", title: "Tirar #{p.name}", "aria-label": "Tirar #{p.name}" do %><%= icon("x", "size-3.5") %><% end %></span>
     <% end %>
     <% if @selected.empty? %><span class="text-sm text-muted">Nenhum escolhido ainda.</span><% end %>
@@ -96,7 +96,7 @@
             <span class="hx-brush" data-history-chart-target="brush" hidden></span>
             <div class="hx-tip" data-history-chart-target="tip" hidden></div>
           </div>
-          <div class="hx-x num"><% ticks.each do |t| %><span><%= t %></span><% end %></div>
+          <div class="hx-axis num"><% ticks.each do |t| %><span><%= t %></span><% end %></div>
         </div>
         <p class="text-xs text-muted mt-2 max-sm:hidden">Arraste no gráfico para aproximar o trecho.</p>
       <% else %>
@@ -104,7 +104,7 @@
       <% end %>
       <ul class="dw-legend mt-3">
         <% series.each do |s| %>
-          <li><span class="hx-dot" style="background: <%= hx_color(index[s.point.id]) %>"></span><%= link_to s.point.name, point_path(s.point), class: "truncate no-underline text-ink-2 hover:text-accent" %><strong class="num text-ink ml-auto shrink-0"><%= point_value_text(s.point) %></strong></li>
+          <li><span class="hx-dot" style="background: <%= hx_color(index[s.point.id]) %>"></span><%= link_to Logbook.point_title(s.point), point_path(s.point), class: "truncate no-underline text-ink-2 hover:text-accent" %><strong class="num text-ink ml-auto shrink-0"><%= point_value_text(s.point) %></strong></li>
         <% end %>
       </ul>
     </section>
@@ -115,12 +115,12 @@
       <div class="hx-tl">
         <% @overlay.timelines.each do |s| %>
           <div class="hx-tl-row">
-            <p class="hx-tl-name"><span class="hx-dot" style="background: <%= hx_color(index[s.point.id]) %>"></span><span class="truncate"><%= s.point.name %></span></p>
+            <p class="hx-tl-name"><span class="hx-dot" style="background: <%= hx_color(index[s.point.id]) %>"></span><span class="truncate"><%= Logbook.point_title(s.point) %></span></p>
             <div class="hx-tl-bar"><%= s.rows.any? ? hx_bands(s, @from, @to) : tag.span("Sem leituras", class: "text-xs text-muted") %></div>
             <p class="hx-tl-now num"><%= point_value_text(s.point) %></p>
           </div>
         <% end %>
-        <div class="hx-tl-row" aria-hidden="true"><span></span><div class="hx-x num"><% ticks.each do |t| %><span><%= t %></span><% end %></div><span></span></div>
+        <div class="hx-tl-row" aria-hidden="true"><span></span><div class="hx-axis num"><% ticks.each do |t| %><span><%= t %></span><% end %></div><span></span></div>
       </div>
     </section>
   <% end %>

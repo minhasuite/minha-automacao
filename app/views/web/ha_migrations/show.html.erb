@@ -63,7 +63,7 @@
       <% list = p[key] %>
       <% next if list.empty? %>
       <details class="ss-card mg-group" open>
-        <summary><span class="font-bold text-ink"><%= title %></span><span class="ss-chip-count"><%= list.size %></span><span class="text-xs text-muted ml-auto">todas marcadas</span></summary>
+        <summary><span class="font-bold text-ink"><%= title %></span><span class="ss-chip-count"><%= list.size %></span></summary>
         <div class="mg-items">
           <% list.each do |it| %>
             <label class="hx-opt"><%= check_box_tag "#{key}[]", it["id"], true, id: "mg-#{key}-#{it['id'].parameterize}" %>

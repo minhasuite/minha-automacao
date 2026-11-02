@@ -54,7 +54,7 @@ RSpec.describe "Diário e Histórico" do
     get "/diario", params: { sources: %w[runs] }
     expect(response.body).to include("Teste chegada").and(exclude("Teste cinema"))
     get "/diario", params: { q: "cinema" }
-    expect(response.body).to include("Teste cinema").and(exclude(">Luz do teto</a>"))
+    expect(response.body).to include("Teste cinema").and(exclude("Interruptor da sala</a>"))
   end
 
   it "pagina por cursor num turbo-frame preguiçoso" do

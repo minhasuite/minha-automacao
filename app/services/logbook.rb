@@ -46,6 +46,16 @@ module Logbook
     reading.value_text
   end
 
+  # Nome do ponto na linha: com o aparelho quando o ponto sozinho não diz
+  # qual é ("Luz da sala", "Medidor geral · Potência"), como nas telas.
+  def point_title(p)
+    title, context = p.display_names
+    dev = p.device&.name.to_s
+    return dev if context.nil? && p.helper.blank? && dev.size > title.to_s.size && Point.covered?(title.to_s, dev)
+
+    [ title, context ].compact.join(" · ")
+  end
+
   def text(point, value) = ApplicationController.helpers.point_value_label(point, value)
 
   # Pessoas com acesso ao local (membros e administradores da instalação).
@@ -134,13 +144,13 @@ module Logbook
       def self.fetch(f)
         return [] if f.user_id
 
-        points = f.points.where.not(data_type: %w[integer decimal]).where.not(capability: %w[stream calendar]).index_by(&:id)
+        points = f.points.where.not(data_type: %w[integer decimal]).where.not(capability: %w[stream calendar]).includes(:device).index_by(&:id)
         return [] if points.empty?
 
         Reading.where(point_id: points.keys, at: f.window).order(at: :desc).limit(f.limit).map do |r|
           p = points[r.point_id]
           v = Logbook.value_of(p, r)
-          item(at: r.at, title: p.name, state: Logbook.text(p, v), tone: v == true ? "success" : "muted", point_id: p.id, ref: { type: "point", id: p.id })
+          item(at: r.at, title: Logbook.point_title(p), state: Logbook.text(p, v), tone: v == true ? "success" : "muted", point_id: p.id, ref: { type: "point", id: p.id })
         end
       end
     end
@@ -151,13 +161,13 @@ module Logbook
       TONES = { "confirmed" => "success", "failed" => "danger", "expired" => "warn" }.freeze
 
       def self.fetch(f)
-        scope = Command.where(site_id: f.site.id, created_at: f.window).includes(:point, :user).order(created_at: :desc).limit(f.limit)
+        scope = Command.where(site_id: f.site.id, created_at: f.window).includes(:user, point: :device).order(created_at: :desc).limit(f.limit)
         scope = scope.where(point_id: f.points.select(:id)) if f.narrowed?
         scope = scope.where(user_id: f.user_id) if f.user_id
         scope.map do |c|
           action = Points::Timeline::COMMAND_LABELS.fetch(c.command, c.command)
           action = "#{action} #{c.value}" if c.value.present? && !c.value.is_a?(Hash)
-          item(at: c.created_at, title: c.point.name, state: action, user: c.user&.name, tone: TONES.fetch(c.status, "muted"),
+          item(at: c.created_at, title: Logbook.point_title(c.point), state: action, user: c.user&.name, tone: TONES.fetch(c.status, "muted"),
                detail: [ "pelo #{c.source_label}", c.status_label.downcase, c.error ].compact.join(" · "), point_id: c.point_id,
                ref: { type: "point", id: c.point_id })
         end
@@ -206,7 +216,7 @@ module Logbook
       describe key: "alerts", label: "Alertas", icon: "exclamation-circle"
 
       def self.fetch(f)
-        base = Alert.where(site_id: f.site.id).includes(:point, :alert_rule, :acked_by)
+        base = Alert.where(site_id: f.site.id).includes(:alert_rule, :acked_by, point: :device)
         base = base.where(point_id: f.points.select(:id)) if f.narrowed?
         list = []
         unless f.user_id
@@ -219,7 +229,7 @@ module Logbook
       end
 
       def self.row(a, at, state, tone, user = nil)
-        item(at: at, title: a.alert_rule.name, state: state, tone: tone, user: user, detail: a.point.name, point_id: a.point_id, ref: { type: "point", id: a.point_id })
+        item(at: at, title: a.alert_rule.name, state: state, tone: tone, user: user, detail: Logbook.point_title(a.point), point_id: a.point_id, ref: { type: "point", id: a.point_id })
       end
     end
 
@@ -230,11 +240,11 @@ module Logbook
       def self.fetch(f)
         return [] if f.user_id
 
-        scope = Event.where(site_id: f.site.id, kind: "quality", at: f.window).includes(:point).order(at: :desc).limit(f.limit)
+        scope = Event.where(site_id: f.site.id, kind: "quality", at: f.window).includes(point: :device).order(at: :desc).limit(f.limit)
         scope = scope.where(point_id: f.points.select(:id)) if f.narrowed?
         scope.select(&:point).map do |e|
           to = e.payload["to"]
-          item(at: e.at, title: e.point.name, state: Points::Timeline::QUALITY_LABELS.fetch(to, to), tone: to == "good" ? "success" : "warn",
+          item(at: e.at, title: Logbook.point_title(e.point), state: Points::Timeline::QUALITY_LABELS.fetch(to, to), tone: to == "good" ? "success" : "warn",
                detail: "antes: #{Points::Timeline::QUALITY_LABELS.fetch(e.payload['from'], e.payload['from']).downcase}", point_id: e.point_id,
                ref: { type: "point", id: e.point_id })
         end
@@ -247,6 +257,7 @@ module Logbook
       TYPES = { "Point" => "Ponto", "Device" => "Dispositivo", "Area" => "Área", "Automation" => "Automação", "Scene" => "Cena",
                 "Dashboard" => "Painel", "Schedule" => "Agenda", "NotifyRule" => "Aviso", "AlertRule" => "Regra de alerta",
                 "PointLink" => "Espelhamento", "Integration" => "Integração", "SiteMembership" => "Acesso", "Blueprint" => "Blueprint" }.freeze
+      HIDDEN = %w[version draft definition updated_at created_at].freeze
       ACTIONS = { "create" => "Criado", "update" => "Alterado", "destroy" => "Excluído" }.freeze
 
       def self.fetch(f)
@@ -264,7 +275,7 @@ module Logbook
         events.map do |e|
           kind = TYPES.fetch(e.auditable_type, "Local")
           item(at: e.created_at, title: names[e.auditable_id] || e.details["name"] || kind, state: ACTIONS.fetch(e.action, e.action),
-               user: users[e.user_id]&.name, detail: [ kind, e.details.keys.first(4).join(", ").presence ].compact.join(" · "),
+               user: users[e.user_id]&.name, detail: [ kind, (e.details.keys - HIDDEN).first(4).map { |k| e.auditable_type.safe_constantize&.human_attribute_name(k)&.downcase || k }.join(", ").presence ].compact.join(" · "),
                point_id: (e.auditable_id if e.auditable_type == "Point"), ref: (e.auditable_type == "Point" && e.action != "destroy" ? { type: "point", id: e.auditable_id } : nil))
         end
       end
@@ -282,7 +293,7 @@ module Logbook
         users = users.where(id: f.user_id) if f.user_id
         names = users.pluck(:id, :name).to_h
         AuditEvent.where(action: "login", user_id: names.keys, created_at: f.window).order(created_at: :desc).limit(f.limit).map do |e|
-          item(at: e.created_at, title: names[e.user_id].to_s, state: "Entrou", detail: VIA[e.details["via"]], user: names[e.user_id])
+          item(at: e.created_at, title: names[e.user_id].to_s, state: "Entrou", detail: VIA[e.details["via"]])
         end
       end
     end
