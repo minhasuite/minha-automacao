@@ -225,6 +225,8 @@ Rails.application.routes.draw do
     get "configuracoes/plano", to: "licenses#show", as: :settings_plan
     # Saúde do sistema (registro Health::CHECKS) e o que falta para a troca (Cutover).
     get "configuracoes/saude", to: "health#show", as: :settings_health
+    get "configuracoes/hardware", to: "hardware#show", as: :settings_hardware
+    post "configuracoes/hardware/:acao", to: "hardware#power", as: :settings_hardware_power
     # Backup no Google Drive: conectar volta por integrations#oauth_callback.
     delete "configuracoes/saude/google-drive", to: "health#disconnect_drive", as: :settings_health_drive
     # IA da instalação (Lote 2): provedores (chave cifrada), teste, padrão, limite e uso.

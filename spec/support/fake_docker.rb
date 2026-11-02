@@ -26,7 +26,9 @@ class FakeDocker
 
   def inspect(id) = @containers_by_id.fetch(id)
   def pull(ref) = @pulled << ref
-  def logs(_id, lines) = "linha 1\nlinha 2 (#{lines})"
+  attr_writer :probe_out
+
+  def logs(_id, lines, timestamps: true) = @probe_out && !timestamps ? @probe_out : "linha 1\nlinha 2 (#{lines})"
   def memory_mb(_id) = 42.5
 
   def call(method, path, body: nil, query: {}, timeout: 30) # rubocop:disable Lint/UnusedMethodArgument

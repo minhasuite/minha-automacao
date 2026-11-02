@@ -62,8 +62,8 @@ module Supervisor
       raise Error, err if err
     end
 
-    def logs(id, lines)
-      _, body = call(:get, "/containers/#{id}/logs", query: { stdout: 1, stderr: 1, timestamps: 1, tail: lines })
+    def logs(id, lines, timestamps: true)
+      _, body = call(:get, "/containers/#{id}/logs", query: { stdout: 1, stderr: 1, timestamps: timestamps ? 1 : 0, tail: lines })
       demux(body.to_s.b).force_encoding("UTF-8").scrub
     end
 
@@ -153,8 +153,55 @@ module Supervisor
       when "GET /system/remote" then json(200, data: remote_status)
       when "POST /system/remote" then remote_on(body["provider"].to_s, body["token"].to_s)
       when "DELETE /system/remote" then remote_off
+      when "GET /system/host" then json(200, data: host_probe)
+      when "POST /system/host/reboot" then host_power("reboot")
+      when "POST /system/host/shutdown" then host_power("poweroff")
+      when "GET /system/logs" then json(200, data: { lines: service_logs(req.params["service"].to_s, req.params["lines"]) })
       else json(404, error: "Não encontrado.")
       end
+    end
+
+    # ---- ondaA2: host (hardware, rede, USB), desligar/reiniciar e logs do servidor ----
+    PROBE_LABEL = "minha-automacao.probe".freeze
+    LOG_SERVICES = %w[web worker supervisor].freeze
+
+    def compose_service(name) = @docker.containers([ "com.docker.compose.project=#{@project}", "com.docker.compose.service=#{name}" ]).first
+
+    def own_image
+      me = compose_service("supervisor") or raise(Error, "Supervisor fora do compose.")
+      @docker.inspect(me["Id"]).dig("Config", "Image")
+    end
+
+    # Container de uma vez com a imagem do produto: cria, roda, espera, lê a saída e apaga.
+    def run_once(cmd, host_config, timeout: 60)
+      _, created = @docker.call(:post, "/containers/create", query: { name: "minha-automacao-probe-#{Time.now.to_i}-#{rand(1000)}" },
+                                                             body: { "Image" => own_image, "Cmd" => cmd, "Labels" => { PROBE_LABEL => "1" }, "HostConfig" => host_config })
+      id = created["Id"]
+      @docker.call(:post, "/containers/#{id}/start")
+      @docker.call(:post, "/containers/#{id}/wait", timeout: timeout)
+      @docker.logs(id, 1000, timestamps: false)
+    ensure
+      @docker.call(:delete, "/containers/#{id}", query: { force: 1 }) if id
+    end
+
+    # Só leitura: rede do host e /dev, /sys e /etc do host montados em /host.
+    def host_probe
+      out = run_once(%w[ruby supervisor/host_probe.rb], { "NetworkMode" => "host", "Binds" => %w[/dev:/host/dev:ro /sys:/host/sys:ro /etc:/host/etc:ro /usr/lib/os-release:/host/usr/lib/os-release:ro] })
+      JSON.parse(out[/\{.*\}/m] || raise(Error, "Sonda do host sem resposta."))
+    end
+
+    # Reiniciar/desligar a máquina: nsenter no PID 1 do host (container privilegiado de uma vez).
+    def host_power(action)
+      Supervisor.log("host #{action}")
+      run_once([ "nsenter", "-t", "1", "-m", "-u", "-i", "-n", "-p", "--", "systemctl", action ], { "Privileged" => true, "PidMode" => "host" }, timeout: 30)
+      json(202, data: { action: action })
+    end
+
+    def service_logs(service, lines)
+      raise Error, "Serviço desconhecido." unless LOG_SERVICES.include?(service)
+
+      c = compose_service(service) or raise(Error, "Serviço fora do ar.")
+      @docker.logs(c["Id"], lines.to_i.clamp(10, 5000))
     end
 
     # Pasta do compose no servidor (label do próprio supervisor): o atualizador monta a mesma.
