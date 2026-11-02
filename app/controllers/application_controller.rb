@@ -44,6 +44,7 @@ class ApplicationController < ActionController::Base
     session[:user_id] = user.id
     session[:pwd] = user.password_digest.to_s.last(10)
     Current.user = user
+    AuditEvent.login!(user, "web")
   end
 
   def require_login!

@@ -48,6 +48,8 @@ class Scene < ApplicationRecord
   # comandos criados e os erros ("Ponto: motivo").
   # Em sombra (F10): cada comando fica registrado e nenhum sai.
   def activate!(source:, user: Current.user)
+    Event.create!(tenant_id: tenant_id, site_id: site_id, kind: "scene", source: source, at: Time.current,
+                  payload: { scene_id: id, name: name, user_id: user&.id, shadow: Shadow.active?(self) })
     return Shadow.within(site_id: site_id, scene: self) { send_items(source, user) } if Shadow.active?(self)
 
     send_items(source, user)

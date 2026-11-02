@@ -191,6 +191,10 @@ Rails.application.routes.draw do
     post "perguntar", to: "ask#create"
     # Assistente de voz (Pacote 3): áudio ou texto → intenção local ou "Perguntar à casa".
     post "assistente", to: "assist#create", as: :assist
+    # Paridade com o HA (roadmap de vendas): Diário, Histórico e Mapa da instalação (um local por vez).
+    get "diario", to: "logbook#show", as: :logbook
+    get "historico", to: "history#show", as: :history
+    get "mapa", to: "maps#show", as: :map
     # Meus aparelhos (Lote 1): navegadores inscritos no Web Push.
     resources :push_subscriptions, path: "configuracoes/aparelhos", only: %i[index create destroy] do
       post :test, on: :collection, path: "teste"
@@ -271,6 +275,10 @@ Rails.application.routes.draw do
       # Pacote 3: pessoas, voz, pacotes e ferramentas de desenvolvedor.
       get "sites/:site_id/people", to: "people#index"
       get "sites/:site_id/points", to: "points#site_index" # app2: widgets, atalhos e controles do Android
+      # Diário, Histórico de vários pontos e Mapa (paridade com o HA).
+      get "sites/:site_id/logbook", to: "logbook#index"
+      get "sites/:site_id/history", to: "history#index"
+      get "sites/:site_id/map", to: "maps#index"
       post "sites/:site_id/assist", to: "assist#create"
       get "sites/:site_id/packages", to: "packages#index"
       post "sites/:site_id/packages/preview", to: "packages#preview"

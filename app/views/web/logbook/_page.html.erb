@@ -1,0 +1,40 @@
+<%# locals: (items:, next_cursor:, filter:, zone:, day:, frame:) -%>
+<% frame_id = ->(cursor) { "lb-#{cursor.to_s.delete('^0-9')}" } %>
+<% body = capture do %>
+  <% items.each do |i| %>
+    <% at = i.at.in_time_zone(zone) %>
+    <% if at.to_date.iso8601 != day %>
+      <% day = at.to_date.iso8601 %>
+      <h2 class="lb-day"><%= at.to_date == Date.current ? "Hoje" : (at.to_date == Date.yesterday ? "Ontem" : l(at.to_date, format: "%A, %d de %B").capitalize) %></h2>
+    <% end %>
+    <% href = case i.ref&.dig(:type)
+              when "point" then point_path(i.ref[:id])
+              when "automation_run" then automation_run_path(i.ref[:id])
+              when "scene" then edit_scene_path(i.ref[:id]) if can?(:manage)
+              end %>
+    <article class="lb-item lb-<%= i.tone %>">
+      <time class="lb-time num" datetime="<%= i.at.iso8601 %>"><%= at.strftime("%H:%M") %></time>
+      <span class="lb-ico" title="<%= Logbook.source(i.source)&.label %>"><%= icon(i.icon, "size-4") %></span>
+      <div class="min-w-0 flex-1">
+        <p class="lb-title">
+          <% if href %><%= link_to i.title, href, class: "lb-link", data: { turbo_frame: "_top" } %><% else %><span><%= i.title %></span><% end %>
+          <% if i.state.present? %><span class="lb-state"><%= i.state %></span><% end %>
+        </p>
+        <% meta = [ i.detail, (i.user && "por #{i.user}") ].compact_blank %>
+        <% if meta.any? %><p class="lb-meta"><%= meta.join(" · ") %></p><% end %>
+      </div>
+    </article>
+  <% end %>
+  <% if next_cursor %>
+    <%= turbo_frame_tag frame_id.(next_cursor), src: logbook_path(filter.to_params(next_cursor).merge(site_id: filter.site.id, day: day)), loading: :lazy, target: "_top" do %>
+      <p class="lb-loading" role="status"><span class="lb-spin" aria-hidden="true"></span>Carregando mais…</p>
+    <% end %>
+  <% else %>
+    <p class="lb-end">Início do período. <%= link_to "Ver um período maior", logbook_path(filter.to_params.except(:from, :until).merge(site_id: filter.site.id, period: "365d")), data: { turbo_frame: "_top" } if filter.period != "365d" && !filter.custom_dates? %></p>
+  <% end %>
+<% end %>
+<% if frame %>
+  <%= turbo_frame_tag frame_id.(frame), target: "_top" do %><%= body %><% end %>
+<% else %>
+  <%= body %>
+<% end %>

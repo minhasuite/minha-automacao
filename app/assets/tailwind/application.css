@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./dashboards.css";
+@import "./paridade.css";
 
 /* Lista Clara (design system da suíte) no Tailwind 4: tokens em variável CSS,
    tema escuro por [data-theme="dark"] ou preferência do sistema. Cor solta

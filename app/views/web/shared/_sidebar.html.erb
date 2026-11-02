@@ -15,6 +15,9 @@
     <% Dashboard.sidebar_for(current_user).each do |d| %><%= nav_link d.name, dashboard_path(d), icon: d.icon_name %><% end %>
     <% unless (reader = current_user.reader?) %>
       <%= nav_link "Locais", sites_path, icon: "home" %>
+      <%= nav_link "Diário", logbook_path, icon: "view-list" %>
+      <%= nav_link "Histórico", history_path, icon: "chart-bar" %>
+      <%= nav_link "Mapa", map_path, icon: "map" if Maps.allowed?(current_user) %>
       <%= nav_link "Alertas", alerts_path, icon: "exclamation-circle", badge: Alert.active.where(acked_at: nil, site_id: Site.visible_to(current_user).select(:id)).count %>
       <%= nav_link "Perguntar à casa", ask_path, icon: "sparkles" %>
     <% end %>

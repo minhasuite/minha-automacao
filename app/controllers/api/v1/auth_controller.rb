@@ -99,6 +99,7 @@ module Api
 
       def issue(user, status)
         token, access, refresh = ApiToken.issue(user, device_name: params[:device_name])
+        AuditEvent.login!(user, "app")
         render_tokens(token, access, refresh, status: status)
       end
 
