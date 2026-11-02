@@ -342,7 +342,7 @@ module Blueprints
       when "event" then event_trigger(t)
       when "homeassistant" then ({ "type" => "system", "event" => t["event"].to_s } if %w[start shutdown].include?(t["event"].to_s))
       when "template" then (e = @jinja.expr(t["value_template"].to_s)) && { "type" => "template", "expr" => e }
-      when "mqtt" then { "type" => "mqtt", "topic" => t["topic"].to_s, "payload" => (t["payload"].to_s if t["payload"]) }.compact
+      when "mqtt" then ({ "type" => "mqtt", "topic" => t["topic"].to_s, "payload" => (t["payload"].to_s if t["payload"]) }.compact if t["topic"].present?)
       when "calendar" then calendar_trigger(t)
       when "device" then device_block(t)
       end
