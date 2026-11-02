@@ -45,3 +45,24 @@ gen2:
     - { field: tC, name: Temperatura, unit: "°C", device_class: temperature, state_class: measurement }
   humidity:
     - { field: rh, name: Umidade, unit: "%", device_class: humidity, state_class: measurement }
+  # integ: medidores de energia Gen2+ (Pro 3EM, 3EM Gen3: `em` trifásico;
+  # Pro EM, EM Gen3: `em1` por canal). Energia em Wh → kWh.
+  em:
+    - { field: total_act_power, name: Potência total, unit: W, device_class: power, state_class: measurement }
+    - { field: a_act_power, name: Potência fase A, unit: W, device_class: power, state_class: measurement }
+    - { field: b_act_power, name: Potência fase B, unit: W, device_class: power, state_class: measurement }
+    - { field: c_act_power, name: Potência fase C, unit: W, device_class: power, state_class: measurement }
+    - { field: a_voltage, name: Tensão fase A, unit: V, device_class: voltage, state_class: measurement }
+    - { field: b_voltage, name: Tensão fase B, unit: V, device_class: voltage, state_class: measurement }
+    - { field: c_voltage, name: Tensão fase C, unit: V, device_class: voltage, state_class: measurement }
+    - { field: total_current, name: Corrente total, unit: A, device_class: current, state_class: measurement }
+  emdata:
+    - { field: total_act, name: Energia consumida, unit: kWh, device_class: energy, state_class: total_increasing, scale: 0.001 }
+    - { field: total_act_ret, name: Energia devolvida, unit: kWh, device_class: energy, state_class: total_increasing, scale: 0.001 }
+  em1:
+    - { field: act_power, name: Potência, unit: W, device_class: power, state_class: measurement }
+    - { field: voltage, name: Tensão, unit: V, device_class: voltage, state_class: measurement }
+    - { field: current, name: Corrente, unit: A, device_class: current, state_class: measurement }
+  em1data:
+    - { field: total_act_energy, name: Energia consumida, unit: kWh, device_class: energy, state_class: total_increasing, scale: 0.001 }
+    - { field: total_act_ret_energy, name: Energia devolvida, unit: kWh, device_class: energy, state_class: total_increasing, scale: 0.001 }

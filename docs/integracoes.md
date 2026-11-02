@@ -439,3 +439,74 @@ desenho sai da capacidade do ponto.
 - **Broadlink**: aparelho desbloqueado no app Broadlink.
 - **Matter**: subir o `matter-server` (perfil) e comissionar pelo código.
 - **ESPHome**: a chave `api: encryption: key` do YAML da placa.
+
+## Ecossistema ampliado (integ, 2026-11)
+
+### Ponte Matter (expor) e pontes de exposição
+
+- Registro genérico `Bridges::PLUGINS` (`app/services/bridges.rb`): cada ponte
+  descreve os tipos de aparelho em `TYPES` (`applies`, `state`, `commands`).
+  A escolha dos pontos fica em `bridge_exposures` (ponto, ponte, nome; ponto
+  crítico só com confirmação), tela `/locais/:id/pontes/:ponte` (aba
+  "Matter") e API do serviço `GET /api/v1/bridges/:ponte`,
+  `PUT …/status` e `POST …/commands` (chave de integração gerada na tela, só
+  ler e comandar o local). Comando vindo da ponte tem origem `bridge`.
+- `Bridges::MatterBridge`: liga/desliga (luz ou tomada), luz com intensidade,
+  luz colorida (hs; liga/desliga pelo ponto irmão), cortina (posição em %,
+  invertida para o Matter), termostato (setpoint em °C), fechadura (portão:
+  trancar = fechar), abertura, presença, temperatura e umidade.
+- Serviço `matter-bridge/` (Node 22 + matter.js 0.17.9), perfil
+  `matter-bridge` do `docker-compose.local.yml`, desligado:
+  `docker compose --profile matter-bridge up -d --build matter-bridge`, com
+  `MATTER_BRIDGE_KEY` no `.env`. Rede do host, porta 5540, pareamento no
+  volume `matter-bridge-data`. Lê a lista a cada 3 s; QR e código aparecem
+  na aba. Teste: `cd matter-bridge && npm test` (todos os tipos sobem, eco
+  não volta, mudança de fora vira comando); o contrato com o Rails é o
+  `matter-bridge/fixture.json` (conferido também no RSpec).
+
+### Câmeras com IA (capacidade `detection`)
+
+- Capacidade genérica `detection` (json, só leitura, conta a cada aviso como
+  `event`): `{kind (person/vehicle/animal/package/face/other), label, score
+  0–100, zones, id, at, clip?}` (`Detections`). Gatilho "Câmera detectou"
+  (`DetectionTrigger`: tipo, zona, confiança mínima). No "Avisar", o campo
+  câmera aceita o ponto de detecção: o quadro vem do plugin
+  (`Plugin.snapshot(point)` → `Integrations.snapshot`), também em
+  `GET /api/v1/points/:id/snapshot`.
+- **Frigate** (`FrigatePlugin`, `Frigate`): `/api/config` → um aparelho por
+  câmera (detecção + "Pessoa/Veículo… na câmera"); eventos pela API (10 s) e,
+  com broker, MQTT `<tópico>/events` e `<tópico>/<câmera>/<rótulo>`
+  (`Mqtt::Listener::DISCOVERY`). Quadro com caixa e link do clipe.
+- **Reolink** (`ReolinkPlugin`, `Reolink`): `/api.cgi` com token; um aparelho
+  por canal; `GetAiState` (pessoa, veículo, animal) e `GetMdState` a cada 5 s;
+  quadro pelo `Snap`.
+- **UniFi Protect** (`UnifiProtectPlugin`, `UnifiProtect`): usuário local do
+  console, cookie + CSRF; `bootstrap`, eventos `smartDetectZone` e
+  `/cameras/:id/snapshot`.
+
+### Luz e casa, energia
+
+- **Philips Hue** (`HuePlugin`, `Drivers::Hue`): API v2 local, pareamento pelo
+  botão (chave cifrada), mDNS `_hue._tcp`; luz (liga, brilho, cor xy ↔ hs),
+  movimento e temperatura; leitura a cada 15 s.
+- **WLED** (`WledPlugin`, `Drivers::Wled`): JSON API, mDNS `_wled._tcp`; liga,
+  brilho 0–255, cor e efeito.
+- **Yeelight** (`YeelightPlugin`, `Drivers::Yeelight`): TCP 55443 (Controle
+  pela LAN); liga, brilho e cor.
+- **SwitchBot** (`SwitchbotPlugin`, `Drivers::Switchbot`): API de nuvem v1.1
+  assinada (token e segredo do usuário); tipos → pontos pelo
+  `config/device_maps/switchbot.yml` (bot, tomada, cortina, termo-higrômetro,
+  movimento, abertura, lâmpada, fechadura); leitura a cada 5 min.
+- **Shelly EM** Gen2+ (Pro 3EM, Pro EM, EM Gen3): componentes `em`, `emdata`,
+  `em1` e `em1data` no `shelly.yml` (só dado).
+- `LanHttp`: HTTP comum dos aparelhos da rede (JSON, timeout curto, 401/403 =
+  Reconfigurar, `insecure` para certificado próprio). `LanPlugin.plain`:
+  campos às claras no formulário (usuário).
+
+### Ficou de fora (próximas)
+
+Tempo real da Hue (SSE; hoje leitura a cada 15 s), IKEA Dirigera, Sonos,
+Govee LAN, descoberta SSDP da Yeelight, ar-condicionado (Midea, LG ThinQ,
+Daikin), inversores (Growatt, Deye/Solarman, SolarEdge, Fronius), Z-Wave JS e
+proxy Bluetooth do ESPHome; no app Flutter, a capacidade `detection` aparece
+como texto genérico.

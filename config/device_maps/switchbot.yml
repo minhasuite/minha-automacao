@@ -1,0 +1,44 @@
+# SwitchBot (integ): tipo do aparelho na API v1.1 (`deviceType`) → pontos.
+# `field` = campo do GET /devices/:id/status; `map` = valor da nuvem → valor
+# do ponto; `cmd` = como o comando chega (Drivers::Switchbot::COMMANDS).
+# Tipo novo = linhas aqui (vários nomes da SwitchBot para o mesmo aparelho
+# usam `alias`).
+types:
+  Bot:
+    - { field: power, name: Liga/desliga, capability: onoff, map: { "on": true, "off": false }, cmd: power }
+  Plug:
+    - { field: power, name: Liga/desliga, capability: onoff, map: { "on": true, "off": false }, cmd: power }
+  Plug Mini (US):
+    - { field: power, name: Liga/desliga, capability: onoff, map: { "on": true, "off": false }, cmd: power }
+    - { field: weight, name: Potência, unit: W, device_class: power, state_class: measurement }
+    - { field: voltage, name: Tensão, unit: V, device_class: voltage, state_class: measurement }
+  Curtain:
+    - { field: slidePosition, name: Posição, capability: setpoint, unit: "%", min: 0, max: 100, step: 1, invert: true, cmd: position }
+  Roller Shade:
+    - { field: slidePosition, name: Posição, capability: setpoint, unit: "%", min: 0, max: 100, step: 1, invert: true, cmd: position }
+  Meter:
+    - { field: temperature, name: Temperatura, unit: "°C", device_class: temperature, state_class: measurement }
+    - { field: humidity, name: Umidade, unit: "%", device_class: humidity, state_class: measurement }
+  Motion Sensor:
+    - { field: moveDetected, name: Movimento, capability: motion }
+  Contact Sensor:
+    - { field: openState, name: Abertura, capability: contact, map: { "open": true, "close": false, "timeOutNotClose": true } }
+  Color Bulb:
+    - { field: power, name: Luz, capability: onoff, icon: light-bulb, map: { "on": true, "off": false }, cmd: power }
+    - { field: brightness, name: Brilho, capability: dimmer, min: 1, max: 100, cmd: brightness }
+    - { field: color, name: Cor, capability: color, cmd: color }
+  Smart Lock:
+    - { field: lockState, name: Fechadura, capability: gate, risk: critical, map: { "locked": closed, "unlocked": open, "jammed": open }, cmd: lock }
+alias:
+  Plug Mini (JP): Plug Mini (US)
+  Plug Mini (EU): Plug Mini (US)
+  Curtain3: Curtain
+  Blind Tilt: Roller Shade
+  MeterPlus: Meter
+  Meter Pro: Meter
+  WoIOSensor: Meter
+  Outdoor Meter: Meter
+  Hub 2: Meter
+  Strip Light: Color Bulb
+  Smart Lock Pro: Smart Lock
+  Smart Lock Ultra: Smart Lock

@@ -1,0 +1,4 @@
+<%# locals: (f:, integration:) -%>
+<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::HuePlugin,
+           fields: [ [ :app_key, "Chave da aplicação (opcional)", "deixe vazio para parear pelo botão" ] ],
+           note: "Para parear: aperte o botão redondo do Hue Bridge e, em até 30 s, clique em Adicionar. A chave fica guardada cifrada. Luzes, cor, movimento e temperatura entram como pontos." %>
