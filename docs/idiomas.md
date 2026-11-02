@@ -1,37 +1,39 @@
 # Idiomas (pt-BR, en, es)
 
-- Textos em `config/locales/web.{pt-BR,en,es}.yml` (telas) e
+- Textos em `config/locales/<área>.{pt-BR,en,es}.yml` (telas: `web`,
+  `automations`, `integrations`, `helpers`, `dashboards`, `home`) e
   `config/locales/{pt-BR,en,es}.yml` (nomes de modelos e campos). Datas,
   números e mensagens padrão do Rails vêm do `rails-i18n`.
 - `spec/i18n_spec.rb` falha se uma chave existir num idioma e faltar em outro,
   se o plural tiver formas diferentes ou se a interpolação (`%{x}`) mudar.
+- `spec/i18n_coverage_spec.rb` falha se uma chave `t("...")` do código faltar
+  em algum idioma ou se um plugin não trouxer en/es para cada texto pt-BR. No
+  ambiente de teste, `raise_on_missing_translations` está ligado.
 - Idioma da tela (`Localized`): o da pessoa (`users.dashboard_prefs["locale"]`,
   escolhido em Minha conta) → o do cookie `ma_locale` (seletor na entrada e na
   primeira configuração) → o do navegador (`Accept-Language`) → pt-BR.
 - Texto novo: `t("area.chave")` na tela e a chave nos três arquivos. Chave
   terminada em `_html` pode ter HTML.
+- Texto de plugin (integração, helper, widget, gatilho/condição/ação, tema,
+  predefinição, ponte, fonte do Diário, provedor de IA/clima...) fica no
+  próprio plugin, sem lista central: `extend PluginTexts` +
+  `translates :title, :description` na base; o pt-BR vem do `describe` e o
+  plugin traz `texts en: {...}, es: {...}` (mensagens próprias com
+  `texts "pt-BR" => {...}` e `text(:chave, var: x)`).
+- Rótulos de constantes (`Site::KINDS`, `Device::SITUATIONS`...) usam
+  `LocalizedLabel` (traduz na hora de ler).
 
 ## Já traduzido
 
-Layouts (app, entrada, primeira configuração), menu lateral, cabeçalho e
-avisos, entrar / criar conta / esqueci a senha, Início sem local, primeira
-configuração inteira, painéis (lista, novo, painel aberto), dispositivos
-(lista, página, formulário), Configurações (moldura, Minha conta, Sistema com
-a atualização, Acesso remoto, Plano) e os avisos desses controllers.
+Todas as telas web, avisos (flash), e-mail de senha, páginas legais,
+validações dos modelos e os textos dos plugins. App Flutter: `lib/l10n` do app.
 
-## Falta (próximas levas)
+## Falta
 
-- Editor de painel, widgets e quiosque (`web/dashboards/edit`, `_widget_form`,
-  `_layout_editor`, `_kiosk`, `widgets/*`) — estão com o agente de UI.
-- Locais e áreas (`web/sites`, `web/areas`), pontos (`web/points`), Diário,
-  Histórico, Mapa, Alertas, Notificações, Perguntar à casa.
-- Automações, scripts, cenas, blueprints, regras simples, sombra, ferramentas.
-- Integrações (catálogo, assistente, formulários `forms/_*`), helpers, dados,
-  pacotes, aplicativos, IA, Saúde, Pessoas, Chaves de integração, Meus aparelhos.
-- Textos que vêm do código: `describe` dos plugins (integrações, helpers,
-  gatilhos/condições/ações, widgets, temas), mensagens de validação dos
-  plugins, rótulos em constantes (`Site::KINDS`, `Area::KINDS`,
-  `Device::SITUATIONS`, `SiteMembership` papéis), notificações e push, e-mails.
-- Conteúdo gerado: títulos e rótulos do painel automático (`Dashboards::Generator`:
-  "Luzes", "Agora", "Ligado"…) e dos widgets.
-- App Flutter (tem o próprio `l10n`).
+- Textos gravados no banco na hora (nomes padrão de pontos criados pelas
+  integrações, passos do trace de automação, notas de importação do HA,
+  títulos de disparo): ficam no idioma de quem gerou.
+- Gramática do assistente de voz e verbos da busca (só pt, com alguns verbos
+  en/es na busca), manifesto PWA, erros da API `/api/v1` e erros técnicos de
+  drivers/supervisor/backups.
+- Broadcast Turbo renderizado fora de uma requisição sai em pt-BR.
