@@ -7,9 +7,12 @@ module Automations
       def self.shadow_safe?(_e, _node) = true
 
       describe key: "wait_notification", label: "Esperar resposta do aviso", defaults: { "timeout" => "10m", "response_variable" => "resposta" },
-               fields: [ f("actions", :text, "Só os botões (ids separados por vírgula; vazio = qualquer)"),
-                         f("timeout", :duration, "Tempo limite", required: true), f("continue_on_timeout", :bool, "Seguir se o tempo acabar") ]
+               fields: [ f("actions", :text, "Só os botões (ids separados por vírgula; vazio = qualquer)", en: "Only these buttons (comma-separated IDs; empty = any)", es: "Solo los botones (IDs separados por coma; vacío = cualquiera)"),
+                         f("timeout", :duration, "Tempo limite", required: true, en: "Timeout", es: "Tiempo límite"),
+                         f("continue_on_timeout", :bool, "Seguir se o tempo acabar", en: "Continue if time runs out", es: "Seguir si se acaba el tiempo") ]
       returns "{action, title, user, user_id, notification_id, data} (vazio no tempo limite)"
+      texts en: { label: "Wait for notification reply", returns: "{action, title, user, user_id, notification_id, data} (empty on timeout)" },
+            es: { label: "Esperar respuesta del aviso", returns: "{action, title, user, user_id, notification_id, data} (vacío al agotarse el tiempo)" }
 
       def self.control? = true
 

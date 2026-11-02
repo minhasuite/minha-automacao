@@ -7,6 +7,9 @@ module Notifier
     # automação). Erro numa Echo não impede as outras nem o aviso.
     module Alexa
       PATTERN = /\Aalexa:(\h{8}-\h{4}-\h{4}-\h{4}-\h{12})\z/
+      extend PluginTexts
+      texts "pt-BR" => { speak_on: "Falar na %{name}", removed: "Echo removida" },
+            en: { speak_on: "Speak on %{name}", removed: "Echo removed" }, es: { speak_on: "Hablar en %{name}", removed: "Echo eliminada" }
 
       module_function
 
@@ -15,12 +18,12 @@ module Notifier
 
       def choices(site)
         site.points.includes(:device).where(capability: "speaker", disabled: false).order(:name)
-            .map { |p| [ "alexa:#{p.id}", "Falar na #{p.device.name}" ] }.sort_by(&:last)
+            .map { |p| [ "alexa:#{p.id}", text(:speak_on, name: p.device.name) ] }.sort_by(&:last)
       end
 
       def label(channel)
         point = Point.includes(:device).find_by(id: channel[PATTERN, 1])
-        point ? "Falar na #{point.device.name}" : "Echo removida"
+        point ? text(:speak_on, name: point.device.name) : text(:removed)
       end
 
       # Ação "Falar" (Lote 3): só a fala, sem criar aviso. `chime` = com o som de anúncio.

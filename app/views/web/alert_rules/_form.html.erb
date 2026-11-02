@@ -2,20 +2,20 @@
 <%= form_with model: record.new_record? ? [ site, record ] : record, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-3 max-w-4xl" do |f| %>
   <%= render "web/shared/errors", record: record %>
   <%= hidden_field_tag :back, params[:back], id: nil %>
-  <div class="md:col-span-2"><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: "Porta de vidro aberta", autofocus: true %></div>
-  <div><%= f.label :severity, "Gravidade", class: "ss-label" %><%= f.select :severity, AlertRule::SEVERITIES.invert, {}, class: "ss-input" %></div>
-  <div><%= f.label :point_id, "Ponto", class: "ss-label" %><%= f.select :point_id, point_choices(site), { include_blank: "Escolha" }, class: "ss-input", required: true %></div>
-  <div><%= f.label :operator, "Condição", class: "ss-label" %><%= f.select :operator, AlertRule::OPERATORS.invert, {}, class: "ss-input" %></div>
-  <div><%= f.label :value, "Valor", class: "ss-label" %><%= f.text_field :value, value: record.value, class: "ss-input", placeholder: "true = ligado/aberto; ou um número" %></div>
-  <div><%= f.label :for_min, "Por quantos minutos", class: "ss-label" %><%= f.number_field :for_min, min: 0, step: "any", class: "ss-input num" %></div>
-  <div><%= f.label :repeat_min, "Depois da última etapa, repetir a cada (min)", class: "ss-label" %><%= f.number_field :repeat_min, min: 1, class: "ss-input num", placeholder: "vazio = não repete" %></div>
+  <div class="md:col-span-2"><%= f.label :name, t("automations.settings.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: t("automations.alert_rules.name_ph"), autofocus: true %></div>
+  <div><%= f.label :severity, t("automations.alert_rules.severity"), class: "ss-label" %><%= f.select :severity, AlertRule::SEVERITIES.invert, {}, class: "ss-input" %></div>
+  <div><%= f.label :point_id, t("automations.labels.field_types.point"), class: "ss-label" %><%= f.select :point_id, point_choices(site), { include_blank: t("automations.bp.choose") }, class: "ss-input", required: true %></div>
+  <div><%= f.label :operator, t("automations.alert_rules.operator"), class: "ss-label" %><%= f.select :operator, AlertRule::OPERATORS.invert, {}, class: "ss-input" %></div>
+  <div><%= f.label :value, t("automations.scenes.value"), class: "ss-label" %><%= f.text_field :value, value: record.value, class: "ss-input", placeholder: t("automations.alert_rules.value_ph") %></div>
+  <div><%= f.label :for_min, t("automations.alert_rules.for_min"), class: "ss-label" %><%= f.number_field :for_min, min: 0, step: "any", class: "ss-input num" %></div>
+  <div><%= f.label :repeat_min, t("automations.alert_rules.repeat"), class: "ss-label" %><%= f.number_field :repeat_min, min: 1, class: "ss-input num", placeholder: t("automations.alert_rules.repeat_ph") %></div>
   <fieldset class="md:col-span-3">
-    <legend class="ss-label">Etapas (espera em minutos desde a etapa anterior; a primeira conta da abertura)</legend>
+    <legend class="ss-label"><%= t("automations.alert_rules.steps") %></legend>
     <div class="grid gap-2">
       <% steps = record.escalation.presence || [ { "wait_s" => 0, "channels" => Notifier.default_channels } ] %>
       <% (steps + Array.new([ 5 - steps.size, 1 ].max) { {} }).each_with_index do |s, i| %>
         <div class="flex flex-wrap items-center gap-3">
-          <label class="text-sm text-muted w-16" for="step_<%= i %>">Etapa <%= i + 1 %></label>
+          <label class="text-sm text-muted w-16" for="step_<%= i %>"><%= t("automations.alert_rules.step", n: i + 1) %></label>
           <%= number_field_tag "alert_rule[steps][#{i}][wait_min]", (s["wait_s"] && (s["wait_s"] / 60.0).round(2).to_s.delete_suffix(".0")), min: 0, step: "any", class: "ss-input num w-28", id: "step_#{i}", placeholder: "min" %>
           <% Notifier.channel_choices(site).each do |key, name| %>
             <label class="ss-check"><%= check_box_tag "alert_rule[steps][#{i}][channels][]", key, Array(s["channels"]).include?(key), id: "step_#{i}_#{key.parameterize}" %> <%= name %></label>
@@ -24,10 +24,10 @@
       <% end %>
     </div>
   </fieldset>
-  <label class="ss-check"><%= f.check_box :auto_resolve %> Fecha sozinho quando a condição some</label>
-  <label class="ss-check"><%= f.check_box :enabled %> Ativo</label>
+  <label class="ss-check"><%= f.check_box :auto_resolve %> <%= t("automations.alert_rules.auto_resolve") %></label>
+  <label class="ss-check"><%= f.check_box :enabled %> <%= t("automations.notify_rules.active") %></label>
   <div class="md:col-span-3 flex flex-wrap gap-2">
-    <%= f.submit "Salvar alerta", class: "ss-btn ss-btn-primary" %>
-    <%= link_to "Cancelar", back_path, class: "ss-btn ss-btn-ghost" %>
+    <%= f.submit t("automations.alert_rules.save"), class: "ss-btn ss-btn-primary" %>
+    <%= link_to t("automations.settings.cancel"), back_path, class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>

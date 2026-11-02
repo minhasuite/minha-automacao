@@ -1,12 +1,6 @@
 # Telas das automações da DSL (F6): resumo de cada bloco, rótulos dos
 # valores e o selo de situação das execuções.
 module AutomationsHelper
-  KIND_TITLES = { triggers: "Quando", conditions: "Só se", actions: "Então" }.freeze
-  KIND_HINTS = {
-    triggers: "O que dispara: ponto mudou, limite, horário, sol, alerta, webhook ou só manual.",
-    conditions: "Todas precisam valer na hora do disparo (opcional).",
-    actions: "Executadas em ordem. Esperas sobrevivem a reinício do servidor."
-  }.freeze
   RESULT_STYLES = { "ok" => %w[check-circle text-success], "false" => %w[x-circle text-muted], "error" => %w[exclamation-circle text-danger],
                     "simulated" => %w[eye text-accent], "waiting" => %w[clock text-accent], "timeout" => %w[clock text-warn],
                     "skipped" => %w[minus-circle text-warn], "tolerated" => %w[exclamation-circle text-warn],
@@ -27,25 +21,25 @@ module AutomationsHelper
 
   def dsl_value_text(fd, v, node, points)
     case fd.kind
-    when :point, :writable_point then v.to_s.start_with?("$") ? "campo #{v.delete_prefix('$')}" : points[v]&.name || "ponto removido"
+    when :point, :writable_point then v.to_s.start_with?("$") ? t("automations.helper.field", name: v.delete_prefix("$")) : points[v]&.name || t("automations.helper.point_removed")
     when :value then (p = points[node["point"]]) ? point_value_label(p, v) : v.to_s
     when :duration then Automations::Dsl.duration_label(Automations::Dsl.seconds(v))
-    when :days then Array(v).map { |d| Automations::Dsl::DAYS[d.to_i] }.join("/")
+    when :days then Array(v).map { |d| Automations::Dsl.days[d.to_i] }.join("/")
     when :select then fd.choices.fetch(v, v)
-    when :bool then v ? "sim" : "não"
-    when :channels then Array(v).map { |c| Notifier.channel_label(c) }.join(" e ").downcase
+    when :bool then v ? t("automations.helper.yes") : t("automations.helper.no")
+    when :channels then Array(v).map { |c| Notifier.channel_label(c) }.join(t("automations.helper.and")).downcase
     when :recipient then (s = points.values.first&.site) ? Notifier.recipient_label(v, s) : v.to_s
-    when :camera then points[v]&.name || "câmera removida"
+    when :camera then points[v]&.name || t("automations.helper.camera_removed")
     when :buttons then Array(v).pluck("title").join(", ")
     when :command then (p = points[node["point"]]) ? command_options(p).find { |_, c| c == v }&.first || command_label(v) : command_label(v)
-    when :scene then Scene.find_by(id: v)&.name || "cena removida"
-    when :script then Automation.find_by(id: v)&.name || "script removido"
+    when :scene then Scene.find_by(id: v)&.name || t("automations.helper.scene_removed")
+    when :script then Automation.find_by(id: v)&.name || t("automations.helper.script_removed")
     when :script_fields then v.map { |k, x| "#{k} = #{x}" }.join(", ")
-    when :alert_rule then AlertRule.find_by(id: v)&.name || "regra removida"
-    when :secret then "guardado"
-    when :cameras, :points then Array(v).map { |id| points[id]&.name || "ponto removido" }.join(", ").truncate(80)
-    when :areas, :tags then "#{Array(v).size} escolhida(s)"
-    when :dataset then Dataset.find_by(id: v)&.name || "conjunto removido"
+    when :alert_rule then AlertRule.find_by(id: v)&.name || t("automations.helper.rule_removed")
+    when :secret then t("automations.helper.stored")
+    when :cameras, :points then Array(v).map { |id| points[id]&.name || t("automations.helper.point_removed") }.join(", ").truncate(80)
+    when :areas, :tags then t("automations.helper.chosen", count: Array(v).size)
+    when :dataset then Dataset.find_by(id: v)&.name || t("automations.helper.dataset_removed")
     when :kv then v.to_h.keys.join(", ")
     when :ai_output then v.is_a?(Hash) ? "JSON schema" : Array(v).filter_map { |f| f["name"] }.join(", ")
     else v.to_s.truncate(80)
@@ -68,7 +62,7 @@ module AutomationsHelper
   end
 
   def last_run_text(automation)
-    return "Nunca rodou" unless automation.last_run_at
+    return t("automations.helper.never_ran") unless automation.last_run_at
 
     "#{AutomationRun::STATUSES.fetch(automation.last_status, automation.last_status)} #{l(automation.last_run_at, format: :short)}"
   end

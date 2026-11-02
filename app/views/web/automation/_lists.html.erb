@@ -4,22 +4,22 @@
 <% q = { back: back, point_id: point&.id }.compact %>
 <div class="grid gap-4 lg:grid-cols-2">
 
-  <%= render layout: "web/automation/section", locals: { title: "Agendas", items: lists[:schedules], new_path: new_site_schedule_path(site, q), empty: "Nenhuma agenda. Ex.: ligar às 17h, desligar às 23h, acender no pôr do sol." } do %>
+  <%= render layout: "web/automation/section", locals: { title: t("automations.lists.schedules"), items: lists[:schedules], new_path: new_site_schedule_path(site, q), empty: t("automations.lists.schedules_empty") } do %>
     <% lists[:schedules].each do |s| %>
       <%= render "web/automation/item", title: s.name, detail: schedule_detail(s), record: s, back: back, enabled: s.enabled %>
     <% end %>
   <% end %>
-  <%= render layout: "web/automation/section", locals: { title: "Espelhar", items: lists[:links], new_path: new_site_point_link_path(site, q), empty: "Nenhum espelhamento. Ex.: um interruptor acende outra luz junto, ou um botão aciona outro aparelho." } do %>
+  <%= render layout: "web/automation/section", locals: { title: t("automations.lists.links"), items: lists[:links], new_path: new_site_point_link_path(site, q), empty: t("automations.lists.links_empty") } do %>
     <% lists[:links].each do |l| %>
       <%= render "web/automation/item", title: "#{l.source_point.name} → #{l.target_point.name}", detail: link_detail(l), record: l, back: back, enabled: l.enabled %>
     <% end %>
   <% end %>
-  <%= render layout: "web/automation/section", locals: { title: "Avisos", items: lists[:notify_rules], new_path: new_site_notify_rule_path(site, q), empty: "Nenhum aviso. Ex.: notificar quando uma porta abrir." } do %>
+  <%= render layout: "web/automation/section", locals: { title: t("automations.lists.notify_rules"), items: lists[:notify_rules], new_path: new_site_notify_rule_path(site, q), empty: t("automations.lists.notify_rules_empty") } do %>
     <% lists[:notify_rules].each do |r| %>
       <%= render "web/automation/item", title: r.point.name, detail: notify_detail(r), record: r, back: back, enabled: r.enabled %>
     <% end %>
   <% end %>
-  <%= render layout: "web/automation/section", locals: { title: "Alertas", items: lists[:alert_rules], new_path: new_site_alert_rule_path(site, q), empty: "Nenhum alerta. Ex.: porta aberta há mais de 5 minutos, avisando de novo até alguém marcar ciente." } do %>
+  <%= render layout: "web/automation/section", locals: { title: t("automations.alerts.title"), items: lists[:alert_rules], new_path: new_site_alert_rule_path(site, q), empty: t("automations.lists.alert_rules_empty") } do %>
     <% lists[:alert_rules].each do |r| %>
       <%= render "web/automation/item", title: r.name, detail: alert_rule_detail(r), record: r, back: back, enabled: r.enabled %>
     <% end %>

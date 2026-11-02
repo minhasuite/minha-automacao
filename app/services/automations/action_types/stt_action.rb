@@ -6,10 +6,12 @@ module Automations
     # `{{ fala.text }}`, e dá para mandar para "Pedir à IA".
     class SttAction < Base
       describe key: "stt", label: "Transcrever áudio", defaults: { "language" => "pt", "response_variable" => "fala" },
-               fields: [ f("audio", :template, "Áudio (URL https ou anexo, texto com {{ }})", required: true), f("language", :text, "Idioma (ex.: pt)"),
-                         f("provider", :select, "Provedor (vazio = o padrão)", options: -> { Ai.choices(:stt) }),
-                         f("model", :text, "Modelo (vazio = o do provedor)") ]
+               fields: [ f("audio", :template, "Áudio (URL https ou anexo, texto com {{ }})", required: true, en: "Audio (https URL or attachment, text with {{ }})", es: "Audio (URL https o adjunto, texto con {{ }})"),
+                         f("language", :text, "Idioma (ex.: pt)", en: "Language (e.g. en)", es: "Idioma (ej.: es)"),
+                         f("provider", :select, "Provedor (vazio = o padrão)", en: "Provider (empty = default)", es: "Proveedor (vacío = el predeterminado)", options: -> { Ai.choices(:stt) }),
+                         f("model", :text, "Modelo (vazio = o do provedor)", en: "Model (empty = provider's default)", es: "Modelo (vacío = el del proveedor)") ]
       returns "{text, provider, model}"
+      texts en: { label: "Transcribe audio" }, es: { label: "Transcribir audio" }
 
       def self.call(e, _path, node)
         url = e.ctx.render(node["audio"]).strip

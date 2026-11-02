@@ -1,29 +1,29 @@
-<%= render "web/shared/header", title: @blueprint.name, subtitle: "#{@site.name} · #{[ @blueprint.domain_label, @blueprint.source_label, "versão #{@blueprint.version}" ].join(' · ')}", back: site_blueprints_path(@site) do %>
-  <% if can?(:manage) %><%= link_to use_blueprint_path(@blueprint), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Criar <%= @blueprint.domain == "script" ? "script" : "automação" %><% end %><% end %>
+<%= render "web/shared/header", title: @blueprint.name, subtitle: "#{@site.name} · #{[ @blueprint.domain_label, @blueprint.source_label, t("automations.bp.version", version: @blueprint.version) ].join(' · ')}", back: site_blueprints_path(@site) do %>
+  <% if can?(:manage) %><%= link_to use_blueprint_path(@blueprint), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t(@blueprint.domain == "script" ? "automations.bp.create_script" : "automations.bp.create_automation") %><% end %><% end %>
 <% end %>
 
 <div class="grid gap-6 lg:grid-cols-3 items-start">
   <div class="lg:col-span-2 flex flex-col gap-4 min-w-0">
     <% if @blueprint.unsupported.any? %>
       <section class="rounded-xl bg-warn-soft p-4 text-sm" aria-labelledby="bp-unsupported" role="status">
-        <h2 id="bp-unsupported" class="!text-base flex items-center gap-2"><%= icon("exclamation-circle", "size-5 text-warn") %>Não suportado</h2>
-        <p class="text-ink-2 mt-1">Ficou de fora na conversão. A automação criada roda sem estas partes; ajuste no editor se precisar.</p>
-        <ul class="list-disc pl-5 mt-2 text-ink"><% @blueprint.unsupported.each do |u| %><li>não suportado: <%= u %></li><% end %></ul>
+        <h2 id="bp-unsupported" class="!text-base flex items-center gap-2"><%= icon("exclamation-circle", "size-5 text-warn") %><%= t("automations.bp.unsupported") %></h2>
+        <p class="text-ink-2 mt-1"><%= t("automations.bp.unsupported_hint") %></p>
+        <ul class="list-disc pl-5 mt-2 text-ink"><% @blueprint.unsupported.each do |u| %><li><%= t("automations.bp.unsupported_item", item: u) %></li><% end %></ul>
       </section>
     <% end %>
     <% if @blueprint.description.present? %><p class="ss-card ss-card-pad text-ink-2"><%= @blueprint.description %></p><% end %>
 
     <section class="ss-card ss-card-pad" aria-labelledby="bp-inputs">
-      <h2 id="bp-inputs">Entradas</h2>
+      <h2 id="bp-inputs"><%= t("automations.bp.inputs") %></h2>
       <% if @blueprint.inputs.empty? %>
-        <p class="text-sm text-muted mt-1">Nenhuma.</p>
+        <p class="text-sm text-muted mt-1"><%= t("automations.bp.none") %></p>
       <% else %>
         <ul class="mt-2 divide-y divide-line">
           <% @blueprint.inputs.each do |i| %>
             <li class="py-2 text-sm">
               <p><span class="font-semibold text-ink"><%= i["label"] %></span> <code class="text-muted"><%= i["key"] %></code></p>
-              <p class="text-muted"><%= [ Blueprint::INPUT_TYPES[i["type"]], (Array(i.dig("filter", "capability")).map { |c| Point::CAPABILITY_LABELS.fetch(c, c).downcase }.join(" ou ").presence),
-                                        ("padrão #{i['default']}" if i.key?("default")), ("obrigatória" if @blueprint.required?(i)) ].compact.join(" · ") %></p>
+              <p class="text-muted"><%= [ Blueprint::INPUT_TYPES[i["type"]], (Array(i.dig("filter", "capability")).map { |c| Point::CAPABILITY_LABELS.fetch(c, c).downcase }.join(t("automations.blueprint_errors.or")).presence),
+                                        (t("automations.fields.default", value: i["default"]) if i.key?("default")), (t("automations.bp.required") if @blueprint.required?(i)) ].compact.join(" · ") %></p>
             </li>
           <% end %>
         </ul>
@@ -31,13 +31,13 @@
     </section>
 
     <details class="ss-card ss-card-pad">
-      <summary class="ss-summary font-bold text-ink">Definição (JSON)</summary>
+      <summary class="ss-summary font-bold text-ink"><%= t("automations.bp.definition") %></summary>
       <% json = JSON.pretty_generate(@blueprint.slice("name", "description", "mode", "inputs", "definition")) %>
       <% if can?(:manage) && !@blueprint.builtin? %>
         <%= form_with model: @blueprint, url: blueprint_path(@blueprint), method: :patch, class: "grid gap-3 mt-3" do %>
-          <label class="ss-label" for="bp-json">Editar: mudar inputs, definition ou mode refaz o rascunho das automações criadas</label>
+          <label class="ss-label" for="bp-json"><%= t("automations.bp.edit_json") %></label>
           <%= text_area_tag :json, json, id: "bp-json", rows: 20, spellcheck: false, class: "ss-input num text-xs leading-relaxed" %>
-          <div><%= submit_tag "Salvar e propagar", class: "ss-btn ss-btn-primary ss-btn-sm", data: { turbo_confirm: "Salvar? As automações criadas deste blueprint ganham o rascunho novo (a versão publicada só muda quando alguém publicar)." } %></div>
+          <div><%= submit_tag t("automations.bp.save"), class: "ss-btn ss-btn-primary ss-btn-sm", data: { turbo_confirm: t("automations.bp.save_confirm") } %></div>
         <% end %>
       <% else %>
         <pre class="mt-3 text-xs num overflow-x-auto"><%= json %></pre>
@@ -47,26 +47,26 @@
 
   <aside class="flex flex-col gap-4 min-w-0">
     <section class="ss-card ss-card-pad" aria-labelledby="bp-created">
-      <h2 id="bp-created">Criadas daqui</h2>
+      <h2 id="bp-created"><%= t("automations.bp.created_here") %></h2>
       <% if @automations.empty? %>
-        <p class="text-sm text-muted mt-1">Nenhuma ainda.</p>
+        <p class="text-sm text-muted mt-1"><%= t("automations.edit.no_versions") %></p>
       <% else %>
         <ul class="mt-2 divide-y divide-line">
           <% @automations.each do |a| %>
             <li class="py-2 text-sm flex flex-wrap items-center gap-2">
               <%= link_to a.name, edit_automation_path(a), class: "flex-1 min-w-0 font-semibold" %>
-              <% if a.blueprint_outdated? %><span class="ss-badge ss-badge-accent">Rascunho novo</span><% end %>
+              <% if a.blueprint_outdated? %><span class="ss-badge ss-badge-accent"><%= t("automations.bp.new_draft") %></span><% end %>
             </li>
           <% end %>
         </ul>
       <% end %>
     </section>
     <% if @blueprint.source_url.present? %>
-      <section class="ss-card ss-card-pad text-sm"><h2>Fonte</h2><p class="break-all mt-1 text-muted"><%= @blueprint.source_url %></p></section>
+      <section class="ss-card ss-card-pad text-sm"><h2><%= t("automations.bp.source") %></h2><p class="break-all mt-1 text-muted"><%= @blueprint.source_url %></p></section>
     <% end %>
     <% if can?(:manage) && !@blueprint.builtin? %>
       <%= button_to blueprint_path(@blueprint), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger w-fit",
-                    form: { data: { turbo_confirm: "Excluir o blueprint? As automações criadas dele continuam." } } do %><%= icon("trash", "size-4") %>Excluir<% end %>
+                    form: { data: { turbo_confirm: t("automations.bp.delete_confirm") } } do %><%= icon("trash", "size-4") %><%= t("automations.common.delete") %><% end %>
     <% end %>
   </aside>
 </div>

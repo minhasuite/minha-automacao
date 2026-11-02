@@ -38,13 +38,13 @@ module Blueprints
 
     def self.fetch(url)
       uri = URI.parse(url.to_s.strip)
-      raise Error, "Use um endereço https do GitHub, gist ou da comunidade do Home Assistant." unless uri.is_a?(URI::HTTPS) && HOSTS.include?(uri.host)
+      raise Error, I18n.t("automations.ha_import.https_only") unless uri.is_a?(URI::HTTPS) && HOSTS.include?(uri.host)
 
       community = uri.host == "community.home-assistant.io"
       body = get(raw_uri(uri))
       community ? community_yaml(body) : body
     rescue URI::InvalidURIError
-      raise Error, "Endereço inválido."
+      raise Error, I18n.t("automations.ha_import.bad_url")
     end
 
     # Página do GitHub/gist → texto puro; tópico da comunidade → JSON do tópico.
@@ -62,27 +62,27 @@ module Blueprints
     end
 
     def self.get(uri, hops = 3)
-      raise Error, "Endereço fora dos permitidos." unless uri.is_a?(URI::HTTPS) && HOSTS.include?(uri.host)
+      raise Error, I18n.t("automations.ha_import.host_not_allowed") unless uri.is_a?(URI::HTTPS) && HOSTS.include?(uri.host)
 
       res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 10, read_timeout: 10) { |http| http.get(uri.request_uri) }
       return get(URI(res["location"]), hops - 1) if res.is_a?(Net::HTTPRedirection) && hops.positive?
-      raise Error, "O endereço respondeu #{res.code}." unless res.is_a?(Net::HTTPSuccess)
-      raise Error, "Arquivo grande demais." if res.body.to_s.bytesize > MAX_BYTES
+      raise Error, I18n.t("automations.ha_import.http_status", code: res.code) unless res.is_a?(Net::HTTPSuccess)
+      raise Error, I18n.t("automations.ha_import.file_too_big") if res.body.to_s.bytesize > MAX_BYTES
 
       res.body.to_s.force_encoding("UTF-8")
     rescue SocketError, Timeout::Error, SystemCallError, OpenSSL::SSL::SSLError => e
-      raise Error, "Não consegui baixar: #{e.message.truncate(80)}"
+      raise Error, I18n.t("automations.ha_import.download_failed", error: e.message.truncate(80))
     end
 
     # Primeiro bloco de código com "blueprint:" do primeiro post.
     def self.community_yaml(json)
       cooked = JSON.parse(json).dig("post_stream", "posts", 0, "cooked").to_s
       code = cooked.scan(%r{<code[^>]*>(.*?)</code>}m).flatten.find { |c| c.include?("blueprint:") }
-      raise Error, "Não achei o YAML do blueprint no tópico." unless code
+      raise Error, I18n.t("automations.ha_import.no_yaml_in_topic") unless code
 
       CGI.unescapeHTML(code)
     rescue JSON::ParserError
-      raise Error, "Resposta da comunidade inválida."
+      raise Error, I18n.t("automations.ha_import.bad_community")
     end
 
     # ---- conversão --------------------------------------------------------------
@@ -112,8 +112,8 @@ module Blueprints
       return [ importer.call ] if doc.is_a?(Hash) && doc.key?("blueprint")
 
       items = ha_items(doc)
-      raise Error, "Não achei blueprint, automação nem script do Home Assistant no YAML." if items.empty?
-      raise Error, "Itens demais (máximo #{MAX_ITEMS} por vez)." if items.size > MAX_ITEMS
+      raise Error, I18n.t("automations.ha_import.nothing_found") if items.empty?
+      raise Error, I18n.t("automations.ha_import.too_many", max: MAX_ITEMS) if items.size > MAX_ITEMS
 
       items.map { |domain, name, body| new("", source_url, entities: true).convert(as_blueprint(domain, name, body)) }
     end
@@ -185,17 +185,17 @@ module Blueprints
     # → atributos do Blueprint (com `unsupported`).
     def call
       doc = parse
-      raise Error, "O YAML precisa ser um objeto." unless doc.is_a?(Hash)
+      raise Error, I18n.t("automations.ha_import.not_object") unless doc.is_a?(Hash)
 
       convert(doc)
     end
 
     def convert(doc)
       bp = doc["blueprint"]
-      raise Error, "Não parece um blueprint do Home Assistant (falta a chave blueprint)." unless bp.is_a?(Hash)
+      raise Error, I18n.t("automations.ha_import.not_blueprint") unless bp.is_a?(Hash)
 
       domain = bp["domain"].to_s
-      raise Error, "Domínio \"#{domain}\" não suportado (só automation e script)." unless %w[automation script].include?(domain)
+      raise Error, I18n.t("automations.ha_import.bad_domain", domain: domain) unless %w[automation script].include?(domain)
 
       convert_inputs(bp["input"])
       @consts = doc["variables"].is_a?(Hash) ? doc["variables"].select { |_, v| v.is_a?(String) && !v.include?("{") }.transform_keys(&:to_s) : {}
@@ -214,8 +214,8 @@ module Blueprints
 
     # `!input nome` vira `{"!input": "nome"}` antes do YAML seguro.
     def parse
-      raise Error, "Cole o YAML do blueprint." if @text.strip.empty?
-      raise Error, "YAML grande demais." if @text.bytesize > MAX_BYTES
+      raise Error, I18n.t("automations.ha_import.paste_yaml") if @text.strip.empty?
+      raise Error, I18n.t("automations.ha_import.yaml_too_big") if @text.bytesize > MAX_BYTES
 
       yaml = @text.gsub(/!input\s+(['"]?)([\w.-]+)\1/) { %({"!input": "#{::Regexp.last_match(2)}"}) }
       YAML.safe_load(yaml, aliases: false)

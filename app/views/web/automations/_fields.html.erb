@@ -1,8 +1,8 @@
 <%# locals: (automation:, points:) -%>
 <% by_id = points.index_by(&:id) %>
 <section id="campos" class="ss-card ss-card-pad scroll-mt-24" aria-labelledby="sec-fields">
-  <h2 id="sec-fields">Campos</h2>
-  <p class="text-sm text-muted mb-3">O que quem chama o script informa. Na sequência: <code>{{ nome }}</code> no texto, <code>nome</code> na expressão, <code>$nome</code> no ponto.</p>
+  <h2 id="sec-fields"><%= t("automations.fields.title") %></h2>
+  <p class="text-sm text-muted mb-3"><%= t("automations.fields.hint_html") %></p>
   <% if automation.fields.any? %>
     <ul class="grid gap-2 mb-3">
       <% automation.fields.each_with_index do |fd, i| %>
@@ -11,8 +11,8 @@
             <summary class="ss-summary flex-wrap !items-baseline gap-x-2 gap-y-0.5">
               <span class="font-semibold text-ink"><%= fd["label"] %></span>
               <code class="text-sm text-muted"><%= fd["name"] %></code>
-              <span class="text-sm text-muted"><%= [ Automation::FIELD_TYPES[fd["type"]], ("obrigatório" if fd["required"]),
-                                                     ("padrão #{fd['type'] == 'point' ? by_id[fd['default']]&.name : { true => 'sim', false => 'não' }.fetch(fd['default'], fd['default'])}" unless fd["default"].nil?) ].compact.join(" · ") %></span>
+              <span class="text-sm text-muted"><%= [ Automation::FIELD_TYPES[fd["type"]], (t("automations.fields.required") if fd["required"]),
+                                                     (t("automations.fields.default", value: fd["type"] == "point" ? by_id[fd["default"]]&.name : { true => t("automations.helper.yes"), false => t("automations.helper.no") }.fetch(fd["default"], fd["default"])) unless fd["default"].nil?) ].compact.join(" · ") %></span>
             </summary>
             <%= render "web/automations/field_form", automation: automation, fd: fd, index: i, points: by_id %>
           </details>
@@ -22,7 +22,7 @@
   <% end %>
   <% if can?(:manage) %>
     <details <%= "open" if automation.fields.empty? %>>
-      <summary class="cursor-pointer ss-btn ss-btn-ghost ss-btn-sm w-fit"><%= icon("plus", "size-4") %>Adicionar campo</summary>
+      <summary class="cursor-pointer ss-btn ss-btn-ghost ss-btn-sm w-fit"><%= icon("plus", "size-4") %><%= t("automations.fields.add") %></summary>
       <%= render "web/automations/field_form", automation: automation, fd: {}, index: nil, points: by_id %>
     </details>
   <% end %>

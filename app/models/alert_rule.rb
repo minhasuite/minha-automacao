@@ -9,8 +9,8 @@ class AlertRule < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  OPERATORS = { "eq" => "igual a", "ne" => "diferente de", "gt" => "maior que", "lt" => "menor que" }.freeze
-  SEVERITIES = { "info" => "Informação", "warning" => "Atenção", "critical" => "Crítico" }.freeze
+  OPERATORS = LocalizedLabel.for("automations.labels.alert_operators", %w[eq ne gt lt])
+  SEVERITIES = LocalizedLabel.for("automations.labels.alert_severities", %w[info warning critical])
 
   belongs_to :site
   belongs_to :point
@@ -27,8 +27,8 @@ class AlertRule < ApplicationRecord
   validates :for_s, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :repeat_s, numericality: { only_integer: true, greater_than_or_equal_to: 60 }, allow_nil: true
   validate :escalation_fits
-  validate { errors.add(:point, "precisa ser deste local") if point && point.site_id != site_id }
-  validate { errors.add(:value, "precisa ser número para maior/menor") if operator.in?(%w[gt lt]) && !value.is_a?(Numeric) }
+  validate { errors.add(:point, :other_site) if point && point.site_id != site_id }
+  validate { errors.add(:value, :not_number) if operator.in?(%w[gt lt]) && !value.is_a?(Numeric) }
 
   normalizes :name, with: ->(v) { v.to_s.squish }
 
@@ -98,7 +98,7 @@ class AlertRule < ApplicationRecord
     ok = escalation.all? do |s|
       s["wait_s"].is_a?(Integer) && s["wait_s"] >= 0 && Notifier.valid_channels?(s["channels"])
     end
-    errors.add(:escalation, "precisa de etapas com espera (≥ 0) e canais válidos") unless ok
+    errors.add(:escalation, :invalid_steps) unless ok
   end
 
   def reevaluate

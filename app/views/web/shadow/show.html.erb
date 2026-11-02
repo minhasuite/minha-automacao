@@ -1,50 +1,50 @@
-<%= render "web/shared/header", title: "Sombra", subtitle: "#{@site.name} · o que as automações em sombra teriam feito", back: site_automations_path(@site) %>
+<%= render "web/shared/header", title: t("automations.tabs.shadow"), subtitle: t("automations.shadow_page.subtitle", site: @site.name), back: site_automations_path(@site) %>
 <%= render "web/automations/tabs", site: @site, current: :shadow %>
 
 <section class="ss-card ss-card-pad mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center" aria-labelledby="shadow-state">
   <div class="min-w-0">
-    <h2 id="shadow-state" class="flex items-center gap-2"><%= icon("moon", "size-5 text-accent") %><%= @site_shadow ? "Local em sombra" : "Sombra por automação" %></h2>
+    <h2 id="shadow-state" class="flex items-center gap-2"><%= icon("moon", "size-5 text-accent") %><%= @site_shadow ? t("automations.shadow_page.site_on") : t("automations.shadow_page.per_automation") %></h2>
     <p class="text-sm text-ink-2 mt-1">
       <% if @site_shadow %>
-        As automações, scripts, cenas e regras do local disparam com os eventos reais, mas nenhum aparelho recebe comando e nenhum aviso, fala, chamada HTTP ou IA sai. Helpers e scripts rodam (são internos).
+        <%= t("automations.shadow_page.site_hint") %>
       <% else %>
-        Só as automações, scripts e cenas marcados "Em sombra" ficam segurados.
+        <%= t("automations.shadow_page.per_hint") %>
       <% end %>
     </p>
-    <p class="text-sm mt-2"><span class="ss-badge ss-badge-accent"><%= @in_shadow %> em sombra</span>
-      <span class="ss-badge <%= 'ss-badge-warn' if @live.positive? %>"><%= @live %> ligada(s) fora da sombra</span></p>
+    <p class="text-sm mt-2"><span class="ss-badge ss-badge-accent"><%= t("automations.shadow_page.in_shadow", count: @in_shadow) %></span>
+      <span class="ss-badge <%= 'ss-badge-warn' if @live.positive? %>"><%= t("automations.shadow_page.live", count: @live) %></span></p>
   </div>
   <% if can?(:admin) %>
     <%= button_to site_shadow_path(@site), method: :patch, params: { shadow: !@site.shadow }, class: "ss-btn #{@site.shadow ? 'ss-btn-outline' : 'ss-btn-primary'}",
-                  form: { data: { turbo_confirm: (@site.shadow ? "Tirar o local da sombra? As automações ligadas e sem a marca \"Em sombra\" passam a comandar aparelhos de verdade." : "Pôr o local inteiro em sombra?"), turbo_confirm_button: "Confirmar" } } do %>
-      <%= icon("moon", "size-4") %><%= @site.shadow ? "Tirar o local da sombra" : "Pôr o local em sombra" %>
+                  form: { data: { turbo_confirm: (@site.shadow ? t("automations.shadow_page.off_confirm") : t("automations.shadow_page.on_confirm")), turbo_confirm_button: t("automations.shadow_page.confirm") } } do %>
+      <%= icon("moon", "size-4") %><%= @site.shadow ? t("automations.shadow_page.turn_off") : t("automations.shadow_page.turn_on") %>
     <% end %>
   <% end %>
 </section>
 
 <div class="grid gap-6 lg:grid-cols-3 items-start">
   <div class="lg:col-span-2 min-w-0">
-    <h2 class="mb-2">Teria feito</h2>
+    <h2 class="mb-2"><%= t("automations.shadow_page.would") %></h2>
     <%= form_with url: site_shadow_path(@site), method: :get, class: "mb-3 grid gap-3 grid-cols-2 sm:flex sm:flex-wrap sm:items-end", role: "search" do %>
-      <div class="col-span-2 min-w-0 sm:min-w-48 sm:flex-1"><label for="automacao" class="ss-label">Automação ou script</label>
-        <%= select_tag :automacao, options_for_select(@origins, params[:automacao]), include_blank: "Todas", class: "ss-input", data: { autosubmit: true } %></div>
-      <div><label for="tipo" class="ss-label">Tipo de ação</label>
-        <%= select_tag :tipo, options_for_select(@types.map { |t| [ shadow_action_label(t), t ] }, params[:tipo]), include_blank: "Todos", class: "ss-input", data: { autosubmit: true } %></div>
-      <div><label for="horas" class="ss-label">Período</label>
+      <div class="col-span-2 min-w-0 sm:min-w-48 sm:flex-1"><label for="automacao" class="ss-label"><%= t("automations.shadow_page.origin") %></label>
+        <%= select_tag :automacao, options_for_select(@origins, params[:automacao]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div>
+      <div><label for="tipo" class="ss-label"><%= t("automations.shadow_page.action_type") %></label>
+        <%= select_tag :tipo, options_for_select(@types.map { |ty| [ shadow_action_label(ty), ty ] }, params[:tipo]), include_blank: t("automations.index.all_m"), class: "ss-input", data: { autosubmit: true } %></div>
+      <div><label for="horas" class="ss-label"><%= t("automations.shadow_page.period") %></label>
         <%= select_tag :horas, options_for_select(Web::ShadowController::WINDOWS.invert, @hours), class: "ss-input", data: { autosubmit: true } %></div>
-      <button type="submit" class="ss-btn ss-btn-ghost hidden sm:inline-flex" aria-label="Filtrar"><%= icon("filter", "size-4") %></button>
+      <button type="submit" class="ss-btn ss-btn-ghost hidden sm:inline-flex" aria-label="<%= t("automations.shadow_page.filter") %>"><%= icon("filter", "size-4") %></button>
     <% end %>
 
     <% if @actions.empty? %>
-      <div class="ss-card ss-empty"><p class="font-bold text-ink">Nada segurado nesse período.</p>
-        <p class="mt-1">Quando uma automação em sombra disparar, cada comando, aviso ou chamada que ela faria aparece aqui.</p></div>
+      <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.shadow_page.empty") %></p>
+        <p class="mt-1"><%= t("automations.shadow_page.empty_hint") %></p></div>
     <% else %>
-      <ol class="ss-card ss-rows" aria-label="Linha do tempo da sombra">
+      <ol class="ss-card ss-rows" aria-label="<%= t("automations.shadow_page.timeline") %>">
         <% @actions.each do |a| %>
           <li id="shadow-<%= a.id %>">
             <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= a.executed ? 'bg-accent-soft text-muted' : 'ss-grad' %>"><%= icon(a.executed ? "check-circle" : "moon") %></span>
             <div class="min-w-0 flex-1 basis-48">
-              <p class="font-bold text-ink break-words"><%= a.executed ? "Fez (interno): " : "Teria feito: " %><%= a.title %></p>
+              <p class="font-bold text-ink break-words"><%= a.executed ? t("automations.shadow_page.did") : t("automations.shadow_page.would_have") %> <%= a.title %></p>
               <p class="text-sm text-muted break-words">
                 <% if a.automation %><%= link_to a.origin_name, automation_automation_runs_path(a.automation) %><% else %><%= a.origin_name %><% end %>
                 · <%= a.origin_kind.downcase %> · <%= shadow_action_label(a.action).downcase %></p>
@@ -60,22 +60,22 @@
 
   <aside class="grid gap-4 min-w-0">
     <section class="ss-card ss-card-pad" aria-labelledby="shadow-compare">
-      <h2 id="shadow-compare">Comparar com a referência</h2>
-      <% if @sources.empty? %><p class="text-sm text-muted mt-1">Nenhuma fonte de referência no catálogo.</p><% end %>
+      <h2 id="shadow-compare"><%= t("automations.shadow_page.compare") %></h2>
+      <% if @sources.empty? %><p class="text-sm text-muted mt-1"><%= t("automations.shadow_page.no_sources") %></p><% end %>
       <% @sources.each do |plugin, integration| %>
         <% if integration %>
           <%= form_with url: compare_site_shadow_path(@site), class: "grid gap-2 mt-2" do %>
             <%= hidden_field_tag :fonte, plugin.key, id: nil %>
-            <label class="ss-label" for="horas-<%= plugin.key %>"><%= plugin.title %>: janela</label>
+            <label class="ss-label" for="horas-<%= plugin.key %>"><%= t("automations.shadow_page.window", name: plugin.title) %></label>
             <%= select_tag :horas, options_for_select(Web::ShadowController::WINDOWS.invert, "24"), class: "ss-input", id: "horas-#{plugin.key}" %>
-            <% if can?(:manage) %><button class="ss-btn ss-btn-primary"><%= icon("refresh", "size-4") %>Comparar agora</button><% end %>
+            <% if can?(:manage) %><button class="ss-btn ss-btn-primary"><%= icon("refresh", "size-4") %><%= t("automations.shadow_page.compare_now") %></button><% end %>
           <% end %>
         <% else %>
-          <p class="text-sm text-muted mt-1"><%= plugin.title %>: conecte em <%= link_to "Integrações", site_integrations_path(@site) %> para comparar sozinho a cada 6 h.</p>
+          <p class="text-sm text-muted mt-1"><%= t("automations.shadow_page.connect_html", name: plugin.title, link: link_to(t("automations.shadow_page.integrations"), site_integrations_path(@site))) %></p>
         <% end %>
       <% end %>
       <% if @reports.any? %>
-        <ul class="mt-3 grid gap-2 text-sm" aria-label="Comparações">
+        <ul class="mt-3 grid gap-2 text-sm" aria-label="<%= t("automations.shadow_page.comparisons") %>">
           <% @reports.each do |r| %>
             <li><%= link_to report_site_shadow_path(@site, r.id), class: "flex flex-wrap gap-x-2 no-underline" do %>
                 <span class="num text-ink"><%= l(r.created_at.in_time_zone(@site.timezone), format: "%d/%m %H:%M") %></span>
@@ -87,15 +87,15 @@
     </section>
 
     <section class="ss-card ss-card-pad" aria-labelledby="shadow-map">
-      <h2 id="shadow-map">De-para da migração</h2>
+      <h2 id="shadow-map"><%= t("automations.shadow_page.mapping") %></h2>
       <% if @refs.empty? %>
-        <p class="text-sm text-muted mt-1">Sem migração importada (veja o guia de migração).</p>
+        <p class="text-sm text-muted mt-1"><%= t("automations.shadow_page.no_migration") %></p>
       <% else %>
         <table class="ss-table mt-2 text-sm"><tbody>
           <% @refs.sort.each do |(source, kind), n| %><tr><td><%= source %></td><td><%= kind %></td><td class="num r"><%= n %></td></tr><% end %>
         </tbody></table>
         <% if @unmapped.any? %>
-          <details class="mt-2 text-sm"><summary class="ss-summary">Sem par aqui (<%= @unmapped.size %>)</summary>
+          <details class="mt-2 text-sm"><summary class="ss-summary"><%= t("automations.shadow_page.unmapped", count: @unmapped.size) %></summary>
             <ul class="mt-1 grid gap-1"><% @unmapped.each do |r| %><li class="break-words"><code><%= r.external_id %></code> <span class="text-muted"><%= r.note %></span></li><% end %></ul>
           </details>
         <% end %>

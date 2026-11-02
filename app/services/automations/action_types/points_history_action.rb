@@ -9,22 +9,36 @@ module Automations
     # em kWh) é do dia mais recente para trás; `median_prev` é a mediana dos
     # dias anteriores ao mais recente que tiveram consumo.
     class PointsHistoryAction < Base
-      OPS = { "energy_kwh" => "Consumo (kWh)", "changes" => "Vezes que foi para o valor", "on_minutes" => "Tempo ligado (min)" }.freeze
-      PERIODS = { "days" => "Últimos dias completos (até ontem)", "this_month" => "Este mês até agora", "last_month" => "Mês passado" }.freeze
+      OPS = %w[energy_kwh changes on_minutes].freeze
+      PERIODS = %w[days this_month last_month].freeze
+      def self.ops = OPS.index_with { |k| text("ops.#{k}") }
+      def self.periods = PERIODS.index_with { |k| text("periods.#{k}") }
       MAX_POINTS = 100
 
       def self.shadow_safe?(_e, _node) = true
 
       describe key: "points_history", label: "Resumo do histórico de pontos",
                defaults: { "op" => "energy_kwh", "period" => "days", "last_days" => 8, "response_variable" => "historico" },
-               fields: [ f("query", :template, "Pontos (consulta, ex.: device_class=energy)", required: true),
-                         f("op", :select, "Resumo", required: true, options: OPS), f("period", :select, "Período", required: true, options: PERIODS),
-                         f("last_days", :number, "Dias (no período por dias)"), f("to", :text, "Valor (nas vezes; vazio = ligado/aberto)") ]
+               fields: [ f("query", :template, "Pontos (consulta, ex.: device_class=energy)", required: true,
+                           en: "Points (query, e.g. device_class=energy)", es: "Puntos (consulta, ej.: device_class=energy)"),
+                         f("op", :select, "Resumo", required: true, options: -> { ops }, en: "Summary", es: "Resumen"),
+                         f("period", :select, "Período", required: true, options: -> { periods }, en: "Period", es: "Período"),
+                         f("last_days", :number, "Dias (no período por dias)", en: "Days (for the days period)", es: "Días (en el período por días)"),
+                         f("to", :text, "Valor (nas vezes; vazio = ligado/aberto)", en: "Value (for times; empty = on/open)", es: "Valor (en las veces; vacío = encendido/abierto)") ]
       returns "{total, count, points: [{key, name, device, total, days, last, median_prev, prev_days}]}"
+      texts "pt-BR" => { days: "dias de 1 a 62.",
+                         ops: { energy_kwh: "Consumo (kWh)", changes: "Vezes que foi para o valor", on_minutes: "Tempo ligado (min)" },
+                         periods: { days: "Últimos dias completos (até ontem)", this_month: "Este mês até agora", last_month: "Mês passado" } },
+            en: { label: "Point history summary", days: "days from 1 to 62.",
+                  ops: { energy_kwh: "Consumption (kWh)", changes: "Times it went to the value", on_minutes: "Time on (min)" },
+                  periods: { days: "Last full days (through yesterday)", this_month: "This month so far", last_month: "Last month" } },
+            es: { label: "Resumen del historial de puntos", days: "días de 1 a 62.",
+                  ops: { energy_kwh: "Consumo (kWh)", changes: "Veces que llegó al valor", on_minutes: "Tiempo encendido (min)" },
+                  periods: { days: "Últimos días completos (hasta ayer)", this_month: "Este mes hasta ahora", last_month: "Mes pasado" } }
 
       def self.rules(node)
         msgs = Dsl.template?(node["query"].to_s) ? [] : [ Points::Query.error(node["query"]) ].compact
-        msgs << "dias de 1 a 62." if node["last_days"] && !(node["last_days"].is_a?(Integer) && node["last_days"].between?(1, 62))
+        msgs << text(:days) if node["last_days"] && !(node["last_days"].is_a?(Integer) && node["last_days"].between?(1, 62))
         msgs
       end
 
@@ -33,7 +47,7 @@ module Automations
         from, to = bounds(node, e.ctx.now.in_time_zone(ActiveSupport::TimeZone[e.ctx.site.timezone]))
         rows = points.map { |p| row(p, node, e.ctx.site, from, to) }.sort_by { |r| -r["total"] }
         respond(e, node, { "total" => rows.sum { |r| r["total"] }.round(2), "count" => rows.size, "points" => rows })
-        [ "#{OPS[node['op']]}: #{rows.size} ponto(s)", "ok", "#{I18n.l(from, format: '%d/%m %H:%M')} a #{I18n.l(to, format: '%d/%m %H:%M')}" ]
+        [ "#{ops[node['op']]}: #{rows.size} ponto(s)", "ok", "#{I18n.l(from, format: '%d/%m %H:%M')} a #{I18n.l(to, format: '%d/%m %H:%M')}" ]
       rescue ArgumentError => ex
         raise Engine::Failure, ex.message
       end

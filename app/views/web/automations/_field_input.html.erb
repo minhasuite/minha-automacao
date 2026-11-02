@@ -1,12 +1,12 @@
 <%# locals: (fd:, name:, value:, id:, site:) -%>
 <%# Controle de um campo de script pelo tipo (formulário de executar e ação "Executar script"). %>
 <% if fd["type"] == "boolean" %>
-  <%= select_tag name, options_for_select([ %w[Sim true], %w[Não false] ], value.nil? ? nil : value.to_s), include_blank: (fd["required"] ? false : "Padrão"), class: "ss-input", id: id %>
+  <%= select_tag name, options_for_select([ [ t("automations.helper.yes_cap"), "true" ], [ t("automations.helper.no_cap"), "false" ] ], value.nil? ? nil : value.to_s), include_blank: (fd["required"] ? false : t("automations.fields.default_blank")), class: "ss-input", id: id %>
 <% elsif fd["type"] == "select" %>
-  <%= select_tag name, options_for_select(Array(fd["options"]), value), include_blank: (fd["required"] ? false : "Padrão"), class: "ss-input", id: id %>
+  <%= select_tag name, options_for_select(Array(fd["options"]), value), include_blank: (fd["required"] ? false : t("automations.fields.default_blank")), class: "ss-input", id: id %>
 <% elsif fd["type"] == "point" %>
   <% groups = site.points.includes(:device).ordered.group_by { |p| p.device.name }.sort.map { |dev, ps| [ dev, ps.map { |p| [ p.name, p.id ] } ] } %>
-  <%= select_tag name, grouped_options_for_select(groups, value), include_blank: "Escolha o ponto", class: "ss-input", id: id %>
+  <%= select_tag name, grouped_options_for_select(groups, value), include_blank: t("automations.fields.pick_point"), class: "ss-input", id: id %>
 <% elsif fd["type"] == "number" %>
   <%= text_field_tag name, value, class: "ss-input num", id: id, inputmode: "decimal", required: fd["required"] && fd["default"].nil? %>
 <% else %>

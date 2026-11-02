@@ -4,28 +4,28 @@
 <% noun = @automation.kind_label.downcase %>
 <% risk = @automation.max_risk(@draft) %>
 <% critical = risk == "critical" %>
-<% status = [ (@automation.published? ? "versão #{@automation.version} publicada" : "nunca publicada"), (@automation.enabled ? "ligada" : "desligada" unless script), ("rascunho com mudanças" if @automation.draft?) ].compact %>
+<% status = [ (@automation.published? ? t("automations.edit.version_published", version: @automation.version) : t("automations.edit.never_published")), (@automation.enabled ? t("automations.edit.on") : t("automations.edit.off") unless script), (t("automations.edit.draft_changes") if @automation.draft?) ].compact %>
 <%= render "web/shared/header", title: @automation.name, subtitle: "#{@site.name} · #{noun} · #{status.join(' · ')}", back: (script ? site_scripts_path(@site) : site_automations_path(@site)) do %>
-  <%= link_to simulate_automation_path(@automation), class: "ss-btn ss-btn-outline" do %><%= icon("eye", "size-4") %>Simular<% end %>
+  <%= link_to simulate_automation_path(@automation), class: "ss-btn ss-btn-outline" do %><%= icon("eye", "size-4") %><%= t("automations.edit.simulate") %><% end %>
   <% if @automation.published? %>
     <% if script && @automation.fields.any? %>
-      <%= link_to run_automation_path(@automation), class: "ss-btn ss-btn-outline" do %><%= icon("play", "size-4") %>Executar<% end %>
+      <%= link_to run_automation_path(@automation), class: "ss-btn ss-btn-outline" do %><%= icon("play", "size-4") %><%= t("automations.edit.run") %><% end %>
     <% else %>
       <% run_risk = @automation.max_risk(@automation.definition) %>
       <%= button_to run_automation_path(@automation), params: { confirm_critical: (run_risk == "critical" ? "1" : nil) }.compact, class: "ss-btn ss-btn-outline",
-                    form: { data: { turbo_confirm: "Executar agora a versão #{@automation.version}#{', sem checar as condições' unless script}?#{' Comanda ponto crítico.' if run_risk == 'critical'}", turbo_confirm_button: "Executar" } } do %><%= icon(script ? "play" : "lightning-bolt", "size-4") %><%= script ? "Executar" : "Executar agora" %><% end %>
+                    form: { data: { turbo_confirm: t(script ? "automations.edit.run_confirm_script" : "automations.edit.run_confirm", version: @automation.version) + (run_risk == "critical" ? t("automations.edit.run_critical") : ""), turbo_confirm_button: t("automations.edit.run") } } do %><%= icon(script ? "play" : "lightning-bolt", "size-4") %><%= script ? t("automations.edit.run") : t("automations.edit.run_now") %><% end %>
     <% end %>
   <% end %>
-  <% why = (@errors.any? ? "Corrija o que falta para publicar" : ("Sem mudanças para publicar" if @automation.published? && !@automation.draft?)) %>
+  <% why = (@errors.any? ? t("automations.edit.why_errors") : (t("automations.edit.why_no_changes") if @automation.published? && !@automation.draft?)) %>
   <%= button_to publish_automation_path(@automation), params: { confirm_critical: (critical ? "1" : nil) }.compact, class: "ss-btn ss-btn-primary", disabled: why.present?, title: why, "aria-describedby": ("publish-why" if why),
-                form: { data: { turbo_confirm: "Publicar o rascunho como versão #{@automation.version + 1}?#{' Comanda ponto crítico (portão, sirene...).' if critical}", turbo_confirm_button: "Publicar" } } do %><%= icon("upload", "size-4") %>Publicar<% end %>
+                form: { data: { turbo_confirm: t("automations.edit.publish_confirm", version: @automation.version + 1) + (critical ? t("automations.edit.publish_critical") : ""), turbo_confirm_button: t("automations.edit.publish") } } do %><%= icon("upload", "size-4") %><%= t("automations.edit.publish") %><% end %>
   <% if why %><p id="publish-why" class="basis-full text-right text-xs text-muted sm:basis-auto"><%= why %></p><% end %>
 <% end %>
 
 <% if flash[:webhook_url] %>
   <div id="webhook" class="ss-card ss-card-pad mb-4 border border-accent" role="status">
-    <p class="font-bold text-ink">Endereço do webhook (aparece só agora)</p>
-    <p class="text-sm text-muted">POST com JSON; o corpo chega em <code>trigger.data</code>. Gerar de novo invalida este.</p>
+    <p class="font-bold text-ink"><%= t("automations.edit.webhook_once") %></p>
+    <p class="text-sm text-muted"><%= t("automations.edit.webhook_hint_html") %></p>
     <code class="block mt-2 break-all text-sm"><%= flash[:webhook_url] %></code>
   </div>
 <% end %>
@@ -33,16 +33,16 @@
 <% if Shadow.active?(@automation) %>
   <div class="rounded-xl bg-accent-soft p-3 mb-4 text-sm flex flex-wrap items-center gap-3" role="status">
     <p class="flex-1 min-w-48 text-ink"><%= icon("moon", "size-5 inline text-accent") %>
-      <strong>Em sombra<%= " (o local inteiro)" if !@automation.shadow %>.</strong> Dispara com os eventos reais, mas nenhum aparelho recebe comando e nenhum aviso, fala, HTTP ou IA sai. O que ela teria feito fica na linha do tempo.</p>
-    <%= link_to site_shadow_path(@site, automacao: @automation.id), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("moon", "size-4") %>Ver o que teria feito<% end %>
+      <strong><%= t("automations.common.in_shadow") %><%= t("automations.edit.whole_site") if !@automation.shadow %>.</strong> <%= t("automations.edit.shadow_hint") %></p>
+    <%= link_to site_shadow_path(@site, automacao: @automation.id), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("moon", "size-4") %><%= t("automations.edit.would_have_done") %><% end %>
   </div>
 <% end %>
 
 <% if @automation.blueprint_outdated? %>
   <div class="rounded-xl bg-accent-soft p-3 mb-4 text-sm flex flex-wrap items-center gap-3" role="status">
     <p class="flex-1 min-w-48 text-ink"><%= icon("information-circle", "size-5 inline text-accent") %>
-      O blueprint <%= link_to @automation.blueprint.name, blueprint_path(@automation.blueprint) %> mudou (versão <%= @automation.blueprint.version %>). O rascunho foi refeito com as mesmas entradas: revise e publique.</p>
-    <%= button_to rebuild_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents" } do %><%= icon("refresh", "size-4") %>Refazer rascunho<% end %>
+      <%= t("automations.edit.blueprint_changed_html", blueprint: link_to(@automation.blueprint.name, blueprint_path(@automation.blueprint)), version: @automation.blueprint.version) %></p>
+    <%= button_to rebuild_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents" } do %><%= icon("refresh", "size-4") %><%= t("automations.edit.rebuild") %><% end %>
   </div>
 <% end %>
 
@@ -50,46 +50,46 @@
   <div class="lg:col-span-2 flex flex-col gap-4 min-w-0 ss-flow">
     <% if @errors.any? %>
       <div class="rounded-xl bg-warn-soft p-3 text-sm" role="status">
-        <p class="font-bold text-ink flex items-center gap-2"><%= icon("exclamation-circle", "size-5 text-warn") %>Falta para publicar</p>
+        <p class="font-bold text-ink flex items-center gap-2"><%= icon("exclamation-circle", "size-5 text-warn") %><%= t("automations.edit.missing") %></p>
         <ul class="list-disc pl-5 mt-1 text-ink-2"><% @errors.first(8).each do |e| %><li><%= e %></li><% end %></ul>
       </div>
     <% end %>
     <% if critical %>
-      <p class="rounded-xl bg-danger-soft text-danger p-3 text-sm font-semibold flex gap-2"><%= icon("exclamation-circle", "size-5 shrink-0") %>Comanda ponto crítico. Publicar e executar pedem confirmação.</p>
+      <p class="rounded-xl bg-danger-soft text-danger p-3 text-sm font-semibold flex gap-2"><%= icon("exclamation-circle", "size-5 shrink-0") %><%= t("automations.edit.critical") %></p>
     <% end %>
 
     <% if script %><%= render "web/automations/fields", automation: @automation, points: points %><% end %>
 
     <% (script ? [ :actions ] : Automations::Dsl::KINDS).each do |kind| %>
       <section class="ss-card ss-card-pad" aria-labelledby="sec-<%= kind %>">
-        <h2 id="sec-<%= kind %>" class="ss-flow-step"><%= script ? "Sequência" : AutomationsHelper::KIND_TITLES[kind] %></h2>
-        <p class="text-sm text-muted mb-3"><%= script ? "Ações em ordem. Use os campos como {{ nome }} nos textos e expressões, ou $nome no ponto." : AutomationsHelper::KIND_HINTS[kind] %></p>
+        <h2 id="sec-<%= kind %>" class="ss-flow-step"><%= script ? t("automations.edit.sequence") : t("automations.kind_titles.#{kind}") %></h2>
+        <p class="text-sm text-muted mb-3"><%= script ? t("automations.edit.sequence_hint") : t("automations.kind_hints.#{kind}") %></p>
         <%= render "web/automations/list", list: Array(@draft[kind.to_s]), path: kind.to_s, kind: kind, points: by_id, automation: @automation %>
       </section>
     <% end %>
   </div>
 
   <aside class="flex flex-col gap-4 min-w-0">
-    <section class="ss-card ss-card-pad" aria-label="Situação">
-      <h2>Situação</h2>
+    <section class="ss-card ss-card-pad" aria-label="<%= t("automations.edit.status") %>">
+      <h2><%= t("automations.edit.status") %></h2>
       <p class="text-sm text-muted mt-1"><%= last_run_text(@automation) %><% if @automation.last_error.present? %> · <span class="text-danger"><%= @automation.last_error %></span><% end %></p>
       <div class="flex flex-wrap gap-2 mt-3">
         <% if script %>
-          <p class="text-sm text-muted w-full">Chame pela ação "Executar script", pelo painel (ponto <code><%= Scripts.point_for(@automation)&.key %></code>), pela API ou pelo botão Executar.</p>
+          <p class="text-sm text-muted w-full"><%= t("automations.edit.script_how_html", key: Scripts.point_for(@automation)&.key) %></p>
         <% elsif @automation.published? %>
-          <%= button_to (@automation.enabled ? "Desligar" : "Ligar"), automation_path(@automation), method: :patch, params: { automation: { enabled: !@automation.enabled } },
+          <%= button_to (@automation.enabled ? t("automations.common.turn_off") : t("automations.common.turn_on")), automation_path(@automation), method: :patch, params: { automation: { enabled: !@automation.enabled } },
                         class: "ss-btn ss-btn-sm #{@automation.enabled ? 'ss-btn-ghost' : 'ss-btn-primary'}", form: { class: "contents" } %>
         <% else %>
-          <p class="text-sm text-muted">Publique para poder ligar.</p>
+          <p class="text-sm text-muted"><%= t("automations.edit.publish_to_enable") %></p>
         <% end %>
-        <%= link_to automation_automation_runs_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("view-list", "size-4") %>Execuções<% end %>
+        <%= link_to automation_automation_runs_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("view-list", "size-4") %><%= t("automations.common.runs") %><% end %>
       </div>
     </section>
 
     <% if @automation.blueprint %>
       <section class="ss-card ss-card-pad" aria-label="Blueprint">
         <h2>Blueprint</h2>
-        <p class="text-sm text-muted mt-1">Criada de <%= link_to @automation.blueprint.name, blueprint_path(@automation.blueprint) %>.</p>
+        <p class="text-sm text-muted mt-1"><%= t("automations.edit.created_from_html", blueprint: link_to(@automation.blueprint.name, blueprint_path(@automation.blueprint))) %></p>
         <ul class="text-sm mt-2 grid gap-1">
           <% @automation.blueprint.inputs.each do |input| %>
             <% v = @automation.blueprint_inputs.to_h[input["key"]] %>
@@ -100,34 +100,34 @@
     <% end %>
 
     <details class="ss-card ss-card-pad" <%= "open" if @automation.errors.any? %>>
-      <summary class="ss-summary font-bold text-ink">Nome e modo</summary>
+      <summary class="ss-summary font-bold text-ink"><%= t("automations.edit.name_mode") %></summary>
       <div class="mt-3"><%= render "web/automations/settings", automation: @automation, site: @site %></div>
     </details>
 
-    <% if Array(@draft["triggers"]).any? { |t| t["type"] == "webhook" } %>
+    <% if Array(@draft["triggers"]).any? { |tr| tr["type"] == "webhook" } %>
       <section class="ss-card ss-card-pad" aria-label="Webhook">
         <h2>Webhook</h2>
-        <p class="text-sm text-muted mt-1"><%= @automation.webhook_token.present? ? "Token gerado. Para ver o endereço, gere outro (o anterior deixa de valer)." : "Gere o endereço para chamar de fora (IA, scripts)." %></p>
+        <p class="text-sm text-muted mt-1"><%= @automation.webhook_token.present? ? t("automations.edit.webhook_has") : t("automations.edit.webhook_none") %></p>
         <%= button_to webhook_automation_path(@automation), class: "ss-btn ss-btn-outline ss-btn-sm mt-3",
-                      form: { data: (@automation.webhook_token.present? ? { turbo_confirm: "Gerar outro endereço? O atual para de funcionar." } : {}) } do %><%= icon("link", "size-4") %><%= @automation.webhook_token.present? ? "Gerar outro" : "Gerar endereço" %><% end %>
+                      form: { data: (@automation.webhook_token.present? ? { turbo_confirm: t("automations.edit.webhook_confirm") } : {}) } do %><%= icon("link", "size-4") %><%= @automation.webhook_token.present? ? t("automations.edit.webhook_again") : t("automations.edit.webhook_generate") %><% end %>
       </section>
     <% end %>
 
-    <section class="ss-card ss-card-pad" aria-label="Versões">
-      <h2>Versões</h2>
+    <section class="ss-card ss-card-pad" aria-label="<%= t("automations.edit.versions") %>">
+      <h2><%= t("automations.edit.versions") %></h2>
       <% versions = @automation.versions.includes(:author).limit(10).to_a %>
       <% if versions.empty? %>
-        <p class="text-sm text-muted mt-1">Nenhuma ainda.</p>
+        <p class="text-sm text-muted mt-1"><%= t("automations.edit.no_versions") %></p>
       <% else %>
         <ul class="mt-2 divide-y divide-line">
           <% versions.each do |v| %>
             <li class="py-2 flex items-center gap-2 text-sm">
-              <span class="flex-1 min-w-0"><span class="font-semibold text-ink">Versão <%= v.version %></span> · <%= l(v.created_at, format: :short) %><%= " · #{v.author.name}" if v.author %></span>
+              <span class="flex-1 min-w-0"><span class="font-semibold text-ink"><%= t("automations.edit.version", version: v.version) %></span> · <%= l(v.created_at, format: :short) %><%= " · #{v.author.name}" if v.author %></span>
               <% if v.version != @automation.version %>
-                <%= button_to "Voltar", revert_automation_path(@automation), params: { version: v.version, confirm_critical: (@automation.max_risk(v.definition) == "critical" ? "1" : nil) }.compact,
-                              class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents", data: { turbo_confirm: "Publicar de novo a versão #{v.version}?" } } %>
+                <%= button_to t("automations.edit.revert"), revert_automation_path(@automation), params: { version: v.version, confirm_critical: (@automation.max_risk(v.definition) == "critical" ? "1" : nil) }.compact,
+                              class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents", data: { turbo_confirm: t("automations.edit.revert_confirm", version: v.version) } } %>
               <% else %>
-                <span class="ss-badge ss-badge-success">Atual</span>
+                <span class="ss-badge ss-badge-success"><%= t("automations.edit.current") %></span>
               <% end %>
             </li>
           <% end %>
@@ -135,12 +135,12 @@
       <% end %>
     </section>
 
-    <section class="ss-card ss-card-pad flex flex-wrap gap-2" aria-label="Mais">
-      <%= link_to json_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("document-text", "size-4") %>JSON avançado<% end %>
+    <section class="ss-card ss-card-pad flex flex-wrap gap-2" aria-label="<%= t("automations.edit.more") %>">
+      <%= link_to json_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("document-text", "size-4") %><%= t("automations.edit.json") %><% end %>
       <% if @automation.draft? %>
-        <%= button_to discard_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents", data: { turbo_confirm: "Descartar as mudanças do rascunho?" } } do %><%= icon("reply", "size-4") %>Descartar rascunho<% end %>
+        <%= button_to discard_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents", data: { turbo_confirm: t("automations.edit.discard_confirm") } } do %><%= icon("reply", "size-4") %><%= t("automations.edit.discard") %><% end %>
       <% end %>
-      <%= button_to automation_path(@automation), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", form: { class: "contents", data: { turbo_confirm: "Excluir #{noun} #{@automation.name} com as versões e execuções?" } } do %><%= icon("trash", "size-4") %>Excluir<% end %>
+      <%= button_to automation_path(@automation), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", form: { class: "contents", data: { turbo_confirm: t("automations.edit.delete_confirm", noun: noun, name: @automation.name) } } do %><%= icon("trash", "size-4") %><%= t("automations.common.delete") %><% end %>
     </section>
   </aside>
 </div>

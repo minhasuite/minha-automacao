@@ -12,7 +12,7 @@ module Web
       alert = Alert.find(params[:id])
       authorize_site!(alert.site, :command, risk: "sensitive")
       alert.ack!(current_user)
-      redirect_to alerts_path, notice: "Marcado como ciente: o alerta não repete mais."
+      redirect_to alerts_path, notice: t("automations.flash.alert_ack")
     end
   end
 end

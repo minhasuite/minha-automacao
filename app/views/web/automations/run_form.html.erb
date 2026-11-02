@@ -1,9 +1,9 @@
 <% risk = @automation.max_risk(@automation.definition) %>
-<%= render "web/shared/header", title: "Executar #{@automation.name}", subtitle: "#{@site.name} · script, versão #{@automation.version}",
+<%= render "web/shared/header", title: t("automations.run_form.title", name: @automation.name), subtitle: t("automations.run_form.subtitle", site: @site.name, version: @automation.version),
                                 back: (can?(:manage) ? edit_automation_path(@automation) : site_scripts_path(@site)) %>
 <% if @automation.published? %>
   <%= form_with url: run_automation_path(@automation), class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl",
-                data: { turbo_confirm: "Executar #{@automation.name}?", turbo_confirm_button: "Executar" } do %>
+                data: { turbo_confirm: t("automations.run_form.confirm", name: @automation.name), turbo_confirm_button: t("automations.edit.run") } do %>
     <% @automation.fields.each do |fd| %>
       <div class="min-w-0">
         <label class="ss-label" for="run-<%= fd['name'] %>"><%= fd["label"] %><%= " *" if fd["required"] && fd["default"].nil? %></label>
@@ -11,12 +11,12 @@
       </div>
     <% end %>
     <% if risk == "critical" %>
-      <label class="sm:col-span-2 inline-flex items-center gap-2 text-sm text-danger font-semibold"><%= check_box_tag :confirm_critical, "1", false, id: "run-critical" %>Comanda ponto crítico: confirmo</label>
+      <label class="sm:col-span-2 inline-flex items-center gap-2 text-sm text-danger font-semibold"><%= check_box_tag :confirm_critical, "1", false, id: "run-critical" %><%= t("automations.run_form.critical") %></label>
     <% end %>
     <div class="sm:col-span-2 flex flex-wrap gap-2">
-      <%= button_tag type: "submit", class: "ss-btn ss-btn-primary" do %><%= icon("play", "size-4") %>Executar<% end %>
+      <%= button_tag type: "submit", class: "ss-btn ss-btn-primary" do %><%= icon("play", "size-4") %><%= t("automations.edit.run") %><% end %>
     </div>
   <% end %>
 <% else %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink">Publique o script antes de executar.</p></div>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.scripts.unpublished") %></p></div>
 <% end %>

@@ -2,21 +2,21 @@
 <% list = automation.script? ? site_scripts_path(site) : site_automations_path(site) %>
 <%= form_with model: automation, scope: :automation, url: (automation.new_record? ? list : automation_path(automation)), class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2" do |f| %>
   <%= render "web/shared/errors", record: automation %>
-  <div class="sm:col-span-2"><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, maxlength: 120, placeholder: (automation.script? ? "Boa noite: apagar tudo" : "Sala: movimento à noite acende o pendente"), autofocus: automation.new_record? %></div>
-  <div><%= f.label :mode, "Se #{automation.script? ? 'chamar' : 'disparar'} de novo enquanto roda", class: "ss-label" %><%= f.select :mode, Automation::MODES.invert, {}, class: "ss-input" %></div>
-  <div><%= f.label :max_runs, "Limite (fila ou paralelo)", class: "ss-label" %><%= f.number_field :max_runs, class: "ss-input", min: 1, max: 50 %></div>
-  <div><%= f.label :area_id, "Área (opcional)", class: "ss-label" %><%= f.select :area_id, site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, { include_blank: "Nenhuma" }, class: "ss-input" %></div>
+  <div class="sm:col-span-2"><%= f.label :name, t("automations.settings.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, maxlength: 120, placeholder: (automation.script? ? t("automations.settings.name_ph_script") : t("automations.settings.name_ph")), autofocus: automation.new_record? %></div>
+  <div><%= f.label :mode, t(automation.script? ? "automations.settings.mode_script" : "automations.settings.mode"), class: "ss-label" %><%= f.select :mode, Automation::MODES.invert, {}, class: "ss-input" %></div>
+  <div><%= f.label :max_runs, t("automations.settings.max_runs"), class: "ss-label" %><%= f.number_field :max_runs, class: "ss-input", min: 1, max: 50 %></div>
+  <div><%= f.label :area_id, t("automations.settings.area"), class: "ss-label" %><%= f.select :area_id, site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, { include_blank: t("automations.settings.none") }, class: "ss-input" %></div>
   <div class="sm:col-span-2"><%= render "web/shared/icon_picker", name: "automation[icon]", selected: automation.icon, icons: HelperTypes::ICONS, id: "automation_icon" %></div>
   <% unless automation.script? %>
-    <div class="sm:col-span-2"><%= f.label :label_list, "Rótulos (separados por vírgula)", class: "ss-label" %><%= f.text_field :label_list, class: "ss-input", maxlength: 300, placeholder: "iluminação, noite" %></div>
+    <div class="sm:col-span-2"><%= f.label :label_list, t("automations.settings.labels"), class: "ss-label" %><%= f.text_field :label_list, class: "ss-input", maxlength: 300, placeholder: t("automations.settings.labels_ph") %></div>
   <% end %>
   <div class="sm:col-span-2">
-    <label class="ss-check"><%= f.check_box :shadow %> Em sombra: dispara de verdade, mas nada sai (aparelho, aviso, fala, HTTP, IA); o que faria fica em Sombra</label>
-    <% if Shadow.site?(site) %><p class="text-xs text-muted mt-1">O local inteiro está em sombra: vale para esta <%= automation.kind_label.downcase %> mesmo desmarcado.</p><% end %>
+    <label class="ss-check"><%= f.check_box :shadow %> <%= t("automations.settings.shadow") %></label>
+    <% if Shadow.site?(site) %><p class="text-xs text-muted mt-1"><%= t("automations.settings.site_shadow", kind: automation.kind_label.downcase) %></p><% end %>
   </div>
-  <div class="sm:col-span-2"><%= f.label :description, "Descrição (opcional)", class: "ss-label" %><%= f.text_area :description, class: "ss-input", rows: 2, maxlength: 1000 %></div>
+  <div class="sm:col-span-2"><%= f.label :description, t("automations.settings.description"), class: "ss-label" %><%= f.text_area :description, class: "ss-input", rows: 2, maxlength: 1000 %></div>
   <div class="sm:col-span-2 flex flex-wrap gap-2">
-    <%= f.submit automation.new_record? ? "Criar e montar" : "Salvar", class: "ss-btn #{automation.new_record? ? 'ss-btn-primary' : 'ss-btn-outline'}" %>
-    <% if automation.new_record? %><%= link_to "Cancelar", list, class: "ss-btn ss-btn-ghost" %><% end %>
+    <%= f.submit automation.new_record? ? t("automations.settings.create") : t("automations.settings.save"), class: "ss-btn #{automation.new_record? ? 'ss-btn-primary' : 'ss-btn-outline'}" %>
+    <% if automation.new_record? %><%= link_to t("automations.settings.cancel"), list, class: "ss-btn ss-btn-ghost" %><% end %>
   </div>
 <% end %>

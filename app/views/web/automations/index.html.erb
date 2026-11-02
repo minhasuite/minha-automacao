@@ -1,56 +1,56 @@
-<%= render "web/shared/header", title: "Automações e cenas", subtitle: "#{@site.name} · regras com gatilhos, condições, esperas e avisos" do %>
+<%= render "web/shared/header", title: t("automations.index.title"), subtitle: t("automations.index.subtitle", site: @site.name) do %>
   <% if can?(:manage) %>
-    <%= link_to site_blueprints_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("duplicate", "size-4") %>De um blueprint<% end %>
-    <%= link_to new_site_automation_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Nova automação<% end %>
+    <%= link_to site_blueprints_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("duplicate", "size-4") %><%= t("automations.index.from_blueprint") %><% end %>
+    <%= link_to new_site_automation_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("automations.index.new") %><% end %>
   <% end %>
 <% end %>
 <%= render "web/automations/tabs", site: @site, current: :automations %>
 
 <% if @total.zero? %>
   <div class="ss-card ss-empty">
-    <p class="font-bold text-ink">Nenhuma automação neste local.</p>
-    <p class="mt-1 max-w-lg mx-auto">Ex.: movimento na sala depois das 18h com as luzes apagadas acende o pendente e apaga 2 minutos depois do último movimento.</p>
-    <p class="mt-1 text-sm">Comece por um <%= link_to "blueprint pronto", site_blueprints_path(@site) %> ou, para o simples (ligar às 17h, espelhar interruptor, avisar quando abrir), use as <%= link_to "regras simples", rules_site_path(@site) %>.</p>
-    <% if can?(:manage) %><%= link_to new_site_automation_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar a primeira<% end %><% end %>
+    <p class="font-bold text-ink"><%= t("automations.index.empty") %></p>
+    <p class="mt-1 max-w-lg mx-auto"><%= t("automations.index.empty_example") %></p>
+    <p class="mt-1 text-sm"><%= t("automations.index.empty_hint_html", blueprint: link_to(t("automations.index.empty_blueprint"), site_blueprints_path(@site)), rules: link_to(t("automations.index.empty_rules"), rules_site_path(@site))) %></p>
+    <% if can?(:manage) %><%= link_to new_site_automation_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("automations.index.create_first") %><% end %><% end %>
   </div>
 <% else %>
   <%= form_with url: site_automations_path(@site), method: :get, class: "mb-3 grid gap-3 sm:flex sm:flex-wrap sm:items-end", role: "search" do %>
-    <div class="min-w-0 sm:min-w-48 sm:flex-1"><label for="q" class="ss-label">Procurar</label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: "Nome da automação" %></div>
+    <div class="min-w-0 sm:min-w-48 sm:flex-1"><label for="q" class="ss-label"><%= t("automations.common.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("automations.index.search_placeholder") %></div>
     <div class="grid grid-cols-3 gap-2 sm:contents">
-      <div><label for="estado" class="ss-label">Situação</label><%= select_tag :estado, options_for_select([ %w[Ativas ativas], %w[Desativadas desativadas] ], params[:estado]), include_blank: "Todas", class: "ss-input", data: { autosubmit: true } %></div>
-      <div><label for="area" class="ss-label">Área</label><%= select_tag :area, options_for_select(@site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, params[:area]), include_blank: "Todas", class: "ss-input", data: { autosubmit: true } %></div>
-      <div><label for="rotulo" class="ss-label">Rótulo</label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: "Todos", class: "ss-input", data: { autosubmit: true } %></div>
+      <div><label for="estado" class="ss-label"><%= t("automations.index.state") %></label><%= select_tag :estado, options_for_select([ [ t("automations.index.active"), "ativas" ], [ t("automations.index.inactive"), "desativadas" ] ], params[:estado]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div>
+      <div><label for="area" class="ss-label"><%= t("automations.index.area") %></label><%= select_tag :area, options_for_select(@site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, params[:area]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div>
+      <div><label for="rotulo" class="ss-label"><%= t("automations.index.label") %></label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: t("automations.index.all_m"), class: "ss-input", data: { autosubmit: true } %></div>
     </div>
-    <button type="submit" class="ss-btn ss-btn-ghost hidden sm:inline-flex" aria-label="Procurar"><%= icon("search", "size-4") %></button>
+    <button type="submit" class="ss-btn ss-btn-ghost hidden sm:inline-flex" aria-label="<%= t("automations.common.search") %>"><%= icon("search", "size-4") %></button>
   <% end %>
 
   <% if @automations.empty? %>
-    <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma automação com esses filtros.</p><p class="mt-1"><%= link_to "Limpar filtros", site_automations_path(@site) %></p></div>
+    <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.index.no_match") %></p><p class="mt-1"><%= link_to t("automations.common.clear_filters"), site_automations_path(@site) %></p></div>
   <% else %>
     <div class="ss-bulk-scope" data-controller="select-all">
     <% site_shadow = Shadow.site?(@site) %>
-    <ul class="ss-card ss-rows" aria-label="Automações">
+    <ul class="ss-card ss-rows" aria-label="<%= t("automations.index.list") %>">
       <% @automations.each do |a| %>
         <li id="automation-<%= a.id %>">
-          <% if can?(:manage) %><input type="checkbox" name="ids[]" value="<%= a.id %>" form="bulk" aria-label="Marcar <%= a.name %>"><% end %>
+          <% if can?(:manage) %><input type="checkbox" name="ids[]" value="<%= a.id %>" form="bulk" aria-label="<%= t("automations.common.mark", name: a.name) %>"><% end %>
           <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= a.enabled ? 'ss-grad' : 'bg-accent-soft text-muted' %>"><%= icon(a.icon.presence_in(HelperTypes::ICONS) || "lightning-bolt") %></span>
           <div class="min-w-0 flex-1 basis-48">
             <p class="font-bold text-ink break-words"><%= link_to a.name, (can?(:manage) ? edit_automation_path(a) : automation_automation_runs_path(a)), class: "text-ink no-underline hover:text-accent" %>
-              <% unless a.enabled %> <span class="ss-badge ss-badge-warn"><%= a.published? ? "Desligada" : "Rascunho" %></span><% end %>
-              <% if a.draft? && a.published? %> <span class="ss-badge">Rascunho com mudanças</span><% end %>
-              <% if a.blueprint_outdated? %> <span class="ss-badge ss-badge-accent">Blueprint mudou</span><% end %>
-              <% if a.shadow || site_shadow %> <span class="ss-badge ss-badge-accent"><%= icon("moon", "size-3 inline") %>Em sombra</span><% end %></p>
+              <% unless a.enabled %> <span class="ss-badge ss-badge-warn"><%= a.published? ? t("automations.index.off") : t("automations.index.draft") %></span><% end %>
+              <% if a.draft? && a.published? %> <span class="ss-badge"><%= t("automations.index.draft_changes") %></span><% end %>
+              <% if a.blueprint_outdated? %> <span class="ss-badge ss-badge-accent"><%= t("automations.index.blueprint_changed") %></span><% end %>
+              <% if a.shadow || site_shadow %> <span class="ss-badge ss-badge-accent"><%= icon("moon", "size-3 inline") %><%= t("automations.common.in_shadow") %></span><% end %></p>
             <p class="text-sm text-muted break-words"><%= [ a.area&.name, a.mode_label.split(" (").first, *a.tags.map(&:name).sort ].compact.join(" · ") %></p>
-            <p class="text-xs text-muted">Última execução: <%= last_run_text(a).downcase %></p>
+            <p class="text-xs text-muted"><%= t("automations.index.last_run", text: last_run_text(a).downcase) %></p>
             <% if a.last_error.present? %><p class="text-sm text-danger mt-1 flex gap-1"><%= icon("exclamation-circle", "size-4 shrink-0 mt-0.5") %><span><%= a.last_error %></span></p><% end %>
           </div>
           <%# Quem não edita abre as execuções pelo nome: sem botão repetido (a lista fica curta com 50+ automações). %>
           <% if can?(:manage) %>
           <div class="flex items-center justify-end gap-2 max-sm:ml-auto">
-            <%= link_to automation_automation_runs_path(a), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": "Execuções de #{a.name}", title: "Execuções" do %><%= icon("view-list", "size-4") %><span class="max-sm:hidden">Execuções</span><% end %>
+            <%= link_to automation_automation_runs_path(a), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("automations.index.runs_of", name: a.name), title: t("automations.common.runs") do %><%= icon("view-list", "size-4") %><span class="max-sm:hidden"><%= t("automations.common.runs") %></span><% end %>
             <% if a.published? %>
               <%= button_to automation_path(a), method: :patch, params: { automation: { enabled: !a.enabled }, back: request.fullpath }, class: "ss-switch", form: { class: "contents" },
-                            "aria-pressed": a.enabled.to_s, "aria-label": "#{a.enabled ? 'Desligar' : 'Ligar'} #{a.name}", title: (a.enabled ? "Desligar" : "Ligar") do %><% end %>
+                            "aria-pressed": a.enabled.to_s, "aria-label": "#{a.enabled ? t('automations.common.turn_off') : t('automations.common.turn_on')} #{a.name}", title: (a.enabled ? t("automations.common.turn_off") : t("automations.common.turn_on")) do %><% end %>
             <% end %>
           </div>
           <% end %>
@@ -58,13 +58,13 @@
       <% end %>
     </ul>
     <% if can?(:manage) %>
-      <%= form_with url: bulk_site_automations_path(@site), id: "bulk", class: "ss-bulk", role: "region", "aria-label": "Ações nas marcadas" do %>
+      <%= form_with url: bulk_site_automations_path(@site), id: "bulk", class: "ss-bulk", role: "region", "aria-label": t("automations.index.bulk_actions") do %>
         <%= hidden_field_tag :back, request.fullpath, id: nil %>
-        <span class="ss-bulk-count">marcada(s)</span>
-        <label class="ss-check text-sm text-ink-2"><input type="checkbox" data-action="select-all#toggle"> Marcar todas</label>
-        <label class="sr-only" for="bulk-op">Ação nas marcadas</label>
-        <%= select_tag :op, options_for_select([ %w[Ligar enable], %w[Desligar disable], [ "Pôr em sombra", "shadow_on" ], [ "Tirar da sombra", "shadow_off" ], %w[Excluir delete] ]), id: "bulk-op", class: "ss-input" %>
-        <%= button_tag "Aplicar nas marcadas", class: "ss-btn ss-btn-primary ss-btn-sm", data: { turbo_confirm: "Aplicar a ação nas automações marcadas? Excluir não tem volta.", turbo_confirm_button: "Aplicar" } %>
+        <span class="ss-bulk-count"><%= t("automations.index.marked") %></span>
+        <label class="ss-check text-sm text-ink-2"><input type="checkbox" data-action="select-all#toggle"> <%= t("automations.index.mark_all") %></label>
+        <label class="sr-only" for="bulk-op"><%= t("automations.index.bulk_action") %></label>
+        <%= select_tag :op, options_for_select([ [ t("automations.common.turn_on"), "enable" ], [ t("automations.common.turn_off"), "disable" ], [ t("automations.index.shadow_on"), "shadow_on" ], [ t("automations.index.shadow_off"), "shadow_off" ], [ t("automations.common.delete"), "delete" ] ]), id: "bulk-op", class: "ss-input" %>
+        <%= button_tag t("automations.index.apply"), class: "ss-btn ss-btn-primary ss-btn-sm", data: { turbo_confirm: t("automations.index.apply_confirm"), turbo_confirm_button: t("automations.index.apply_button") } %>
       <% end %>
     <% end %>
     </div>

@@ -1,6 +1,6 @@
 <%# locals: (list:, path:, kind:, points:, automation:) -%>
 <% if list.any? %>
-  <ol class="grid gap-3" aria-label="<%= kind == :options ? 'Opções' : AutomationsHelper::KIND_TITLES.fetch(kind, 'Blocos') %>">
+  <ol class="grid gap-3" aria-label="<%= t(kind.in?(%i[triggers conditions actions options]) ? "automations.kind_titles.#{kind}" : "automations.list.blocks") %>">
     <% list.each_with_index do |node, i| %>
       <%= render "web/automations/block", node: node, path: "#{path}.#{i}", kind: kind, points: points, automation: automation, first: i.zero?, last: i == list.size - 1 %>
     <% end %>
@@ -10,11 +10,11 @@
   <%= form_with url: draft_automation_path(automation), method: :patch, class: "flex flex-wrap items-center gap-2 #{'mt-3' if list.any?}" do %>
     <%= hidden_field_tag :op, "add", id: nil %><%= hidden_field_tag :target, path, id: nil %>
     <% if kind == :options %>
-      <%= button_tag type: "submit", class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("plus", "size-4") %>Adicionar opção<% end %>
+      <%= button_tag type: "submit", class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("plus", "size-4") %><%= t("automations.list.add_option") %><% end %>
     <% else %>
-      <label class="sr-only" for="add-<%= path.tr('.', '-') %>">Tipo do bloco novo</label>
+      <label class="sr-only" for="add-<%= path.tr('.', '-') %>"><%= t("automations.list.new_type") %></label>
       <%= select_tag :type, options_for_select(dsl_type_choices(kind)), class: "ss-input w-auto min-w-0 flex-1 sm:flex-none", id: "add-#{path.tr('.', '-')}" %>
-      <%= button_tag type: "submit", class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("plus", "size-4") %>Adicionar<% end %>
+      <%= button_tag type: "submit", class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("plus", "size-4") %><%= t("automations.list.add") %><% end %>
     <% end %>
   <% end %>
 <% end %>

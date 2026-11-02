@@ -9,9 +9,10 @@ module Automations
       MAX = 100
 
       describe key: "command_query", label: "Comandar pontos por consulta", defaults: { "query" => "state=on", "command" => "off" },
-               fields: [ f("query", :template, "Consulta (ex.: tag=iluminação state=on)", required: true),
-                         f("command", :select, "Comando", required: true, options: -> { Points::Timeline::COMMAND_LABELS }),
-                         f("value", :value, "Valor (ajustar/selecionar)") ]
+               fields: [ f("query", :template, "Consulta (ex.: tag=iluminação state=on)", required: true, en: "Query (e.g. tag=lighting state=on)", es: "Consulta (ej.: tag=iluminación state=on)"),
+                         f("command", :select, "Comando", required: true, options: -> { Points::Timeline::COMMAND_LABELS }, en: "Command", es: "Comando"),
+                         f("value", :value, "Valor (ajustar/selecionar)", en: "Value (set/select)", es: "Valor (ajustar/seleccionar)") ]
+      texts en: { label: "Command points by query" }, es: { label: "Enviar comando a puntos por consulta" }
 
       def self.rules(node)
         q = node["query"].to_s

@@ -4,7 +4,7 @@ module Web
   # migração e os relatórios do comparador (tela e CSV). Ver: qualquer
   # papel. Ligar/desligar a sombra do local: dono. Comparar agora: técnico+.
   class ShadowController < ApplicationController
-    WINDOWS = { "6" => "6 horas", "24" => "24 horas", "72" => "3 dias", "168" => "7 dias" }.freeze
+    WINDOWS = LocalizedLabel.for("automations.shadow.windows", %w[6 24 72 168])
 
     def show
       load_site(:view)
@@ -29,17 +29,17 @@ module Web
       load_site(:admin)
       on = ActiveModel::Type::Boolean.new.cast(params[:shadow])
       @site.update!(shadow: on)
-      redirect_to site_shadow_path(@site), notice: on ? "Local em sombra: nenhuma automação, cena ou regra comanda aparelho." : "Sombra do local desligada. Vale a marca de cada automação."
+      redirect_to site_shadow_path(@site), notice: t(on ? "automations.flash.shadow_site_on" : "automations.flash.shadow_site_off")
     end
 
     def compare
       load_site(:manage)
-      plugin = Shadow::Compare.source(params[:fonte]) or return redirect_to(site_shadow_path(@site), alert: "Fonte de referência desconhecida.")
+      plugin = Shadow::Compare.source(params[:fonte]) or return redirect_to(site_shadow_path(@site), alert: t("automations.flash.unknown_source"))
       hours = params[:horas].presence_in(WINDOWS.keys).to_i.nonzero? || 24
       report = Shadow::Compare.call(@site, plugin.key, from: hours.hours.ago, to: Time.current)
-      redirect_to report_site_shadow_path(@site, report.id), notice: "Comparação pronta."
+      redirect_to report_site_shadow_path(@site, report.id), notice: t("automations.flash.compared")
     rescue Integrations::Error, ArgumentError => e
-      redirect_to site_shadow_path(@site), alert: "Não comparei: #{e.message}"
+      redirect_to site_shadow_path(@site), alert: t("automations.flash.compare_failed", error: e.message)
     end
 
     def report

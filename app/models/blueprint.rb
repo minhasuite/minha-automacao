@@ -13,15 +13,14 @@ class Blueprint < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  INPUT_TYPES = { "point" => "Ponto", "number" => "Número", "text" => "Texto", "boolean" => "Sim/não",
-                  "select" => "Seleção", "duration" => "Duração", "time" => "Horário", "scene" => "Cena" }.freeze
+  INPUT_TYPES = LocalizedLabel.for("automations.labels.input_types", %w[point number text boolean select duration time scene])
   # Entrada que escolhe um registro do local (Lote 5: a cena do `scene.turn_on`
   # importado do HA): tipo → associação do Site. Tipo novo = uma linha aqui.
   RECORD_INPUTS = { "scene" => :scenes }.freeze
   # Entrada dentro de texto ou expressão (Lote 5): `[[chave]]` vira a `key`
   # do ponto escolhido (ou o valor da entrada), ao criar a automação.
   INLINE_INPUT = /\[\[([a-z0-9_]+)\]\]/
-  SOURCES = { "builtin" => "Pronto", "ha" => "Importado do HA", "manual" => "Manual", "package" => "Pacote" }.freeze
+  SOURCES = LocalizedLabel.for("automations.labels.blueprint_sources", %w[builtin ha manual package])
 
   belongs_to :site
   has_many :automations, dependent: nil # o banco solta o vínculo (nullify)
@@ -30,7 +29,7 @@ class Blueprint < ApplicationRecord
   validates :domain, inclusion: { in: Automation::KINDS.keys }
   validates :mode, inclusion: { in: Automation::MODES.keys }
   validate :inputs_valid
-  validate { errors.add(:definition, "precisa ser um objeto JSON") unless definition.is_a?(Hash) }
+  validate { errors.add(:definition, :not_object) unless definition.is_a?(Hash) }
 
   normalizes :name, with: ->(v) { v.to_s.squish }
 
@@ -55,7 +54,7 @@ class Blueprint < ApplicationRecord
       v = input["default"] if v.nil? || v == ""
       [ input["key"], v.nil? || v == "" ? nil : cast(input, v, errors) ]
     end
-    inputs.each { |input| errors << "Falta #{input['label'].to_s.downcase}." if values[input["key"]].nil? && required?(input) }
+    inputs.each { |input| errors << I18n.t("automations.blueprint_errors.missing", field: input["label"].to_s.downcase) if values[input["key"]].nil? && required?(input) }
     keys = site.points.where(id: values.values.grep(Automation::UUID)).pluck(:id, :key).to_h
     [ replace(definition.deep_dup, values, keys), values.compact, errors ]
   end
@@ -94,14 +93,14 @@ class Blueprint < ApplicationRecord
     label = input["label"]
     case input["type"]
     when "point" then point_input(input, v.to_s, errors)
-    when "number" then v.is_a?(Numeric) ? v : (Float(v.to_s.tr(",", "."), exception: false)&.then { |n| n % 1 == 0 ? n.to_i : n } || errors.push("#{label}: número inválido.") && nil)
+    when "number" then v.is_a?(Numeric) ? v : (Float(v.to_s.tr(",", "."), exception: false)&.then { |n| n % 1 == 0 ? n.to_i : n } || errors.push(I18n.t("automations.blueprint_errors.number", field: label)) && nil)
     when "boolean" then ActiveModel::Type::Boolean.new.cast(v)
-    when "select" then v.to_s.presence_in(Array(input["options"]).map(&:to_s)) || errors.push("#{label}: opção inválida.") && nil
-    when "duration" then Automations::Dsl.seconds(v) ? (v.is_a?(Numeric) ? v : v.to_s.delete(" ")) : errors.push("#{label}: duração inválida (use 30s, 5m, 1h30m).") && nil
-    when "time" then v.to_s[0, 5].then { |t| Automations::Dsl::TIME.match?(t) ? t : errors.push("#{label}: horário inválido.") && nil }
+    when "select" then v.to_s.presence_in(Array(input["options"]).map(&:to_s)) || errors.push(I18n.t("automations.blueprint_errors.option", field: label)) && nil
+    when "duration" then Automations::Dsl.seconds(v) ? (v.is_a?(Numeric) ? v : v.to_s.delete(" ")) : errors.push(I18n.t("automations.blueprint_errors.duration", field: label)) && nil
+    when "time" then v.to_s[0, 5].then { |t| Automations::Dsl::TIME.match?(t) ? t : errors.push(I18n.t("automations.blueprint_errors.time", field: label)) && nil }
     when *RECORD_INPUTS.keys
       scope = site.public_send(RECORD_INPUTS[input["type"]])
-      (scope.find_by(id: v.to_s) if Automation::UUID.match?(v.to_s))&.id || scope.find_by(name: v.to_s)&.id || errors.push("#{label}: não existe neste local.") && nil
+      (scope.find_by(id: v.to_s) if Automation::UUID.match?(v.to_s))&.id || scope.find_by(name: v.to_s)&.id || errors.push(I18n.t("automations.blueprint_errors.missing_record", field: label)) && nil
     else v.to_s.truncate(500)
     end
   end
@@ -109,10 +108,10 @@ class Blueprint < ApplicationRecord
   def point_input(input, ref, errors)
     point = site.points.includes(:area, :device).find_by(id: ref) if Automation::UUID.match?(ref)
     point ||= site.points.find_by(key: ref)
-    return errors.push("#{input['label']}: ponto não existe neste local.") && nil unless point
+    return errors.push(I18n.t("automations.blueprint_errors.point", field: input["label"])) && nil unless point
 
     reason = filter_miss(input["filter"].to_h, point)
-    return errors.push("#{input['label']}: #{point.name} não serve (#{reason}).") && nil if reason
+    return errors.push(I18n.t("automations.blueprint_errors.unfit", field: input["label"], name: point.name, reason: reason)) && nil if reason
 
     point.id
   end
@@ -120,11 +119,11 @@ class Blueprint < ApplicationRecord
   # Por que o ponto não passa no filtro da entrada (nil = passa).
   def filter_miss(filter, point)
     caps = Array(filter["capability"])
-    return "precisa ser #{caps.map { |c| Point::CAPABILITY_LABELS.fetch(c, c).downcase }.join(' ou ')}" if caps.any? && caps.exclude?(point.capability)
-    return "precisa receber comando" if filter["writable"] && !point.writable
+    return I18n.t("automations.blueprint_errors.capability", caps: caps.map { |c| Point::CAPABILITY_LABELS.fetch(c, c).downcase }.join(I18n.t("automations.blueprint_errors.or"))) if caps.any? && caps.exclude?(point.capability)
+    return I18n.t("automations.blueprint_errors.writable") if filter["writable"] && !point.writable
 
     area = filter["area"].to_s.downcase.presence
-    "precisa ser da área #{filter['area']}" if area && Area.find_by(id: point.effective_area_id)&.name.to_s.downcase != area
+    I18n.t("automations.blueprint_errors.area", area: filter["area"]) if area && Area.find_by(id: point.effective_area_id)&.name.to_s.downcase != area
   end
 
   # `{"!input": "k"}` → valor; entrada opcional vazia some da definição.
@@ -142,16 +141,16 @@ class Blueprint < ApplicationRecord
   end
 
   def inputs_valid
-    return errors.add(:inputs, "precisam ser uma lista") unless inputs.is_a?(Array)
+    return errors.add(:inputs, :not_list) unless inputs.is_a?(Array)
 
     keys = inputs.map { |i| i.is_a?(Hash) && i["key"] }
-    errors.add(:inputs, "precisam de chave (letras minúsculas, números e _)") unless keys.all? { |k| k.is_a?(String) && Automations::Dsl::VAR.match?(k) }
-    errors.add(:inputs, "têm chave repetida") if keys.uniq.size != keys.size
+    errors.add(:inputs, :bad_key) unless keys.all? { |k| k.is_a?(String) && Automations::Dsl::VAR.match?(k) }
+    errors.add(:inputs, :repeated) if keys.uniq.size != keys.size
     inputs.each do |i|
       next unless i.is_a?(Hash)
 
-      errors.add(:inputs, "têm tipo inválido em #{i['key']}") unless INPUT_TYPES.key?(i["type"])
-      errors.add(:inputs, "de seleção precisam de opções (#{i['key']})") if i["type"] == "select" && Array(i["options"]).empty?
+      errors.add(:inputs, :bad_type, key: i["key"]) unless INPUT_TYPES.key?(i["type"])
+      errors.add(:inputs, :no_options, key: i["key"]) if i["type"] == "select" && Array(i["options"]).empty?
     end
   end
 end

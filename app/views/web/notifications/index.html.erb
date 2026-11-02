@@ -1,5 +1,5 @@
-<%= render "web/shared/header", title: "Notificações", subtitle: "Avisos das automações e da sua conta." do %>
-  <%= button_to read_all_notifications_path, method: :patch, class: "ss-btn ss-btn-ghost" do %><%= icon("check", "size-4") %>Marcar tudo como lido<% end %>
+<%= render "web/shared/header", title: t("automations.notifications.title"), subtitle: t("automations.notifications.subtitle") do %>
+  <%= button_to read_all_notifications_path, method: :patch, class: "ss-btn ss-btn-ghost" do %><%= icon("check", "size-4") %><%= t("automations.notifications.read_all") %><% end %>
 <% end %>
 <% if @notifications.any? %>
   <div class="ss-card divide-y divide-line overflow-hidden">
@@ -10,23 +10,23 @@
           <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= tone %>"><%= icon(ico, "size-5") %></span>
           <span class="min-w-0 flex-1">
             <span class="flex items-start justify-between gap-3"><span class="<%= n.read_at ? 'font-semibold' : 'font-bold' %> text-ink break-words min-w-0"><%= with_money(n.title) %></span>
-              <span class="shrink-0 text-xs text-muted flex items-center gap-1.5 mt-0.5"><%= l(n.created_at, format: :short) %><% unless n.read_at %><span class="size-2 rounded-full bg-accent" aria-label="não lida"></span><% end %></span></span>
+              <span class="shrink-0 text-xs text-muted flex items-center gap-1.5 mt-0.5"><%= l(n.created_at, format: :short) %><% unless n.read_at %><span class="size-2 rounded-full bg-accent" aria-label="<%= t("automations.notifications.unread") %>"></span><% end %></span></span>
             <% if n.body.present? %><span class="block text-sm text-muted mt-0.5 break-words"><%= with_money(n.body) %></span><% end %>
           </span>
         <% end %>
         <% if n.image_url || n.actions.any? || n.open_url %>
           <div class="px-4 pb-3.5 pl-[4.25rem] grid gap-2 min-w-0">
-            <% if n.image_url %><img src="<%= n.image_url %>" alt="Imagem do aviso" loading="lazy" class="rounded-xl max-h-56 w-auto max-w-full border border-line"><% end %>
+            <% if n.image_url %><img src="<%= n.image_url %>" alt="<%= t("automations.notifications.image") %>" loading="lazy" class="rounded-xl max-h-56 w-auto max-w-full border border-line"><% end %>
             <div class="flex flex-wrap items-center gap-2">
               <% if n.actionable? %>
                 <% n.actions.each do |a| %>
                   <%= button_to a["title"], respond_notification_path(n), method: :patch, params: { action_id: a["id"] }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { class: "contents" } %>
                 <% end %>
               <% elsif n.response %>
-                <span class="ss-badge ss-badge-success"><%= icon("check", "size-3.5") %>Respondido: <%= n.response_title %> (<%= n.response["user"] %>)</span>
+                <span class="ss-badge ss-badge-success"><%= icon("check", "size-3.5") %><%= t("automations.notifications.answered", title: n.response_title, user: n.response["user"]) %></span>
               <% end %>
               <% if n.open_url %>
-                <%= link_to n.open_url, class: "ss-btn ss-btn-ghost ss-btn-sm", **(n.open_url.start_with?("/") ? {} : { target: "_blank", rel: "noopener" }) do %><%= icon("external-link", "size-4") %>Abrir<% end %>
+                <%= link_to n.open_url, class: "ss-btn ss-btn-ghost ss-btn-sm", **(n.open_url.start_with?("/") ? {} : { target: "_blank", rel: "noopener" }) do %><%= icon("external-link", "size-4") %><%= t("automations.notifications.open") %><% end %>
               <% end %>
             </div>
           </div>
@@ -36,5 +36,5 @@
   </div>
   <%= render "web/shared/pagination", pagy: @pagy %>
 <% else %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma notificação.</p><p class="mt-1">Os avisos das automações e da sua conta aparecem aqui. Para recebê-los no celular, ative o aviso no aparelho.</p><%= link_to push_subscriptions_path, class: "ss-btn ss-btn-ghost mt-3" do %><%= icon("bell", "size-4") %>Meus aparelhos<% end %></div>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.notifications.empty") %></p><p class="mt-1"><%= t("automations.notifications.empty_hint") %></p><%= link_to push_subscriptions_path, class: "ss-btn ss-btn-ghost mt-3" do %><%= icon("bell", "size-4") %><%= t("automations.notifications.my_devices") %><% end %></div>
 <% end %>

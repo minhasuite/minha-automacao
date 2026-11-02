@@ -29,10 +29,10 @@ module Web
 
       attrs = list.first
       @unsupported = attrs["unsupported"]
-      return import_error("Nada que a DSL daqui rode: #{empty_parts(attrs).to_sentence}.") if empty_parts(attrs).any?
+      return import_error(t("automations.blueprints.flash.nothing_runs", parts: empty_parts(attrs).to_sentence)) if empty_parts(attrs).any?
 
       blueprint = @site.blueprints.create!(attrs)
-      notice = @unsupported.any? ? "Importado com #{helpers.count_label(@unsupported.size, 'parte', 'partes')} não suportada#{'s' if @unsupported.size != 1}: confira abaixo." : "Importado."
+      notice = @unsupported.any? ? t("automations.blueprints.flash.imported_partial", count: @unsupported.size) : t("automations.blueprints.flash.imported")
       redirect_to blueprint_path(blueprint), notice: notice
     rescue Blueprints::HaImport::Error, ActiveRecord::RecordInvalid => e
       import_error(e.message)
@@ -46,26 +46,26 @@ module Web
     # JSON avançado (nome, descrição, modo, inputs, definition). Os prontos não se editam.
     def update
       load_blueprint(:manage)
-      return redirect_to(blueprint_path(@blueprint), alert: "Blueprint pronto não se edita.") if @blueprint.builtin?
+      return redirect_to(blueprint_path(@blueprint), alert: t("automations.blueprints.flash.builtin_edit")) if @blueprint.builtin?
 
       data = JSON.parse(params[:json].to_s)
-      raise JSON::ParserError, "precisa ser um objeto" unless data.is_a?(Hash)
+      raise JSON::ParserError, t("automations.blueprints.flash.not_object") unless data.is_a?(Hash)
 
       @blueprint.assign_attributes(data.slice("name", "description", "mode", "inputs", "definition"))
       changed = @blueprint.will_save_change_to_definition? || @blueprint.will_save_change_to_inputs? || @blueprint.will_save_change_to_mode?
       @blueprint.save!
       linked = @blueprint.automations.count
-      redirect_to blueprint_path(@blueprint), notice: changed && linked.positive? ? "Versão #{@blueprint.version}: rascunho refeito em #{helpers.count_label(linked, 'automação', 'automações')}." : "Blueprint salvo."
+      redirect_to blueprint_path(@blueprint), notice: changed && linked.positive? ? t("automations.blueprints.flash.rebuilt", version: @blueprint.version, count: linked) : t("automations.blueprints.flash.saved")
     rescue JSON::ParserError, ActiveRecord::RecordInvalid => e
-      redirect_to blueprint_path(@blueprint), alert: "Não salvou: #{e.message.truncate(160)}"
+      redirect_to blueprint_path(@blueprint), alert: t("automations.blueprints.flash.not_saved", error: e.message.truncate(160))
     end
 
     def destroy
       load_blueprint(:manage)
-      return redirect_to(blueprint_path(@blueprint), alert: "Blueprint pronto não se exclui.") if @blueprint.builtin?
+      return redirect_to(blueprint_path(@blueprint), alert: t("automations.blueprints.flash.builtin_delete")) if @blueprint.builtin?
 
       @blueprint.destroy!
-      redirect_to site_blueprints_path(@site), notice: "Blueprint excluído. As automações criadas dele continuam."
+      redirect_to site_blueprints_path(@site), notice: t("automations.blueprints.flash.deleted")
     end
 
     # Formulário gerado pelas entradas.
@@ -99,7 +99,7 @@ module Web
 
     def empty_parts(attrs)
       d = attrs["definition"]
-      [ ("nenhum gatilho" if attrs["domain"] == "automation" && d["triggers"].blank?), ("nenhuma ação" if d["actions"].blank?) ].compact
+      [ (t("automations.blueprints.flash.no_trigger") if attrs["domain"] == "automation" && d["triggers"].blank?), (t("automations.blueprints.flash.no_action") if d["actions"].blank?) ].compact
     end
 
     # Várias automações/scripts do HA (Lote 4, G32): um blueprint por item; os
@@ -108,10 +108,10 @@ module Web
       ok, empty = list.partition { |a| empty_parts(a).empty? }
       Blueprint.transaction { ok.each { |a| @site.blueprints.create!(a) } }
       partial = ok.count { |a| a["unsupported"].any? }
-      parts = [ "#{helpers.count_label(ok.size, 'importado', 'importados')} como blueprint",
-                ("#{partial} com partes não suportadas" if partial.positive?),
-                ("#{empty.size} sem nada que rode aqui: #{empty.map { |a| a['name'] }.first(5).to_sentence}" if empty.any?) ].compact
-      redirect_to site_blueprints_path(@site), notice: "#{parts.join('; ')}. Abra cada um e use \"Criar automação\" para escolher os pontos."
+      parts = [ t("automations.blueprints.flash.many_ok", count: ok.size),
+                (t("automations.blueprints.flash.many_partial", count: partial) if partial.positive?),
+                (t("automations.blueprints.flash.many_empty", count: empty.size, names: empty.map { |a| a["name"] }.first(5).to_sentence) if empty.any?) ].compact
+      redirect_to site_blueprints_path(@site), notice: t("automations.blueprints.flash.many", parts: parts.join("; "))
     end
 
     def import_error(message)
@@ -126,9 +126,9 @@ module Web
 
     def created_notice(a)
       noun = a.kind_label
-      return "#{noun} criada no rascunho: confira e publique (o editor mostra o que falta)." unless a.published?
+      return t("automations.blueprints.flash.created_draft", noun: noun) unless a.published?
 
-      a.script? ? "#{noun} criado e publicado." : "#{noun} criada e publicada, ainda desligada: confira e ligue."
+      t(a.script? ? "automations.blueprints.flash.created_script" : "automations.blueprints.flash.created_off", noun: noun)
     end
   end
 end

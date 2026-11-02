@@ -16,7 +16,7 @@ class NotifyRule < ApplicationRecord
 
   validates :message, length: { maximum: 200 }
   validate :channels_fit
-  validate { errors.add(:point, "precisa ser deste local") if point && point.site_id != site_id }
+  validate { errors.add(:point, :other_site) if point && point.site_id != site_id }
 
   audited_attributes :enabled, :to_value, :channels
 
@@ -33,6 +33,6 @@ class NotifyRule < ApplicationRecord
   private
 
   def channels_fit
-    errors.add(:channels, "precisa de pelo menos um canal válido") unless Notifier.valid_channels?(channels)
+    errors.add(:channels, :none) unless Notifier.valid_channels?(channels)
   end
 end

@@ -6,7 +6,10 @@ module Automations
     # (quem respondeu) e {{ trigger.data.x }} (dados do aviso).
     class NotificationActionTrigger < Base
       describe key: "notification_action", label: "Resposta de aviso",
-               fields: [ f("actions", :text, "Botões (ids separados por vírgula; vazio = qualquer)") ]
+               fields: [ f("actions", :text, "Botões (ids separados por vírgula; vazio = qualquer)", en: "Buttons (comma-separated IDs; empty = any)", es: "Botones (IDs separados por coma; vacío = cualquiera)") ]
+      texts "pt-BR" => { title: "Resposta de aviso (%{ids})", replied: "%{user} respondeu \"%{answer}\"" },
+            en: { label: "Notification reply", title: "Notification reply (%{ids})", replied: "%{user} replied \"%{answer}\"" },
+            es: { label: "Respuesta de aviso", title: "Respuesta de aviso (%{ids})", replied: "%{user} respondió \"%{answer}\"" }
 
       def self.event = "notification_action"
 
@@ -14,10 +17,10 @@ module Automations
 
       def self.fires_on_event?(t, payload) = ids(t).empty? || ids(t).include?(payload["action"])
 
-      def self.title(t) = ids(t).any? ? "Resposta de aviso (#{ids(t).join(', ')})" : label
+      def self.title(t) = ids(t).any? ? text(:title, ids: ids(t).join(", ")) : label
 
       def self.event_info(_t, payload)
-        { "type" => key, "title" => "#{payload['user']} respondeu \"#{payload['title'] || payload['action']}\"",
+        { "type" => key, "title" => text(:replied, user: payload["user"], answer: payload["title"] || payload["action"]),
           "action" => payload["action"], "user" => payload["user"], "user_id" => payload["user_id"],
           "notification_id" => payload["notification_id"], "data" => payload["data"] }.compact
       end

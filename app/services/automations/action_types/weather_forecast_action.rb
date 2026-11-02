@@ -10,8 +10,10 @@ module Automations
       def self.shadow_safe?(_e, _node) = true
 
       describe key: "weather_forecast", label: "Ler previsão do tempo", defaults: { "kind" => "daily", "count" => 3, "response_variable" => "clima" },
-               fields: [ f("point", :point, "Clima", required: true), f("kind", :select, "Previsão", required: true, options: Weather::KINDS),
-                         f("count", :number, "Quantos dias ou horas (vazio = todos)") ]
+               fields: [ f("point", :point, "Clima", required: true, en: "Weather", es: "Clima"),
+                         f("kind", :select, "Previsão", required: true, options: Weather::KINDS, en: "Forecast", es: "Pronóstico"),
+                         f("count", :number, "Quantos dias ou horas (vazio = todos)", en: "How many days or hours (empty = all)", es: "Cuántos días u horas (vacío = todos)") ]
+      texts en: { label: "Read weather forecast" }, es: { label: "Leer pronóstico del tiempo" }
       returns "{current: {condition, condition_text, temperature, humidity…}, forecast: [{date|time, condition, condition_text, temperature_max, temperature_min, temperature, precipitation_probability}], count, today, text}"
 
       def self.call(e, _path, node)

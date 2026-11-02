@@ -6,8 +6,10 @@ module Automations
       ARMED = "armed".freeze
 
       describe key: "alarm", label: "Alarme está", defaults: { "is" => ARMED },
-               fields: [ f("point", :point, "Painel de alarme", required: true),
-                         f("is", :select, "Está", required: true, options: -> { { ARMED => "Armado (qualquer modo)" }.merge(HelperTypes::AlarmPanel.states) }) ]
+               fields: [ f("point", :point, "Painel de alarme", required: true, en: "Alarm panel", es: "Panel de alarma"),
+                         f("is", :select, "Está", required: true, options: -> { { ARMED => text(:armed_any) }.merge(HelperTypes::AlarmPanel.states) }, en: "Is", es: "Está") ]
+      texts "pt-BR" => { armed_any: "Armado (qualquer modo)" },
+            en: { label: "Alarm is", armed_any: "Armed (any mode)" }, es: { label: "La alarma está", armed_any: "Armada (cualquier modo)" }
 
       def self.check(ev, c)
         p = ev.point!(c["point"])

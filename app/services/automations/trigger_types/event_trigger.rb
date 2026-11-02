@@ -7,17 +7,21 @@ module Automations
     # {{ trigger.event }} e {{ trigger.data.campo }}.
     class EventTrigger < Base
       describe key: "event", label: "Evento",
-               fields: [ f("event", :text, "Nome do evento", required: true), f("match", :kv, "Só quando os dados tiverem (campo: valor)") ]
+               fields: [ f("event", :text, "Nome do evento", required: true, en: "Event name", es: "Nombre del evento"),
+                         f("match", :kv, "Só quando os dados tiverem (campo: valor)", en: "Only when the data has (field: value)", es: "Solo cuando los datos tengan (campo: valor)") ]
+      texts "pt-BR" => { name: "nome do evento: letras minúsculas, números, _ . : e - (até 60).", title: "Evento %{event}" },
+            en: { label: "Event", name: "event name: lowercase letters, numbers, _ . : and - (up to 60).", title: "Event %{event}" },
+            es: { label: "Evento", name: "nombre del evento: letras minúsculas, números, _ . : y - (hasta 60).", title: "Evento %{event}" }
 
       def self.listens?(_name) = true
 
-      def self.rules(node) = node["event"].is_a?(String) && node["event"].match?(Triggers::EVENT_NAME) ? [] : [ "nome do evento: letras minúsculas, números, _ . : e - (até 60)." ]
+      def self.rules(node) = node["event"].is_a?(String) && node["event"].match?(Triggers::EVENT_NAME) ? [] : [ text(:name) ]
 
       def self.fires_on_event?(t, payload)
         t["event"] == payload["event"] && t["match"].to_h.all? { |k, v| payload[k].to_s == v.to_s }
       end
 
-      def self.title(t) = "Evento #{Triggers::SYSTEM_EVENTS.fetch(t['event'], t['event'])}"
+      def self.title(t) = text(:title, event: Triggers::SYSTEM_EVENTS.fetch(t["event"], t["event"]))
 
       def self.event_info(t, payload)
         { "type" => key, "title" => title(t), "event" => payload["event"], "data" => payload["data"] }

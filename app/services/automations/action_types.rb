@@ -22,12 +22,12 @@ module Automations
 
     # Toda ação que faz algo (não as de controle) aceita "Seguir se der erro"
     # (Lote 1, `continue_on_error` do HA): a falha vira "erro tolerado" no trace.
-    CONTINUE_ON_ERROR = Dsl.f("continue_on_error", :bool, "Seguir se der erro")
+    CONTINUE_ON_ERROR = Dsl.f("continue_on_error", :bool, "Seguir se der erro", en: "Continue on error", es: "Seguir si hay un error")
     # Contrato "toda ação pode devolver dados" (Lote 1, `response_variable` do
     # HA): o plugin declara `returns "formato"` e ganha o campo; o que ele passa
     # a `respond` vai para a variável, que o Liquid e as expressões das ações
     # seguintes leem (`resposta.status`, `{% for e in agenda.events %}`).
-    RESPONSE_VARIABLE = Dsl.f("response_variable", :var, "Guardar a resposta em")
+    RESPONSE_VARIABLE = Dsl.f("response_variable", :var, "Guardar a resposta em", en: "Save the response to", es: "Guardar la respuesta en")
 
     class Base < Block
       class << self
@@ -53,7 +53,7 @@ module Automations
         # Formato da resposta (texto para a documentação e o editor); nil = não devolve.
         def returns(format = nil)
           @returns = format if format
-          @returns
+          @returns && text(:returns, default: @returns)
         end
 
         def fields
@@ -71,8 +71,9 @@ module Automations
 
     class CommandAction < Base
       describe key: "command", label: "Comandar ponto", defaults: { "command" => "on" },
-               fields: [ f("point", :writable_point, "Ponto", required: true), f("command", :command, "Comando", required: true),
-                         f("value", :value, "Valor (ajustar/selecionar)") ]
+               fields: [ f("point", :writable_point, "Ponto", required: true, en: "Point", es: "Punto"), f("command", :command, "Comando", required: true, en: "Command", es: "Comando"),
+                         f("value", :value, "Valor (ajustar/selecionar)", en: "Value (set/select)", es: "Valor (ajustar/seleccionar)") ]
+      texts en: { label: "Command a point" }, es: { label: "Enviar comando a un punto" }
 
       def self.commanded_point_ids(node, _site, _seen) = [ node["point"] ]
 
@@ -97,7 +98,8 @@ module Automations
     end
 
     class SceneAction < Base
-      describe key: "scene", label: "Acionar cena", fields: [ f("scene", :scene, "Cena", required: true) ]
+      describe key: "scene", label: "Acionar cena", fields: [ f("scene", :scene, "Cena", required: true, en: "Scene", es: "Escena") ]
+      texts en: { label: "Activate scene" }, es: { label: "Activar escena" }
 
       def self.shadow_effects(e, node)
         scene = e.ctx.site.scenes.find_by(id: node["scene"]) or return []
@@ -120,11 +122,14 @@ module Automations
     # sem, dispara e não espera (como antes).
     class ScriptAction < Base
       describe key: "script", label: "Executar script",
-               fields: [ f("script", :script, "Script", required: true), f("fields", :script_fields, "Campos"),
-                         f("wait", :bool, "Esperar o fim e a resposta") ]
+               fields: [ f("script", :script, "Script", required: true, en: "Script", es: "Script"), f("fields", :script_fields, "Campos", en: "Fields", es: "Campos"),
+                         f("wait", :bool, "Esperar o fim e a resposta", en: "Wait for it to finish and respond", es: "Esperar el final y la respuesta") ]
       returns "as variáveis do script no fim (com esperar)"
+      texts "pt-BR" => { wait: "para guardar a resposta, marque esperar o fim." },
+            en: { label: "Run script", returns: "the script's variables at the end (with wait)", wait: "to save the response, check wait for it to finish." },
+            es: { label: "Ejecutar script", returns: "las variables del script al final (con esperar)", wait: "para guardar la respuesta, marca esperar el final." }
 
-      def self.rules(node) = node["response_variable"].present? && node["wait"] != true ? [ "para guardar a resposta, marque esperar o fim." ] : []
+      def self.rules(node) = node["response_variable"].present? && node["wait"] != true ? [ text(:wait) ] : []
 
       # A execução do script herda a sombra de quem chamou (`cause`).
       def self.shadow_safe?(_e, _node) = true
@@ -172,9 +177,12 @@ module Automations
       def self.control? = true
 
       describe key: "wait", label: "Esperar", defaults: { "for" => "1m" },
-               fields: [ f("for", :duration, "Tempo (ex.: 5m)"), f("expr", :expr, "Ou segundos por expressão") ]
+               fields: [ f("for", :duration, "Tempo (ex.: 5m)", en: "Time (e.g. 5m)", es: "Tiempo (ej.: 5m)"),
+                         f("expr", :expr, "Ou segundos por expressão", en: "Or seconds from an expression", es: "O segundos por expresión") ]
+      texts "pt-BR" => { one: "informe o tempo ou a expressão." },
+            en: { label: "Wait", one: "enter the time or the expression." }, es: { label: "Esperar", one: "indica el tiempo o la expresión." }
 
-      def self.rules(node) = node["for"].nil? == node["expr"].nil? ? [ "informe o tempo ou a expressão." ] : []
+      def self.rules(node) = node["for"].nil? == node["expr"].nil? ? [ text(:one) ] : []
 
       def self.call(e, path, node)
         sec = node.key?("for") ? Dsl.seconds(node["for"]) : e.ctx.calc(node["expr"]).to_f.round
@@ -193,8 +201,10 @@ module Automations
       def self.control? = true
 
       describe key: "wait_for", label: "Esperar condição", defaults: { "conditions" => [], "timeout" => "5m" },
-               fields: [ f("conditions", :conditions, "Até que"), f("timeout", :duration, "Tempo limite", required: true),
-                         f("continue_on_timeout", :bool, "Seguir se o tempo acabar") ]
+               fields: [ f("conditions", :conditions, "Até que", en: "Until", es: "Hasta que"),
+                         f("timeout", :duration, "Tempo limite", required: true, en: "Timeout", es: "Tiempo límite"),
+                         f("continue_on_timeout", :bool, "Seguir se o tempo acabar", en: "Continue if time runs out", es: "Seguir si se acaba el tiempo") ]
+      texts en: { label: "Wait for condition" }, es: { label: "Esperar condición" }
 
       def self.call(e, path, node)
         ok, checks = e.conditions.check(node["conditions"])
@@ -220,7 +230,9 @@ module Automations
       def self.control? = true
 
       describe key: "if", label: "Se / senão",
-               fields: [ f("conditions", :conditions, "Se"), f("then", :actions, "Então"), f("else", :actions, "Senão") ]
+               fields: [ f("conditions", :conditions, "Se", en: "If", es: "Si"), f("then", :actions, "Então", en: "Then", es: "Entonces"),
+                         f("else", :actions, "Senão", en: "Else", es: "Si no") ]
+      texts en: { label: "If / else" }, es: { label: "Si / si no" }
 
       def self.compile(e, a, p)
         branch = e.emit([ :branch, p, a["conditions"], nil, "Se" ])
@@ -240,7 +252,8 @@ module Automations
       def self.control? = true
 
       describe key: "choose", label: "Escolher", defaults: { "options" => [ { "conditions" => [], "actions" => [] } ] },
-               fields: [ f("options", :options, "Opções"), f("default", :actions, "Se nenhuma servir") ]
+               fields: [ f("options", :options, "Opções", en: "Options", es: "Opciones"), f("default", :actions, "Se nenhuma servir", en: "If none match", es: "Si ninguna aplica") ]
+      texts en: { label: "Choose" }, es: { label: "Elegir" }
 
       def self.compile(e, a, p)
         ends = Array(a["options"]).each_with_index.map do |o, n|
@@ -262,8 +275,13 @@ module Automations
       # uma variável (resposta de ação: `dados.rows`) ou itens separados por
       # vírgula; o item fica em `repeat_item` ({{ repeat.item }} no texto).
       describe key: "repeat", label: "Repetir", defaults: { "count" => 2 },
-               fields: [ f("count", :number, "Vezes"), f("while", :conditions, "Enquanto"), f("until", :conditions, "Até que"),
-                         f("for_each", :text, "Para cada (variável com lista ou itens separados por vírgula)"), f("actions", :actions, "Fazer") ]
+               fields: [ f("count", :number, "Vezes", en: "Times", es: "Veces"), f("while", :conditions, "Enquanto", en: "While", es: "Mientras"),
+                         f("until", :conditions, "Até que", en: "Until", es: "Hasta que"),
+                         f("for_each", :text, "Para cada (variável com lista ou itens separados por vírgula)", en: "For each (list variable or comma-separated items)", es: "Para cada (variable con lista o elementos separados por coma)"),
+                         f("actions", :actions, "Fazer", en: "Do", es: "Hacer") ]
+      texts "pt-BR" => { one: "informe vezes, enquanto, até que ou para cada (só um).", max: "no máximo %{max} vezes." },
+            en: { label: "Repeat", one: "enter times, while, until or for each (only one).", max: "at most %{max} times." },
+            es: { label: "Repetir", one: "indica veces, mientras, hasta que o para cada (solo uno).", max: "como máximo %{max} veces." }
       MODES = %w[count while until for_each].freeze
 
       # Itens do "para cada": a variável (lista) ou o texto dividido por vírgula.
@@ -276,8 +294,8 @@ module Automations
 
       def self.rules(node)
         msgs = []
-        msgs << "informe vezes, enquanto, até que ou para cada (só um)." if MODES.count { |k| node[k].present? } != 1
-        msgs << "no máximo #{Dsl::MAX_REPEAT} vezes." if node["count"].is_a?(::Numeric) && !node["count"].between?(1, Dsl::MAX_REPEAT)
+        msgs << text(:one) if MODES.count { |k| node[k].present? } != 1
+        msgs << text(:max, max: Dsl::MAX_REPEAT) if node["count"].is_a?(::Numeric) && !node["count"].between?(1, Dsl::MAX_REPEAT)
         msgs
       end
 
@@ -294,9 +312,13 @@ module Automations
       def self.shadow_safe?(_e, _node) = true
 
       describe key: "set", label: "Definir variável",
-               fields: [ f("var", :var, "Nome", required: true), f("expr", :expr, "Expressão (número/lógica)"), f("value", :prompt, "Ou texto") ]
+               fields: [ f("var", :var, "Nome", required: true, en: "Name", es: "Nombre"),
+                         f("expr", :expr, "Expressão (número/lógica)", en: "Expression (number/logic)", es: "Expresión (número/lógica)"),
+                         f("value", :prompt, "Ou texto", en: "Or text", es: "O texto") ]
+      texts "pt-BR" => { one: "informe a expressão ou o texto." },
+            en: { label: "Set variable", one: "enter the expression or the text." }, es: { label: "Definir variable", one: "indica la expresión o el texto." }
 
-      def self.rules(node) = node["expr"].nil? == node["value"].nil? ? [ "informe a expressão ou o texto." ] : []
+      def self.rules(node) = node["expr"].nil? == node["value"].nil? ? [ text(:one) ] : []
 
       def self.call(e, _path, node)
         v = node.key?("expr") ? e.ctx.calc(node["expr"]) : e.ctx.render(node["value"])
@@ -308,7 +330,8 @@ module Automations
     class ConditionAction < Base
       def self.control? = true
 
-      describe key: "condition", label: "Parar se falso", fields: [ f("conditions", :conditions, "Seguir só se") ]
+      describe key: "condition", label: "Parar se falso", fields: [ f("conditions", :conditions, "Seguir só se", en: "Continue only if", es: "Seguir solo si") ]
+      texts en: { label: "Stop if false" }, es: { label: "Detener si es falso" }
 
       def self.call(e, path, node)
         ok, checks = e.conditions.check(node["conditions"])
@@ -323,7 +346,8 @@ module Automations
     class StopAction < Base
       def self.control? = true
 
-      describe key: "stop", label: "Parar", fields: [ f("reason", :text, "Motivo"), f("error", :bool, "Marcar como erro") ]
+      describe key: "stop", label: "Parar", fields: [ f("reason", :text, "Motivo", en: "Reason", es: "Motivo"), f("error", :bool, "Marcar como erro", en: "Mark as error", es: "Marcar como error") ]
+      texts en: { label: "Stop" }, es: { label: "Detener" }
 
       def self.call(e, path, node)
         e.trace(path, "stop", "Parar#{": #{node['reason']}" if node['reason'].present?}", node["error"] ? "error" : "ok")

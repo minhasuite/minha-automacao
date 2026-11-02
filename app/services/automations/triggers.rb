@@ -68,7 +68,7 @@ module Automations
         next unless a.definition["triggers"].any? { |t| t["type"] == "alert" && t["rule"] == alert.alert_rule_id && t["on"] == event }
 
         Automations.safely do
-          a.fire!({ "type" => "alert", "title" => "Alerta #{alert.alert_rule.name}: #{Dsl::ALERT_EVENTS[event].downcase}",
+          a.fire!({ "type" => "alert", "title" => I18n.t("automations.labels.alert_title", name: alert.alert_rule.name, event: Dsl.alert_events[event].downcase),
                     "alert_id" => alert.id, "event" => event, "point" => alert.point.name, "value" => alert.point.value })
         end
       end
@@ -76,8 +76,7 @@ module Automations
 
     # Eventos do sistema (Lote 4, G6): nome → rótulo. A ação "Disparar evento"
     # não pode usar estes nomes nem os dos plugins de gatilho.
-    SYSTEM_EVENTS = { "automation_finished" => "Automação ou script terminou", "notification_action" => "Resposta de aviso",
-                      "script_finished" => "Script terminou", "system_started" => "Sistema iniciou" }.freeze
+    SYSTEM_EVENTS = LocalizedLabel.for("automations.labels.system_events", %w[automation_finished notification_action script_finished system_started])
 
     EVENT_NAME = /\A[a-z0-9][a-z0-9_.:-]{0,59}\z/
 

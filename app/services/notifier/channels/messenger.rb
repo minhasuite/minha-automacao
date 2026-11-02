@@ -14,6 +14,8 @@ module Notifier
     module Messenger
       PATTERN = /\Amessenger:(\h{8}-\h{4}-\h{4}-\h{4}-\h{12})\z/
       REF = /\A(\h{8}-\h{4}-\h{4}-\h{4}-\h{12}):(\d)\z/
+      extend PluginTexts
+      texts "pt-BR" => { removed: "Mensageiro removido" }, en: { removed: "Messenger removed" }, es: { removed: "Mensajero eliminado" }
 
       module_function
 
@@ -27,7 +29,7 @@ module Notifier
 
       def label(channel)
         i = Integration.find_by(id: channel[PATTERN, 1])
-        messenger?(i) ? "#{i.plugin.title}: #{i.name}" : "Mensageiro removido"
+        messenger?(i) ? "#{i.plugin.title}: #{i.name}" : text(:removed)
       end
 
       # Uma mensagem por aviso (o destino é a conversa da integração, não a pessoa).

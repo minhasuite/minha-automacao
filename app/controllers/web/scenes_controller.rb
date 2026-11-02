@@ -40,7 +40,7 @@ module Web
       @site = @record.site
       authorize_site!(@site, :command, risk: @record.risk)
       _commands, failures = @record.activate!(source: "web")
-      redirect_to back_path, **(failures.any? ? { alert: failures.to_sentence } : { notice: "Cena #{@record.name} acionada." })
+      redirect_to back_path, **(failures.any? ? { alert: failures.to_sentence } : { notice: t("automations.flash.scene_activated", name: @record.name) })
     end
 
     private
@@ -49,17 +49,17 @@ module Web
       ids = Array(params[:capture_ids]).compact_blank
       captured = @site.points.where(id: ids, writable: true).filter_map { |p| Scene.capture(p) }
       @record.items = @record.items.reject { |i| captured.any? { |c| c["point_id"] == i["point_id"] } } + captured
-      flash.now[:notice] = captured.empty? ? "Nenhum ponto com valor para capturar." : "Estado de #{helpers.count_label(captured.size, 'ponto', 'pontos')} capturado. Ajuste e salve."
+      flash.now[:notice] = captured.empty? ? t("automations.flash.nothing_to_capture") : t("automations.flash.captured", count: captured.size)
       render "web/automation/edit"
     end
 
     def saved
-      return redirect_to(back_path, notice: "Cena salva.") unless params[:live] == "1"
+      return redirect_to(back_path, notice: t("automations.flash.scene_saved")) unless params[:live] == "1"
 
       authorize_site!(@site, :command, risk: @record.risk)
       _commands, failures = @record.activate!(source: "web")
       redirect_to edit_scene_path(@record, back: params[:back].presence),
-                  **(failures.any? ? { alert: "Salva; ao vivo: #{failures.to_sentence}" } : { notice: "Cena salva e aplicada ao vivo." })
+                  **(failures.any? ? { alert: t("automations.flash.scene_live_failed", errors: failures.to_sentence) } : { notice: t("automations.flash.scene_live") })
     end
 
     def back_path = url_from(params[:back].presence) || site_scenes_path(@site)

@@ -10,20 +10,28 @@ module Automations
     # provedor, modelo e tokens, nunca o pedido nem a resposta.
     class AiTaskAction < Base
       FIELDS = [
-        f("prompt", :prompt, "Pedido (texto com {{ }})", required: true), f("system", :prompt, "Instruções de sistema (opcional)"),
-        f("cameras", :cameras, "Imagens das câmeras (quadro de agora)"), f("image_urls", :template, "Imagens por URL ou anexo (uma por linha)"),
-        f("output", :ai_output, "Saída estruturada (um campo por linha, nome: texto|número|inteiro|sim/não|lista descrição; ou JSON schema; vazio = texto livre)"),
-        f("temperature", :number, "Temperatura (0 a 2; se o provedor aceitar)"), f("max_tokens", :number, "Limite de tokens (da resposta)"),
-        f("provider", :select, "Provedor (vazio = o padrão)", options: -> { Ai.choices }), f("model", :text, "Modelo (vazio = o do provedor)")
+        f("prompt", :prompt, "Pedido (texto com {{ }})", required: true, en: "Request (text with {{ }})", es: "Pedido (texto con {{ }})"),
+        f("system", :prompt, "Instruções de sistema (opcional)", en: "System instructions (optional)", es: "Instrucciones del sistema (opcional)"),
+        f("cameras", :cameras, "Imagens das câmeras (quadro de agora)", en: "Camera images (current frame)", es: "Imágenes de las cámaras (cuadro actual)"),
+        f("image_urls", :template, "Imagens por URL ou anexo (uma por linha)", en: "Images by URL or attachment (one per line)", es: "Imágenes por URL o adjunto (una por línea)"),
+        f("output", :ai_output, "Saída estruturada (um campo por linha, nome: texto|número|inteiro|sim/não|lista descrição; ou JSON schema; vazio = texto livre)",
+          en: "Structured output (one field per line, name: text|number|integer|yes/no|list description; or JSON schema; empty = free text)",
+          es: "Salida estructurada (un campo por línea, nombre: texto|número|entero|sí/no|lista descripción; o JSON schema; vacío = texto libre)"),
+        f("temperature", :number, "Temperatura (0 a 2; se o provedor aceitar)", en: "Temperature (0 to 2; if the provider supports it)", es: "Temperatura (0 a 2; si el proveedor lo admite)"),
+        f("max_tokens", :number, "Limite de tokens (da resposta)", en: "Token limit (for the response)", es: "Límite de tokens (de la respuesta)"),
+        f("provider", :select, "Provedor (vazio = o padrão)", en: "Provider (empty = default)", es: "Proveedor (vacío = el predeterminado)", options: -> { Ai.choices }), f("model", :text, "Modelo (vazio = o do provedor)", en: "Model (empty = provider's default)", es: "Modelo (vacío = el del proveedor)")
       ].freeze
 
       describe key: "ai_task", label: "Pedir à IA", defaults: { "response_variable" => "ia" }, fields: FIELDS
       returns "{data (texto ou os campos), provider, model, tokens, cost}"
+      texts "pt-BR" => { temperature: "temperatura de 0 a 2.", max_tokens: "limite de tokens de 1 a 8000." },
+            en: { label: "Ask the AI", returns: "{data (text or the fields), provider, model, tokens, cost}", temperature: "temperature from 0 to 2.", max_tokens: "token limit from 1 to 8000." },
+            es: { label: "Pedir a la IA", returns: "{data (texto o los campos), provider, model, tokens, cost}", temperature: "temperatura de 0 a 2.", max_tokens: "límite de tokens de 1 a 8000." }
 
       def self.rules(node)
         msgs = []
-        msgs << "temperatura de 0 a 2." if node["temperature"] && !(node["temperature"].is_a?(::Numeric) && node["temperature"].between?(0, 2))
-        msgs << "limite de tokens de 1 a 8000." if node["max_tokens"] && !(node["max_tokens"].is_a?(Integer) && node["max_tokens"].between?(1, 8000))
+        msgs << text(:temperature) if node["temperature"] && !(node["temperature"].is_a?(::Numeric) && node["temperature"].between?(0, 2))
+        msgs << text(:max_tokens) if node["max_tokens"] && !(node["max_tokens"].is_a?(Integer) && node["max_tokens"].between?(1, 8000))
         msgs
       end
 

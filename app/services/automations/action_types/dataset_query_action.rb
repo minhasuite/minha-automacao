@@ -10,18 +10,22 @@ module Automations
       def self.shadow_safe?(_e, _node) = true
 
       describe key: "dataset_query", label: "Consultar dados", defaults: { "op" => "rows", "limit" => 30, "response_variable" => "dados" },
-               fields: [ f("dataset", :dataset, "Conjunto de dados", required: true),
-                         f("op", :select, "Consulta", required: true, options: -> { Datasets.choices }),
-                         f("field", :text, "Campo (contagem e linhas não precisam)"), f("window", :duration, "Janela (ex.: 168h = 7 dias; vazio = tudo)"),
-                         f("filters", :template, "Filtros (um por linha: campo = valor, campo contém x, campo > 3)"),
-                         f("limit", :number, "Máximo de linhas (linhas)") ]
+               fields: [ f("dataset", :dataset, "Conjunto de dados", required: true, en: "Dataset", es: "Conjunto de datos"),
+                         f("op", :select, "Consulta", required: true, options: -> { Datasets.choices }, en: "Query", es: "Consulta"),
+                         f("field", :text, "Campo (contagem e linhas não precisam)", en: "Field (not needed for count and rows)", es: "Campo (conteo y filas no lo necesitan)"),
+                         f("window", :duration, "Janela (ex.: 168h = 7 dias; vazio = tudo)", en: "Window (e.g. 168h = 7 days; empty = all)", es: "Ventana (ej.: 168h = 7 días; vacío = todo)"),
+                         f("filters", :template, "Filtros (um por linha: campo = valor, campo contém x, campo > 3)", en: "Filters (one per line: field = value, field contains x, field > 3)", es: "Filtros (uno por línea: campo = valor, campo contiene x, campo > 3)"),
+                         f("limit", :number, "Máximo de linhas (linhas)", en: "Maximum rows (rows)", es: "Máximo de filas (filas)") ]
+      texts "pt-BR" => { field: "informe o campo.", limit: "máximo de linhas de 1 a %{max}." },
+            en: { label: "Query data", field: "enter the field.", limit: "maximum rows from 1 to %{max}." },
+            es: { label: "Consultar datos", field: "indica el campo.", limit: "máximo de filas de 1 a %{max}." }
       returns "{value, rows, count}"
 
       def self.rules(node)
         msgs = []
         agg = Datasets.aggregate(node["op"])
-        msgs << "informe o campo." if agg&.needs_field? && node["field"].blank?
-        msgs << "máximo de linhas de 1 a #{Datasets::Query::MAX_ROWS}." if node["limit"] && !(node["limit"].is_a?(Integer) && node["limit"].between?(1, Datasets::Query::MAX_ROWS))
+        msgs << text(:field) if agg&.needs_field? && node["field"].blank?
+        msgs << text(:limit, max: Datasets::Query::MAX_ROWS) if node["limit"] && !(node["limit"].is_a?(Integer) && node["limit"].between?(1, Datasets::Query::MAX_ROWS))
         if node["filters"].is_a?(String) && !node["filters"].include?("{{")
           begin
             Datasets.parse_filters(node["filters"])

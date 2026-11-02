@@ -7,13 +7,18 @@ module Automations
       def self.shadow_safe?(_e, _node) = true
 
       describe key: "wait_event", label: "Esperar evento", defaults: { "timeout" => "10m", "response_variable" => "evento" },
-               fields: [ f("event", :text, "Nome do evento", required: true), f("match", :kv, "Só quando os dados tiverem (campo: valor)"),
-                         f("timeout", :duration, "Tempo limite", required: true), f("continue_on_timeout", :bool, "Seguir se o tempo acabar") ]
+               fields: [ f("event", :text, "Nome do evento", required: true, en: "Event name", es: "Nombre del evento"),
+                         f("match", :kv, "Só quando os dados tiverem (campo: valor)", en: "Only when the data has (field: value)", es: "Solo cuando los datos tengan (campo: valor)"),
+                         f("timeout", :duration, "Tempo limite", required: true, en: "Timeout", es: "Tiempo límite"),
+                         f("continue_on_timeout", :bool, "Seguir se o tempo acabar", en: "Continue if time runs out", es: "Seguir si se acaba el tiempo") ]
       returns "os dados do evento (vazio no tempo limite)"
+      texts "pt-BR" => { name: "nome do evento: letras minúsculas, números, _ . : e - (até 60)." },
+            en: { label: "Wait for event", returns: "the event data (empty on timeout)", name: "event name: lowercase letters, numbers, _ . : and - (up to 60)." },
+            es: { label: "Esperar evento", returns: "los datos del evento (vacío al agotarse el tiempo)", name: "nombre del evento: letras minúsculas, números, _ . : y - (hasta 60)." }
 
       def self.control? = true
 
-      def self.rules(node) = node["event"].is_a?(String) && node["event"].match?(Triggers::EVENT_NAME) ? [] : [ "nome do evento: letras minúsculas, números, _ . : e - (até 60)." ]
+      def self.rules(node) = node["event"].is_a?(String) && node["event"].match?(Triggers::EVENT_NAME) ? [] : [ text(:name) ]
 
       def self.call(e, path, node)
         timeout = Dsl.seconds(node["timeout"]).to_i

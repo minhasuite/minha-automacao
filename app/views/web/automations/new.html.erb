@@ -1,2 +1,2 @@
-<%= render "web/shared/header", title: (@automation.script? ? "Novo script" : "Nova automação"), subtitle: @site.name, back: (@automation.script? ? site_scripts_path(@site) : site_automations_path(@site)) %>
+<%= render "web/shared/header", title: (@automation.script? ? t("automations.new.script") : t("automations.index.new")), subtitle: @site.name, back: (@automation.script? ? site_scripts_path(@site) : site_automations_path(@site)) %>
 <%= render "web/automations/settings", automation: @automation, site: @site %>

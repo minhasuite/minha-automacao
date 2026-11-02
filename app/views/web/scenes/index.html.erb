@@ -1,23 +1,23 @@
-<%= render "web/shared/header", title: "Automações e cenas", subtitle: "#{@site.name} · cenas: o estado de vários pontos com um nome" do %>
-  <% if can?(:manage) %><%= link_to new_site_scene_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Nova cena<% end %><% end %>
+<%= render "web/shared/header", title: t("automations.index.title"), subtitle: t("automations.scenes.subtitle", site: @site.name) do %>
+  <% if can?(:manage) %><%= link_to new_site_scene_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("automations.scenes.new") %><% end %><% end %>
 <% end %>
 <%= render "web/automations/tabs", site: @site, current: :scenes %>
 
 <% if @total.zero? %>
   <div class="ss-card ss-empty">
-    <p class="font-bold text-ink">Nenhuma cena neste local.</p>
-    <p class="mt-1 max-w-lg mx-auto">Cena guarda como os pontos devem ficar ("Cinema": luz da sala a 20%, pendente desligado). Capture o estado de agora e ajuste. Aciona pelo painel, pela automação e pela API.</p>
-    <% if can?(:manage) %><%= link_to new_site_scene_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar a primeira<% end %><% end %>
+    <p class="font-bold text-ink"><%= t("automations.scenes.empty") %></p>
+    <p class="mt-1 max-w-lg mx-auto"><%= t("automations.scenes.empty_hint") %></p>
+    <% if can?(:manage) %><%= link_to new_site_scene_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("automations.index.create_first") %><% end %><% end %>
   </div>
 <% else %>
   <%= form_with url: site_scenes_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do %>
-    <div class="min-w-48 flex-1"><label for="q" class="ss-label">Procurar</label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: "Nome da cena" %></div>
-    <button type="submit" class="ss-btn ss-btn-ghost" aria-label="Procurar"><%= icon("search", "size-4") %></button>
+    <div class="min-w-48 flex-1"><label for="q" class="ss-label"><%= t("automations.common.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("automations.scenes.search_placeholder") %></div>
+    <button type="submit" class="ss-btn ss-btn-ghost" aria-label="<%= t("automations.common.search") %>"><%= icon("search", "size-4") %></button>
   <% end %>
   <% if @scenes.empty? %>
-    <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhuma cena com esse nome.</p><%= link_to "Limpar a busca", site_scenes_path(@site), class: "ss-btn ss-btn-ghost mt-3" %></div>
+    <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.scenes.no_match") %></p><%= link_to t("automations.scripts_page.clear"), site_scenes_path(@site), class: "ss-btn ss-btn-ghost mt-3" %></div>
   <% else %>
-    <ul class="ss-card ss-rows" aria-label="Cenas">
+    <ul class="ss-card ss-rows" aria-label="<%= t("automations.tabs.scenes") %>">
       <% @scenes.each do |s| %>
         <% risk = s.risk %>
         <li id="scene-<%= s.id %>">
@@ -25,12 +25,12 @@
           <div class="min-w-0 flex-1 basis-40">
             <p class="font-bold text-ink break-words"><%= can?(:manage) ? link_to(s.name, edit_scene_path(s), class: "text-ink no-underline hover:text-accent") : s.name %>
               <% if risk != "normal" %> <span class="ss-badge ss-badge-warn"><%= Point::RISKS[risk] %></span><% end %></p>
-            <p class="text-sm text-muted"><%= count_label(s.items.size, "ponto", "pontos") %></p>
+            <p class="text-sm text-muted"><%= t("automations.scenes.points", count: s.items.size) %></p>
           </div>
           <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
             <% if can?(:command, risk: risk) %>
               <%= button_to activate_scene_path(s), params: { back: request.fullpath }, class: "ss-btn ss-btn-primary ss-btn-sm",
-                            form: { class: "contents", data: { turbo_confirm: "Acionar a cena #{s.name}? Os aparelhos vão mudar.", turbo_confirm_button: "Acionar" } } do %><%= icon("lightning-bolt", "size-4") %>Acionar<% end %>
+                            form: { class: "contents", data: { turbo_confirm: t("automations.scenes.activate_confirm", name: s.name), turbo_confirm_button: t("automations.scenes.activate") } } do %><%= icon("lightning-bolt", "size-4") %><%= t("automations.scenes.activate") %><% end %>
             <% end %>
           </div>
         </li>

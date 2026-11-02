@@ -24,7 +24,7 @@ module Web
       @automation = @site.scripts.new(params.require(:automation).permit(:name, :description, :mode, :max_runs, :area_id, :icon))
       return render("web/automations/new", status: :unprocessable_content) unless @automation.save
 
-      redirect_to edit_automation_path(@automation), notice: "Script criado. Monte os campos e a sequência e publique."
+      redirect_to edit_automation_path(@automation), notice: t("automations.flash.script_created")
     end
 
     private

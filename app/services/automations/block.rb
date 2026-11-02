@@ -37,6 +37,18 @@ module Automations
       def rules(_node) = []
 
       def f(...) = Dsl.f(...)
+
+      # i18n: os rótulos dos campos trazem o en/es no próprio campo (Dsl.f);
+      # entram aqui para o spec de cobertura conferir ("fields.<nome>").
+      def source_texts = super.merge(fields.to_h { |fd| [ "fields.#{fd.name}", fd[:label] ] })
+
+      def texts(by_locale = nil)
+        return super if by_locale
+
+        %w[en es].each_with_object(super.deep_dup) do |l, all|
+          fields.each { |fd| (all[l] ||= {})["fields.#{fd.name}"] = fd[l.to_sym] }
+        end
+      end
     end
   end
 end

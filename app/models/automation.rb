@@ -22,9 +22,9 @@ class Automation < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  MODES = Automations::Dsl::MODES
-  KINDS = { "automation" => "Automação", "script" => "Script" }.freeze
-  FIELD_TYPES = { "text" => "Texto", "number" => "Número", "boolean" => "Sim/não", "point" => "Ponto", "select" => "Seleção" }.freeze
+  MODES = LocalizedLabel.for("automations.dsl.modes", Automations::Dsl::MODES)
+  KINDS = LocalizedLabel.for("automations.labels.kinds", %w[automation script])
+  FIELD_TYPES = LocalizedLabel.for("automations.labels.field_types", %w[text number boolean point select])
   MAX_PER_MINUTE = 30
   # Corrente de automações (uma disparando a outra). Abaixo do limite das
   # primitivas (Automations::MAX_DEPTH), para o laço evitado ficar no trace.
@@ -51,8 +51,8 @@ class Automation < ApplicationRecord
   validate :fields_valid
   validates :max_runs, numericality: { only_integer: true, in: 1..50 }
   validate :definitions_valid
-  validate { errors.add(:enabled, "só depois de publicar uma versão") if enabled && !published? }
-  validate { errors.add(:area, "precisa ser deste local") if area && area.site_id != site_id }
+  validate { errors.add(:enabled, :unpublished) if enabled && !published? }
+  validate { errors.add(:area, :other_site) if area && area.site_id != site_id }
 
   normalizes :name, with: ->(v) { v.to_s.squish }
 
@@ -87,7 +87,7 @@ class Automation < ApplicationRecord
 
   # Publica o rascunho (ou `new_definition`, da API) como versão nova.
   def publish!(new_definition = draft, author: Current.user)
-    raise ArgumentError, "nada para publicar" if new_definition.blank?
+    raise ArgumentError, I18n.t("automations.errors.nothing_to_publish") if new_definition.blank?
 
     transaction do
       update!(definition: new_definition, draft: nil, version: version + 1, blueprint_version: blueprint&.version)
@@ -120,12 +120,12 @@ class Automation < ApplicationRecord
   def field_values(given)
     given = given.to_h.stringify_keys
     unknown = given.keys - fields.pluck("name")
-    raise ArgumentError, "campo desconhecido: #{unknown.join(', ')}" if unknown.any?
+    raise ArgumentError, I18n.t("automations.errors.unknown_field", fields: unknown.join(", ")) if unknown.any?
 
     values = cast_fields(given.compact_blank)
     fields.each do |fd|
       values[fd["name"]] = fd["default"] if !values.key?(fd["name"]) && !fd["default"].nil?
-      raise ArgumentError, "falta o campo #{fd['label']}" if fd["required"] && values[fd["name"]].nil?
+      raise ArgumentError, I18n.t("automations.errors.missing_field", field: fd["label"]) if fd["required"] && values[fd["name"]].nil?
     end
     values
   end
@@ -235,7 +235,7 @@ class Automation < ApplicationRecord
   # Só a publicada precisa estar completa: o rascunho do editor pode ter
   # bloco pela metade (os erros aparecem no editor e barram a publicação).
   def definitions_valid
-    errors.add(:draft, "precisa ser um objeto JSON") unless draft.nil? || draft.is_a?(Hash)
+    errors.add(:draft, :not_object) unless draft.nil? || draft.is_a?(Hash)
     return unless published? && site
 
     errors_in(definition).first(5).each { |e| errors.add(:definition, e) }
@@ -247,14 +247,14 @@ class Automation < ApplicationRecord
     case fd["type"]
     when "number" then raw.is_a?(Numeric) ? raw : number_field(fd, raw)
     when "boolean" then ActiveModel::Type::Boolean.new.cast(raw)
-    when "point" then point_ref(raw.to_s)&.id || raise(ArgumentError, "#{fd['label']}: ponto não existe")
-    when "select" then raw.to_s.presence_in(Array(fd["options"]).map(&:to_s)) || raise(ArgumentError, "#{fd['label']}: opção inválida")
+    when "point" then point_ref(raw.to_s)&.id || raise(ArgumentError, I18n.t("automations.errors.field_point", field: fd["label"]))
+    when "select" then raw.to_s.presence_in(Array(fd["options"]).map(&:to_s)) || raise(ArgumentError, I18n.t("automations.errors.field_option", field: fd["label"]))
     else raw.to_s.truncate(500)
     end
   end
 
   def number_field(fd, raw)
-    n = Float(raw.to_s.tr(",", "."), exception: false) or raise ArgumentError, "#{fd['label']}: número inválido"
+    n = Float(raw.to_s.tr(",", "."), exception: false) or raise ArgumentError, I18n.t("automations.errors.field_number", field: fd["label"])
     n % 1 == 0 ? n.to_i : n
   end
 
@@ -262,18 +262,18 @@ class Automation < ApplicationRecord
 
   # Campos do script: nome de variável único, tipo conhecido, seleção com opções.
   def fields_valid
-    return errors.add(:fields, "precisam ser uma lista") unless fields.is_a?(Array)
+    return errors.add(:fields, :not_list) unless fields.is_a?(Array)
     return if fields.empty?
-    return errors.add(:fields, "só existem em script") unless script?
+    return errors.add(:fields, :script_only) unless script?
 
     names = fields.map { |fd| fd.is_a?(Hash) && fd["name"] }
-    errors.add(:fields, "precisam de nome com letras minúsculas, números e _") unless names.all? { |n| n.is_a?(String) && Automations::Dsl::VAR.match?(n) }
-    errors.add(:fields, "têm nome repetido") if names.uniq.size != names.size
+    errors.add(:fields, :bad_name) unless names.all? { |n| n.is_a?(String) && Automations::Dsl::VAR.match?(n) }
+    errors.add(:fields, :repeated) if names.uniq.size != names.size
     fields.each do |fd|
       next unless fd.is_a?(Hash)
 
-      errors.add(:fields, "têm tipo inválido em #{fd['name']}") unless FIELD_TYPES.key?(fd["type"])
-      errors.add(:fields, "de seleção precisam de opções (#{fd['name']})") if fd["type"] == "select" && Array(fd["options"]).empty?
+      errors.add(:fields, :bad_type, name: fd["name"]) unless FIELD_TYPES.key?(fd["type"])
+      errors.add(:fields, :no_options, name: fd["name"]) if fd["type"] == "select" && Array(fd["options"]).empty?
     end
   end
 end

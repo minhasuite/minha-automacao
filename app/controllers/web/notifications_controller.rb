@@ -15,14 +15,14 @@ module Web
     def respond
       n = Notification.for_user(current_user).find(params[:id])
       ok = n.respond!(params[:action_id], current_user)
-      redirect_to notifications_path, **(ok ? { notice: "Resposta enviada: #{n.response_title}." } : { alert: "Este aviso já foi respondido." })
+      redirect_to notifications_path, **(ok ? { notice: t("automations.flash.replied", title: n.response_title) } : { alert: t("automations.flash.already_replied") })
     rescue ArgumentError
-      redirect_to notifications_path, alert: "Botão inválido."
+      redirect_to notifications_path, alert: t("automations.flash.bad_button")
     end
 
     def read_all
       Notification.for_user(current_user).unread.update_all(read_at: Time.current) # rubocop:disable Rails/SkipsModelValidations
-      redirect_to notifications_path, notice: "Tudo marcado como lido."
+      redirect_to notifications_path, notice: t("automations.flash.all_read")
     end
   end
 end

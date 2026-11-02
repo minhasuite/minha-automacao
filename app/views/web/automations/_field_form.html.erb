@@ -4,17 +4,17 @@
 <%= form_with url: fields_automation_path(automation), method: :patch, class: "grid gap-3 sm:grid-cols-2 mt-3" do %>
   <%= hidden_field_tag :op, index ? "update" : "add", id: nil %>
   <% if index %><%= hidden_field_tag :index, index, id: nil %><% end %>
-  <div><label class="ss-label" for="<%= dom %>-name">Nome (variável)</label><%= text_field_tag "field[name]", fd["name"], class: "ss-input num", id: "#{dom}-name", required: true, pattern: "[a-z_][a-z0-9_]*", placeholder: "comodo", maxlength: 40 %></div>
-  <div><label class="ss-label" for="<%= dom %>-label">Rótulo</label><%= text_field_tag "field[label]", fd["label"], class: "ss-input", id: "#{dom}-label", placeholder: "Cômodo", maxlength: 80 %></div>
-  <div><label class="ss-label" for="<%= dom %>-type">Tipo</label><%= select_tag "field[type]", options_for_select(Automation::FIELD_TYPES.invert, fd["type"] || "text"), class: "ss-input", id: "#{dom}-type" %></div>
-  <div><label class="ss-label" for="<%= dom %>-default">Padrão (opcional)</label><%= text_field_tag "field[default]", default, class: "ss-input", id: "#{dom}-default", placeholder: "ponto: a chave (sala.luz)", maxlength: 200 %></div>
-  <div class="sm:col-span-2"><label class="ss-label" for="<%= dom %>-options">Opções (só seleção, separadas por vírgula)</label><%= text_field_tag "field[options]", Array(fd["options"]).join(", "), class: "ss-input", id: "#{dom}-options", placeholder: "sala, quarto, cozinha", maxlength: 300 %></div>
-  <label class="inline-flex items-center gap-2 text-sm"><%= hidden_field_tag "field[required]", "0", id: nil %><%= check_box_tag "field[required]", "1", fd["required"], id: "#{dom}-required" %>Obrigatório</label>
+  <div><label class="ss-label" for="<%= dom %>-name"><%= t("automations.fields.name") %></label><%= text_field_tag "field[name]", fd["name"], class: "ss-input num", id: "#{dom}-name", required: true, pattern: "[a-z_][a-z0-9_]*", placeholder: t("automations.fields.name_ph"), maxlength: 40 %></div>
+  <div><label class="ss-label" for="<%= dom %>-label"><%= t("automations.fields.label") %></label><%= text_field_tag "field[label]", fd["label"], class: "ss-input", id: "#{dom}-label", placeholder: t("automations.fields.label_ph"), maxlength: 80 %></div>
+  <div><label class="ss-label" for="<%= dom %>-type"><%= t("automations.fields.type") %></label><%= select_tag "field[type]", options_for_select(Automation::FIELD_TYPES.invert, fd["type"] || "text"), class: "ss-input", id: "#{dom}-type" %></div>
+  <div><label class="ss-label" for="<%= dom %>-default"><%= t("automations.fields.default_label") %></label><%= text_field_tag "field[default]", default, class: "ss-input", id: "#{dom}-default", placeholder: t("automations.fields.default_ph"), maxlength: 200 %></div>
+  <div class="sm:col-span-2"><label class="ss-label" for="<%= dom %>-options"><%= t("automations.fields.options") %></label><%= text_field_tag "field[options]", Array(fd["options"]).join(", "), class: "ss-input", id: "#{dom}-options", placeholder: t("automations.fields.options_ph"), maxlength: 300 %></div>
+  <label class="inline-flex items-center gap-2 text-sm"><%= hidden_field_tag "field[required]", "0", id: nil %><%= check_box_tag "field[required]", "1", fd["required"], id: "#{dom}-required" %><%= t("automations.fields.required_label") %></label>
   <div class="sm:col-span-2 flex flex-wrap gap-2">
-    <%= submit_tag (index ? "Salvar campo" : "Adicionar campo"), class: "ss-btn ss-btn-primary ss-btn-sm" %>
+    <%= submit_tag (index ? t("automations.fields.save") : t("automations.fields.add")), class: "ss-btn ss-btn-primary ss-btn-sm" %>
   </div>
 <% end %>
 <% if index %>
   <%= button_to fields_automation_path(automation), method: :patch, params: { op: "remove", index: index }, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger mt-2",
-                form: { data: { turbo_confirm: "Remover o campo #{fd['label']}?" } } do %><%= icon("trash", "size-4") %>Remover campo<% end %>
+                form: { data: { turbo_confirm: t("automations.fields.remove_confirm", label: fd["label"]) } } do %><%= icon("trash", "size-4") %><%= t("automations.fields.remove") %><% end %>
 <% end %>

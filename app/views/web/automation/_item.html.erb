@@ -1,14 +1,14 @@
 <%# locals: (title:, detail:, record:, back:, enabled: nil, extra: nil) -%>
 <li class="flex flex-wrap items-center gap-2 py-3">
   <div class="min-w-0 flex-1">
-    <p class="font-semibold text-ink"><%= title %><% if enabled == false %> <span class="ss-badge ss-badge-warn">Desativado</span><% end %></p>
+    <p class="font-semibold text-ink"><%= title %><% if enabled == false %> <span class="ss-badge ss-badge-warn"><%= t("automations.primitive.disabled") %></span><% end %></p>
     <p class="text-sm text-muted"><%= detail %></p>
   </div>
   <%= extra %>
   <% if can?(:manage) %>
     <% unless enabled.nil? %>
-      <%= button_to (enabled ? "Desativar" : "Ativar"), polymorphic_path(record), method: :patch, params: { record.model_name.param_key => { enabled: !enabled }, back: back }, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents" } %>
+      <%= button_to (enabled ? t("automations.primitive.disable") : t("automations.primitive.enable")), polymorphic_path(record), method: :patch, params: { record.model_name.param_key => { enabled: !enabled }, back: back }, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents" } %>
     <% end %>
-    <%= link_to "Editar", polymorphic_path(record, action: :edit, back: back), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": "Editar #{title}" %>
+    <%= link_to t("automations.primitive.edit"), polymorphic_path(record, action: :edit, back: back), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("automations.primitive.edit_name", name: title) %>
   <% end %>
 </li>

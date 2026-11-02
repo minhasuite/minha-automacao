@@ -5,13 +5,15 @@ module Notifier
     # transporte suporta está em `capabilities` dele (Push::Message corta o resto).
     module Push
       KEY = "push".freeze
+      extend PluginTexts
+      texts "pt-BR" => { label: "Push no celular" }, en: { label: "Phone push" }, es: { label: "Push en el celular" }
 
       module_function
 
       def default = KEY
       def owns?(channel) = channel == KEY
-      def choices(_site) = [ [ KEY, "Push no celular" ] ]
-      def label(_channel) = "Push no celular"
+      def choices(_site) = [ [ KEY, text(:label) ] ]
+      def label(_channel) = text(:label)
       def capabilities = ::Push::TRANSPORTS.flat_map { |t| ::Push.const_get(t).capabilities }.uniq
 
       def deliver(_channel, notifications)

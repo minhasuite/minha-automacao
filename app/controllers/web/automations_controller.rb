@@ -28,7 +28,7 @@ module Web
       @automation = @site.automations.new(automation_params.except(:enabled))
       return render(:new, status: :unprocessable_content) unless @automation.save
 
-      redirect_to edit_automation_path(@automation), notice: "Automação criada. Monte os gatilhos, as condições e as ações e publique."
+      redirect_to edit_automation_path(@automation), notice: t("automations.flash.created")
     end
 
     def edit
@@ -43,14 +43,14 @@ module Web
       load_automation(:manage)
       return redirect_to(back, alert: @automation.errors.full_messages.to_sentence) unless @automation.update(automation_params)
 
-      notice = automation_params.keys == [ "enabled" ] ? "#{@automation.name} #{@automation.enabled ? 'ligada' : 'desligada'}." : "#{@automation.kind_label} salva."
+      notice = automation_params.keys == [ "enabled" ] ? t(@automation.enabled ? "automations.flash.turned_on" : "automations.flash.turned_off", name: @automation.name) : t("automations.flash.kind_saved", kind: @automation.kind_label)
       redirect_to back, notice: notice
     end
 
     def destroy
       load_automation(:manage)
       @automation.destroy!
-      redirect_to list_path, notice: "#{@automation.kind_label} excluída."
+      redirect_to list_path, notice: t("automations.flash.kind_deleted", kind: @automation.kind_label)
     end
 
     # Ações em massa da lista: ligar, desligar ou excluir as marcadas.
@@ -59,7 +59,7 @@ module Web
       authorize_site!(@site, :manage)
       list = Automation.where(site_id: @site.id, id: Array(params[:ids]).compact_blank).to_a
       back = url_from(params[:back].presence) || site_automations_path(@site)
-      return redirect_to(back, alert: "Marque pelo menos uma.") if list.empty?
+      return redirect_to(back, alert: t("automations.flash.pick_one")) if list.empty?
 
       redirect_to back, notice: bulk_apply(list)
     end
@@ -71,27 +71,27 @@ module Web
       focus = apply(editor)
       @automation.update!(draft: editor.definition)
       redirect_to edit_automation_path(@automation, b: focus, anchor: focus && "b-#{focus.tr('.', '-')}"),
-                  notice: "Salvo no rascunho. Publique para valer."
+                  notice: t("automations.flash.draft_saved")
     rescue KeyError
-      redirect_to edit_automation_path(@automation), alert: "Esse bloco não existe mais no rascunho."
+      redirect_to edit_automation_path(@automation), alert: t("automations.flash.block_gone")
     end
 
     def publish
       load_automation(:manage)
       definition = @automation.working_draft
       errors = @automation.errors_in(definition)
-      return redirect_to(edit_automation_path(@automation), alert: "Corrija antes de publicar: #{errors.first(3).to_sentence}") if errors.any?
+      return redirect_to(edit_automation_path(@automation), alert: t("automations.flash.fix_first", errors: errors.first(3).to_sentence)) if errors.any?
 
       confirm_risk!(@automation.max_risk(definition))
       @automation.publish!(definition)
-      later = @automation.script? || @automation.enabled ? "" : ". Ligue a automação para ela rodar"
-      redirect_to edit_automation_path(@automation), notice: "Versão #{@automation.version} publicada#{later}."
+      key = @automation.script? || @automation.enabled ? "published" : "published_off"
+      redirect_to edit_automation_path(@automation), notice: t("automations.flash.#{key}", version: @automation.version)
     end
 
     def discard
       load_automation(:manage)
       @automation.update!(draft: nil)
-      redirect_to edit_automation_path(@automation), notice: "Rascunho descartado."
+      redirect_to edit_automation_path(@automation), notice: t("automations.flash.draft_discarded")
     end
 
     def revert
@@ -99,16 +99,16 @@ module Web
       old = @automation.versions.find_by!(version: params[:version].to_i)
       confirm_risk!(@automation.max_risk(old.definition))
       @automation.revert!(old.version)
-      redirect_to edit_automation_path(@automation), notice: "Versão #{old.version} publicada de novo como a #{@automation.version}."
+      redirect_to edit_automation_path(@automation), notice: t("automations.flash.republished", old: old.version, version: @automation.version)
     end
 
     # O blueprint mudou: refaz o rascunho com as mesmas entradas.
     def rebuild
       load_automation(:manage)
-      errors = @automation.blueprint ? @automation.blueprint.rebuild_draft!(@automation) : [ "Sem blueprint." ]
+      errors = @automation.blueprint ? @automation.blueprint.rebuild_draft!(@automation) : [ t("automations.flash.no_blueprint") ]
       return redirect_to(edit_automation_path(@automation), alert: errors.to_sentence) if errors.any?
 
-      redirect_to edit_automation_path(@automation), notice: "Rascunho refeito pelo blueprint (versão #{@automation.blueprint.version}). Revise e publique."
+      redirect_to edit_automation_path(@automation), notice: t("automations.flash.rebuilt", version: @automation.blueprint.version)
     end
 
     # Campos do script: adicionar, alterar ou remover (na hora, fora do rascunho).
@@ -123,9 +123,9 @@ module Web
       end
       list = with_defaults(list)
       saved = @automation.update(fields: list)
-      redirect_to edit_automation_path(@automation, anchor: "campos"), **(saved ? { notice: "Campos salvos." } : { alert: @automation.errors.full_messages.to_sentence })
+      redirect_to edit_automation_path(@automation, anchor: "campos"), **(saved ? { notice: t("automations.flash.fields_saved") } : { alert: @automation.errors.full_messages.to_sentence })
     rescue ArgumentError => e
-      redirect_to edit_automation_path(@automation, anchor: "campos"), alert: "Padrão inválido: #{e.message}"
+      redirect_to edit_automation_path(@automation, anchor: "campos"), alert: t("automations.flash.bad_default", error: e.message)
     end
 
     def json
@@ -141,9 +141,9 @@ module Web
       return render(:json, status: :unprocessable_content) if @errors.any?
 
       @automation.update!(draft: parsed)
-      redirect_to edit_automation_path(@automation), notice: "JSON válido, salvo no rascunho."
+      redirect_to edit_automation_path(@automation), notice: t("automations.flash.json_saved")
     rescue JSON::ParserError => e
-      @errors = [ "JSON inválido: #{e.message.truncate(160)}" ]
+      @errors = [ t("automations.flash.bad_json", error: e.message.truncate(160)) ]
       render :json, status: :unprocessable_content
     end
 
@@ -175,12 +175,12 @@ module Web
     # script, com os campos do formulário.
     def run
       load_automation(:view)
-      return redirect_to(back, alert: "Publique uma versão antes de executar.") unless @automation.published?
+      return redirect_to(back, alert: t("automations.flash.publish_first")) unless @automation.published?
       return run_script if @automation.script?
 
       confirm_risk!(@automation.max_risk(@automation.definition))
       run = @automation.fire!({ "type" => "manual", "title" => "Executar agora (#{current_user.name})", "user_id" => current_user.id }, skip_conditions: true)
-      return redirect_to(back, alert: "Já há uma execução em andamento (modo #{@automation.mode_label.downcase}).") unless run
+      return redirect_to(back, alert: t("automations.flash.already_running", mode: @automation.mode_label.downcase)) unless run
 
       redirect_to automation_run_path(run)
     end
@@ -208,27 +208,25 @@ module Web
       when "enable"
         ok = list.select { |a| a.published? && !a.script? }
         ok.each { |a| a.update!(enabled: true) }
-        "#{count(ok.size)} ligada#{'s' if ok.size != 1}#{' (só as publicadas)' if ok.size < list.size}."
+        t("automations.bulk.enabled", count: ok.size) + (ok.size < list.size ? t("automations.bulk.only_published") : "") + "."
       when "disable"
         list.each { |a| a.update!(enabled: false) }
-        "#{count(list.size)} desligada#{'s' if list.size != 1}."
+        "#{t('automations.bulk.disabled', count: list.size)}."
       when "shadow_on", "shadow_off"
         list.each { |a| a.update!(shadow: params[:op] == "shadow_on") }
-        "#{count(list.size)} #{params[:op] == 'shadow_on' ? 'em sombra' : 'fora da sombra'}."
+        "#{t(params[:op] == 'shadow_on' ? 'automations.bulk.shadow_on' : 'automations.bulk.shadow_off', count: list.size)}."
       when "delete"
         list.each(&:destroy!)
-        "#{count(list.size)} excluída#{'s' if list.size != 1}."
-      else "Nada feito."
+        "#{t('automations.bulk.deleted', count: list.size)}."
+      else t("automations.bulk.nothing")
       end
     end
-
-    def count(n) = helpers.count_label(n, "automação", "automações")
 
     def run_script
       values = @automation.field_values(params.fetch(:fields, {}).permit(*@automation.fields.pluck("name")).to_h)
       confirm_risk!(@automation.run_risk(values))
       run = @automation.run_script!(values, title: "Executar (#{current_user.name})", user: current_user)
-      return redirect_to(back, alert: "Já está rodando (modo #{@automation.mode_label.downcase}).") unless run
+      return redirect_to(back, alert: t("automations.flash.script_running", mode: @automation.mode_label.downcase)) unless run
 
       redirect_to automation_run_path(run)
     rescue ArgumentError => e
@@ -281,7 +279,7 @@ module Web
       authorize_site!(@site, :command, risk: risk)
       return if risk != "critical" || params[:confirm_critical] == "1"
 
-      raise SiteMembership::Forbidden, "Esta #{@automation.kind_label.downcase} comanda ponto crítico: confirme antes."
+      raise SiteMembership::Forbidden, t("automations.flash.critical", kind: @automation.kind_label.downcase)
     end
   end
 end

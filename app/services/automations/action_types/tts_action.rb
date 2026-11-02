@@ -6,10 +6,12 @@ module Automations
     # do aviso, em "Chamar HTTP" ou em "Transcrever áudio".
     class TtsAction < Base
       describe key: "tts", label: "Gerar fala", defaults: { "response_variable" => "fala" },
-               fields: [ f("text", :template, "Texto (com {{ }})", required: true), f("voice", :text, "Voz (vazio = a do provedor)"),
-                         f("provider", :select, "Provedor (vazio = o padrão)", options: -> { Ai.choices(:tts) }),
-                         f("model", :text, "Modelo (vazio = o do provedor)") ]
+               fields: [ f("text", :template, "Texto (com {{ }})", required: true, en: "Text (with {{ }})", es: "Texto (con {{ }})"),
+                         f("voice", :text, "Voz (vazio = a do provedor)", en: "Voice (empty = provider's default)", es: "Voz (vacío = la del proveedor)"),
+                         f("provider", :select, "Provedor (vazio = o padrão)", en: "Provider (empty = default)", es: "Proveedor (vacío = el predeterminado)", options: -> { Ai.choices(:tts) }),
+                         f("model", :text, "Modelo (vazio = o do provedor)", en: "Model (empty = provider's default)", es: "Modelo (vacío = el del proveedor)") ]
       returns "{url, content_type, bytes, provider, model}"
+      texts en: { label: "Generate speech" }, es: { label: "Generar voz" }
 
       def self.call(e, _path, node)
         text = e.ctx.render(node["text"])

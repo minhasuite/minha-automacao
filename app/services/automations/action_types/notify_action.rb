@@ -11,27 +11,39 @@ module Automations
       BUTTON_ID = /\A[a-z0-9_-]{1,40}\z/
 
       describe key: "notify", label: "Avisar", defaults: { "channels" => Notifier.default_channels, "title" => "Aviso" },
-               fields: [ f("channels", :channels, "Canais"), f("to", :recipient, "Para"), f("title", :template, "Título", required: true),
-                         f("message", :template, "Mensagem"), f("buttons", :buttons, "Botões (até 3, um por linha: id: Título; para comandar um ponto: id: Título -> ponto comando [valor])"),
-                         f("camera", :camera, "Imagem: quadro da câmera agora"), f("image_url", :template, "Ou imagem por URL (https://... ou /...)"),
-                         f("url", :template, "Ao tocar, abrir (/paineis/..., /locais/... ou https://...)"),
-                         f("priority", :select, "Prioridade", options: Push::PRIORITIES), f("tag", :template, "Tag (substitui o aviso anterior com a mesma)"),
-                         f("group", :text, "Grupo"), f("ttl", :duration, "Validade no push (ex.: 1h)"), f("sticky", :bool, "Fixo (fica até tocar)"),
-                         f("progress", :template, "Progresso 0–100 no app (contínuo, atualiza no lugar pela tag)"),
-                         f("clear", :bool, "Só apagar o aviso com esta tag") ]
+               fields: [ f("channels", :channels, "Canais", en: "Channels", es: "Canales"), f("to", :recipient, "Para", en: "To", es: "Para"),
+                         f("title", :template, "Título", required: true, en: "Title", es: "Título"), f("message", :template, "Mensagem", en: "Message", es: "Mensaje"),
+                         f("buttons", :buttons, "Botões (até 3, um por linha: id: Título; para comandar um ponto: id: Título -> ponto comando [valor])",
+                           en: "Buttons (up to 3, one per line: id: Title; to command a point: id: Title -> point command [value])",
+                           es: "Botones (hasta 3, uno por línea: id: Título; para enviar un comando a un punto: id: Título -> punto comando [valor])"),
+                         f("camera", :camera, "Imagem: quadro da câmera agora", en: "Image: current camera frame", es: "Imagen: cuadro actual de la cámara"),
+                         f("image_url", :template, "Ou imagem por URL (https://... ou /...)", en: "Or image by URL (https://... or /...)", es: "O imagen por URL (https://... o /...)"),
+                         f("url", :template, "Ao tocar, abrir (/paineis/..., /locais/... ou https://...)", en: "On tap, open (/paineis/..., /locais/... or https://...)", es: "Al tocar, abrir (/paineis/..., /locais/... o https://...)"),
+                         f("priority", :select, "Prioridade", options: Push::PRIORITIES, en: "Priority", es: "Prioridad"),
+                         f("tag", :template, "Tag (substitui o aviso anterior com a mesma)", en: "Tag (replaces the previous notification with the same one)", es: "Etiqueta (reemplaza el aviso anterior con la misma)"),
+                         f("group", :text, "Grupo", en: "Group", es: "Grupo"), f("ttl", :duration, "Validade no push (ex.: 1h)", en: "Push expiration (e.g. 1h)", es: "Validez del push (ej.: 1h)"),
+                         f("sticky", :bool, "Fixo (fica até tocar)", en: "Sticky (stays until tapped)", es: "Fijo (queda hasta tocarlo)"),
+                         f("progress", :template, "Progresso 0–100 no app (contínuo, atualiza no lugar pela tag)", en: "Progress 0–100 in the app (ongoing, updates in place by tag)", es: "Progreso 0–100 en la app (continuo, se actualiza en el lugar por la etiqueta)"),
+                         f("clear", :bool, "Só apagar o aviso com esta tag", en: "Only clear the notification with this tag", es: "Solo borrar el aviso con esta etiqueta") ]
+      texts "pt-BR" => { clear: "para apagar, informe a tag.", buttons: "botões: até %{max}, cada um com id (letras minúsculas, números, _ ou -) e título de até 40 letras.",
+                         command: "botão que comanda precisa de ponto e comando.", repeated: "botões com id repetido." },
+            en: { label: "Notify", clear: "to clear, enter the tag.", buttons: "buttons: up to %{max}, each with an id (lowercase letters, numbers, _ or -) and a title of up to 40 characters.",
+                  command: "a button that sends a command needs a point and a command.", repeated: "buttons with a repeated id." },
+            es: { label: "Avisar", clear: "para borrar, indica la etiqueta.", buttons: "botones: hasta %{max}, cada uno con id (letras minúsculas, números, _ o -) y título de hasta 40 letras.",
+                  command: "un botón que envía comandos necesita punto y comando.", repeated: "botones con id repetido." }
 
       def self.rules(node)
         msgs = []
-        msgs << "para apagar, informe a tag." if node["clear"] == true && node["tag"].blank?
+        msgs << text(:clear) if node["clear"] == true && node["tag"].blank?
         buttons = node["buttons"]
         if buttons && !(buttons.is_a?(Array) && buttons.size.between?(1, Notification::MAX_ACTIONS) &&
                         buttons.all? { |b| b.is_a?(Hash) && BUTTON_ID.match?(b["id"].to_s) && b["title"].to_s.strip.size.between?(1, 40) })
-          msgs << "botões: até #{Notification::MAX_ACTIONS}, cada um com id (letras minúsculas, números, _ ou -) e título de até 40 letras."
+          msgs << text(:buttons, max: Notification::MAX_ACTIONS)
         end
         if buttons.is_a?(Array) && buttons.any? { |b| b.is_a?(Hash) && (b["command"].present? ^ b["point"].present?) }
-          msgs << "botão que comanda precisa de ponto e comando."
+          msgs << text(:command)
         end
-        msgs << "botões com id repetido." if buttons.is_a?(Array) && buttons.map { |b| b.is_a?(Hash) && b["id"] }.uniq.size != buttons.size
+        msgs << text(:repeated) if buttons.is_a?(Array) && buttons.map { |b| b.is_a?(Hash) && b["id"] }.uniq.size != buttons.size
         msgs
       end
 

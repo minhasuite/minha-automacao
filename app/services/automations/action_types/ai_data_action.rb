@@ -7,13 +7,18 @@ module Automations
     # anomalia" e "resumo da semana" são automações do usuário, não código.
     class AiDataAction < AiTaskAction
       describe key: "ai_data", label: "Gerar dados por IA", defaults: { "response_variable" => "ia", "history" => "24h" },
-               fields: [ f("points", :points, "Contexto: pontos"), f("areas", :areas, "Contexto: áreas"), f("tags", :tags, "Contexto: etiquetas"),
-                         f("history", :duration, "Resumo do histórico de (ex.: 24h; vazio = só o estado agora)") ] + FIELDS
+               fields: [ f("points", :points, "Contexto: pontos", en: "Context: points", es: "Contexto: puntos"),
+                         f("areas", :areas, "Contexto: áreas", en: "Context: areas", es: "Contexto: áreas"),
+                         f("tags", :tags, "Contexto: etiquetas", en: "Context: tags", es: "Contexto: etiquetas"),
+                         f("history", :duration, "Resumo do histórico de (ex.: 24h; vazio = só o estado agora)", en: "History summary for (e.g. 24h; empty = current state only)", es: "Resumen del historial de (ej.: 24h; vacío = solo el estado actual)") ] + FIELDS
       returns "{data (texto ou os campos), provider, model, tokens, cost}"
+      texts "pt-BR" => { context: "escolha pontos, áreas ou etiquetas para o contexto." },
+            en: { label: "Generate data with AI", returns: "{data (text or the fields), provider, model, tokens, cost}", context: "choose points, areas or tags for the context." },
+            es: { label: "Generar datos con IA", returns: "{data (texto o los campos), provider, model, tokens, cost}", context: "elige puntos, áreas o etiquetas para el contexto." }
 
       def self.rules(node)
         msgs = super
-        msgs << "escolha pontos, áreas ou etiquetas para o contexto." if %w[points areas tags].all? { |k| node[k].blank? }
+        msgs << text(:context) if %w[points areas tags].all? { |k| node[k].blank? }
         msgs
       end
 

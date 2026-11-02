@@ -6,9 +6,12 @@ module Automations
     # Fala com a rede: em sombra fica segurada (padrão dos plugins).
     class IntegrationReloadAction < Base
       describe key: "integration_reload", label: "Recarregar integração",
-               fields: [ f("integration", :text, "Tipo de integração (ex.: tuya, alexa)", required: true) ]
+               fields: [ f("integration", :text, "Tipo de integração (ex.: tuya, alexa)", required: true, en: "Integration type (e.g. tuya, alexa)", es: "Tipo de integración (ej.: tuya, alexa)") ]
+      texts "pt-BR" => { unknown: "tipo de integração não existe (%{keys})." },
+            en: { label: "Reload integration", unknown: "integration type doesn't exist (%{keys})." },
+            es: { label: "Recargar integración", unknown: "el tipo de integración no existe (%{keys})." }
 
-      def self.rules(node) = Integrations.plugin(node["integration"]) ? [] : [ "tipo de integração não existe (#{Integrations.plugins.map(&:key).join(', ')})." ]
+      def self.rules(node) = Integrations.plugin(node["integration"]) ? [] : [ text(:unknown, keys: Integrations.plugins.map(&:key).join(", ")) ]
 
       def self.call(e, _path, node)
         list = e.ctx.site.integrations.select { |i| i.plugin&.key == node["integration"] }

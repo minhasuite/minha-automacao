@@ -10,8 +10,11 @@ module Automations
       def self.shadow_safe?(_e, _node) = true
 
       describe key: "calendar_events", label: "Ler eventos da agenda", defaults: { "within" => "24h", "response_variable" => "agenda" },
-               fields: [ f("point", :point, "Agenda", required: true), f("start", :duration, "A partir de (ex.: 0m, -1h, 2h)"),
-                         f("within", :duration, "Durante (ex.: 24h)", required: true), f("contains", :text, "Título contém (opcional)") ]
+               fields: [ f("point", :point, "Agenda", required: true, en: "Calendar", es: "Calendario"),
+                         f("start", :duration, "A partir de (ex.: 0m, -1h, 2h)", en: "Starting from (e.g. 0m, -1h, 2h)", es: "A partir de (ej.: 0m, -1h, 2h)"),
+                         f("within", :duration, "Durante (ex.: 24h)", required: true, en: "Within (e.g. 24h)", es: "Durante (ej.: 24h)"),
+                         f("contains", :text, "Título contém (opcional)", en: "Title contains (optional)", es: "El título contiene (opcional)") ]
+      texts en: { label: "Read calendar events" }, es: { label: "Leer eventos del calendario" }
       returns "{events: [{summary, start, end, all_day, location}], count, titles}"
 
       def self.call(e, _path, node)

@@ -29,7 +29,7 @@ module Ai
       lines = list.map do |p|
         since = ctx.changed_at(p)
         area = p.area || p.device&.area
-        parts = [ "#{p.name} [#{p.key}]#{" (#{area.name})" if area}: #{p.quality == 'good' ? ctx.point_text(p) : Automations::Dsl::QUALITIES.fetch(p.quality, p.quality)}" ]
+        parts = [ "#{p.name} [#{p.key}]#{" (#{area.name})" if area}: #{p.quality == 'good' ? ctx.point_text(p) : Automations::Dsl.qualities.fetch(p.quality, p.quality)}" ]
         parts << "mudou há #{Automations::Dsl.duration_label((ctx.now - since).to_i)}" if since
         if (count, min, max, avg = stats[p.id])
           parts << "últimas #{window}: #{count} leituras#{", mín #{num(min)}, máx #{num(max)}, média #{num(avg)}" if min}"

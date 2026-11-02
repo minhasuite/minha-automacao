@@ -6,9 +6,10 @@ module Automations
     # campo (ou guarda livre). Resposta: a linha gravada {id, em, ...campos}.
     class DatasetRecordAction < Base
       describe key: "dataset_record", label: "Registrar dados",
-               fields: [ f("dataset", :dataset, "Conjunto de dados", required: true),
-                         f("values", :kv, "Valores (um por linha, campo: texto com {{ }})", required: true) ]
+               fields: [ f("dataset", :dataset, "Conjunto de dados", required: true, en: "Dataset", es: "Conjunto de datos"),
+                         f("values", :kv, "Valores (um por linha, campo: texto com {{ }})", required: true, en: "Values (one per line, field: text with {{ }})", es: "Valores (uno por línea, campo: texto con {{ }})") ]
       returns "{id, em, ...campos}"
+      texts en: { label: "Record data", returns: "{id, em, ...fields}" }, es: { label: "Registrar datos", returns: "{id, em, ...campos}" }
 
       def self.call(e, _path, node)
         dataset = e.ctx.site.datasets.find_by(id: node["dataset"]) or raise Engine::Failure, "Conjunto de dados removido do local."

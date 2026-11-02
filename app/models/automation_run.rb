@@ -5,9 +5,7 @@
 class AutomationRun < ApplicationRecord
   acts_as_tenant :tenant
 
-  STATUSES = { "queued" => "Na fila", "running" => "Rodando", "waiting" => "Esperando", "done" => "Concluída",
-               "skipped" => "Condições não atendidas", "stopped" => "Parada", "failed" => "Falhou",
-               "cancelled" => "Cancelada", "loop" => "Laço evitado" }.freeze
+  STATUSES = LocalizedLabel.for("automations.labels.run_statuses", %w[queued running waiting done skipped stopped failed cancelled loop])
   TONES = { "done" => "success", "failed" => "danger", "loop" => "warn", "cancelled" => "warn", "waiting" => "info",
             "running" => "info", "queued" => "info" }.freeze
   RETENTION_DAYS = 30

@@ -13,30 +13,34 @@ module Automations
   # Duração: "30s", "5m", "1h30m" ou segundos (número); o sinal "-" só vale no
   # deslocamento do sol.
   module Dsl
-    Field = Struct.new(:name, :kind, :label, :required, :options, keyword_init: true) do
+    # i18n: o rótulo (pt-BR) vem com o en e o es no próprio campo do plugin
+    # (`f("point", :point, "Ponto", en: "Point", es: "Punto")`); `label`
+    # responde no idioma da tela.
+    Field = Struct.new(:name, :kind, :label, :required, :options, :en, :es, keyword_init: true) do
       # Opções do `:select`: hash fixo ou lambda lido na hora (registro de
       # plugins, como os provedores de IA e os tipos de consulta).
       def choices = options.respond_to?(:call) ? options.call : options
+      def label = (self[I18n.locale] if %i[en es].include?(I18n.locale)) || self[:label]
     end
 
     # Texto Liquid no lugar de um valor (Lote 7: o valor do comando vindo de template do HA).
     def self.template?(v) = v.is_a?(String) && (v.include?("{{") || v.include?("{%"))
 
-    def self.f(name, kind, label, required: false, options: nil) = Field.new(name: name, kind: kind, label: label, required: required, options: options)
+    def self.f(name, kind, label, required: false, options: nil, en: nil, es: nil) = Field.new(name: name, kind: kind, label: label, required: required, options: options, en: en, es: es)
 
-    DAYS = %w[Dom Seg Ter Qua Qui Sex Sáb].freeze
-    SUN_EVENTS = { "sunrise" => "Nascer do sol", "sunset" => "Pôr do sol" }.freeze
-    QUALITIES = { "unavailable" => "Indisponível", "error" => "Com erro", "stale" => "Desatualizado", "good" => "Normal" }.freeze
-    ALERT_EVENTS = { "open" => "Abriu", "ack" => "Alguém marcou ciente", "resolve" => "Fechou" }.freeze
-    MODES = { "single" => "Uma por vez (ignora novo disparo)", "restart" => "Reinicia (cancela a anterior)",
-              "queued" => "Em fila", "parallel" => "Em paralelo" }.freeze
+    # Rótulos no idioma da tela (config/locales/automations.*.yml).
+    def self.days = I18n.t("automations.dsl.days")
+    def self.sun_events = I18n.t("automations.dsl.sun_events").stringify_keys
+    def self.qualities = I18n.t("automations.dsl.qualities").stringify_keys
+    def self.alert_events = I18n.t("automations.dsl.alert_events").stringify_keys
+    # Modos de execução (rótulos em Automation::MODES).
+    MODES = %w[single restart queued parallel].freeze
 
     # Pseudo-bloco das opções do "Escolher".
-    class Option
-      def self.label = "Opção"
-      def self.fields = [ Dsl.f("conditions", :conditions, "Se"), Dsl.f("actions", :actions, "Então") ]
-      def self.rules(_node) = []
-      def self.defaults = {}
+    class Option < Block
+      describe key: "option", label: "Opção",
+               fields: [ f("conditions", :conditions, "Se", en: "If", es: "Si"), f("actions", :actions, "Então", en: "Then", es: "Entonces") ]
+      texts en: { label: "Option" }, es: { label: "Opción" }
     end
 
     # Listas de blocos da definição → registro dos tipos (plugins).
@@ -201,16 +205,14 @@ module Automations
     # `fields`: campos do script (F8f) — definição de script não tem gatilho
     # nem condição e pode citar ponto de campo como "$nome".
     def errors(definition, site, fields: nil)
-      return [ "A definição precisa ser um objeto JSON." ] unless definition.is_a?(Hash)
+      return [ I18n.t("automations.dsl.errors.not_object") ] unless definition.is_a?(Hash)
 
       Validator.new(site, fields).call(definition)
     end
 
     # Validação: chaves conhecidas, campos obrigatórios, o tipo de cada campo
-    # e as regras do plugin (`rules`).
+    # e as regras do plugin (`rules`). Mensagens em automations.dsl.errors.
     class Validator
-      LIST_NAMES = { triggers: "gatilhos", conditions: "condições", actions: "ações", options: "opções" }.freeze
-
       def initialize(site, fields = nil)
         @site = site
         @fields = fields&.index_by { |fd| fd["name"] }
@@ -220,39 +222,41 @@ module Automations
 
       def call(definition)
         extra = definition.keys - %w[triggers conditions actions]
-        @errors << "Chave desconhecida: #{extra.join(', ')}." if extra.any?
-        KINDS.each { |kind| list(definition[kind.to_s], kind, LIST_NAMES[kind]) }
+        @errors << e(:unknown_key, keys: extra.join(", ")) if extra.any?
+        KINDS.each { |kind| list(definition[kind.to_s], kind, e("lists.#{kind}")) }
         if @fields
-          @errors << "Script não tem gatilho nem condição: quem chama é a automação, o painel, a API ou o botão Executar." if Array(definition["triggers"]).any? || Array(definition["conditions"]).any?
+          @errors << e(:script_no_triggers) if Array(definition["triggers"]).any? || Array(definition["conditions"]).any?
         elsif Array(definition["triggers"]).empty?
-          @errors << "Falta pelo menos um gatilho."
+          @errors << e(:no_trigger)
         end
-        @errors << "Falta pelo menos uma ação." if Array(definition["actions"]).empty?
+        @errors << e(:no_action) if Array(definition["actions"]).empty?
         @errors
       end
 
       private
 
+      def e(key, **) = I18n.t("automations.dsl.errors.#{key}", **)
+
       def list(value, kind, where)
         return if value.nil?
-        return @errors << "#{where}: precisa ser uma lista." unless value.is_a?(Array)
+        return @errors << e(:not_list_at, where: where) unless value.is_a?(Array)
 
         value.each_with_index { |node, i| block(node, kind, "#{where} #{i + 1}") }
       end
 
       def block(node, kind, where)
-        return @errors << "#{where}: precisa ser um objeto." unless node.is_a?(Hash)
+        return @errors << e(:not_hash_at, where: where) unless node.is_a?(Hash)
 
         type = kind == :options ? "option" : node["type"]
-        s = Dsl.spec(kind, type) or return @errors << "#{where}: tipo \"#{node['type']}\" não existe."
+        s = Dsl.spec(kind, type) or return @errors << e(:unknown_type, where: where, type: node["type"])
 
         where = "#{where} (#{s.label})"
         names = s.fields.map(&:name)
         extra = node.keys - names - %w[type id]
-        @errors << "#{where}: campo desconhecido #{extra.join(', ')}." if extra.any?
+        @errors << e(:unknown_field_at, where: where, fields: extra.join(", ")) if extra.any?
         s.fields.each do |fd|
           v = node[fd.name]
-          next @errors << "#{where}: falta #{fd.label.downcase}." if fd.required && (v.nil? || v == "" || v == [])
+          next @errors << e(:missing_at, where: where, field: fd.label.downcase) if fd.required && (v.nil? || v == "" || v == [])
           next if v.nil?
 
           field(fd, v, node, where)
@@ -263,33 +267,33 @@ module Automations
       def field(fd, v, node, where)
         msg = case fd.kind
         when :point, :writable_point then point_error(v, fd.kind == :writable_point)
-        when :duration then "duração inválida (use 30s, 5m, 1h30m)" unless (sec = Dsl.seconds(v)) && sec.abs <= MAX_DURATION
-        when :number then "precisa ser número" unless v.is_a?(Numeric)
-        when :time then "horário precisa ser HH:MM" unless v.is_a?(String) && TIME.match?(v)
-        when :days then "dias precisam ser de 0 (dom) a 6 (sáb)" unless v.is_a?(Array) && v.any? && v.all? { |d| d.is_a?(Integer) && d.between?(0, 6) }
-        when :select then "opção inválida" unless fd.choices.key?(v)
-        when :bool then "precisa ser verdadeiro ou falso" unless [ true, false ].include?(v)
-        when :text then "texto longo demais" unless v.is_a?(String) && v.size <= 500
-        when :secret then "segredo inválido" unless (v.is_a?(String) && v.size <= 500) || (v.is_a?(Hash) && v["enc"].is_a?(String))
-        when :var then "nome de variável inválido (letras minúsculas, números e _)" unless v.is_a?(String) && VAR.match?(v)
+        when :duration then e(:duration) unless (sec = Dsl.seconds(v)) && sec.abs <= MAX_DURATION
+        when :number then e(:number) unless v.is_a?(Numeric)
+        when :time then e(:time) unless v.is_a?(String) && TIME.match?(v)
+        when :days then e(:days) unless v.is_a?(Array) && v.any? && v.all? { |d| d.is_a?(Integer) && d.between?(0, 6) }
+        when :select then e(:select) unless fd.choices.key?(v)
+        when :bool then e(:bool) unless [ true, false ].include?(v)
+        when :text then e(:text) unless v.is_a?(String) && v.size <= 500
+        when :secret then e(:secret) unless (v.is_a?(String) && v.size <= 500) || (v.is_a?(Hash) && v["enc"].is_a?(String))
+        when :var then e(:var) unless v.is_a?(String) && VAR.match?(v)
         when :expr then expr_error(v)
         when :template then template_error(v)
         when :prompt then template_error(v, MAX_PROMPT)
         when :cameras then list_error(v) { |id| camera_error(id) }
         when :points then list_error(v) { |id| point_error(id, false) }
-        when :areas then list_error(v) { |id| "área não existe neste local" unless @site.areas.exists?(id: id) }
-        when :tags then list_error(v) { |id| "etiqueta não existe" unless Tag.exists?(id: id) }
+        when :areas then list_error(v) { |id| e(:area) unless @site.areas.exists?(id: id) }
+        when :tags then list_error(v) { |id| e(:tag) unless Tag.exists?(id: id) }
         when :ai_output then Ai::Output.error(v)
-        when :dataset then "conjunto de dados não existe neste local" unless v.is_a?(String) && @site.datasets.exists?(id: v)
-        when :kv then "precisam ser {campo: texto}" unless v.is_a?(Hash) && v.size <= Dataset::MAX_FIELDS && v.all? { |k, x| k.is_a?(String) && x.is_a?(String) && x.size <= 500 }
-        when :channels then "canal inválido" unless Notifier.valid_channels?(v)
+        when :dataset then e(:dataset) unless v.is_a?(String) && @site.datasets.exists?(id: v)
+        when :kv then e(:kv) unless v.is_a?(Hash) && v.size <= Dataset::MAX_FIELDS && v.all? { |k, x| k.is_a?(String) && x.is_a?(String) && x.size <= 500 }
+        when :channels then e(:channels) unless Notifier.valid_channels?(v)
         when :recipient then recipient_error(v)
         when :camera then camera_error(v, detection: true)
         when :buttons then nil # regras do plugin
-        when :scene then "cena não existe neste local" unless v.is_a?(String) && @site.scenes.exists?(id: v)
-        when :script then "script não existe neste local" unless v.is_a?(String) && @site.scripts.exists?(id: v)
+        when :scene then e(:scene) unless v.is_a?(String) && @site.scenes.exists?(id: v)
+        when :script then e(:script) unless v.is_a?(String) && @site.scripts.exists?(id: v)
         when :script_fields then script_fields_error(node, v)
-        when :alert_rule then "regra de alerta não existe neste local" unless v.is_a?(String) && @site.alert_rules.exists?(id: v)
+        when :alert_rule then e(:alert_rule) unless v.is_a?(String) && @site.alert_rules.exists?(id: v)
         when :command then command_error(node, v)
         when :value then nil
         else list(v, fd.kind, "#{where} › #{fd.label.downcase}") && nil
@@ -298,40 +302,40 @@ module Automations
       end
 
       def recipient_error(v)
-        return "destinatário inválido" unless Notifier.valid_recipient?(v)
+        return e(:recipient) unless Notifier.valid_recipient?(v)
 
-        "pessoa não existe" if v.start_with?("user:") && !User.exists?(id: v.delete_prefix("user:"), tenant_id: @site.tenant_id)
+        e(:person) if v.start_with?("user:") && !User.exists?(id: v.delete_prefix("user:"), tenant_id: @site.tenant_id)
       end
 
       # integ: no "Avisar", a detecção com IA também dá o quadro (o da detecção).
       def camera_error(id, detection: false)
-        point = @points[id] or return "câmera não existe neste local"
-        "#{point.name} não é câmera" unless point.capability == "stream" || (detection && point.capability == "detection")
+        point = @points[id] or return e(:camera)
+        e(:not_camera, name: point.name) unless point.capability == "stream" || (detection && point.capability == "detection")
       end
 
       def point_error(id, writable)
         return field_ref_error(id) if id.is_a?(String) && id.start_with?("$")
 
-        point = @points[id] or return "ponto não existe neste local"
-        "#{point.name} não recebe comando" if writable && !point.writable
+        point = @points[id] or return e(:point)
+        e(:not_writable, name: point.name) if writable && !point.writable
       end
 
       # "$nome" = ponto escolhido no campo do script.
       def field_ref_error(ref)
-        "campo #{ref} não existe no script (ou não é do tipo ponto)" unless @fields&.dig(ref.delete_prefix("$"), "type") == "point"
+        e(:field_ref, ref: ref) unless @fields&.dig(ref.delete_prefix("$"), "type") == "point"
       end
 
       def script_fields_error(node, v)
-        return "precisam ser um objeto {campo: valor}" unless v.is_a?(Hash)
+        return e(:script_fields) unless v.is_a?(Hash)
 
         script = @site.scripts.find_by(id: node["script"]) if node["script"].is_a?(String)
         return unless script
 
         unknown = v.keys - script.fields.pluck("name")
-        return "campo desconhecido #{unknown.join(', ')}" if unknown.any?
+        return e(:unknown_field, fields: unknown.join(", ")) if unknown.any?
 
         missing = script.fields.select { |fd| fd["required"] && fd["default"].nil? && v[fd["name"]].blank? }
-        "falta #{missing.pluck('label').join(', ').downcase}" if missing.any?
+        e(:missing, field: missing.pluck("label").join(", ").downcase) if missing.any?
       end
 
       def command_error(node, command)
@@ -344,27 +348,27 @@ module Automations
       end
 
       def expr_error(v)
-        return "precisa ser texto" unless v.is_a?(String) && v.size <= 500
+        return e(:not_text) unless v.is_a?(String) && v.size <= 500
 
         Expr.calculator.ast(v)
         nil
-      rescue Dentaku::Error, Dentaku::ParseError, Dentaku::TokenizerError => e
-        "expressão inválida (#{e.message.truncate(80)})"
+      rescue Dentaku::Error, Dentaku::ParseError, Dentaku::TokenizerError => ex
+        e(:expr, error: ex.message.truncate(80))
       end
 
       def list_error(v)
-        return "precisa ser uma lista" unless v.is_a?(Array) && v.size <= 50 && v.all?(String)
+        return e(:not_list) unless v.is_a?(Array) && v.size <= 50 && v.all?(String)
 
         v.lazy.filter_map { |id| yield id }.first
       end
 
       def template_error(v, max = 500)
-        return "precisa ser texto de até #{max} caracteres" unless v.is_a?(String) && v.size <= max
+        return e(:template_size, max: max) unless v.is_a?(String) && v.size <= max
 
         Liquid::Template.parse(v, error_mode: :strict)
         nil
-      rescue Liquid::Error => e
-        "texto inválido (#{e.message.truncate(80)})"
+      rescue Liquid::Error => ex
+        e(:template, error: ex.message.truncate(80))
       end
     end
   end

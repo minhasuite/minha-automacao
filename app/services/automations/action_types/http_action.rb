@@ -10,13 +10,16 @@ module Automations
       METHODS = SafeHttp::METHODS.index_by(&:itself).freeze
 
       describe key: "http", label: "Chamar HTTP / webhook", defaults: { "method" => "POST", "timeout" => 10 },
-               fields: [ f("method", :select, "Método", required: true, options: METHODS), f("url", :template, "URL", required: true),
-                         f("headers", :template, "Cabeçalhos (um por linha, Nome: valor)"), f("secret", :secret, "Segredo (cifrado; use {{ secret }})"),
-                         f("body", :template, "Corpo"), f("timeout", :number, "Tempo limite (s)") ]
+               fields: [ f("method", :select, "Método", required: true, options: METHODS, en: "Method", es: "Método"), f("url", :template, "URL", required: true, en: "URL", es: "URL"),
+                         f("headers", :template, "Cabeçalhos (um por linha, Nome: valor)", en: "Headers (one per line, Name: value)", es: "Encabezados (uno por línea, Nombre: valor)"),
+                         f("secret", :secret, "Segredo (cifrado; use {{ secret }})", en: "Secret (encrypted; use {{ secret }})", es: "Secreto (cifrado; usa {{ secret }})"),
+                         f("body", :template, "Corpo", en: "Body", es: "Cuerpo"), f("timeout", :number, "Tempo limite (s)", en: "Timeout (s)", es: "Tiempo límite (s)") ]
+      texts "pt-BR" => { timeout: "tempo limite de 1 a 30 segundos." },
+            en: { label: "Call HTTP / webhook", timeout: "timeout from 1 to 30 seconds." }, es: { label: "Llamar HTTP / webhook", timeout: "tiempo límite de 1 a 30 segundos." }
       returns "{status, body, json}"
 
       def self.rules(node)
-        node["timeout"].nil? || (node["timeout"].is_a?(::Numeric) && node["timeout"].between?(1, 30)) ? [] : [ "tempo limite de 1 a 30 segundos." ]
+        node["timeout"].nil? || (node["timeout"].is_a?(::Numeric) && node["timeout"].between?(1, 30)) ? [] : [ text(:timeout) ]
       end
 
       def self.call(e, _path, node)

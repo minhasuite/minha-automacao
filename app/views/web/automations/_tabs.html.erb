@@ -1,10 +1,10 @@
 <%# locals: (site:, current:) -%>
 <%= render "web/sites/tabs", site: site, current: :automation, css: "max-sm:!hidden" %>
-<nav class="ss-chips mb-4" aria-label="Automações e cenas">
-  <%= link_to site_path(site), class: "ss-chip shrink-0 sm:!hidden", "aria-label": "Voltar a #{site.name}" do %><%= icon("arrow-left", "size-4") %><%= site.name %><% end %>
-  <% [ [ "Automações", site_automations_path(site), "lightning-bolt", :automations ], [ "Cenas", site_scenes_path(site), "sparkles", :scenes ],
-       [ "Scripts", site_scripts_path(site), "play", :scripts ], [ "Blueprints", site_blueprints_path(site), "duplicate", :blueprints ],
-       [ "Regras simples", rules_site_path(site), "clock", :rules ], [ "Sombra", site_shadow_path(site), "moon", :shadow ] ].each do |label, path, ico, key| %>
+<nav class="ss-chips mb-4" aria-label="<%= t("automations.index.title") %>">
+  <%= link_to site_path(site), class: "ss-chip shrink-0 sm:!hidden", "aria-label": t("automations.tabs.back_to", name: site.name) do %><%= icon("arrow-left", "size-4") %><%= site.name %><% end %>
+  <% [ [ t("automations.tabs.automations"), site_automations_path(site), "lightning-bolt", :automations ], [ t("automations.tabs.scenes"), site_scenes_path(site), "sparkles", :scenes ],
+       [ t("automations.tabs.scripts"), site_scripts_path(site), "play", :scripts ], [ t("automations.tabs.blueprints"), site_blueprints_path(site), "duplicate", :blueprints ],
+       [ t("automations.tabs.rules"), rules_site_path(site), "clock", :rules ], [ t("automations.tabs.shadow"), site_shadow_path(site), "moon", :shadow ] ].each do |label, path, ico, key| %>
     <%= link_to path, class: "ss-chip shrink-0", "aria-current": (key == current).to_s do %><%= icon(ico, "size-4") %><%= label %><% end %>
   <% end %>
 </nav>

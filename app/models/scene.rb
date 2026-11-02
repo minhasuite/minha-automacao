@@ -73,15 +73,15 @@ class Scene < ApplicationRecord
   private
 
   def items_fit
-    return errors.add(:items, "precisa de pelo menos um comando") if items.empty?
+    return errors.add(:items, :none) if items.empty?
 
     by_id = points
     items.each do |i|
       point = by_id[i["point_id"]]
-      next errors.add(:items, "tem ponto de outro local") unless point&.site_id == site_id
+      next errors.add(:items, :other_site) unless point&.site_id == site_id
       next if Points::Command.commands_for(point).include?(i["command"]) && point.writable
 
-      errors.add(:items, "tem comando inválido para #{point.name}")
+      errors.add(:items, :bad_command, name: point.name)
     end
   end
 end

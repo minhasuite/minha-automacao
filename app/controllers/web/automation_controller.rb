@@ -7,7 +7,7 @@ module Web
   class AutomationController < ApplicationController
     class_attribute :model, :label
 
-    helper_method :back_path
+    helper_method :back_path, :label_text
 
     def new
       load_site
@@ -20,7 +20,7 @@ module Web
       @record = model.new(record_params.merge(site: @site))
       return render("web/automation/edit", status: :unprocessable_content) unless @record.save
 
-      redirect_to back_path, notice: "#{label} salvo."
+      redirect_to back_path, notice: t("automations.flash.saved", what: label_text)
     end
 
     def edit
@@ -32,16 +32,19 @@ module Web
       load_record
       return render("web/automation/edit", status: :unprocessable_content) unless @record.update(record_params)
 
-      redirect_to back_path, notice: "#{label} salvo."
+      redirect_to back_path, notice: t("automations.flash.saved", what: label_text)
     end
 
     def destroy
       load_record
       @record.destroy!
-      redirect_to back_path, notice: "#{label} excluído."
+      redirect_to back_path, notice: t("automations.flash.deleted", what: label_text)
     end
 
     private
+
+    # Rótulo da primitiva no idioma da tela (automations.primitives.<controller>).
+    def label_text = t("automations.primitives.#{controller_name}", default: label)
 
     def load_site
       @site = Site.find(params[:site_id])

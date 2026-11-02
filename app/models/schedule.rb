@@ -10,8 +10,7 @@ class Schedule < ApplicationRecord
 
   acts_as_tenant :tenant
 
-  KINDS = { "time" => "Horário", "sunrise" => "Nascer do sol", "sunset" => "Pôr do sol" }.freeze
-  DAYS = %w[Dom Seg Ter Qua Qui Sex Sáb].freeze
+  KINDS = LocalizedLabel.for("automations.labels.schedule_kinds", %w[time sunrise sunset])
   MISSED = 5.minutes
 
   belongs_to :site
@@ -25,7 +24,7 @@ class Schedule < ApplicationRecord
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }
-  validates :time_of_day, format: { with: /\A([01]\d|2[0-3]):[0-5]\d\z/, message: "precisa ser HH:MM" }, if: -> { kind == "time" }
+  validates :time_of_day, format: { with: /\A([01]\d|2[0-3]):[0-5]\d\z/, message: :hh_mm }, if: -> { kind == "time" }
   validates :offset_min, numericality: { only_integer: true, in: -720..720 }
   validate :target_fits
   validate :days_fit
@@ -36,7 +35,7 @@ class Schedule < ApplicationRecord
   audited_attributes :name, :enabled, :kind, :time_of_day, :days
 
   def kind_label = KINDS.fetch(kind, kind)
-  def days_label = days.size == 7 ? "todos os dias" : days.map { |d| DAYS[d] }.join(", ")
+  def days_label = days.size == 7 ? I18n.t("automations.labels.every_day") : days.map { |d| Automations::Dsl.days[d] }.join(", ")
 
   def when_label
     base = kind == "time" ? time_of_day : kind_label.downcase
@@ -88,8 +87,8 @@ class Schedule < ApplicationRecord
   end
 
   def target_fits
-    return errors.add(:base, "Escolha um ponto ou uma cena (só um).") unless point.nil? ^ scene.nil?
-    return errors.add(:base, "O ponto ou a cena precisa ser deste local.") if (point || scene).site_id != site_id
+    return errors.add(:base, :one_target) unless point.nil? ^ scene.nil?
+    return errors.add(:base, :other_site) if (point || scene).site_id != site_id
     return if scene
 
     Points::Command.new(point, command.to_s, value).new_value
@@ -98,10 +97,10 @@ class Schedule < ApplicationRecord
   end
 
   def days_fit
-    errors.add(:days, "precisa de pelo menos um dia") if days.empty? || days.any? { |d| !d.between?(0, 6) }
+    errors.add(:days, :none) if days.empty? || days.any? { |d| !d.between?(0, 6) }
   end
 
   def site_has_location
-    errors.add(:kind, "precisa da latitude e longitude do local") unless site&.latitude && site.longitude
+    errors.add(:kind, :no_location) unless site&.latitude && site.longitude
   end
 end

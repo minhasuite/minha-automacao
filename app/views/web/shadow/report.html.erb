@@ -1,10 +1,10 @@
 <% zone = @site.timezone %>
-<%= render "web/shared/header", title: "Comparação", subtitle: "#{@site.name} · #{@report.source} · #{l(@report.window_from.in_time_zone(zone), format: '%d/%m %H:%M')} a #{l(@report.window_to.in_time_zone(zone), format: '%d/%m %H:%M')}", back: site_shadow_path(@site) do %>
-  <%= link_to report_site_shadow_path(@site, @report.id, format: :csv), class: "ss-btn ss-btn-ghost", data: { turbo: false } do %><%= icon("download", "size-4") %>Exportar CSV<% end %>
+<%= render "web/shared/header", title: t("automations.shadow_report.title"), subtitle: "#{@site.name} · #{@report.source} · #{t('automations.alerts.range', from: l(@report.window_from.in_time_zone(zone), format: '%d/%m %H:%M'), to: l(@report.window_to.in_time_zone(zone), format: '%d/%m %H:%M'))}", back: site_shadow_path(@site) do %>
+  <%= link_to report_site_shadow_path(@site, @report.id, format: :csv), class: "ss-btn ss-btn-ghost", data: { turbo: false } do %><%= icon("download", "size-4") %><%= t("automations.shadow_report.csv") %><% end %>
 <% end %>
 
-<nav class="ss-chips mb-4" aria-label="Filtrar por resultado">
-  <%= link_to "Todas (#{@report.rows.size})", report_site_shadow_path(@site, @report.id), class: "ss-chip shrink-0", "aria-current": @status.nil?.to_s %>
+<nav class="ss-chips mb-4" aria-label="<%= t("automations.shadow_report.filter") %>">
+  <%= link_to t("automations.shadow_report.all", count: @report.rows.size), report_site_shadow_path(@site, @report.id), class: "ss-chip shrink-0", "aria-current": @status.nil?.to_s %>
   <% ShadowReport::STATUSES.each do |key, label| %>
     <% n = @report.summary[key].to_i %>
     <% next if n.zero? %>
@@ -13,9 +13,9 @@
 </nav>
 
 <% if @rows.empty? %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nada nessa situação.</p></div>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.shadow_report.none") %></p></div>
 <% else %>
-  <ul class="ss-card ss-rows" aria-label="Automações comparadas">
+  <ul class="ss-card ss-rows" aria-label="<%= t("automations.shadow_report.compared") %>">
     <% @rows.each do |r| %>
       <li>
         <div class="min-w-0 flex-1 basis-56">
@@ -26,8 +26,8 @@
           <% if r["detail"].present? %><p class="text-sm text-ink-2 break-words mt-1"><%= r["detail"] %></p><% end %>
         </div>
         <dl class="grid grid-cols-2 gap-x-4 text-sm text-right shrink-0">
-          <dt class="text-muted">Referência</dt><dd class="num"><%= r["ref_runs"] %></dd>
-          <dt class="text-muted">Sombra</dt><dd class="num"><%= r["runs"] %></dd>
+          <dt class="text-muted"><%= t("automations.shadow_report.reference") %></dt><dd class="num"><%= r["ref_runs"] %></dd>
+          <dt class="text-muted"><%= t("automations.shadow_report.shadow") %></dt><dd class="num"><%= r["runs"] %></dd>
         </dl>
       </li>
     <% end %>

@@ -64,7 +64,7 @@ class Notification < ApplicationRecord
 
   # Grava a resposta (uma vez só) e avisa as automações. => true | false (já respondida).
   def respond!(action_id, user)
-    action = actions.find { |a| a["id"] == action_id.to_s } or raise ArgumentError, "ação desconhecida"
+    action = actions.find { |a| a["id"] == action_id.to_s } or raise ArgumentError, I18n.t("automations.notifications.unknown_action")
     now = Time.current
     resp = { "action" => action["id"], "user_id" => user.id, "user" => user.name, "at" => now.iso8601 }
     taken = self.class.where(id: id, responded_at: nil).update_all(responded_at: now, read_at: read_at || now, response: resp, updated_at: now) # rubocop:disable Rails/SkipsModelValidations
