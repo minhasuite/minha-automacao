@@ -1,0 +1,5 @@
+<%# locals: (f:, integration:) -%>
+<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::MideaPlugin,
+           plain: [ [ :device_id, "Id do aparelho", "ex.: 151732605161920" ] ],
+           fields: [ [ :token, "Token (128 caracteres)", "do msmart-ng discover" ], [ :key, "Chave (64 caracteres)", "do msmart-ng discover" ] ],
+           note: "Para ACs com Wi-Fi da Midea (protocolo V3). O id, o token e a chave saem uma vez da conta com o msmart-ng (\"msmart-ng discover\"); depois tudo é local. Token e chave ficam cifrados." %>

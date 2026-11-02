@@ -1,0 +1,9 @@
+<%# locals: (f:, integration:) -%>
+<% if integration.nil? %>
+  <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "Growatt", maxlength: 80 %></div>
+<% end %>
+<div>
+  <%= f.label :token, "Token da API", class: "ss-label" %>
+  <%= f.password_field :token, class: "ss-input font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: integration ? "Deixe vazio para manter o guardado" : "do ShineServer" %>
+</div>
+<p class="text-xs text-muted">O token sai do ShineServer (ou pedido ao instalador/suporte Growatt) e fica cifrado. Cada usina vira um aparelho com potência e energia, lidas a cada 5 min, prontas para o papel "Geração solar" dos painéis de energia.</p>

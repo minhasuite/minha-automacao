@@ -1,0 +1,22 @@
+# Ar-condicionado (integ2): pontos comuns a todo AC (Drivers::Climate) e os
+# códigos de cada fabricante (modo e ventilação do aparelho → opção do MA).
+# `field` = campo do estado normalizado {power, target, mode, fan, current};
+# `climate` = resumo (json, só leitura) para painel e automação.
+# Fabricante novo = um bloco em `vendors` + um driver que lê e grava o estado.
+points:
+  - { field: power, name: Liga/desliga, capability: onoff, icon: sun }
+  - { field: target, name: Temperatura alvo, capability: setpoint, unit: "°C", device_class: temperature, min: 16, max: 30, step: 0.5 }
+  - { field: mode, name: Modo, capability: enum }
+  - { field: fan, name: Ventilação, capability: enum }
+  - { field: current, name: Temperatura ambiente, capability: measure, unit: "°C", device_class: temperature, state_class: measurement }
+  - { field: climate, name: Clima, capability: climate, writable: false, history: none }
+vendors:
+  daikin:
+    mode: { "0": Automático, "1": Automático, "7": Automático, "2": Desumidificar, "3": Refrigerar, "4": Aquecer, "6": Ventilar }
+    fan: { "A": Automática, "B": Silenciosa, "3": Baixa, "4": Baixa, "5": Média, "6": Alta, "7": Alta }
+  midea:
+    mode: { "1": Automático, "2": Refrigerar, "3": Desumidificar, "4": Aquecer, "5": Ventilar }
+    fan: { "102": Automática, "20": Silenciosa, "40": Baixa, "60": Média, "80": Alta }
+  lg_thinq:
+    mode: { AUTO: Automático, COOL: Refrigerar, AIR_DRY: Desumidificar, HEAT: Aquecer, FAN: Ventilar }
+    fan: { AUTO: Automática, SLOW: Silenciosa, LOW: Baixa, MID: Média, HIGH: Alta }

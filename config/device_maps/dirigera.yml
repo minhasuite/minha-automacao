@@ -1,0 +1,33 @@
+# IKEA Dirigera (integ2): tipo do aparelho no hub (`deviceType`) → pontos.
+# `attr` = atributo do GET /v1/devices (só entra se o aparelho tiver);
+# `set` = atributo gravado no comando (padrão: o próprio `attr`);
+# `invert` = 100 - valor (persiana: no hub 0 = aberta; no MA 100 = aberta).
+# `common` vale para todo tipo conhecido. Tipo novo = linhas aqui.
+common:
+  - { attr: batteryPercentage, name: Bateria, unit: "%", device_class: battery, state_class: measurement }
+types:
+  light:
+    - { attr: isOn, name: Luz, capability: onoff, icon: light-bulb }
+    - { attr: lightLevel, name: Brilho, capability: dimmer, min: 1, max: 100 }
+  outlet:
+    - { attr: isOn, name: Liga/desliga, capability: onoff }
+    - { attr: currentActivePower, name: Potência, unit: W, device_class: power, state_class: measurement }
+    - { attr: totalEnergyConsumed, name: Energia, unit: kWh, device_class: energy, state_class: total_increasing }
+  blinds:
+    - { attr: blindsCurrentLevel, set: blindsTargetLevel, name: Posição, capability: setpoint, unit: "%", min: 0, max: 100, step: 1, invert: true }
+  airPurifier:
+    - { attr: isOn, name: Liga/desliga, capability: onoff }
+    - { attr: currentPM25, name: PM2.5, unit: "µg/m³", device_class: pm25, state_class: measurement }
+  environmentSensor:
+    - { attr: currentTemperature, name: Temperatura, unit: "°C", device_class: temperature, state_class: measurement }
+    - { attr: currentRH, name: Umidade, unit: "%", device_class: humidity, state_class: measurement }
+    - { attr: currentPM25, name: PM2.5, unit: "µg/m³", device_class: pm25, state_class: measurement }
+    - { attr: vocIndex, name: Índice VOC, state_class: measurement }
+  motionSensor:
+    - { attr: isDetected, name: Movimento, capability: motion }
+  occupancySensor:
+    - { attr: isDetected, name: Presença, capability: motion }
+  openCloseSensor:
+    - { attr: isOpen, name: Abertura, capability: contact }
+  waterSensor:
+    - { attr: waterLeakDetected, name: Vazamento, capability: problem }

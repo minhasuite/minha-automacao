@@ -1,0 +1,24 @@
+# Z-Wave JS (integ2): classe de comando (commandClass) → ponto. Cada valor
+# do nó (`values` do zwave-js-server) vira um ponto pela linha da classe:
+# `read` = só a propriedade lida (e `write` = a gravada; senão grava na
+# própria), `name` = nome fixo (senão o rótulo do valor), `motion` = padrão
+# do nome que vira movimento (o resto, abertura). A unidade decide a
+# `device_class` por `units`. Classe nova = uma linha aqui.
+command_classes:
+  37: { read: currentValue, write: targetValue, name: Liga/desliga, capability: onoff }
+  38: { read: currentValue, write: targetValue, name: Intensidade, capability: dimmer, min: 0, max: 99 }
+  48: { capability: contact, motion: motion }
+  49: { capability: measure, state_class: measurement }
+  50: { capability: measure }
+  67: { capability: setpoint, device_class: temperature, min: 5, max: 35, step: 0.5 }
+  128: { read: level, name: Bateria, capability: measure, unit: "%", device_class: battery, state_class: measurement }
+units:
+  W: power
+  kWh: energy
+  V: voltage
+  A: current
+  "°C": temperature
+  "°F": temperature
+  Lux: illuminance
+  lux: illuminance
+  "%": humidity

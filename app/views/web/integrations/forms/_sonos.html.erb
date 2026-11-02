@@ -1,0 +1,3 @@
+<%# locals: (f:, integration:) -%>
+<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::SonosPlugin,
+           note: "Uma caixa Sonos por integração (ache na rede ou informe o IP). O que está tocando, volume e mudo são lidos a cada minuto e logo depois de cada comando, sem nuvem." %>

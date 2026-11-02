@@ -78,6 +78,8 @@ module PointsHelper
       calendar_text(v)
     elsif point.capability == "detection"
       Detections.text(v)
+    elsif point.capability == "climate" && v.is_a?(Hash)
+      climate_text(v) # integ2: resumo do ar-condicionado
     elsif v.nil?
       "Sem valor"
     elsif point.capability == "color" && v.is_a?(Hash)
@@ -159,6 +161,14 @@ module PointsHelper
   end
 
   # Um valor qualquer no texto do ponto (regras: "quando ficar Aberto").
+  # integ2: {power, mode, target, current} → "Ligado · Refrigerar · 23 °C · ambiente 25,5 °C".
+  def climate_text(v)
+    return "Desligado" if v["power"] == false
+
+    c = ->(x) { x.is_a?(Numeric) ? "#{number_with_precision(x, precision: 1, strip_insignificant_zeros: true)} °C" : nil }
+    [ ("Ligado" if v["power"]), v["mode"], c.call(v["target"]), (a = c.call(v["current"])) && "ambiente #{a}" ].compact.join(" · ")
+  end
+
   def point_value_label(point, value) = point_value_text(point.dup.tap { |p| p.value = value })
 
   # Confirmação antes de acionar ponto sensível, crítico ou com texto próprio.

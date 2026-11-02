@@ -12,7 +12,11 @@ module Polling
               "cast" => "Drivers::Cast", "webos" => "Drivers::Webos", "tizen" => "Drivers::Tizen", "adb" => "Drivers::Adb", "spotify" => "Drivers::Spotify",
               # integ: câmeras com IA (só leitura) e luz e casa.
               "frigate" => "Frigate", "reolink" => "Reolink", "unifi_protect" => "UnifiProtect",
-              "hue" => "Drivers::Hue", "wled" => "Drivers::Wled", "yeelight" => "Drivers::Yeelight", "switchbot" => "Drivers::Switchbot" }.freeze
+              "hue" => "Drivers::Hue", "wled" => "Drivers::Wled", "yeelight" => "Drivers::Yeelight", "switchbot" => "Drivers::Switchbot",
+              # integ2: ar-condicionado, solar, casa, mídia, Z-Wave e Bluetooth.
+              "daikin" => "Drivers::Daikin", "midea" => "Drivers::Midea", "lg_thinq" => "Drivers::LgThinq", "sunspec" => "Drivers::Sunspec",
+              "growatt" => "Drivers::Growatt", "dirigera" => "Drivers::Dirigera", "sonos" => "Drivers::Sonos", "govee" => "Drivers::Govee",
+              "zwave_js" => "Drivers::ZwaveJs", "ble_proxy" => "Drivers::BleProxy" }.freeze
   # Integração de conta: varredura (`Integrations.sync!`; Alexa = lista de Echo).
   DUE = "COALESCE(poll_s, 0) > 0 AND (polled_at IS NULL OR polled_at <= now() - make_interval(secs => poll_s))".freeze
 

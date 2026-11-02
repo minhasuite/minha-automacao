@@ -1,0 +1,9 @@
+<%# locals: (f:, integration:) -%>
+<% if integration.nil? %>
+  <div><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "Z-Wave JS", maxlength: 80 %></div>
+<% end %>
+<div>
+  <%= f.label :url, "Endereço do servidor Z-Wave JS", class: "ss-label" %>
+  <%= f.text_field :url, class: "ss-input num", value: integration&.settings&.dig("url"), placeholder: "ws://192.168.0.10:3000", autocomplete: "off", spellcheck: false %>
+</div>
+<p class="text-xs text-muted">O servidor do add-on Z-Wave JS, do Z-Wave JS UI (com o "WS Server" ligado) ou o container zwave-js-server, com o bastão Z-Wave. Os nós aparecem para adicionar com os relés, dimmers, sensores, medidores e termostatos de cada um. A inclusão de nós novos continua no Z-Wave JS UI.</p>

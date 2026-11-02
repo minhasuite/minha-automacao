@@ -1,0 +1,4 @@
+<%# locals: (f:, integration:) -%>
+<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::SunspecPlugin,
+           plain: [ [ :unit, "Unidade Modbus (id)", "1" ] ],
+           note: "Ligue o Modbus TCP (SunSpec) no inversor ou no data manager (porta 502). Só leitura, a cada 30 s: a potência e a energia gerada entram nos painéis de energia (papel \"Geração solar\")." %>

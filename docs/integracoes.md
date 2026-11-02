@@ -505,8 +505,90 @@ desenho sai da capacidade do ponto.
 
 ### Ficou de fora (próximas)
 
-Tempo real da Hue (SSE; hoje leitura a cada 15 s), IKEA Dirigera, Sonos,
-Govee LAN, descoberta SSDP da Yeelight, ar-condicionado (Midea, LG ThinQ,
-Daikin), inversores (Growatt, Deye/Solarman, SolarEdge, Fronius), Z-Wave JS e
-proxy Bluetooth do ESPHome; no app Flutter, a capacidade `detection` aparece
-como texto genérico.
+Tempo real da Hue (SSE; hoje leitura a cada 15 s), descoberta SSDP da
+Yeelight, Deye/Solarman e SolarEdge/Fronius pela nuvem; no app Flutter, a
+capacidade `detection` aparece como texto genérico. (Ar-condicionado,
+SunSpec, Growatt, Dirigera, Sonos, Govee, Z-Wave JS e proxy Bluetooth
+entraram no integ2, abaixo.)
+
+## Ecossistema 2 (integ2, 2026-11)
+
+Tudo como plugin de `Integrations::PLUGINS` + driver em `Drivers::REGISTRY`
+(e `Polling::DEVICES`); mapas em `config/device_maps/`. Spec:
+`spec/services/integ2_spec.rb` (respostas gravadas e aparelhos de mentira em
+127.0.0.1, AC falso por `stub_const`) e `spec/requests/integ2_spec.rb`.
+`Drivers.refresh(integração)` lê os aparelhos logo depois da adoção.
+
+### Ar-condicionado (capacidade `climate`)
+
+- Base `Drivers::Climate` + `config/device_maps/climate.yml`: todo AC ganha os
+  mesmos pontos (Liga/desliga, Temperatura alvo em °C — vira termostato na
+  Alexa e na ponte Matter —, Modo, Ventilação, Temperatura ambiente) e o
+  resumo `climate` (json, só leitura: `{power, target, mode, fan, current}`).
+  O fabricante só lê o estado e grava um campo; os códigos de modo e
+  ventilação de cada um ficam em `vendors` do mapa. Fabricante novo = bloco no
+  mapa + subclasse com `vendor`, `read` e `write`.
+- **Daikin** (`DaikinPlugin`): adaptador BRP069/BRP072, HTTP local
+  (`get_control_info`/`set_control_info`; o set leva o controle inteiro e, ao
+  trocar o modo, a temperatura guardada daquele modo).
+- **Midea** (`MideaPlugin`, `Midea::Session`): protocolo local V3 na TCP 6444
+  (aperto de mão com token + chave → chave da sessão; envelope 0x8370
+  AES-CBC/SHA-256, pacote 0x5A5A AES-ECB/MD5, quadro 0xAA com CRC-8). Id,
+  token e chave saem uma vez da conta com o `msmart-ng discover`; token e
+  chave cifrados. O comando 0x40 grava o estado inteiro.
+- **LG ThinQ** (`LgThinqPlugin`): API oficial ThinQ Connect (região Américas),
+  token de acesso pessoal (PAT) cifrado, país em `x-country`. Só os
+  `DEVICE_AIR_CONDITIONER` da conta; o comando grava o pedido sem reler.
+
+### Solar (alimenta os painéis de energia)
+
+- **SunSpec / Modbus TCP** (`SunspecPlugin`, `Modbus`, `Drivers::Sunspec`):
+  acha "SunS" (40000, 0 ou 50000), lê o modelo comum (fabricante, modelo,
+  série) e o do inversor (101–103) com fator de escala: potência (W),
+  energia gerada (kWh, `total_increasing`), tensão, frequência, potência CC,
+  temperatura e estado. Só leitura (função 3).
+- **Growatt** (`GrowattPlugin`): OpenAPI v1 com o token da conta; cada usina
+  vira aparelho com potência, energia do dia e total (a cada 5 min).
+- A potência entra direto no papel "Geração solar" do painel de energia
+  (`EnergyFlowWidget`/`EnergyPreset`).
+
+### Casa e mídia
+
+- **IKEA Dirigera** (`DirigeraPlugin`): API local HTTPS 8443; pareamento OAuth
+  PKCE em dois passos com o botão de ação (token cifrado); tipos → pontos por
+  `config/device_maps/dirigera.yml` (luz, tomada com medição, persiana,
+  purificador, sensores de ambiente, movimento, abertura e vazamento);
+  comando por `PATCH /v1/devices/:id`.
+- **Sonos** (`SonosPlugin`, `Drivers::Sonos < MediaLan`): UPnP/SOAP na 1400,
+  mDNS `_sonos._tcp`; ponto `media` comum (o que toca, volume, mudo; tocar,
+  pausar, avançar, voltar, volume e tocar um endereço).
+- **Govee** (`GoveePlugin`): API LAN por UDP (scan multicast na 4001,
+  respostas na 4002, comandos na 4003); "Procurar na rede" pelo scan próprio;
+  liga, brilho e cor.
+
+### Z-Wave JS e Bluetooth
+
+- **Z-Wave JS** (`ZwaveJsPlugin`, `ZwaveJs::Client`): cliente do
+  zwave-js-server pelo WebSocket (`set_api_schema`, `start_listening`,
+  `node.set_value`). Valores → pontos por classe de comando em
+  `config/device_maps/zwave.yml` (relé, dimmer, sensor binário, sensor
+  multinível, medidor, setpoint de termostato, bateria). Inclusão de nós
+  continua no Z-Wave JS UI.
+- **Proxy Bluetooth** (`BleProxyPlugin`, `Drivers::BleProxy`, `Ble`): a placa
+  ESPHome com `bluetooth_proxy` repassa os anúncios crus (assinatura 66 →
+  mensagens 93) pela API nativa (com Noise). Decodificadores em `Ble::DECODERS`:
+  BTHome v2 sem criptografia, termômetros Xiaomi pvvx e ATC1441, Govee
+  H5072/H5075. A varredura ouve 10 s; a leitura ouve até 30 s e atualiza
+  todos os sensores vistos.
+
+### Limites conhecidos (integ2)
+
+- Todos conferidos só contra respostas gravadas/aparelhos de mentira, não
+  contra aparelho ou conta real. O protocolo Midea foi escrito a partir do
+  msmart-ng (V2 e descoberta UDP 6445 ficaram de fora).
+- Sem tempo real: AC a cada 1–2 min, Dirigera/Govee a cada 30 s, Z-Wave a cada
+  5 min (sem ouvinte de eventos), Bluetooth a cada 5 min.
+- BTHome cifrado, Xiaomi MiBeacon (cifrado) e a classe Notification do Z-Wave
+  (sensores de movimento novos) não são lidos ainda.
+- Govee: o estado volta na UDP 4002 do servidor (rede `host`); dois pedidos
+  ao mesmo tempo dividem a porta.
