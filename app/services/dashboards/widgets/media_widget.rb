@@ -8,7 +8,7 @@ module Dashboards
     class MediaWidget < Base
       describe type: "media", label: "Mídia", icon: "desktop-computer", required: %w[bind], bind: true, auto: %w[media]
 
-      FIELDS = %w[state title artist album app source volume muted].freeze
+      FIELDS = %w[state title artist album app source volume muted image].freeze # image: capa (uiweb)
       CONTROLS = %w[on off previous resume pause next volume_down volume_up mute volume play_media].freeze
 
       def self.data(_r, _w, binds)

@@ -4,6 +4,9 @@ module Web
   # técnico ou dono. O editor mexe só no rascunho; a tela mostra a versão
   # publicada (ou o rascunho, em `?rascunho=1`, para quem edita).
   class DashboardsController < ApplicationController
+    UploadError = Class.new(StandardError)
+    UPLOAD_TYPES = %w[image/png image/jpeg image/webp].freeze
+
     def index
       @site = Site.find(params[:site_id])
       authorize_site!(@site, :view)
@@ -51,6 +54,7 @@ module Web
       @points = @site.points.includes(:device).order(:name).to_a
       @areas = @site.areas.order(:position, :name).to_a
       @editing = params[:w]
+      @live = Dashboards::Resolver.new(@dashboard, role: @site_role, definition: @draft).call # o layout ao vivo
     end
 
     # Nome, papéis e padrão do local.
@@ -77,11 +81,16 @@ module Web
     # Operação do editor no rascunho (ver Dashboards::Editor).
     def draft
       load_dashboard(:manage)
+      store_uploads(params)
       editor = Dashboards::Editor.new(@dashboard.working_draft)
       focus = apply(editor)
       save_draft(editor.definition, focus)
     rescue KeyError
+      return head(:not_found) if request.format.json?
+
       redirect_to edit_dashboard_path(@dashboard), alert: "Esse item não existe mais no rascunho."
+    rescue UploadError
+      redirect_to edit_dashboard_path(@dashboard, view: params[:view_id]), alert: "A imagem precisa ser PNG, JPG ou WebP de até 8 MB."
     end
 
     def publish
@@ -133,6 +142,23 @@ module Web
     # Leitor (viewer) vê o painel e o que ele abre; comando e cadastro barram pelo papel.
     def viewer_allowed? = true
 
+    # Arquivo de qualquer campo `upload` do formulário (planta baixa, papel de
+    # parede): vira anexo do painel e o campo irmão `image` recebe o link.
+    # Genérico: plugin novo com upload não mexe aqui. O tipo vem do conteúdo.
+    def store_uploads(node)
+      return unless node.is_a?(ActionController::Parameters)
+
+      node.each_value { |v| store_uploads(v) }
+      file = node[:upload]
+      return unless file.respond_to?(:original_filename)
+      type = Marcel::MimeType.for(file.tempfile) # só pelos bytes: o nome e o tipo declarado não valem
+      raise UploadError unless file.size <= 8.megabytes && UPLOAD_TYPES.include?(type)
+
+      blob = ActiveStorage::Blob.create_and_upload!(io: file.tempfile, filename: file.original_filename, content_type: type, identify: false)
+      @dashboard.files.attach(blob)
+      node[:image] = rails_blob_path(blob, only_path: true)
+    end
+
     def load_dashboard(action)
       @dashboard = Dashboard.find(params[:id])
       @site = @dashboard.site
@@ -162,6 +188,8 @@ module Web
       when "add_widget" then focus[:w] = editor.add_widget(t, widget_attrs)
       when "update_widget" then editor.update_widget(t, widget_attrs)
       when "move" then editor.move(params[:kind], t, params[:dir])
+      when "place" then editor.place(params[:kind], t, params[:index], parent: params[:parent])
+      when "resize" then editor.resize(params[:kind], t, params[:screen].to_s, params[:cols])
       when "remove" then editor.remove(params[:kind], t)
       else raise KeyError, "op"
       end
@@ -170,6 +198,12 @@ module Web
 
     def save_draft(definition, focus)
       errors = Dashboards::Schema.errors(definition)
+      if request.format.json? # arrastar e soltar do editor (fetch)
+        return render(json: { errors: errors }, status: :unprocessable_content) if errors.any?
+
+        @dashboard.update!(draft: definition)
+        return head(:no_content)
+      end
       return redirect_to(edit_dashboard_path(@dashboard, view: focus[:view], w: focus[:w]), alert: errors.first(3).to_sentence) if errors.any?
 
       @dashboard.update!(draft: definition)

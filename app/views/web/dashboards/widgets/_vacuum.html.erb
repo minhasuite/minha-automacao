@@ -22,6 +22,12 @@
         <span class="dw-vac-battery num" title="Bateria"><%= battery["text"] %></span>
       <% end %>
     </div>
+    <% if busy && !off_line %>
+      <%# Robô limpando (uiweb): ele percorre o piso em faixas e deixa o rastro; só CSS. %>
+      <div class="dw-vac-run dw-anim <%= 'dw-vac-back' if p['value'] == 'returning' %>" aria-hidden="true">
+        <span class="dw-vac-trail"></span><span class="dw-vac-bot"><span></span></span><span class="dw-vac-dock"></span>
+      </div>
+    <% end %>
     <% if fault && fault["value"] == true && !off_line %>
       <p class="dw-vac-alert" role="status"><%= icon("exclamation-circle", "size-4") %>O robô avisou um erro. Veja no app da Xiaomi.</p>
     <% end %>

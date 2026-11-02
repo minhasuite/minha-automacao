@@ -24,10 +24,16 @@
       <% end %>
     </div>
     <% if m["title"].present? && !off_line %>
-      <div class="dw-media-now">
-        <p class="dw-media-title"><%= m["title"] %></p>
-        <% sub = [ m["artist"], m["album"], m["app"] ].compact_blank.uniq %>
-        <% if sub.any? %><p class="dw-media-sub"><%= sub.join(" · ") %></p><% end %>
+      <div class="dw-media-now dw-anim">
+        <%# Capa (link seguro) ou a arte própria; equalizador anda só tocando. %>
+        <% cover = dw_media_image(m) %>
+        <%= tag.span((icon("music-note", "size-5") unless cover), class: [ "dw-media-cover", ("dw-media-cover-art" unless cover) ], style: ("background-image: url('#{cover}')" if cover)) %>
+        <div class="min-w-0 flex-1">
+          <p class="dw-media-title"><%= m["title"] %></p>
+          <% sub = [ m["artist"], m["album"], m["app"] ].compact_blank.uniq %>
+          <% if sub.any? %><p class="dw-media-sub"><%= sub.join(" · ") %></p><% end %>
+        </div>
+        <span class="dw-eq <%= 'dw-eq-on' if playing %>" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       </div>
     <% elsif m["app"].present? && !off_line %>
       <p class="dw-media-sub mt-2"><%= m["app"] %></p>

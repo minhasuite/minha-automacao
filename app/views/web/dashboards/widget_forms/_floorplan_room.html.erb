@@ -1,0 +1,9 @@
+<%# locals: (name:, room:, area_options:, id:) -%>
+<div class="dw-fpe-row" data-kind="room">
+  <div class="min-w-0 flex-1"><label class="sr-only" for="fr-a-<%= id %>">Área</label>
+    <%= select_tag "#{name}[area]", options_for_select(area_options, room["area"]), include_blank: "Escolha a área", class: "ss-input", id: "fr-a-#{id}", data: { role: "ref", action: "floorplan-editor#render" } %></div>
+  <% { "x" => 10, "y" => 10, "w" => 30, "h" => 30 }.each do |k, default| %>
+    <label class="dw-fpe-num"><span><%= { "x" => "x %", "y" => "y %", "w" => "larg. %", "h" => "alt. %" }[k] %></span><%= number_field_tag "#{name}[#{k}]", room[k] || default, min: 0, max: 100, step: "any", id: nil, class: "ss-input num", data: { role: k, action: "floorplan-editor#render" } %></label>
+  <% end %>
+  <% if room["area"] %><label class="ss-check text-xs"><%= check_box_tag "#{name}[remove]", "1", false, id: "fr-r-#{id}", data: { role: "remove", action: "floorplan-editor#render" } %>Tirar</label><% end %>
+</div>

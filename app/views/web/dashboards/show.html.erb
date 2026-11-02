@@ -47,8 +47,8 @@
 
 <% if view["sections"].all? { |s| s["widgets"].empty? } %>
   <div class="ss-card ss-empty mt-4">
-    <p class="font-bold text-ink">Esta visão ainda está vazia.</p>
-    <% if @resolved["can_edit"] %><p class="mt-1">Abra o editor e adicione seções e widgets.</p><%= link_to "Editar painel", edit_dashboard_path(@dashboard, view: view["id"]), class: "ss-btn ss-btn-primary mt-4" %><% end %>
+    <%= render "web/shared/empty_art", art: "board", title: "Esta visão ainda está vazia.", text: ("Abra o editor e adicione seções e widgets." if @resolved["can_edit"]) %>
+    <% if @resolved["can_edit"] %><%= link_to "Editar painel", edit_dashboard_path(@dashboard, view: view["id"]), class: "ss-btn ss-btn-primary" %><% end %>
   </div>
 <% else %>
   <div class="dw-grid dw-sections mt-5">

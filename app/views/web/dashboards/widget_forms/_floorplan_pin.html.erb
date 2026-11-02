@@ -1,0 +1,8 @@
+<%# locals: (name:, pin:, point_options:, id:) -%>
+<div class="dw-fpe-row" data-kind="pin">
+  <div class="min-w-0 flex-1"><label class="sr-only" for="fp-p-<%= id %>">Ponto</label>
+    <%= select_tag "#{name}[point]", grouped_options_for_select(point_options, pin["point"]), include_blank: "Escolha um ponto", class: "ss-input", id: "fp-p-#{id}", data: { role: "ref", action: "floorplan-editor#render" } %></div>
+  <label class="dw-fpe-num"><span>x %</span><%= number_field_tag "#{name}[x]", pin["x"] || 50, min: 0, max: 100, step: "any", id: nil, class: "ss-input num", data: { role: "x", action: "floorplan-editor#render" } %></label>
+  <label class="dw-fpe-num"><span>y %</span><%= number_field_tag "#{name}[y]", pin["y"] || 50, min: 0, max: 100, step: "any", id: nil, class: "ss-input num", data: { role: "y", action: "floorplan-editor#render" } %></label>
+  <% if pin["point"] %><label class="ss-check text-xs"><%= check_box_tag "#{name}[remove]", "1", false, id: "fp-r-#{id}", data: { role: "remove", action: "floorplan-editor#render" } %>Tirar</label><% end %>
+</div>

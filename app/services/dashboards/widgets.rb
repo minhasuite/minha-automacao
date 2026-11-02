@@ -8,7 +8,7 @@ module Dashboards
   module Widgets
     PLUGINS = %w[TileWidget GroupWidget StatWidget GaugeWidget ChartWidget QueryListWidget AreaCardWidget SceneBarWidget
                  AlertsWidget CameraWidget VacuumWidget EnergyWidget HeadingWidget MarkdownWidget WeatherWidget MediaWidget RemoteWidget
-                 PeopleWidget AlarmWidget].freeze
+                 PeopleWidget AlarmWidget FloorplanWidget].freeze
 
     module_function
 
@@ -71,6 +71,13 @@ module Dashboards
         def number(v)
           n = Float(v.to_s.tr(",", "."), exception: false) if v.present?
           n && n % 1 == 0 ? n.to_i : n
+        end
+
+        # Irmão `color` do aparelho do ponto (lâmpada colorida): o widget acende na cor real.
+        def color_point(r, point)
+          return unless point&.capability.in?(%w[onoff dimmer])
+
+          r.points.find { |p| p.device_id == point.device_id && p.capability == "color" && !p.disabled }
         end
 
         def partial = "web/dashboards/widgets/#{type}"

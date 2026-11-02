@@ -15,6 +15,8 @@ class Dashboard < ApplicationRecord
 
   belongs_to :site
   has_many :versions, -> { order(version: :desc) }, class_name: "DashboardVersion", dependent: nil # cascade no banco
+  # Imagens enviadas no editor (planta baixa, papel de parede): o JSON guarda o link.
+  has_many_attached :files
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }

@@ -60,6 +60,29 @@ module Dashboards
       list[i], list[j] = list[j], list[i] if j.between?(0, list.size - 1)
     end
 
+    # Arrastar e soltar (uiweb): leva a seção/widget para a posição `index`
+    # (0 = primeiro) da visão/seção `parent` (widget pode trocar de seção; sem
+    # parent, fica onde está).
+    def place(kind, id, index, parent: nil)
+      from = container(kind, id)
+      item = from.find { |x| x["id"] == id }
+      to = if parent.blank? then from
+      elsif kind == "widget" then section(parent)["widgets"] ||= []
+      else view(parent)["sections"] ||= []
+      end
+      from.delete(item)
+      to.insert(index.to_i.clamp(0, to.size), item)
+    end
+
+    # Alça de largura (uiweb): span de uma tela (1 a 12) do widget ou da seção.
+    def resize(kind, id, screen, cols)
+      raise KeyError, "tela #{screen}" unless Schema::SCREENS.include?(screen)
+
+      item = kind == "section" ? section(id) : widget(id)
+      default = kind == "section" ? { "mobile" => 12, "tablet" => 12, "desktop" => 12 } : { "mobile" => 12, "tablet" => 6, "desktop" => 4 }
+      item["span"] = default.merge(item["span"] || {}).merge(screen => cols.to_i.clamp(1, 12))
+    end
+
     def remove(kind, id)
       container(kind, id).reject! { |x| x["id"] == id }
     end

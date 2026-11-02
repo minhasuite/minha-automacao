@@ -5,8 +5,10 @@ module Dashboards
     class TileWidget < Base
       describe type: "tile", label: "Ponto", icon: "light-bulb", required: %w[bind], params: %w[tap color], bind: true
 
-      def self.data(_r, w, binds)
-        [ names(w, binds.first).merge("point_ids" => binds.map(&:id), "missing" => binds.empty? && w["bind"].present?), [] ]
+      # `color_id`: o ponto de cor do aparelho (lâmpada colorida), para o brilho na cor real.
+      def self.data(r, w, binds)
+        color = r.use(color_point(r, binds.first))
+        [ names(w, binds.first).merge("point_ids" => binds.map(&:id), "missing" => binds.empty? && w["bind"].present?, "color_id" => color&.id).compact, [ color ].compact ]
       end
 
       # Título do tile: o rótulo próprio; o automático do Início ("Aparelho · Ponto",

@@ -47,6 +47,8 @@
         </div>
       </section>
 
+      <%= render "web/dashboards/layout_editor", dashboard: @dashboard, view: view, live: @live %>
+
       <% sections = Array(view["sections"]) %>
       <% sections.each do |s| %>
         <%# Seções recolhidas quando são muitas (editor curto no celular); a que tem o widget em edição abre. %>
