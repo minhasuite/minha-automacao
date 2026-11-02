@@ -120,4 +120,5 @@
   </p>
   <p class="text-sm text-muted mt-1"><%= t("settings.system.ai_plan_text") %><%= t("settings.system.trial_days", n: Plans::TRIAL_DAYS) if b[:trial_eligible] %>.</p>
 </section>
+<%= render "web/settings/firmware" %>
 <% end %>

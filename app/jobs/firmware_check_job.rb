@@ -1,0 +1,6 @@
+# ondaA2 A18: confere todo dia a versão de firmware dos aparelhos que se atualizam (Firmware).
+class FirmwareCheckJob < ApplicationJob
+  queue_as :default
+
+  def perform = Firmware.check_all!
+end

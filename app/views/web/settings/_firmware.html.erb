@@ -1,0 +1,27 @@
+<%# ondaA2 A18: firmware dos aparelhos (pontos `update`) dos locais que a pessoa gerencia. %>
+<% sites = Site.order(:name).select { |s| SiteMembership.allowed?(s.role_for(current_user), :manage) } %>
+<% points = Point.where(site_id: sites.map(&:id), capability: "update", disabled: false).includes(:device).sort_by { |p| [ Firmware.available?(p) ? 0 : 1, p.device.name ] } %>
+<% if points.any? %>
+  <section class="ss-card ss-card-pad mt-4" aria-labelledby="fw-t" data-firmware>
+    <h2 id="fw-t" class="flex items-center gap-2"><%= icon("chip", "size-5 text-accent") %><%= t("firmware.title") %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("firmware.pitch") %></p>
+    <ul class="mt-3 divide-y divide-line">
+      <% points.each do |p| %>
+        <% v = Firmware.view(p.value) %>
+        <li class="py-2 flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-semibold text-ink break-words"><%= link_to p.device.name, point_path(p), class: "text-ink no-underline hover:text-accent" %></p>
+            <p class="text-xs text-muted num"><%= t("firmware.versions", installed: v[:installed] || "—", latest: v[:latest] || "—") %>
+              <% if v[:notes_url].present? %> · <%= link_to t("firmware.notes"), v[:notes_url], target: "_blank", rel: "noopener" %><% end %></p>
+          </div>
+          <% if v[:state] == "available" %>
+            <%= button_to settings_firmware_path(point_id: p.id), class: "ss-btn ss-btn-primary ss-btn-sm",
+                          form: { data: { turbo_confirm: t("firmware.confirm", name: p.device.name, version: v[:latest]) } } do %><%= icon("download", "size-4") %><%= t("firmware.install") %><% end %>
+          <% else %>
+            <span class="ss-badge <%= v[:state] == "installing" ? "ss-badge-accent" : "ss-badge-success" %>"><%= t("firmware.states.#{v[:state]}") %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

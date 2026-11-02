@@ -1,0 +1,54 @@
+pt-BR:
+  labels:
+    capabilities:
+      update: "Atualização de firmware"
+  firmware:
+    point_name: "Firmware"
+    title: "Firmware dos aparelhos"
+    pitch: "Versão instalada e a mais nova de cada aparelho que se atualiza pela rede (Shelly, Zigbee...). Conferido todo dia."
+    versions: "instalada %{installed} · mais nova %{latest}"
+    notes: "novidades"
+    install: "Instalar"
+    confirm: "Instalar a versão %{version} em %{name}? O aparelho reinicia sozinho."
+    started: "%{name}: atualização enviada ao aparelho."
+    no_provider: "Este aparelho não se atualiza pela rede."
+    states:
+      available: "Atualização disponível"
+      up_to_date: "Em dia"
+      installing: "Instalando"
+en:
+  labels:
+    capabilities:
+      update: "Firmware update"
+  firmware:
+    point_name: "Firmware"
+    title: "Device firmware"
+    pitch: "Installed and latest version of every device that updates over the network (Shelly, Zigbee...). Checked every day."
+    versions: "installed %{installed} · latest %{latest}"
+    notes: "release notes"
+    install: "Install"
+    confirm: "Install version %{version} on %{name}? The device restarts on its own."
+    started: "%{name}: update sent to the device."
+    no_provider: "This device does not update over the network."
+    states:
+      available: "Update available"
+      up_to_date: "Up to date"
+      installing: "Installing"
+es:
+  labels:
+    capabilities:
+      update: "Actualización de firmware"
+  firmware:
+    point_name: "Firmware"
+    title: "Firmware de los dispositivos"
+    pitch: "Versión instalada y la más nueva de cada dispositivo que se actualiza por la red (Shelly, Zigbee...). Se revisa todos los días."
+    versions: "instalada %{installed} · más nueva %{latest}"
+    notes: "novedades"
+    install: "Instalar"
+    confirm: "¿Instalar la versión %{version} en %{name}? El dispositivo se reinicia solo."
+    started: "%{name}: actualización enviada al dispositivo."
+    no_provider: "Este dispositivo no se actualiza por la red."
+    states:
+      available: "Actualización disponible"
+      up_to_date: "Al día"
+      installing: "Instalando"

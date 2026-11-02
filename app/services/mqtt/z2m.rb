@@ -54,6 +54,7 @@ module Mqtt
       device.update!(name: d["friendly_name"], manufacturer: d.dig("definition", "vendor"), model: d.dig("definition", "model"))
       existing = device.points.index_by { |p| p.address["json_path"] }
       slug = d["friendly_name"].parameterize(separator: "_")
+      Firmware.ensure_point!(device, address: { "topic" => topic, "json_path" => "update" }) if d.dig("definition", "supports_ota") # ondaA2 A18
       flatten(d["definition"]["exposes"]).each do |e|
         attrs = point_attrs(e) or next
         address = { "topic" => topic, "json_path" => e["property"] }.merge(attrs.delete(:address) || {})

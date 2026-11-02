@@ -20,11 +20,13 @@ class Point < ApplicationRecord
     # integ: detecção de câmera com IA (Frigate, Reolink, UniFi Protect…), genérica: {kind, label, score, zones, at…}.
     "detection" => "json",
     # ondaA1 (A11): lista de tarefas (valor = quantos itens faltam; itens em attrs).
-    "todo" => "integer"
+    "todo" => "integer",
+    # ondaA2 A18: firmware do aparelho (Firmware): {installed, latest, state, notes_url}.
+    "update" => "json"
   }.freeze
   CAPABILITY_LABELS = LocalizedLabel.for("labels.capabilities", CAPABILITIES.keys)
   # Só leitura por natureza (o resto nasce gravável).
-  READ_ONLY = %w[contact motion tamper problem measure stream event calendar weather detection].freeze
+  READ_ONLY = %w[contact motion tamper problem measure stream event calendar weather detection update].freeze
   # Contam a cada aviso, mesmo repetido (botão, campainha, nova detecção).
   REPEATING = %w[event detection].freeze
   DATA_TYPES = %w[bool integer decimal enum string json timestamp].freeze

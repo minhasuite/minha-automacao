@@ -367,4 +367,56 @@ b [tuya] falha
       expect(response).to have_http_status(:not_found)
     end
   end
+
+  describe "A18 firmware dos aparelhos (entidade update)" do
+    before { sign_in }
+
+    it "provedor falso: confere, mostra em Sistema e instala com auditoria" do
+      calls = []
+      fake = Class.new(Firmware::Provider) do
+        describe key: "teste"
+        define_singleton_method(:handles?) { |d| d.driver == "virtual" }
+        define_singleton_method(:check) { |_d| { installed: "1.0", latest: "1.1", notes_url: "https://exemplo.com/notas" } }
+        define_singleton_method(:install!) { |d| calls << d.name }
+      end
+      stub_const("Firmware::Providers::Teste", fake)
+      stub_const("Firmware::PROVIDERS", Firmware::PROVIDERS + [ "Teste" ])
+      device # existe antes da verificação diária
+      FirmwareCheckJob.perform_now
+      point = within(tenant) { device.points.find_by!(capability: "update") }
+      expect(point).to have_attributes(capability: "update", data_type: "json")
+      expect(Firmware.view(point.value)).to include(installed: "1.0", latest: "1.1", state: "available")
+      expect(within(tenant) { Firmware.check!(device) }.id).to eq(point.id)
+
+      get "/configuracoes/sistema"
+      expect(response.body).to include("Firmware dos aparelhos", "Medidor", "instalada 1.0 · mais nova 1.1", "novidades", "Instalar")
+      post "/configuracoes/sistema/firmware/#{point.id}"
+      expect(flash[:notice]).to eq("Medidor: atualização enviada ao aparelho.")
+      expect(calls).to eq([ "Medidor" ])
+      expect(Firmware.view(point.reload.value)[:state]).to eq("installing")
+      expect(within(tenant) { AuditEvent.where(action: "firmware.install").count }).to eq(1)
+      get "/configuracoes/sistema"
+      expect(response.body).to include("Instalando")
+    end
+
+    it "Shelly Gen2 pelo RPC e Zigbee2MQTT pelo pedido da ponte" do
+      shelly = within(tenant) { create(:device, site: site, name: "Teste Shelly", driver: "shelly", address: { "host" => "192.168.0.30", "gen" => 2 }) }
+      stub_request(:post, "http://192.168.0.30/rpc").with(body: hash_including("method" => "Shelly.GetDeviceInfo")).to_return(body: { result: { ver: "1.4.2" } }.to_json)
+      stub_request(:post, "http://192.168.0.30/rpc").with(body: hash_including("method" => "Shelly.CheckForUpdate")).to_return(body: { result: { stable: { version: "1.4.4" } } }.to_json)
+      upd = stub_request(:post, "http://192.168.0.30/rpc").with(body: hash_including("method" => "Shelly.Update")).to_return(body: { result: nil }.to_json)
+      point = within(tenant) { Firmware.check!(shelly) }
+      expect(Firmware.view(point.value)).to include(installed: "1.4.2", latest: "1.4.4", state: "available")
+      within(tenant) { Firmware.install!(point, user: user) }
+      expect(upd).to have_been_requested
+
+      z = within(tenant) { create(:device, site: site, name: "Teste Sensor", driver: "mqtt", external_id: "0x00158d0001") }
+      zp = within(tenant) { Firmware.ensure_point!(z, address: { "topic" => "zigbee2mqtt/Teste Sensor", "json_path" => "update" }) }
+      zp.update!(value: { "state" => "available", "installed_version" => 16, "latest_version" => 20 })
+      expect(Firmware.view(zp.value)).to include(installed: "16", latest: "20", state: "available")
+      expect(Mqtt::Listener).to receive(:publish).with("zigbee2mqtt/bridge/request/device/ota_update/update", { id: "0x00158d0001" }.to_json)
+      within(tenant) { Firmware.install!(zp.reload, user: user) }
+      expect(Firmware.view({ "state" => "updating" })[:state]).to eq("installing")
+      expect(within(tenant) { Firmware.check!(z) }).to be_nil
+    end
+  end
 end

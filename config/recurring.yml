@@ -5,6 +5,10 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
   # Assinatura: renovação sem RTDN e plano das empresas.
+  # ondaA2 A18: versão de firmware dos aparelhos que se atualizam pela rede.
+  firmware_check:
+    class: FirmwareCheckJob
+    schedule: every day at 4:20am
   billing_reconcile:
     class: BillingReconcileJob
     schedule: every hour at minute 40
