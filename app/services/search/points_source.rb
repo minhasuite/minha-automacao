@@ -32,11 +32,12 @@ module Search
       helpers = ApplicationController.helpers
       action = if q.verb && p.writable && ctx.allowed?(p.site_id, :command, risk: p.risk)
         cmd, value = command(p, q.verb)
-        { label: COMMAND[q.verb], url: command_point_path(p), params: { command: cmd, value: value }.compact,
-          confirm: (p.confirm.presence || ("#{COMMAND[q.verb]} #{p.name}?" if p.risk != "normal")),
+        verb = I18n.t("search.commands.#{q.verb}", default: COMMAND[q.verb].to_s)
+        { label: verb, url: command_point_path(p), params: { command: cmd, value: value }.compact,
+          confirm: (p.confirm.presence || ("#{verb} #{p.name}?" if p.risk != "normal")),
           confirm_title: (Point::RISKS[p.risk] if p.risk != "normal" || p.confirm.present?) }
       end
-      Result.new(kind: "Ponto", title: title, subtitle: [ context, areas[p.effective_area_id], helpers.point_value_text(p) ].compact_blank.uniq.join(" · "),
+      Result.new(kind: I18n.t("search.kinds.point"), title: title, subtitle: [ context, areas[p.effective_area_id], helpers.point_value_text(p) ].compact_blank.uniq.join(" · "),
                  icon: helpers.dw_point_icon(Dashboards::Resolver.point_json(p, ctx.roles[p.site_id])), url: point_path(p), action: action)
     end
   end

@@ -1,2 +1,2 @@
-<%= render "web/shared/header", title: "Novo conjunto de dados", subtitle: @site.name, back: site_datasets_path(@site) %>
+<%= render "web/shared/header", title: t("datasets.new.title"), subtitle: @site.name, back: site_datasets_path(@site) %>
 <%= render "form", dataset: @dataset, url: site_datasets_path(@site), method: :post %>

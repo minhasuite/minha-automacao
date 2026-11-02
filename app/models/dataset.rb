@@ -44,11 +44,11 @@ class Dataset < ApplicationRecord
   # Campo desconhecido num conjunto tipado = ArgumentError.
   def cast(values)
     values = values.to_h.transform_keys(&:to_s)
-    raise ArgumentError, "nenhum valor." if values.empty?
-    raise ArgumentError, "campos demais (até #{MAX_FIELDS})." if values.size > MAX_FIELDS
+    raise ArgumentError, I18n.t("datasets.errors.no_value") if values.empty?
+    raise ArgumentError, I18n.t("datasets.errors.too_many", max: MAX_FIELDS) if values.size > MAX_FIELDS
 
     unknown = free? ? values.keys.grep_v(FIELD) : values.keys - field_names
-    raise ArgumentError, "campo desconhecido: #{unknown.join(', ')}." if unknown.any?
+    raise ArgumentError, I18n.t("datasets.errors.unknown", fields: unknown.join(", ")) if unknown.any?
 
     values.to_h { |k, v| [ k, cast_value(free? ? nil : field_type(k), v) ] }
   end
@@ -74,9 +74,9 @@ class Dataset < ApplicationRecord
     return nil if v.nil? || v == ""
 
     case type
-    when "number" then v.is_a?(Numeric) ? v : Float(v.to_s.strip.tr(",", "."), exception: false)&.then { |n| n % 1 == 0 ? n.to_i : n } || raise(ArgumentError, "\"#{v.to_s.truncate(30)}\" não é número.")
+    when "number" then v.is_a?(Numeric) ? v : Float(v.to_s.strip.tr(",", "."), exception: false)&.then { |n| n % 1 == 0 ? n.to_i : n } || raise(ArgumentError, I18n.t("datasets.errors.not_number", value: v.to_s.truncate(30)))
     when "bool" then ActiveModel::Type::Boolean.new.cast(v)
-    when "time" then (v.respond_to?(:iso8601) ? v : Time.zone.parse(v.to_s))&.iso8601 || raise(ArgumentError, "\"#{v.to_s.truncate(30)}\" não é data.")
+    when "time" then (v.respond_to?(:iso8601) ? v : Time.zone.parse(v.to_s))&.iso8601 || raise(ArgumentError, I18n.t("datasets.errors.not_date", value: v.to_s.truncate(30)))
     when "text" then v.to_s.truncate(MAX_VALUE)
     else v.is_a?(String) && NUMBER.match?(v.strip) ? cast_value("number", v) : (v.is_a?(String) ? v.truncate(MAX_VALUE) : v)
     end
@@ -84,9 +84,9 @@ class Dataset < ApplicationRecord
 
   def fields_shape
     list = Array(fields)
-    errors.add(:fields, "até #{MAX_FIELDS} campos.") if list.size > MAX_FIELDS
+    errors.add(:fields, :too_many_fields, max: MAX_FIELDS) if list.size > MAX_FIELDS
     bad = list.find { |f| !FIELD.match?(f["name"].to_s) || !FIELD_TYPES.key?(f["type"]) }
-    errors.add(:fields, "inválido: \"#{bad['name']}: #{bad['type']}\" (use nome: texto, número, sim/não ou data).") if bad
-    errors.add(:fields, "com nome repetido.") if list.pluck("name").uniq.size != list.size
+    errors.add(:fields, :bad_field, field: "#{bad['name']}: #{bad['type']}") if bad
+    errors.add(:fields, :repeated) if list.pluck("name").uniq.size != list.size
   end
 end

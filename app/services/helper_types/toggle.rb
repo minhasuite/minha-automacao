@@ -4,6 +4,10 @@ module HelperTypes
     describe key: "toggle", title: "Liga/desliga", icon: "switch-horizontal", capability: "onoff",
              description: "Uma chave que você liga e desliga: modo visita, férias, não perturbe."
     fields %i[initial]
+    texts "pt-BR" => { on: "começa ligado", off: "começa desligado" },
+          en: { title: "On/off", description: "A switch you turn on and off: guest mode, vacation, do not disturb.", on: "starts on", off: "starts off" },
+          es: { title: "Encendido/apagado", description: "Un interruptor que enciendes y apagas: modo visita, vacaciones, no molestar.",
+                on: "empieza encendido", off: "empieza apagado" }
 
     def self.assign(point, form)
       point.writable = true
@@ -11,6 +15,6 @@ module HelperTypes
     end
 
     def self.initial_value(point) = point.address["initial"] || false
-    def self.summary(point) = "começa #{point.address['initial'] ? 'ligado' : 'desligado'}"
+    def self.summary(point) = text(point.address["initial"] ? :on : :off)
   end
 end

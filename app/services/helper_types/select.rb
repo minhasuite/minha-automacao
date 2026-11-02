@@ -4,6 +4,8 @@ module HelperTypes
     describe key: "select", title: "Lista de opções", icon: "view-list", capability: "enum",
              description: "Uma escolha entre opções fixas: modo da casa (Casa, Fora, Noite)."
     fields %i[options_text]
+    texts en: { title: "Option list", description: "One choice among fixed options: house mode (Home, Away, Night)." },
+          es: { title: "Lista de opciones", description: "Una elección entre opciones fijas: modo de la casa (Casa, Fuera, Noche)." }
 
     def self.assign(point, form)
       point.writable = true

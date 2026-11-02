@@ -10,13 +10,22 @@ module HelperTypes
     describe key: "statistics", title: "Estatística", icon: "chart-bar", capability: "measure",
              description: "Média, mínimo, máximo ou soma de um sensor numa janela: temperatura média da última hora."
     fields %i[source func window]
+    texts "pt-BR" => { funcs: FUNCS, window: "Janela inválida (use 30m, 1h, 24h; até 30 dias).", summary: "%{func} em %{time}" },
+          en: { title: "Statistics", description: "Average, minimum, maximum or sum of a sensor over a window: average temperature over the last hour.",
+                funcs: { mean: "Average", median: "Median", min: "Minimum", max: "Maximum", sum: "Sum" },
+                window: "Invalid window (use 30m, 1h, 24h; up to 30 days).", summary: "%{func} over %{time}" },
+          es: { title: "Estadística", description: "Promedio, mínimo, máximo o suma de un sensor en una ventana: temperatura promedio de la última hora.",
+                funcs: { mean: "Promedio", median: "Mediana", min: "Mínimo", max: "Máximo", sum: "Suma" },
+                window: "Ventana no válida (usa 30m, 1h, 24h; hasta 30 días).", summary: "%{func} en %{time}" }
+
+    def self.funcs = labels(:funcs, FUNCS)
 
     def self.assign(point, form)
       source = point.site.points.find_by(id: form["source"].presence || point.address.dig("sources", 0))
-      return point.errors.add(:base, "Escolha um ponto numérico de origem.") unless source&.numeric? && source.id != point.id
+      return point.errors.add(:base, text(:pick_source)) unless source&.numeric? && source.id != point.id
 
       window = Automations::Dsl.seconds(form["window"].presence || point.address["window_s"] || "")
-      return point.errors.add(:base, "Janela inválida (use 30m, 1h, 24h; até 30 dias).") unless window&.between?(60, MAX_WINDOW)
+      return point.errors.add(:base, text(:window)) unless window&.between?(60, MAX_WINDOW)
 
       point.data_type = "decimal"
       point.writable = false
@@ -34,6 +43,6 @@ module HelperTypes
       point.report!(Group.aggregate(point.address["func"], nums))
     end
 
-    def self.summary(point) = "#{FUNCS[point.address['func']]} em #{Automations::Dsl.duration_label(point.address['window_s'].to_i)}"
+    def self.summary(point) = text(:summary, func: funcs[point.address["func"]].to_s, time: Automations::Dsl.duration_label(point.address["window_s"].to_i))
   end
 end

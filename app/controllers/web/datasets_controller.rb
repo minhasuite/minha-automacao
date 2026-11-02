@@ -38,7 +38,7 @@ module Web
       @dataset = @site.datasets.new(form)
       return render(:new, status: :unprocessable_content) unless @dataset.save
 
-      redirect_to dataset_path(@dataset), notice: "Conjunto #{@dataset.name} criado."
+      redirect_to dataset_path(@dataset), notice: t("datasets.flash.created", name: @dataset.name)
     end
 
     def edit = load_for(:manage)
@@ -47,13 +47,13 @@ module Web
       load_for(:manage)
       return render(:edit, status: :unprocessable_content) unless @dataset.update(form)
 
-      redirect_to dataset_path(@dataset), notice: "Conjunto #{@dataset.name} salvo."
+      redirect_to dataset_path(@dataset), notice: t("datasets.flash.saved", name: @dataset.name)
     end
 
     def destroy
       load_for(:manage)
       @dataset.destroy!
-      redirect_to site_datasets_path(@site), notice: "Conjunto #{@dataset.name} excluído com os registros."
+      redirect_to site_datasets_path(@site), notice: t("datasets.flash.deleted", name: @dataset.name)
     end
 
     private

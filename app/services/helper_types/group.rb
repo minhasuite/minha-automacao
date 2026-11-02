@@ -14,18 +14,31 @@ module HelperTypes
     describe key: "group", title: "Grupo", icon: "collection", capability: "onoff",
              description: "Junta vários pontos do mesmo tipo: todas as luzes da sala, média das temperaturas."
     fields [ :mode, { members: [] } ]
+    texts "pt-BR" => { modes: BOOL_MODES.merge(NUM_MODES), two: "Escolha ao menos dois pontos.", same: "Os membros precisam ser do mesmo tipo.",
+                       nested: "Grupo dentro de grupo não pode.", kind: "Esse tipo de ponto não forma grupo.", summary: "%{n} pontos · %{mode}" },
+          en: { title: "Group", description: "Combines several points of the same type: all living room lights, average temperature.",
+                modes: { any: "Any one on", all: "All on", mean: "Average", median: "Median", min: "Minimum", max: "Maximum", sum: "Sum" },
+                two: "Choose at least two points.", same: "Members must be of the same type.", nested: "A group can't contain another group.",
+                kind: "This type of point can't be grouped.", summary: "%{n} points · %{mode}" },
+          es: { title: "Grupo", description: "Junta varios puntos del mismo tipo: todas las luces de la sala, promedio de las temperaturas.",
+                modes: { any: "Cualquiera encendido", all: "Todos encendidos", mean: "Promedio", median: "Mediana", min: "Mínimo", max: "Máximo", sum: "Suma" },
+                two: "Elige al menos dos puntos.", same: "Los miembros deben ser del mismo tipo.", nested: "Un grupo no puede estar dentro de otro grupo.",
+                kind: "Este tipo de punto no forma grupo.", summary: "%{n} puntos · %{mode}" }
+
+    def self.bool_modes = labels(:modes, BOOL_MODES)
+    def self.num_modes = labels(:modes, NUM_MODES)
 
     def self.assign(point, form)
       ids = Array(form["members"]).compact_blank.uniq.first(MAX_MEMBERS)
       members = point.site.points.where(id: ids).where.not(id: point.id).to_a
       caps = members.map(&:capability).uniq
-      return point.errors.add(:base, "Escolha ao menos dois pontos.") if members.size < 2
-      return point.errors.add(:base, "Os membros precisam ser do mesmo tipo.") unless caps.one?
-      return point.errors.add(:base, "Grupo dentro de grupo não pode.") if members.any? { |m| m.helper == key }
+      return point.errors.add(:base, text(:two)) if members.size < 2
+      return point.errors.add(:base, text(:same)) unless caps.one?
+      return point.errors.add(:base, text(:nested)) if members.any? { |m| m.helper == key }
 
       cap = caps.first
       numeric = NUM_CAPS.include?(cap)
-      return point.errors.add(:base, "Esse tipo de ponto não forma grupo.") unless numeric || BOOL_CAPS.include?(cap)
+      return point.errors.add(:base, text(:kind)) unless numeric || BOOL_CAPS.include?(cap)
 
       modes = numeric ? NUM_MODES : BOOL_MODES
       point.capability = numeric ? "measure" : cap
@@ -73,8 +86,8 @@ module HelperTypes
     end
 
     def self.summary(point)
-      modes = BOOL_MODES.merge(NUM_MODES)
-      "#{Array(point.address['sources']).size} pontos · #{modes[point.address['mode']]&.downcase}"
+      mode = point.address["mode"]
+      text(:summary, n: Array(point.address["sources"]).size, mode: (text("modes.#{mode}").downcase if mode))
     end
   end
 end

@@ -17,11 +17,11 @@ module Web
 
     def update
       Ai::Budget.save!(current_user.tenant, params.fetch(:ai, {}).permit(:default_provider, :limit_usd, :limit_calls))
-      redirect_to settings_ai_path, notice: "Padrão e limite salvos."
+      redirect_to settings_ai_path, notice: t("ai_settings.flash.limits")
     end
 
     def provider
-      plugin = Ai.provider(params[:provider]) or return redirect_to(settings_ai_path, alert: "Provedor desconhecido.")
+      plugin = Ai.provider(params[:provider]) or return redirect_to(settings_ai_path, alert: t("ai_settings.flash.unknown"))
       account = AiAccount.find_or_initialize_by(provider: plugin.key)
       p = params.fetch(:account, {}).permit(:api_key, :base_url, :model, :enabled, :remove_key)
       account.api_key = p[:api_key].strip if p[:api_key].present? # vazio = mantém a guardada
@@ -31,21 +31,21 @@ module Web
       account.enabled = p[:enabled] != "0"
       return redirect_to(settings_ai_path(anchor: plugin.key), alert: account.errors.full_messages.to_sentence) unless account.save
 
-      redirect_to settings_ai_path(anchor: plugin.key), notice: "#{plugin.label} salvo."
+      redirect_to settings_ai_path(anchor: plugin.key), notice: t("ai_settings.flash.saved", name: plugin.label)
     end
 
     # Pergunta curta ao provedor; conta como chamada (origem "teste").
     def check
       account = AiAccount.find_by(provider: params[:provider].to_s)
-      return redirect_to(settings_ai_path, alert: "Salve a chave antes de testar.") unless account&.usable?
+      return redirect_to(settings_ai_path, alert: t("ai_settings.flash.save_first")) unless account&.usable?
 
       notice = if account.plugin.supports?(:text)
         res = Ai::Request.call(tenant: current_user.tenant, provider: account.provider, source: "teste", max_tokens: 30, timeout: 30,
                                prompt: "Responda apenas com a palavra OK.")
-        "#{account.plugin.label} respondeu (#{res.model}, #{res.tokens} tokens)."
+        t("ai_settings.flash.answered", name: account.plugin.label, model: res.model, tokens: res.tokens)
       else # só voz (Lote 5): gera uma fala curta
         res = Ai::Audio.speak(tenant: current_user.tenant, provider: account.provider, source: "teste", text: "OK")
-        "#{account.plugin.label} gerou a fala (#{res.model}, #{res.data[:data].bytesize} bytes)."
+        t("ai_settings.flash.spoke", name: account.plugin.label, model: res.model, bytes: res.data[:data].bytesize)
       end
       account.update!(last_ok_at: Time.current, last_error: nil)
       redirect_to settings_ai_path(anchor: account.provider), notice: notice
@@ -57,7 +57,7 @@ module Web
     private
 
     def require_admin_web!
-      redirect_to settings_path, alert: "Só administradores." unless current_user.admin?
+      redirect_to settings_path, alert: t("ai_settings.flash.admins") unless current_user.admin?
     end
   end
 end

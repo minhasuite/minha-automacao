@@ -10,6 +10,14 @@ module HelperTypes
     describe key: "derivative", title: "Derivada", icon: "trending-up", capability: "measure",
              description: "Quanto um valor muda por tempo: temperatura subindo 2 °C/h, energia em kWh/h."
     fields %i[source window prefix time_unit round]
+    texts "pt-BR" => { window: "Janela inválida (vazio = sem janela; ex.: 10m, 1h, até 1 dia).", in: "em %{unit}", window_of: "janela de %{time}",
+                       last_two: "entre as duas últimas leituras" },
+          en: { title: "Derivative", description: "How fast a value changes over time: temperature rising 2 °C/h, energy in kWh/h.",
+                window: "Invalid window (blank = no window; e.g. 10m, 1h, up to 1 day).", in: "in %{unit}", window_of: "%{time} window",
+                last_two: "between the last two readings" },
+          es: { title: "Derivada", description: "Cuánto cambia un valor en el tiempo: temperatura subiendo 2 °C/h, energía en kWh/h.",
+                window: "Ventana no válida (vacío = sin ventana; ej.: 10m, 1h, hasta 1 día).", in: "en %{unit}", window_of: "ventana de %{time}",
+                last_two: "entre las dos últimas lecturas" }
 
     def self.assign(point, form)
       src = numeric_source!(point, form) or return
@@ -22,8 +30,8 @@ module HelperTypes
       point.writable = false
       point.unit = "#{prefix}#{src.unit}/#{unit}"
       point.address = a.merge("prefix" => prefix, "time_unit" => unit, "round" => round, "window_s" => window.to_i)
-      point.errors.add(:base, "Casas decimais de 0 a 6.") unless round.between?(0, 6)
-      point.errors.add(:base, "Janela inválida (vazio = sem janela; ex.: 10m, 1h, até 1 dia).") unless window&.between?(0, 86_400)
+      point.errors.add(:base, text(:decimals)) unless round.between?(0, 6)
+      point.errors.add(:base, text(:window)) unless window&.between?(0, 86_400)
     end
 
     def self.sourced? = true
@@ -55,7 +63,7 @@ module HelperTypes
 
     def self.summary(point)
       w = point.address["window_s"].to_i
-      [ "em #{point.unit}", (w.positive? ? "janela de #{Automations::Dsl.duration_label(w)}" : "entre as duas últimas leituras") ].join(" · ")
+      [ text(:in, unit: point.unit), (w.positive? ? text(:window_of, time: Automations::Dsl.duration_label(w)) : text(:last_two)) ].join(" · ")
     end
   end
 end

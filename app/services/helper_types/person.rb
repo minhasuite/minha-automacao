@@ -14,6 +14,14 @@ module HelperTypes
     describe key: "person", title: "Pessoa", icon: "user-circle", capability: "enum",
              description: "Quem está em casa ou em outra zona, pelo celular (GPS, Wi-Fi) e pela rede. Vários rastreadores, com prioridade."
     fields [ :user_id, :home_ssids, { sources: [] } ]
+    texts "pt-BR" => { no_source: "Escolha ao menos uma fonte de rastreio.", no_tracker: "Fonte sem rastreador: %{names}.",
+                       user: "Usuário não é desta instalação.", sources: "%{n} fonte(s)", via: "agora por %{source}" },
+          en: { title: "Person", description: "Who is home or in another zone, from the phone (GPS, Wi-Fi) and the network. Several trackers, by priority.",
+                no_source: "Choose at least one tracking source.", no_tracker: "Source without a tracker: %{names}.",
+                user: "This user doesn't belong to this installation.", sources: "%{n} source(s)", via: "now via %{source}" },
+          es: { title: "Persona", description: "Quién está en casa o en otra zona, por el celular (GPS, Wi-Fi) y por la red. Varios rastreadores, con prioridad.",
+                no_source: "Elige al menos una fuente de rastreo.", no_tracker: "Fuente sin rastreador: %{names}.",
+                user: "El usuario no es de esta instalación.", sources: "%{n} fuente(s)", via: "ahora por %{source}" }
 
     def self.assign(point, form)
       point.writable = false
@@ -21,10 +29,10 @@ module HelperTypes
       ids = Array(form["sources"]).compact_blank.uniq.first(MAX_SOURCES)
       found = point.site.points.where(id: ids).index_by(&:id)
       sources = ids.filter_map { |id| found[id] }
-      point.errors.add(:base, "Escolha ao menos uma fonte de rastreio.") if sources.empty?
-      point.errors.add(:base, "Fonte sem rastreador: #{sources.reject { |s| People.tracker_for(s) }.map(&:name).join(', ')}.") unless sources.all? { |s| People.tracker_for(s) }
+      point.errors.add(:base, text(:no_source)) if sources.empty?
+      point.errors.add(:base, text(:no_tracker, names: sources.reject { |s| People.tracker_for(s) }.map(&:name).join(", "))) unless sources.all? { |s| People.tracker_for(s) }
       user_id = form["user_id"].presence
-      point.errors.add(:base, "Usuário não é desta instalação.") if user_id && !User.exists?(id: user_id)
+      point.errors.add(:base, text(:user)) if user_id && !User.exists?(id: user_id)
       ssids = form["home_ssids"].to_s.split(/[,\n]/).map { |s| s.strip.delete('"') }.compact_blank.first(10)
       point.address = point.address.merge("sources" => sources.map(&:id), "user_id" => user_id, "home_ssids" => ssids).compact
       point.options = options(point.site)
@@ -74,7 +82,7 @@ module HelperTypes
 
     def self.summary(person)
       user = person.address["user_id"] && User.find_by(id: person.address["user_id"])
-      [ user&.name, "#{Array(person.address['sources']).size} fonte(s)", person.attrs.to_h["source"]&.then { |s| "agora por #{s}" } ].compact.join(" · ")
+      [ user&.name, text(:sources, n: Array(person.address["sources"]).size), person.attrs.to_h["source"]&.then { |s| text(:via, source: s) } ].compact.join(" · ")
     end
   end
 end

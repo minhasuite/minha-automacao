@@ -15,15 +15,26 @@ module HelperTypes
     describe key: "tariff", title: "Tarifa de energia", icon: "cash", capability: "measure",
              description: "Preço do kWh, fixo ou por horário (tarifa branca). O painel de Energia calcula o custo hora a hora."
     fields %i[base bands weekdays_only]
+    texts "pt-BR" => { base: "Informe o preço base do kWh (R$).", bad: "Faixa que não entendi: %{bands}. Use \"Ponta 18:00-21:00 = 1,35\".",
+                       fixed: "%{base}/kWh fixo", outside: "%{base} fora das faixas · %{n} faixa(s)", weekdays: " em dias úteis" },
+          en: { title: "Energy rate", description: "Price per kWh, flat or by time of day (time-of-use). The Energy dashboard works out the cost hour by hour.",
+                base: "Enter the base price per kWh.", bad: "I couldn't understand this band: %{bands}. Use \"Peak 18:00-21:00 = 1.35\".",
+                fixed: "%{base}/kWh flat", outside: "%{base} outside the bands · %{n} band(s)", weekdays: " on weekdays" },
+          es: { title: "Tarifa de energía", description: "Precio del kWh, fijo o por horario (tarifa horaria). El panel de Energía calcula el costo hora por hora.",
+                base: "Indica el precio base del kWh.", bad: "No entendí esta franja: %{bands}. Usa \"Punta 18:00-21:00 = 1,35\".",
+                fixed: "%{base}/kWh fijo", outside: "%{base} fuera de las franjas · %{n} franja(s)", weekdays: " en días hábiles" }
+
+    # Preço com o separador decimal do idioma da tela.
+    def self.money(v) = "R$ #{format('%.2f', v).tr('.', I18n.t('number.format.separator', default: ','))}"
 
     def self.assign(point, form)
       point.writable = false
       point.data_type = "decimal"
       point.unit = "R$/kWh"
       base = number(form["base"])
-      point.errors.add(:base, "Informe o preço base do kWh (R$).") unless base && base >= 0
+      point.errors.add(:base, text(:base)) unless base && base >= 0
       bands, bad = parse(form["bands"])
-      point.errors.add(:base, "Faixa que não entendi: #{bad.first(3).join('; ')}. Use \"Ponta 18:00-21:00 = 1,35\".") if bad.any?
+      point.errors.add(:base, text(:bad, bands: bad.first(3).join("; "))) if bad.any?
       point.address = point.address.merge("base" => base, "bands" => bands,
                                           "weekdays_only" => ActiveModel::Type::Boolean.new.cast(form.fetch("weekdays_only", "1")) || false)
     end
@@ -76,13 +87,13 @@ module HelperTypes
     def self.value_text(point)
       return unless point.value.is_a?(Numeric)
 
-      "R$ #{format('%.2f', point.value).tr('.', ',')}/kWh · #{point.attrs.to_h['band'] || BASE_LABEL}"
+      "#{money(point.value)}/kWh · #{point.attrs.to_h['band'] || BASE_LABEL}"
     end
 
     def self.summary(point)
       bands = Array(point.address["bands"])
-      base = "R$ #{format('%.2f', point.address['base'].to_f).tr('.', ',')}"
-      bands.empty? ? "#{base}/kWh fixo" : "#{base} fora das faixas · #{bands.size} faixa(s)#{' em dias úteis' if point.address['weekdays_only']}"
+      base = money(point.address["base"].to_f)
+      bands.empty? ? text(:fixed, base: base) : "#{text(:outside, base: base, n: bands.size)}#{text(:weekdays) if point.address['weekdays_only']}"
     end
   end
 end

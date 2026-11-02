@@ -25,8 +25,14 @@ module Health
 
   # Interface comum de uma verificação.
   class Check
+    extend PluginTexts
+    translates :label
+    texts "pt-BR" => { last_ok: "último ok %{at}", failed: "falhou: %{error}", not_run: "Ainda não rodou", none: "Nenhum" },
+          en: { last_ok: "last ok %{at}", failed: "failed: %{error}", not_run: "Hasn't run yet", none: "None" },
+          es: { last_ok: "último ok %{at}", failed: "falló: %{error}", not_run: "Todavía no se ejecutó", none: "Ninguno" }
+
     class << self
-      attr_reader :key, :label, :icon
+      attr_reader :key, :icon
 
       def describe(key:, label:, icon:, alerts: true)
         @key = key
@@ -49,6 +55,7 @@ module Health
   def checks = CHECKS.map { |name| Checks.const_get(name) }
   def check(key) = checks.find { |c| c.key == key.to_s }
 
+  def label(status) = I18n.t("health.labels.#{status}", default: LABELS[status].to_s)
   def worst(statuses) = statuses.max_by { |s| STATUSES.index(s) } || "ok"
 
   # Uma verificação que quebra vira item de erro dela, sem derrubar as outras.
@@ -56,7 +63,7 @@ module Health
     (only ? Array(only).map { |k| check(k) }.compact : checks).map do |c|
       Result.new(check: c, items: ActsAsTenant.with_tenant(tenant) { c.items(tenant) })
     rescue StandardError => e
-      Result.new(check: c, items: [ Item.new(key: "falha", status: "error", title: "A verificação falhou", detail: e.message.truncate(200)) ])
+      Result.new(check: c, items: [ Item.new(key: "falha", status: "error", title: I18n.t("health.check_failed"), detail: e.message.truncate(200)) ])
     end
   end
 

@@ -1,6 +1,6 @@
 <%# locals: (f:, point:) -%>
 <%= render "web/site_helpers/forms/source_field", f: f, point: point %>
-<div><%= f.label :lower, "Limite inferior", class: "ss-label" %><%= f.text_field :lower, value: point.address["lower"], class: "ss-input num", inputmode: "decimal" %></div>
-<div><%= f.label :upper, "Limite superior", class: "ss-label" %><%= f.text_field :upper, value: point.address["upper"], class: "ss-input num", inputmode: "decimal" %></div>
-<div><%= f.label :hysteresis, "Histerese", class: "ss-label" %><%= f.text_field :hysteresis, value: point.address["hysteresis"] || 0, class: "ss-input num", inputmode: "decimal" %></div>
-<p class="sm:col-span-2 text-xs text-muted">Só o inferior: liga abaixo dele. Só o superior: liga acima. Os dois: liga dentro da faixa. A histerese evita liga-desliga perto do limite.</p>
+<div><%= f.label :lower, t("helper_forms.threshold.lower"), class: "ss-label" %><%= f.text_field :lower, value: point.address["lower"], class: "ss-input num", inputmode: "decimal" %></div>
+<div><%= f.label :upper, t("helper_forms.threshold.upper"), class: "ss-label" %><%= f.text_field :upper, value: point.address["upper"], class: "ss-input num", inputmode: "decimal" %></div>
+<div><%= f.label :hysteresis, t("helper_forms.threshold.hysteresis"), class: "ss-label" %><%= f.text_field :hysteresis, value: point.address["hysteresis"] || 0, class: "ss-input num", inputmode: "decimal" %></div>
+<p class="sm:col-span-2 text-xs text-muted"><%= t("helper_forms.threshold.hint") %></p>

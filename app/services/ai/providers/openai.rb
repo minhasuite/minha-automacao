@@ -10,6 +10,8 @@ module Ai
                base_url: "https://api.openai.com/v1", capabilities: %i[text image structured tools stt tts],
                stt_model: "gpt-4o-mini-transcribe", tts_model: "gpt-4o-mini-tts", tts_voice: "alloy",
                hint: "Chave em platform.openai.com → API keys."
+      texts en: { label: "OpenAI", hint: "Get a key at platform.openai.com → API keys." },
+            es: { label: "OpenAI", hint: "Clave en platform.openai.com → API keys." }
 
       def complete(model:, system:, user:, schema:, max_tokens:, timeout:, effort: nil, temperature: nil) # rubocop:disable Lint/UnusedMethodArgument
         body = { model: model, messages: [ { role: "system", content: system }, { role: "user", content: translate(user) } ],

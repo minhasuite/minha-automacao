@@ -11,7 +11,7 @@ module Web
       authorize_site!(site, :view)
       text = params[:text].to_s
       if (audio = params[:audio]).respond_to?(:read)
-        return render(json: { error: "Áudio grande demais." }, status: :unprocessable_content) if audio.size > MAX_AUDIO
+        return render(json: { error: t("assist.too_big") }, status: :unprocessable_content) if audio.size > MAX_AUDIO
 
         text = Assist.transcribe(site: site, audio: audio.read, media_type: audio.content_type.to_s)
       end

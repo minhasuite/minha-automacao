@@ -3,6 +3,7 @@ module Web
   # Modelo (Liquid/expressão ao vivo), Ação (comando com confirmação, risco e
   # sombra) e Eventos (escutar e disparar). Só administrador ou dono.
   class DevToolsController < ApplicationController
+    # Aba → rótulo em pt-BR (na tela: t("dev_tools.tabs.<aba>")).
     TABS = { "estados" => "Estados", "modelo" => "Modelo", "acao" => "Ação", "eventos" => "Eventos" }.freeze
 
     before_action :load_site
@@ -10,7 +11,7 @@ module Web
     def show
       @tab = TABS.key?(params[:aba]) ? params[:aba] : "estados"
       @states = DevTools.states(@site, q: params[:q], capability: params[:capacidade]) if @tab == "estados"
-      @template = params[:template].presence || "Agora: {{ now | date: \"%H:%M\" }}"
+      @template = params[:template].presence || t("dev_tools.default_template")
       @writable = @site.points.where(writable: true, disabled: false).includes(:device).ordered if @tab == "acao"
     end
 
@@ -42,7 +43,7 @@ module Web
 
     def event
       name = DevTools.fire!(@site, params[:event], params[:data])
-      redirect_to dev_tools_site_path(@site, aba: "eventos"), notice: "Evento #{name} disparado."
+      redirect_to dev_tools_site_path(@site, aba: "eventos"), notice: t("dev_tools.fired", name: name)
     rescue ArgumentError => e
       redirect_to dev_tools_site_path(@site, aba: "eventos"), alert: e.message
     end

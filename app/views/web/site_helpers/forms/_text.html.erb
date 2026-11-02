@@ -1,5 +1,5 @@
 <%# locals: (f:, point:) -%>
-<div><%= f.label :min, "Tamanho mínimo", class: "ss-label" %><%= f.number_field :min, value: (point.min || 0).to_i, min: 0, max: 255, class: "ss-input num" %></div>
-<div><%= f.label :max, "Tamanho máximo", class: "ss-label" %><%= f.number_field :max, value: (point.max || 255).to_i, min: 1, max: 255, class: "ss-input num" %></div>
-<div class="sm:col-span-2"><%= f.label :pattern, "Padrão (expressão regular, opcional)", class: "ss-label" %><%= f.text_field :pattern, value: point.address["pattern"], class: "ss-input num", maxlength: 200, spellcheck: false, placeholder: "[0-9]{4}" %></div>
-<label class="ss-check sm:col-span-2"><%= f.check_box :password, { checked: point.address["password"] == true }, "1", "0" %>Modo senha (o valor fica oculto na tela)</label>
+<div><%= f.label :min, t("helper_forms.text.min"), class: "ss-label" %><%= f.number_field :min, value: (point.min || 0).to_i, min: 0, max: 255, class: "ss-input num" %></div>
+<div><%= f.label :max, t("helper_forms.text.max"), class: "ss-label" %><%= f.number_field :max, value: (point.max || 255).to_i, min: 1, max: 255, class: "ss-input num" %></div>
+<div class="sm:col-span-2"><%= f.label :pattern, t("helper_forms.text.pattern"), class: "ss-label" %><%= f.text_field :pattern, value: point.address["pattern"], class: "ss-input num", maxlength: 200, spellcheck: false, placeholder: "[0-9]{4}" %></div>
+<label class="ss-check sm:col-span-2"><%= f.check_box :password, { checked: point.address["password"] == true }, "1", "0" %><%= t("helper_forms.text.password") %></label>

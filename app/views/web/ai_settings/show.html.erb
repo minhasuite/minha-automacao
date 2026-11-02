@@ -1,35 +1,35 @@
-<%= render "web/shared/header", title: "Configurações", subtitle: "IA: seus provedores (a chave fica cifrada), o padrão, o limite do mês e quanto cada chamada custou." %>
+<%= render "web/shared/header", title: t("ai_settings.title"), subtitle: t("ai_settings.subtitle") %>
 <% owner = current_user.owner? %>
 <% b = @budget %>
 <%= render layout: "web/settings/frame", locals: { current: :ai } do %>
 <section class="ss-card ss-card-pad" aria-labelledby="mes-t">
   <div class="flex flex-wrap items-baseline justify-between gap-2">
-    <h2 id="mes-t">Neste mês</h2>
-    <p class="text-sm text-muted"><%= b.exceeded? ? "Limite atingido: as chamadas estão bloqueadas." : "As chamadas param quando o limite é atingido (e você recebe um aviso)." %></p>
+    <h2 id="mes-t"><%= t("ai_settings.month") %></h2>
+    <p class="text-sm text-muted"><%= b.exceeded? ? t("ai_settings.exceeded") : t("ai_settings.stops") %></p>
   </div>
   <dl class="mt-3 grid gap-3 grid-cols-2 sm:grid-cols-4 text-sm">
-    <div><dt class="text-muted">Chamadas</dt><dd class="text-xl font-bold text-ink num"><%= b.calls %><%= " / #{b.limit_calls}" if b.limit_calls %></dd></div>
-    <div><dt class="text-muted">Gasto estimado</dt><dd class="text-xl font-bold text-ink num"><%= usd(b.cost) %></dd></div>
-    <div><dt class="text-muted">Limite de gasto</dt><dd class="text-xl font-bold text-ink num"><%= b.limit_usd ? usd(b.limit_usd) : "Sem limite" %></dd></div>
-    <div><dt class="text-muted">Provedor padrão</dt><dd class="text-xl font-bold text-ink truncate"><%= Ai.provider(b.default_provider)&.label || AiAccount.pick&.plugin&.label || "Nenhum" %></dd></div>
+    <div><dt class="text-muted"><%= t("ai_settings.calls") %></dt><dd class="text-xl font-bold text-ink num"><%= b.calls %><%= " / #{b.limit_calls}" if b.limit_calls %></dd></div>
+    <div><dt class="text-muted"><%= t("ai_settings.spent") %></dt><dd class="text-xl font-bold text-ink num"><%= usd(b.cost) %></dd></div>
+    <div><dt class="text-muted"><%= t("ai_settings.limit") %></dt><dd class="text-xl font-bold text-ink num"><%= b.limit_usd ? usd(b.limit_usd) : t("ai_settings.no_limit") %></dd></div>
+    <div><dt class="text-muted"><%= t("ai_settings.default") %></dt><dd class="text-xl font-bold text-ink truncate"><%= Ai.provider(b.default_provider)&.label || AiAccount.pick&.plugin&.label || t("ai_settings.none") %></dd></div>
   </dl>
   <% if b.ratio %>
-    <div class="mt-3 h-2 rounded-full bg-line overflow-hidden" role="progressbar" aria-label="Uso do limite do mês" aria-valuenow="<%= (b.ratio * 100).round %>" aria-valuemin="0" aria-valuemax="100">
+    <div class="mt-3 h-2 rounded-full bg-line overflow-hidden" role="progressbar" aria-label="<%= t("ai_settings.usage") %>" aria-valuenow="<%= (b.ratio * 100).round %>" aria-valuemin="0" aria-valuemax="100">
       <div class="h-full <%= b.ratio >= 1 ? 'bg-danger' : (b.ratio >= 0.8 ? 'bg-warn' : 'bg-accent') %>" style="width: <%= (b.ratio * 100).round %>%"></div>
     </div>
   <% end %>
   <% if owner %>
     <%= form_with url: settings_ai_path, method: :patch, scope: :ai, class: "mt-4 grid gap-3 sm:grid-cols-3 items-end" do |f| %>
-      <div><%= f.label :default_provider, "Provedor padrão", class: "ss-label" %>
-        <%= f.select :default_provider, Ai.providers.map { |p| [ p.label, p.key ] }, { selected: b.default_provider, include_blank: "O primeiro configurado" }, class: "ss-input" %></div>
-      <div><%= f.label :limit_usd, "Limite de gasto por mês (US$)", class: "ss-label" %><%= f.text_field :limit_usd, value: b.limit_usd&.then { |v| v % 1 == 0 ? v.to_i : v }, class: "ss-input num", inputmode: "decimal", placeholder: "Sem limite" %></div>
-      <div><%= f.label :limit_calls, "Limite de chamadas por mês", class: "ss-label" %><%= f.number_field :limit_calls, value: b.limit_calls, min: 1, class: "ss-input num", placeholder: "Sem limite" %></div>
-      <div class="sm:col-span-3"><%= f.submit "Salvar padrão e limite", class: "ss-btn ss-btn-primary", name: nil %></div>
+      <div><%= f.label :default_provider, t("ai_settings.default"), class: "ss-label" %>
+        <%= f.select :default_provider, Ai.providers.map { |p| [ p.label, p.key ] }, { selected: b.default_provider, include_blank: t("ai_settings.first") }, class: "ss-input" %></div>
+      <div><%= f.label :limit_usd, t("ai_settings.limit_usd"), class: "ss-label" %><%= f.text_field :limit_usd, value: b.limit_usd&.then { |v| v % 1 == 0 ? v.to_i : v }, class: "ss-input num", inputmode: "decimal", placeholder: t("ai_settings.no_limit") %></div>
+      <div><%= f.label :limit_calls, t("ai_settings.limit_calls"), class: "ss-label" %><%= f.number_field :limit_calls, value: b.limit_calls, min: 1, class: "ss-input num", placeholder: t("ai_settings.no_limit") %></div>
+      <div class="sm:col-span-3"><%= f.submit t("ai_settings.save_limit"), class: "ss-btn ss-btn-primary", name: nil %></div>
     <% end %>
   <% end %>
 </section>
 
-<h2 class="mt-6 mb-3">Provedores</h2>
+<h2 class="mt-6 mb-3"><%= t("ai_settings.providers") %></h2>
 <div class="grid gap-4 md:grid-cols-2">
   <% Ai.providers.each do |plugin| %>
     <% acc = @accounts[plugin.key] %>
@@ -37,36 +37,36 @@
       <div class="flex flex-wrap items-center justify-between gap-2">
         <h3 id="p-<%= plugin.key %>" class="font-bold text-ink flex items-center gap-2"><%= icon("sparkles", "size-5") %><%= plugin.label %></h3>
         <% if acc&.usable? %>
-          <span class="ss-badge <%= acc.last_error ? 'ss-badge-danger' : 'ss-badge-success' %>"><%= acc.last_error ? "Com erro" : (acc.last_ok_at ? "Testado" : "Configurado") %></span>
+          <span class="ss-badge <%= acc.last_error ? 'ss-badge-danger' : 'ss-badge-success' %>"><%= acc.last_error ? t("site_helpers.index.error") : (acc.last_ok_at ? t("ai_settings.tested") : t("ai_settings.configured")) %></span>
         <% else %>
-          <span class="ss-badge"><%= acc && !acc.enabled ? "Desligado" : "Sem chave" %></span>
+          <span class="ss-badge"><%= acc && !acc.enabled ? t("ai_settings.off") : t("ai_settings.no_key") %></span>
         <% end %>
       </div>
-      <div class="mt-2 flex flex-wrap gap-1" aria-label="Capacidades">
-        <% plugin.capabilities.each do |c| %><span class="ss-badge ss-badge-accent"><%= Ai::CAPABILITIES[c] %></span><% end %>
+      <div class="mt-2 flex flex-wrap gap-1" aria-label="<%= t("ai_settings.capabilities") %>">
+        <% plugin.capabilities.each do |c| %><span class="ss-badge ss-badge-accent"><%= t("ai_settings.caps.#{c}", default: Ai::CAPABILITIES[c]) %></span><% end %>
       </div>
       <% if plugin.hint %><p class="mt-2 text-xs text-muted"><%= plugin.hint %></p><% end %>
       <% if acc&.last_error %><p class="mt-2 text-sm text-danger" role="alert"><%= acc.last_error %></p><% end %>
-      <% if acc&.last_ok_at %><p class="mt-1 text-xs text-muted">Último teste bom <%= ago_text(acc.last_ok_at) %>.</p><% end %>
+      <% if acc&.last_ok_at %><p class="mt-1 text-xs text-muted"><%= t("ai_settings.last_ok", ago: ago_text(acc.last_ok_at)) %></p><% end %>
       <% if owner %>
         <%= form_with url: settings_ai_provider_path(plugin.key), method: :patch, scope: :account, class: "mt-3 grid gap-3" do |f| %>
-          <div><%= f.label :api_key, plugin.key_required? ? "Chave da API" : "Chave (opcional)", class: "ss-label", for: "k-#{plugin.key}" %>
+          <div><%= f.label :api_key, plugin.key_required? ? t("ai_settings.api_key") : t("ai_settings.key_opt"), class: "ss-label", for: "k-#{plugin.key}" %>
             <%= f.password_field :api_key, id: "k-#{plugin.key}", class: "ss-input", autocomplete: "new-password", maxlength: 300,
-                                 placeholder: acc&.api_key.present? ? "Guardada (cifrada). Vazio = mantém" : "Cole a chave aqui" %></div>
+                                 placeholder: acc&.api_key.present? ? t("ai_settings.key_kept") : t("ai_settings.key_paste") %></div>
           <% if plugin.custom_url? %>
-            <div><%= f.label :base_url, "Endereço", class: "ss-label", for: "u-#{plugin.key}" %><%= f.url_field :base_url, id: "u-#{plugin.key}", value: acc&.base_url, class: "ss-input num", placeholder: plugin.base_url %></div>
+            <div><%= f.label :base_url, t("ai_settings.base_url"), class: "ss-label", for: "u-#{plugin.key}" %><%= f.url_field :base_url, id: "u-#{plugin.key}", value: acc&.base_url, class: "ss-input num", placeholder: plugin.base_url %></div>
           <% end %>
-          <div><%= f.label :model, "Modelo (vazio = #{plugin.default_model})", class: "ss-label", for: "m-#{plugin.key}" %>
+          <div><%= f.label :model, t("ai_settings.model_default", model: plugin.default_model), class: "ss-label", for: "m-#{plugin.key}" %>
             <%= f.text_field :model, id: "m-#{plugin.key}", value: acc&.model, class: "ss-input num", list: "models-#{plugin.key}", maxlength: 100, placeholder: plugin.default_model %>
             <datalist id="models-<%= plugin.key %>"><% plugin.models.each do |m| %><option value="<%= m %>"></option><% end %></datalist></div>
           <div class="flex flex-wrap gap-x-4 gap-y-1">
-            <label class="ss-check"><%= f.check_box :enabled, { checked: acc.nil? || acc.enabled, id: "e-#{plugin.key}" }, "1", "0" %>Ligado</label>
-            <% if acc&.api_key.present? %><label class="ss-check"><%= f.check_box :remove_key, { id: "r-#{plugin.key}" }, "1", nil %>Apagar a chave guardada</label><% end %>
+            <label class="ss-check"><%= f.check_box :enabled, { checked: acc.nil? || acc.enabled, id: "e-#{plugin.key}" }, "1", "0" %><%= t("ai_settings.enabled") %></label>
+            <% if acc&.api_key.present? %><label class="ss-check"><%= f.check_box :remove_key, { id: "r-#{plugin.key}" }, "1", nil %><%= t("ai_settings.remove_key") %></label><% end %>
           </div>
-          <div><%= f.submit "Salvar", class: "ss-btn ss-btn-primary ss-btn-sm", name: nil %></div>
+          <div><%= f.submit t("site_helpers.form.save"), class: "ss-btn ss-btn-primary ss-btn-sm", name: nil %></div>
         <% end %>
         <% if acc&.usable? %>
-          <%= button_to settings_ai_check_path(plugin.key), class: "ss-btn ss-btn-outline ss-btn-sm mt-2" do %><%= icon("lightning-bolt", "size-4") %>Testar conexão<% end %>
+          <%= button_to settings_ai_check_path(plugin.key), class: "ss-btn ss-btn-outline ss-btn-sm mt-2" do %><%= icon("lightning-bolt", "size-4") %><%= t("ai_settings.test") %><% end %>
         <% end %>
       <% end %>
     </section>
@@ -75,28 +75,28 @@
 
 <section class="ss-card mt-6 overflow-x-auto" aria-labelledby="uso-t" tabindex="0">
   <div class="ss-card-pad !pb-0 flex flex-wrap items-baseline justify-between gap-2">
-    <h2 id="uso-t">Uso de IA e custos</h2>
-    <p class="text-sm text-muted"><%= @by_source.map { |s, c| "#{AiCall::SOURCES[s]}: #{usd(c)}" }.join(" · ").presence || "Nenhum gasto neste mês." %></p>
+    <h2 id="uso-t"><%= t("ai_settings.usage_title") %></h2>
+    <p class="text-sm text-muted"><%= @by_source.map { |s, c| "#{AiCall.source_text(s)}: #{usd(c)}" }.join(" · ").presence || t("ai_settings.no_spend") %></p>
   </div>
   <% if @calls.empty? %>
-    <p class="ss-card-pad text-sm text-muted">Nenhuma chamada ainda. Cada chamada aparece aqui com o modelo, os tokens e o custo estimado (nunca o pedido nem a resposta).</p>
+    <p class="ss-card-pad text-sm text-muted"><%= t("ai_settings.no_calls") %></p>
   <% else %>
     <table class="ss-table ss-table-stack mt-3">
-      <thead><tr><th>Quando</th><th>Origem</th><th class="hidden sm:table-cell">Modelo</th><th class="r hidden md:table-cell">Tokens</th><th class="r">Custo</th><th>Resultado</th></tr></thead>
+      <thead><tr><th><%= t("datasets.show.when") %></th><th><%= t("ai_settings.source") %></th><th class="hidden sm:table-cell"><%= t("ai_settings.model") %></th><th class="r hidden md:table-cell"><%= t("ai_settings.tokens") %></th><th class="r"><%= t("ai_settings.cost") %></th><th><%= t("ai_settings.result") %></th></tr></thead>
       <tbody>
         <% @calls.each do |c| %>
           <tr>
-            <td class="num whitespace-nowrap" data-label="Quando"><%= l(c.created_at, format: "%d/%m %H:%M") %></td>
-            <td class="min-w-0" data-label="Origem"><span class="block font-semibold text-ink truncate max-w-[12rem]"><%= c.automation&.name || c.source_label %></span><span class="block text-xs text-muted"><%= [ c.source_label, c.site&.name ].compact.join(" · ") %></span></td>
+            <td class="num whitespace-nowrap" data-label="<%= t("datasets.show.when") %>"><%= l(c.created_at, format: t("ai_settings.time_format")) %></td>
+            <td class="min-w-0" data-label="<%= t("ai_settings.source") %>"><span class="block font-semibold text-ink truncate max-w-[12rem]"><%= c.automation&.name || c.source_label %></span><span class="block text-xs text-muted"><%= [ c.source_label, c.site&.name ].compact.join(" · ") %></span></td>
             <td class="hidden sm:table-cell"><span class="block"><%= Ai.provider(c.provider)&.label || c.provider %></span><span class="block text-xs text-muted num"><%= c.model %></span></td>
             <td class="r num hidden md:table-cell"><%= number_with_delimiter(c.tokens) %></td>
-            <td class="r num" data-label="Custo"><%= usd(c.cost) %></td>
-            <td data-label="Resultado"><span class="ss-badge <%= { 'ok' => 'ss-badge-success', 'error' => 'ss-badge-danger', 'blocked' => 'ss-badge-warn' }[c.status] %>" title="<%= c.error %>"><%= c.status_label %></span></td>
+            <td class="r num" data-label="<%= t("ai_settings.cost") %>"><%= usd(c.cost) %></td>
+            <td data-label="<%= t("ai_settings.result") %>"><span class="ss-badge <%= { 'ok' => 'ss-badge-success', 'error' => 'ss-badge-danger', 'blocked' => 'ss-badge-warn' }[c.status] %>" title="<%= c.error %>"><%= c.status_label %></span></td>
           </tr>
         <% end %>
       </tbody>
     </table>
   <% end %>
 </section>
-<p class="text-xs text-muted mt-3">Custo estimado pela tabela de preços por modelo (US$ por milhão de tokens); confira no provedor. Modelo local (Ollama) não tem custo.</p>
+<p class="text-xs text-muted mt-3"><%= t("ai_settings.cost_note") %></p>
 <% end %>

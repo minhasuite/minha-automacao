@@ -1,31 +1,31 @@
-<%= render "web/shared/header", title: @dataset.name, subtitle: "#{@site.name} · #{@dataset.free? ? 'campos livres' : @dataset.fields_text.gsub("\n", ", ")}#{" · guarda #{@dataset.retention_days} dias" if @dataset.retention_days}", back: site_datasets_path(@site) do %>
-  <%= link_to dataset_path(@dataset, format: :csv, filtros: @filters.presence, dias: (@days if @days.positive?)), class: "ss-btn ss-btn-ghost", data: { turbo: false } do %><%= icon("download", "size-4") %>Exportar CSV<% end %>
-  <% if can?(:manage) %><%= link_to edit_dataset_path(@dataset), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %>Editar<% end %><% end %>
+<%= render "web/shared/header", title: @dataset.name, subtitle: "#{@site.name} · #{@dataset.free? ? t('datasets.free') : @dataset.fields_text.gsub("\n", ", ")}#{" · #{t('datasets.keeps', n: @dataset.retention_days)}" if @dataset.retention_days}", back: site_datasets_path(@site) do %>
+  <%= link_to dataset_path(@dataset, format: :csv, filtros: @filters.presence, dias: (@days if @days.positive?)), class: "ss-btn ss-btn-ghost", data: { turbo: false } do %><%= icon("download", "size-4") %><%= t("datasets.show.csv") %><% end %>
+  <% if can?(:manage) %><%= link_to edit_dataset_path(@dataset), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %><%= t("site_helpers.index.edit") %><% end %><% end %>
 <% end %>
 
 <%= form_with url: dataset_path(@dataset), method: :get, class: "ss-card ss-card-pad mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] items-end", role: "search" do %>
-  <div class="min-w-0"><label for="filtros" class="ss-label">Filtros (um por linha: campo = valor, campo contém x, campo &gt; 3)</label>
-    <%= text_area_tag :filtros, @filters, rows: 2, class: "ss-input num text-sm", spellcheck: false, placeholder: "porta = garagem" %></div>
-  <div><label for="dias" class="ss-label">Últimos (dias)</label><%= number_field_tag :dias, (@days if @days.positive?), min: 1, class: "ss-input num", placeholder: "Todos" %></div>
-  <div class="flex gap-2"><button type="submit" class="ss-btn ss-btn-primary"><%= icon("filter", "size-4") %>Filtrar</button>
-    <% if @filters.present? || @days.positive? %><%= link_to "Limpar", dataset_path(@dataset), class: "ss-btn ss-btn-ghost" %><% end %></div>
+  <div class="min-w-0"><label for="filtros" class="ss-label"><%= t("datasets.show.filters") %></label>
+    <%= text_area_tag :filtros, @filters, rows: 2, class: "ss-input num text-sm", spellcheck: false, placeholder: t("datasets.show.filters_ph") %></div>
+  <div><label for="dias" class="ss-label"><%= t("datasets.show.days") %></label><%= number_field_tag :dias, (@days if @days.positive?), min: 1, class: "ss-input num", placeholder: t("site_helpers.index.all") %></div>
+  <div class="flex gap-2"><button type="submit" class="ss-btn ss-btn-primary"><%= icon("filter", "size-4") %><%= t("datasets.show.filter") %></button>
+    <% if @filters.present? || @days.positive? %><%= link_to t("datasets.show.clear"), dataset_path(@dataset), class: "ss-btn ss-btn-ghost" %><% end %></div>
   <% if @error %><p class="sm:col-span-3 text-sm text-danger" role="alert"><%= @error %></p><% end %>
 <% end %>
 
 <% if @records.empty? %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum registro<%= " com esses filtros" if @filters.present? || @days.positive? %>.</p>
-    <p class="mt-1">A ação "Registrar dados" de uma automação grava aqui.</p></div>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= @filters.present? || @days.positive? ? t("datasets.show.none_filtered") : t("datasets.show.none") %></p>
+    <p class="mt-1"><%= t("datasets.show.none_text") %></p></div>
 <% else %>
-  <section class="ss-card sm:overflow-x-auto" aria-label="Registros">
+  <section class="ss-card sm:overflow-x-auto" aria-label="<%= t("datasets.show.records") %>">
     <table class="ss-table ss-table-stack">
-      <thead><tr><th>Quando</th><% @columns.each do |c| %><th><%= c %></th><% end %></tr></thead>
+      <thead><tr><th><%= t("datasets.show.when") %></th><% @columns.each do |c| %><th><%= c %></th><% end %></tr></thead>
       <tbody>
         <% @records.each do |r| %>
           <tr>
-            <td class="num whitespace-nowrap" data-label="Quando"><%= l(r.created_at.in_time_zone(@site.timezone), format: "%d/%m/%Y %H:%M") %></td>
+            <td class="num whitespace-nowrap" data-label="<%= t("datasets.show.when") %>"><%= l(r.created_at.in_time_zone(@site.timezone), format: t("datasets.show.time_format")) %></td>
             <% @columns.each do |c| %>
               <% v = r.data[c] %>
-              <td class="<%= 'num r' if v.is_a?(Numeric) %> max-w-xs truncate" data-label="<%= c %>" title="<%= v.to_s.truncate(300) %>"><%= v == true ? "sim" : (v == false ? "não" : (v.is_a?(Hash) || v.is_a?(Array) ? v.to_json : v).to_s.truncate(120)) %></td>
+              <td class="<%= 'num r' if v.is_a?(Numeric) %> max-w-xs truncate" data-label="<%= c %>" title="<%= v.to_s.truncate(300) %>"><%= v == true ? t("datasets.show.yes") : (v == false ? t("datasets.show.no") : (v.is_a?(Hash) || v.is_a?(Array) ? v.to_json : v).to_s.truncate(120)) %></td>
             <% end %>
           </tr>
         <% end %>

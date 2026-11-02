@@ -9,8 +9,9 @@ module Search
     def self.call(q, ctx)
       return [] if q.verb
 
-      PAGES.select { |title, _, _, staff| !(staff && ctx.user.reader?) && match?(q, title) }
-           .map { |title, ico, route| Result.new(kind: "Página", title: title, icon: ico, url: public_send(route)) }
+      PAGES.map { |title, ico, route, staff| [ I18n.t("search.pages.#{route}", default: title), ico, route, staff ] }
+           .select { |title, _, _, staff| !(staff && ctx.user.reader?) && match?(q, title) }
+           .map { |title, ico, route| Result.new(kind: I18n.t("search.kinds.page"), title: title, icon: ico, url: public_send(route)) }
     end
   end
 end

@@ -1,4 +1,4 @@
 <%# locals: (f:, point:) -%>
-<div><%= f.label :prefix, "Prefixo da unidade", class: "ss-label" %><%= f.select :prefix, [ [ "Nenhum", "" ], [ "k (mil)", "k" ], [ "M (milhão)", "M" ], [ "G (bilhão)", "G" ] ], { selected: point.address["prefix"] }, class: "ss-input" %></div>
-<div><%= f.label :time_unit, "Unidade de tempo", class: "ss-label" %><%= f.select :time_unit, [ [ "Segundo", "s" ], [ "Minuto", "min" ], [ "Hora", "h" ], [ "Dia", "d" ] ], { selected: point.address["time_unit"] || "h" }, class: "ss-input" %></div>
-<div><%= f.label :round, "Casas decimais", class: "ss-label" %><%= f.number_field :round, value: point.address.fetch("round", 3), min: 0, max: 6, step: 1, class: "ss-input num" %></div>
+<div><%= f.label :prefix, t("helper_forms.units.prefix"), class: "ss-label" %><%= f.select :prefix, [ [ t("helper_forms.units.none"), "" ], [ t("helper_forms.units.k"), "k" ], [ t("helper_forms.units.m"), "M" ], [ t("helper_forms.units.g"), "G" ] ], { selected: point.address["prefix"] }, class: "ss-input" %></div>
+<div><%= f.label :time_unit, t("helper_forms.units.time"), class: "ss-label" %><%= f.select :time_unit, [ [ t("helper_forms.units.s"), "s" ], [ t("helper_forms.units.min"), "min" ], [ t("helper_forms.units.h"), "h" ], [ t("helper_forms.units.d"), "d" ] ], { selected: point.address["time_unit"] || "h" }, class: "ss-input" %></div>
+<div><%= f.label :round, t("helper_forms.units.round"), class: "ss-label" %><%= f.number_field :round, value: point.address.fetch("round", 3), min: 0, max: 6, step: 1, class: "ss-input num" %></div>

@@ -21,9 +21,11 @@ module Ai
     #   speak(text:, model:, voice:, timeout:) → {media_type:, data: bytes}
     class Base
       Result = Data.define(:data, :usage)
+      extend PluginTexts
+      translates :label, :hint
 
       class << self
-        attr_reader :key, :label, :default_model, :env, :base_url, :hint, :stt_model, :tts_model, :tts_voice
+        attr_reader :key, :default_model, :env, :base_url, :stt_model, :tts_model, :tts_voice
 
         def describe(key:, label:, default_model:, capabilities:, models: [], env: nil, base_url: nil, custom_url: false, key_required: true, hint: nil,
                      stt_model: nil, tts_model: nil, tts_voice: nil)

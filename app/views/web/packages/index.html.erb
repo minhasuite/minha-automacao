@@ -1,32 +1,32 @@
-<%= render "web/shared/header", title: "Pacotes", subtitle: "#{@site.name} · mapas de aparelho, blueprints, modelos de painel e helpers de terceiros. Só dados: nenhum código entra.", back: site_path(@site) %>
+<%= render "web/shared/header", title: t("packages.index.title"), subtitle: t("packages.index.subtitle", site: @site.name), back: site_path(@site) %>
 <%= render "web/sites/tabs", site: @site, current: :packages %>
 
 <% if can?(:manage) %>
   <%= form_with url: preview_site_packages_path(@site), class: "ss-card ss-card-pad mb-4 flex flex-wrap items-end gap-3" do %>
     <div class="min-w-64 flex-1">
-      <label for="url" class="ss-label">Repositório git ou manifesto</label>
-      <%= url_field_tag :url, params[:url], class: "ss-input", required: true, placeholder: "https://github.com/dono/repo ou https://…/minha-automacao.json" %>
+      <label for="url" class="ss-label"><%= t("packages.index.url") %></label>
+      <%= url_field_tag :url, params[:url], class: "ss-input", required: true, placeholder: t("packages.index.url_ph") %>
     </div>
-    <button type="submit" class="ss-btn ss-btn-primary"><%= icon("eye", "size-4") %>Ver o que entra</button>
-    <p class="basis-full text-xs text-muted">No repositório, o manifesto fica na raiz como <code>minha-automacao.json</code> (ou .yml). Nada é instalado antes da pré-visualização. Formato em docs/pacotes.md.</p>
+    <button type="submit" class="ss-btn ss-btn-primary"><%= icon("eye", "size-4") %><%= t("packages.index.preview") %></button>
+    <p class="basis-full text-xs text-muted"><%= t("packages.index.hint_html") %></p>
   <% end %>
 <% end %>
 
 <% if @packages.empty? %>
   <div class="ss-card ss-empty">
-    <p class="font-bold text-ink">Nenhum pacote instalado.</p>
-    <p class="mt-1 max-w-md mx-auto">Pacote é um manifesto versionado com itens que entram nos registros do local, como um blueprint pronto ou o mapa de um aparelho novo. Atualiza e remove sem mexer no que é seu.</p>
+    <p class="font-bold text-ink"><%= t("packages.index.empty") %></p>
+    <p class="mt-1 max-w-md mx-auto"><%= t("packages.index.empty_text") %></p>
   </div>
 <% else %>
-  <ul class="ss-card ss-rows" aria-label="Pacotes instalados">
+  <ul class="ss-card ss-rows" aria-label="<%= t("packages.index.installed") %>">
     <% @packages.each do |pk| %>
       <li>
         <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon("archive") %></span>
         <div class="min-w-0 flex-1">
           <p class="font-bold text-ink truncate"><%= link_to pk.name, package_path(pk), class: "text-ink no-underline hover:text-accent" %></p>
-          <p class="text-xs text-muted truncate"><span class="num"><%= pk.version %></span> · <%= pk.installed.size %> item(ns) · <%= pk.manifest["description"].to_s.truncate(80) %></p>
+          <p class="text-xs text-muted truncate"><span class="num"><%= pk.version %></span> · <%= t("packages.items", n: pk.installed.size) %> · <%= pk.manifest["description"].to_s.truncate(80) %></p>
         </div>
-        <%= link_to package_path(pk), class: "grid place-items-center size-9 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", "aria-label": "Abrir #{pk.name}" do %><%= icon("chevron-right", "size-4") %><% end %>
+        <%= link_to package_path(pk), class: "grid place-items-center size-9 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", "aria-label": t("packages.open_name", name: pk.name) do %><%= icon("chevron-right", "size-4") %><% end %>
       </li>
     <% end %>
   </ul>

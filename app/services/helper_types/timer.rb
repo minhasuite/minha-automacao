@@ -14,18 +14,28 @@ module HelperTypes
     describe key: "timer", title: "Temporizador", icon: "clock", capability: "timer",
              description: "Conta um tempo e avisa quando acaba: desligar a rega em 20 min. Sobrevive a reinício."
     fields %i[duration]
+    texts "pt-BR" => { commands: LABELS, duration: "Duração inválida (use 30s, 5m, 1h30m; até 7 dias).", bad: "Duração inválida (use 30s, 5m, 1h30m).",
+                       active: "Contando, termina às %{time}", paused: "Pausado, faltam %{time}", summary: "duração %{time}" },
+          en: { title: "Timer", description: "Counts down and lets you know when it's done: turn off the sprinklers in 20 min. Survives restarts.",
+                commands: { start: "Start timer", pause: "Pause timer", cancel: "Cancel timer", finish: "Finish timer" },
+                duration: "Invalid duration (use 30s, 5m, 1h30m; up to 7 days).", bad: "Invalid duration (use 30s, 5m, 1h30m).",
+                active: "Running, ends at %{time}", paused: "Paused, %{time} left", summary: "duration %{time}" },
+          es: { title: "Temporizador", description: "Cuenta un tiempo y avisa cuando termina: apagar el riego en 20 min. Sobrevive a reinicios.",
+                commands: { start: "Iniciar temporizador", pause: "Pausar temporizador", cancel: "Cancelar temporizador", finish: "Terminar temporizador" },
+                duration: "Duración no válida (usa 30s, 5m, 1h30m; hasta 7 días).", bad: "Duración no válida (usa 30s, 5m, 1h30m).",
+                active: "Contando, termina a las %{time}", paused: "En pausa, faltan %{time}", summary: "duración %{time}" }
 
     def self.assign(point, form)
       point.writable = true
       point.data_type = "enum"
       sec = Automations::Dsl.seconds(form["duration"].presence || point.address["duration_s"] || "")
-      point.errors.add(:base, "Duração inválida (use 30s, 5m, 1h30m; até 7 dias).") unless sec&.between?(1, MAX)
+      point.errors.add(:base, text(:duration)) unless sec&.between?(1, MAX)
       point.address = point.address.merge("duration_s" => sec)
     end
 
     def self.initial_value(_point) = "idle"
     def self.commands(_point) = COMMANDS
-    def self.command_labels = LABELS
+    def self.command_labels = labels(:commands, LABELS)
 
     def self.actions(point)
       { "active" => %w[pause cancel finish], "paused" => %w[start cancel] }.fetch(point.value, %w[start])
@@ -33,8 +43,8 @@ module HelperTypes
 
     def self.value_text(point)
       case point.value
-      when "active" then "Contando, termina às #{I18n.l(Time.zone.parse(point.address['finishes_at']), format: '%H:%M:%S')}" if point.address["finishes_at"]
-      when "paused" then "Pausado, faltam #{Automations::Dsl.duration_label(point.address['remaining_s'].to_i)}"
+      when "active" then text(:active, time: I18n.l(Time.zone.parse(point.address["finishes_at"]), format: "%H:%M:%S")) if point.address["finishes_at"]
+      when "paused" then text(:paused, time: Automations::Dsl.duration_label(point.address["remaining_s"].to_i))
       end
     end
 
@@ -54,7 +64,7 @@ module HelperTypes
       return if raw.blank?
 
       sec = Automations::Dsl.seconds(raw)
-      sec&.between?(1, MAX) ? sec : invalid!("Duração inválida (use 30s, 5m, 1h30m).")
+      sec&.between?(1, MAX) ? sec : invalid!(text(:bad))
     end
 
     def self.execute(point, command, value)
@@ -86,6 +96,6 @@ module HelperTypes
 
     def self.reset!(point) = execute(point, "cancel", nil)
 
-    def self.summary(point) = "duração #{Automations::Dsl.duration_label(point.address['duration_s'].to_i)}"
+    def self.summary(point) = text(:summary, time: Automations::Dsl.duration_label(point.address["duration_s"].to_i))
   end
 end

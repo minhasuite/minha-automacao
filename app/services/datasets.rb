@@ -25,7 +25,7 @@ module Datasets
     ops = operators.sort_by { |o| -o.symbol.size }
     pattern = /\A([a-z_][a-z0-9_]*)\s*(#{ops.map { |o| Regexp.escape(o.symbol) }.join('|')})\s*(.*)\z/i
     text.to_s.lines.map(&:strip).compact_blank.first(10).map do |line|
-      m = pattern.match(line) or raise ArgumentError, "filtro inválido \"#{line.truncate(40)}\" (use campo = valor, campo contém x, campo > 3)."
+      m = pattern.match(line) or raise ArgumentError, I18n.t("datasets.errors.filter", line: line.truncate(40))
       [ ops.find { |o| o.symbol.casecmp?(m[2]) }, m[1], m[3].strip ]
     end
   end

@@ -6,7 +6,7 @@ module Search
 
       sites = ctx.site_ids.select { |id| ctx.allowed?(id, :manage) }
       Automation.where(site_id: sites).order(:name).select { |a| match?(q, a.name, "automacao") }.first(LIMIT)
-                .map { |a| Result.new(kind: "Automação", title: a.name, subtitle: (a.enabled ? "Ligada" : "Desligada"), icon: "switch-horizontal", url: edit_automation_path(a)) }
+                .map { |a| Result.new(kind: I18n.t("search.kinds.automation"), title: a.name, subtitle: I18n.t(a.enabled ? "search.on" : "search.off"), icon: "switch-horizontal", url: edit_automation_path(a)) }
     end
   end
 end

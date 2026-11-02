@@ -5,11 +5,13 @@ import { Controller } from "@hotwired/stimulus"
 // que entendeu e a resposta, e toca a fala quando o servidor gera (TTS).
 export default class extends Controller {
   static targets = ["dialog", "mic", "status", "text", "log", "audio"]
-  static values = { url: String, site: String }
+  static values = { url: String, site: String, texts: Object }
+
+  t(key) { return this.textsValue[key] || key }
 
   open() {
     this.dialogTarget.showModal()
-    if (!navigator.mediaDevices?.getUserMedia) this.statusTarget.textContent = "Microfone só pelo endereço seguro (https). Escreva abaixo."
+    if (!navigator.mediaDevices?.getUserMedia) this.statusTarget.textContent = this.t("https")
   }
 
   close() {
@@ -33,10 +35,10 @@ export default class extends Controller {
       }
       this.recorder.start()
       this.micTarget.setAttribute("aria-pressed", "true")
-      this.statusTarget.textContent = "Ouvindo… toque de novo para enviar"
+      this.statusTarget.textContent = this.t("listening")
       this.timeout = setTimeout(() => this.stop(), 15000)
     } catch (_) {
-      this.statusTarget.textContent = "Sem acesso ao microfone. Escreva abaixo."
+      this.statusTarget.textContent = this.t("no_mic")
     }
   }
 
@@ -59,16 +61,16 @@ export default class extends Controller {
   async post(body) {
     body.append("site_id", this.siteValue)
     body.append("speak", "1")
-    this.statusTarget.textContent = "Pensando…"
+    this.statusTarget.textContent = this.t("thinking")
     try {
       const res = await fetch(this.urlValue, {
         method: "POST", body, headers: { Accept: "application/json", "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content }
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Falhou")
+      if (!res.ok) throw new Error(data.error || this.t("failed"))
       this.add(data.heard, "dw-assist-me")
       this.add(data.text, "dw-assist-house")
-      this.statusTarget.textContent = "Toque para falar"
+      this.statusTarget.textContent = this.t("idle")
       if (data.audio_url) { this.audioTarget.src = data.audio_url; this.audioTarget.play().catch(() => {}) }
     } catch (e) {
       this.statusTarget.textContent = e.message

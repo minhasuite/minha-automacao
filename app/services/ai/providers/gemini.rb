@@ -15,6 +15,8 @@ module Ai
                base_url: "https://generativelanguage.googleapis.com/v1beta/models", capabilities: %i[text image structured tools temperature stt tts],
                stt_model: "gemini-2.5-flash", tts_model: "gemini-2.5-flash-preview-tts", tts_voice: "Kore",
                hint: "Chave em aistudio.google.com → Get API key."
+      texts en: { label: "Google Gemini", hint: "Get a key at aistudio.google.com → Get API key." },
+            es: { label: "Google Gemini", hint: "Clave en aistudio.google.com → Get API key." }
 
       PCM_RATE = /rate=(\d+)/
 

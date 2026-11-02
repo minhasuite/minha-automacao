@@ -6,8 +6,8 @@ module Search
 
       Scene.where(site_id: ctx.site_ids, shadow: false).order(:name).select { |s| match?(q, s.name) }.first(LIMIT).map do |s|
         risk = s.risk
-        action = ({ label: "Ativar", url: activate_scene_path(s), confirm: ("Ativar a cena #{s.name}?" if risk != "normal"), confirm_title: (Point::RISKS[risk] if risk != "normal") } if ctx.allowed?(s.site_id, :command, risk: risk))
-        Result.new(kind: "Cena", title: s.name, subtitle: "#{s.items.size} comandos", icon: s.icon.presence || "sparkles", url: edit_scene_path(s), action: action)
+        action = ({ label: I18n.t("search.activate"), url: activate_scene_path(s), confirm: (I18n.t("search.activate_scene", name: s.name) if risk != "normal"), confirm_title: (Point::RISKS[risk] if risk != "normal") } if ctx.allowed?(s.site_id, :command, risk: risk))
+        Result.new(kind: I18n.t("search.kinds.scene"), title: s.name, subtitle: I18n.t("search.commands_n", n: s.items.size), icon: s.icon.presence || "sparkles", url: edit_scene_path(s), action: action)
       end
     end
   end

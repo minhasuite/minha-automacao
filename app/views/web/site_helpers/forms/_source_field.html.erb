@@ -1,4 +1,4 @@
-<%# locals: (f:, point:, label: "Ponto de origem") -%>
+<%# locals: (f:, point:, label: t("helper_forms.source")) -%>
 <% sources = point.site.points.includes(:device).where(data_type: %w[integer decimal]).where.not(id: point.id).ordered %>
 <div class="sm:col-span-2"><%= f.label :source, label, class: "ss-label" %>
-  <%= f.select :source, sources.map { |p| [ "#{p.name} · #{p.device.name}#{" (#{p.unit})" if p.unit.present?}", p.id ] }, { selected: point.address.dig("sources", 0), include_blank: "Escolha um ponto numérico" }, class: "ss-input", required: true %></div>
+  <%= f.select :source, sources.map { |p| [ "#{p.name} · #{p.device.name}#{" (#{p.unit})" if p.unit.present?}", p.id ] }, { selected: point.address.dig("sources", 0), include_blank: t("helper_forms.pick_numeric") }, class: "ss-input", required: true %></div>

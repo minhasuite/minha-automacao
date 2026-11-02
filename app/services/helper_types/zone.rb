@@ -10,6 +10,17 @@ module HelperTypes
     describe key: "zone", title: "Zona", icon: "location-marker", capability: "counter",
              description: "Um lugar no mapa (casa, trabalho, escola) com raio. Conta quem está nele."
     fields %i[latitude longitude radius_m home]
+    texts "pt-BR" => { coords: "Informe latitude e longitude (ou marque \"É a casa\").", radius: "O raio vai de 20 m a 50 km.",
+                       home_taken: "Já há uma zona da casa neste local.", name: "já é de outra zona", home: "casa (local)",
+                       radius_m: "raio %{m} m", no_coords: "sem coordenadas no local" },
+          en: { title: "Zone", description: "A place on the map (home, work, school) with a radius. Counts who's in it.",
+                coords: "Enter latitude and longitude (or check \"This is home\").", radius: "The radius goes from 20 m to 50 km.",
+                home_taken: "This place already has a home zone.", name: "is already used by another zone", home: "home (place)",
+                radius_m: "%{m} m radius", no_coords: "no coordinates on the place" },
+          es: { title: "Zona", description: "Un lugar en el mapa (casa, trabajo, escuela) con un radio. Cuenta quién está en él.",
+                coords: "Indica latitud y longitud (o marca \"Es la casa\").", radius: "El radio va de 20 m a 50 km.",
+                home_taken: "Ya hay una zona de la casa en este lugar.", name: "ya es de otra zona", home: "casa (lugar)",
+                radius_m: "radio de %{m} m", no_coords: "el lugar no tiene coordenadas" }
 
     def self.assign(point, form)
       point.writable = false
@@ -21,13 +32,13 @@ module HelperTypes
       unless home
         lat = number(form["latitude"])
         lon = number(form["longitude"])
-        point.errors.add(:base, "Informe latitude e longitude (ou marque \"É a casa\").") unless lat&.between?(-90, 90) && lon&.between?(-180, 180)
+        point.errors.add(:base, text(:coords)) unless lat&.between?(-90, 90) && lon&.between?(-180, 180)
         a = a.merge("latitude" => lat, "longitude" => lon)
       end
-      point.errors.add(:base, "O raio vai de 20 m a 50 km.") unless radius.between?(20, 50_000)
+      point.errors.add(:base, text(:radius)) unless radius.between?(20, 50_000)
       others = point.site.points.where(helper: key).where.not(id: point.id)
-      point.errors.add(:base, "Já há uma zona da casa neste local.") if home && others.exists?([ "address->>'home' = 'true'" ])
-      point.errors.add(:name, "já é de outra zona") if point.site.points.where(helper: key).where.not(id: point.id).exists?(name: point.name)
+      point.errors.add(:base, text(:home_taken)) if home && others.exists?([ "address->>'home' = 'true'" ])
+      point.errors.add(:name, text(:name)) if point.site.points.where(helper: key).where.not(id: point.id).exists?(name: point.name)
       point.address = a
     end
 
@@ -58,7 +69,7 @@ module HelperTypes
 
     def self.summary(point)
       c = center(point)
-      [ ("casa (local)" if home?(point)), "raio #{radius(point).round} m", (c ? c.map { |x| x.round(4) }.join(", ") : "sem coordenadas no local") ].compact.join(" · ")
+      [ (text(:home) if home?(point)), text(:radius_m, m: radius(point).round), (c ? c.map { |x| x.round(4) }.join(", ") : text(:no_coords)) ].compact.join(" · ")
     end
   end
 end

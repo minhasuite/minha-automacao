@@ -17,6 +17,7 @@ class AiCall < ApplicationRecord
   scope :charged, -> { where.not(status: "blocked") }
 
   def tokens = input_tokens + output_tokens
-  def source_label = SOURCES.fetch(source, source)
-  def status_label = STATUSES.fetch(status, status)
+  def self.source_text(source) = I18n.t("ai_settings.sources.#{source}", default: SOURCES.fetch(source, source).to_s)
+  def source_label = AiCall.source_text(source)
+  def status_label = I18n.t("ai_settings.statuses.#{status}", default: STATUSES.fetch(status, status).to_s)
 end

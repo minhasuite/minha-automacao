@@ -11,6 +11,15 @@ module HelperTypes
     describe key: "integral", title: "Integral", icon: "chart-square-bar", capability: "measure",
              description: "Acumula um valor no tempo: potência (W) vira energia (kWh), vazão vira volume."
     fields %i[source method prefix time_unit round max_interval]
+    texts "pt-BR" => { methods: METHODS, max: "Intervalo máximo inválido (ex.: 5m, 1h).", in: "em %{unit}", every: "a cada %{time} sem leitura" },
+          en: { title: "Integral", description: "Accumulates a value over time: power (W) becomes energy (kWh), flow becomes volume.",
+                methods: { trapezoidal: "Trapezoidal (default)", left: "Left (previous value)", right: "Right (new value)" },
+                max: "Invalid maximum interval (e.g. 5m, 1h).", in: "in %{unit}", every: "every %{time} without a reading" },
+          es: { title: "Integral", description: "Acumula un valor en el tiempo: la potencia (W) se vuelve energía (kWh), el caudal se vuelve volumen.",
+                methods: { trapezoidal: "Trapezoidal (predeterminado)", left: "Izquierda (valor anterior)", right: "Derecha (valor nuevo)" },
+                max: "Intervalo máximo no válido (ej.: 5m, 1h).", in: "en %{unit}", every: "cada %{time} sin lectura" }
+
+    def self.methods_labels = labels(:methods, METHODS)
 
     def self.assign(point, form)
       src = numeric_source!(point, form) or return
@@ -24,8 +33,8 @@ module HelperTypes
       point.unit = "#{prefix}#{src.unit}#{unit}"
       point.address = a.merge("method" => (form["method"] || a["method"]).presence_in(METHODS.keys) || "trapezoidal", "prefix" => prefix,
                               "time_unit" => unit, "round" => round, "max_s" => max.to_i.positive? ? max.to_i : nil).compact
-      point.errors.add(:base, "Casas decimais de 0 a 6.") unless round.between?(0, 6)
-      point.errors.add(:base, "Intervalo máximo inválido (ex.: 5m, 1h).") if max.nil? || (max.to_i.positive? && max.to_i < 60)
+      point.errors.add(:base, text(:decimals)) unless round.between?(0, 6)
+      point.errors.add(:base, text(:max)) if max.nil? || (max.to_i.positive? && max.to_i < 60)
     end
 
     def self.sourced? = true
@@ -57,7 +66,8 @@ module HelperTypes
 
     def self.summary(point)
       a = point.address
-      [ METHODS[a["method"]]&.split(" (")&.first, "em #{point.unit}", ("a cada #{Automations::Dsl.duration_label(a['max_s'])} sem leitura" if a["max_s"]) ].compact.join(" · ")
+      [ (text("methods.#{a['method']}").split(" (").first if METHODS.key?(a["method"])), text(:in, unit: point.unit),
+        (text(:every, time: Automations::Dsl.duration_label(a["max_s"])) if a["max_s"]) ].compact.join(" · ")
     end
   end
 end

@@ -6,13 +6,13 @@ module Datasets
 
     def initialize(dataset, op:, field: nil, window_s: nil, filters: nil, limit: nil, zone: Time.zone)
       @dataset = dataset
-      @aggregate = Datasets.aggregate(op) or raise ArgumentError, "consulta \"#{op}\" não existe."
+      @aggregate = Datasets.aggregate(op) or raise ArgumentError, I18n.t("datasets.errors.no_query", op: op)
       @field = field.to_s.strip.presence
       @window_s = window_s.to_i
       @filters = filters
       @limit = (limit || 30).to_i.clamp(1, MAX_ROWS)
       @zone = zone
-      raise ArgumentError, "informe o campo." if @aggregate.needs_field? && @field.nil?
+      raise ArgumentError, I18n.t("datasets.errors.no_field") if @aggregate.needs_field? && @field.nil?
     end
 
     def scope

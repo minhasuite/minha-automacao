@@ -3,8 +3,11 @@ module Datasets
   # só como valor quotado (Arel), nunca interpolado.
   module Aggregates
     class Base
+      extend PluginTexts
+      translates :label
+
       class << self
-        attr_reader :key, :label
+        attr_reader :key
 
         def describe(key:, label:, field: false, scalar: true)
           @key = key
@@ -17,8 +20,8 @@ module Datasets
         def scalar? = @scalar
 
         # data ->> 'campo'
-        def text(field) = Arel::Nodes::InfixOperation.new("->>", DatasetRecord.arel_table[:data], Arel::Nodes.build_quoted(field))
-        def number(field) = Arel::Nodes::NamedFunction.new("CAST", [ text(field).as("numeric") ])
+        def json_text(field) = Arel::Nodes::InfixOperation.new("->>", DatasetRecord.arel_table[:data], Arel::Nodes.build_quoted(field))
+        def number(field) = Arel::Nodes::NamedFunction.new("CAST", [ json_text(field).as("numeric") ])
         def numeric(scope, field) = scope.where("jsonb_typeof(data -> ?) = 'number'", field)
         def plain(v) = v.is_a?(BigDecimal) ? (v == v.to_i ? v.to_i : v.to_f.round(6)) : v
       end
@@ -26,6 +29,7 @@ module Datasets
 
     class Count < Base
       describe key: "count", label: "Contagem"
+      texts en: { label: "Count" }, es: { label: "Conteo" }
       def self.call(scope, _field, _limit, _zone) = scope.count
     end
 
@@ -36,28 +40,33 @@ module Datasets
 
     class Sum < NumericFunction
       describe key: "sum", label: "Soma", field: true
+      texts en: { label: "Sum" }, es: { label: "Suma" }
       @sql = "SUM"
       def self.call(*args) = super(*args) || 0
     end
 
     class Avg < NumericFunction
       describe key: "avg", label: "Média", field: true
+      texts en: { label: "Average" }, es: { label: "Promedio" }
       @sql = "AVG"
     end
 
     class Min < NumericFunction
       describe key: "min", label: "Mínimo", field: true
+      texts en: { label: "Minimum" }, es: { label: "Mínimo" }
       @sql = "MIN"
     end
 
     class Max < NumericFunction
       describe key: "max", label: "Máximo", field: true
+      texts en: { label: "Maximum" }, es: { label: "Máximo" }
       @sql = "MAX"
     end
 
     # Último valor do campo (ou a última linha inteira, sem campo).
     class Last < Base
       describe key: "last", label: "Último valor"
+      texts en: { label: "Latest value" }, es: { label: "Último valor" }
 
       def self.call(scope, field, _limit, zone)
         rec = scope.order(created_at: :desc).first or return nil
@@ -67,6 +76,7 @@ module Datasets
 
     class Rows < Base
       describe key: "rows", label: "Linhas (as mais recentes)", scalar: false
+      texts en: { label: "Rows (most recent)" }, es: { label: "Filas (las más recientes)" }
       def self.call(scope, _field, limit, zone) = scope.order(created_at: :desc).limit(limit).map { |r| r.row(zone) }
     end
   end

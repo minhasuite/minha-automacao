@@ -9,14 +9,21 @@ module Ai
              "curto e direto, usando só o estado dos pontos informado abaixo. Se a informação não estiver lá, diga que não sabe. " \
              "Você não executa comandos: se pedirem para ligar ou desligar algo, explique que nesta fase só responde.".freeze
     HISTORY = 6.hours.to_i
+    # Idioma da resposta = o da tela de quem pergunta.
+    LANGUAGES = { "en" => "inglês (en)", "es" => "espanhol (es)" }.freeze
 
     module_function
 
     # → Ai::Request::Response (levanta Ai::Client::Error).
     def response(site:, question:, source: "pergunta")
       ctx = Automations::Context.new(site: site)
-      Ai::Request.call(tenant: site.tenant, site: site, source: source, system: SYSTEM, max_tokens: 800, timeout: 45,
+      Ai::Request.call(tenant: site.tenant, site: site, source: source, system: system, max_tokens: 800, timeout: 45,
                        prompt: "#{Ai::PointContext.text(ctx, history_s: HISTORY)}\n\nPergunta: #{question.to_s.strip.truncate(1_000)}")
+    end
+
+    def system
+      lang = LANGUAGES[I18n.locale.to_s]
+      lang ? SYSTEM.sub("português do Brasil", lang) : SYSTEM
     end
 
     # → só o texto da resposta.

@@ -32,7 +32,7 @@ module Web
       authorize_site!(@site, :manage)
       manifest, source = Packages.fetch(params[:url])
       package = Packages.install!(@site, manifest, source)
-      redirect_to package_path(package), notice: "Pacote #{package.name} #{package.version} instalado."
+      redirect_to package_path(package), notice: t("packages.flash.installed", name: package.name, version: package.version)
     rescue Packages::Error, ActiveRecord::RecordInvalid => e
       redirect_to site_packages_path(@site, url: params[:url]), alert: e.message.truncate(300)
     end
@@ -53,7 +53,7 @@ module Web
     def destroy
       load_package(:manage)
       Packages.uninstall!(@package)
-      redirect_to site_packages_path(@site), notice: "Pacote #{@package.name} removido com o que ele tinha posto."
+      redirect_to site_packages_path(@site), notice: t("packages.flash.removed", name: @package.name)
     end
 
     private

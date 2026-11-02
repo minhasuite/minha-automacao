@@ -32,51 +32,51 @@ module Packages
   # URL do repositório ou do manifesto → [manifesto, url de onde veio].
   def fetch(url)
     url = url.to_s.strip
-    source = sources.find { |s| s.match?(url) } or raise Error, "Endereço não reconhecido: use https://github.com/dono/repo, https://gitlab.com/... ou a URL do manifesto (.json, .yml)."
+    source = sources.find { |s| s.match?(url) } or raise Error, I18n.t("packages.errors.url")
     last = nil
     source.candidates(url).each do |candidate|
       res = SafeHttp.get(candidate, timeout: 15)
-      next last = "#{candidate} respondeu #{res.status}" if res.status == 404
-      raise Error, "#{candidate} respondeu #{res.status}." if res.status >= 400
-      raise Error, "Manifesto grande demais (até 512 KB)." if res.body.bytesize > MAX_BYTES
+      next last = I18n.t("packages.errors.status", url: candidate, status: res.status) if res.status == 404
+      raise Error, "#{I18n.t('packages.errors.status', url: candidate, status: res.status)}." if res.status >= 400
+      raise Error, I18n.t("packages.errors.too_big") if res.body.bytesize > MAX_BYTES
 
       return [ parse(res.body, candidate), candidate ]
     end
-    raise Error, "Manifesto não encontrado (#{FILES.join(', ')} na raiz). #{last}".strip
+    raise Error, "#{I18n.t('packages.errors.not_found', files: FILES.join(', '))} #{last}".strip
   rescue SafeHttp::Error => e
-    raise Error, "Não consegui baixar: #{e.message}"
+    raise Error, I18n.t("packages.errors.download", error: e.message)
   end
 
   def parse(body, name = "")
     data = name.to_s.match?(/\.ya?ml\z/) ? YAML.safe_load(body, permitted_classes: [], aliases: false) : JSON.parse(body)
-    raise Error, "O manifesto precisa ser um objeto." unless data.is_a?(Hash)
+    raise Error, I18n.t("packages.errors.object") unless data.is_a?(Hash)
 
     data
   rescue JSON::ParserError, Psych::Exception => e
-    raise Error, "Manifesto inválido: #{e.message.truncate(120)}"
+    raise Error, I18n.t("packages.errors.invalid", error: e.message.truncate(120))
   end
 
   # Erros do manifesto (vazio = válido). Cada item é validado pelo tipo dele.
   def errors(manifest, site)
     m = manifest.to_h
     list = []
-    list << "format precisa ser #{FORMAT}." unless m["format"] == FORMAT
-    list << "key inválida (letras minúsculas, números, - e _)." unless m["key"].is_a?(String) && KEY.match?(m["key"])
-    list << "name obrigatório." unless m["name"].is_a?(String) && m["name"].strip.present?
-    list << "version inválida (ex.: 1.2.0)." unless m["version"].is_a?(String) && VERSION.match?(m["version"])
+    list << I18n.t("packages.errors.format", format: FORMAT) unless m["format"] == FORMAT
+    list << I18n.t("packages.errors.key") unless m["key"].is_a?(String) && KEY.match?(m["key"])
+    list << I18n.t("packages.errors.name") unless m["name"].is_a?(String) && m["name"].strip.present?
+    list << I18n.t("packages.errors.version") unless m["version"].is_a?(String) && VERSION.match?(m["version"])
     items = m["items"]
-    return list << "items precisa ser uma lista de 1 a #{MAX_ITEMS}." unless items.is_a?(Array) && items.size.between?(1, MAX_ITEMS)
+    return list << I18n.t("packages.errors.items", max: MAX_ITEMS) unless items.is_a?(Array) && items.size.between?(1, MAX_ITEMS)
 
     keys = []
     items.each_with_index do |item, i|
       where = "item #{i + 1}"
-      next list << "#{where}: precisa ser um objeto." unless item.is_a?(Hash)
+      next list << "#{where}: #{I18n.t('packages.errors.item_object')}" unless item.is_a?(Hash)
 
       type = item_type(item["type"])
-      next list << "#{where}: tipo \"#{item['type']}\" não existe (#{ITEMS.map { |n| Items.const_get(n).key }.join(', ')})." unless type
-      next list << "#{where}: key inválida." unless item["key"].is_a?(String) && KEY.match?(item["key"])
+      next list << "#{where}: #{I18n.t('packages.errors.type', type: item['type'], types: ITEMS.map { |n| Items.const_get(n).key }.join(', '))}" unless type
+      next list << "#{where}: #{I18n.t('packages.errors.item_key')}" unless item["key"].is_a?(String) && KEY.match?(item["key"])
 
-      list << "#{where}: key \"#{item['key']}\" repetida." if keys.include?([ type.key, item["key"] ])
+      list << "#{where}: #{I18n.t('packages.errors.repeated', key: item['key'])}" if keys.include?([ type.key, item["key"] ])
       keys << [ type.key, item["key"] ]
       list.concat(type.errors(site, item).map { |e| "#{where} (#{item['key']}): #{e}" })
     end
@@ -168,8 +168,11 @@ module Packages
 
   module Items
     class Base
+      extend PluginTexts
+      translates :label
+
       class << self
-        attr_reader :key, :label
+        attr_reader :key
 
         def describe(key:, label:)
           @key = key
@@ -191,24 +194,31 @@ module Packages
     # dados, nas seções que `DeviceMaps::MERGEABLE` deixa (nada de regex).
     class DeviceMapItem < Base
       describe key: "device_map", label: "Mapa de dados"
+      texts "pt-BR" => { or: "ou", map: "map precisa ser %{maps}.", data: "data precisa ser um objeto.", sections: "seções não permitidas: %{extra} (só %{allowed}).",
+                         plain: "%{key} precisa ser objeto ou lista de dados simples." },
+            en: { label: "Data map", or: "or", map: "map must be %{maps}.", data: "data must be an object.", sections: "sections not allowed: %{extra} (only %{allowed}).",
+                  plain: "%{key} must be an object or a list of plain data." },
+            es: { label: "Mapa de datos", or: "o", map: "map debe ser %{maps}.", data: "data debe ser un objeto.", sections: "secciones no permitidas: %{extra} (solo %{allowed}).",
+                  plain: "%{key} debe ser un objeto o una lista de datos simples." }
 
       def self.title(item) = "#{item['name'].presence || item['key']} (#{item['map']})"
 
       def self.errors(_site, item)
-        allowed = DeviceMaps::MERGEABLE[item["map"].to_s] or return [ "map precisa ser #{DeviceMaps::MERGEABLE.keys.join(' ou ')}." ]
+        allowed = DeviceMaps::MERGEABLE[item["map"].to_s] or return [ text(:map, maps: DeviceMaps::MERGEABLE.keys.join(" #{text(:or)} ")) ]
         data = item["data"]
-        return [ "data precisa ser um objeto." ] unless data.is_a?(Hash) && data.any?
+        return [ text(:data) ] unless data.is_a?(Hash) && data.any?
 
         extra = data.keys - allowed
-        return [ "seções não permitidas: #{extra.join(', ')} (só #{allowed.join(', ')})." ] if extra.any?
+        return [ text(:sections, extra: extra.join(", "), allowed: allowed.join(", ")) ] if extra.any?
 
-        data.filter_map { |k, v| "#{k} precisa ser objeto ou lista de dados simples." unless DeviceMaps.plain?(v) }
+        data.filter_map { |k, v| text(:plain, key: k) unless DeviceMaps.plain?(v) }
       end
     end
 
     # Blueprint (modelo de automação ou script): valida pelo próprio Blueprint.
     class BlueprintItem < Base
       describe key: "blueprint", label: "Blueprint"
+      texts en: { label: "Blueprint" }, es: { label: "Blueprint" }
 
       def self.build(site, item, record = nil)
         record ||= site.blueprints.new
@@ -232,9 +242,10 @@ module Packages
     # Modelo de painel: um dashboard novo do local (o formato da F5).
     class DashboardItem < Base
       describe key: "dashboard", label: "Modelo de painel"
+      texts en: { label: "Dashboard template" }, es: { label: "Plantilla de panel" }
 
       def self.errors(_site, item)
-        return [ "name obrigatório." ] if item["name"].blank?
+        return [ I18n.t("packages.errors.name") ] if item["name"].blank?
 
         Dashboards::Schema.errors(item["definition"].to_h)
       end
@@ -253,15 +264,18 @@ module Packages
     # campos do formulário dele. Validado pelo plugin do tipo.
     class HelperItem < Base
       describe key: "helper", label: "Helper"
+      texts "pt-BR" => { unknown: "helper \"%{helper}\" não existe (%{list})." },
+            en: { label: "Helper", unknown: "helper \"%{helper}\" doesn't exist (%{list})." },
+            es: { label: "Helper", unknown: "el helper \"%{helper}\" no existe (%{list})." }
 
       def self.form(item) = item["form"].to_h.stringify_keys.merge("name" => item["name"])
 
       def self.errors(site, item)
-        plugin = HelperTypes.plugin(item["helper"]) or return [ "helper \"#{item['helper']}\" não existe (#{HelperTypes.keys.join(', ')})." ]
+        plugin = HelperTypes.plugin(item["helper"]) or return [ text(:unknown, helper: item["helper"], list: HelperTypes.keys.join(", ")) ]
         point = HelperTypes.build(site, plugin)
         point.assign_attributes(name: item["name"])
         plugin.assign(point, form(item))
-        point.errors.full_messages + (point.name.blank? ? [ "name obrigatório." ] : [])
+        point.errors.full_messages + (point.name.blank? ? [ I18n.t("packages.errors.name") ] : [])
       end
 
       def self.install!(site, item, _package, old_id)

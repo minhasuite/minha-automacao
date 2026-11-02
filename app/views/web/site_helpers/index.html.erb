@@ -1,37 +1,37 @@
-<%= render "web/shared/header", title: "Helpers", subtitle: "#{@site.name} · chaves, números, listas, contadores e temporizadores para usar nas automações e nos painéis", back: site_path(@site) do %>
-  <% if can?(:manage) %><%= link_to new_site_helper_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %>Criar helper<% end %><% end %>
+<%= render "web/shared/header", title: t("site_helpers.index.title"), subtitle: t("site_helpers.index.subtitle", site: @site.name), back: site_path(@site) do %>
+  <% if can?(:manage) %><%= link_to new_site_helper_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("site_helpers.catalog.title") %><% end %><% end %>
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :helpers %>
 
 <% filtered = params.values_at(:q, :tipo).any?(&:present?) %>
 <% if @counts.empty? %>
   <div class="ss-card ss-empty">
-    <p class="font-bold text-ink">Nenhum helper neste local.</p>
-    <p class="mt-1 max-w-md mx-auto">Helper é um valor seu, sem aparelho: o modo da casa, um contador de visitas, um temporizador da rega. Ele aparece nas automações e nos painéis como qualquer ponto.</p>
-    <% if can?(:manage) %><%= link_to new_site_helper_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %>Criar o primeiro<% end %><% end %>
+    <p class="font-bold text-ink"><%= t("site_helpers.index.empty") %></p>
+    <p class="mt-1 max-w-md mx-auto"><%= t("site_helpers.index.empty_text") %></p>
+    <% if can?(:manage) %><%= link_to new_site_helper_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("site_helpers.index.create_first") %><% end %><% end %>
   </div>
 <% else %>
   <%= form_with url: site_helpers_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do %>
-    <div class="min-w-48 flex-1"><label for="q" class="ss-label">Procurar</label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: "Nome ou chave" %></div>
+    <div class="min-w-48 flex-1"><label for="q" class="ss-label"><%= t("site_helpers.index.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("site_helpers.index.search_ph") %></div>
     <%= hidden_field_tag :tipo, params[:tipo] if params[:tipo].present? %>
-    <button type="submit" class="ss-btn ss-btn-ghost" aria-label="Procurar"><%= icon("search", "size-4") %></button>
+    <button type="submit" class="ss-btn ss-btn-ghost" aria-label="<%= t("site_helpers.index.search") %>"><%= icon("search", "size-4") %></button>
   <% end %>
-  <nav class="ss-chips mb-4" aria-label="Filtrar por tipo">
-    <%= link_to site_helpers_path(@site, q: params[:q].presence), class: "ss-chip", "aria-current": params[:tipo].blank?.to_s do %>Todos <span class="ss-chip-count"><%= @counts.values.sum %></span><% end %>
+  <nav class="ss-chips mb-4" aria-label="<%= t("site_helpers.index.filter") %>">
+    <%= link_to site_helpers_path(@site, q: params[:q].presence), class: "ss-chip", "aria-current": params[:tipo].blank?.to_s do %><%= t("site_helpers.index.all") %> <span class="ss-chip-count"><%= @counts.values.sum %></span><% end %>
     <% HelperTypes.plugins.select { |p| @counts.key?(p.key) }.each do |p| %>
       <%= link_to site_helpers_path(@site, tipo: p.key, q: params[:q].presence), class: "ss-chip", "aria-current": (params[:tipo] == p.key).to_s do %><%= icon(p.icon, "size-4") %><%= p.title %> <span class="ss-chip-count"><%= @counts[p.key] %></span><% end %>
     <% end %>
   </nav>
 
   <% if @helpers.empty? %>
-    <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum helper<%= " com esses filtros" if filtered %>.</p><% if filtered %><%= link_to "Limpar filtros", site_helpers_path(@site), class: "ss-btn ss-btn-ghost mt-3" %><% end %></div>
+    <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= filtered ? t("site_helpers.index.none_filtered") : t("site_helpers.index.none") %></p><% if filtered %><%= link_to t("site_helpers.index.clear"), site_helpers_path(@site), class: "ss-btn ss-btn-ghost mt-3" %><% end %></div>
   <% else %>
     <% @helpers.each { |h| %><%= turbo_stream_from h, channel: PointsChannel %><% } %>
-    <ul class="ss-card ss-rows" aria-label="Helpers">
+    <ul class="ss-card ss-rows" aria-label="<%= t("site_helpers.index.title") %>">
       <% @helpers.each do |h| %>
         <% plugin = h.helper_type %>
         <li id="<%= dom_id(h) %>">
-          <% value_text = h.quality == "good" ? point_value_text(h) : (h.quality == "error" ? "Com erro" : "Sem sinal") %>
+          <% value_text = h.quality == "good" ? point_value_text(h) : (h.quality == "error" ? t("site_helpers.index.error") : t("site_helpers.index.no_signal")) %>
           <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= point_on?(h) ? 'ss-grad' : 'bg-accent-soft text-accent' %>"><%= icon(point_icon(h)) %></span>
           <%# Celular: chave e lápis cabem ao lado do nome; campo largo (hora, número) desce para a linha de baixo. %>
           <div class="min-w-0 flex-1 max-sm:basis-40">
@@ -46,7 +46,7 @@
           <div class="ml-auto flex items-center justify-end gap-1 shrink-0">
             <%= render "web/points/control", point: h %>
             <% if can?(:manage) %>
-              <%= link_to edit_helper_path(h), class: "grid place-items-center size-9 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", title: "Editar", "aria-label": "Editar #{h.name}" do %><%= icon("pencil", "size-4") %><% end %>
+              <%= link_to edit_helper_path(h), class: "grid place-items-center size-9 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", title: t("site_helpers.index.edit"), "aria-label": t("site_helpers.index.edit_name", name: h.name) do %><%= icon("pencil", "size-4") %><% end %>
             <% end %>
           </div>
         </li>

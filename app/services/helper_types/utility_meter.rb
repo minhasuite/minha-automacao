@@ -23,6 +23,23 @@ module HelperTypes
     describe key: "utility_meter", title: "Medidor por ciclo", icon: "lightning-bolt", capability: "measure",
              description: "Consumo de um medidor (kWh, m³) por dia, mês ou ciclo da fatura, com tarifas: energia do mês desde o dia 12."
     fields %i[source cycle day cron tariffs_text]
+    texts "pt-BR" => { cycles: CYCLES, commands: LABELS, day: "Dia de fechamento de 1 a 28.", tariffs: "Até %{max} tarifas.",
+                       cron: "Cron inválido (5 campos: minuto hora dia mês dia-da-semana).", unknown: "Tarifa desconhecida.",
+                       read_only: "O medidor lê da origem; use Zerar ou Trocar a tarifa.", closes: " · fecha dia %{day}", tariff_list: "tarifas: %{list}" },
+          en: { title: "Cycle meter", description: "Meter consumption (kWh, m³) by day, month or billing cycle, with rates: this month's energy since the 12th.",
+                cycles: { none: "No cycle (reset by hand only)", hour: "Hourly", day: "Daily", week: "Weekly (Monday)", month: "Monthly",
+                          quarter: "Quarterly", year: "Yearly", cron: "Cron (advanced)" },
+                commands: { reset: "Reset the cycle", select: "Switch rate" }, day: "Closing day from 1 to 28.", tariffs: "Up to %{max} rates.",
+                cron: "Invalid cron (5 fields: minute hour day month weekday).", unknown: "Unknown rate.",
+                read_only: "The meter reads from its source; use Reset or Switch rate.", closes: " · closes on day %{day}", tariff_list: "rates: %{list}" },
+          es: { title: "Medidor por ciclo", description: "Consumo de un medidor (kWh, m³) por día, mes o ciclo de facturación, con tarifas: energía del mes desde el día 12.",
+                cycles: { none: "Sin ciclo (solo se reinicia a mano)", hour: "Cada hora", day: "Diario", week: "Semanal (lunes)", month: "Mensual",
+                          quarter: "Trimestral", year: "Anual", cron: "Cron (avanzado)" },
+                commands: { reset: "Reiniciar el ciclo", select: "Cambiar la tarifa" }, day: "Día de cierre de 1 a 28.", tariffs: "Hasta %{max} tarifas.",
+                cron: "Cron no válido (5 campos: minuto hora día mes día-de-la-semana).", unknown: "Tarifa desconocida.",
+                read_only: "El medidor lee de la origen; usa Reiniciar o Cambiar la tarifa.", closes: " · cierra el día %{day}", tariff_list: "tarifas: %{list}" }
+
+    def self.cycles = labels(:cycles, CYCLES)
 
     def self.assign(point, form)
       src = numeric_source!(point, form) or return
@@ -35,28 +52,28 @@ module HelperTypes
       point.unit = src.unit
       point.options = tariffs
       point.address = point.address.merge("cycle" => cycle, "day" => day, "cron" => (cron if cycle == "cron")).compact
-      return point.errors.add(:base, "Dia de fechamento de 1 a 28.") unless day.between?(1, 28)
-      return point.errors.add(:base, "Até #{MAX_TARIFFS} tarifas.") if tariffs.size > MAX_TARIFFS
+      return point.errors.add(:base, text(:day)) unless day.between?(1, 28)
+      return point.errors.add(:base, text(:tariffs, max: MAX_TARIFFS)) if tariffs.size > MAX_TARIFFS
 
-      point.errors.add(:base, "Cron inválido (5 campos: minuto hora dia mês dia-da-semana).") if cycle == "cron" && !cron_for(point)
+      point.errors.add(:base, text(:cron)) if cycle == "cron" && !cron_for(point)
     end
 
     def self.sourced? = true
     def self.clocked? = true
     def self.initial_value(_point) = 0.0
     def self.commands(point) = point.options.present? ? %w[reset select] : %w[reset]
-    def self.command_labels = LABELS
+    def self.command_labels = labels(:commands, LABELS)
     def self.actions(_point) = %w[reset]
 
     def self.new_value(cmd)
       return 0.0 if cmd.command == "reset"
 
-      cmd.value.to_s.presence_in(cmd.point.options.to_a) || invalid!("Tarifa desconhecida.")
+      cmd.value.to_s.presence_in(cmd.point.options.to_a) || invalid!(text(:unknown))
       cmd.point.value
     end
 
     # Não se escreve valor de fora: ele vem da origem.
-    def self.check(_point, _value) = invalid!("O medidor lê da origem; use Zerar ou Trocar a tarifa.")
+    def self.check(_point, _value) = invalid!(text(:read_only))
 
     # Cron do ciclo no fuso do local (nil = sem ciclo ou cron inválido).
     def self.cron_for(point)
@@ -116,10 +133,10 @@ module HelperTypes
     end
 
     def self.summary(point)
-      cycle = CYCLES[point.address["cycle"]].to_s
-      cycle += " · fecha dia #{point.address['day']}" if %w[month quarter year].include?(point.address["cycle"]) && point.address["day"].to_i > 1
+      cycle = (cycles[point.address["cycle"]] if CYCLES.key?(point.address["cycle"])).to_s
+      cycle += text(:closes, day: point.address["day"]) if %w[month quarter year].include?(point.address["cycle"]) && point.address["day"].to_i > 1
       cycle += " · #{point.address['cron']}" if point.address["cycle"] == "cron"
-      [ cycle, ("tarifas: #{point.options.join(', ')}" if point.options.present?) ].compact.join(" · ")
+      [ cycle, (text(:tariff_list, list: point.options.join(", ")) if point.options.present?) ].compact.join(" · ")
     end
   end
 end

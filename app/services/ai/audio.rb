@@ -32,7 +32,7 @@ module Ai
     def call(capability, tenant, provider, model, site, automation, source)
       budget = Ai::Budget.for(tenant)
       account = AiAccount.pick(provider, default: budget.default_provider, capability: capability) or
-        raise Ai::Client::Error, "Nenhum provedor de #{Ai::CAPABILITIES[capability].downcase} configurado. Veja Configurações → IA."
+        raise Ai::Client::Error, I18n.t("ai_settings.no_provider", what: I18n.t("ai_settings.caps.#{capability}").downcase)
       plugin = account.plugin
       model = model.presence || (account.model.presence if capability == :stt && !plugin.supports?(:text)) || plugin.public_send(:"#{capability}_model")
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)

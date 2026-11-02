@@ -1,10 +1,10 @@
-<%= render "web/shared/header", title: @dataset.name, subtitle: "Conjunto de dados · chave #{@dataset.key}", back: dataset_path(@dataset) %>
+<%= render "web/shared/header", title: @dataset.name, subtitle: t("datasets.edit.subtitle", key: @dataset.key), back: dataset_path(@dataset) %>
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
   <%= render "form", dataset: @dataset, url: dataset_path(@dataset), method: :patch %>
   <section class="ss-card ss-card-pad" aria-labelledby="excluir">
-    <h2 id="excluir" class="flex items-center gap-2"><%= icon("trash", "size-5") %>Excluir</h2>
-    <p class="mt-2 text-sm text-muted">Apaga o conjunto e todos os registros. As automações que gravam nele passam a falhar nesse passo.</p>
+    <h2 id="excluir" class="flex items-center gap-2"><%= icon("trash", "size-5") %><%= t("site_helpers.edit.delete") %></h2>
+    <p class="mt-2 text-sm text-muted"><%= t("datasets.edit.delete_text") %></p>
     <%= button_to dataset_path(@dataset), method: :delete, class: "ss-btn ss-btn-outline ss-btn-sm mt-3 !text-danger",
-                  form: { data: { turbo_confirm: "Excluir o conjunto #{@dataset.name} e os registros?", turbo_confirm_button: "Excluir" } } do %><%= icon("trash", "size-4") %>Excluir conjunto<% end %>
+                  form: { data: { turbo_confirm: t("datasets.edit.confirm", name: @dataset.name), turbo_confirm_button: t("site_helpers.edit.delete") } } do %><%= icon("trash", "size-4") %><%= t("datasets.edit.delete_button") %><% end %>
   </section>
 </div>

@@ -1,5 +1,5 @@
-<%= render "web/shared/header", title: "Criar helper", subtitle: "Escolha o tipo. Depois de criado, ele vira um ponto para automações, painéis, histórico e API.", back: site_helpers_path(@site) %>
-<ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Tipos de helper">
+<%= render "web/shared/header", title: t("site_helpers.catalog.title"), subtitle: t("site_helpers.catalog.subtitle"), back: site_helpers_path(@site) %>
+<ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="<%= t("site_helpers.catalog.types") %>">
   <% HelperTypes.plugins.each do |p| %>
     <li>
       <%= link_to new_site_helper_path(@site, tipo: p.key), class: "ss-card ss-card-link p-4 no-underline flex items-start gap-3 h-full" do %>

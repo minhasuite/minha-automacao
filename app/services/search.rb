@@ -10,7 +10,10 @@ module Search
 
   # Verbo no começo da frase → ação. "ativar cena X" também tira o "cena".
   VERBS = { "apagar" => "off", "desligar" => "off", "acender" => "on", "ligar" => "on", "alternar" => "toggle",
-            "ativar" => "activate", "acionar" => "activate", "executar" => "activate", "rodar" => "activate" }.freeze
+            "ativar" => "activate", "acionar" => "activate", "executar" => "activate", "rodar" => "activate",
+            # en / es (i18n): os verbos de uma palavra só.
+            "activate" => "activate", "run" => "activate", "toggle" => "toggle",
+            "encender" => "on", "prender" => "on", "activar" => "activate", "ejecutar" => "activate" }.freeze
   FILLER = %w[a o as os da do das dos de cena script luz luzes].freeze
 
   # `action`: { label:, url:, params:, confirm:, confirm_title: } (POST).

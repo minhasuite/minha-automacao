@@ -1,3 +1,3 @@
 <%# locals: (f:, point:) -%>
-<div class="sm:col-span-2"><%= f.label :options_text, "Opções (separadas por vírgula)", class: "ss-label" %><%= f.text_field :options_text, value: point.options_text, class: "ss-input", required: true, placeholder: "Casa, Fora, Noite, Férias" %>
-  <p class="text-xs text-muted mt-1">A primeira é o valor inicial.</p></div>
+<div class="sm:col-span-2"><%= f.label :options_text, t("helper_forms.select.options"), class: "ss-label" %><%= f.text_field :options_text, value: point.options_text, class: "ss-input", required: true, placeholder: t("helper_forms.select.options_ph") %>
+  <p class="text-xs text-muted mt-1"><%= t("helper_forms.select.hint") %></p></div>

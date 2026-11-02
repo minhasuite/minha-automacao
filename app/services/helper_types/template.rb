@@ -24,6 +24,22 @@ module HelperTypes
     describe key: "template", title: "Sensor calculado", icon: "sparkles", capability: "measure",
              description: "Um valor calculado a partir de outros pontos: diferença de temperatura, consumo somado."
     fields %i[kind expr unit every attrs]
+    texts "pt-BR" => { kinds: KINDS.transform_values(&:first), expr: "Escreva a expressão (até %{max} caracteres).",
+                       every: "\"A cada\" precisa ser de 1 min a 24 h, em minutos inteiros (ex.: 5m).",
+                       attrs: "Atributos: até %{max}, um por linha, \"nome: texto\" (nome com letras minúsculas, números e _).",
+                       invalid: "Expressão inválida: %{error}", every_sum: " · a cada %{time}" },
+          en: { title: "Calculated sensor", description: "A value calculated from other points: temperature difference, combined consumption.",
+                kinds: { number: "Number", bool: "On/off (yes/no)", text: "Text", timestamp: "Date and time" },
+                expr: "Write the expression (up to %{max} characters).", every: "\"Every\" must be from 1 min to 24 h, in whole minutes (e.g. 5m).",
+                attrs: "Attributes: up to %{max}, one per line, \"name: text\" (name in lowercase letters, numbers and _).",
+                invalid: "Invalid expression: %{error}", every_sum: " · every %{time}" },
+          es: { title: "Sensor calculado", description: "Un valor calculado a partir de otros puntos: diferencia de temperatura, consumo sumado.",
+                kinds: { number: "Número", bool: "Encendido/apagado (sí/no)", text: "Texto", timestamp: "Fecha y hora" },
+                expr: "Escribe la expresión (hasta %{max} caracteres).", every: "\"Cada\" debe ser de 1 min a 24 h, en minutos enteros (ej.: 5m).",
+                attrs: "Atributos: hasta %{max}, uno por línea, \"nombre: texto\" (nombre con minúsculas, números y _).",
+                invalid: "Expresión no válida: %{error}", every_sum: " · cada %{time}" }
+
+    def self.kinds = labels(:kinds, KINDS)
 
     def self.assign(point, form)
       kind = form["kind"].presence_in(KINDS.keys) || point.address["kind"] || "number"
@@ -40,13 +56,13 @@ module HelperTypes
       sources = [] if every.to_i.positive? # "a cada": só o relógio refaz
       point.address = point.address.merge("kind" => kind, "expr" => expr, "sources" => sources, "attrs" => attrs.presence,
                                            "every" => (every if every.to_i.positive?)).compact
-      return point.errors.add(:base, "Escreva a expressão (até #{MAX} caracteres).") unless expr.present? && expr.size <= MAX
-      return point.errors.add(:base, "\"A cada\" precisa ser de 1 min a 24 h, em minutos inteiros (ex.: 5m).") unless every_ok?(every)
-      return point.errors.add(:base, "Atributos: até #{MAX_ATTRS}, um por linha, \"nome: texto\" (nome com letras minúsculas, números e _).") if attrs.nil? || attrs.size > MAX_ATTRS
+      return point.errors.add(:base, text(:expr, max: MAX)) unless expr.present? && expr.size <= MAX
+      return point.errors.add(:base, text(:every)) unless every_ok?(every)
+      return point.errors.add(:base, text(:attrs, max: MAX_ATTRS)) if attrs.nil? || attrs.size > MAX_ATTRS
 
       error = %w[text timestamp].include?(kind) && !expr_like?(expr) ? template_error(expr) : expr_error(expr)
       error ||= attrs.values.lazy.filter_map { |t| template_error(t) }.first
-      point.errors.add(:base, "Expressão inválida: #{error}") if error
+      point.errors.add(:base, text(:invalid, error: error)) if error
     end
 
     def self.every_ok?(every) = every.nil? || every.zero? || (every.between?(60, 86_400) && (every % 60).zero?)
@@ -107,8 +123,8 @@ module HelperTypes
     end
 
     def self.summary(point)
-      every = " · a cada #{Automations::Dsl.duration_label(point.address['every'])}" if point.address["every"]
-      "#{KINDS.dig(point.address['kind'], 0)} · #{point.address['expr'].to_s.truncate(50)}#{every}"
+      every = text(:every_sum, time: Automations::Dsl.duration_label(point.address["every"])) if point.address["every"]
+      "#{kinds[point.address['kind']]} · #{point.address['expr'].to_s.truncate(50)}#{every}"
     end
   end
 end

@@ -1,6 +1,6 @@
 <%# locals: (f:, point:) -%>
-<%= render "web/site_helpers/forms/source_field", f: f, point: point, label: "Ponto de origem (ex.: potência em W)" %>
-<div><%= f.label :method, "Método", class: "ss-label" %><%= f.select :method, HelperTypes::Integral::METHODS.invert, { selected: point.address["method"] }, class: "ss-input" %></div>
+<%= render "web/site_helpers/forms/source_field", f: f, point: point, label: t("helper_forms.integral.source") %>
+<div><%= f.label :method, t("helper_forms.integral.method"), class: "ss-label" %><%= f.select :method, HelperTypes::Integral.methods_labels.invert, { selected: point.address["method"] }, class: "ss-input" %></div>
 <%= render "web/site_helpers/forms/unit_fields", f: f, point: point %>
-<div><%= f.label :max_interval, "Intervalo máximo sem leitura (opcional)", class: "ss-label" %><%= f.text_field :max_interval, value: helper_duration(point.address["max_s"]), class: "ss-input num", placeholder: "5m" %></div>
-<p class="sm:col-span-2 text-xs text-muted">W com prefixo k e hora = kWh. Se a origem ficar parada mais que o intervalo máximo, acumula assim mesmo com o valor atual. Tempo com a origem fora do ar não entra.</p>
+<div><%= f.label :max_interval, t("helper_forms.integral.max"), class: "ss-label" %><%= f.text_field :max_interval, value: helper_duration(point.address["max_s"]), class: "ss-input num", placeholder: "5m" %></div>
+<p class="sm:col-span-2 text-xs text-muted"><%= t("helper_forms.integral.hint") %></p>

@@ -10,6 +10,8 @@ module Ai
                base_url: "http://localhost:11434", custom_url: true, key_required: false,
                capabilities: %i[text image structured tools temperature],
                hint: "Libere o endereço do Ollama em Configurações → Sistema → Saída HTTP (ex.: 192.168.68.50)."
+      texts en: { label: "Ollama (local)", hint: "Allow the Ollama address in Settings → System → HTTP egress (e.g. 192.168.68.50)." },
+            es: { label: "Ollama (local)", hint: "Habilita la dirección de Ollama en Configuración → Sistema → Salida HTTP (ej.: 192.168.68.50)." }
 
       def complete(model:, system:, user:, schema:, max_tokens:, timeout:, effort: nil, temperature: nil) # rubocop:disable Lint/UnusedMethodArgument
         message = { role: "user", content: text_of(user) }

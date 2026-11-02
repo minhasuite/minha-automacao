@@ -1,10 +1,10 @@
-<% overall = { "ok" => "Tudo certo", "warn" => "Precisa de atenção", "error" => "Com erro" }[@status] %>
-<%= render "web/shared/header", title: "Configurações", subtitle: "Saúde do sistema: integrações, aparelhos, fila, backup, disco, versão e sombra." %>
+<% overall = t("health.overall.#{@status}", default: "") %>
+<%= render "web/shared/header", title: t("ai_settings.title"), subtitle: t("health.subtitle") %>
 <%= render layout: "web/settings/frame", locals: { current: :health } do %>
 <section class="ss-card ss-card-pad flex flex-wrap items-center justify-between gap-3" aria-labelledby="health-t">
   <div class="min-w-0">
-    <h2 id="health-t" class="flex items-center gap-2"><%= icon("shield-check", "size-5 text-accent") %>Saúde do sistema</h2>
-    <p class="text-sm text-muted mt-1">Verificado agora. O que fica com erro vira aviso para os administradores (um por problema por dia).</p>
+    <h2 id="health-t" class="flex items-center gap-2"><%= icon("shield-check", "size-5 text-accent") %><%= t("health.title") %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("health.checked") %></p>
   </div>
   <span class="ss-badge ss-badge-<%= Health::TONES[@status] %>"><%= overall %></span>
 </section>
@@ -13,23 +13,23 @@
   <% at = @drive[:status]["uploaded_at"].presence && Time.zone.parse(@drive[:status]["uploaded_at"]) %>
   <section class="ss-card ss-card-pad mt-4 flex flex-wrap items-center justify-between gap-3" aria-labelledby="drive-t" data-health="google-drive">
     <div class="min-w-0">
-      <h2 id="drive-t" class="flex items-center gap-2 font-bold"><%= icon("download", "size-5 text-accent") %>Backup no Google Drive</h2>
+      <h2 id="drive-t" class="flex items-center gap-2 font-bold"><%= icon("download", "size-5 text-accent") %><%= t("health.drive.title") %></h2>
       <% if @drive[:connected] %>
-        <p class="text-sm text-ink mt-1 break-words">Conectado<%= " como #{@drive[:email]}" if @drive[:email] %>. As cópias cifradas vão para a pasta “<%= Backups::Destinations::GoogleDrive::FOLDER %>”.</p>
+        <p class="text-sm text-ink mt-1 break-words"><%= @drive[:email] ? t("health.drive.connected_as", email: @drive[:email], folder: Backups::Destinations::GoogleDrive::FOLDER) : t("health.drive.connected", folder: Backups::Destinations::GoogleDrive::FOLDER) %></p>
         <p class="text-sm text-muted break-words">
-          <%= at ? "Última cópia: #{l(at, format: :short)}" : "Nenhuma cópia ainda (sai na próxima hora cheia)" %>
-          <% if (used = @drive[:status]["destination"].to_s[/\AGoogle Drive: .* · (.+)\z/, 1]) %> · No Drive: <%= used %><% end %>
+          <%= at ? t("health.drive.last", at: l(at, format: :short)) : t("health.drive.none") %>
+          <% if (used = @drive[:status]["destination"].to_s[/\AGoogle Drive: .* · (.+)\z/, 1]) %> · <%= t("health.drive.used") %> <%= used %><% end %>
         </p>
-        <% unless Backups.passphrase %><p class="text-sm text-warn mt-1">Falta a senha da cifra (BACKUP_PASSPHRASE) no servidor: sem ela nada é enviado.</p><% end %>
+        <% unless Backups.passphrase %><p class="text-sm text-warn mt-1"><%= t("health.drive.no_pass") %></p><% end %>
       <% else %>
-        <p class="text-sm text-muted mt-1">Guarde a cópia diária fora de casa no seu Google Drive. O app só enxerga os arquivos que ele mesmo cria.</p>
+        <p class="text-sm text-muted mt-1"><%= t("health.drive.pitch") %></p>
       <% end %>
     </div>
     <% if @drive[:connected] %>
       <%= button_to settings_health_drive_path, method: :delete, class: "ss-btn ss-btn-ghost",
-                    form: { data: { turbo_confirm: "Desconectar o Google Drive? As cópias que já estão lá continuam lá.", turbo_confirm_button: "Desconectar" } } do %>Desconectar<% end %>
+                    form: { data: { turbo_confirm: t("health.drive.confirm"), turbo_confirm_button: t("health.drive.disconnect") } } do %><%= t("health.drive.disconnect") %><% end %>
     <% else %>
-      <%= link_to "Conectar Google Drive", @drive[:auth_url], class: "ss-btn ss-btn-primary", data: { turbo: false } %>
+      <%= link_to t("health.drive.connect"), @drive[:auth_url], class: "ss-btn ss-btn-primary", data: { turbo: false } %>
     <% end %>
   </section>
 <% end %>
@@ -39,14 +39,14 @@
     <section class="ss-card ss-card-pad min-w-0" aria-labelledby="hc-<%= r.check.key %>" data-health="<%= r.check.key %>">
       <div class="flex items-center justify-between gap-3">
         <h3 id="hc-<%= r.check.key %>" class="flex items-center gap-2 font-bold"><%= icon(r.check.icon, "size-5 text-accent") %><%= r.check.label %></h3>
-        <span class="ss-badge ss-badge-<%= Health::TONES[r.status] %>"><%= Health::LABELS[r.status] %></span>
+        <span class="ss-badge ss-badge-<%= Health::TONES[r.status] %>"><%= Health.label(r.status) %></span>
       </div>
       <ul class="mt-3 divide-y divide-line">
         <% r.items.each do |i| %>
           <li class="py-2 flex items-start gap-3">
             <%= icon({ "ok" => "check-circle", "warn" => "exclamation-circle", "error" => "x-circle" }[i.status], "size-5 shrink-0 mt-0.5 #{{ 'ok' => 'text-success', 'warn' => 'text-warn', 'error' => 'text-danger' }[i.status]}") %>
             <div class="min-w-0">
-              <p class="text-sm font-semibold text-ink break-words"><%= i.title %><span class="sr-only"> (<%= Health::LABELS[i.status] %>)</span></p>
+              <p class="text-sm font-semibold text-ink break-words"><%= i.title %><span class="sr-only"> (<%= Health.label(i.status) %>)</span></p>
               <% if i.detail.present? %><p class="text-sm text-muted break-words"><%= i.detail %></p><% end %>
             </div>
           </li>

@@ -2,15 +2,15 @@
 <%= turbo_frame_tag "palette-results" do %>
   <% if q.blank? %>
     <div class="ss-pal-tips">
-      <p class="ss-pal-group">Experimente</p>
-      <% [ "sala", "apagar sala", "ativar cena cinema", "painéis" ].each do |tip| %>
+      <p class="ss-pal-group"><%= t("search.try") %></p>
+      <% t("search.tips").each do |tip| %>
         <button type="button" class="ss-pal-chip" data-action="palette#fill" data-palette-text-param="<%= tip %>"><%= tip %></button>
       <% end %>
     </div>
   <% elsif results.empty? %>
-    <%= render "web/shared/empty_art", art: "search", title: "Nada encontrado para “#{q}”", text: "Tente o nome do aparelho, da área ou um verbo: apagar, acender, ativar." %>
+    <%= render "web/shared/empty_art", art: "search", title: t("search.nothing", q: q), text: t("search.nothing_text") %>
   <% else %>
-    <ul class="ss-pal-list" role="listbox" aria-label="Resultados">
+    <ul class="ss-pal-list" role="listbox" aria-label="<%= t("search.results") %>">
       <% results.chunk_while { |a, b| a.kind == b.kind }.each do |group| %>
         <li class="ss-pal-group" role="presentation"><%= group.first.kind %></li>
         <% group.each do |r| %>

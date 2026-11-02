@@ -19,7 +19,7 @@ module Web
       raise ActiveRecord::RecordNotFound unless Backups::Destinations::GoogleDrive.manageable_by?(current_user)
 
       Backups::Destinations::GoogleDrive.disconnect!
-      redirect_to settings_health_path, notice: "Google Drive desconectado. As cópias que já estão lá continuam lá."
+      redirect_to settings_health_path, notice: t("health.drive.disconnected")
     end
   end
 end

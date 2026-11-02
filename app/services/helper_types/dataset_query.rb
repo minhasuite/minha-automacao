@@ -9,21 +9,27 @@ module HelperTypes
     describe key: "dataset_query", title: "Consulta", icon: "table", capability: "measure",
              description: "Contagem, soma, média, mínimo, máximo ou último valor de um campo num conjunto de dados: portões abertos hoje."
     fields %i[dataset op field window filters]
+    texts "pt-BR" => { dataset: "Escolha o conjunto de dados.", op: "Escolha a consulta.", field: "Informe o campo.",
+                       window: "Janela inválida (use 1h, 24h, 168h; vazio = tudo)." },
+          en: { title: "Query", description: "Count, sum, average, minimum, maximum or latest value of a field in a dataset: gates opened today.",
+                dataset: "Choose the dataset.", op: "Choose the query.", field: "Enter the field.", window: "Invalid window (use 1h, 24h, 168h; blank = everything)." },
+          es: { title: "Consulta", description: "Conteo, suma, promedio, mínimo, máximo o último valor de un campo en un conjunto de datos: portones abiertos hoy.",
+                dataset: "Elige el conjunto de datos.", op: "Elige la consulta.", field: "Indica el campo.", window: "Ventana no válida (usa 1h, 24h, 168h; vacío = todo)." }
 
     def self.assign(point, form)
       dataset = point.site.datasets.find_by(id: form["dataset"].presence || point.address.dig("sources", 0))
-      return point.errors.add(:base, "Escolha o conjunto de dados.") unless dataset
+      return point.errors.add(:base, text(:dataset)) unless dataset
 
       op = form["op"].presence || point.address["op"]
       aggregate = Datasets.aggregate(op)
-      return point.errors.add(:base, "Escolha a consulta.") unless aggregate&.scalar?
+      return point.errors.add(:base, text(:op)) unless aggregate&.scalar?
 
       field = (form.key?("field") ? form["field"] : point.address["field"]).to_s.strip.presence
-      return point.errors.add(:base, "Informe o campo.") if aggregate.needs_field? && field.nil?
+      return point.errors.add(:base, text(:field)) if aggregate.needs_field? && field.nil?
 
       raw_window = form.key?("window") ? form["window"].to_s.strip : point.address["window_s"].to_s
       window = raw_window.empty? ? nil : Automations::Dsl.seconds(raw_window)
-      return point.errors.add(:base, "Janela inválida (use 1h, 24h, 168h; vazio = tudo).") if raw_window.present? && !window&.positive?
+      return point.errors.add(:base, text(:window)) if raw_window.present? && !window&.positive?
 
       filters = form.key?("filters") ? form["filters"].to_s.strip : point.address["filters"].to_s
       begin

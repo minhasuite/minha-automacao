@@ -8,6 +8,8 @@ module Ai
       describe key: "anthropic", label: "Anthropic (Claude)", env: "ANTHROPIC_API_KEY", default_model: "claude-sonnet-5-5",
                models: %w[claude-sonnet-5-5 claude-haiku-5-5 claude-opus-5-5], capabilities: %i[text image structured tools],
                hint: "Chave em console.anthropic.com → API keys. claude-haiku-5-5 é a opção barata."
+      texts en: { label: "Anthropic (Claude)", hint: "Get a key at console.anthropic.com → API keys. claude-haiku-5-5 is the budget option." },
+            es: { label: "Anthropic (Claude)", hint: "Clave en console.anthropic.com → API keys. claude-haiku-5-5 es la opción económica." }
 
       def complete(model:, system:, user:, schema:, max_tokens:, timeout:, effort: nil, temperature: nil) # rubocop:disable Lint/UnusedMethodArgument
         params = {

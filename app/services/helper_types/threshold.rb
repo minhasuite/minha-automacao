@@ -8,6 +8,17 @@ module HelperTypes
     describe key: "threshold", title: "Limite", icon: "exclamation-circle", capability: "onoff",
              description: "Liga quando um valor passa do limite (com histerese): umidade acima de 70%, tanque abaixo de 20%."
     fields %i[source lower upper hysteresis]
+    texts "pt-BR" => { none: "Informe o limite inferior, o superior ou os dois.", order: "O limite inferior precisa ser menor que o superior.",
+                       hyst: "A histerese não pode ser negativa.", between: "liga entre %{lower} e %{upper}", below: "liga abaixo de %{lower}",
+                       above: "liga acima de %{upper}", hysteresis: "histerese %{n}" },
+          en: { title: "Threshold", description: "Turns on when a value crosses a limit (with hysteresis): humidity above 70%, tank below 20%.",
+                none: "Enter the lower limit, the upper limit or both.", order: "The lower limit must be less than the upper limit.",
+                hyst: "Hysteresis can't be negative.", between: "on between %{lower} and %{upper}", below: "on below %{lower}",
+                above: "on above %{upper}", hysteresis: "hysteresis %{n}" },
+          es: { title: "Umbral", description: "Se enciende cuando un valor pasa del límite (con histéresis): humedad arriba de 70%, tanque abajo de 20%.",
+                none: "Indica el límite inferior, el superior o los dos.", order: "El límite inferior debe ser menor que el superior.",
+                hyst: "La histéresis no puede ser negativa.", between: "enciende entre %{lower} y %{upper}", below: "enciende abajo de %{lower}",
+                above: "enciende arriba de %{upper}", hysteresis: "histéresis %{n}" }
 
     def self.assign(point, form)
       numeric_source!(point, form) or return
@@ -18,10 +29,10 @@ module HelperTypes
       point.data_type = "bool"
       point.writable = false
       point.address = a.merge("lower" => lower, "upper" => upper, "hysteresis" => hyst)
-      return point.errors.add(:base, "Informe o limite inferior, o superior ou os dois.") if lower.nil? && upper.nil?
-      return point.errors.add(:base, "O limite inferior precisa ser menor que o superior.") if lower && upper && lower >= upper
+      return point.errors.add(:base, text(:none)) if lower.nil? && upper.nil?
+      return point.errors.add(:base, text(:order)) if lower && upper && lower >= upper
 
-      point.errors.add(:base, "A histerese não pode ser negativa.") if hyst.negative?
+      point.errors.add(:base, text(:hyst)) if hyst.negative?
     end
 
     def self.sourced? = true
@@ -54,11 +65,11 @@ module HelperTypes
 
     def self.summary(point)
       a = point.address
-      text = if a["lower"] && a["upper"] then "liga entre #{fmt(a['lower'])} e #{fmt(a['upper'])}"
-      elsif a["lower"] then "liga abaixo de #{fmt(a['lower'])}"
-      else "liga acima de #{fmt(a['upper'])}"
+      msg = if a["lower"] && a["upper"] then text(:between, lower: fmt(a["lower"]), upper: fmt(a["upper"]))
+      elsif a["lower"] then text(:below, lower: fmt(a["lower"]))
+      else text(:above, upper: fmt(a["upper"]))
       end
-      a["hysteresis"].to_f.positive? ? "#{text} · histerese #{fmt(a['hysteresis'])}" : text
+      a["hysteresis"].to_f.positive? ? "#{msg} · #{text(:hysteresis, n: fmt(a['hysteresis']))}" : msg
     end
 
     def self.fmt(n) = n.to_f == n.to_i ? n.to_i.to_s : n.to_s

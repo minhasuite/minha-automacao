@@ -1,15 +1,15 @@
 <%# locals: (point:, plugin:, url:, method:) -%>
 <%= form_with scope: :helper, url: url, method: method, class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl w-full" do |f| %>
   <%= render "web/shared/errors", record: point %>
-  <div class="sm:col-span-2"><%= f.label :name, "Nome", class: "ss-label" %><%= f.text_field :name, value: point.name, class: "ss-input", required: true, maxlength: 80, autofocus: point.new_record?, placeholder: "Ex.: Modo da casa, Luzes da sala" %></div>
-  <div class="sm:col-span-2"><%= render "web/shared/icon_picker", name: "helper[icon]", selected: point.icon, icons: HelperTypes::ICONS, id: "helper_icon", blank: "Padrão do tipo" %></div>
-  <div><%= f.label :area_id, "Área (opcional)", class: "ss-label" %><%= f.select :area_id, point.site.areas.order(:name).pluck(:name, :id), { selected: point.area_id, include_blank: "Sem área" }, class: "ss-input" %></div>
+  <div class="sm:col-span-2"><%= f.label :name, t("site_helpers.form.name"), class: "ss-label" %><%= f.text_field :name, value: point.name, class: "ss-input", required: true, maxlength: 80, autofocus: point.new_record?, placeholder: t("site_helpers.form.name_ph") %></div>
+  <div class="sm:col-span-2"><%= render "web/shared/icon_picker", name: "helper[icon]", selected: point.icon, icons: HelperTypes::ICONS, id: "helper_icon", blank: t("site_helpers.form.icon_default") %></div>
+  <div><%= f.label :area_id, t("site_helpers.form.area"), class: "ss-label" %><%= f.select :area_id, point.site.areas.order(:name).pluck(:name, :id), { selected: point.area_id, include_blank: t("site_helpers.form.no_area") }, class: "ss-input" %></div>
   <%= render "web/site_helpers/forms/#{plugin.key}", f: f, point: point %>
   <% unless plugin.sourced? %>
-    <label class="ss-check sm:col-span-2"><%= f.check_box :restore, { checked: point.address.fetch("restore", true) != false }, "1", "0" %>Restaurar o valor depois de reiniciar</label>
+    <label class="ss-check sm:col-span-2"><%= f.check_box :restore, { checked: point.address.fetch("restore", true) != false }, "1", "0" %><%= t("site_helpers.form.restore") %></label>
   <% end %>
   <div class="sm:col-span-2 flex flex-wrap gap-2">
-    <%= f.submit point.new_record? ? "Criar helper" : "Salvar", class: "ss-btn ss-btn-primary" %>
-    <%= link_to "Cancelar", site_helpers_path(point.site), class: "ss-btn ss-btn-ghost" %>
+    <%= f.submit point.new_record? ? t("site_helpers.form.create") : t("site_helpers.form.save"), class: "ss-btn ss-btn-primary" %>
+    <%= link_to t("site_helpers.form.cancel"), site_helpers_path(point.site), class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>

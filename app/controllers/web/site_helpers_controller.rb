@@ -33,7 +33,7 @@ module Web
       @point = HelperTypes.build(@site, @plugin)
       return render(:new, status: :unprocessable_content) unless HelperTypes.save(@point, form)
 
-      redirect_to site_helpers_path(@site), notice: "Helper #{@point.name} criado."
+      redirect_to site_helpers_path(@site), notice: t("site_helpers.flash.created", name: @point.name)
     end
 
     def edit
@@ -48,13 +48,13 @@ module Web
         return render(:edit, status: :unprocessable_content)
       end
 
-      redirect_to site_helpers_path(@site), notice: "Helper #{@point.name} salvo."
+      redirect_to site_helpers_path(@site), notice: t("site_helpers.flash.saved", name: @point.name)
     end
 
     def destroy
       load_for(:manage)
       @point.destroy!
-      redirect_to site_helpers_path(@site), notice: "Helper #{@point.name} excluído."
+      redirect_to site_helpers_path(@site), notice: t("site_helpers.flash.deleted", name: @point.name)
     end
 
     private

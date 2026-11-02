@@ -7,6 +7,9 @@ module HelperTypes
   class Plugin
     extend PluginTexts
     translates :title, :description
+    texts "pt-BR" => { pick_source: "Escolha um ponto numérico de origem.", decimals: "Casas decimais de 0 a 6." },
+          en: { pick_source: "Choose a numeric source point.", decimals: "Decimal places must be from 0 to 6." },
+          es: { pick_source: "Elige un punto numérico de origen.", decimals: "Los decimales van de 0 a 6." }
 
     # Fator do prefixo de unidade (k = mil) e segundos da unidade de tempo (integral e derivada).
     PREFIXES = { "" => 1, "k" => 1e3, "M" => 1e6, "G" => 1e9 }.freeze
@@ -80,6 +83,9 @@ module HelperTypes
       def public_address(point) = point.address
 
       # Para os plugins: número do formulário ("2,5" → 2.5; vazio → nil).
+      # Rótulos de uma lista do plugin no idioma da tela ({chave → texto} de `texts`).
+      def labels(name, source) = source.to_h { |k, _| [ k, text("#{name}.#{k}") ] }
+
       def number(raw) = raw.to_s.strip.empty? ? nil : Float(raw.to_s.tr(",", "."), exception: false)
 
       def invalid!(message) = raise(Points::Command::Error.new(:invalid_value, message))
@@ -100,7 +106,7 @@ module HelperTypes
       def numeric_source!(point, form)
         src = point.site.points.find_by(id: form["source"].presence || point.address.dig("sources", 0))
         unless src&.numeric? && src.id != point.id
-          point.errors.add(:base, "Escolha um ponto numérico de origem.")
+          point.errors.add(:base, text(:pick_source))
           return
         end
 

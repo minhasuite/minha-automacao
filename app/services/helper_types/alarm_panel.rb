@@ -25,8 +25,30 @@ module HelperTypes
     describe key: "alarm_panel", title: "Painel de alarme", icon: "shield-check", capability: "enum",
              description: "Armar em casa, ausente, noite ou férias, cada modo com os seus sensores, atrasos e código. A sirene é uma automação."
     fields [ :code, :code_arm, :trigger_time, { modes: {} } ]
+    texts "pt-BR" => { modes: MODES.transform_values { |m| m[:label] }, states: BASE_STATES, armed: "Armado (%{mode})", arm: "Armar: %{mode}",
+                       disarm: "Desarmar", panic: "Disparar (pânico)", code_size: "O código precisa ter de 4 a 8 números.", code_missing: "Defina um código.",
+                       bad_trigger: "Tempo disparado inválido.", no_mode: "Ligue ao menos um modo.", delays: "%{mode}: atrasos de 0 a 10 min (ex.: 30s, 1m).",
+                       open_sensors: "Sensores abertos: %{names}.", no_code: "Painel sem código.", wrong_code: "Código incorreto.",
+                       commands_only: "O painel muda só pelos comandos (armar e desarmar com código).", summary: "modos: %{modes}" },
+          en: { title: "Alarm panel", description: "Arm for home, away, night or vacation, each mode with its own sensors, delays and code. The siren is an automation.",
+                modes: { armed_home: "Home", armed_away: "Away", armed_night: "Night", armed_vacation: "Vacation" },
+                states: { disarmed: "Disarmed", arming: "Arming", pending: "Entry: disarm now", triggered: "Triggered" },
+                armed: "Armed (%{mode})", arm: "Arm: %{mode}", disarm: "Disarm", panic: "Trigger (panic)",
+                code_size: "The code must be 4 to 8 digits.", code_missing: "Set a code.", bad_trigger: "Invalid triggered time.",
+                no_mode: "Turn on at least one mode.", delays: "%{mode}: delays from 0 to 10 min (e.g. 30s, 1m).",
+                open_sensors: "Open sensors: %{names}.", no_code: "The panel has no code.", wrong_code: "Wrong code.",
+                commands_only: "The panel only changes through commands (arm and disarm with the code).", summary: "modes: %{modes}" },
+          es: { title: "Panel de alarma", description: "Arma en casa, ausente, noche o vacaciones, cada modo con sus sensores, retardos y código. La sirena es una automatización.",
+                modes: { armed_home: "En casa", armed_away: "Ausente", armed_night: "Noche", armed_vacation: "Vacaciones" },
+                states: { disarmed: "Desarmado", arming: "Armando", pending: "Entrada: desarma ahora", triggered: "Disparado" },
+                armed: "Armado (%{mode})", arm: "Armar: %{mode}", disarm: "Desarmar", panic: "Disparar (pánico)",
+                code_size: "El código debe tener de 4 a 8 números.", code_missing: "Define un código.", bad_trigger: "Tiempo disparado no válido.",
+                no_mode: "Activa al menos un modo.", delays: "%{mode}: retardos de 0 a 10 min (ej.: 30s, 1m).",
+                open_sensors: "Sensores abiertos: %{names}.", no_code: "El panel no tiene código.", wrong_code: "Código incorrecto.",
+                commands_only: "El panel solo cambia con comandos (armar y desarmar con código).", summary: "modos: %{modes}" }
 
-    def self.states = BASE_STATES.merge(MODES.transform_values { |m| "Armado (#{m[:label].downcase})" })
+    def self.mode_label(state) = text("modes.#{state}")
+    def self.states = BASE_STATES.to_h { |k, _| [ k, text("states.#{k}") ] }.merge(MODES.to_h { |k, _| [ k, text(:armed, mode: mode_label(k).downcase) ] })
     def self.mode_commands = MODES.to_h { |state, m| [ m[:command], state ] }
 
     def self.assign(point, form)
@@ -38,17 +60,17 @@ module HelperTypes
       a = point.address.except("code_digest")
       code = form["code"].to_s.strip
       if code.present?
-        return point.errors.add(:base, "O código precisa ter de 4 a 8 números.") unless code.match?(CODE)
+        return point.errors.add(:base, text(:code_size)) unless code.match?(CODE)
 
         a["code_digest"] = BCrypt::Password.create(code).to_s
       elsif point.address["code_digest"]
         a["code_digest"] = point.address["code_digest"]
       end
-      point.errors.add(:base, "Defina um código.") unless a["code_digest"]
+      point.errors.add(:base, text(:code_missing)) unless a["code_digest"]
       a["code_arm"] = ActiveModel::Type::Boolean.new.cast(form["code_arm"]) || false
-      a["trigger_s"] = Automations::Dsl.seconds(form["trigger_time"].presence || "3m") || point.errors.add(:base, "Tempo disparado inválido.")
+      a["trigger_s"] = Automations::Dsl.seconds(form["trigger_time"].presence || "3m") || point.errors.add(:base, text(:bad_trigger))
       modes = assign_modes(point, form["modes"].to_h)
-      point.errors.add(:base, "Ligue ao menos um modo.") if modes.empty?
+      point.errors.add(:base, text(:no_mode)) if modes.empty?
       a["modes"] = modes
       a["sources"] = modes.values.flat_map { |m| m["sensors"] }.uniq
       point.address = a
@@ -64,7 +86,7 @@ module HelperTypes
         exit_s = Automations::Dsl.seconds(m["exit"].presence || "0s")
         entry_s = Automations::Dsl.seconds(m["entry"].presence || "0s")
         unless exit_s&.between?(0, MAX_DELAY) && entry_s&.between?(0, MAX_DELAY)
-          point.errors.add(:base, "#{MODES[state][:label]}: atrasos de 0 a 10 min (ex.: 30s, 1m).")
+          point.errors.add(:base, text(:delays, mode: mode_label(state)))
           next
         end
         out[state] = { "sensors" => sensors, "exit_s" => exit_s, "entry_s" => entry_s }
@@ -72,7 +94,7 @@ module HelperTypes
     end
 
     def self.initial_value(_point) = "disarmed"
-    def self.command_labels = MODES.to_h { |_s, m| [ m[:command], "Armar: #{m[:label].downcase}" ] }.merge("disarm" => "Desarmar", "trigger" => "Disparar (pânico)")
+    def self.command_labels = MODES.to_h { |s, m| [ m[:command], text(:arm, mode: mode_label(s).downcase) ] }.merge("disarm" => text(:disarm), "trigger" => text(:panic))
     def self.commands(point) = configured(point).map { |s| MODES[s][:command] } + %w[disarm trigger]
     def self.configured(point) = MODES.keys & point.address["modes"].to_h.keys
     def self.value_text(point) = states[point.value.to_s]
@@ -89,14 +111,14 @@ module HelperTypes
       return "triggered" if cmd.command == "trigger"
 
       open = active_sensors(point, state)
-      invalid!("Sensores abertos: #{open.map(&:name).join(', ')}.") if open.any?
+      invalid!(text(:open_sensors, names: open.map(&:name).join(", "))) if open.any?
       exit_s(point, state).positive? ? "arming" : state
     end
 
     def self.check_code!(point, code)
-      digest = point.address["code_digest"] or invalid!("Painel sem código.")
+      digest = point.address["code_digest"] or invalid!(text(:no_code))
       ok = code.to_s.match?(CODE) && BCrypt::Password.new(digest).is_password?(code.to_s)
-      invalid!("Código incorreto.") unless ok
+      invalid!(text(:wrong_code)) unless ok
     end
 
     def self.execute(point, command, _value)
@@ -167,13 +189,13 @@ module HelperTypes
     def self.reset!(point) = set!(point, "disarmed", target: nil)
 
     # Escrever o valor direto (POST /points/:id/value, ferramentas) pularia o código.
-    def self.check(_point, _value) = invalid!("O painel muda só pelos comandos (armar e desarmar com código).")
+    def self.check(_point, _value) = invalid!(text(:commands_only))
 
     def self.public_address(point) = point.address.except("code_digest").merge("has_code" => point.address["code_digest"].present?)
 
     def self.summary(point)
-      modes = configured(point).map { |s| "#{MODES[s][:label].downcase} (#{mode(point, s)['sensors'].size})" }
-      "modos: #{modes.join(', ')}"
+      modes = configured(point).map { |s| "#{mode_label(s).downcase} (#{mode(point, s)['sensors'].size})" }
+      text(:summary, modes: modes.join(", "))
     end
   end
 end
