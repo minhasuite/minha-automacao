@@ -75,8 +75,9 @@ module Assist
     exact = points.select { |p| names.call(p).include?(want) }
     return exact if exact.any?
 
+    # ondaA1 (A1): a área ou o andar inteiro ("apague o térreo"), com as áreas de dentro.
     area = site.areas.to_a.find { |a| clean(a.name) == want }
-    return points.select { |p| p.effective_area_id == area.id } if area
+    return points.select { |p| area.subtree_ids.include?(p.effective_area_id) } if area
 
     words = want.split
     points.select { |p| names.call(p).any? { |n| words.all? { |w| n.split.include?(w) } } }

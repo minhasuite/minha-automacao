@@ -50,14 +50,24 @@ module Dashboards
       vacuums = @points.select { |p| vacuum?(p) }
       sections << section("s-home-vacuum", tr(:vacuum), "vacuum", vacuums.map { |p| tile(p, "wv", span: span(12, 12, 12)) }) if vacuums.any?
       sections << section("s-home-scenes", tr(:scenes), "sparkles", [ { "id" => "w-home-scenes", "type" => "scene_bar", "span" => span(12, 12, 12) } ]) if @site.scenes.exists?
-      if @areas.size > 1
-        cards = @areas.map { |a| { "id" => "w-area-#{a.id}", "type" => "area_card", "area" => a.id, "span" => span(12, 6, 4) } }
-        sections << section("s-home-areas", tr(:areas), "view-boards", cards)
-      end
+      sections.concat(area_sections) if @areas.size > 1
 
       badges = [ { "id" => "b-on", "type" => "stat", "label" => tr(:on_badge), "query" => { "capability" => "onoff", "state" => "on" }, "aggregate" => "count" } ]
       badges << { "id" => "b-power", "type" => "stat", "label" => tr(:now_badge), "query" => { "device_class" => "power" }, "aggregate" => "sum" } if power.any?
       { "id" => "home", "title" => tr(:home), "icon" => "home", "badges" => badges, "sections" => sections }
+    end
+
+    # ondaA1 (A1): com andares, um bloco de áreas por andar (na ordem do nível).
+    def area_sections
+      card = ->(a) { { "id" => "w-area-#{a.id}", "type" => "area_card", "area" => a.id, "span" => span(12, 6, 4) } }
+      floors = @areas.select(&:floor?).sort_by { |f| [ f.level || 0, f.position, f.name ] }
+      return [ section("s-home-areas", tr(:areas), "view-boards", @areas.map(&card)) ] if floors.empty?
+
+      by_id = @areas.index_by(&:id)
+      groups = @areas.reject(&:floor?).group_by { |a| a.floor_area(by_id) }
+      list = floors.filter_map { |f| section("s-home-floor-#{f.id}", f.name, "view-boards", groups[f].map(&card)) if groups[f] }
+      list << section("s-home-areas", "Outras áreas", "view-boards", groups[nil].map(&card)) if groups[nil]
+      list
     end
 
     def area_views

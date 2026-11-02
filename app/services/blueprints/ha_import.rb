@@ -553,15 +553,17 @@ module Blueprints
       { "!input" => k }
     end
 
-    # Alvo por etiqueta (`label_id`) ou área (`area_id`) → consulta (uma por tipo de alvo, como a união do HA).
+    # Alvo por etiqueta (`label_id`), área (`area_id`) ou andar (`floor_id`,
+    # ondaA1) → consulta (uma por tipo de alvo, como a união do HA). O andar
+    # importado fica em `areas` como "floor:<id>".
     def query_actions(domain, a, command)
       t = a["target"].is_a?(Hash) ? a["target"] : {}
-      note("alvo por andar (floor_id)") if t["floor_id"]
+      floors = Array.wrap(t["floor_id"]).map { |x| @areas.fetch("floor:#{x}", x).to_s }
       cap = DOMAIN_CAPS[domain] if domain != "homeassistant"
       labels = Array.wrap(t["label_id"]).map { |l| @labels.fetch(l, l).to_s.downcase }
       areas = Array.wrap(t["area_id"]).map { |x| @areas.fetch(x, x).to_s }
       note("alvo por área em #{domain}: aqui vale todo ponto liga/desliga da área (confira)") if areas.any? && domain == "light"
-      [ ([ "tag", labels ] if labels.any?), ([ "area", areas ] if areas.any?) ].compact.filter_map do |key, names|
+      [ ([ "tag", labels ] if labels.any?), ([ "area", areas ] if areas.any?), ([ "floor", floors ] if floors.any?) ].compact.filter_map do |key, names|
         next note("alvo com aspas no nome") && nil if names.join.match?(/["']/)
 
         list = names.join(",")

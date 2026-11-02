@@ -17,6 +17,8 @@ module Points
       "capability" => ->(_q, p, v) { list(v).include?(p.capability) },
       "device_class" => ->(_q, p, v) { list(v).include?(p.device_class) || (list(v).include?("power") && p.unit == "W" && p.capability == "measure") },
       "area" => ->(q, p, v) { list(v).any? { |a| a == p.effective_area_id || a.casecmp?(q.area_names[p.effective_area_id].to_s) } },
+      # ondaA1 (A1): no andar (o próprio andar e as áreas dentro dele), pelo nome ou id.
+      "floor" => ->(q, p, v) { list(v).any? { |f| q.floor_ids(f).include?(p.effective_area_id) } },
       "quality" => ->(_q, p, v) { list(v).include?(p.quality) },
       "tag" => ->(q, p, v) { list(v).any? { |t| q.tagged(t).include?(p.id) } },
       "state" => ->(q, p, v) { list(v).include?(q.on?(p) ? "on" : "off") },
@@ -96,6 +98,14 @@ module Points
     def on?(p) = [ true, "open" ].include?(value(p))
     def all = @all ||= (@points || @site.points.includes(:device)).to_a
     def area_names = @area_names ||= @site.areas.pluck(:id, :name).to_h
+
+    def floor_ids(ref)
+      (@floors ||= {})[ref.to_s.downcase] ||= begin
+        rows = @site.areas.pluck(:id, :parent_id, :name, :kind)
+        floor = rows.find { |id, _, name, kind| kind == "floor" && (id == ref || name.casecmp?(ref.to_s)) }
+        floor ? Area.subtree_ids(rows.map { |r| r.first(2) }, floor.first) : Set.new
+      end
+    end
     def tagged(name) = (@tags ||= {})[name.to_s.downcase] ||= Tagging.joins(:tag).where(tags: { name: name.to_s.downcase }, taggable_type: "Point").pluck(:taggable_id).to_set
 
     # Liquid: `{{ "tag=bateria below=30" | points_where | map: "name" | join: ", " }}`.

@@ -253,7 +253,8 @@ CREATE TABLE public.areas (
     background character varying,
     "position" integer DEFAULT 0 NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    level integer
 );
 
 
@@ -4513,6 +4514,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102200001'),
 ('20261102100001'),
 ('20261101130003'),
 ('20261101000001'),

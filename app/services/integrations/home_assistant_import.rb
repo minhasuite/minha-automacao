@@ -93,12 +93,23 @@ module Integrations
 
     # ---- 1. áreas ---------------------------------------------------------------
 
+    # ondaA1 (A1): os andares do HA (`floor_registry`) viram áreas do tipo
+    # andar com o nível; a área com `floor_id` fica dentro do andar. No mapa
+    # do conversor o andar entra como "floor:<id>".
     def areas!
+      floors = registry("floor_registry", "floors").to_h do |f|
+        floor = @site.areas.find_by("lower(name) = ?", f["name"].to_s.downcase) || (@r.areas += 1) && @site.areas.create!(name: f["name"], kind: "floor")
+        floor.update!(kind: "floor", level: f["level"]) if f["level"].is_a?(Integer) && floor.level != f["level"]
+        link!("floor:#{f['floor_id']}", "area", floor, f["name"])
+        [ "floor:#{f['floor_id']}", floor ]
+      end
       @areas = registry("area_registry", "areas").to_h do |a|
         area = @site.areas.find_by("lower(name) = ?", a["name"].to_s.downcase) || (@r.areas += 1) && @site.areas.create!(name: a["name"])
+        parent = floors["floor:#{a['floor_id']}"]
+        area.update!(parent: parent) if parent && area.parent_id.nil? && !area.floor?
         link!("area:#{a['id']}", "area", area, a["name"])
         [ a["id"], area ]
-      end
+      end.merge(floors)
     end
 
     # ---- 2. aparelhos -------------------------------------------------------------

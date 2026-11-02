@@ -13,8 +13,19 @@ module Integrations
     # Registro do HA → [comando do WebSocket, chave no formato do `.storage`].
     REGISTRIES = { "area_registry" => [ "config/area_registry/list", "areas" ], "device_registry" => [ "config/device_registry/list", "devices" ],
                    "entity_registry" => [ "config/entity_registry/list", "entities" ], "label_registry" => [ "config/label_registry/list", "labels" ],
+                   "floor_registry" => [ "config/floor_registry/list", "floors" ],
                    "config_entries" => [ "config_entries/get", "entries" ] }.freeze
     MAX_ITEMS = 500
+    # HA antigo (antes de 2024.4) não tem andares: segue sem eles.
+    OPTIONAL = %w[floor_registry].freeze
+
+    def self.registry_list(transport, name, type)
+      Array(transport.ws(type))
+    rescue StandardError
+      raise unless OPTIONAL.include?(name)
+
+      []
+    end
 
     module_function
 
@@ -29,7 +40,7 @@ module Integrations
     def fetch(integration, transport: transport_for(integration))
       states = Array(transport.get("/api/states"))
       files = { "states" => states }
-      REGISTRIES.each { |name, (type, key)| files[name] = { "data" => { key => Array(transport.ws(type)) } } }
+      REGISTRIES.each { |name, (type, key)| files[name] = { "data" => { key => registry_list(transport, name, type) } } }
       ids = ->(domain) { states.select { |s| s["entity_id"].to_s.start_with?("#{domain}.") }.first(MAX_ITEMS) }
       autos = ids.("automation").filter_map { |s| (id = s.dig("attributes", "id")) && transport.get("/api/config/automation/config/#{CGI.escape(id.to_s)}") }
       scripts = ids.("script").to_h { |s| (k = s["entity_id"].split(".", 2).last) && [ k, transport.get("/api/config/script/config/#{CGI.escape(k)}") ] }

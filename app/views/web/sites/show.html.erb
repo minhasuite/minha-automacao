@@ -1,6 +1,7 @@
 <%= render "web/shared/header", title: @site.name, subtitle: [ @site.kind_label, @site.address.presence, t("sites.show.your_role", role: SiteMembership.role_label(@site_role)) ].compact.join(" · "), back: sites_path do %>
   <% if can?(:manage) %>
     <%= link_to new_site_area_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("areas.new.title") %><% end %>
+    <%= link_to new_site_area_path(@site, kind: "floor"), class: "ss-btn ss-btn-outline" do %><%= icon("view-boards", "size-4") %>Novo andar<% end %>
     <%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("cube", "size-4") %><%= t("devices.new") %><% end %>
   <% end %>
   <% if can?(:admin) %><%= link_to edit_site_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %><%= t("shared.edit") %><% end %><% end %>
@@ -15,17 +16,37 @@
   </div>
 <% else %>
   <% if @areas.any? %>
-    <p class="ss-section mb-3"><%= t("sites.tabs.areas") %></p>
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <% @areas.each_with_index do |area, i| %>
-        <%= link_to area, class: "ss-card ss-go p-4 no-underline ss-rise flex items-center gap-3", style: "animation-delay: #{[ i, 7 ].min * 40}ms" do %>
-          <span class="grid place-items-center size-10 shrink-0 rounded-xl text-white shadow-sm <%= dw_area_art("id" => area.id) %>"><%= icon(area.icon.presence || "view-boards") %></span>
-          <span class="min-w-0 flex-1"><span class="block font-bold text-ink truncate"><%= area.name %></span>
-            <span class="block text-sm text-muted"><%= area.kind_label %> · <%= t("shared.count.devices", count: area.devices.size) %></span></span>
-          <%= icon("chevron-right", "size-4 text-muted") %>
+    <% by_id = @areas.index_by(&:id) %>
+    <% groups = @areas.reject(&:floor?).group_by { |a| a.floor_area(by_id) } %>
+    <% floors = @areas.select(&:floor?).sort_by { |f| [ f.level || 0, f.position, f.name ] } %>
+    <% sections = floors.map { |f| [ f, groups[f].to_a ] } + [ [ nil, groups[nil].to_a ] ] %>
+    <% sections.each do |floor, list| %>
+      <% next if floor.nil? && list.empty? %>
+      <div class="flex items-center justify-between gap-3 mb-3 <%= 'mt-6' unless floor == floors.first || (floor.nil? && floors.empty?) %>">
+        <% if floor %>
+          <%= link_to floor, class: "flex items-center gap-2 no-underline min-w-0" do %>
+            <span class="ss-section truncate"><%= floor.name %></span><% if floor.level_label && floor.level_label != floor.name %><span class="ss-badge"><%= floor.level_label %></span><% end %>
+          <% end %>
+          <span class="text-xs text-muted"><%= count_label(list.size, "área", "áreas") %></span>
+        <% else %>
+          <p class="ss-section"><%= floors.any? ? "Fora dos andares" : t("sites.tabs.areas") %></p>
         <% end %>
+      </div>
+      <% if list.empty? %>
+        <p class="ss-card p-4 text-sm text-muted">Nenhuma área neste andar. <%= link_to("Criar área aqui", new_site_area_path(@site, parent_id: floor.id), class: "font-semibold text-accent") if can?(:manage) %></p>
+      <% else %>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <% list.each_with_index do |area, i| %>
+            <%= link_to area, class: "ss-card ss-go p-4 no-underline ss-rise flex items-center gap-3", style: "animation-delay: #{[ i, 7 ].min * 40}ms" do %>
+              <span class="grid place-items-center size-10 shrink-0 rounded-xl text-white shadow-sm <%= dw_area_art("id" => area.id) %>"><%= icon(area.icon.presence || "view-boards") %></span>
+              <span class="min-w-0 flex-1"><span class="block font-bold text-ink truncate"><%= area.name %></span>
+                <span class="block text-sm text-muted"><%= area.kind_label %> · <%= t("shared.count.devices", count: area.devices.size) %></span></span>
+              <%= icon("chevron-right", "size-4 text-muted") %>
+            <% end %>
+          <% end %>
+        </div>
       <% end %>
-    </div>
+    <% end %>
   <% end %>
   <% if @loose_devices.any? %>
     <p class="ss-section mt-6 mb-3"><%= t("devices.no_area") %></p>

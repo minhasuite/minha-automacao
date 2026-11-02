@@ -1,11 +1,21 @@
-<%= render "web/shared/header", title: @area.name, subtitle: "#{@area.kind_label} · #{@site.name}", back: site_path(@site) do %>
+<%= render "web/shared/header", title: @area.name, subtitle: [ @area.kind_label, (@area.level_label if @area.floor?), @site.name ].compact.join(" · "), back: site_path(@site) do %>
   <% if can?(:manage) %>
     <%= link_to new_site_device_path(@site, area_id: @area.id), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("devices.new") %><% end %>
     <%= link_to edit_area_path(@area), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %><%= t("shared.edit") %><% end %>
   <% end %>
 <% end %>
 
-<% if @devices.empty? %>
+<% if @children.any? %>
+  <p class="ss-section mb-3"><%= @area.floor? ? "Áreas deste andar" : "Áreas dentro" %></p>
+  <div class="flex flex-wrap gap-2 mb-6">
+    <% @children.each do |c| %>
+      <%= link_to c, class: "ss-chip no-underline flex items-center gap-1" do %><%= icon(c.icon.presence || "view-boards", "size-4") %><%= c.name %><% end %>
+    <% end %>
+    <% if can?(:manage) %><%= link_to new_site_area_path(@site, parent_id: @area.id), class: "ss-chip no-underline text-accent flex items-center gap-1" do %><%= icon("plus", "size-4") %>Nova área aqui<% end %><% end %>
+  </div>
+<% end %>
+<% if @devices.empty? && @children.any? %>
+<% elsif @devices.empty? %>
   <div class="ss-card ss-empty">
     <p class="font-bold text-ink"><%= t("areas.show.empty") %></p>
     <p class="mt-1"><%= t("areas.show.empty_hint") %></p>
