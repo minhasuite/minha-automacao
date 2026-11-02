@@ -49,4 +49,21 @@ RSpec.describe "Web ondaA1: paridade HA" do
     patch "/configuracoes/rotulos/#{noite.id}", params: { tag: { name: "noite", color: "#00aa00" } }
     expect(within(tenant) { noite.reload.color }).to eq("#00aa00")
   end
+
+  it "A3: tela Expor marca em massa por assistente e respeita o risco crítico" do
+    pts = within(tenant) do
+      dev = create(:device, site: site, name: "Teste aparelho")
+      [ create(:point, site: site, device: dev, name: "Teste luz", aliases: [ "abajur" ]),
+        create(:point, site: site, device: dev, name: "Teste portão", risk: "critical") ]
+    end
+    get "/locais/#{site.id}/expor"
+    expect(response.body).to include("Expor a assistentes", "Teste luz", "Apelidos: abajur", "Assist", "Alexa")
+    get "/locais/#{site.id}/expor", params: { q: "abajur" }
+    expect(response.body).not_to include("Teste portão")
+    patch "/locais/#{site.id}/expor", params: { x: { pts[0].id => { assist: "0", alexa: "1" }, pts[1].id => { alexa: "1" } } }
+    expect(flash[:alert]).to include("confirmação")
+    expect(within(tenant) { [ pts[0].reload.expose["assist"], pts[0].alexa_exposed, pts[1].reload.alexa_exposed ] }).to eq([ false, true, false ])
+    patch "/locais/#{site.id}/expor", params: { confirm: "1", x: { pts[1].id => { alexa: "1" } } }
+    expect(within(tenant) { pts[1].reload.alexa_exposed }).to be true
+  end
 end

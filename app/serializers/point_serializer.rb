@@ -1,7 +1,7 @@
 class PointSerializer < ApplicationSerializer
   EDITABLE = [ :area_id, :key, :name, :icon, :capability, :data_type, :device_class, :state_class, :unit, :min, :max, :step,
                :writable, :scale, :offset, :deadband, :history, :history_interval_s, :retention_days, :pulse_ms, :max_on_s,
-               :confirm, :risk, :hidden, :disabled, :category, :label_list, { options: [], address: {}, expose: {} } ].freeze
+               :confirm, :risk, :hidden, :disabled, :category, :label_list, { aliases: [], options: [], address: {}, expose: {} } ].freeze
 
   attributes :id, :site_id, :device_id, :area_id, :key, :name, :icon, :capability, :data_type, :device_class,
              :state_class, :unit, :options
@@ -14,7 +14,7 @@ class PointSerializer < ApplicationSerializer
     params[:reveal] ? address : Sensitive.mask(address)
   end
   attributes :history, :history_interval_s, :retention_days, :pulse_ms, :max_on_s, :confirm,
-             :risk, :expose, :helper, :value, :quality, :changed_at, :reported_at, :hidden, :disabled, :category, :created_at, :updated_at
+             :risk, :expose, :helper, :value, :quality, :changed_at, :reported_at, :hidden, :disabled, :category, :aliases, :created_at, :updated_at
   # ondaA1 (A2): rótulos.
   attribute(:labels, &:label_names)
 end

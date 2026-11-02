@@ -292,6 +292,7 @@ es:
       automation: Automatizaciones y escenas
       helpers: Helpers
       datasets: Datos
+      exposure: Exponer
       alerts: Alertas
       packages: Paquetes
       dev_tools: Herramientas

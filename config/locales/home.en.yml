@@ -292,6 +292,7 @@ en:
       automation: Automations and scenes
       helpers: Helpers
       datasets: Data
+      exposure: Expose
       alerts: Alerts
       packages: Packages
       dev_tools: Tools

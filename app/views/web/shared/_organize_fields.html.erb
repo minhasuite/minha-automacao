@@ -13,3 +13,9 @@
     <datalist id="<%= list_id %>-cat"><% categories.each do |c| %><option value="<%= c %>"></option><% end %></datalist>
   </div>
 <% end %>
+<% if record.respond_to?(:alias_list) %>
+  <div class="<%= span %>">
+    <%= f.label :alias_list, "Apelidos (outros nomes para a voz e a busca)", class: "ss-label" %>
+    <%= f.text_field :alias_list, class: "ss-input", maxlength: 600, placeholder: "abajur, luz de leitura" %>
+  </div>
+<% end %>

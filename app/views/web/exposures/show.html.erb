@@ -1,0 +1,63 @@
+<%= render "web/shared/header", title: "Expor a assistentes", subtitle: "#{@site.name} · o que a voz, a Alexa e as pontes enxergam, numa tela só" %>
+<%= render "web/sites/tabs", site: @site, current: :exposure %>
+<% admin = can?(:admin) %>
+<%= form_with url: site_exposure_path(@site), method: :get, class: "mb-3 grid gap-3 sm:flex sm:flex-wrap sm:items-end", role: "search" do %>
+  <div class="min-w-0 sm:min-w-48 sm:flex-1"><label for="q" class="ss-label">Procurar</label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: "Nome ou apelido" %></div>
+  <div class="grid grid-cols-3 gap-2 sm:contents">
+    <div><label for="area" class="ss-label">Área ou andar</label><%= select_tag :area, options_for_select(@site.areas.order(:level, :position, :name).map { |a| [ a.name, a.id ] }, params[:area]), include_blank: "Todas", class: "ss-input", data: { autosubmit: true } %></div>
+    <div><label for="rotulo" class="ss-label">Rótulo</label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: "Todos", class: "ss-input", data: { autosubmit: true } %></div>
+    <div><label for="so" class="ss-label">Mostrar</label><%= select_tag :so, options_for_select([ [ "Só expostos", "expostos" ] ], params[:so]), include_blank: "Todos", class: "ss-input", data: { autosubmit: true } %></div>
+  </div>
+  <button type="submit" class="ss-btn ss-btn-ghost hidden sm:inline-flex" aria-label="Procurar"><%= icon("search", "size-4") %></button>
+<% end %>
+
+<% if @points.empty? %>
+  <div class="ss-card ss-empty"><p class="font-bold text-ink">Nenhum ponto com esses filtros.</p><p class="mt-1"><%= link_to "Limpar filtros", site_exposure_path(@site) %></p></div>
+<% else %>
+  <%= form_with url: site_exposure_path(@site), method: :patch, data: { controller: "expose" } do %>
+    <%= hidden_field_tag :back, request.fullpath, id: nil %>
+    <div class="ss-card oa-expose overflow-hidden" role="table" aria-label="Exposição por assistente" style="--cols: <%= @targets.size %>">
+      <div class="oa-expose-row oa-expose-head" role="row">
+        <span></span><span role="columnheader">Ponto</span>
+        <div class="oa-expose-cells">
+          <% @targets.each do |t| %>
+            <label class="oa-expose-cell" role="columnheader" title="Marcar ou desmarcar todos em <%= t.title %>">
+              <span class="flex items-center gap-1"><%= icon(t.icon, "size-4") %><%= t.title %></span>
+              <% if admin %><input type="checkbox" data-action="expose#column" data-expose-col-param="<%= t.key %>" aria-label="Todos em <%= t.title %>"><% end %>
+            </label>
+          <% end %>
+        </div>
+      </div>
+      <% @points.each do |p| %>
+        <div class="oa-expose-row" role="row" id="expose-<%= p.id %>">
+          <span class="ss-icon-tile text-muted"><%= icon(point_icon(p)) %></span>
+          <div class="min-w-0" role="cell">
+            <p class="font-semibold text-ink truncate"><%= p.name %> <% if p.risk == "critical" %><span class="ss-badge ss-badge-warn">Crítico</span><% end %></p>
+            <p class="text-xs text-muted truncate"><%= [ p.device&.name, (p.area || p.device&.area)&.name ].compact.uniq.join(" · ") %> <%= label_chips(p) %></p>
+            <% if p.aliases.any? %><p class="oa-aliases truncate">Apelidos: <%= p.aliases.join(", ") %></p><% end %>
+          </div>
+          <div class="oa-expose-cells">
+            <% @targets.each do |t| %>
+              <span class="oa-expose-cell" role="cell">
+                <% if t.applies?(p) %>
+                  <%= hidden_field_tag "x[#{p.id}][#{t.key}]", "0", id: nil %>
+                  <input type="checkbox" name="x[<%= p.id %>][<%= t.key %>]" value="1" data-col="<%= t.key %>" <%= "checked" if t.exposed?(p) %> <%= "disabled" unless admin %> aria-label="<%= p.name %> em <%= t.title %>">
+                  <span class="sr-only"><%= t.title %></span>
+                <% else %>
+                  <span class="text-muted" title="<%= t.title %> não entende este tipo de ponto">–</span>
+                <% end %>
+              </span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <% if admin %>
+      <div class="ss-bulk-static mt-4 flex flex-wrap items-center gap-3">
+        <label class="ss-check text-sm"><%= check_box_tag :confirm, "1", false, id: "confirm" %> Confirmo expor pontos críticos (portão, fechadura, sirene)</label>
+        <%= submit_tag "Salvar exposição", class: "ss-btn ss-btn-primary" %>
+      </div>
+      <p class="text-xs text-muted mt-2">Assist é a voz local deste app. A Alexa e as pontes pedem para descobrir aparelhos de novo depois de salvar. Nome falado e apelidos ficam na página do ponto.</p>
+    <% end %>
+  <% end %>
+<% end %>

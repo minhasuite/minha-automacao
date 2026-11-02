@@ -2,6 +2,7 @@
 class Area < ApplicationRecord
   include Auditable
   include Labelable
+  include Aliasable
 
   acts_as_tenant :tenant
 

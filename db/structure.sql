@@ -254,7 +254,8 @@ CREATE TABLE public.areas (
     "position" integer DEFAULT 0 NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    level integer
+    level integer,
+    aliases character varying[] DEFAULT '{}'::character varying[] NOT NULL
 );
 
 
@@ -765,7 +766,8 @@ CREATE TABLE public.points (
     alexa_exposed boolean DEFAULT false NOT NULL,
     alexa_name character varying,
     attrs jsonb DEFAULT '{}'::jsonb NOT NULL,
-    category character varying
+    category character varying,
+    aliases character varying[] DEFAULT '{}'::character varying[] NOT NULL
 );
 
 
@@ -4517,6 +4519,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102200003'),
 ('20261102200002'),
 ('20261102200001'),
 ('20261102100001'),

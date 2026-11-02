@@ -47,6 +47,6 @@ module Web
       authorize_site!(@site, action)
     end
 
-    def area_params = params.require(:area).permit(:name, :kind, :parent_id, :level, :label_list)
+    def area_params = params.require(:area).permit(:name, :kind, :parent_id, :level, :label_list, :alias_list)
   end
 end

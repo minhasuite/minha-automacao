@@ -4,6 +4,7 @@ class Point < ApplicationRecord
   include Auditable
   include AlexaExposable
   include Labelable
+  include Aliasable
 
   acts_as_tenant :tenant
 

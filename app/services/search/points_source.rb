@@ -11,7 +11,7 @@ module Search
 
       areas = Area.where(site_id: ctx.site_ids).pluck(:id, :name).to_h
       Point.where(site_id: ctx.site_ids, hidden: false, disabled: false).includes(:device).order(:name).limit(2000)
-           .select { |p| match?(q, p.name, p.device.name, areas[p.effective_area_id]) }
+           .select { |p| match?(q, p.name, p.device.name, areas[p.effective_area_id], *p.aliases) }
            .then { |list| q.verb ? list.select { |p| command(p, q.verb) } : list }
            .first(LIMIT).map { |p| result(p, q, ctx, areas) }
     end

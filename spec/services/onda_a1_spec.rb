@@ -99,4 +99,35 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect(point.reload).to have_attributes(category: "Modos", label_list: "casa")
     end
   end
+
+  describe "A3 apelidos e Expor" do
+    let(:room) { create(:area, site: site, name: "Sala", aliases: [ "living" ]) }
+    let!(:lamp) { create(:point, site: site, device: create(:device, site: site, area: room), name: "Luz", value: false, aliases: [ " abajur ", "Abajur", "leitura" ]) }
+
+    it "apelido de ponto e de área valem para a voz e a busca; tirar do Assist esconde da voz" do
+      expect(lamp.aliases).to eq(%w[abajur leitura])
+      expect(Assist.call(site: site, user: owner, text: "ligar a leitura")["text"]).to eq("Liguei Luz.")
+      expect(Assist.call(site: site, user: owner, text: "desligar o living")["text"]).to eq("Desliguei Luz.")
+      assist = Exposure.targets(site).find { |t| t.key == "assist" }
+      expect(assist.set!(lamp, false)).to be_nil
+      expect(assist.exposed?(lamp.reload)).to be false
+      expect(Assist.find_points(site, "abajur")).to be_empty
+    end
+
+    it "assistente novo entra na tela só pelo registro (plugin falso)" do
+      fake = Class.new(Exposure::Target) do
+        def key = "teste"
+        def title = "Teste"
+        def icon = "cube"
+        def exposed?(point) = point.expose.to_h["teste"] == true
+        def set!(point, on, confirm: false) = point.update!(expose: point.expose.to_h.merge("teste" => on)) && nil
+      end
+      stub_const("Exposure::Teste", fake)
+      stub_const("Exposure::PLUGINS", [ *Exposure::PLUGINS, "Teste" ])
+      t = Exposure.targets(site).find { |x| x.key == "teste" }
+      expect(t.title).to eq("Teste")
+      t.set!(lamp, true)
+      expect(t.exposed?(lamp.reload)).to be true
+    end
+  end
 end

@@ -70,13 +70,14 @@ module Assist
     want = clean(phrase)
     return [] if want.empty?
 
-    points = (scope || site.points).where(disabled: false, hidden: false).includes(:area, device: :area).to_a
-    names = ->(p) { [ p.name, p.alexa_name, p.display_names.compact.join(" "), *area_names(p) ].compact.map { |n| clean(n) }.uniq }
+    # ondaA1 (A3): só o exposto ao Assist (tela Expor) e os apelidos do ponto e da área.
+    points = (scope || site.points).where(disabled: false, hidden: false).includes(:area, device: :area).reject { |p| p.expose.to_h["assist"] == false }
+    names = ->(p) { [ p.name, p.alexa_name, *p.aliases, p.display_names.compact.join(" "), *area_names(p) ].compact.map { |n| clean(n) }.uniq }
     exact = points.select { |p| names.call(p).include?(want) }
     return exact if exact.any?
 
     # ondaA1 (A1): a área ou o andar inteiro ("apague o térreo"), com as áreas de dentro.
-    area = site.areas.to_a.find { |a| clean(a.name) == want }
+    area = site.areas.to_a.find { |a| a.all_names.any? { |n| clean(n) == want } }
     return points.select { |p| area.subtree_ids.include?(p.effective_area_id) } if area
 
     words = want.split
@@ -85,7 +86,7 @@ module Assist
 
   def area_names(p)
     area = p.area || p.device&.area or return []
-    [ "#{p.name} da #{area.name}", "#{p.name} do #{area.name}", "#{p.name} #{area.name}" ]
+    area.all_names.flat_map { |a| [ "#{p.name} da #{a}", "#{p.name} do #{a}", "#{p.name} #{a}" ] }
   end
 
   def can_command?(ctx, point) = point.risk != "critical" && SiteMembership.allowed?(ctx.role, :command, risk: point.risk)

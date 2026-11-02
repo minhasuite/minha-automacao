@@ -153,6 +153,8 @@ Rails.application.routes.draw do
           post :adopt, path: "adicionar"
         end
       end
+      # ondaA1 (A3): tela Expor (Assist, Alexa e pontes numa tela só, em massa).
+      resource :exposure, controller: "exposures", path: "expor", only: %i[show update]
       # Alexa Smart Home (F9): o que expor, nome falado, vínculos e cliente OAuth.
       resource :alexa, controller: "alexa", path: "alexa", only: %i[show update] do
         post :client, path: "cliente"
