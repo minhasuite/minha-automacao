@@ -1,0 +1,8 @@
+<% content_for :title, "Buscar" %>
+<%= render "web/shared/header", title: "Buscar", subtitle: "Pontos, áreas, painéis, cenas, automações e páginas" %>
+<%= form_with url: search_path, method: :get, class: "ss-card p-3 flex gap-2 mb-4" do %>
+  <label for="q" class="sr-only">Buscar</label>
+  <%= search_field_tag :q, @q, class: "ss-input flex-1", placeholder: "Ex.: apagar sala", autofocus: true %>
+  <%= submit_tag "Buscar", class: "ss-btn ss-btn-primary" %>
+<% end %>
+<div class="ss-card p-2"><%= render "web/search/results", results: @results, q: @q %></div>

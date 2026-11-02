@@ -14,6 +14,7 @@ module Web
       @resolved = Dashboards::Resolver.new(@dashboard, role: @site_role).call
       @view = Dashboards.pick_view(@resolved, params[:view])
       @home = true
+      load_kiosk
       render "web/dashboards/show"
     end
 

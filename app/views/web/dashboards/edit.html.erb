@@ -1,5 +1,6 @@
 <% views = @draft["views"] %>
 <% view = views.find { |v| v["id"] == params[:view] } || views.first %>
+<% @body_theme = view && (th = Dashboards::Themes.resolve(@draft, view, @site)) && dw_theme_attrs(th) %>
 <% point_options = @points.group_by { |p| p.device.name }.sort.map { |dev, ps| [ dev, ps.map { |p| [ "#{p.name}#{' (oculto)' if p.hidden}", p.id ] } ] } %>
 <% names = @points.index_by(&:id) %>
 <% scenes = @site.scenes.order(:name).to_a %>
@@ -45,6 +46,10 @@
           <% end %>
           <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "view", target: view["id"], view_id: view["id"], name: "a visão #{view['title']}" %>
         </div>
+        <details class="mt-3" <%= "open" if view["theme"].present? %>>
+          <summary class="ss-summary text-sm font-semibold text-ink-2 w-fit">Tema desta visão</summary>
+          <div class="mt-3"><%= render "web/dashboards/theme_form", dashboard: @dashboard, target: view["id"], theme: view["theme"], view_id: view["id"], inherit: true %></div>
+        </details>
       </section>
 
       <%= render "web/dashboards/layout_editor", dashboard: @dashboard, view: view, live: @live %>
@@ -123,6 +128,11 @@
       <label class="ss-check"><%= f.check_box :site_default %>Padrão do local</label>
       <div><%= f.submit "Salvar painel", class: "ss-btn ss-btn-ghost" %></div>
     <% end %>
+    <section class="ss-card ss-card-pad" aria-labelledby="theme-title">
+      <h2 id="theme-title" class="flex items-center gap-2"><%= icon("color-swatch", "size-5 text-accent") %>Aparência</h2>
+      <p class="text-sm text-muted mt-0.5 mb-3">Tema do painel inteiro. Cada visão pode ter o seu.</p>
+      <%= render "web/dashboards/theme_form", dashboard: @dashboard, target: nil, theme: @draft["theme"], view_id: view&.dig("id") %>
+    </section>
     <% if current_user.dashboard_prefs[@site.id] == @dashboard.id %>
       <p class="ss-badge ss-badge-success w-fit">Abre no seu Início</p>
     <% else %>

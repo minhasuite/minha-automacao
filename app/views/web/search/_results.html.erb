@@ -1,0 +1,37 @@
+<%# locals: (results:, q:) -%>
+<%= turbo_frame_tag "palette-results" do %>
+  <% if q.blank? %>
+    <div class="ss-pal-tips">
+      <p class="ss-pal-group">Experimente</p>
+      <% [ "sala", "apagar sala", "ativar cena cinema", "painéis" ].each do |tip| %>
+        <button type="button" class="ss-pal-chip" data-action="palette#fill" data-palette-text-param="<%= tip %>"><%= tip %></button>
+      <% end %>
+    </div>
+  <% elsif results.empty? %>
+    <%= render "web/shared/empty_art", art: "search", title: "Nada encontrado para “#{q}”", text: "Tente o nome do aparelho, da área ou um verbo: apagar, acender, ativar." %>
+  <% else %>
+    <ul class="ss-pal-list" role="listbox" aria-label="Resultados">
+      <% results.chunk_while { |a, b| a.kind == b.kind }.each do |group| %>
+        <li class="ss-pal-group" role="presentation"><%= group.first.kind %></li>
+        <% group.each do |r| %>
+          <li class="ss-pal-item" role="presentation">
+            <% if r.action %>
+              <%= button_to r.action[:url], params: r.action[:params] || {}, class: "ss-pal-row", role: "option", data: { palette_item: true, turbo_frame: "_top" },
+                            form: { data: { turbo_frame: "_top", turbo_confirm: r.action[:confirm], turbo_confirm_title: r.action[:confirm_title] }.compact, class: "contents" } do %>
+                <span class="ss-pal-ico ss-pal-ico-act"><%= icon(r.icon, "size-4") %></span>
+                <span class="min-w-0 flex-1"><span class="ss-pal-title"><%= r.title %></span><% if r.subtitle.present? %><span class="ss-pal-sub"><%= r.subtitle %></span><% end %></span>
+                <span class="ss-pal-verb"><%= r.action[:label] %></span>
+              <% end %>
+            <% else %>
+              <%= link_to r.url, class: "ss-pal-row", role: "option", data: { palette_item: true, turbo_frame: "_top" } do %>
+                <span class="ss-pal-ico"><%= icon(r.icon, "size-4") %></span>
+                <span class="min-w-0 flex-1"><span class="ss-pal-title"><%= r.title %></span><% if r.subtitle.present? %><span class="ss-pal-sub"><%= r.subtitle %></span><% end %></span>
+                <%= icon("chevron-right", "size-4 text-muted") %>
+              <% end %>
+            <% end %>
+          </li>
+        <% end %>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>

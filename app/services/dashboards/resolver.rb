@@ -28,7 +28,7 @@ module Dashboards
       end
       { "id" => dashboard.id, "site_id" => @site.id, "name" => dashboard.name, "kind" => dashboard.kind, "auto" => dashboard.auto,
         "version" => dashboard.version, "schema_version" => @definition["schema_version"], "role" => role,
-        "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload }
+        "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload }.merge(@definition.slice("theme"))
     end
 
     # Um widget só (o quadro que o tempo real recarrega). nil = não existe ou o papel não vê.

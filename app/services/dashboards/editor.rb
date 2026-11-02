@@ -83,6 +83,13 @@ module Dashboards
       item["span"] = default.merge(item["span"] || {}).merge(screen => cols.to_i.clamp(1, 12))
     end
 
+    # Tema (uiweb) do painel (view_id vazio) ou de uma visão; vazio = herda/padrão.
+    def set_theme(view_id, theme)
+      target = view_id.present? ? view(view_id) : @definition
+      theme = theme.reject { |_, v| v.nil? || v == "" }
+      theme.empty? ? target.delete("theme") : target["theme"] = theme
+    end
+
     def remove(kind, id)
       container(kind, id).reject! { |x| x["id"] == id }
     end

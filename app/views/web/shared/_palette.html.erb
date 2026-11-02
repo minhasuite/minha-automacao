@@ -1,0 +1,15 @@
+<%# Busca global (Ctrl+K, uiweb): acha e executa (fontes do registro Search). %>
+<dialog id="palette" class="ss-pal" aria-label="Buscar e executar" data-controller="palette" data-palette-url-value="<%= search_path %>"
+        data-action="keydown.ctrl+k@window->palette#open keydown.meta+k@window->palette#open keydown->palette#nav click->palette#backdrop">
+  <form action="<%= search_path %>" method="get" class="ss-pal-head" data-action="submit->palette#submit">
+    <%= icon("search", "size-5 text-muted shrink-0") %>
+    <label for="palette-q" class="sr-only">Buscar ou mandar</label>
+    <input id="palette-q" name="q" type="search" class="ss-pal-input" placeholder="Buscar ou mandar: apagar sala, ativar cena…" autocomplete="off" spellcheck="false"
+           data-palette-target="input" data-action="input->palette#search" aria-controls="palette-results" aria-autocomplete="list">
+    <kbd class="ss-kbd">Esc</kbd>
+  </form>
+  <turbo-frame id="palette-results" class="ss-pal-body" data-palette-target="frame">
+    <div class="p-3 grid gap-2" aria-hidden="true"><div class="dw-skel dw-skel-line w-2/3"></div><div class="dw-skel dw-skel-line"></div><div class="dw-skel dw-skel-line w-1/2"></div></div>
+  </turbo-frame>
+  <p class="ss-pal-foot"><span><kbd class="ss-kbd">↑</kbd><kbd class="ss-kbd">↓</kbd> navegar</span><span><kbd class="ss-kbd">Enter</kbd> abrir ou executar</span><span class="max-sm:hidden"><kbd class="ss-kbd">Ctrl</kbd><kbd class="ss-kbd">K</kbd> abre de qualquer tela</span></p>
+</dialog>

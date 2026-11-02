@@ -1,0 +1,47 @@
+<%# locals: (site:, dashboard:) -%>
+<%# Modo tablet de parede (uiweb): tela cheia sem menu, tela sempre acesa
+    (Wake Lock), cursor some parado, protetor de tela que acorda no toque ou
+    no movimento de um ponto escolhido. Ajustes por aparelho (cookie). %>
+<% k = kiosk %>
+<% weather = site.points.where(capability: "weather", disabled: false).first %>
+<% temperature = site.points.where(capability: "measure", device_class: "temperature", disabled: false).order(:name).first %>
+<% cameras = k["saver"] == "cameras" ? site.points.where(capability: "stream", disabled: false).order(:name).limit(12).map { |c| camera_snapshot_path(c.id) } : [] %>
+<% photos = k["saver"] == "photos" ? dashboard.files.select(&:image?).map { |f| rails_blob_path(f, only_path: true) } : [] %>
+<div data-controller="kiosk" data-kiosk-idle-value="<%= k['idle'] %>" data-kiosk-saver-value="<%= k['saver'] %>" data-kiosk-motion-value="<%= k['motion'] %>"
+     data-kiosk-dim-value="<%= k['dim'] %>" data-kiosk-slides-value="<%= (cameras + photos).to_json %>">
+  <div class="ss-kiosk-bar" data-kiosk-target="bar">
+    <button type="button" class="ss-kiosk-btn" data-action="kiosk#fullscreen" title="Tela cheia" aria-label="Tela cheia"><%= icon("arrows-expand", "size-5") %></button>
+    <button type="button" class="ss-kiosk-btn" data-action="kiosk#sleep" title="Protetor de tela agora" aria-label="Protetor de tela agora"><%= icon("moon", "size-5") %></button>
+    <details class="dw-pop relative">
+      <summary class="ss-kiosk-btn" title="Ajustes deste aparelho" aria-label="Ajustes deste aparelho"><%= icon("cog", "size-5") %></summary>
+      <%= form_with url: kiosk_path, method: :patch, class: "ss-card ss-kiosk-form" do %>
+        <p class="font-bold text-ink">Este tablet</p>
+        <div><label class="ss-label" for="k-saver">Protetor de tela</label>
+          <%= select_tag :saver, options_for_select(KioskMode::SAVERS.invert, k["saver"]), class: "ss-input", id: "k-saver" %></div>
+        <div><label class="ss-label" for="k-idle">Liga depois de (minutos parado)</label>
+          <%= number_field_tag :idle, k["idle"], min: 1, max: 60, class: "ss-input num", id: "k-idle" %></div>
+        <div><label class="ss-label" for="k-motion">Acordar com o movimento de <span class="font-normal">(opcional)</span></label>
+          <%= select_tag :motion, options_for_select(site.points.where(capability: "motion").order(:name).map { |p| [ p.name, p.id ] }, k["motion"]), include_blank: "Só no toque", class: "ss-input", id: "k-motion" %></div>
+        <label class="ss-check"><%= hidden_field_tag :dim, "0", id: nil %><%= check_box_tag :dim, "1", k["dim"], id: "k-dim" %>Escurecer a tela no protetor</label>
+        <div class="flex flex-wrap gap-2">
+          <%= submit_tag "Salvar", class: "ss-btn ss-btn-primary" %>
+          <%= link_to "Sair do quiosque", url_for(quiosque: 0), class: "ss-btn ss-btn-ghost" %>
+        </div>
+      <% end %>
+    </details>
+  </div>
+
+  <div class="ss-saver <%= 'ss-saver-dim' if k['dim'] %>" data-kiosk-target="saver" hidden role="dialog" aria-modal="true" aria-label="Protetor de tela: toque para voltar">
+    <div class="ss-saver-slide" data-kiosk-target="slide" aria-hidden="true"></div>
+    <div class="ss-saver-info">
+      <p class="ss-saver-clock num" data-kiosk-target="clock">--:--</p>
+      <p class="ss-saver-date" data-kiosk-target="date"></p>
+      <% if k["saver"] == "weather" && (weather || temperature) %>
+        <p class="ss-saver-weather"><%= icon("cloud", "size-6") %>
+          <% if temperature %><span class="num"><%= point_value_text(temperature) %></span><% end %>
+          <% if weather %><span><%= point_value_text(weather) %></span><% end %></p>
+      <% end %>
+      <p class="ss-saver-hint"><%= site.name %> · toque para voltar</p>
+    </div>
+  </div>
+</div>

@@ -4,6 +4,7 @@ class ApplicationController < ActionController::Base
   include MeuLogInstrumented
   include Pagy::Backend
   include SiteAuthorization
+  include KioskMode
 
   allow_browser versions: :modern
   set_current_tenant_through_filter

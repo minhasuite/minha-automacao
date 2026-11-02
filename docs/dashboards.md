@@ -202,3 +202,72 @@ abas rolam na horizontal no celular (`.dw-tabs`).
   por tela, quem vê, pré-visualizar, publicar, descartar, versões; e
   `/paineis/:id/json` (JSON avançado validado).
 - `/configuracoes/paineis`: lista da instalação (ver acima).
+
+## Vitrine (uiweb, 2026-11)
+
+### Planta baixa (`floorplan`)
+
+Widget plugin (`Dashboards::Widgets::FloorplanWidget`). Camadas (andares) com
+imagem de fundo (enviada no editor: Active Storage em `Dashboard#files`, PNG,
+JPG ou WebP até 8 MB, tipo conferido pelos bytes; ou link `https://`/`/`) ou,
+sem imagem, os cômodos desenham a planta. Pontos em % (`x`, `y`) e cômodos
+em % (`x`, `y`, `w`, `h`, `area`):
+
+```json
+{ "type": "floorplan", "layers": [ { "id": "t", "title": "Térreo", "image": "/rails/active_storage/...",
+  "pins": [ { "point": "<id>", "x": 22, "y": 30 } ],
+  "rooms": [ { "area": "<id>", "x": 2, "y": 4, "w": 52, "h": 66 } ] } ] }
+```
+
+O ícone acende com o estado e a cor real (irmão `color` do aparelho,
+`Widgets::Base.color_point`) e alterna com um toque (risco/confirmação do
+ponto valem); sensores mostram o valor. O cômodo abre a visão da área (ou a
+página da área) e fica âmbar com luz acesa. Botão "noite": planta escura com
+halo das luzes (padrão = tema escuro; escolha por navegador). No editor,
+arrastar os marcadores escreve x/y (a alça do cômodo muda w/h); os números
+continuam editáveis pelo teclado. Qualquer campo `upload` do formulário do
+editor vira anexo do painel e preenche o `image` irmão (genérico).
+
+### Editor de arrastar e soltar
+
+"Arrume ao vivo" no editor: os widgets reais do rascunho numa tela simulada
+(celular 390, tablet 768, computador 1180, encolhida por zoom). Alça para
+reordenar e trocar de seção (SortableJS 1.15.6 em `vendor/javascript`) e alça
+na borda direita para a largura da tela escolhida. Ops do rascunho (também
+por `Accept: application/json`, resposta 204/422/404): `place` (`kind`,
+`target`, `index`, `parent`) e `resize` (`kind`, `target`, `screen`,
+`cols`). Os formulários e as setas continuam (teclado).
+
+### Cartões vivos
+
+Só CSS e com `prefers-reduced-motion`: luz brilha na cor real (`color_id` no
+`data` do `tile`) e no nível do dimmer; ventilador (nome: ventila/fan/exaust)
+gira pela velocidade; cortina (cortina/persiana/toldo/blackout, dimmer ou
+setpoint) mostra a posição; portão corre as grades; robô percorre o piso
+limpando; mídia com capa (`media.image`, link seguro) e equalizador. Estados
+vazios ilustrados (`web/shared/_empty_art`, SVG próprio) e esqueleto
+(`.dw-skel`).
+
+### Quiosque (tablet de parede)
+
+`?quiosque=1` liga neste aparelho (cookie `ma_kiosk`, 1 ano, httponly);
+`?quiosque=0` desliga. Sem menu, cursor some parado, Wake Lock, botão de tela
+cheia e protetor de tela (relógio, relógio e clima, câmeras ou fotos do
+painel) depois de N minutos; acorda no toque (o toque não aciona nada) ou
+quando o ponto de movimento escolhido muda. Ajustes em `PATCH /quiosque`.
+
+### Busca global (Ctrl+K)
+
+Paleta em todas as telas (Ctrl+K/⌘K ou "Buscar" no menu); sem JS, `/busca`.
+Fontes por registro (`Search::SOURCES`: páginas, pontos, cenas, áreas,
+painéis, automações), cada uma cortando pelo papel. Verbo no começo vira ação:
+apagar/desligar, acender/ligar, alternar (pontos) e ativar/acionar (cenas);
+risco e `confirm` do ponto viram a pergunta de confirmação.
+
+### Temas
+
+`Dashboards::Themes::PLUGINS` (Lista Clara, Aurora, Oceano, Floresta, Pôr do
+sol, Grafite). No JSON, `theme` no painel e/ou na visão (a visão herda e
+troca): `key`, `night` (tema das 18h às 6h no fuso do local), `image` (papel
+de parede), `blur` (0 a 40) e `glass` (cartões de vidro). Galeria no editor
+(Aparência e "Tema desta visão").

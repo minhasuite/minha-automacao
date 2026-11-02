@@ -133,6 +133,15 @@ module DashboardsHelper
   # Capa da mídia só por link seguro (https:// ou do próprio servidor).
   def dw_media_image(m) = m["image"].to_s.match?(%r{\A(https://|/)[^"'()\s<>]+\z}) ? m["image"] : nil
 
+  # Tema resolvido (Dashboards::Themes.resolve) → classe e style do <body>:
+  # variáveis de cor, papel de parede (link já validado no Schema), desfoque e vidro.
+  def dw_theme_attrs(th)
+    t = th["theme"]
+    image = th["image"].to_s.match?(Dashboards::Themes::IMAGE) ? th["image"] : nil
+    style = [ t.css, ("--wall-img: url('#{image}')" if image), "--wall-blur: #{th['blur'].to_i}px" ].compact.join("; ")
+    { "class" => [ "dw-themed", "dw-theme-#{t.key}", ("dw-glass" if th["glass"]), ("dw-has-wall" if image || t.wallpaper) ].compact.join(" "), "style" => style }
+  end
+
   def dw_color_class(w, p = nil) = "dw-#{w['color'].presence || (p && dw_light?(p) ? 'amber' : 'accent')}"
 
   # Linha de lista e tile: título e contexto pela regra de Point#display_names (resolver).

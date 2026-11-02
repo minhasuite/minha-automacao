@@ -3,6 +3,7 @@
 <% points = @resolved["points"] %>
 <% view = @view %>
 <% home_view = view == @resolved["views"].first %>
+<% @body_theme = (th = Dashboards::Themes.resolve(@resolved, view, @site)) && dw_theme_attrs(th) %>
 <% if live %><%= turbo_stream_from @site, :points, channel: PointsChannel %><% end %>
 
 <% if @preview %>
@@ -25,7 +26,7 @@
       <% if (@dashboards || []).size > 1 || @sites.to_a.size > 1 %>
         <%= link_to site_dashboards_path(@site), class: "dw-hero-btn", title: "Outros painéis", "aria-label": "Outros painéis" do %><%= icon("view-boards", "size-4") %><span class="hidden sm:inline">Painéis</span><% end %>
       <% end %>
-      <% if @resolved["can_edit"] && live %>
+      <% if @resolved["can_edit"] && live && !kiosk %>
         <%= link_to edit_dashboard_path(@dashboard, view: view["id"]), class: "dw-hero-btn", title: "Editar painel", "aria-label": "Editar painel" do %><%= icon("pencil", "size-4") %><span class="hidden sm:inline">Editar</span><% end %>
       <% end %>
     </div>
@@ -63,3 +64,5 @@
     <% end %>
   </div>
 <% end %>
+
+<%= render "web/dashboards/kiosk", site: @site, dashboard: @dashboard if kiosk && live %>

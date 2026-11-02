@@ -56,6 +56,7 @@ document.addEventListener("turbo:load", () => {
 const stale = new Set()
 let staleTimer
 Turbo.StreamActions.point_changed = function () {
+  document.dispatchEvent(new CustomEvent("dw:point-changed", { detail: this.target })) // quiosque: acordar no movimento
   document.querySelectorAll(`turbo-frame[data-points~="${CSS.escape(this.target)}"]`).forEach((f) => stale.add(f))
   clearTimeout(staleTimer)
   staleTimer = setTimeout(() => {

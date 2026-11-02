@@ -15,6 +15,7 @@ module Web
 
     def show
       load_dashboard(:view)
+      load_kiosk
       preview = params[:rascunho].present? && can?(:manage)
       @resolved = Dashboards::Resolver.new(@dashboard, role: @site_role, definition: (@dashboard.working_draft if preview)).call
       @preview = preview
@@ -130,6 +131,12 @@ module Web
       render :json, status: :unprocessable_content
     end
 
+    # Ajustes do quiosque deste aparelho (cookie; ver KioskMode).
+    def kiosk_settings
+      write_kiosk(params.permit(:saver, :idle, :motion, :dim).to_h)
+      redirect_back_or_to root_path(quiosque: 1), notice: "Quiosque ajustado neste aparelho."
+    end
+
     # Painel padrão da pessoa (e o local que abre no Início).
     def prefer
       load_dashboard(:view)
@@ -189,6 +196,7 @@ module Web
       when "update_widget" then editor.update_widget(t, widget_attrs)
       when "move" then editor.move(params[:kind], t, params[:dir])
       when "place" then editor.place(params[:kind], t, params[:index], parent: params[:parent])
+      when "theme" then editor.set_theme(t, theme_param)
       when "resize" then editor.resize(params[:kind], t, params[:screen].to_s, params[:cols])
       when "remove" then editor.remove(params[:kind], t)
       else raise KeyError, "op"
@@ -224,6 +232,13 @@ module Web
                   "screen" => (screens if screens.any? && screens.size < Dashboards::Schema::SCREENS.size) }.compact
       attrs["visible_if"] = visible.presence
       attrs.compact
+    end
+
+    # Tema (uiweb): galeria do editor → JSON; o upload já virou `image` (store_uploads).
+    def theme_param
+      p = params.fetch(:theme, {}).permit(:key, :night, :image, :blur, :glass, :remove_image)
+      { "key" => p[:key].presence, "night" => p[:night].presence, "image" => (p[:image].presence unless p[:remove_image] == "1"),
+        "blur" => (p[:blur].to_i.clamp(0, 40) if p[:blur].present?), "glass" => ({ "1" => true, "0" => false }[p[:glass]]) }
     end
 
     def span_param

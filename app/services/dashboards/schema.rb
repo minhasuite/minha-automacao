@@ -37,6 +37,7 @@ module Dashboards
       views = defn["views"]
       return e << "views precisa ser uma lista com ao menos uma view" unless views.is_a?(Array) && views.any?
 
+      e.concat(Themes.errors(defn["theme"], "painel"))
       ids = []
       paths = []
       boxes = 0 # visões e seções: dividem os ids, mas não contam no limite de widgets
@@ -48,6 +49,7 @@ module Dashboards
         boxes += 1
         e << "#{where}: título obrigatório" if view["title"].to_s.strip.empty?
         path(view, where, paths, e)
+        e.concat(Themes.errors(view["theme"], where))
         Array(view["badges"]).each { |b| widget(b, "#{where} (selo)", ids, e) }
         sections = view["sections"]
         next e << "#{where}: sections precisa ser uma lista" unless sections.is_a?(Array)

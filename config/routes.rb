@@ -50,6 +50,10 @@ Rails.application.routes.draw do
     end
 
     # Câmeras (F8): quadro e ao vivo (WebRTC) passando pelo Rails.
+    # Busca global (Ctrl+K, uiweb).
+    get "busca", to: "search#index", as: :search
+    # Modo tablet de parede (uiweb): ajustes deste aparelho (cookie).
+    patch "quiosque", to: "dashboards#kiosk_settings", as: :kiosk
     get "cameras/:id/quadro", to: "cameras#snapshot", as: :camera_snapshot
     post "cameras/:id/ao-vivo", to: "cameras#webrtc", as: :camera_webrtc
 
