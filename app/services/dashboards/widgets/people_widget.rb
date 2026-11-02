@@ -5,6 +5,8 @@ module Dashboards
     # (helpers Pessoa); `params.zone` (nome) mostra só quem está nessa zona.
     class PeopleWidget < Base
       describe type: "people", label: "Pessoas", icon: "users", params: %w[zone]
+      texts en: { label: "People" },
+            es: { label: "Personas" }
 
       def self.data(r, w, _binds)
         persons = People.persons(r.site).to_a

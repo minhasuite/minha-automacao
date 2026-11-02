@@ -19,7 +19,7 @@ module Web
       dashboard, @errors = Dashboards::Presets.create!(@site, @kind, @form)
       return render(:new, status: :unprocessable_content) unless dashboard
 
-      redirect_to dashboard_path(dashboard), notice: "Painel \"#{dashboard.name}\" criado. Ajuste no editor quando quiser."
+      redirect_to dashboard_path(dashboard), notice: t("dashboards.flash.preset_created", name: dashboard.name)
     end
 
     private

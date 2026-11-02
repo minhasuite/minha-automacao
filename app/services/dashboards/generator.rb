@@ -31,39 +31,39 @@ module Dashboards
       power = @points.select { |p| power?(p) }
       security = @points.select { |p| p.risk != "normal" || p.capability.in?(%w[gate contact motion]) }
       sections = []
-      sections << section("s-home-lights", "Luzes", "light-bulb", lights.map { |p| tile(p, "wh", label: home_label(p), span: span(6, 4, 3)) }) if lights.any?
-      sections << section("s-home-now", "Agora", "lightning-bolt", [
-        { "id" => "w-home-on", "type" => "query_list", "label" => "Ligados agora", "query" => { "capability" => "onoff", "state" => "on" },
-          "empty_text" => "Tudo desligado.", "span" => span(12, 6, 6) },
-        { "id" => "w-home-alerts", "type" => "alerts", "label" => "Alertas", "span" => span(12, 6, 6) }
+      sections << section("s-home-lights", tr(:lights), "light-bulb", lights.map { |p| tile(p, "wh", label: home_label(p), span: span(6, 4, 3)) }) if lights.any?
+      sections << section("s-home-now", tr(:now), "lightning-bolt", [
+        { "id" => "w-home-on", "type" => "query_list", "label" => tr(:on_now), "query" => { "capability" => "onoff", "state" => "on" },
+          "empty_text" => tr(:all_off), "span" => span(12, 6, 6) },
+        { "id" => "w-home-alerts", "type" => "alerts", "label" => tr(:alerts), "span" => span(12, 6, 6) }
       ])
       if power.any?
-        sections << section("s-home-energy", "Consumo", "chart-bar", [
-          { "id" => "w-home-power-chart", "type" => "chart", "label" => "Potência nas últimas 24 h", "binds" => top_power(power).map(&:id),
+        sections << section("s-home-energy", tr(:energy), "chart-bar", [
+          { "id" => "w-home-power-chart", "type" => "chart", "label" => tr(:power_24h), "binds" => top_power(power).map(&:id),
             "range" => "24h", "span" => span(12, 12, 8) },
-          { "id" => "w-home-power-now", "type" => "group", "label" => "Agora", "binds" => top_power(power).map(&:id), "span" => span(12, 12, 4) }
+          { "id" => "w-home-power-now", "type" => "group", "label" => tr(:now), "binds" => top_power(power).map(&:id), "span" => span(12, 12, 4) }
         ])
       end
-      sections << section("s-home-security", "Segurança", "exclamation-circle", security.map { |p| tile(p, "ws", label: home_label(p), span: span(12, 6, 4)) }) if security.any?
+      sections << section("s-home-security", tr(:security), "exclamation-circle", security.map { |p| tile(p, "ws", label: home_label(p), span: span(12, 6, 4)) }) if security.any?
       cameras = @points.select { |p| camera?(p) }
-      sections << section("s-home-cameras", "Câmeras", "video-camera", cameras.map { |p| tile(p, "wc", span: nil) }) if cameras.any?
+      sections << section("s-home-cameras", tr(:cameras), "video-camera", cameras.map { |p| tile(p, "wc", span: nil) }) if cameras.any?
       vacuums = @points.select { |p| vacuum?(p) }
-      sections << section("s-home-vacuum", "Robô", "vacuum", vacuums.map { |p| tile(p, "wv", span: span(12, 12, 12)) }) if vacuums.any?
-      sections << section("s-home-scenes", "Cenas", "sparkles", [ { "id" => "w-home-scenes", "type" => "scene_bar", "span" => span(12, 12, 12) } ]) if @site.scenes.exists?
+      sections << section("s-home-vacuum", tr(:vacuum), "vacuum", vacuums.map { |p| tile(p, "wv", span: span(12, 12, 12)) }) if vacuums.any?
+      sections << section("s-home-scenes", tr(:scenes), "sparkles", [ { "id" => "w-home-scenes", "type" => "scene_bar", "span" => span(12, 12, 12) } ]) if @site.scenes.exists?
       if @areas.size > 1
         cards = @areas.map { |a| { "id" => "w-area-#{a.id}", "type" => "area_card", "area" => a.id, "span" => span(12, 6, 4) } }
-        sections << section("s-home-areas", "Áreas", "view-boards", cards)
+        sections << section("s-home-areas", tr(:areas), "view-boards", cards)
       end
 
-      badges = [ { "id" => "b-on", "type" => "stat", "label" => "ligados", "query" => { "capability" => "onoff", "state" => "on" }, "aggregate" => "count" } ]
-      badges << { "id" => "b-power", "type" => "stat", "label" => "agora", "query" => { "device_class" => "power" }, "aggregate" => "sum" } if power.any?
-      { "id" => "home", "title" => "Início", "icon" => "home", "badges" => badges, "sections" => sections }
+      badges = [ { "id" => "b-on", "type" => "stat", "label" => tr(:on_badge), "query" => { "capability" => "onoff", "state" => "on" }, "aggregate" => "count" } ]
+      badges << { "id" => "b-power", "type" => "stat", "label" => tr(:now_badge), "query" => { "device_class" => "power" }, "aggregate" => "sum" } if power.any?
+      { "id" => "home", "title" => tr(:home), "icon" => "home", "badges" => badges, "sections" => sections }
     end
 
     def area_views
       groups = @points.group_by(&:effective_area_id)
       views = @areas.filter_map { |a| area_view("a-#{a.id}", a.name, a.icon.presence || "view-boards", groups[a.id], area: a.id) if groups[a.id] }
-      views << area_view("a-none", "Sem área", "cube", groups[nil]) if groups[nil]
+      views << area_view("a-none", tr(:no_area), "cube", groups[nil]) if groups[nil]
       views
     end
 
@@ -77,8 +77,8 @@ module Dashboards
       end
       power = points.select { |p| power?(p) }
       if power.any?
-        sections << section("s-#{id}-energy", "Consumo da área", "chart-bar",
-                            [ { "id" => "w-#{id}-chart", "type" => "chart", "label" => "Potência nas últimas 24 h", "binds" => top_power(power).map(&:id), "range" => "24h", "span" => span(12, 12, 12) } ])
+        sections << section("s-#{id}-energy", tr(:area_energy), "chart-bar",
+                            [ { "id" => "w-#{id}-chart", "type" => "chart", "label" => tr(:power_24h), "binds" => top_power(power).map(&:id), "range" => "24h", "span" => span(12, 12, 12) } ])
       end
       { "id" => id, "title" => title, "icon" => icon, "area" => area, "sections" => sections }.compact
     end
@@ -102,6 +102,9 @@ module Dashboards
     def section(id, title, icon, widgets, span: nil)
       { "id" => id, "title" => title, "icon" => icon, "span" => span, "widgets" => widgets }.compact
     end
+
+    # Títulos no idioma de quem gera (I18n.locale do pedido).
+    def tr(key) = I18n.t("dashboards.gen.#{key}")
 
     def span(mobile, tablet, desktop) = { "mobile" => mobile, "tablet" => tablet, "desktop" => desktop }
     def light?(p) = p.capability.in?(%w[onoff dimmer]) && (@lights_tag.include?(p.id) || p.name.match?(LIGHT) || p.device.name.match?(LIGHT))

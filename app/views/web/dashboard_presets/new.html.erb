@@ -1,18 +1,18 @@
-<%= render "web/shared/header", title: "Painel de #{@kind.title}", subtitle: @kind.description, back: site_dashboard_presets_path(@site) %>
+<%= render "web/shared/header", title: t("dashboards.presets.title", name: @kind.title), subtitle: @kind.description, back: site_dashboard_presets_path(@site) %>
 <% pts = @site.points.where(disabled: false).includes(:device).ordered.to_a %>
 <% opts = ->(f) { pts.select { |p| f.filter.nil? || f.filter.call(p) }.map { |p| [ "#{p.name} · #{p.device.name}", p.id ] } } %>
 <%= form_with url: site_dashboard_preset_path(@site, @kind.key), scope: :preset, class: "ss-card ss-card-pad max-w-3xl" do |f| %>
   <% if @errors.present? %>
-    <div class="flex items-start gap-2 rounded-xl bg-danger-soft text-danger p-3 text-sm font-semibold mb-4" role="alert"><%= icon("exclamation-circle", "size-5 shrink-0") %><span>Não deu para montar o painel: <%= @errors.first(3).to_sentence %></span></div>
+    <div class="flex items-start gap-2 rounded-xl bg-danger-soft text-danger p-3 text-sm font-semibold mb-4" role="alert"><%= icon("exclamation-circle", "size-5 shrink-0") %><span><%= t("dashboards.presets.failed", errors: @errors.first(3).to_sentence) %></span></div>
   <% end %>
   <div class="grid gap-4 sm:grid-cols-2">
-    <div class="sm:col-span-2"><%= f.label :name, "Nome do painel", class: "ss-label" %><%= f.text_field :name, value: @form["name"].presence || @kind.title, class: "ss-input", maxlength: 80 %></div>
+    <div class="sm:col-span-2"><%= f.label :name, t("dashboards.presets.name"), class: "ss-label" %><%= f.text_field :name, value: @form["name"].presence || @kind.title, class: "ss-input", maxlength: 80 %></div>
     <% @kind.fields.each do |fd| %>
       <div class="<%= 'sm:col-span-2' if fd.kind == :points %>">
         <%= f.label fd.key, class: "ss-label" do %><%= fd.label %><% if fd.hint %> <span class="font-normal">(<%= fd.hint %>)</span><% end %><% end %>
         <% if fd.kind == :point %>
           <% list = opts.(fd) %>
-          <%= f.select fd.key, list, { include_blank: list.any? ? "Nenhum" : "Nenhum ponto serve", selected: @form[fd.key] }, class: "ss-input" %>
+          <%= f.select fd.key, list, { include_blank: list.any? ? t("dashboards.presets.none") : t("dashboards.presets.no_point"), selected: @form[fd.key] }, class: "ss-input" %>
         <% elsif fd.kind == :points %>
           <%= f.select fd.key, opts.(fd), { selected: Array(@form[fd.key]) }, multiple: true, size: 6, class: "ss-input" %>
         <% else %>
@@ -21,7 +21,7 @@
       </div>
     <% end %>
   </div>
-  <p class="text-sm text-muted mt-4">Tarifa branca: crie antes um helper <strong>Tarifa de energia</strong> com as faixas de ponta e intermediária (Helpers do local) e escolha-o aqui.</p>
-  <div class="flex flex-wrap gap-2 mt-5"><button class="ss-btn ss-btn-primary"><%= icon("check", "size-4") %>Criar painel</button>
-    <%= link_to "Cancelar", site_dashboard_presets_path(@site), class: "ss-btn ss-btn-ghost" %></div>
+  <p class="text-sm text-muted mt-4"><%= t("dashboards.presets.tariff_html") %></p>
+  <div class="flex flex-wrap gap-2 mt-5"><button class="ss-btn ss-btn-primary"><%= icon("check", "size-4") %><%= t("dashboards.create") %></button>
+    <%= link_to t("dashboards.cancel"), site_dashboard_presets_path(@site), class: "ss-btn ss-btn-ghost" %></div>
 <% end %>

@@ -1,7 +1,7 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <% d = w["data"] %>
 <% if d["missing"] %>
-  <div class="dw-card dw-unavailable"><p class="dw-name">Área removida</p></div>
+  <div class="dw-card dw-unavailable"><p class="dw-name"><%= t("dashboards.w.area_removed") %></p></div>
 <% else %>
   <% a = d["area"] %>
   <% photo = a["background"].to_s.match?(%r{\A(https://|/)[^"'()\s]+\z}) %>
@@ -10,12 +10,12 @@
     <span class="dw-area-ico"><%= icon(a["icon"].presence || "view-boards") %></span>
     <span class="dw-area-name"><%= a["name"] %></span>
     <span class="flex flex-wrap gap-1.5 mt-2">
-      <% if d["on"].positive? %><span class="dw-area-chip"><%= icon("light-bulb", "size-3.5") %><%= d["on"] %> <%= d["on"] == 1 ? "ligado" : "ligados" %></span><% end %>
-      <% if d["open"].positive? %><span class="dw-area-chip"><%= icon("view-boards", "size-3.5") %><%= d["open"] %> <%= d["open"] == 1 ? "aberto" : "abertos" %></span><% end %>
-      <% if d["motion"] %><span class="dw-area-chip"><%= icon("eye", "size-3.5") %>Movimento</span><% end %>
+      <% if d["on"].positive? %><span class="dw-area-chip"><%= icon("light-bulb", "size-3.5") %><%= t("dashboards.w.n_on", count: d["on"]) %></span><% end %>
+      <% if d["open"].positive? %><span class="dw-area-chip"><%= icon("view-boards", "size-3.5") %><%= t("dashboards.w.n_open", count: d["open"]) %></span><% end %>
+      <% if d["motion"] %><span class="dw-area-chip"><%= icon("eye", "size-3.5") %><%= t("dashboards.w.motion") %></span><% end %>
       <% if d["power"] %><span class="dw-area-chip num"><%= icon("lightning-bolt", "size-3.5") %><%= dw_number(d["power"], "W") %></span><% end %>
-      <% if d["unavailable"].positive? %><span class="dw-area-chip"><%= d["unavailable"] %> sem sinal</span><% end %>
-      <% if d["on"].zero? && d["open"].zero? && d["unavailable"].zero? && !d["power"] %><span class="dw-area-chip"><%= d["total"] %> pontos</span><% end %>
+      <% if d["unavailable"].positive? %><span class="dw-area-chip"><%= t("dashboards.w.n_offline", count: d["unavailable"]) %></span><% end %>
+      <% if d["on"].zero? && d["open"].zero? && d["unavailable"].zero? && !d["power"] %><span class="dw-area-chip"><%= t("dashboards.ed.points", count: d["total"]) %></span><% end %>
     </span>
   <% end %>
 <% end %>

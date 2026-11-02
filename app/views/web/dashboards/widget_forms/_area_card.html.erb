@@ -1,3 +1,3 @@
 <%# locals: (w:, uid:, types:, areas:, **) -%>
-<div data-for="<%= types %>"><label class="ss-label" for="ar-<%= uid %>">Área</label>
+<div data-for="<%= types %>"><label class="ss-label" for="ar-<%= uid %>"><%= t("dashboards.wf.area") %></label>
   <%= select_tag "widget[area]", options_from_collection_for_select(areas, :id, :name, w["area"]), class: "ss-input", id: "ar-#{uid}" %></div>

@@ -6,16 +6,16 @@
 <% uid = "#{op}-#{target}" %>
 <%= form_with url: draft_dashboard_path(dashboard), method: :patch, multipart: true, class: "dw-wf grid gap-3 sm:grid-cols-2 pt-3" do |f| %>
   <%= hidden_field_tag :op, op, id: nil %><%= hidden_field_tag :target, target, id: nil %><%= hidden_field_tag :view_id, view_id, id: nil %>
-  <div><label class="ss-label" for="t-<%= uid %>">Tipo</label>
+  <div><label class="ss-label" for="t-<%= uid %>"><%= t("dashboards.kind") %></label>
     <%= select_tag "widget[type]", options_for_select(Dashboards::Schema.labels.invert, w["type"] || "tile"), class: "ss-input", id: "t-#{uid}" %></div>
-  <div><label class="ss-label" for="l-<%= uid %>">Rótulo <span class="font-normal">(opcional)</span></label>
-    <%= text_field_tag "widget[label]", w["label"], class: "ss-input", id: "l-#{uid}", maxlength: 80, placeholder: "Usa o nome do ponto" %></div>
+  <div><label class="ss-label" for="l-<%= uid %>"><%= t("dashboards.wf.label") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label>
+    <%= text_field_tag "widget[label]", w["label"], class: "ss-input", id: "l-#{uid}", maxlength: 80, placeholder: t("dashboards.wf.label_hint") %></div>
 
   <%# Tipos de widget = plugins (Dashboards::Widgets): os campos de cada tipo aparecem quando ele está escolhido. %>
   <style><%= plugins.map { |pl| ".dw-wf:has(option[value=#{pl.type}]:checked) [data-for~=#{pl.type}]" }.join(", ") %> { display: block; }</style>
-  <div class="sm:col-span-2" data-for="<%= plugins.select(&:bind?).map(&:type).join(" ") %>"><label class="ss-label" for="b-<%= uid %>">Ponto</label>
-    <%= select_tag "widget[bind]", grouped_options_for_select(point_options, w["bind"]), include_blank: "Escolha um ponto", class: "ss-input", id: "b-#{uid}" %></div>
-  <div class="sm:col-span-2" data-for="<%= plugins.select(&:binds?).map(&:type).join(" ") %>"><label class="ss-label" for="bs-<%= uid %>">Pontos <span class="font-normal">(até 8; Ctrl/toque para marcar vários; no consumo, kWh ou W somados)</span></label>
+  <div class="sm:col-span-2" data-for="<%= plugins.select(&:bind?).map(&:type).join(" ") %>"><label class="ss-label" for="b-<%= uid %>"><%= t("dashboards.wf.point") %></label>
+    <%= select_tag "widget[bind]", grouped_options_for_select(point_options, w["bind"]), include_blank: t("dashboards.wf.pick_point"), class: "ss-input", id: "b-#{uid}" %></div>
+  <div class="sm:col-span-2" data-for="<%= plugins.select(&:binds?).map(&:type).join(" ") %>"><label class="ss-label" for="bs-<%= uid %>"><%= t("dashboards.wf.points") %> <span class="font-normal"><%= t("dashboards.wf.points_hint") %></span></label>
     <%= select_tag "widget[binds][]", grouped_options_for_select(point_options, w["binds"]), multiple: true, size: 6, class: "ss-input", id: "bs-#{uid}" %></div>
   <%# Campos próprios do tipo (`form` do plugin); partial de vários tipos sai uma vez só. %>
   <% plugins.flat_map { |pl| Array(pl.form).map { |form| [ form, pl.type ] } }.group_by(&:first).each do |form, pairs| %>
@@ -23,29 +23,29 @@
   <% end %>
 
   <fieldset class="sm:col-span-2">
-    <legend class="ss-label">Largura (de 12 colunas)</legend>
+    <legend class="ss-label"><%= t("dashboards.wf.width") %></legend>
     <div class="grid grid-cols-3 gap-2">
-      <% { "mobile" => "Celular", "tablet" => "Tablet", "desktop" => "Computador" }.each do |screen, label| %>
+      <% %w[mobile tablet desktop].each do |screen| %><% label = t("dashboards.screens.#{screen}") %>
         <div><label class="text-xs text-muted" for="sp-<%= screen %>-<%= uid %>"><%= label %></label>
           <%= select_tag "span[#{screen}]", options_for_select((1..12).to_a.reverse, span[screen]), class: "ss-input num", id: "sp-#{screen}-#{uid}" %></div>
       <% end %>
     </div>
   </fieldset>
   <fieldset class="sm:col-span-2">
-    <legend class="ss-label">Mostrar em <span class="font-normal">(nenhum marcado = todas as telas)</span></legend>
+    <legend class="ss-label"><%= t("dashboards.wf.show_on") %> <span class="font-normal"><%= t("dashboards.wf.show_on_hint") %></span></legend>
     <div class="flex flex-wrap gap-3">
-      <% { "mobile" => "Celular", "tablet" => "Tablet", "desktop" => "Computador" }.each do |screen, label| %>
+      <% %w[mobile tablet desktop].each do |screen| %><% label = t("dashboards.screens.#{screen}") %>
         <label class="ss-check"><%= check_box_tag "widget[screens][]", screen, screens.include?(screen), id: "sc-#{screen}-#{uid}" %><%= label %></label>
       <% end %>
     </div>
   </fieldset>
   <fieldset class="sm:col-span-2">
-    <legend class="ss-label">Quem vê <span class="font-normal">(nenhum marcado = todos)</span></legend>
+    <legend class="ss-label"><%= t("dashboards.ed.who_sees") %> <span class="font-normal"><%= t("dashboards.wf.who_hint") %></span></legend>
     <div class="flex flex-wrap gap-3">
       <% SiteMembership::ROLES.each do |r| %>
         <label class="ss-check"><%= check_box_tag "widget[roles][]", r, roles.include?(r), id: "ro-#{r}-#{uid}" %><%= SiteMembership.role_label(r) %></label>
       <% end %>
     </div>
   </fieldset>
-  <div class="sm:col-span-2"><%= submit_tag op == "add_widget" ? "Adicionar widget" : "Salvar widget", class: "ss-btn ss-btn-primary" %></div>
+  <div class="sm:col-span-2"><%= submit_tag op == "add_widget" ? t("dashboards.ed.add_widget") : t("dashboards.wf.save"), class: "ss-btn ss-btn-primary" %></div>
 <% end %>

@@ -5,6 +5,8 @@ module Dashboards
     # comandar, "Aprender botão".
     class RemoteWidget < Base
       describe type: "remote", label: "Controle remoto", icon: "status-online", required: %w[bind], bind: true, auto: %w[remote]
+      texts en: { label: "Remote control" },
+            es: { label: "Control remoto" }
 
       def self.data(_r, _w, binds)
         point = binds.first

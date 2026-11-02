@@ -4,24 +4,24 @@
 <% c = d["current"] || {} %>
 <div class="dw-card dw-weather">
   <% if p.nil? %>
-    <p class="dw-card-title"><%= w["label"].presence || "Clima" %></p>
-    <p class="text-sm text-muted">Escolha o ponto de clima (integração Clima).</p>
+    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.weather") %></p>
+    <p class="text-sm text-muted"><%= t("dashboards.w.pick_weather") %></p>
   <% else %>
     <div class="flex items-center gap-3">
       <span class="ss-icon-tile text-accent"><%= icon(d["icon"]) %></span>
       <div class="min-w-0 flex-1">
         <p class="text-sm text-muted truncate"><%= dw_label(w, p) %></p>
-        <p class="font-semibold text-ink truncate"><%= p["quality"] == "good" ? c["condition_text"] : "Sem leitura recente" %></p>
+        <p class="font-semibold text-ink truncate"><%= p["quality"] == "good" ? c["condition_text"] : t("dashboards.w.no_recent") %></p>
       </div>
       <p class="dw-weather-temp num"><%= c["temperature"] ? "#{dw_number(c['temperature'].round)}°" : "—" %></p>
     </div>
-    <% facts = [ ("Sensação #{dw_number(c['apparent_temperature'].round)}°" if c["apparent_temperature"]), ("Umidade #{dw_number(c['humidity'])}%" if c["humidity"]),
-                 ("Vento #{dw_number(c['wind_speed'])} km/h" if c["wind_speed"]), ("Chuva #{dw_number(c['precipitation_probability'])}%" if c["precipitation_probability"]) ].compact %>
+    <% facts = [ (t("dashboards.w.wx.feels", v: dw_number(c['apparent_temperature'].round)) if c["apparent_temperature"]), (t("dashboards.w.wx.humidity", v: dw_number(c['humidity'])) if c["humidity"]),
+                 (t("dashboards.w.wx.wind", v: dw_number(c['wind_speed'])) if c["wind_speed"]), (t("dashboards.w.wx.rain", v: dw_number(c['precipitation_probability'])) if c["precipitation_probability"]) ].compact %>
     <% if facts.any? %><p class="mt-2 text-xs text-muted num"><%= facts.join(" · ") %></p><% end %>
     <% if Array(d["forecast"]).any? %>
-      <ol class="dw-weather-list" aria-label="Previsão <%= d['kind'] == 'hourly' ? 'por hora' : 'por dia' %>">
+      <ol class="dw-weather-list" aria-label="<%= d['kind'] == 'hourly' ? t("dashboards.w.wx.hourly") : t("dashboards.w.wx.daily") %>">
         <% d["forecast"].each do |f| %>
-          <% when_text = f["time"] ? Time.zone.parse(f["time"]).strftime("%Hh") : (Date.parse(f["date"]) == Date.current ? "Hoje" : l(Date.parse(f["date"]), format: "%a")) %>
+          <% when_text = f["time"] ? Time.zone.parse(f["time"]).strftime("%Hh") : (Date.parse(f["date"]) == Date.current ? t("dashboards.w.wx.today") : l(Date.parse(f["date"]), format: "%a")) %>
           <li title="<%= f['condition_text'] %>">
             <span class="text-xs text-muted"><%= when_text %></span>
             <span class="text-accent"><%= icon(Weather.icon(f["condition"]), "size-5") %></span>

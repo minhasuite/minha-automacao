@@ -4,8 +4,11 @@ module Weather
     # implementa `fetch(lat:, lon:, zone:, api_key:)` devolvendo o formato
     # comum de `Weather`. Rede só pelo `SafeHttp`; erro do serviço = Weather::Error.
     class Base
+      extend PluginTexts
+      translates :label
+
       class << self
-        attr_reader :key, :label, :needs_key
+        attr_reader :key, :needs_key
 
         def describe(key:, label:, needs_key: false)
           @key = key

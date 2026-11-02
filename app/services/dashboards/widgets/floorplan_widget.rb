@@ -11,6 +11,9 @@ module Dashboards
     #     "rooms": [ { "area": "<id>", "x": 0, "y": 0, "w": 40, "h": 50 } ] } ] }
     class FloorplanWidget < Base
       describe type: "floorplan", label: "Planta baixa", icon: "map", required: %w[layers]
+      texts en: { "label" => "Floor plan", "bad_image" => "%{where}: image must be an https:// or / link", "bad_pins" => "%{where}: pins must be a list of up to %{max}", "bad_rooms" => "%{where}: rooms must be a list of up to %{max}", "bad_pin" => "%{where}: each pin needs point and x/y from 0 to 100", "bad_room" => "%{where}: each room needs area and x/y/w/h from 0 to 100" },
+            es: { "label" => "Plano de planta", "bad_image" => "%{where}: la imagen debe ser un enlace https:// o /", "bad_pins" => "%{where}: pins debe ser una lista de hasta %{max}", "bad_rooms" => "%{where}: rooms debe ser una lista de hasta %{max}", "bad_pin" => "%{where}: cada punto necesita point y x/y de 0 a 100", "bad_room" => "%{where}: cada habitación necesita area y x/y/w/h de 0 a 100" },
+            "pt-BR" => { "bad_image" => "%{where}: imagem precisa ser um link https:// ou /", "bad_pins" => "%{where}: pins precisa ser uma lista de até %{max}", "bad_rooms" => "%{where}: rooms precisa ser uma lista de até %{max}", "bad_pin" => "%{where}: ponto precisa de point e x/y de 0 a 100", "bad_room" => "%{where}: cômodo precisa de area e x/y/w/h de 0 a 100" }
 
       MAX_LAYERS = 8
       MAX_PINS = 80
@@ -27,13 +30,13 @@ module Dashboards
         layers.each_with_index.flat_map do |l, i|
           where = "camada #{i + 1}"
           e = []
-          e << "#{where}: imagem precisa ser um link https:// ou /" if l.key?("image") && !l["image"].to_s.match?(IMAGE)
+          e << text(:bad_image, where: where) if l.key?("image") && !l["image"].to_s.match?(IMAGE)
           pins = l["pins"] || []
           rooms = l["rooms"] || []
-          e << "#{where}: pins precisa ser uma lista de até #{MAX_PINS}" unless pins.is_a?(Array) && pins.size <= MAX_PINS
-          e << "#{where}: rooms precisa ser uma lista de até #{MAX_ROOMS}" unless rooms.is_a?(Array) && rooms.size <= MAX_ROOMS
-          e << "#{where}: ponto precisa de point e x/y de 0 a 100" unless Array(pins).all? { |pin| pin.is_a?(Hash) && pin["point"].is_a?(String) && pct?(pin, %w[x y]) }
-          e << "#{where}: cômodo precisa de area e x/y/w/h de 0 a 100" unless Array(rooms).all? { |r| r.is_a?(Hash) && r["area"].is_a?(String) && pct?(r, %w[x y w h]) }
+          e << text(:bad_pins, where: where, max: MAX_PINS) unless pins.is_a?(Array) && pins.size <= MAX_PINS
+          e << text(:bad_rooms, where: where, max: MAX_ROOMS) unless rooms.is_a?(Array) && rooms.size <= MAX_ROOMS
+          e << text(:bad_pin, where: where) unless Array(pins).all? { |pin| pin.is_a?(Hash) && pin["point"].is_a?(String) && pct?(pin, %w[x y]) }
+          e << text(:bad_room, where: where) unless Array(rooms).all? { |r| r.is_a?(Hash) && r["area"].is_a?(String) && pct?(r, %w[x y w h]) }
           e
         end
       end

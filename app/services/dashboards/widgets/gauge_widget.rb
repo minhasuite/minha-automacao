@@ -3,6 +3,8 @@ module Dashboards
     # Medidor em arco (F5): faixa do widget, senão a do ponto, senão 0–100.
     class GaugeWidget < Base
       describe type: "gauge", label: "Medidor", icon: "clock", required: %w[bind], params: %w[min max], bind: true
+      texts en: { label: "Gauge" },
+            es: { label: "Indicador" }
 
       def self.data(_r, w, binds)
         point = binds.first

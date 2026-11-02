@@ -3,6 +3,8 @@ module Dashboards
     # Gráfico (F5): linhas dos pontos na mesma escala; a tela busca o histórico.
     class ChartWidget < Base
       describe type: "chart", label: "Gráfico", icon: "chart-bar", required: %w[binds], params: %w[range], binds: true
+      texts en: { label: "Chart" },
+            es: { label: "Gráfico" }
 
       def self.data(r, w, binds) = GroupWidget.data(r, w, binds)
       def self.attrs(p, site = nil) = super.merge("range" => p[:range].presence || "24h")

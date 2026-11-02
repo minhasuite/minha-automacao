@@ -4,6 +4,8 @@ module Dashboards
     # O padrão do painel automático para ponto sem widget próprio.
     class TileWidget < Base
       describe type: "tile", label: "Ponto", icon: "light-bulb", required: %w[bind], params: %w[tap color], bind: true
+      texts en: { label: "Point" },
+            es: { label: "Punto" }
 
       # `color_id`: o ponto de cor do aparelho (lâmpada colorida), para o brilho na cor real.
       def self.data(r, w, binds)

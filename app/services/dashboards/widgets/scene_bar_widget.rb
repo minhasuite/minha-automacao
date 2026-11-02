@@ -3,6 +3,8 @@ module Dashboards
     # Cenas (F5): botões das cenas marcadas (nenhuma = todas).
     class SceneBarWidget < Base
       describe type: "scene_bar", label: "Cenas", icon: "sparkles"
+      texts en: { label: "Scenes" },
+            es: { label: "Escenas" }
 
       def self.data(r, w, _binds)
         list = r.site.scenes.order(:name)

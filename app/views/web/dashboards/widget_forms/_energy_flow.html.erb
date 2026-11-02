@@ -1,10 +1,9 @@
 <%# locals: (w:, uid:, types:, point_options:, **) -%>
-<% { "grid" => "Rede (W ou kW; positivo = comprando)", "solar" => "Solar (geração)", "battery" => "Bateria (positivo = descarregando)",
-     "battery_soc" => "Carga da bateria (%)", "home" => "Casa (opcional; sem ele, é o que sobra)" }.each do |k, label| %>
+<% %w[grid solar battery battery_soc home].each do |k| %><% label = t("dashboards.wf.flow.#{k}") %>
   <div data-for="<%= types %>"><label class="ss-label" for="ef-<%= k %>-<%= uid %>"><%= label %></label>
-    <%= select_tag "widget[#{k}]", grouped_options_for_select(point_options, w[k]), include_blank: "Nenhum", class: "ss-input", id: "ef-#{k}-#{uid}" %></div>
+    <%= select_tag "widget[#{k}]", grouped_options_for_select(point_options, w[k]), include_blank: t("dashboards.wf.none"), class: "ss-input", id: "ef-#{k}-#{uid}" %></div>
 <% end %>
 <div data-for="<%= types %>" class="flex flex-col justify-end gap-2">
-  <label class="ss-check"><%= hidden_field_tag "widget[grid_invert]", "0", id: nil %><%= check_box_tag "widget[grid_invert]", "1", w["grid_invert"], id: "efgi-#{uid}" %>Medidor da rede com o sinal invertido</label>
-  <label class="ss-check"><%= hidden_field_tag "widget[battery_invert]", "0", id: nil %><%= check_box_tag "widget[battery_invert]", "1", w["battery_invert"], id: "efbi-#{uid}" %>Bateria com o sinal invertido</label>
+  <label class="ss-check"><%= hidden_field_tag "widget[grid_invert]", "0", id: nil %><%= check_box_tag "widget[grid_invert]", "1", w["grid_invert"], id: "efgi-#{uid}" %><%= t("dashboards.wf.grid_invert") %></label>
+  <label class="ss-check"><%= hidden_field_tag "widget[battery_invert]", "0", id: nil %><%= check_box_tag "widget[battery_invert]", "1", w["battery_invert"], id: "efbi-#{uid}" %><%= t("dashboards.wf.battery_invert") %></label>
 </div>

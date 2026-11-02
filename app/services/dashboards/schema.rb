@@ -24,135 +24,138 @@ module Dashboards
 
     module_function
 
+    # Mensagem de validação no idioma da tela.
+    def msg(key, **vars) = I18n.t("dashboards.schema.#{key}", **vars)
+
     # Tipo → props obrigatórias e tipo → nome: só do registro (`Dashboards::Widgets`).
     def types = Widgets.plugins.to_h { |p| [ p.type, p.required ] }
     def labels = Widgets.plugins.to_h { |p| [ p.type, p.label ] }
 
     def errors(defn)
       e = []
-      return [ "precisa ser um objeto JSON" ] unless defn.is_a?(Hash)
-      return [ "passa do tamanho máximo (256 KB)" ] if defn.to_json.bytesize > MAX_BYTES
+      return [ msg(:json_object) ] unless defn.is_a?(Hash)
+      return [ msg(:too_big) ] if defn.to_json.bytesize > MAX_BYTES
 
-      e << "schema_version precisa ser #{VERSION}" unless defn["schema_version"] == VERSION
+      e << msg(:schema_version, version: VERSION) unless defn["schema_version"] == VERSION
       views = defn["views"]
-      return e << "views precisa ser uma lista com ao menos uma view" unless views.is_a?(Array) && views.any?
+      return e << msg(:views_list) unless views.is_a?(Array) && views.any?
 
-      e.concat(Themes.errors(defn["theme"], "painel"))
+      e.concat(Themes.errors(defn["theme"], msg(:at_dashboard)))
       ids = []
       paths = []
       boxes = 0 # visões e seções: dividem os ids, mas não contam no limite de widgets
       views.each_with_index do |view, vi|
-        next e << "view #{vi + 1} precisa ser um objeto" unless view.is_a?(Hash)
+        next e << msg(:view_object, n: vi + 1) unless view.is_a?(Hash)
 
-        where = "view #{view['id'] || vi + 1}"
+        where = msg(:at_view, id: view['id'] || vi + 1)
         check_id(view, where, ids, e)
         boxes += 1
-        e << "#{where}: título obrigatório" if view["title"].to_s.strip.empty?
+        e << msg(:title_required, where: where) if view["title"].to_s.strip.empty?
         path(view, where, paths, e)
         e.concat(Themes.errors(view["theme"], where))
-        Array(view["badges"]).each { |b| widget(b, "#{where} (selo)", ids, e) }
+        Array(view["badges"]).each { |b| widget(b, msg(:at_badge, where: where), ids, e) }
         sections = view["sections"]
-        next e << "#{where}: sections precisa ser uma lista" unless sections.is_a?(Array)
+        next e << msg(:sections_list, where: where) unless sections.is_a?(Array)
 
         sections.each_with_index do |section, si|
-          next e << "#{where}: seção #{si + 1} precisa ser um objeto" unless section.is_a?(Hash)
+          next e << msg(:section_object, where: where, n: si + 1) unless section.is_a?(Hash)
 
-          swhere = "seção #{section['id'] || si + 1}"
+          swhere = msg(:at_section, id: section['id'] || si + 1)
           check_id(section, swhere, ids, e)
           boxes += 1
           span(section["span"], swhere, e)
           widgets = section["widgets"]
-          next e << "#{swhere}: widgets precisa ser uma lista" unless widgets.is_a?(Array)
+          next e << msg(:widgets_list, where: swhere) unless widgets.is_a?(Array)
 
           widgets.each { |w| widget(w, swhere, ids, e) }
         end
       end
-      e << "widgets demais (máximo #{MAX_WIDGETS})" if ids.size - boxes > MAX_WIDGETS
+      e << msg(:too_many, max: MAX_WIDGETS) if ids.size - boxes > MAX_WIDGETS
       e
     end
 
     def widget(w, where, ids, e)
-      return e << "#{where}: widget precisa ser um objeto" unless w.is_a?(Hash)
+      return e << msg(:widget_object, where: where) unless w.is_a?(Hash)
 
-      where = "widget #{w['id'] || '?'} (#{where})"
+      where = msg(:at_widget, id: w['id'] || '?', where: where)
       check_id(w, where, ids, e)
       type = w["type"]
-      required = types[type] or return e << "#{where}: tipo desconhecido #{type.inspect}"
+      required = types[type] or return e << msg(:unknown_type, where: where, type: type.inspect)
 
-      required.each { |prop| e << "#{where}: #{prop} obrigatório" if blank?(w[prop]) }
-      e << "#{where}: bind precisa ser texto" if w.key?("bind") && !w["bind"].is_a?(String)
-      e << "#{where}: binds precisa ser uma lista de até 8 pontos" if w.key?("binds") && !(w["binds"].is_a?(Array) && w["binds"].size <= 8 && w["binds"].all?(String))
+      required.each { |prop| e << msg(:required, where: where, prop: prop) if blank?(w[prop]) }
+      e << msg(:bind_text, where: where) if w.key?("bind") && !w["bind"].is_a?(String)
+      e << msg(:binds_list, where: where) if w.key?("binds") && !(w["binds"].is_a?(Array) && w["binds"].size <= 8 && w["binds"].all?(String))
       span(w["span"], where, e)
       visible_if(w["visible_if"], where, e)
       query(w["query"], where, e) if w.key?("query")
-      e << "#{where}: tap inválido" if w.key?("tap") && !TAPS.include?(w["tap"])
-      e << "#{where}: features inválidas" if w.key?("features") && !(w["features"].is_a?(Array) && (w["features"] - FEATURES).empty?)
-      e << "#{where}: aggregate inválido" if w.key?("aggregate") && !AGGREGATES.include?(w["aggregate"])
-      e << "#{where}: range inválido" if w.key?("range") && !RANGES.include?(w["range"])
-      e << "#{where}: color inválida" if w.key?("color") && !COLORS.include?(w["color"])
-      e << "#{where}: live precisa ser true ou false" if w.key?("live") && ![ true, false ].include?(w["live"])
-      e << "#{where}: snapshot_interval precisa ser de 2 a 300 segundos" if w.key?("snapshot_interval") && !(w["snapshot_interval"].is_a?(Integer) && w["snapshot_interval"].between?(2, 300))
-      %w[min max].each { |k| e << "#{where}: #{k} precisa ser número" if w.key?(k) && !w[k].is_a?(Numeric) }
+      e << msg(:bad_tap, where: where) if w.key?("tap") && !TAPS.include?(w["tap"])
+      e << msg(:bad_features, where: where) if w.key?("features") && !(w["features"].is_a?(Array) && (w["features"] - FEATURES).empty?)
+      e << msg(:bad_aggregate, where: where) if w.key?("aggregate") && !AGGREGATES.include?(w["aggregate"])
+      e << msg(:bad_range, where: where) if w.key?("range") && !RANGES.include?(w["range"])
+      e << msg(:bad_color, where: where) if w.key?("color") && !COLORS.include?(w["color"])
+      e << msg(:live_bool, where: where) if w.key?("live") && ![ true, false ].include?(w["live"])
+      e << msg(:snapshot_interval, where: where) if w.key?("snapshot_interval") && !(w["snapshot_interval"].is_a?(Integer) && w["snapshot_interval"].between?(2, 300))
+      %w[min max].each { |k| e << msg(:number, where: where, prop: k) if w.key?(k) && !w[k].is_a?(Numeric) }
       Widgets[type].errors(w).each { |m| e << "#{where}: #{m}" }
     end
 
     # Caminho da visão (opcional): minúsculas, números e hífen; único no painel.
     def path(view, where, paths, e)
       return unless view.key?("path")
-      return e << "#{where}: caminho só com letras minúsculas, números e hífen (até 40)" unless view["path"].is_a?(String) && view["path"].match?(/\A[a-z0-9][a-z0-9-]{0,39}\z/)
+      return e << msg(:bad_path, where: where) unless view["path"].is_a?(String) && view["path"].match?(/\A[a-z0-9][a-z0-9-]{0,39}\z/)
 
-      e << "#{where}: caminho repetido" if paths.include?(view["path"])
+      e << msg(:dup_path, where: where) if paths.include?(view["path"])
       paths << view["path"]
     end
 
     def check_id(obj, where, ids, e)
       id = obj["id"]
-      return e << "#{where}: id obrigatório (texto)" unless id.is_a?(String) && id.match?(/\A[\w-]{1,100}\z/)
+      return e << msg(:id_required, where: where) unless id.is_a?(String) && id.match?(/\A[\w-]{1,100}\z/)
 
-      e << "#{where}: id repetido" if ids.include?(id)
+      e << msg(:dup_id, where: where) if ids.include?(id)
       ids << id
     end
 
     def span(value, where, e)
       return if value.nil?
-      return e << "#{where}: span precisa ser {mobile, tablet, desktop}" unless value.is_a?(Hash) && (value.keys - SCREENS).empty?
+      return e << msg(:span_object, where: where) unless value.is_a?(Hash) && (value.keys - SCREENS).empty?
 
-      value.each { |k, n| e << "#{where}: span.#{k} precisa ser de 1 a 12" unless n.is_a?(Integer) && n.between?(1, 12) }
+      value.each { |k, n| e << msg(:span_range, where: where, screen: k) unless n.is_a?(Integer) && n.between?(1, 12) }
     end
 
     def visible_if(value, where, e, nested: false)
       return if value.nil?
-      return e << "#{where}: visible_if precisa ser um objeto" unless value.is_a?(Hash)
+      return e << msg(:visible_object, where: where) unless value.is_a?(Hash)
 
-      e << "#{where}: visible_if com chave desconhecida" unless (value.keys - VISIBILITY).empty?
-      e << "#{where}: visible_if.any não aceita role nem screen" if nested && (value.key?("role") || value.key?("screen"))
+      e << msg(:visible_unknown, where: where) unless (value.keys - VISIBILITY).empty?
+      e << msg(:visible_any_nested, where: where) if nested && (value.key?("role") || value.key?("screen"))
       numeric = value["numeric"]
-      e << "#{where}: visible_if.numeric precisa de {point, above e/ou below}" if value.key?("numeric") &&
+      e << msg(:visible_numeric, where: where) if value.key?("numeric") &&
                                                                                  !(numeric.is_a?(Hash) && numeric["point"].is_a?(String) && (numeric.keys - %w[point above below]).empty? &&
                                                                                    %w[above below].any? { |k| numeric.key?(k) } && numeric.values_at("above", "below").compact.all?(Numeric))
-      e << "#{where}: visible_if.screen precisa ser lista de #{SCREENS.join(', ')}" if value.key?("screen") && !(value["screen"].is_a?(Array) && value["screen"].any? && (value["screen"] - SCREENS).empty?)
+      e << msg(:visible_screen, where: where, screens: SCREENS.join(', ')) if value.key?("screen") && !(value["screen"].is_a?(Array) && value["screen"].any? && (value["screen"] - SCREENS).empty?)
       if value.key?("any")
         list = value["any"]
         next_level = list.is_a?(Array) && list.size.between?(1, MAX_ANY) && !nested
-        e << "#{where}: visible_if.any precisa ser lista de 1 a #{MAX_ANY} condições (sem any dentro)" unless next_level
+        e << msg(:visible_any, where: where, max: MAX_ANY) unless next_level
         list.each { |c| visible_if(c, where, e, nested: true) } if next_level
       end
-      e << "#{where}: visible_if.role inválido" if value.key?("role") && !(value["role"].is_a?(Array) && (value["role"] - SiteMembership::ROLES).empty?)
-      e << "#{where}: visible_if.state precisa de {point, is}" if value.key?("state") && !(value["state"].is_a?(Hash) && value["state"]["point"].is_a?(String) && value["state"].key?("is"))
-      e << "#{where}: visible_if.quality inválido" if value.key?("quality") && !(Array(value["quality"]) - Point::QUALITIES).empty?
-      e << "#{where}: visible_if.device precisa ser lista" if value.key?("device") && !value["device"].is_a?(Array)
+      e << msg(:visible_role, where: where) if value.key?("role") && !(value["role"].is_a?(Array) && (value["role"] - SiteMembership::ROLES).empty?)
+      e << msg(:visible_state, where: where) if value.key?("state") && !(value["state"].is_a?(Hash) && value["state"]["point"].is_a?(String) && value["state"].key?("is"))
+      e << msg(:visible_quality, where: where) if value.key?("quality") && !(Array(value["quality"]) - Point::QUALITIES).empty?
+      e << msg(:visible_device, where: where) if value.key?("device") && !value["device"].is_a?(Array)
       return unless value.key?("time")
 
       t = value["time"]
-      e << "#{where}: visible_if.time precisa de {after, before} em HH:MM" unless t.is_a?(Hash) && [ t["after"], t["before"] ].compact.any? && [ t["after"], t["before"] ].compact.all? { |s| s.to_s.match?(TIME) }
+      e << msg(:visible_time, where: where) unless t.is_a?(Hash) && [ t["after"], t["before"] ].compact.any? && [ t["after"], t["before"] ].compact.all? { |s| s.to_s.match?(TIME) }
     end
 
     def query(value, where, e)
-      return e << "#{where}: query precisa ser um objeto" unless value.is_a?(Hash)
+      return e << msg(:query_object, where: where) unless value.is_a?(Hash)
 
-      e << "#{where}: query com chave desconhecida" unless (value.keys - QUERY_KEYS).empty?
-      e << "#{where}: query.capability desconhecida" if value.key?("capability") && !(Array(value["capability"]) - Point::CAPABILITIES.keys).empty?
-      e << "#{where}: query.state precisa ser on ou off" if value.key?("state") && !STATES.include?(value["state"])
+      e << msg(:query_unknown, where: where) unless (value.keys - QUERY_KEYS).empty?
+      e << msg(:query_capability, where: where) if value.key?("capability") && !(Array(value["capability"]) - Point::CAPABILITIES.keys).empty?
+      e << msg(:query_state, where: where) if value.key?("state") && !STATES.include?(value["state"])
     end
 
     def blank?(v) = v.nil? || v == "" || v == [] || v == {}

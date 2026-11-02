@@ -3,6 +3,8 @@ module Dashboards
     # Alertas ativos (F5) com "Ciente"; depende dos pontos vigiados por regra.
     class AlertsWidget < Base
       describe type: "alerts", label: "Alertas ativos", icon: "exclamation-circle"
+      texts en: { label: "Active alerts" },
+            es: { label: "Alertas activas" }
 
       def self.data(r, _w, _binds)
         helpers = ApplicationController.helpers

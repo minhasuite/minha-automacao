@@ -1,5 +1,5 @@
 <%# locals: (w:, uid:, types:, point_options:, **) -%>
-<div data-for="<%= types %>"><label class="ss-label" for="tf-<%= uid %>">Tarifa fixa (R$/kWh)</label>
-  <%= text_field_tag "widget[tariff]", w["tariff"], class: "ss-input num", id: "tf-#{uid}", inputmode: "decimal", placeholder: "0,95" %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="tp3-<%= uid %>">Ou a tarifa de um ponto <span class="font-normal">(helper Tarifa ou Número)</span></label>
-  <%= select_tag "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), include_blank: "Usar a tarifa fixa", class: "ss-input", id: "tp3-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="tf-<%= uid %>"><%= t("dashboards.wf.tariff") %></label>
+  <%= text_field_tag "widget[tariff]", w["tariff"], class: "ss-input num", id: "tf-#{uid}", inputmode: "decimal", placeholder: t("dashboards.wf.tariff_placeholder") %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="tp3-<%= uid %>"><%= t("dashboards.wf.tariff_point") %> <span class="font-normal"><%= t("dashboards.wf.tariff_point_hint2") %></span></label>
+  <%= select_tag "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), include_blank: t("dashboards.wf.use_fixed"), class: "ss-input", id: "tp3-#{uid}" %></div>

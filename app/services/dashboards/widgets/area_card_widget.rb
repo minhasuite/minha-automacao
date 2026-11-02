@@ -4,6 +4,8 @@ module Dashboards
     # navega para a view com `area` igual.
     class AreaCardWidget < Base
       describe type: "area_card", label: "Área", icon: "home", required: %w[area], params: %w[area]
+      texts en: { label: "Area" },
+            es: { label: "Área" }
 
       def self.data(r, w, _binds)
         area = r.site.areas.find_by(id: w["area"])

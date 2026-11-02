@@ -2,7 +2,7 @@
 <% p = points[w["data"]["point_ids"].first] %>
 <% ratio = w["data"]["ratio"] %>
 <div class="dw-card">
-  <p class="dw-card-title"><%= p ? dw_label(w, p) : (w["label"].presence || "Medidor") %></p>
+  <p class="dw-card-title"><%= p ? dw_label(w, p) : (w["label"].presence || t("dashboards.w.gauge")) %></p>
   <svg viewBox="0 0 100 56" class="w-full max-w-56 mx-auto block mt-1" role="img" aria-label="<%= p ? "#{dw_label(w, p)}: #{p['text']}" : 'Sem valor' %>">
     <path d="M10 50 A40 40 0 0 1 90 50" pathLength="100" class="dw-gauge-track" />
     <% if ratio %><path d="M10 50 A40 40 0 0 1 90 50" pathLength="100" class="dw-gauge-bar" stroke-dasharray="<%= (ratio * 100).round(2) %> 100" /><% end %>

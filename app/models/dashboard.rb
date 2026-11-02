@@ -49,13 +49,13 @@ class Dashboard < ApplicationRecord
       .select { |d| d.visible_to?(sites[d.site_id].role_for(user)) }
   end
 
-  def kind_label = KINDS.fetch(kind, kind)
+  def kind_label = I18n.t("dashboards.kinds.#{kind}", default: kind)
   def icon_name = icon || "view-boards"
 
   # Cópia manual (fora do menu e do padrão): publicada como versão 1.
   def duplicate!(author: Current.user)
     transaction do
-      copy = site.dashboards.create!(name: "#{name} (cópia)", kind: kind, icon: icon, roles: roles, definition: published, position: position + 1)
+      copy = site.dashboards.create!(name: I18n.t("dashboards.copy_name", name: name), kind: kind, icon: icon, roles: roles, definition: published, position: position + 1)
       copy.publish!(copy.definition, author: author)
       copy
     end
@@ -85,7 +85,7 @@ class Dashboard < ApplicationRecord
   private
 
   def roles_known
-    errors.add(:roles, "tem papel inválido") unless roles.all? { |r| SiteMembership::ROLES.include?(r) }
+    errors.add(:roles, :invalid_role) unless roles.all? { |r| SiteMembership::ROLES.include?(r) }
   end
 
   def definitions_valid

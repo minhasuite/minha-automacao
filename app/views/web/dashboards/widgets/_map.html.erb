@@ -2,13 +2,13 @@
 <% d = w["data"] %>
 <div class="dw-card mp-card">
   <div class="flex items-center justify-between gap-2">
-    <p class="dw-card-title"><%= w["label"].presence || "Mapa" %></p>
-    <% unless d["hidden"] %><%= link_to "Abrir o mapa", map_path(site_id: dashboard.site_id), class: "text-xs font-semibold text-accent no-underline", data: { turbo_frame: "_top" } %><% end %>
+    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.map") %></p>
+    <% unless d["hidden"] %><%= link_to t("dashboards.w.open_map"), map_path(site_id: dashboard.site_id), class: "text-xs font-semibold text-accent no-underline", data: { turbo_frame: "_top" } %><% end %>
   </div>
   <% if d["hidden"] %>
-    <p class="dw-quiet"><%= icon("lock-closed", "size-5 text-muted") %>Seu papel neste local não mostra onde as pessoas estão.</p>
+    <p class="dw-quiet"><%= icon("lock-closed", "size-5 text-muted") %><%= t("dashboards.w.map_hidden") %></p>
   <% elsif d["center"].nil? %>
-    <p class="dw-quiet"><%= icon("map", "size-5 text-muted") %>Cadastre a localização do local ou uma zona para ver o mapa.</p>
+    <p class="dw-quiet"><%= icon("map", "size-5 text-muted") %><%= t("dashboards.w.map_empty") %></p>
   <% else %>
     <%= render "web/maps/canvas", map: d, height: w["height"] || 320, compact: true %>
   <% end %>

@@ -4,6 +4,8 @@ module Dashboards
     # endereço (situação, bateria, erro, ajustes, peças), cômodos e ações.
     class VacuumWidget < Base
       describe type: "vacuum", label: "Robô aspirador", required: %w[bind], bind: true
+      texts en: { label: "Robot vacuum" },
+            es: { label: "Robot aspirador" }
 
       def self.data(r, _w, binds)
         point = binds.first

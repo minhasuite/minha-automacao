@@ -13,11 +13,14 @@ module Dashboards
       IDLE_W = 5
 
       describe type: "energy_flow", label: "Fluxo de energia", icon: "switch-horizontal", params: ROLES + FLAGS
+      texts en: { "label" => "Energy flow", "need_grid" => "set at least the grid or the solar" },
+            es: { "label" => "Flujo de energía", "need_grid" => "indica al menos la red o la solar" },
+            "pt-BR" => { "need_grid" => "informe ao menos a rede ou o solar" }
 
       def self.errors(w)
         e = ROLES.filter_map { |k| "#{k} precisa ser texto (id ou chave do ponto)" if w.key?(k) && !w[k].is_a?(String) }
         e += FLAGS.filter_map { |k| "#{k} precisa ser true ou false" if w.key?(k) && ![ true, false ].include?(w[k]) }
-        e << "informe ao menos a rede ou o solar" unless w["grid"].is_a?(String) || w["solar"].is_a?(String)
+        e << text(:need_grid) unless w["grid"].is_a?(String) || w["solar"].is_a?(String)
         e
       end
 

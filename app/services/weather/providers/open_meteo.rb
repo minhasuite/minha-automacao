@@ -4,6 +4,9 @@ module Weather
     # serviços nacionais. Agora, 7 dias e as próximas 24 horas numa chamada.
     class OpenMeteo < Base
       describe key: "open_meteo", label: "Open-Meteo (grátis, sem chave)"
+      texts en: { label: "Open-Meteo (free, no key)", invalid: "Open-Meteo returned an invalid response." },
+            es: { label: "Open-Meteo (gratis, sin clave)", invalid: "Open-Meteo devolvió una respuesta no válida." },
+            "pt-BR" => { invalid: "Open-Meteo devolveu uma resposta inválida." }
 
       URL = "https://api.open-meteo.com/v1/forecast".freeze
       # Código WMO → condição do formato comum.
@@ -25,7 +28,7 @@ module Weather
 
         normalize(JSON.parse(res.body))
       rescue JSON::ParserError
-        raise Weather::Error, "Open-Meteo devolveu uma resposta inválida."
+        raise Weather::Error, text(:invalid)
       end
 
       def self.normalize(body)

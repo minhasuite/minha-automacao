@@ -46,9 +46,20 @@ module Dashboards
           @description = description
         end
 
+        # Rótulo e dica no idioma da tela (`texts` com "fields.<campo>" e "hints.<campo>").
         def fields(list = nil)
           @fields = list.map { |f| Field.new(**f) } if list
-          @fields || []
+          (@fields || []).map do |f|
+            Field.new(**f.to_h.merge(label: text("fields.#{f.key}", default: f.label), hint: f.hint && text("hints.#{f.key}", default: f.hint)))
+          end
+        end
+
+        # Os campos também pedem en/es (spec/i18n_coverage_spec.rb).
+        def source_texts
+          (@fields || []).each_with_object(super) do |f, h|
+            h["fields.#{f.key}"] = f.label
+            h["hints.#{f.key}"] = f.hint if f.hint
+          end
         end
 
         def build(_site, _form) = raise(NotImplementedError)
@@ -77,6 +88,22 @@ module Dashboards
 
       describe key: "energy", title: "Energia", icon: "lightning-bolt",
                description: "Fluxo rede, solar e bateria, consumo e custo com meta e projeção, comparação dia/semana/mês e ranking por aparelho."
+      texts en: { title: "Energy", description: "Grid, solar and battery flow, usage and cost with goal and projection, day/week/month comparison and ranking by device.",
+                  fields: { grid: "Grid power", solar: "Solar generation", battery: "Battery power", battery_soc: "Battery charge", consumption: "Usage meters",
+                            tariff_point: "Rate", tariff: "Or fixed rate (per kWh)", goal: "Monthly goal (kWh)" },
+                  hints: { grid: "W or kW; positive = buying from the utility", solar: "optional", battery: "optional; positive = discharging", battery_soc: "optional, in %",
+                           consumption: "kWh or W; empty = the grid", tariff_point: "Rate helper (time-of-use) or Number", tariff: "0.95", goal: "optional" },
+                  need_one: "pick at least the grid power, the solar or a usage meter",
+                  gen: { flow: "Energy now", month: "This month", now: "Now", compare: "Comparison", today: "Today", rank: "By device", power: "Power", last_24h: "Last 24 h" } },
+            es: { title: "Energía", description: "Flujo de red, solar y batería, consumo y costo con meta y proyección, comparación día/semana/mes y ranking por aparato.",
+                  fields: { grid: "Potencia de la red", solar: "Generación solar", battery: "Potencia de la batería", battery_soc: "Carga de la batería", consumption: "Medidores de consumo",
+                            tariff_point: "Tarifa", tariff: "O tarifa fija (por kWh)", goal: "Meta del mes (kWh)" },
+                  hints: { grid: "W o kW; positivo = comprando a la distribuidora", solar: "opcional", battery: "opcional; positivo = descargando", battery_soc: "opcional, en %",
+                           consumption: "kWh o W; vacío = la red", tariff_point: "helper Tarifa (horaria) o Número", tariff: "0.95", goal: "opcional" },
+                  need_one: "elige al menos la potencia de la red, la solar o un medidor de consumo",
+                  gen: { flow: "Energía ahora", month: "Este mes", now: "Ahora", compare: "Comparación", today: "Hoy", rank: "Por aparato", power: "Potencia", last_24h: "Últimas 24 h" } },
+            "pt-BR" => { need_one: "escolha ao menos a potência da rede, o solar ou um medidor de consumo",
+                         gen: { flow: "Energia agora", month: "Este mês", now: "Agora", compare: "Comparação", today: "Hoje", rank: "Por aparelho", power: "Potência", last_24h: "Últimas 24 h" } }
       fields [
         { key: "grid", label: "Potência da rede", kind: :point, hint: "W ou kW; positivo = comprando da distribuidora", filter: POWER },
         { key: "solar", label: "Geração solar", kind: :point, hint: "opcional", filter: POWER },
@@ -90,7 +117,7 @@ module Dashboards
 
       def self.errors(site, form)
         any = %w[grid solar].any? { |k| pick(site, [ form[k] ]).any? } || pick(site, form[:consumption]).any?(&ENERGY)
-        any ? [] : [ "escolha ao menos a potência da rede, o solar ou um medidor de consumo" ]
+        any ? [] : [ text(:need_one) ]
       end
 
       def self.build(site, form)
@@ -104,21 +131,21 @@ module Dashboards
         binds = meters.map(&:id)
         now = []
         if grid || solar
-          now << widget("en-flow", "energy_flow", label: "Energia agora", grid: grid&.id, solar: solar&.id, battery: battery&.id, battery_soc: soc&.id)
+          now << widget("en-flow", "energy_flow", label: text("gen.flow"), grid: grid&.id, solar: solar&.id, battery: battery&.id, battery_soc: soc&.id)
         end
-        now << widget("en-month", "energy", label: "Este mês", binds: binds, period: "month", goal: (goal if goal&.positive?), compare: true, **price) if binds.any?
-        sections = [ section("en-now", "Agora", "lightning-bolt", now) ]
+        now << widget("en-month", "energy", label: text("gen.month"), binds: binds, period: "month", goal: (goal if goal&.positive?), compare: true, **price) if binds.any?
+        sections = [ section("en-now", text("gen.now"), "lightning-bolt", now) ]
         if binds.any?
-          sections << section("en-cmp", "Comparação", "trending-up", [
-                                widget("en-today", "energy", label: "Hoje", binds: binds, period: "today", compare: true, **price),
+          sections << section("en-cmp", text("gen.compare"), "trending-up", [
+                                widget("en-today", "energy", label: text("gen.today"), binds: binds, period: "today", compare: true, **price),
                                 widget("en-compare", "energy_compare", binds: binds, **price)
                               ])
         end
-        sections << section("en-rank", "Por aparelho", "chart-bar", [ widget("en-breakdown", "energy_breakdown", period: "month", binds: chosen.map(&:id).presence, **price) ])
+        sections << section("en-rank", text("gen.rank"), "chart-bar", [ widget("en-breakdown", "energy_breakdown", period: "month", binds: chosen.map(&:id).presence, **price) ])
         power = [ grid, solar, battery ].compact.map(&:id)
-        sections << section("en-power", "Potência", "chart-bar", [ widget("en-chart", "chart", desktop: 12, label: "Últimas 24 h", binds: power, range: "24h") ]) if power.any?
+        sections << section("en-power", text("gen.power"), "chart-bar", [ widget("en-chart", "chart", desktop: 12, label: text("gen.last_24h"), binds: power, range: "24h") ]) if power.any?
         { "schema_version" => 1,
-          "views" => [ { "id" => "energia", "title" => "Energia", "icon" => "lightning-bolt", "sections" => sections.reject { |s| s["widgets"].empty? } } ] }
+          "views" => [ { "id" => "energia", "title" => title, "icon" => "lightning-bolt", "sections" => sections.reject { |s| s["widgets"].empty? } } ] }
       end
     end
   end

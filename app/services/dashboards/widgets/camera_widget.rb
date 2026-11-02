@@ -3,6 +3,8 @@ module Dashboards
     # Câmera (F8): quadro periódico e "Ao vivo" (WebRTC) do ponto `stream` do go2rtc.
     class CameraWidget < Base
       describe type: "camera", label: "Câmera", required: %w[bind], bind: true
+      texts en: { label: "Camera" },
+            es: { label: "Cámara" }
 
       def self.data(r, w, binds) = GroupWidget.data(r, w, binds)
       def self.attrs(p, site = nil) = super.merge("live" => true)

@@ -11,12 +11,15 @@ module Dashboards
       DEFAULT_LIMIT = 8
 
       describe type: "energy_breakdown", label: "Consumo por aparelho", icon: "chart-bar", params: %w[period limit tariff tariff_point], binds: true
+      texts en: { "label" => "Usage by device", "bad_period" => "invalid period", "bad_limit" => "limit must be from 3 to 20", "bad_tariff" => "tariff must be a number greater than or equal to zero" },
+            es: { "label" => "Consumo por aparato", "bad_period" => "period no válido", "bad_limit" => "limit debe ser de 3 a 20", "bad_tariff" => "tariff debe ser un número mayor o igual a cero" },
+            "pt-BR" => { "bad_period" => "period inválido", "bad_limit" => "limit precisa ser de 3 a 20", "bad_tariff" => "tariff precisa ser número maior ou igual a zero" }
 
       def self.errors(w)
         e = []
-        e << "period inválido" if w.key?("period") && !PERIODS.key?(w["period"])
-        e << "limit precisa ser de 3 a 20" if w.key?("limit") && !(w["limit"].is_a?(Integer) && w["limit"].between?(3, 20))
-        e << "tariff precisa ser número maior ou igual a zero" if w.key?("tariff") && !(w["tariff"].is_a?(Numeric) && w["tariff"] >= 0)
+        e << text(:bad_period) if w.key?("period") && !PERIODS.key?(w["period"])
+        e << text(:bad_limit) if w.key?("limit") && !(w["limit"].is_a?(Integer) && w["limit"].between?(3, 20))
+        e << text(:bad_tariff) if w.key?("tariff") && !(w["tariff"].is_a?(Numeric) && w["tariff"] >= 0)
         e
       end
 
@@ -37,7 +40,7 @@ module Dashboards
         rest = rows.drop(limit)
         top << { "name" => "Outros (#{rest.size})", "kwh" => rest.sum { |x| x["kwh"] }.round(2), "cost" => rest.filter_map { |x| x["cost"] }.sum.round(2) } if rest.any?
         top.each { |x| x["pct"] = total.positive? ? (x["kwh"] / total * 100).round(1) : 0 }
-        [ { "period" => period, "period_label" => PERIODS[period], "rows" => top, "total_kwh" => total.round(2),
+        [ { "period" => period, "period_label" => I18n.t("dashboards.periods.#{period}"), "rows" => top, "total_kwh" => total.round(2),
             "total_cost" => (rows.filter_map { |x| x["cost"] }.sum.round(2) if rows.any? { |x| x["cost"] }), "empty" => by_device.empty? }, [ tariff ].compact ]
       end
 

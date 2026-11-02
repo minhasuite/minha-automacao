@@ -1,0 +1,547 @@
+# Dashboard texts (editor, widgets, kiosk, ready-made dashboard, automatic dashboard). New key = in all three languages (spec/i18n_spec.rb checks).
+en:
+  date:
+    formats:
+      ddmm: '%m/%d'
+  activerecord:
+    errors:
+      models:
+        dashboard:
+          attributes:
+            roles:
+              invalid_role: has an invalid role
+  dashboards:
+    cancel: Cancel
+    save: Save
+    copy_name: "%{name} (copy)"
+    kinds:
+      home: Home
+      plant: Plant
+      custom: Custom
+    screens:
+      mobile: Phone
+      tablet: Tablet
+      desktop: Computer
+    periods:
+      today: Today
+      week: Week
+      month: Month
+      cycle: Billing cycle
+      range: "%{from} to %{to}"
+    flash:
+      created: Dashboard created. Build the views and publish.
+      saved: Dashboard saved.
+      duplicated: Dashboard duplicated. Adjust the name and the views.
+      deleted: Dashboard deleted.
+      gone: That item is no longer in the draft.
+      bad_image: The image must be a PNG, JPG or WebP up to 8 MB.
+      published: Version %{n} published.
+      discarded: Draft discarded.
+      reverted: Version %{from} published again as version %{n}.
+      json_saved: Valid JSON, saved to the draft.
+      bad_json: 'Invalid JSON: %{error}'
+      kiosk: Kiosk set up on this device.
+      preferred: "%{name} now opens on your Home."
+      draft_saved: Saved to the draft. Publish so everyone sees it.
+      preset_created: Dashboard "%{name}" created. Fine-tune it in the editor whenever you like.
+    gen:
+      home: Home
+      lights: Lights
+      now: Now
+      on_now: On right now
+      all_off: Everything is off.
+      alerts: Alerts
+      energy: Energy
+      power_24h: Power over the last 24 h
+      security: Security
+      cameras: Cameras
+      vacuum: Vacuum
+      scenes: Scenes
+      areas: Areas
+      on_badge: "on"
+      now_badge: now
+      no_area: No area
+      area_energy: Area energy use
+    ed:
+      hidden_suffix: " (hidden)"
+      title: Edit %{name}
+      auto_note: 'automatic: becomes manual when you publish'
+      published: version %{n} published
+      draft_changed: draft has changes
+      preview: Preview
+      nothing_to_publish: No changes to publish
+      publish_confirm: Publish the draft for everyone who uses this dashboard?
+      draft_views: Draft views
+      new_view: New view
+      view_name: View name
+      view_placeholder: Kitchen
+      create: Create
+      view_label: View %{name}
+      view_icon: View icon
+      view_path: View address
+      link_name: Name in the link
+      optional: (optional)
+      path_placeholder: 'e.g. kitchen'
+      path_title: Lowercase letters, numbers and hyphens
+      path_hint: Opens this view directly from a short link. Lowercase letters, numbers and hyphens only.
+      the_view: the view %{name}
+      view_theme: Theme for this view
+      section_label: Section %{name}
+      untitled: Untitled
+      widgets:
+        one: 1 widget
+        other: "%{count} widgets"
+      desktop_width: Width on computer
+      width:
+        full: Full
+        two_thirds: Two thirds
+        half: Half
+        third: One third
+      the_section: the section %{name}
+      points:
+        one: 1 point
+        other: "%{count} points"
+      span_title: Width on phone / tablet / computer (out of 12)
+      only_roles: only %{roles}
+      the_widget: the widget
+      empty_section: 'Empty section: add the first widget.'
+      add_widget: Add widget
+      new_section_name: New section name
+      new_section_placeholder: 'New section (e.g. Lights)'
+      add_section: Add section
+      dashboard: Dashboard
+      name: Title
+      sidebar: Show in the side menu
+      who_sees: Who can see it
+      none_all: (none = everyone)
+      save_dashboard: Save dashboard
+      appearance: Appearance
+      appearance_hint: Theme for the whole dashboard. Each view can have its own.
+      duplicate: Duplicate dashboard
+      draft: Draft
+      draft_hint: Changes stay here until you publish. People using the dashboard keep seeing the published version.
+      json: Advanced JSON
+      discard: Discard draft
+      discard_confirm: Discard the changes in the draft?
+      versions: Versions
+      no_versions: None published yet.
+      no_versions_auto: None published yet (automatic dashboard).
+      live: Live
+      revert: Go back to this one
+      revert_confirm: Publish version %{n} again?
+      delete_confirm: Delete the dashboard %{name}?
+      delete: Delete dashboard
+    tools:
+      up: Move %{name} up
+      down: Move %{name} down
+      remove: Remove %{name}
+      remove_confirm: Remove %{name} from the draft?
+    le:
+      title: Arrange it live
+      hint: Drag by the handle to change the order or the section; pull the right edge to change the width. Saves to the draft right away.
+      screen: Screen to preview and adjust the width
+      empty: Nothing to arrange yet
+      empty_hint: Create a section below and add the first widget.
+      drag_section: Drag the section
+      resize: Pull to change the width
+      drag: Drag
+      edit_widget: Edit this widget
+      saved: Saved to the draft.
+      failed: Couldn't save.
+    theme:
+      theme: Theme
+      empty_inherit: (empty = the dashboard's)
+      inherit: Dashboard's
+      night: At night (6 pm to 6 am)
+      same_day: Same as daytime
+      cards: Cards
+      as_theme: Like the theme
+      glass: Glass (frosted)
+      solid: Solid
+      wallpaper: Wallpaper
+      formats: (PNG, JPG or WebP)
+      remove_wallpaper: Remove the wallpaper
+      blur: Wallpaper blur
+      save: Save theme
+    json:
+      title: Draft JSON
+      subtitle: the same format the app reads (docs/dashboards.md). Validated before saving.
+      not_saved: 'The JSON was not saved:'
+      definition: Definition (schema_version 1)
+      submit: Validate and save to the draft
+    kiosk:
+      fullscreen: Full screen
+      sleep: Screen saver now
+      settings: Settings for this device
+      this_tablet: This tablet
+      saver: Screen saver
+      savers:
+        clock: Clock
+        weather: Clock and weather
+        cameras: Cameras
+        photos: Dashboard photos
+        "off": None
+      idle: Starts after (idle minutes)
+      motion: Wake up on motion from
+      touch_only: Touch only
+      dim: Dim the screen while the saver is on
+      exit: Leave kiosk mode
+      saver_label: 'Screen saver: touch to go back'
+      touch_back: touch to go back
+    presets:
+      subtitle: Pick a template, choose which points to use and the dashboard comes ready. After that it's a dashboard like any other.
+      build: Build
+      title: "%{name} dashboard"
+      failed: 'Couldn''t build the dashboard: %{errors}'
+      name: Dashboard name
+      none: None
+      no_point: No suitable point
+      tariff_html: 'Time-of-use rate: first create a <strong>Energy rate</strong> helper with the peak and shoulder bands (place Helpers) and pick it here.'
+    wf:
+      label: Label
+      label_hint: Uses the point name
+      point: Point
+      pick_point: Pick a point
+      points: Points
+      points_hint: (up to 8; Ctrl/tap to select several; for energy, kWh or W are added up)
+      width: Width (out of 12 columns)
+      show_on: Show on
+      show_on_hint: (none checked = every screen)
+      who_hint: (none checked = everyone)
+      save: Save widget
+      area: Area
+      period: Period
+      ranges:
+        24h: 24 hours
+        7d: 7 days
+        30d: 30 days
+      cycle_day: Billing day
+      cycle_only: (billing cycle only)
+      cycle_placeholder: 1 to 28
+      tariff: Fixed rate (per kWh)
+      tariff_placeholder: '0.95'
+      use_fixed: Use the fixed rate
+      tariff_point: Or a rate from a point
+      tariff_point_hint: (Number helper)
+      tariff_point_hint2: (Rate or Number helper)
+      goal: Goal (kWh in the period, optional)
+      compare: Compare with the previous period
+      limit: How many devices
+      limit_hint: (the rest becomes "Others")
+      breakdown_hint: With no points picked above, every energy and power point of the place is included, grouped by device.
+      flow:
+        grid: Grid (W or kW; positive = buying)
+        solar: Solar (generation)
+        battery: Battery (positive = discharging)
+        battery_soc: Battery charge (%)
+        home: Home (optional; without it, it's what's left)
+      none: None
+      grid_invert: Grid meter with inverted sign
+      battery_invert: Battery with inverted sign
+      fp:
+        first_layer: First layer
+        new_layer: New layer (floor)
+        layer_name: Layer name
+        layer_placeholder: Ground floor
+        image: Floor plan image
+        image_hint: (PNG, JPG or WebP, up to 8 MB)
+        image_url: Or image link
+        image_url_hint: (optional; with no image, the rooms draw the plan)
+        drag_hint: Drag the points and rooms on the plan. The handle on the corner of a room resizes it.
+        pins: Points on the plan
+        add_pin: Another point
+        rooms: Rooms
+        rooms_hint: (tapping opens the area)
+        add_room: Another room
+        remove_layer: Remove this layer
+        remove: Remove
+        pick_area: Pick the area
+        dims:
+          x: x %
+          y: y %
+          w: width %
+          h: height %
+      min: Minimum
+      max: Maximum
+      height: Height (px)
+      track: Show today's route
+      text: Text
+      text_hint: '(accepts Liquid: {{ points["point.key"].text }}, {% if %}; **bold**, - list)'
+      q:
+        capability: 'Which points: type'
+        any: Any
+        state: State
+        "on": On / open
+        "off": Off / closed
+        all: All
+        measure: Measurement
+        classes:
+          power: Power (W)
+          energy: Energy (kWh)
+          temperature: Temperature
+          humidity: Humidity
+          battery: Battery
+        tag: Tag
+        tag_placeholder: lighting
+        unchanged: Unchanged for (min)
+        exclude: Leave out names containing
+        exclude_placeholder: test, spare
+        sort: Order
+        sorts:
+          name: Name
+          value: Lowest value
+          value_desc: Highest value
+          oldest: Changed longest ago
+          newest: Changed most recently
+        empty_text: Text when empty
+      scenes_hint: (none checked = all)
+      show: Show
+      aggregates:
+        count: How many
+        sum: Sum
+        avg: Average
+        min: Minimum
+        max: Maximum
+        last: Point value
+      attribute: Attribute
+      attribute_hint: (optional, instead of the value)
+      attribute_placeholder: phrase
+      color: Color when on
+      colors:
+        accent: Purple (default)
+        amber: Amber (light)
+        green: Green
+        red: Red
+        blue: Blue
+      tap: Tap
+      taps:
+        toggle: Turns on and off / adjusts
+        more_info: Only opens the point
+      forecast: Forecast
+      forecasts:
+        daily: Daily
+        hourly: Hourly
+        none: No forecast
+    w:
+      not_found: Point not found
+      point_removed: Point removed
+      tap_to_run: Tap to run
+      no_signal: No signal
+      no_reading: No reading
+      offline: Offline
+      turn_on: Turn on
+      turn_off: Turn off
+      turn_on_x: Turn on %{name}
+      turn_off_x: Turn off %{name}
+      run_x: Run %{name}
+      press_x: Trigger %{name}
+      details_x: "%{name} details"
+      adjust_x: Adjust %{name}
+      choose_x: Choose %{name}
+      new_value_x: New value for %{name}
+      apply_x: Apply %{name}
+      actions_x: "%{name} actions"
+      vacuum_removed: Vacuum removed
+      battery: Battery
+      vacuum_fault: The vacuum reported an error. Check the Xiaomi app.
+      vacuum_commands: Vacuum commands
+      vac:
+        start: Clean the house
+        resume: Resume
+        pause: Pause
+        stop: Stop
+        home: Back to dock
+        rooms: Rooms
+        clean_selected: Clean selected
+        wash_mop: Wash mop
+        dry_mop: Dry mop
+        empty: Empty bin
+        dock: Dock
+        parts: Parts
+      media: Media
+      controls_x: "%{name} controls"
+      mc:
+        previous: Previous
+        pause: Pause
+        resume: Play
+        next: Next
+        volume_down: Volume down
+        mute: Mute
+        unmute: Unmute
+        volume_up: Volume up
+      volume_x: "%{name} volume"
+      what_to_play: What to play
+      play_hint: URL, playlist or search
+      list: List
+      nothing_now: Nothing here right now.
+      area_removed: Area removed
+      motion: Motion
+      n_on:
+        one: 1 on
+        other: "%{count} on"
+      n_open:
+        one: 1 open
+        other: "%{count} open"
+      n_offline:
+        one: 1 offline
+        other: "%{count} offline"
+      people: People
+      no_people: No people yet. Create one in Helpers → Person.
+      no_people_in: No one in %{zone}. Create people in Helpers → Person.
+      since: since
+      home_count: "%{n} of %{total} at home"
+      at_home: At home
+      away: Away
+      floorplan: Floor plan
+      floors: Floors
+      night_mode: Night mode
+      fp_empty: Floor plan without layers
+      fp_empty_hint: Open the dashboard editor to upload the floor plan image and place the points.
+      open_x: Open %{name}
+      lights_on:
+        one: 1 light on
+        other: "%{count} lights on"
+      plan_x: 'Floor plan: %{name}'
+      camera_removed: Camera removed
+      live: Live
+      image_x: "%{name} image"
+      live_x: "%{name} live"
+      loading: Loading…
+      map: Map
+      open_map: Open the map
+      map_hidden: Your role in this place doesn't show where people are.
+      map_empty: Set the place location or a zone to see the map.
+      history: History
+      on_for_html: On for %{time} in the period.
+      no_readings: No readings in the period.
+      now: now
+      alarm: Alarm
+      pick_alarm: Pick an alarm panel (Helpers → Alarm panel).
+      until: until
+      by: 'By:'
+      code: Code
+      keypad: Keypad
+      backspace: Delete
+      disarm: Disarm
+      alerts: Alerts
+      see_all: See all
+      no_alerts: No open alerts.
+      ago: "%{time} ago"
+      acked: Acknowledged
+      remote: Remote control
+      pick_remote: Pick a remote control point
+      no_buttons: No buttons learned
+      buttons:
+        one: 1 button
+        other: "%{count} buttons"
+      buttons_x: "%{name} buttons"
+      learn_button: Learn a button
+      learn_hint: Type the name, tap Learn and press the button on the original remote pointed at the device (up to 20 s).
+      button_name: Button name
+      button_placeholder: TV on
+      learn: Learn
+      energy_now: Energy now
+      pick_power: Pick the grid or solar power point.
+      ef:
+        home_x: Home using %{power}
+        grid_in_x: grid receiving %{power}
+        grid_out_x: grid supplying %{power}
+        solar_x: solar producing %{power}
+        solar: Solar
+        grid: Grid
+        selling: Selling
+        buying: Buying
+        home: Home
+        charging_x: Charging %{power}
+        using_x: Using %{power}
+        self_share: "%{pct}% of the home off the grid"
+        self_share_now_html: "%{pct} of the home off the grid right now"
+      scene_confirm: Activate the scene %{name}?
+      activate: Activate
+      scene_role: Your role can't activate this scene
+      no_scenes: No scenes yet.
+      by_device: Usage by device
+      no_energy_points: No energy (kWh) or power (W) points in this place.
+      no_usage: No usage recorded in the period.
+      usage_cost: Usage and cost
+      pick_energy: Pick an energy (kWh) or power (W) point.
+      no_tariff: 'No rate: usage only'
+      projection_day: Projected for the day
+      projection_period: Projected for the period
+      previous_period: Previous period, same stretch
+      goal: Goal
+      of_goal: of goal
+      of_goal_projected: of goal (projected)
+      usage_hour: Usage per hour
+      usage_day: Usage per day
+      not_yet: not yet
+      compare: Usage comparison
+      no_compare: no comparison
+      gauge: Gauge
+      weather: Weather
+      pick_weather: Pick the weather point (Weather integration).
+      no_recent: No recent reading
+      wx:
+        feels: Feels like %{v}°
+        humidity: Humidity %{v}%
+        wind: Wind %{v} km/h
+        rain: Rain %{v}%
+        hourly: Hourly forecast
+        daily: Daily forecast
+        today: Today
+    schema:
+      title_required: '%{where}: title is required'
+      sections_list: '%{where}: sections must be a list'
+      widgets_list: '%{where}: widgets must be a list'
+      widget_object: '%{where}: widget must be an object'
+      bind_text: '%{where}: bind must be text'
+      binds_list: '%{where}: binds must be a list of up to 8 points'
+      bad_tap: '%{where}: invalid tap'
+      bad_features: '%{where}: invalid features'
+      bad_aggregate: '%{where}: invalid aggregate'
+      bad_range: '%{where}: invalid range'
+      bad_color: '%{where}: invalid color'
+      live_bool: '%{where}: live must be true or false'
+      snapshot_interval: '%{where}: snapshot_interval must be from 2 to 300 seconds'
+      bad_path: '%{where}: path may only have lowercase letters, numbers and hyphens (up to 40)'
+      dup_path: '%{where}: duplicate path'
+      id_required: '%{where}: id is required (text)'
+      dup_id: '%{where}: duplicate id'
+      span_object: '%{where}: span must be {mobile, tablet, desktop}'
+      visible_object: '%{where}: visible_if must be an object'
+      visible_unknown: '%{where}: visible_if has an unknown key'
+      visible_any_nested: '%{where}: visible_if.any does not accept role or screen'
+      visible_numeric: '%{where}: visible_if.numeric needs {point, above and/or below}'
+      visible_role: '%{where}: invalid visible_if.role'
+      visible_state: '%{where}: visible_if.state needs {point, is}'
+      visible_quality: '%{where}: invalid visible_if.quality'
+      visible_device: '%{where}: visible_if.device must be a list'
+      visible_time: '%{where}: visible_if.time needs {after, before} as HH:MM'
+      query_object: '%{where}: query must be an object'
+      query_unknown: '%{where}: query has an unknown key'
+      query_capability: '%{where}: unknown query.capability'
+      query_state: '%{where}: query.state must be on or off'
+      theme_object: '%{where}: theme must be an object'
+      theme_unknown: '%{where}: theme has an unknown key'
+      theme_image: '%{where}: wallpaper must be an https:// or / link'
+      theme_blur: '%{where}: blur must be from 0 to 40'
+      theme_glass: '%{where}: glass must be true or false'
+      json_object: 'must be a JSON object'
+      too_big: 'exceeds the maximum size (256 KB)'
+      schema_version: 'schema_version must be %{version}'
+      views_list: 'views must be a list with at least one view'
+      at_dashboard: 'dashboard'
+      view_object: 'view %{n} must be an object'
+      at_view: 'view %{id}'
+      at_badge: '%{where} (badge)'
+      section_object: '%{where}: section %{n} must be an object'
+      at_section: 'section %{id}'
+      too_many: 'too many widgets (maximum %{max})'
+      at_widget: 'widget %{id} (%{where})'
+      unknown_type: '%{where}: unknown type %{type}'
+      required: '%{where}: %{prop} is required'
+      number: '%{where}: %{prop} must be a number'
+      span_range: '%{where}: span.%{screen} must be from 1 to 12'
+      visible_screen: '%{where}: visible_if.screen must be a list of %{screens}'
+      visible_any: '%{where}: visible_if.any must be a list of 1 to %{max} conditions (no any inside)'
+      theme_missing: '%{where}: theme %{theme} does not exist'

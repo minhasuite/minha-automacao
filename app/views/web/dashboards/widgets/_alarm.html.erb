@@ -3,8 +3,8 @@
 <% p = points[Array(d["point_ids"]).first] %>
 <div class="dw-card dw-alarm" data-controller="keypad">
   <% if p.nil? %>
-    <p class="dw-card-title"><%= w["label"].presence || "Alarme" %></p>
-    <p class="text-sm text-muted">Escolha um painel de alarme (Helpers → Painel de alarme).</p>
+    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.alarm") %></p>
+    <p class="text-sm text-muted"><%= t("dashboards.w.pick_alarm") %></p>
   <% else %>
     <% state = d["state"].to_s %>
     <% tone = { "triggered" => "dw-alarm-danger", "pending" => "dw-alarm-warn", "arming" => "dw-alarm-warn" }[state] || (d["armed"] ? "dw-alarm-armed" : "dw-alarm-off") %>
@@ -12,20 +12,20 @@
       <span class="dw-alarm-badge <%= tone %>"><%= icon(d["armed"] || state.in?(%w[pending triggered]) ? "lock-closed" : "lock-open") %></span>
       <div class="min-w-0 flex-1">
         <p class="text-sm text-muted truncate"><%= dw_label(w, p) %></p>
-        <p class="font-bold text-ink" aria-live="polite"><%= p["quality"] == "good" ? d["state_text"] : "Sem sinal" %></p>
-        <% if d["until"] && state.in?(%w[arming pending]) %><p class="text-xs text-muted num">até <%= l(Time.zone.parse(d["until"]), format: "%H:%M:%S") %></p><% end %>
-        <% if Array(d["tripped_by"]).any? && state.in?(%w[pending triggered]) %><p class="text-xs text-danger truncate">Por: <%= Array(d["tripped_by"]).join(", ") %></p><% end %>
+        <p class="font-bold text-ink" aria-live="polite"><%= p["quality"] == "good" ? d["state_text"] : t("dashboards.w.no_signal") %></p>
+        <% if d["until"] && state.in?(%w[arming pending]) %><p class="text-xs text-muted num"><%= t("dashboards.w.until") %> <%= l(Time.zone.parse(d["until"]), format: "%H:%M:%S") %></p><% end %>
+        <% if Array(d["tripped_by"]).any? && state.in?(%w[pending triggered]) %><p class="text-xs text-danger truncate"><%= t("dashboards.w.by") %> <%= Array(d["tripped_by"]).join(", ") %></p><% end %>
       </div>
     </div>
     <% if p["can_command"] %>
       <%= form_with url: command_point_path(p["id"]), data: { turbo_frame: (live ? nil : "_top"), action: "turbo:submit-end->keypad#clear" }.compact, class: "mt-3" do %>
         <% if live %><%= hidden_field_tag :dashboard_id, dashboard.id, id: nil %><%= hidden_field_tag :widget_id, w["id"], id: nil %><% end %>
-        <label for="code_<%= w['id'] %>" class="sr-only">Código</label>
+        <label for="code_<%= w['id'] %>" class="sr-only"><%= t("dashboards.w.code") %></label>
         <input type="password" id="code_<%= w['id'] %>" name="value" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="8"
-               class="ss-input num text-center tracking-[.4em] text-lg" placeholder="Código" data-keypad-target="input">
-        <div class="dw-keypad" role="group" aria-label="Teclado">
+               class="ss-input num text-center tracking-[.4em] text-lg" placeholder="<%= t("dashboards.w.code") %>" data-keypad-target="input">
+        <div class="dw-keypad" role="group" aria-label="<%= t("dashboards.w.keypad") %>">
           <% %w[1 2 3 4 5 6 7 8 9].each do |n| %><button type="button" data-action="keypad#press" data-keypad-digit-param="<%= n %>"><%= n %></button><% end %>
-          <button type="button" data-action="keypad#back" aria-label="Apagar"><%= icon("backspace", "size-5") %></button>
+          <button type="button" data-action="keypad#back" aria-label="<%= t("dashboards.w.backspace") %>"><%= icon("backspace", "size-5") %></button>
           <button type="button" data-action="keypad#press" data-keypad-digit-param="0">0</button>
           <span></span>
         </div>
@@ -35,7 +35,7 @@
               <button type="submit" name="command" value="<%= m['command'] %>" class="ss-btn ss-btn-outline ss-btn-sm"><%= m["label"] %></button>
             <% end %>
           <% else %>
-            <button type="submit" name="command" value="disarm" class="ss-btn ss-btn-primary"><%= icon("lock-open", "size-4") %>Desarmar</button>
+            <button type="submit" name="command" value="disarm" class="ss-btn ss-btn-primary"><%= icon("lock-open", "size-4") %><%= t("dashboards.w.disarm") %></button>
           <% end %>
         </div>
       <% end %>

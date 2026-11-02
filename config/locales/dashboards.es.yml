@@ -1,0 +1,547 @@
+# Textos de los paneles (editor, widgets, quiosco, panel listo, panel automático). Clave nueva = en los tres idiomas (spec/i18n_spec.rb lo verifica).
+es:
+  date:
+    formats:
+      ddmm: '%d/%m'
+  activerecord:
+    errors:
+      models:
+        dashboard:
+          attributes:
+            roles:
+              invalid_role: tiene un rol no válido
+  dashboards:
+    cancel: Cancelar
+    save: Guardar
+    copy_name: "%{name} (copia)"
+    kinds:
+      home: Casa
+      plant: Fábrica
+      custom: Personalizado
+    screens:
+      mobile: Celular
+      tablet: Tableta
+      desktop: Computadora
+    periods:
+      today: Hoy
+      week: Semana
+      month: Mes
+      cycle: Ciclo de facturación
+      range: "%{from} al %{to}"
+    flash:
+      created: Panel creado. Arma las vistas y publícalo.
+      saved: Panel guardado.
+      duplicated: Panel duplicado. Ajusta el nombre y las vistas.
+      deleted: Panel eliminado.
+      gone: Ese elemento ya no está en el borrador.
+      bad_image: La imagen debe ser PNG, JPG o WebP de hasta 8 MB.
+      published: Versión %{n} publicada.
+      discarded: Borrador descartado.
+      reverted: La versión %{from} se publicó de nuevo como la %{n}.
+      json_saved: JSON válido, guardado en el borrador.
+      bad_json: 'JSON no válido: %{error}'
+      kiosk: Quiosco configurado en este aparato.
+      preferred: "%{name} ahora abre en tu Inicio."
+      draft_saved: Guardado en el borrador. Publícalo para que todos lo vean.
+      preset_created: Panel "%{name}" creado. Ajústalo en el editor cuando quieras.
+    gen:
+      home: Inicio
+      lights: Luces
+      now: Ahora
+      on_now: Encendidos ahora
+      all_off: Todo apagado.
+      alerts: Alertas
+      energy: Consumo
+      power_24h: Potencia en las últimas 24 h
+      security: Seguridad
+      cameras: Cámaras
+      vacuum: Robot
+      scenes: Escenas
+      areas: Áreas
+      on_badge: encendidos
+      now_badge: ahora
+      no_area: Sin área
+      area_energy: Consumo del área
+    ed:
+      hidden_suffix: " (oculto)"
+      title: Editar %{name}
+      auto_note: 'automático: al publicar, pasa a manual'
+      published: versión %{n} publicada
+      draft_changed: borrador con cambios
+      preview: Vista previa
+      nothing_to_publish: No hay cambios para publicar
+      publish_confirm: ¿Publicar el borrador para todos los que usan este panel?
+      draft_views: Vistas del borrador
+      new_view: Nueva vista
+      view_name: Nombre de la vista
+      view_placeholder: Cocina
+      create: Crear
+      view_label: Vista %{name}
+      view_icon: Ícono de la vista
+      view_path: Dirección de la vista
+      link_name: Nombre en el enlace
+      optional: (opcional)
+      path_placeholder: 'ej.: cocina'
+      path_title: Minúsculas, números y guion
+      path_hint: Para abrir esta vista directo con un enlace corto. Solo minúsculas, números y guion.
+      the_view: la vista %{name}
+      view_theme: Tema de esta vista
+      section_label: Sección %{name}
+      untitled: Sin título
+      widgets:
+        one: 1 widget
+        other: "%{count} widgets"
+      desktop_width: Ancho en la computadora
+      width:
+        full: Completo
+        two_thirds: Dos tercios
+        half: Mitad
+        third: Un tercio
+      the_section: la sección %{name}
+      points:
+        one: 1 punto
+        other: "%{count} puntos"
+      span_title: Ancho en celular / tableta / computadora (de 12)
+      only_roles: solo %{roles}
+      the_widget: el widget
+      empty_section: 'Sección vacía: agrega el primer widget.'
+      add_widget: Agregar widget
+      new_section_name: Nombre de la nueva sección
+      new_section_placeholder: 'Nueva sección (ej.: Luces)'
+      add_section: Agregar sección
+      dashboard: Panel
+      name: Título
+      sidebar: Mostrar en el menú lateral
+      who_sees: Quién lo ve
+      none_all: (ninguno = todos)
+      save_dashboard: Guardar panel
+      appearance: Apariencia
+      appearance_hint: Tema de todo el panel. Cada vista puede tener el suyo.
+      duplicate: Duplicar panel
+      draft: Borrador
+      draft_hint: Los cambios quedan aquí hasta que publiques. Quien usa el panel sigue viendo la versión publicada.
+      json: JSON avanzado
+      discard: Descartar borrador
+      discard_confirm: ¿Descartar los cambios del borrador?
+      versions: Versiones
+      no_versions: Ninguna publicada todavía.
+      no_versions_auto: Ninguna publicada todavía (panel automático).
+      live: Publicada
+      revert: Volver a esta
+      revert_confirm: ¿Publicar de nuevo la versión %{n}?
+      delete_confirm: ¿Eliminar el panel %{name}?
+      delete: Eliminar panel
+    tools:
+      up: Subir %{name}
+      down: Bajar %{name}
+      remove: Quitar %{name}
+      remove_confirm: ¿Quitar %{name} del borrador?
+    le:
+      title: Ordénalo en vivo
+      hint: Arrastra por el asa para cambiar el orden o la sección; tira del borde derecho para el ancho. Se guarda en el borrador al instante.
+      screen: Pantalla para ver y ajustar el ancho
+      empty: Todavía no hay nada que ordenar
+      empty_hint: Crea una sección abajo y agrega el primer widget.
+      drag_section: Arrastrar la sección
+      resize: Tira para cambiar el ancho
+      drag: Arrastrar
+      edit_widget: Editar este widget
+      saved: Guardado en el borrador.
+      failed: No se pudo guardar.
+    theme:
+      theme: Tema
+      empty_inherit: (vacío = el del panel)
+      inherit: Del panel
+      night: De noche (18 h a 6 h)
+      same_day: El mismo del día
+      cards: Tarjetas
+      as_theme: Como el tema
+      glass: Vidrio (esmerilado)
+      solid: Sólidas
+      wallpaper: Fondo de pantalla
+      formats: (PNG, JPG o WebP)
+      remove_wallpaper: Quitar el fondo de pantalla
+      blur: Desenfoque del fondo
+      save: Guardar tema
+    json:
+      title: JSON del borrador
+      subtitle: el mismo formato que lee la app (docs/dashboards.md). Se valida antes de guardar.
+      not_saved: 'El JSON no se guardó:'
+      definition: Definición (schema_version 1)
+      submit: Validar y guardar en el borrador
+    kiosk:
+      fullscreen: Pantalla completa
+      sleep: Protector de pantalla ahora
+      settings: Ajustes de este aparato
+      this_tablet: Esta tableta
+      saver: Protector de pantalla
+      savers:
+        clock: Reloj
+        weather: Reloj y clima
+        cameras: Cámaras
+        photos: Fotos del panel
+        "off": Ninguno
+      idle: Se activa después de (minutos sin uso)
+      motion: Despertar con el movimiento de
+      touch_only: Solo al tocar
+      dim: Oscurecer la pantalla en el protector
+      exit: Salir del quiosco
+      saver_label: 'Protector de pantalla: toca para volver'
+      touch_back: toca para volver
+    presets:
+      subtitle: Elige una plantilla, indica qué puntos usar y el panel nace armado. Después es un panel como cualquier otro.
+      build: Armar
+      title: Panel de %{name}
+      failed: 'No se pudo armar el panel: %{errors}'
+      name: Nombre del panel
+      none: Ninguno
+      no_point: Ningún punto sirve
+      tariff_html: 'Tarifa horaria: crea antes un helper <strong>Tarifa de energía</strong> con las franjas punta e intermedia (Helpers del lugar) y elígelo aquí.'
+    wf:
+      label: Etiqueta
+      label_hint: Usa el nombre del punto
+      point: Punto
+      pick_point: Elige un punto
+      points: Puntos
+      points_hint: (hasta 8; Ctrl/toque para marcar varios; en consumo se suman kWh o W)
+      width: Ancho (de 12 columnas)
+      show_on: Mostrar en
+      show_on_hint: (ninguno marcado = todas las pantallas)
+      who_hint: (ninguno marcado = todos)
+      save: Guardar widget
+      area: Área
+      period: Período
+      ranges:
+        24h: 24 horas
+        7d: 7 días
+        30d: 30 días
+      cycle_day: Día de corte
+      cycle_only: (solo en el ciclo)
+      cycle_placeholder: 1 a 28
+      tariff: Tarifa fija (por kWh)
+      tariff_placeholder: '0.95'
+      use_fixed: Usar la tarifa fija
+      tariff_point: O la tarifa de un punto
+      tariff_point_hint: (helper Número)
+      tariff_point_hint2: (helper Tarifa o Número)
+      goal: Meta (kWh en el período, opcional)
+      compare: Comparar con el período anterior
+      limit: Cuántos aparatos
+      limit_hint: (el resto pasa a "Otros")
+      breakdown_hint: Sin puntos elegidos arriba, entran todos los de energía y potencia del lugar, agrupados por aparato.
+      flow:
+        grid: Red (W o kW; positivo = comprando)
+        solar: Solar (generación)
+        battery: Batería (positivo = descargando)
+        battery_soc: Carga de la batería (%)
+        home: Casa (opcional; sin él, es lo que sobra)
+      none: Ninguno
+      grid_invert: Medidor de la red con el signo invertido
+      battery_invert: Batería con el signo invertido
+      fp:
+        first_layer: Primera capa
+        new_layer: Nueva capa (piso)
+        layer_name: Nombre de la capa
+        layer_placeholder: Planta baja
+        image: Imagen del plano
+        image_hint: (PNG, JPG o WebP, hasta 8 MB)
+        image_url: O enlace de la imagen
+        image_url_hint: (opcional; sin imagen, las habitaciones dibujan el plano)
+        drag_hint: Arrastra los puntos y las habitaciones en el plano. El asa en la esquina de la habitación cambia el tamaño.
+        pins: Puntos en el plano
+        add_pin: Otro punto
+        rooms: Habitaciones
+        rooms_hint: (al tocar se abre el área)
+        add_room: Otra habitación
+        remove_layer: Quitar esta capa
+        remove: Quitar
+        pick_area: Elige el área
+        dims:
+          x: x %
+          y: y %
+          w: ancho %
+          h: alto %
+      min: Mínimo
+      max: Máximo
+      height: Altura (px)
+      track: Mostrar el recorrido del día
+      text: Texto
+      text_hint: '(acepta Liquid: {{ points["clave.del.punto"].text }}, {% if %}; **negrita**, - lista)'
+      q:
+        capability: 'Qué puntos: tipo'
+        any: Cualquiera
+        state: Estado
+        "on": Encendidos / abiertos
+        "off": Apagados / cerrados
+        all: Todas
+        measure: Medición
+        classes:
+          power: Potencia (W)
+          energy: Energía (kWh)
+          temperature: Temperatura
+          humidity: Humedad
+          battery: Batería
+        tag: Etiqueta
+        tag_placeholder: iluminacion
+        unchanged: Sin cambios hace (min)
+        exclude: Dejar fuera nombres con
+        exclude_placeholder: prueba, reserva
+        sort: Orden
+        sorts:
+          name: Nombre
+          value: Menor valor
+          value_desc: Mayor valor
+          oldest: Cambió hace más tiempo
+          newest: Cambió por último
+        empty_text: Texto cuando está vacío
+      scenes_hint: (ninguna marcada = todas)
+      show: Mostrar
+      aggregates:
+        count: Cuántos son
+        sum: Suma
+        avg: Promedio
+        min: Mínimo
+        max: Máximo
+        last: Valor del punto
+      attribute: Atributo
+      attribute_hint: (opcional, en lugar del valor)
+      attribute_placeholder: frase
+      color: Color cuando está encendido
+      colors:
+        accent: Morado (predeterminado)
+        amber: Ámbar (luz)
+        green: Verde
+        red: Rojo
+        blue: Azul
+      tap: Toque
+      taps:
+        toggle: Enciende y apaga / ajusta
+        more_info: Solo abre el punto
+      forecast: Pronóstico
+      forecasts:
+        daily: Por día
+        hourly: Por hora
+        none: Sin pronóstico
+    w:
+      not_found: Punto no encontrado
+      point_removed: Punto eliminado
+      tap_to_run: Toca para ejecutar
+      no_signal: Sin señal
+      no_reading: Sin lectura
+      offline: Sin conexión
+      turn_on: Encender
+      turn_off: Apagar
+      turn_on_x: Encender %{name}
+      turn_off_x: Apagar %{name}
+      run_x: Ejecutar %{name}
+      press_x: Accionar %{name}
+      details_x: Detalles de %{name}
+      adjust_x: Ajustar %{name}
+      choose_x: Elegir %{name}
+      new_value_x: Nuevo valor de %{name}
+      apply_x: Aplicar %{name}
+      actions_x: Acciones de %{name}
+      vacuum_removed: Robot eliminado
+      battery: Batería
+      vacuum_fault: El robot avisó un error. Revisa la app de Xiaomi.
+      vacuum_commands: Comandos del robot
+      vac:
+        start: Limpiar la casa
+        resume: Continuar
+        pause: Pausar
+        stop: Detener
+        home: Volver a la base
+        rooms: Habitaciones
+        clean_selected: Limpiar seleccionadas
+        wash_mop: Lavar mopa
+        dry_mop: Secar mopa
+        empty: Vaciar
+        dock: Base
+        parts: Piezas
+      media: Multimedia
+      controls_x: Controles de %{name}
+      mc:
+        previous: Anterior
+        pause: Pausar
+        resume: Reproducir
+        next: Siguiente
+        volume_down: Bajar volumen
+        mute: Silenciar
+        unmute: Quitar silencio
+        volume_up: Subir volumen
+      volume_x: Volumen de %{name}
+      what_to_play: Qué reproducir
+      play_hint: Dirección, lista o búsqueda
+      list: Lista
+      nothing_now: Nada por aquí ahora.
+      area_removed: Área eliminada
+      motion: Movimiento
+      n_on:
+        one: 1 encendido
+        other: "%{count} encendidos"
+      n_open:
+        one: 1 abierto
+        other: "%{count} abiertos"
+      n_offline:
+        one: 1 sin señal
+        other: "%{count} sin señal"
+      people: Personas
+      no_people: Ninguna persona. Créala en Helpers → Persona.
+      no_people_in: Ninguna persona en %{zone}. Créalas en Helpers → Persona.
+      since: desde
+      home_count: "%{n} de %{total} en casa"
+      at_home: En casa
+      away: Fuera de casa
+      floorplan: Plano
+      floors: Pisos
+      night_mode: Modo noche
+      fp_empty: Plano sin capas
+      fp_empty_hint: Abre el editor del panel para subir la imagen del plano y ubicar los puntos.
+      open_x: Abrir %{name}
+      lights_on:
+        one: 1 luz encendida
+        other: "%{count} luces encendidas"
+      plan_x: 'Plano: %{name}'
+      camera_removed: Cámara eliminada
+      live: En vivo
+      image_x: Imagen de %{name}
+      live_x: "%{name} en vivo"
+      loading: Cargando…
+      map: Mapa
+      open_map: Abrir el mapa
+      map_hidden: Tu rol en este lugar no muestra dónde están las personas.
+      map_empty: Registra la ubicación del lugar o una zona para ver el mapa.
+      history: Historial
+      on_for_html: Encendido durante %{time} en el período.
+      no_readings: Sin lecturas en el período.
+      now: ahora
+      alarm: Alarma
+      pick_alarm: Elige un panel de alarma (Helpers → Panel de alarma).
+      until: hasta
+      by: 'Por:'
+      code: Código
+      keypad: Teclado
+      backspace: Borrar
+      disarm: Desarmar
+      alerts: Alertas
+      see_all: Ver todas
+      no_alerts: Ninguna alerta abierta.
+      ago: hace %{time}
+      acked: Visto
+      remote: Control remoto
+      pick_remote: Elige un punto de control remoto
+      no_buttons: Ningún botón aprendido
+      buttons:
+        one: 1 botón
+        other: "%{count} botones"
+      buttons_x: Botones de %{name}
+      learn_button: Aprender botón
+      learn_hint: Escribe el nombre, toca Aprender y presiona el botón del control original apuntando al aparato (hasta 20 s).
+      button_name: Nombre del botón
+      button_placeholder: Encender TV
+      learn: Aprender
+      energy_now: Energía ahora
+      pick_power: Elige el punto de potencia de la red o de la solar.
+      ef:
+        home_x: Casa consumiendo %{power}
+        grid_in_x: red recibiendo %{power}
+        grid_out_x: red suministrando %{power}
+        solar_x: solar generando %{power}
+        solar: Solar
+        grid: Red
+        selling: Vendiendo
+        buying: Comprando
+        home: Casa
+        charging_x: Cargando %{power}
+        using_x: Usando %{power}
+        self_share: "%{pct}% de la casa sin la red"
+        self_share_now_html: "%{pct} de la casa sin la red ahora"
+      scene_confirm: ¿Activar la escena %{name}?
+      activate: Activar
+      scene_role: Tu rol no activa esta escena
+      no_scenes: Ninguna escena creada.
+      by_device: Consumo por aparato
+      no_energy_points: Ningún punto de energía (kWh) o potencia (W) en el lugar.
+      no_usage: Sin consumo registrado en el período.
+      usage_cost: Consumo y costo
+      pick_energy: Elige un punto de energía (kWh) o de potencia (W).
+      no_tariff: 'Sin tarifa: solo el consumo'
+      projection_day: Proyección del día
+      projection_period: Proyección del período
+      previous_period: Período anterior, mismo tramo
+      goal: Meta
+      of_goal: de la meta
+      of_goal_projected: de la meta (proyección)
+      usage_hour: Consumo por hora
+      usage_day: Consumo por día
+      not_yet: todavía no
+      compare: Comparación de consumo
+      no_compare: sin comparación
+      gauge: Indicador
+      weather: Clima
+      pick_weather: Elige el punto de clima (integración Clima).
+      no_recent: Sin lectura reciente
+      wx:
+        feels: Sensación %{v}°
+        humidity: Humedad %{v}%
+        wind: Viento %{v} km/h
+        rain: Lluvia %{v}%
+        hourly: Pronóstico por hora
+        daily: Pronóstico por día
+        today: Hoy
+    schema:
+      title_required: '%{where}: el título es obligatorio'
+      sections_list: '%{where}: sections debe ser una lista'
+      widgets_list: '%{where}: widgets debe ser una lista'
+      widget_object: '%{where}: widget debe ser un objeto'
+      bind_text: '%{where}: bind debe ser texto'
+      binds_list: '%{where}: binds debe ser una lista de hasta 8 puntos'
+      bad_tap: '%{where}: tap no válido'
+      bad_features: '%{where}: features no válidas'
+      bad_aggregate: '%{where}: aggregate no válido'
+      bad_range: '%{where}: range no válido'
+      bad_color: '%{where}: color no válido'
+      live_bool: '%{where}: live debe ser true o false'
+      snapshot_interval: '%{where}: snapshot_interval debe ser de 2 a 300 segundos'
+      bad_path: '%{where}: la ruta solo admite minúsculas, números y guion (hasta 40)'
+      dup_path: '%{where}: ruta repetida'
+      id_required: '%{where}: el id es obligatorio (texto)'
+      dup_id: '%{where}: id repetido'
+      span_object: '%{where}: span debe ser {mobile, tablet, desktop}'
+      visible_object: '%{where}: visible_if debe ser un objeto'
+      visible_unknown: '%{where}: visible_if tiene una clave desconocida'
+      visible_any_nested: '%{where}: visible_if.any no acepta role ni screen'
+      visible_numeric: '%{where}: visible_if.numeric necesita {point, above y/o below}'
+      visible_role: '%{where}: visible_if.role no válido'
+      visible_state: '%{where}: visible_if.state necesita {point, is}'
+      visible_quality: '%{where}: visible_if.quality no válido'
+      visible_device: '%{where}: visible_if.device debe ser una lista'
+      visible_time: '%{where}: visible_if.time necesita {after, before} en HH:MM'
+      query_object: '%{where}: query debe ser un objeto'
+      query_unknown: '%{where}: query tiene una clave desconocida'
+      query_capability: '%{where}: query.capability desconocida'
+      query_state: '%{where}: query.state debe ser on u off'
+      theme_object: '%{where}: theme debe ser un objeto'
+      theme_unknown: '%{where}: theme tiene una clave desconocida'
+      theme_image: '%{where}: el fondo de pantalla debe ser un enlace https:// o /'
+      theme_blur: '%{where}: blur debe ser de 0 a 40'
+      theme_glass: '%{where}: glass debe ser true o false'
+      json_object: 'debe ser un objeto JSON'
+      too_big: 'supera el tamaño máximo (256 KB)'
+      schema_version: 'schema_version debe ser %{version}'
+      views_list: 'views debe ser una lista con al menos una vista'
+      at_dashboard: 'panel'
+      view_object: 'la vista %{n} debe ser un objeto'
+      at_view: 'vista %{id}'
+      at_badge: '%{where} (insignia)'
+      section_object: '%{where}: la sección %{n} debe ser un objeto'
+      at_section: 'sección %{id}'
+      too_many: 'demasiados widgets (máximo %{max})'
+      at_widget: 'widget %{id} (%{where})'
+      unknown_type: '%{where}: tipo desconocido %{type}'
+      required: '%{where}: %{prop} es obligatorio'
+      number: '%{where}: %{prop} debe ser un número'
+      span_range: '%{where}: span.%{screen} debe ser de 1 a 12'
+      visible_screen: '%{where}: visible_if.screen debe ser una lista de %{screens}'
+      visible_any: '%{where}: visible_if.any debe ser una lista de 1 a %{max} condiciones (sin any dentro)'
+      theme_missing: '%{where}: el tema %{theme} no existe'

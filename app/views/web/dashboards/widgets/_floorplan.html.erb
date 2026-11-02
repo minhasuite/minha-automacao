@@ -3,30 +3,30 @@
 <% uid = w["id"] %>
 <div class="dw-card dw-fp" data-controller="floorplan" data-floorplan-key-value="<%= uid %>">
   <div class="dw-fp-head">
-    <p class="dw-card-title flex items-center gap-2 min-w-0"><%= icon(w["icon"].presence || "map", "size-4 text-accent shrink-0") %><span class="truncate"><%= w["label"].presence || "Planta" %></span></p>
+    <p class="dw-card-title flex items-center gap-2 min-w-0"><%= icon(w["icon"].presence || "map", "size-4 text-accent shrink-0") %><span class="truncate"><%= w["label"].presence || t("dashboards.w.floorplan") %></span></p>
     <% if layers.size > 1 %>
-      <div class="dw-fp-tabs" role="tablist" aria-label="Andares">
+      <div class="dw-fp-tabs" role="tablist" aria-label="<%= t("dashboards.w.floors") %>">
         <% layers.each_with_index do |l, i| %>
           <button type="button" role="tab" id="fpt-<%= uid %>-<%= i %>" aria-controls="fpl-<%= uid %>-<%= i %>" aria-selected="<%= i.zero? %>" class="dw-fp-tab"
                   data-floorplan-target="tab" data-action="floorplan#show" data-floorplan-index-param="<%= i %>"><%= l["title"] %></button>
         <% end %>
       </div>
     <% end %>
-    <button type="button" class="dw-fp-night-btn" data-action="floorplan#night" data-floorplan-target="nightButton" aria-pressed="false" title="Modo noite">
-      <%= icon("moon", "size-4") %><span class="sr-only">Modo noite</span>
+    <button type="button" class="dw-fp-night-btn" data-action="floorplan#night" data-floorplan-target="nightButton" aria-pressed="false" title="<%= t("dashboards.w.night_mode") %>">
+      <%= icon("moon", "size-4") %><span class="sr-only"><%= t("dashboards.w.night_mode") %></span>
     </button>
   </div>
   <% if layers.empty? %>
-    <%= render "web/shared/empty_art", art: "plan", title: "Planta sem camadas", text: "Abra o editor do painel para enviar a imagem da planta e posicionar os pontos." %>
+    <%= render "web/shared/empty_art", art: "plan", title: t("dashboards.w.fp_empty"), text: t("dashboards.w.fp_empty_hint") %>
   <% end %>
   <% layers.each_with_index do |l, i| %>
     <div class="dw-fp-layer" id="fpl-<%= uid %>-<%= i %>" role="<%= 'tabpanel' if layers.size > 1 %>" aria-labelledby="<%= "fpt-#{uid}-#{i}" if layers.size > 1 %>" data-floorplan-target="layer"<%= " hidden" unless i.zero? %>>
       <div class="dw-fp-stage <%= 'dw-fp-drawn' if l['image'].blank? %>">
-        <% if l["image"].present? %><img src="<%= l['image'] %>" alt="Planta: <%= l['title'] %>" class="dw-fp-img" loading="lazy" decoding="async"><% end %>
+        <% if l["image"].present? %><img src="<%= l['image'] %>" alt="<%= t("dashboards.w.plan_x", name: l['title']) %>" class="dw-fp-img" loading="lazy" decoding="async"><% end %>
         <% l["rooms"].each do |room| %>
           <% target = room["view_id"] ? dw_view_path(dashboard, { "id" => room["view_id"] }, home: @home) : area_path(room["area_id"]) %>
           <%= link_to target, class: "dw-fp-room #{'dw-fp-room-on' if room['on'].positive?}", style: "left: #{room['x']}%; top: #{room['y']}%; width: #{room['w']}%; height: #{room['h']}%",
-                              data: { turbo_frame: "_top" }, "aria-label": "Abrir #{room['name']}#{" (#{room['on']} #{room['on'] == 1 ? 'luz acesa' : 'luzes acesas'})" if room['on'].positive?}" do %>
+                              data: { turbo_frame: "_top" }, "aria-label": t("dashboards.w.open_x", name: room['name']) + (room['on'].positive? ? " (#{t("dashboards.w.lights_on", count: room['on'])})" : "") do %>
             <span class="dw-fp-room-name"><%= room["name"] %></span>
           <% end %>
         <% end %>
@@ -39,11 +39,11 @@
           <% alert = on && p["capability"].in?(%w[motion contact gate tamper problem]) %>
           <% css = [ "dw-fp-pin", ("dw-on" if on), ("dw-fp-light" if light), ("dw-fp-alert" if alert), ("dw-fp-fan" if dw_fan?(p) && on), ("dw-unavailable" if off_line) ].compact.join(" ") %>
           <% style = [ ("--glow: #{glow}" if glow), (dw_spin_style(p) if dw_fan?(p)) ].compact.join("; ") %>
-          <% label = "#{dw_row_names(p).first}: #{off_line ? 'sem sinal' : p['text']}" %>
+          <% label = "#{dw_row_names(p).first}: #{off_line ? t("dashboards.w.no_signal").downcase : p['text']}" %>
           <span class="dw-fp-at" style="left: <%= pin['x'] %>%; top: <%= pin['y'] %>%">
             <% if p["can_command"] && !off_line && Array(p["commands"]).include?("toggle") %>
               <%= dw_command_button(p, "toggle", w: w, dashboard: dashboard, live: live, class: css, style: style, form_class: "contents", "aria-pressed": p["on"].to_s,
-                                    "aria-label": "#{p['on'] ? 'Desligar' : 'Ligar'} #{dw_row_names(p).first}", title: label) do %><%= icon(p["display_icon"], "size-4") %><% end %>
+                                    "aria-label": t(p['on'] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: dw_row_names(p).first), title: label) do %><%= icon(p["display_icon"], "size-4") %><% end %>
             <% else %>
               <%= link_to point_path(p["id"]), class: css, style: style, title: label, "aria-label": label, data: { turbo_frame: "_top" } do %><%= icon(p["display_icon"], "size-4") %><% end %>
             <% end %>

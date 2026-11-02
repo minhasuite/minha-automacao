@@ -3,13 +3,13 @@
 <% people = Array(d["people"]) %>
 <div class="dw-card">
   <div class="flex items-center justify-between gap-2">
-    <p class="dw-card-title"><%= w["label"].presence || "Pessoas" %></p>
-    <% if people.any? %><span class="text-xs text-muted num"><%= d["home_count"] %> de <%= people.size %> em casa</span><% end %>
+    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.people") %></p>
+    <% if people.any? %><span class="text-xs text-muted num"><%= t("dashboards.w.home_count", n: d["home_count"], total: people.size) %></span><% end %>
   </div>
   <% if people.empty? %>
-    <p class="text-sm text-muted">Nenhuma pessoa<%= " em #{w['zone']}" if w["zone"].present? %>. Crie em Helpers → Pessoa.</p>
+    <p class="text-sm text-muted"><%= w["zone"].present? ? t("dashboards.w.no_people_in", zone: w["zone"]) : t("dashboards.w.no_people") %></p>
   <% else %>
-    <ul class="dw-people" aria-label="Pessoas">
+    <ul class="dw-people" aria-label="<%= t("dashboards.w.people") %>">
       <% people.each do |p| %>
         <% off = p["quality"] != "good" %>
         <li>
@@ -17,10 +17,10 @@
           <span class="min-w-0 flex-1">
             <%= link_to p["name"], point_path(p["id"]), class: "block font-semibold text-ink truncate no-underline hover:text-accent", data: { turbo_frame: "_top" } %>
             <span class="block text-xs text-muted truncate">
-              <%= off ? "Sem sinal" : (p["zone"].presence || "Sem leitura") %><% if p["since"] && !off %> · desde <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %>
+              <%= off ? t("dashboards.w.no_signal") : (p["zone"].presence || t("dashboards.w.no_reading")) %><% if p["since"] && !off %> · <%= t("dashboards.w.since") %> <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %>
             </span>
           </span>
-          <span class="dw-dot <%= off ? 'dw-dot-off' : (p['home'] ? 'dw-dot-home' : 'dw-dot-away') %>" title="<%= p['home'] ? 'Em casa' : 'Fora de casa' %>"></span>
+          <span class="dw-dot <%= off ? 'dw-dot-off' : (p['home'] ? 'dw-dot-home' : 'dw-dot-away') %>" title="<%= p['home'] ? t("dashboards.w.at_home") : t("dashboards.w.away") %>"></span>
         </li>
       <% end %>
     </ul>

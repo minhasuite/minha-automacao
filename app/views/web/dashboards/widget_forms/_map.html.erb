@@ -1,4 +1,4 @@
 <%# locals: (w:, uid:, types:, **) -%>
-<div data-for="<%= types %>"><label class="ss-label" for="mh-<%= uid %>">Altura (px)</label>
+<div data-for="<%= types %>"><label class="ss-label" for="mh-<%= uid %>"><%= t("dashboards.wf.height") %></label>
   <%= number_field_tag "widget[height]", w["height"], in: 180..800, class: "ss-input num", id: "mh-#{uid}", placeholder: "320" %></div>
-<div data-for="<%= types %>" class="flex items-end"><label class="ss-check"><%= hidden_field_tag "widget[track]", "0", id: nil %><%= check_box_tag "widget[track]", "1", w["track"] != false, id: "mt-#{uid}" %>Mostrar o trajeto do dia</label></div>
+<div data-for="<%= types %>" class="flex items-end"><label class="ss-check"><%= hidden_field_tag "widget[track]", "0", id: nil %><%= check_box_tag "widget[track]", "1", w["track"] != false, id: "mt-#{uid}" %><%= t("dashboards.wf.track") %></label></div>

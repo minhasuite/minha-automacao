@@ -4,6 +4,8 @@ module Dashboards
     # `aggregate`; com `bind` e `attribute` (Lote 5), o atributo do ponto.
     class StatWidget < Base
       describe type: "stat", label: "Contador / número", icon: "calculator", params: %w[aggregate attribute], bind: true
+      texts en: { label: "Counter / number" },
+            es: { label: "Contador / número" }
 
       def self.errors(w) = w["bind"].blank? && w["query"].blank? ? [ "stat precisa de bind ou query" ] : []
 
@@ -21,17 +23,17 @@ module Dashboards
         else list.first&.value
         end
         unit = agg == "count" ? nil : list.filter_map(&:unit).first
-        text = w["attribute"].present? && agg == "last" ? list.first&.attrs.to_h[w["attribute"]].to_s.presence || "—" : text(value, unit, agg, list.first)
+        text = w["attribute"].present? && agg == "last" ? list.first&.attrs.to_h[w["attribute"]].to_s.presence || "—" : value_text(value, unit, agg, list.first)
         [ { "value" => value, "unit" => unit, "text" => text, "point_ids" => list.first(Resolver::LIST_LIMIT).map(&:id) },
           w["query"] ? r.query(w["query"], with_state: false) : [] ]
       end
 
-      def self.text(value, unit, agg, first)
+      def self.value_text(value, unit, agg, first)
         helpers = ApplicationController.helpers
         return helpers.point_value_text(first) if agg == "last" && first
         return "—" if value.nil?
 
-        [ helpers.number_with_precision(value, precision: 1, strip_insignificant_zeros: true, delimiter: "."), unit ].compact.join(" ")
+        [ helpers.number_with_precision(value, precision: 1, strip_insignificant_zeros: true, delimiter: I18n.t("number.format.delimiter")), unit ].compact.join(" ")
       end
 
       def self.attrs(p, _site = nil)

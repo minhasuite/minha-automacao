@@ -2,7 +2,7 @@
 <% d = w["data"] %>
 <% p = points[d["point_ids"].first] %>
 <% if p.nil? %>
-  <div class="dw-card dw-tile dw-unavailable"><span class="dw-ico"><%= icon("vacuum") %></span><span><span class="dw-name"><%= w["label"].presence || "Robô removido" %></span><span class="dw-state">Ponto não encontrado</span></span></div>
+  <div class="dw-card dw-tile dw-unavailable"><span class="dw-ico"><%= icon("vacuum") %></span><span><span class="dw-name"><%= w["label"].presence || t("dashboards.w.vacuum_removed") %></span><span class="dw-state"><%= t("dashboards.w.not_found") %></span></span></div>
 <% else %>
   <% off_line = p["quality"] != "good" %>
   <% detail = points[d["detail"]] %>
@@ -16,10 +16,10 @@
       <span class="dw-ico"><%= icon(w["icon"].presence || "vacuum") %></span>
       <%= link_to point_path(p["id"]), class: "min-w-0 flex-1 no-underline", data: { turbo_frame: "_top" } do %>
         <span class="dw-name"><%= w["label"].presence || p["device"] %></span>
-        <span class="dw-state"><%= off_line ? "Sem conexão" : [ p["text"], (detail["text"] if detail && detail["text"] != p["text"]) ].compact.uniq.join(" · ") %></span>
+        <span class="dw-state"><%= off_line ? t("dashboards.w.offline") : [ p["text"], (detail["text"] if detail && detail["text"] != p["text"]) ].compact.uniq.join(" · ") %></span>
       <% end %>
       <% if battery && battery["value"].is_a?(Numeric) %>
-        <span class="dw-vac-battery num" title="Bateria"><%= battery["text"] %></span>
+        <span class="dw-vac-battery num" title="<%= t("dashboards.w.battery") %>"><%= battery["text"] %></span>
       <% end %>
     </div>
     <% if busy && !off_line %>
@@ -29,12 +29,12 @@
       </div>
     <% end %>
     <% if fault && fault["value"] == true && !off_line %>
-      <p class="dw-vac-alert" role="status"><%= icon("exclamation-circle", "size-4") %>O robô avisou um erro. Veja no app da Xiaomi.</p>
+      <p class="dw-vac-alert" role="status"><%= icon("exclamation-circle", "size-4") %><%= t("dashboards.w.vacuum_fault") %></p>
     <% end %>
 
     <% if can %>
-      <div class="dw-vac-actions" role="group" aria-label="Comandos do robô">
-        <% [ [ "start", p["value"] == "paused" ? "Continuar" : "Limpar a casa", "play" ], [ "pause", "Pausar", "pause" ], [ "stop", "Parar", "stop" ], [ "home", "Voltar à base", "home" ] ].each do |cmd, label, ico| %>
+      <div class="dw-vac-actions" role="group" aria-label="<%= t("dashboards.w.vacuum_commands") %>">
+        <% [ [ "start", p["value"] == "paused" ? t("dashboards.w.vac.resume") : t("dashboards.w.vac.start"), "play" ], [ "pause", t("dashboards.w.vac.pause"), "pause" ], [ "stop", t("dashboards.w.vac.stop"), "stop" ], [ "home", t("dashboards.w.vac.home"), "home" ] ].each do |cmd, label, ico| %>
           <% next unless d["actions"].include?(cmd) %>
           <%= dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "dw-vac-btn #{'dw-vac-main' if cmd == 'start'}", "aria-label": label) do %><%= icon(ico, "size-4") %><span><%= label %></span><% end %>
         <% end %>
@@ -44,7 +44,7 @@
     <% if d["rooms"].any? %>
       <%= dw_command_form(p, "clean_rooms", w: w, dashboard: dashboard, live: live) do %>
         <fieldset>
-          <legend class="dw-vac-title">Cômodos</legend>
+          <legend class="dw-vac-title"><%= t("dashboards.w.vac.rooms") %></legend>
           <div class="dw-vac-rooms">
             <% d["rooms"].each do |r| %>
               <label class="dw-vac-room"><input type="checkbox" name="value[rooms][]" value="<%= r['id'] %>" <%= 'disabled' unless can %>><span><%= r["name"] %></span></label>
@@ -63,14 +63,14 @@
           </div>
         <% end %>
         <% if can %>
-          <button type="submit" class="ss-btn ss-btn-primary w-full mt-3"><%= icon("play", "size-4") %>Limpar selecionados</button>
+          <button type="submit" class="ss-btn ss-btn-primary w-full mt-3"><%= icon("play", "size-4") %><%= t("dashboards.w.vac.clean_selected") %></button>
         <% end %>
       <% end %>
     <% end %>
 
-    <% base = [ [ "wash_mop", "Lavar pano" ], [ "dry_mop", "Secar pano" ], [ "empty", "Esvaziar" ] ].select { |cmd, _| d["actions"].include?(cmd) } %>
+    <% base = [ [ "wash_mop", t("dashboards.w.vac.wash_mop") ], [ "dry_mop", t("dashboards.w.vac.dry_mop") ], [ "empty", t("dashboards.w.vac.empty") ] ].select { |cmd, _| d["actions"].include?(cmd) } %>
     <% if can && base.any? %>
-      <p class="dw-vac-title mt-4">Base</p>
+      <p class="dw-vac-title mt-4"><%= t("dashboards.w.vac.dock") %></p>
       <div class="dw-vac-actions">
         <% base.each do |cmd, label| %>
           <%= dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "dw-vac-btn") do %><span><%= label %></span><% end %>
@@ -80,7 +80,7 @@
 
     <% parts = d["parts"].filter_map { |id| points[id] } %>
     <% if parts.any? %>
-      <p class="dw-vac-title mt-4">Peças</p>
+      <p class="dw-vac-title mt-4"><%= t("dashboards.w.vac.parts") %></p>
       <ul class="dw-vac-parts">
         <% parts.each do |part| %>
           <% pct = part["value"].is_a?(Numeric) ? part["value"].clamp(0, 100) : nil %>

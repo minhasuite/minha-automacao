@@ -5,11 +5,14 @@ module Dashboards
     # (Maps::MIN_ROLE) recebe só o aviso, sem coordenada nenhuma no JSON.
     class MapWidget < Base
       describe type: "map", label: "Mapa", icon: "map", params: %w[track height]
+      texts en: { "label" => "Map", "bad_track" => "track must be true or false", "bad_height" => "height must be from 180 to 800" },
+            es: { "label" => "Mapa", "bad_track" => "track debe ser true o false", "bad_height" => "height debe ser de 180 a 800" },
+            "pt-BR" => { "bad_track" => "track precisa ser true ou false", "bad_height" => "height precisa ser de 180 a 800" }
 
       def self.errors(w)
         e = []
-        e << "track precisa ser true ou false" if w.key?("track") && ![ true, false ].include?(w["track"])
-        e << "height precisa ser de 180 a 800" if w.key?("height") && !(w["height"].is_a?(Integer) && w["height"].between?(180, 800))
+        e << text(:bad_track) if w.key?("track") && ![ true, false ].include?(w["track"])
+        e << text(:bad_height) if w.key?("height") && !(w["height"].is_a?(Integer) && w["height"].between?(180, 800))
         e
       end
 

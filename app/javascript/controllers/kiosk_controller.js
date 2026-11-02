@@ -76,8 +76,8 @@ export default class extends Controller {
 
   clock() {
     const now = new Date()
-    this.clockTarget.textContent = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-    this.dateTarget.textContent = now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })
+    this.clockTarget.textContent = now.toLocaleTimeString(document.documentElement.lang || "pt-BR", { hour: "2-digit", minute: "2-digit" })
+    this.dateTarget.textContent = now.toLocaleDateString(document.documentElement.lang || "pt-BR", { weekday: "long", day: "numeric", month: "long" })
   }
 
   async lock() {

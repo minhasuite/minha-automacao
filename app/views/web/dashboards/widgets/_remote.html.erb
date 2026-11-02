@@ -2,7 +2,7 @@
 <% d = w["data"] %>
 <% p = points[Array(d["point_ids"]).first] %>
 <% if p.nil? %>
-  <div class="dw-card dw-tile dw-unavailable"><span class="dw-ico"><%= icon("status-online") %></span><span><span class="dw-name"><%= w["label"].presence || "Controle remoto" %></span><span class="dw-state">Escolha um ponto de controle remoto</span></span></div>
+  <div class="dw-card dw-tile dw-unavailable"><span class="dw-ico"><%= icon("status-online") %></span><span><span class="dw-name"><%= w["label"].presence || t("dashboards.w.remote") %></span><span class="dw-state"><%= t("dashboards.w.pick_remote") %></span></span></div>
 <% else %>
   <% off_line = p["quality"].in?(%w[unavailable error]) %>
   <% can = p["can_command"] && !off_line %>
@@ -11,11 +11,11 @@
       <span class="dw-ico"><%= icon(w["icon"].presence || "status-online") %></span>
       <%= link_to point_path(p["id"]), class: "min-w-0 flex-1 no-underline", data: { turbo_frame: "_top" } do %>
         <span class="dw-name"><%= dw_label(w, p) %></span>
-        <span class="dw-state"><%= off_line ? "Sem conexão" : (d["buttons"].empty? ? "Nenhum botão aprendido" : "#{d['buttons'].size} botão(ões)") %></span>
+        <span class="dw-state"><%= off_line ? t("dashboards.w.offline") : (d["buttons"].empty? ? t("dashboards.w.no_buttons") : t("dashboards.w.buttons", count: d['buttons'].size)) %></span>
       <% end %>
     </div>
     <% if d["buttons"].any? %>
-      <div class="dw-media-keys" role="group" aria-label="Botões de <%= p['name'] %>">
+      <div class="dw-media-keys" role="group" aria-label="<%= t("dashboards.w.buttons_x", name: p['name']) %>">
         <% d["buttons"].each do |name| %>
           <%= dw_command_button(p, "send", value: name, w: w, dashboard: dashboard, live: live, class: "dw-vac-btn", disabled: !can) do %><span class="truncate"><%= name %></span><% end %>
         <% end %>
@@ -23,12 +23,12 @@
     <% end %>
     <% if can && d["learn"] %>
       <details class="mt-3">
-        <summary class="text-sm font-semibold text-accent cursor-pointer">Aprender botão</summary>
+        <summary class="text-sm font-semibold text-accent cursor-pointer"><%= t("dashboards.w.learn_button") %></summary>
         <%= dw_command_form(p, "learn", w: w, dashboard: dashboard, live: live) do %>
-          <p class="text-xs text-muted mb-2">Escreva o nome, toque em Aprender e aperte o botão do controle original apontado para o aparelho (até 20 s).</p>
-          <div class="flex gap-2"><label for="rl-<%= w['id'] %>" class="sr-only">Nome do botão</label>
-            <input id="rl-<%= w['id'] %>" type="text" name="value" class="ss-input flex-1 min-w-0" maxlength="60" placeholder="Ligar TV" required>
-            <button class="ss-btn ss-btn-outline" type="submit">Aprender</button></div>
+          <p class="text-xs text-muted mb-2"><%= t("dashboards.w.learn_hint") %></p>
+          <div class="flex gap-2"><label for="rl-<%= w['id'] %>" class="sr-only"><%= t("dashboards.w.button_name") %></label>
+            <input id="rl-<%= w['id'] %>" type="text" name="value" class="ss-input flex-1 min-w-0" maxlength="60" placeholder="<%= t("dashboards.w.button_placeholder") %>" required>
+            <button class="ss-btn ss-btn-outline" type="submit"><%= t("dashboards.w.learn") %></button></div>
         <% end %>
       </details>
     <% end %>

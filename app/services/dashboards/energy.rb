@@ -11,7 +11,7 @@ module Dashboards
   # ponytail: a média de potência da hora não é ponderada pelo tempo (como o
   # RollupReadingsJob) e a projeção é linear; refinar se o erro incomodar.
   class Energy
-    PERIODS = { "today" => "Hoje", "week" => "Semana", "month" => "Mês", "cycle" => "Ciclo de faturamento" }.freeze
+    PERIODS = %w[today week month cycle].index_with { |k| k }.freeze
 
     def self.energy?(p) = p.unit.to_s.match?(/\A(k?Wh)\z/i) || p.device_class == "energy"
     def self.power?(p) = p.unit.to_s.match?(/\Ak?W\z/i) || p.device_class == "power"
@@ -67,9 +67,9 @@ module Dashboards
     end
 
     def period_label(from, to)
-      return "Hoje" if period == "today"
+      return I18n.t("dashboards.periods.today") if period == "today"
 
-      "#{I18n.l(from.to_date, format: '%d/%m')} a #{I18n.l((to - 1.day).to_date, format: '%d/%m')}"
+      I18n.t("dashboards.periods.range", from: I18n.l(from.to_date, format: :ddmm), to: I18n.l((to - 1.day).to_date, format: :ddmm))
     end
 
     # Mesmo trecho do período anterior (do início até o mesmo tempo decorrido).

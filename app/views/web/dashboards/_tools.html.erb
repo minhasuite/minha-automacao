@@ -1,7 +1,7 @@
 <%# locals: (dashboard:, kind:, target:, view_id:, name:) -%>
 <div class="flex items-center gap-1 shrink-0">
-  <% [ [ "up", "chevron-up", "Subir" ], [ "down", "chevron-down", "Descer" ] ].each do |dir, ico, verb| %>
-    <%= button_to draft_dashboard_path(dashboard), method: :patch, params: { op: "move", kind: kind, target: target, dir: dir, view_id: view_id }, class: "dw-tool", title: "#{verb} #{name}", "aria-label": "#{verb} #{name}" do %><%= icon(ico, "size-4") %><% end %>
+  <% [ [ "up", "chevron-up" ], [ "down", "chevron-down" ] ].each do |dir, ico| %><% label = t("dashboards.tools.#{dir}", name: name) %>
+    <%= button_to draft_dashboard_path(dashboard), method: :patch, params: { op: "move", kind: kind, target: target, dir: dir, view_id: view_id }, class: "dw-tool", title: label, "aria-label": label do %><%= icon(ico, "size-4") %><% end %>
   <% end %>
-  <%= button_to draft_dashboard_path(dashboard), method: :patch, params: { op: "remove", kind: kind, target: target, view_id: view_id }, class: "dw-tool dw-tool-danger", title: "Remover #{name}", "aria-label": "Remover #{name}", form: { data: { turbo_confirm: "Remover #{name} do rascunho?" } } do %><%= icon("trash", "size-4") %><% end %>
+  <%= button_to draft_dashboard_path(dashboard), method: :patch, params: { op: "remove", kind: kind, target: target, view_id: view_id }, class: "dw-tool dw-tool-danger", title: t("dashboards.tools.remove", name: name), "aria-label": t("dashboards.tools.remove", name: name), form: { data: { turbo_confirm: t("dashboards.tools.remove_confirm", name: name) } } do %><%= icon("trash", "size-4") %><% end %>
 </div>

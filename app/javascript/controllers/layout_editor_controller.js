@@ -10,7 +10,7 @@ const VAR = { mobile: "--m", tablet: "--t", desktop: "--d" }
 
 export default class extends Controller {
   static targets = ["sections", "widgets", "status", "screenButton", "frame"]
-  static values = { url: String, view: String }
+  static values = { url: String, view: String, saved: String, failed: String }
 
   connect() {
     const common = { animation: 180, easing: "cubic-bezier(.2, .8, .2, 1)", ghostClass: "dw-ed-ghost", chosenClass: "dw-ed-chosen", forceFallback: true, fallbackTolerance: 4 }
@@ -113,8 +113,8 @@ export default class extends Controller {
     Object.entries({ ...fields, view_id: this.viewValue }).forEach(([k, v]) => v !== undefined && body.append(k, v))
     try {
       const r = await fetch(this.urlValue, { method: "PATCH", body, headers: { Accept: "application/json", "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content } })
-      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errors?.[0] || "Não deu para salvar.")
-      this.status("Salvo no rascunho.")
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errors?.[0] || this.failedValue)
+      this.status(this.savedValue)
     } catch (e) {
       this.status(e.message, true)
     }

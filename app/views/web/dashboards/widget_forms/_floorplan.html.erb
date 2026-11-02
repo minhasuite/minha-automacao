@@ -10,42 +10,42 @@
     <% base = "widget[layers][#{li}]" %>
     <% fresh = l.empty? %>
     <details class="dw-fpe rounded-2xl border border-line p-3" <%= "open" if li.zero? %> data-controller="floorplan-editor">
-      <summary class="cursor-pointer font-semibold text-ink flex items-center gap-2"><%= icon(fresh ? "plus" : "map", "size-4 text-accent") %><%= fresh ? (layers.size == 1 ? "Primeira camada" : "Nova camada (andar)") : l["title"] %></summary>
+      <summary class="cursor-pointer font-semibold text-ink flex items-center gap-2"><%= icon(fresh ? "plus" : "map", "size-4 text-accent") %><%= fresh ? (layers.size == 1 ? t("dashboards.wf.fp.first_layer") : t("dashboards.wf.fp.new_layer")) : l["title"] %></summary>
       <%= hidden_field_tag "#{base}[id]", l["id"], id: nil %>
       <div class="grid gap-3 sm:grid-cols-2 mt-3">
-        <div><label class="ss-label" for="fl-t-<%= uid %>-<%= li %>">Nome da camada</label>
-          <%= text_field_tag "#{base}[title]", l["title"], class: "ss-input", id: "fl-t-#{uid}-#{li}", maxlength: 40, placeholder: "Térreo" %></div>
-        <div><label class="ss-label" for="fl-u-<%= uid %>-<%= li %>">Imagem da planta <span class="font-normal">(PNG, JPG ou WebP, até 8 MB)</span></label>
+        <div><label class="ss-label" for="fl-t-<%= uid %>-<%= li %>"><%= t("dashboards.wf.fp.layer_name") %></label>
+          <%= text_field_tag "#{base}[title]", l["title"], class: "ss-input", id: "fl-t-#{uid}-#{li}", maxlength: 40, placeholder: t("dashboards.wf.fp.layer_placeholder") %></div>
+        <div><label class="ss-label" for="fl-u-<%= uid %>-<%= li %>"><%= t("dashboards.wf.fp.image") %> <span class="font-normal"><%= t("dashboards.wf.fp.image_hint") %></span></label>
           <%= file_field_tag "#{base}[upload]", accept: "image/png,image/jpeg,image/webp", class: "ss-input", id: "fl-u-#{uid}-#{li}", data: { action: "floorplan-editor#preview" } %></div>
-        <div class="sm:col-span-2"><label class="ss-label" for="fl-i-<%= uid %>-<%= li %>">Ou link da imagem <span class="font-normal">(opcional; sem imagem, os cômodos desenham a planta)</span></label>
+        <div class="sm:col-span-2"><label class="ss-label" for="fl-i-<%= uid %>-<%= li %>"><%= t("dashboards.wf.fp.image_url") %> <span class="font-normal"><%= t("dashboards.wf.fp.image_url_hint") %></span></label>
           <%= text_field_tag "#{base}[image]", l["image"], class: "ss-input", id: "fl-i-#{uid}-#{li}", placeholder: "https://…", data: { floorplan_editor_target: "image", action: "floorplan-editor#render" } %></div>
       </div>
 
-      <p class="text-xs text-muted mt-3" id="fl-hint-<%= uid %>-<%= li %>">Arraste os pontos e os cômodos na planta. A alça no canto do cômodo muda o tamanho.</p>
+      <p class="text-xs text-muted mt-3" id="fl-hint-<%= uid %>-<%= li %>"><%= t("dashboards.wf.fp.drag_hint") %></p>
       <div class="dw-fpe-canvas <%= 'dw-fp-drawn' if l['image'].blank? %>" data-floorplan-editor-target="canvas" aria-describedby="fl-hint-<%= uid %>-<%= li %>">
         <img src="<%= l['image'] %>" alt="" class="dw-fp-img" data-floorplan-editor-target="img"<%= " hidden" if l["image"].blank? %>>
       </div>
 
       <fieldset class="mt-3">
-        <legend class="ss-label">Pontos na planta</legend>
+        <legend class="ss-label"><%= t("dashboards.wf.fp.pins") %></legend>
         <div class="grid gap-2" data-floorplan-editor-target="pins">
           <% (Array(l["pins"]) + [ {} ]).each_with_index do |pin, pi| %>
             <%= render "web/dashboards/widget_forms/floorplan_pin", name: "#{base}[pins][#{pi}]", pin: pin, point_options: point_options, id: "#{uid}-#{li}-#{pi}" %>
           <% end %>
         </div>
-        <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm mt-2" data-action="floorplan-editor#addPin" hidden data-floorplan-editor-target="js"><%= icon("plus", "size-4") %>Outro ponto</button>
+        <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm mt-2" data-action="floorplan-editor#addPin" hidden data-floorplan-editor-target="js"><%= icon("plus", "size-4") %><%= t("dashboards.wf.fp.add_pin") %></button>
       </fieldset>
 
       <fieldset class="mt-3">
-        <legend class="ss-label">Cômodos <span class="font-normal">(o toque abre a área)</span></legend>
+        <legend class="ss-label"><%= t("dashboards.wf.fp.rooms") %> <span class="font-normal"><%= t("dashboards.wf.fp.rooms_hint") %></span></legend>
         <div class="grid gap-2" data-floorplan-editor-target="rooms">
           <% (Array(l["rooms"]) + [ {} ]).each_with_index do |room, ri| %>
             <%= render "web/dashboards/widget_forms/floorplan_room", name: "#{base}[rooms][#{ri}]", room: room, area_options: area_options, id: "#{uid}-#{li}-#{ri}" %>
           <% end %>
         </div>
-        <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm mt-2" data-action="floorplan-editor#addRoom" hidden data-floorplan-editor-target="js"><%= icon("plus", "size-4") %>Outro cômodo</button>
+        <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm mt-2" data-action="floorplan-editor#addRoom" hidden data-floorplan-editor-target="js"><%= icon("plus", "size-4") %><%= t("dashboards.wf.fp.add_room") %></button>
       </fieldset>
-      <% unless fresh %><label class="ss-check mt-3"><%= check_box_tag "#{base}[remove]", "1", false, id: "fl-r-#{uid}-#{li}" %>Remover esta camada</label><% end %>
+      <% unless fresh %><label class="ss-check mt-3"><%= check_box_tag "#{base}[remove]", "1", false, id: "fl-r-#{uid}-#{li}" %><%= t("dashboards.wf.fp.remove_layer") %></label><% end %>
     </details>
   <% end %>
 </div>

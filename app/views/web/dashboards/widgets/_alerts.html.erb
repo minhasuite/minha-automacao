@@ -1,21 +1,21 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <div class="dw-card">
   <div class="flex items-center justify-between gap-2">
-    <p class="dw-card-title"><%= w["label"].presence || "Alertas" %></p>
-    <%= link_to "Ver todos", alerts_path, class: "text-xs font-semibold text-accent no-underline", data: { turbo_frame: "_top" } %>
+    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.alerts") %></p>
+    <%= link_to t("dashboards.w.see_all"), alerts_path, class: "text-xs font-semibold text-accent no-underline", data: { turbo_frame: "_top" } %>
   </div>
   <% if w["data"]["alerts"].empty? %>
-    <p class="dw-quiet"><%= icon("check-circle", "size-5 text-success") %>Nenhum alerta aberto.</p>
+    <p class="dw-quiet"><%= icon("check-circle", "size-5 text-success") %><%= t("dashboards.w.no_alerts") %></p>
   <% else %>
     <ul class="dw-rows">
       <% w["data"]["alerts"].each do |a| %>
         <li class="dw-row">
           <span class="dw-ico dw-ico-sm <%= a['severity'] == 'critical' ? 'bg-danger-soft text-danger' : 'bg-warn-soft text-warn' %>"><%= icon("exclamation-circle", "size-4") %></span>
-          <span class="min-w-0 flex-1"><span class="dw-name text-sm"><%= a["title"] %></span><span class="block text-xs text-muted truncate"><%= a["text"] %> · há <%= time_ago_in_words(a["opened_at"]) %></span></span>
+          <span class="min-w-0 flex-1"><span class="dw-name text-sm"><%= a["title"] %></span><span class="block text-xs text-muted truncate"><%= a["text"] %> · <%= t("dashboards.w.ago", time: time_ago_in_words(a["opened_at"])) %></span></span>
           <% if a["acked"] %>
-            <span class="ss-badge">Ciente</span>
+            <span class="ss-badge"><%= t("dashboards.w.acked") %></span>
           <% elsif a["can_ack"] %>
-            <%= button_to "Ciente", ack_alert_path(a["id"]), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_frame: "_top" } } %>
+            <%= button_to t("dashboards.w.acked"), ack_alert_path(a["id"]), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_frame: "_top" } } %>
           <% end %>
         </li>
       <% end %>

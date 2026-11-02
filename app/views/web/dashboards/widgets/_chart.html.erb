@@ -3,7 +3,7 @@
 <% records = Point.where(id: ids).index_by(&:id).values_at(*ids).compact %>
 <% chart = records.any? ? dashboard_chart(records, w["range"] || "24h") : nil %>
 <div class="dw-card">
-  <p class="dw-card-title"><%= w["label"].presence || "Histórico" %></p>
+  <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.history") %></p>
   <% if chart %>
     <div class="ss-chart mt-2">
       <div class="flex gap-2">
@@ -12,7 +12,7 @@
         <% end %>
         <div class="flex-1 min-w-0 rounded-xl bg-field overflow-hidden"><%= chart[:svg] %></div>
       </div>
-      <div class="flex justify-between text-xs text-muted num mt-1 <%= 'pl-10' if chart[:max] %>"><span><%= l(chart[:from], format: :short) %></span><span>agora</span></div>
+      <div class="flex justify-between text-xs text-muted num mt-1 <%= 'pl-10' if chart[:max] %>"><span><%= l(chart[:from], format: :short) %></span><span><%= t("dashboards.w.now") %></span></div>
     </div>
     <ul class="dw-legend">
       <% chart[:series].each do |point, i| %>
@@ -20,8 +20,8 @@
         <li><span class="dw-dot dw-bg<%= i % 6 %>"></span><span class="truncate"><%= p ? p["device"] : point.name %></span><strong class="num text-ink ml-auto shrink-0"><%= p ? p["text"] : "" %></strong></li>
       <% end %>
     </ul>
-    <% if chart[:on_seconds] %><p class="text-sm text-ink-2 mt-2">Ligado por <strong class="num"><%= duration_text(chart[:on_seconds]) %></strong> no período.</p><% end %>
+    <% if chart[:on_seconds] %><p class="text-sm text-ink-2 mt-2"><%= t("dashboards.w.on_for_html", time: tag.strong(duration_text(chart[:on_seconds]), class: "num")) %></p><% end %>
   <% else %>
-    <p class="dw-quiet"><%= icon("chart-bar", "size-5 text-muted") %>Sem leituras no período.</p>
+    <p class="dw-quiet"><%= icon("chart-bar", "size-5 text-muted") %><%= t("dashboards.w.no_readings") %></p>
   <% end %>
 </div>

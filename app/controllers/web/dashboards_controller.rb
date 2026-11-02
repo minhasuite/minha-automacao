@@ -46,7 +46,7 @@ module Web
       return render(:new, status: :unprocessable_content) unless @dashboard.save
 
       @dashboard.publish!(start)
-      redirect_to edit_dashboard_path(@dashboard), notice: "Painel criado. Monte as views e publique."
+      redirect_to edit_dashboard_path(@dashboard), notice: t("dashboards.flash.created")
     end
 
     def edit
@@ -64,19 +64,19 @@ module Web
       @dashboard.assign_attributes(dashboard_params)
       @site.dashboards.where.not(id: @dashboard.id).update_all(site_default: false) if @dashboard.site_default && @dashboard.valid?
       @dashboard.save!
-      redirect_to edit_dashboard_path(@dashboard), notice: "Painel salvo."
+      redirect_to edit_dashboard_path(@dashboard), notice: t("dashboards.flash.saved")
     end
 
     def duplicate
       load_dashboard(:manage)
       copy = @dashboard.duplicate!
-      redirect_to edit_dashboard_path(copy), notice: "Painel duplicado. Ajuste o nome e as visões."
+      redirect_to edit_dashboard_path(copy), notice: t("dashboards.flash.duplicated")
     end
 
     def destroy
       load_dashboard(:manage)
       @dashboard.destroy!
-      redirect_to settings_dashboards_path, notice: "Painel excluído."
+      redirect_to settings_dashboards_path, notice: t("dashboards.flash.deleted")
     end
 
     # Operação do editor no rascunho (ver Dashboards::Editor).
@@ -89,27 +89,27 @@ module Web
     rescue KeyError
       return head(:not_found) if request.format.json?
 
-      redirect_to edit_dashboard_path(@dashboard), alert: "Esse item não existe mais no rascunho."
+      redirect_to edit_dashboard_path(@dashboard), alert: t("dashboards.flash.gone")
     rescue UploadError
-      redirect_to edit_dashboard_path(@dashboard, view: params[:view_id]), alert: "A imagem precisa ser PNG, JPG ou WebP de até 8 MB."
+      redirect_to edit_dashboard_path(@dashboard, view: params[:view_id]), alert: t("dashboards.flash.bad_image")
     end
 
     def publish
       load_dashboard(:manage)
       @dashboard.publish!(@dashboard.working_draft)
-      redirect_to dashboard_path(@dashboard), notice: "Versão #{@dashboard.version} publicada."
+      redirect_to dashboard_path(@dashboard), notice: t("dashboards.flash.published", n: @dashboard.version)
     end
 
     def discard
       load_dashboard(:manage)
       @dashboard.update!(draft: nil)
-      redirect_to edit_dashboard_path(@dashboard), notice: "Rascunho descartado."
+      redirect_to edit_dashboard_path(@dashboard), notice: t("dashboards.flash.discarded")
     end
 
     def revert
       load_dashboard(:manage)
       @dashboard.revert!(params[:version].to_i)
-      redirect_to edit_dashboard_path(@dashboard), notice: "Versão #{params[:version]} publicada de novo como a #{@dashboard.version}."
+      redirect_to edit_dashboard_path(@dashboard), notice: t("dashboards.flash.reverted", from: params[:version], n: @dashboard.version)
     end
 
     def json
@@ -125,23 +125,23 @@ module Web
       return render(:json, status: :unprocessable_content) if @errors.any?
 
       @dashboard.update!(draft: parsed)
-      redirect_to edit_dashboard_path(@dashboard), notice: "JSON válido, salvo no rascunho."
+      redirect_to edit_dashboard_path(@dashboard), notice: t("dashboards.flash.json_saved")
     rescue JSON::ParserError => e
-      @errors = [ "JSON inválido: #{e.message.truncate(160)}" ]
+      @errors = [ t("dashboards.flash.bad_json", error: e.message.truncate(160)) ]
       render :json, status: :unprocessable_content
     end
 
     # Ajustes do quiosque deste aparelho (cookie; ver KioskMode).
     def kiosk_settings
       write_kiosk(params.permit(:saver, :idle, :motion, :dim).to_h)
-      redirect_back_or_to root_path(quiosque: 1), notice: "Quiosque ajustado neste aparelho."
+      redirect_back_or_to root_path(quiosque: 1), notice: t("dashboards.flash.kiosk")
     end
 
     # Painel padrão da pessoa (e o local que abre no Início).
     def prefer
       load_dashboard(:view)
       current_user.update!(dashboard_prefs: current_user.dashboard_prefs.merge("site" => @site.id, @site.id => @dashboard.id))
-      redirect_to root_path, notice: "#{@dashboard.name} agora abre no seu Início."
+      redirect_to root_path, notice: t("dashboards.flash.preferred", name: @dashboard.name)
     end
 
     private
@@ -181,7 +181,7 @@ module Web
       params.require(:dashboard).permit(:name, :kind, :site_default, :icon, :sidebar, roles: []).tap { |p| p[:roles] = Array(p[:roles]).compact_blank if p.key?(:roles) }
     end
 
-    def blank_definition = { "schema_version" => Dashboards::Schema::VERSION, "views" => [ { "id" => "home", "title" => "Início", "sections" => [] } ] }
+    def blank_definition = { "schema_version" => Dashboards::Schema::VERSION, "views" => [ { "id" => "home", "title" => t("dashboards.gen.home"), "sections" => [] } ] }
 
     # Devolve o widget/view para focar depois de salvar.
     def apply(editor)
@@ -216,7 +216,7 @@ module Web
 
       @dashboard.update!(draft: definition)
       redirect_to edit_dashboard_path(@dashboard, view: focus[:view].presence || params[:view_id], w: focus[:w], anchor: focus[:w]),
-                  notice: "Salvo no rascunho. Publique para todos verem."
+                  notice: t("dashboards.flash.draft_saved")
     end
 
     # Formulário do widget → JSON (só o que vale para o tipo; vazio some).

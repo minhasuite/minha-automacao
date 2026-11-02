@@ -5,13 +5,13 @@
 <div class="dw-card">
   <div class="dw-energy-head">
     <div class="min-w-0">
-      <p class="dw-card-title"><%= w["label"].presence || "Consumo por aparelho" %></p>
+      <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.by_device") %></p>
       <p class="text-xs text-muted"><%= d["period_label"] %> · <span class="num"><%= kwh.(d["total_kwh"]) %></span><%= " · #{money.(d['total_cost'])}" if d["total_cost"] %></p>
     </div>
     <span class="dw-ico dw-ico-sm" style="color: var(--amber)"><%= icon("chart-bar") %></span>
   </div>
   <% if d["rows"].empty? %>
-    <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %><%= d["empty"] ? "Nenhum ponto de energia (kWh) ou potência (W) no local." : "Sem consumo registrado no período." %></p>
+    <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %><%= d["empty"] ? t("dashboards.w.no_energy_points") : t("dashboards.w.no_usage") %></p>
   <% else %>
     <% top = d["rows"].first["kwh"].to_f %>
     <ol class="ef-rank">

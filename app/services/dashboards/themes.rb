@@ -22,14 +22,14 @@ module Dashboards
 
     def errors(theme, where)
       return [] if theme.nil?
-      return [ "#{where}: theme precisa ser um objeto" ] unless theme.is_a?(Hash)
+      return [ I18n.t("dashboards.schema.theme_object", where: where) ] unless theme.is_a?(Hash)
 
       e = []
-      e << "#{where}: theme com chave desconhecida" unless (theme.keys - KEYS).empty?
-      %w[key night].each { |k| e << "#{where}: tema #{theme[k].inspect} não existe" if theme.key?(k) && !self[theme[k]] }
-      e << "#{where}: papel de parede precisa ser um link https:// ou /" if theme.key?("image") && !theme["image"].to_s.match?(IMAGE)
-      e << "#{where}: blur precisa ser de 0 a 40" if theme.key?("blur") && !(theme["blur"].is_a?(Integer) && theme["blur"].between?(0, 40))
-      e << "#{where}: glass precisa ser true ou false" if theme.key?("glass") && ![ true, false ].include?(theme["glass"])
+      e << I18n.t("dashboards.schema.theme_unknown", where: where) unless (theme.keys - KEYS).empty?
+      %w[key night].each { |k| e << I18n.t("dashboards.schema.theme_missing", where: where, theme: theme[k].inspect) if theme.key?(k) && !self[theme[k]] }
+      e << I18n.t("dashboards.schema.theme_image", where: where) if theme.key?("image") && !theme["image"].to_s.match?(IMAGE)
+      e << I18n.t("dashboards.schema.theme_blur", where: where) if theme.key?("blur") && !(theme["blur"].is_a?(Integer) && theme["blur"].between?(0, 40))
+      e << I18n.t("dashboards.schema.theme_glass", where: where) if theme.key?("glass") && ![ true, false ].include?(theme["glass"])
       e
     end
 
@@ -74,29 +74,35 @@ module Dashboards
 
     class Lista < Base
       describe key: "lista", label: "Lista Clara", accent: "#5a45e8", accent2: "#3b82f6"
+      texts en: { label: "Lista Clara" }, es: { label: "Lista Clara" }
     end
 
     class Aurora < Base
+      texts en: { label: "Aurora" }, es: { label: "Aurora" }
       describe key: "aurora", label: "Aurora", accent: "#7c3aed", accent2: "#ec4899", glass: true,
                wallpaper: "radial-gradient(60% 50% at 15% 10%, rgba(236, 72, 153, .35), transparent), radial-gradient(50% 60% at 90% 30%, rgba(124, 58, 237, .4), transparent), radial-gradient(60% 50% at 50% 100%, rgba(59, 130, 246, .3), transparent)"
     end
 
     class Oceano < Base
+      texts en: { label: "Ocean" }, es: { label: "Océano" }
       describe key: "oceano", label: "Oceano", accent: "#0284c7", accent2: "#14b8a6",
                wallpaper: "radial-gradient(70% 60% at 0% 0%, rgba(14, 165, 233, .28), transparent), radial-gradient(60% 60% at 100% 100%, rgba(20, 184, 166, .28), transparent)"
     end
 
     class Floresta < Base
+      texts en: { label: "Forest" }, es: { label: "Bosque" }
       describe key: "floresta", label: "Floresta", accent: "#059669", accent2: "#65a30d",
                wallpaper: "radial-gradient(70% 60% at 100% 0%, rgba(16, 185, 129, .25), transparent), radial-gradient(60% 50% at 0% 100%, rgba(101, 163, 13, .22), transparent)"
     end
 
     class PorDoSol < Base
+      texts en: { label: "Sunset" }, es: { label: "Atardecer" }
       describe key: "por-do-sol", label: "Pôr do sol", accent: "#ea580c", accent2: "#db2777", glass: true,
                wallpaper: "radial-gradient(70% 60% at 10% 0%, rgba(251, 146, 60, .35), transparent), radial-gradient(60% 60% at 95% 90%, rgba(219, 39, 119, .3), transparent)"
     end
 
     class Grafite < Base
+      texts en: { label: "Graphite (night)" }, es: { label: "Grafito (noche)" }
       describe key: "grafite", label: "Grafite (noite)", accent: "#6366f1", accent2: "#0ea5e9", glass: true,
                wallpaper: "radial-gradient(80% 60% at 50% -10%, rgba(99, 102, 241, .35), transparent), radial-gradient(50% 40% at 100% 100%, rgba(14, 165, 233, .18), transparent)"
     end

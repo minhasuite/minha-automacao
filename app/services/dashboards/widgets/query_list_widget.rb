@@ -4,6 +4,8 @@ module Dashboards
     # (sem o filtro de estado) são dependência do tempo real.
     class QueryListWidget < Base
       describe type: "query_list", label: "Lista automática", icon: "filter", required: %w[query], params: %w[empty_text]
+      texts en: { label: "Smart list" },
+            es: { label: "Lista automática" }
 
       def self.data(r, w, _binds)
         matched = r.query(w["query"]).first(Resolver::LIST_LIMIT).each { |p| r.use(p) }

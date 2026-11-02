@@ -5,6 +5,8 @@ module Dashboards
     # (HelperTypes::AlarmPanel::MODES), nada fixo aqui.
     class AlarmWidget < Base
       describe type: "alarm", label: "Painel de alarme", icon: "shield-check", required: %w[bind], bind: true
+      texts en: { label: "Alarm panel" },
+            es: { label: "Panel de alarma" }
 
       def self.data(_r, _w, binds)
         point = binds.first
