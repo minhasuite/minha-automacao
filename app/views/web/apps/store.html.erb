@@ -28,6 +28,7 @@
               <span class="font-bold text-ink"><%= app.name %></span>
               <% if @statuses.dig(app.key, "installed") %><span class="ss-badge ss-badge-success"><%= t("apps.installed") %></span><% end %>
               <% if app.system? %><span class="ss-badge"><%= t("apps.system_badge") %></span><% end %>
+              <% if app.third_party? %><span class="ss-badge ss-badge-warn" title="<%= t("resto.apps.third_party_hint") %>"><%= t("resto.apps.third_party", repo: app.repository) %></span><% end %>
             </span>
             <span class="block text-xs text-muted mt-0.5"><%= app.category %> · <%= app.version %></span>
             <span class="block text-sm text-muted mt-1"><%= app.description %></span>
@@ -37,4 +38,24 @@
     <% end %>
   </ul>
 <% end %>
+<section class="ss-card ss-card-pad mt-6" aria-labelledby="repos-t" data-apps="repositories">
+  <h2 id="repos-t" class="flex items-center gap-2"><%= icon("archive", "size-5 text-accent") %><%= t("resto.apps.repos_title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("resto.apps.repos_pitch") %></p>
+  <% if @repositories.any? %>
+    <ul class="mt-3 divide-y divide-line">
+      <% @repositories.each do |r| %>
+        <li class="py-2 flex flex-wrap items-center justify-between gap-2">
+          <div class="min-w-0"><p class="font-semibold text-ink"><%= r["name"] %> <span class="text-xs text-muted"><%= t("resto.apps.repo_apps", count: r["apps"].to_h.size) %></span></p>
+            <p class="text-xs text-muted break-all"><%= r["url"] %></p></div>
+          <%= button_to app_repositories_path, method: :delete, params: { url: r["url"] }, class: "ss-btn ss-btn-ghost ss-btn-sm",
+                        form: { data: { turbo_confirm: t("resto.apps.remove_confirm", name: r["name"]) } } do %><%= icon("trash", "size-4") %><%= t("integrations.common.remove") %><% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <%= form_with url: app_repositories_path, class: "mt-4 flex flex-wrap gap-2 items-end" do %>
+    <div class="flex-1 min-w-0"><%= label_tag :url, t("resto.apps.repo_url"), class: "ss-label" %><%= url_field_tag :url, nil, class: "ss-input w-full", placeholder: "https://exemplo.com/apps.json", required: true %></div>
+    <button class="ss-btn ss-btn-outline"><%= icon("plus", "size-4") %><%= t("resto.apps.add_repo") %></button>
+  <% end %>
+</section>
 <% end %>

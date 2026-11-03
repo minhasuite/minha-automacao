@@ -325,6 +325,9 @@ Rails.application.routes.draw do
       resources :api_keys, path: "chaves", only: %i[index create destroy]
       # Aplicativos (F8g): catálogo em config/apps/*.yml, ações pelo supervisor.
       get "aplicativos/loja", to: "apps#store", as: :apps_store
+      # resto (7.13): repositórios de apps de terceiros (imagem fixada por digest).
+      post "aplicativos/repositorios", to: "apps#add_repository", as: :app_repositories
+      delete "aplicativos/repositorios", to: "apps#remove_repository"
       resources :apps, path: "aplicativos", param: :key, only: %i[index show update destroy], constraints: { key: /[a-z0-9_]+/ } do
         member do
           post :install, path: "instalar"

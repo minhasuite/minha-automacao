@@ -1,0 +1,66 @@
+pt-BR:
+  resto:
+    apps:
+      repos_title: "Repositórios de terceiros"
+      repos_pitch: "Junte à loja os aplicativos de outros autores. O repositório é um índice JSON ou YAML por https; cada app passa pelas mesmas regras dos daqui e precisa da imagem fixada por digest (sha256), então o que você instala é exatamente o que foi publicado. Não recebem segredos do servidor."
+      repo_url: "Endereço do índice"
+      add_repo: "Adicionar repositório"
+      repo_apps:
+        one: "1 app"
+        other: "%{count} apps"
+      remove_confirm: "Tirar o repositório %{name} da loja? Os apps já instalados continuam."
+      added: "Repositório %{name} adicionado (%{n} app(s))."
+      removed: "Repositório removido da loja."
+      third_party: "Terceiro · %{repo}"
+      third_party_hint: "De um repositório de terceiros, com a imagem fixada por digest."
+      errors:
+        url: "Use um endereço https."
+        download: "O repositório respondeu %{status}."
+        empty: "O índice não tem nenhum app (chave apps)."
+        read: "Não deu para ler o repositório: %{error}"
+        invalid: "App inválido no repositório: %{error}"
+        clash: "Estes apps já vêm de outro repositório: %{keys}."
+en:
+  resto:
+    apps:
+      repos_title: "Third-party repositories"
+      repos_pitch: "Add apps from other authors to the store. The repository is a JSON or YAML index over https; each app goes through the same rules as ours and needs its image pinned by digest (sha256), so what you install is exactly what was published. They get no server secrets."
+      repo_url: "Index address"
+      add_repo: "Add repository"
+      repo_apps:
+        one: "1 app"
+        other: "%{count} apps"
+      remove_confirm: "Remove the %{name} repository from the store? Apps already installed keep running."
+      added: "Repository %{name} added (%{n} app(s))."
+      removed: "Repository removed from the store."
+      third_party: "Third party · %{repo}"
+      third_party_hint: "From a third-party repository, with the image pinned by digest."
+      errors:
+        url: "Use an https address."
+        download: "The repository answered %{status}."
+        empty: "The index has no app (apps key)."
+        read: "Couldn't read the repository: %{error}"
+        invalid: "Invalid app in the repository: %{error}"
+        clash: "These apps already come from another repository: %{keys}."
+es:
+  resto:
+    apps:
+      repos_title: "Repositorios de terceros"
+      repos_pitch: "Suma a la tienda las aplicaciones de otros autores. El repositorio es un índice JSON o YAML por https; cada app pasa por las mismas reglas que las de aquí y necesita la imagen fijada por digest (sha256), así que lo que instalas es exactamente lo publicado. No reciben secretos del servidor."
+      repo_url: "Dirección del índice"
+      add_repo: "Agregar repositorio"
+      repo_apps:
+        one: "1 app"
+        other: "%{count} apps"
+      remove_confirm: "¿Quitar el repositorio %{name} de la tienda? Las apps ya instaladas siguen."
+      added: "Repositorio %{name} agregado (%{n} app(s))."
+      removed: "Repositorio quitado de la tienda."
+      third_party: "Tercero · %{repo}"
+      third_party_hint: "De un repositorio de terceros, con la imagen fijada por digest."
+      errors:
+        url: "Usa una dirección https."
+        download: "El repositorio respondió %{status}."
+        empty: "El índice no tiene ninguna app (clave apps)."
+        read: "No se pudo leer el repositorio: %{error}"
+        invalid: "App no válida en el repositorio: %{error}"
+        clash: "Estas apps ya vienen de otro repositorio: %{keys}."

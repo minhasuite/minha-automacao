@@ -356,10 +356,10 @@ module Supervisor
 
     def route(req)
       m = PATH.match(req.path_info) or return json(404, error: "Não encontrado.")
-      return json(200, data: AppCatalog.all.map { |a| status(a) }) if m[1].nil? && req.get?
+      return json(200, data: (AppCatalog.all + third_party_installed).map { |a| status(a) }) if m[1].nil? && req.get?
 
-      app = m[1] && AppCatalog.find(m[1]) or return json(404, error: "App fora do catálogo.")
       body = req.post? || req.put? ? (JSON.parse(req.body.read.to_s.then { |s| s.empty? ? "{}" : s }) rescue {}) : {}
+      app = m[1] && find_app(m[1], body) or return json(404, error: "App fora do catálogo.")
       verb = "#{req.request_method} #{m[2]}".strip
       case verb
       when "GET" then json(200, data: status(app))
@@ -370,6 +370,25 @@ module Supervisor
       when "DELETE" then uninstall(app, req.params["keep_data"] == "1")
       else
         verb.start_with?("POST ") ? act(app, m[2]) : json(404, error: "Não encontrado.")
+      end
+    end
+
+    # resto (7.13): app de terceiro. Instalar/atualizar traz o manifesto (validado
+    # aqui de novo, com o digest); depois ele vem do label do próprio container.
+    def find_app(key, body)
+      return AppCatalog.third_party(key, body["manifest"]) if body["manifest"].is_a?(Hash) && !AppCatalog.builtin.any? { |b| b.key == key }
+
+      AppCatalog.find(key) || third_party_installed.find { |a| a.key == key }
+    end
+
+    def third_party_installed
+      @docker.containers([ AppCatalog::LABEL ]).filter_map do |c|
+        labels = @docker.inspect(c["Id"]).dig("Config", "Labels") || {}
+        raw = labels["minha-automacao.manifest"] or next
+        data = JSON.parse(raw)
+        AppCatalog.third_party(labels[AppCatalog::LABEL], data.except("repository"), repository: data["repository"])
+      rescue JSON::ParserError, AppCatalog::Invalid
+        nil
       end
     end
 

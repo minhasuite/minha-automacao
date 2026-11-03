@@ -122,4 +122,36 @@ RSpec.describe "Paridade: resto (telas e API)" do
       expect(flash[:notice]).to include("Rede do servidor atualizada")
     end
   end
+
+  describe "repositórios de apps de terceiros (7.13)" do
+    let(:digest) { "sha256:#{'b' * 64}" }
+    let(:index) do
+      { name: "Teste Repo", apps: [ { key: "teste_terceiro", name: "Teste Terceiro", category: "Teste", icon: "cube", description: "App de teste",
+                                      image: "ghcr.io/teste/terceiro", version: "2.0", digest: digest, network: "bridge" } ] }
+    end
+
+    it "adiciona o índice, mostra na loja com o selo e instala mandando o manifesto ao supervisor" do
+      Dir.mktmpdir do |dir|
+        stub_const("ENV", ENV.to_h.merge("APP_REPOS_FILE" => "#{dir}/repos.json", "SUPERVISOR_URL" => "http://sup:8099", "SUPERVISOR_TOKEN" => "x" * 40))
+        allow(SafeHttp).to receive(:lookup).and_return([ "93.184.216.34" ])
+        stub_request(:get, "https://apps.teste.dev/sem-digest.json").to_return(body: { apps: [ index[:apps].first.except(:digest) ] }.to_json)
+        stub_request(:get, "https://apps.teste.dev/apps.json").to_return(body: index.to_json)
+        stub_request(:get, "http://sup:8099/apps").to_return(body: { data: [] }.to_json)
+
+        post "/configuracoes/aplicativos/repositorios", params: { url: "https://apps.teste.dev/sem-digest.json" }
+        expect(flash[:alert]).to include("digest")
+        post "/configuracoes/aplicativos/repositorios", params: { url: "https://apps.teste.dev/apps.json" }
+        expect(flash[:notice]).to include("Teste Repo")
+        get "/configuracoes/aplicativos/loja"
+        expect(response.body).to include("Teste Terceiro", "Terceiro · Teste Repo", "Repositórios de terceiros")
+
+        install = stub_request(:post, "http://sup:8099/apps/teste_terceiro/install").with(body: hash_including("manifest" => hash_including("digest" => digest)))
+                                                                                   .to_return(status: 202, body: { data: {} }.to_json)
+        post "/configuracoes/aplicativos/teste_terceiro/instalar"
+        expect(install).to have_been_requested
+        delete "/configuracoes/aplicativos/repositorios", params: { url: "https://apps.teste.dev/apps.json" }
+        expect(AppCatalog.find("teste_terceiro")).to be_nil
+      end
+    end
+  end
 end

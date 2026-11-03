@@ -6,7 +6,7 @@ module Web
     TABS = %w[info config log].freeze
 
     before_action :require_owner!
-    before_action :load_app, except: %i[index store]
+    before_action :load_app, except: %i[index store add_repository remove_repository]
     rescue_from Apps::Supervisor::Error do |e|
       redirect_to(@app ? app_path(@app.key) : apps_path, alert: e.message)
     end
@@ -18,6 +18,7 @@ module Web
 
     def store
       @apps = AppCatalog.search(params[:q], params[:categoria])
+      @repositories = AppRepos.all
       @statuses, @offline = fetch_statuses
     end
 
@@ -29,7 +30,7 @@ module Web
     end
 
     def install
-      Apps::Supervisor.install(@app.key, options: option_params, boot: params[:boot] == "1", watchdog: params[:watchdog] == "1")
+      Apps::Supervisor.install(@app.key, options: option_params, boot: params[:boot] == "1", watchdog: params[:watchdog] == "1", manifest: third_party_manifest)
       done("install", t("apps.flash.installing", name: @app.name))
     end
 
@@ -46,7 +47,7 @@ module Web
     end
 
     def upgrade
-      Apps::Supervisor.upgrade(@app.key)
+      Apps::Supervisor.upgrade(@app.key, manifest: third_party_manifest)
       done("upgrade", t("apps.flash.upgrading", name: @app.name, version: @app.version), details: { version: @app.version })
     end
 
@@ -74,7 +75,21 @@ module Web
       redirect_to "http://#{host}:#{port.to_i}#{@app.web_ui['path']}", allow_other_host: true
     end
 
+    def add_repository
+      repo = AppRepos.add!(params[:url].to_s.strip, user: current_user)
+      redirect_to apps_store_path, notice: t("resto.apps.added", name: repo["name"], n: repo["apps"].size)
+    rescue AppRepos::Error => e
+      redirect_to apps_store_path, alert: e.message
+    end
+
+    def remove_repository
+      AppRepos.remove!(params[:url].to_s, user: current_user)
+      redirect_to apps_store_path, notice: t("resto.apps.removed")
+    end
+
     private
+
+    def third_party_manifest = (@app.data if @app.third_party?)
 
     def load_app
       @app = AppCatalog.find(params[:key]) or render("web/shared/not_found", status: :not_found)

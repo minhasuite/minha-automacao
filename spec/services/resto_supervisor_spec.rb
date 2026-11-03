@@ -46,9 +46,33 @@ RSpec.describe "Paridade: resto no supervisor" do
       expect(cmds.last.last(8)).to eq(%w[device wifi connect Casa password 12345678 ifname wlan0])
     end
 
-    it "sem NetworkManager explica" do
+    it "sem NetworkManager explica (rede)" do
       docker.probe_out = "exec: \"nmcli\": executable file not found in $PATH"
-      expect(req("POST", "/system/host/network", { interface: "eth0", mode: "dhcp" })).to eq([ 422, { "error" => "Este sistema não usa o NetworkManager (nmcli)." } ])
+      expect(req("POST", "/system/host/network", { interface: "eth0", mode: "dhcp" }).first).to eq(422)
+    end
+  end
+
+  describe "apps de repositório de terceiros (7.13)" do
+    let(:digest) { "sha256:#{'a' * 64}" }
+    let(:manifest) do
+      { "name" => "Teste App", "category" => "Teste", "icon" => "cube", "description" => "Teste", "image" => "ghcr.io/teste/app", "version" => "1.0",
+        "digest" => digest, "network" => "apps", "ports" => [ { "container" => 8080, "host" => 18_080 } ] }
+    end
+
+    it "instala com a imagem pelo digest, guarda o manifesto no container e lista depois" do
+      expect(req("POST", "/apps/teste_app/install", { manifest: manifest.except("digest") })).to match([ 422, include("error" => /digest/) ])
+      expect(req("POST", "/apps/teste_app/install", { manifest: manifest.merge("server_env" => { "X" => "MQTT_PASSWORD" }) }).first).to eq(422)
+      expect(req("POST", "/apps/mosquitto/install", { manifest: manifest }).first).to eq(422) # app do sistema/produto não é trocado
+      expect(req("POST", "/apps/nao_existe/install", {}).first).to eq(404)
+
+      expect(req("POST", "/apps/teste_app/install", { manifest: manifest }).first).to eq(202)
+      Timeout.timeout(2) { sleep 0.02 until docker.containers([ "#{AppCatalog::LABEL}=teste_app" ]).any? }
+      create = docker.calls.find { |c| c[1] == "/containers/create" }[2]
+      expect(create["Image"]).to eq("ghcr.io/teste/app@#{digest}")
+      expect(create["HostConfig"]).to include("Privileged" => false, "NetworkMode" => "ma-apps")
+      expect(JSON.parse(create["Labels"]["minha-automacao.manifest"])).to include("digest" => digest)
+      expect(req("GET", "/apps").last["data"].map { |a| a["key"] }).to include("teste_app")
+      expect(req("GET", "/apps/teste_app").last.dig("data", "installed")).to be true
     end
   end
 end

@@ -13,9 +13,10 @@ module Apps
     def statuses = request(:get, "/apps").fetch("data").index_by { |s| s["key"] }
     def status(key) = request(:get, "/apps/#{key}").fetch("data")
     def logs(key, lines = 200) = request(:get, "/apps/#{key}/logs?lines=#{lines.to_i}").dig("data", "lines").to_s
-    def install(key, options:, boot:, watchdog:) = request(:post, "/apps/#{key}/install", { options:, boot:, watchdog: })
+    # resto (7.13): app de terceiro leva o manifesto (o supervisor valida de novo).
+    def install(key, options:, boot:, watchdog:, manifest: nil) = request(:post, "/apps/#{key}/install", { options:, boot:, watchdog:, manifest: }.compact)
     def configure(key, **body) = request(:put, "/apps/#{key}/config", body)
-    def upgrade(key) = request(:post, "/apps/#{key}/update")
+    def upgrade(key, manifest: nil) = request(:post, "/apps/#{key}/update", ({ manifest: } if manifest))
     def act(key, action) = request(:post, "/apps/#{key}/#{action}")
     def uninstall(key, keep_data:) = request(:delete, "/apps/#{key}?keep_data=#{keep_data ? 1 : 0}")
 

@@ -18,7 +18,9 @@ module AppCatalog
   TYPES = %w[string integer boolean enum device].freeze
   NETWORKS = %w[apps bridge].freeze
   KEYS = %w[name category icon description image version system network ports volumes options env
-            server_env web_ui health shm_mb i18n].freeze
+            server_env web_ui health shm_mb i18n digest].freeze
+  # resto (7.13): app de repositório de terceiros só com a imagem fixada por digest.
+  DIGEST = /\Asha256:\h{64}\z/
   # Idiomas além do pt-BR que o manifesto traz em `i18n:` (category,
   # description e options.<chave>.label/help); falta = cai no pt-BR.
   LOCALES = %w[en es].freeze
@@ -30,7 +32,20 @@ module AppCatalog
   # Idioma da tela no Rails; o supervisor (sem I18n) usa o pt-BR.
   def locale = defined?(I18n) ? I18n.locale.to_s : "pt-BR"
 
-  def all = @all ||= Dir[File.join(DIR, "*.yml")].sort.map { |f| Manifest.load(f) }
+  def builtin = @builtin ||= Dir[File.join(DIR, "*.yml")].sort.map { |f| Manifest.load(f) }
+  # resto (7.13): apps de fora (repositórios no Rails, containers instalados no supervisor).
+  class << self
+    attr_accessor :extra
+  end
+
+  def all = builtin + Array(extra&.call).reject { |m| builtin.any? { |b| b.key == m.key } }
+
+  # Manifesto de terceiro: mesmas regras + digest, sem system nem server_env, chave livre.
+  def third_party(key, data, repository: nil)
+    raise Invalid, "#{key}: chave já é de um app do produto" if builtin.any? { |b| b.key == key.to_s }
+
+    Manifest.new(key.to_s, data, third_party: true, repository: repository)
+  end
   def find(key) = all.find { |m| m.key == key.to_s }
   def categories = all.map(&:category).uniq.sort
 
@@ -43,15 +58,19 @@ module AppCatalog
   end
 
   class Manifest
-    attr_reader :key, :data
+    attr_reader :key, :data, :repository
 
     def self.load(path) = new(File.basename(path, ".yml"), YAML.safe_load_file(path))
 
-    def initialize(key, data)
+    def initialize(key, data, third_party: false, repository: nil)
       @key = key
-      @data = data
+      @data = data.is_a?(Hash) ? data : {}
+      @third_party = third_party
+      @repository = repository
       validate!
     end
+
+    def third_party? = @third_party
 
     %w[name icon image version network shm_mb web_ui health].each { |k| define_method(k) { data[k] } }
     def category = text("category")
@@ -63,7 +82,7 @@ module AppCatalog
     def ports = data.fetch("ports", [])
     def volumes = data.fetch("volumes", [])
     def options = data.fetch("options", [])
-    def image_ref = "#{image}:#{version}"
+    def image_ref = data["digest"] ? "#{image}@#{data['digest']}" : "#{image}:#{version}"
     def container_name = "#{PREFIX}#{key}"
     def volume_name(vol) = "#{PREFIX}#{key}-#{vol['name']}"
 
@@ -99,7 +118,8 @@ module AppCatalog
         "Image" => image_ref,
         "Env" => env.map { |k, v| "#{k}=#{v}" },
         "Labels" => { LABEL => key, "minha-automacao.version" => version.to_s,
-                      "minha-automacao.options" => JSON.generate(public_options(opts)) },
+                      "minha-automacao.options" => JSON.generate(public_options(opts)),
+                      "minha-automacao.manifest" => (JSON.generate(data.merge("repository" => repository).compact) if third_party?) }.compact,
         "ExposedPorts" => ports.to_h { |p| [ port_spec(p), {} ] },
         "Healthcheck" => health && { "Test" => health["test"], "Interval" => health.fetch("interval_s", 30) * 1_000_000_000 },
         "HostConfig" => {
@@ -146,6 +166,7 @@ module AppCatalog
       fail!("image") unless image.match?(%r{\A[a-z0-9][a-z0-9._/-]*\z})
       fail!("version") unless version.is_a?(String) && version.match?(/\A[\w.-]+\z/) && version != "latest"
       fail!("system") unless system_service.nil? || system_service.match?(/\A[a-z0-9_-]+\z/)
+      validate_third_party! if third_party?
       return if system?
 
       fail!("network") unless NETWORKS.include?(network)
@@ -156,6 +177,12 @@ module AppCatalog
       options.each { |o| validate_option!(o) }
       fail!("health") unless health.nil? || (health["test"].is_a?(Array) && health["test"].all?(String))
       fail!("shm_mb") unless shm_mb.nil? || (shm_mb.is_a?(Integer) && shm_mb.between?(64, 2048))
+    end
+
+    def validate_third_party!
+      fail!("digest (imagem de terceiro precisa de sha256:…)") unless data["digest"].to_s.match?(DIGEST)
+      fail!("app de terceiro não pode ser do sistema") if data.key?("system")
+      fail!("app de terceiro não recebe segredos do servidor") if data.key?("server_env")
     end
 
     def validate_ports!
