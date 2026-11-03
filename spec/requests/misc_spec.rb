@@ -78,6 +78,13 @@ RSpec.describe "Notificações, push, IA e páginas públicas" do
     end
   end
 
+  it "páginas legais falam de casa/instalação, não de empresa, nos três idiomas" do
+    files = Dir[Rails.root.join("app/views/legal/{privacy,terms,data_deletion}*.html.erb")]
+    expect(files.size).to eq(9)
+    files.each { |f| expect(File.read(f)).not_to match(/empresa|company/i), f }
+    expect(File.read(Rails.root.join("app/views/legal/data_deletion.html.erb"))).to include("dados da sua casa")
+  end
+
   it "healthcheck" do
     get "/up"
     expect(response).to have_http_status(:ok)
