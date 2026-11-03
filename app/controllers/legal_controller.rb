@@ -1,6 +1,6 @@
 # Páginas públicas: as exigidas pela Play (privacidade, termos, exclusão) e
 # a de redefinir a senha (link do e-mail). Texto por idioma em
-# app/views/legal/<página>.<idioma>.html.erb (pt-BR é o arquivo sem idioma).
+# app/views/legal/<página>.<idioma>.html.erb (pt-BR também tem o idioma no nome: com `i18n.fallbacks = [:en]`, um arquivo sem idioma perderia para o `.en`).
 class LegalController < ActionController::Base
   include Localized
   layout "legal"
