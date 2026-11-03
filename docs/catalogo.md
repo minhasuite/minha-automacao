@@ -53,3 +53,10 @@ end
 | Denon / Marantz AVR | HTTP do receiver (`formiPhoneAppDirect.xml`) | só o IP (porta 8080 nos modelos novos) |
 | Denon HEOS | CLI HEOS (TCP 1255) | IP de qualquer caixa |
 | Sony Bravia TV | REST `/sony/*` com `X-Auth-PSK` | ligar Controle IP com chave pré-compartilhada na TV |
+| Clima: Met.no | provedor de `Weather::PROVIDERS` | nada (grátis, sem chave) |
+| Clima: OpenWeatherMap | provedor de `Weather::PROVIDERS` (API 2.5 grátis) | chave da conta OpenWeatherMap |
+| Forecast.Solar | `api.forecast.solar/estimate` | potência de pico, inclinação e orientação; latitude/longitude do local |
+| Electricity Maps (CO2 Signal) | API v3 (`carbon-intensity`, `power-breakdown`) | token grátis em app.electricitymaps.com |
+| Lua / Estação do ano | calculadas no servidor | nada |
+| Feriados | Nager.Date (`date.nager.at`) | país e, se quiser, o estado |
+| Google Tradutor (fala) | provedor de voz `Ai::PROVIDERS` (TTS) | adicionar em Configurações → IA |

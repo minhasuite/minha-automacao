@@ -14,7 +14,7 @@ module Weather
   class Error < StandardError; end
 
   # Ordem = ordem no formulário; o primeiro é o padrão.
-  PROVIDERS = %w[OpenMeteo].freeze
+  PROVIDERS = %w[OpenMeteo MetNo OpenWeatherMap].freeze
 
   # Condição (mesmos nomes do HA) → [rótulo, ícone].
   CONDITIONS = {

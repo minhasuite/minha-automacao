@@ -28,6 +28,7 @@ module Integrations
                FrigatePlugin ReolinkPlugin UnifiProtectPlugin HuePlugin WledPlugin YeelightPlugin SwitchbotPlugin
                DaikinPlugin MideaPlugin LgThinqPlugin SunspecPlugin GrowattPlugin DirigeraPlugin SonosPlugin DlnaPlugin GoveePlugin ZwaveJsPlugin BleProxyPlugin BluetoothPlugin ThreadPlugin GoogleHomePlugin HomekitPlugin
                WizPlugin TplinkPlugin AdguardPlugin NutPlugin FullyKioskPlugin HomewizardPlugin SynologyDsmPlugin FritzboxPlugin DenonavrPlugin HeosPlugin BraviatvPlugin
+               ForecastSolarPlugin Co2signalPlugin MoonPlugin SeasonPlugin HolidayPlugin
                CalendarPlugin WeatherPlugin MobileAppPlugin NetworkTrackerPlugin TelegramPlugin WhatsappPlugin HttpMessengerPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
 
   module_function

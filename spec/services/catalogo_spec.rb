@@ -355,4 +355,103 @@ RSpec.describe "Catálogo de integrações (grupo 9)" do
       expect(pts(i)["media"].value).to eq("state" => "off")
     end
   end
+
+  describe "dados (D13)" do
+    before { site.update!(latitude: -23.55, longitude: -46.63, timezone: "America/Sao_Paulo") }
+
+    it "Met.no e OpenWeatherMap são provedores do Clima (formato comum)" do
+      expect(Weather.choices.keys).to include("open_meteo", "met_no", "openweathermap")
+      met = { "properties" => { "timeseries" => [
+        { "time" => "2026-11-03T15:00:00Z", "data" => { "instant" => { "details" => { "air_temperature" => 27.1, "relative_humidity" => 60, "wind_speed" => 2.5 } },
+                                                         "next_1_hours" => { "summary" => { "symbol_code" => "rainshowers_day" }, "details" => { "precipitation_amount" => 1.2 } } } },
+        { "time" => "2026-11-03T16:00:00Z", "data" => { "instant" => { "details" => { "air_temperature" => 29.0 } },
+                                                         "next_1_hours" => { "summary" => { "symbol_code" => "heavyrainandthunder" } } } }
+      ] } }
+      stub_request(:get, %r{api\.met\.no/weatherapi/locationforecast/2\.0/compact\?lat=-23\.55&lon=-46\.63}).with(headers: { "User-Agent" => /MinhaAutomacao/ })
+                                                                                                       .to_return(json(met))
+      d = Weather::Providers::MetNo.fetch(lat: -23.55, lon: -46.63, zone: "America/Sao_Paulo")
+      expect(d["current"]).to include("condition" => "rainy", "temperature" => 27.1, "humidity" => 60, "wind_speed" => 9.0)
+      expect(d["hourly"].map { |h| h["condition"] }).to eq(%w[rainy lightning-rainy])
+      expect(d["daily"].first).to include("date" => "2026-11-03", "temperature_max" => 29.0, "temperature_min" => 27.1, "precipitation" => 1.2)
+
+      now = { "weather" => [ { "id" => 800 } ], "main" => { "temp" => 25.3, "feels_like" => 26, "humidity" => 50 }, "wind" => { "speed" => 5 },
+              "dt" => 100, "sys" => { "sunrise" => 50, "sunset" => 200 } }
+      fc = { "list" => [ { "dt" => 1_793_000_000, "main" => { "temp" => 24, "temp_max" => 26, "temp_min" => 20 }, "weather" => [ { "id" => 502 } ], "pop" => 0.8,
+                           "rain" => { "3h" => 4.5 }, "sys" => { "pod" => "d" } } ] }
+      stub_request(:get, %r{api\.openweathermap\.org/data/2\.5/weather\?.*appid=chave-teste}).to_return(json(now))
+      stub_request(:get, %r{api\.openweathermap\.org/data/2\.5/forecast\?}).to_return(json(fc))
+      o = Weather::Providers::OpenWeatherMap.fetch(lat: -23.55, lon: -46.63, zone: "America/Sao_Paulo", api_key: "chave-teste")
+      expect(o["current"]).to include("condition" => "sunny", "temperature" => 25.3, "wind_speed" => 18.0, "precipitation_probability" => 80)
+      expect(o["daily"].first).to include("condition" => "pouring", "temperature_max" => 26, "temperature_min" => 20, "precipitation" => 4.5)
+      stub_request(:get, /openweathermap/).to_return(status: 401, body: "{}")
+      expect { Weather::Providers::OpenWeatherMap.fetch(lat: 1, lon: 1, zone: "UTC", api_key: "x") }.to raise_error(Weather::Error, /recusou/)
+    end
+
+    it "Forecast.Solar: previsão de hoje, de amanhã, a de agora e a que falta" do
+      result = { "watts" => { "2026-11-03 06:00:00" => 0, "2026-11-03 12:00:00" => 3100, "2026-11-03 18:00:00" => 0 },
+                 "watt_hours" => { "2026-11-03 06:00:00" => 0, "2026-11-03 12:00:00" => 9000, "2026-11-03 18:00:00" => 21_000 },
+                 "watt_hours_day" => { "2026-11-03" => 21_000, "2026-11-04" => 18_500 } }
+      stub_request(:get, "https://api.forecast.solar/estimate/-23.55/-46.63/20/180/5.4").to_return(json("result" => result, "message" => { "code" => 0 }))
+      i = travel_to(Time.zone.parse("2026-11-03 13:30 -03:00")) { add(Integrations::ForecastSolarPlugin, kwp: "5,4") }
+      p = pts(i)
+      expect([ p["power_now"].value, p["energy_today"].value, p["energy_tomorrow"].value, p["energy_remaining"].value ]).to eq([ 3100, 21.0, 18.5, 12.0 ])
+      expect(p["energy_today"].unit).to eq("kWh")
+      site.update!(latitude: nil)
+      expect(Integrations::ForecastSolarPlugin.setup(site, form(kwp: "3")).alert).to include("latitude")
+    end
+
+    it "Electricity Maps: intensidade de carbono e parte fóssil (o painel de energia lê em %)" do
+      stub_request(:get, %r{electricitymap\.org/v3/carbon-intensity/latest\?lat=-23\.55&lon=-46\.63}).with(headers: { "auth-token" => "tok-teste" })
+                                                                                                 .to_return(json("zone" => "BR-CS", "carbonIntensity" => 95))
+      stub_request(:get, %r{electricitymap\.org/v3/power-breakdown/latest}).to_return(json("fossilFreePercentage" => 88))
+      i = add(Integrations::Co2signalPlugin, token: "tok-teste")
+      expect(i.devices.first.name).to eq("Electricity Maps BR-CS")
+      expect([ pts(i)["intensity"].value, pts(i)["fossil"].value ]).to eq([ 95, 12.0 ])
+      stub_request(:get, /carbon-intensity/).to_return(status: 401, body: { message: "Invalid token" }.to_json)
+      expect(Integrations::Co2signalPlugin.setup(site, form(token: "x")).alert).to include("Invalid token")
+    end
+
+    it "Lua e estação do ano: calculadas aqui, no idioma em que nasceram e no hemisfério do local" do
+      expect(Integrations::MoonPlugin.phase(Time.utc(2026, 11, 24, 15))[0]).to eq("full_moon") # lua cheia de 24/11/2026
+      expect(Integrations::MoonPlugin.phase(Time.utc(2026, 11, 10, 0))[0]).to eq("new_moon")
+      expect(Integrations::SeasonPlugin.starts(2026)[0].utc.to_date).to eq(Date.new(2026, 3, 20))
+      expect(Integrations::SeasonPlugin.starts(2026)[3].utc.to_date).to eq(Date.new(2026, 12, 21))
+      expect(Integrations::SeasonPlugin.season(Time.utc(2026, 11, 3), south: true)).to eq("spring")
+      expect(Integrations::SeasonPlugin.season(Time.utc(2026, 11, 3))).to eq("autumn")
+      expect(Integrations::SeasonPlugin.season(Time.utc(2026, 12, 5), south: true, type: "meteorological")).to eq("summer")
+
+      moon = I18n.with_locale(:en) { add(Integrations::MoonPlugin, {}) }
+      travel_to(Time.utc(2026, 11, 24, 15)) { Integrations::MoonPlugin.poll(moon.devices.first) }
+      expect(pts(moon)["phase"].value).to eq("Full moon")
+      season = add(Integrations::SeasonPlugin, type: "astronomical")
+      travel_to(Time.utc(2026, 11, 3)) { Integrations::SeasonPlugin.poll(season.devices.first) }
+      expect(pts(season)["season"].value).to eq("Primavera")
+    end
+
+    it "Feriados: nacionais e do estado viram agenda (ponto calendar)" do
+      list = [ { "date" => "2026-11-15", "localName" => "Proclamação da República", "global" => true },
+               { "date" => "2026-11-20", "localName" => "Consciência Negra", "global" => false, "counties" => [ "BR-SP" ] },
+               { "date" => "2026-11-20", "localName" => "Teste Só no Rio", "global" => false, "counties" => [ "BR-RJ" ] } ]
+      stub_request(:get, "https://date.nager.at/api/v3/PublicHolidays/2026/BR").to_return(json(list))
+      stub_request(:get, "https://date.nager.at/api/v3/PublicHolidays/2026/ZZ").to_return(status: 404, body: "")
+      i = travel_to(Time.zone.parse("2026-11-03 10:00 -03:00")) { add(Integrations::HolidayPlugin, country: "br", subdivision: "BR-SP") }
+      cal = pts(i)["holidays"]
+      expect(cal.capability).to eq("calendar")
+      expect(cal.address["events"].pluck("summary")).to eq([ "Proclamação da República", "Consciência Negra" ])
+      expect(cal.address["events"].first).to include("all_day" => true, "start" => "2026-11-15T00:00:00-03:00")
+      expect(Integrations::HolidayPlugin.setup(site, form(country: "ZZ")).alert).to include("ZZ")
+    end
+
+    it "Google Tradutor: fala grátis como provedor de voz (TTS), em pedaços de 200 caracteres" do
+      long = "palavra " * 40
+      expect(Ai::Providers::GoogleTranslate.chunks(long).map(&:size)).to all(be <= 200)
+      expect(Ai::Providers::GoogleTranslate.chunks(long).join(" ").split.size).to eq(40)
+      tts = stub_request(:get, %r{translate\.google\.com/translate_tts\?.*tl=pt-BR}).to_return(status: 200, body: "MP3")
+      AiAccount.create!(provider: "google_translate")
+      expect(Ai.choices(:tts)).to include("google_translate")
+      r = Ai::Audio.speak(tenant: tenant, text: long, provider: "google_translate")
+      expect(r.data).to eq({ media_type: "audio/mpeg", data: "MP3MP3" })
+      expect(tts).to have_been_requested.twice
+    end
+  end
 end
