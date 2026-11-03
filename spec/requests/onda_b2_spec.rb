@@ -248,6 +248,72 @@ RSpec.describe "ondaB2: painéis" do
     end
   end
 
+  describe "B11: temas do usuário e barra lateral por pessoa" do
+    it "a casa cria um tema (cores, papel de parede, vidro, fonte); ele entra na galeria, valida no painel e pinta" do
+      get "/configuracoes/aparencia"
+      expect(response.body).to include("Meu tema", "Temas da casa", "Barra lateral", "Lista Clara", 'data-controller="theme-preview"')
+      post "/configuracoes/aparencia/temas", params: { theme: { name: "Teste praia", accent: "#0EA5E9", accent2: "#f59e0b", wall_style: "mesh", glass: "1", font: "rounded" } }
+      th = within(tenant) { DashboardTheme.last }
+      expect(th).to have_attributes(name: "Teste praia", accent: "#0ea5e9", wall_style: "mesh", glass: true, font: "rounded")
+      expect(th.key).to match(/\Au-[a-z0-9]{8}\z/)
+      expect(th.css).to include("--accent: #0ea5e9", "--grad: linear-gradient(135deg, #0ea5e9 0%, #f59e0b 100%)", "--wall: radial-gradient", "--font-sans: ui-rounded")
+
+      d = board([ { "id" => "w1", "type" => "tile", "bind" => power.id } ], view: { "theme" => { "key" => th.key } })
+      expect(within(tenant) { Dashboards::Schema.errors(d.definition) }).to eq([])
+      expect(resolved(d)["views"][0]["theme_now"]).to include("key" => th.key, "accent" => "#0ea5e9", "accent2" => "#f59e0b")
+      get "/paineis/#{d.id}"
+      expect(response.body).to include("dw-theme-#{th.key}", "--font-sans: ui-rounded")
+      get "/paineis/#{d.id}/editar"
+      expect(response.body).to include("Teste praia")
+
+      post "/configuracoes/aparencia/temas", params: { theme: { name: "Teste ruim", accent: "red", accent2: "#000000", wall_style: "glow", font: "manrope" } }
+      expect(within(tenant) { DashboardTheme.count }).to eq(1)
+    end
+
+    it "tema da pessoa vale por cima do painel, no perfil (web e app) ou só no aparelho" do
+      d = board([ { "id" => "w1", "type" => "tile", "bind" => power.id } ], view: { "theme" => { "key" => "aurora" } })
+      patch "/configuracoes/aparencia", params: { op: "my_theme", key: "oceano" }
+      expect(within(tenant) { user.reload.dashboard_prefs["theme"] }).to eq("oceano")
+      get "/paineis/#{d.id}"
+      expect(response.body).to include("dw-theme-oceano")
+      patch "/configuracoes/aparencia", params: { op: "device_theme", key: "grafite" }
+      get "/paineis/#{d.id}"
+      expect(response.body).to include("dw-theme-grafite")
+      patch "/configuracoes/aparencia", params: { op: "device_theme", key: "" }
+      patch "/configuracoes/aparencia", params: { op: "my_theme", key: "nada" } # chave que não existe = segue o painel
+      get "/paineis/#{d.id}"
+      expect(response.body).to include("dw-theme-aurora")
+
+      headers = auth_headers(user)
+      get "/api/v1/themes", headers: headers
+      expect(response.parsed_body["data"].map { |t| t["key"] }).to include("lista", "aurora", "grafite")
+      patch "/api/v1/me", params: { theme: "floresta" }, headers: headers
+      expect(response.parsed_body.dig("data", "theme")).to eq("floresta")
+      get "/api/v1/dashboards/#{d.id}", headers: headers
+      expect(response.parsed_body.dig("data", "views", 0, "theme_now", "key")).to eq("floresta")
+      patch "/api/v1/me", params: { theme: "voar" }, headers: headers
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it "barra lateral por pessoa: esconde, reordena e restaura; Configurações fica" do
+      get "/configuracoes/aparencia"
+      expect(response.body).to include("Esconder Diário")
+      patch "/configuracoes/aparencia", params: { op: "sidebar", item: "logbook", dir: "toggle" }
+      patch "/configuracoes/aparencia", params: { op: "sidebar", item: "history", dir: "up" }
+      patch "/configuracoes/aparencia", params: { op: "sidebar", item: "settings", dir: "toggle" }
+      prefs = within(tenant) { user.reload.dashboard_prefs["sidebar"] }
+      expect(prefs["hidden"]).to eq([ "logbook" ])
+      expect(prefs["order"].index("history")).to be < prefs["order"].index("logbook")
+      get "/configuracoes/aparencia"
+      nav = response.body[/<nav class="ss-nav.*?<\/nav>/m]
+      expect(nav).not_to include(">Diário<")
+      expect(nav).to include("Configurações")
+      expect(nav.index(">Histórico<")).to be < nav.index(">Notificações<")
+      patch "/configuracoes/aparencia", params: { op: "sidebar_reset" }
+      expect(within(tenant) { user.reload.dashboard_prefs }).not_to have_key("sidebar")
+    end
+  end
+
   describe "B9: ações de toque, segurar e duplo toque" do
     it "valida, resolve e deixa na tela o que o gesto dispara" do
       w = { "id" => "w1", "type" => "tile", "bind" => power.id, "tap_action" => { "action" => "navigate", "navigation_path" => "quarto" },

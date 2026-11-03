@@ -182,3 +182,50 @@
   .dw-stack-title { grid-column: 1 / -1; margin-bottom: 0; }
   .dw-stack-horizontal .dw-stack-title { grid-row: 1; }
 }
+
+@layer components {
+  /* ---- Aparência: galeria de temas, editor com prévia (B11) ------------- */
+  .ap-gallery { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); }
+  .ap-theme { padding: .6rem; border-radius: 1.1rem; border: 1px solid var(--line); background: var(--surface); transition: box-shadow .2s ease, border-color .2s ease; }
+  .ap-theme:hover { box-shadow: var(--shadow-hover); }
+  .ap-theme.is-mine { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+  .ap-preview { position: relative; height: 7.5rem; border-radius: .85rem; overflow: hidden; background: var(--bg, var(--field)); display: grid;
+                grid-template-columns: 1fr 1fr; grid-template-rows: 2.6rem 1fr; gap: .4rem; padding: .45rem; }
+  .ap-wall { position: absolute; inset: 0; }
+  .ap-hero { position: relative; grid-column: 1 / -1; border-radius: .6rem; background: var(--grad); }
+  .ap-card { position: relative; display: grid; gap: .3rem; align-content: center; padding: .35rem .45rem; border-radius: .6rem; background: var(--surface);
+             box-shadow: 0 1px 2px rgba(0, 0, 0, .06); }
+  .ap-glass .ap-card { background: color-mix(in srgb, var(--surface) 62%, transparent); backdrop-filter: blur(8px); }
+  .ap-dot { width: .9rem; height: .9rem; border-radius: .35rem; background: var(--field); }
+  .ap-on .ap-dot { background: var(--grad); }
+  .ap-line { height: .35rem; width: 70%; border-radius: 999px; background: var(--field); }
+  .ap-swatch { width: 2.2rem; height: 2.2rem; flex: none; border-radius: .8rem; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08); }
+  .ap-editor { display: grid; gap: 1.25rem; padding: 1rem; border-radius: 1.2rem; background: var(--field); }
+  @media (min-width: 1024px) { .ap-editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; } }
+  .ap-color { width: 100%; height: 2.75rem; padding: .2rem; border-radius: .8rem; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
+  .ap-live { position: relative; overflow: hidden; display: grid; gap: .75rem; padding: .9rem; border-radius: 1.1rem; background: var(--bg, var(--surface));
+             font-family: var(--font-sans); box-shadow: var(--shadow-card); isolation: isolate; }
+  .ap-live::before { content: ""; position: absolute; inset: 0; z-index: -1; }
+  .ap-wall-glow::before { background: radial-gradient(60% 50% at 10% 0%, color-mix(in srgb, var(--accent) 32%, transparent), transparent),
+                                       radial-gradient(55% 55% at 95% 95%, color-mix(in srgb, var(--accent2, var(--accent)) 28%, transparent), transparent); }
+  .ap-wall-mesh::before { background: radial-gradient(40% 40% at 20% 20%, color-mix(in srgb, var(--accent) 32%, transparent), transparent),
+                                       radial-gradient(45% 45% at 80% 30%, color-mix(in srgb, var(--accent2, var(--accent)) 28%, transparent), transparent),
+                                       radial-gradient(50% 50% at 50% 100%, color-mix(in srgb, var(--accent) 22%, transparent), transparent); }
+  .ap-wall-solid::before { background: linear-gradient(color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent2, var(--accent)) 12%, transparent)); }
+  .ap-live-hero { display: grid; gap: .15rem; padding: 1rem 1.1rem; border-radius: .95rem; color: #fff; background: var(--grad); box-shadow: 0 16px 32px -20px var(--accent); }
+  .ap-live-hero strong { font-size: 1.35rem; font-weight: 800; }
+  .ap-live-kicker { font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
+  .ap-live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+  .ap-live-card { display: flex; align-items: center; gap: .65rem; padding: .7rem .8rem; border-radius: .95rem; background: var(--surface);
+                  box-shadow: var(--shadow-card); color: var(--ink); }
+  .ap-glass .ap-live-card { background: color-mix(in srgb, var(--surface) 60%, transparent); backdrop-filter: blur(10px); }
+  .ap-live-card b { display: block; font-size: .85rem; }
+  .ap-live-card small { display: block; font-size: .72rem; color: var(--muted); }
+  .ap-live-card.is-on small { color: var(--accent); font-weight: 700; }
+  .ap-live-ico { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; flex: none; border-radius: .8rem; background: var(--field); color: var(--muted); }
+  .ap-live-card.is-on .ap-live-ico { background: var(--grad); color: #fff; }
+  .ap-live-wide { grid-column: 1 / -1; justify-content: space-between; }
+  .ap-live-chips { display: flex; gap: .35rem; }
+  .ap-live-chips span { padding: .3rem .7rem; border-radius: 999px; font-size: .75rem; font-weight: 700; background: var(--field); color: var(--ink-2); }
+  .ap-live-chips .is-on { background: var(--grad); color: #fff; }
+}

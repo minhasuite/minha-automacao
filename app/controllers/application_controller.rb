@@ -12,6 +12,7 @@ class ApplicationController < ActionController::Base
 
   before_action :require_login!
   before_action :set_tenant
+  before_action { Current.theme_key = cookies[:ma_theme].presence || current_user&.dashboard_prefs&.dig("theme") }
 
   helper_method :current_user, :can?, :reveal_sensitive?
 

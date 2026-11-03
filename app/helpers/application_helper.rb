@@ -37,6 +37,35 @@ module ApplicationHelper
     end
   end
 
+  # ondaB2 (B11): itens do menu lateral, com a ordem e o que a pessoa
+  # escondeu (`dashboard_prefs["sidebar"]`). Configurações fica sempre.
+  # `all: true` devolve também os escondidos (marcados), para a tela Aparência.
+  SIDEBAR_FIXED = %w[settings].freeze
+
+  def sidebar_entries(all: false)
+    user = current_user
+    reader = user.reader?
+    list = [ { key: "home", label: t("nav.home"), path: root_path, icon: "lightning-bolt" } ]
+    list += Dashboard.sidebar_for(user).map { |d| { key: "dash:#{d.id}", label: d.name, path: dashboard_path(d), icon: d.icon_name } }
+    unless reader
+      list += [ { key: "sites", label: t("nav.sites"), path: sites_path, icon: "home" },
+                { key: "logbook", label: t("nav.logbook"), path: logbook_path, icon: "view-list" },
+                { key: "history", label: t("nav.history"), path: history_path, icon: "chart-bar" },
+                ({ key: "map", label: t("nav.map"), path: map_path, icon: "map" } if Maps.allowed?(user)),
+                { key: "alerts", label: t("nav.alerts"), path: alerts_path, icon: "exclamation-circle",
+                  badge: -> { Alert.active.where(acked_at: nil, site_id: Site.visible_to(user).select(:id)).count } },
+                { key: "ask", label: t("nav.ask"), path: ask_path, icon: "sparkles" } ].compact
+    end
+    list << { key: "notifications", label: t("nav.notifications"), path: notifications_path, icon: "bell", badge: -> { Notification.for_user(user).unread.count } }
+    list << { key: "settings", label: reader ? t("nav.account") : t("nav.settings"), path: reader ? settings_account_path : settings_path, icon: "cog", class: "mt-3" }
+    prefs = user.dashboard_prefs.to_h["sidebar"].to_h
+    order = Array(prefs["order"])
+    hidden = Array(prefs["hidden"]) - SIDEBAR_FIXED
+    list = list.sort_by.with_index { |e, i| [ e[:key] == "settings" ? 1 : 0, order.index(e[:key]) || (order.size + i) ] }
+    list.each { |e| e[:hidden] = hidden.include?(e[:key]) }
+    all ? list : list.reject { |e| e[:hidden] }
+  end
+
   # Item ativo: a própria página ou uma página abaixo dela.
   def nav_current?(path)
     return current_page?(path) if path == root_path

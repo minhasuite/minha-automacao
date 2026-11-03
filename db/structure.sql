@@ -505,6 +505,25 @@ CREATE TABLE public.commands (
 
 
 --
+-- Name: dashboard_themes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dashboard_themes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    key character varying NOT NULL,
+    name character varying NOT NULL,
+    accent character varying NOT NULL,
+    accent2 character varying NOT NULL,
+    wall_style character varying DEFAULT 'glow'::character varying NOT NULL,
+    glass boolean DEFAULT false NOT NULL,
+    font character varying DEFAULT 'manrope'::character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: dashboard_versions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2058,6 +2077,14 @@ ALTER TABLE ONLY public.commands
 
 
 --
+-- Name: dashboard_themes dashboard_themes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_themes
+    ADD CONSTRAINT dashboard_themes_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: dashboard_versions dashboard_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2922,6 +2949,20 @@ CREATE UNIQUE INDEX index_commands_on_tenant_id_and_client_uuid ON public.comman
 --
 
 CREATE INDEX index_commands_on_user_id ON public.commands USING btree (user_id);
+
+
+--
+-- Name: index_dashboard_themes_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_dashboard_themes_on_tenant_id ON public.dashboard_themes USING btree (tenant_id);
+
+
+--
+-- Name: index_dashboard_themes_on_tenant_id_and_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_dashboard_themes_on_tenant_id_and_key ON public.dashboard_themes USING btree (tenant_id, key);
 
 
 --
@@ -4897,12 +4938,21 @@ ALTER TABLE public.readings
 
 
 --
+-- Name: dashboard_themes fk_rails_0b2b0e7a1d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_themes
+    ADD CONSTRAINT fk_rails_0b2b0e7a1d FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261103100001'),
 ('20261102400003'),
 ('20261102400002'),
 ('20261102400001'),

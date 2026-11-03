@@ -262,6 +262,11 @@ Rails.application.routes.draw do
     post "configuracoes/seguranca/passkeys", to: "security#create_passkey", as: :settings_passkeys
     delete "configuracoes/seguranca/passkeys/:id", to: "security#destroy_passkey", as: :settings_passkey
     get "configuracoes/logs", to: "logs#show", as: :settings_logs
+    get "configuracoes/aparencia", to: "appearance#show", as: :settings_appearance
+    patch "configuracoes/aparencia", to: "appearance#update"
+    post "configuracoes/aparencia/temas", to: "appearance#create_theme", as: :settings_themes
+    patch "configuracoes/aparencia/temas/:id", to: "appearance#update_theme", as: :settings_theme
+    delete "configuracoes/aparencia/temas/:id", to: "appearance#destroy_theme"
     delete "configuracoes/logs", to: "logs#destroy"
     post "configuracoes/hardware/:acao", to: "hardware#power", as: :settings_hardware_power
     # Backup no Google Drive: conectar volta por integrations#oauth_callback.
@@ -322,6 +327,7 @@ Rails.application.routes.draw do
       get "me/export", to: "me#export"
       post "me/wipe", to: "me#wipe"
       get "me/sessions", to: "me#sessions"
+      get "themes", to: "me#themes"
       delete "me/sessions", to: "me#revoke_sessions"
       delete "me/sessions/:id", to: "me#revoke_session"
 

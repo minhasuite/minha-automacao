@@ -6,6 +6,13 @@ module Api
       # PATCH /me { name?, email?, password?, current_password? }
       def update
         attrs = params.permit(:name, :email).to_h
+        # ondaB2 (B11): o tema do painel da pessoa (vazio = o do painel).
+        if params.key?(:theme)
+          key = params[:theme].presence
+          return render_error(:invalid_theme, I18n.t("appearance.unknown"), status: :unprocessable_content) if key && !Dashboards::Themes[key]
+
+          attrs[:dashboard_prefs] = current_user.dashboard_prefs.to_h.merge("theme" => key).compact
+        end
         if params[:password].present?
           if current_user.password_digest.present? && !current_user.authenticate(params[:current_password].to_s)
             return render_error(:invalid_password, "Senha atual incorreta.", status: :unprocessable_content)
@@ -14,6 +21,12 @@ module Api
         end
         current_user.update!(attrs)
         render_data(UserSerializer.new(current_user).to_h)
+      end
+
+      # GET /themes — temas para escolher (os prontos e os da casa), com as cores.
+      def themes
+        render_data(Dashboards::Themes.all.map { |t| { key: t.key, label: t.label, accent: t.accent, accent2: t.accent2, glass: t.glass } },
+                    meta: { current: current_user.dashboard_prefs.to_h["theme"] })
       end
 
       # DELETE /me — exclui a conta. Último membro leva a empresa junto.

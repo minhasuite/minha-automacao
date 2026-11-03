@@ -71,6 +71,7 @@ module Api
         return unauthorized! if @current_api_user.disabled?
 
         Current.user = @current_api_user
+        Current.theme_key = @current_api_user.dashboard_prefs.to_h["theme"] # ondaB2 (B11)
       end
 
       def current_user = @current_api_user

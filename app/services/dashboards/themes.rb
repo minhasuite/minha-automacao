@@ -18,7 +18,16 @@ module Dashboards
     module_function
 
     def plugins = PLUGINS.map { |n| const_get(n) }
-    def [](key) = plugins.find { |t| t.key == key.to_s }
+    # ondaB2 (B11): os prontos e os da casa (DashboardTheme, chave "u-...").
+    def all = plugins + (ActsAsTenant.current_tenant ? DashboardTheme.order(:name).to_a : [])
+    def [](key) = plugins.find { |t| t.key == key.to_s } || (DashboardTheme.find_by(key: key.to_s) if key.to_s.start_with?("u-") && ActsAsTenant.current_tenant)
+
+    # Variáveis CSS da marca a partir das duas cores (já validadas).
+    def css_vars(accent, accent2, wallpaper = nil)
+      [ "--accent: #{accent}", "--accent-solid: #{accent}", "--accent-hover: #{accent}", "--accent2: #{accent2}", "--accent-soft: color-mix(in srgb, #{accent} 14%, var(--surface))",
+        "--grad: linear-gradient(135deg, #{accent} 0%, #{accent2} 100%)", "--glow: color-mix(in srgb, #{accent} 16%, transparent)", "--ring: color-mix(in srgb, #{accent} 22%, transparent)",
+        ("--wall: #{wallpaper}" if wallpaper) ].compact.join("; ")
+    end
 
     def errors(theme, where)
       return [] if theme.nil?
@@ -33,13 +42,16 @@ module Dashboards
       e
     end
 
-    # O tema que vale agora para a visão: painel + visão, e o de noite se for noite no local.
+    # O tema que vale agora para a visão: painel + visão, e o de noite se for
+    # noite no local. ondaB2 (B11): o tema da pessoa (perfil ou aparelho,
+    # `Current.theme_key`) vale por cima das cores; o papel de parede enviado fica.
     def resolve(definition, view, site, now: Time.current)
       t = (definition["theme"] || {}).merge(view&.dig("theme") || {})
-      return nil if t.empty?
+      mine = Current.theme_key.presence && self[Current.theme_key]
+      return nil if t.empty? && !mine
 
-      night = t["night"].present? && NIGHT.include?(now.in_time_zone(site.timezone).hour)
-      theme = self[night ? t["night"] : t["key"]] || Lista
+      night = !mine && t["night"].present? && NIGHT.include?(now.in_time_zone(site.timezone).hour)
+      theme = mine || self[night ? t["night"] : t["key"]] || Lista
       { "theme" => theme, "night" => night, "image" => t["image"], "blur" => t["blur"] || 0, "glass" => t.fetch("glass", theme.glass) }
     end
 
@@ -64,11 +76,7 @@ module Dashboards
         end
 
         # Variáveis CSS do tema (só cores validadas na definição).
-        def css
-          [ "--accent: #{accent}", "--accent-solid: #{accent}", "--accent-hover: #{accent}", "--accent-soft: color-mix(in srgb, #{accent} 14%, var(--surface))",
-            "--grad: linear-gradient(135deg, #{accent} 0%, #{accent2} 100%)", "--glow: color-mix(in srgb, #{accent} 16%, transparent)", "--ring: color-mix(in srgb, #{accent} 22%, transparent)",
-            ("--wall: #{wallpaper}" if wallpaper) ].compact.join("; ")
-        end
+        def css = Themes.css_vars(accent, accent2, wallpaper)
       end
     end
 
