@@ -212,6 +212,17 @@ services:
     volumes:
       - homekit-bridge-data:/data
 
+  # resto2 (grupo 9 #47/#55): gravador de firmware do SkyConnect/ZBT-1/ZBT-2
+  # (pasta flasher/, universal-silabs-flasher), DESLIGADO por padrão (perfil
+  # `flasher`). Não fica rodando: `docker compose --profile flasher build flasher`
+  # só cria a imagem; o supervisor sobe um container de uma vez com a porta
+  # serial quando a pessoa clica Instalar no firmware do rádio.
+  flasher:
+    build: ./flasher
+    image: minha-automacao-flasher:local
+    profiles: ["flasher"]
+    restart: "no"
+
   # integ: Ponte Matter (expor), DESLIGADA por padrão (perfil `matter-bridge`:
   # `docker compose --profile matter-bridge up -d --build matter-bridge`).
   # matter.js em Node (pasta matter-bridge/): publica os pontos escolhidos na

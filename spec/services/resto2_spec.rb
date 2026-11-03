@@ -246,4 +246,86 @@ RSpec.describe "Paridade: resto2" do
       expect(broker.topics).to include("rr/m/o/uTeste/#{user}/d1", "rr/m/i/uTeste/#{user}/d1")
     end
   end
+
+  describe "SkyConnect / ZBT-1 / ZBT-2: firmware pelo gravador do supervisor (grupo 9, #47, #55)" do
+    let(:plugin) { Integrations::SkyconnectPlugin }
+    let(:port) { "/dev/serial/by-id/usb-Nabu_Casa_SkyConnect_v1.0_teste-if00-port0" }
+    let(:release) do
+      { "html_url" => "https://github.com/NabuCasa/silabs-firmware-builder/releases/tag/v2025.10.1",
+        "assets" => [ { "name" => "skyconnect_zigbee_ncp_7.4.4.5.gbl", "browser_download_url" => "https://github.com/NabuCasa/silabs-firmware-builder/releases/download/v2025.10.1/skyconnect_zigbee_ncp_7.4.4.5.gbl",
+                        "digest" => "sha256:#{'a' * 64}" },
+                      { "name" => "skyconnect_openthread_rcp_2.4.4.0_GitHub-7074a43e4_gsdk_4.4.4.gbl", "browser_download_url" => "https://github.com/NabuCasa/silabs-firmware-builder/releases/download/v2025.10.1/skyconnect_openthread_rcp_2.4.4.0_GitHub-7074a43e4_gsdk_4.4.4.gbl" } ] }
+    end
+
+    before do
+      stub_const("ENV", ENV.to_h.merge("SUPERVISOR_URL" => "http://supervisor:8099", "SUPERVISOR_TOKEN" => "t" * 40))
+      stub_request(:get, "https://api.github.com/repos/NabuCasa/silabs-firmware-builder/releases/latest").to_return(json(release))
+    end
+
+    it "lê o rádio pela sonda, compara com o release da Nabu Casa e grava pelo supervisor" do
+      stub_request(:post, "http://supervisor:8099/system/radio/probe").with(body: { device: port }.to_json).to_return(json("data" => { "type" => "ezsp", "version" => "7.4.4.0" }))
+      o = plugin.setup(site, form(device: port))
+      expect(o.alert).to be_nil
+      dev = adopt(o.integration).sole
+      expect(dev.firmware).to eq("ezsp 7.4.4.0")
+      plugin.poll(dev)
+      expect(caps(dev)["text"].value).to eq("ezsp 7.4.4.0")
+
+      fw = Firmware.check!(dev)
+      expect(Firmware.view(fw.value)).to include(installed: "7.4.4.0", latest: "7.4.4.5", state: "available")
+      flash = stub_request(:post, "http://supervisor:8099/system/radio/flash")
+              .with(body: { device: port, url: release["assets"][0]["browser_download_url"], sha256: "a" * 64 }.to_json)
+              .to_return(json("data" => { "type" => "ezsp", "version" => "7.4.4.5" }))
+      allow(Thread).to receive(:new).and_yield
+      Firmware.install!(fw, user: nil)
+      expect(flash).to have_been_requested
+      expect(dev.reload.firmware).to eq("ezsp 7.4.4.5")
+      expect(Firmware.view(Firmware.check!(dev).value)[:state]).to eq("up_to_date")
+
+      # Thread: troca o tipo e o firmware escolhido passa a ser o RCP do OpenThread
+      o.integration.update!(settings: o.integration.settings.merge("firmware" => "thread"))
+      expect(Firmware::Providers::Silabs.check(dev.reload)[:latest]).to eq("2.4.4.0")
+    end
+
+    it "gravador desligado ou porta ocupada: o aviso do supervisor chega na tela do firmware" do
+      stub_request(:post, "http://supervisor:8099/system/radio/probe").to_return(json({ "error" => "Gravador desligado" }, 422))
+      expect(plugin.setup(site, form(device: port)).alert).to include("Gravador desligado")
+    end
+
+    describe "rota do supervisor" do
+      require Rails.root.join("supervisor/server").to_s
+
+      let(:token) { "t" * 40 }
+      let(:docker) { FakeDocker.new }
+      let(:app) { Supervisor::App.new(docker: docker, token: token, network: "ma-apps", project: "minha-automacao") }
+      let(:url) { release["assets"][0]["browser_download_url"] }
+
+      def req(path, body)
+        status, _h, out = app.call(Rack::MockRequest.env_for(path, method: "POST", input: body.to_json, "HTTP_AUTHORIZATION" => "Bearer #{token}"))
+        [ status, JSON.parse(out.join) ]
+      end
+
+      before do
+        allow(Supervisor).to receive(:log)
+        docker.probe_out = %(log do gravador\n{"type": "ezsp", "version": "7.4.4.5"}\n)
+      end
+
+      it "só porta serial e firmware da Nabu Casa; container de uma vez com só a porta; recusa porta em uso" do
+        expect(req("/system/radio/flash", device: "/dev/sda", url: url)).to eq([ 422, { "error" => "Porta serial inválida." } ])
+        expect(req("/system/radio/flash", device: port, url: "https://exemplo.com/x.gbl").first).to eq(422)
+        expect(req("/system/radio/flash", device: port, url: url, sha256: "zz").first).to eq(422)
+
+        status, body = req("/system/radio/flash", device: port, url: url, sha256: "a" * 64)
+        expect([ status, body["data"] ]).to eq([ 200, { "type" => "ezsp", "version" => "7.4.4.5" } ])
+        create = docker.calls.find { |c| c[1] == "/containers/create" }[2]
+        expect(create["Image"]).to eq("minha-automacao-flasher:local")
+        expect(create["Cmd"]).to eq([ "flash", port, url, "a" * 64 ])
+        expect(create["HostConfig"]).to eq("Devices" => [ { "PathOnHost" => port, "PathInContainer" => port, "CgroupPermissions" => "rwm" } ])
+
+        z2m = docker.add(labels: { "com.docker.compose.service" => "zigbee2mqtt" })
+        docker.inspect(z2m)["HostConfig"]["Devices"] = [ { "PathOnHost" => port } ]
+        expect(req("/system/radio/probe", device: port)).to eq([ 422, { "error" => "A porta #{port} está em uso (pare o Zigbee2MQTT/OTBR antes)." } ])
+      end
+    end
+  end
 end

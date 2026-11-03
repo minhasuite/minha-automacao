@@ -160,6 +160,8 @@ module Supervisor
       when "POST /system/host/network" then host_network(body)
       when "GET /system/host/wifi" then host_wifi_scan
       when "POST /system/host/wifi" then host_wifi(body)
+      when "POST /system/radio/probe" then radio(body, "probe")
+      when "POST /system/radio/flash" then radio(body, "flash")
       when "GET /system/logs" then json(200, data: { lines: service_logs(req.params["service"].to_s, req.params["lines"]) })
       else json(404, error: "Não encontrado.")
       end
@@ -177,9 +179,9 @@ module Supervisor
     end
 
     # Container de uma vez com a imagem do produto: cria, roda, espera, lê a saída e apaga.
-    def run_once(cmd, host_config, timeout: 60)
+    def run_once(cmd, host_config, timeout: 60, image: own_image)
       _, created = @docker.call(:post, "/containers/create", query: { name: "minha-automacao-probe-#{Time.now.to_i}-#{rand(1000)}" },
-                                                             body: { "Image" => own_image, "Cmd" => cmd, "Labels" => { PROBE_LABEL => "1" }, "HostConfig" => host_config })
+                                                             body: { "Image" => image, "Cmd" => cmd, "Labels" => { PROBE_LABEL => "1" }, "HostConfig" => host_config })
       id = created["Id"]
       @docker.call(:post, "/containers/#{id}/start")
       @docker.call(:post, "/containers/#{id}/wait", timeout: timeout)
@@ -256,6 +258,37 @@ module Supervisor
       Supervisor.log("wi-fi: conectar")
       nmcli("device", "wifi", "connect", ssid, *(pass.empty? ? [] : [ "password", pass ]), *(iface.empty? ? [] : [ "ifname", iface ]), timeout: 60)
       json(202, data: { ssid: ssid })
+    end
+
+    # ---- resto2 (grupo 9 #47/#55): firmware do SkyConnect/ZBT-1/ZBT-2 ----
+    # Container de uma vez da imagem do perfil `flasher` (flasher/) com só a
+    # porta serial; o firmware vem só dos releases da Nabu Casa no GitHub.
+    FLASHER_IMAGE = ENV.fetch("FLASHER_IMAGE", "minha-automacao-flasher:local")
+    SERIAL = %r{\A/dev/(serial/by-id/[\w.:+-]+|tty(USB|ACM)\d{1,2})\z}
+    FIRMWARE_URL = %r{\Ahttps://github\.com/NabuCasa/[\w.-]+/releases/download/[\w.%+-]+/[\w.%+-]+\.gbl\z}
+
+    def radio(body, action)
+      dev = body["device"].to_s
+      raise Error, "Porta serial inválida." unless dev.match?(SERIAL) && !dev.include?("..")
+      raise Error, "Firmware só dos releases da Nabu Casa no GitHub." if action == "flash" && !body["url"].to_s.match?(FIRMWARE_URL)
+      raise Error, "Hash do firmware inválido." unless body["sha256"].to_s.match?(/\A(\h{64})?\z/)
+      raise Error, "Gravador desligado: rode `docker compose --profile flasher build flasher`." unless @docker.call(:get, "/images/#{FLASHER_IMAGE}/json").first == 200
+      raise Error, "A porta #{dev} está em uso (pare o Zigbee2MQTT/OTBR antes)." if port_busy?(dev)
+
+      Supervisor.log("rádio #{action} #{dev}")
+      cmd = [ action, dev, *([ body["url"].to_s, body["sha256"].to_s ].reject(&:empty?) if action == "flash") ]
+      out = run_once(cmd, { "Devices" => [ { "PathOnHost" => dev, "PathInContainer" => dev, "CgroupPermissions" => "rwm" } ] }, timeout: 900, image: FLASHER_IMAGE)
+      data = JSON.parse(out.lines.reverse.find { |l| l.start_with?("{") } || raise(Error, "Gravador sem resposta."))
+      raise Error, "Gravador: #{data['error']}" if data["error"]
+
+      json(200, data: data)
+    end
+
+    def port_busy?(dev)
+      @docker.containers([]).any? do |c|
+        info = @docker.inspect(c["Id"])
+        info.dig("State", "Running") && Array(info.dig("HostConfig", "Devices")).any? { |d| d["PathOnHost"] == dev }
+      end
     end
 
     def service_logs(service, lines)

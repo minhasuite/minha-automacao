@@ -20,14 +20,14 @@ module Apps
     def act(key, action) = request(:post, "/apps/#{key}/#{action}")
     def uninstall(key, keep_data:) = request(:delete, "/apps/#{key}?keep_data=#{keep_data ? 1 : 0}")
 
-    def request(method, path, body = nil)
+    def request(method, path, body = nil, timeout: 20)
       raise Error, "Os aplicativos rodam no servidor local." unless configured?
 
       uri = URI.join(ENV.fetch("SUPERVISOR_URL"), path)
       req = Net::HTTP.const_get(method.to_s.capitalize).new(uri, "Authorization" => "Bearer #{ENV.fetch('SUPERVISOR_TOKEN')}",
                                                                  "Content-Type" => "application/json")
       req.body = body.to_json if body
-      res = Net::HTTP.start(uri.host, uri.port, open_timeout: 3, read_timeout: 20) { |h| h.request(req) }
+      res = Net::HTTP.start(uri.host, uri.port, open_timeout: 3, read_timeout: timeout) { |h| h.request(req) }
       data = JSON.parse(res.body.presence || "{}")
       return data if res.is_a?(Net::HTTPSuccess)
 

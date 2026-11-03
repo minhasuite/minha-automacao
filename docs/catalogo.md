@@ -80,6 +80,7 @@ end
 | Apple TV | Companion do tvOS (`Companion`, porta do `_companion-link._tcp`, 49153 em geral): quadros OPACK, pair-setup/pair-verify do HAP (`Hap::Client`) e sessão ChaCha20-Poly1305 | o IP e o PIN de 4 dígitos que a TV mostra no primeiro Continuar |
 | Xbox | Xbox Live na nuvem (`xccs.xboxlive.com`): token da Microsoft → token de usuário → XSTS, cabeçalho `XBL3.0` | app OAuth no Azure (ver abaixo) e "Recursos remotos" ligados no console |
 | Roborock | nuvem da Roborock: API da casa com Hawk e MQTT da Roborock (protocolo 1.0, AES com a chave local do robô) | o e-mail da conta e o código que a Roborock manda |
+| Home Assistant Connect (SkyConnect, ZBT-1, ZBT-2) | sonda e gravação pelo supervisor num container de uma vez com a porta serial (perfil `flasher`, universal-silabs-flasher); firmware dos releases da Nabu Casa | a porta serial; parar o Zigbee2MQTT/OTBR antes de gravar; `docker compose --profile flasher build flasher` uma vez |
 | OneDrive (cópia de segurança) | destino `Backups::Destinations::Onedrive` (Graph, sessão de upload) | app no Azure (ver abaixo) |
 
 ## Nuvem com OAuth: o que o dono cria (`Integrations::OauthPlugin`)
@@ -138,10 +139,16 @@ espera (`put(id, sessão)` / `take(id)`), sem mexer no núcleo.
   e desce por tecla; o app aberto vem da TV. `play_media` abre um link (ex.:
   `https://www.netflix.com/title/…` ou `market://launch?id=<pacote>`).
 
-## Roborock
+## Roborock e o rádio da Nabu Casa
 
 - **Roborock**: a senha não passa pelo MA (login pelo código do e-mail); fica
   cifrado só o `rriot` da sessão e a chave local de cada robô. Cômodos pelo
   `get_room_mapping` (segmento do robô → nome do cômodo do app), limpar
   cômodos pelo widget do robô. O desenho do mapa (protocolo 301, compactado e
   cifrado) não entra. Uma conexão MQTT por leitura/comando (a cada minuto).
+- **SkyConnect / ZBT-1 / ZBT-2**: ler ou gravar abre a porta serial, então o
+  supervisor recusa se algum container (Zigbee2MQTT, OTBR) estiver com ela.
+  O tipo escolhido na integração (Zigbee ou Thread) diz qual firmware
+  procurar no release (`<modelo>_zigbee_ncp_*.gbl` ou
+  `<modelo>_openthread_rcp_*.gbl`); o hash SHA-256 do release é conferido
+  antes de gravar.

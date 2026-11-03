@@ -212,5 +212,40 @@ module Firmware
 
       def self.install!(device) = raise(Integrations::Error, I18n.t("resto.firmware.smlight", url: "http://#{device.address['host']}/"))
     end
+
+    # resto2 (grupo 9 #47/#55): rádio Zigbee/Thread da Nabu Casa (SkyConnect,
+    # ZBT-1, ZBT-2). Versão gravada pela sonda do gravador (supervisor,
+    # perfil `flasher`); a mais nova vem dos releases públicos da Nabu Casa
+    # no GitHub, no tipo escolhido na integração (Zigbee ou Thread).
+    class Silabs < Provider
+      describe key: "silabs"
+
+      def self.handles?(device) = device.driver == "homeassistant_sky_connect"
+      def self.plugin = Integrations::SkyconnectPlugin
+
+      def self.release(device)
+        repo, prefix = plugin.model(device)
+        Rails.cache.fetch("firmware/silabs/#{repo}", expires_in: 6.hours) { JSON.parse(SafeHttp.get("https://api.github.com/repos/#{repo}/releases/latest", timeout: 10).body) }
+          .then { |r| [ r, Array(r["assets"]).find { |a| a["name"].to_s.match?(/\A#{prefix}_#{plugin.kind(device)}_.*\.gbl\z/) } ] }
+      rescue SafeHttp::Error, JSON::ParserError => e
+        raise Integrations::Error, e.message
+      end
+
+      def self.check(device)
+        release, asset = release(device)
+        installed = device.firmware.to_s[/\d+(\.\d+)+/]
+        latest = asset && asset["name"][/_(\d+(?:\.\d+)+)/, 1]
+        return nil unless installed || latest
+
+        { installed: installed, latest: latest || installed, notes_url: release["html_url"] }
+      end
+
+      def self.install!(device)
+        _, asset = release(device)
+        raise Integrations::Error, I18n.t("firmware.no_update") unless asset
+
+        Thread.new { Rails.application.executor.wrap { plugin.flash!(device.id, asset["browser_download_url"], asset["digest"].to_s.delete_prefix("sha256:")) } }
+      end
+    end
   end
 end
