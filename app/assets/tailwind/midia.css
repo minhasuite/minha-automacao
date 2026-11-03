@@ -1,0 +1,37 @@
+/* Mídia e câmeras (ondaC2): players, navegador das fontes, PTZ e falar (ma-).
+   Só tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
+@layer components {
+  .ma-player { position: relative; overflow: hidden; }
+  .ma-player::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--line); }
+  .ma-player[data-state="playing"]::before { background: linear-gradient(90deg, var(--accent-solid), color-mix(in srgb, var(--accent-solid) 30%, #22c3a6)); }
+
+  .ma-source { transition: transform .15s, box-shadow .15s; }
+  .ma-source:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -20px rgba(30, 20, 90, .55); }
+
+  .ma-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: .85rem; margin: 0; padding: 0; list-style: none; }
+  @media (max-width: 30rem) { .ma-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .ma-tile { display: flex; flex-direction: column; gap: .35rem; padding: .55rem; border-radius: 1rem; background: var(--surface); border: 1px solid var(--line); height: 100%;
+             transition: border-color .15s, transform .15s; }
+  .ma-tile:hover, .ma-tile[aria-current="true"] { border-color: var(--accent-solid); transform: translateY(-1px); }
+  .ma-tile-art { display: grid; place-items: center; aspect-ratio: 1; border-radius: .8rem; overflow: hidden; color: var(--accent);
+                 background: color-mix(in srgb, var(--accent-solid) 10%, var(--field)); }
+  .ma-tile-art[data-kind="folder"] { color: var(--ink-2); background: var(--field); }
+  .ma-tile-art img { width: 100%; height: 100%; object-fit: cover; }
+  .ma-tile-title { font-weight: 700; font-size: .88rem; color: var(--ink); line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+  .ma-tile-sub { font-size: .74rem; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+  .ma-now { background: linear-gradient(135deg, color-mix(in srgb, var(--accent-solid) 9%, var(--surface)), var(--surface) 60%); }
+  .ma-preview video, .ma-preview > img { width: 100%; max-height: 24rem; border-radius: 1rem; background: #0b0b12; object-fit: contain; display: block; }
+  .ma-art { display: grid; place-items: center; aspect-ratio: 1; max-width: 14rem; margin: 0 auto; border-radius: 1.25rem; overflow: hidden; color: var(--accent);
+            background: color-mix(in srgb, var(--accent-solid) 12%, var(--field)); box-shadow: 0 20px 40px -28px rgba(30, 20, 90, .7); }
+  .ma-art img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Câmera: ao vivo, PTZ (cruz) e falar. */
+  .ma-cam .dw-camera-view { aspect-ratio: 16 / 9; }
+  .ma-ptz { display: grid; grid-template-columns: repeat(3, 2.75rem); grid-template-rows: repeat(3, 2.75rem); gap: .35rem; }
+  .ma-ptz form { display: contents; }
+  .ma-ptz button { display: grid; place-items: center; border-radius: .9rem; background: var(--field); color: var(--ink); border: 1px solid var(--line); }
+  .ma-ptz button:hover { border-color: var(--accent-solid); color: var(--accent); }
+  .ma-ptz-up { grid-area: 1 / 2; } .ma-ptz-left { grid-area: 2 / 1; } .ma-ptz-home { grid-area: 2 / 2; } .ma-ptz-right { grid-area: 2 / 3; } .ma-ptz-down { grid-area: 3 / 2; }
+  .ma-talk[aria-pressed="true"] { background: var(--danger, #e5484d); color: #fff; border-color: transparent; }
+}

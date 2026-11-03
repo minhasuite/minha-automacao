@@ -4,6 +4,7 @@
        [ t("sites.tabs.integrations"), site_integrations_path(site), "link", :integrations ], [ t("sites.tabs.automation"), site_automations_path(site), "lightning-bolt", :automation ],
        [ t("sites.tabs.helpers"), site_helpers_path(site), "collection", :helpers ],
        [ t("sites.tabs.datasets"), site_datasets_path(site), "table", :datasets ], [ t("sites.tabs.todo"), site_todo_lists_path(site), "clipboard-list", :todo ], [ t("sites.tabs.agenda"), site_agenda_path(site), "calendar", :agenda ],
+       [ t("sites.tabs.media"), site_media_path(site), "music-note", :media ],
        [ t("sites.tabs.exposure"), site_exposure_path(site), "microphone", :exposure ], [ t("sites.tabs.assist"), site_assist_settings_path(site), "volume-up", :assist ], [ "Alexa", site_alexa_path(site), "speakerphone", :alexa ],
        *Bridges.plugins.map { |b| [ b.title, site_bridge_path(site, b.key), b.icon, :"bridge_#{b.key}" ] },
        [ t("sites.tabs.alerts"), alerts_path, "exclamation-circle", :alerts ], [ t("sites.tabs.packages"), site_packages_path(site), "archive", :packages ],

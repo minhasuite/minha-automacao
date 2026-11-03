@@ -1,0 +1,100 @@
+<% back = @page.parent.nil? ? site_media_path(@site) : site_media_browse_path(@site, @source.key, path: @page.parent.presence) %>
+<%= render "web/shared/header", title: @page.title, subtitle: @source.title, back: back %>
+<%= render "web/sites/tabs", site: @site, current: :media %>
+
+<% if @error %>
+  <div class="ss-card ss-card-pad mb-4 text-sm" role="alert"><strong><%= t("media.browse.error") %></strong> <%= @error %></div>
+<% end %>
+
+<% if @item %>
+  <% preview = @preview %>
+  <section class="ss-card ss-card-pad ma-now mb-6" aria-labelledby="item-title">
+    <div class="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center">
+      <div class="ma-preview" data-kind="<%= @item.kind %>">
+        <% if preview && @item.kind == "video" %>
+          <video src="<%= preview %>" controls playsinline preload="metadata" aria-label="<%= @item.title %>"></video>
+        <% elsif preview && @item.kind == "image" %>
+          <img src="<%= preview %>" alt="<%= @item.title %>">
+        <% else %>
+          <div class="ma-art"><% if @item.thumb %><img src="<%= @item.thumb %>" alt="" loading="lazy"><% else %><%= icon(@item.kind == "radio" ? "globe" : "music-note", "size-12") %><% end %></div>
+          <% if preview %><audio src="<%= preview %>" controls preload="none" class="w-full mt-3" aria-label="<%= t("media.browse.listen_here", name: @item.title) %>"></audio><% end %>
+        <% end %>
+      </div>
+      <div class="min-w-0">
+        <p class="ss-section"><%= t("media.kinds.#{@item.kind}") %></p>
+        <h2 id="item-title" class="text-xl break-words"><%= @item.title %></h2>
+        <% if @item.subtitle.present? %><p class="text-sm text-muted mt-1"><%= @item.subtitle %></p><% end %>
+        <% if preview %><%= link_to MediaSources.public_url(preview), class: "ss-btn ss-btn-ghost ss-btn-sm mt-3", target: "_blank", rel: "noopener" do %><%= icon("external-link", "size-4") %><%= t("media.browse.open") %><% end %><% end %>
+        <% if @players.any? && can?(:command) %>
+          <%= form_with url: site_media_play_path(@site), class: "flex flex-wrap items-end gap-2 mt-4" do %>
+            <%= hidden_field_tag :source, @source.key, id: nil %>
+            <%= hidden_field_tag :item, @item.id, id: nil %>
+            <%= hidden_field_tag :path, @path, id: nil %>
+            <div class="flex-1 min-w-48">
+              <label class="ss-label" for="play-on"><%= t("media.browse.play_on") %></label>
+              <%= select_tag :player_id, options_for_select(@players.map { |p| [ Notifier::Channels::Player.name(p), p.id ] }), id: "play-on", class: "ss-input" %>
+            </div>
+            <button class="ss-btn ss-btn-primary"><%= icon("play", "size-4") %><%= t("media.browse.play") %></button>
+          <% end %>
+        <% elsif @players.empty? %>
+          <p class="text-sm text-muted mt-4"><%= t("media.browse.no_player") %></p>
+        <% end %>
+        <% if @source.uploads? && can?(:manage) %>
+          <%= button_to site_media_file_delete_path(@site), method: :delete, params: { path: @item.id }, class: "ss-btn ss-btn-ghost ss-btn-sm mt-3",
+                        form: { data: { turbo_confirm: t("media.files.confirm_delete", name: @item.title) } } do %><%= icon("trash", "size-4") %><%= t("media.files.delete") %><% end %>
+        <% end %>
+      </div>
+    </div>
+  </section>
+<% end %>
+
+<% if @source.searchable? %>
+  <%= form_with url: site_media_browse_path(@site, @source.key), method: :get, class: "flex gap-2 mb-4", role: "search" do %>
+    <label class="sr-only" for="media-q"><%= t("media.browse.search") %></label>
+    <%= search_field_tag :q, @query, id: "media-q", class: "ss-input flex-1 min-w-0", placeholder: t("media.browse.search_ph") %>
+    <button class="ss-btn ss-btn-ghost" aria-label="<%= t("media.browse.search") %>"><%= icon("search", "size-4") %></button>
+  <% end %>
+<% end %>
+
+<% if @source.uploads? && can?(:manage) && !@item %>
+  <div class="grid gap-3 sm:grid-cols-2 mb-4">
+    <%= form_with url: site_media_files_path(@site), multipart: true, class: "ss-card ss-card-pad flex flex-wrap items-end gap-2" do %>
+      <%= hidden_field_tag :path, @path, id: nil %>
+      <div class="flex-1 min-w-48">
+        <label class="ss-label" for="media-upload"><%= t("media.files.upload") %></label>
+        <%= file_field_tag "files[]", id: "media-upload", multiple: true, accept: "audio/*,video/*,image/*", class: "ss-input", required: true %>
+      </div>
+      <button class="ss-btn ss-btn-primary"><%= icon("upload", "size-4") %><%= t("media.files.send") %></button>
+    <% end %>
+    <%= form_with url: site_media_folders_path(@site), class: "ss-card ss-card-pad flex flex-wrap items-end gap-2" do %>
+      <%= hidden_field_tag :path, @path, id: nil %>
+      <div class="flex-1 min-w-48">
+        <label class="ss-label" for="media-folder"><%= t("media.files.new_folder") %></label>
+        <%= text_field_tag :name, nil, id: "media-folder", class: "ss-input", maxlength: 120, required: true %>
+      </div>
+      <button class="ss-btn ss-btn-ghost"><%= icon("plus", "size-4") %><%= t("media.files.create") %></button>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @page.items.empty? %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink"><%= t("media.browse.empty") %></p>
+    <p class="mt-1 max-w-lg mx-auto"><%= @source.uploads? ? t("media.browse.empty_local") : t("media.browse.empty_hint") %></p>
+  </div>
+<% else %>
+  <ul class="ma-grid" aria-label="<%= @page.title %>">
+    <% @page.items.each do |i| %>
+      <li>
+        <% href = i.folder? ? site_media_browse_path(@site, @source.key, path: i.id) : site_media_browse_path(@site, @source.key, path: @path.presence, q: @query, item: i.id) %>
+        <%= link_to href, class: "ma-tile no-underline", "aria-current": (@item&.id == i.id ? "true" : nil) do %>
+          <span class="ma-tile-art" data-kind="<%= i.kind %>">
+            <% if i.thumb %><img src="<%= i.thumb %>" alt="" loading="lazy"><% else %><%= icon({ "folder" => "collection", "audio" => "music-note", "video" => "video-camera", "image" => "photograph", "radio" => "globe" }.fetch(i.kind, "document-text"), "size-7") %><% end %>
+          </span>
+          <span class="ma-tile-title"><%= i.title %></span>
+          <% if i.subtitle.present? %><span class="ma-tile-sub"><%= i.subtitle %></span><% end %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

@@ -79,6 +79,9 @@ Rails.application.routes.draw do
     patch "quiosque", to: "dashboards#kiosk_settings", as: :kiosk
     get "cameras/:id/quadro", to: "cameras#snapshot", as: :camera_snapshot
     post "cameras/:id/ao-vivo", to: "cameras#webrtc", as: :camera_webrtc
+    # ondaC2 (C10): gravação, PTZ e alto-falante da câmera. Arquivo de mídia por link assinado (players da rede, sem sessão).
+    patch "cameras/:id/ajustes", to: "cameras#settings", as: :camera_settings
+    get "midia/arquivo/:name", to: "media_files#show", as: :media_file, constraints: { name: %r{[^/]+} }, format: false
 
     # Retorno do OAuth de plugin de integração (F9: Google Agenda); `state` assinado.
     get "integracoes/oauth/retorno", to: "integrations#oauth_callback", as: :integrations_oauth_callback
@@ -172,6 +175,15 @@ Rails.application.routes.draw do
           post "gerenciar/:acao", action: :panel_action, as: :panel_action, constraints: { acao: /[a-z_]+/ }
         end
       end
+      # ondaC2 (C8/C9): mídia do local (players, falar, navegador das fontes).
+      get "midia", to: "media#index", as: :media
+      get "midia/fontes/:source", to: "media#browse", as: :media_browse
+      post "midia/tocar", to: "media#play", as: :media_play
+      post "midia/falar", to: "media#speak", as: :media_speak
+      post "midia/players/:id", to: "media#control", as: :media_control
+      post "midia/pastas", to: "media#mkdir", as: :media_folders
+      post "midia/arquivos", to: "media#upload", as: :media_files
+      delete "midia/arquivos", to: "media#destroy", as: :media_file_delete
       # ondaA1 (A11): listas de tarefas e agenda local do local.
       resources :todo_lists, controller: "todo_lists", path: "listas", only: %i[index] do
         post :items, on: :member, path: "itens", action: :add
@@ -365,6 +377,7 @@ Rails.application.routes.draw do
             post :value, on: :member, action: :write_value
             get :history, on: :member
             get :snapshot, on: :member
+            post :talk, on: :member # ondaC2 (C10): áudio gravado no app vai para o alto-falante da câmera
           end
         end
         # App do celular (F7, G17): o aparelho se registra e manda os sensores.
