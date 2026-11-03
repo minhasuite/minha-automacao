@@ -128,6 +128,13 @@ module Integrations
 
       def diagnostics_extra(_integration) = {}
 
+      # Pareamento pelo app (Tuya hoje; ESPHome/Matter amanhã): o provedor de
+      # pareamento do app pede a sessão da conta do SDK (`pairing_session` →
+      # hash, nil = este plugin não pareia pelo app) e depois manda o aparelho
+      # que pareou (`pair` → Device). Erro do formulário: Integrations::Error.
+      def pairing_session(_site, _user) = nil
+      def pair(_site, _form) = raise(Error, I18n.t("integrations.pairing.unsupported"))
+
       # Primeira configuração: adiciona um aparelho achado na rede sem formulário
       # (→ integração, com a varredura na fila) ou nil = precisa do assistente.
       def add_found(_site, _entry) = nil

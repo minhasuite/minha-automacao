@@ -376,6 +376,9 @@ Rails.application.routes.draw do
       get "sites/:site_id/detections", to: "detections#index"
       get "sites/:site_id/history", to: "history#index"
       get "sites/:site_id/map", to: "maps#index"
+      # tuya: pareamento pelo app (provedor = plugin com `pair`; Tuya hoje).
+      post "sites/:site_id/pairings/:provider/session", to: "pairings#account"
+      post "sites/:site_id/pairings/:provider", to: "pairings#create"
       post "sites/:site_id/assist", to: "assist#create"
       get "sites/:site_id/packages", to: "packages#index"
       post "sites/:site_id/packages/preview", to: "packages#preview"
