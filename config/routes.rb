@@ -287,6 +287,8 @@ Rails.application.routes.draw do
     get "configuracoes/seguranca/passkeys/opcoes", to: "security#passkey_options", as: :settings_passkey_options
     post "configuracoes/seguranca/passkeys", to: "security#create_passkey", as: :settings_passkeys
     delete "configuracoes/seguranca/passkeys/:id", to: "security#destroy_passkey", as: :settings_passkey
+    post "configuracoes/seguranca/google", to: "security#link_google", as: :settings_security_google
+    delete "configuracoes/seguranca/google", to: "security#unlink_google"
     get "configuracoes/logs", to: "logs#show", as: :settings_logs
     get "configuracoes/aparencia", to: "appearance#show", as: :settings_appearance
     patch "configuracoes/aparencia", to: "appearance#update"
@@ -345,6 +347,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       post "auth/signup", to: "auth#signup"
       post "auth/login", to: "auth#login"
+      get "auth/providers", to: "auth#providers"
       post "auth/google", to: "auth#google"
       post "auth/refresh", to: "auth#refresh"
       delete "auth/logout", to: "auth#logout"
@@ -355,6 +358,8 @@ Rails.application.routes.draw do
       post "auth/passkey", to: "auth#passkey"
       get "me/passkeys/options", to: "me#passkey_options"
       post "me/passkeys", to: "me#create_passkey"
+      post "me/google", to: "me#link_google"
+      delete "me/google", to: "me#unlink_google"
 
       # appweb: telas da web transcodificadas para o app (AppScreen).
       get "screen", to: "screens#show"

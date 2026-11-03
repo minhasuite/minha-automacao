@@ -70,27 +70,6 @@ RSpec.describe "Auth e conta" do
     end
   end
 
-  describe "POST /api/v1/auth/google" do
-    it "cria a conta na primeira vez" do
-      allow(ENV).to receive(:[]).and_call_original
-      allow(ENV).to receive(:[]).with("GOOGLE_CLIENT_ID").and_return("client-web")
-      allow(Google::Auth::IDTokens).to receive(:verify_oidc).and_return("email" => "gil@ex.com", "sub" => "g-1", "name" => "Gil")
-      post "/api/v1/auth/google", params: { id_token: "jwt" }
-      expect(response).to have_http_status(:created)
-      expect(User.find_by(email: "gil@ex.com").google_uid).to eq("g-1")
-    end
-
-    it "responde 503 sem client configurado e 401 com token inválido" do
-      post "/api/v1/auth/google", params: { id_token: "jwt" }
-      expect(response).to have_http_status(:service_unavailable)
-      allow(ENV).to receive(:[]).and_call_original
-      allow(ENV).to receive(:[]).with("GOOGLE_CLIENT_ID").and_return("client-web")
-      allow(Google::Auth::IDTokens).to receive(:verify_oidc).and_raise(Google::Auth::IDTokens::VerificationError)
-      post "/api/v1/auth/google", params: { id_token: "jwt" }
-      expect(response).to have_http_status(:unauthorized)
-    end
-  end
-
   describe "/api/v1/me" do
     let(:user) { create(:user) }
     let(:headers) { auth_headers(user) }

@@ -1,23 +1,17 @@
-<%# Botão "Entrar com o Google" (Google Identity Services). Some sem GOOGLE_CLIENT_ID. %>
-<% if ENV["GOOGLE_CLIENT_ID"].present? %>
-  <% content_for :head do %>
-    <meta name="turbo-visit-control" content="reload">
-    <script src="https://accounts.google.com/gsi/client" async></script>
-  <% end %>
-  <%= form_with url: google_login_path, id: "google-login", data: { turbo: false } do %>
-    <%= hidden_field_tag :credential %>
-    <%= hidden_field_tag :return_to, params[:return_to] %>
-  <% end %>
-  <div id="g_id_onload" data-client_id="<%= ENV["GOOGLE_CLIENT_ID"] %>" data-callback="msGoogleLogin" data-auto_prompt="false"></div>
-  <div class="mt-6 flex justify-center">
-    <div class="g_id_signin" data-type="standard" data-text="<%= text %>" data-shape="pill" data-locale="<%= I18n.locale %>" data-width="320"></div>
+<%# locals: (text: "signin_with", url: google_login_path, invite: nil, return_to: params[:return_to], divider: true) -%>
+<%# Botão do Google (Google Identity Services, controller google-signin). Some sem GOOGLE_CLIENT_ID
+    e em endereço que o Google não aceita (IP, .local). `text`: signin_with, signup_with ou continue_with. %>
+<% if google_login_available? %>
+  <div class="mt-6" data-controller="google-signin" data-google-signin-client-value="<%= GoogleLogin.client_id %>"
+       data-google-signin-text-value="<%= text %>" data-google-signin-locale-value="<%= I18n.locale %>" data-google="button">
+    <%= form_with url: url, data: { turbo: false, google_signin_target: "form" } do %>
+      <%= hidden_field_tag :credential, nil, id: nil, data: { google_signin_target: "credential" } %>
+      <%= hidden_field_tag :return_to, return_to, id: nil if return_to.present? %>
+      <%= hidden_field_tag :invite, invite, id: nil if invite %>
+    <% end %>
+    <div class="flex justify-center min-h-11" data-google-signin-target="button"></div>
+    <% if divider %>
+      <div class="mt-6 flex items-center gap-3 text-xs text-muted"><span class="h-px flex-1 bg-line"></span><%= t("sessions.or") %><span class="h-px flex-1 bg-line"></span></div>
+    <% end %>
   </div>
-  <script>
-    function msGoogleLogin(r) {
-      const f = document.getElementById("google-login");
-      f.credential.value = r.credential;
-      f.submit();
-    }
-  </script>
-  <div class="mt-6 flex items-center gap-3 text-xs text-muted"><span class="h-px flex-1 bg-line"></span><%= t("sessions.or") %><span class="h-px flex-1 bg-line"></span></div>
 <% end %>

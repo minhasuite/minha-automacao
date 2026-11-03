@@ -90,6 +90,9 @@ module ApplicationHelper
 
   def date(value) = value && l(value.to_date, format: :default)
 
+  # Botão do Google: só com client configurado e num endereço que o Google aceita.
+  def google_login_available? = GoogleLogin.enabled? && GoogleLogin.usable_host?(request.host)
+
   # Ícone de traço (Heroicons v1 outline, MIT — os mesmos do meu-financeiro),
   # inlinado para herdar a cor do texto. Arquivos em app/assets/images/icons.
   ICONS = Hash.new do |h, name|

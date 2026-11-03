@@ -22,17 +22,21 @@ module Web
       end
     end
 
-    # POST /entrar/google { credential } — o botão do Google (GIS) entrega o
-    # id_token aqui pelo formulário da tela, com o token CSRF do Rails.
+    # POST /entrar/google { credential, invite?, return_to? } — o botão do Google
+    # (GIS) entrega o id_token aqui pelo formulário da tela, com o token CSRF do
+    # Rails. `invite`: o token do convite (a conta nasce na instalação dele).
+    # Duas etapas ligada → pede o código, como no login por senha.
     def google
-      return redirect_to(login_path, alert: t("flash.google_off")) if ENV["GOOGLE_CLIENT_ID"].blank?
+      return redirect_to(login_path, alert: t("flash.google_off")) unless GoogleLogin.enabled?
 
-      user = User.from_google!(params[:credential])
+      user = User.from_google!(params[:credential], invite: Invite.find_valid(params[:invite]))
       return redirect_to(login_path, alert: t("flash.google_disabled")) if user.disabled?
 
       finish_login(user)
-    rescue Google::Auth::IDTokens::VerificationError
+    rescue GoogleLogin::Error
       redirect_to login_path, alert: t("flash.google_failed")
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to login_path, alert: e.record.errors.full_messages.to_sentence
     end
 
     # ondaA2 A16: segunda etapa (código do app autenticador ou de recuperação).

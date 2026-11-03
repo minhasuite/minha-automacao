@@ -3,7 +3,7 @@ module Api
     # Cadastro, login (e-mail/senha e Google), refresh e logout. Signup, login,
     # google e refresh rodam SEM tenant.
     class AuthController < BaseController
-      PUBLIC = %i[signup login google refresh password_forgot password_reset passkey_options passkey].freeze
+      PUBLIC = %i[signup login providers google refresh password_forgot password_reset passkey_options passkey].freeze
       FORGOT_PER_EMAIL_HOUR = 3
       skip_before_action :authenticate_request!, only: PUBLIC
       skip_before_action :set_tenant, only: PUBLIC
@@ -32,17 +32,27 @@ module Api
         end
       end
 
-      # POST /auth/google { id_token, device_name? } — verifica o JWT contra o
-      # client web (GOOGLE_CLIENT_ID). Cria a conta (e a empresa) na primeira vez.
-      def google
-        return render_error(:google_unconfigured, "Login Google indisponível.", status: :service_unavailable) if ENV["GOOGLE_CLIENT_ID"].blank?
+      # GET /auth/providers — o que este servidor aceita no login. O app usa o
+      # `google_client_id` (client web) como serverClientId do google_sign_in:
+      # cada instalação diz o seu; nulo = sem botão do Google.
+      def providers
+        render_data({ google_client_id: GoogleLogin.client_id })
+      end
 
-        user = User.from_google!(params[:id_token])
+      # POST /auth/google { id_token, otp?, invite_token?, device_name? } — o
+      # id_token do Google (GoogleLogin: assinatura, audiência, e-mail
+      # verificado). Acha/vincula a conta pelo e-mail ou cria (no convite, se
+      # vier; senão uma instalação nova). Duas etapas: como no login, sem
+      # `otp` responde 401 mfa_required e o app repete com o código.
+      def google
+        return render_error(:google_unconfigured, "Login Google indisponível.", status: :service_unavailable) unless GoogleLogin.enabled?
+
+        user = User.from_google!(params[:id_token], invite: Invite.find_valid(params[:invite_token]))
         return render_error(:account_disabled, "Esta conta está desativada.", status: :forbidden) if user.disabled?
         return if mfa_refused?(user)
 
         issue(user, :created)
-      rescue Google::Auth::IDTokens::VerificationError
+      rescue GoogleLogin::Error
         render_error(:invalid_token, "Token do Google inválido.", status: :unauthorized)
       end
 

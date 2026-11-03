@@ -32,23 +32,44 @@ class User < ApplicationRecord
     password_digest.to_s.last(10)
   end
 
-  # Login Google (web e API): verifica o id_token contra o client web
-  # (GOOGLE_CLIENT_ID) e acha a conta por google_uid/e-mail; cria a conta (e a
-  # empresa) na primeira vez. Levanta VerificationError com token inválido.
-  def self.from_google!(id_token)
-    payload = Google::Auth::IDTokens.verify_oidc(id_token.to_s, aud: ENV["GOOGLE_CLIENT_ID"].to_s)
+  # Login Google (web e API; GoogleLogin confere o id_token). Acha a conta pelo
+  # Google vinculado ou pelo e-mail verificado (e vincula); senão cria: no
+  # convite, na instalação dele; sem convite, uma instalação nova (como criar
+  # conta). E-mail de uma conta já vinculada a OUTRO Google é recusado.
+  def self.from_google!(id_token, invite: nil)
+    payload = GoogleLogin.verify!(id_token)
+    sub = payload["sub"].to_s
     email = payload["email"].to_s.downcase
-    raise Google::Auth::IDTokens::VerificationError, "token sem e-mail" if email.blank?
-
-    user = find_by(google_uid: payload["sub"]) || find_by(email: email)
+    user = find_by(google_uid: sub) || find_by(email: email)
     if user
-      user.update!(google_uid: payload["sub"]) if user.google_uid.blank?
+      raise GoogleLogin::Error, "e-mail vinculado a outra conta Google" if user.google_uid.present? && user.google_uid != sub
+
+      user.update!(google_uid: sub) if user.google_uid.blank?
       return user
     end
+
+    name = payload["name"].presence || email.split("@").first
+    return invite.accept!(name: name, email: email, google_uid: sub) if invite
+
     transaction do
-      name = payload["name"].presence || email.split("@").first
-      create!(tenant: Tenant.create!(name: "Casa de #{name.split.first}"), name: name, email: email, google_uid: payload["sub"])
+      tenant = Tenant.create!(name: I18n.t("onboarding.account.tenant_name", name: name.split.first))
+      create!(tenant: tenant, name: name, email: email, google_uid: sub)
     end
+  end
+
+  # Configurações → Segurança: vincula o Google do token a esta conta.
+  def link_google!(id_token)
+    sub = GoogleLogin.verify!(id_token)["sub"].to_s
+    raise GoogleLogin::Error, "Google vinculado a outra conta" if User.where.not(id: id).exists?(google_uid: sub)
+
+    update!(google_uid: sub)
+  end
+
+  # Desvincular só com outro jeito de entrar (senha ou passkey). → true/false
+  def unlink_google!
+    return false unless password_digest.present? || passkeys.exists?
+
+    update!(google_uid: nil)
   end
 
   # Desativada: não entra (web, API, chave de integração) até ser reativada.

@@ -24,6 +24,24 @@ module Api
         render_error(:passkey_failed, I18n.t("security.passkeys.failed"), status: :unprocessable_content)
       end
 
+      # Segurança no app: vincular o Google (id_token do google_sign_in) e desvincular
+      # (só com senha ou passkey, para não ficar sem como entrar).
+      # POST /me/google {id_token} · DELETE /me/google → o perfil (google_linked)
+      def link_google
+        current_user.link_google!(params.require(:id_token))
+        google_audit!("google.link")
+        show
+      rescue GoogleLogin::Error
+        render_error(:invalid_token, "Token do Google inválido ou já vinculado a outra conta.", status: :unprocessable_content)
+      end
+
+      def unlink_google
+        return render_error(:last_credential, I18n.t("security.google.last_credential"), status: :unprocessable_content) unless current_user.unlink_google!
+
+        google_audit!("google.unlink")
+        show
+      end
+
       # PATCH /me { name?, email?, password?, current_password? }
       def update
         attrs = params.permit(:name, :email).to_h
@@ -90,6 +108,12 @@ module Api
         return require_owner! unless current_user.owner?
 
         render_data({ deleted: Accounts::WipeData.call(current_tenant_record) })
+      end
+
+      private
+
+      def google_audit!(action)
+        AuditEvent.create!(tenant_id: current_user.tenant_id, user_id: current_user.id, action: action, auditable_type: "User", auditable_id: current_user.id, details: { "app" => true })
       end
     end
   end

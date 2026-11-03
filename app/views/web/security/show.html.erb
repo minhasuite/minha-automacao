@@ -50,6 +50,28 @@
   <% end %>
 </section>
 
+<% if GoogleLogin.enabled? %>
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="google-t" data-security="google">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 id="google-t" class="flex items-center gap-2"><%= icon("link", "size-5 text-accent") %><%= t("security.google.title") %></h2>
+    <span class="ss-badge <%= @user.google_uid.present? ? "ss-badge-success" : "ss-badge-muted" %>"><%= @user.google_uid.present? ? t("security.google.on") : t("security.google.off") %></span>
+  </div>
+  <p class="text-sm text-muted mt-1"><%= t("security.google.pitch") %></p>
+  <% if @user.google_uid.present? %>
+    <% can_unlink = @user.password_digest.present? || @user.passkeys.any? %>
+    <div class="mt-3 flex flex-wrap items-center gap-3">
+      <%= button_to t("security.google.unlink"), settings_security_google_path, method: :delete, disabled: !can_unlink,
+                    class: "ss-btn ss-btn-outline", form: { data: { turbo_confirm: t("security.google.unlink_confirm") } } %>
+      <% unless can_unlink %><p class="text-sm text-muted"><%= t("security.google.last_credential") %></p><% end %>
+    </div>
+  <% elsif google_login_available? %>
+    <div class="max-w-xs -mt-3"><%= render "web/sessions/google", text: "continue_with", url: settings_security_google_path, divider: false %></div>
+  <% else %>
+    <p class="text-sm text-muted mt-3"><%= t("security.google.unavailable_here") %></p>
+  <% end %>
+</section>
+<% end %>
+
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="pk-t" data-security="passkeys"
          data-controller="passkey" data-passkey-options-value="<%= settings_passkey_options_path %>" data-passkey-url-value="<%= settings_passkeys_path %>">
   <h2 id="pk-t" class="flex items-center gap-2"><%= icon("finger-print", "size-5 text-accent") %><%= t("security.passkeys.title") %></h2>

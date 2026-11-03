@@ -17,8 +17,9 @@ x-app-env: &app-env
   RAILS_LOG_TO_STDOUT: "true"
   # Host das URLs de anexo e dos links dos e-mails.
   APP_HOST: ${MINHA_AUTOMACAO_APP_HOST:-minhaautomacao.minhasuite.com}
-  # Login Google: client WEB (o app manda o id_token emitido para ele).
+  # Login Google: client WEB (o app manda o id_token emitido para ele). docs/login-google.md
   GOOGLE_CLIENT_ID: ${MINHA_AUTOMACAO_GOOGLE_CLIENT_ID:-}
+  GOOGLE_LOGIN_AUDIENCES: ${MINHA_AUTOMACAO_GOOGLE_LOGIN_AUDIENCES:-}
   GOOGLE_CLIENT_SECRET: ${MINHA_AUTOMACAO_GOOGLE_CLIENT_SECRET:-}
   # meulog (telemetria). Vazio = desligado. A CONTA vai no caminho da URL.
   MEULOG_URL: ${MINHA_AUTOMACAO_MEULOG_URL:-}

@@ -441,6 +441,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   RunSchedulesJob antes dos gatilhos. OAuth de plugin: `oauth_callback` +
   `/integracoes/oauth/retorno` (state assinado). Modo Google só com
   `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`.
+- **Entrar com Google** (`GoogleLogin`, `User.from_google!`): web pelo botão
+  GIS (controller `google-signin`, `POST /entrar/google`), app por
+  `GET /api/v1/auth/providers` + `POST /api/v1/auth/google`; aud = clients
+  configurados, e-mail verificado, convite e duas etapas respeitados;
+  vincular em Segurança. Clients e ENVs: `docs/login-google.md`.
 - **Alexa Smart Home (F9)**: o vínculo é um `ApiToken` com `client: "alexa"` e
   `site_id`; o código de autorização é o próprio registro antes do primeiro
   uso (5 min; a rotação o consome). `ApiToken.find_by_access` só aceita

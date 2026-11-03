@@ -1,6 +1,6 @@
 module Web
   # Configurações → Segurança (ondaA2 A16): app autenticador (TOTP) com
-  # códigos de recuperação e passkeys da própria pessoa.
+  # códigos de recuperação, passkeys e o Google vinculado da própria pessoa.
   class SecurityController < ApplicationController
     def show
       @user = current_user
@@ -54,6 +54,22 @@ module Web
       current_user.passkeys.find(params[:id]).destroy!
       audit!("passkey.remove")
       redirect_to settings_security_path, notice: t("security.passkeys.removed")
+    end
+
+    # Google: o botão (GIS) manda o id_token; vincula à conta logada.
+    def link_google
+      current_user.link_google!(params[:credential])
+      audit!("google.link")
+      redirect_to settings_security_path, notice: t("security.google.linked")
+    rescue GoogleLogin::Error
+      redirect_to settings_security_path, alert: t("security.google.link_failed")
+    end
+
+    def unlink_google
+      return redirect_to(settings_security_path, alert: t("security.google.last_credential")) unless current_user.unlink_google!
+
+      audit!("google.unlink")
+      redirect_to settings_security_path, notice: t("security.google.unlinked")
     end
 
     private

@@ -35,10 +35,11 @@ class Invite < ApplicationRecord
   end
 
   # Cria a conta na instalação do convite (e o papel no local) e queima o link.
-  def accept!(name:, email:, password:)
+  # Com Google (`google_uid`), a conta nasce sem senha.
+  def accept!(name:, email:, password: nil, google_uid: nil)
     ActsAsTenant.with_tenant(tenant) do
       transaction do
-        user = User.create!(tenant: tenant, role: role, name: name, email: email, password: password.to_s)
+        user = User.create!(tenant: tenant, role: role, name: name, email: email, password: password&.to_s, google_uid: google_uid)
         SiteMembership.create!(site: site, user: user, role: site_role) if site && site_role
         update!(accepted_at: Time.current, accepted_by: user)
         user
