@@ -354,6 +354,17 @@ th.r .ss-sort { flex-direction: row-reverse; }
 .ss-subnav a { display: inline-flex; align-items: center; gap: .45rem; white-space: nowrap; padding: .45rem .8rem; border-radius: 999px;
                font-size: .85rem; font-weight: 600; color: var(--ink-2); text-decoration: none; background: var(--surface); border: 1px solid var(--line); }
 .ss-subnav a:hover { color: var(--accent); border-color: var(--accent); }
+/* resto: no celular a faixa vira menu (aba atual + grade com todas), sem rolar de lado. */
+.ss-subnav-menu { margin-bottom: 1rem; }
+.ss-subnav-current { display: flex; align-items: center; gap: .55rem; padding: .7rem .9rem; border-radius: 14px; cursor: pointer;
+                     background: var(--surface); border: 1px solid var(--line); color: var(--accent); font-weight: 700; font-size: .9rem; }
+.ss-subnav-current::before { display: none !important; }
+.ss-subnav-menu[open] .ss-subnav-chevron { transform: rotate(180deg); }
+.ss-subnav-chevron { transition: transform .2s ease; color: var(--ink-2); }
+.ss-subnav-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; margin-top: .5rem; }
+.ss-subnav-grid a { display: flex; align-items: center; gap: .45rem; min-width: 0; padding: .6rem .7rem; border-radius: 12px; font-size: .85rem; font-weight: 600;
+                    color: var(--ink-2); text-decoration: none; background: var(--surface); border: 1px solid var(--line); }
+.ss-subnav-grid a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
 @media (min-width: 1024px) {
   .ss-subnav { position: sticky; top: 1.5rem; flex-direction: column; margin: 0; overflow: visible; }
   .ss-subnav a { border-radius: 12px; border-color: transparent; background: transparent; }

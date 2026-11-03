@@ -1,6 +1,5 @@
 <%# locals: (site:, current:, css: nil) -%>
-<nav class="ss-subnav lg:!flex-row lg:!flex-wrap lg:!static lg:!mb-6 <%= css %>" aria-label="<%= t("sites.tabs.label") %>">
-  <% [ [ t("sites.tabs.areas"), site_path(site), "home", :areas ], [ t("sites.tabs.dashboards"), site_dashboards_path(site), "view-boards", :dashboards ], [ t("sites.tabs.devices"), site_devices_path(site), "cube", :devices ],
+<% tabs = [ [ t("sites.tabs.areas"), site_path(site), "home", :areas ], [ t("sites.tabs.dashboards"), site_dashboards_path(site), "view-boards", :dashboards ], [ t("sites.tabs.devices"), site_devices_path(site), "cube", :devices ],
        [ t("sites.tabs.integrations"), site_integrations_path(site), "link", :integrations ], [ t("sites.tabs.automation"), site_automations_path(site), "lightning-bolt", :automation ],
        [ t("sites.tabs.helpers"), site_helpers_path(site), "collection", :helpers ],
        [ t("sites.tabs.datasets"), site_datasets_path(site), "table", :datasets ], [ t("sites.tabs.todo"), site_todo_lists_path(site), "clipboard-list", :todo ], [ t("sites.tabs.agenda"), site_agenda_path(site), "calendar", :agenda ],
@@ -8,7 +7,11 @@
        [ t("sites.tabs.exposure"), site_exposure_path(site), "microphone", :exposure ], [ t("sites.tabs.assist"), site_assist_settings_path(site), "volume-up", :assist ], [ "Alexa", site_alexa_path(site), "speakerphone", :alexa ],
        *Bridges.plugins.map { |b| [ b.title, site_bridge_path(site, b.key), b.icon, :"bridge_#{b.key}" ] },
        [ t("sites.tabs.alerts"), alerts_path, "exclamation-circle", :alerts ], [ t("sites.tabs.packages"), site_packages_path(site), "archive", :packages ],
-       ([ t("sites.tabs.dev_tools"), dev_tools_site_path(site), "code", :dev_tools ] if DevTools.admin?(current_user)) ].compact.each do |label, path, ico, key| %>
+       ([ t("sites.tabs.dev_tools"), dev_tools_site_path(site), "code", :dev_tools ] if DevTools.admin?(current_user)) ].compact %>
+<%= render "web/shared/subnav_menu", label: t("sites.tabs.label"), css: css,
+           items: tabs.map { |label, path, ico, key| { label: label, path: path, icon: ico, current: key == current } } %>
+<nav class="ss-subnav max-lg:!hidden lg:!flex-row lg:!flex-wrap lg:!static lg:!mb-6 <%= css %>" aria-label="<%= t("sites.tabs.label") %>">
+  <% tabs.each do |label, path, ico, key| %>
     <%= link_to path, "aria-current": (key == current ? "page" : nil) do %><%= icon(ico, "size-4") %><%= label %><% end %>
   <% end %>
 </nav>

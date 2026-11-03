@@ -1,0 +1,12 @@
+pt-BR:
+  resto:
+    subnav:
+      more: "%{n} seções"
+en:
+  resto:
+    subnav:
+      more: "%{n} sections"
+es:
+  resto:
+    subnav:
+      more: "%{n} secciones"
