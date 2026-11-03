@@ -1,12 +1,12 @@
 module Integrations
-  # Broker MQTT do servidor: os aparelhos entram sozinhos (Mqtt::Z2m ou
-  # cadastro manual); a varredura só os liga ao card.
+  # Broker MQTT do servidor: os aparelhos entram sozinhos (Mqtt::Z2m,
+  # Mqtt::Tasmota, Mqtt::HaDiscovery ou cadastro manual); a varredura só os liga ao card.
   class MqttPlugin < Plugin
     describe key: "mqtt", title: "MQTT", icon: "switch-horizontal",
-             description: "Sensores e aparelhos que conversam por MQTT com o servidor da casa. Aparecem sozinhos quando mandam o primeiro dado."
+             description: "Sensores e aparelhos que conversam por MQTT com o servidor da casa. Quem segue a descoberta do Home Assistant (homeassistant/…: OpenMQTTGateway, ESPHome, Shelly, Theengs, rtl_433…) aparece sozinho."
     texts "pt-BR" => { added: "%{name} adicionada. Os aparelhos aparecem sozinhos quando publicarem." },
-          en: { title: "MQTT", description: "Sensors and devices that talk MQTT with the home server. They show up on their own when they send their first data.", added: "%{name} added. Devices show up on their own when they publish." },
-          es: { title: "MQTT", description: "Sensores y aparatos que se comunican por MQTT con el servidor de casa. Aparecen solos cuando envían su primer dato.", added: "%{name} agregada. Los aparatos aparecen solos cuando publiquen." }
+          en: { title: "MQTT", description: "Sensors and devices that talk MQTT with the home server. Anything that follows Home Assistant discovery (homeassistant/…: OpenMQTTGateway, ESPHome, Shelly, Theengs, rtl_433…) shows up on its own.", added: "%{name} added. Devices show up on their own when they publish." },
+          es: { title: "MQTT", description: "Sensores y aparatos que se comunican por MQTT con el servidor de casa. Lo que sigue el descubrimiento de Home Assistant (homeassistant/…: OpenMQTTGateway, ESPHome, Shelly, Theengs, rtl_433…) aparece solo.", added: "%{name} agregada. Los aparatos aparecen solos cuando publiquen." }
 
     def self.setup(site, _form)
       i = site.integrations.find_or_create_by!(driver: driver) { |n| n.assign_attributes(name: title, poll_s: Integration::SYNC_S) }

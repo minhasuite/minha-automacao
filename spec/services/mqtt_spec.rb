@@ -84,7 +84,8 @@ RSpec.describe "Driver mqtt e zigbee2mqtt" do
       expect(relay.reload.value).to be true
       expect(other.reload.value).to eq(12)
       expect(device.reload.status).to eq("online")
-      expect(described_class.topics).to contain_exactly("z/rele", "zigbee2mqtt/bridge/devices", "tasmota/discovery/#") # único local: descoberta ligada
+      expect(described_class.topics).to contain_exactly("z/rele", "zigbee2mqtt/bridge/devices", "tasmota/discovery/#", # único local: descoberta ligada
+                                                         "homeassistant/+/+/config", "homeassistant/+/+/+/config") # ondaC1: formato do HA
     end
 
     it "queda do broker deixa os pontos indisponíveis" do
@@ -96,7 +97,7 @@ RSpec.describe "Driver mqtt e zigbee2mqtt" do
 
     it "sessão: assina os tópicos, entrega as mensagens e reconecta quando cai" do
       relay = point(address: { "topic" => "z/rele", "json_path" => "state", "payload_on" => "ON", "payload_off" => "OFF" })
-      client = instance_double(MQTT::Client, connected?: true)
+      client = instance_double(MQTT::Client, connected?: true, publish: true) # ondaC1: birth message do HA
       allow(MQTT::Client).to receive(:connect).and_yield(client)
       allow(client).to receive(:subscribe).and_return(true)
       allow(client).to receive(:queue_empty?).and_return(false)

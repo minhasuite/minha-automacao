@@ -3914,6 +3914,14 @@ ALTER TABLE ONLY public.schedules
 
 
 --
+-- Name: dashboard_themes fk_rails_0b2b0e7a1d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_themes
+    ADD CONSTRAINT fk_rails_0b2b0e7a1d FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
 -- Name: subscriptions fk_rails_0cedf77d81; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4935,14 +4943,6 @@ ALTER TABLE ONLY public.passkeys
 
 ALTER TABLE public.readings
     ADD CONSTRAINT readings_point_id_fkey FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
-
-
---
--- Name: dashboard_themes fk_rails_0b2b0e7a1d; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dashboard_themes
-    ADD CONSTRAINT fk_rails_0b2b0e7a1d FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
 
 
 --

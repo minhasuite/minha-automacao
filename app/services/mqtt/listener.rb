@@ -10,7 +10,9 @@ module Mqtt
     # curinga vale), se trata um tópico (`handles?`) e trata (`handle`).
     # Descoberta nova = módulo em Mqtt + nome aqui.
     # integ: "Frigate" = ::Frigate (eventos de detecção e contagem por câmera).
-    DISCOVERY = %w[Z2m Tasmota Frigate].freeze
+    # ondaC1 (C4): HaDiscovery = o formato `homeassistant/` de todo o resto.
+    # Descobridor com `connected(client)` publica ao conectar (birth message).
+    DISCOVERY = %w[Z2m Tasmota Frigate HaDiscovery].freeze
     SCAN_EVERY = 30
     MAX_BACKOFF = 60
 
@@ -46,6 +48,7 @@ module Mqtt
         MQTT::Client.connect(Drivers::Mqtt.url, keep_alive: 15) do |client|
           @client = client
           connected = true
+          discoverers.each { |d| wrap { d.connected(client) } if d.respond_to?(:connected) }
           subscribed = Set.new
           next_scan = 0
           loop do
