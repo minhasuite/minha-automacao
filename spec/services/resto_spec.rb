@@ -260,5 +260,22 @@ RSpec.describe "Paridade: resto" do
       expect(Drivers::Go2rtc.source(net)).to eq("ffmpeg:https://vpn.netatmo.net/abc/live/files/high/index.m3u8#video=copy")
     end
   end
+
+  describe "SMLIGHT SLZB (grupo 9, #60)" do
+    it "lê sensores e versões pela API local e avisa firmware novo da lista da SMLIGHT" do
+      stub_request(:get, "http://10.0.0.50/ha_info").to_return(body: { Info: { MAC: "AA:BB", model: "SLZB-06", sw_version: "v2.5.2", zb_version: "20240510", coord_mode: 0 } }.to_json)
+      stub_request(:get, "http://10.0.0.50/ha_sensors").to_return(body: { Sensors: { esp32_temp: 41.5, zb_temp: 38.0, ram_usage: 99, uptime: 3600, ethernet: true } }.to_json)
+      stub_request(:get, Firmware::Providers::Smlight::LIST).to_return(body: { esp: [ { ver: "v2.7.1", type: 0 }, { ver: "v2.8.0-dev", type: 1 } ] }.to_json)
+      allow(SafeHttp).to receive(:lookup).and_return([ "104.21.0.1" ])
+      Rails.cache.delete("firmware/smlight/latest")
+      o = Integrations::SmlightPlugin.setup(site, ActionController::Parameters.new(host: "10.0.0.50"))
+      Integrations.adopt!(o.integration, o.integration.found.to_h { |e| [ e["id"], "" ] })
+      d = o.integration.devices.sole
+      Integrations::SmlightPlugin.poll(d)
+      v = d.points.reload.to_h { |p| [ p.address["field"], p.value ] }
+      expect(v).to include("esp_temp" => 41.5, "ethernet" => true, "mode" => "Ethernet", "zigbee" => "20240510")
+      expect(Firmware.view(Firmware.check!(d.reload).value)).to include(installed: "2.5.2", latest: "2.7.1", state: "available")
+    end
+  end
 end
 

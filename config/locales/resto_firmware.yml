@@ -1,0 +1,12 @@
+pt-BR:
+  resto:
+    firmware:
+      smlight: "Grave o firmware novo pelo painel do SLZB (%{url}), em Atualizar firmware."
+en:
+  resto:
+    firmware:
+      smlight: "Flash the new firmware from the SLZB panel (%{url}), under Firmware update."
+es:
+  resto:
+    firmware:
+      smlight: "Graba el firmware nuevo desde el panel del SLZB (%{url}), en Actualizar firmware."

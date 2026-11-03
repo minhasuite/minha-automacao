@@ -31,7 +31,7 @@ module Integrations
                ForecastSolarPlugin Co2signalPlugin MoonPlugin SeasonPlugin HolidayPlugin
                SmartthingsPlugin NetatmoPlugin HomeConnectPlugin NestPlugin EcowittPlugin OverkizPlugin RingPlugin
                UnifiPlugin SpeedtestPlugin IppPlugin InfluxdbPlugin ModbusPlugin OnedrivePlugin UpnpPlugin FritzPlugin MusicAssistantPlugin PlexPlugin
-               BrotherPlugin
+               BrotherPlugin SmlightPlugin
                CalendarPlugin WeatherPlugin MobileAppPlugin NetworkTrackerPlugin TelegramPlugin WhatsappPlugin HttpMessengerPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
 
   module_function

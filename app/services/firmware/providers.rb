@@ -186,5 +186,31 @@ module Firmware
         false
       end
     end
+
+    # resto: SMLIGHT SLZB, versão do núcleo comparada com a lista pública da
+    # SMLIGHT. Gravar o firmware fica no painel do próprio aparelho (a API de
+    # gravação não é documentada): Instalar abre o caminho.
+    class Smlight < Provider
+      describe key: "smlight"
+      LIST = "https://updates.smlight.tech/firmware.json".freeze
+
+      def self.handles?(device) = device.driver == "smlight"
+
+      def self.latest
+        Rails.cache.fetch("firmware/smlight/latest", expires_in: 6.hours) do
+          data = JSON.parse(SafeHttp.get(LIST, timeout: 10).body)
+          Array(data["esp"]).filter_map { |f| f["ver"].to_s[/\d+(\.\d+)+/] if f["type"].to_i.zero? }.max_by { |v| Gem::Version.new(v) }
+        end
+      rescue SafeHttp::Error, JSON::ParserError, ArgumentError => e
+        raise Integrations::Error, e.message
+      end
+
+      def self.check(device)
+        installed = device.firmware.to_s[/\d+(\.\d+)+/] or return nil
+        { installed: installed, latest: latest || installed, notes_url: "http://#{device.address['host']}/" }
+      end
+
+      def self.install!(device) = raise(Integrations::Error, I18n.t("resto.firmware.smlight", url: "http://#{device.address['host']}/"))
+    end
   end
 end
