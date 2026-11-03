@@ -21,7 +21,7 @@ module Packages
   VERSION = /\A\d+(\.\d+){0,3}([-+.][0-9A-Za-z.]+)?\z/
   FILES = %w[minha-automacao.json minha-automacao.yml minha-automacao.yaml].freeze
   SOURCES = %w[GithubRepo GitlabRepo ManifestUrl].freeze
-  ITEMS = %w[DeviceMapItem BlueprintItem DashboardItem HelperItem CardItem].freeze
+  ITEMS = %w[DeviceMapItem BlueprintItem DashboardItem HelperItem CardItem PanelItem].freeze
 
   module_function
 
@@ -310,6 +310,18 @@ module Packages
       end
 
       def self.install!(_site, item, _package, _old_id) = Cards.fetch!(item["url"], item["sha256"])
+    end
+
+    # resto (grupo 9, panel_custom do HA): painel lateral de terceiro. Mesmo
+    # cuidado do card (JS pelo hash, iframe sandbox), ocupando a tela toda e
+    # com um item no menu lateral de quem vê o local.
+    class PanelItem < CardItem
+      describe key: "panel", label: "Painel lateral"
+      texts en: { label: "Sidebar panel", url: "url must be https and end in .js.", element: "element must be the panel element name (e.g. my-panel)." },
+            es: { label: "Panel lateral", url: "url debe ser https y terminar en .js.", element: "element debe ser el nombre del elemento del panel (ej.: mi-panel)." },
+            "pt-BR" => { url: "url precisa ser https e terminar em .js.", element: "element precisa ser o nome do elemento do painel (ex.: meu-painel)." }
+
+      def self.path(ref) = ref["panel_path"]
     end
   end
 end

@@ -66,6 +66,19 @@ module Cards
     end
   end
 
+  # resto: painéis laterais de terceiros (item `panel`) dos locais que a pessoa vê.
+  MAX_PANEL_POINTS = 500
+
+  def panels(sites)
+    Package.where(site_id: sites.select(:id)).ordered.flat_map do |pkg|
+      pkg.items.select { |i| i["type"] == "panel" }.filter_map do |i|
+        ref = pkg.ref("panel", i["key"]) or next
+        { "package" => pkg, "key" => i["key"], "name" => i["name"].presence || i["key"], "icon" => i["icon"].presence_in(HelperTypes::ICONS) || "template",
+          "sha" => ref["id"], "element" => i["element"], "config" => i["config"].to_h }
+      end
+    end
+  end
+
   # Estado no formato do HA (`hass.states`): entity_id = chave do ponto.
   def states(points)
     points.to_h do |p|

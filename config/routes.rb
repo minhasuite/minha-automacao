@@ -310,6 +310,7 @@ Rails.application.routes.draw do
     # Paridade com o HA (roadmap de vendas): Diário, Histórico e Mapa da instalação (um local por vez).
     get "diario", to: "logbook#show", as: :logbook
     get "historico", to: "history#show", as: :history
+    get "paineis-extras/:package_id/:key", to: "custom_panels#show", as: :custom_panel, constraints: { key: /[a-z0-9_-]+/ } # resto: panel_custom
     get "mapa", to: "maps#show", as: :map
     # Meus aparelhos (Lote 1): navegadores inscritos no Web Push.
     resources :push_subscriptions, path: "configuracoes/aparelhos", only: %i[index create destroy] do

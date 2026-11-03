@@ -1,0 +1,12 @@
+pt-BR:
+  resto:
+    panels:
+      subtitle: "Painel do pacote %{package}, isolado da página (só lê o estado dos pontos)."
+en:
+  resto:
+    panels:
+      subtitle: "Panel from the %{package} package, isolated from the page (it only reads point states)."
+es:
+  resto:
+    panels:
+      subtitle: "Panel del paquete %{package}, aislado de la página (solo lee el estado de los puntos)."

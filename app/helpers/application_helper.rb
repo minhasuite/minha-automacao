@@ -61,6 +61,7 @@ module ApplicationHelper
     reader = user.reader?
     list = [ { key: "home", label: t("nav.home"), path: root_path, icon: "lightning-bolt" } ]
     list += Dashboard.sidebar_for(user).map { |d| { key: "dash:#{d.id}", label: d.name, path: dashboard_path(d), icon: d.icon_name } }
+    list += Cards.panels(Site.visible_to(user)).map { |p| { key: "panel:#{p['package'].id}:#{p['key']}", label: p["name"], path: custom_panel_path(p["package"], p["key"]), icon: p["icon"] } } # resto
     unless reader
       list += [ { key: "sites", label: t("nav.sites"), path: sites_path, icon: "home" },
                 { key: "logbook", label: t("nav.logbook"), path: logbook_path, icon: "view-list" },

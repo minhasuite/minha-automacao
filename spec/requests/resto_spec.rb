@@ -154,4 +154,30 @@ RSpec.describe "Paridade: resto (telas e API)" do
       end
     end
   end
+
+  describe "painel lateral de terceiro (panel_custom)" do
+    it "pacote com item panel ganha item no menu e a tela num iframe sandbox com o estado do local" do
+      js = "customElements.define('teste-painel', class extends HTMLElement {})"
+      sha = Digest::SHA256.hexdigest(js)
+      FileUtils.mkdir_p(Cards.dir)
+      File.write(Cards.path(sha), js)
+      pkg = within(user.tenant) do
+        create(:point, site: site, device: create(:device, site: site, name: "Teste Sala"), name: "Teste Luz", capability: "onoff")
+        manifest = { "format" => 1, "key" => "teste_pkg", "name" => "Teste Pacote", "version" => "1.0",
+                     "items" => [ { "type" => "panel", "key" => "teste_painel", "name" => "Teste Painel", "icon" => "chip", "url" => "https://x.dev/p.js", "sha256" => sha, "element" => "teste-painel" } ] }
+        expect(Packages.errors(manifest, site)).to be_empty
+        site.packages.create!(key: "teste_pkg", name: "Teste Pacote", version: "1.0", source_url: "https://x.dev/p.json", manifest: manifest,
+                              installed: [ { "type" => "panel", "key" => "teste_painel", "id" => sha } ])
+      end
+      get "/"
+      expect(response.body).to include("/paineis-extras/#{pkg.id}/teste_painel", "Teste Painel")
+      get "/paineis-extras/#{pkg.id}/teste_painel"
+      expect(response.body).to include('sandbox="allow-scripts"', "/cartoes/#{sha}.js", "teste-painel", "Teste Luz")
+      expect(response.body).not_to include("allow-same-origin")
+      get "/paineis-extras/#{pkg.id}/outro"
+      expect(response).to have_http_status(:not_found)
+    ensure
+      FileUtils.rm_f(Cards.path(sha)) if sha
+    end
+  end
 end

@@ -1,0 +1,5 @@
+<%= render "web/shared/header", title: @panel["name"], subtitle: t("resto.panels.subtitle", package: @panel["package"].name) %>
+<div class="ss-card overflow-hidden" data-custom-panel="<%= @panel["key"] %>">
+  <%# Origem opaca (sandbox sem allow-same-origin): o painel não lê cookie nem a página; só recebe o estado. %>
+  <iframe sandbox="allow-scripts" srcdoc="<%= @doc %>" title="<%= @panel["name"] %>" referrerpolicy="no-referrer" class="w-full border-0 block" style="height: calc(100dvh - 12rem); min-height: 28rem"></iframe>
+</div>
