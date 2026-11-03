@@ -130,7 +130,7 @@ RSpec.describe "ondaB2: painéis" do
       expect(Dashboards::Schema.errors(d.definition)).to eq([])
       res = resolved(d)["views"][0]["sections"][0]["widgets"].index_by { |w| w["id"] }
       expect(res["t"]["data"]).to include("target_id" => target.id, "value" => 23, "current" => 26.5, "mode" => "Refrigerar", "tone" => "cool", "on" => true)
-      expect(res["h"]["data"]).to include("value" => 55, "current" => 41, "tone" => "humid")
+      expect(res["h"]["data"]).to include("value" => 55, "current" => 41, "tone" => "humid", "min" => 30.0, "max" => 80.0, "ratio" => 0.5)
       expect(res["l"]["data"]).to include("target_id" => dim.id, "value" => 60, "tone" => "light", "ratio" => 0.6)
       expect(res["b"]["data"]).to include("command" => "run")
       expect(res["c"]["data"]["days"].map { |x| x["events"].map { |e| e["summary"] } }.flatten).to eq([ "Teste dentista", "Teste viagem" ])

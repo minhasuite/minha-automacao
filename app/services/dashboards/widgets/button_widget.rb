@@ -14,7 +14,7 @@ module Dashboards
       def self.data(_r, w, binds)
         p = binds.first
         command = p && (COMMAND[p.capability] || ("toggle" if Points::Command.commands_for(p).include?("toggle")))
-        [ { "point_ids" => [ p&.id ].compact, "missing" => p.nil? && w["bind"].present?, "command" => command, "show_state" => w["show_state"] != "0" }.compact, [] ]
+        [ { "point_ids" => [ p&.id ].compact, "missing" => p.nil? && w["bind"].present?, "command" => command, "show_state" => w["show_state"] == "1" || (w["show_state"].nil? && !COMMAND.key?(p&.capability)) }.compact, [] ]
       end
     end
   end

@@ -105,8 +105,10 @@
           <%= button_to settings_appearance_path, method: :patch, params: { op: "sidebar", item: e[:key], dir: "toggle" }, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-pressed": (!e[:hidden]).to_s,
                                                   "aria-label": t(e[:hidden] ? "appearance.sidebar.show_x" : "appearance.sidebar.hide_x", name: e[:label]) do %><%= icon(e[:hidden] ? "eye-off" : "eye", "size-4") %><% end %>
         <% end %>
+        <% unless ApplicationHelper::SIDEBAR_FIXED.include?(e[:key]) %>
         <%= button_to settings_appearance_path, method: :patch, params: { op: "sidebar", item: e[:key], dir: "up" }, class: "ss-btn ss-btn-ghost ss-btn-sm", disabled: i.zero?, "aria-label": t("appearance.sidebar.up_x", name: e[:label]) do %><%= icon("chevron-up", "size-4") %><% end %>
         <%= button_to settings_appearance_path, method: :patch, params: { op: "sidebar", item: e[:key], dir: "down" }, class: "ss-btn ss-btn-ghost ss-btn-sm", disabled: i == @entries.size - 1, "aria-label": t("appearance.sidebar.down_x", name: e[:label]) do %><%= icon("chevron-down", "size-4") %><% end %>
+        <% end %>
       </li>
     <% end %>
   </ol>

@@ -237,3 +237,16 @@
   .ef-co2 svg { color: #059669; }
   .ef-fc svg { color: #f59e0b; }
 }
+
+@layer components {
+  .dw-chips-wrap { flex-wrap: wrap; justify-content: center; overflow: visible; }
+  .dw-dial-value small { font-size: .45em; font-weight: 700; margin-left: .15em; color: var(--muted); }
+}
+
+/* Fora das camadas: vence a largura por tela (.dw-w) de dashboards.css. */
+.dw-sidebar-side .dw-grid .dw-w, .dw-stack .dw-w { grid-column: 1 / -1; }
+.dw-clock { container-type: inline-size; }
+.dw-clock .dw-clock-time { font-size: min(2.6rem, 21cqi); }
+.dw-clock-small .dw-clock-time { font-size: min(1.8rem, 18cqi); }
+.dw-clock-large .dw-clock-time { font-size: min(5.5rem, 24cqi); }
+.dw-tile > .dw-feats { order: 3; }

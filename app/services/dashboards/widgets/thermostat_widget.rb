@@ -32,8 +32,8 @@ module Dashboards
         mode = around.find { |p| mode?(p) }
         [ current, mode, power, target ].compact.each { |p| r.use(p) }
         min, max, step = default_range
-        min = target&.min&.to_f || min
-        max = target&.max&.to_f || max
+        min = (target&.min || min).to_f
+        max = (target&.max || max).to_f
         value = target&.value
         on = power.nil? || power.value == true
         features, used = TileFeatures.resolve(r, w, point)

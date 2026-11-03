@@ -27,7 +27,7 @@
       </svg>
       <div class="dw-dial-center">
         <span class="dw-dial-label"><%= d["on"] ? d["target_label"] : t("dashboards.cards.turned_off") %></span>
-        <strong class="dw-dial-value num"><%= d["value"].is_a?(Numeric) ? dw_number(d["value"], d["unit"]) : (main["text"].presence || "—") %></strong>
+        <strong class="dw-dial-value num"><% if d["value"].is_a?(Numeric) %><%= dw_number(d["value"]) %><small><%= d["unit"] %></small><% else %><%= main["text"].presence || "—" %><% end %></strong>
         <% if d["current"].is_a?(Numeric) %><span class="dw-dial-now num"><%= icon("thermometer", "size-4") if w["type"] == "thermostat" %><%= t("dashboards.cards.now_x", value: dw_number(d["current"], d["unit"])) %></span><% end %>
       </div>
     </div>
@@ -38,7 +38,7 @@
       </div>
     <% end %>
     <% if mode && d["modes"].present? %>
-      <div class="dw-chips justify-center mt-3" role="group" aria-label="<%= mode["name"] %>">
+      <div class="dw-chips dw-chips-wrap mt-3" role="group" aria-label="<%= mode["name"] %>">
         <% d["modes"].each do |o| %>
           <% if mode["can_command"] && mode["quality"] == "good" %>
             <%= dw_command_button(mode, "select", value: o, w: w, dashboard: dashboard, live: live, class: "dw-chip", form_class: "contents", "aria-pressed": (o.to_s == d["mode"].to_s).to_s) do %><%= o %><% end %>
