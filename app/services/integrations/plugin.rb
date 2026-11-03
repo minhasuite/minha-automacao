@@ -134,15 +134,6 @@ module Integrations
       # resto (7.7): linha no log de depuração da integração (só grava com ele ligado).
       def debug(integration, message) = DebugLog.log(integration, message)
 
-      # Pareamento pelo app (Tuya hoje; ESPHome/Matter amanhã): o provedor de
-      # pareamento do app pede a sessão da conta do SDK (`pairing_session` →
-      # hash, nil = este plugin não pareia pelo app) e depois manda o aparelho
-      # que pareou (`pair` → Device). Erro do formulário: Integrations::Error.
-      def pairing_session(_site, _user) = nil
-      # Campos que o app manda no `pair` (formato do `params.permit`).
-      def pairing_params = [ :name, :area_id, :area_name ]
-      def pair(_site, _form) = raise(Error, I18n.t("integrations.pairing.unsupported"))
-
       # ondaC1: tela "Gerenciar" da integração (as telas de rede do HA: Z-Wave,
       # Matter, Thread, Bluetooth). Plugin com `panel?` ganha o botão no card;
       # a tela é a partial `web/integrations/panels/_<key>` com as variáveis de

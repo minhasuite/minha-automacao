@@ -626,8 +626,6 @@ es:
       use: Usar
     plugin:
       no_oauth: Esta integración no usa inicio de sesión externo.
-    pairing:
-      unsupported: Este tipo no empareja aparatos desde la app.
     statuses:
       error: Con error
       ok: Conectada

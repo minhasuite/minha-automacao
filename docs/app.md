@@ -144,24 +144,6 @@ com ele aberto (leitura em segundo plano fica para a próxima rodada).
 - Spec: `spec/requests/app3_spec.rb` (plugin de câmera falso e tema falso por
   `stub_const`).
 
-## Pareamento pelo app (frente tuya)
-
-O app pareia aparelhos sozinho (Tuya hoje, pelo SDK oficial; sem o Smart Life).
-O provedor de pareamento é um plugin de integração com dois ganchos
-(`Integrations::Plugin.pairing_session` e `.pair`); outro provedor (ESPHome,
-Matter) entra com uma classe e uma linha em `Integrations::PLUGINS`.
-
-- `POST /api/v1/sites/:id/pairings/:provider/session` → conta do SDK do local
-  (Tuya: `uid`/`password` derivados do `secret_key_base`, nada gravado, para o
-  `loginOrRegisterWithUid` do SDK; uma conta por local).
-- `POST /api/v1/sites/:id/pairings/:provider` → o aparelho pareado vira
-  aparelho do local. Tuya: `tuya_local` com a `local_key` (comando local), os
-  pontos pela mesma tradução da nuvem (`Tuya::Cloud.points` sobre o `schema` do
-  SDK) e a área (`area_id` ou `area_name`). Parear de novo atualiza chave, nome
-  e IP (só IP de LAN é gravado).
-- Técnico ou dono; chave de integração não. Spec: `spec/requests/tuya_pareamento_spec.rb`.
-- Chaves do SDK e o passo a passo do console: `docs/tuya.md` do app.
-
 ## Telas do servidor (appweb)
 
 Toda tela da web abre no app, nativa (sem WebView): o servidor faz o pedido à

@@ -626,8 +626,6 @@ en:
       use: Use
     plugin:
       no_oauth: This integration doesn't use an external sign-in.
-    pairing:
-      unsupported: This type doesn't pair devices from the app.
     statuses:
       error: Error
       ok: Connected

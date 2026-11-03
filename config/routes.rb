@@ -427,9 +427,6 @@ Rails.application.routes.draw do
       get "sites/:site_id/detections", to: "detections#index"
       get "sites/:site_id/history", to: "history#index"
       get "sites/:site_id/map", to: "maps#index"
-      # tuya: pareamento pelo app (provedor = plugin com `pair`; Tuya hoje).
-      post "sites/:site_id/pairings/:provider/session", to: "pairings#account"
-      post "sites/:site_id/pairings/:provider", to: "pairings#create"
       post "sites/:site_id/assist", to: "assist#create"
       get "sites/:site_id/assist/pipelines", to: "assist#pipelines" # appweb2 D5
       post "sites/:site_id/assist/wake", to: "assist#wake" # appweb2 D5: palavra de ativação no celular
