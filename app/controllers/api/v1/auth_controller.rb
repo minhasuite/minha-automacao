@@ -3,7 +3,7 @@ module Api
     # Cadastro, login (e-mail/senha e Google), refresh e logout. Signup, login,
     # google e refresh rodam SEM tenant.
     class AuthController < BaseController
-      PUBLIC = %i[signup login google refresh password_forgot password_reset].freeze
+      PUBLIC = %i[signup login google refresh password_forgot password_reset passkey_options passkey].freeze
       FORGOT_PER_EMAIL_HOUR = 3
       skip_before_action :authenticate_request!, only: PUBLIC
       skip_before_action :set_tenant, only: PUBLIC
@@ -86,6 +86,27 @@ module Api
           user.api_tokens.active.update_all(revoked_at: Time.current) # rubocop:disable Rails/SkipsModelValidations
         end
         render_data({ reset: true })
+      end
+
+      # appweb2: entrar com passkey pelo Credential Manager do Android.
+      # POST /auth/passkey/options → {challenge_id, options} (o JSON do WebAuthn, vale 2 min)
+      # POST /auth/passkey {challenge_id, credential: {id, response: {clientDataJSON, authenticatorData, signature}}}
+      def passkey_options
+        id = SecureRandom.hex(16)
+        challenge = Passkeys.challenge
+        Rails.cache.write("api_passkey_login/#{id}", challenge, expires_in: 2.minutes)
+        render_data({ challenge_id: id, options: Passkeys.request_options(rp_id: request.host, challenge: challenge) })
+      end
+
+      def passkey
+        challenge = Rails.cache.read("api_passkey_login/#{params[:challenge_id]}")
+        Rails.cache.delete("api_passkey_login/#{params[:challenge_id]}")
+        key = Passkeys.authenticate!(Passkeys.from_credential(params[:credential]), challenge: challenge, origin: Passkeys.android_origins, rp_id: request.host)
+        return render_error(:account_disabled, "Esta conta está desativada.", status: :forbidden) if key.user.disabled?
+
+        issue(key.user, :created)
+      rescue Passkeys::Error
+        render_error(:invalid_credentials, I18n.t("security.passkeys.failed"), status: :unauthorized)
       end
 
       # DELETE /auth/logout

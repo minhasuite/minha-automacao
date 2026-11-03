@@ -8,11 +8,29 @@ module Passkeys
   Error = Class.new(StandardError)
   ALGS = [ -7, -257 ].freeze # ES256, RS256
 
+  ANDROID_PACKAGE = "com.minhasuite.minhaautomacao".freeze
+
   module_function
+
+  # appweb2: impressões do certificado do app (`AA:BB:…`) e as origens que o
+  # Credential Manager manda (`android:apk-key-hash:<sha256 em base64url>`).
+  def android_prints = ENV["ANDROID_APP_CERT_SHA256"].to_s.split(",").map { |s| s.strip.upcase }.grep(/\A(\h\h:){31}\h\h\z/)
+  def android_origins = android_prints.map { |p| "android:apk-key-hash:#{b64([ p.delete(':') ].pack('H*'))}" }
 
   def b64(bin) = Base64.urlsafe_encode64(bin, padding: false)
   def unb64(text) = Base64.urlsafe_decode64(text.to_s + ("=" * ((4 - (text.to_s.length % 4)) % 4)))
   def challenge = b64(SecureRandom.random_bytes(32))
+
+  # appweb2: o JSON do Credential Manager (`{id, response: {…}}`) no formato
+  # plano que o navegador manda (id, clientDataJSON, authenticatorData, …).
+  def from_credential(cred)
+    cred = cred.respond_to?(:to_unsafe_h) ? cred.to_unsafe_h : (cred.is_a?(String) ? JSON.parse(cred) : cred.to_h)
+    resp = cred["response"].to_h
+    { id: cred["id"], clientDataJSON: resp["clientDataJSON"], authenticatorData: resp["authenticatorData"],
+      signature: resp["signature"], publicKey: resp["publicKey"], name: cred["name"] }.with_indifferent_access
+  rescue JSON::ParserError, TypeError, NoMethodError
+    raise Error, "credencial"
+  end
 
   def creation_options(user, rp_id:, challenge:)
     { challenge: challenge, rp: { id: rp_id, name: "Minha Automação" },
@@ -55,7 +73,7 @@ module Passkeys
     client = JSON.parse(unb64(params[:clientDataJSON]))
     raise Error, "tipo" unless client["type"] == type
     raise Error, "desafio" unless challenge.present? && ActiveSupport::SecurityUtils.secure_compare(client["challenge"].to_s, challenge)
-    raise Error, "origem" unless client["origin"] == origin
+    raise Error, "origem" unless Array(origin).include?(client["origin"])
 
     data = unb64(params[:authenticatorData])
     raise Error, "rp" unless data.bytesize >= 37 && ActiveSupport::SecurityUtils.secure_compare(data.byteslice(0, 32), Digest::SHA256.digest(rp_id))

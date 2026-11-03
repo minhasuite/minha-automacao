@@ -3,6 +3,27 @@ module Api
     class MeController < BaseController
       def show = render_data(UserSerializer.new(current_user).to_h)
 
+      # appweb2: passkey nova pelo Credential Manager do Android (a mesma
+      # passkey da web: RP = este domínio; origem = o certificado do app).
+      # GET /me/passkeys/options → o JSON do WebAuthn (desafio vale 2 min)
+      # POST /me/passkeys {credential, name?}
+      def passkey_options
+        challenge = Passkeys.challenge
+        Rails.cache.write("api_passkey_new/#{current_user.id}", challenge, expires_in: 2.minutes)
+        render_data(Passkeys.creation_options(current_user, rp_id: request.host, challenge: challenge))
+      end
+
+      def create_passkey
+        challenge = Rails.cache.read("api_passkey_new/#{current_user.id}")
+        Rails.cache.delete("api_passkey_new/#{current_user.id}")
+        cred = Passkeys.from_credential(params[:credential]).merge(name: params[:name].presence || "Android")
+        key = Passkeys.register!(current_user, cred, challenge: challenge, origin: Passkeys.android_origins, rp_id: request.host)
+        AuditEvent.create!(tenant_id: current_user.tenant_id, user_id: current_user.id, action: "passkey.add", auditable_type: "User", auditable_id: current_user.id, details: { "app" => true })
+        render_data({ id: key.id, name: key.name }, status: :created)
+      rescue Passkeys::Error
+        render_error(:passkey_failed, I18n.t("security.passkeys.failed"), status: :unprocessable_content)
+      end
+
       # PATCH /me { name?, email?, password?, current_password? }
       def update
         attrs = params.permit(:name, :email).to_h

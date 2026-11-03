@@ -19,6 +19,15 @@ class LegalController < ActionController::Base
     @updated_on = nil
   end
 
+  # appweb2: Digital Asset Links. Com `ANDROID_APP_CERT_SHA256` (impressões
+  # SHA-256 do certificado do app, separadas por vírgula) o Android deixa o
+  # app criar e usar as passkeys deste domínio. Sem a variável: lista vazia.
+  def assetlinks
+    prints = Passkeys.android_prints
+    render json: prints.empty? ? [] : [ { relation: %w[delegate_permission/common.handle_all_urls delegate_permission/common.get_login_creds],
+                                          target: { namespace: "android_app", package_name: Passkeys::ANDROID_PACKAGE, sha256_cert_fingerprints: prints } } ]
+  end
+
   private
 
   # Localized: estas páginas não têm sessão; vale o cookie ou o navegador.

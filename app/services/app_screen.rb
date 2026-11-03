@@ -32,12 +32,12 @@ module AppScreen
 
   # Faz o pedido à web por dentro (mesmo processo), seguindo redirecionamentos
   # com o cookie (o flash do redirect aparece na tela seguinte).
-  def dispatch(user:, verb:, path:, fields:, request:)
+  def dispatch(user:, verb:, path:, fields:, request:, files: nil)
     allowed!(verb, path)
     cookie = nil
     status = nil
     MAX_REDIRECTS.times do
-      status, headers, body = call(user, verb, path, fields, request, cookie)
+      status, headers, body = call(user, verb, path, fields, request, cookie, files)
       cookie = merge_cookie(cookie, headers["set-cookie"] || headers["Set-Cookie"])
       if status.between?(300, 399) && (loc = headers["location"] || headers["Location"])
         uri = URI.parse(loc)
@@ -48,6 +48,7 @@ module AppScreen
         path = uri.request_uri
         verb = "get"
         fields = nil
+        files = nil
         allowed!(verb, path)
         next
       end
@@ -63,17 +64,20 @@ module AppScreen
     { status: status || 508, json: {} }
   end
 
-  def call(user, verb, path, fields, request, cookie)
+  def call(user, verb, path, fields, request, cookie, files = nil)
     pairs = Array(fields).filter_map { |f| [ f[0].to_s, f[1].to_s ] if f.is_a?(Array) && f[0].present? }
     url = path
     input = ""
+    type = "application/x-www-form-urlencoded"
     if verb == "get"
       url = "#{path}#{path.include?('?') ? '&' : '?'}#{URI.encode_www_form(pairs)}" if pairs.any?
+    elsif files.present?
+      type, input = multipart(pairs, files)
     else
       input = URI.encode_www_form(pairs)
     end
     env = Rack::MockRequest.env_for(url, method: verb.upcase, input: input,
-                                         "CONTENT_TYPE" => "application/x-www-form-urlencoded",
+                                         "CONTENT_TYPE" => type,
                                          "HTTP_ACCEPT" => "text/html", "HTTP_HOST" => request.host_with_port,
                                          "HTTPS" => request.ssl? ? "on" : "off", "HTTP_USER_AGENT" => UA,
                                          "HTTP_ACCEPT_LANGUAGE" => request.headers["Accept-Language"].to_s,
@@ -82,6 +86,22 @@ module AppScreen
     env[ENV_KEY] = user.id
     env.merge!(Rails.application.env_config)
     stack.call(env)
+  end
+
+  # appweb2: envio com arquivo (seletor nativo do app) → corpo multipart como
+  # o do navegador; `files` = {nome do campo => arquivo enviado ao /screen}.
+  def multipart(pairs, files)
+    boundary = "----ma-app-#{SecureRandom.hex(12)}"
+    clean = ->(s) { s.to_s.gsub(/["\r\n]/, "") }
+    body = +"".b
+    pairs.each { |k, v| body << "--#{boundary}\r\nContent-Disposition: form-data; name=\"#{clean.(k)}\"\r\n\r\n#{v}\r\n".b }
+    files.each do |name, file|
+      body << ("--#{boundary}\r\nContent-Disposition: form-data; name=\"#{clean.(name)}\"; filename=\"#{clean.(file.original_filename.presence || 'arquivo')}\"\r\n" \
+               "Content-Type: #{clean.(file.content_type.presence || 'application/octet-stream')}\r\n\r\n").b
+      body << file.read.b << "\r\n".b
+    end
+    body << "--#{boundary}--\r\n".b
+    [ "multipart/form-data; boundary=#{boundary}", body ]
   end
 
   # A pilha de middlewares da aplicação sem o executor/reloader: o pedido

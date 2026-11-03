@@ -5,6 +5,7 @@ module Api
     # mesmo controlador da web que decide (papel no local, dono, administrador).
     #   GET  /screen?path=/configuracoes/saude          → {data: página | json | download | external}
     #   POST /screen {path, method, fields: [[nome, valor], …]} → o envio do formulário e a tela seguinte
+    #   POST /screen (multipart) path, method, fields (JSON), files[<campo>] → envio com arquivo (appweb2)
     #   POST /screen/bridge {to}                         → link de uso único que abre `to` no navegador já logado
     class ScreensController < BaseController
       rescue_from AppScreen::Denied do
@@ -16,7 +17,10 @@ module Api
       def create
         verb = params[:method].to_s.downcase.presence_in(%w[get post patch put delete]) || "post"
         fields = request.request_parameters["fields"]
-        respond_with(AppScreen.dispatch(user: current_user, verb: verb, path: params.require(:path), fields: fields, request: request))
+        fields = (JSON.parse(fields) rescue nil) if fields.is_a?(String) # rubocop:disable Style/RescueModifier -- multipart: os campos vêm em JSON
+        # appweb2: arquivos do seletor nativo (multipart `files[<campo>]`).
+        files = params[:files].respond_to?(:to_unsafe_h) ? params[:files].to_unsafe_h.select { |_k, v| v.respond_to?(:read) } : nil
+        respond_with(AppScreen.dispatch(user: current_user, verb: verb, path: params.require(:path), fields: fields, request: request, files: files))
       end
 
       def bridge
