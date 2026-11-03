@@ -21,6 +21,22 @@ module Onvif
   # movimento da câmera, alarme de movimento da fonte de vídeo).
   MOTION_TOPIC = /motion/i
   MOTION_ITEMS = %w[IsMotion State Motion].freeze
+  # resto: os outros eventos das câmeras (como o HA): tópico → ponto. Evento
+  # novo = uma linha aqui (o tópico aparece no GetEventProperties da câmera e
+  # o item booleano diz ligado/desligado). A ordem importa: o primeiro que casa vale.
+  Event = Data.define(:key, :topic, :items, :capability, :device_class)
+  EVENTS = [
+    Event.new("tamper", /Tamper|ImageTooBlurry|ImageTooDark|GlobalSceneChange/i, %w[State IsTamper IsTooBlurry IsTooDark Value], "tamper", "tamper"),
+    Event.new("line", /LineDetector|LineCross|LineDetection/i, %w[State IsLineCross Crossed ObjectId], "motion", "motion"),
+    Event.new("field", /FieldDetector|Intrusion|FieldDetection|RegionEntrance|RegionExiting/i, %w[IsInside State IsIntrusion], "motion", "occupancy"),
+    Event.new("person", /People|Person|Human|Face/i, %w[State IsPeople IsPerson IsHuman], "motion", "occupancy"),
+    Event.new("vehicle", /Vehicle|Car|LicensePlate/i, %w[State IsVehicle IsCar], "motion", "motion"),
+    Event.new("pet", /Pet|Animal|Dog|Cat/i, %w[State IsPet IsAnimal], "motion", "motion"),
+    Event.new("sound", /Audio|Sound|Cry/i, %w[IsSoundDetected State IsCry], "problem", "sound"),
+    Event.new("input", %r{DigitalInput|Device/Trigger/Input}i, %w[LogicalState State Level], "contact", "opening"),
+    Event.new("relay", /Relay/i, %w[LogicalState State], "contact", "running"),
+    Event.new("motion", MOTION_TOPIC, MOTION_ITEMS, "motion", "motion")
+  ].freeze
 
   class Client
     attr_reader :host, :port
@@ -86,10 +102,19 @@ module Onvif
       { "url" => text(ref, "./*[local-name()='Address']"), "headers" => params ? params.children.map(&:to_s).join : "" }
     end
 
-    # Mensagens de movimento desde a última vez → [true/false, ...] em ordem.
+    # Tópicos de evento que a câmera diz ter (texto do TopicSet); vazio se ela não responder.
+    def event_topics(events_url)
+      doc = call(events_url, "<tev:GetEventProperties/>")
+      set = REXML::XPath.first(doc, "//*[local-name()='TopicSet']") or return ""
+      REXML::XPath.match(set, ".//*").map(&:name).join("/")
+    rescue Error
+      ""
+    end
+
+    # Eventos desde a última vez → [[chave, true/false], ...] em ordem (motion, tamper, line…).
     def pull(sub, timeout: 20)
       body = "<tev:PullMessages><tev:Timeout>PT#{timeout}S</tev:Timeout><tev:MessageLimit>20</tev:MessageLimit></tev:PullMessages>"
-      Onvif.motions(call(sub["url"], body, headers: sub["headers"], action: "http://www.onvif.org/ver10/events/wsdl/PullPointSubscription/PullMessagesRequest",
+      Onvif.events(call(sub["url"], body, headers: sub["headers"], action: "http://www.onvif.org/ver10/events/wsdl/PullPointSubscription/PullMessagesRequest",
                                           read_timeout: timeout + 10))
     end
 
@@ -167,14 +192,28 @@ module Onvif
   # Caminho + consulta de um endereço RTSP (URI genérica não tem request_uri).
   def path_of(uri) = "#{uri.path.presence || '/'}#{"?#{uri.query}" if uri.query}"
 
-  # Movimento nas mensagens de evento: tópico com "motion" e um item booleano conhecido.
-  def motions(doc)
-    REXML::XPath.match(doc, "//*[local-name()='NotificationMessage']").map do |m|
-      next unless REXML::XPath.first(m, ".//*[local-name()='Topic']")&.text.to_s.match?(MOTION_TOPIC)
+  # Eventos nas mensagens: o primeiro de EVENTS cujo tópico casa e que traz um
+  # item booleano conhecido → [chave, true/false]. false conta (parou); outro evento fica de fora.
+  def events(doc)
+    REXML::XPath.match(doc, "//*[local-name()='NotificationMessage']").filter_map do |m|
+      topic = REXML::XPath.first(m, ".//*[local-name()='Topic']")&.text.to_s
+      items = REXML::XPath.match(m, ".//*[local-name()='Data']/*[local-name()='SimpleItem']")
+      EVENTS.lazy.filter_map do |ev|
+        next unless topic.match?(ev.topic)
 
-      item = REXML::XPath.match(m, ".//*[local-name()='Data']/*[local-name()='SimpleItem']").find { |i| MOTION_ITEMS.include?(i.attributes["Name"]) }
-      item.attributes["Value"].to_s.casecmp?("true") if item
-    end.compact # false conta (parou o movimento); nil = outro evento
+        value = items.find { |i| ev.items.include?(i.attributes["Name"]) }&.attributes&.[]("Value").to_s
+        [ ev.key, value.downcase.in?(%w[true 1 active]) ] if value.match?(/\A(true|false|0|1|active|inactive)\z/i)
+      end.first
+    end
+  end
+
+  def motions(doc) = events(doc).filter_map { |k, v| v if k == "motion" }
+
+  # Pontos dos eventos que a câmera anuncia (além do movimento).
+  def event_points(topics)
+    EVENTS.reject { |ev| ev.key == "motion" || !topics.match?(ev.topic) }.map do |ev|
+      { "name" => I18n.t("onvif.events.#{ev.key}"), "capability" => ev.capability, "device_class" => ev.device_class, "address" => { "onvif" => ev.key } }
+    end
   end
 
   # Câmera → entrada do inventário: um aparelho `go2rtc` com um ponto
@@ -197,7 +236,10 @@ module Onvif
         "address" => { "path" => path_of(u), "port" => (u.port if u.port != rtsp.port), "profile" => p["token"],
                        "supports" => [ "record", ("ptz" if svc["ptz"]) ].compact }.compact }
     end
-    points << { "name" => "Movimento", "capability" => "motion", "device_class" => "motion", "address" => { "onvif" => "motion" } } if svc["events"]
+    if svc["events"]
+      points << { "name" => "Movimento", "capability" => "motion", "device_class" => "motion", "address" => { "onvif" => "motion" } }
+      points.concat(event_points(client.event_topics(svc["events"])))
+    end
     # id pelo IP: câmera barata repete o número de série (ex.: 123456).
     { "id" => "onvif:#{settings['host']}", "kind" => "go2rtc", "name" => settings["name"].presence || [ info["manufacturer"], info["model"] ].compact_blank.join(" ").presence || "Câmera #{settings['host']}",
       "manufacturer" => info["manufacturer"], "model" => info["model"], "category" => "Câmera ONVIF", "online" => true,

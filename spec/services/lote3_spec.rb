@@ -33,6 +33,7 @@ RSpec.describe "Lote 3: câmeras e Alexa" do
       stub_request(:post, dev_url).with(body: /GetCapabilities/).to_return(body: soap(
         "<tt:Capabilities><tt:Media><tt:XAddr>#{media}</tt:XAddr></tt:Media>#{"<tt:Events><tt:XAddr>#{events}</tt:XAddr></tt:Events>" if events_service}</tt:Capabilities>"
       ))
+      stub_request(:post, events).with(body: /GetEventProperties/).to_return(body: soap("<r/>"))
       stub_request(:post, media).with(body: /GetProfiles/).to_return(body: soap(
         %(<r><Profiles token="p0"><tt:Name>Principal</tt:Name><tt:VideoEncoderConfiguration><tt:Resolution><tt:Width>1920</tt:Width><tt:Height>1080</tt:Height></tt:Resolution></tt:VideoEncoderConfiguration></Profiles>) +
         %(<Profiles token="p1"><tt:Name>Sub</tt:Name></Profiles></r>)

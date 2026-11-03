@@ -5,7 +5,7 @@
 # `check(device)` (→ Hash, ou nil quando o próprio aparelho informa, como o
 # Zigbee2MQTT) e `install!(device)`. A tela e a verificação diária só perguntam ao registro.
 module Firmware
-  PROVIDERS = %w[Shelly Zigbee2mqtt ZwaveJs Matter].freeze
+  PROVIDERS = %w[Shelly Zigbee2mqtt ZwaveJs Matter Mqtt Tasmota Esphome].freeze
   Error = Class.new(StandardError)
 
   class Provider
@@ -26,7 +26,7 @@ module Firmware
 
   # Normaliza o valor (o nosso ou o do Zigbee2MQTT: installed_version/latest_version).
   def view(value)
-    v = value.is_a?(Hash) ? value : {}
+    v = value.is_a?(Hash) ? value : { "installed" => value.presence }.compact # resto: MQTT `update` só com a versão
     installed = v["installed"] || v["installed_version"]
     latest = v["latest"] || v["latest_version"] || installed
     state = v["state"].to_s

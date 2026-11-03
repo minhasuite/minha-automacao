@@ -34,7 +34,7 @@ module Mqtt
       t = ->(i) { c["ft"].to_s.gsub("%prefix%", Array(c["tp"])[i].to_s).gsub("%topic%", c["t"].to_s).gsub("%hostname%", c["hn"].to_s).gsub("%id%", mac) }
       device = site.devices.find_or_initialize_by(driver: "mqtt", external_id: mac)
       count[:devices] += 1 if device.new_record?
-      device.update!(name: c["dn"].presence || c["hn"].presence || "Tasmota #{mac}", manufacturer: "Tasmota", model: c["md"],
+      device.update!(name: c["dn"].presence || c["hn"].presence || "Tasmota #{mac}", manufacturer: "Tasmota", model: c["md"], firmware: c["sw"].presence || device.firmware,
                      address: device.address.merge("cmnd" => t.call(0), "stat" => t.call(1), "tele" => t.call(2)))
       outputs = Array(c["rl"]).each_with_index.select { |type, _| MAP["relay_types"].key?(type.to_i) }
       outputs.each do |_, i|

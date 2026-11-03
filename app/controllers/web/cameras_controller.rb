@@ -38,7 +38,7 @@ module Web
 
     def load_camera
       @point = Point.find(params[:id])
-      raise ActiveRecord::RecordNotFound unless @point.capability == "stream" && @point.device.driver == "go2rtc"
+      raise ActiveRecord::RecordNotFound unless @point.capability == "stream" && (@point.device.driver == "go2rtc" || @point.address["image"] == "mqtt")
 
       authorize_site!(@point.site, :view)
     end

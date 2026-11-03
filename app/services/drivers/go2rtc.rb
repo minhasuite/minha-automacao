@@ -69,6 +69,7 @@ module Drivers
     # JPEG do último quadro; guarda só o último no disco (não vai para o histórico).
     def snapshot(point)
       file = SNAPSHOT_DIR.join("#{point.id}.jpg")
+      return (file.exist? ? file.binread : raise(Error, "Sem quadro da câmera ainda.")) if point.address["image"] == "mqtt" # resto: câmera MQTT
       return file.binread if file.exist? && file.mtime > SNAPSHOT_TTL.seconds.ago
 
       prepare(point)

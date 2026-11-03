@@ -9,6 +9,8 @@ module Drivers
   # ondaC1 (C4, descoberta do HA): `value_template`/`command_template` (Jinja do
   # HA), `value_map`/`payload_map` (estado ↔ valor), `state_on`/`state_off`
   # (estado diferente do comando), `payload_press` (botão) e `retain`.
+  # resto: `command_map` (nome do comando → payload: robô), `payload_install`
+  # (firmware) e `image` ("mqtt": o payload é o JPEG da câmera, guardado como quadro).
   class Mqtt
     class Error < StandardError; end
 
@@ -17,6 +19,8 @@ module Drivers
     def execute(point, command, value)
       a = point.address
       topic = a["command_topic"].presence || (a["topic"].present? && "#{a['topic']}/set") or raise Error, "Ponto sem tópico no endereço."
+      return ::Mqtt::Listener.publish(topic, a["command_map"].fetch(command) { raise Error, "Comando sem payload: #{command}." }.to_s) if a["command_map"].is_a?(Hash)
+
       new_value = Points::Command.new(point, command, value).new_value
       ::Mqtt::Listener.publish(topic, self.class.payload(point, new_value), **(a["retain"] ? { retain: true } : {}))
       point.report!(new_value) if a["topic"].blank?
@@ -53,6 +57,8 @@ module Drivers
     # Payload recebido → valor do ponto; nil = a mensagem não traz o campo.
     def self.value_for(point, payload)
       a = point.address
+      return image!(point, payload) if a["image"] == "mqtt"
+
       raw = a["value_template"].present? ? ::Mqtt::HaDiscovery.render(a["value_template"], payload.to_s).presence : extract(payload, a["json_path"].presence)
       return if raw.nil?
 
@@ -61,7 +67,16 @@ module Drivers
       return bool(point, raw) if point.bool?
       return point.from_raw(raw.is_a?(String) ? Float(raw, exception: false) : raw) if point.numeric?
 
-      point.data_type == "json" ? raw : raw.to_s
+      point.data_type == "json" ? json(raw) : raw.to_s
+    end
+
+    def self.json(raw) = raw.is_a?(String) && raw.start_with?("{", "[") ? (JSON.parse(raw) rescue raw) : raw # rubocop:disable Style/RescueModifier
+
+    # Quadro da câmera MQTT: vai para o cache de quadros do go2rtc; o valor é a hora em que chegou.
+    def self.image!(point, payload)
+      FileUtils.mkdir_p(Go2rtc::SNAPSHOT_DIR)
+      Go2rtc::SNAPSHOT_DIR.join("#{point.id}.jpg").binwrite(payload.to_s.b)
+      Time.current.iso8601
     end
 
     def self.extract(payload, path)

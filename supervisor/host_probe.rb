@@ -20,6 +20,7 @@ module HostProbe
     { hostname: read("#{root}/etc/hostname").to_s.strip, os: read("#{root}/etc/os-release").to_s[/^PRETTY_NAME="?([^"\n]*)/, 1],
       kernel: read("/proc/sys/kernel/osrelease").to_s.strip, arch: Etc.uname[:machine],
       cpu: read("/proc/cpuinfo").to_s[/^model name\s*:\s*(.+)$/, 1], cpus: Etc.nprocessors,
+      board: read("#{root}/sys/firmware/devicetree/base/model").to_s.delete("\0").strip.then { |s| s.empty? ? nil : s }, # resto: Raspberry Pi e afins
       memory_mb: meminfo("MemTotal"), memory_free_mb: meminfo("MemAvailable"), uptime_s: read("/proc/uptime").to_s.to_f.round,
       interfaces: interfaces(root), gateway: gateway, dns: (read("#{root}/etc/resolv.conf") || read("/etc/resolv.conf")).to_s.scan(/^nameserver\s+(\S+)/).flatten,
       neighbors: neighbors, serial: serial(root), usb: usb(root) }

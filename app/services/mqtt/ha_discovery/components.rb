@@ -238,6 +238,122 @@ module Mqtt
               capability: "event", history: "none", writable: false, address: { "topic" => c["topic"], "value_template" => c["value_template"] } } ]
         end
       end
+
+      # resto: alarme (crítico como a fechadura): estado do painel ↔ payload de armar/desarmar.
+      class AlarmControlPanel < Base
+        describe key: "alarm_control_panel"
+        STATES = %w[disarmed armed_home armed_away armed_night armed_vacation armed_custom_bypass pending arming disarming triggered].freeze
+        PAYLOADS = { "disarmed" => "DISARM", "armed_home" => "ARM_HOME", "armed_away" => "ARM_AWAY", "armed_night" => "ARM_NIGHT",
+                     "armed_vacation" => "ARM_VACATION", "armed_custom_bypass" => "ARM_CUSTOM_BYPASS", "triggered" => "TRIGGER" }.freeze
+
+        def self.points(c)
+          [ { name: name(c, "Alarme"), capability: "enum", options: STATES, risk: "critical", icon: "shield-check", writable: c["command_topic"].present?,
+              address: state(c).merge(command(c)).merge("payload_map" => PAYLOADS.to_h { |s, d| [ s, c.fetch("payload_#{d.downcase}", d) ] }) } ]
+        end
+      end
+
+      # Câmera MQTT: o tópico traz a imagem (JPEG), que vira o quadro do ponto `stream` (Drivers::Go2rtc.snapshot).
+      class Camera < Base
+        describe key: "camera"
+        def self.points(c) = [ { name: name(c, "Câmera"), capability: "stream", history: "none", writable: false, address: { "topic" => c["topic"], "image" => "mqtt" } } ]
+      end
+
+      # Robô aspirador (esquema "state"): estado no JSON, comandos pelo nome (`command_map`), aspiração e bateria à parte.
+      class Vacuum < Base
+        describe key: "vacuum"
+        COMMANDS = { "start" => "start", "pause" => "pause", "stop" => "stop", "home" => "return_to_base", "locate" => "locate" }.freeze
+
+        def self.points(c)
+          list = [ { sub: "state", name: name(c, "Robô"), capability: "vacuum",
+                     address: { "topic" => c["state_topic"], "json_path" => "state", "command_topic" => c["command_topic"],
+                                "command_map" => COMMANDS.to_h { |cmd, ha| [ cmd, c.fetch("payload_#{ha}", ha) ] } } } ]
+          if c["set_fan_speed_topic"].present?
+            list << { sub: "fan_speed", name: "Aspiração", capability: "enum", options: Array(c["fan_speed_list"]).map(&:to_s),
+                      address: { "topic" => c["state_topic"], "json_path" => "fan_speed", "command_topic" => c["set_fan_speed_topic"], "command_json_path" => "" } }
+          end
+          list << { sub: "battery", name: "Bateria", capability: "measure", unit: "%", device_class: "battery", writable: false,
+                    address: { "topic" => c["state_topic"], "json_path" => "battery_level" } }
+        end
+      end
+
+      # Cortador de grama: atividade e um botão por comando (cada um com o seu tópico, como no HA).
+      class LawnMower < Base
+        describe key: "lawn_mower"
+        BUTTONS = { "start_mowing" => "Cortar", "pause" => "Pausar", "dock" => "Voltar à base" }.freeze
+
+        def self.points(c)
+          list = []
+          if c["activity_state_topic"].present?
+            list << { sub: "activity", name: name(c, "Cortador"), capability: "enum", options: %w[mowing paused docked returning error], writable: false,
+                      address: state(c, "activity_state_topic", "activity_value_template") }
+          end
+          BUTTONS.each do |cmd, label|
+            next if c["#{cmd}_command_topic"].blank?
+
+            list << { sub: cmd, name: label, capability: "command", address: command(c, "#{cmd}_command_topic", "#{cmd}_command_template").merge("payload_press" => cmd) }
+          end
+          list
+        end
+      end
+
+      class Humidifier < Base
+        describe key: "humidifier"
+
+        def self.points(c)
+          on, off = c.fetch("payload_on", "ON"), c.fetch("payload_off", "OFF")
+          list = [ { sub: "state", name: name(c, "Umidificador"), capability: "onoff", address: state(c).merge(command(c)).merge("payload_on" => on, "payload_off" => off) },
+                   { sub: "target", name: "Umidade alvo", capability: "setpoint", unit: "%", device_class: "humidity", min: c.fetch("min_humidity", 0), max: c.fetch("max_humidity", 100),
+                     step: 1, address: state(c, "target_humidity_state_topic", "target_humidity_state_template")
+                       .merge(command(c, "target_humidity_command_topic", "target_humidity_command_template")) } ]
+          if c["mode_command_topic"].present?
+            list << { sub: "mode", name: "Modo", capability: "enum", options: Array(c["modes"]).map(&:to_s),
+                      address: state(c, "mode_state_topic", "mode_state_template").merge(command(c, "mode_command_topic", "mode_command_template")) }
+          end
+          if c["current_humidity_topic"].present?
+            list << { sub: "current", name: "Umidade", capability: "measure", unit: "%", device_class: "humidity", state_class: "measurement", writable: false,
+                      address: state(c, "current_humidity_topic", "current_humidity_template") }
+          end
+          list
+        end
+      end
+
+      class WaterHeater < Base
+        describe key: "water_heater"
+        MODES = %w[off eco electric gas heat_pump high_demand performance].freeze
+
+        def self.points(c)
+          list = []
+          if c["mode_command_topic"].present? || c["mode_state_topic"].present?
+            list << { sub: "mode", name: name(c, "Aquecedor"), capability: "enum", options: Array(c["modes"].presence || MODES).map(&:to_s), writable: c["mode_command_topic"].present?,
+                      address: state(c, "mode_state_topic", "mode_state_template").merge(command(c, "mode_command_topic", "mode_command_template")) }
+          end
+          if c["temperature_command_topic"].present?
+            list << { sub: "target", name: "Temperatura alvo", capability: "setpoint", unit: "°C", device_class: "temperature",
+                      min: c.fetch("min_temp", 43), max: c.fetch("max_temp", 60), step: c.fetch("precision", 1),
+                      address: state(c, "temperature_state_topic", "temperature_state_template").merge(command(c, "temperature_command_topic", "temperature_command_template")) }
+          end
+          if c["current_temperature_topic"].present?
+            list << { sub: "current", name: "Temperatura da água", capability: "measure", unit: "°C", device_class: "temperature", state_class: "measurement", writable: false,
+                      address: state(c, "current_temperature_topic", "current_temperature_template") }
+          end
+          if c["power_command_topic"].present?
+            list << { sub: "power", name: "Liga/desliga", capability: "onoff",
+                      address: command(c, "power_command_topic").merge("payload_on" => c.fetch("payload_on", "ON"), "payload_off" => c.fetch("payload_off", "OFF")) }
+          end
+          list
+        end
+      end
+
+      # Firmware anunciado pelo aparelho: JSON {installed_version, latest_version} ou só a versão; instalar = `payload_install`
+      # (provedor Firmware::Providers::Mqtt).
+      class Update < Base
+        describe key: "update"
+
+        def self.points(c)
+          [ { name: name(c, "Firmware"), capability: "update", writable: false,
+              address: state(c).merge("command_topic" => c["command_topic"], "payload_install" => (c.fetch("payload_install", "install") if c["command_topic"].present?)) } ]
+        end
+      end
     end
   end
 end

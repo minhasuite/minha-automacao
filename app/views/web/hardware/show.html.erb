@@ -14,7 +14,7 @@
     <dl class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 text-sm">
       <% [ [ :os, h["os"] ], [ :kernel, h["kernel"] ], [ :arch, h["arch"] ], [ :cpu, [ h["cpu"], (t("hardware.cores", n: h["cpus"]) if h["cpus"]) ].compact.join(" · ") ],
            [ :memory, (t("hardware.memory_of", free: number_to_human_size(h["memory_free_mb"].to_i.megabytes), total: number_to_human_size(h["memory_mb"].to_i.megabytes)) if h["memory_mb"]) ],
-           [ :uptime, (distance_of_time_in_words(h["uptime_s"].to_i) if h["uptime_s"]) ] ].each do |k, v| %>
+           [ :uptime, (distance_of_time_in_words(h["uptime_s"].to_i) if h["uptime_s"]) ], *([ [ :board, h["board"] ] ] if h["board"].present?) ].each do |k, v| %>
         <div class="min-w-0"><dt class="text-xs font-semibold text-muted"><%= t("hardware.fields.#{k}") %></dt><dd class="text-ink break-words num"><%= v.presence || "—" %></dd></div>
       <% end %>
     </dl>

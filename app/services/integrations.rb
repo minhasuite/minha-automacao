@@ -174,7 +174,7 @@ module Integrations
   def create_device(integration, site, e, area)
     secret = for_driver(integration.driver).device_secret(integration, e)
     device = site.devices.create!(driver: e["kind"], name: e["name"], external_id: e["id"], integration: integration, area: area,
-                                  manufacturer: e["manufacturer"], model: e["model"], address: e["address"] || {}, credential: secret,
+                                  manufacturer: e["manufacturer"], model: e["model"], firmware: e["firmware"], address: e["address"] || {}, credential: secret,
                                   poll_s: e["poll_s"] || 1800, discovered_at: Time.current)
     Array(e["points"]).each do |p|
       device.points.create!(p.merge("site" => site, "key" => unique_key(site, device, p["name"])))

@@ -42,7 +42,7 @@ RSpec.describe "Descoberta MQTT do HA (ondaC1, C4)" do
                              "stat_t" => "teste01/state", "cmps" => {
                                "rele" => { "p" => "switch", "cmd_t" => "teste01/rele/set", "val_tpl" => "{{ value_json.rele }}" },
                                "porta" => { "p" => "binary_sensor", "dev_cla" => "door", "val_tpl" => "{{ value_json.porta }}" },
-                               "desconhecido" => { "p" => "lawn_mower" }
+                               "desconhecido" => { "p" => "notify" }
                              })
     p = pts("teste01")
     expect(p.keys).to contain_exactly("switch/teste01/rele", "binary_sensor/teste01/porta")

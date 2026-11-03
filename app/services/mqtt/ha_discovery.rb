@@ -40,14 +40,22 @@ module Mqtt
       "stat_tpl" => "state_template", "stat_unlocked" => "state_unlocked", "stat_val_tpl" => "state_value_template", "stype" => "subtype",
       "sug_dsp_prc" => "suggested_display_precision", "t" => "topic", "temp_cmd_t" => "temperature_command_topic",
       "temp_cmd_tpl" => "temperature_command_template", "temp_stat_t" => "temperature_state_topic", "temp_stat_tpl" => "temperature_state_template",
-      "temp_unit" => "temperature_unit", "uniq_id" => "unique_id", "unit_of_meas" => "unit_of_measurement", "val_tpl" => "value_template"
+      "temp_unit" => "temperature_unit", "uniq_id" => "unique_id", "unit_of_meas" => "unit_of_measurement", "val_tpl" => "value_template",
+      # resto: alarme, robô, umidificador, aquecedor e firmware
+      "pl_arm_away" => "payload_arm_away", "pl_arm_home" => "payload_arm_home", "pl_arm_nite" => "payload_arm_night", "pl_arm_vacation" => "payload_arm_vacation",
+      "pl_arm_custom_b" => "payload_arm_custom_bypass", "pl_disarm" => "payload_disarm", "pl_trig" => "payload_trigger", "set_fan_spd_t" => "set_fan_speed_topic",
+      "fanspd_lst" => "fan_speed_list", "pl_strt" => "payload_start", "pl_paus" => "payload_pause", "pl_ret" => "payload_return_to_base", "pl_loc" => "payload_locate",
+      "pl_inst" => "payload_install", "curr_hum_t" => "current_humidity_topic", "curr_hum_tpl" => "current_humidity_template",
+      "hum_cmd_t" => "target_humidity_command_topic", "hum_cmd_tpl" => "target_humidity_command_template", "hum_stat_t" => "target_humidity_state_topic",
+      "hum_state_tpl" => "target_humidity_state_template", "max_hum" => "max_humidity", "min_hum" => "min_humidity", "pow_cmd_t" => "power_command_topic"
     }.freeze
     DEVICE_ABBR = { "cns" => "connections", "ids" => "identifiers", "mf" => "manufacturer", "mdl" => "model", "mdl_id" => "model_id",
                     "hw" => "hw_version", "sw" => "sw_version", "sa" => "suggested_area", "sn" => "serial_number", "cu" => "configuration_url" }.freeze
     # Já têm descoberta nativa no MA (Mqtt::Z2m, Mqtt::Tasmota): não duplicar.
     SKIP_ORIGINS = /zigbee2mqtt|tasmota/i
     # Componentes que o MA entende (classe em HaDiscovery::Components). Novo = classe + nome aqui.
-    COMPONENTS = %w[Sensor BinarySensor Switch Light Cover Number Select Button Fan Lock Text Event Scene Siren Valve Climate DeviceAutomation].freeze
+    COMPONENTS = %w[Sensor BinarySensor Switch Light Cover Number Select Button Fan Lock Text Event Scene Siren Valve Climate DeviceAutomation
+                    AlarmControlPanel Camera Vacuum LawnMower Humidifier WaterHeater Update].freeze
 
     @availability = {} # tópico → external_ids dos aparelhos que dependem dele
 

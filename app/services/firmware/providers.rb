@@ -101,5 +101,90 @@ module Firmware
         raise Integrations::Error, e.message
       end
     end
+
+    # resto: aparelho da descoberta MQTT do HA com componente `update`: ele
+    # mesmo informa as versões; instalar = publicar o `payload_install`.
+    class Mqtt < Provider
+      describe key: "mqtt"
+
+      def self.point(device) = device.points.find { |p| p.capability == "update" && p.address["payload_install"] }
+      def self.handles?(device) = device.driver == "mqtt" && point(device).present?
+
+      def self.install!(device)
+        a = point(device).address
+        ::Mqtt::Listener.publish(a["command_topic"], a["payload_install"].to_s)
+      end
+    end
+
+    # resto: Tasmota (descoberta nativa, versão no `sw`): a mais nova vem das
+    # versões publicadas do Tasmota; instalar = `Upgrade 1` (baixa do OtaUrl do aparelho).
+    class Tasmota < Provider
+      describe key: "tasmota"
+      RELEASES = "https://api.github.com/repos/arendst/Tasmota/releases/latest".freeze
+
+      def self.handles?(device) = device.driver == "mqtt" && device.manufacturer == "Tasmota" && device.address["cmnd"].present?
+
+      def self.latest
+        Rails.cache.fetch("firmware/tasmota/latest", expires_in: 6.hours) do
+          JSON.parse(SafeHttp.get(RELEASES, timeout: 10).body)["tag_name"].to_s.delete_prefix("v").presence
+        end
+      rescue SafeHttp::Error, JSON::ParserError => e
+        raise Integrations::Error, e.message
+      end
+
+      def self.check(device)
+        installed = device.firmware.to_s[/\d+(\.\d+)+/] or return nil
+        { installed: installed, latest: latest || installed, notes_url: "https://github.com/arendst/Tasmota/releases" }
+      end
+
+      def self.install!(device) = ::Mqtt::Listener.publish("#{device.address['cmnd']}Upgrade", "1")
+    end
+
+    # resto: ESPHome pelo painel do app ESPHome (ESPHOME_DASHBOARD_URL): a
+    # versão nova é a do painel; instalar = compilar e mandar pelo ar
+    # (`/upload`), numa thread que acompanha o processo até o fim (o painel
+    # para a compilação se o websocket fechar).
+    class Esphome < Provider
+      describe key: "esphome"
+      UPLOAD_TIMEOUT = 15 * 60
+
+      def self.url = ENV["ESPHOME_DASHBOARD_URL"].presence
+      def self.handles?(device) = device.driver == "esphome" && url.present?
+
+      def self.entry(device)
+        res = Net::HTTP.get_response(URI("#{url}/devices"))
+        raise Integrations::Error, "ESPHome: HTTP #{res.code}" unless res.is_a?(Net::HTTPSuccess)
+
+        host = device.address["host"].to_s
+        Array(JSON.parse(res.body)["configured"]).find { |d| [ d["address"], "#{d['name']}.local" ].include?(host) || d["name"] == device.name.parameterize }
+      rescue *Integrations::LanPlugin::NET_ERRORS, JSON::ParserError => e
+        raise Integrations::Error, "ESPHome: #{e.message}"
+      end
+
+      def self.check(device)
+        e = entry(device) or return nil
+        { installed: e["deployed_version"] || device.firmware, latest: e["current_version"], notes_url: "https://esphome.io/changelog/" }
+      end
+
+      def self.install!(device)
+        conf = entry(device)&.dig("configuration") or raise Integrations::Error, I18n.t("firmware.no_update")
+        Thread.new { Rails.application.executor.wrap { upload(conf, device.id) } }
+      end
+
+      def self.upload(conf, device_id)
+        WsClient.open("#{url.sub(/\Ahttp/, 'ws')}/upload", timeout: UPLOAD_TIMEOUT) do |ws|
+          ws.send_json(type: "spawn", configuration: conf, port: "OTA")
+          while (m = ws.read_json(UPLOAD_TIMEOUT))
+            next unless m["event"] == "exit"
+
+            Rails.logger.info("[firmware] ESPHome #{conf}: saiu com #{m['code']}")
+            return m["code"].to_i.zero?
+          end
+        end
+      rescue WsClient::Error => e
+        Rails.logger.warn("[firmware] ESPHome #{conf} (#{device_id}): #{e.message}")
+        false
+      end
+    end
   end
 end

@@ -25,7 +25,7 @@ module Onvif
         end
       end
 
-      def motion_points = Point.joins(:device).where(capability: "motion", disabled: false, devices: { driver: "go2rtc", disabled: false }).where("points.address->>'onvif' = 'motion'")
+      def motion_points = Point.joins(:device).where(disabled: false, devices: { driver: "go2rtc", disabled: false }).where("points.address->>'onvif' IS NOT NULL")
 
       def scan
         wanted = Rails.application.executor.wrap { ActsAsTenant.without_tenant { motion_points.distinct.pluck(:device_id) } }
@@ -57,7 +57,7 @@ module Onvif
         renewed = monotonic
         n = 0
         until rounds && (n += 1) > rounds
-          client.pull(sub).each { |moving| report(device_id, moving) }
+          client.pull(sub).each { |key, on| report(device_id, on, key: key) }
           next unless monotonic - renewed > RENEW_EVERY
 
           client.renew(sub, seconds: TERMINATION)
@@ -72,10 +72,11 @@ module Onvif
         client.unsubscribe(sub) if sub
       end
 
-      def report(device_id, moving, quality: "good")
+      # resto: `key` = evento (motion, tamper, line…); sem chave (caiu) vale para todos os pontos ONVIF.
+      def report(device_id, moving, quality: "good", key: nil)
         with_device(device_id) do |d|
           d.update_columns(status: "online", last_seen_at: Time.current) if quality == "good"
-          d.points.select { |p| p.capability == "motion" && p.address["onvif"] == "motion" }.each do |p|
+          d.points.select { |p| p.address["onvif"].present? && (key.nil? || p.address["onvif"] == key) }.each do |p|
             value = moving.nil? ? p.value : moving
             p.report!(value, quality: quality) unless p.value == value && p.quality == quality
           end

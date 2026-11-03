@@ -1,0 +1,39 @@
+pt-BR:
+  onvif:
+    events:
+      motion: "Movimento"
+      tamper: "Violação da câmera"
+      line: "Cruzou a linha"
+      field: "Invasão de área"
+      person: "Pessoa"
+      vehicle: "Veículo"
+      pet: "Animal"
+      sound: "Som detectado"
+      input: "Entrada digital"
+      relay: "Relé"
+en:
+  onvif:
+    events:
+      motion: "Motion"
+      tamper: "Camera tampering"
+      line: "Line crossed"
+      field: "Area intrusion"
+      person: "Person"
+      vehicle: "Vehicle"
+      pet: "Animal"
+      sound: "Sound detected"
+      input: "Digital input"
+      relay: "Relay"
+es:
+  onvif:
+    events:
+      motion: "Movimiento"
+      tamper: "Manipulación de la cámara"
+      line: "Cruzó la línea"
+      field: "Intrusión en el área"
+      person: "Persona"
+      vehicle: "Vehículo"
+      pet: "Animal"
+      sound: "Sonido detectado"
+      input: "Entrada digital"
+      relay: "Relé"
