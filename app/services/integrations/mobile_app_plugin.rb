@@ -26,7 +26,20 @@ module Integrations
                       read: ->(v, _i) { ActiveModel::Type::Boolean.new.cast(v) } },
       "wifi" => { name: "Wi-Fi", capability: "text", device_class: "wifi_ssid", read: ->(v, _i) { v.to_s.delete('"').strip.first(64) } },
       "location" => { name: "Presença", capability: "enum", options: [ HOME, AWAY ], device_class: "location",
-                      read: ->(v, i) { MobileAppPlugin.presence(i, v) }, attrs: ->(v, i) { MobileAppPlugin.location_attrs(i, v) } }
+                      read: ->(v, i) { MobileAppPlugin.presence(i, v) }, attrs: ->(v, i) { MobileAppPlugin.location_attrs(i, v) } },
+      # appweb D1: o que o Android diz sem permissão extra (canal ma/native `sensors`).
+      "next_alarm" => { name: "Próximo alarme", capability: "text", device_class: "timestamp", read: ->(v, _i) { v.to_s.first(40) } },
+      "dnd" => { name: "Não perturbe", capability: "onoff", device_class: "dnd", read_only: true, read: ->(v, _i) { ActiveModel::Type::Boolean.new.cast(v) } },
+      "ringer" => { name: "Modo da campainha", capability: "enum", options: %w[normal vibrar silencioso], device_class: "ringer_mode",
+                    read: ->(v, _i) { v.to_s.presence_in(%w[normal vibrar silencioso]) } },
+      "volume" => { name: "Volume da mídia", capability: "measure", unit: "%", device_class: "volume",
+                    read: ->(v, _i) { Float(v.to_s, exception: false)&.round&.clamp(0, 100) } },
+      "storage_free" => { name: "Armazenamento livre", capability: "measure", unit: "GB", device_class: "data_size",
+                          read: ->(v, _i) { Float(v.to_s, exception: false)&.round(1) } },
+      "interactive" => { name: "Tela ligada", capability: "onoff", device_class: "interactive", read_only: true, read: ->(v, _i) { ActiveModel::Type::Boolean.new.cast(v) } },
+      "power_save" => { name: "Economia de bateria", capability: "onoff", device_class: "power_save", read_only: true, read: ->(v, _i) { ActiveModel::Type::Boolean.new.cast(v) } },
+      "network" => { name: "Rede", capability: "enum", options: %w[wifi movel cabo nenhuma], device_class: "network_type",
+                     read: ->(v, _i) { v.to_s.presence_in(%w[wifi movel cabo nenhuma]) } }
     }.freeze
 
     def self.setup(site, form)

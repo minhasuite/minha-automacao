@@ -2,3 +2,14 @@ pt-BR:
   appweb:
     not_allowed: "Esta tela não abre pelo app."
     bridge_expired: "O link do app venceu. Abra de novo pelo app."
+  automations:
+    notifier:
+      phone_commands:
+        tts: "Falar o título e a mensagem"
+        dnd_on: "Ligar o não perturbe"
+        dnd_off: "Desligar o não perturbe"
+        silent: "Campainha em silêncio"
+        vibrate: "Campainha em vibrar"
+        normal: "Campainha normal"
+        volume_max: "Volume da mídia no máximo"
+        volume_mute: "Mídia sem som"

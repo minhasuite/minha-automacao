@@ -2,3 +2,14 @@ es:
   appweb:
     not_allowed: "Esta pantalla no se abre desde la app."
     bridge_expired: "El enlace de la app venció. Ábrelo de nuevo desde la app."
+  automations:
+    notifier:
+      phone_commands:
+        tts: "Decir el título y el mensaje"
+        dnd_on: "Activar no molestar"
+        dnd_off: "Desactivar no molestar"
+        silent: "Timbre en silencio"
+        vibrate: "Timbre en vibrar"
+        normal: "Timbre normal"
+        volume_max: "Volumen de medios al máximo"
+        volume_mute: "Silenciar medios"

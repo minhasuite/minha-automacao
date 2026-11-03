@@ -2,3 +2,14 @@ en:
   appweb:
     not_allowed: "This screen can't be opened from the app."
     bridge_expired: "The app link expired. Open it again from the app."
+  automations:
+    notifier:
+      phone_commands:
+        tts: "Speak the title and message"
+        dnd_on: "Turn on do not disturb"
+        dnd_off: "Turn off do not disturb"
+        silent: "Ringer silent"
+        vibrate: "Ringer vibrate"
+        normal: "Ringer normal"
+        volume_max: "Media volume to max"
+        volume_mute: "Mute media"

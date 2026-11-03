@@ -22,8 +22,21 @@ module Api
       # POST /mobile_devices/:id/sensors { battery?, charging?, wifi?, location?: {latitude, longitude, accuracy} }
       def sensors
         device = own_device
-        Integrations::MobileAppPlugin.report!(device, params.permit(:battery, :charging, :wifi, location: %i[latitude longitude accuracy]).to_h)
+        fields = Integrations::MobileAppPlugin::SENSORS.keys - [ "location" ]
+        Integrations::MobileAppPlugin.report!(device, params.permit(*fields, location: %i[latitude longitude accuracy]).to_h)
         render_data(payload(device.reload))
+      end
+
+      # POST /mobile_devices/:id/tag { tag } — appweb D4: o celular leu uma tag
+      # (NFC ou QR `minhaautomacao://tag/<id>`); dispara o gatilho "Tag lida".
+      def tag
+        device = own_device
+        tag = params.require(:tag).to_s.strip.first(120)
+        return render_error(:invalid_parameter, "tag inválida.", status: :bad_request) unless tag.match?(/\A[\w.:-]+\z/)
+
+        Automations::Triggers.event(device.site_id, Automations::TriggerTypes::TagTrigger::EVENT,
+                                    { "tag" => tag, "user" => current_user.name, "user_id" => current_user.id, "device" => device.name })
+        render_data({ tag: tag })
       end
 
       # DELETE /mobile_devices/:id — tira o celular (e os pontos dele) do local.

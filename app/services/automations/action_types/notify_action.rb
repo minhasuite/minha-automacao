@@ -8,6 +8,8 @@ module Automations
     # link ao tocar e as opções de push: prioridade, tag (substitui o anterior),
     # validade, fixo e grupo. "Só apagar" tira o aviso com a tag.
     class NotifyAction < Base
+      PHONE_COMMAND_KEYS = %w[tts dnd_on dnd_off silent vibrate normal volume_max volume_mute].freeze
+      PHONE_COMMANDS = LocalizedLabel.for("automations.notifier.phone_commands", PHONE_COMMAND_KEYS)
       BUTTON_ID = /\A[a-z0-9_-]{1,40}\z/
 
       describe key: "notify", label: "Avisar", defaults: { "channels" => Notifier.default_channels, "title" => "Aviso" },
@@ -24,7 +26,9 @@ module Automations
                          f("group", :text, "Grupo", en: "Group", es: "Grupo"), f("ttl", :duration, "Validade no push (ex.: 1h)", en: "Push expiration (e.g. 1h)", es: "Validez del push (ej.: 1h)"),
                          f("sticky", :bool, "Fixo (fica até tocar)", en: "Sticky (stays until tapped)", es: "Fijo (queda hasta tocarlo)"),
                          f("progress", :template, "Progresso 0–100 no app (contínuo, atualiza no lugar pela tag)", en: "Progress 0–100 in the app (ongoing, updates in place by tag)", es: "Progreso 0–100 en la app (continuo, se actualiza en el lugar por la etiqueta)"),
-                         f("clear", :bool, "Só apagar o aviso com esta tag", en: "Only clear the notification with this tag", es: "Solo borrar el aviso con esta etiqueta") ]
+                         f("clear", :bool, "Só apagar o aviso com esta tag", en: "Only clear the notification with this tag", es: "Solo borrar el aviso con esta etiqueta"),
+                         # appweb D2: o app executa em vez de mostrar (falar o título e a mensagem, não perturbe, campainha, volume).
+                         f("phone_command", :select, "Comando no celular (app)", options: PHONE_COMMANDS, en: "Command on the phone (app)", es: "Comando en el celular (app)") ]
       texts "pt-BR" => { clear: "para apagar, informe a tag.", buttons: "botões: até %{max}, cada um com id (letras minúsculas, números, _ ou -) e título de até 40 letras.",
                          command: "botão que comanda precisa de ponto e comando.", repeated: "botões com id repetido." },
             en: { label: "Notify", clear: "to clear, enter the tag.", buttons: "buttons: up to %{max}, each with an id (lowercase letters, numbers, _ or -) and a title of up to 40 characters.",
@@ -74,7 +78,8 @@ module Automations
           "url" => (e.ctx.render(node["url"]).strip.presence if node["url"]), "image_url" => (e.ctx.render(node["image_url"]).strip.presence if node["image_url"]),
           "tag" => (e.ctx.render(node["tag"]).strip.presence if node["tag"]), "priority" => node["priority"], "group" => node["group"].presence,
           "ttl" => (Dsl.seconds(node["ttl"]) if node["ttl"]), "sticky" => (true if node["sticky"] == true),
-          "progress" => (progress(e.ctx.render(node["progress"])) if node["progress"].present?) }.compact
+          "progress" => (progress(e.ctx.render(node["progress"])) if node["progress"].present?),
+          "command" => node["phone_command"].presence_in(PHONE_COMMAND_KEYS) }.compact
       end
 
       # Botão com `point` (chave ou id) e `command`: leva o id do ponto (Notification#run_command).

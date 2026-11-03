@@ -37,6 +37,7 @@ module Push
         "data" => { "id" => notification.id, "url" => (can.(:link) && notification.open_url) || "/notificacoes",
                     "priority" => (priority if can.(:priority)), "group" => (data["group"].presence if can.(:group)),
                     "progress" => (data["progress"] if can.(:progress)),
+                    "command" => data["command"].presence, # appweb D2: só o app lê
                     "token" => (notification.action_token(user) if buttons.present?) }.compact }.compact
     end
   end
