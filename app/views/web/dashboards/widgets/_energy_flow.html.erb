@@ -50,5 +50,12 @@
       <% share = ((f["solar_home"].to_f + f["battery_home"].to_f) / f["home"].to_f * 100).round.clamp(0, 100) %>
       <p class="ef-foot"><span class="dw-meter" role="img" aria-label="<%= t("dashboards.w.ef.self_share", pct: share) %>"><span style="width: <%= share %>%"></span></span><%= t("dashboards.w.ef.self_share_now_html", pct: tag.span("#{share}%", class: "num")) %></p>
     <% end %>
+    <%# ondaB2 (B12): parcela fóssil da rede e previsão solar de hoje. %>
+    <% if d["fossil_pct"] || d["forecast_kwh"] %>
+      <div class="ef-extras">
+        <% if d["fossil_pct"] %><span class="ef-chip ef-co2"><%= icon("globe-alt", "size-4") %><%= t("dashboards.energy_b12.low_carbon", pct: 100 - d["fossil_pct"]) %></span><% end %>
+        <% if d["forecast_kwh"] %><span class="ef-chip ef-fc"><%= icon("sun", "size-4") %><%= t("dashboards.energy_b12.forecast", kwh: number_with_precision(d["forecast_kwh"], precision: 1, strip_insignificant_zeros: true, separator: ",")) %></span><% end %>
+      </div>
+    <% end %>
   <% end %>
 </div>

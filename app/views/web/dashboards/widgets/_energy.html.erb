@@ -1,20 +1,22 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <% d = w["data"] %>
-<% kwh = ->(v) { "#{number_with_precision(v, precision: v.to_f < 10 ? 2 : 1, strip_insignificant_zeros: true, delimiter: '.', separator: ',')} kWh" } %>
+<%# ondaB2 (B12): o mesmo card serve ao gás e à água (`utility`): unidade, título e ícone vêm do data. %>
+<% unit = d["unit"] || "kWh" %>
+<% kwh = ->(v) { "#{number_with_precision(v, precision: v.to_f < 10 ? 2 : 1, strip_insignificant_zeros: true, delimiter: '.', separator: ',')} #{unit}" } %>
 <% money = ->(v) { number_to_currency(v, unit: "R$ ", separator: ",", delimiter: ".") } %>
 <div class="dw-card">
   <div class="dw-energy-head">
     <div class="min-w-0">
-      <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.usage_cost") %></p>
+      <p class="dw-card-title"><%= w["label"].presence || d["title"] || t("dashboards.w.usage_cost") %></p>
       <p class="text-xs text-muted"><%= d["period_label"] %></p>
     </div>
-    <span class="dw-ico dw-ico-sm" style="color: var(--amber)"><%= icon("lightning-bolt") %></span>
+    <span class="dw-ico dw-ico-sm" style="color: <%= d["tone"] || "var(--amber)" %>"><%= icon(d["icon"] || "lightning-bolt") %></span>
   </div>
   <% if d["missing"] %>
-    <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %><%= t("dashboards.w.pick_energy") %></p>
+    <p class="dw-quiet"><%= icon(d["icon"] || "lightning-bolt", "size-5 text-muted") %><%= d["missing_text"] || t("dashboards.w.pick_energy") %></p>
   <% else %>
     <p class="dw-energy-big num mt-2"><%= d["cost"] ? money.(d["cost"]) : kwh.(d["kwh"]) %></p>
-    <p class="text-sm text-ink-2 num"><%= d["cost"] ? "#{kwh.(d['kwh'])} · #{money.(d['tariff'])}/kWh" : t("dashboards.w.no_tariff") %></p>
+    <p class="text-sm text-ink-2 num"><%= d["cost"] ? "#{kwh.(d['kwh'])} · #{money.(d['tariff'])}/#{unit}" : t("dashboards.w.no_tariff") %></p>
     <div class="dw-energy-facts">
       <% if d["projection_kwh"] %>
         <div class="dw-energy-fact"><%= d["period"] == "today" ? t("dashboards.w.projection_day") : t("dashboards.w.projection_period") %>
@@ -29,7 +31,7 @@
       <% if d["goal"] %>
         <div class="dw-energy-fact"><%= t("dashboards.w.goal") %> <%= kwh.(d["goal"]) %>
           <strong class="num"><%= (d["goal_ratio"] * 100).round %>% <span class="text-xs font-normal"><%= d["projection_kwh"] ? t("dashboards.w.of_goal_projected") : t("dashboards.w.of_goal") %></span></strong>
-          <div class="dw-meter<%= ' dw-over' if d['goal_ratio'] > 1 %>" role="img" aria-label="<%= (d['goal_ratio'] * 100).round %>% da meta"><span style="width: <%= [ d['goal_ratio'] * 100, 100 ].min.round %>%"></span></div></div>
+          <div class="dw-meter<%= ' dw-over' if d['goal_ratio'] > 1 %>" role="img" aria-label="<%= (d['goal_ratio'] * 100).round %>% <%= t("dashboards.w.of_goal") %>"><span style="width: <%= [ d['goal_ratio'] * 100, 100 ].min.round %>%"></span></div></div>
       <% end %>
     </div>
     <% max = d["bars"].filter_map { |b| b["kwh"] }.max.to_f %>

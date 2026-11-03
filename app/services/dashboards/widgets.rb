@@ -10,7 +10,7 @@ module Dashboards
                  AlertsWidget CameraWidget VacuumWidget EnergyWidget HeadingWidget MarkdownWidget WeatherWidget MediaWidget RemoteWidget
                  PeopleWidget AlarmWidget FloorplanWidget EnergyFlowWidget EnergyBreakdownWidget EnergyCompareWidget MapWidget CustomCardWidget
                  ThermostatWidget HumidifierWidget LightWidget ButtonWidget CalendarWidget TodoWidget LogbookWidget ImageWidget IframeWidget
-                 ClockWidget PlantWidget StackWidget].freeze
+                 ClockWidget PlantWidget StackWidget UtilityWidget].freeze
 
     module_function
 

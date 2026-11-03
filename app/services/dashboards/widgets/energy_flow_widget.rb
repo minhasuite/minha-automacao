@@ -9,16 +9,18 @@ module Dashboards
     class EnergyFlowWidget < Base
       ROLES = %w[grid solar battery battery_soc home].freeze
       FLAGS = %w[grid_invert battery_invert].freeze
+      # ondaB2 (B12): parcela fóssil da rede (%, ex. Electricity Maps) e previsão solar de hoje (kWh).
+      EXTRAS = %w[co2 solar_forecast].freeze
       # Abaixo disso (W) a linha fica parada.
       IDLE_W = 5
 
-      describe type: "energy_flow", label: "Fluxo de energia", icon: "switch-horizontal", params: ROLES + FLAGS
+      describe type: "energy_flow", label: "Fluxo de energia", icon: "switch-horizontal", params: ROLES + FLAGS + EXTRAS
       texts en: { "label" => "Energy flow", "need_grid" => "set at least the grid or the solar" },
             es: { "label" => "Flujo de energía", "need_grid" => "indica al menos la red o la solar" },
             "pt-BR" => { "need_grid" => "informe ao menos a rede ou o solar" }
 
       def self.errors(w)
-        e = ROLES.filter_map { |k| "#{k} precisa ser texto (id ou chave do ponto)" if w.key?(k) && !w[k].is_a?(String) }
+        e = (ROLES + EXTRAS).filter_map { |k| "#{k} precisa ser texto (id ou chave do ponto)" if w.key?(k) && !w[k].is_a?(String) }
         e += FLAGS.filter_map { |k| "#{k} precisa ser true ou false" if w.key?(k) && ![ true, false ].include?(w[k]) }
         e << text(:need_grid) unless w["grid"].is_a?(String) || w["solar"].is_a?(String)
         e
@@ -34,7 +36,12 @@ module Dashboards
         data = { "has" => ROLES.index_with { |k| pts[k].present? }, "watts" => watts.except("battery_soc"), "flows" => flows,
                  "soc" => (soc.to_f.round if soc.is_a?(Numeric)), "missing" => pts["grid"].nil? && pts["solar"].nil?,
                  "point_ids" => pts.values.compact.map(&:id) }
-        [ data, pts.values.compact ]
+        extra = EXTRAS.to_h { |k| [ k, r.use(r.point(w[k])) ] }
+        co2 = extra["co2"]&.value
+        data["fossil_pct"] = co2.to_f.clamp(0, 100).round if co2.is_a?(Numeric)
+        fc = extra["solar_forecast"]&.value
+        data["forecast_kwh"] = fc.to_f.round(1) if fc.is_a?(Numeric)
+        [ data, pts.values.compact + extra.values.compact ]
       end
 
       # Potência em W (nil = sem leitura boa).
@@ -65,7 +72,7 @@ module Dashboards
       end
 
       def self.attrs(p, _site = nil)
-        ROLES.to_h { |k| [ k, p[k].presence ] }.merge(FLAGS.to_h { |k| [ k, p[k] == "1" || nil ] }).compact
+        (ROLES + EXTRAS).to_h { |k| [ k, p[k].presence ] }.merge(FLAGS.to_h { |k| [ k, p[k] == "1" || nil ] }).compact
       end
 
       def self.form = "web/dashboards/widget_forms/energy_flow"

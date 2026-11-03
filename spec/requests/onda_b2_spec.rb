@@ -314,6 +314,39 @@ RSpec.describe "ondaB2: painéis" do
     end
   end
 
+  describe "B12: painel de energia completo" do
+    it "gás e água em m³ (litro vira m³), CO2 e previsão solar no fluxo, e o painel pronto monta tudo" do
+      travel_to(Time.zone.parse("2026-11-02 15:30")) do
+        gas = within(tenant) { create(:point, device: create(:device, site: site, name: "Teste gás"), name: "Gás", key: "gas.m3", capability: "measure", unit: "m³", data_type: "decimal", value: 12.5) }
+        water = within(tenant) { create(:point, device: create(:device, site: site, name: "Teste água"), name: "Água", key: "agua.l", capability: "measure", unit: "L", data_type: "decimal", value: 2500) }
+        grid = within(tenant) { create(:point, device: create(:device, site: site, name: "Teste rede"), name: "Rede", key: "rede.w", capability: "measure", unit: "W", data_type: "decimal", value: 800) }
+        co2 = within(tenant) { create(:point, device: grid.device, name: "Fóssil", key: "rede.co2", capability: "measure", unit: "%", data_type: "decimal", value: 18) }
+        fc = within(tenant) { create(:point, device: grid.device, name: "Previsão", key: "solar.prev", capability: "measure", unit: "kWh", data_type: "decimal", value: 21.4) }
+        day = Time.zone.parse("2026-11-02 00:00")
+        [ [ gas, 10.0, 12.0 ], [ water, 1000.0, 2000.0 ] ].each do |p, a, b|
+          within(tenant) { ReadingRollup.create!(point_id: p.id, bucket: "1h", starts_at: day + 1.hour, min: a, max: a, avg: a, last: a, count: 1) }
+          within(tenant) { ReadingRollup.create!(point_id: p.id, bucket: "1h", starts_at: day + 10.hours, min: b, max: b, avg: b, last: b, count: 1) }
+        end
+        d = board([ { "id" => "g", "type" => "utility", "kind" => "gas", "binds" => [ gas.id ], "period" => "today", "tariff" => 8.0 },
+                    { "id" => "a", "type" => "utility", "binds" => [ water.id ], "period" => "today" },
+                    { "id" => "f", "type" => "energy_flow", "grid" => grid.id, "co2" => co2.id, "solar_forecast" => fc.id } ])
+        expect(Dashboards::Schema.errors(d.definition)).to eq([])
+        res = resolved(d)["views"][0]["sections"][0]["widgets"].index_by { |w| w["id"] }
+        expect(res["g"]["data"]).to include("unit" => "m³", "kind" => "gas", "kwh" => 2.5, "cost" => 20.0)
+        expect(res["a"]["data"]).to include("kind" => "water", "kwh" => 1.5)
+        expect(res["f"]["data"]).to include("fossil_pct" => 18, "forecast_kwh" => 21.4)
+        get "/paineis/#{d.id}"
+        expect(response.body).to include("2,5 m³", "Gás", "Água", "82% da rede sem fóssil", "Previsão solar hoje: 21,4 kWh")
+
+        preset = within(tenant) { Dashboards::Presets::EnergyPreset.build(site, ActionController::Parameters.new(grid: grid.id, gas: gas.id, water: water.id, gas_tariff: "8", co2: co2.id, solar_forecast: fc.id)) }
+        all = preset["views"][0]["sections"].flat_map { |s| s["widgets"] }
+        expect(all.select { |w| w["type"] == "utility" }.map { |w| w["kind"] }).to eq(%w[gas water])
+        expect(all.find { |w| w["type"] == "energy_flow" }).to include("co2" => co2.id, "solar_forecast" => fc.id)
+        expect(within(tenant) { Dashboards::Schema.errors(preset) }).to eq([])
+      end
+    end
+  end
+
   describe "B9: ações de toque, segurar e duplo toque" do
     it "valida, resolve e deixa na tela o que o gesto dispara" do
       w = { "id" => "w1", "type" => "tile", "bind" => power.id, "tap_action" => { "action" => "navigate", "navigation_path" => "quarto" },

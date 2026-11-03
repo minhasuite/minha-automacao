@@ -85,25 +85,34 @@ module Dashboards
       ENERGY = ->(p) { Energy.supported?(p) }
       PERCENT = ->(p) { p.numeric? && p.unit.to_s == "%" }
       TARIFF = ->(p) { p.numeric? && (p.helper.in?(%w[tariff number]) || p.unit.to_s.include?("R$")) }
+      VOLUME = ->(p) { Meter.supported?(p) }
 
       describe key: "energy", title: "Energia", icon: "lightning-bolt",
                description: "Fluxo rede, solar e bateria, consumo e custo com meta e projeção, comparação dia/semana/mês e ranking por aparelho."
       texts en: { title: "Energy", description: "Grid, solar and battery flow, usage and cost with goal and projection, day/week/month comparison and ranking by device.",
                   fields: { grid: "Grid power", solar: "Solar generation", battery: "Battery power", battery_soc: "Battery charge", consumption: "Usage meters",
-                            tariff_point: "Rate", tariff: "Or fixed rate (per kWh)", goal: "Monthly goal (kWh)" },
+                            tariff_point: "Rate", tariff: "Or fixed rate (per kWh)", goal: "Monthly goal (kWh)",
+                            gas: "Gas meter", gas_tariff: "Gas rate (per m³)", water: "Water meter", water_tariff: "Water rate (per m³)",
+                            co2: "Grid fossil share", solar_forecast: "Today's solar forecast" },
                   hints: { grid: "W or kW; positive = buying from the utility", solar: "optional", battery: "optional; positive = discharging", battery_soc: "optional, in %",
-                           consumption: "kWh or W; empty = the grid", tariff_point: "Rate helper (time-of-use) or Number", tariff: "0.95", goal: "optional" },
+                           consumption: "kWh or W; empty = the grid", tariff_point: "Rate helper (time-of-use) or Number", tariff: "0.95", goal: "optional",
+                           gas: "optional; cumulative m³ or L", gas_tariff: "optional", water: "optional; cumulative m³ or L", water_tariff: "optional",
+                           co2: "optional, in % (e.g. Electricity Maps)", solar_forecast: "optional, in kWh (e.g. Forecast.Solar)" },
                   need_one: "pick at least the grid power, the solar or a usage meter",
-                  gen: { flow: "Energy now", month: "This month", now: "Now", compare: "Comparison", today: "Today", rank: "By device", power: "Power", last_24h: "Last 24 h" } },
+                  gen: { flow: "Energy now", month: "This month", now: "Now", compare: "Comparison", today: "Today", rank: "By device", power: "Power", last_24h: "Last 24 h", utility: "Gas and water" } },
             es: { title: "Energía", description: "Flujo de red, solar y batería, consumo y costo con meta y proyección, comparación día/semana/mes y ranking por aparato.",
                   fields: { grid: "Potencia de la red", solar: "Generación solar", battery: "Potencia de la batería", battery_soc: "Carga de la batería", consumption: "Medidores de consumo",
-                            tariff_point: "Tarifa", tariff: "O tarifa fija (por kWh)", goal: "Meta del mes (kWh)" },
+                            tariff_point: "Tarifa", tariff: "O tarifa fija (por kWh)", goal: "Meta del mes (kWh)",
+                            gas: "Medidor de gas", gas_tariff: "Tarifa del gas (por m³)", water: "Medidor de agua", water_tariff: "Tarifa del agua (por m³)",
+                            co2: "Parte fósil de la red", solar_forecast: "Previsión solar de hoy" },
                   hints: { grid: "W o kW; positivo = comprando a la distribuidora", solar: "opcional", battery: "opcional; positivo = descargando", battery_soc: "opcional, en %",
-                           consumption: "kWh o W; vacío = la red", tariff_point: "helper Tarifa (horaria) o Número", tariff: "0.95", goal: "opcional" },
+                           consumption: "kWh o W; vacío = la red", tariff_point: "helper Tarifa (horaria) o Número", tariff: "0.95", goal: "opcional",
+                           gas: "opcional; m³ o L acumulados", gas_tariff: "opcional", water: "opcional; m³ o L acumulados", water_tariff: "opcional",
+                           co2: "opcional, en % (ej. Electricity Maps)", solar_forecast: "opcional, en kWh (ej. Forecast.Solar)" },
                   need_one: "elige al menos la potencia de la red, la solar o un medidor de consumo",
-                  gen: { flow: "Energía ahora", month: "Este mes", now: "Ahora", compare: "Comparación", today: "Hoy", rank: "Por aparato", power: "Potencia", last_24h: "Últimas 24 h" } },
+                  gen: { flow: "Energía ahora", month: "Este mes", now: "Ahora", compare: "Comparación", today: "Hoy", rank: "Por aparato", power: "Potencia", last_24h: "Últimas 24 h", utility: "Gas y agua" } },
             "pt-BR" => { need_one: "escolha ao menos a potência da rede, o solar ou um medidor de consumo",
-                         gen: { flow: "Energia agora", month: "Este mês", now: "Agora", compare: "Comparação", today: "Hoje", rank: "Por aparelho", power: "Potência", last_24h: "Últimas 24 h" } }
+                         gen: { flow: "Energia agora", month: "Este mês", now: "Agora", compare: "Comparação", today: "Hoje", rank: "Por aparelho", power: "Potência", last_24h: "Últimas 24 h", utility: "Gás e água" } }
       fields [
         { key: "grid", label: "Potência da rede", kind: :point, hint: "W ou kW; positivo = comprando da distribuidora", filter: POWER },
         { key: "solar", label: "Geração solar", kind: :point, hint: "opcional", filter: POWER },
@@ -112,7 +121,14 @@ module Dashboards
         { key: "consumption", label: "Medidores de consumo", kind: :points, hint: "kWh ou W; vazio = a rede", filter: ENERGY },
         { key: "tariff_point", label: "Tarifa", kind: :point, hint: "helper Tarifa (tarifa branca) ou Número", filter: TARIFF },
         { key: "tariff", label: "Ou tarifa fixa (R$/kWh)", kind: :number, hint: "0,95" },
-        { key: "goal", label: "Meta do mês (kWh)", kind: :number, hint: "opcional" }
+        { key: "goal", label: "Meta do mês (kWh)", kind: :number, hint: "opcional" },
+        # ondaB2 (B12): o resto do painel de energia do HA.
+        { key: "gas", label: "Medidor de gás", kind: :point, hint: "opcional; m³ ou L acumulados", filter: VOLUME },
+        { key: "gas_tariff", label: "Tarifa do gás (por m³)", kind: :number, hint: "opcional" },
+        { key: "water", label: "Medidor de água", kind: :point, hint: "opcional; m³ ou L acumulados", filter: VOLUME },
+        { key: "water_tariff", label: "Tarifa da água (por m³)", kind: :number, hint: "opcional" },
+        { key: "co2", label: "Parcela fóssil da rede", kind: :point, hint: "opcional, em % (ex. Electricity Maps)", filter: PERCENT },
+        { key: "solar_forecast", label: "Previsão solar de hoje", kind: :point, hint: "opcional, em kWh (ex. Forecast.Solar)", filter: ENERGY }
       ]
 
       def self.errors(site, form)
@@ -131,7 +147,8 @@ module Dashboards
         binds = meters.map(&:id)
         now = []
         if grid || solar
-          now << widget("en-flow", "energy_flow", label: text("gen.flow"), grid: grid&.id, solar: solar&.id, battery: battery&.id, battery_soc: soc&.id)
+          now << widget("en-flow", "energy_flow", label: text("gen.flow"), grid: grid&.id, solar: solar&.id, battery: battery&.id, battery_soc: soc&.id,
+                                                  co2: one.("co2")&.id, solar_forecast: one.("solar_forecast")&.id)
         end
         now << widget("en-month", "energy", label: text("gen.month"), binds: binds, period: "month", goal: (goal if goal&.positive?), compare: true, **price) if binds.any?
         sections = [ section("en-now", text("gen.now"), "lightning-bolt", now) ]
@@ -142,6 +159,11 @@ module Dashboards
                               ])
         end
         sections << section("en-rank", text("gen.rank"), "chart-bar", [ widget("en-breakdown", "energy_breakdown", period: "month", binds: chosen.map(&:id).presence, **price) ])
+        utility = %w[gas water].filter_map do |k|
+          meter = one.(k) or next
+          widget("en-#{k}", "utility", kind: k, binds: [ meter.id ], period: "month", compare: true, tariff: Widgets::Base.number(form[:"#{k}_tariff"]))
+        end
+        sections << section("en-util", text("gen.utility"), "beaker", utility) if utility.any?
         power = [ grid, solar, battery ].compact.map(&:id)
         sections << section("en-power", text("gen.power"), "chart-bar", [ widget("en-chart", "chart", desktop: 12, label: text("gen.last_24h"), binds: power, range: "24h") ]) if power.any?
         { "schema_version" => 1,

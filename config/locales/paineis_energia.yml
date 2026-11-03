@@ -1,0 +1,31 @@
+# Painéis ondaB2 (B12): gás e água, CO2 e previsão solar no painel de energia.
+pt-BR:
+  dashboards:
+    energy_b12:
+      kind: Medidor de
+      low_carbon: "%{pct}% da rede sem fóssil"
+      forecast: "Previsão solar hoje: %{kwh} kWh"
+    wf:
+      flow:
+        co2: Parcela fóssil da rede (%)
+        solar_forecast: Previsão solar de hoje (kWh)
+en:
+  dashboards:
+    energy_b12:
+      kind: Meter of
+      low_carbon: "%{pct}% of the grid fossil-free"
+      forecast: "Solar forecast today: %{kwh} kWh"
+    wf:
+      flow:
+        co2: Grid fossil share (%)
+        solar_forecast: Today's solar forecast (kWh)
+es:
+  dashboards:
+    energy_b12:
+      kind: Medidor de
+      low_carbon: "%{pct}% de la red sin fósil"
+      forecast: "Previsión solar hoy: %{kwh} kWh"
+    wf:
+      flow:
+        co2: Parte fósil de la red (%)
+        solar_forecast: Previsión solar de hoy (kWh)

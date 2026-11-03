@@ -229,3 +229,11 @@
   .ap-live-chips span { padding: .3rem .7rem; border-radius: 999px; font-size: .75rem; font-weight: 700; background: var(--field); color: var(--ink-2); }
   .ap-live-chips .is-on { background: var(--grad); color: #fff; }
 }
+
+@layer components {
+  /* ---- Energia (B12): CO2 e previsão solar no fluxo --------------------- */
+  .ef-extras { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+  .ef-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .7rem; border-radius: 999px; font-size: .75rem; font-weight: 700; background: var(--field); color: var(--ink-2); }
+  .ef-co2 svg { color: #059669; }
+  .ef-fc svg { color: #f59e0b; }
+}

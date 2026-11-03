@@ -1,5 +1,5 @@
 <%# locals: (w:, uid:, types:, point_options:, **) -%>
-<% %w[grid solar battery battery_soc home].each do |k| %><% label = t("dashboards.wf.flow.#{k}") %>
+<% %w[grid solar battery battery_soc home co2 solar_forecast].each do |k| %><% label = t("dashboards.wf.flow.#{k}") %>
   <div data-for="<%= types %>"><label class="ss-label" for="ef-<%= k %>-<%= uid %>"><%= label %></label>
     <%= select_tag "widget[#{k}]", grouped_options_for_select(point_options, w[k]), include_blank: t("dashboards.wf.none"), class: "ss-input", id: "ef-#{k}-#{uid}" %></div>
 <% end %>
