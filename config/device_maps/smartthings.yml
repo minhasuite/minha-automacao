@@ -1,0 +1,22 @@
+# SmartThings (catalogo): capacidade do SmartThings → ponto do MA.
+# attribute: atributo no status do componente; truthy: valor que vira true (binários);
+# cmd_on/cmd_off: comando da capacidade para true/false; set: comando com o valor (nível).
+# Capacidade nova = um bloco aqui, sem código.
+switch: { attribute: switch, capability: onoff, truthy: "on", cmd_on: "on", cmd_off: "off", icon: power,
+          name: { pt-BR: Liga/desliga, en: On/off, es: Encendido } }
+switchLevel: { attribute: level, capability: dimmer, set: setLevel, name: { pt-BR: Brilho, en: Brightness, es: Brillo } }
+temperatureMeasurement: { attribute: temperature, capability: measure, unit: "°C", device_class: temperature, state_class: measurement,
+                          name: { pt-BR: Temperatura, en: Temperature, es: Temperatura } }
+relativeHumidityMeasurement: { attribute: humidity, capability: measure, unit: "%", device_class: humidity, state_class: measurement,
+                               name: { pt-BR: Umidade, en: Humidity, es: Humedad } }
+illuminanceMeasurement: { attribute: illuminance, capability: measure, unit: lx, device_class: illuminance, state_class: measurement,
+                          name: { pt-BR: Luminosidade, en: Illuminance, es: Luminosidad } }
+contactSensor: { attribute: contact, capability: contact, truthy: open, name: { pt-BR: Aberto, en: Open, es: Abierto } }
+motionSensor: { attribute: motion, capability: motion, truthy: active, name: { pt-BR: Movimento, en: Motion, es: Movimiento } }
+waterSensor: { attribute: water, capability: problem, truthy: wet, name: { pt-BR: Vazamento, en: Leak, es: Fuga } }
+smokeDetector: { attribute: smoke, capability: problem, truthy: detected, name: { pt-BR: Fumaça, en: Smoke, es: Humo } }
+presenceSensor: { attribute: presence, capability: contact, truthy: present, name: { pt-BR: Presente, en: Present, es: Presente } }
+powerMeter: { attribute: power, capability: measure, unit: W, device_class: power, state_class: measurement, name: { pt-BR: Potência, en: Power, es: Potencia } }
+energyMeter: { attribute: energy, capability: measure, unit: kWh, device_class: energy, state_class: total_increasing,
+               name: { pt-BR: Energia, en: Energy, es: Energía } }
+battery: { attribute: battery, capability: measure, unit: "%", device_class: battery, state_class: measurement, name: { pt-BR: Bateria, en: Battery, es: Batería } }

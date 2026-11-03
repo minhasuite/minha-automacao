@@ -1,0 +1,10 @@
+<%# locals: (integration:, auth_url: nil, redirect_uri: nil) -%>
+<%# catalogo: passo "Entrar com …" de toda integração de nuvem com OAuth (OauthPlugin). %>
+<section class="ss-card ss-card-pad grid gap-3">
+  <h2 class="font-bold"><%= @plugin.text(:sign_in, name: @plugin.title) %></h2>
+  <p class="text-sm text-ink-2"><%= @plugin.text(:sign_in_hint) %></p>
+  <p class="text-xs"><strong class="font-mono break-all"><%= redirect_uri || integrations_oauth_callback_url %></strong></p>
+  <% if auth_url %>
+    <div><%= link_to auth_url, class: "ss-btn ss-btn-primary", data: { turbo: false } do %><%= icon(@plugin.icon, "size-4") %><%= @plugin.text(:sign_in, name: @plugin.title) %><% end %></div>
+  <% end %>
+</section>

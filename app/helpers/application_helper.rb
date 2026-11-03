@@ -13,6 +13,14 @@ module ApplicationHelper
     lookup_context.exists?(own, [], true) || !plugin.respond_to?(:fields) ? own : "web/integrations/forms/schema"
   end
 
+  # Passo de login: a partial própria, a genérica do OAuth (OauthPlugin) ou nenhuma.
+  def integration_connect_partial(plugin)
+    own = "web/integrations/connect/#{plugin.key}"
+    return own if lookup_context.exists?(own, [], true)
+
+    "web/integrations/connect/oauth" if plugin.respond_to?(:oauth_config)
+  end
+
   def initials(name) = name.to_s.split.first(2).map { |w| w[0] }.join.upcase
 
   # Valor em <span class="money"> para o "esconder valores" borrar. Dentro de string ou atributo, use Money.format.

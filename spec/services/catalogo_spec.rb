@@ -454,4 +454,188 @@ RSpec.describe "Catálogo de integrações (grupo 9)" do
       expect(tts).to have_been_requested.twice
     end
   end
+
+  describe "nuvem (D12)" do
+    # Formulário (app do dono) → passo de login → retorno do OAuth com token gravado → adota tudo.
+    def oauth_add(plugin, extra = {})
+      o = plugin.setup(site, form({ client_id: "cid-teste", client_secret: "csec-teste" }.merge(extra)))
+      expect(o.to).to eq(:connect)
+      i = o.integration
+      expect(i.settings.to_json).not_to include("csec-teste")
+      url = plugin.connect_locals(i, { redirect_uri: "https://ma.exemplo/integracoes/oauth/retorno" })[:auth_url]
+      expect(url).to include("client_id=cid-teste", "redirect_uri=https%3A%2F%2Fma.exemplo", "state=")
+      stub_request(:post, plugin.oauth_config[:token]).with(body: hash_including("grant_type" => "authorization_code", "code" => "C1", "client_secret" => "csec-teste"))
+                                                      .to_return(json("access_token" => "A1", "refresh_token" => "R-teste", "expires_in" => 3600))
+      r = plugin.oauth_callback(i, { code: "C1", redirect_uri: "https://ma.exemplo/integracoes/oauth/retorno" })
+      expect(r.alert).to be_nil
+      Integrations.adopt!(i, i.found.to_h { |e| [ e["id"], "" ] })
+      i
+    end
+
+    it "OauthPlugin: plugin falso de nuvem entra por stub_const; 401 renova o token uma vez" do
+      fake = Class.new(Integrations::OauthPlugin) do
+        describe key: "teste_nuvem", title: "Teste Nuvem", icon: "cloud", description: "Teste"
+        texts en: { title: "Cloud test", description: "Test" }, es: { title: "Prueba nube", description: "Prueba" }
+        oauth authorize: "https://nuvem.exemplo/oauth/authorize", token: "https://nuvem.exemplo/oauth/token", scope: "ler"
+        def self.entries(i) = Array(api(i, :get, "https://nuvem.exemplo/api/coisas")["items"]).map { |c| entry(id: "n:#{c['id']}", name: c["nome"], points: [ point("power", unit: "W") ]) }
+        def self.read(device) = { "power" => api(device.integration, :get, "https://nuvem.exemplo/api/coisas")["items"].first["w"] }
+      end
+      stub_const("Integrations::FakeNuvemPlugin", fake)
+      stub_const("Integrations::PLUGINS", Integrations::PLUGINS + [ "FakeNuvemPlugin" ])
+      stub_request(:get, "https://nuvem.exemplo/api/coisas").with(headers: { "Authorization" => "Bearer A1" }).to_return(json("items" => [ { "id" => 1, "nome" => "Teste Coisa", "w" => 7 } ]))
+      i = oauth_add(fake)
+      expect(pts(i)["power"].value).to eq(7)
+      expect(i.secrets).to include("refresh_token" => "R-teste")
+
+      stub_request(:get, "https://nuvem.exemplo/api/coisas").with(headers: { "Authorization" => "Bearer A1" }).to_return(status: 401, body: "{}")
+      stub_request(:get, "https://nuvem.exemplo/api/coisas").with(headers: { "Authorization" => "Bearer A2" }).to_return(json("items" => [ { "id" => 1, "w" => 9 } ]))
+      stub_request(:post, "https://nuvem.exemplo/oauth/token").with(body: hash_including("grant_type" => "refresh_token", "refresh_token" => "R-teste"))
+                                                              .to_return(json("access_token" => "A2", "expires_in" => 3600))
+      fake.poll(i.devices.first)
+      expect(pts(i)["power"].value).to eq(9)
+      expect(ApplicationController.helpers.integration_connect_partial(fake)).to eq("web/integrations/connect/oauth")
+    end
+
+    it "SmartThings: capacidades viram pontos pelo mapa YAML e o comando sai pela capacidade" do
+      api = "https://api.smartthings.com/v1"
+      stub_request(:get, "#{api}/locations").to_return(json("items" => [ { "locationId" => "L1" } ]))
+      stub_request(:get, "#{api}/locations/L1/rooms").to_return(json("items" => [ { "roomId" => "R1", "name" => "Teste Sala" } ]))
+      stub_request(:get, "#{api}/devices").to_return(json("items" => [
+        { "deviceId" => "d1", "label" => "Teste Abajur", "roomId" => "R1", "components" => [ { "id" => "main", "capabilities" => [ { "id" => "switch" }, { "id" => "switchLevel" }, { "id" => "refresh" } ] } ] },
+        { "deviceId" => "d2", "label" => "Teste Sensor", "components" => [ { "id" => "main", "capabilities" => [ { "id" => "contactSensor" }, { "id" => "temperatureMeasurement" } ] } ] },
+        { "deviceId" => "d3", "label" => "Teste Hub", "components" => [ { "id" => "main", "capabilities" => [ { "id" => "bridge" } ] } ] }
+      ]))
+      stub_request(:get, "#{api}/devices/d1/status").to_return(json("components" => { "main" => { "switch" => { "switch" => { "value" => "on" } }, "switchLevel" => { "level" => { "value" => 60 } } } }))
+      stub_request(:get, "#{api}/devices/d2/status").to_return(json("components" => { "main" => { "contactSensor" => { "contact" => { "value" => "open" } },
+                                                                                                   "temperatureMeasurement" => { "temperature" => { "value" => 77, "unit" => "F" } } } }))
+      cmd = stub_request(:post, "#{api}/devices/d1/commands").with(body: { commands: [ { capability: "switchLevel", command: "setLevel", arguments: [ 30 ], component: "main" } ] })
+                                                              .to_return(json({}))
+      i = oauth_add(Integrations::SmartthingsPlugin)
+      by = i.devices.index_by(&:name)
+      expect(by.keys).to contain_exactly("Teste Abajur", "Teste Sensor")
+      expect(by["Teste Abajur"].area&.name).to be_nil # sugestão de área fica no inventário
+      expect(i.found.find { |e| e["name"] == "Teste Abajur" }["room"]).to eq("Teste Sala")
+      lamp = by["Teste Abajur"].points.index_by { |p| p.address["field"] }
+      sensor = by["Teste Sensor"].points.index_by { |p| p.address["field"] }
+      expect([ lamp["switch"].value, lamp["switchLevel"].value, sensor["contactSensor"].value, sensor["temperatureMeasurement"].value ]).to eq([ true, 60, true, 25.0 ])
+      expect(sensor["contactSensor"].name).to eq("Aberto")
+      run(lamp["switchLevel"], "set", 30)
+      expect(cmd).to have_been_requested
+    end
+
+    it "Netatmo: estação com módulos e cômodo com temperatura alvo" do
+      api = "https://api.netatmo.com/api"
+      stub_request(:get, "#{api}/getstationsdata").to_return(json("body" => { "devices" => [
+        { "_id" => "70:ee", "module_name" => "Teste Interno", "type" => "NAMain", "dashboard_data" => { "Temperature" => 22.5, "Humidity" => 55, "CO2" => 610, "Noise" => 38, "Pressure" => 1013 },
+          "modules" => [ { "_id" => "02:00", "module_name" => "Teste Externo", "type" => "NAModule1", "battery_percent" => 70, "dashboard_data" => { "Temperature" => 18.1, "Humidity" => 80 } } ] }
+      ] }))
+      stub_request(:get, "#{api}/homesdata").to_return(json("body" => { "homes" => [ { "id" => "H1", "rooms" => [ { "id" => "r1", "name" => "Teste Quarto" } ] } ] }))
+      stub_request(:get, "#{api}/homestatus?home_id=H1").to_return(json("body" => { "home" => { "rooms" => [ { "id" => "r1", "therm_measured_temperature" => 19.5, "therm_setpoint_temperature" => 20 } ] } }))
+      set = stub_request(:post, "#{api}/setroomthermpoint").with(body: hash_including("home_id" => "H1", "room_id" => "r1", "mode" => "manual", "temp" => 21.5)).to_return(json("status" => "ok"))
+      i = oauth_add(Integrations::NetatmoPlugin)
+      by = i.devices.index_by(&:name)
+      inner = by["Teste Interno"].points.index_by { |p| p.address["field"] }
+      outer = by["Teste Externo"].points.index_by { |p| p.address["field"] }
+      room = by["Teste Quarto"].points.index_by { |p| p.address["field"] }
+      expect([ inner["co2"].value, inner["noise"].value, outer["temperature"].value, outer["battery"].value, room["setpoint"].value ]).to eq([ 610, 38, 18.1, 70, 20 ])
+      run(room["setpoint"], "set", 21.5)
+      expect(set).to have_been_requested
+    end
+
+    it "Home Connect: estado, porta, programa e tempo que falta; liga pelo PowerState" do
+      api = "https://api.home-connect.com/api/homeappliances"
+      stub_request(:get, api).with(headers: { "Accept" => "application/vnd.bsh.sdk.v1+json" })
+                             .to_return(json("data" => { "homeappliances" => [ { "haId" => "BOSCH-1", "name" => "Teste Lava-louças", "type" => "Dishwasher", "brand" => "Bosch", "connected" => true } ] }))
+      stub_request(:get, "#{api}/BOSCH-1/status").to_return(json("data" => { "status" => [ { "key" => "BSH.Common.Status.OperationState", "value" => "BSH.Common.EnumType.OperationState.Run" },
+                                                                                             { "key" => "BSH.Common.Status.DoorState", "value" => "BSH.Common.EnumType.DoorState.Closed" } ] }))
+      stub_request(:get, "#{api}/BOSCH-1/settings/BSH.Common.Setting.PowerState").to_return(json("data" => { "value" => "BSH.Common.EnumType.PowerState.On" }))
+      stub_request(:get, "#{api}/BOSCH-1/programs/active").to_return(json("data" => { "key" => "Dishcare.Dishwasher.Program.Eco50",
+                                                                                         "options" => [ { "key" => "BSH.Common.Option.RemainingProgramTime", "value" => 5400 },
+                                                                                                        { "key" => "BSH.Common.Option.ProgramProgress", "value" => 40 } ] }))
+      off = stub_request(:put, "#{api}/BOSCH-1/settings/BSH.Common.Setting.PowerState").with(body: { data: { key: "BSH.Common.Setting.PowerState", value: "BSH.Common.EnumType.PowerState.Off" } })
+                                                                                      .to_return(status: 204, body: "")
+      i = oauth_add(Integrations::HomeConnectPlugin)
+      p = pts(i)
+      expect([ p["power"].value, p["operation"].value, p["door"].value, p["program"].value, p["remaining"].value, p["progress"].value ]).to eq([ true, "Run", false, "Eco50", 90, 40 ])
+      run(p["power"], "off")
+      expect(off).to have_been_requested
+    end
+
+    it "Google Nest: termostato pela SDM (projeto do dono na URL do login)" do
+      base = "https://smartdevicemanagement.googleapis.com/v1/enterprises/proj-teste"
+      dev = { "name" => "enterprises/proj-teste/devices/T1", "type" => "sdm.devices.types.THERMOSTAT",
+              "traits" => { "sdm.devices.traits.Info" => { "customName" => "Teste Termostato" }, "sdm.devices.traits.Temperature" => { "ambientTemperatureCelsius" => 23.44 },
+                            "sdm.devices.traits.Humidity" => { "ambientHumidityPercent" => 48 }, "sdm.devices.traits.ThermostatMode" => { "mode" => "COOL", "availableModes" => %w[COOL OFF] },
+                            "sdm.devices.traits.ThermostatTemperatureSetpoint" => { "coolCelsius" => 24.0 } } }
+      stub_request(:get, "#{base}/devices").to_return(json("devices" => [ dev, { "name" => "enterprises/proj-teste/devices/C1", "type" => "sdm.devices.types.CAMERA" } ]))
+      stub_request(:get, "https://smartdevicemanagement.googleapis.com/v1/enterprises/proj-teste/devices/T1").to_return(json(dev))
+      set = stub_request(:post, "https://smartdevicemanagement.googleapis.com/v1/enterprises/proj-teste/devices/T1:executeCommand")
+            .with(body: { command: "sdm.devices.commands.ThermostatTemperatureSetpoint.SetCool", params: { coolCelsius: 22.5 } }).to_return(json({}))
+      expect(Integrations::NestPlugin.authorize_url(Integration.new(settings: { "project_id" => "proj-teste" }))).to eq("https://nestservices.google.com/partnerconnections/proj-teste/auth")
+      i = oauth_add(Integrations::NestPlugin, project_id: "proj-teste")
+      expect(i.devices.map(&:name)).to eq([ "Teste Termostato" ])
+      p = pts(i)
+      expect([ p["temperature"].value, p["humidity"].value, p["mode"].value, p["cool"].value, p["mode"].options ]).to eq([ 23.4, 48, "COOL", 24.0, %w[COOL OFF] ])
+      run(p["cool"], "set", 22.5)
+      expect(set).to have_been_requested
+    end
+
+    it "Ecowitt: o gateway manda as leituras (formato Ecowitt) e os pontos nascem; outra PASSKEY é recusada" do
+      o = Integrations::EcowittPlugin.setup(site, form({}))
+      expect(o.to).to eq(:panel)
+      i = o.integration
+      expect(Integrations::EcowittPlugin.panel_locals(i, {})[:rows].first.last).to eq("/mensageiros/#{i.id}")
+      req = ->(h) { ActionDispatch::Request.new(Rack::MockRequest.env_for("/mensageiros/#{i.id}", method: "POST", params: h)) }
+      body = { "PASSKEY" => "ABC123", "stationtype" => "GW2000A", "tempf" => "77.0", "humidity" => "60", "baromrelin" => "29.92", "windspeedmph" => "10",
+               "dailyrainin" => "0.5", "temp1f" => "68", "soilmoisture2" => "33", "model" => "GW2000A" }
+      expect(Integrations::EcowittPlugin.webhook(i, req.call(body))).to eq([ 200, "OK" ])
+      p = pts(i)
+      expect([ p["temperature"].value, p["humidity"].value, p["pressure"].value, p["wind_speed"].value, p["rain_day"].value, p["channel_temperature:1"].value, p["soil:2"].value ])
+        .to eq([ 25.0, 60.0, 1013.2, 16.1, 12.7, 20.0, 33.0 ])
+      expect(p["soil:2"].name).to eq("Umidade do solo 2")
+      expect(Integrations::EcowittPlugin.webhook(i, req.call(body.merge("PASSKEY" => "OUTRO")))[0]).to eq(403)
+      expect(Integrations::EcowittPlugin.webhook(i, req.call(body.merge("tempf" => "86")))).to eq([ 200, "OK" ])
+      expect(pts(i)["temperature"].value).to eq(30.0)
+    end
+
+    it "Overkiz: local com token (persiana com posição e botões) e nuvem com login por formulário" do
+      devices = [ { "deviceURL" => "io://1234/567", "label" => "Teste Persiana", "controllableName" => "io:RollerShutterGenericIOComponent",
+                    "definition" => { "uiClass" => "RollerShutter", "commands" => %w[open close stop setClosure].map { |c| { "commandName" => c } } },
+                    "states" => [ { "name" => "core:ClosureState", "value" => 30 } ] },
+                  { "deviceURL" => "internal://1234/pod/0", "label" => "Teste Box", "definition" => { "uiClass" => "Pod", "commands" => [] } } ]
+      local = "https://gateway-1234.local:8443/enduser-mobile-web/1/enduserAPI"
+      stub_request(:get, "#{local}/setup/devices").with(headers: { "Authorization" => "Bearer tok-teste" }).to_return(json(devices))
+      exec = stub_request(:post, "#{local}/exec/apply").with(body: hash_including("actions" => [ { "deviceURL" => "io://1234/567", "commands" => [ { "name" => "setClosure", "parameters" => [ 20 ] } ] } ]))
+                                                       .to_return(json("execId" => "e1"))
+      i = add(Integrations::OverkizPlugin, server: "local", host: "gateway-1234.local", token: "tok-teste")
+      p = pts(i)
+      expect(p.keys).to contain_exactly("position", "open", "close", "stop")
+      expect(p["position"].value).to eq(70)
+      run(p["position"], "set", 80)
+      expect(exec).to have_been_requested
+
+      cloud = "https://ha101-1.overkiz.com/enduser-mobile-web/enduserAPI"
+      stub_request(:post, "#{cloud}/login").with(body: { userId: "teste@exemplo.com", userPassword: "senha-teste" }).to_return(status: 200, body: "{}", headers: { "Set-Cookie" => "JSESSIONID=J1; Path=/" })
+      stub_request(:get, "#{cloud}/setup/devices").with(headers: { "Cookie" => "JSESSIONID=J1" }).to_return(json(devices))
+      c = Integrations::OverkizPlugin.setup(site, form(server: "somfy_europe", username: "teste@exemplo.com", password: "senha-teste"))
+      expect([ c.alert, c.integration.found.size ]).to eq([ nil, 1 ])
+    end
+
+    it "Ring: pede o código de 2 etapas, guarda só o refresh token e lê bateria e eventos" do
+      stub_request(:post, "https://oauth.ring.com/oauth/token").with(headers: { "2fa-support" => "true" }) { |r| !r.headers.key?("2fa-Code") }.to_return(status: 412, body: "{}")
+      stub_request(:post, "https://oauth.ring.com/oauth/token").with(headers: { "2fa-code" => "123456" })
+                                                              .to_return(json("access_token" => "A1", "refresh_token" => "R1-teste", "expires_in" => 3600))
+      stub_request(:get, "https://api.ring.com/clients_api/ring_devices").to_return(json("doorbots" => [ { "id" => 9, "description" => "Teste Porta", "kind" => "doorbell_v3", "battery_life" => "88" } ]))
+      stub_request(:get, "https://api.ring.com/clients_api/doorbots/9/history?limit=5").to_return(json([ { "created_at" => "2026-11-03T12:00:00Z", "kind" => "ding", "answered" => false } ]))
+      o = Integrations::RingPlugin.setup(site, form(username: "teste@exemplo.com", password: "senha-teste"))
+      expect([ o.to, o.alert ]).to eq([ :connect, Integrations::RingPlugin.text(:need_code) ])
+      r = Integrations::RingPlugin.login(o.integration, form(username: "teste@exemplo.com", password: "senha-teste", otp: "123456"))
+      i = r.integration
+      expect(r.alert).to be_nil
+      expect(i.secrets).to eq("access_token" => "A1", "refresh_token" => "R1-teste", "expires_at" => i.secrets["expires_at"])
+      Integrations.adopt!(i, i.found.to_h { |e| [ e["id"], "" ] })
+      p = pts(i)
+      expect([ p["battery"].value, p["ding"].value ]).to eq([ 88, { "at" => "2026-11-03T12:00:00Z", "answered" => false } ])
+    end
+  end
 end

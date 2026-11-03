@@ -60,3 +60,35 @@ end
 | Lua / Estação do ano | calculadas no servidor | nada |
 | Feriados | Nager.Date (`date.nager.at`) | país e, se quiser, o estado |
 | Google Tradutor (fala) | provedor de voz `Ai::PROVIDERS` (TTS) | adicionar em Configurações → IA |
+| SmartThings | API REST, OAuth do SmartApp do dono; capacidades pelo mapa `config/device_maps/smartthings.yml` | app OAuth (ver abaixo) |
+| Netatmo | API Netatmo (estação, homesdata/homestatus, setroomthermpoint) | app em dev.netatmo.com |
+| Home Connect (Bosch, Siemens) | API Home Connect | app em developer.home-connect.com |
+| Google Nest | Smart Device Management API | Device Access (US$ 5) + cliente OAuth do Google Cloud |
+| Ecowitt | o gateway manda para `/mensageiros/<id>` (webhook de integração) | configurar o "Customized upload" no gateway |
+| Somfy TaHoma (Overkiz) | local (modo desenvolvedor, token) ou nuvem (login) | token do modo desenvolvedor ou e-mail e senha |
+| Ring | API do app (login com 2 etapas; fica só o refresh token) | e-mail, senha e o código que a Ring manda |
+
+## Nuvem com OAuth: o que o dono cria (`Integrations::OauthPlugin`)
+
+O MA nunca usa um app "do MA" nesses serviços: cada dono cria o próprio app
+(client id e secret ficam cifrados na integração). Em todos, o endereço de
+retorno é o que aparece no passo "Entrar com …" (`https://<seu endereço>/integracoes/oauth/retorno`,
+precisa do acesso remoto com HTTPS ou do IP da rede, conforme o serviço aceitar).
+
+- **SmartThings**: instale a SmartThings CLI (`npm i -g @smartthings/cli`),
+  `smartthings apps:create` → tipo *OAuth-In App*, escopos `r:devices:*`,
+  `x:devices:*`, `r:locations:*` e o endereço de retorno. A CLI mostra o
+  client id e o secret uma vez.
+- **Netatmo**: dev.netatmo.com → *My apps* → *Create*; copie client id e
+  secret e cadastre o endereço de retorno (*Redirect URI*).
+- **Home Connect**: developer.home-connect.com → *Applications* → *Register
+  application*, *OAuth Flow: Authorization Code Grant Flow*, endereço de
+  retorno. A conta do desenvolvedor precisa ser a mesma do app Home Connect
+  (ou acrescente a conta nos *Users* do app).
+- **Google Nest**: (1) console.cloud.google.com → projeto → *APIs e serviços*
+  → ative *Smart Device Management API* → *Credenciais* → *ID do cliente OAuth*
+  (aplicativo da web) com o endereço de retorno; (2) console.nest.google.com/device-access
+  → aceite os termos e pague a taxa única (US$ 5) → *Create project* com o
+  client id do passo 1; o *Project ID* vai no formulário.
+- **Ring, Overkiz e os demais** não pedem app: usam a conta do próprio dono
+  (Ring guarda só o refresh token; a senha não fica).
