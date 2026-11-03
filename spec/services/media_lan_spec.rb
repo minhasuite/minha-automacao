@@ -211,7 +211,8 @@ RSpec.describe "Pacote 1: mídia na rede" do
       integration, device, point = add(Integrations::TizenPlugin, port)
       expect(integration.reload.secrets["token"]).to eq("TOKEN-1")
       expect(device).to have_attributes(external_id: "tizen:uuid:tv-1", model: "QN55Q60")
-      expect(Points::Command.commands_for(point)).not_to include("volume", "play_media")
+      expect(Points::Command.commands_for(point)).not_to include("volume")
+      expect(Points::Command.commands_for(point)).to include("play_media") # ondaC2: abre no navegador da TV
       expect(Points::Command.commands_for(point)).to include("on", "volume_up", "mute")
       expect(point.reload.value).to eq("state" => "on")
 

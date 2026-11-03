@@ -12,6 +12,7 @@ module Drivers
     PLAYER = { "PLAYING" => "playing", "PAUSED" => "paused", "BUFFERING" => "buffering", "IDLE" => "idle" }.freeze
     MEDIA_CMDS = { "resume" => "PLAY", "pause" => "PAUSE", "next" => "QUEUE_NEXT", "previous" => "QUEUE_PREV" }.freeze
     TYPES = { ".mp3" => "audio/mpeg", ".m4a" => "audio/mp4", ".aac" => "audio/aac", ".ogg" => "audio/ogg", ".wav" => "audio/wav",
+              ".flac" => "audio/flac", ".mp4" => "video/mp4", ".mkv" => "video/x-matroska", ".webm" => "video/webm",
               ".m3u8" => "application/x-mpegURL", ".jpg" => "image/jpeg", ".png" => "image/png" }.freeze
 
     class << self

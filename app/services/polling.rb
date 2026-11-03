@@ -18,7 +18,9 @@ module Polling
               "growatt" => "Drivers::Growatt", "dirigera" => "Drivers::Dirigera", "sonos" => "Drivers::Sonos", "govee" => "Drivers::Govee",
               "zwave_js" => "Drivers::ZwaveJs", "ble_proxy" => "Drivers::BleProxy",
               # ondaC1: Bluetooth do próprio servidor.
-              "bluetooth" => "Drivers::Bluetooth", "homekit" => "Drivers::Homekit" }.freeze
+              "bluetooth" => "Drivers::Bluetooth", "homekit" => "Drivers::Homekit",
+              # ondaC2: reprodutor DLNA.
+              "dlna" => "Drivers::Dlna" }.freeze
   # Integração de conta: varredura (`Integrations.sync!`; Alexa = lista de Echo).
   DUE = "COALESCE(poll_s, 0) > 0 AND (polled_at IS NULL OR polled_at <= now() - make_interval(secs => poll_s))".freeze
 

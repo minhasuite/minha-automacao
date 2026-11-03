@@ -9,6 +9,9 @@ module HelperTypes
     NUM_MODES = { "mean" => "Média", "median" => "Mediana", "min" => "Mínimo", "max" => "Máximo", "sum" => "Soma" }.freeze
     BOOL_CAPS = %w[onoff contact motion problem tamper].freeze
     NUM_CAPS = %w[measure setpoint dimmer counter].freeze
+    # ondaC2 (C9): grupo de players (o media_player group do HA): o comando vai a todos; o valor é o do que estiver tocando.
+    MEDIA_CAPS = %w[media].freeze
+    MEDIA_FAN = %w[on off resume pause next previous volume volume_up volume_down mute play_media].freeze
     MAX_MEMBERS = 50
 
     describe key: "group", title: "Grupo", icon: "collection", capability: "onoff",
@@ -38,12 +41,13 @@ module HelperTypes
 
       cap = caps.first
       numeric = NUM_CAPS.include?(cap)
-      return point.errors.add(:base, text(:kind)) unless numeric || BOOL_CAPS.include?(cap)
+      media = MEDIA_CAPS.include?(cap)
+      return point.errors.add(:base, text(:kind)) unless numeric || media || BOOL_CAPS.include?(cap)
 
       modes = numeric ? NUM_MODES : BOOL_MODES
       point.capability = numeric ? "measure" : cap
       point.data_type = Point::CAPABILITIES[point.capability]
-      point.writable = cap == "onoff"
+      point.writable = cap == "onoff" || media
       point.unit = members.filter_map(&:unit).first if numeric
       point.risk = members.map(&:risk).max_by { |r| Point::RISKS.keys.index(r) }
       point.address = point.address.merge("sources" => members.map(&:id), "mode" => form["mode"].presence_in(modes.keys) || modes.keys.first)
@@ -55,6 +59,8 @@ module HelperTypes
 
     def self.refresh!(point)
       values = members(point).select { |m| m.quality == "good" }.map(&:value)
+      return point.report!(media_value(values), quality: values.empty? ? "unavailable" : "good") if point.capability == "media"
+
       v = case point.address["mode"]
       when "any" then values.any?(true)
       when "all" then values.any? && values.all?(true)
@@ -62,6 +68,13 @@ module HelperTypes
       end
       point.report!(v, quality: values.empty? ? "unavailable" : "good")
     end
+
+    def self.media_value(values)
+      hashes = values.grep(Hash)
+      hashes.find { |v| v["state"] == "playing" } || hashes.find { |v| v["state"].in?(%w[paused on]) } || hashes.first || { "state" => "idle" }
+    end
+
+    def self.commands(point) = point.capability == "media" ? MEDIA_FAN : super
 
     def self.aggregate(mode, nums)
       return if nums.empty?
@@ -72,11 +85,14 @@ module HelperTypes
     end
 
     # Comando no grupo: o mesmo comando em cada membro (alternar vira ligar/desligar para todos).
-    def self.execute(point, command, _value)
+    def self.execute(point, command, value)
       target = command == "toggle" ? (point.value ? "off" : "on") : command
+      value = nil unless point.capability == "media"
       parent = point.commands.where(status: "sent").order(:created_at).last
       errors = members(point).filter_map do |m|
-        Points::Command.call(m, target, nil, source: parent&.source || "automation", user: parent&.user,
+        next if point.capability == "media" && !Points::Command.commands_for(m).include?(target) # player do grupo que não faz isso (TV sem volume exato)
+
+        Points::Command.call(m, target, value, source: parent&.source || "automation", user: parent&.user,
                                              run: parent&.automation_run_id && AutomationRun.find_by(id: parent.automation_run_id)).error
       rescue Points::Command::Error => e
         "#{m.name}: #{e.message}"

@@ -20,9 +20,14 @@ module Points
       "vacuum" => %w[start pause stop home clean_rooms wash_mop dry_mop empty locate],
       "speaker" => %w[announce speak routine sound play volume], "script" => %w[run], "color" => %w[set],
       # Pacote 1: mídia genérica (TV, Chromecast, Spotify…) e controle remoto (IR/RF aprendido).
-      "media" => %w[on off resume pause next previous volume volume_up volume_down mute play_media],
-      "remote" => %w[send learn forget]
+      # ondaC2: grupo nativo de caixas (join = valor é o ponto de mídia que coordena).
+      "media" => %w[on off resume pause next previous volume volume_up volume_down mute play_media join unjoin],
+      "remote" => %w[send learn forget],
+      # ondaC2 (C10): câmera move (PTZ), grava e toca áudio no alto-falante (o aparelho diz o que tem em `address.supports`).
+      "stream" => %w[ptz record play_media]
     }.freeze
+    PTZ_MOVES = %w[left right up down zoom_in zoom_out home].freeze
+    MAX_RECORD_S = 600
     MAX_MEDIA = 500
     VACUUM_SETTINGS = %w[mode suction water route times].freeze
     MAX_SPEECH = 250
@@ -96,6 +101,7 @@ module Points
       when "color" then @value = Points::Color.normalize(@point, @value) # Lote 8
       when "media" then media_args && @point.value
       when "remote" then remote_args && @point.value
+      when "stream" then stream_args && @point.value
       end
     end
 
@@ -109,11 +115,34 @@ module Points
       case @command
       when "volume" then volume
       when "mute" then @value = @value.nil? || @value == "" ? !(@point.value.is_a?(Hash) && @point.value["muted"]) : ActiveModel::Type::Boolean.new.cast(@value)
-      when "play_media"
+      when "play_media" then media_url
+      when "join"
         @value = @value.to_s.strip
-        raise Error.new(:invalid_value, "Informe o que tocar (endereço, playlist ou busca).") if @value.empty?
-        raise Error.new(:invalid_value, "Texto longo demais (máximo #{MAX_MEDIA}).") if @value.length > MAX_MEDIA
+        target = @point.site.points.find_by(id: @value, capability: "media")
+        raise Error.new(:invalid_value, "Escolha a caixa que coordena o grupo.") if target.nil? || target.id == @point.id
       else @value = nil
+      end
+      true
+    end
+
+    def media_url
+      @value = @value.to_s.strip
+      raise Error.new(:invalid_value, "Informe o que tocar (endereço, playlist ou busca).") if @value.empty?
+      raise Error.new(:invalid_value, "Texto longo demais (máximo #{MAX_MEDIA}).") if @value.length > MAX_MEDIA
+    end
+
+    # Câmera (ondaC2, C10): ptz = movimento (PTZ_MOVES) ou "preset:<token>"; record = segundos; play_media = áudio no alto-falante.
+    def stream_args
+      case @command
+      when "ptz"
+        @value = @value.to_s.strip
+        raise Error.new(:invalid_value, "Movimento inválido.") unless PTZ_MOVES.include?(@value) || @value.match?(/\Apreset:[\w.\-]{1,64}\z/)
+      when "record"
+        n = Integer(@value.to_s.presence || 30, exception: false)
+        raise Error.new(:invalid_value, "Gravar de 5 a #{MAX_RECORD_S} segundos.") unless n&.between?(5, MAX_RECORD_S)
+
+        @value = n
+      when "play_media" then media_url
       end
       true
     end

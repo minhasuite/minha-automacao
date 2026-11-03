@@ -14,7 +14,9 @@ module Drivers
                "growatt" => "Drivers::Growatt", "dirigera" => "Drivers::Dirigera", "sonos" => "Drivers::Sonos", "govee" => "Drivers::Govee",
                "zwave_js" => "Drivers::ZwaveJs", "ble_proxy" => "Drivers::BleProxy",
               # ondaC1: Bluetooth do próprio servidor.
-              "bluetooth" => "Drivers::Bluetooth", "homekit" => "Drivers::Homekit" }.freeze
+              "bluetooth" => "Drivers::Bluetooth", "homekit" => "Drivers::Homekit",
+              # ondaC2: reprodutor DLNA e câmeras do go2rtc (PTZ, gravar, falar).
+              "dlna" => "Drivers::Dlna", "go2rtc" => "Drivers::Camera" }.freeze
 
   def self.supported?(device) = REGISTRY.key?(device.driver)
 
