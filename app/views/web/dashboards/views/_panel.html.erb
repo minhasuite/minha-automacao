@@ -1,0 +1,6 @@
+<%# locals: (view:, points:, dashboard:, live:) -%>
+<%# Painel inteiro (o panel do HA): só o primeiro card, ocupando a tela. %>
+<% w = view["sections"].flat_map { |s| s["widgets"] }.find { |x| x["visible"] } %>
+<div class="dw-panel mt-5">
+  <% if w %><%= render "web/dashboards/widget", w: w.merge("span" => { "mobile" => 12, "tablet" => 12, "desktop" => 12 }), points: points, dashboard: dashboard, badge: false, live: live %><% end %>
+</div>

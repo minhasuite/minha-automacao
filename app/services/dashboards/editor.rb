@@ -18,9 +18,13 @@ module Dashboards
     end
 
     # `path`: o pedaço da URL da visão (?view=cozinha); vazio = usa o id.
-    def update_view(id, title:, icon: nil, path: nil)
-      view(id).merge!("title" => title.presence || view(id)["title"], "icon" => icon.presence,
-                      "path" => path.to_s.parameterize.presence).compact!
+    # ondaB2 (B8): `type` (ViewTypes), subvisão e para onde ela volta.
+    def update_view(id, title:, icon: nil, path: nil, type: nil, subview: nil, back_path: nil)
+      v = view(id)
+      v.merge!("title" => title.presence || v["title"], "icon" => icon.presence, "path" => path.to_s.parameterize.presence,
+               "type" => (type if type.present? && type != "sections" && ViewTypes[type]), "subview" => (true if subview == "1"),
+               "back_path" => (back_path.presence if subview == "1")).compact!
+      %w[type subview back_path].each { |k| v.delete(k) if v[k].nil? }
     end
 
     def add_section(view_id, title:)
@@ -29,16 +33,18 @@ module Dashboards
       sections.last["id"]
     end
 
-    def update_section(id, title:, span: nil)
+    def update_section(id, title:, span: nil, position: nil)
       s = section(id)
       s["title"] = title.presence
       s["span"] = span
+      s["position"] = position.presence_in(%w[sidebar]) # ondaB2: coluna lateral da visão "sidebar"
       s.compact!
     end
 
-    def add_widget(section_id, attrs)
+    # `target`: a seção ou uma pilha (ondaB2 B8).
+    def add_widget(target, attrs)
       w = { "id" => new_id("w") }.merge(attrs)
-      (section(section_id)["widgets"] ||= []) << w
+      holder(target) << w
       w["id"]
     end
 
@@ -47,7 +53,8 @@ module Dashboards
     def update_widget(id, attrs)
       w = widget(id)
       visible = (w["visible_if"] || {}).except(*FORM_VISIBILITY).merge(attrs["visible_if"] || {})
-      w.replace({ "id" => w["id"] }.merge(attrs).merge("visible_if" => visible.presence).compact)
+      kids = w["widgets"] if Widgets[attrs["type"]]&.container?
+      w.replace({ "id" => w["id"] }.merge(attrs).merge("visible_if" => visible.presence, "widgets" => kids).compact)
     end
 
     FORM_VISIBILITY = %w[role screen].freeze
@@ -67,7 +74,7 @@ module Dashboards
       from = container(kind, id)
       item = from.find { |x| x["id"] == id }
       to = if parent.blank? then from
-      elsif kind == "widget" then section(parent)["widgets"] ||= []
+      elsif kind == "widget" then holder(parent)
       else view(parent)["sections"] ||= []
       end
       from.delete(item)
@@ -102,13 +109,24 @@ module Dashboards
 
     def views = @definition["views"]
     def sections = views.flat_map { |v| Array(v["sections"]) }
-    def widgets = sections.flat_map { |s| Array(s["widgets"]) }
+    def widgets = Resolver.flatten(sections.flat_map { |s| Array(s["widgets"]) })
+
+    # Lista onde entra um widget: a de uma seção ou a de uma pilha.
+    def holder(id)
+      s = sections.find { |x| x["id"] == id }
+      return s["widgets"] ||= [] if s
+
+      w = widget(id)
+      raise KeyError, "seção #{id}" unless Widgets[w["type"]]&.container?
+
+      w["widgets"] ||= []
+    end
 
     def container(kind, id)
       case kind
       when "view" then views
       when "section" then views.find { |v| Array(v["sections"]).any? { |s| s["id"] == id } }&.dig("sections")
-      when "widget" then sections.find { |s| Array(s["widgets"]).any? { |w| w["id"] == id } }&.dig("widgets")
+      when "widget" then [ *sections, *widgets ].find { |s| Array(s["widgets"]).any? { |w| w["id"] == id } }&.dig("widgets")
       end || raise(KeyError, "#{kind} #{id}")
     end
 

@@ -189,9 +189,9 @@ module Web
       focus = { view: params[:view_id] }
       case params[:op]
       when "add_view" then focus[:view] = editor.add_view(title: params[:title], icon: params[:icon])
-      when "update_view" then editor.update_view(t, title: params[:title], icon: params[:icon], path: params[:path])
+      when "update_view" then editor.update_view(t, title: params[:title], icon: params[:icon], path: params[:path], type: params[:view_type], subview: params[:subview], back_path: params[:back_path])
       when "add_section" then editor.add_section(params[:view_id], title: params[:title])
-      when "update_section" then editor.update_section(t, title: params[:title], span: span_param)
+      when "update_section" then editor.update_section(t, title: params[:title], span: span_param, position: params[:position])
       when "add_widget" then focus[:w] = editor.add_widget(t, widget_attrs)
       when "update_widget" then editor.update_widget(t, widget_attrs)
       when "move" then editor.move(params[:kind], t, params[:dir])

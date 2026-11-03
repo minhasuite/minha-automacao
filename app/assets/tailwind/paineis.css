@@ -157,3 +157,28 @@
   .dw-plant-m.is-ok .dw-feat-bar span { background: var(--green-grad); }
   .dw-plant-m.is-low .dw-feat-bar span, .dw-plant-m.is-high .dw-feat-bar span { background: var(--amber-grad); }
 }
+
+@layer components {
+  /* ---- Tipos de visão e pilhas (B8) ------------------------------------ */
+  .dw-masonry { columns: 1; column-gap: .75rem; }
+  @media (min-width: 640px) { .dw-masonry { columns: 2; } }
+  @media (min-width: 1024px) { .dw-masonry { columns: 3; } }
+  @media (min-width: 1440px) { .dw-masonry { columns: 4; } }
+  .dw-masonry .dw-w { display: block; break-inside: avoid; margin-bottom: .75rem; }
+  .dw-masonry .dw-w[hidden] { display: none; }
+  .dw-masonry-title { break-after: avoid; padding-top: .35rem; }
+  .dw-panel .dw-w { min-height: calc(100dvh - 15rem); }
+  .dw-panel .dw-w > *, .dw-panel .dw-w > * > .dw-card { height: 100%; }
+  .dw-sidebar-view { display: grid; gap: 1.25rem; }
+  @media (min-width: 1024px) { .dw-sidebar-view { grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr); align-items: start; } }
+  .dw-sidebar-main, .dw-sidebar-side { display: grid; gap: 1.5rem; min-width: 0; }
+  .dw-sidebar-side { position: sticky; top: 1rem; }
+  .dw-sidebar-side .dw-grid > turbo-frame > .dw-w, .dw-sidebar-side .dw-grid > .dw-w { grid-column: 1 / -1; }
+  .dw-back { width: fit-content; }
+  .dw-stack { display: grid; gap: .75rem; min-width: 0; }
+  .dw-stack .dw-w { grid-column: auto; }
+  .dw-stack-horizontal { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+  .dw-stack-grid { grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); }
+  .dw-stack-title { grid-column: 1 / -1; margin-bottom: 0; }
+  .dw-stack-horizontal .dw-stack-title { grid-row: 1; }
+}

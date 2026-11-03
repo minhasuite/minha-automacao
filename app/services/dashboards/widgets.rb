@@ -10,7 +10,7 @@ module Dashboards
                  AlertsWidget CameraWidget VacuumWidget EnergyWidget HeadingWidget MarkdownWidget WeatherWidget MediaWidget RemoteWidget
                  PeopleWidget AlarmWidget FloorplanWidget EnergyFlowWidget EnergyBreakdownWidget EnergyCompareWidget MapWidget CustomCardWidget
                  ThermostatWidget HumidifierWidget LightWidget ButtonWidget CalendarWidget TodoWidget LogbookWidget ImageWidget IframeWidget
-                 ClockWidget PlantWidget].freeze
+                 ClockWidget PlantWidget StackWidget].freeze
 
     module_function
 
@@ -87,6 +87,8 @@ module Dashboards
 
         # ondaB2: o widget aceita tap/hold/double_tap_action (o editor mostra os campos).
         def gestures? = false
+        # ondaB2 (B8): o widget guarda outros em `widgets` (pilha, grade).
+        def container? = false
 
         def partial = "web/dashboards/widgets/#{type}"
         def form = nil

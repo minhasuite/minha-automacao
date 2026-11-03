@@ -1,0 +1,6 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Pilha/grade (ondaB2 B8): os widgets de dentro, cada um no próprio quadro. %>
+<div class="dw-stack dw-stack-<%= w["direction"].presence || "vertical" %>" style="--cols: <%= (w["columns"] || 2).to_i.clamp(2, 4) %>">
+  <% if w["label"].present? %><p class="dw-sec-title dw-stack-title"><%= icon(w["icon"], "size-4") if w["icon"].present? %><%= w["label"] %></p><% end %>
+  <% Array(w["widgets"]).each do |c| %><%= render "web/dashboards/widget", w: c, points: points, dashboard: dashboard, live: live %><% end %>
+</div>

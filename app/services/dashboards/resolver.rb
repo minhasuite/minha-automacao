@@ -34,7 +34,7 @@ module Dashboards
     # Um widget só (o quadro que o tempo real recarrega). nil = não existe ou o papel não vê.
     def widget(id)
       Array(@definition["views"]).each do |view|
-        found = [ *Array(view["badges"]), *Array(view["sections"]).flat_map { |s| Array(s["widgets"]) } ].find { |w| w["id"] == id }
+        found = Resolver.flatten([ *Array(view["badges"]), *Array(view["sections"]).flat_map { |s| Array(s["widgets"]) } ]).find { |w| w["id"] == id }
         return resolve(found) if found
       end
       nil
@@ -75,6 +75,8 @@ module Dashboards
     def resolve(w)
       return if w.dig("visible_if", "role") && !(role == "owner" || w.dig("visible_if", "role").include?(role))
 
+      return container(w) if w["widgets"].is_a?(Array)
+
       data, deps = data_for(w)
       gestures = Actions.resolve(self, w, [ w["bind"] ].compact.filter_map { |ref| point(ref) })
       deps += gestures.values.filter_map { |g| point(g["point_id"]) }
@@ -90,6 +92,15 @@ module Dashboards
       data, extra = plugin.data(self, w, binds)
       [ data, deps + Array(extra) ]
     end
+
+    # Pilha/grade (ondaB2 B8): resolve os de dentro; cada um tem o próprio quadro de tempo real.
+    def container(w)
+      w.merge("visible" => visible?(w), "data" => {}, "deps" => visibility_refs(w["visible_if"]).filter_map { |ref| use(point(ref))&.id },
+              "widgets" => w["widgets"].filter_map { |c| resolve(c) })
+    end
+
+    # Widgets com os de dentro das pilhas.
+    def self.flatten(list) = list.flat_map { |w| [ w, *flatten(Array(w["widgets"])) ] }
 
     def on?(p) = p.value == true || p.value == "open"
 

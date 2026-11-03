@@ -166,6 +166,88 @@ RSpec.describe "ondaB2: painéis" do
     end
   end
 
+  describe "B8: tipos de visão, subvisões e pilhas" do
+    it "masonry, panel e sidebar desenham as mesmas seções de outro jeito; subvisão some das abas e tem voltar" do
+      tile = ->(id) { { "id" => id, "type" => "tile", "bind" => power.id } }
+      views = [
+        { "id" => "m", "title" => "Mosaico", "type" => "masonry", "sections" => [ { "id" => "ms", "title" => "Luzes", "widgets" => [ tile.("m1"), tile.("m2") ] } ] },
+        { "id" => "p", "title" => "Teste câmera", "path" => "camera", "type" => "panel", "subview" => true, "back_path" => "v1", "sections" => [ { "id" => "ps", "widgets" => [ tile.("p1") ] } ] },
+        { "id" => "sb", "title" => "Lateral", "type" => "sidebar", "sections" => [ { "id" => "a", "widgets" => [ tile.("x1") ] }, { "id" => "b", "position" => "sidebar", "widgets" => [ tile.("x2") ] } ] }
+      ]
+      d = board([ tile.("w1") ], extra_views: views)
+      expect(Dashboards::Schema.errors(d.definition)).to eq([])
+
+      get "/paineis/#{d.id}"
+      expect(response.body).to include("Mosaico", "Lateral")
+      expect(response.body).not_to include("Teste câmera") # subvisão fora das abas
+      get "/paineis/#{d.id}?view=m"
+      expect(response.body).to include("dw-masonry", "dw-masonry-title")
+      get "/paineis/#{d.id}?view=camera"
+      expect(response.body).to include("dw-panel", "dw-back", "Teste câmera", "Voltar para Início")
+      get "/paineis/#{d.id}?view=sb"
+      expect(response.body).to include("dw-sidebar-main", "dw-sidebar-side")
+    end
+
+    it "recusa tipo de visão e posição desconhecidos" do
+      bad = { "schema_version" => 1, "views" => [ { "id" => "v", "title" => "V", "type" => "carrossel", "subview" => "sim", "sections" => [ { "id" => "s", "position" => "topo", "widgets" => [] } ] } ] }
+      expect(Dashboards::Schema.errors(bad).join(" | ")).to include("tipo de visão desconhecido", "subview precisa ser", "position de seção")
+    end
+
+    it "pilha guarda widgets, resolve e desenha cada um no próprio quadro; o editor adiciona dentro e preserva" do
+      stack = { "id" => "st", "type" => "stack", "direction" => "grid", "columns" => 3, "label" => "Teste pilha",
+                "widgets" => [ { "id" => "c1", "type" => "tile", "bind" => power.id }, { "id" => "c2", "type" => "tile", "bind" => target.id } ] }
+      d = board([ stack ])
+      expect(Dashboards::Schema.errors(d.definition)).to eq([])
+      w = first_widget(d)
+      expect(w["widgets"].map { |c| c["data"]["point_ids"] }).to eq([ [ power.id ], [ target.id ] ])
+      get "/paineis/#{d.id}"
+      expect(response.body).to include("dw-stack dw-stack-grid", "--cols: 3", %(id="w_c1"), %(id="w_c2"))
+      get "/paineis/#{d.id}/w/c2"
+      expect(response.body).to include(%(id="w_c2"))
+
+      nested = defn([ { "id" => "x", "type" => "tile", "bind" => power.id, "widgets" => [] } ])
+      expect(Dashboards::Schema.errors(nested).join).to include("não guarda widgets")
+      deep = defn([ { "id" => "a", "type" => "stack", "widgets" => [ { "id" => "b", "type" => "stack", "widgets" => [ { "id" => "c", "type" => "stack", "widgets" => [] } ] } ] } ])
+      expect(Dashboards::Schema.errors(deep).join).to include("até 2 níveis")
+
+      patch "/paineis/#{d.id}/rascunho", params: { op: "add_widget", target: "st", view_id: "v1", widget: { type: "clock" } }
+      patch "/paineis/#{d.id}/rascunho", params: { op: "update_widget", target: "st", view_id: "v1", widget: { type: "stack", direction: "horizontal", label: "Teste pilha 2" } }
+      patch "/paineis/#{d.id}/rascunho", params: { op: "move", kind: "widget", target: "c2", dir: "up", view_id: "v1" }
+      draft = within(tenant) { d.reload.draft }
+      st = draft["views"][0]["sections"][0]["widgets"][0]
+      expect(st).to include("direction" => "horizontal", "label" => "Teste pilha 2")
+      expect(st["widgets"].map { |c| c["type"] }).to eq(%w[tile tile clock])
+      expect(st["widgets"].map { |c| c["id"] }.first(2)).to eq(%w[c2 c1])
+      get "/paineis/#{d.id}/editar"
+      expect(response.body).to include("Adicionar dentro", "Tipo de visão", "Subvisão")
+    end
+
+    it "o editor grava tipo, subvisão e o voltar da visão" do
+      d = board([], extra_views: [ { "id" => "v2", "title" => "Teste quarto", "sections" => [] } ])
+      patch "/paineis/#{d.id}/rascunho", params: { op: "update_view", target: "v2", view_id: "v2", title: "Teste quarto", view_type: "masonry", subview: "1", back_path: "v1" }
+      v = within(tenant) { d.reload.draft["views"][1] }
+      expect(v).to include("type" => "masonry", "subview" => true, "back_path" => "v1")
+      patch "/paineis/#{d.id}/rascunho", params: { op: "update_view", target: "v2", view_id: "v2", title: "Teste quarto", view_type: "sections" }
+      expect(within(tenant) { d.reload.draft["views"][1].keys }).not_to include("type", "subview", "back_path")
+    end
+
+    it "tipo de visão novo entra pelo registro (stub_const)" do
+      fake = Class.new(Dashboards::ViewTypes::Base) do
+        describe key: "carrossel_teste", label: "Carrossel (teste)", icon: "collection", description: "Teste"
+        texts en: { label: "Carousel (test)", description: "Test" }, es: { label: "Carrusel (prueba)", description: "Prueba" }
+        def self.partial = "web/dashboards/views/masonry"
+      end
+      stub_const("Dashboards::ViewTypes::CarrosselTeste", fake)
+      stub_const("Dashboards::ViewTypes::PLUGINS", Dashboards::ViewTypes::PLUGINS + %w[CarrosselTeste])
+      d = board([ { "id" => "w1", "type" => "tile", "bind" => power.id } ], view: { "type" => "carrossel_teste" })
+      expect(Dashboards::Schema.errors(d.definition)).to eq([])
+      get "/paineis/#{d.id}"
+      expect(response.body).to include("dw-masonry")
+      get "/paineis/#{d.id}/editar"
+      expect(response.body).to include("Carrossel (teste)")
+    end
+  end
+
   describe "B9: ações de toque, segurar e duplo toque" do
     it "valida, resolve e deixa na tela o que o gesto dispara" do
       w = { "id" => "w1", "type" => "tile", "bind" => power.id, "tap_action" => { "action" => "navigate", "navigation_path" => "quarto" },

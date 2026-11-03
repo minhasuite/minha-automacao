@@ -1,0 +1,85 @@
+# Painéis ondaB2 (B8): tipos de visão, subvisões e pilhas/grades.
+pt-BR:
+  dashboards:
+    schema:
+      view_type: "%{where}: tipo de visão desconhecido"
+      view_subview: "%{where}: subview precisa ser verdadeiro ou falso"
+      view_back: "%{where}: back_path precisa ser o caminho ou o id de uma visão"
+      section_position: "%{where}: position de seção é main ou sidebar"
+      not_container: "%{where}: este tipo não guarda widgets dentro"
+      children_list: "%{where}: widgets precisa ser uma lista (até %{max})"
+      children_depth: "%{where}: pilhas dentro de pilhas vão até %{max} níveis"
+    vt:
+      sidebar: Coluna lateral
+      back_to: "Voltar para %{name}"
+      form:
+        type: Tipo de visão
+        subview: Subvisão (fora das abas, com voltar)
+        back: Voltar para
+        back_first: A primeira visão
+        in_sidebar: Na coluna lateral
+        inside: "Dentro de %{name}"
+        add_inside: Adicionar dentro
+        direction: Arrumação
+        directions:
+          vertical: Um embaixo do outro
+          horizontal: Lado a lado
+          grid: Grade
+        columns: Colunas da grade
+        stack_hint: Os widgets de dentro entram pela lista do editor, logo abaixo desta pilha.
+en:
+  dashboards:
+    schema:
+      view_type: "%{where}: unknown view type"
+      view_subview: "%{where}: subview must be true or false"
+      view_back: "%{where}: back_path must be a view path or id"
+      section_position: "%{where}: a section position is main or sidebar"
+      not_container: "%{where}: this type does not hold widgets inside"
+      children_list: "%{where}: widgets must be a list (up to %{max})"
+      children_depth: "%{where}: stacks inside stacks go up to %{max} levels"
+    vt:
+      sidebar: Side column
+      back_to: "Back to %{name}"
+      form:
+        type: View type
+        subview: Subview (out of the tabs, with back)
+        back: Back to
+        back_first: The first view
+        in_sidebar: In the side column
+        inside: "Inside %{name}"
+        add_inside: Add inside
+        direction: Layout
+        directions:
+          vertical: One below the other
+          horizontal: Side by side
+          grid: Grid
+        columns: Grid columns
+        stack_hint: The widgets inside are added from the editor list, right below this stack.
+es:
+  dashboards:
+    schema:
+      view_type: "%{where}: tipo de vista desconocido"
+      view_subview: "%{where}: subview debe ser verdadero o falso"
+      view_back: "%{where}: back_path debe ser el camino o el id de una vista"
+      section_position: "%{where}: la position de una sección es main o sidebar"
+      not_container: "%{where}: este tipo no guarda widgets dentro"
+      children_list: "%{where}: widgets debe ser una lista (hasta %{max})"
+      children_depth: "%{where}: pilas dentro de pilas llegan hasta %{max} niveles"
+    vt:
+      sidebar: Columna lateral
+      back_to: "Volver a %{name}"
+      form:
+        type: Tipo de vista
+        subview: Subvista (fuera de las pestañas, con volver)
+        back: Volver a
+        back_first: La primera vista
+        in_sidebar: En la columna lateral
+        inside: "Dentro de %{name}"
+        add_inside: Agregar dentro
+        direction: Disposición
+        directions:
+          vertical: Uno debajo del otro
+          horizontal: Lado a lado
+          grid: Cuadrícula
+        columns: Columnas de la cuadrícula
+        stack_hint: Los widgets de dentro se agregan desde la lista del editor, justo debajo de esta pila.

@@ -18,6 +18,9 @@
 <section class="ss-hero ss-rise dw-hero" aria-label="<%= view['title'] %>">
   <div class="flex flex-wrap items-start justify-between gap-3">
     <div class="min-w-0">
+      <% if (back = Dashboards::ViewTypes.back(@resolved["views"], view)) %>
+        <%= link_to dw_view_path(@dashboard, back, home: @home), class: "dw-hero-btn dw-back mb-2", "aria-label": t("dashboards.vt.back_to", name: back["title"]) do %><%= icon("arrow-left", "size-4") %><%= back["title"] %><% end %>
+      <% end %>
       <p class="ss-kicker"><%= [ @site.name, l(Date.current, format: :long).upcase_first ].join(" · ") %></p>
       <h1 class="mt-1 text-white truncate"><%= home_view && @home ? "#{greeting}, #{current_user.name.split.first}" : view["title"] %></h1>
     </div>
@@ -38,9 +41,10 @@
   <% end %>
 </section>
 
-<% if @resolved["views"].size > 1 %>
+<% tabs = Dashboards::ViewTypes.tabs(@resolved["views"], view) %>
+<% if tabs.size > 1 %>
   <nav class="dw-tabs" aria-label="<%= t("dashboards.views") %>">
-    <% @resolved["views"].each do |v| %>
+    <% tabs.each do |v| %>
       <%= link_to dw_view_path(@dashboard, v, home: @home).then { |p| @preview ? dashboard_path(@dashboard, view: v["path"].presence || v["id"], rascunho: 1) : p }, class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
     <% end %>
   </nav>
@@ -52,17 +56,8 @@
     <% if @resolved["can_edit"] %><%= link_to t("dashboards.edit_dashboard"), edit_dashboard_path(@dashboard, view: view["id"]), class: "ss-btn ss-btn-primary" %><% end %>
   </div>
 <% else %>
-  <div class="dw-grid dw-sections mt-5">
-    <% view["sections"].each_with_index do |s, i| %>
-      <% next if s["widgets"].empty? %>
-      <section class="dw-w ss-rise" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>; animation-delay: <%= [ i, 6 ].min * 50 %>ms" aria-label="<%= s['title'] || t("dashboards.section") %>">
-        <% if s["title"].present? %><h2 class="dw-sec-title"><%= icon(s["icon"], "size-4") if s["icon"].present? %><%= s["title"] %></h2><% end %>
-        <div class="dw-grid">
-          <% s["widgets"].each do |w| %><%= render "web/dashboards/widget", w: w, points: points, dashboard: @dashboard, badge: false, live: live %><% end %>
-        </div>
-      </section>
-    <% end %>
-  </div>
+  <%# ondaB2 (B8): o tipo da visão (Dashboards::ViewTypes) desenha as seções. %>
+  <%= render Dashboards::ViewTypes.for(view).partial, view: view, points: points, dashboard: @dashboard, live: live %>
 <% end %>
 
 <%= render "web/dashboards/kiosk", site: @site, dashboard: @dashboard if kiosk && live %>

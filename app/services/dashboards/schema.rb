@@ -52,6 +52,7 @@ module Dashboards
         e << msg(:title_required, where: where) if view["title"].to_s.strip.empty?
         path(view, where, paths, e)
         e.concat(Themes.errors(view["theme"], where))
+        e.concat(ViewTypes.errors(view, where))
         Array(view["badges"]).each { |b| widget(b, msg(:at_badge, where: where), ids, e) }
         sections = view["sections"]
         next e << msg(:sections_list, where: where) unless sections.is_a?(Array)
@@ -73,7 +74,10 @@ module Dashboards
       e
     end
 
-    def widget(w, where, ids, e)
+    MAX_CHILDREN = 12
+    MAX_DEPTH = 2
+
+    def widget(w, where, ids, e, depth: 0)
       return e << msg(:widget_object, where: where) unless w.is_a?(Hash)
 
       where = msg(:at_widget, id: w["id"] || "?", where: where)
@@ -97,6 +101,16 @@ module Dashboards
       e << msg(:snapshot_interval, where: where) if w.key?("snapshot_interval") && !(w["snapshot_interval"].is_a?(Integer) && w["snapshot_interval"].between?(2, 300))
       %w[min max].each { |k| e << msg(:number, where: where, prop: k) if w.key?(k) && !w[k].is_a?(Numeric) }
       Widgets[type].errors(w).each { |m| e << "#{where}: #{m}" }
+      children(w, where, ids, e, depth) if w.key?("widgets")
+    end
+
+    # ondaB2 (B8): pilha/grade com widgets dentro (`container?` do plugin), até 2 níveis.
+    def children(w, where, ids, e, depth)
+      return e << msg(:not_container, where: where) unless Widgets[w["type"]].container?
+      return e << msg(:children_list, where: where, max: MAX_CHILDREN) unless w["widgets"].is_a?(Array) && w["widgets"].size <= MAX_CHILDREN
+      return e << msg(:children_depth, where: where, max: MAX_DEPTH) if depth >= MAX_DEPTH
+
+      w["widgets"].each { |c| widget(c, where, ids, e, depth: depth + 1) }
     end
 
     # Caminho da visão (opcional): minúsculas, números e hífen; único no painel.

@@ -1,0 +1,9 @@
+<%# locals: (view:, points:, dashboard:, live:) -%>
+<%# Com barra lateral (o sidebar do HA): seções marcadas (position: sidebar) na coluna da direita; sem marca, a última vai para lá. %>
+<% list = view["sections"].reject { |s| s["widgets"].empty? } %>
+<% side, main = list.partition { |s| s["position"] == "sidebar" } %>
+<% side, main = [ [ main.pop ].compact, main ] if side.empty? && main.size > 1 %>
+<div class="dw-sidebar-view mt-5">
+  <div class="dw-sidebar-main"><% main.each_with_index do |s, i| %><%= render "web/dashboards/views/section", s: s, i: i, points: points, dashboard: dashboard, live: live, span: false %><% end %></div>
+  <aside class="dw-sidebar-side" aria-label="<%= t("dashboards.vt.sidebar") %>"><% side.each_with_index do |s, i| %><%= render "web/dashboards/views/section", s: s, i: i + main.size, points: points, dashboard: dashboard, live: live, span: false %><% end %></aside>
+</div>

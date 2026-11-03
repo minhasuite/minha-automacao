@@ -1,0 +1,29 @@
+<%# locals: (w:, view:, names:, point_options:, scenes:) -%>
+<%# Um widget na lista do editor; pilha/grade (ondaB2 B8) mostra os de dentro e "adicionar aqui". %>
+<% bound = [ w["bind"], *Array(w["binds"]) ].compact.filter_map { |id| names[id]&.name } %>
+<% sp = DashboardsHelper::DEFAULT_SPAN.merge(w["span"] || {}) %>
+<li id="<%= w['id'] %>" class="py-2 flex items-start gap-2">
+  <details class="flex-1 min-w-0" <%= "open" if @editing == w["id"] %>>
+    <summary class="flex items-center gap-3 cursor-pointer list-none">
+      <span class="grid place-items-center size-9 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(Dashboards::Widgets[w["type"]]&.icon || "cube", "size-4") %></span>
+      <span class="min-w-0 flex-1">
+        <span class="block font-semibold text-ink truncate"><%= w["label"].presence || w["title"].presence || bound.first || Dashboards::Schema.labels[w["type"]] %></span>
+        <span class="block text-xs text-muted truncate"><%= Dashboards::Schema.labels.fetch(w["type"], w["type"]) %><%= " · #{t("dashboards.ed.points", count: bound.size)}" if bound.size > 1 %><span class="hidden sm:inline" title="<%= t("dashboards.ed.span_title") %>"> · <span class="num"><%= sp.values_at("mobile", "tablet", "desktop").join(" / ") %></span></span><%= " · #{t("dashboards.ed.only_roles", roles: w.dig('visible_if', 'role').map { |r| SiteMembership.role_label(r).downcase }.to_sentence)}" if w.dig("visible_if", "role") %></span>
+      </span>
+      <span class="ss-btn ss-btn-ghost ss-btn-sm max-sm:hidden"><%= icon("pencil", "size-4") %><span class="sr-only"><%= t("dashboards.edit") %></span></span>
+    </summary>
+    <%= render "web/dashboards/widget_form", dashboard: @dashboard, w: w, op: "update_widget", target: w["id"], view_id: view["id"], point_options: point_options, areas: @areas, scenes: scenes %>
+  </details>
+  <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "widget", target: w["id"], view_id: view["id"], name: t("dashboards.ed.the_widget") %>
+</li>
+<% if Dashboards::Widgets[w["type"]]&.container? %>
+  <li class="py-2 pl-4 ml-4 border-l-2 border-accent/30" aria-label="<%= t("dashboards.vt.form.inside", name: w["label"].presence || Dashboards::Schema.labels[w["type"]]) %>">
+    <ul class="divide-y divide-line">
+      <% Array(w["widgets"]).each do |c| %><%= render "web/dashboards/editor_widget", w: c, view: view, names: names, point_options: point_options, scenes: scenes %><% end %>
+    </ul>
+    <details class="mt-2 rounded-2xl bg-field p-3">
+      <summary class="cursor-pointer font-semibold text-accent flex items-center gap-2"><%= icon("plus", "size-4") %><%= t("dashboards.vt.form.add_inside") %></summary>
+      <%= render "web/dashboards/widget_form", dashboard: @dashboard, w: {}, op: "add_widget", target: w["id"], view_id: view["id"], point_options: point_options, areas: @areas, scenes: scenes %>
+    </details>
+  </li>
+<% end %>

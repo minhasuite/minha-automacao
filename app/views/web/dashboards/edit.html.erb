@@ -42,7 +42,16 @@
               <div class="mt-2 max-w-xs"><label class="ss-label" for="vp"><%= t("dashboards.ed.link_name") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label><%= text_field_tag :path, view["path"], class: "ss-input num", id: "vp", maxlength: 40, placeholder: t("dashboards.ed.path_placeholder"), pattern: "[a-z0-9][a-z0-9-]*", title: t("dashboards.ed.path_title"), "aria-describedby": "vp-hint" %>
                 <p id="vp-hint" class="text-xs text-muted mt-1"><%= t("dashboards.ed.path_hint") %></p></div>
             </details>
-            <%= submit_tag "Salvar", class: "ss-btn ss-btn-ghost" %>
+            <%# ondaB2 (B8): tipo da visão e subvisão (fora das abas, com "voltar"). %>
+            <div class="basis-full grid gap-3 sm:grid-cols-3 items-end">
+              <div><label class="ss-label" for="vty"><%= t("dashboards.vt.form.type") %></label>
+                <%= select_tag :view_type, options_for_select(Dashboards::ViewTypes.plugins.map { |x| [ x.label, x.key, { title: x.description } ] }, view["type"] || "sections"), class: "ss-input", id: "vty" %></div>
+              <label class="ss-check pb-2"><%= check_box_tag :subview, "1", view["subview"] == true, id: "vsub" %><%= t("dashboards.vt.form.subview") %></label>
+              <div><label class="ss-label" for="vbk"><%= t("dashboards.vt.form.back") %></label>
+                <%= select_tag :back_path, options_for_select(Array(@draft["views"]).reject { |x| x["id"] == view["id"] }.map { |x| [ x["title"], x["path"].presence || x["id"] ] }, view["back_path"]),
+                               include_blank: t("dashboards.vt.form.back_first"), class: "ss-input", id: "vbk" %></div>
+            </div>
+            <%= submit_tag t("dashboards.save"), class: "ss-btn ss-btn-ghost" %>
           <% end %>
           <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "view", target: view["id"], view_id: view["id"], name: t("dashboards.ed.the_view", name: view["title"]) %>
         </div>
@@ -71,29 +80,15 @@
               <div class="w-44"><label class="ss-label" for="sw-<%= s['id'] %>"><%= t("dashboards.ed.desktop_width") %></label>
                 <%= select_tag "span[desktop]", options_for_select({ t("dashboards.ed.width.full") => 12, t("dashboards.ed.width.two_thirds") => 8, t("dashboards.ed.width.half") => 6, t("dashboards.ed.width.third") => 4 }, s.dig("span", "desktop") || 12), class: "ss-input", id: "sw-#{s['id']}" %>
                 <%= hidden_field_tag "span[mobile]", 12, id: nil %><%= hidden_field_tag "span[tablet]", (s.dig("span", "desktop") || 12) == 12 ? 12 : 6, id: nil %></div>
-              <%= submit_tag "Salvar", class: "ss-btn ss-btn-ghost" %>
+              <% if view["type"] == "sidebar" %><label class="ss-check pb-2"><%= check_box_tag :position, "sidebar", s["position"] == "sidebar", id: "spo-#{s['id']}" %><%= t("dashboards.vt.form.in_sidebar") %></label><% end %>
+              <%= submit_tag t("dashboards.save"), class: "ss-btn ss-btn-ghost" %>
             <% end %>
             <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "section", target: s["id"], view_id: view["id"], name: t("dashboards.ed.the_section", name: s["title"]) %>
           </div>
 
           <ul class="mt-4 divide-y divide-line">
             <% Array(s["widgets"]).each do |w| %>
-              <% bound = [ w["bind"], *Array(w["binds"]) ].compact.filter_map { |id| names[id]&.name } %>
-              <% sp = DashboardsHelper::DEFAULT_SPAN.merge(w["span"] || {}) %>
-              <li id="<%= w['id'] %>" class="py-2 flex items-start gap-2">
-                <details class="flex-1 min-w-0" <%= "open" if @editing == w["id"] %>>
-                  <summary class="flex items-center gap-3 cursor-pointer list-none">
-                    <span class="grid place-items-center size-9 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(Dashboards::Widgets[w["type"]]&.icon || "cube", "size-4") %></span>
-                    <span class="min-w-0 flex-1">
-                      <span class="block font-semibold text-ink truncate"><%= w["label"].presence || w["title"].presence || bound.first || Dashboards::Schema.labels[w["type"]] %></span>
-                      <span class="block text-xs text-muted truncate"><%= Dashboards::Schema.labels.fetch(w["type"], w["type"]) %><%= " · #{t("dashboards.ed.points", count: bound.size)}" if bound.size > 1 %><span class="hidden sm:inline" title="<%= t("dashboards.ed.span_title") %>"> · <span class="num"><%= sp.values_at("mobile", "tablet", "desktop").join(" / ") %></span></span><%= " · #{t("dashboards.ed.only_roles", roles: w.dig('visible_if', 'role').map { |r| SiteMembership.role_label(r).downcase }.to_sentence)}" if w.dig("visible_if", "role") %></span>
-                    </span>
-                    <span class="ss-btn ss-btn-ghost ss-btn-sm max-sm:hidden"><%= icon("pencil", "size-4") %><span class="sr-only"><%= t("dashboards.edit") %></span></span>
-                  </summary>
-                  <%= render "web/dashboards/widget_form", dashboard: @dashboard, w: w, op: "update_widget", target: w["id"], view_id: view["id"], point_options: point_options, areas: @areas, scenes: scenes %>
-                </details>
-                <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "widget", target: w["id"], view_id: view["id"], name: t("dashboards.ed.the_widget") %>
-              </li>
+              <%= render "web/dashboards/editor_widget", w: w, view: view, names: names, point_options: point_options, scenes: scenes %>
             <% end %>
           </ul>
           <% if Array(s["widgets"]).empty? %><p class="text-sm text-muted mt-3"><%= t("dashboards.ed.empty_section") %></p><% end %>
