@@ -48,16 +48,22 @@ module AndroidTvRemote
     OpenSSL::Digest::SHA256.digest(parts.join + [ code.to_s[2..] ].pack("H*"))
   end
 
+  def fingerprint(cert) = OpenSSL::Digest::SHA256.hexdigest(cert.to_der)
+
   # Conexão TLS com mensagens protobuf de tamanho prefixado. A TV usa
-  # certificado próprio sem cadeia: quem garante a ponta é o pareamento.
+  # certificado próprio sem cadeia: no pareamento vale o primeiro que vier;
+  # depois, só o mesmo certificado (`pin`, impressão SHA-256 guardada na
+  # primeira sessão de controle).
   class Conn
     attr_reader :ssl
 
-    def initialize(host, port, pair)
+    def initialize(host, port, pair, pin: nil)
       ctx = OpenSSL::SSL::SSLContext.new
       ctx.key = OpenSSL::PKey.read(pair["key"].to_s)
       ctx.cert = OpenSSL::X509::Certificate.new(pair["cert"].to_s)
-      ctx.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      ctx.verify_hostname = false # o certificado da TV não traz o IP
+      ctx.verify_callback = ->(_ok, store) { pin.nil? || AndroidTvRemote.fingerprint(store.current_cert) == pin }
       @ssl = OpenSSL::SSL::SSLSocket.new(Socket.tcp(host, port.to_i, connect_timeout: TIMEOUT), ctx).tap { |s| s.sync_close = true }
       @ssl.connect
       @buf = +"".b
@@ -148,15 +154,15 @@ module AndroidTvRemote
   class Remote
     attr_reader :state
 
-    def self.open(host, port, pair)
-      r = new(host, port, pair)
+    def self.open(host, port, pair, pin: nil)
+      r = new(host, port, pair, pin: pin)
       yield r
     ensure
       r&.close
     end
 
-    def initialize(host, port, pair)
-      @conn = Conn.new(host, port, pair)
+    def initialize(host, port, pair, pin: nil)
+      @conn = Conn.new(host, port, pair, pin: pin)
       @state = {}
       handle(@conn.read_msg || raise(Error, "a TV não respondeu")) until @active
     rescue StandardError
@@ -173,6 +179,7 @@ module AndroidTvRemote
       @state
     end
 
+    def fingerprint = AndroidTvRemote.fingerprint(@conn.ssl.peer_cert)
     def key(code) = @conn.send_msg([ [ 10, :message, Proto.encode([ [ 1, :enum, code ], [ 2, :enum, 3 ] ]) ] ]) # 3 = toque curto
     def launch(link) = @conn.send_msg([ [ 90, :message, Proto.encode([ [ 1, :string, link ] ]) ] ])
     def close = @conn&.close

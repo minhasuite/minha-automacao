@@ -62,8 +62,13 @@ module Integrations
         outcome(:connect, integration: integration, alert: text(:failed, error: e.message))
       end
 
-      def session(integration, &)
-        AndroidTvRemote::Remote.open(conf(integration, :host), conf(integration, :port), integration.secrets, &)
+      # Sessão de controle; a 1ª grava a impressão do certificado da TV e as outras só aceitam ele.
+      def session(integration)
+        pin = integration.secrets["tv_cert"].presence
+        AndroidTvRemote::Remote.open(conf(integration, :host), conf(integration, :port), integration.secrets, pin: pin) do |r|
+          integration.merge_secrets!("tv_cert" => r.fingerprint) unless pin
+          yield r
+        end
       rescue AndroidTvRemote::Error, *LanPlugin::NET_ERRORS => e
         raise Integrations::Error, "Android TV: #{e.message}"
       end

@@ -68,6 +68,11 @@ RSpec.describe "Paridade: resto2" do
       expect(tv.keys).to eq([ [ 127, 3 ], [ 223, 3 ], [ 3, 3 ] ])
       expect(tv.links).to eq([ "https://www.netflix.com/title/1" ])
       expect { Points::Command.call(remote, "send", "teclado", source: "web") }.to raise_error(Points::Command::Error)
+
+      # o certificado da TV ficou preso na 1ª sessão: outro no mesmo endereço é recusado
+      expect(i.reload.secrets["tv_cert"]).to match(/\A\h{64}\z/)
+      i.merge_secrets!("tv_cert" => "0" * 64)
+      expect { plugin.entries(i) }.to raise_error(Integrations::Error, /TLS/)
     end
 
     it "a TV não conversa com um certificado que não pareou" do
