@@ -78,6 +78,7 @@ end
 | Plex Media Server | API do servidor (32400) com `X-Plex-Token` | o token da conta Plex |
 | Android TV Remote (Google TV / Android TV) | protocolo do controle do app Google TV (`AndroidTvRemote`): protobuf com tamanho em varint sobre TLS com o certificado do MA; pareamento na 6467, controle na 6466 | o IP e o código de 6 caracteres que a TV mostra no primeiro Continuar |
 | Apple TV | Companion do tvOS (`Companion`, porta do `_companion-link._tcp`, 49153 em geral): quadros OPACK, pair-setup/pair-verify do HAP (`Hap::Client`) e sessão ChaCha20-Poly1305 | o IP e o PIN de 4 dígitos que a TV mostra no primeiro Continuar |
+| Xbox | Xbox Live na nuvem (`xccs.xboxlive.com`): token da Microsoft → token de usuário → XSTS, cabeçalho `XBL3.0` | app OAuth no Azure (ver abaixo) e "Recursos remotos" ligados no console |
 | OneDrive (cópia de segurança) | destino `Backups::Destinations::Onedrive` (Graph, sessão de upload) | app no Azure (ver abaixo) |
 
 ## Nuvem com OAuth: o que o dono cria (`Integrations::OauthPlugin`)
@@ -107,6 +108,13 @@ precisa do acesso remoto com HTTPS ou do IP da rede, conforme o serviço aceitar
   *Certificados e segredos* → novo segredo, *Permissões de API* → Microsoft Graph
   delegada `Files.ReadWrite.AppFolder` e `offline_access`. Conectado, vira o
   destino da cópia de fora de casa (a menos que haja `BACKUP_OFFSITE_URL` ou o Google Drive).
+- **Xbox**: portal.azure.com → *Registros de aplicativo* → *Novo registro*,
+  tipo de conta *Somente contas pessoais da Microsoft*, plataforma *Web* com
+  o endereço de retorno; *Certificados e segredos* → novo segredo. Não precisa
+  adicionar permissão: o login pede `Xboxlive.signin Xboxlive.offline_access`.
+  A conta tem de ter perfil Xbox. No console: *Configurações → Dispositivos e
+  conexões → Recursos remotos* → permitir, e o modo de energia *Suspensão*
+  para ligar pela rede.
 - **Ring, Overkiz e os demais** não pedem app: usam a conta do próprio dono
   (Ring guarda só o refresh token; a senha não fica).
 
@@ -128,3 +136,4 @@ espera (`put(id, sessão)` / `take(id)`), sem mexer no núcleo.
   se a TV já estiver no estado); o volume é lido (nível/máximo da TV) e sobe
   e desce por tecla; o app aberto vem da TV. `play_media` abre um link (ex.:
   `https://www.netflix.com/title/…` ou `market://launch?id=<pacote>`).
+

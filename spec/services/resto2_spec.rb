@@ -13,6 +13,7 @@ RSpec.describe "Paridade: resto2" do
   def run(point, command, value = nil) = ExecuteCommandJob.perform_now(Points::Command.call(point, command, value, source: "web").id)
   def adopt(i) = Integrations.adopt!(i, i.found.to_h { |e| [ e["id"], "" ] }).then { i.devices.reload }
   def caps(device) = device.points.reload.index_by(&:capability)
+  def json(body, status = 200) = { status: status, body: body.to_json, headers: { "Content-Type" => "application/json" } }
 
   describe "pareamento com código na tela por plugin (PendingPairing)" do
     it "um plugin falso registrado usa a mesma espera sem mudar o núcleo" do
@@ -125,6 +126,64 @@ RSpec.describe "Paridade: resto2" do
       expect(plugin.login(i, form(pin: "9999")).alert).to include("código errado")
       expect(i.reload.secrets["pairing"]).to be_nil
       expect(plugin.login(i, form(pin: "1234")).alert).to eq(plugin.text(:expired))
+    end
+  end
+
+  describe "Xbox pelo Xbox Live (grupo 9, #76)" do
+    let(:plugin) { Integrations::XboxPlugin }
+    let(:xsts) { { "Token" => "XT", "NotAfter" => 1.hour.from_now.iso8601, "DisplayClaims" => { "xui" => [ { "uhs" => "123" } ] } } }
+
+    before do
+      stub_request(:post, Integrations::XboxPlugin::USER_AUTH).with(body: hash_including("Properties" => hash_including("RpsTicket" => /\Ad=A\d\z/)))
+                                                               .to_return(json("Token" => "UT"))
+      stub_request(:post, Integrations::XboxPlugin::XSTS).with(body: hash_including("Properties" => { "UserTokens" => [ "UT" ], "SandboxId" => "RETAIL" }))
+                                                          .to_return(json(xsts))
+    end
+
+    def xbl(path) = stub_request(:any, "#{Integrations::XboxPlugin::API}#{path}").with(headers: { "Authorization" => "XBL3.0 x=123;XT", "x-xbl-contract-version" => "4" })
+
+    it "app OAuth do dono → token de usuário → XSTS → consoles, estado e comandos; 401 renova uma vez" do
+      xbl("/lists/devices?queryCurrentDevice=false&includeStorageDevices=true")
+        .to_return(json("result" => [ { "id" => "FD00", "name" => "Teste Xbox", "consoleType" => "XboxSeriesX", "powerState" => "On" } ]))
+      o = plugin.setup(site, form(client_id: "cid-teste", client_secret: "csec-teste"))
+      expect(o.to).to eq(:connect)
+      i = o.integration
+      expect(plugin.connect_locals(i, { redirect_uri: "https://ma.exemplo/r" })[:auth_url]).to include("login.live.com", "Xboxlive.signin")
+      stub_request(:post, plugin.oauth_config[:token]).with(body: hash_including("grant_type" => "authorization_code", "code" => "C1"))
+                                                      .to_return(json("access_token" => "A1", "refresh_token" => "R-teste", "expires_in" => 3600))
+      expect(plugin.oauth_callback(i, { code: "C1", redirect_uri: "https://ma.exemplo/r" }).alert).to be_nil
+      expect(i.reload.settings.to_json).not_to include("XT", "csec-teste")
+
+      xbl("/consoles/FD00").to_return(json({}, 401), json("powerState" => "On", "focusAppAumid" => "Teste.Netflix", "playbackState" => "Playing"))
+      stub_request(:post, plugin.oauth_config[:token]).with(body: hash_including("grant_type" => "refresh_token", "refresh_token" => "R-teste"))
+                                                      .to_return(json("access_token" => "A2", "refresh_token" => "R-teste", "expires_in" => 3600))
+      dev = adopt(i).sole # a adoção já lê: o 1º 401 renova o XSTS
+      plugin.poll(dev)
+      media, remote = caps(dev).values_at("media", "remote")
+      expect(media.value).to eq("state" => "on", "app" => "Teste.Netflix", "playback" => "Playing")
+      expect(i.reload.secrets["access_token"]).to eq("A2")
+
+      xbl("/consoles/FD00").to_return(json("powerState" => "ConnectedStandby"))
+      bodies = []
+      xbl("/commands").to_return do |req|
+        bodies << JSON.parse(req.body)
+        json({})
+      end
+      run(media, "off")
+      run(media, "volume_up")
+      run(media, "play_media", "9WZDNCRFJ3TJ")
+      run(remote, "send", "A")
+      expect(media.reload.value).to eq("state" => "off")
+      expect(bodies.map { |b| [ b["type"], b["command"], b["parameters"] ] }).to eq([ [ "Power", "TurnOff", [ {} ] ], [ "Audio", "Volume", [ { "direction" => "Up", "amount" => 1 } ] ],
+                                                                                     [ "Shell", "ActivateApplicationWithOneStoreProductId", [ { "oneStoreProductId" => "9WZDNCRFJ3TJ" } ] ],
+                                                                                     [ "Shell", "InjectKey", [ { "keyType" => "A" } ] ] ])
+      expect(bodies.map { |b| b["linkedXboxId"] }.uniq).to eq([ "FD00" ])
+    end
+
+    it "conta sem perfil Xbox: o XSTS recusa com a explicação" do
+      stub_request(:post, Integrations::XboxPlugin::XSTS).to_return(json({ "XErr" => 2_148_916_233 }, 401))
+      i = site.integrations.create!(driver: "xbox", name: "Teste Xbox", credentials: { "access_token" => "A1", "expires_at" => 1.hour.from_now.to_i }.to_json)
+      expect { plugin.entries(i) }.to raise_error(Integrations::Error, plugin.text(:no_profile))
     end
   end
 end
