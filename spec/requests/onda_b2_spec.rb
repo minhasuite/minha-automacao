@@ -88,6 +88,9 @@ RSpec.describe "ondaB2: painéis" do
   end
 
   describe "B10: cards que faltavam" do
+    # Meio-dia: "daqui a 1 h" ainda é hoje (depois das 23 h a agenda virava amanhã e o CI falhava à noite).
+    around { |ex| travel_to(Time.zone.now.change(hour: 12)) { ex.run } }
+
     it "termostato, umidificador, luz, botão, agenda, lista, diário, imagem, página, relógio e planta: validam, resolvem e desenham" do
       within(tenant) do
         create(:point, device: ac, name: "Temperatura ambiente", key: "ar.agora", capability: "measure", value: 26.5, unit: "°C", device_class: "temperature", data_type: "decimal")
