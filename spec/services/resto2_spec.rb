@@ -77,4 +77,49 @@ RSpec.describe "Paridade: resto2" do
       expect(plugin.add_found(site, "host" => "127.0.0.1")).to be_nil
     end
   end
+
+  describe "Apple TV pelo Companion (grupo 9, #22)" do
+    let(:plugin) { Integrations::AppleTvPlugin }
+    let!(:atv) { FakeAppleTv.new }
+
+    after { atv.stop }
+
+    it "OPACK: lê referências a valores já lidos e escreve o que lê" do
+      o = Companion::Opack
+      raw = "\xE2".b + o.pack("k1") + o.pack("valor") + o.pack("k2") + "\xA1".b
+      expect(o.unpack(raw)).to eq("k1" => "valor", "k2" => "valor")
+      big = { "_i" => "x" * 300, "_x" => 70_000, "_c" => { "b" => "\x00\x01".b, "l" => (1..20).to_a, "f" => 1.5, "t" => true, "n" => nil } }
+      expect(o.unpack(o.pack(big))).to eq(big)
+    end
+
+    it "pareia pelo PIN de 4 dígitos (HAP sobre quadros OPACK), lê o estado e comanda" do
+      o = plugin.setup(site, form(host: "127.0.0.1", port: atv.port.to_s))
+      expect([ o.to, o.alert, atv.started ]).to eq([ :connect, plugin.text(:need_code), true ])
+      i = o.integration
+      o = plugin.login(i, form(pin: "1234"))
+      expect(o.alert).to be_nil
+      expect(i.reload.found.sole["id"]).to eq("appletv:#{FakeHapAccessory::ID}")
+      expect(i.settings.to_json).not_to include("ltsk")
+
+      dev = adopt(i).sole
+      plugin.poll(dev)
+      media, remote = caps(dev).values_at("media", "remote")
+      expect(media.value).to eq("state" => "on")
+      expect(media.address["apps"]).to include("com.netflix.Netflix" => "Netflix")
+      run(media, "off")
+      run(media, "pause")
+      run(media, "play_media", "com.netflix.Netflix")
+      run(remote, "send", "menu")
+      expect(atv.hid).to eq([ [ 12, 1 ], [ 12, 2 ], [ 5, 1 ], [ 5, 2 ] ])
+      expect([ atv.mcc, atv.launched ]).to eq([ [ 2 ], [ "com.netflix.Netflix" ] ])
+      expect(atv.asked).to include("_systemInfo", "_sessionStart")
+    end
+
+    it "PIN errado: a Apple TV recusa e nada fica pareado" do
+      i = plugin.setup(site, form(host: "127.0.0.1", port: atv.port.to_s)).integration
+      expect(plugin.login(i, form(pin: "9999")).alert).to include("código errado")
+      expect(i.reload.secrets["pairing"]).to be_nil
+      expect(plugin.login(i, form(pin: "1234")).alert).to eq(plugin.text(:expired))
+    end
+  end
 end

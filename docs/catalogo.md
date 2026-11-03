@@ -77,6 +77,7 @@ end
 | Music Assistant | API WebSocket (`/ws`, `players/*`, `player_queues/play_media`) | o servidor Music Assistant (app do catálogo ou próprio) |
 | Plex Media Server | API do servidor (32400) com `X-Plex-Token` | o token da conta Plex |
 | Android TV Remote (Google TV / Android TV) | protocolo do controle do app Google TV (`AndroidTvRemote`): protobuf com tamanho em varint sobre TLS com o certificado do MA; pareamento na 6467, controle na 6466 | o IP e o código de 6 caracteres que a TV mostra no primeiro Continuar |
+| Apple TV | Companion do tvOS (`Companion`, porta do `_companion-link._tcp`, 49153 em geral): quadros OPACK, pair-setup/pair-verify do HAP (`Hap::Client`) e sessão ChaCha20-Poly1305 | o IP e o PIN de 4 dígitos que a TV mostra no primeiro Continuar |
 | OneDrive (cópia de segurança) | destino `Backups::Destinations::Onedrive` (Graph, sessão de upload) | app no Azure (ver abaixo) |
 
 ## Nuvem com OAuth: o que o dono cria (`Integrations::OauthPlugin`)
@@ -111,12 +112,18 @@ precisa do acesso remoto com HTTPS ou do IP da rede, conforme o serviço aceitar
 
 ## Pareamento com código na tela (`Integrations::PendingPairing`)
 
-Android TV Remote pede um código que só aparece na TV depois que
+Android TV Remote e Apple TV pedem um código que só aparece na TV depois que
 o MA abre a conexão. O primeiro Continuar abre o pareamento e guarda a
 conexão em `PendingPairing` (memória do processo web, 3 min); o segundo
 Continuar leva o código e fecha. Outro plugin com o mesmo jeito usa a mesma
 espera (`put(id, sessão)` / `take(id)`), sem mexer no núcleo.
 
+- **Apple TV**: o que entra é o Companion (o protocolo do Controle Remoto do
+  iPhone): liga (acorda), desliga (dorme), mídia (`_mcc`), volume e teclas
+  (`_hidC`), abrir app pelo bundle id ou link (`_launchApp`) e a lista de
+  apps. Estado: acordada ou dormindo (`FetchAttentionState`). "O que está
+  tocando" e a capa (MRP, que no tvOS atual vai dentro do AirPlay 2) ficam de
+  fora; o volume exato também (o Companion só sobe e desce).
 - **Android TV Remote**: ligar e desligar vão por WAKEUP/SLEEP (não invertem
   se a TV já estiver no estado); o volume é lido (nível/máximo da TV) e sobe
   e desce por tecla; o app aberto vem da TV. `play_media` abre um link (ex.:

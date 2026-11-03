@@ -130,13 +130,30 @@ module Hap
 
     # Pareia com o código de 8 dígitos → os dados do pareamento (guardar cifrado).
     def pair_setup!(code)
+      pin = pin_code(code)
+      pair_start!
+      pair_finish!(pin)
+    end
+
+    def pin_code(code)
       pin = code.to_s.delete("^0-9").sub(/\A(\d{3})(\d{2})(\d{3})\z/, '\1-\2-\3')
       raise Error, "O código de pareamento tem 8 dígitos." unless pin.match?(/\A\d{3}-\d{2}-\d{3}\z/)
 
+      pin
+    end
+
+    # M1/M2 do pair-setup (resto2: aparelho com tela, como a Apple TV, mostra o PIN aqui).
+    def pair_start!
       m2 = tlv_post("/pair-setup", [ [ Tlv::STATE, 1 ], [ Tlv::METHOD, 0 ] ])
       check!(m2, 2)
-      salt, b_pub = m2[Tlv::SALT], Srp.int(m2[Tlv::PUBLIC_KEY].to_s)
-      a = SecureRandom.random_number(1 << 256)
+      @srp = [ m2[Tlv::SALT], Srp.int(m2[Tlv::PUBLIC_KEY].to_s) ]
+      self
+    end
+
+    # M3 a M6 com o PIN → os dados do pareamento.
+    def pair_finish!(pin)
+      salt, b_pub = @srp
+      a =SecureRandom.random_number(1 << 256)
       a_pub = Srp::G.pow(a, Srp::N)
       u = Srp.u(a_pub, b_pub)
       x = Srp.x(salt, "Pair-Setup", pin)
@@ -181,10 +198,14 @@ module Hap
       sig = Hap.ed_private([ pairing["ltsk"] ].pack("H*")).sign(nil, mine.raw_public_key + pairing["id"] + theirs)
       sub = Tlv.encode([ [ Tlv::IDENTIFIER, pairing["id"] ], [ Tlv::SIGNATURE, sig ] ])
       check!(tlv_post("/pair-verify", [ [ Tlv::STATE, 3 ], [ Tlv::ENCRYPTED, Hap.seal(key, "PV-Msg03", sub) ] ]), 4)
-      @write = Hap.hkdf(shared, "Control-Salt", "Control-Write-Encryption-Key")
-      @read = Hap.hkdf(shared, "Control-Salt", "Control-Read-Encryption-Key")
+      session_keys!(shared)
       @out = @in = 0
       self
+    end
+
+    def session_keys!(shared)
+      @write = Hap.hkdf(shared, "Control-Salt", "Control-Write-Encryption-Key")
+      @read = Hap.hkdf(shared, "Control-Salt", "Control-Read-Encryption-Key")
     end
 
     def accessories = Array(json(request("GET", "/accessories"))["accessories"])
