@@ -49,7 +49,7 @@ RSpec.describe Integrations::SpotifyPlugin do
     i = connected
     expect(i.secrets).to include("refresh_token" => "R1", "access_token" => "A1", "client_secret" => "csec")
     raw = Integration.connection.select_value("SELECT credentials FROM integrations WHERE id = '#{i.id}'")
-    expect(raw).not_to include("R1", "csec")
+    expect(raw).not_to include("refresh_token", "client_secret") # cifrado (o "R1" às vezes aparecia no base64 aleatório)
     device = site.devices.find_by!(driver: "spotify", external_id: "spotify:#{i.id}")
     expect(device.poll_s).to eq(30)
     expect(media_point.value).to eq("state" => "playing", "title" => "Garota de Ipanema", "artist" => "Tom Jobim", "album" => "Getz/Gilberto",
