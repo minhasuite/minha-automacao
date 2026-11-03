@@ -4,6 +4,8 @@
 # própria), `name` = nome fixo (senão o rótulo do valor), `motion` = padrão
 # do nome que vira movimento (o resto, abertura). A unidade decide a
 # `device_class` por `units`. Classe nova = uma linha aqui.
+# ondaC1 (C1): Notification (113) por "tipo/evento" em `notifications` (`on` =
+# estados que valem ativo; 0 = parado) e Central Scene (91) = evento (botão).
 command_classes:
   37: { read: currentValue, write: targetValue, name: Liga/desliga, capability: onoff }
   38: { read: currentValue, write: targetValue, name: Intensidade, capability: dimmer, min: 0, max: 99 }
@@ -11,6 +13,8 @@ command_classes:
   49: { capability: measure, state_class: measurement }
   50: { capability: measure }
   67: { capability: setpoint, device_class: temperature, min: 5, max: 35, step: 0.5 }
+  91: { capability: event, history: none }
+  113: { notification: true }
   128: { read: level, name: Bateria, capability: measure, unit: "%", device_class: battery, state_class: measurement }
 units:
   W: power
@@ -22,3 +26,13 @@ units:
   Lux: illuminance
   lux: illuminance
   "%": humidity
+notifications:
+  "Home Security/Motion sensor status": { name: Movimento, capability: motion, "on": [7, 8] }
+  "Home Security/Cover status": { name: Violação, capability: tamper, "on": [3] }
+  "Access Control/Door state": { name: Abertura, capability: contact, "on": [22] }
+  "Access Control/Door state (simple)": { name: Abertura, capability: contact, "on": [22] }
+  "Water Alarm/Water leak status": { name: Vazamento, capability: problem, device_class: moisture, "on": [1, 2] }
+  "Smoke Alarm/Sensor status": { name: Fumaça, capability: problem, device_class: smoke, "on": [1, 2] }
+  "CO Alarm/Sensor status": { name: Monóxido de carbono, capability: problem, device_class: carbon_monoxide, "on": [1, 2] }
+  "Heat Alarm/Heat sensor status": { name: Calor, capability: problem, device_class: heat, "on": [1, 2] }
+  "Power Management/Mains status": { name: Sem energia, capability: problem, device_class: power, "on": [2] }

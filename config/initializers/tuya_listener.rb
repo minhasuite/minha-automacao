@@ -11,6 +11,8 @@ Rails.application.config.after_initialize do
   # Tempo real do ESPHome e do Matter (Pacote 1); sem aparelho adotado, só olham a tabela.
   SolidQueue.on_worker_start { Esphome::Listener.start } if defined?(SolidQueue) && ENV["ESPHOME_LISTENER"] != "off"
   SolidQueue.on_worker_start { Matter::Listener.start } if defined?(SolidQueue) && ENV["MATTER_LISTENER"] != "off"
+  # ondaC1 (C1): Z-Wave JS em tempo real e a inclusão pedida na tela.
+  SolidQueue.on_worker_start { ZwaveJs::Listener.start } if defined?(SolidQueue) && ENV["ZWAVE_LISTENER"] != "off"
   # ondaB1 (B6): satélites de voz (Wyoming, ESPHome).
   SolidQueue.on_worker_start { Assist::Satellites::Listener.start } if defined?(SolidQueue) && ENV["ASSIST_SATELLITES"] != "off"
   # Leitura periódica (F8: Tuya, Xiaomi, lista de Echo); POLLING=off desliga.

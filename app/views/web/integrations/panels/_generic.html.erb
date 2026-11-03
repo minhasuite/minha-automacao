@@ -1,0 +1,20 @@
+<%# locals: (integration:, plugin:, stats: [], rows: [], actions: [], **) -%>
+<% if stats.any? %>
+  <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <% stats.each do |label, value| %>
+      <div class="ss-card ss-card-pad"><p class="text-xs font-bold uppercase text-muted"><%= label %></p><p class="mt-1 text-lg font-bold text-ink num break-words"><%= value.presence || "—" %></p></div>
+    <% end %>
+  </section>
+<% end %>
+<% if rows.any? %>
+  <section class="ss-card overflow-hidden">
+    <table class="ss-table ss-table-stack"><tbody>
+      <% rows.each do |label, value| %><tr><td class="text-muted"><%= label %></td><td class="font-semibold text-ink break-words"><%= value.presence || "—" %></td></tr><% end %>
+    </tbody></table>
+  </section>
+<% end %>
+<% if actions.any? %>
+  <div class="flex flex-wrap gap-2">
+    <% actions.each do |action, label| %><%= button_to label, panel_action_integration_path(integration, acao: action), class: "ss-btn ss-btn-outline" %><% end %>
+  </div>
+<% end %>

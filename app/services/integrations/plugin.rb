@@ -137,6 +137,20 @@ module Integrations
       def pairing_params = [ :name, :area_id, :area_name ]
       def pair(_site, _form) = raise(Error, I18n.t("integrations.pairing.unsupported"))
 
+      # ondaC1: tela "Gerenciar" da integração (as telas de rede do HA: Z-Wave,
+      # Matter, Thread, Bluetooth). Plugin com `panel?` ganha o botão no card;
+      # a tela é a partial `web/integrations/panels/_<key>` com as variáveis de
+      # `panel_locals` (erro do serviço: Integrations::Error), e cada botão
+      # dela posta uma ação (`panel_action(integração, ação, params)` →
+      # Outcome; `:panel` volta para a tela). `panel_refresh` (ms) recarrega a
+      # tela sozinha enquanto algo corre (inclusão, varredura). Sem partial
+      # própria vale a genérica: `stats` [[rótulo, valor]], `rows` [[rótulo,
+      # valor]] e `actions` [[ação, rótulo]] nas variáveis.
+      def panel? = false
+      def panel_locals(_integration, _params) = {}
+      def panel_action(integration, _action, _params) = outcome(:panel, integration: integration)
+      def panel_refresh(_integration) = nil
+
       # Primeira configuração: adiciona um aparelho achado na rede sem formulário
       # (→ integração, com a varredura na fila) ou nil = precisa do assistente.
       def add_found(_site, _entry) = nil

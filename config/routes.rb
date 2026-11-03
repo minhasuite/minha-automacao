@@ -165,6 +165,9 @@ Rails.application.routes.draw do
           get :found, path: "encontrados"
           get :diagnostics, path: "diagnostico"
           post :adopt, path: "adicionar"
+          # ondaC1: tela "Gerenciar" do plugin (Z-Wave, Matter, Thread, Bluetooth…).
+          get :panel, path: "gerenciar"
+          post "gerenciar/:acao", action: :panel_action, as: :panel_action, constraints: { acao: /[a-z_]+/ }
         end
       end
       # ondaA1 (A11): listas de tarefas e agenda local do local.

@@ -83,6 +83,26 @@ module Web
       send_data json, type: "application/json", filename: "diagnostico-#{@integration.driver}-#{Time.current.strftime('%Y%m%d-%H%M')}.json"
     end
 
+    # ondaC1: tela "Gerenciar" do plugin (partial `panels/_<key>`).
+    def panel
+      load_for(:manage)
+      raise ActiveRecord::RecordNotFound unless @plugin&.panel?
+
+      @refresh = @plugin.panel_refresh(@integration)
+      @locals = @plugin.panel_locals(@integration, params)
+    rescue Integrations::Error => e
+      @locals = { error: e.message }
+    end
+
+    def panel_action
+      load_for(:manage)
+      raise ActiveRecord::RecordNotFound unless @plugin&.panel?
+
+      follow(@plugin.panel_action(@integration, params[:acao].to_s, params.fetch(:panel, ActionController::Parameters.new)))
+    rescue Integrations::Error => e
+      redirect_to panel_integration_path(@integration), alert: e.message
+    end
+
     def adopt
       load_for(:manage)
       areas = params.fetch(:area, {}).to_unsafe_h
@@ -149,6 +169,7 @@ module Web
       end
 
       url = { found: -> { found_integration_path(o.integration) }, connect: -> { connect_integration_path(o.integration, **o.params) },
+              panel: -> { panel_integration_path(o.integration, **o.params) },
               devices: -> { site_devices_path(@site) } }.fetch(o.to, -> { site_integrations_path(@site) }).call
       redirect_to url, **flash_now
     end
