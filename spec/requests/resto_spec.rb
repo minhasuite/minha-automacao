@@ -96,6 +96,9 @@ RSpec.describe "Paridade: resto (telas e API)" do
 
   describe "backup parcial (7.12) e rede do host (7.3)" do
     it "backup agora sem o histórico: pg_dump de verdade, sem os dados das tabelas desmarcadas" do
+      server = ActiveRecord::Base.connection.select_value("SHOW server_version_num").to_i / 10_000
+      client = `pg_dump --version`[/\d+/].to_i
+      skip "pg_dump #{client} mais velho que o banco #{server} (no produto vai o cliente 18)" if client < server
       Dir.mktmpdir do |dir|
         stub_const("ENV", ENV.to_h.merge("BACKUP_DIR" => dir))
         get "/configuracoes/backups"
