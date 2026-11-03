@@ -2,7 +2,7 @@
 <% endpoint = "#{request.base_url}/mcp" %>
 <p class="text-sm text-muted mb-4 max-w-3xl"><%= t("assist_settings.mcp.pitch") %></p>
 <div class="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-  <section class="ss-card ss-card-pad vz-pipe" aria-labelledby="mcp-t">
+  <section class="ss-card ss-card-pad vz-pipe min-w-0" aria-labelledby="mcp-t">
     <h2 id="mcp-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("code", "size-5") %><%= t("assist_settings.mcp.connect") %></h2>
     <dl class="mt-3 grid gap-3 text-sm">
       <div><dt class="ss-label"><%= t("assist_settings.mcp.endpoint") %></dt>
@@ -41,10 +41,10 @@
       </ul>
     <% end %>
   </section>
-  <section class="ss-card ss-card-pad" aria-labelledby="mcp-tools">
+  <section class="ss-card ss-card-pad min-w-0" aria-labelledby="mcp-tools">
     <h2 id="mcp-tools" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("sparkles", "size-5") %><%= t("assist_settings.mcp.tools") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("assist_settings.mcp.tools_hint") %></p>
-    <ul class="ss-chips mt-3">
+    <ul class="ss-chips flex-wrap mt-3">
       <% Assist::Mcp.tools(site).each do |tool| %><li class="ss-chip" title="<%= tool["description"] %>"><code><%= tool["name"] %></code></li><% end %>
     </ul>
   </section>

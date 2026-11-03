@@ -37,7 +37,7 @@ module Assist
           return if value.nil?
 
           value = value.round.clamp(0, 100)
-          run(ctx, points, "set", value, done: :done, value: value)
+          run(ctx, points, "set", value, done: :done, label: device_label, value: value)
         end
       end
 
@@ -69,7 +69,7 @@ module Assist
         def self.handle(ctx, slots)
           value = color(slots["color"]) or return
           points = Assist.targets(ctx, [ slots["name"], slots["area"] ].compact.join(" "), "color", command: "set")
-          run(ctx, points, "set", value, done: :done, color: slots["color"])
+          run(ctx, points, "set", value, done: :done, label: device_label, color: slots["color"])
         end
       end
     end

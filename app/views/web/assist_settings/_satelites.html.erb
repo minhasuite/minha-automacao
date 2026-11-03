@@ -6,7 +6,7 @@
 <div class="grid gap-4 xl:grid-cols-2">
   <% (@satellites + [ AssistSatellite.new(site: site, kind: "wyoming", role: "resident", enabled: true) ]).each do |sat| %>
     <% id = sat.persisted? ? sat.id : "novo" %>
-    <section class="ss-card ss-card-pad <%= 'vz-pipe-new' unless sat.persisted? %>" aria-labelledby="st-<%= id %>">
+    <section class="ss-card ss-card-pad min-w-0 <%= 'vz-pipe-new' unless sat.persisted? %>" aria-labelledby="st-<%= id %>">
       <div class="vz-sat">
         <span class="vz-sat-ico" data-online="<%= sat.online? %>"><%= icon(sat.persisted? ? "status-online" : "plus", "size-5") %></span>
         <div class="min-w-0 flex-1">

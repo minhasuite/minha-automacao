@@ -25,7 +25,7 @@ module Assist
           return if points.empty?
 
           shown = "#{value.to_s.sub(/\.0\z/, '')} #{points.first.unit.presence || '°'}".strip
-          run(ctx, points, "set", value, done: :done, value: shown)
+          run(ctx, points, "set", value, done: :done, label: device_label, value: shown)
         end
       end
 

@@ -56,30 +56,34 @@ module Assist
         { name: key, description: description, parameters: { type: "object", properties: props } }
       end
 
+      # O aparelho, quando o ponto é uma parte dele (Brilho → Lâmpada).
+      def device_label = ->(p) { p.device&.name.presence || p.name }
+
       def reply(text, points: []) = Reply.new(text: text, intent: key, points: points)
 
       # Comanda cada ponto com o papel x risco de quem fala e a sombra do
       # local: [feitos, falhas, negados] (nomes).
-      def command_all(ctx, points, command, value = nil)
+      # `label`: como o ponto aparece na resposta (padrão: o nome; brilho e ajuste usam o aparelho).
+      def command_all(ctx, points, command, value = nil, label: :name.to_proc)
         allowed, denied = points.partition { |p| Assist.can_command?(ctx, p) }
         failed = []
         Shadow.for_site(ctx.site) do
           allowed.each do |p|
             c = Points::Command.call(p, command, value, source: "voice", user: ctx.user)
-            failed << p.name if c.error
+            failed << label.call(p) if c.error
           rescue Points::Command::Error => e
-            failed << "#{p.name} (#{e.message})"
+            failed << "#{label.call(p)} (#{e.message})"
           end
         end
-        ok = allowed.map(&:name) - failed.map { |f| f.sub(/ \(.*/, "") }
-        [ ok, failed, denied.map(&:name) ]
+        ok = allowed.map { |p| label.call(p) } - failed.map { |f| f.sub(/ \(.*/, "") }
+        [ ok.uniq, failed, denied.map { |p| label.call(p) }.uniq ]
       end
 
       # Comando + resposta padrão ("Liguei X. Não consegui: Y. Sem permissão: Z.").
-      def run(ctx, points, command, value = nil, done:, **vars)
+      def run(ctx, points, command, value = nil, done:, label: :name.to_proc, **vars)
         return if points.empty?
 
-        ok, failed, denied = command_all(ctx, points, command, value)
+        ok, failed, denied = command_all(ctx, points, command, value, label: label)
         return reply(text(:denied_only, names: Assist.list(denied))) if ok.empty? && failed.empty?
 
         msg = [ (text(done, names: Assist.list(ok), **vars) if ok.any?), (text(:failed, names: Assist.list(failed)) if failed.any?),

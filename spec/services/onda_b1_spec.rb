@@ -34,7 +34,7 @@ RSpec.describe "ondaB1: paridade HA (voz e Assist)" do
     end
 
     it "brilho, cor, mais claro e o ponto irmão do mesmo aparelho" do
-      expect(say("deixe a luz da sala em 70%")).to include("intent" => "light_brightness", "text" => "Brilho de Brilho em 70%.")
+      expect(say("deixe a luz da sala em 70%")).to include("intent" => "light_brightness", "text" => "Brilho de Lâmpada em 70%.")
       expect(brilho.reload.value).to eq(70)
       say("diminua a luz da sala")
       expect(brilho.reload.value).to eq(45)
@@ -52,7 +52,7 @@ RSpec.describe "ondaB1: paridade HA (voz e Assist)" do
       tv = create(:point, site: site, device: create(:device, site: site, area: sala, name: "TV"), name: "TV", capability: "media", value: { "state" => "playing" })
       robo = create(:point, site: site, device: create(:device, site: site, name: "Robô"), name: "Robô", capability: "vacuum", value: "docked")
 
-      expect(say("coloque o ar em 22 graus")).to include("intent" => "climate_set_temperature", "text" => "Alvo em 22 °C.")
+      expect(say("coloque o ar em 22 graus")).to include("intent" => "climate_set_temperature", "text" => "Ar em 22 °C.")
       expect(ar.reload.value).to eq(22.0)
       expect(say("qual a temperatura")["text"]).to eq("Está 26,5 °C.")
       expect(say("abra a cortina")["text"]).to eq("Abri Cortina.")
@@ -120,7 +120,7 @@ RSpec.describe "ondaB1: paridade HA (voz e Assist)" do
       guest = create(:user, tenant: tenant, role: "member")
       create(:site_membership, site: site, user: guest, role: "guest")
       brilho.update!(risk: "sensitive")
-      expect(say("deixe a luz da sala em 10%", user: guest)["text"]).to include("não posso comandar Brilho")
+      expect(say("deixe a luz da sala em 10%", user: guest)["text"]).to include("não posso comandar Lâmpada")
     end
 
     it "satélite numa área: \"acenda a luz\" sem dizer o cômodo" do
@@ -368,7 +368,7 @@ modo festa", "response" => "Boa noite, {quem}!" })
         expect([ luz.reload.value, luz_quarto.reload.value ]).to eq([ false, true ])
         expect(AssistRun.last).to have_attributes(source: "satellite", satellite_id: sat.id, heard: "acenda a luz")
         expect(sat.reload.last_seen_at).to be_present
-        expect(Assist.call(site: site, user: nil, text: "deixe a luz da sala em 10%", satellite: sat)["text"]).to include("não posso comandar Brilho")
+        expect(Assist.call(site: site, user: nil, text: "deixe a luz da sala em 10%", satellite: sat)["text"]).to include("não posso comandar Lâmpada")
       end
     end
 
@@ -440,7 +440,7 @@ modo festa", "response" => "Boa noite, {quem}!" })
       guest = create(:user, tenant: tenant, role: "member")
       create(:site_membership, site: site, user: guest, role: "guest")
       brilho.update!(risk: "sensitive")
-      expect(rpc("tools/call", { "name" => "light_brightness", "arguments" => { "name" => "luz da sala", "brightness" => 10 } }, user: guest)["result"]["content"].first["text"]).to include("não posso comandar Brilho")
+      expect(rpc("tools/call", { "name" => "light_brightness", "arguments" => { "name" => "luz da sala", "brightness" => 10 } }, user: guest)["result"]["content"].first["text"]).to include("não posso comandar Lâmpada")
       expect(rpc("tools/call", { "name" => "rm" })["result"]["isError"]).to be true
       expect(rpc("nada")["error"]).to include("code" => -32_601)
       expect(Assist::Mcp.handle({ "id" => 1 }, site: site, user: owner)["error"]["code"]).to eq(-32_600)
@@ -463,7 +463,7 @@ modo festa", "response" => "Boa noite, {quem}!" })
   describe "B3 Assist multilíngue" do
     it "en e es: liga, brilho, timer, lista e respostas no idioma da frase" do
       expect(say("turn on the living room light", language: "en")).to include("intent" => "turn_on", "text" => "Turned on Luz.", "language" => "en")
-      expect(say("set the living room light to 30%", language: "en")["text"]).to eq("Set Brilho brightness to 30%.")
+      expect(say("set the living room light to 30%", language: "en")["text"]).to eq("Set Lâmpada brightness to 30%.")
       expect(say("set a timer for 2 minutes", language: "en")["text"]).to eq("2 minutes timer started.")
       expect(say("what time is it", language: "en")["intent"]).to eq("get_time")
       expect(say("apaga la luz de la sala", language: "es")["text"]).to eq("Apagué Luz.")
