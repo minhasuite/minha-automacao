@@ -143,7 +143,8 @@ pt-BR:
       alexa: Alexa
       voice: voz
       push: botão do aviso
-      bridge: ponte (Matter)
+      bridge: ponte (Matter, HomeKit)
+      google: Google Home
     media:
       "off": Desligada
       "on": Ligada

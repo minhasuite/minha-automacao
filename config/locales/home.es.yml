@@ -143,7 +143,8 @@ es:
       alexa: Alexa
       voice: voz
       push: botón del aviso
-      bridge: puente (Matter)
+      bridge: puente (Matter, HomeKit)
+      google: Google Home
     media:
       "off": Apagada
       "on": Encendida

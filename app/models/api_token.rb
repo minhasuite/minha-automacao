@@ -51,9 +51,14 @@ class ApiToken < ApplicationRecord
   # --- Alexa (F9): account linking por OAuth 2.0 (authorization code) ------
 
   # Código de autorização = registro ainda não usado (5 min). → código em claro.
-  def self.alexa_code!(user, site, redirect_uri)
+  # ondaC1 (C6): o mesmo fluxo para o Google Home (`client: "google"`, OauthClients).
+  CLIENT_NAMES = { "alexa" => "Alexa", "google" => "Google Home" }.freeze
+
+  def self.alexa_code!(user, site, redirect_uri) = code!(user, site, redirect_uri, client: "alexa")
+
+  def self.code!(user, site, redirect_uri, client:)
     code = generate_token
-    create!(user: user, site: site, client: "alexa", redirect_uri: redirect_uri, device_name: "Alexa (#{site.name})",
+    create!(user: user, site: site, client: client, redirect_uri: redirect_uri, device_name: "#{CLIENT_NAMES.fetch(client, client)} (#{site.name})",
             access_token_digest: digest(code), refresh_token_digest: digest(generate_token),
             access_expires_at: ALEXA_CODE_TTL.from_now, refresh_expires_at: ALEXA_CODE_TTL.from_now)
     code
@@ -79,18 +84,22 @@ class ApiToken < ApplicationRecord
   end
 
   # Troca o código (uma vez só: a rotação muda o digest) → [registro, access, refresh] ou nil.
-  def self.redeem_alexa_code(code, redirect_uri)
-    token = active.alexa.where(last_used_at: nil, access_token_digest: digest(code)).where("access_expires_at > ?", Time.current).first
+  def self.redeem_alexa_code(code, redirect_uri) = redeem_code(code, redirect_uri, client: "alexa")
+
+  def self.redeem_code(code, redirect_uri, client:)
+    token = active.where(client: client, last_used_at: nil, access_token_digest: digest(code)).where("access_expires_at > ?", Time.current).first
     return unless token && token.redirect_uri == redirect_uri.to_s
 
     [ token, *token.rotate! ]
   end
 
   # Access token da diretiva Smart Home (só depois da troca do código).
-  def self.find_alexa(plain)
+  def self.find_alexa(plain) = find_client_token(plain, "alexa")
+
+  def self.find_client_token(plain, client)
     return if plain.blank?
 
-    active.alexa.where.not(last_used_at: nil).where(access_token_digest: digest(plain)).where("access_expires_at > ?", Time.current).first
+    active.where(client: client).where.not(last_used_at: nil).where(access_token_digest: digest(plain)).where("access_expires_at > ?", Time.current).first
   end
 
   # Janela deslizante: cada rotação estende o refresh por mais 60 dias.

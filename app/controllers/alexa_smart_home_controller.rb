@@ -11,13 +11,15 @@ class AlexaSmartHomeController < ActionController::API
     render json: Alexa::SmartHome.error_response({}, {}, Alexa::SmartHome::Error.new("INVALID_DIRECTIVE", "JSON inválido.")), status: :bad_request
   end
 
+  # ondaC1 (C6): o mesmo token para o Google Home (cliente pelo OauthClients).
   def token
-    tenant = client_tenant or return oauth_error("invalid_client", :unauthorized)
+    client = oauth_client or return oauth_error("invalid_client", :unauthorized)
+    tenant = client.tenant
 
     token, access, refresh = case params[:grant_type]
-    when "authorization_code" then ApiToken.redeem_alexa_code(params[:code].to_s, params[:redirect_uri])
+    when "authorization_code" then ApiToken.redeem_code(params[:code].to_s, params[:redirect_uri], client: client.kind)
     when "refresh_token"
-      t = ApiToken.find_by_refresh(params[:refresh_token].to_s, scope: ApiToken.active.alexa)
+      t = ApiToken.find_by_refresh(params[:refresh_token].to_s, scope: ApiToken.active.where(client: client.kind))
       [ t, *t.rotate! ] if t
     else return oauth_error("unsupported_grant_type")
     end
@@ -29,12 +31,12 @@ class AlexaSmartHomeController < ActionController::API
 
   private
 
-  def client_tenant
+  def oauth_client
     id, secret = ActionController::HttpAuthentication::Basic.user_name_and_password(request) if request.authorization.to_s.start_with?("Basic ")
     id ||= params[:client_id]
     secret ||= params[:client_secret]
-    tenant = Tenant.find_by_alexa_client(id)
-    tenant if tenant&.alexa_secret_ok?(secret.to_s)
+    client = OauthClients.find(id)
+    client if client&.secret_ok?(secret)
   end
 
   def oauth_error(code, status = :bad_request) = render(json: { error: code }, status: status)

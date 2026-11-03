@@ -1,8 +1,9 @@
-<% content_for :title, t("oauth.page_title") %>
+<% google = @client.kind == "google" %>
+<% content_for :title, google ? t("protocols.google.oauth_page_title") : t("oauth.page_title") %>
 <div class="text-center">
   <span class="mx-auto grid place-items-center size-12 rounded-2xl bg-accent-soft text-accent"><%= icon("speakerphone", "size-6") %></span>
-  <h1 class="text-2xl mt-4"><%= t("oauth.title") %></h1>
-  <p class="text-sm text-muted mt-1"><%= t("oauth.hint") %></p>
+  <h1 class="text-2xl mt-4"><%= google ? t("protocols.google.oauth_title") : t("oauth.title") %></h1>
+  <p class="text-sm text-muted mt-1"><%= google ? t("protocols.google.oauth_hint") : t("oauth.hint") %></p>
 </div>
 <%= form_with url: oauth_authorize_path, class: "mt-6 space-y-4" do |f| %>
   <% %w[client_id redirect_uri state response_type scope].each do |k| %><%= hidden_field_tag k, params[k], id: nil %><% end %>

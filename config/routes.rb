@@ -28,7 +28,9 @@ Rails.application.routes.draw do
 
   # Alexa Smart Home (F9): diretivas repassadas pela Lambda e tokens do account linking.
   post "alexa/smart_home", to: "alexa_smart_home#smart_home"
-  post "oauth/token", to: "alexa_smart_home#token"
+  # ondaC1 (C6): Google Home cloud-to-cloud (SYNC/QUERY/EXECUTE/DISCONNECT).
+  post "google/smart_home", to: "google_smart_home#fulfill", as: :google_smart_home
+  post "oauth/token", to: "alexa_smart_home#token", as: :oauth_token
   get "oauth/autorizar", to: "web/oauth#new", as: :oauth_authorize
   post "oauth/autorizar", to: "web/oauth#create"
 

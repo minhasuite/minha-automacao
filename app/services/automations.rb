@@ -32,6 +32,8 @@ module Automations
     safely { HelperTypes.on_change(point) }
     # Automações da DSL (F6).
     safely { Triggers.on_change(point, value_was, fresh: fresh) }
+    # ondaC1 (C6): estado aos ecossistemas de fora (Google Home…), numa tarefa.
+    safely { StateReport.changed(point) }
   end
 
   def self.safely

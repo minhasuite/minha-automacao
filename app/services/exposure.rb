@@ -7,7 +7,7 @@
 #   set!(point, on, confirm:) — expõe/tira; devolve a mensagem de erro ou nil
 #     (ponto crítico só entra com `confirm`).
 module Exposure
-  PLUGINS = %w[Assist Alexa].freeze
+  PLUGINS = %w[Assist Alexa Google].freeze
 
   module_function
 
@@ -41,6 +41,23 @@ module Exposure
     def set!(point, on, confirm: false)
       point.assign_attributes(alexa_exposed: on, alexa_risk_confirmed: confirm)
       point.save ? nil : point.errors.full_messages.to_sentence
+    end
+  end
+
+  # ondaC1 (C6): Google Home cloud-to-cloud; desligado por padrão, `expose.google`.
+  # Crítico só com a confirmação (e o Google ainda pergunta na hora do comando).
+  class Google < Target
+    def key = "google"
+    def title = "Google Home"
+    def icon = "speakerphone"
+    def applies?(point) = ::GoogleHome::Traits.for(point).any?
+    def exposed?(point) = point.expose.to_h["google"] == true
+
+    def set!(point, on, confirm: false)
+      return I18n.t("protocols.google.critical_confirm", name: point.name) if on && point.risk == "critical" && !ActiveModel::Type::Boolean.new.cast(confirm)
+
+      point.update!(expose: point.expose.to_h.merge("google" => on))
+      nil
     end
   end
 
