@@ -74,7 +74,16 @@ module Matter
 
     def write_attribute(node, path, value) = call("write_attribute", { "node_id" => node, "attribute_path" => path, "value" => value })
 
-    # Código de pareamento (MT:… do QR ou os 11 dígitos); o aparelho já precisa estar na rede (Wi-Fi/Thread).
-    def commission(code) = call("commission_with_code", { "code" => code, "network_only" => true }, timeout: COMMISSION_TIMEOUT)
+    # Código de pareamento (MT:… do QR ou os 11 dígitos). `network_only`: o
+    # aparelho já está na rede (Wi-Fi/Thread ou compartilhado de outro app);
+    # falso = pelo Bluetooth do servidor (ondaC1), com as credenciais já mandadas.
+    def commission(code, network_only: true) = call("commission_with_code", { "code" => code, "network_only" => network_only }, timeout: COMMISSION_TIMEOUT)
+
+    # ondaC1 (C3): multi-admin, manutenção e redes para comissionar.
+    def open_commissioning_window(node, timeout: 180) = call("open_commissioning_window", { "node_id" => node, "timeout" => timeout })
+    def interview(node) = call("interview_node", { "node_id" => node }, timeout: COMMISSION_TIMEOUT)
+    def remove_node(node) = call("remove_node", { "node_id" => node })
+    def set_wifi_credentials(ssid, password) = call("set_wifi_credentials", { "ssid" => ssid, "credentials" => password })
+    def set_thread_dataset(hex) = call("set_thread_dataset", { "dataset" => hex })
   end
 end

@@ -1,0 +1,94 @@
+<%# locals: (integration:, plugin:, info:, nodes:, share:, thread_dataset:) -%>
+<% act = ->(a) { panel_action_integration_path(integration, acao: a) } %>
+<% yes_no = ->(v) { v ? t("protocols.matter.answer_yes") : t("protocols.matter.answer_no") } %>
+<section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="<%= t("protocols.matter.summary") %>">
+  <div class="ss-card ss-card-pad">
+    <p class="text-xs font-bold uppercase text-muted"><%= t("protocols.matter.server") %></p>
+    <p class="mt-1 text-lg font-bold text-ink num"><%= info["sdk_version"] || "—" %></p>
+    <p class="text-sm text-muted num"><%= t("protocols.matter.fabric", id: info["compressed_fabric_id"] || info["fabric_id"] || "—") %></p>
+  </div>
+  <div class="ss-card ss-card-pad">
+    <p class="text-xs font-bold uppercase text-muted"><%= t("protocols.matter.devices") %></p>
+    <p class="mt-1 text-lg font-bold text-ink num"><%= nodes.size %></p>
+    <p class="text-sm text-muted"><%= t("protocols.matter.available", n: nodes.count { |n| n["available"] != false }) %></p>
+  </div>
+  <div class="ss-card ss-card-pad">
+    <p class="text-xs font-bold uppercase text-muted"><%= t("protocols.matter.wifi") %></p>
+    <p class="mt-1 text-lg font-bold text-ink"><%= yes_no.call(info["wifi_credentials_set"]) %></p>
+    <p class="text-sm text-muted"><%= t("protocols.matter.wifi_hint") %></p>
+  </div>
+  <div class="ss-card ss-card-pad">
+    <p class="text-xs font-bold uppercase text-muted"><%= t("protocols.matter.thread") %></p>
+    <p class="mt-1 text-lg font-bold text-ink"><%= yes_no.call(info["thread_credentials_set"]) %></p>
+    <p class="text-sm text-muted"><%= t("protocols.matter.ble", v: yes_no.call(info["bluetooth_enabled"])) %></p>
+  </div>
+</section>
+
+<% if share %>
+  <section class="ss-card ss-card-pad grid gap-4 sm:grid-cols-[auto_1fr] items-center" aria-labelledby="mt-share" role="status">
+    <div class="w-44 rounded-xl bg-white p-2 mx-auto"><%= qr_svg(share["qr"]) if share["qr"].present? %></div>
+    <div>
+      <h2 id="mt-share" class="font-bold text-ink"><%= t("protocols.matter.share_title", name: share["name"]) %></h2>
+      <p class="mt-1 text-sm text-muted"><%= t("protocols.matter.share_hint") %></p>
+      <p class="mt-3 font-mono text-2xl font-bold tracking-wider text-ink num"><%= share["manual"].to_s.scan(/.{1,4}/).join(" ") %></p>
+      <p class="mt-1 text-xs text-muted"><%= t("protocols.matter.share_until", time: l(Time.zone.parse(share["until"]), format: :short)) %></p>
+    </div>
+  </section>
+<% end %>
+
+<div class="grid gap-4 lg:grid-cols-2">
+  <section class="ss-card ss-card-pad grid gap-3 content-start" aria-labelledby="mt-add">
+    <h2 id="mt-add" class="font-bold text-ink"><%= t("protocols.matter.add") %></h2>
+    <%= form_with url: act.call("commission"), scope: :panel, class: "grid gap-3", data: { turbo_submits_with: t("protocols.matter.commissioning") } do |f| %>
+      <div><%= f.label :code, t("integrations.forms.matter.code"), class: "ss-label" %><%= f.text_field :code, class: "ss-input font-mono", autocomplete: "off", spellcheck: false, required: true, placeholder: t("integrations.forms.matter.code_hint") %></div>
+      <fieldset class="grid gap-2">
+        <legend class="ss-label"><%= t("protocols.matter.how") %></legend>
+        <label class="flex items-start gap-2"><%= radio_button_tag "panel[mode]", "network", true, class: "mt-1" %><span><span class="font-semibold text-ink"><%= t("protocols.matter.mode_network") %></span><br><span class="text-sm text-muted"><%= t("protocols.matter.mode_network_hint") %></span></span></label>
+        <label class="flex items-start gap-2 <%= 'opacity-60' unless info['bluetooth_enabled'] %>"><%= radio_button_tag "panel[mode]", "ble", false, class: "mt-1", disabled: !info["bluetooth_enabled"] %><span><span class="font-semibold text-ink"><%= t("protocols.matter.mode_ble") %></span><br><span class="text-sm text-muted"><%= info["bluetooth_enabled"] ? t("protocols.matter.mode_ble_hint") : t("protocols.matter.mode_ble_off") %></span></span></label>
+      </fieldset>
+      <p class="text-xs text-muted"><%= t("protocols.matter.phone_soon") %></p>
+      <div><%= f.submit t("protocols.matter.commission"), class: "ss-btn ss-btn-primary" %></div>
+    <% end %>
+  </section>
+
+  <section class="ss-card ss-card-pad grid gap-4 content-start" aria-labelledby="mt-net">
+    <h2 id="mt-net" class="font-bold text-ink"><%= t("protocols.matter.networks") %></h2>
+    <%= form_with url: act.call("wifi"), scope: :panel, class: "grid gap-2 sm:grid-cols-[1fr_1fr_auto] items-end" do |f| %>
+      <div><%= f.label :ssid, t("protocols.matter.ssid"), class: "ss-label" %><%= f.text_field :ssid, class: "ss-input", autocomplete: "off", required: true %></div>
+      <div><%= f.label :password, t("protocols.matter.password"), class: "ss-label" %><%= f.password_field :password, class: "ss-input", autocomplete: "new-password" %></div>
+      <%= f.submit t("protocols.matter.save_wifi"), class: "ss-btn ss-btn-outline" %>
+    <% end %>
+    <div class="flex flex-wrap items-center gap-2">
+      <%= button_to act.call("thread"), class: "ss-btn ss-btn-outline ss-btn-sm", disabled: thread_dataset.blank? do %><%= icon("share", "size-4") %><%= t("protocols.matter.use_thread") %><% end %>
+      <span class="text-xs text-muted"><%= thread_dataset.present? ? t("protocols.matter.thread_ready") : t("protocols.matter.thread_missing") %></span>
+    </div>
+  </section>
+</div>
+
+<section class="ss-card overflow-hidden" aria-labelledby="mt-nodes">
+  <h2 id="mt-nodes" class="font-bold text-ink px-4 pt-4"><%= t("protocols.matter.node_list") %></h2>
+  <% if nodes.empty? %>
+    <p class="ss-empty"><%= t("protocols.matter.no_nodes") %></p>
+  <% else %>
+    <table class="ss-table ss-table-stack mt-2">
+      <thead><tr><th><%= t("protocols.matter.col_device") %></th><th><%= t("protocols.matter.col_status") %></th><th><%= t("protocols.matter.col_fabrics") %></th><th class="r"><span class="sr-only"><%= t("protocols.zwave.col_actions") %></span></th></tr></thead>
+      <tbody>
+        <% nodes.each do |n| %>
+          <% entry = Matter::Map.entry(n) %>
+          <tr>
+            <td><span class="font-semibold text-ink"><%= entry["name"] %></span><br><span class="text-xs text-muted num">#<%= n["node_id"] %> · <%= [ entry["manufacturer"], entry["model"] ].compact.join(" ") %></span></td>
+            <td><span class="ss-badge ss-badge-<%= n['available'] == false ? 'danger' : 'success' %>"><%= n["available"] == false ? t("protocols.matter.offline") : t("protocols.matter.online") %></span></td>
+            <td class="text-sm"><%= Matter::Map.fabrics(n).map { |v| t("protocols.matter.vendors.#{v}", default: v) }.join(", ").presence || "—" %></td>
+            <td class="r">
+              <div class="inline-flex gap-1">
+                <%= button_to act.call("share"), params: { "panel[node]" => n["node_id"] }, class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("protocols.matter.share") do %><%= icon("user-group", "size-4") %><span class="sr-only"><%= t("protocols.matter.share") %></span><% end %>
+                <%= button_to act.call("interview"), params: { "panel[node]" => n["node_id"] }, class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("protocols.zwave.reinterview") do %><%= icon("refresh", "size-4") %><span class="sr-only"><%= t("protocols.zwave.reinterview") %></span><% end %>
+                <%= button_to act.call("remove"), params: { "panel[node]" => n["node_id"] }, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", title: t("protocols.matter.remove"), form: { data: { turbo_confirm: t("protocols.matter.remove_confirm", name: entry["name"]) } } do %><%= icon("trash", "size-4") %><span class="sr-only"><%= t("protocols.matter.remove") %></span><% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>

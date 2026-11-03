@@ -1,0 +1,53 @@
+<%# locals: (integration:, plugin:, node:, dataset:, preferred:, matter:) -%>
+<% act = ->(a) { panel_action_integration_path(integration, acao: a) } %>
+<% role = node["State"].to_s %>
+<section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="<%= t("protocols.thread.summary") %>">
+  <div class="ss-card ss-card-pad">
+    <p class="text-xs font-bold uppercase text-muted"><%= t("protocols.thread.role") %></p>
+    <p class="mt-1 text-lg font-bold text-ink"><%= t("protocols.thread.roles.#{role.presence || 'disabled'}", default: role) %></p>
+    <p class="text-sm text-muted"><%= t("protocols.thread.routers", n: node["NumOfRouter"] || 0) %></p>
+  </div>
+  <div class="ss-card ss-card-pad">
+    <p class="text-xs font-bold uppercase text-muted"><%= t("protocols.thread.network") %></p>
+    <p class="mt-1 text-lg font-bold text-ink break-words"><%= dataset["network_name"] || "—" %></p>
+    <p class="text-sm text-muted"><% if preferred %><span class="ss-badge ss-badge-success"><%= icon("star", "size-3.5") %><%= t("protocols.thread.preferred") %></span><% else %><%= t("protocols.thread.not_preferred") %><% end %></p>
+  </div>
+  <div class="ss-card ss-card-pad">
+    <p class="text-xs font-bold uppercase text-muted"><%= t("protocols.thread.channel") %></p>
+    <p class="mt-1 text-lg font-bold text-ink num"><%= dataset["channel"] || "—" %></p>
+    <p class="text-sm text-muted num">PAN <%= dataset["pan_id"] || "—" %></p>
+  </div>
+  <div class="ss-card ss-card-pad">
+    <p class="text-xs font-bold uppercase text-muted"><%= t("protocols.thread.ext_pan") %></p>
+    <p class="mt-1 text-sm font-bold text-ink font-mono break-all"><%= dataset["ext_pan_id"] || "—" %></p>
+    <p class="text-sm text-muted"><%= t("protocols.thread.key_hidden") %></p>
+  </div>
+</section>
+
+<div class="grid gap-4 lg:grid-cols-2">
+  <section class="ss-card ss-card-pad grid gap-3 content-start" aria-labelledby="th-net">
+    <h2 id="th-net" class="font-bold text-ink"><%= t("protocols.thread.credentials") %></h2>
+    <p class="text-sm text-muted"><%= t("protocols.thread.credentials_pitch") %></p>
+    <div class="flex flex-wrap gap-2">
+      <% unless preferred %><%= button_to act.call("prefer"), class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("star", "size-4") %><%= t("protocols.thread.make_preferred") %><% end %><% end %>
+      <%= button_to act.call("send_matter"), class: "ss-btn ss-btn-primary ss-btn-sm", disabled: dataset.empty? || matter.empty? do %><%= icon("chip", "size-4") %><%= t("protocols.thread.send_matter", n: matter.size) %><% end %>
+    </div>
+    <% if matter.empty? %><p class="text-xs text-muted"><%= t("protocols.thread.no_matter") %></p><% end %>
+  </section>
+
+  <section class="ss-card ss-card-pad grid gap-4 content-start" aria-labelledby="th-new">
+    <h2 id="th-new" class="font-bold text-ink"><%= dataset.empty? ? t("protocols.thread.form_title") : t("protocols.thread.other_title") %></h2>
+    <% if dataset.empty? %>
+      <%= form_with url: act.call("form"), scope: :panel, class: "flex flex-wrap items-end gap-2" do |f| %>
+        <div class="flex-1 min-w-40"><%= f.label :network_name, t("protocols.thread.network_name"), class: "ss-label" %><%= f.text_field :network_name, class: "ss-input", maxlength: 16, placeholder: "MA-Casa" %></div>
+        <%= f.submit t("protocols.thread.form"), class: "ss-btn ss-btn-primary" %>
+      <% end %>
+    <% end %>
+    <%= form_with url: act.call("import"), scope: :panel, class: "grid gap-2" do |f| %>
+      <%= f.label :dataset, t("protocols.thread.import"), class: "ss-label" %>
+      <%= f.text_area :dataset, rows: 3, class: "ss-input font-mono text-xs", autocomplete: "off", spellcheck: false, placeholder: "0e080000000000010000000300000f35060004001fffe0…" %>
+      <p class="text-xs text-muted"><%= t("protocols.thread.import_hint") %></p>
+      <div><%= f.submit t("protocols.thread.import_save"), class: "ss-btn ss-btn-outline ss-btn-sm" %></div>
+    <% end %>
+  </section>
+</div>

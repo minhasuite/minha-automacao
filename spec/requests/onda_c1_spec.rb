@@ -111,4 +111,41 @@ RSpec.describe "Protocolos e ecossistemas (ondaC1)" do
       expect(response).to have_http_status(:forbidden)
     end
   end
+
+  describe "Matter e Thread" do
+    let(:cache) { ActiveSupport::Cache::MemoryStore.new }
+    let(:ws) do
+      node = { "node_id" => 7, "available" => true, "attributes" => { "0/40/5" => "Teste Luz", "1/6/0" => true, "0/62/1" => [ { "2" => 24_582 } ] } }
+      FakeWs.new({ "fabric_id" => 1, "sdk_version" => "2025.1", "bluetooth_enabled" => false }) do |msg|
+        result = { "get_nodes" => [ node ], "open_commissioning_window" => { "setup_manual_code" => "34970112332", "setup_qr_code" => "MT:Y.K90AFN00KA0648G00" } }[msg["command"]]
+        { "message_id" => msg["message_id"], "result" => result }
+      end
+    end
+
+    before do
+      allow(WsClient).to receive(:new).and_return(ws)
+      allow(Rails).to receive(:cache).and_return(cache)
+    end
+
+    it "Gerenciar do Matter: servidor, aparelhos com quem compartilha e o QR do multi-admin" do
+      i = within(user.tenant) { site.integrations.create!(driver: "matter", name: "Teste Matter", settings: { "url" => "ws://10.0.0.5:5580/ws" }) }
+      get "/integracoes/#{i.id}/gerenciar"
+      expect(response.body).to include("Teste Luz", "Google Home", "Comissionar", "O Matter Server está sem Bluetooth")
+      post "/integracoes/#{i.id}/gerenciar/share", params: { panel: { node: "7" } }
+      follow_redirect!
+      expect(response.body).to include("Compartilhar Teste Luz", "3497 0112 332", "<svg")
+    end
+
+    it "Gerenciar do Thread: papel, rede e credenciais" do
+      stub_request(:get, "http://10.0.0.6:8081/node").to_return(status: 200, body: { "State" => "leader", "NumOfRouter" => 1 }.to_json)
+      stub_request(:get, "http://10.0.0.6:8081/node/dataset/active").to_return(status: 200, body: "")
+      post "/locais/#{site.id}/integracoes", params: { tipo: "thread", integration: { url: "http://10.0.0.6:8081" } }
+      i = within(user.tenant) { site.integrations.find_by!(driver: "thread") }
+      follow_redirect!
+      expect(response.body).to include("Líder", "Criar uma rede", "Importar dataset")
+      user.update!(dashboard_prefs: user.dashboard_prefs.to_h.merge("locale" => "en"))
+      get "/integracoes/#{i.id}/gerenciar"
+      expect(response.body).to include("Leader", "Create a network")
+    end
+  end
 end

@@ -42,6 +42,16 @@ module Matter
 
     def path(point) = point.address.values_at("endpoint", "cluster", "attribute").join("/")
 
+    # ondaC1 (C3): quem mais controla o nó (multi-admin), pela lista de fabrics
+    # do Operational Credentials (0/62/1, campo 2 = vendor id).
+    VENDORS = { 4937 => "apple", 24_582 => "google", 4631 => "amazon", 4362 => "samsung", 65_521 => "test" }.freeze
+    def fabrics(node)
+      Array(node.dig("attributes", "0/62/1")).filter_map do |f|
+        v = f.is_a?(Hash) && (f["2"] || f["vendorID"] || f["vendor_id"])
+        VENDORS.fetch(v.to_i, format("0x%04X", v.to_i)) if v
+      end.uniq
+    end
+
     # Bruto do servidor → valor do ponto.
     def value(point, raw)
       return if raw.nil?

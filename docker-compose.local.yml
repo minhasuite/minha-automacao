@@ -171,6 +171,47 @@ services:
     volumes:
       - matter-data:/data
 
+  # ondaC1 (C3): Thread, DESLIGADO por padrão (perfil `thread`:
+  # `docker compose --profile thread up -d otbr`). OpenThread Border Router
+  # com um rádio RCP na USB (ex.: SkyConnect/ZBT-1, nRF52840 com firmware
+  # RCP); API REST na 8081 para a integração "Thread". Rede do host (IPv6 e
+  # mDNS do Thread). Fixar a tag da imagem quando subir de verdade.
+  otbr:
+    image: openthread/otbr:latest
+    restart: unless-stopped
+    profiles: ["thread"]
+    network_mode: host
+    privileged: true
+    environment:
+      OT_RCP_DEVICE: spinel+hdlc+uart://${OTBR_DEVICE:-/dev/ttyUSB0}?uart-baudrate=460800
+      OT_INFRA_IF: ${OTBR_INFRA_IF:-eth0}
+      OT_THREAD_IF: wpan0
+      OT_LOG_LEVEL: "6"
+      OT_REST_LISTEN_ADDR: 0.0.0.0
+      OT_REST_LISTEN_PORT: "8081"
+    devices:
+      - ${OTBR_DEVICE:-/dev/ttyUSB0}:${OTBR_DEVICE:-/dev/ttyUSB0}
+    volumes:
+      - otbr-data:/var/lib/thread
+
+  # ondaC1 (C5): Ponte HomeKit (expor), DESLIGADA por padrão (perfil `homekit`:
+  # `docker compose --profile homekit up -d --build homekit-bridge`).
+  # hap-nodejs (pasta homekit-bridge/): publica os pontos escolhidos na aba
+  # "HomeKit" do local para o app Casa da Apple. Rede do host (mDNS do HAP,
+  # porta 51826); fala com o web por HTTP com a chave gerada na aba
+  # (HOMEKIT_BRIDGE_KEY no .env). O pareamento fica no volume.
+  homekit-bridge:
+    build: ./homekit-bridge
+    image: minha-automacao-homekit-bridge:local
+    restart: unless-stopped
+    profiles: ["homekit"]
+    network_mode: host
+    environment:
+      MA_URL: http://127.0.0.1:${WEB_PORT:-80}
+      MA_API_KEY: ${HOMEKIT_BRIDGE_KEY:-}
+    volumes:
+      - homekit-bridge-data:/data
+
   # integ: Ponte Matter (expor), DESLIGADA por padrão (perfil `matter-bridge`:
   # `docker compose --profile matter-bridge up -d --build matter-bridge`).
   # matter.js em Node (pasta matter-bridge/): publica os pontos escolhidos na
@@ -263,6 +304,8 @@ volumes:
   mosquitto:
   matter-data:
   matter-bridge-data:
+  otbr-data:
+  homekit-bridge-data:
   wyoming-whisper:
   wyoming-piper:
 
