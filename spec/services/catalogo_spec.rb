@@ -638,4 +638,232 @@ RSpec.describe "Catálogo de integrações (grupo 9)" do
       expect([ p["battery"].value, p["ding"].value ]).to eq([ 88, { "at" => "2026-11-03T12:00:00Z", "answered" => false } ])
     end
   end
+
+  describe "rede e dados, parte 2 (D10/D13)" do
+    it "UniFi Network: clientes como presença, aparelhos UniFi e bloquear cliente (UniFi OS)" do
+      root = "https://192.0.2.20:443"
+      stub_request(:post, "#{root}/api/auth/login").with(body: { username: "teste", password: "teste" })
+                                                   .to_return(status: 200, body: "{}", headers: { "Set-Cookie" => "TOKEN=t1; path=/", "X-CSRF-Token" => "csrf1" })
+      net = "#{root}/proxy/network/api/s/default"
+      stub_request(:get, "#{net}/stat/sta").with(headers: { "Cookie" => "TOKEN=t1" })
+                                           .to_return { json("data" => [ { "mac" => "aa:bb:cc:00:00:01", "name" => "Teste Celular", "essid" => "Casa", "last_seen" => Time.current.to_i } ]) }
+      stub_request(:get, "#{net}/stat/device").to_return(json("data" => [ { "mac" => "f0:9f:00:00:00:01", "name" => "Teste AP", "model" => "U6LR", "type" => "uap" } ]))
+      stub_request(:get, "#{net}/stat/device/f0:9f:00:00:00:01").to_return(json("data" => [ { "state" => 1, "num_sta" => 12, "uptime" => 7200 } ]))
+      stub_request(:get, "#{net}/rest/user").to_return(json("data" => [ { "mac" => "aa:bb:cc:00:00:01", "blocked" => false } ]))
+      block = stub_request(:post, "#{net}/cmd/stamgr").with(body: { cmd: "block-sta", mac: "aa:bb:cc:00:00:01" }, headers: { "X-CSRF-Token" => "csrf1" }).to_return(json("data" => []))
+      i = add(Integrations::UnifiPlugin, host: "192.0.2.20", username: "teste", password: "teste")
+      by = i.devices.index_by(&:name)
+      phone = by["Teste Celular"].points.index_by { |p| p.address["field"] }
+      ap = by["Teste AP"].points.index_by { |p| p.address["field"] }
+      expect([ phone["home"].value, phone["home"].device_class, phone["blocked"].value ]).to eq([ true, "presence", false ])
+      expect([ ap["online"].value, ap["clients"].value, ap["uptime"].value ]).to eq([ true, 12, 2.0 ])
+      run(phone["blocked"], "on")
+      expect(block).to have_been_requested
+    end
+
+    it "Speedtest: latência, download e upload contra o servidor da lista" do
+      stub_request(:get, %r{www\.speedtest\.net/api/js/servers}).to_return(json([ { "id" => "1", "host" => "speed.exemplo:8080", "name" => "São Paulo", "sponsor" => "Teste" } ]))
+      stub_request(:get, %r{https://speed\.exemplo:8080/speedtest/latency\.txt}).to_return(status: 200, body: "test=test")
+      stub_request(:get, %r{https://speed\.exemplo:8080/download\?}).to_return(status: 200, body: "x" * 1000)
+      up = stub_request(:post, %r{https://speed\.exemplo:8080/upload\?}).to_return(status: 200, body: "size=5000000")
+      i = add(Integrations::SpeedtestPlugin, {})
+      p = pts(i)
+      expect(p.keys).to contain_exactly("download", "upload", "ping")
+      expect([ p["download"].value, p["upload"].value, p["ping"].value ]).to all(be_a(Numeric))
+      expect(p["download"].unit).to eq("Mbit/s")
+      expect(up).to have_been_requested
+      expect(i.devices.first.model).to eq("Teste · São Paulo")
+    end
+
+    it "IPP: Get-Printer-Attributes binário, estado e nível de cada toner" do
+      ipp = Integrations::IppPlugin
+      int = ->(tag, name, v) { [ tag, name.bytesize ].pack("Cn") + name + [ 4, v ].pack("nl>") }
+      reply = [ 2, 0, 0, 1 ].pack("CCnN") + [ 0x04 ].pack("C") +
+              ipp.attr(0x41, "printer-make-and-model", "Brother HL-L2350DW") + ipp.attr(0x45, "printer-uuid", "urn:uuid:teste-1") +
+              int.(0x23, "printer-state", 4) + ipp.attr(0x41, "marker-names", "Black Toner") + ipp.attr(0x41, "", "Drum") +
+              int.(0x21, "marker-levels", 70) + int.(0x21, "", -3) + [ 0x03 ].pack("C")
+      req = stub_request(:post, "http://192.0.2.30:631/ipp/print").with(headers: { "Content-Type" => "application/ipp" }) { |r| r.body.b.include?("printer-uri") }
+                                                                   .to_return(status: 200, body: reply)
+      i = add(ipp, host: "192.0.2.30")
+      p = pts(i)
+      expect(i.devices.first.name).to eq("Brother HL-L2350DW")
+      expect([ p["state"].value, p["marker:0"].name, p["marker:0"].value, p["marker:1"].value ]).to eq([ "Imprimindo", "Black Toner", 70, nil ])
+      expect(req).to have_been_requested.at_least_once
+    end
+
+    it "InfluxDB: relator do StateReport manda a leitura nova em line protocol (2.x)" do
+      ping = stub_request(:post, "http://192.0.2.40:8086/api/v2/write?bucket=casa&org=teste&precision=s").with(headers: { "Authorization" => "Token tok-teste" }).to_return(status: 204, body: "")
+      o = Integrations::InfluxdbPlugin.setup(site, form(url: "http://192.0.2.40:8086", org: "teste", bucket: "casa", token: "tok-teste"))
+      expect([ o.to, o.alert ]).to eq([ :index, nil ])
+      expect(ping).to have_been_requested
+      device = site.devices.create!(name: "Teste Medidor", driver: "virtual")
+      point = device.points.create!(site: site, name: "Teste Potência", key: "teste.potencia", capability: "measure", unit: "W")
+      point.report!(42.5)
+      expect(Integrations::InfluxdbPlugin.wants?(point)).to be(true)
+      Integrations::InfluxdbPlugin.report!(site, [ point ])
+      expect(a_request(:post, %r{/api/v2/write}).with(body: /\AW,entity_id=teste.potencia,domain=measure value=42.5 \d+\z/)).to have_been_made
+      expect(StateReport.reporters).to include(Integrations::InfluxdbPlugin)
+    end
+
+    it "Modbus TCP: registradores descritos em texto viram pontos; holding e coil recebem comando" do
+      regs = { 30_775 => [ 0xFFFF, 0xFF38 ], 400 => [ 215 ], 100 => [ 0x41C8, 0x0000 ] }
+      coils = { 12 => false }
+      writes = []
+      port = tcp_server do |s|
+        while (head = s.read(7))
+          tid, _p, len, unit = head.unpack("nnnC")
+          pdu = s.read(len - 1)
+          fn, addr, n = pdu.unpack("Cnn")
+          if fn == 5 || fn == 6
+            writes << [ fn, addr, n ]
+            fn == 5 ? coils[addr] = (n == 0xFF00) : regs[addr] = [ n ]
+            body = pdu
+          elsif fn == 1
+            body = [ fn, 1, coils[addr] ? 1 : 0 ].pack("CCC")
+          else
+            words = (regs[addr] || ([ 0 ] * n)).first(n)
+            body = [ fn, words.size * 2, *words ].pack("CCn*")
+          end
+          s.write([ tid, 0, body.bytesize + 1, unit ].pack("nnnC") + body)
+        end
+      end
+      text = "Teste Potência; 30775; input; int32; 1; W\nTeste Bomba; 12; coil\nTeste Alvo; 400; holding; int16; 0,1; °C\nTeste Fluxo; 100; holding; float32; 1; m³/h"
+      i = add(Integrations::ModbusPlugin, host: "127.0.0.1", port: port, registers: text)
+      p = pts(i)
+      expect([ p["input:30775"].value, p["coil:12"].value, p["holding:400"].value, p["holding:100"].value ]).to eq([ -200, false, 21.5, 25.0 ])
+      expect([ p["holding:400"].capability, p["holding:100"].capability, p["coil:12"].capability ]).to eq(%w[setpoint measure onoff])
+      run(p["holding:400"], "set", 23)
+      run(p["coil:12"], "on")
+      expect(writes).to eq([ [ 6, 400, 230 ], [ 5, 12, 0xFF00 ] ])
+      expect(Integrations::ModbusPlugin.setup(site, form(host: "127.0.0.1", registers: "sem ponto e vírgula")).alert).to include("Linha 1")
+    end
+
+    it "OneDrive: a integração vira o destino do backup (sessão de upload em pedaços, listar, apagar)" do
+      o = Integrations::OnedrivePlugin.setup(site, form(client_id: "cid-teste", client_secret: "csec-teste"))
+      expect(o.to).to eq(:connect)
+      stub_request(:post, Integrations::OnedrivePlugin.oauth_config[:token]).to_return(json("access_token" => "A1", "refresh_token" => "R-teste", "expires_in" => 3600))
+      stub_request(:get, "https://graph.microsoft.com/v1.0/me/drive/special/approot").to_return(json("id" => "root"))
+      r = Integrations::OnedrivePlugin.oauth_callback(o.integration, { code: "C1", redirect_uri: "https://ma.exemplo/x" })
+      expect(r.notice).to include("OneDrive")
+      expect(Backups::Destinations::Onedrive.connected?).to be(true)
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("BACKUP_OFFSITE_URL").and_return(nil)
+      expect(Backups.url).to eq("onedrive://approot") unless Backups::Destinations::GoogleDrive.connected?
+
+      stub_request(:post, %r{approot:/ma-20261103\.sql\.gz\.enc:/createUploadSession}).to_return(json("uploadUrl" => "https://up.exemplo/sessao/1"))
+      put = stub_request(:put, "https://up.exemplo/sessao/1").to_return(status: 201, body: "{}")
+      stub_request(:get, %r{approot/children}).to_return(json("value" => [ { "id" => "F1", "name" => "ma-20261103.sql.gz.enc", "size" => 10 }, { "id" => "X", "name" => "outro.txt" } ]))
+      del = stub_request(:delete, "https://graph.microsoft.com/v1.0/me/drive/items/F1").to_return(status: 204, body: "")
+      dest = Backups::Destinations::Onedrive.new(URI("onedrive://approot"))
+      file = Rails.root.join("tmp", "teste-onedrive.bin")
+      File.binwrite(file, "x" * 100)
+      dest.upload(file.to_s, "ma-20261103.sql.gz.enc")
+      expect(put.with(headers: { "Content-Range" => "bytes 0-99/100" })).to have_been_requested
+      expect(dest.list).to include("ma-20261103.sql.gz.enc")
+      dest.delete("ma-20261103.sql.gz.enc")
+      expect(del).to have_been_requested
+    ensure
+      FileUtils.rm_f(file) if file
+    end
+
+    it "UPnP/IGD: IP externo, conexão, bytes e a taxa entre duas leituras" do
+      allow(Ssdp).to receive(:search).and_return([ { "host" => "192.0.2.1", "txt" => { "location" => "http://192.0.2.1:5000/rootDesc.xml" } } ])
+      desc = "<root><device><UDN>uuid:igd-1</UDN><friendlyName>Teste Roteador</friendlyName><modelName>R1</modelName><manufacturer>Teste</manufacturer>" \
+             "<service><serviceType>urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1</serviceType><controlURL>/ctl/CmnIfCfg</controlURL></service>" \
+             "<service><serviceType>urn:schemas-upnp-org:service:WANIPConnection:1</serviceType><controlURL>/ctl/IPConn</controlURL></service></device></root>"
+      stub_request(:get, "http://192.0.2.1:5000/rootDesc.xml").to_return(status: 200, body: desc)
+      rx = [ 1_000_000_000 ]
+      stub_request(:post, %r{192\.0\.2\.1:5000/ctl/}).to_return do |req|
+        body = case req.headers["Soapaction"].to_s.split("#").last
+        when "GetStatusInfo" then "<NewConnectionStatus>Connected</NewConnectionStatus><NewUptime>7200</NewUptime>"
+        when "GetExternalIPAddress" then "<NewExternalIPAddress>203.0.113.7</NewExternalIPAddress>"
+        when "GetTotalBytesReceived" then "<NewTotalBytesReceived>#{rx.first}</NewTotalBytesReceived>"
+        else "<NewTotalBytesSent>500000000</NewTotalBytesSent>"
+        end
+        { status: 200, body: "<s:Envelope><s:Body>#{body}</s:Body></s:Envelope>" }
+      end
+      i = travel_to(Time.zone.parse("2026-11-03 10:00:00")) { add(Integrations::UpnpPlugin, host: "192.0.2.1") }
+      p = pts(i)
+      expect([ p["connected"].value, p["external_ip"].value, p["uptime"].value, p["received"].value, p["rate_down"].value ]).to eq([ true, "203.0.113.7", 2.0, 1.0, nil ])
+      rx[0] += 125_000_000 # 1 Gbit em 10 s
+      travel_to(Time.zone.parse("2026-11-03 10:00:10")) { Integrations::UpnpPlugin.poll(i.devices.first) }
+      expect(pts(i)["rate_down"].value).to eq(100.0)
+    end
+
+    it "FRITZ!Box TR-064: digest, Wi-Fi liga/desliga e aparelhos como presença" do
+      calls = []
+      stub_request(:post, %r{http://fritz\.box:49000/upnp/control/}).to_return do |req|
+        action = req.headers["Soapaction"].to_s.split("#").last
+        calls << [ action, req.body[/<NewEnable>(\d)</, 1] ].compact
+        next({ status: 401, headers: { "WWW-Authenticate" => 'Digest realm="F!Box SOAP-Auth", nonce="N1", algorithm=MD5, qop="auth"' }, body: "" }) unless req.headers["Authorization"].to_s.start_with?("Digest ")
+
+        body = case action
+        when "GetInfo"
+                 if req.uri.path.include?("wlanconfig")
+                   k = req.uri.path[/\d\z/].to_i
+                   k <= 2 ? "<NewSSID>Teste Wi-Fi #{k}</NewSSID><NewEnable>1</NewEnable>" : nil
+                 else "<NewModelName>FRITZ!Box 7590</NewModelName><NewSerialNumber>S1</NewSerialNumber><NewUpTime>36000</NewUpTime><NewSoftwareVersion>7.57</NewSoftwareVersion>"
+                 end
+        when "GetHostNumberOfEntries" then "<NewHostNumberOfEntries>1</NewHostNumberOfEntries>"
+        when "GetGenericHostEntry" then "<NewMACAddress>AA:BB:CC:00:00:09</NewMACAddress><NewHostName>Teste-Celular</NewHostName><NewActive>1</NewActive>"
+        when "GetSpecificHostEntry" then "<NewActive>0</NewActive>"
+        when "GetExternalIPAddress" then "<NewExternalIPAddress>203.0.113.9</NewExternalIPAddress>"
+        when "SetEnable" then ""
+        end
+        body.nil? ? { status: 500, body: "" } : { status: 200, body: "<s:Envelope><s:Body>#{body}</s:Body></s:Envelope>" }
+      end
+      i = add(Integrations::FritzPlugin, username: "teste", password: "teste")
+      by = i.devices.index_by(&:name)
+      router = by["FRITZ!Box 7590"].points.index_by { |p| p.address["field"] }
+      phone = by["Teste-Celular"].points.index_by { |p| p.address["field"] }
+      expect([ router["uptime"].value, router["external_ip"].value, router["wifi:1"].name, router["wifi:2"].value, phone["home"].value ])
+        .to eq([ 10.0, "203.0.113.9", "Teste Wi-Fi 1", true, false ])
+      run(router["wifi:2"], "off")
+      expect(calls).to include([ "SetEnable", "0" ])
+    end
+
+    it "Music Assistant: players pela API WebSocket, comandos por player" do
+      sent = []
+      players = [ { "player_id" => "sonos_1", "display_name" => "Teste Sala", "available" => true, "state" => "playing", "volume_level" => 30,
+                    "current_media" => { "title" => "Teste Faixa", "artist" => "Teste Artista" } } ]
+      ws = Object.new
+      ws.define_singleton_method(:connect) { self }
+      ws.define_singleton_method(:close) { nil }
+      inbox = []
+      ws.define_singleton_method(:send_json) do |m|
+        m = JSON.parse(m.to_json)
+        sent << m
+        inbox << { "event" => "player_updated" } << { "message_id" => m["message_id"], "result" => m["command"] == "players/all" ? players : nil }
+      end
+      ws.define_singleton_method(:read_json) { |_t = nil| inbox.shift }
+      allow(WsClient).to receive(:new).with("ws://192.0.2.50:8095/ws").and_return(ws)
+      i = add(Integrations::MusicAssistantPlugin, host: "192.0.2.50")
+      media = pts(i)["media"]
+      expect(media.value).to eq("state" => "playing", "volume" => 30, "title" => "Teste Faixa", "artist" => "Teste Artista")
+      run(media, "volume", 45)
+      run(media, "play_media", "library://track/12")
+      expect(sent.map { |m| [ m["command"], m["args"] ] }).to include([ "players/cmd/volume_set", { "player_id" => "sonos_1", "volume_level" => 45 } ],
+                                                                       [ "player_queues/play_media", { "queue_id" => "sonos_1", "media" => "library://track/12" } ])
+    end
+
+    it "Plex: assistindo agora, bibliotecas e o player da sessão com pausar" do
+      base = "http://192.0.2.60:32400"
+      h = { "X-Plex-Token" => "tok-teste" }
+      stub_request(:get, "#{base}/identity").with(headers: h).to_return(json("MediaContainer" => { "machineIdentifier" => "srv1" }))
+      stub_request(:get, "#{base}/library/sections").to_return(json("MediaContainer" => { "Directory" => [ { "key" => "1", "title" => "Filmes" } ] }))
+      stub_request(:get, "#{base}/library/sections/1/all").to_return(json("MediaContainer" => { "totalSize" => 321 }))
+      stub_request(:get, "#{base}/status/sessions").to_return(json("MediaContainer" => { "Metadata" => [
+        { "title" => "Teste Filme", "Player" => { "machineIdentifier" => "tv1", "title" => "Teste TV", "product" => "Plex for Android", "state" => "playing" } }
+      ] }))
+      pause = stub_request(:get, "#{base}/player/playback/pause?type=video").with(headers: { "X-Plex-Target-Client-Identifier" => "tv1" }).to_return(json({}))
+      i = add(Integrations::PlexPlugin, host: "192.0.2.60", token: "tok-teste")
+      by = i.devices.index_by(&:name)
+      server = by[i.name].points.index_by { |p| p.address["field"] }
+      expect([ server["watching"].value, server["library:1"].value, server["library:1"].name ]).to eq([ 1, 321, "Biblioteca: Filmes" ])
+      media = by["Teste TV"].points.first
+      expect(media.value).to include("state" => "playing", "title" => "Teste Filme")
+      run(media, "pause")
+      expect(pause).to have_been_requested
+    end
+  end
 end

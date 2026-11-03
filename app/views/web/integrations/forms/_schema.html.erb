@@ -16,6 +16,8 @@
                            placeholder: integration ? t("integrations.forms.common.keep") : hint.presence %>
     <% when :select %>
       <%= f.select fld.key, Array(fld.options).map { |o| [ plugin.option_label(fld.key, o), o ] }, { selected: value }, class: "ss-input" %>
+    <% when :textarea %>
+      <%= f.text_area fld.key, class: "ss-input font-mono text-sm", rows: 6, value: value, required: fld.required, placeholder: hint.presence, spellcheck: false %>
     <% when :number %>
       <%= f.number_field fld.key, class: "ss-input num", value: value, step: "any", required: fld.required, placeholder: hint.presence %>
     <% else %>

@@ -52,7 +52,7 @@ module Integrations
     texts COMMON
 
     class << self
-      # Campo do formulário: :text, :number, :url, :select (options) ou secreto
+      # Campo do formulário: :text, :number, :url, :textarea, :select (options) ou secreto
       # (`secret: true`, vai cifrado e vazio no Reconfigurar mantém o guardado).
       def field(key, type = :text, secret: false, required: false, default: nil, options: nil)
         own_fields << Field.new(key.to_s, secret ? :password : type, secret, required, default, options)

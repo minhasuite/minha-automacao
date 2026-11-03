@@ -30,6 +30,7 @@ module Integrations
                WizPlugin TplinkPlugin AdguardPlugin NutPlugin FullyKioskPlugin HomewizardPlugin SynologyDsmPlugin FritzboxPlugin DenonavrPlugin HeosPlugin BraviatvPlugin
                ForecastSolarPlugin Co2signalPlugin MoonPlugin SeasonPlugin HolidayPlugin
                SmartthingsPlugin NetatmoPlugin HomeConnectPlugin NestPlugin EcowittPlugin OverkizPlugin RingPlugin
+               UnifiPlugin SpeedtestPlugin IppPlugin InfluxdbPlugin ModbusPlugin OnedrivePlugin UpnpPlugin FritzPlugin MusicAssistantPlugin PlexPlugin
                CalendarPlugin WeatherPlugin MobileAppPlugin NetworkTrackerPlugin TelegramPlugin WhatsappPlugin HttpMessengerPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
 
   module_function

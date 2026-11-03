@@ -13,7 +13,7 @@ require "zlib"
 # Sem `BACKUP_OFFSITE_URL` e `BACKUP_PASSPHRASE` fica desligado (a tela de
 # saúde avisa). Runbook em docs/backup.md.
 module Backups
-  DESTINATIONS = %w[Ssh S3 GoogleDrive].freeze
+  DESTINATIONS = %w[Ssh S3 GoogleDrive Onedrive].freeze
   LATE = 26.hours
   RESTORE_LATE = 8.days
   ITER = 200_000
@@ -26,8 +26,12 @@ module Backups
   module_function
 
   def dir = ENV.fetch("BACKUP_DIR", "/backups")
-  # Google Drive conectado pela tela vence o `BACKUP_OFFSITE_URL`.
-  def url = Destinations::GoogleDrive.connected? ? Destinations::GoogleDrive::URL : ENV["BACKUP_OFFSITE_URL"].presence
+  # Google Drive conectado pela tela vence o `BACKUP_OFFSITE_URL`; depois o OneDrive da integração (catalogo).
+  def url
+    return Destinations::GoogleDrive::URL if Destinations::GoogleDrive.connected?
+
+    ENV["BACKUP_OFFSITE_URL"].presence || (Destinations::Onedrive::URL if Destinations::Onedrive.connected?)
+  end
   def passphrase = ENV["BACKUP_PASSPHRASE"].presence
   def keep = [ ENV.fetch("BACKUP_OFFSITE_KEEP", "14").to_i, 1 ].max
   def configured? = !url.nil? && !passphrase.nil?

@@ -67,6 +67,16 @@ end
 | Ecowitt | o gateway manda para `/mensageiros/<id>` (webhook de integração) | configurar o "Customized upload" no gateway |
 | Somfy TaHoma (Overkiz) | local (modo desenvolvedor, token) ou nuvem (login) | token do modo desenvolvedor ou e-mail e senha |
 | Ring | API do app (login com 2 etapas; fica só o refresh token) | e-mail, senha e o código que a Ring manda |
+| UniFi Network | API da controladora (UniFi OS `/proxy/network` ou a antiga) | usuário local da controladora |
+| Speedtest | servidores do Speedtest.net (latência, download 25 MB, upload 5 MB) | nada; mede de hora em hora |
+| Impressora (IPP) | Get-Printer-Attributes (IPP binário no HTTP 631) | só o IP |
+| InfluxDB | relator do `StateReport` (line protocol, 1.x ou 2.x) | URL, bucket/banco e token ou usuário/senha |
+| Modbus TCP | `Modbus` (funções 1, 3, 4, 5 e 6) | os registradores, um por linha |
+| Roteador (UPnP/IGD) | `Upnp.soap` no InternetGatewayDevice (SSDP ou endereços comuns) | ligar o UPnP no roteador |
+| FRITZ!Box (roteador) | TR-064 (SOAP com digest, porta 49000) | permitir acesso para aplicativos e usuário/senha |
+| Music Assistant | API WebSocket (`/ws`, `players/*`, `player_queues/play_media`) | o servidor Music Assistant (app do catálogo ou próprio) |
+| Plex Media Server | API do servidor (32400) com `X-Plex-Token` | o token da conta Plex |
+| OneDrive (cópia de segurança) | destino `Backups::Destinations::Onedrive` (Graph, sessão de upload) | app no Azure (ver abaixo) |
 
 ## Nuvem com OAuth: o que o dono cria (`Integrations::OauthPlugin`)
 
@@ -90,5 +100,10 @@ precisa do acesso remoto com HTTPS ou do IP da rede, conforme o serviço aceitar
   (aplicativo da web) com o endereço de retorno; (2) console.nest.google.com/device-access
   → aceite os termos e pague a taxa única (US$ 5) → *Create project* com o
   client id do passo 1; o *Project ID* vai no formulário.
+- **OneDrive**: portal.azure.com → *Registros de aplicativo* → *Novo registro*
+  (contas pessoais e corporativas), plataforma *Web* com o endereço de retorno,
+  *Certificados e segredos* → novo segredo, *Permissões de API* → Microsoft Graph
+  delegada `Files.ReadWrite.AppFolder` e `offline_access`. Conectado, vira o
+  destino da cópia de fora de casa (a menos que haja `BACKUP_OFFSITE_URL` ou o Google Drive).
 - **Ring, Overkiz e os demais** não pedem app: usam a conta do próprio dono
   (Ring guarda só o refresh token; a senha não fica).
