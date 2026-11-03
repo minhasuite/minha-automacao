@@ -2,7 +2,7 @@ module Drivers
   # Sensores Bluetooth pelo proxy Bluetooth do ESPHome (integ2): a placa
   # ESP32 com `bluetooth_proxy` repassa os anúncios BLE pela API nativa
   # (assinatura 66 com anúncios crus → mensagens 93). Os anúncios viram
-  # leituras pelo `Ble`. Aparelho: `external_id` = MAC, `address` {mac}; o
+  # leituras pelo `Ble`. Aparelho: `external_id` = MAC (ou o id do iBeacon), `address` {mac}; o
   # proxy (host, porta, chave) fica na integração. Só leitura.
   class BleProxy
     SUBSCRIBE, RAW = 66, 93
@@ -12,6 +12,7 @@ module Drivers
     def self.listen(integration, seconds = LISTEN_S, until_mac: nil)
       s = integration.settings
       k = integration.secrets
+      keys = Ble.keys(integration) # ondaC1: BTHome cifrado e bindkey Xiaomi
       seen = {}
       ::Esphome::Client.open(host: s["host"], port: s["port"], key: k["encryption_key"], password: k["password"]) do |c|
         c.send_message(SUBSCRIBE, [ [ 1, :varint, 1 ] ]) # 1 = anúncios crus
@@ -23,7 +24,10 @@ module Drivers
 
           Array(f[1]).each do |raw|
             adv = Proto.decode(raw)
-            (r = Ble.decode(adv[4]&.first.to_s)) && (seen[Ble.mac(adv[1]&.first)] = r)
+            mac = Ble.mac(adv[1]&.first)
+            z = adv[2]&.first.to_i
+            r = Ble.decode(adv[4]&.first.to_s, mac: mac, rssi: (z >> 1) ^ -(z & 1), key: keys[mac]) or next
+            seen[r[2] || mac] = r
           end
           break if until_mac && seen.key?(until_mac)
         end
@@ -35,15 +39,12 @@ module Drivers
 
     def self.entries(integration)
       listen(integration).map do |mac, (model, values)|
-        { "id" => mac, "kind" => "ble_proxy", "name" => "#{model} #{mac[-5..]}", "manufacturer" => model, "category" => "Bluetooth", "online" => true,
+        { "id" => mac, "kind" => "ble_proxy", "name" => mac.match?(Ble::MAC) ? "#{model} #{mac[-5..]}" : model, "manufacturer" => model, "category" => "Bluetooth", "online" => true,
           "poll_s" => 300, "address" => { "mac" => mac }, "points" => Ble.points(values) }
       end
     end
 
-    def self.apply(device, values)
-      device.update_columns(status: "online", last_seen_at: Time.current)
-      device.points.reject(&:disabled).each { |p| (v = values[p.address["field"]]).nil? || p.report!(v) }
-    end
+    def self.apply(device, values) = Ble.apply(device, values)
 
     # Ouve até ver este aparelho; os outros do mesmo proxy vistos no caminho também atualizam.
     def self.poll(device)

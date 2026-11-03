@@ -83,4 +83,32 @@ RSpec.describe "Protocolos e ecossistemas (ondaC1)" do
       expect(response.body).to include("Mapa de la red", "Incluir aparato", "Sin respuesta")
     end
   end
+
+  describe "Bluetooth do servidor" do
+    let(:cache) { ActiveSupport::Cache::MemoryStore.new }
+
+    before { allow(Rails).to receive(:cache).and_return(cache) }
+
+    it "assistente cria e abre Gerenciar; chave do serviço; o ble-scanner manda os anúncios pela API" do
+      get "/locais/#{site.id}/integracoes/nova", params: { tipo: "bluetooth" }
+      expect(response.body).to include("Chaves dos sensores cifrados", "ble-scanner")
+      post "/locais/#{site.id}/integracoes", params: { tipo: "bluetooth", integration: { name: "Teste BT" } }
+      i = within(user.tenant) { site.integrations.find_by!(driver: "bluetooth") }
+      expect(response).to redirect_to("/integracoes/#{i.id}/gerenciar")
+      post "/integracoes/#{i.id}/gerenciar/service_key"
+      key = flash[:notice][/svc_\S+/]
+      expect(key).to be_present
+
+      data = Base64.strict_encode64([ 12, 0x09, *"Teste Termo".bytes ].pack("C*") + [ 7, 0x16, 0xD2, 0xFC, 0x40, 0x02, 0xCA, 0x09 ].pack("C*"))
+      post "/api/v1/bluetooth/advertisements", params: { adapter: { name: "hci0" }, adverts: [ { mac: "A4:C1:38:00:00:09", rssi: -60, data: data } ] }.to_json,
+                                               headers: { "X-Api-Key" => key, "Content-Type" => "application/json" }
+      expect(response.parsed_body.dig("data", "understood")).to eq(1)
+      get "/integracoes/#{i.id}/gerenciar"
+      expect(response.body).to include("hci0", "Teste Termo", "Temperatura 25,06 °C")
+
+      _, read_only = within(user.tenant) { ServiceApiKey.issue(user, name: "Teste", scopes: %w[read], site_ids: [ site.id ]) }
+      post "/api/v1/bluetooth/advertisements", params: { adverts: [] }.to_json, headers: { "X-Api-Key" => read_only, "Content-Type" => "application/json" }
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
 end

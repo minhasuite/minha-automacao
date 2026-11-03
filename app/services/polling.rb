@@ -16,7 +16,9 @@ module Polling
               # integ2: ar-condicionado, solar, casa, mídia, Z-Wave e Bluetooth.
               "daikin" => "Drivers::Daikin", "midea" => "Drivers::Midea", "lg_thinq" => "Drivers::LgThinq", "sunspec" => "Drivers::Sunspec",
               "growatt" => "Drivers::Growatt", "dirigera" => "Drivers::Dirigera", "sonos" => "Drivers::Sonos", "govee" => "Drivers::Govee",
-              "zwave_js" => "Drivers::ZwaveJs", "ble_proxy" => "Drivers::BleProxy" }.freeze
+              "zwave_js" => "Drivers::ZwaveJs", "ble_proxy" => "Drivers::BleProxy",
+              # ondaC1: Bluetooth do próprio servidor.
+              "bluetooth" => "Drivers::Bluetooth" }.freeze
   # Integração de conta: varredura (`Integrations.sync!`; Alexa = lista de Echo).
   DUE = "COALESCE(poll_s, 0) > 0 AND (polled_at IS NULL OR polled_at <= now() - make_interval(secs => poll_s))".freeze
 

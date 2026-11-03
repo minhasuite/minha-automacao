@@ -1,4 +1,5 @@
 <%# locals: (f:, integration:) -%>
 <%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::BleProxyPlugin,
-           fields: [ [ :encryption_key, t("integrations.forms.ble_proxy.key"), t("integrations.forms.ble_proxy.key_hint") ], [ :password, t("integrations.forms.ble_proxy.password"), t("integrations.forms.ble_proxy.password_hint") ] ],
+           fields: [ [ :encryption_key, t("integrations.forms.ble_proxy.key"), t("integrations.forms.ble_proxy.key_hint") ], [ :password, t("integrations.forms.ble_proxy.password"), t("integrations.forms.ble_proxy.password_hint") ],
+                     [ :bindkeys, t("protocols.ble.bindkeys"), t("protocols.ble.bindkeys_hint") ] ],
            note: t("integrations.forms.ble_proxy.note") %>

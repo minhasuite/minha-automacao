@@ -189,6 +189,23 @@ services:
     volumes:
       - matter-bridge-data:/data
 
+  # ondaC1 (C2): Bluetooth do próprio servidor, DESLIGADO por padrão (perfil
+  # `bluetooth`: `docker compose --profile bluetooth up -d ble-scanner`).
+  # Ouve o adaptador hci0 pelo HCI cru (bin/ble-scan, Ruby puro, escuta
+  # passiva) e manda os anúncios para a integração "Bluetooth (adaptador do
+  # servidor)" com a chave gerada na tela Gerenciar (BLE_SCANNER_KEY no .env).
+  ble-scanner:
+    image: ${IMAGE:-ghcr.io/minhasuite/minha-automacao:latest}
+    restart: unless-stopped
+    profiles: ["bluetooth"]
+    network_mode: host
+    cap_add: [NET_ADMIN, NET_RAW]
+    command: ruby bin/ble-scan
+    environment:
+      MA_URL: http://127.0.0.1:${WEB_PORT:-80}
+      MA_API_KEY: ${BLE_SCANNER_KEY:-}
+      BLE_ADAPTER: ${BLE_ADAPTER:-0}
+
   # Descoberta pelo app: anuncia `_minhaautomacao._tcp` na rede de casa
   # (bin/mdns-announce, Ruby puro). Rede do host porque o multicast não chega
   # na bridge; só UDP 5353, sem banco e sem segredo. Parar não afeta o resto.

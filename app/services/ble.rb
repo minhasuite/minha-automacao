@@ -1,8 +1,10 @@
-# Bluetooth (integ2): anúncios BLE crus (vindos do proxy Bluetooth do
-# ESPHome) → leituras de sensores comuns, sem conexão e sem chave:
-# BTHome v2 (sem criptografia), termômetros Xiaomi com firmware pvvx/ATC e
-# Govee H5072/H5075/H5101/H5102. Decodificador novo = um método + uma linha
-# em `DECODERS`; campo novo = uma linha em `FIELDS`.
+# Bluetooth (integ2; ondaC1 C2): anúncios BLE crus → leituras, sem conexão.
+# Os anúncios chegam do proxy Bluetooth do ESPHome (Drivers::BleProxy) ou do
+# adaptador do próprio servidor (bin/ble-scan → Ble::Hub). Cada formato é
+# um plugin (`Ble::Parsers`, registro `PARSERS`): BTHome v2 (com e sem
+# chave), Xiaomi MiBeacon (com e sem bindkey), termômetros pvvx/ATC, Govee,
+# iBeacon (presença e distância) e escovas Oral-B. Campo novo = linha em
+# `FIELDS`; formato novo = classe + nome em `PARSERS`.
 module Ble
   FIELDS = {
     "temperature" => { "name" => "Temperatura", "unit" => "°C", "device_class" => "temperature" },
@@ -12,18 +14,31 @@ module Ble
     "illuminance" => { "name" => "Luminosidade", "unit" => "lx", "device_class" => "illuminance" },
     "voltage" => { "name" => "Tensão", "unit" => "V", "device_class" => "voltage" },
     "moisture" => { "name" => "Umidade do solo", "unit" => "%", "device_class" => "moisture" },
+    "conductivity" => { "name" => "Condutividade", "unit" => "µS/cm", "device_class" => "conductivity" },
+    "co2" => { "name" => "CO2", "unit" => "ppm", "device_class" => "carbon_dioxide" },
     "motion" => { "name" => "Movimento", "capability" => "motion" },
-    "window" => { "name" => "Abertura", "capability" => "contact" }
+    "window" => { "name" => "Abertura", "capability" => "contact" },
+    # iBeacon: visto agora (some sozinho sem anúncio) e a distância estimada pelo sinal.
+    "presence" => { "name" => "Presença", "capability" => "motion", "device_class" => "presence" },
+    "distance" => { "name" => "Distância", "unit" => "m", "device_class" => "distance" },
+    "rssi" => { "name" => "Sinal", "unit" => "dBm", "device_class" => "signal_strength" },
+    # Oral-B.
+    "brushing" => { "name" => "Escovando", "capability" => "motion" },
+    "brush_time" => { "name" => "Tempo de escovação", "unit" => "s", "device_class" => "duration" },
+    "brush_mode" => { "name" => "Modo", "capability" => "text" },
+    "brush_state" => { "name" => "Situação", "capability" => "text" },
+    "brush_pressure" => { "name" => "Pressão da escova", "capability" => "text" },
+    "sector" => { "name" => "Setor", "unit" => nil }
   }.freeze
-  # BTHome v2: id do objeto → [campo, bytes, fator, com sinal?] (só os comuns; id desconhecido encerra a leitura).
-  BTHOME = { 0x00 => [ nil, 1 ], 0x01 => [ "battery", 1, 1 ], 0x02 => [ "temperature", 2, 0.01, true ], 0x03 => [ "humidity", 2, 0.01 ],
-             0x04 => [ "pressure", 3, 0.01 ], 0x05 => [ "illuminance", 3, 0.01 ], 0x0C => [ "voltage", 2, 0.001 ], 0x21 => [ "motion", 1, nil ],
-             0x2D => [ "window", 1, nil ], 0x2E => [ "humidity", 1, 1 ], 0x2F => [ "moisture", 1, 1 ], 0x45 => [ "temperature", 2, 0.1, true ] }.freeze
-  DECODERS = %i[bthome pvvx atc govee].freeze
+  PARSERS = %w[Bthome Xiaomi Pvvx Atc Govee Ibeacon OralB].freeze
+  MAC = /\A\h{2}(:\h{2}){5}\z/
 
   module_function
 
+  def parsers = PARSERS.map { |n| Parsers.const_get(n) }
+
   def mac(int) = format("%012X", int.to_i).scan(/../).join(":")
+  def mac_bytes(mac) = [ mac.to_s.delete(":") ].pack("H*")
 
   # Estruturas AD → {name:, service: {uuid16 => bytes}, maker: {id => bytes}}.
   def ads(data)
@@ -45,70 +60,63 @@ module Ble
     out
   end
 
-  # Anúncio cru → [modelo, {campo → valor}] ou nil (desconhecido ou cifrado).
-  def decode(data)
+  # Anúncio cru → [modelo, {campo → valor}(, id próprio)] ou nil (desconhecido,
+  # ou cifrado sem a chave). `mac`/`key` decifram BTHome e MiBeacon; `rssi`
+  # dá a distância do iBeacon. id próprio (iBeacon: uuid/major/minor) vale
+  # no lugar do MAC, que o celular troca.
+  def decode(data, mac: nil, rssi: nil, key: nil)
     a = ads(data.b)
-    DECODERS.each do |d|
-      r = send(d, a)
+    ctx = { mac: mac, rssi: rssi, key: key.presence && [ key.to_s.delete("^0-9a-fA-F") ].pack("H*") }
+    parsers.each do |p|
+      r = p.parse(a, ctx)
       return r if r && r[1].any?
     end
     nil
   end
 
-  def bthome(a)
-    d = a[:service][0xFCD2] or return
-    info = d.getbyte(0).to_i
-    return if info.anybits?(0x01) # cifrado: precisa da chave
+  # AES-CCM com etiqueta de 4 bytes (BTHome e MiBeacon v4/v5); nil = chave errada.
+  def ccm_decrypt(key, nonce, ct, tag, aad: nil)
+    return if key.to_s.bytesize != 16
 
-    values = {}
-    pos = 1
-    while pos < d.bytesize
-      spec = BTHOME[d.getbyte(pos)] or break
-      field, size, factor, signed = spec
-      raw = d.byteslice(pos + 1, size).to_s
-      break if raw.bytesize < size
-
-      n = (raw + "\0".b * (4 - size)).unpack1("V")
-      n -= 1 << (size * 8) if signed && n >= 1 << ((size * 8) - 1)
-      values[field] = factor ? (n * factor).round(2) : n.positive? if field
-      pos += 1 + size
-    end
-    [ a[:name].presence || "BTHome", values ]
+    c = OpenSSL::Cipher.new("aes-128-ccm").decrypt
+    c.iv_len = nonce.bytesize
+    c.auth_tag = tag
+    c.key = key
+    c.iv = nonce
+    c.ccm_data_len = ct.bytesize
+    c.auth_data = aad if aad
+    c.update(ct)
+  rescue OpenSSL::Cipher::CipherError
+    nil
   end
 
-  # Termômetro Xiaomi com firmware pvvx (formato próprio, 15 bytes, little-endian).
-  def pvvx(a)
-    d = a[:service][0x181A]
-    return unless d&.bytesize == 15
-
-    _mac, t, h, mv, batt = d.unpack("a6s<S<S<C")
-    [ a[:name].presence || "Termômetro pvvx", { "temperature" => t / 100.0, "humidity" => h / 100.0, "voltage" => mv / 1000.0, "battery" => batt } ]
-  end
-
-  # Termômetro Xiaomi com firmware ATC1441 (13 bytes, big-endian).
-  def atc(a)
-    d = a[:service][0x181A]
-    return unless d&.bytesize == 13
-
-    _mac, t, h, batt, mv = d.unpack("a6s>CCS>")
-    [ a[:name].presence || "Termômetro ATC", { "temperature" => t / 10.0, "humidity" => h.to_f, "battery" => batt, "voltage" => mv / 1000.0 } ]
-  end
-
-  # Govee H5072/H5075/H5101/H5102: temperatura e umidade num número de 3 bytes.
-  def govee(a)
-    d = a[:maker][0xEC88]
-    return unless d && d.bytesize >= 5
-
-    v = (d.getbyte(1) << 16) | (d.getbyte(2) << 8) | d.getbyte(3)
-    sign = v.anybits?(0x800000) ? -1 : 1
-    v &= 0x7FFFFF
-    [ a[:name].presence || "Govee", { "temperature" => sign * (v / 1000) / 10.0, "humidity" => (v % 1000) / 10.0, "battery" => d.getbyte(4) & 0x7F } ]
+  # Chaves por MAC (BTHome e bindkey Xiaomi), "AA:BB:CC:DD:EE:FF=chave" separadas por ; ou linha, nos segredos da integração.
+  def keys(integration)
+    integration.secrets["bindkeys"].to_s.split(/[
+;,]/).filter_map do |l|
+      mac, key = l.split(/[=\s]+/, 2).map(&:strip)
+      [ mac.upcase, key ] if mac.to_s.upcase.match?(MAC) && key.to_s.match?(/\A\h{32}\z/)
+    end.to_h
   end
 
   def points(values)
     values.keys.filter_map do |f|
       spec = FIELDS[f] or next
-      { "capability" => "measure", "state_class" => ("measurement" unless spec["capability"]) }.merge(spec).compact.merge("address" => { "field" => f })
+      { "capability" => "measure", "state_class" => ("measurement" unless spec["capability"]), "writable" => false }.merge(spec).compact.merge("address" => { "field" => f })
     end
+  end
+
+  # "Temperatura 22,5 °C · Umidade 50 %" (tela Gerenciar).
+  def summary(values)
+    values.to_h.filter_map do |f, v|
+      spec = FIELDS[f] or next
+      v = ActiveSupport::NumberHelper.number_to_delimited(v, locale: I18n.locale) if v.is_a?(Numeric)
+      [ spec["name"], v, spec["unit"] ].compact.join(" ")
+    end.join(" · ")
+  end
+
+  def apply(device, values)
+    device.update_columns(status: "online", last_seen_at: Time.current)
+    device.points.reject(&:disabled).each { |p| (v = values[p.address["field"]]).nil? || p.report!(v) }
   end
 end

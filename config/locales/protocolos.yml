@@ -5,6 +5,10 @@ pt-BR:
       open: "Gerenciar"
       title: "Gerenciar %{name}"
       unreachable: "Não deu para falar com o serviço agora."
+    ble:
+      bindkeys: "Chaves dos sensores cifrados (opcional)"
+      bindkeys_hint: "AA:BB:CC:DD:EE:FF=chave de 32 caracteres; uma por aparelho, separadas por ;"
+      note_html: "Liga o serviço <code>ble-scanner</code> (perfil <code>bluetooth</code> do compose) com a chave gerada em <strong>Gerenciar</strong>. Escuta passiva: o servidor só ouve, não conecta nem pareia. BTHome cifrado e Xiaomi novos precisam da chave (bindkey)."
     zwave:
       summary: "Resumo da rede Z-Wave"
       controller: "Controlador"
@@ -99,6 +103,10 @@ en:
       open: "Manage"
       title: "Manage %{name}"
       unreachable: "Couldn't reach the service right now."
+    ble:
+      bindkeys: "Keys of encrypted sensors (optional)"
+      bindkeys_hint: "AA:BB:CC:DD:EE:FF=32-character key; one per device, separated by ;"
+      note_html: "Start the <code>ble-scanner</code> service (compose profile <code>bluetooth</code>) with the key generated in <strong>Manage</strong>. Passive listening: the server only listens, it never connects or pairs. Encrypted BTHome and newer Xiaomi need the key (bindkey)."
     zwave:
       summary: "Z-Wave network summary"
       controller: "Controller"
@@ -193,6 +201,10 @@ es:
       open: "Administrar"
       title: "Administrar %{name}"
       unreachable: "No se pudo comunicar con el servicio ahora."
+    ble:
+      bindkeys: "Claves de sensores cifrados (opcional)"
+      bindkeys_hint: "AA:BB:CC:DD:EE:FF=clave de 32 caracteres; una por aparato, separadas por ;"
+      note_html: "Inicia el servicio <code>ble-scanner</code> (perfil <code>bluetooth</code> del compose) con la clave generada en <strong>Administrar</strong>. Escucha pasiva: el servidor solo escucha, no conecta ni vincula. BTHome cifrado y Xiaomi nuevos necesitan la clave (bindkey)."
     zwave:
       summary: "Resumen de la red Z-Wave"
       controller: "Controlador"

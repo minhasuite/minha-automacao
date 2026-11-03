@@ -4,11 +4,11 @@ module Integrations
   # lista os sensores BLE que o `Ble` entende (Drivers::BleProxy).
   class BleProxyPlugin < LanPlugin
     describe key: "ble_proxy", title: "Proxy Bluetooth (ESPHome)", icon: "status-online",
-             description: "Sensores Bluetooth (BTHome, termômetros Xiaomi pvvx/ATC, Govee) pelo proxy Bluetooth do ESPHome: temperatura, umidade, bateria, movimento e abertura."
-    texts en: { title: "Bluetooth proxy (ESPHome)", description: "Bluetooth sensors (BTHome, Xiaomi pvvx/ATC thermometers, Govee) through the ESPHome Bluetooth proxy: temperature, humidity, battery, motion and open/close." },
-          es: { title: "Proxy Bluetooth (ESPHome)", description: "Sensores Bluetooth (BTHome, termómetros Xiaomi pvvx/ATC, Govee) mediante el proxy Bluetooth de ESPHome: temperatura, humedad, batería, movimiento y apertura." }
+             description: "Sensores Bluetooth (BTHome, Xiaomi, pvvx/ATC, Govee, iBeacon, Oral-B) pelo proxy Bluetooth do ESPHome: temperatura, umidade, bateria, movimento, abertura e presença."
+    texts en: { title: "Bluetooth proxy (ESPHome)", description: "Bluetooth sensors (BTHome, Xiaomi, pvvx/ATC, Govee, iBeacon, Oral-B) through the ESPHome Bluetooth proxy: temperature, humidity, battery, motion, open/close and presence." },
+          es: { title: "Proxy Bluetooth (ESPHome)", description: "Sensores Bluetooth (BTHome, Xiaomi, pvvx/ATC, Govee, iBeacon, Oral-B) mediante el proxy Bluetooth de ESPHome: temperatura, humedad, batería, movimiento, apertura y presencia." }
     port 6053
-    secrets :encryption_key, :password
+    secrets :encryption_key, :password, :bindkeys
     mdns "_esphomelib._tcp"
 
     def self.inventory(integration) = Drivers::BleProxy.entries(integration)

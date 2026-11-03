@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+# Bluetooth do próprio servidor (ondaC1, C2): ouve o adaptador do Linux pelo
+# HCI cru (Ble::Hci, escuta passiva) e manda os anúncios em lote para o MA
+# (POST /api/v1/bluetooth/advertisements). Ruby puro, sem Rails nem banco;
+# roda no serviço `ble-scanner` do docker-compose.local.yml (perfil
+# `bluetooth`, desligado), na rede do host com NET_ADMIN/NET_RAW.
+#
+#   MA_URL         endereço da web (padrão http://127.0.0.1:80)
+#   MA_API_KEY     chave da tela Gerenciar → Bluetooth (BLE_SCANNER_KEY no .env)
+#   BLE_ADAPTER    número do adaptador (padrão 0 = hci0)
+#   BLE_BATCH_S    segundos por lote (padrão 3)
+require "json"
+require "net/http"
+require "base64"
+require_relative "../app/services/ble/hci"
+
+url = URI("#{ENV.fetch('MA_URL', 'http://127.0.0.1:80').chomp('/')}/api/v1/bluetooth/advertisements")
+key = ENV["MA_API_KEY"].to_s
+abort "[ble] defina MA_API_KEY (chave gerada na tela Gerenciar da integração Bluetooth)" if key.empty?
+dev = Integer(ENV.fetch("BLE_ADAPTER", "0"))
+batch_s = Float(ENV.fetch("BLE_BATCH_S", "3"))
+$stdout.sync = true
+
+sock = Ble::Hci.open(dev)
+ok = lambda do |cmds, ocf|
+  cmds.each { |c| sock.write(c) }
+  deadline = Time.now + 2
+  while Time.now < deadline
+    next unless sock.wait_readable(0.2)
+
+    st = Ble::Hci.command_status(sock.recv(1024), ocf)
+    return st.zero? unless st.nil?
+  end
+  false
+end
+mode = if ok.call(Ble::Hci.legacy_scan(true), Ble::Hci::SET_SCAN_ENABLE) then :legacy
+elsif ok.call(Ble::Hci.extended_scan(true), Ble::Hci::SET_EXT_SCAN_ENABLE) then :extended
+else abort "[ble] o adaptador hci#{dev} recusou a varredura (desligado? rfkill?)"
+end
+at_exit { (mode == :legacy ? Ble::Hci.legacy_scan(false) : Ble::Hci.extended_scan(false)).each { |c| sock.write(c) rescue nil } } # rubocop:disable Style/RescueModifier
+puts "[ble] ouvindo hci#{dev} (#{mode}), lote a cada #{batch_s} s → #{url}"
+
+http = Net::HTTP.new(url.host, url.port)
+http.use_ssl = url.scheme == "https"
+loop do
+  latest = {}
+  limit = Time.now + batch_s
+  while (left = limit - Time.now).positive?
+    next unless sock.wait_readable(left)
+
+    Ble::Hci.reports(sock.recv(1024)).each { |r| latest[r["mac"]] = r }
+  end
+  next if latest.empty?
+
+  body = { adapter: { name: "hci#{dev}" }, adverts: latest.values.map { |r| r.merge("data" => Base64.strict_encode64(r["data"])) } }
+  begin
+    res = http.post(url.path, body.to_json, "Content-Type" => "application/json", "X-Api-Key" => key)
+    warn "[ble] MA respondeu #{res.code}" unless res.is_a?(Net::HTTPSuccess)
+  rescue StandardError => e
+    warn "[ble] #{e.class}: #{e.message}"
+  end
+end

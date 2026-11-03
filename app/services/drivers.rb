@@ -12,7 +12,9 @@ module Drivers
                # integ2: ar-condicionado, solar, casa, mídia, Z-Wave e Bluetooth.
                "daikin" => "Drivers::Daikin", "midea" => "Drivers::Midea", "lg_thinq" => "Drivers::LgThinq", "sunspec" => "Drivers::Sunspec",
                "growatt" => "Drivers::Growatt", "dirigera" => "Drivers::Dirigera", "sonos" => "Drivers::Sonos", "govee" => "Drivers::Govee",
-               "zwave_js" => "Drivers::ZwaveJs", "ble_proxy" => "Drivers::BleProxy" }.freeze
+               "zwave_js" => "Drivers::ZwaveJs", "ble_proxy" => "Drivers::BleProxy",
+              # ondaC1: Bluetooth do próprio servidor.
+              "bluetooth" => "Drivers::Bluetooth" }.freeze
 
   def self.supported?(device) = REGISTRY.key?(device.driver)
 

@@ -378,6 +378,8 @@ Rails.application.routes.draw do
       get "bridges/:key", to: "bridges#index"
       put "bridges/:key/status", to: "bridges#status"
       post "bridges/:key/commands", to: "bridges#command"
+      # ondaC1 (C2): o serviço ble-scanner manda os anúncios do adaptador do servidor.
+      post "bluetooth/advertisements", to: "bluetooth#advertisements"
 
       # Pacote 3: pessoas, voz, pacotes e ferramentas de desenvolvedor.
       get "sites/:site_id/people", to: "people#index"
