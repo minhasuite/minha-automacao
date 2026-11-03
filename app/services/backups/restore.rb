@@ -71,7 +71,14 @@ module Backups
           IO.copy_stream(io, out)
         end
       end
-      check!(path)
+      begin
+        check!(path)
+      rescue Error
+        # Senha errada às vezes passa no padding do CBC (~1 em 256) e sai lixo.
+        raise Error, I18n.t("backup_restore.errors.bad_pass") if head == "Salted__"
+
+        raise
+      end
       name
     rescue Error
       FileUtils.rm_f(path) if path
