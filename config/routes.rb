@@ -34,6 +34,8 @@ Rails.application.routes.draw do
 
   # ---- Web (Hotwire, sessão em cookie) --------------------------------------
   get "entrar", to: "web/sessions#new", as: :login
+  # appweb: o app abre esta página no navegador (link de uso único) já logado.
+  get "entrar/ponte", to: "web/sessions#bridge", as: :login_bridge
   # ondaA2 A20: JS dos cards de terceiros pelo hash (público, imutável; o iframe sandbox não manda cookie).
   get "cartoes/:sha.js", to: "cards#show", constraints: { sha: /\h{64}/ }, format: false
   post "entrar", to: "web/sessions#create"
@@ -321,6 +323,11 @@ Rails.application.routes.draw do
       post "auth/password/forgot", to: "auth#password_forgot"
       post "auth/password/reset", to: "auth#password_reset"
 
+      # appweb: telas da web transcodificadas para o app (AppScreen).
+      get "screen", to: "screens#show"
+      post "screen", to: "screens#create"
+      post "screen/bridge", to: "screens#bridge"
+
       get "me", to: "me#show"
       patch "me", to: "me#update"
       delete "me", to: "me#destroy"
@@ -358,6 +365,7 @@ Rails.application.routes.draw do
         # App do celular (F7, G17): o aparelho se registra e manda os sensores.
         resources :mobile_devices, only: %i[create destroy], shallow: true do
           post :sensors, on: :member
+          post :tag, on: :member # appweb D4: tag NFC/QR lida no celular
         end
       end
 

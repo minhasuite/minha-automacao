@@ -83,6 +83,6 @@ module ApplicationHelper
   end
 
   def icon(name, css = "size-5")
-    ICONS[name.to_s].sub("<svg ", %(<svg class="#{css}" )).html_safe # rubocop:disable Rails/OutputSafety
+    ICONS[name.to_s].sub("<svg ", %(<svg data-icon="#{name}" class="#{css}" )).html_safe # rubocop:disable Rails/OutputSafety
   end
 end

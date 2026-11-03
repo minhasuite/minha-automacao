@@ -10,6 +10,9 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
   set_current_tenant_through_filter
 
+  # appweb: pedido interno do app (AppScreen.dispatch, nunca vem de fora:
+  # chave do env, não cabeçalho) entra com o usuário do token, sem CSRF.
+  skip_forgery_protection if: -> { request.env.key?(AppScreen::ENV_KEY) }
   before_action :require_login!
   before_action :set_tenant
   before_action { Current.theme_key = cookies[:ma_theme].presence || current_user&.dashboard_prefs&.dig("theme") }
@@ -36,6 +39,7 @@ class ApplicationController < ActionController::Base
   # sessões web caem, como os tokens da API).
   def current_user
     return @current_user if defined?(@current_user)
+    return @current_user = User.where(disabled_at: nil).find_by(id: request.env[AppScreen::ENV_KEY]) if request.env.key?(AppScreen::ENV_KEY)
 
     user = User.find_by(id: session[:user_id])
     @current_user = user if user && !user.disabled? && session[:pwd] == user.password_digest.to_s.last(10)

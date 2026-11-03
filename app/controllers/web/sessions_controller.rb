@@ -70,6 +70,17 @@ module Web
 
     def new_signup; end
 
+    # appweb: link de uso único do app (AppScreen.bridge_token) → sessão web e o destino.
+    def bridge
+      data = AppScreen.redeem(params[:t]) or return redirect_to(login_path, alert: t("appweb.bridge_expired"))
+      user = User.find_by(id: data["u"])
+      return redirect_to(login_path, alert: t("appweb.bridge_expired")) if user.nil? || user.disabled?
+
+      sign_in!(user)
+      to = data["to"].to_s
+      to.match?(%r{\Ahttps?://}) ? redirect_to(to, allow_other_host: true) : redirect_to(to.start_with?("/") && !to.start_with?("//") ? to : root_path)
+    end
+
     def signup
       user = nil
       ActiveRecord::Base.transaction do

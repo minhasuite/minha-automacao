@@ -161,3 +161,68 @@ Matter) entra com uma classe e uma linha em `Integrations::PLUGINS`.
   e IP (só IP de LAN é gravado).
 - Técnico ou dono; chave de integração não. Spec: `spec/requests/tuya_pareamento_spec.rb`.
 - Chaves do SDK e o passo a passo do console: `docs/tuya.md` do app.
+
+## Telas do servidor (appweb)
+
+Toda tela da web abre no app, nativa (sem WebView): o servidor faz o pedido à
+web por dentro, com a pessoa do token, e transcodifica o HTML da mesma view
+que o navegador recebe em blocos (`AppScreen::Transcoder`); o app desenha os
+blocos com o Lista Clara (`lib/features/server_screen/server_screen.dart`).
+Formulário de plugin (integração, helper, gatilho/condição/ação do editor de
+automação, ponte, satélite…) chega ao app pela própria partial da web: não há
+tela fixa por tipo no app, e plugin novo aparece no app sem versão nova.
+
+| Para quê | Onde |
+|---|---|
+| Abrir uma tela | `GET /api/v1/screen?path=/configuracoes/saude` → `{data: {page}, meta: {status}}` |
+| Enviar um formulário ou link com método | `POST /api/v1/screen {path, method, fields: [[nome, valor], …]}` → a tela seguinte (segue o redirect com o flash) |
+| Abrir no navegador já logado (OAuth, passkey, envio de arquivo, download) | `POST /api/v1/screen/bridge {to}` → `{url}` de uso único (2 min) em `/entrar/ponte` |
+
+- `page`: `title`, `subtitle`, `back`, `actions` (botões do cabeçalho),
+  `flash` (`[{tone, text}]`), `menu` (o menu lateral) e `blocks`. Blocos (`t`):
+  `heading`, `para` (`runs` com negrito/mono/apagado/link/selo), `badge`,
+  `icon`, `image`, `card`, `row`/`col`, `list`/`item`, `table`, `details`,
+  `code`, `divider`, `link` (`kind` de botão, `method`, `confirm`, `ext`,
+  `bridge`), `form` (`action`, `method`, `hidden`, `confirm`), `field`
+  (`kind` = tipo do input, `name`, `label`, `hint`, `options`, `value`,
+  `checked`, `required`), `submit`, `subnav`, `frame` (turbo-frame com src),
+  `poll` e `reload` (o que a web faz por JS). Tipo desconhecido: o app desenha
+  os filhos.
+- Só abre rota do escopo web; sessão, senha, convite, OAuth do Alexa, idioma
+  e primeira configuração ficam de fora (`AppScreen::DENY`). Quem pode o quê é
+  o controlador da web (papel no local, dono, administrador).
+- O pedido interno usa a pilha de middlewares sem o executor (o da API já
+  roda), marca `env["ma.app_user_id"]` (só por dentro; nenhum cabeçalho chega
+  lá) e não passa pelo CSRF.
+- Ícone: o `icon()` da web marca `data-icon` no SVG; o app troca pelo Material.
+- Para a view ficar boa no app: cabeçalho pelo `web/shared/header`, campos com
+  `label for`, botão com `ss-btn-*`, card com `ss-card`; o que for só do
+  navegador leva `data-app="skip"`.
+- Spec: `spec/requests/appweb_spec.rb` (todas as telas de configuração abrem,
+  formulário de plugin falso por `stub_const` vira campos e cria, link de uso
+  único). `APPWEB_DUMP=dir` grava as páginas que viram as fixtures do app
+  (`test/fixtures/screens/`, `test/appweb_test.dart`).
+
+## App do celular: Onda D (appweb)
+
+- **Tag NFC/QR (D4):** o conteúdo da tag é `minhaautomacao://tag/<id>`. O
+  Android abre o app (intent `VIEW`/`NDEF_DISCOVERED`), que manda
+  `POST /api/v1/mobile_devices/:id/tag {tag}`; o evento `tag_scanned` dispara
+  o gatilho "Tag lida (NFC ou QR)" (`TagTrigger`, filtro opcional pelo id;
+  `{{ trigger.tag }}`, `{{ trigger.user }}`, `{{ trigger.device }}`). No app:
+  Mais → Tags NFC e QR (endereço para gravar e "Testar agora").
+- **Sensores do Android (D1):** ligando "Aparelho" em Sensores do celular, o
+  app manda `next_alarm`, `dnd`, `ringer`, `volume`, `storage_free`,
+  `interactive`, `power_save` e `network` (plugin local `packages/ma_phone`,
+  sem permissão extra). Sensor novo = entrada em `MobileAppPlugin::SENSORS`
+  (o controller aceita qualquer chave do registro).
+- **Comando no celular (D2):** campo "Comando no celular (app)" do Avisar
+  (`tts`, `dnd_on`, `dnd_off`, `silent`, `vibrate`, `normal`, `volume_max`,
+  `volume_mute`) vai no push como `command`; o app executa em vez de mostrar
+  (também com o app fechado: o plugin vale no isolate do push). `tts` fala o
+  título e a mensagem. Sem acesso ao "Não perturbe" o aviso aparece normal.
+- **Assistente do Android (D5):** o app responde a `ASSIST`/`VOICE_COMMAND`
+  (escolher em Configurações do Android → Apps padrão → Assistente) e abre a
+  folha de voz do local.
+- **Quiosque (D6):** Mais → Modo quiosque: tela cheia, sempre ligada e sem
+  abas; sair pelo botão discreto no canto.

@@ -1,0 +1,4 @@
+pt-BR:
+  appweb:
+    not_allowed: "Esta tela não abre pelo app."
+    bridge_expired: "O link do app venceu. Abra de novo pelo app."

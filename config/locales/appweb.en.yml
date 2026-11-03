@@ -1,0 +1,4 @@
+en:
+  appweb:
+    not_allowed: "This screen can't be opened from the app."
+    bridge_expired: "The app link expired. Open it again from the app."
