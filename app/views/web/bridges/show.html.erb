@@ -69,10 +69,10 @@
           <%= RQRCode::QRCode.new(@status["qr"]).as_svg(module_size: 4, standalone: true, use_path: true, viewbox: true).html_safe %>
         </div>
         <p class="mt-2 text-center text-sm text-muted"><%= t("bridges.or_code") %></p>
-        <p class="text-center font-mono text-lg font-bold tracking-wider num"><%= @status["manual"].to_s.gsub(/\D/, "").sub(/\A(\d{4})(\d{3})(\d{4})/, '\1-\2-\3') %></p>
-        <p class="mt-2 text-xs text-muted"><%= t("bridges.pair_help") %></p>
+        <p class="text-center font-mono text-lg font-bold tracking-wider num"><%= @bridge.format_code(@status["manual"]) %></p>
+        <p class="mt-2 text-xs text-muted"><%= @bridge.pair_help %></p>
       <% elsif @status.nil? %>
-        <p class="mt-2 text-sm text-muted"><%= t("bridges.start_html") %></p>
+        <p class="mt-2 text-sm text-muted"><%= sanitize(@bridge.start_html) %></p>
       <% end %>
     </section>
 

@@ -10,7 +10,7 @@
 # API do serviço (/api/v1/bridges/:ponte) são comuns. Ponte nova = classe +
 # nome aqui.
 module Bridges
-  PLUGINS = %w[MatterBridge].freeze
+  PLUGINS = %w[MatterBridge HomekitBridge].freeze
   STATUS_TTL = 2.minutes # o serviço manda a situação a cada poucos segundos; sem ela = fora do ar
 
   module_function
@@ -68,6 +68,11 @@ module Bridges
       end
 
       def type_for(point) = self::TYPES.find { |_k, t| t[:applies].call(point) }&.first
+
+      # ondaC1: textos e código de pareamento da tela da ponte, por ponte (padrão: os da Matter).
+      def pair_help = text(:pair_help, default: I18n.t("bridges.pair_help"))
+      def start_html = text(:start_html, default: I18n.t("bridges.start_html"))
+      def format_code(code) = code.to_s.gsub(/\D/, "").sub(/\A(\d{4})(\d{3})(\d{4})/, '\1-\2-\3')
       def label(type) = text("types.#{type}", default: self::TYPES.dig(type, :label) || type)
       def state(type, point) = self::TYPES.fetch(type)[:state].call(point, point.value)
       def listen(type) = self::TYPES.fetch(type)[:commands].to_h.keys

@@ -1,0 +1,18 @@
+{
+  "name": "minha-automacao-homekit-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ponte HomeKit do Minha Automação (hap-nodejs): expõe os pontos escolhidos para o app Casa da Apple.",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test test.js"
+  },
+  "dependencies": {
+    "hap-nodejs": "1.1.0"
+  }
+}

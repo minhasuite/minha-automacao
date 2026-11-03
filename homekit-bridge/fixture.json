@@ -1,0 +1,166 @@
+{
+ "devices": [
+  {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "type": "garage_door",
+   "name": "Portão",
+   "reachable": true,
+   "state": {
+    "GarageDoorOpener": {
+     "CurrentDoorState": 1,
+     "TargetDoorState": 1,
+     "ObstructionDetected": false
+    }
+   },
+   "listen": [
+    "GarageDoorOpener.TargetDoorState"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000002",
+   "type": "window_covering",
+   "name": "Persiana",
+   "reachable": true,
+   "state": {
+    "WindowCovering": {
+     "CurrentPosition": 50,
+     "TargetPosition": 50,
+     "PositionState": 2
+    }
+   },
+   "listen": [
+    "WindowCovering.TargetPosition"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000003",
+   "type": "thermostat",
+   "name": "Ar da sala",
+   "reachable": true,
+   "state": {
+    "Thermostat": {
+     "CurrentTemperature": 25.0,
+     "TargetTemperature": 23.0,
+     "CurrentHeatingCoolingState": 0,
+     "TargetHeatingCoolingState": 3,
+     "TemperatureDisplayUnits": 0
+    }
+   },
+   "listen": [
+    "Thermostat.TargetTemperature"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000004",
+   "type": "color_light",
+   "name": "Fita LED",
+   "reachable": true,
+   "state": {
+    "Lightbulb": {
+     "On": true,
+     "Brightness": 80,
+     "Hue": 120,
+     "Saturation": 100
+    }
+   },
+   "listen": [
+    "Lightbulb.On",
+    "Lightbulb.Brightness",
+    "Lightbulb.Hue",
+    "Lightbulb.Saturation"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000005",
+   "type": "dimmable_light",
+   "name": "Abajur",
+   "reachable": true,
+   "state": {
+    "Lightbulb": {
+     "On": true,
+     "Brightness": 50
+    }
+   },
+   "listen": [
+    "Lightbulb.On",
+    "Lightbulb.Brightness"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000006",
+   "type": "light",
+   "name": "Luz da sala",
+   "reachable": true,
+   "state": {
+    "Lightbulb": {
+     "On": false
+    }
+   },
+   "listen": [
+    "Lightbulb.On"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000007",
+   "type": "switch",
+   "name": "Bomba",
+   "reachable": true,
+   "state": {
+    "Switch": {
+     "On": true
+    }
+   },
+   "listen": [
+    "Switch.On"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000008",
+   "type": "contact_sensor",
+   "name": "Porta",
+   "reachable": true,
+   "state": {
+    "ContactSensor": {
+     "ContactSensorState": 0
+    }
+   },
+   "listen": []
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000009",
+   "type": "motion_sensor",
+   "name": "Presença",
+   "reachable": true,
+   "state": {
+    "MotionSensor": {
+     "MotionDetected": false
+    }
+   },
+   "listen": []
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000010",
+   "type": "temperature_sensor",
+   "name": "Temperatura",
+   "reachable": true,
+   "state": {
+    "TemperatureSensor": {
+     "CurrentTemperature": 26.5
+    }
+   },
+   "listen": []
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000011",
+   "type": "humidity_sensor",
+   "name": "Umidade",
+   "reachable": true,
+   "state": {
+    "HumiditySensor": {
+     "CurrentRelativeHumidity": 55.0
+    }
+   },
+   "listen": []
+  }
+ ]
+}
