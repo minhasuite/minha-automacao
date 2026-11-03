@@ -49,6 +49,11 @@ module Integrations
       { "uid" => "ma#{digest[0, 20]}", "password" => digest[20, 32], "country_code" => "55", "home_name" => site.name }
     end
 
+    def self.pairing_params
+      super + [ :device_id, :local_key, :product_name, :category, :ip, :version, :parent_id,
+                { schema: [ :id, :code, :mode, :type, :property, { property: {} } ] } ]
+    end
+
     # Tipo do dp no schema do SDK → tipo da API da nuvem (Tuya::Cloud.points).
     SDK_TYPES = { "bool" => "Boolean", "value" => "Integer", "enum" => "Enum", "string" => "String", "bitmap" => "Bitmap", "raw" => "Raw" }.freeze
 

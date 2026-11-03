@@ -17,7 +17,7 @@ module Api
 
       def create
         site, plugin = site_and_plugin
-        device = plugin.pair(site, params.except(:controller, :action, :site_id, :provider).permit!.to_h.with_indifferent_access)
+        device = plugin.pair(site, params.permit(*plugin.pairing_params).to_h.with_indifferent_access)
         render_data(DeviceSerializer.new(device, params: { reveal: true }).to_h, status: device.previously_new_record? ? :created : :ok)
       rescue Integrations::Error => e
         render_error(:pairing_failed, e.message, status: :unprocessable_content)
