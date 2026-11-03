@@ -71,6 +71,35 @@ RSpec.describe "Web ondaB1: assistente de voz" do
     expect(response.body).to include("Wyoming (Whisper, Piper, openWakeWord)", "wyoming-piper")
   end
 
+  it "B7: cria token MCP (aparece uma vez), cliente chama /mcp com Bearer, revoga" do
+    get "/locais/#{site.id}/assistente", params: { aba: "mcp" }
+    expect(response.body).to include("Conectar um cliente MCP", "/mcp", "get_live_context")
+    post "/locais/#{site.id}/assistente/mcp", params: { name: "Teste Claude" }
+    token = response.body[/ma_mcp_[\w-]+/]
+    expect(token).to be_present
+    expect(response.body).to include("Copie agora", "mcpServers")
+
+    headers = { "Authorization" => "Bearer #{token}", "Content-Type" => "application/json" }
+    post "/mcp", params: { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "turn_on", arguments: { name: "luz da sala" } } }.to_json, headers: headers
+    expect(response.parsed_body["result"]["content"].first["text"]).to eq("Liguei Luz.")
+    post "/mcp", params: { jsonrpc: "2.0", method: "notifications/initialized" }.to_json, headers: headers
+    expect(response).to have_http_status(:accepted)
+    post "/mcp", params: "{", headers: headers
+    expect(response.parsed_body["error"]["code"]).to eq(-32_700)
+    get "/mcp", headers: headers
+    expect(response).to have_http_status(:method_not_allowed)
+    post "/mcp", params: "{}", headers: { "Authorization" => "Bearer errado" }
+    expect(response).to have_http_status(:unauthorized)
+
+    get "/locais/#{site.id}/assistente", params: { aba: "mcp" }
+    expect(response.body).to include("Teste Claude")
+    expect(response.body).not_to include(token)
+    tk = ApiToken.mcp.sole
+    delete "/locais/#{site.id}/assistente/mcp/#{tk.id}"
+    post "/mcp", params: { jsonrpc: "2.0", id: 2, method: "ping" }.to_json, headers: headers
+    expect(response).to have_http_status(:unauthorized)
+  end
+
   it "B5: em inglês a tela sai em inglês; quem não é técnico não entra" do
     user.update!(dashboard_prefs: { "locale" => "en" })
     get "/locais/#{site.id}/assistente", params: { aba: "frases" }

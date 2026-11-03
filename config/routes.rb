@@ -2,6 +2,10 @@ Rails.application.routes.draw do
   # Liveness do container (Docker/Caddy).
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # ondaB1 (B7): servidor MCP (JSON-RPC; token MCP do local).
+  post "mcp", to: "mcp#create", as: :mcp
+  get "mcp", to: "mcp#show"
+
   # Páginas públicas exigidas pela Play.
   get "privacidade", to: "legal#privacy", as: :privacy
   get "termos", to: "legal#terms", as: :terms
@@ -182,6 +186,8 @@ Rails.application.routes.draw do
       patch "assistente/satelites/:id", to: "assist_settings#update_satellite", as: :assist_satellite
       delete "assistente/satelites/:id", to: "assist_settings#destroy_satellite"
       post "assistente/satelites/:id/testar", to: "assist_settings#test_satellite", as: :assist_satellite_test
+      post "assistente/mcp", to: "assist_settings#create_mcp_token", as: :assist_mcp_tokens
+      delete "assistente/mcp/:id", to: "assist_settings#revoke_mcp_token", as: :assist_mcp_token
       # Alexa Smart Home (F9): o que expor, nome falado, vínculos e cliente OAuth.
       resource :alexa, controller: "alexa", path: "alexa", only: %i[show update] do
         post :client, path: "cliente"

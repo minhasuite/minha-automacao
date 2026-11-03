@@ -1,0 +1,51 @@
+<%# locals: (site:) -%>
+<% endpoint = "#{request.base_url}/mcp" %>
+<p class="text-sm text-muted mb-4 max-w-3xl"><%= t("assist_settings.mcp.pitch") %></p>
+<div class="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+  <section class="ss-card ss-card-pad vz-pipe" aria-labelledby="mcp-t">
+    <h2 id="mcp-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("code", "size-5") %><%= t("assist_settings.mcp.connect") %></h2>
+    <dl class="mt-3 grid gap-3 text-sm">
+      <div><dt class="ss-label"><%= t("assist_settings.mcp.endpoint") %></dt>
+        <dd class="flex gap-2" data-controller="clipboard">
+          <%= text_field_tag :mcp_url, endpoint, readonly: true, id: "mcp-url", class: "ss-input num text-xs", data: { clipboard_target: "source" }, "aria-label": t("assist_settings.mcp.endpoint") %>
+          <button type="button" class="ss-btn ss-btn-outline" data-action="clipboard#copy"><%= icon("duplicate", "size-4") %><span><%= t("assist_settings.mcp.copy") %></span></button>
+        </dd></div>
+      <div><dt class="ss-label"><%= t("assist_settings.mcp.auth") %></dt><dd class="text-muted"><%= t("assist_settings.mcp.auth_hint") %></dd></div>
+    </dl>
+    <% if @new_token %>
+      <div class="vz-result vz-result-ok mt-4" role="status">
+        <p class="font-bold text-ink flex items-center gap-2"><%= icon("check-circle", "size-5") %><%= t("assist_settings.mcp.once") %></p>
+        <div class="mt-2 flex gap-2" data-controller="clipboard">
+          <%= text_field_tag :mcp_token, @new_token, readonly: true, id: "mcp-token", class: "ss-input num text-xs", data: { clipboard_target: "source" }, "aria-label": t("assist_settings.mcp.token") %>
+          <button type="button" class="ss-btn ss-btn-outline" data-action="clipboard#copy"><%= icon("duplicate", "size-4") %><span><%= t("assist_settings.mcp.copy") %></span></button>
+        </div>
+        <p class="ss-label mt-3"><%= t("assist_settings.mcp.config") %></p>
+        <pre class="vz-secret"><code><%= JSON.pretty_generate("mcpServers" => { site.name.parameterize.presence || "casa" => { "type" => "http", "url" => endpoint, "headers" => { "Authorization" => "Bearer #{@new_token}" } } }) %></code></pre>
+      </div>
+    <% end %>
+    <%= form_with url: site_assist_mcp_tokens_path(site), method: :post, class: "mt-4 flex flex-wrap gap-2 items-end", data: { turbo: false } do %>
+      <div class="flex-1 min-w-48"><label for="mcp-name" class="ss-label"><%= t("assist_settings.mcp.name") %></label><%= text_field_tag :name, nil, id: "mcp-name", class: "ss-input", maxlength: 60, placeholder: t("assist_settings.mcp.name_ph"), required: true %></div>
+      <button class="ss-btn ss-btn-primary"><%= icon("plus", "size-4") %><%= t("assist_settings.mcp.create") %></button>
+    <% end %>
+    <% if @mcp_tokens.any? %>
+      <ul class="mt-4 grid gap-2" aria-label="<%= t("assist_settings.mcp.tokens") %>">
+        <% @mcp_tokens.each do |tk| %>
+          <li class="vz-token">
+            <%= icon("lock-closed", "size-4 text-muted") %>
+            <span class="min-w-0 flex-1"><span class="block font-semibold text-ink truncate"><%= tk.device_name %></span>
+              <span class="block text-xs text-muted"><%= tk.last_used_at ? t("assist_settings.mcp.used", ago: ago_text(tk.last_used_at)) : t("assist_settings.mcp.never") %></span></span>
+            <%= button_to t("assist_settings.mcp.revoke"), site_assist_mcp_token_path(site, tk), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger",
+                          form: { data: { turbo_confirm: t("assist_settings.mcp.confirm_revoke", name: tk.device_name) } } %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+  <section class="ss-card ss-card-pad" aria-labelledby="mcp-tools">
+    <h2 id="mcp-tools" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("sparkles", "size-5") %><%= t("assist_settings.mcp.tools") %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("assist_settings.mcp.tools_hint") %></p>
+    <ul class="ss-chips mt-3">
+      <% Assist::Mcp.tools(site).each do |tool| %><li class="ss-chip" title="<%= tool["description"] %>"><code><%= tool["name"] %></code></li><% end %>
+    </ul>
+  </section>
+</div>

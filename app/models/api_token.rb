@@ -59,6 +59,25 @@ class ApiToken < ApplicationRecord
     code
   end
 
+  # --- MCP (ondaB1, B7): token de longa duração de uma pessoa num local ----
+  MCP_TTL = 1.year
+  scope :mcp, -> { where(client: "mcp") }
+
+  # → [registro, token em claro] (o claro só aparece uma vez).
+  def self.mcp!(user, site, name)
+    plain = "ma_mcp_#{generate_token}"
+    token = create!(user: user, site: site, client: "mcp", device_name: name.to_s.squish.first(60).presence || "MCP",
+                    access_token_digest: digest(plain), refresh_token_digest: digest(generate_token),
+                    access_expires_at: MCP_TTL.from_now, refresh_expires_at: MCP_TTL.from_now)
+    [ token, plain ]
+  end
+
+  def self.find_mcp(plain)
+    return if plain.blank?
+
+    active.mcp.where(access_token_digest: digest(plain)).where("access_expires_at > ?", Time.current).first
+  end
+
   # Troca o código (uma vez só: a rotação muda o digest) → [registro, access, refresh] ou nil.
   def self.redeem_alexa_code(code, redirect_uri)
     token = active.alexa.where(last_used_at: nil, access_token_digest: digest(code)).where("access_expires_at > ?", Time.current).first

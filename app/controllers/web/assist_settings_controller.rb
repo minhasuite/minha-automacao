@@ -5,7 +5,7 @@ module Web
   # teste ao vivo, sem executar) e, nas abas dos próximos pacotes, satélites
   # e servidor MCP. Ver e mudar: técnico ou dono do local.
   class AssistSettingsController < ApplicationController
-    TABS = %w[pipelines satelites depuracao frases].freeze
+    TABS = %w[pipelines satelites depuracao frases mcp].freeze
 
     before_action -> { @site = Site.find(params[:site_id]) }
     before_action -> { authorize_site!(@site, :manage) }
@@ -16,6 +16,7 @@ module Web
       case @tab
       when "depuracao" then @runs = AssistRun.where(site: @site).includes(:user, :pipeline).order(created_at: :desc).limit(50)
       when "frases" then frases
+      when "mcp" then @mcp_tokens = mcp_tokens
       when "satelites" then @satellites = AssistSatellite.where(site: @site).includes(:area, :pipeline, :device).order(:name).to_a
       end
     end
@@ -54,7 +55,23 @@ module Web
       redirect_to back, alert: e.message
     end
 
+    # Token MCP novo: aparece uma vez na própria página (sem Turbo, sem flash).
+    def create_mcp_token
+      _token, @new_token = ApiToken.mcp!(current_user, @site, params[:name])
+      @tab = "mcp"
+      @pipelines = []
+      @mcp_tokens = mcp_tokens
+      render :show
+    end
+
+    def revoke_mcp_token
+      mcp_tokens.find { |tk| tk.id == params[:id] }&.revoke!
+      redirect_to site_assist_settings_path(@site, aba: "mcp"), notice: t("assist_settings.flash.mcp_revoked")
+    end
+
     private
+
+    def mcp_tokens = ApiToken.active.mcp.where(site_id: @site.id, user_id: current_user.id).where("access_expires_at > ?", Time.current).order(:created_at).to_a
 
     def save_satellite(sat, notice)
       f = params.require(:satellite).permit(:name, :kind, :host, :port, :device_id, :area_id, :pipeline_id, :enabled)

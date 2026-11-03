@@ -91,6 +91,17 @@ kinds:, fields:` + `transcribe`/`speak`/`detect`/`check`) e o nome em
   `http://APP_HOST`). O `Assist::Satellites::Listener` sobe no worker
   (`ASSIST_SATELLITES=off` desliga). Fim da fala: `ASSIST_VAD_RMS`.
 
+## Servidor MCP
+
+`POST /mcp` (JSON-RPC 2.0, transporte "streamable HTTP" sem SSE; `GET` =
+405), com `Authorization: Bearer ma_mcp_...`: token de longa duração (1 ano)
+de uma pessoa num local, criado na aba MCP (aparece uma vez; revogável;
+`ApiToken` com `client: "mcp"`). Métodos: `initialize`, `ping`,
+`tools/list`, `tools/call`, `resources/list`, `prompts/list` e lote.
+Ferramentas = as intenções com `tool` (as mesmas da IA) + `get_live_context`
+(estado dos pontos expostos). Roda com o papel x risco da pessoa, só o
+exposto ao Assist, crítico nunca; cada chamada fica na Depuração (origem MCP).
+
 ## Segurança
 
 - Comando por voz usa `source: "voice"` e o usuário que falou; segue o papel

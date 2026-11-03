@@ -51,15 +51,20 @@ module Assist
       I18n.with_locale(lang) do
         ctx = Ctx.new(site: site, user: user, role: site.role_for(user), heard: "#{name}(#{args.to_json})".first(300), language: lang)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        text, points, known = if name == CONTEXT_TOOL then [ Llm.context(ctx), [], true ]
-                              elsif Llm.tools.any? { |t| t.key == name } then [ *Llm.run_tool(ctx, name, args), true ]
-                              else [ "ferramenta desconhecida: #{name}", [], false ]
-                              end
+        text, points, known = run(ctx, name, args)
         ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
         AssistRun.create!(site: site, user: user, source: "mcp", language: lang, heard: ctx.heard, intent: name, reply: text.first(2000),
                           stages: [ { "stage" => "intent", "ms" => ms, "intent" => name, "slots" => args.transform_values(&:to_s) } ], duration_ms: ms)
         { "content" => [ { "type" => "text", "text" => text } ], "isError" => !known, "structuredContent" => { "points" => points.map(&:id) } }
       end
+    end
+
+    # → [texto, pontos, ferramenta conhecida?]
+    def run(ctx, name, args)
+      return [ Llm.context(ctx), [], true ] if name == CONTEXT_TOOL
+      return [ *Llm.run_tool(ctx, name, args), true ] if Llm.tools.any? { |t| t.key == name }
+
+      [ "ferramenta desconhecida: #{name}", [], false ]
     end
 
     def error(id, code, message) = { "jsonrpc" => "2.0", "id" => id, "error" => { "code" => code, "message" => message } }

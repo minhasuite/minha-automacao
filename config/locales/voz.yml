@@ -34,6 +34,7 @@ pt-BR:
       depuracao: Depuração
       frases: Frases
       satelites: Satélites
+      mcp: MCP
     flash:
       created: Pipeline criado.
       saved: Pipeline salvo.
@@ -43,6 +44,7 @@ pt-BR:
       sat_removed: Satélite removido.
       sat_ok: '%{name} respondeu.'
       sat_device: Satélite ESPHome usa a conexão do aparelho %{name}.
+      mcp_revoked: Token revogado.
     agents:
       local: Local (intenções + Perguntar à casa)
       local_llm: Local, depois IA com ferramentas
@@ -138,6 +140,26 @@ pt-BR:
       create: Criar satélite
       test: Testar conexão
       confirm_remove: Remover o satélite %{name}?
+    mcp:
+      pitch: 'Servidor MCP: Claude, ChatGPT e outros agentes de IA controlam a casa pelas mesmas ferramentas do assistente, com o seu papel e só o que está exposto ao Assist. Crítico nunca.'
+      connect: Conectar um cliente MCP
+      endpoint: Endereço
+      copy: Copiar
+      auth: Autenticação
+      auth_hint: 'Cabeçalho Authorization: Bearer com um token deste local. O token age como você.'
+      once: 'Token criado. Copie agora: ele não aparece de novo.'
+      token: Token MCP
+      config: 'Configuração do cliente (ex.: Claude)'
+      name: Nome do cliente
+      name_ph: Claude no notebook
+      create: Criar token
+      tokens: Tokens deste local
+      used: usado %{ago}
+      never: nunca usado
+      revoke: Revogar
+      confirm_revoke: Revogar o token %{name}? O cliente para de funcionar.
+      tools: Ferramentas expostas
+      tools_hint: As intenções do assistente viram ferramentas; cada chamada aparece na Depuração.
 en:
   assist:
     empty: Say or type what you want.
@@ -173,6 +195,7 @@ en:
       depuracao: Debug
       frases: Sentences
       satelites: Satellites
+      mcp: MCP
     flash:
       created: Pipeline created.
       saved: Pipeline saved.
@@ -182,6 +205,7 @@ en:
       sat_removed: Satellite removed.
       sat_ok: '%{name} answered.'
       sat_device: ESPHome satellite uses the connection of device %{name}.
+      mcp_revoked: Token revoked.
     agents:
       local: Local (intents + Ask the house)
       local_llm: Local, then AI with tools
@@ -277,6 +301,26 @@ en:
       create: Create satellite
       test: Test connection
       confirm_remove: Remove the satellite %{name}?
+    mcp:
+      pitch: 'MCP server: Claude, ChatGPT and other AI agents control the house with the same tools as the assistant, with your role and only what is exposed to Assist. Critical never.'
+      connect: Connect an MCP client
+      endpoint: Address
+      copy: Copy
+      auth: Authentication
+      auth_hint: 'Authorization: Bearer header with a token for this site. The token acts as you.'
+      once: 'Token created. Copy it now: it won''t be shown again.'
+      token: MCP token
+      config: Client configuration (e.g. Claude)
+      name: Client name
+      name_ph: Claude on the laptop
+      create: Create token
+      tokens: Tokens for this site
+      used: used %{ago}
+      never: never used
+      revoke: Revoke
+      confirm_revoke: Revoke the token %{name}? The client stops working.
+      tools: Exposed tools
+      tools_hint: The assistant's intents become tools; each call shows up in Debug.
 es:
   assist:
     empty: Di o escribe lo que quieres.
@@ -312,6 +356,7 @@ es:
       depuracao: Depuración
       frases: Frases
       satelites: Satélites
+      mcp: MCP
     flash:
       created: Pipeline creado.
       saved: Pipeline guardado.
@@ -321,6 +366,7 @@ es:
       sat_removed: Satélite quitado.
       sat_ok: '%{name} respondió.'
       sat_device: El satélite ESPHome usa la conexión del aparato %{name}.
+      mcp_revoked: Token revocado.
     agents:
       local: Local (intenciones + Preguntar a la casa)
       local_llm: Local, después IA con herramientas
@@ -416,3 +462,23 @@ es:
       create: Crear satélite
       test: Probar conexión
       confirm_remove: ¿Quitar el satélite %{name}?
+    mcp:
+      pitch: 'Servidor MCP: Claude, ChatGPT y otros agentes de IA controlan la casa con las mismas herramientas del asistente, con tu rol y solo lo expuesto a Assist. Lo crítico nunca.'
+      connect: Conectar un cliente MCP
+      endpoint: Dirección
+      copy: Copiar
+      auth: Autenticación
+      auth_hint: 'Encabezado Authorization: Bearer con un token de este lugar. El token actúa como tú.'
+      once: 'Token creado. Cópialo ahora: no vuelve a aparecer.'
+      token: Token MCP
+      config: 'Configuración del cliente (ej.: Claude)'
+      name: Nombre del cliente
+      name_ph: Claude en el portátil
+      create: Crear token
+      tokens: Tokens de este lugar
+      used: usado %{ago}
+      never: nunca usado
+      revoke: Revocar
+      confirm_revoke: ¿Revocar el token %{name}? El cliente deja de funcionar.
+      tools: Herramientas expuestas
+      tools_hint: Las intenciones del asistente se vuelven herramientas; cada llamada aparece en Depuración.

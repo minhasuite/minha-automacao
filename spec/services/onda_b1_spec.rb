@@ -417,6 +417,49 @@ modo festa", "response" => "Boa noite, {quem}!" })
     end
   end
 
+  describe "B7 servidor MCP" do
+    def rpc(method, params = {}, id: 1, user: owner) = Assist::Mcp.handle({ "jsonrpc" => "2.0", "id" => id, "method" => method, "params" => params }, site: site, user: user)
+
+    it "initialize, tools/list (intenções + contexto) e tools/call com papel x risco, registrado na depuração" do
+      expect(rpc("initialize", { "protocolVersion" => "2025-03-26" })["result"]).to include("protocolVersion" => "2025-03-26", "serverInfo" => include("name" => "Minha Automação"))
+      expect(Assist::Mcp.handle({ "jsonrpc" => "2.0", "method" => "notifications/initialized" }, site: site, user: owner)).to be_nil
+      names = rpc("tools/list")["result"]["tools"].pluck("name")
+      expect(names).to include("turn_on", "light_brightness", "timer_start", "todo_add", "get_live_context")
+      expect(names).not_to include("nevermind", "conversation")
+      expect(rpc("tools/list")["result"]["tools"].find { |t| t["name"] == "light_brightness" }["inputSchema"]["properties"]["brightness"]).to include("type" => "number")
+
+      luz_quarto.update!(expose: { "assist" => false })
+      ctx = rpc("tools/call", { "name" => "get_live_context" })["result"]["content"].first["text"]
+      expect(ctx).to include("Luz Lâmpada (Sala) [onoff]")
+      expect(ctx).not_to include("Abajur")
+      r = rpc("tools/call", { "name" => "turn_on", "arguments" => { "name" => "luz da sala" } })["result"]
+      expect(r).to include("isError" => false, "content" => [ { "type" => "text", "text" => "Liguei Luz." } ])
+      expect(luz.reload.value).to be true
+      expect(AssistRun.find_by(intent: "turn_on")).to have_attributes(source: "mcp", intent: "turn_on", reply: "Liguei Luz.", user_id: owner.id)
+
+      guest = create(:user, tenant: tenant, role: "member")
+      create(:site_membership, site: site, user: guest, role: "guest")
+      brilho.update!(risk: "sensitive")
+      expect(rpc("tools/call", { "name" => "light_brightness", "arguments" => { "name" => "luz da sala", "brightness" => 10 } }, user: guest)["result"]["content"].first["text"]).to include("não posso comandar Brilho")
+      expect(rpc("tools/call", { "name" => "rm" })["result"]["isError"]).to be true
+      expect(rpc("nada")["error"]).to include("code" => -32_601)
+      expect(Assist::Mcp.handle({ "id" => 1 }, site: site, user: owner)["error"]["code"]).to eq(-32_600)
+      expect(Assist::Mcp.handle([ { "jsonrpc" => "2.0", "id" => 7, "method" => "ping" } ], site: site, user: owner)).to eq([ { "jsonrpc" => "2.0", "id" => 7, "result" => {} } ])
+    end
+
+    it "ferramenta nova entra pelo registro de intenções e já aparece no MCP" do
+      fake = Class.new(Assist::Intent) do
+        describe key: "teste_eco", slots: %w[texto], description: "Eco de teste", sentences: {}
+        texts en: { description: "Test echo" }, es: { description: "Eco de prueba" }
+        def self.handle(_ctx, slots) = reply("eco #{slots['texto']}")
+      end
+      stub_const("Assist::Intents::TesteEco", fake)
+      stub_const("Assist::INTENTS", Assist::INTENTS + %w[TesteEco])
+      expect(rpc("tools/list")["result"]["tools"].pluck("name")).to include("teste_eco")
+      expect(rpc("tools/call", { "name" => "teste_eco", "arguments" => { "texto" => "oi" } })["result"]["content"].first["text"]).to eq("eco oi")
+    end
+  end
+
   describe "B3 Assist multilíngue" do
     it "en e es: liga, brilho, timer, lista e respostas no idioma da frase" do
       expect(say("turn on the living room light", language: "en")).to include("intent" => "turn_on", "text" => "Turned on Luz.", "language" => "en")

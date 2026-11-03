@@ -64,22 +64,27 @@ module Assist
       [ "argumentos inválidos (JSON)", [] ]
     end
 
-    def system(ctx)
+    # Estado dos pontos expostos ao Assist, uma linha por ponto (o GetLiveContext do HA).
+    def context(ctx)
       lines = Assist.exposed(ctx.site.points).first(MAX_CONTEXT).map do |p|
         area = p.area || p.device&.area
         "- #{p.display_names.compact.join(' ')}#{" (#{area.name})" if area} [#{p.capability}]: #{p.quality == 'good' ? Assist.value_text(p) : '?'}"
       end
+      "Hora local: #{I18n.l(Time.current, format: '%d/%m/%Y %H:%M')}.\n#{lines.join("\n").presence || '- nenhum'}"
+    end
+
+    def system(ctx)
       catalog = tools.map { |t| "- #{t.key}(#{t.slots.join(', ')}): #{t.description}" }
       <<~TXT
         Você é o assistente de voz de #{ctx.site.name}. Responda em #{LANGUAGES.fetch(ctx.language)}, curto (uma ou duas frases), sem markdown.
         Para agir na casa, chame ferramentas em "calls" (args em JSON com os parâmetros dela) e deixe "say" vazio; depois dos
         resultados, responda em "say" com "calls" vazio. Use os nomes como aparecem abaixo. Se a ferramenta recusar
-        (permissão ou risco), explique; nunca invente estado. Hora local: #{I18n.l(Time.current, format: '%d/%m/%Y %H:%M')}.
+        (permissão ou risco), explique; nunca invente estado.
         #{"A pessoa está em #{ctx.area.name}." if ctx.area}
         Ferramentas:
         #{catalog.join("\n")}
         Pontos expostos:
-        #{lines.join("\n").presence || '- nenhum'}
+        #{context(ctx)}
       TXT
     end
 
