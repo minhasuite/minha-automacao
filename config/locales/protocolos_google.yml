@@ -1,6 +1,10 @@
 # ondaC1 (C6): Google Home cloud-to-cloud.
 pt-BR:
   protocols:
+    homekit:
+      code: "Código HomeKit (8 dígitos)"
+      code_keep: "vazio = manter o pareamento"
+      note_html: "O código está na etiqueta ou na caixa do aparelho. O acessório precisa estar livre: se estiver no app Casa, remova-o lá antes (o HomeKit aceita um controlador por vez). Aparelhos Bluetooth e Thread ficam para a ponte (Matter)."
     google:
       summary: "Resumo do Google Home"
       exposed: "Pontos expostos"
@@ -41,6 +45,10 @@ pt-BR:
       critical_confirm: "%{name} é crítico: marque a confirmação para expor ao Google."
 en:
   protocols:
+    homekit:
+      code: "HomeKit code (8 digits)"
+      code_keep: "empty = keep the pairing"
+      note_html: "The code is on the device label or box. The accessory must be free: if it's in the Home app, remove it there first (HomeKit takes one controller at a time). Bluetooth and Thread devices go through the bridge (Matter)."
     google:
       summary: "Google Home summary"
       exposed: "Exposed points"
@@ -81,6 +89,10 @@ en:
       critical_confirm: "%{name} is critical: check the confirmation to expose it to Google."
 es:
   protocols:
+    homekit:
+      code: "Código HomeKit (8 dígitos)"
+      code_keep: "vacío = mantener la vinculación"
+      note_html: "El código está en la etiqueta o la caja del aparato. El accesorio debe estar libre: si está en la app Casa, quítalo allí antes (HomeKit acepta un controlador por vez). Los aparatos Bluetooth y Thread van por el puente (Matter)."
     google:
       summary: "Resumen de Google Home"
       exposed: "Puntos expuestos"

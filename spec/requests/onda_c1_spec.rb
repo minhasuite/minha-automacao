@@ -148,4 +148,14 @@ RSpec.describe "Protocolos e ecossistemas (ondaC1)" do
       expect(response.body).to include("Leader", "Create a network")
     end
   end
+
+  it "catálogo e formulário dos tipos novos nos três idiomas" do
+    { "bluetooth" => "ble-scanner", "thread" => "8081", "google_home" => "Id do projeto no Google", "homekit_controller" => "Código HomeKit" }.each do |tipo, text|
+      get "/locais/#{site.id}/integracoes/nova", params: { tipo: tipo }
+      expect(response.body).to include(text)
+    end
+    user.update!(dashboard_prefs: user.dashboard_prefs.to_h.merge("locale" => "es"))
+    get "/locais/#{site.id}/integracoes"
+    expect(response.body).to include("Bluetooth (adaptador del servidor)", "HomeKit (aparatos)", "Google Home y Asistente de Google")
+  end
 end

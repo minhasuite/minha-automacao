@@ -1,0 +1,17 @@
+# HomeKit (ondaC1, C5): característica do HAP (tipo curto) → ponto. `on` =
+# valores brutos que valem verdadeiro; `values` = bruto → opção (enum).
+# Característica nova = uma linha aqui.
+characteristics:
+  "25": { name: Liga/desliga, capability: onoff }
+  "B0": { name: Ligado, capability: onoff }
+  "8": { name: Brilho, capability: dimmer, min: 0, max: 100 }
+  "11": { name: Temperatura, capability: measure, unit: "°C", device_class: temperature, state_class: measurement }
+  "35": { name: Temperatura alvo, capability: setpoint, unit: "°C", device_class: temperature }
+  "10": { name: Umidade, capability: measure, unit: "%", device_class: humidity, state_class: measurement }
+  "6A": { name: Abertura, capability: contact, "on": [1] }
+  "22": { name: Movimento, capability: motion }
+  "7C": { name: Posição, capability: setpoint, unit: "%", min: 0, max: 100 }
+  "32": { name: Portão, capability: enum, options: [open, closed], values: { 0: open, 1: closed }, risk: critical }
+  "1E": { name: Fechadura, capability: enum, options: [unlocked, locked], values: { 0: unlocked, 1: locked }, risk: critical }
+  "68": { name: Bateria, capability: measure, unit: "%", device_class: battery, state_class: measurement }
+  "6B": { name: Luminosidade, capability: measure, unit: lx, device_class: illuminance, state_class: measurement }

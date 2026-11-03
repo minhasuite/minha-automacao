@@ -14,7 +14,7 @@ module Drivers
                "growatt" => "Drivers::Growatt", "dirigera" => "Drivers::Dirigera", "sonos" => "Drivers::Sonos", "govee" => "Drivers::Govee",
                "zwave_js" => "Drivers::ZwaveJs", "ble_proxy" => "Drivers::BleProxy",
               # ondaC1: Bluetooth do próprio servidor.
-              "bluetooth" => "Drivers::Bluetooth" }.freeze
+              "bluetooth" => "Drivers::Bluetooth", "homekit" => "Drivers::Homekit" }.freeze
 
   def self.supported?(device) = REGISTRY.key?(device.driver)
 

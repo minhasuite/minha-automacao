@@ -1,0 +1,14 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<% if integration.nil? %>
+  <div><%= f.label :name, t("integrations.forms.common.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", value: params[:nome], placeholder: "HomeKit", maxlength: 80 %></div>
+<% end %>
+<div class="grid gap-4 grid-cols-[1fr_7rem]">
+  <div><%= f.label :host, t("integrations.forms.common.host"), class: "ss-label" %><%= f.text_field :host, class: "ss-input num", value: params[:host].presence || s["host"], placeholder: "192.168.0.60", autocomplete: "off", spellcheck: false %></div>
+  <div><%= f.label :port, t("integrations.forms.common.port"), class: "ss-label" %><%= f.number_field :port, class: "ss-input num", value: params[:port].presence || s["port"], placeholder: "80" %></div>
+</div>
+<div>
+  <%= f.label :code, t("protocols.homekit.code"), class: "ss-label" %>
+  <%= f.text_field :code, class: "ss-input font-mono num", inputmode: "numeric", autocomplete: "off", placeholder: integration ? t("protocols.homekit.code_keep") : "031-45-154" %>
+</div>
+<p class="text-xs text-muted"><%= t("protocols.homekit.note_html") %></p>
