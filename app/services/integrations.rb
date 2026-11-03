@@ -32,6 +32,7 @@ module Integrations
                SmartthingsPlugin NetatmoPlugin HomeConnectPlugin NestPlugin EcowittPlugin OverkizPlugin RingPlugin
                UnifiPlugin SpeedtestPlugin IppPlugin InfluxdbPlugin ModbusPlugin OnedrivePlugin UpnpPlugin FritzPlugin MusicAssistantPlugin PlexPlugin
                BrotherPlugin SmlightPlugin LutronCasetaPlugin
+               AndroidtvRemotePlugin
                CalendarPlugin WeatherPlugin MobileAppPlugin NetworkTrackerPlugin TelegramPlugin WhatsappPlugin HttpMessengerPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
 
   module_function

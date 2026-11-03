@@ -76,6 +76,7 @@ end
 | FRITZ!Box (roteador) | TR-064 (SOAP com digest, porta 49000) | permitir acesso para aplicativos e usuário/senha |
 | Music Assistant | API WebSocket (`/ws`, `players/*`, `player_queues/play_media`) | o servidor Music Assistant (app do catálogo ou próprio) |
 | Plex Media Server | API do servidor (32400) com `X-Plex-Token` | o token da conta Plex |
+| Android TV Remote (Google TV / Android TV) | protocolo do controle do app Google TV (`AndroidTvRemote`): protobuf com tamanho em varint sobre TLS com o certificado do MA; pareamento na 6467, controle na 6466 | o IP e o código de 6 caracteres que a TV mostra no primeiro Continuar |
 | OneDrive (cópia de segurança) | destino `Backups::Destinations::Onedrive` (Graph, sessão de upload) | app no Azure (ver abaixo) |
 
 ## Nuvem com OAuth: o que o dono cria (`Integrations::OauthPlugin`)
@@ -107,3 +108,16 @@ precisa do acesso remoto com HTTPS ou do IP da rede, conforme o serviço aceitar
   destino da cópia de fora de casa (a menos que haja `BACKUP_OFFSITE_URL` ou o Google Drive).
 - **Ring, Overkiz e os demais** não pedem app: usam a conta do próprio dono
   (Ring guarda só o refresh token; a senha não fica).
+
+## Pareamento com código na tela (`Integrations::PendingPairing`)
+
+Android TV Remote pede um código que só aparece na TV depois que
+o MA abre a conexão. O primeiro Continuar abre o pareamento e guarda a
+conexão em `PendingPairing` (memória do processo web, 3 min); o segundo
+Continuar leva o código e fecha. Outro plugin com o mesmo jeito usa a mesma
+espera (`put(id, sessão)` / `take(id)`), sem mexer no núcleo.
+
+- **Android TV Remote**: ligar e desligar vão por WAKEUP/SLEEP (não invertem
+  se a TV já estiver no estado); o volume é lido (nível/máximo da TV) e sobe
+  e desce por tecla; o app aberto vem da TV. `play_media` abre um link (ex.:
+  `https://www.netflix.com/title/…` ou `market://launch?id=<pacote>`).
