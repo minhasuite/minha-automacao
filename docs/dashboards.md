@@ -294,3 +294,65 @@ sol, Grafite). No JSON, `theme` no painel e/ou na visão (a visão herda e
 troca): `key`, `night` (tema das 18h às 6h no fuso do local), `image` (papel
 de parede), `blur` (0 a 40) e `glass` (cartões de vidro). Galeria no editor
 (Aparência e "Tema desta visão").
+
+## Paridade de painéis (ondaB2, 2026-11)
+
+Tudo por registro, com spec de plugin falso em `spec/requests/onda_b2_spec.rb`.
+
+### Tipos de visão e subvisões (`Dashboards::ViewTypes`)
+
+`type` na visão: `sections` (padrão), `masonry` (mosaico em colunas pela
+altura), `panel` (o primeiro card na tela inteira) e `sidebar` (seções com
+`"position": "sidebar"` na coluna da direita; sem marca, a última). A visão
+guarda sempre seções; o tipo só muda o desenho (partial
+`web/dashboards/views/_<chave>`; no app `ViewLayouts.register`). Subvisão:
+`"subview": true` e `back_path` (caminho ou id): fora das abas, com "Voltar
+para" no topo.
+
+### Pilha e grade (`stack`)
+
+`{"type": "stack", "direction": "vertical|horizontal|grid", "columns": 2..4,
+"widgets": [...]}`: até 12 widgets dentro, dois níveis. Plugin com
+`container?` guarda filhos; Schema, Resolver (cada filho tem o próprio quadro
+de tempo real) e editor ("Adicionar dentro", mover, editar sem perder os de
+dentro) entendem o aninhamento.
+
+### Recursos do tile (`Dashboards::TileFeatures`)
+
+`"features": ["brightness", {"type": "climate_mode", "point": "<id>"}]`.
+32 recursos (os do HA: luz, cortina, ventilador, clima, umidade, aquecedor,
+robô, alarme, fechadura, válvula, opções, número, mídia, ações de helper,
+botão, tendência e barra). O alvo é o ponto do tile ou um irmão do aparelho;
+o recurso diz o `kind` (`toggle`, `slider`, `stepper`, `chips`, `buttons`,
+`trend`, `bar`) e o payload; a web (`web/dashboards/features/_<kind>`) e o
+app (`TileFeatureRegistry`) desenham o kind. `toggle`/`select`/`slider`
+antigos seguem como controles próprios do tile.
+
+### Ações de toque (`Dashboards::Actions`)
+
+`tap_action`, `hold_action`, `double_tap_action` em qualquer widget que diga
+`gestures?` (tile, botão, imagem, relógio): `toggle`, `more_info`,
+`navigate` (`navigation_path`: visão ou `/tela`), `url` (só https),
+`command` (`point`, `command`, `value`), `assist`, `none`, e
+`confirmation` (verdadeiro ou texto). O Resolver põe em `gestures` o que a
+tela precisa; web pelo controlador `dw-gesture`, app pelo `DashGestures`.
+
+### Cards novos
+
+`thermostat`, `humidifier` e `light` (mostrador de 270°, alvo, agora, −/+,
+modos, liga/desliga, aceitam `features`), `button`, `calendar` (`binds`,
+`days`), `todo` (helper Lista), `logbook` (`binds`, `period`, `limit`),
+`image` (`image`, `aspect`), `iframe` (`url` https, sandbox), `clock`
+(`format`, `seconds`, `show_date`, `size`; fuso do local), `plant`
+(`binds`, `limits`) e `utility` (gás e água em m³, `Dashboards::Meter`).
+O fluxo de energia aceita `co2` (parcela fóssil, %) e `solar_forecast`
+(kWh de hoje); o painel pronto de Energia pede gás, água, CO2 e previsão.
+
+### Temas da casa, tema da pessoa e barra lateral
+
+Configurações → Aparência: temas criados (`DashboardTheme`: cores, papel de
+parede, vidro, fonte) com prévia ao vivo, que entram na galeria
+(`Dashboards::Themes.all`); o tema da pessoa vale por cima do painel, no
+perfil (web e app: `PATCH /api/v1/me` `theme`, `GET /api/v1/themes`) ou só
+no aparelho (cookie `ma_theme`); a barra lateral de cada pessoa esconde e
+reordena itens (`dashboard_prefs["sidebar"]`; Configurações fica sempre).
