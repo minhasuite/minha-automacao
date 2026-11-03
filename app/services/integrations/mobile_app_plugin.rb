@@ -19,6 +19,9 @@ module Integrations
     HOME = "Em casa".freeze
     AWAY = "Fora".freeze
 
+    ACTIVITIES = %w[parado andando correndo bicicleta veiculo desconhecido].freeze
+    CALL_STATES = %w[livre tocando em_chamada].freeze
+
     SENSORS = {
       "battery" => { name: "Bateria", capability: "measure", unit: "%", device_class: "battery",
                      read: ->(v, _i) { Float(v.to_s, exception: false)&.round&.clamp(0, 100) } },
@@ -39,7 +42,17 @@ module Integrations
       "interactive" => { name: "Tela ligada", capability: "onoff", device_class: "interactive", read_only: true, read: ->(v, _i) { ActiveModel::Type::Boolean.new.cast(v) } },
       "power_save" => { name: "Economia de bateria", capability: "onoff", device_class: "power_save", read_only: true, read: ->(v, _i) { ActiveModel::Type::Boolean.new.cast(v) } },
       "network" => { name: "Rede", capability: "enum", options: %w[wifi movel cabo nenhuma], device_class: "network_type",
-                     read: ->(v, _i) { v.to_s.presence_in(%w[wifi movel cabo nenhuma]) } }
+                     read: ->(v, _i) { v.to_s.presence_in(%w[wifi movel cabo nenhuma]) } },
+      # appweb2 D1: os que pedem permissão (cada um com a tela de consentimento no app).
+      "steps" => { name: "Passos", capability: "measure", unit: "passos", device_class: "steps",
+                   read: ->(v, _i) { Integer(v.to_s, exception: false)&.clamp(0, 10_000_000) } },
+      "activity" => { name: "Atividade", capability: "enum", options: ACTIVITIES, device_class: "activity",
+                      read: ->(v, _i) { v.to_s.presence_in(ACTIVITIES) } },
+      "bluetooth" => { name: "Bluetooth", capability: "onoff", device_class: "bluetooth", read_only: true, read: ->(v, _i) { ActiveModel::Type::Boolean.new.cast(v) } },
+      "bt_devices" => { name: "Bluetooth conectado", capability: "text", device_class: "bluetooth_connection", read: ->(v, _i) { Array(v).map { |n| n.to_s.squish.first(40) }.compact_blank.uniq.first(8).join(", ") } },
+      "call" => { name: "Chamada", capability: "enum", options: CALL_STATES, device_class: "phone_state", read: ->(v, _i) { v.to_s.presence_in(CALL_STATES) } },
+      "light" => { name: "Luz ambiente", capability: "measure", unit: "lx", device_class: "illuminance",
+                   read: ->(v, _i) { Float(v.to_s, exception: false)&.round&.clamp(0, 200_000) } }
     }.freeze
 
     def self.setup(site, form)

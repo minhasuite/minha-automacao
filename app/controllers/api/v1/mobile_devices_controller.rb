@@ -23,7 +23,8 @@ module Api
       def sensors
         device = own_device
         fields = Integrations::MobileAppPlugin::SENSORS.keys - [ "location" ]
-        Integrations::MobileAppPlugin.report!(device, params.permit(*fields, location: %i[latitude longitude accuracy]).to_h)
+        lists = fields.index_with { [] } # appweb2: sensor que manda lista (ex.: bt_devices)
+        Integrations::MobileAppPlugin.report!(device, params.permit(*fields, location: %i[latitude longitude accuracy], **lists).to_h)
         render_data(payload(device.reload))
       end
 
@@ -58,11 +59,25 @@ module Api
         device
       end
 
+      # appweb2 D1: casa e zonas (centro e raio) para o celular vigiar com o
+      # geofence do Android em segundo plano; ao entrar/sair ele manda a
+      # localização e o servidor resolve a zona como sempre.
+      def geofences(site)
+        home = { "id" => "home", "name" => Integrations::MobileAppPlugin::HOME, "latitude" => site.latitude&.to_f, "longitude" => site.longitude&.to_f,
+                 "radius" => site.integrations.find_by(driver: Integrations::MobileAppPlugin.driver)&.settings&.dig("home_radius_m") || Integrations::MobileAppPlugin::HOME_RADIUS_M }
+        zones = People.zones(site).filter_map do |z|
+          lat, lon = HelperTypes::Zone.center(z)
+          { "id" => z.id, "name" => z.name, "latitude" => lat&.to_f, "longitude" => lon&.to_f, "radius" => HelperTypes::Zone.radius(z).to_f }
+        end
+        [ home, *zones ].select { |z| z["latitude"] && z["longitude"] && z["radius"].to_f.positive? }.first(90)
+      end
+
       # Pacote 3: `zone` = zona onde a última localização caiu (nunca a coordenada).
       def payload(device)
         points = device.points.ordered.to_a
         DeviceSerializer.new(device, params: { reveal: true }).to_h.merge("points" => PointSerializer.new(points, params: { reveal: true }).to_h, # o celular é da pessoa
-                                                                       "zone" => points.find { |p| p.device_class == "location" }&.attrs&.dig("zone"))
+                                                                       "zone" => points.find { |p| p.device_class == "location" }&.attrs&.dig("zone"),
+                                                                       "zones" => geofences(device.site))
       end
     end
   end

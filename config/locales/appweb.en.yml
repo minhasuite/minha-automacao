@@ -2,6 +2,7 @@ en:
   appweb:
     not_allowed: "This screen can't be opened from the app."
     bridge_expired: "The app link expired. Open it again from the app."
+    wake_unavailable: "This pipeline has no wake word. Choose the wake engine under Voice assistant → Pipelines."
   automations:
     notifier:
       phone_commands:

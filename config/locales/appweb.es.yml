@@ -2,6 +2,7 @@ es:
   appweb:
     not_allowed: "Esta pantalla no se abre desde la app."
     bridge_expired: "El enlace de la app venció. Ábrelo de nuevo desde la app."
+    wake_unavailable: "Este pipeline no tiene palabra de activación. Elige el motor de activación en Asistente de voz → Pipelines."
   automations:
     notifier:
       phone_commands:

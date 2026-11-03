@@ -226,3 +226,32 @@ tela fixa por tipo no app, e plugin novo aparece no app sem versão nova.
   folha de voz do local.
 - **Quiosque (D6):** Mais → Modo quiosque: tela cheia, sempre ligada e sem
   abas; sair pelo botão discreto no canto.
+
+## App nativo: Onda D completa (appweb2)
+
+- **Câmera ao vivo (D3):** `POST /api/v1/points/:id/webrtc` (corpo = oferta
+  SDP, `Content-Type: application/sdp`) → resposta SDP do go2rtc; a mesma
+  troca da web (`/cameras/:id/ao-vivo`), com o token do app e o papel do local.
+- **Pipelines e palavra de ativação (D5):** `GET /api/v1/sites/:id/assist/pipelines`
+  (`{id, name, preferred, language, wake, wake_names}`) e
+  `POST /api/v1/sites/:id/assist/wake` (multipart `audio` WAV 16 kHz até 1 MB,
+  `pipeline_id?`) → `{detected, name}` pelo motor `wake` do pipeline (qualquer
+  plugin de `Assist::Engines` com `detect`). `POST /assist` já aceitava `pipeline_id`.
+- **Sensores com permissão e geofence (D1):** `steps`, `activity`
+  (`parado/andando/correndo/bicicleta/veiculo/desconhecido`), `bluetooth`,
+  `bt_devices` (lista de nomes), `call` (`livre/tocando/em_chamada`) e `light`
+  em `MobileAppPlugin::SENSORS`; o controller aceita lista em qualquer sensor
+  do registro. A resposta do registro/sensores traz `zones` (casa e helpers
+  Zona com centro e raio) para o geofence do Android; ao entrar/sair o celular
+  manda a localização e o servidor resolve a zona como sempre.
+- **Passkey no app (Credential Manager):** `GET /me/passkeys/options` +
+  `POST /me/passkeys {credential, name}` (criar) e `POST /auth/passkey/options`
+  → `{challenge_id, options}` + `POST /auth/passkey {challenge_id, credential}`
+  → tokens (entrar). A origem aceita é `android:apk-key-hash:<sha256>` do
+  certificado do app, configurado em `ANDROID_APP_CERT_SHA256` (impressões
+  `AA:BB:…` separadas por vírgula); com ela o servidor publica
+  `/.well-known/assetlinks.json`. O RP é o domínio do pedido (passkey exige
+  HTTPS e domínio: pelo IP da rede de casa não funciona).
+- **Arquivo pelo seletor nativo:** `POST /api/v1/screen` em multipart
+  (`path`, `method`, `fields` em JSON e `files[<campo>]`) vira o mesmo
+  multipart que o navegador manda para a tela da web (`AppScreen.multipart`).

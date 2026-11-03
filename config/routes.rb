@@ -14,6 +14,8 @@ Rails.application.routes.draw do
   get "terms", to: "legal#terms"
   get "data-deletion", to: "legal#data_deletion"
   get "redefinir-senha", to: "legal#reset_password", as: :reset_password_page
+  # appweb2: o app Android pode criar e usar passkeys deste domínio (Credential Manager).
+  get ".well-known/assetlinks.json", to: "legal#assetlinks", format: false
 
   post "webhooks/google_play", to: "webhooks/google_play#create"
 
@@ -339,6 +341,11 @@ Rails.application.routes.draw do
       delete "auth/logout", to: "auth#logout"
       post "auth/password/forgot", to: "auth#password_forgot"
       post "auth/password/reset", to: "auth#password_reset"
+      # appweb2: passkey pelo Credential Manager do Android (entrar e criar).
+      post "auth/passkey/options", to: "auth#passkey_options"
+      post "auth/passkey", to: "auth#passkey"
+      get "me/passkeys/options", to: "me#passkey_options"
+      post "me/passkeys", to: "me#create_passkey"
 
       # appweb: telas da web transcodificadas para o app (AppScreen).
       get "screen", to: "screens#show"
@@ -378,6 +385,7 @@ Rails.application.routes.draw do
             get :history, on: :member
             get :snapshot, on: :member
             post :talk, on: :member # ondaC2 (C10): áudio gravado no app vai para o alto-falante da câmera
+            post :webrtc, on: :member # appweb2: câmera ao vivo no app (SDP do go2rtc)
           end
         end
         # App do celular (F7, G17): o aparelho se registra e manda os sensores.
@@ -408,6 +416,8 @@ Rails.application.routes.draw do
       post "sites/:site_id/pairings/:provider/session", to: "pairings#account"
       post "sites/:site_id/pairings/:provider", to: "pairings#create"
       post "sites/:site_id/assist", to: "assist#create"
+      get "sites/:site_id/assist/pipelines", to: "assist#pipelines" # appweb2 D5
+      post "sites/:site_id/assist/wake", to: "assist#wake" # appweb2 D5: palavra de ativação no celular
       get "sites/:site_id/packages", to: "packages#index"
       post "sites/:site_id/packages/preview", to: "packages#preview"
       post "sites/:site_id/packages", to: "packages#create"

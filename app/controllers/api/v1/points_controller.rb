@@ -113,6 +113,21 @@ module Api
       # GET /points/:id/snapshot — quadro JPEG da câmera (ponto `stream` de
       # aparelho go2rtc) para o app (F7), igual ao /cameras/:id/quadro da web.
       # 503 camera_unavailable sem o go2rtc ou com a câmera fora.
+      # POST /points/:id/webrtc (corpo = oferta SDP) → resposta SDP do go2rtc.
+      # appweb2 (D3): câmera ao vivo nativa no app, o mesmo caminho da web.
+      def webrtc
+        point = Point.find(params[:id])
+        raise ActiveRecord::RecordNotFound unless point.capability == "stream" && point.device.driver == "go2rtc"
+
+        authorize_site!(point.site, :view)
+        offer = request.raw_post.to_s
+        return render_error(:invalid_parameter, "Oferta SDP inválida.", status: :unprocessable_content) unless offer.start_with?("v=0") && offer.bytesize <= 64.kilobytes
+
+        render plain: Drivers::Go2rtc.webrtc(point, offer), content_type: "application/sdp"
+      rescue Drivers::Go2rtc::Error => e
+        render_error(:camera_unavailable, e.message, status: :service_unavailable)
+      end
+
       def snapshot
         point = Point.find(params[:id])
         own = point.capability == "detection" # integ: quadro da detecção pelo plugin da câmera
