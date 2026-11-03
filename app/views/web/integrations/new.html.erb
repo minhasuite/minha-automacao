@@ -28,7 +28,7 @@
 <% end %>
 <%= form_with scope: :integration, url: site_integrations_path(@site, tipo: @plugin.key), multipart: true, class: "ss-card ss-card-pad grid gap-4 max-w-2xl",
               data: { turbo_submits_with: t("integrations.common.connecting") } do |f| %>
-  <%= render "web/integrations/forms/#{@plugin.key}", f: f, integration: nil %>
+  <%= render integration_form_partial(@plugin), f: f, integration: nil %>
   <div class="flex flex-wrap gap-2">
     <%= f.submit t("integrations.common.continue"), class: "ss-btn ss-btn-primary" %>
     <%= link_to t("integrations.common.cancel"), site_integrations_path(@site), class: "ss-btn ss-btn-ghost" %>

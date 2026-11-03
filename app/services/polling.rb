@@ -26,7 +26,9 @@ module Polling
 
   module_function
 
-  def supported?(device) = DEVICES.key?(device.driver)
+  # catalogo: aparelho de plugin de integração que é o próprio driver também é lido.
+  def driver_for(name) = DEVICES[name]&.constantize || Integrations.device_driver(name)
+  def supported?(device) = !driver_for(device.driver).nil?
 
   def start
     return if @thread&.alive?
@@ -40,7 +42,7 @@ module Polling
   end
 
   def run_due(gap: GAP)
-    ids = wrap { Device.where(driver: DEVICES.keys, disabled: false).where.not(driver: "tuya_local", listen: true).where(DUE).order(:polled_at).pluck(:id) }
+    ids = wrap { Device.where(driver: DEVICES.keys | Integrations.device_kinds, disabled: false).where.not(driver: "tuya_local", listen: true).where(DUE).order(:polled_at).pluck(:id) }
     ids.each_with_index do |id, i|
       sleep gap if i.positive?
       poll_device(id)
@@ -59,7 +61,7 @@ module Polling
 
       ActsAsTenant.with_tenant(device.tenant) do
         device.update_columns(polled_at: Time.current)
-        driver = DEVICES.fetch(device.driver).constantize
+        driver = driver_for(device.driver)
         reconnect && driver.respond_to?(:reconnect) ? driver.reconnect(device) : driver.poll(device)
         device.update_columns(last_error: nil) if device.last_error
         true

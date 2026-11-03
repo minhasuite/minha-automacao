@@ -6,7 +6,7 @@
   <%= form_with scope: :integration, url: connect_integration_path(@integration), method: :post, multipart: true, class: "ss-card ss-card-pad grid gap-4",
                 data: { turbo_submits_with: t("integrations.common.connecting") } do |f| %>
     <h2 class="font-bold"><%= t("integrations.connect.account") %></h2>
-    <%= render "web/integrations/forms/#{@plugin.key}", f: f, integration: @integration %>
+    <%= render integration_form_partial(@plugin), f: f, integration: @integration %>
     <div><%= f.submit t("integrations.connect.submit"), class: "ss-btn ss-btn-primary" %></div>
   <% end %>
 </div>

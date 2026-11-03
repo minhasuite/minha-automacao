@@ -7,6 +7,12 @@ module ApplicationHelper
                          "alerta" => [ "exclamation-circle", "bg-danger-soft text-danger" ],
                          "automacao" => [ "lightning-bolt", "bg-accent-soft text-accent" ] }.freeze
 
+  # catalogo: formulário da integração: a partial própria do plugin ou a gerada dos campos (SchemaPlugin).
+  def integration_form_partial(plugin)
+    own = "web/integrations/forms/#{plugin.key}"
+    lookup_context.exists?(own, [], true) || !plugin.respond_to?(:fields) ? own : "web/integrations/forms/schema"
+  end
+
   def initials(name) = name.to_s.split.first(2).map { |w| w[0] }.join.upcase
 
   # Valor em <span class="money"> para o "esconder valores" borrar. Dentro de string ou atributo, use Money.format.

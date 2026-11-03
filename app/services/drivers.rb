@@ -18,7 +18,9 @@ module Drivers
               # ondaC2: reprodutor DLNA e câmeras do go2rtc (PTZ, gravar, falar).
               "dlna" => "Drivers::Dlna", "go2rtc" => "Drivers::Camera" }.freeze
 
-  def self.supported?(device) = REGISTRY.key?(device.driver)
+  # catalogo: driver de plugin de integração (`Integrations.device_driver`) vale sem linha aqui.
+  def self.klass(driver) = REGISTRY[driver.to_s]&.constantize || Integrations.device_driver(driver)
+  def self.supported?(device) = !klass(device.driver).nil?
 
   # Leitura falhou (Polling): aparelho fora e pontos indisponíveis (integ: comum aos drivers novos).
   def self.offline!(device)
@@ -28,11 +30,11 @@ module Drivers
   # Estado logo depois da varredura e da adoção (integ2: `refresh` dos plugins novos).
   def self.refresh(integration)
     integration.devices.where(removed_at: nil, disabled: false).find_each do |d|
-      REGISTRY.fetch(d.driver).constantize.poll(d)
+      klass(d.driver).poll(d)
     rescue StandardError => e
       Rails.logger.warn("[#{d.driver}] estado de #{d.name}: #{e.message}")
     end
   end
 
-  def self.for(device) = REGISTRY.fetch(device.driver).constantize.new
+  def self.for(device) = (klass(device.driver) or raise(KeyError, "driver #{device.driver}")).new
 end

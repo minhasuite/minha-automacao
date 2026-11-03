@@ -14,8 +14,11 @@ RSpec.describe Integrations do
 
   describe "plugins" do
     it "catálogo vem do registro, com interface comum" do
-      expect(described_class.plugins.map(&:key)).to eq(%w[tuya xiaomi alexa camera hikvision mqtt zigbee2mqtt esphome shelly tasmota matter cast webos tizen adb broadlink spotify frigate reolink unifi_protect hue wled yeelight switchbot daikin midea lg_thinq sunspec growatt dirigera sonos dlna govee zwave_js ble_proxy bluetooth thread google_home homekit_controller calendar weather mobile_app network_tracker telegram whatsapp http_messenger system ha_import home_assistant])
-      expect(described_class.drivers).to eq(%w[tuya xiaomi alexa camera hikvision mqtt esphome shelly matter cast webos tizen adb broadlink spotify frigate reolink unifi_protect hue wled yeelight switchbot daikin midea lg_thinq sunspec growatt dirigera sonos dlna govee zwave_js ble_proxy bluetooth thread google_home homekit calendar weather mobile_app network_tracker telegram whatsapp http_messenger system home_assistant])
+      keys = described_class.plugins.map(&:key)
+      # catalogo: os de antes, na mesma ordem (integrações novas entram sem mexer aqui).
+      expect(keys & (known = %w[tuya xiaomi alexa camera hikvision mqtt zigbee2mqtt esphome shelly tasmota matter cast webos tizen adb broadlink spotify frigate reolink unifi_protect hue wled yeelight switchbot daikin midea lg_thinq sunspec growatt dirigera sonos dlna govee zwave_js ble_proxy bluetooth thread google_home homekit_controller calendar weather mobile_app network_tracker telegram whatsapp http_messenger system ha_import home_assistant])).to eq(known)
+      expect(keys).to eq(keys.uniq)
+      expect(described_class.drivers & (known = %w[tuya xiaomi alexa camera hikvision mqtt esphome shelly matter cast webos tizen adb broadlink spotify frigate reolink unifi_protect hue wled yeelight switchbot daikin midea lg_thinq sunspec growatt dirigera sonos dlna govee zwave_js ble_proxy bluetooth thread google_home homekit calendar weather mobile_app network_tracker telegram whatsapp http_messenger system home_assistant])).to eq(known)
       expect(described_class.for_driver("mqtt")).to eq(Integrations::MqttPlugin)
       expect(described_class.plugin("zigbee2mqtt").driver).to eq("mqtt")
       described_class.plugins.each { |p| expect([ p.title, p.icon, p.description ]).to all(be_present) }

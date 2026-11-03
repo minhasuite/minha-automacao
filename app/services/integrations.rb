@@ -27,6 +27,7 @@ module Integrations
                EsphomePlugin ShellyPlugin TasmotaPlugin MatterPlugin CastPlugin WebosPlugin TizenPlugin AdbPlugin BroadlinkPlugin SpotifyPlugin
                FrigatePlugin ReolinkPlugin UnifiProtectPlugin HuePlugin WledPlugin YeelightPlugin SwitchbotPlugin
                DaikinPlugin MideaPlugin LgThinqPlugin SunspecPlugin GrowattPlugin DirigeraPlugin SonosPlugin DlnaPlugin GoveePlugin ZwaveJsPlugin BleProxyPlugin BluetoothPlugin ThreadPlugin GoogleHomePlugin HomekitPlugin
+               WizPlugin TplinkPlugin AdguardPlugin NutPlugin FullyKioskPlugin
                CalendarPlugin WeatherPlugin MobileAppPlugin NetworkTrackerPlugin TelegramPlugin WhatsappPlugin HttpMessengerPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
 
   module_function
@@ -48,6 +49,9 @@ module Integrations
   def plugin(key) = plugins.find { |p| p.key == key.to_s }
   def for_driver(driver) = plugins.find { |p| p.driver == driver.to_s }
   def drivers = plugins.filter_map(&:driver).uniq
+  # catalogo: plugin que também é o driver dos seus aparelhos (SchemaPlugin).
+  def device_kinds = plugins.flat_map(&:device_kinds)
+  def device_driver(kind) = plugins.lazy.filter_map { |p| p.device_driver(kind.to_s) }.first
 
   # Quadro de um ponto de câmera pelo plugin do aparelho (integ); nil = não tem.
   def snapshot(point) = for_driver(point.device.driver)&.snapshot(point)

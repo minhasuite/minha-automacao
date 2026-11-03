@@ -151,6 +151,10 @@ module Integrations
       def panel_action(integration, _action, _params) = outcome(:panel, integration: integration)
       def panel_refresh(_integration) = nil
 
+      # catalogo: tipos de aparelho que o próprio plugin dirige (SchemaPlugin); padrão: nenhum.
+      def device_kinds = []
+      def device_driver(_kind) = nil
+
       # Primeira configuração: adiciona um aparelho achado na rede sem formulário
       # (→ integração, com a varredura na fila) ou nil = precisa do assistente.
       def add_found(_site, _entry) = nil
