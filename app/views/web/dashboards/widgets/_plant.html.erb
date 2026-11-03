@@ -1,0 +1,20 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Planta (ondaB2 B10): cada medida com a barra, a faixa boa e o aviso de baixo/alto. %>
+<% d = w["data"] %>
+<div class="dw-card dw-plant <%= 'is-problem' if d['problem'] %>">
+  <div class="dw-plant-head">
+    <span class="dw-plant-art"><% if d["image"] %><img src="<%= d["image"] %>" alt="" loading="lazy"><% else %><%= icon("leaf", "size-7") %><% end %></span>
+    <span class="min-w-0"><span class="dw-name block truncate"><%= w["label"].presence || Dashboards::Widgets::PlantWidget.label %></span>
+      <span class="dw-state block <%= d['problem'] ? 'text-warn' : 'text-success' %>"><%= d["summary"] %></span></span>
+  </div>
+  <ul class="dw-plant-list">
+    <% Array(d["metrics"]).each do |m| %>
+      <% p = points[m["point_id"]] %>
+      <li class="dw-plant-m is-<%= m['status'] %>">
+        <span class="dw-feat-label"><%= icon(m["icon"], "size-4") %><%= m["label"] %></span>
+        <span class="dw-feat-value num"><%= p ? p["text"] : dw_number(m["value"], m["unit"]) %><% if m["status_text"] %> <em><%= m["status_text"] %></em><% end %></span>
+        <div class="dw-feat-bar" role="meter" aria-label="<%= m["label"] %>" aria-valuenow="<%= m['value'] %>"><span style="--r: <%= m['ratio'] %>"></span></div>
+      </li>
+    <% end %>
+  </ul>
+</div>

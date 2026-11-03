@@ -1,0 +1,12 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Página da web (ondaB2 B10): https em iframe com sandbox, sem referer, carregada só quando aparece. %>
+<% d = w["data"] %>
+<div class="dw-card dw-frame">
+  <% if w["label"].present? %><p class="dw-card-title mb-2"><%= w["label"] %></p><% end %>
+  <% if d["url"] %>
+    <div class="dw-frame-box" style="aspect-ratio: <%= d['ratio'] %>">
+      <iframe src="<%= d["url"] %>" title="<%= w["label"].presence || Dashboards::Widgets::IframeWidget.label %>" loading="lazy" referrerpolicy="no-referrer"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups" allow="fullscreen"></iframe>
+    </div>
+  <% end %>
+</div>

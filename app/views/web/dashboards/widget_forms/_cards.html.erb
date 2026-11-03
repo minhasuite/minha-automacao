@@ -1,0 +1,30 @@
+<%# locals: (w:, uid:, types:, **) -%>
+<%# ondaB2 (B10): campos dos cards novos; cada campo diz para quais tipos aparece. %>
+<div data-for="image plant"><label class="ss-label" for="im-<%= uid %>"><%= t("dashboards.cards.form.image") %></label>
+  <%= text_field_tag "widget[image]", w["image"], class: "ss-input", id: "im-#{uid}", placeholder: "https://", maxlength: 500 %></div>
+<div data-for="image plant"><label class="ss-label" for="iu-<%= uid %>"><%= t("dashboards.cards.form.upload") %></label>
+  <%= file_field_tag "widget[upload]", accept: "image/png,image/jpeg,image/webp", class: "ss-input", id: "iu-#{uid}" %></div>
+<div class="sm:col-span-2" data-for="iframe"><label class="ss-label" for="if-<%= uid %>"><%= t("dashboards.cards.form.url") %></label>
+  <%= url_field_tag "widget[url]", w["url"], class: "ss-input", id: "if-#{uid}", placeholder: "https://", maxlength: 500 %></div>
+<div data-for="image iframe"><label class="ss-label" for="ia-<%= uid %>"><%= t("dashboards.cards.form.aspect") %></label>
+  <%= select_tag "widget[aspect]", options_for_select(Dashboards::Widgets::ImageWidget::ASPECTS.keys, w["aspect"] || "16:9"), class: "ss-input num", id: "ia-#{uid}" %></div>
+<div data-for="calendar"><label class="ss-label" for="cd-<%= uid %>"><%= t("dashboards.cards.form.days") %></label>
+  <%= number_field_tag "widget[days]", w["days"] || 7, min: 1, max: 31, class: "ss-input num", id: "cd-#{uid}" %></div>
+<div data-for="logbook"><label class="ss-label" for="lp-<%= uid %>"><%= t("dashboards.cards.form.period") %></label>
+  <%= select_tag "widget[period]", options_for_select(%w[24h 7d 30d].index_by { |k| Logbook::PERIOD_LABELS.fetch(k, k) }, w["period"] || "24h"), class: "ss-input", id: "lp-#{uid}" %></div>
+<div data-for="logbook"><label class="ss-label" for="ll-<%= uid %>"><%= t("dashboards.cards.form.limit") %></label>
+  <%= number_field_tag "widget[limit]", w["limit"] || 10, min: 3, max: 30, class: "ss-input num", id: "ll-#{uid}" %></div>
+<div data-for="clock"><label class="ss-label" for="cf-<%= uid %>"><%= t("dashboards.cards.form.format") %></label>
+  <%= select_tag "widget[format]", options_for_select({ "24 h" => "24h", "12 h" => "12h" }, w["format"] || "24h"), class: "ss-input", id: "cf-#{uid}" %></div>
+<div data-for="clock"><label class="ss-label" for="cz-<%= uid %>"><%= t("dashboards.cards.form.size") %></label>
+  <%= select_tag "widget[size]", options_for_select(Dashboards::Widgets::ClockWidget::SIZES.index_by { |k| t("dashboards.cards.form.sizes.#{k}") }, w["size"] || "medium"), class: "ss-input", id: "cz-#{uid}" %></div>
+<fieldset class="sm:col-span-2" data-for="clock button todo">
+  <div class="flex flex-wrap gap-4">
+    <label class="ss-check" data-for="clock"><%= hidden_field_tag "widget[seconds]", "0", id: nil %><%= check_box_tag "widget[seconds]", "1", w["seconds"] == "1", id: "cs-#{uid}" %><%= t("dashboards.cards.form.seconds") %></label>
+    <label class="ss-check" data-for="clock"><%= hidden_field_tag "widget[show_date]", "0", id: nil %><%= check_box_tag "widget[show_date]", "1", w["show_date"] != "0", id: "cdt-#{uid}" %><%= t("dashboards.cards.form.show_date") %></label>
+    <label class="ss-check" data-for="button"><%= hidden_field_tag "widget[show_state]", "0", id: nil %><%= check_box_tag "widget[show_state]", "1", w["show_state"] != "0", id: "bs-#{uid}" %><%= t("dashboards.cards.form.show_state") %></label>
+    <label class="ss-check" data-for="todo"><%= hidden_field_tag "widget[hide_completed]", "0", id: nil %><%= check_box_tag "widget[hide_completed]", "1", w["hide_completed"] == "1", id: "th-#{uid}" %><%= t("dashboards.cards.form.hide_completed") %></label>
+  </div>
+</fieldset>
+<div class="sm:col-span-2" data-for="button"><label class="ss-label" for="bi-<%= uid %>"><%= t("dashboards.cards.form.icon") %></label>
+  <%= select_tag "widget[icon]", options_for_select(HelperTypes::ICONS, w["icon"]), include_blank: t("dashboards.cards.form.icon_auto"), class: "ss-input", id: "bi-#{uid}" %></div>

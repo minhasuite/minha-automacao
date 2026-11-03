@@ -87,6 +87,85 @@ RSpec.describe "ondaB2: painéis" do
     end
   end
 
+  describe "B10: cards que faltavam" do
+    it "termostato, umidificador, luz, botão, agenda, lista, diário, imagem, página, relógio e planta: validam, resolvem e desenham" do
+      within(tenant) do
+        create(:point, device: ac, name: "Temperatura ambiente", key: "ar.agora", capability: "measure", value: 26.5, unit: "°C", device_class: "temperature", data_type: "decimal")
+      end
+      hum = within(tenant) { create(:device, site: site, name: "Umidificador do quarto") }
+      within(tenant) do
+        create(:point, device: hum, name: "Umidade alvo", key: "um.alvo", capability: "setpoint", writable: true, value: 55, unit: "%", device_class: "humidity", data_type: "decimal")
+        create(:point, device: hum, name: "Umidade", key: "um.agora", capability: "measure", value: 41, unit: "%", device_class: "humidity", data_type: "decimal")
+      end
+      lamp = within(tenant) { create(:device, site: site, name: "Luz da sala") }
+      dim = within(tenant) { create(:point, device: lamp, name: "Brilho", key: "luz.brilho", capability: "dimmer", writable: true, value: 60, data_type: "integer") }
+      script = within(tenant) { create(:point, device: create(:device, site: site, name: "Scripts"), name: "Teste noite", key: "s.noite", capability: "script", writable: true) }
+      cal = within(tenant) do
+        create(:point, device: create(:device, site: site, name: "Agenda"), name: "Família", key: "agenda.familia", capability: "calendar",
+                       address: { "events" => [ { "summary" => "Teste dentista", "start" => 1.hour.from_now.iso8601, "end" => 2.hours.from_now.iso8601 },
+                                                { "summary" => "Teste viagem", "start" => 1.day.from_now.beginning_of_day.iso8601, "end" => 2.days.from_now.beginning_of_day.iso8601, "all_day" => true } ] })
+      end
+      todo = within(tenant) do
+        create(:point, device: create(:device, site: site, name: "Listas"), name: "Compras", key: "lista.compras", capability: "todo", helper: "todo", writable: true, value: 1, data_type: "integer",
+                       attrs: { "items" => [ { "uid" => "u1", "summary" => "Leite", "status" => "needs_action" }, { "uid" => "u2", "summary" => "Pão", "status" => "completed" } ] })
+      end
+      plant = within(tenant) { create(:device, site: site, name: "Teste samambaia") }
+      soil = within(tenant) { create(:point, device: plant, name: "Umidade do solo", key: "pl.solo", capability: "measure", value: 9, unit: "%", device_class: "moisture", data_type: "decimal") }
+      lux = within(tenant) { create(:point, device: plant, name: "Luz", key: "pl.luz", capability: "measure", value: 9000, unit: "lx", data_type: "decimal") }
+
+      widgets = [
+        { "id" => "t", "type" => "thermostat", "bind" => power.id },
+        { "id" => "h", "type" => "humidifier", "bind" => "um.alvo" },
+        { "id" => "l", "type" => "light", "bind" => dim.id },
+        { "id" => "b", "type" => "button", "bind" => script.id, "icon" => "moon" },
+        { "id" => "c", "type" => "calendar", "binds" => [ cal.id ], "days" => 3 },
+        { "id" => "td", "type" => "todo", "bind" => todo.id },
+        { "id" => "lg", "type" => "logbook", "limit" => 5 },
+        { "id" => "im", "type" => "image", "image" => "https://exemplo.com.br/sala.jpg", "aspect" => "4:3", "label" => "Sala", "tap_action" => { "action" => "navigate", "navigation_path" => "v1" } },
+        { "id" => "if", "type" => "iframe", "url" => "https://exemplo.com.br/radar" },
+        { "id" => "ck", "type" => "clock", "seconds" => "1", "size" => "large" },
+        { "id" => "pl", "type" => "plant", "binds" => [ soil.id, lux.id ] }
+      ]
+      d = board(widgets)
+      expect(Dashboards::Schema.errors(d.definition)).to eq([])
+      res = resolved(d)["views"][0]["sections"][0]["widgets"].index_by { |w| w["id"] }
+      expect(res["t"]["data"]).to include("target_id" => target.id, "value" => 23, "current" => 26.5, "mode" => "Refrigerar", "tone" => "cool", "on" => true)
+      expect(res["h"]["data"]).to include("value" => 55, "current" => 41, "tone" => "humid")
+      expect(res["l"]["data"]).to include("target_id" => dim.id, "value" => 60, "tone" => "light", "ratio" => 0.6)
+      expect(res["b"]["data"]).to include("command" => "run")
+      expect(res["c"]["data"]["days"].map { |x| x["events"].map { |e| e["summary"] } }.flatten).to eq([ "Teste dentista", "Teste viagem" ])
+      expect(res["c"]["data"]["days"].first["label"]).to eq("Hoje")
+      expect(res["td"]["data"]["pending"].map { |i| i["summary"] }).to eq([ "Leite" ])
+      expect(res["pl"]["data"]).to include("problem" => true)
+      expect(res["pl"]["data"]["metrics"].map { |m| [ m["key"], m["status"] ] }).to eq([ %w[moisture low], %w[illuminance ok] ])
+      expect(res["ck"]["data"]).to include("tz" => "America/Sao_Paulo", "seconds" => true, "size" => "large")
+
+      get "/paineis/#{d.id}"
+      body = response.body
+      expect(body).to include("dw-dial dw-dial-cool", "Agora 26,5 °C", "dw-dial-humid", "dw-dial-light", "dw-btn", "Teste dentista", "Dia inteiro",
+                              "Leite", %(aria-checked="true"), "Concluídos (1)", "https://exemplo.com.br/sala.jpg", "aspect-ratio: 4 / 3",
+                              %(sandbox="allow-scripts allow-same-origin allow-forms allow-popups"), 'data-controller="dw-clock"', "Precisa de atenção: umidade", "Baixo")
+    end
+
+    it "recusa link inseguro na imagem e na página" do
+      errs = Dashboards::Schema.errors(defn([ { "id" => "im", "type" => "image", "image" => "javascript:x" }, { "id" => "if", "type" => "iframe", "url" => "http://x.com" } ])).join(" | ")
+      expect(errs).to include("image precisa ser https://", "url precisa começar com https://")
+    end
+
+    it "o editor cria os cards novos pelo formulário" do
+      d = board([])
+      %w[clock calendar logbook].each do |type|
+        patch "/paineis/#{d.id}/rascunho", params: { op: "add_widget", target: "s1", view_id: "v1", widget: { type: type, days: "5", limit: "8", period: "7d", format: "12h", size: "small" } }
+      end
+      list = within(tenant) { d.reload.draft["views"][0]["sections"][0]["widgets"] }
+      expect(list.map { |w| w["type"] }).to eq(%w[clock calendar logbook])
+      expect(list[0]).to include("format" => "12h", "size" => "small")
+      expect(list[1]).to include("days" => 5)
+      expect(list[2]).to include("limit" => 8, "period" => "7d")
+      expect(Dashboards::Schema.errors(within(tenant) { d.reload.draft })).to eq([])
+    end
+  end
+
   describe "B9: ações de toque, segurar e duplo toque" do
     it "valida, resolve e deixa na tela o que o gesto dispara" do
       w = { "id" => "w1", "type" => "tile", "bind" => power.id, "tap_action" => { "action" => "navigate", "navigation_path" => "quarto" },

@@ -8,7 +8,9 @@ module Dashboards
   module Widgets
     PLUGINS = %w[TileWidget GroupWidget StatWidget GaugeWidget ChartWidget QueryListWidget AreaCardWidget SceneBarWidget
                  AlertsWidget CameraWidget VacuumWidget EnergyWidget HeadingWidget MarkdownWidget WeatherWidget MediaWidget RemoteWidget
-                 PeopleWidget AlarmWidget FloorplanWidget EnergyFlowWidget EnergyBreakdownWidget EnergyCompareWidget MapWidget CustomCardWidget].freeze
+                 PeopleWidget AlarmWidget FloorplanWidget EnergyFlowWidget EnergyBreakdownWidget EnergyCompareWidget MapWidget CustomCardWidget
+                 ThermostatWidget HumidifierWidget LightWidget ButtonWidget CalendarWidget TodoWidget LogbookWidget ImageWidget IframeWidget
+                 ClockWidget PlantWidget].freeze
 
     module_function
 

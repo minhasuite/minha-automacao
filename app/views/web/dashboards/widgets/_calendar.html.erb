@@ -1,0 +1,29 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Agenda (ondaB2 B10): faixa da semana e os próximos dias, uma cor por agenda. %>
+<% d = w["data"] %>
+<div class="dw-card dw-cal">
+  <p class="dw-card-title flex items-center gap-2"><%= icon("calendar", "size-4 text-accent") %><%= w["label"].presence || Dashboards::Widgets::CalendarWidget.label %></p>
+  <ol class="dw-cal-week" aria-hidden="true">
+    <% Array(d["week"]).each_with_index do |day, i| %>
+      <li class="<%= 'is-today' if i.zero? %> <%= 'is-busy' if day['busy'] %>"><span><%= day["dow"] %></span><strong class="num"><%= day["day"] %></strong></li>
+    <% end %>
+  </ol>
+  <% if Array(d["days"]).empty? %>
+    <p class="text-sm text-muted mt-3"><%= d["empty"] %></p>
+  <% else %>
+    <div class="dw-cal-days">
+      <% d["days"].each do |day| %>
+        <section>
+          <h3 class="dw-cal-day"><%= day["label"] %></h3>
+          <ul>
+            <% day["events"].each do |e| %>
+              <li class="dw-cal-ev"><span class="dw-dot dw-bg<%= e['color'].to_i %>"></span>
+                <span class="min-w-0 flex-1"><span class="block truncate font-semibold text-ink"><%= e["summary"] %></span>
+                  <span class="block truncate text-xs text-muted"><%= [ e["time"], e["location"], (e["calendar"] if Array(d["calendars"]).size > 1) ].compact.join(" · ") %></span></span></li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
+    </div>
+  <% end %>
+</div>

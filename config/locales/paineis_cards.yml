@@ -1,0 +1,77 @@
+# Painéis ondaB2 (B10): cards novos (termostato, umidificador, luz, botão,
+# agenda, lista, diário, imagem, página da web, relógio e planta).
+pt-BR:
+  dashboards:
+    cards:
+      turned_off: Desligado
+      now_x: "Agora %{value}"
+      form:
+        image: Imagem (link)
+        upload: Ou envie uma foto
+        url: Endereço da página (https)
+        aspect: Proporção
+        days: Dias à frente
+        period: Período
+        limit: Linhas
+        format: Formato
+        size: Tamanho
+        sizes:
+          small: Pequeno
+          medium: Médio
+          large: Grande
+        seconds: Mostrar segundos
+        show_date: Mostrar a data
+        show_state: Mostrar o estado
+        hide_completed: Esconder os concluídos
+        icon: Ícone
+        icon_auto: O do ponto
+en:
+  dashboards:
+    cards:
+      turned_off: "Off"
+      now_x: "Now %{value}"
+      form:
+        image: Image (link)
+        upload: Or upload a photo
+        url: Page address (https)
+        aspect: Aspect ratio
+        days: Days ahead
+        period: Period
+        limit: Rows
+        format: Format
+        size: Size
+        sizes:
+          small: Small
+          medium: Medium
+          large: Large
+        seconds: Show seconds
+        show_date: Show the date
+        show_state: Show the state
+        hide_completed: Hide completed
+        icon: Icon
+        icon_auto: The point's icon
+es:
+  dashboards:
+    cards:
+      turned_off: Apagado
+      now_x: "Ahora %{value}"
+      form:
+        image: Imagen (enlace)
+        upload: O sube una foto
+        url: Dirección de la página (https)
+        aspect: Proporción
+        days: Días adelante
+        period: Período
+        limit: Filas
+        format: Formato
+        size: Tamaño
+        sizes:
+          small: Pequeño
+          medium: Mediano
+          large: Grande
+        seconds: Mostrar segundos
+        show_date: Mostrar la fecha
+        show_state: Mostrar el estado
+        hide_completed: Ocultar los completados
+        icon: Ícono
+        icon_auto: El del punto

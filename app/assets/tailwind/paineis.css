@@ -51,3 +51,109 @@
   .dw-wf-more[open] > summary::before { content: "▾ "; }
   @media (prefers-reduced-motion: reduce) { .dw-holding > .dw-card, .dw-holding.dw-card, .dw-chip:active, .dw-step:active { transform: none; } }
 }
+
+@layer components {
+  /* ---- Mostrador: termostato, umidificador e luz ----------------------- */
+  .dw-dial { display: flex; flex-direction: column; align-items: stretch; --tone: var(--accent); --tone2: var(--accent); }
+  .dw-dial-heat { --tone: #f97316; --tone2: #ef4444; }
+  .dw-dial-cool { --tone: #38bdf8; --tone2: #6366f1; }
+  .dw-dial-dry { --tone: #f59e0b; --tone2: #eab308; }
+  .dw-dial-fan, .dw-dial-humid { --tone: #14b8a6; --tone2: #0ea5e9; }
+  .dw-dial-light { --tone: var(--glow, #fbbf24); --tone2: #f59e0b; }
+  .dw-dial-off { --tone: var(--muted); --tone2: var(--muted); }
+  .dw-dial-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 2.25rem; }
+  .dw-dial-power { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 999px; border: 0; cursor: pointer; background: var(--field); color: var(--muted);
+                   transition: background .25s ease, color .25s ease; }
+  .dw-dial-power[aria-pressed="true"] { background: linear-gradient(135deg, var(--tone), var(--tone2)); color: #fff; box-shadow: 0 8px 18px -10px var(--tone); }
+  .dw-dial-ring { position: relative; width: min(100%, 13.5rem); aspect-ratio: 1; margin: .25rem auto 0; }
+  .dw-dial-ring svg { width: 100%; height: 100%; transform: rotate(135deg); overflow: visible; }
+  .dw-dial-track, .dw-dial-bar { fill: none; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 75 100; }
+  .dw-dial-track { stroke: var(--field); }
+  .dw-dial-bar { stroke: var(--tone); stroke-dasharray: calc(var(--r, 0) * 75) 100; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--tone) 45%, transparent));
+                 transition: stroke-dasharray .6s cubic-bezier(.2, .8, .2, 1), stroke .4s ease; }
+  .dw-dial-center { position: absolute; inset: 18%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .1rem; }
+  .dw-dial-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+  .dw-dial-value { font-size: clamp(1.7rem, 5vw, 2.35rem); font-weight: 800; color: var(--ink); line-height: 1.05; }
+  .dw-dial-now { display: inline-flex; align-items: center; gap: .25rem; font-size: .8rem; color: var(--ink-2); }
+  .dw-dial-steps { display: flex; justify-content: center; gap: 2.5rem; margin-top: -.6rem; }
+  .dw-step-lg { width: 2.75rem; height: 2.75rem; }
+  .dw-dial-steps .dw-step:hover { color: var(--tone); }
+
+  /* ---- Botão ----------------------------------------------------------- */
+  .dw-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .45rem; min-height: 8.5rem; text-align: center; }
+  .dw-btn-ico { display: grid; place-items: center; width: 3.6rem; height: 3.6rem; border-radius: 1.25rem; background: var(--field); color: var(--muted);
+                transition: background .3s ease, color .3s ease, transform .15s ease; }
+  .dw-btn-ico svg { width: 1.7rem; height: 1.7rem; }
+  .dw-btn-ico.dw-on { background: var(--grad); color: #fff; box-shadow: 0 12px 24px -14px var(--accent); }
+  .dw-amber .dw-btn-ico.dw-on { background: var(--amber-grad); box-shadow: 0 12px 24px -14px #f59e0b; }
+  .dw-btn:active .dw-btn-ico { transform: scale(.92); }
+
+  /* ---- Agenda ---------------------------------------------------------- */
+  .dw-cal-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .3rem; margin: .8rem 0 .2rem; padding: 0; list-style: none; }
+  .dw-cal-week li { display: grid; justify-items: center; gap: .1rem; padding: .4rem 0 .55rem; border-radius: .8rem; font-size: .68rem; color: var(--muted); position: relative; }
+  .dw-cal-week strong { font-size: .95rem; color: var(--ink); }
+  .dw-cal-week li.is-today { background: var(--grad); color: rgba(255, 255, 255, .85); }
+  .dw-cal-week li.is-today strong { color: #fff; }
+  .dw-cal-week li.is-busy::after { content: ""; position: absolute; bottom: .2rem; width: .3rem; height: .3rem; border-radius: 999px; background: var(--accent); }
+  .dw-cal-week li.is-today.is-busy::after { background: #fff; }
+  .dw-cal-days { display: grid; gap: .7rem; margin-top: .6rem; max-height: 22rem; overflow-y: auto; }
+  .dw-cal-day { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .3rem; }
+  .dw-cal-ev { display: flex; align-items: flex-start; gap: .6rem; padding: .45rem .55rem; border-radius: .8rem; background: var(--field); margin-bottom: .3rem; }
+  .dw-cal-ev .dw-dot { margin-top: .35rem; flex: none; }
+
+  /* ---- Lista de tarefas ------------------------------------------------ */
+  .dw-todo form { margin: 0; }
+  .dw-todo-add { display: flex; gap: .4rem; margin-top: .7rem; }
+  .dw-todo-add .ss-input { flex: 1; min-width: 0; }
+  .dw-todo-list { display: grid; gap: .15rem; margin-top: .55rem; max-height: 20rem; overflow-y: auto; }
+  .dw-todo-list li { display: flex; align-items: center; gap: .55rem; padding: .35rem .25rem; border-radius: .6rem; font-size: .9rem; color: var(--ink); }
+  .dw-todo-list li:hover { background: var(--field); }
+  .dw-todo-list li.is-done span { color: var(--muted); text-decoration: line-through; }
+  .dw-todo-check { display: grid; place-items: center; flex: none; width: 1.4rem; height: 1.4rem; border-radius: .45rem; border: 2px solid var(--line); background: var(--surface);
+                   color: transparent; cursor: pointer; padding: 0; transition: background .2s ease, border-color .2s ease; }
+  .dw-todo-check:hover { border-color: var(--accent); }
+  .is-done .dw-todo-check { background: var(--grad); border-color: transparent; color: #fff; }
+  .dw-todo-del { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: .5rem; border: 0; background: transparent; color: var(--muted); cursor: pointer; opacity: 0; }
+  .dw-todo-list li:hover .dw-todo-del, .dw-todo-del:focus-visible { opacity: 1; }
+  @media (hover: none) { .dw-todo-del { opacity: .7; } }
+
+  /* ---- Diário ---------------------------------------------------------- */
+  .dw-log { display: grid; gap: .1rem; margin-top: .55rem; }
+  .dw-log-row { display: flex; align-items: center; gap: .6rem; padding: .4rem .2rem; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+  .dw-log-row:last-child { border-bottom: 0; }
+  .dw-log-ico { display: grid; place-items: center; flex: none; width: 1.9rem; height: 1.9rem; border-radius: .65rem; background: var(--field); color: var(--muted); }
+  .dw-tone-success .dw-log-ico { color: #059669; }
+  .dw-tone-danger .dw-log-ico { color: #e11d48; }
+  .dw-tone-warn .dw-log-ico { color: var(--amber); }
+  .dw-more.static { position: static; }
+
+  /* ---- Imagem, página e relógio ---------------------------------------- */
+  .dw-pic { position: relative; padding: 0; overflow: hidden; margin: 0; background: var(--field); }
+  .dw-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: filter .4s ease, transform .6s ease; }
+  .dw-tappable:hover .dw-pic img { transform: scale(1.03); }
+  .dw-pic-off img { filter: grayscale(.85) brightness(.6); }
+  .dw-pic figcaption { position: absolute; inset: auto 0 0 0; display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: 1.6rem .9rem .7rem;
+                       color: #fff; font-size: .9rem; background: linear-gradient(transparent, rgba(0, 0, 0, .6)); }
+  .dw-pic-state { flex: none; padding: .15rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 700; background: rgba(255, 255, 255, .2); backdrop-filter: blur(6px); }
+  .dw-frame-box { border-radius: .9rem; overflow: hidden; background: var(--field); }
+  .dw-frame-box iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .dw-clock { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .15rem; min-height: 6rem; }
+  .dw-clock-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+  .dw-clock-time { font-weight: 800; color: var(--ink); letter-spacing: -.02em; line-height: 1; font-size: 2.6rem; }
+  .dw-clock-small .dw-clock-time { font-size: 1.8rem; }
+  .dw-clock-large .dw-clock-time { font-size: clamp(3.2rem, 10vw, 5.5rem); background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .dw-clock-date { font-size: .9rem; color: var(--ink-2); }
+
+  /* ---- Planta ---------------------------------------------------------- */
+  .dw-plant-head { display: flex; align-items: center; gap: .8rem; }
+  .dw-plant-art { display: grid; place-items: center; flex: none; width: 3.4rem; height: 3.4rem; border-radius: 1.1rem; overflow: hidden; color: #fff;
+                  background: linear-gradient(135deg, #34d399, #059669); }
+  .dw-plant-art img { width: 100%; height: 100%; object-fit: cover; }
+  .dw-plant.is-problem .dw-plant-art { background: linear-gradient(135deg, #fbbf24, #f97316); }
+  .dw-plant-list { display: grid; gap: .65rem; margin-top: .9rem; }
+  .dw-plant-m { display: grid; grid-template-columns: 1fr auto; gap: .3rem .5rem; align-items: center; }
+  .dw-plant-m .dw-feat-bar { grid-column: 1 / -1; }
+  .dw-plant-m em { font-style: normal; font-size: .7rem; padding: .05rem .45rem; border-radius: 999px; background: var(--amber-soft); color: var(--amber); margin-left: .25rem; }
+  .dw-plant-m.is-ok .dw-feat-bar span { background: var(--green-grad); }
+  .dw-plant-m.is-low .dw-feat-bar span, .dw-plant-m.is-high .dw-feat-bar span { background: var(--amber-grad); }
+}

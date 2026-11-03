@@ -1,0 +1,40 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Lista de tarefas (ondaB2 B10): marcar/desmarcar, remover, adicionar e limpar, pelos comandos do ponto. %>
+<% d = w["data"] %>
+<% p = points[Array(d["point_ids"]).first] %>
+<% if p.nil? %>
+  <div class="dw-card dw-tile dw-unavailable"><span class="dw-ico"><%= icon("clipboard-list") %></span><span><span class="dw-name"><%= w["label"].presence || t("dashboards.w.point_removed") %></span><span class="dw-state"><%= t("dashboards.w.not_found") %></span></span></div>
+<% else %>
+  <% can = p["can_command"] %>
+  <div class="dw-card dw-todo">
+    <div class="flex items-center justify-between gap-2"><p class="dw-card-title flex items-center gap-2"><%= icon("clipboard-list", "size-4 text-accent") %><%= w["label"].presence || p["title"] || p["name"] %></p>
+      <span class="ss-chip num"><%= Array(d["pending"]).size %></span></div>
+    <% if can %>
+      <%= dw_command_form(p, "add_item", w: w, dashboard: dashboard, live: live) do %>
+        <div class="dw-todo-add"><label class="sr-only" for="td-<%= w['id'] %>"><%= d["add_label"] %></label>
+          <input type="text" name="value" id="td-<%= w['id'] %>" class="ss-input" maxlength="255" placeholder="<%= d["add_label"] %>" required autocomplete="off">
+          <button class="dw-step" aria-label="<%= d["add_label"] %>"><%= icon("plus", "size-4") %></button></div>
+      <% end %>
+    <% end %>
+    <% if Array(d["pending"]).empty? && Array(d["done"]).empty? %><p class="text-sm text-muted mt-3"><%= d["empty"] %></p><% end %>
+    <ul class="dw-todo-list">
+      <% (Array(d["pending"]) + Array(d["done"])).each do |i| %>
+        <% done = i["status"] == "completed" %>
+        <li class="<%= 'is-done' if done %>">
+          <% if can %>
+            <%= dw_command_button(p, done ? "reopen_item" : "complete_item", value: i["uid"], w: w, dashboard: dashboard, live: live, class: "dw-todo-check", form_class: "contents",
+                                  role: "checkbox", "aria-checked": done.to_s, "aria-label": i["summary"]) do %><%= icon("check", "size-4") %><% end %>
+          <% else %><span class="dw-todo-check" role="img" aria-label="<%= i["summary"] %>"><%= icon("check", "size-4") if done %></span><% end %>
+          <span class="min-w-0 flex-1 truncate"><%= i["summary"] %></span>
+          <% if can %>
+            <%= dw_command_button(p, "remove_item", value: i["uid"], w: w, dashboard: dashboard, live: live, class: "dw-todo-del", form_class: "contents", "aria-label": "#{HelperTypes::TodoList.command_labels['remove_item']}: #{i['summary']}") do %><%= icon("x", "size-4") %><% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <% if can && d["done_count"].to_i.positive? %>
+      <div class="mt-2 flex items-center justify-between text-xs text-muted"><span><%= d["done_label"] %></span>
+        <%= dw_command_button(p, "clear_completed", w: w, dashboard: dashboard, live: live, class: "ss-btn ss-btn-ghost ss-btn-sm", form_class: "contents") do %><%= icon("trash", "size-4") %><%= d["clear_label"] %><% end %></div>
+    <% end %>
+  </div>
+<% end %>

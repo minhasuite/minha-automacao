@@ -1,0 +1,21 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Botão (ondaB2 B10): sem tap_action, o toque faz o natural do ponto; segurar e duplo toque pelos gestos. %>
+<% d = w["data"] %>
+<% p = points[Array(d["point_ids"]).first] %>
+<% gattrs, ghidden = dw_gestures(w, points, dashboard: dashboard, live: live) %>
+<% label = w["label"].presence || p&.dig("title") || p&.dig("name") || Dashboards::Widgets::ButtonWidget.label %>
+<% art = icon(w["icon"].presence || (p ? dw_point_icon(p) : "cursor-click")) %>
+<% inner = capture do %>
+  <span class="dw-btn-ico <%= 'dw-on' if p && dw_on?(p) %>"><%= art %></span>
+  <span class="dw-name text-center"><%= label %></span>
+  <% if p && d["show_state"] %><span class="dw-state text-center"><%= p["quality"] == "good" ? p["text"] : t("dashboards.w.no_signal") %></span><% end %>
+<% end %>
+<div class="relative h-full" <%= tag.attributes(data: gattrs) %>>
+  <%= ghidden %>
+  <% if w.dig("gestures", "tap").nil? && p && d["command"] && p["can_command"] && p["quality"] == "good" %>
+    <%= dw_command_button(p, d["command"], w: w, dashboard: dashboard, live: live, class: "dw-card dw-btn dw-press #{dw_color_class(w, p)}", form_class: "h-full",
+                          "aria-label": label, "aria-pressed": (p["on"].to_s if d["command"] == "toggle")) do %><%= inner %><% end %>
+  <% else %>
+    <div class="dw-card dw-btn <%= dw_color_class(w, p) %> <%= 'dw-unavailable' if d['missing'] %>" role="<%= 'button' if w['gestures'] %>" tabindex="<%= 0 if w['gestures'] %>"><%= inner %></div>
+  <% end %>
+</div>
