@@ -34,6 +34,7 @@
     </ul>
     <p class="text-xs text-muted mt-2"><%= t("hardware.neighbors", n: Array(h["neighbors"]).size) %></p>
   </section>
+  <%= render "web/hardware/network_form", h: h, wifi: @wifi %>
 
   <section class="ss-card ss-card-pad mt-4" aria-labelledby="usb-t" data-hardware="usb">
     <h2 id="usb-t" class="flex items-center gap-2"><%= icon("link", "size-5 text-accent") %><%= t("hardware.serial") %></h2>

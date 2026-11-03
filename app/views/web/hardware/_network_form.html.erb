@@ -1,0 +1,31 @@
+<%# locals: (h:, wifi:) -%>
+<%# resto (7.3): IP fixo/DHCP por interface e Wi-Fi, pelo NetworkManager do host. -%>
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="netcfg-t" data-hardware="network-config">
+  <h2 id="netcfg-t" class="flex items-center gap-2"><%= icon("adjustments", "size-5 text-accent") %><%= t("resto.host.title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("resto.host.pitch") %></p>
+  <% ifaces = Array(h["interfaces"]).map { |i| i["name"] } %>
+  <%= form_with url: settings_hardware_network_path, class: "mt-4 grid gap-3 sm:grid-cols-2", data: { turbo_confirm: t("resto.host.confirm"), turbo_confirm_button: t("resto.host.apply") } do %>
+    <div><%= label_tag :interface, t("resto.host.interface"), class: "ss-label" %><%= select_tag :interface, options_for_select(ifaces), class: "ss-input" %></div>
+    <div><%= label_tag :mode, t("resto.host.mode"), class: "ss-label" %><%= select_tag :mode, options_for_select([ [ t("resto.host.dhcp"), "dhcp" ], [ t("resto.host.static"), "static" ] ]), class: "ss-input" %></div>
+    <div><%= label_tag :address, t("resto.host.address"), class: "ss-label" %><%= text_field_tag :address, nil, class: "ss-input num", placeholder: "192.168.0.10/24", inputmode: "decimal" %></div>
+    <div><%= label_tag :gateway, t("hardware.gateway"), class: "ss-label" %><%= text_field_tag :gateway, h["gateway"], class: "ss-input num", inputmode: "decimal" %></div>
+    <div class="sm:col-span-2"><%= label_tag :dns, "DNS", class: "ss-label" %><%= text_field_tag :dns, Array(h["dns"]).join(", "), class: "ss-input num", placeholder: "1.1.1.1, 8.8.8.8" %>
+      <p class="text-xs text-muted mt-1"><%= t("resto.host.static_hint") %></p></div>
+    <div class="sm:col-span-2"><button class="ss-btn ss-btn-outline"><%= t("resto.host.apply") %></button></div>
+  <% end %>
+
+  <h3 class="font-bold text-ink mt-6 flex items-center gap-2"><%= icon("globe", "size-4 text-accent") %><%= t("resto.host.wifi") %></h3>
+  <% if wifi.nil? %>
+    <%= link_to t("resto.host.scan"), settings_hardware_path(wifi: 1, anchor: "netcfg-t"), class: "ss-btn ss-btn-ghost ss-btn-sm mt-2" %>
+  <% elsif wifi.empty? %>
+    <p class="text-sm text-muted mt-2"><%= t("resto.host.no_wifi") %></p>
+  <% end %>
+  <%= form_with url: settings_hardware_wifi_path, class: "mt-3 grid gap-3 sm:grid-cols-2", data: { turbo_confirm: t("resto.host.confirm"), turbo_confirm_button: t("resto.host.connect") } do %>
+    <div><%= label_tag :ssid, t("resto.host.ssid"), class: "ss-label" %>
+      <%= text_field_tag :ssid, nil, class: "ss-input", list: "wifi-list", required: true, maxlength: 32, autocomplete: "off" %>
+      <datalist id="wifi-list"><% Array(wifi).each do |w| %><option value="<%= w["ssid"] %>"><%= w["signal"] %>%</option><% end %></datalist></div>
+    <div><%= label_tag :password, t("resto.host.wifi_password"), class: "ss-label" %><%= password_field_tag :password, nil, class: "ss-input", maxlength: 63, autocomplete: "new-password" %></div>
+    <%= hidden_field_tag :interface, ifaces.find { |n| n.start_with?("wl") } %>
+    <div class="sm:col-span-2"><button class="ss-btn ss-btn-outline"><%= t("resto.host.connect") %></button></div>
+  <% end %>
+</section>

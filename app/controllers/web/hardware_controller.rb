@@ -8,6 +8,22 @@ module Web
     def show
       @available = Host.available?
       @host = Host.info(refresh: params[:atualizar].present?)
+      @wifi = (Host.wifi_networks rescue []) if @available && params[:wifi].present? # rubocop:disable Style/RescueModifier
+    end
+
+    # resto (7.3): IP fixo ou DHCP numa interface, e Wi-Fi (o "Rede" do HAOS).
+    def network
+      Host.network!(params, user: current_user)
+      redirect_to settings_hardware_path, notice: t("resto.host.network_saved")
+    rescue Apps::Supervisor::Error => e
+      redirect_to settings_hardware_path, alert: e.message
+    end
+
+    def wifi
+      Host.wifi!(params, user: current_user)
+      redirect_to settings_hardware_path, notice: t("resto.host.wifi_saved", ssid: params[:ssid])
+    rescue Apps::Supervisor::Error => e
+      redirect_to settings_hardware_path, alert: e.message
     end
 
     def power

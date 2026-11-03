@@ -23,6 +23,14 @@ module Web
       redirect_to settings_backups_path, alert: e.message
     end
 
+    # resto (7.12): backup agora, completo ou sem as partes desmarcadas.
+    def create
+      name = Backups::Partial.create!(skip: Backups::Partial::PARTS.keys - Array(params[:parts]), user: current_user)
+      redirect_to settings_backups_path, notice: t("resto.backup.created", name: name)
+    rescue Backups::Error => e
+      redirect_to settings_backups_path, alert: e.message
+    end
+
     private
 
     # Arquivo enviado vence; senão o escolhido na lista ("local:<nome>" ou "offsite:<nome>").

@@ -273,9 +273,13 @@ Rails.application.routes.draw do
     post "configuracoes/saude/ignorar", to: "health#ignore", as: :settings_health_ignore
     post "configuracoes/saude/reparar", to: "health#repair", as: :settings_health_repair
     get "configuracoes/hardware", to: "hardware#show", as: :settings_hardware
+    # resto (7.3): IP e Wi-Fi do host (NetworkManager pelo supervisor)
+    post "configuracoes/hardware/rede", to: "hardware#network", as: :settings_hardware_network
+    post "configuracoes/hardware/wifi", to: "hardware#wifi", as: :settings_hardware_wifi
     post "configuracoes/sistema/firmware/:point_id", to: "firmware#create", as: :settings_firmware
     get "configuracoes/backups", to: "backups#show", as: :settings_backups
     post "configuracoes/backups", to: "backups#restore"
+    post "configuracoes/backups/agora", to: "backups#create", as: :settings_backups_now # resto (7.12)
     get "configuracoes/seguranca", to: "security#show", as: :settings_security
     post "configuracoes/seguranca/totp", to: "security#enable_totp", as: :settings_security_totp
     delete "configuracoes/seguranca/totp", to: "security#disable_totp"

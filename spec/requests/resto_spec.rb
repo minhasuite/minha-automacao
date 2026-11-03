@@ -93,4 +93,33 @@ RSpec.describe "Paridade: resto (telas e API)" do
       end
     end
   end
+
+  describe "backup parcial (7.12) e rede do host (7.3)" do
+    it "backup agora sem o histórico: pg_dump de verdade, sem os dados das tabelas desmarcadas" do
+      Dir.mktmpdir do |dir|
+        stub_const("ENV", ENV.to_h.merge("BACKUP_DIR" => dir))
+        get "/configuracoes/backups"
+        expect(response.body).to include("Fazer backup agora", "Histórico das leituras")
+        post "/configuracoes/backups/agora", params: { parts: %w[runs recordings logs] }
+        expect(flash[:notice]).to match(/ma-parcial-.*\.sql\.gz criado/)
+        sql = Zlib::GzipReader.open(Dir["#{dir}/*.sql.gz"].sole, &:read)
+        expect(sql).to include("PostgreSQL database dump", "CREATE TABLE public.readings") # dados do teste ficam na transação, fora do pg_dump
+        expect(sql).not_to match(/^COPY public\.readings /)
+        expect(sql).to match(/^COPY public\.sites /)
+        expect(Backups::Restore.local.map { |f| f[:name] }).to include(File.basename(Dir["#{dir}/*.sql.gz"].sole))
+      end
+    end
+
+    it "Hardware mostra o formulário de rede e manda ao supervisor" do
+      stub_const("ENV", ENV.to_h.merge("SUPERVISOR_URL" => "http://sup:8099", "SUPERVISOR_TOKEN" => "x" * 40))
+      stub_request(:get, "http://sup:8099/system/host").to_return(body: { data: { hostname: "casa", interfaces: [ { name: "eth0", state: "up" } ] } }.to_json)
+      net = stub_request(:post, "http://sup:8099/system/host/network").with(body: hash_including("interface" => "eth0", "mode" => "static", "dns" => %w[1.1.1.1 8.8.8.8]))
+                                                                       .to_return(status: 202, body: { data: {} }.to_json)
+      get "/configuracoes/hardware"
+      expect(response.body).to include("Configurar a rede do servidor", "Procurar redes Wi-Fi")
+      post "/configuracoes/hardware/rede", params: { interface: "eth0", mode: "static", address: "192.168.0.10/24", gateway: "192.168.0.1", dns: "1.1.1.1, 8.8.8.8" }
+      expect(net).to have_been_requested
+      expect(flash[:notice]).to include("Rede do servidor atualizada")
+    end
+  end
 end

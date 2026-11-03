@@ -157,6 +157,9 @@ module Supervisor
       when "GET /system/host" then json(200, data: host_probe)
       when "POST /system/host/reboot" then host_power("reboot")
       when "POST /system/host/shutdown" then host_power("poweroff")
+      when "POST /system/host/network" then host_network(body)
+      when "GET /system/host/wifi" then host_wifi_scan
+      when "POST /system/host/wifi" then host_wifi(body)
       when "GET /system/logs" then json(200, data: { lines: service_logs(req.params["service"].to_s, req.params["lines"]) })
       else json(404, error: "Não encontrado.")
       end
@@ -196,6 +199,63 @@ module Supervisor
       Supervisor.log("host #{action}")
       run_once([ "nsenter", "-t", "1", "-m", "-u", "-i", "-n", "-p", "--", "systemctl", action ], { "Privileged" => true, "PidMode" => "host" }, timeout: 30)
       json(202, data: { action: action })
+    end
+
+    # ---- resto (7.3): IP e Wi-Fi do host pelo NetworkManager (nmcli no PID 1) ----
+    IFACE = /\A[a-z][a-z0-9._-]{0,14}\z/
+    IPV4 = /\A(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}\z/
+
+    def nmcli(*args, timeout: 40)
+      out = run_once([ "nsenter", "-t", "1", "-m", "-u", "-i", "-n", "-p", "--", "nmcli", *args ], { "Privileged" => true, "PidMode" => "host" }, timeout: timeout)
+      raise Error, "Este sistema não usa o NetworkManager (nmcli)." if out.match?(/executable file not found|No such file|nmcli: not found/i)
+      raise Error, "nmcli: #{out.lines.last.to_s.strip[0, 200]}" if out.match?(/\AError:|^Error:/)
+
+      out
+    end
+
+    # {interface, mode: dhcp|static, address: "192.168.0.10/24", gateway, dns: ["1.1.1.1"]}
+    def host_network(body)
+      iface = body["interface"].to_s
+      raise Error, "Interface inválida." unless iface.match?(IFACE)
+
+      conn = nmcli("-g", "GENERAL.CONNECTION", "device", "show", iface).lines.map(&:strip).reject(&:empty?).last.to_s
+      raise Error, "A interface #{iface} não tem conexão no NetworkManager." if conn.empty? || conn.match?(/\A--\z/)
+
+      args = if body["mode"] == "static"
+        ip, prefix = body["address"].to_s.split("/", 2)
+        dns = Array(body["dns"]).map(&:to_s).reject(&:empty?)
+        ok = ip.to_s.match?(IPV4) && prefix.to_i.between?(8, 32) && body["gateway"].to_s.match?(IPV4) && dns.all? { |d| d.match?(IPV4) } && dns.size <= 3
+        raise Error, "Endereço, gateway ou DNS inválido." unless ok
+
+        [ "ipv4.method", "manual", "ipv4.addresses", "#{ip}/#{prefix.to_i}", "ipv4.gateway", body["gateway"].to_s, "ipv4.dns", dns.join(" ") ]
+      else
+        [ "ipv4.method", "auto", "ipv4.addresses", "", "ipv4.gateway", "", "ipv4.dns", "" ]
+      end
+      Supervisor.log("rede #{iface}: #{body['mode']}")
+      nmcli("connection", "modify", conn, *args)
+      nmcli("connection", "up", conn, timeout: 60)
+      json(202, data: { interface: iface, mode: body["mode"] == "static" ? "static" : "dhcp" })
+    end
+
+    def host_wifi_scan
+      rows = nmcli("-t", "-f", "SSID,SIGNAL,SECURITY", "device", "wifi", "list", "--rescan", "auto").lines.filter_map do |l|
+        ssid, signal, sec = l.strip.split(/(?<!\\):/, 3)
+        { ssid: ssid.to_s.gsub("\\:", ":"), signal: signal.to_i, secure: !sec.to_s.strip.empty? && sec.strip != "--" } unless ssid.to_s.empty?
+      end
+      json(200, data: rows.uniq { |r| r[:ssid] }.sort_by { |r| -r[:signal] }.first(40))
+    end
+
+    def host_wifi(body)
+      ssid = body["ssid"].to_s
+      pass = body["password"].to_s
+      iface = body["interface"].to_s
+      raise Error, "Rede Wi-Fi inválida." unless ssid.bytesize.between?(1, 32) && !ssid.match?(/[[:cntrl:]]/)
+      raise Error, "A senha do Wi-Fi tem de 8 a 63 caracteres." unless pass.empty? || (pass.length.between?(8, 63) && !pass.match?(/[[:cntrl:]]/))
+      raise Error, "Interface inválida." unless iface.empty? || iface.match?(IFACE)
+
+      Supervisor.log("wi-fi: conectar")
+      nmcli("device", "wifi", "connect", ssid, *(pass.empty? ? [] : [ "password", pass ]), *(iface.empty? ? [] : [ "ifname", iface ]), timeout: 60)
+      json(202, data: { ssid: ssid })
     end
 
     def service_logs(service, lines)

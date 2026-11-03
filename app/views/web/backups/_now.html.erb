@@ -1,0 +1,15 @@
+<%# resto (7.12): backup agora, completo ou parcial (o que ficar desmarcado vai sem os dados). -%>
+<section class="ss-card ss-card-pad mb-4" aria-labelledby="bk-now-t" data-backup="now">
+  <h2 id="bk-now-t" class="flex items-center gap-2"><%= icon("archive", "size-5 text-accent") %><%= t("resto.backup.title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("resto.backup.pitch") %></p>
+  <%= form_with url: settings_backups_now_path, class: "mt-4 grid gap-3", data: { turbo_submits_with: t("resto.backup.working") } do %>
+    <fieldset class="grid gap-2 sm:grid-cols-2">
+      <legend class="ss-label"><%= t("resto.backup.include") %></legend>
+      <label class="ss-check"><input type="checkbox" checked disabled><%= t("resto.backup.config") %></label>
+      <% Backups::Partial.labels.each do |key, label| %>
+        <label class="ss-check"><%= check_box_tag "parts[]", key, true, id: "part-#{key}" %><%= label %></label>
+      <% end %>
+    </fieldset>
+    <div><button class="ss-btn ss-btn-primary"><%= icon("download", "size-4") %><%= t("resto.backup.now") %></button></div>
+  <% end %>
+</section>

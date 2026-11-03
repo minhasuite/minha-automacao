@@ -28,6 +28,21 @@ module Host
     Apps::Supervisor.request(:post, path)
   end
 
+  # ---- resto (7.3): IP e Wi-Fi do host (nmcli no host, pelo supervisor) ----
+  def network!(form, user:)
+    body = { "interface" => form[:interface].to_s, "mode" => form[:mode] == "static" ? "static" : "dhcp", "address" => form[:address].to_s.strip,
+             "gateway" => form[:gateway].to_s.strip, "dns" => form[:dns].to_s.split(/[\s,]+/).compact_blank }
+    AuditEvent.create!(tenant_id: user.tenant_id, user_id: user.id, action: "host.network", auditable_type: "Host", details: body.except("dns"))
+    Apps::Supervisor.request(:post, "/system/host/network", body)
+  end
+
+  def wifi_networks = Array(Apps::Supervisor.request(:get, "/system/host/wifi")["data"])
+
+  def wifi!(form, user:)
+    AuditEvent.create!(tenant_id: user.tenant_id, user_id: user.id, action: "host.wifi", auditable_type: "Host", details: { ssid: form[:ssid].to_s })
+    Apps::Supervisor.request(:post, "/system/host/wifi", { "ssid" => form[:ssid].to_s, "password" => form[:password].to_s, "interface" => form[:interface].to_s })
+  end
+
   # ---- Descoberta (A19): o plugin declara `dhcp` e `usb` como no manifesto do HA ----
 
   # Vizinhos da rede que casam com {hostname: "shelly*", mac: "A4CF12"} → formato do Mdns.browse.
