@@ -592,3 +592,46 @@ Tudo como plugin de `Integrations::PLUGINS` + driver em `Drivers::REGISTRY`
   (sensores de movimento novos) não são lidos ainda.
 - Govee: o estado volta na UDP 4002 do servidor (rede `host`); dois pedidos
   ao mesmo tempo dividem a porta.
+
+## Protocolos e ecossistemas (ondaC1, 2026-11)
+
+Paridade com o grupo 5 do HA. Tudo por registro, com spec de plugin falso.
+
+- **Tela "Gerenciar" da integração** (`Plugin.panel?`, `panel_locals`,
+  `panel_action`, `panel_refresh`): partial `web/integrations/panels/_<key>`
+  ou a genérica (`stats`, `rows`, `actions`). Rotas
+  `/integracoes/:id/gerenciar` e `/integracoes/:id/gerenciar/:acao`.
+- **Z-Wave JS completo**: inclusão S2 (concede as classes pedidas, PIN do
+  DSK), só S2, sem segurança, SmartStart pelo QR, exclusão, refazer rotas,
+  remover nó com falha, reentrevistar, mapa da rede pelos vizinhos, valores
+  em tempo real (`ZwaveJs::Listener`, `ZWAVE_LISTENER=off` desliga),
+  Notification CC (113) e Central Scene (91) no `zwave.yml`, firmware pelo ar
+  (`Firmware::Providers::ZwaveJs`). A inclusão corre no worker; a tela fala
+  com ele pelo cache (`ZwaveJs::Inclusion`).
+- **Bluetooth**: formatos em `Ble::PARSERS` (BTHome com e sem chave,
+  Xiaomi MiBeacon com bindkey, pvvx, ATC, Govee, iBeacon, Oral-B). Adaptador
+  do servidor: `bin/ble-scan` (HCI cru, escuta passiva) no serviço
+  `ble-scanner` (perfil `bluetooth`) → `POST /api/v1/bluetooth/advertisements`
+  (chave `write` gerada no Gerenciar) → `Ble::Hub` em tempo real. Chaves
+  "MAC=chave" nos segredos (proxy ESPHome e adaptador).
+- **Matter**: Gerenciar com servidor, comissionar pela rede ou pelo
+  Bluetooth do servidor, Wi-Fi e Thread para comissionar, compartilhar
+  (multi-admin, QR e código por 3 min, fabrics do nó), reentrevistar,
+  remover; firmware pela DCL (`Firmware::Providers::Matter`). Pelo Bluetooth
+  do celular: onda D (app).
+- **Thread**: integração do OpenThread Border Router (REST 8081, serviço
+  `otbr`, perfil `thread`): papel, rede, dataset cifrado, formar rede,
+  importar dataset, rede preferida e credenciais para o Matter.
+- **MQTT discovery do HA**: `homeassistant/<componente>/…/config` e o
+  formato de aparelho (`cmps`), componentes em
+  `Mqtt::HaDiscovery::COMPONENTS`, templates Jinja, disponibilidade, birth
+  message; zigbee2mqtt e Tasmota não duplicam.
+- **HomeKit**: ponte para o app Casa (`Bridges::HomekitBridge` + serviço
+  `homekit-bridge/` com hap-nodejs, perfil `homekit`) e controlador nativo
+  em Ruby (`Hap::Client`, integração "HomeKit (aparelhos)", mapa
+  `homekit.yml`).
+- **Google Home cloud-to-cloud**: `POST /google/smart_home`, traits em
+  `GoogleHome::Traits`, OAuth comum (`OauthClients`), HomeGraph pela conta
+  de serviço, estado aos ecossistemas por `StateReport::REPORTERS`. Passo a
+  passo do dono em `docs/google-home.md`.
+

@@ -133,7 +133,7 @@ RSpec.describe "Protocolos e ecossistemas (ondaC1)" do
       expect(response.body).to include("Teste Luz", "Google Home", "Comissionar", "O Matter Server está sem Bluetooth")
       post "/integracoes/#{i.id}/gerenciar/share", params: { panel: { node: "7" } }
       follow_redirect!
-      expect(response.body).to include("Compartilhar Teste Luz", "3497 0112 332", "<svg")
+      expect(response.body).to include("Compartilhar Teste Luz", "3497-011-2332", "<svg")
     end
 
     it "Gerenciar do Thread: papel, rede e credenciais" do

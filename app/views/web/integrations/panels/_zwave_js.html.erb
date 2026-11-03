@@ -5,7 +5,7 @@
 <% state = inclusion["state"] %>
 <% classes = ZwaveJs::SECURITY_CLASSES %>
 
-<section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="<%= t("protocols.zwave.summary") %>">
+<section class="grid gap-3 grid-cols-2 xl:grid-cols-4" aria-label="<%= t("protocols.zwave.summary") %>">
   <div class="ss-card ss-card-pad">
     <p class="text-xs font-bold uppercase text-muted"><%= t("protocols.zwave.controller") %></p>
     <p class="mt-1 text-lg font-bold text-ink num"><%= controller["homeId"] ? format("%08X", controller["homeId"]) : "—" %></p>

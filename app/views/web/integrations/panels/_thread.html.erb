@@ -1,7 +1,7 @@
 <%# locals: (integration:, plugin:, node:, dataset:, preferred:, matter:) -%>
 <% act = ->(a) { panel_action_integration_path(integration, acao: a) } %>
 <% role = node["State"].to_s %>
-<section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="<%= t("protocols.thread.summary") %>">
+<section class="grid gap-3 grid-cols-2 xl:grid-cols-4" aria-label="<%= t("protocols.thread.summary") %>">
   <div class="ss-card ss-card-pad">
     <p class="text-xs font-bold uppercase text-muted"><%= t("protocols.thread.role") %></p>
     <p class="mt-1 text-lg font-bold text-ink"><%= t("protocols.thread.roles.#{role.presence || 'disabled'}", default: role) %></p>
