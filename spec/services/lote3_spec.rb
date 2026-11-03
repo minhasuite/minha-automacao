@@ -49,8 +49,10 @@ RSpec.describe "Lote 3: câmeras e Alexa" do
       expect(entry).to include("id" => "onvif:10.0.0.20", "kind" => "go2rtc", "name" => "Marca M1", "manufacturer" => "Marca",
                                "address" => { "host" => "10.0.0.20", "port" => 554, "username" => "admin", "onvif_port" => 8000 })
       expect(entry["points"]).to eq([
-        { "name" => "Principal 1920x1080", "capability" => "stream", "history" => "none", "address" => { "path" => "/live/ch0" } },
-        { "name" => "Sub", "capability" => "stream", "history" => "none", "address" => { "path" => "/live/ch1?x=1", "port" => 8554 } },
+        { "name" => "Principal 1920x1080", "capability" => "stream", "history" => "none", "writable" => true,
+          "address" => { "path" => "/live/ch0", "profile" => "p0", "supports" => %w[record] } },
+        { "name" => "Sub", "capability" => "stream", "history" => "none", "writable" => true,
+          "address" => { "path" => "/live/ch1?x=1", "port" => 8554, "profile" => "p1", "supports" => %w[record] } },
         { "name" => "Movimento", "capability" => "motion", "device_class" => "motion", "address" => { "onvif" => "motion" } }
       ])
       expect(a_request(:post, dev_url).with(body: /<wsse:Username>admin<.*PasswordDigest/)).to have_been_made.at_least_once

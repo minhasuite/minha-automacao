@@ -41,6 +41,7 @@
     <% end %>
   </section>
 </div>
+<% if @point.capability == "stream" && @device.driver == "go2rtc" %><%= render "web/points/camera", point: @point, site: @site %><% end %>
 
 <p class="ss-section mt-6 mb-3"><%= t("points.show.automation") %></p>
 <% if @point.capability == "onoff" && @point.writable %>

@@ -15,6 +15,8 @@ Rails.application.config.after_initialize do
   SolidQueue.on_worker_start { ZwaveJs::Listener.start } if defined?(SolidQueue) && ENV["ZWAVE_LISTENER"] != "off"
   # ondaB1 (B6): satélites de voz (Wyoming, ESPHome).
   SolidQueue.on_worker_start { Assist::Satellites::Listener.start } if defined?(SolidQueue) && ENV["ASSIST_SATELLITES"] != "off"
+  # ondaC2 (C10): gravação contínua das câmeras (só com GO2RTC_URL).
+  SolidQueue.on_worker_start { Recordings::Recorder.start } if defined?(SolidQueue) && ENV["RECORDINGS"] != "off"
   # Leitura periódica (F8: Tuya, Xiaomi, lista de Echo); POLLING=off desliga.
   SolidQueue.on_worker_start { Polling.start } if defined?(SolidQueue) && ENV["POLLING"] != "off"
   # Helpers sem "restaurar depois de reiniciar" voltam ao valor inicial (F8e).

@@ -59,3 +59,28 @@ confirmação de risco. Nunca acione sirene de teste.
 
 A ação "Avisar" (`camera`) e "Pedir à IA" (`cameras`) usam o quadro do
 go2rtc de qualquer ponto `stream`, de qualquer plugin.
+
+## PTZ, gravação e falar (ondaC2)
+
+Na página do ponto de vídeo (`/pontos/:id`) e no app (câmera em tela cheia):
+
+- **PTZ**: comando `ptz` no ponto `stream` (`left`, `right`, `up`, `down`,
+  `zoom_in`, `zoom_out`, `home` ou `preset:<token>`), pelo ONVIF da câmera
+  (`ContinuousMove` de 1 s com Timeout, `GotoHomePosition`, `GotoPreset`;
+  `Drivers::Camera`). A descoberta ONVIF marca `ptz` quando a câmera tem o
+  serviço; dá para ligar à mão em "Ajustes da câmera".
+- **Gravação própria** (`Recordings`): `address.record` {mode `off` |
+  `continuous` | `events`, `retention_days`, `event_s`}. O go2rtc entrega o
+  MP4 (`/api/stream.mp4?duration=`) e o arquivo fica em
+  `RECORDINGS_DIR/<local>/<ponto>/<dia>/` (padrão `storage/recordings`), com
+  o índice em `camera_recordings`. Contínua: `Recordings::Recorder` no worker
+  (trechos de 60 s; `RECORDINGS=off` desliga). Por evento: um ponto `motion`
+  do mesmo aparelho ligando grava `event_s`. Na hora: comando `record`
+  (segundos). Retenção: `RecordingsPurgeJob` a cada hora. As gravações
+  aparecem em Mídia → Gravações das câmeras (ver, ou mandar para a TV).
+- **Falar (áudio de duas vias)**: "Tem alto-falante" liga `play_media` no
+  ponto. Na web, "Falar" refaz o ao vivo WebRTC mandando o microfone (o
+  go2rtc repassa pelo backchannel da câmera). No app, segura e fala: o áudio
+  vai por `POST /api/v1/points/:id/talk` e o go2rtc toca
+  (`POST /api/streams?dst=<ponto>&src=ffmpeg:<url>`). A câmera também vira
+  canal de fala (ação "Falar", avisos).

@@ -1,0 +1,83 @@
+<%# locals: (point:, site:) -%>
+<%# ondaC2 (C10): câmera na página do ponto — ao vivo com falar (áudio de duas vias), PTZ, gravar agora, gravações e ajustes. %>
+<% cmds = Points::Command.commands_for(point) %>
+<% rec = Recordings.settings(point) %>
+<% can_cmd = point.writable && can?(:command, risk: point.risk) %>
+<section class="grid gap-4 lg:grid-cols-3 mt-4" aria-labelledby="cam-title">
+  <div class="ss-card ss-card-pad lg:col-span-2 ma-cam">
+    <div class="dw-camera !p-0" data-controller="camera" data-camera-snapshot-value="<%= camera_snapshot_path(point) %>"
+         data-camera-webrtc-value="<%= camera_webrtc_path(point) %>" data-camera-interval-value="5"
+         data-camera-mic-denied-value="<%= t("cameras.mic_denied") %>">
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <h2 id="cam-title" class="flex-1 min-w-0"><%= t("cameras.title") %></h2>
+        <button type="button" class="dw-camera-live" data-camera-target="liveButton" data-action="camera#toggle" aria-pressed="false"><%= t("dashboards.w.live") %></button>
+        <% if cmds.include?("play_media") && can_cmd %>
+          <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm ma-talk" data-camera-target="talkButton" data-action="camera#talk" aria-pressed="false"><%= icon("microphone", "size-4") %><%= t("cameras.talk") %></button>
+        <% end %>
+      </div>
+      <div class="dw-camera-view">
+        <img data-camera-target="img" alt="<%= t("dashboards.w.image_x", name: point.name) %>" hidden>
+        <video data-camera-target="video" playsinline autoplay hidden aria-label="<%= t("dashboards.w.live_x", name: point.name) %>"></video>
+        <span class="dw-camera-status" data-camera-target="status" role="status"><%= t("dashboards.w.loading") %></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid gap-4 content-start">
+    <% if cmds.include?("ptz") && can_cmd %>
+      <div class="ss-card ss-card-pad">
+        <h3 class="mb-3"><%= t("cameras.ptz") %></h3>
+        <div class="flex items-center gap-4">
+          <div class="ma-ptz" role="group" aria-label="<%= t("cameras.ptz") %>">
+            <% { "up" => "chevron-up", "left" => "chevron-left", "home" => "home", "right" => "chevron-right", "down" => "chevron-down" }.each do |move, ico| %>
+              <%= button_to command_point_path(point), params: { command: "ptz", value: move }, class: "ma-ptz-#{move}", form_class: "contents",
+                            title: t("cameras.moves.#{move}"), "aria-label": t("cameras.moves.#{move}") do %><%= icon(ico, "size-5") %><% end %>
+            <% end %>
+          </div>
+          <span class="ss-step" role="group" aria-label="<%= t("cameras.zoom") %>">
+            <% { "zoom_in" => "zoom-in", "zoom_out" => "zoom-out" }.each do |move, ico| %>
+              <%= button_to command_point_path(point), params: { command: "ptz", value: move }, title: t("cameras.moves.#{move}"), "aria-label": t("cameras.moves.#{move}") do %><%= icon(ico, "size-4") %><% end %>
+            <% end %>
+          </span>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="ss-card ss-card-pad">
+      <h3><%= t("cameras.recordings") %></h3>
+      <p class="text-sm text-muted mt-1"><%= t("cameras.mode_now", mode: t("cameras.modes.#{rec['mode']}"), days: rec["retention_days"]) %></p>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <%= link_to site_media_browse_path(site, "recordings", path: point.id), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("video-camera", "size-4") %><%= t("cameras.see_recordings") %><% end %>
+        <% if cmds.include?("record") && can_cmd %>
+          <%= button_to command_point_path(point), params: { command: "record", value: rec["event_s"] }, class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("stop", "size-4") %><%= t("cameras.record_now", s: rec["event_s"]) %><% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if can?(:manage) %>
+      <details class="ss-card ss-card-pad">
+        <summary class="font-bold text-ink cursor-pointer"><%= t("cameras.settings") %></summary>
+        <%= form_with url: camera_settings_path(point), method: :patch, class: "grid gap-3 mt-3" do %>
+          <div>
+            <label class="ss-label" for="rec-mode"><%= t("cameras.mode") %></label>
+            <%= select_tag :mode, options_for_select(Recordings::MODES.map { |m| [ t("cameras.modes.#{m}"), m ] }, rec["mode"]), id: "rec-mode", class: "ss-input" %>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="ss-label" for="rec-days"><%= t("cameras.retention") %></label>
+              <%= number_field_tag :retention_days, rec["retention_days"], id: "rec-days", class: "ss-input num", min: 1, max: Recordings::MAX_RETENTION %>
+            </div>
+            <div>
+              <label class="ss-label" for="rec-secs"><%= t("cameras.event_s") %></label>
+              <%= number_field_tag :event_s, rec["event_s"], id: "rec-secs", class: "ss-input num", min: 5, max: Points::Command::MAX_RECORD_S %>
+            </div>
+          </div>
+          <label class="ss-check"><%= check_box_tag :ptz, "1", point.address["ptz"] || cmds.include?("ptz"), id: "cam-ptz" %> <%= t("cameras.has_ptz") %></label>
+          <label class="ss-check"><%= check_box_tag :talk, "1", point.address["talk"], id: "cam-talk" %> <%= t("cameras.has_talk") %></label>
+          <p class="text-xs text-muted"><%= t("cameras.settings_hint") %></p>
+          <button class="ss-btn ss-btn-primary"><%= t("cameras.save") %></button>
+        <% end %>
+      </details>
+    <% end %>
+  </div>
+</section>

@@ -480,6 +480,25 @@ CREATE TABLE public.bridge_exposures (
 
 
 --
+-- Name: camera_recordings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.camera_recordings (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    point_id uuid NOT NULL,
+    started_at timestamp(6) without time zone NOT NULL,
+    duration_s integer DEFAULT 0 NOT NULL,
+    bytes bigint DEFAULT 0 NOT NULL,
+    trigger character varying DEFAULT 'continuous'::character varying NOT NULL,
+    file character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: commands; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2069,6 +2088,14 @@ ALTER TABLE ONLY public.bridge_exposures
 
 
 --
+-- Name: camera_recordings camera_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.camera_recordings
+    ADD CONSTRAINT camera_recordings_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: commands commands_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2907,6 +2934,27 @@ CREATE INDEX index_bridge_exposures_on_site_id_and_bridge ON public.bridge_expos
 --
 
 CREATE INDEX index_bridge_exposures_on_tenant_id ON public.bridge_exposures USING btree (tenant_id);
+
+
+--
+-- Name: index_camera_recordings_on_point_id_and_started_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_camera_recordings_on_point_id_and_started_at ON public.camera_recordings USING btree (point_id, started_at);
+
+
+--
+-- Name: index_camera_recordings_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_camera_recordings_on_site_id ON public.camera_recordings USING btree (site_id);
+
+
+--
+-- Name: index_camera_recordings_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_camera_recordings_on_tenant_id ON public.camera_recordings USING btree (tenant_id);
 
 
 --
@@ -4130,6 +4178,14 @@ ALTER TABLE ONLY public.commands
 
 
 --
+-- Name: camera_recordings fk_rails_3797977587; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.camera_recordings
+    ADD CONSTRAINT fk_rails_3797977587 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: datasets fk_rails_390f4d8005; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4247,6 +4303,14 @@ ALTER TABLE ONLY public.ai_calls
 
 ALTER TABLE ONLY public.assist_satellites
     ADD CONSTRAINT fk_rails_4ec2c4348d FOREIGN KEY (area_id) REFERENCES public.areas(id) ON DELETE SET NULL;
+
+
+--
+-- Name: camera_recordings fk_rails_4fa267420d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.camera_recordings
+    ADD CONSTRAINT fk_rails_4fa267420d FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
 
 
 --
@@ -4682,6 +4746,14 @@ ALTER TABLE ONLY public.solid_queue_batch_executions
 
 
 --
+-- Name: camera_recordings fk_rails_c03ab3d4a9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.camera_recordings
+    ADD CONSTRAINT fk_rails_c03ab3d4a9 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: bridge_exposures fk_rails_c1a474917b; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4952,6 +5024,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261103200001'),
 ('20261103100001'),
 ('20261102400003'),
 ('20261102400002'),

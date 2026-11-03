@@ -3,8 +3,8 @@ import { Controller } from "@hotwired/stimulus"
 // Widget de câmera: quadro a cada N segundos (só com a aba visível) e "Ao vivo"
 // por WebRTC. A oferta vai ao Rails, que confere o papel e repassa ao go2rtc.
 export default class extends Controller {
-  static targets = ["img", "video", "status", "liveButton"]
-  static values = { snapshot: String, webrtc: String, interval: Number }
+  static targets = ["img", "video", "status", "liveButton", "talkButton"]
+  static values = { snapshot: String, webrtc: String, interval: Number, micDenied: String }
 
   connect() {
     this.imgTarget.onload = () => this.show(this.imgTarget)
@@ -15,6 +15,7 @@ export default class extends Controller {
 
   disconnect() {
     clearInterval(this.timer)
+    this.releaseMic()
     this.stopLive()
   }
 
@@ -32,6 +33,9 @@ export default class extends Controller {
     this.liveButtonTarget.setAttribute("aria-pressed", "true")
     this.status("Conectando…")
     pc.addTransceiver("video", { direction: "recvonly" })
+    // ondaC2 (C10): com o microfone ligado (Falar), o áudio vai para o alto-falante da câmera (go2rtc).
+    const mic = this.mic?.getAudioTracks()[0]
+    mic ? pc.addTransceiver(mic, { direction: "sendrecv", streams: [this.mic] }) : pc.addTransceiver("audio", { direction: "recvonly" })
     pc.ontrack = (e) => {
       if (e.track.kind !== "video") return
       this.videoTarget.srcObject = e.streams[0] || new MediaStream([e.track])
@@ -50,6 +54,30 @@ export default class extends Controller {
     } catch {
       this.liveFailed()
     }
+  }
+
+  // Falar (áudio de duas vias): liga o microfone e refaz o ao vivo mandando o áudio.
+  async talk() {
+    if (this.mic) {
+      this.releaseMic()
+      if (this.pc) { this.stopLive(); this.startLive() }
+      return
+    }
+    try {
+      this.mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
+    } catch {
+      this.status(this.micDeniedValue)
+      return
+    }
+    this.talkButtonTarget.setAttribute("aria-pressed", "true")
+    if (this.pc) this.stopLive()
+    await this.startLive()
+  }
+
+  releaseMic() {
+    this.mic?.getTracks().forEach((t) => t.stop())
+    this.mic = null
+    if (this.hasTalkButtonTarget) this.talkButtonTarget.setAttribute("aria-pressed", "false")
   }
 
   iceGathered(pc) {

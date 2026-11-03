@@ -88,6 +88,14 @@ module Drivers
       request(Net::HTTP::Post, "/api/webrtc", { src: point.id }, body: offer).body
     end
 
+    # ondaC2 (C10): áudio de duas vias. O go2rtc toca o endereço no
+    # alto-falante da câmera (backchannel do RTSP/ONVIF, Tapo, ISAPI…); no
+    # navegador o ao vivo por WebRTC também manda o microfone.
+    def play_audio(point, audio_url)
+      prepare(point)
+      request(Net::HTTP::Post, "/api/streams", { dst: point.id, src: "ffmpeg:#{audio_url}#audio=pcma#input=file" })
+    end
+
     # Lote 9: câmera de nuvem (`address.on_demand`): o plugin da integração dá o
     # endereço de agora (`stream_url`), posto no go2rtc na hora de ver. Fica
     # fora do `sync!` (o endereço vence); o `sync!` tira o stream depois.

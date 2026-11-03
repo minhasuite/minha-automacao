@@ -3,7 +3,8 @@ module Api
     # Pontos do dispositivo e comandos. Cadastro: técnico ou dono. Comando: o
     # papel mínimo depende do risco do ponto (SiteMembership::MIN_ROLE_BY_RISK).
     class PointsController < BaseController
-      self.key_actions = { index: "read", site_index: "read", show: "read", history: "read", command: "command", write_value: "write" }
+      self.key_actions = { index: "read", site_index: "read", show: "read", history: "read", command: "command", talk: "command", write_value: "write" }
+      TALK_MAX = 5.megabytes
 
       # ?view=app: cada ponto como no dashboard resolvido (texto, comandos,
       # can_command para o papel de quem pede), para o app desenhar os controles.
@@ -65,6 +66,20 @@ module Api
         authorize_site!(point.site, :command, risk: point.risk)
         record = Points::Command.call(point, params.require(:command), params[:value], source: "api",
                                                                                       client_uuid: params[:client_uuid])
+        render_data(CommandSerializer.new(record).to_h, status: :accepted)
+      end
+
+      # POST /points/:id/talk (audio = arquivo) — ondaC2 (C10): o "Falar" do app
+      # (aperta, fala, solta): o áudio vira anexo de 1 dia e a câmera toca
+      # pelo go2rtc (`play_media`). O navegador fala ao vivo pelo WebRTC.
+      def talk
+        point = Point.find(params[:id])
+        authorize_site!(point.site, :command, risk: point.risk)
+        audio = params.require(:audio)
+        return render_error(:invalid_value, "Áudio grande demais.", status: :unprocessable_content) if audio.size > TALK_MAX
+
+        _blob, path = Ai::Audio.store(audio.read, audio.content_type.presence || "audio/mp4", "falar-#{Time.current.to_i}")
+        record = Points::Command.call(point, "play_media", MediaSources.public_url(path), source: "api")
         render_data(CommandSerializer.new(record).to_h, status: :accepted)
       end
 

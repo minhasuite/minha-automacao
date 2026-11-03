@@ -13,7 +13,7 @@ module Onvif
   NS = { "s" => "http://www.w3.org/2003/05/soap-envelope", "tds" => "http://www.onvif.org/ver10/device/wsdl",
          "trt" => "http://www.onvif.org/ver10/media/wsdl", "tt" => "http://www.onvif.org/ver10/schema",
          "tev" => "http://www.onvif.org/ver10/events/wsdl", "wsnt" => "http://docs.oasis-open.org/wsn/b-2",
-         "wsa" => "http://www.w3.org/2005/08/addressing" }.freeze
+         "wsa" => "http://www.w3.org/2005/08/addressing", "tptz" => "http://www.onvif.org/ver20/ptz/wsdl" }.freeze
   WSSE = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd".freeze
   WSU = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd".freeze
   DIGEST = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest".freeze
@@ -42,8 +42,8 @@ module Onvif
       cam = Time.utc(d.call("Year"), d.call("Month"), d.call("Day"), d.call("Hour"), d.call("Minute"), d.call("Second"))
       @offset = cam - Time.now.utc if d.call("Year").positive?
       self
-    rescue Error
-      self # sem hora da câmera: usa a nossa
+    rescue Error, ArgumentError
+      self # sem hora da câmera (ou data inválida): usa a nossa
     end
 
     def info
@@ -56,7 +56,8 @@ module Onvif
     def services
       doc = call(device_url, "<tds:GetCapabilities><tds:Category>All</tds:Category></tds:GetCapabilities>")
       { "media" => text(doc, "//*[local-name()='Media']/*[local-name()='XAddr']"),
-        "events" => text(doc, "//*[local-name()='Events']/*[local-name()='XAddr']") }.transform_values(&:presence)
+        "events" => text(doc, "//*[local-name()='Events']/*[local-name()='XAddr']"),
+        "ptz" => text(doc, "//*[local-name()='PTZ']/*[local-name()='XAddr']") }.transform_values(&:presence)
     end
 
     # [{"token", "name", "width", "height", "uri"}] (RTSP de cada perfil).
@@ -94,6 +95,25 @@ module Onvif
 
     def renew(sub, seconds: 600)
       call(sub["url"], "<wsnt:Renew><wsnt:TerminationTime>PT#{seconds}S</wsnt:TerminationTime></wsnt:Renew>", headers: sub["headers"])
+    end
+
+    # PTZ (ondaC2, C10): mexe por `seconds` na velocidade dada (-1 a 1) e para sozinha (Timeout).
+    def ptz_move(ptz_url, profile, pan: 0, tilt: 0, zoom: 0, seconds: 1)
+      velocity = %(<tt:PanTilt x="#{pan}" y="#{tilt}"/><tt:Zoom x="#{zoom}"/>)
+      call(ptz_url, "<tptz:ContinuousMove><tptz:ProfileToken>#{xml(profile)}</tptz:ProfileToken><tptz:Velocity>#{velocity}</tptz:Velocity>" \
+                    "<tptz:Timeout>PT#{seconds}S</tptz:Timeout></tptz:ContinuousMove>")
+    end
+
+    def ptz_home(ptz_url, profile) = call(ptz_url, "<tptz:GotoHomePosition><tptz:ProfileToken>#{xml(profile)}</tptz:ProfileToken></tptz:GotoHomePosition>")
+
+    def ptz_preset(ptz_url, profile, preset)
+      call(ptz_url, "<tptz:GotoPreset><tptz:ProfileToken>#{xml(profile)}</tptz:ProfileToken><tptz:PresetToken>#{xml(preset)}</tptz:PresetToken></tptz:GotoPreset>")
+    end
+
+    # [{"token", "name"}] das posições salvas na câmera.
+    def ptz_presets(ptz_url, profile)
+      doc = call(ptz_url, "<tptz:GetPresets><tptz:ProfileToken>#{xml(profile)}</tptz:ProfileToken></tptz:GetPresets>")
+      REXML::XPath.match(doc, "//*[local-name()='Preset']").map { |p| { "token" => p.attributes["token"], "name" => text(p, "./*[local-name()='Name']").presence || p.attributes["token"] } }
     end
 
     def unsubscribe(sub)
@@ -139,6 +159,7 @@ module Onvif
     end
 
     def text(node, path) = REXML::XPath.first(node, path)&.text.to_s.strip
+    def xml(value) = value.to_s.encode(xml: :text)
   end
 
   module_function
@@ -171,8 +192,10 @@ module Onvif
     points = streams.map do |p|
       u = URI(p["uri"])
       size = "#{p['width']}x#{p['height']}" if p["width"].to_i.positive?
-      { "name" => [ p["name"].presence || "Vídeo", size ].compact.join(" "), "capability" => "stream", "history" => "none",
-        "address" => { "path" => path_of(u), "port" => (u.port if u.port != rtsp.port) }.compact }
+      # ondaC2 (C10): perfil ONVIF e PTZ no ponto; gravar vale para toda câmera.
+      { "name" => [ p["name"].presence || "Vídeo", size ].compact.join(" "), "capability" => "stream", "history" => "none", "writable" => true,
+        "address" => { "path" => path_of(u), "port" => (u.port if u.port != rtsp.port), "profile" => p["token"],
+                       "supports" => [ "record", ("ptz" if svc["ptz"]) ].compact }.compact }
     end
     points << { "name" => "Movimento", "capability" => "motion", "device_class" => "motion", "address" => { "onvif" => "motion" } } if svc["events"]
     # id pelo IP: câmera barata repete o número de série (ex.: 123456).

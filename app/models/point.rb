@@ -126,6 +126,7 @@ class Point < ApplicationRecord
       Turbo::StreamsChannel.broadcast_action_to(site, :points, action: :point_changed, target: id)
     end
     Automations.on_change(self, quality_was, value_was) if value_changed
+    Recordings.motion!(self) if value_changed && new_value == true && capability == "motion" # ondaC2: câmera em "por evento" grava
     # Só a qualidade mudou (caiu, voltou): os helpers calculados também refazem (Pacote 2).
     HelperTypes.on_change(self) if !value_changed && quality != quality_was
   end

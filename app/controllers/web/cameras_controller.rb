@@ -22,6 +22,15 @@ module Web
       render plain: e.message, status: :service_unavailable
     end
 
+    # ondaC2 (C10): gravação (modo, retenção, segundos por evento), PTZ e alto-falante da câmera.
+    def settings
+      authorize_site!(@point.site, :manage)
+      Recordings.configure!(@point, params)
+      supports = [ "record", ("ptz" if params[:ptz] == "1"), ("play_media" if params[:talk] == "1") ].compact
+      @point.update!(writable: true, address: @point.address.merge("supports" => supports, "ptz" => supports.include?("ptz"), "talk" => supports.include?("play_media")))
+      redirect_to point_path(@point), notice: t("cameras.saved")
+    end
+
     private
 
     # Leitor (viewer) vê o painel e o que ele abre; comando e cadastro barram pelo papel.
