@@ -79,6 +79,7 @@ end
 | Android TV Remote (Google TV / Android TV) | protocolo do controle do app Google TV (`AndroidTvRemote`): protobuf com tamanho em varint sobre TLS com o certificado do MA; pareamento na 6467, controle na 6466 | o IP e o código de 6 caracteres que a TV mostra no primeiro Continuar |
 | Apple TV | Companion do tvOS (`Companion`, porta do `_companion-link._tcp`, 49153 em geral): quadros OPACK, pair-setup/pair-verify do HAP (`Hap::Client`) e sessão ChaCha20-Poly1305 | o IP e o PIN de 4 dígitos que a TV mostra no primeiro Continuar |
 | Xbox | Xbox Live na nuvem (`xccs.xboxlive.com`): token da Microsoft → token de usuário → XSTS, cabeçalho `XBL3.0` | app OAuth no Azure (ver abaixo) e "Recursos remotos" ligados no console |
+| Roborock | nuvem da Roborock: API da casa com Hawk e MQTT da Roborock (protocolo 1.0, AES com a chave local do robô) | o e-mail da conta e o código que a Roborock manda |
 | OneDrive (cópia de segurança) | destino `Backups::Destinations::Onedrive` (Graph, sessão de upload) | app no Azure (ver abaixo) |
 
 ## Nuvem com OAuth: o que o dono cria (`Integrations::OauthPlugin`)
@@ -137,3 +138,10 @@ espera (`put(id, sessão)` / `take(id)`), sem mexer no núcleo.
   e desce por tecla; o app aberto vem da TV. `play_media` abre um link (ex.:
   `https://www.netflix.com/title/…` ou `market://launch?id=<pacote>`).
 
+## Roborock
+
+- **Roborock**: a senha não passa pelo MA (login pelo código do e-mail); fica
+  cifrado só o `rriot` da sessão e a chave local de cada robô. Cômodos pelo
+  `get_room_mapping` (segmento do robô → nome do cômodo do app), limpar
+  cômodos pelo widget do robô. O desenho do mapa (protocolo 301, compactado e
+  cifrado) não entra. Uma conexão MQTT por leitura/comando (a cada minuto).

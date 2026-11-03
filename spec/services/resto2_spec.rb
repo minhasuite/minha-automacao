@@ -186,4 +186,64 @@ RSpec.describe "Paridade: resto2" do
       expect { plugin.entries(i) }.to raise_error(Integrations::Error, plugin.text(:no_profile))
     end
   end
+
+  describe "Roborock pela nuvem (grupo 9, #34)" do
+    let(:plugin) { Integrations::RoborockPlugin }
+    let(:key) { "chave-local-123" }
+    let(:base) { "https://usiot.roborock.com" }
+    let(:rriot) { { "u" => "uTeste", "s" => "sTeste", "h" => "hTeste", "k" => "kTeste", "r" => { "a" => "https://api-us.roborock.com", "m" => "tcp://127.0.0.1:#{broker.port}" } } }
+    let!(:broker) { FakeRoborockMqtt.new(local_key: key, user: Roborock.mqtt_user("u" => "uTeste", "k" => "kTeste"), pass: Roborock.mqtt_pass("s" => "sTeste", "k" => "kTeste")) }
+
+    after { broker.stop }
+
+    it "protocolo 1.0: carimbo embaralhado, AES com a chave local e CRC" do
+      expect(Roborock.encode_ts(0x12345678)).to eq("67482315")
+      msg = Roborock.encode(key, 101, '{"a":1}', ts: 0x12345678)
+      expect(Roborock.decode(key, msg)).to eq([ 101, '{"a":1}' ])
+      bad = msg.dup.tap { |m| m.setbyte(20, m.getbyte(20) ^ 1) }
+      expect { Roborock.decode(key, bad) }.to raise_error(Roborock::Error, /CRC/)
+      expect { Roborock.decode("outra", msg) }.to raise_error(Roborock::Error, /chave/)
+    end
+
+    it "login com o código do e-mail, robôs e cômodos pela API (Hawk), estado e comandos pelo MQTT" do
+      stub_request(:post, "https://euiot.roborock.com/api/v1/getUrlByEmail?email=teste@exemplo.com").with(headers: { "header_clientid" => %r{\A[A-Za-z0-9+/=]{24}\z} })
+                                                                                                    .to_return(json("code" => 200, "data" => { "url" => base }))
+      code = stub_request(:post, "#{base}/api/v1/sendEmailCode?type=auth&username=teste@exemplo.com").to_return(json("code" => 200))
+      o = plugin.setup(site, form(username: "teste@exemplo.com"))
+      expect([ o.to, o.alert ]).to eq([ :connect, plugin.text(:need_code) ])
+      expect(code).to have_been_requested
+      i = o.integration
+
+      stub_request(:post, "#{base}/api/v1/loginWithCode?username=teste@exemplo.com&verifycode=123456&verifycodetype=AUTH_EMAIL_CODE")
+        .to_return(json("code" => 200, "data" => { "token" => "tok-teste", "rriot" => rriot }))
+      stub_request(:get, "#{base}/api/v1/getHomeDetail").with(headers: { "Authorization" => "tok-teste" }).to_return(json("code" => 200, "data" => { "rrHomeId" => 77 }))
+      hawk_ok = lambda do |req|
+        h = req.headers["Authorization"].to_s.scan(/(\w+)="([^"]*)"/).to_h
+        pre = [ "uTeste", "sTeste", h["nonce"], h["ts"], Digest::MD5.hexdigest("/user/homes/77"), "", "" ].join(":")
+        h["id"] == "uTeste" && h["mac"] == Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", "hTeste", pre))
+      end
+      stub_request(:get, "https://api-us.roborock.com/user/homes/77").with(&hawk_ok)
+        .to_return(json("success" => true, "result" => { "devices" => [ { "duid" => "d1", "name" => "Teste Robô", "localKey" => key, "productId" => "p1" } ],
+                                                         "products" => [ { "id" => "p1", "model" => "roborock.vacuum.a15", "name" => "S7" } ],
+                                                         "rooms" => [ { "id" => 501, "name" => "Cozinha" }, { "id" => 502, "name" => "Sala" } ] }))
+      o = plugin.login(i, form(code: "123456"))
+      expect(o.alert).to be_nil
+      entry = i.reload.found.sole
+      expect(entry).to include("name" => "Teste Robô", "model" => "roborock.vacuum.a15")
+      expect(entry["points"].first.dig("address", "rooms")).to eq([ { "id" => 16, "name" => "Cozinha" }, { "id" => 17, "name" => "Sala" } ])
+      expect(i.settings.to_json).not_to include("kTeste", "tok-teste")
+
+      dev = adopt(i).sole
+      expect(dev.credential).to eq(key)
+      plugin.poll(dev)
+      pts = dev.points.reload.index_by { |p| p.address["field"] }
+      expect(pts.transform_values(&:value)).to eq("vacuum" => "cleaning", "battery" => 87, "fan" => "Turbo", "area" => 12.5, "duration" => 20, "error" => false)
+      run(pts["vacuum"], "clean_rooms", { "rooms" => [ "Sala" ] })
+      run(pts["vacuum"], "home")
+      run(pts["fan"], "select", "Máxima")
+      expect(broker.calls).to include([ "app_segment_clean", [ { "segments" => [ 17 ], "repeat" => 1 } ] ], [ "app_charge", [] ], [ "set_custom_mode", [ 104 ] ])
+      user = Roborock.mqtt_user(rriot)
+      expect(broker.topics).to include("rr/m/o/uTeste/#{user}/d1", "rr/m/i/uTeste/#{user}/d1")
+    end
+  end
 end

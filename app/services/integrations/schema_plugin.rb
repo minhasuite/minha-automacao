@@ -144,8 +144,8 @@ module Integrations
     def execute(point, command, value)
       cmd = Points::Command.new(point, command, value)
       v = cmd.new_value
-      # Mídia e controle remoto: o valor novo é o do ponto; o argumento do comando vai à parte.
-      self.class.command(point, command, point.capability.in?(%w[media remote]) ? cmd.value : v)
+      # Mídia, controle remoto e robô (resto2: cômodos): o valor novo é o do ponto; o argumento do comando vai à parte.
+      self.class.command(point, command, point.capability.in?(%w[media remote vacuum]) ? cmd.value : v)
       self.class.poll(point.device)
     end
   end
