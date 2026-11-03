@@ -37,7 +37,8 @@
         <% engines.each do |e| %>
           <div class="vz-engine-fields" data-engine="<%= e.key %>" <%= "hidden" unless current["engine"] == e.key %>>
             <% if e.hint %><p class="text-xs text-muted vz-engine-hint"><%= e.hint %></p><% end %>
-            <% e.fields.each do |name, type| %>
+            <% e.fields.each do |name, type, only| %>
+              <% next if only && !only.include?(kind) %>
               <% fid = "pf-#{kind}-#{e.key}-#{name}-#{id}" %>
               <% value = current["engine"] == e.key ? current[name] : nil %>
               <div>

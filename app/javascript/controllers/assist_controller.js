@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Assistente de voz (Pacote 3): grava pelo microfone (MediaRecorder; exige
+// Assistente de voz (Pacote 3): grava pelo microfone (Web Audio, em WAV; exige
 // https ou localhost) ou manda o texto digitado para /assistente, mostra o
 // que entendeu e a resposta, e toca a fala quando o servidor gera (TTS).
 export default class extends Controller {
@@ -15,25 +15,23 @@ export default class extends Controller {
   }
 
   close() {
-    this.stop()
+    if (this.recording) this.stop()
     this.dialogTarget.close()
   }
 
+  // ondaB1 (B6): grava WAV PCM 16 kHz mono (vale para a voz da nuvem e para o Wyoming/Whisper local).
   async toggle() {
-    if (this.recorder?.state === "recording") return this.stop()
+    if (this.recording) return this.stop()
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      this.chunks = []
-      this.recorder = new MediaRecorder(stream)
-      this.recorder.ondataavailable = (e) => e.data.size && this.chunks.push(e.data)
-      this.recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop())
-        const blob = new Blob(this.chunks, { type: this.recorder.mimeType || "audio/webm" })
-        const body = new FormData()
-        body.append("audio", blob, "fala.webm")
-        this.post(body)
-      }
-      this.recorder.start()
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } })
+      const ctx = new AudioContext({ sampleRate: 16000 })
+      const source = ctx.createMediaStreamSource(stream)
+      const node = ctx.createScriptProcessor(4096, 1, 1)
+      this.samples = []
+      node.onaudioprocess = (e) => this.samples.push(new Float32Array(e.inputBuffer.getChannelData(0)))
+      source.connect(node)
+      node.connect(ctx.destination)
+      this.recording = { stream, ctx, node, source }
       this.micTarget.setAttribute("aria-pressed", "true")
       this.statusTarget.textContent = this.t("listening")
       this.timeout = setTimeout(() => this.stop(), 15000)
@@ -44,8 +42,30 @@ export default class extends Controller {
 
   stop() {
     clearTimeout(this.timeout)
-    if (this.recorder?.state === "recording") this.recorder.stop()
     this.micTarget.setAttribute("aria-pressed", "false")
+    const rec = this.recording
+    if (!rec) return
+    this.recording = null
+    rec.node.disconnect()
+    rec.source.disconnect()
+    rec.stream.getTracks().forEach((t) => t.stop())
+    const rate = rec.ctx.sampleRate
+    rec.ctx.close()
+    const body = new FormData()
+    body.append("audio", this.wav(this.samples, rate), "fala.wav")
+    this.post(body)
+  }
+
+  wav(chunks, rate) {
+    const length = chunks.reduce((n, c) => n + c.length, 0)
+    const view = new DataView(new ArrayBuffer(44 + length * 2))
+    const text = (o, s) => [...s].forEach((ch, i) => view.setUint8(o + i, ch.charCodeAt(0)))
+    text(0, "RIFF"); view.setUint32(4, 36 + length * 2, true); text(8, "WAVE"); text(12, "fmt ")
+    view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true); view.setUint32(24, rate, true)
+    view.setUint32(28, rate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true); text(36, "data"); view.setUint32(40, length * 2, true)
+    let o = 44
+    chunks.forEach((c) => c.forEach((v) => { view.setInt16(o, Math.max(-1, Math.min(1, v)) * 0x7fff, true); o += 2 }))
+    return new Blob([view], { type: "audio/wav" })
   }
 
   send(event) {

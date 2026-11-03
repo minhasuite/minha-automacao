@@ -33,10 +33,16 @@ pt-BR:
       pipelines: Pipelines
       depuracao: Depuração
       frases: Frases
+      satelites: Satélites
     flash:
       created: Pipeline criado.
       saved: Pipeline salvo.
       removed: Pipeline removido.
+      sat_created: Satélite criado.
+      sat_saved: Satélite salvo.
+      sat_removed: Satélite removido.
+      sat_ok: '%{name} respondeu.'
+      sat_device: Satélite ESPHome usa a conexão do aparelho %{name}.
     agents:
       local: Local (intenções + Perguntar à casa)
       local_llm: Local, depois IA com ferramentas
@@ -53,6 +59,10 @@ pt-BR:
     fields:
       provider: Provedor
       voice: Voz
+      host: Endereço
+      port: Porta
+      model: Modelo
+      names: Palavras (separe por vírgula)
     pipelines:
       pitch: Cada pipeline junta idioma, agente e os motores de voz. O preferido atende o botão Falar, o app e os satélites sem pipeline próprio. O motor de cada etapa é um plugin.
       default_name: Casa
@@ -110,6 +120,24 @@ pt-BR:
       catalog: Intenções nativas (%{language})
       tool: IA
       tool_hint: Também é ferramenta da IA e do servidor MCP.
+    satellites:
+      pitch: Microfones nos cômodos. Cada satélite fica numa área ("acenda a luz" vale para ela), usa um pipeline e comanda com o papel escolhido (no máximo morador; crítico nunca por voz).
+      new: Novo satélite
+      online: Conectado
+      offline: Sem conexão
+      'off': Desligado
+      kind: Tipo
+      device: Aparelho ESPHome (para o tipo ESPHome)
+      device_none: Nenhum
+      area: Área
+      no_area: Sem área
+      pipeline: Pipeline
+      preferred: O preferido do local
+      role: Comanda como
+      enabled: Ligado
+      create: Criar satélite
+      test: Testar conexão
+      confirm_remove: Remover o satélite %{name}?
 en:
   assist:
     empty: Say or type what you want.
@@ -144,10 +172,16 @@ en:
       pipelines: Pipelines
       depuracao: Debug
       frases: Sentences
+      satelites: Satellites
     flash:
       created: Pipeline created.
       saved: Pipeline saved.
       removed: Pipeline removed.
+      sat_created: Satellite created.
+      sat_saved: Satellite saved.
+      sat_removed: Satellite removed.
+      sat_ok: '%{name} answered.'
+      sat_device: ESPHome satellite uses the connection of device %{name}.
     agents:
       local: Local (intents + Ask the house)
       local_llm: Local, then AI with tools
@@ -164,6 +198,10 @@ en:
     fields:
       provider: Provider
       voice: Voice
+      host: Address
+      port: Port
+      model: Model
+      names: Words (comma separated)
     pipelines:
       pitch: Each pipeline combines language, agent and voice engines. The preferred one serves the Talk button, the app and satellites without their own pipeline. Each stage's engine is a plugin.
       default_name: Home
@@ -221,6 +259,24 @@ en:
       catalog: Built-in intents (%{language})
       tool: AI
       tool_hint: Also a tool for the AI and the MCP server.
+    satellites:
+      pitch: Microphones in the rooms. Each satellite sits in an area ("turn on the light" applies to it), uses a pipeline and controls with the chosen role (resident at most; critical never by voice).
+      new: New satellite
+      online: Connected
+      offline: Not connected
+      'off': 'Off'
+      kind: Type
+      device: ESPHome device (for the ESPHome type)
+      device_none: None
+      area: Area
+      no_area: No area
+      pipeline: Pipeline
+      preferred: The site's preferred
+      role: Controls as
+      enabled: 'On'
+      create: Create satellite
+      test: Test connection
+      confirm_remove: Remove the satellite %{name}?
 es:
   assist:
     empty: Di o escribe lo que quieres.
@@ -255,10 +311,16 @@ es:
       pipelines: Pipelines
       depuracao: Depuración
       frases: Frases
+      satelites: Satélites
     flash:
       created: Pipeline creado.
       saved: Pipeline guardado.
       removed: Pipeline quitado.
+      sat_created: Satélite creado.
+      sat_saved: Satélite guardado.
+      sat_removed: Satélite quitado.
+      sat_ok: '%{name} respondió.'
+      sat_device: El satélite ESPHome usa la conexión del aparato %{name}.
     agents:
       local: Local (intenciones + Preguntar a la casa)
       local_llm: Local, después IA con herramientas
@@ -275,6 +337,10 @@ es:
     fields:
       provider: Proveedor
       voice: Voz
+      host: Dirección
+      port: Puerto
+      model: Modelo
+      names: Palabras (separadas por coma)
     pipelines:
       pitch: Cada pipeline junta idioma, agente y los motores de voz. El preferido atiende el botón Hablar, la app y los satélites sin pipeline propio. El motor de cada etapa es un plugin.
       default_name: Casa
@@ -332,3 +398,21 @@ es:
       catalog: Intenciones integradas (%{language})
       tool: IA
       tool_hint: También es herramienta de la IA y del servidor MCP.
+    satellites:
+      pitch: Micrófonos en las habitaciones. Cada satélite está en un área ("enciende la luz" vale para ella), usa un pipeline y controla con el rol elegido (como máximo residente; lo crítico nunca por voz).
+      new: Nuevo satélite
+      online: Conectado
+      offline: Sin conexión
+      'off': Apagado
+      kind: Tipo
+      device: Aparato ESPHome (para el tipo ESPHome)
+      device_none: Ninguno
+      area: Área
+      no_area: Sin área
+      pipeline: Pipeline
+      preferred: El preferido del lugar
+      role: Controla como
+      enabled: Encendido
+      create: Crear satélite
+      test: Probar conexión
+      confirm_remove: ¿Quitar el satélite %{name}?

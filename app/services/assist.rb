@@ -53,7 +53,8 @@ module Assist
 
     lang = language(language || site.language.presence)
     I18n.with_locale(lang) do
-      ctx = Ctx.new(site: site, user: user, role: site.role_for(user), heard: heard, language: lang, area: area || satellite&.area, satellite: satellite)
+      # ondaB1 (B6): satélite sem pessoa fala com o papel dele.
+      ctx = Ctx.new(site: site, user: user, role: user ? site.role_for(user) : satellite&.role, heard: heard, language: lang, area: area || satellite&.area, satellite: satellite)
       reply, slots = agent == "llm" ? [] : recognize(ctx, normalize(heard))
       conversation_id = conversation_id.presence || SecureRandom.uuid if agent.to_s.include?("llm")
       reply ||= conversation_id ? Llm.call(ctx, heard, provider: llm_provider, conversation_id: conversation_id) : ask(ctx, heard)

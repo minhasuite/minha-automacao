@@ -5,4 +5,9 @@
     <%= link_to t("assist_settings.tabs.#{tab}"), site_assist_settings_path(@site, aba: tab), class: "vz-tab", "aria-current": (tab == @tab ? "page" : nil) %>
   <% end %>
 </nav>
-<%= render @tab, site: @site %>
+<% case @tab %>
+<% when "satelites" %><%= render "satelites", site: @site %>
+<% when "depuracao" %><%= render "depuracao", site: @site %>
+<% when "frases" %><%= render "frases", site: @site %>
+<% else %><%= render "pipelines", site: @site %>
+<% end %>

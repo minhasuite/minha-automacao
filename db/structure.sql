@@ -304,6 +304,30 @@ CREATE TABLE public.assist_runs (
 
 
 --
+-- Name: assist_satellites; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.assist_satellites (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    area_id uuid,
+    pipeline_id uuid,
+    device_id uuid,
+    name character varying NOT NULL,
+    kind character varying NOT NULL,
+    host character varying,
+    port integer,
+    role character varying DEFAULT 'resident'::character varying NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    last_seen_at timestamp(6) without time zone,
+    last_error character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: assist_timers; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1962,6 +1986,14 @@ ALTER TABLE ONLY public.assist_runs
 
 
 --
+-- Name: assist_satellites assist_satellites_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_satellites
+    ADD CONSTRAINT assist_satellites_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: assist_timers assist_timers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2652,6 +2684,20 @@ CREATE INDEX index_assist_runs_on_site_id_and_created_at ON public.assist_runs U
 --
 
 CREATE INDEX index_assist_runs_on_tenant_id ON public.assist_runs USING btree (tenant_id);
+
+
+--
+-- Name: index_assist_satellites_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_satellites_on_site_id ON public.assist_satellites USING btree (site_id);
+
+
+--
+-- Name: index_assist_satellites_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_satellites_on_tenant_id ON public.assist_satellites USING btree (tenant_id);
 
 
 --
@@ -3851,6 +3897,14 @@ ALTER TABLE ONLY public.shadow_actions
 
 
 --
+-- Name: assist_satellites fk_rails_0fa4457e47; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_satellites
+    ADD CONSTRAINT fk_rails_0fa4457e47 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: devices fk_rails_12ad68c8f1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3960,6 +4014,14 @@ ALTER TABLE ONLY public.site_memberships
 
 ALTER TABLE ONLY public.scenes
     ADD CONSTRAINT fk_rails_28279ad49b FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
+-- Name: assist_satellites fk_rails_2b54368916; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_satellites
+    ADD CONSTRAINT fk_rails_2b54368916 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -4128,6 +4190,14 @@ ALTER TABLE ONLY public.reading_rollups
 
 ALTER TABLE ONLY public.ai_calls
     ADD CONSTRAINT fk_rails_4e48191c3d FOREIGN KEY (automation_id) REFERENCES public.automations(id) ON DELETE SET NULL;
+
+
+--
+-- Name: assist_satellites fk_rails_4ec2c4348d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_satellites
+    ADD CONSTRAINT fk_rails_4ec2c4348d FOREIGN KEY (area_id) REFERENCES public.areas(id) ON DELETE SET NULL;
 
 
 --
@@ -4307,6 +4377,14 @@ ALTER TABLE ONLY public.automations
 
 
 --
+-- Name: assist_satellites fk_rails_815c16a3f1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_satellites
+    ADD CONSTRAINT fk_rails_815c16a3f1 FOREIGN KEY (pipeline_id) REFERENCES public.assist_pipelines(id) ON DELETE SET NULL;
+
+
+--
 -- Name: solid_queue_ready_executions fk_rails_81fcbd66af; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4424,6 +4502,14 @@ ALTER TABLE ONLY public.active_storage_variant_records
 
 ALTER TABLE ONLY public.assist_runs
     ADD CONSTRAINT fk_rails_9a628a9d5a FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: assist_satellites fk_rails_9b6ebdbd7f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_satellites
+    ADD CONSTRAINT fk_rails_9b6ebdbd7f FOREIGN KEY (device_id) REFERENCES public.devices(id) ON DELETE CASCADE;
 
 
 --
@@ -4817,6 +4903,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261102400003'),
 ('20261102400002'),
 ('20261102400001'),
 ('20261102300002'),

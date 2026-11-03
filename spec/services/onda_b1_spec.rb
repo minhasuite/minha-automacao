@@ -274,6 +274,149 @@ modo festa", "response" => "Boa noite, {quem}!" })
     end
   end
 
+  describe "B6 Wyoming, palavra de ativação e satélites" do
+    # Servidor Wyoming falso (Whisper + Piper + openWakeWord) em 127.0.0.1, sem rede de verdade.
+    def fake_wyoming(text: "ligar a luz da sala")
+      seen = Queue.new
+      server = TCPServer.new("127.0.0.1", 0)
+      thread = Thread.new do
+        loop do
+          sock = server.accept
+          c = Wyoming::Connection.new(sock, 5)
+          type, data = c.read
+          seen << [ type, data ]
+          case type
+          when "describe" then c.write("info", { "asr" => [ { "name" => "teste-whisper" } ], "satellite" => { "name" => "Teste sat" } })
+          when "transcribe"
+            loop { t, = c.read; break if t.nil? || t == "audio-stop" }
+            c.write("transcript", { "text" => text })
+          when "synthesize"
+            c.write("audio-start", { "rate" => 16_000, "width" => 2, "channels" => 1 })
+            c.write("audio-chunk", { "rate" => 16_000 }, "\x01\x00".b * 3000)
+            c.write("audio-stop")
+          when "detect"
+            loop { t, = c.read; break if t.nil? || t == "audio-stop" }
+            c.write("detection", { "name" => "ok_nabu" })
+          end
+          sock.close
+        end
+      rescue IOError, Errno::EBADF
+        nil
+      end
+      yield server.addr[1], seen
+    ensure
+      thread&.kill
+      server&.close
+    end
+
+    def wav(seconds = 0.5, amp = 3000) = Wyoming.wav(([ amp, -amp ].pack("s<s<") * (8000 * seconds)).b, 16_000, 2, 1)
+
+    it "cliente Wyoming: describe, STT, TTS e detecção; WAV lido e escrito; erro claro sem WAV" do
+      fake_wyoming do |port, seen|
+        expect(Wyoming.describe("127.0.0.1", port)["asr"].first["name"]).to eq("teste-whisper")
+        pcm, rate, width, channels = Wyoming.pcm_of(wav)
+        expect([ rate, width, channels, pcm.bytesize ]).to eq([ 16_000, 2, 1, 16_000 ])
+        expect(Wyoming.transcribe("127.0.0.1", port, pcm, language: "pt-BR")).to eq("ligar a luz da sala")
+        voice = Wyoming.synthesize("127.0.0.1", port, "Oi", voice: "pt_BR-faber-medium")
+        expect(voice).to include(media_type: "audio/wav", rate: 16_000)
+        expect(Wyoming.pcm_of(voice[:data]).first.bytesize).to eq(6000)
+        expect(Wyoming.detect("127.0.0.1", port, pcm, names: %w[ok_nabu])).to eq("ok_nabu")
+        types = Array.new(seen.size) { seen.pop }.to_h
+        expect(types["transcribe"]).to eq("language" => "pt")
+        expect(types["synthesize"]).to eq("text" => "Oi", "voice" => { "name" => "pt_BR-faber-medium" })
+      end
+      expect { Wyoming.pcm_of("webm") }.to raise_error(Wyoming::Error, /WAV/)
+      expect { Wyoming.describe("127.0.0.1", 1, timeout: 1) }.to raise_error(Wyoming::Error)
+    end
+
+    it "pipeline com motor Wyoming no STT e no TTS; configuração validada" do
+      fake_wyoming do |port|
+        cfg = { "engine" => "wyoming", "host" => "127.0.0.1", "port" => port.to_s }
+        pl = AssistPipeline.create!(site: site, name: "Teste local", stt: cfg, tts: cfg.merge("voice" => "faber"))
+        out = Assist::Pipeline.run(site: site, user: owner, audio: wav, media_type: "audio/wav", speak: true, pipeline: pl, keep_audio: true)
+        expect(out).to include("heard" => "ligar a luz da sala", "text" => "Liguei Luz.")
+        expect(out["audio"][:media_type]).to eq("audio/wav")
+        expect(AssistRun.last.stages.pluck("engine")).to eq([ "wyoming", nil, "wyoming" ])
+      end
+      expect(AssistPipeline.new(site: site, name: "x", stt: { "engine" => "wyoming", "host" => "a b", "port" => "99999" }).tap(&:valid?).errors[:stt].size).to eq(2)
+    end
+
+    it "satélite Wyoming: run-pipeline → áudio → VAD → transcript, synthesize e a fala; área e papel do satélite" do
+      brilho.update!(risk: "sensitive")
+      fake_wyoming(text: "acenda a luz") do |port|
+        cfg = { "engine" => "wyoming", "host" => "127.0.0.1", "port" => port.to_s }
+        pl = AssistPipeline.create!(site: site, name: "Teste sat", stt: cfg, tts: cfg)
+        server = TCPServer.new("127.0.0.1", 0)
+        sat = AssistSatellite.create!(site: site, name: "Teste quarto", kind: "wyoming", host: "127.0.0.1", port: server.addr[1], area: quarto, pipeline: pl, role: "guest")
+        got = []
+        t = Thread.new do
+          c = Wyoming::Connection.new(server.accept, 5)
+          c.read && c.write("info", { "satellite" => { "name" => "Teste" } })
+          c.read # run-satellite
+          c.write("run-pipeline", { "start_stage" => "asr", "end_stage" => "tts" })
+          c.write("audio-start", { "rate" => 16_000, "width" => 2, "channels" => 1 })
+          c.write("audio-chunk", { "rate" => 16_000 }, Wyoming.pcm_of(wav(0.4)).first)
+          c.write("audio-chunk", { "rate" => 16_000 }, Wyoming.pcm_of(wav(1.0, 0)).first)
+          while (ev = c.read(3))
+            got << ev.first
+          end
+        end
+        Assist::Satellites::WyomingSatellite.serve(sat, rounds: 4)
+        t.join(5)
+        server.close
+        expect(got).to include("voice-stopped", "transcript", "synthesize", "audio-start", "audio-chunk", "audio-stop")
+        expect([ luz.reload.value, luz_quarto.reload.value ]).to eq([ false, true ])
+        expect(AssistRun.last).to have_attributes(source: "satellite", satellite_id: sat.id, heard: "acenda a luz")
+        expect(sat.reload.last_seen_at).to be_present
+        expect(Assist.call(site: site, user: nil, text: "deixe a luz da sala em 10%", satellite: sat)["text"]).to include("não posso comandar Brilho")
+      end
+    end
+
+    it "satélite ESPHome (Voice PE): pedido, áudio pela API, eventos do pipeline com a URL da fala" do
+      fake_engine = Class.new(Assist::Engines::Base) do
+        describe key: "teste_esp", label: "Teste ESP", kinds: %i[stt tts]
+        texts en: { label: "ESP test" }, es: { label: "Prueba ESP" }
+        def self.transcribe(*, **) = "ligar a luz da sala"
+        def self.speak(*, **) = { data: "mp3", media_type: "audio/mpeg" }
+      end
+      stub_const("Assist::Engines::TesteEsp", fake_engine)
+      stub_const("Assist::Engines::PLUGINS", Assist::Engines::PLUGINS + %w[TesteEsp])
+      pl = AssistPipeline.create!(site: site, name: "Teste esp", stt: { "engine" => "teste_esp" }, tts: { "engine" => "teste_esp" })
+      dev = create(:device, site: site, name: "Voice PE", driver: "esphome", address: { "host" => "10.0.0.9" })
+      sat = AssistSatellite.create!(site: site, name: "Teste PE", kind: "esphome", device: dev, pipeline: pl, area: sala)
+      sent = []
+      inbox = [ [ 90, { 1 => [ 1 ], 2 => [ "conv-1" ] } ], [ 106, { 1 => [ "\x00\x00".b * 800 ], 2 => [ 1 ] } ] ]
+      client = Object.new
+      client.define_singleton_method(:send_message) { |type, fields = []| sent << [ type, fields ] }
+      client.define_singleton_method(:read) { |_t| inbox.shift }
+      client.define_singleton_method(:close) { nil }
+      Assist::Satellites::EsphomeSatellite.serve(sat, rounds: 2, client: client)
+      expect(sent.map(&:first).first(2)).to eq([ 89, 91 ])
+      events = sent.select { |t, _| t == 92 }
+      ev = Assist::Satellites::EsphomeSatellite::EVENTS
+      expect(events.map { |_, f| f.first.last }).to eq(ev.values_at(:run_start, :stt_start, :stt_vad_end, :stt_end, :intent_start, :intent_end, :tts_start, :tts_end, :run_end))
+      url = Proto.decode(events[-2].last.last.last)
+      expect([ Proto.string(url[1].first), Proto.string(url[2].first) ]).to match([ "url", %r{\Ahttp://.+/rails/active_storage/} ])
+      expect(luz.reload.value).to be true
+    end
+
+    it "tipo de satélite novo entra pelo registro e o ouvinte o serve" do
+      served = []
+      fake = Class.new(Assist::Satellites::Base) do
+        describe key: "teste_sat", label: "Teste satélite", needs: []
+        texts en: { label: "Test satellite" }, es: { label: "Satélite de prueba" }
+        define_singleton_method(:serve) { |sat, rounds: nil| served << [ sat.name, rounds ] }
+      end
+      stub_const("Assist::Satellites::TesteSat", fake)
+      stub_const("Assist::Satellites::PLUGINS", Assist::Satellites::PLUGINS + %w[TesteSat])
+      sat = AssistSatellite.create!(site: site, name: "Teste x", kind: "teste_sat")
+      expect(Assist::Satellites::Listener.run_once(sat.id, rounds: 1)).to be true
+      expect(served).to eq([ [ "Teste x", 1 ] ])
+      expect(AssistSatellite.new(site: site, name: "y", kind: "wyoming")).not_to be_valid # sem endereço
+      expect(AssistSatellite.new(site: site, name: "z", kind: "teste_sat", role: "owner")).not_to be_valid
+    end
+  end
+
   describe "B3 Assist multilíngue" do
     it "en e es: liga, brilho, timer, lista e respostas no idioma da frase" do
       expect(say("turn on the living room light", language: "en")).to include("intent" => "turn_on", "text" => "Turned on Luz.", "language" => "en")

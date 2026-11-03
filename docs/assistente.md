@@ -73,6 +73,24 @@ Motor novo = subclasse de `Assist::Engines::Base` (`describe key:, label:,
 kinds:, fields:` + `transcribe`/`speak`/`detect`/`check`) e o nome em
 `Assist::Engines::PLUGINS`; prova com `stub_const` no spec da ondaB1.
 
+## Wyoming, palavra de ativação e satélites
+
+- `Wyoming` (cliente do protocolo do HA, TCP curto com timeout): `describe`,
+  `transcribe` (Whisper), `synthesize` (Piper), `detect` (openWakeWord), WAV
+  ↔ PCM. Motor `wyoming` (`Assist::Engines::WyomingServer`) para STT, TTS e
+  palavra de ativação no pipeline. O botão Falar grava WAV 16 kHz mono.
+- Containers opcionais no `docker-compose.local.yml`, perfil `voz`
+  (desligado): `wyoming-whisper`, `wyoming-piper`, `wyoming-openwakeword`.
+- Satélites (`AssistSatellite`, aba Satélites): área, pipeline, papel (no
+  máximo morador) e tipo do registro `Assist::Satellites`:
+  `wyoming` (wyoming-satellite na porta 10700: run-pipeline → áudio → fim
+  da fala por volume → STT → intenção → transcript/synthesize e a fala em PCM;
+  começando na palavra de ativação, o áudio passa pelo motor `wake` do
+  pipeline) e `esphome` (Voice PE pela API nativa do aparelho integrado:
+  áudio pela API, eventos do pipeline e a fala por URL, `ASSIST_MEDIA_URL` ou
+  `http://APP_HOST`). O `Assist::Satellites::Listener` sobe no worker
+  (`ASSIST_SATELLITES=off` desliga). Fim da fala: `ASSIST_VAD_RMS`.
+
 ## Segurança
 
 - Comando por voz usa `source: "voice"` e o usuário que falou; segue o papel

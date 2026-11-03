@@ -9,7 +9,7 @@ module Assist
   #   detect(cfg, site:, audio:, media_type:) → nome da palavra ou nil
   #   check(cfg, kind) → mensagens de erro da configuração
   module Engines
-    PLUGINS = %w[Installation].freeze
+    PLUGINS = %w[Installation WyomingServer].freeze
 
     module_function
 

@@ -214,12 +214,40 @@ services:
     environment:
       TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN:-}
 
+  # ondaB1 (B6): voz local pelo protocolo Wyoming, opcional (perfil `voz`,
+  # desligado: `docker compose --profile voz up -d`). No pipeline do
+  # Assistente de voz: motor Wyoming com endereço wyoming-whisper (10300),
+  # wyoming-piper (10200) e wyoming-openwakeword (10400). Nada sai da casa.
+  wyoming-whisper:
+    image: rhasspy/wyoming-whisper:latest
+    restart: unless-stopped
+    profiles: ["voz"]
+    command: --model small-int8 --language pt
+    volumes:
+      - wyoming-whisper:/data
+
+  wyoming-piper:
+    image: rhasspy/wyoming-piper:latest
+    restart: unless-stopped
+    profiles: ["voz"]
+    command: --voice pt_BR-faber-medium
+    volumes:
+      - wyoming-piper:/data
+
+  wyoming-openwakeword:
+    image: rhasspy/wyoming-openwakeword:latest
+    restart: unless-stopped
+    profiles: ["voz"]
+    command: --preload-model ok_nabu
+
 volumes:
   pgdata:
   storage:
   mosquitto:
   matter-data:
   matter-bridge-data:
+  wyoming-whisper:
+  wyoming-piper:
 
 networks:
   # Rede dos apps instalados pelo supervisor (manifesto com `network: apps`):

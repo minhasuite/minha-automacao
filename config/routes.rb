@@ -178,6 +178,10 @@ Rails.application.routes.draw do
       post "assistente/pipelines", to: "assist_settings#create_pipeline", as: :assist_pipelines
       patch "assistente/pipelines/:id", to: "assist_settings#update_pipeline", as: :assist_pipeline
       delete "assistente/pipelines/:id", to: "assist_settings#destroy_pipeline"
+      post "assistente/satelites", to: "assist_settings#create_satellite", as: :assist_satellites
+      patch "assistente/satelites/:id", to: "assist_settings#update_satellite", as: :assist_satellite
+      delete "assistente/satelites/:id", to: "assist_settings#destroy_satellite"
+      post "assistente/satelites/:id/testar", to: "assist_settings#test_satellite", as: :assist_satellite_test
       # Alexa Smart Home (F9): o que expor, nome falado, vínculos e cliente OAuth.
       resource :alexa, controller: "alexa", path: "alexa", only: %i[show update] do
         post :client, path: "cliente"

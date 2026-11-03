@@ -45,6 +45,32 @@ RSpec.describe "Web ondaB1: assistente de voz" do
     expect(within(tenant) { AssistPipeline.count }).to eq(0)
   end
 
+  it "B6: satélites (criar, testar, remover) e o motor Wyoming no pipeline" do
+    get "/locais/#{site.id}/assistente", params: { aba: "satelites" }
+    expect(response.body).to include("Novo satélite", "Satélite Wyoming", "Satélite ESPHome")
+    area = within(tenant) { site.areas.first }
+    post "/locais/#{site.id}/assistente/satelites", params: { satellite: { name: "Teste cozinha", kind: "wyoming", host: "127.0.0.1", port: "1", area_id: area.id, role: "resident", enabled: "1" } }
+    sat = within(tenant) { AssistSatellite.find_by!(name: "Teste cozinha") }
+    expect(sat).to have_attributes(area_id: area.id, port: 1, role: "resident")
+    post "/locais/#{site.id}/assistente/satelites/#{sat.id}/testar"
+    expect(flash[:alert]).to include("Wyoming 127.0.0.1:1")
+    get "/locais/#{site.id}/assistente", params: { aba: "satelites" }
+    expect(response.body).to include("Teste cozinha", "Sem conexão", "Wyoming 127.0.0.1:1")
+    post "/locais/#{site.id}/assistente/satelites", params: { satellite: { name: "Teste sem", kind: "wyoming", host: "" } }
+    expect(flash[:alert]).to be_present
+    delete "/locais/#{site.id}/assistente/satelites/#{sat.id}"
+    expect(within(tenant) { AssistSatellite.count }).to eq(0)
+
+    post "/locais/#{site.id}/assistente/pipelines", params: { pipeline: { name: "Teste local", language: "pt-BR", agent: "local", stt_engine: "wyoming",
+                                                                          stt: { wyoming: { host: "wyoming-whisper", port: "10300", model: "small" } }, tts_engine: "wyoming",
+                                                                          tts: { wyoming: { host: "wyoming-piper", voice: "pt_BR-faber-medium", model: "ignorado" } } } }
+    pl = within(tenant) { AssistPipeline.find_by!(name: "Teste local") }
+    expect(pl.stt).to eq("engine" => "wyoming", "host" => "wyoming-whisper", "port" => "10300", "model" => "small")
+    expect(pl.tts).to eq("engine" => "wyoming", "host" => "wyoming-piper", "voice" => "pt_BR-faber-medium")
+    get "/locais/#{site.id}/assistente"
+    expect(response.body).to include("Wyoming (Whisper, Piper, openWakeWord)", "wyoming-piper")
+  end
+
   it "B5: em inglês a tela sai em inglês; quem não é técnico não entra" do
     user.update!(dashboard_prefs: { "locale" => "en" })
     get "/locais/#{site.id}/assistente", params: { aba: "frases" }
