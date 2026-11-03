@@ -277,5 +277,56 @@ RSpec.describe "Paridade: resto" do
       expect(Firmware.view(Firmware.check!(d.reload).value)).to include(installed: "2.5.2", latest: "2.7.1", state: "available")
     end
   end
-end
 
+  describe "Lutron Caséta pelo LEAP (grupo 9, #100)" do
+    def cert(cn)
+      key = OpenSSL::PKey::RSA.new(2048)
+      c = OpenSSL::X509::Certificate.new
+      c.version = 2
+      c.serial = rand(1..1000)
+      c.subject = c.issuer = OpenSSL::X509::Name.parse("/CN=#{cn}")
+      c.public_key = key.public_key
+      c.not_before = 1.hour.ago
+      c.not_after = 1.day.from_now
+      c.sign(key, OpenSSL::Digest.new("SHA256"))
+      [ key, c ]
+    end
+
+    it "lista dimmer, interruptor e cortina pela ponte (TLS com certificado) e manda o nível" do
+      bkey, bcert = cert("teste-ponte")
+      ckey, ccert = cert("teste-cliente")
+      levels = { "/zone/1" => 40, "/zone/2" => 0, "/zone/3" => 75 }
+      sent = []
+      devices = [ { "href" => "/device/1", "Name" => "Abajur", "FullyQualifiedName" => %w[Sala Abajur], "DeviceType" => "WallDimmer", "SerialNumber" => 11, "LocalZones" => [ { "href" => "/zone/1" } ] },
+                  { "href" => "/device/2", "Name" => "Luz", "DeviceType" => "WallSwitch", "SerialNumber" => 12, "LocalZones" => [ { "href" => "/zone/2" } ] },
+                  { "href" => "/device/3", "Name" => "Cortina", "DeviceType" => "SerenaRollerShade", "SerialNumber" => 13, "LocalZones" => [ { "href" => "/zone/3" } ] },
+                  { "href" => "/device/4", "Name" => "Pico", "DeviceType" => "Pico3ButtonRaiseLower" } ]
+      # ponytail: a ponte de mentira responde pelo bloco da sessão LEAP (o TLS com certificado de cliente fica no aparelho real).
+      ask = lambda do |_type, url, body = nil|
+        next { "Devices" => devices } if url == "/device"
+        next { "ZoneStatus" => { "Level" => levels[url.delete_suffix("/status")] } } if url.end_with?("/status")
+
+        sent << [ url, body.dig(:Command, :Parameter, 0, :Value) ]
+        {}
+      end
+      allow(Integrations::LutronCasetaPlugin).to receive(:leap) { |_i, &blk| blk.call(ask) }
+      o = Integrations::LutronCasetaPlugin.setup(site, ActionController::Parameters.new(host: "127.0.0.1", port: "8081",
+                                                                                         client_key: ckey.to_pem, client_cert: ccert.to_pem, bridge_cert: bcert.to_pem))
+      expect(o.alert).to be_nil
+      i = o.integration
+      expect(i.settings.to_json).not_to include("PRIVATE KEY")
+      expect(i.found.map { |e| e["name"] }).to eq([ "Sala Abajur", "Luz", "Cortina" ])
+      Integrations.adopt!(i, i.found.to_h { |e| [ e["id"], "" ] })
+      i.devices.each { |d| Integrations::LutronCasetaPlugin.poll(d) }
+      caps = i.devices.flat_map(&:points).to_h { |p| [ p.capability, p.reload.value ] }
+      expect(caps).to eq("dimmer" => 40, "onoff" => false, "setpoint" => 75)
+      sw = i.devices.flat_map(&:points).find { |p| p.capability == "onoff" }
+      ExecuteCommandJob.perform_now(Points::Command.call(sw, "on", source: "web").id)
+      expect(sent).to eq([ [ "/zone/2/commandprocessor", 100 ] ])
+
+      allow(Integrations::LutronCasetaPlugin).to receive(:leap).and_call_original
+      i.update!(credentials: i.secrets.merge("client_key" => "lixo").to_json)
+      expect { Integrations::LutronCasetaPlugin.entries(i) }.to raise_error(Integrations::Error, /inválidos/)
+    end
+  end
+end
