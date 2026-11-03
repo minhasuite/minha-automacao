@@ -5,7 +5,7 @@
 # `check(device)` (→ Hash, ou nil quando o próprio aparelho informa, como o
 # Zigbee2MQTT) e `install!(device)`. A tela e a verificação diária só perguntam ao registro.
 module Firmware
-  PROVIDERS = %w[Shelly Zigbee2mqtt ZwaveJs Matter Mqtt Tasmota Esphome].freeze
+  PROVIDERS = %w[Shelly Zigbee2mqtt ZwaveJs Matter MqttDiscovery Tasmota Esphome].freeze
   Error = Class.new(StandardError)
 
   class Provider

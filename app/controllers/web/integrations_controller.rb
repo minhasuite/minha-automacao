@@ -83,6 +83,17 @@ module Web
       send_data json, type: "application/json", filename: "diagnostico-#{@integration.driver}-#{Time.current.strftime('%Y%m%d-%H%M')}.json"
     end
 
+    # resto (7.7): liga o log de depuração; desligar baixa o que juntou.
+    def debug
+      load_for(:manage)
+      if Integrations::DebugLog.on?(@integration)
+        send_data Integrations::DebugLog.stop!(@integration), type: "text/plain", filename: "depuracao-#{@integration.driver}-#{Time.current.strftime('%Y%m%d-%H%M')}.log"
+      else
+        Integrations::DebugLog.start!(@integration)
+        redirect_to site_integrations_path(@integration.site), notice: t("resto.debug.started", name: @integration.name)
+      end
+    end
+
     # ondaC1: tela "Gerenciar" do plugin (partial `panels/_<key>`).
     def panel
       load_for(:manage)

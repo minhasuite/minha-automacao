@@ -23,9 +23,11 @@ module Ble
       state = read(integration)
       seen = state["seen"]
       devices = integration.devices.where(driver: "bluetooth", removed_at: nil, disabled: false).includes(:points).index_by(&:external_id)
+      heard = []
       count = Array(adverts).first(500).count do |a|
         mac = a["mac"].to_s.upcase
         data = (Base64.strict_decode64(a["data"].to_s) if mac.match?(MAC)) rescue nil # rubocop:disable Style/RescueModifier
+        heard << { "mac" => mac, "rssi" => a["rssi"], "data" => data } if data
         r = data && Ble.decode(data, mac: mac, rssi: a["rssi"].is_a?(Numeric) ? a["rssi"] : nil, key: keys[mac])
         next false unless r
 
@@ -35,6 +37,7 @@ module Ble
         (d = devices[id]) && Ble.apply(d, values)
         true
       end
+      Discovery.note!(integration.tenant_id, heard) # resto (7.23)
       seen = seen.sort_by { |_, v| v["at"].to_s }.last(MAX).to_h
       Rails.cache.write(key(integration), { "seen" => seen, "adapter" => adapter.presence || state["adapter"], "at" => Time.current.iso8601 }, expires_in: TTL)
       count

@@ -104,8 +104,8 @@ module Firmware
 
     # resto: aparelho da descoberta MQTT do HA com componente `update`: ele
     # mesmo informa as versões; instalar = publicar o `payload_install`.
-    class Mqtt < Provider
-      describe key: "mqtt"
+    class MqttDiscovery < Provider
+      describe key: "mqtt_discovery"
 
       def self.point(device) = device.points.find { |p| p.capability == "update" && p.address["payload_install"] }
       def self.handles?(device) = device.driver == "mqtt" && point(device).present?

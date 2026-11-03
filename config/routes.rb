@@ -171,6 +171,7 @@ Rails.application.routes.draw do
           post :sync, path: "sincronizar"
           get :found, path: "encontrados"
           get :diagnostics, path: "diagnostico"
+          post :debug, path: "depuracao" # resto (7.7): liga ou desliga (e baixa) o log de depuração
           post :adopt, path: "adicionar"
           # ondaC1: tela "Gerenciar" do plugin (Z-Wave, Matter, Thread, Bluetooth…).
           get :panel, path: "gerenciar"
@@ -403,6 +404,7 @@ Rails.application.routes.draw do
       post "bridges/:key/commands", to: "bridges#command"
       # ondaC1 (C2): o serviço ble-scanner manda os anúncios do adaptador do servidor.
       post "bluetooth/advertisements", to: "bluetooth#advertisements"
+      post "dhcp/leases", to: "dhcp#leases" # resto (7.23): escuta passiva de DHCP
 
       # Pacote 3: pessoas, voz, pacotes e ferramentas de desenvolvedor.
       get "sites/:site_id/people", to: "people#index"

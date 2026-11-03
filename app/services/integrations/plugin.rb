@@ -82,12 +82,12 @@ module Integrations
       # Encontrados na rede → [{"name", "host", "port", "txt"}] (padrão: mDNS do `mdns`,
       # SSDP do `ssdp` e, pelo host, vizinhos do `dhcp` e portas do `usb`; um por endereço).
       def discover
-        list = (mdns ? Mdns.browse(mdns) : []) + (ssdp ? Ssdp.search(ssdp) : []) + Host.dhcp(dhcp) + Host.usb(usb)
-        list.uniq { |e| e["host"] || e.dig("txt", "path") }
+        list = (mdns ? Mdns.browse(mdns) : []) + (ssdp ? Ssdp.search(ssdp) : []) + Host.dhcp(dhcp) + Host.usb(usb) + Ble::Discovery.matching(bluetooth)
+        list.uniq { |e| e["host"] || e.dig("txt", "path") || e.dig("txt", "mac") }
       end
 
       # Mostra "Procurar na rede": plugin com `mdns`, `ssdp`, `dhcp`, `usb` ou com descoberta própria (Broadlink: hello UDP).
-      def discovers? = mdns.present? || ssdp.present? || dhcp.any? || usb.any?
+      def discovers? = mdns.present? || ssdp.present? || dhcp.any? || usb.any? || bluetooth.any?
 
       # ondaA2 A19: como o `dhcp` do manifesto do HA, casamentos com o vizinho
       # da rede: `dhcp({ hostname: "shelly*" }, { mac: "A4CF12" })` (glob no nome
@@ -96,6 +96,9 @@ module Integrations
 
       # E o `usb`: porta serial do host por `{ vid:, pid:, description: "*zigbee*" }`.
       def usb(*matchers) = matchers.empty? ? (@usb || []) : (@usb = matchers)
+
+      # resto (7.23): e o `bluetooth`: anúncio por `{ local_name: "WoHand*" }`, `{ manufacturer_id: 2409 }` ou `{ service_uuid: 0xFD3D }`.
+      def bluetooth(*matchers) = matchers.empty? ? (@bluetooth || []) : (@bluetooth = matchers)
 
       # Produto: tipo SSDP/UPnP que acha o aparelho (TVs: "urn:lge-com:service:webos-second-screen:1").
       def ssdp(st = nil)
@@ -127,6 +130,9 @@ module Integrations
       end
 
       def diagnostics_extra(_integration) = {}
+
+      # resto (7.7): linha no log de depuração da integração (só grava com ele ligado).
+      def debug(integration, message) = DebugLog.log(integration, message)
 
       # Pareamento pelo app (Tuya hoje; ESPHome/Matter amanhã): o provedor de
       # pareamento do app pede a sessão da conta do SDK (`pairing_session` →

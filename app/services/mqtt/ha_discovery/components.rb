@@ -345,7 +345,7 @@ module Mqtt
       end
 
       # Firmware anunciado pelo aparelho: JSON {installed_version, latest_version} ou só a versão; instalar = `payload_install`
-      # (provedor Firmware::Providers::Mqtt).
+      # (provedor Firmware::Providers::MqttDiscovery).
       class Update < Base
         describe key: "update"
 

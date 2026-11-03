@@ -1,4 +1,10 @@
 pt-BR:
+  resto:
+    debug:
+      start: "Ligar log de depuração"
+      stop: "Desligar e baixar o log"
+      active: "Log de depuração ligado"
+      started: "%{name}: log de depuração ligado por até 24 h. Desligue no menu ⋯ para baixar."
   onvif:
     events:
       motion: "Movimento"
@@ -12,6 +18,12 @@ pt-BR:
       input: "Entrada digital"
       relay: "Relé"
 en:
+  resto:
+    debug:
+      start: "Enable debug logging"
+      stop: "Disable and download the log"
+      active: "Debug logging on"
+      started: "%{name}: debug logging on for up to 24 h. Turn it off in the ⋯ menu to download."
   onvif:
     events:
       motion: "Motion"
@@ -25,6 +37,12 @@ en:
       input: "Digital input"
       relay: "Relay"
 es:
+  resto:
+    debug:
+      start: "Activar registro de depuración"
+      stop: "Desactivar y descargar el registro"
+      active: "Registro de depuración activado"
+      started: "%{name}: registro de depuración activado por hasta 24 h. Desactívalo en el menú ⋯ para descargarlo."
   onvif:
     events:
       motion: "Movimiento"

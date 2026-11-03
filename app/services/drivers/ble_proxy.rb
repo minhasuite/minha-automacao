@@ -14,6 +14,7 @@ module Drivers
       k = integration.secrets
       keys = Ble.keys(integration) # ondaC1: BTHome cifrado e bindkey Xiaomi
       seen = {}
+      heard = [] # resto: tudo que chegou vai para a descoberta por Bluetooth
       ::Esphome::Client.open(host: s["host"], port: s["port"], key: k["encryption_key"], password: k["password"]) do |c|
         c.send_message(SUBSCRIBE, [ [ 1, :varint, 1 ] ]) # 1 = anúncios crus
         limit = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
@@ -26,12 +27,14 @@ module Drivers
             adv = Proto.decode(raw)
             mac = Ble.mac(adv[1]&.first)
             z = adv[2]&.first.to_i
+            heard << { "mac" => mac, "rssi" => (z >> 1) ^ -(z & 1), "data" => adv[4]&.first.to_s }
             r = Ble.decode(adv[4]&.first.to_s, mac: mac, rssi: (z >> 1) ^ -(z & 1), key: keys[mac]) or next
             seen[r[2] || mac] = r
           end
           break if until_mac && seen.key?(until_mac)
         end
       end
+      Ble::Discovery.note!(integration.tenant_id, heard)
       seen
     rescue ::Esphome::Error, *Integrations::LanPlugin::NET_ERRORS => e
       raise Integrations::Error, e.message

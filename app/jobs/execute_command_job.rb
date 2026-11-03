@@ -19,8 +19,10 @@ class ExecuteCommandJob < ApplicationJob
     point = command.point
     Drivers.for(point.device).execute(point, command.command, command.value)
     command.update!(status: "confirmed", confirmed_at: Time.current)
+    Integrations::DebugLog.log(point.device.integration, "comando #{point.name}: #{command.command} #{command.value.inspect} ok")
   rescue StandardError => e
     Rails.error.report(e, handled: true) unless e.is_a?(Points::Command::Error)
     command.update!(status: "failed", error: e.message.truncate(255))
+    Integrations::DebugLog.log(command.point&.device&.integration, "comando #{command.command} falhou: #{e.class}: #{e.message}")
   end
 end

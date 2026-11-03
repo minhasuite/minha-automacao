@@ -42,7 +42,7 @@ module Ble
 
   # Estruturas AD → {name:, service: {uuid16 => bytes}, maker: {id => bytes}}.
   def ads(data)
-    out = { name: nil, service: {}, maker: {} }
+    out = { name: nil, service: {}, maker: {}, uuids: [] }
     pos = 0
     while pos < data.bytesize
       len = data.getbyte(pos)
@@ -52,6 +52,7 @@ module Ble
       body = data.byteslice(pos + 2, len - 1).to_s
       case type
       when 0x08, 0x09 then out[:name] = body.dup.force_encoding("UTF-8").scrub
+      when 0x02, 0x03 then out[:uuids].concat(body.unpack("v*")) # resto: serviços anunciados (descoberta)
       when 0x16 then out[:service][body.unpack1("v")] = body.byteslice(2..) if body.bytesize >= 2
       when 0xFF then out[:maker][body.unpack1("v")] = body.byteslice(2..) if body.bytesize >= 2
       end

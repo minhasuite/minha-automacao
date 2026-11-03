@@ -34,10 +34,39 @@ module Host
   def dhcp(matchers)
     return [] if matchers.blank?
 
-    Array(info["neighbors"]).select { |n| matchers.any? { |m| dhcp_match?(m, n) } }.map do |n|
+    neighbors.select { |n| matchers.any? { |m| dhcp_match?(m, n) } }.map do |n|
       { "name" => n["hostname"].presence&.sub(/\..*/, "") || n["ip"], "host" => n["ip"], "port" => nil,
         "txt" => { "mac" => n["mac"], "hostname" => n["hostname"], "via" => "dhcp" }.compact }
     end
+  end
+
+  # Vizinhos da sonda do host (ARP + DNS reverso) mais o que o dhcp-watch ouviu
+  # (o nome que o próprio aparelho pediu vale mais que o do roteador).
+  def neighbors
+    heard = leases.values
+    by_mac = heard.index_by { |l| l["mac"] }
+    arp = Array(info["neighbors"]).map { |n| (l = by_mac[n["mac"].to_s.upcase]) ? n.merge("hostname" => l["hostname"].presence || n["hostname"]) : n }
+    arp + heard.reject { |l| arp.any? { |n| n["mac"].to_s.casecmp?(l["mac"]) } || l["ip"].blank? }.map { |l| l.slice("ip", "mac", "hostname") }
+  end
+
+  # ---- DHCP passivo (resto, 7.23): bin/dhcp-watch → POST /api/v1/dhcp/leases ----
+  LEASES_TTL = 7.days
+  MAX_LEASES = 500
+
+  def leases_key(tenant_id = ActsAsTenant.current_tenant&.id) = "dhcp:leases:#{tenant_id}"
+  def leases(tenant_id = ActsAsTenant.current_tenant&.id) = Rails.cache.read(leases_key(tenant_id)) || {}
+
+  def store_leases!(tenant, list)
+    seen = leases(tenant.id)
+    n = Array(list).first(200).count do |l|
+      mac = l["mac"].to_s.upcase
+      next false unless mac.match?(/\A\h\h(:\h\h){5}\z/)
+
+      seen[mac] = (seen[mac] || {}).merge(l.slice("hostname", "ip", "vendor").compact_blank).merge("mac" => mac, "at" => Time.current.iso8601)
+      true
+    end
+    Rails.cache.write(leases_key(tenant.id), seen.sort_by { |_, v| v["at"] }.last(MAX_LEASES).to_h, expires_in: LEASES_TTL)
+    n
   end
 
   def dhcp_match?(m, n)

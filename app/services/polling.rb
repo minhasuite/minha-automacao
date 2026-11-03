@@ -63,10 +63,12 @@ module Polling
         device.update_columns(polled_at: Time.current)
         driver = driver_for(device.driver)
         reconnect && driver.respond_to?(:reconnect) ? driver.reconnect(device) : driver.poll(device)
+        Integrations::DebugLog.log(device.integration, "leitura #{device.name}: #{device.points.reload.map { |p| "#{p.name}=#{p.value.inspect}" }.join(", ")}") if Integrations::DebugLog.on?(device.integration)
         device.update_columns(last_error: nil) if device.last_error
         true
       rescue StandardError => e
         Rails.logger.warn("[polling] #{device.name}: #{e.class}: #{e.message}")
+        Integrations::DebugLog.log(device.integration, "leitura #{device.name} falhou: #{e.class}: #{e.message}")
         device.update_columns(last_error: "#{l_now} #{e.message}".truncate(255))
         driver.unavailable!(device)
         false

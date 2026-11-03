@@ -50,7 +50,7 @@ RSpec.describe "Paridade: resto" do
       expect(Firmware.available?(fw.reload)).to be true
       Mqtt::Listener.handle("placa/fw", "1.1")
       expect(Firmware.view(fw.reload.value)).to include(installed: "1.1", state: "up_to_date")
-      expect(Firmware.provider(fw.device)).to eq(Firmware::Providers::Mqtt)
+      expect(Firmware.provider(fw.device)).to eq(Firmware::Providers::MqttDiscovery)
       Firmware.install!(fw, user: nil)
       expect(Mqtt::Listener).to have_received(:publish).with("placa/fw/set", "install")
     end
@@ -168,6 +168,60 @@ RSpec.describe "Paridade: resto" do
       expect(prox.reload).to have_attributes(value: 0)
       expect(prox.attrs).to include("direction" => "arrived", "in_zone" => true)
       expect(HelperTypes.save(HelperTypes.build(site, HelperTypes.plugin("proximity")), "name" => "Teste Sem", "source" => home.id, "zone" => home.id)).to be false
+    end
+  end
+
+  describe "Brother por SNMP (grupo 9, #38)" do
+    # Impressora de mentira em 127.0.0.1: lê o GET (BER) e responde com a tabela.
+    def snmp_printer(table)
+      sock = UDPSocket.new
+      sock.bind("127.0.0.1", 0)
+      Thread.new do
+        loop do
+          data, from = sock.recvfrom(2048)
+          _, msg, = Snmp.read(data)
+          (_, _), (_, community), (_, pdu) = Snmp.items(msg)
+          (_, rid), _, _, (_, binds) = Snmp.items(pdu)
+          oids = Snmp.items(binds).map { |_, b| Snmp.decode_oid(Snmp.items(b).first[1]) }
+          vals = oids.map do |o|
+            v = community == "public" ? table[o] : nil
+            body = case v
+            when Integer then o == Integrations::BrotherPlugin::PAGES ? Snmp.tlv(0x41, Snmp.int_bytes(v)) : Snmp.int(v)
+            when String then Snmp.tlv(0x04, v.b)
+            else Snmp.tlv(0x81, "")
+            end
+            Snmp.tlv(0x30, Snmp.oid(o) + body)
+          end
+          reply = Snmp.tlv(0x30, Snmp.int(1) + Snmp.tlv(0x04, community) + Snmp.tlv(0xA2, Snmp.tlv(0x02, rid) + Snmp.int(0) + Snmp.int(0) + Snmp.tlv(0x30, vals.join)))
+          sock.send(reply, 0, from[3], from[1])
+        end
+      rescue IOError
+        nil
+      end
+      [ sock, sock.addr[1] ]
+    end
+
+    it "estado, páginas e cada suprimento com o nome da impressora; nível -3 vira 'pouco'" do
+      s = Integrations::BrotherPlugin::SUPPLY
+      sock, port = snmp_printer(Integrations::BrotherPlugin::SYS_DESCR => "Brother HL-L2350DW series", Integrations::BrotherPlugin::SERIAL => "E7X1",
+                                Integrations::BrotherPlugin::PAGES => 123_456, Integrations::BrotherPlugin::STATUS => 3,
+                                "#{s}.6.1.1" => "Toner Cartridge", "#{s}.8.1.1" => 2600, "#{s}.9.1.1" => 650,
+                                "#{s}.6.1.2" => "Drum Unit", "#{s}.8.1.2" => 12_000, "#{s}.9.1.2" => -3)
+      expect(Snmp.get("127.0.0.1", [ Integrations::BrotherPlugin::PAGES, "1.3.6.1.9.9" ], port: port)).to eq(Integrations::BrotherPlugin::PAGES => 123_456)
+      allow(Snmp).to receive(:get).and_wrap_original { |m, host, oids, **kw| m.call(host, oids, **kw, port: port) }
+
+      o = Integrations::BrotherPlugin.setup(site, ActionController::Parameters.new(host: "127.0.0.1"))
+      expect(o.alert).to be_nil
+      i = o.integration
+      entry = i.found.sole
+      expect(entry).to include("id" => "brother:E7X1", "name" => "Brother HL-L2350DW series")
+      Integrations.adopt!(i, entry["id"] => "")
+      d = i.devices.sole
+      Integrations::BrotherPlugin.poll(d)
+      v = d.points.reload.to_h { |p| [ p.name, p.value ] }
+      expect(v).to include("Páginas impressas" => 123_456, "Estado" => "pronta", "Toner Cartridge restante" => 25, "Drum Unit restante" => 10)
+    ensure
+      sock&.close
     end
   end
 end

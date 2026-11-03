@@ -31,6 +31,7 @@ module Integrations
                ForecastSolarPlugin Co2signalPlugin MoonPlugin SeasonPlugin HolidayPlugin
                SmartthingsPlugin NetatmoPlugin HomeConnectPlugin NestPlugin EcowittPlugin OverkizPlugin RingPlugin
                UnifiPlugin SpeedtestPlugin IppPlugin InfluxdbPlugin ModbusPlugin OnedrivePlugin UpnpPlugin FritzPlugin MusicAssistantPlugin PlexPlugin
+               BrotherPlugin
                CalendarPlugin WeatherPlugin MobileAppPlugin NetworkTrackerPlugin TelegramPlugin WhatsappPlugin HttpMessengerPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
 
   module_function
@@ -76,6 +77,7 @@ module Integrations
     before = integration.found.map { |e| e["id"] }
     list = plugin.inventory(integration).select { |e| e["id"].present? }
     counts = reconcile(integration, list)
+    DebugLog.log(integration, "varredura: #{list.size} aparelho(s): #{list.map { |e| e['id'] }.first(50).join(", ")}")
     integration.update!(inventory: list.to_json)
     integration.ok!
     plugin.refresh(integration)
@@ -85,6 +87,7 @@ module Integrations
     counts.merge(found: list.size, fresh: fresh.size)
   rescue StandardError => e
     integration.error!(e) if integration.persisted?
+    DebugLog.log(integration, "varredura falhou: #{e.class}: #{e.message}")
     raise
   end
 

@@ -6,6 +6,7 @@ module Integrations
   class SwitchbotPlugin < Plugin
     describe key: "switchbot", title: "SwitchBot", icon: "switch-horizontal",
              description: "Bots, tomadas, cortinas, termo-higrômetros, sensores, lâmpadas e fechaduras SwitchBot pela conta (token do app)."
+    bluetooth({ manufacturer_id: 2409 }, { service_uuid: 0xFD3D }) # resto (7.23): aparece em "Procurar na rede" quando um SwitchBot anuncia perto
     texts "pt-BR" => { need: "Informe o token e o segredo do app SwitchBot.", found: "%{n} aparelho(s) na conta SwitchBot.", failed: "Não deu para ler a conta SwitchBot: %{error}" },
           en: { title: "SwitchBot", description: "SwitchBot bots, plugs, curtains, thermo-hygrometers, sensors, bulbs and locks through your account (app token).", need: "Enter the SwitchBot app token and secret.", found: "%{n} device(s) in the SwitchBot account.", failed: "Couldn't read the SwitchBot account: %{error}" },
           es: { title: "SwitchBot", description: "Bots, enchufes, cortinas, termohigrómetros, sensores, bombillas y cerraduras SwitchBot por la cuenta (token de la app).", need: "Ingresa el token y el secreto de la app SwitchBot.", found: "%{n} aparato(s) en la cuenta SwitchBot.", failed: "No se pudo leer la cuenta SwitchBot: %{error}" }

@@ -1,0 +1,47 @@
+#!/usr/bin/env ruby
+# Escuta passiva de DHCP (resto, 7.23; o `dhcp` watcher do HA): ouve na rede
+# do host os pedidos de endereço que os aparelhos mandam em broadcast (porta
+# 67) e manda em lote para o MA (POST /api/v1/dhcp/leases) o MAC, o nome que
+# o aparelho pediu e o IP. Só ouve: não responde nem dá endereço. Ruby puro,
+# sem Rails nem banco; roda no serviço `dhcp-watch` do docker-compose.local.yml
+# (perfil `dhcp`, desligado), com rede do host e NET_BIND_SERVICE.
+#
+#   MA_URL       endereço da web (padrão http://127.0.0.1:80)
+#   MA_API_KEY   chave de integração com permissão "write" (DHCP_WATCH_KEY no .env)
+#   DHCP_PORT    porta (padrão 67)
+require "json"
+require "net/http"
+require "socket"
+require_relative "../app/services/dhcp_packet"
+
+url = URI("#{ENV.fetch('MA_URL', 'http://127.0.0.1:80').chomp('/')}/api/v1/dhcp/leases")
+key = ENV["MA_API_KEY"].to_s
+abort "[dhcp] defina MA_API_KEY (chave de integração com permissão de escrita)" if key.empty?
+$stdout.sync = true
+
+sock = UDPSocket.new
+sock.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, true)
+sock.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, true)
+sock.bind("0.0.0.0", Integer(ENV.fetch("DHCP_PORT", "67")))
+puts "[dhcp] ouvindo na porta #{sock.addr[1]}"
+
+http = Net::HTTP.new(url.host, url.port)
+pending = {}
+last = Time.now
+loop do
+  if sock.wait_readable(1)
+    data, = sock.recvfrom(1500)
+    lease = DhcpPacket.parse(data)
+    pending[lease["mac"]] = (pending[lease["mac"]] || {}).merge(lease) if lease
+  end
+  next if pending.empty? || Time.now - last < 10
+
+  begin
+    res = http.post(url.path, { leases: pending.values }.to_json, "Content-Type" => "application/json", "X-Api-Key" => key)
+    warn "[dhcp] MA respondeu #{res.code}" unless res.is_a?(Net::HTTPSuccess)
+    pending.clear
+  rescue SystemCallError, IOError, Net::OpenTimeout, Net::ReadTimeout => e
+    warn "[dhcp] #{e.class}: #{e.message}"
+  end
+  last = Time.now
+end
