@@ -30,6 +30,8 @@
         <%= render "web/points/control", point: point %>
       <% elsif point.capability == "onoff" %>
         <%= button_to command_point_path(point), params: { command: on ? "off" : "on" }, class: "ss-btn #{on ? 'ss-btn-outline' : 'ss-btn-primary'} w-full", form: { data: confirm }, "aria-pressed": on do %><%= icon(on ? "x-circle" : "lightning-bolt", "size-4") %><%= on ? t("points.turn_off") : t("points.turn_on") %><% end %>
+      <% elsif point.capability == "stream" %>
+        <%# ondaC2: câmera tem PTZ, gravar e falar na página do ponto (_camera). %>
       <% elsif point.capability.in?(%w[gate command]) %>
         <%= button_to command_point_path(point), params: { command: point.capability == "gate" ? "pulse" : "press" }, class: "ss-btn ss-btn-primary w-full", form: { data: confirm } do %><%= icon("lightning-bolt", "size-4") %><%= t("points.fire") %><% end %>
       <% else %>

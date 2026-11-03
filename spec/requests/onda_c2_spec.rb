@@ -109,6 +109,7 @@ RSpec.describe "ondaC2: telas de mídia e câmeras" do
       cam.update!(writable: true, address: cam.address.merge("supports" => %w[record ptz play_media], "talk" => true, "record" => { "mode" => "events" }))
     end
     dir = ENV["APPWEB_DUMP"].presence
+    FileUtils.mkdir_p(dir) if dir
     { "midia" => "/locais/#{site.id}/midia", "midia_arquivo" => "/locais/#{site.id}/midia/fontes/local?path=Festa&item=Festa/abertura.mp3",
       "midia_radios" => "/locais/#{site.id}/midia/fontes/radios", "ponto_camera" => "/pontos/#{cam.id}" }.each do |name, path|
       get "/api/v1/screen", params: { path: path }, headers: auth_headers(user)

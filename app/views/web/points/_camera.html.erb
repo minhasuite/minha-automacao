@@ -4,7 +4,7 @@
 <% rec = Recordings.settings(point) %>
 <% can_cmd = point.writable && can?(:command, risk: point.risk) %>
 <section class="grid gap-4 lg:grid-cols-3 mt-4" aria-labelledby="cam-title">
-  <div class="ss-card ss-card-pad lg:col-span-2 ma-cam">
+  <div class="ss-card ss-card-pad lg:col-span-2 ma-cam" data-app="skip">
     <div class="dw-camera !p-0" data-controller="camera" data-camera-snapshot-value="<%= camera_snapshot_path(point) %>"
          data-camera-webrtc-value="<%= camera_webrtc_path(point) %>" data-camera-interval-value="5"
          data-camera-mic-denied-value="<%= t("cameras.mic_denied") %>">
@@ -31,12 +31,12 @@
           <div class="ma-ptz" role="group" aria-label="<%= t("cameras.ptz") %>">
             <% { "up" => "chevron-up", "left" => "chevron-left", "home" => "home", "right" => "chevron-right", "down" => "chevron-down" }.each do |move, ico| %>
               <%= button_to command_point_path(point), params: { command: "ptz", value: move }, class: "ma-ptz-#{move}", form_class: "contents",
-                            title: t("cameras.moves.#{move}"), "aria-label": t("cameras.moves.#{move}") do %><%= icon(ico, "size-5") %><% end %>
+                            title: t("cameras.moves.#{move}"), "aria-label": t("cameras.moves.#{move}") do %><%= icon(ico, "size-5") %><span class="sr-only"><%= t("cameras.moves.#{move}") %></span><% end %>
             <% end %>
           </div>
           <span class="ss-step" role="group" aria-label="<%= t("cameras.zoom") %>">
             <% { "zoom_in" => "zoom-in", "zoom_out" => "zoom-out" }.each do |move, ico| %>
-              <%= button_to command_point_path(point), params: { command: "ptz", value: move }, title: t("cameras.moves.#{move}"), "aria-label": t("cameras.moves.#{move}") do %><%= icon(ico, "size-4") %><% end %>
+              <%= button_to command_point_path(point), params: { command: "ptz", value: move }, title: t("cameras.moves.#{move}"), "aria-label": t("cameras.moves.#{move}") do %><%= icon(ico, "size-4") %><span class="sr-only"><%= t("cameras.moves.#{move}") %></span><% end %>
             <% end %>
           </span>
         </div>

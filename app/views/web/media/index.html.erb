@@ -33,11 +33,11 @@
             <span class="ss-step" role="group" aria-label="<%= t("media.index.controls", name: p.name) %>">
               <% [ [ "previous", "rewind" ], [ v["state"] == "playing" ? "pause" : "resume", v["state"] == "playing" ? "pause" : "play" ], [ "next", "fast-forward" ] ].each do |c, ico| %>
                 <% next unless cmds.include?(c) %>
-                <%= button_to site_media_control_path(@site, p), params: { command: c }, title: t("media.cmd.#{c}"), "aria-label": "#{t("media.cmd.#{c}")} #{p.name}" do %><%= icon(ico, "size-4") %><% end %>
+                <%= button_to site_media_control_path(@site, p), params: { command: c }, title: t("media.cmd.#{c}"), "aria-label": "#{t("media.cmd.#{c}")} #{p.name}" do %><%= icon(ico, "size-4") %><span class="sr-only"><%= t("media.cmd.#{c}") %></span><% end %>
               <% end %>
             </span>
             <% if cmds.include?("mute") %>
-              <%= button_to site_media_control_path(@site, p), params: { command: "mute" }, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-pressed": (v["muted"] == true).to_s, title: t("media.cmd.mute") do %><%= icon(v["muted"] ? "volume-off" : "volume-up", "size-4") %><% end %>
+              <%= button_to site_media_control_path(@site, p), params: { command: "mute" }, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-pressed": (v["muted"] == true).to_s, title: t("media.cmd.mute") do %><%= icon(v["muted"] ? "volume-off" : "volume-up", "size-4") %><span class="sr-only"><%= t("media.cmd.mute") %></span><% end %>
             <% end %>
             <% if cmds.include?("volume") %>
               <%= form_with url: site_media_control_path(@site, p), class: "flex items-center gap-2 flex-1 min-w-32" do %>
@@ -88,12 +88,13 @@
 <p class="ss-section mb-3"><%= t("media.index.sources") %></p>
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
   <% @sources.each do |s| %>
-    <%= link_to site_media_browse_path(@site, s.key), class: "ss-card ss-card-pad ma-source no-underline flex items-start gap-3" do %>
+    <section class="ss-card ss-card-pad ma-source relative flex items-start gap-3" aria-labelledby="src-<%= s.key %>">
       <span class="ss-icon-tile text-accent shrink-0"><%= icon(s.icon) %></span>
-      <span class="min-w-0">
-        <span class="block font-bold text-ink"><%= s.title %></span>
-        <span class="block text-sm text-muted mt-1"><%= s.description %></span>
-      </span>
-    <% end %>
+      <div class="min-w-0 flex-1">
+        <h3 id="src-<%= s.key %>"><%= s.title %></h3>
+        <p class="text-sm text-muted mt-1"><%= s.description %></p>
+        <%= link_to site_media_browse_path(@site, s.key), class: "ss-btn ss-btn-ghost ss-btn-sm mt-3 after:absolute after:inset-0" do %><%= icon("arrow-right", "size-4") %><%= t("media.index.open_source") %><% end %>
+      </div>
+    </section>
   <% end %>
 </div>

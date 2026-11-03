@@ -29,6 +29,7 @@ pt-BR:
       say_btn: "Falar"
       say_empty: "Escreva o que falar."
       sources: "Bibliotecas"
+      open_source: "Abrir"
     states:
       playing: "Tocando"
       paused: "Pausado"
@@ -131,6 +132,7 @@ en:
       say_btn: "Speak"
       say_empty: "Write what to say."
       sources: "Libraries"
+      open_source: "Open"
     states:
       playing: "Playing"
       paused: "Paused"
@@ -233,6 +235,7 @@ es:
       say_btn: "Hablar"
       say_empty: "Escribe qué decir."
       sources: "Bibliotecas"
+      open_source: "Abrir"
     states:
       playing: "Reproduciendo"
       paused: "En pausa"
