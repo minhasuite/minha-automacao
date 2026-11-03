@@ -66,7 +66,7 @@ module Integrations
       def note = text(:note, default: "")
 
       def setup(site, form)
-        missing = fields.find { |f| f.required && form[f.key].to_s.strip.blank? }
+        missing = fields.find { |f| f.required && f.default.nil? && form[f.key].to_s.strip.blank? }
         return outcome(:form, alert: text(:required, field: field_label(missing.key))) if missing
 
         name = form[:name].to_s.squish.presence || [ title, form[:host].to_s.strip.presence ].compact.join(" ")
@@ -142,8 +142,10 @@ module Integrations
     end
 
     def execute(point, command, value)
-      v = Points::Command.new(point, command, value).new_value
-      self.class.command(point, command, v)
+      cmd = Points::Command.new(point, command, value)
+      v = cmd.new_value
+      # Mídia e controle remoto: o valor novo é o do ponto; o argumento do comando vai à parte.
+      self.class.command(point, command, point.capability.in?(%w[media remote]) ? cmd.value : v)
       self.class.poll(point.device)
     end
   end

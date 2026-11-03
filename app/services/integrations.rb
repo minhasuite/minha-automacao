@@ -27,7 +27,7 @@ module Integrations
                EsphomePlugin ShellyPlugin TasmotaPlugin MatterPlugin CastPlugin WebosPlugin TizenPlugin AdbPlugin BroadlinkPlugin SpotifyPlugin
                FrigatePlugin ReolinkPlugin UnifiProtectPlugin HuePlugin WledPlugin YeelightPlugin SwitchbotPlugin
                DaikinPlugin MideaPlugin LgThinqPlugin SunspecPlugin GrowattPlugin DirigeraPlugin SonosPlugin DlnaPlugin GoveePlugin ZwaveJsPlugin BleProxyPlugin BluetoothPlugin ThreadPlugin GoogleHomePlugin HomekitPlugin
-               WizPlugin TplinkPlugin AdguardPlugin NutPlugin FullyKioskPlugin
+               WizPlugin TplinkPlugin AdguardPlugin NutPlugin FullyKioskPlugin HomewizardPlugin SynologyDsmPlugin FritzboxPlugin DenonavrPlugin HeosPlugin BraviatvPlugin
                CalendarPlugin WeatherPlugin MobileAppPlugin NetworkTrackerPlugin TelegramPlugin WhatsappPlugin HttpMessengerPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
 
   module_function

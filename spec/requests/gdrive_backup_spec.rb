@@ -89,7 +89,7 @@ RSpec.describe "Backup no Google Drive" do
     get "/integracoes/oauth/retorno", params: { state: query["state"], code: "C1" }
     expect(response).to redirect_to("/configuracoes/saude")
     expect(gd).to be_connected
-    expect(File.read(gd.file)).not_to include("R1") # cifrado
+    expect(File.read(gd.file)).not_to include("refresh_token") # cifrado (o "R1" às vezes aparecia no base64 aleatório)
     expect(gd.secrets).to include("refresh_token" => "R1", "email" => "teste@exemplo.com")
     expect(Backups.url).to eq(gd::URL)
     expect(Backups.destination).to be_a(gd)

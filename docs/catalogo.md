@@ -47,3 +47,9 @@ end
 | AdGuard Home | API `/control/*` | usuário e senha do painel |
 | Nobreak (NUT) | `upsd` TCP 3493 | usuário/senha do `upsd` se exigir |
 | Fully Kiosk Browser | API REST do app (2323) | ligar "Remote Administration" e a senha |
+| HomeWizard Energy | API local v1 (`/api/v1/data`, `/state`) | ligar "API local" no app HomeWizard |
+| Synology DSM | Web API do DSM (login por chamada, logout no fim) | usuário (de preferência sem admin) e senha; código de 2 etapas se tiver |
+| FRITZ!Box Smart Home | AHA (`homeautoswitch.lua`), login PBKDF2/MD5 | usuário e senha do FRITZ!Box |
+| Denon / Marantz AVR | HTTP do receiver (`formiPhoneAppDirect.xml`) | só o IP (porta 8080 nos modelos novos) |
+| Denon HEOS | CLI HEOS (TCP 1255) | IP de qualquer caixa |
+| Sony Bravia TV | REST `/sony/*` com `X-Auth-PSK` | ligar Controle IP com chave pré-compartilhada na TV |

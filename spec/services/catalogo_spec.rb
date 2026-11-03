@@ -233,5 +233,126 @@ RSpec.describe "Catálogo de integrações (grupo 9)" do
       o = Integrations::FullyKioskPlugin.setup(site, form(host: "192.0.2.7", password: "x"))
       expect(o.alert).to include("password")
     end
+
+    it "HomeWizard: P1 com energia e gás, tomada liga/desliga" do
+      stub_request(:get, "http://192.0.2.8/api").to_return(json("product_type" => "HWE-SKT", "product_name" => "Teste Tomada", "serial" => "abc", "api_version" => "v1"))
+      stub_request(:get, "http://192.0.2.8/api/v1/data").to_return(json("active_power_w" => 120.5, "total_power_import_kwh" => 33.2, "wifi_strength" => 80))
+      stub_request(:get, "http://192.0.2.8/api/v1/state").to_return(json("power_on" => true))
+      put = stub_request(:put, "http://192.0.2.8/api/v1/state").with(body: { power_on: false }.to_json).to_return(json("power_on" => false))
+      i = add(Integrations::HomewizardPlugin, host: "192.0.2.8")
+      p = pts(i)
+      expect(p.keys).to contain_exactly("switch", "power", "import")
+      expect([ p["switch"].value, p["power"].value, p["import"].value, p["import"].state_class ]).to eq([ true, 120.5, 33.2, "total_increasing" ])
+      run(p["switch"], "off")
+      expect(put).to have_been_requested
+    end
+
+    it "Synology DSM: login, CPU, memória e volumes, e logout" do
+      stub_request(:get, %r{192\.0\.2\.9:5001/webapi/auth\.cgi\?.*method=login}).to_return(json("success" => true, "data" => { "sid" => "s1" }))
+      logout = stub_request(:get, /method=logout/).to_return(json("success" => true))
+      stub_request(:get, /api=SYNO\.Core\.System&/).to_return(json("data" => { "model" => "DS920+", "serial" => "X1", "sys_temp" => 41, "up_time" => "50:30:00" }))
+      stub_request(:get, /api=SYNO\.Core\.System\.Utilization/).to_return(json("data" => { "cpu" => { "user_load" => 7, "system_load" => 3 }, "memory" => { "real_usage" => 35 } }))
+      vols = [ { "id" => "volume_1", "display_name" => "Volume 1", "status" => "normal", "size" => { "total" => "1000", "used" => "250" } } ]
+      stub_request(:get, /api=SYNO\.Storage\.CGI\.Storage/).to_return(json("data" => { "volumes" => vols }))
+      i = add(Integrations::SynologyDsmPlugin, host: "192.0.2.9", username: "teste", password: "teste")
+      p = pts(i)
+      expect([ p["cpu"].value, p["memory"].value, p["temperature"].value, p["uptime"].value, p["used:volume_1"].value, p["bad:volume_1"].value ])
+        .to eq([ 10, 35, 41, 50.5, 25.0, false ])
+      expect(p["used:volume_1"].name).to eq("Volume 1 usado")
+      expect(logout).to have_been_requested.at_least_once
+      stub_request(:get, /method=login/).to_return(json("success" => false, "error" => { "code" => 400 }))
+      expect(Integrations::SynologyDsmPlugin.setup(site, form(host: "192.0.2.9", username: "x", password: "y")).alert).to include("400")
+    end
+
+    it "FRITZ!Box: login PBKDF2, tomada com consumo e termostato" do
+      challenge = "2$10$5a1711$10$5a1722"
+      stub_request(:get, "http://fritz.box/login_sid.lua?version=2")
+        .to_return(status: 200, body: "<SessionInfo><SID>0000000000000000</SID><Challenge>#{challenge}</Challenge></SessionInfo>")
+      good = Integrations::FritzboxPlugin.answer(challenge, "teste")
+      stub_request(:get, /login_sid\.lua\?.*response=/).to_return do |req|
+        sid = Rack::Utils.parse_query(req.uri.query)["response"] == good ? "abcdef0123456789" : "0000000000000000"
+        { status: 200, body: "<SessionInfo><SID>#{sid}</SID></SessionInfo>" }
+      end
+      xml = <<~XML
+        <devicelist><device identifier="11657 0240192" productname="FRITZ!DECT 200"><present>1</present><name>Teste Tomada</name>
+        <switch><state>1</state></switch><powermeter><power>23500</power><energy>1500</energy><voltage>230000</voltage></powermeter>
+        <temperature><celsius>215</celsius><offset>0</offset></temperature></device>
+        <device identifier="09995 0000001" productname="FRITZ!DECT 301"><present>1</present><name>Teste Termostato</name>
+        <temperature><celsius>200</celsius><offset>5</offset></temperature><hkr><tist>40</tist><tsoll>42</tsoll></hkr><battery>80</battery></device></devicelist>
+      XML
+      stub_request(:get, /getdevicelistinfos/).to_return(status: 200, body: xml)
+      set = stub_request(:get, /switchcmd=sethkrtsoll/).with(query: hash_including("param" => "44")).to_return(status: 200, body: "44")
+      i = add(Integrations::FritzboxPlugin, username: "teste", password: "teste")
+      by = i.devices.index_by(&:name)
+      pp = by["Teste Tomada"].points.index_by { |x| x.address["field"] }
+      hp = by["Teste Termostato"].points.index_by { |x| x.address["field"] }
+      expect([ pp["switch"].value, pp["power"].value, pp["energy"].value, pp["temperature"].value ]).to eq([ true, 23.5, 1.5, 21.5 ])
+      expect([ hp["temperature"].value, hp["setpoint"].value, hp["battery"].value ]).to eq([ 20.5, 21.0, 80 ])
+      run(hp["setpoint"], "set", 22)
+      expect(set).to have_been_requested
+      expect(Integrations::FritzboxPlugin.setup(site, form(username: "teste", password: "errada")).alert).to include("recusou")
+    end
+
+    it "Denon AVR: zona principal como player (volume em dB, mudo, entrada)" do
+      stub_request(:get, "http://192.0.2.10:80/goform/formMainZone_MainZoneXmlStatusLite.xml")
+        .to_return(status: 200, body: "<item><Power><value>ON</value></Power><InputFuncSelect><value>TV</value></InputFuncSelect>" \
+                                      "<MasterVolume><value>-40.0</value></MasterVolume><Mute><value>off</value></Mute></item>")
+      stub_request(:get, "http://192.0.2.10:80/goform/formMainZone_MainZoneXml.xml").to_return(status: 200, body: "<item><FriendlyName><value>Teste Sala</value></FriendlyName></item>")
+      sent = stub_request(:get, %r{/goform/formiPhoneAppDirect\.xml\?}).to_return(status: 200, body: "")
+      i = add(Integrations::DenonavrPlugin, host: "192.0.2.10")
+      media = pts(i)["media"]
+      expect(i.devices.first.name).to eq("Teste Sala")
+      expect(media.value).to eq("state" => "on", "volume" => 50, "muted" => false, "source" => "TV")
+      run(media, "volume", 50)
+      run(media, "play_media", "Blu-ray")
+      run(media, "off")
+      expect(a_request(:get, "http://192.0.2.10:80/goform/formiPhoneAppDirect.xml?MV40")).to have_been_made
+      expect(a_request(:get, "http://192.0.2.10:80/goform/formiPhoneAppDirect.xml?SIBLU-RAY")).to have_been_made
+      expect(sent).to have_been_requested.times(3)
+    end
+
+    it "HEOS: cada player vira aparelho; estado, música e comandos pela CLI (TCP 1255)" do
+      cmds = []
+      replies = { "player/get_play_state" => "pid=7&state=play", "player/get_volume" => "pid=7&level=25", "player/get_mute" => "pid=7&state=off" }
+      payloads = { "player/get_players" => [ { "name" => "Teste Cozinha", "pid" => 7, "model" => "HEOS 1" } ],
+                   "player/get_now_playing_media" => { "song" => "Teste Música", "artist" => "Teste Banda" } }
+      port = tcp_server do |s|
+        while (line = s.gets("\r\n"))
+          cmd = line.strip.delete_prefix("heos://")
+          cmds << cmd
+          path = cmd.split("?").first
+          reply = { "heos" => { "command" => path, "result" => "success", "message" => replies[path] || cmd.split("?", 2)[1].to_s }, "payload" => payloads[path] }.compact
+          s.write("#{reply.to_json}\r\n")
+        end
+      end
+      stub_const("Integrations::HeosPlugin::PORT", port)
+      i = add(Integrations::HeosPlugin, host: "127.0.0.1")
+      media = pts(i)["media"]
+      expect(media.value).to eq("state" => "playing", "volume" => 25, "muted" => false, "title" => "Teste Música", "artist" => "Teste Banda")
+      run(media, "pause")
+      run(media, "play_media", "http://radio.local/stream.mp3")
+      expect(cmds).to include("player/set_play_state?pid=7&state=pause", "browse/play_stream?pid=7&url=http://radio.local/stream.mp3")
+    end
+
+    it "Sony Bravia: JSON-RPC com a PSK; desligada não lê o resto" do
+      power = +"active"
+      rpc = lambda do |svc, method, result|
+        stub_request(:post, "http://192.0.2.11/sony/#{svc}").with(body: hash_including("method" => method), headers: { "X-Auth-PSK" => "0000" })
+                                                          .to_return(json("result" => result, "id" => 1))
+      end
+      rpc.call("system", "getSystemInformation", [ { "name" => "Teste TV", "model" => "KD-55X80J", "macAddr" => "aa:bb" } ])
+      stub_request(:post, "http://192.0.2.11/sony/system").with(body: hash_including("method" => "getPowerStatus")).to_return { json("result" => [ { "status" => power } ]) }
+      rpc.call("audio", "getVolumeInformation", [ [ { "target" => "speaker", "volume" => 18, "mute" => false } ] ])
+      rpc.call("avContent", "getPlayingContentInfo", [ { "title" => "HDMI 1", "uri" => "extInput:hdmi?port=1" } ])
+      vol = rpc.call("audio", "setAudioVolume", [])
+      i = add(Integrations::BraviatvPlugin, host: "192.0.2.11", psk: "0000")
+      media = pts(i)["media"]
+      expect(media.value).to eq("state" => "on", "volume" => 18, "muted" => false, "source" => "HDMI 1", "app" => "extInput:hdmi?port=1")
+      run(media, "volume", 30)
+      expect(vol).to have_been_requested
+      power.replace("standby")
+      Integrations::BraviatvPlugin.poll(i.devices.first)
+      expect(pts(i)["media"].value).to eq("state" => "off")
+    end
   end
 end
