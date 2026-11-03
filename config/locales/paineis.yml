@@ -1,0 +1,98 @@
+# Painéis ondaB2 (paridade HA, grupo 4): recursos do tile, ações de toque,
+# cards novos, tipos de visão, temas do usuário e barra lateral por pessoa.
+pt-BR:
+  dashboards:
+    schema:
+      features_list: "features precisa ser uma lista (até %{max})"
+      feature_object: 'recurso precisa ser texto ou {"type", "point"}'
+      feature_unknown: "features inválidas: recurso %{key} não existe"
+      action_unknown: "%{field} precisa de uma ação conhecida em action"
+      action_confirmation: "%{field}: confirmation precisa ser verdadeiro/falso ou um texto"
+      action_bad: "%{field}: %{msg}"
+    act:
+      sure: Tem certeza?
+      title: Ações
+      hint: "(vazio = o padrão do card)"
+      default: Padrão do card
+      same_point: O ponto do card
+      command: Comando
+      value: Valor (opcional)
+      navigation_path: Visão ou tela
+      path_hint: "caminho da visão ou /tela"
+      url: Endereço
+      confirm: Pedir confirmação
+      gestures:
+        tap: Ao tocar
+        hold: Ao segurar
+        double_tap: Ao tocar duas vezes
+    feat:
+      title: Recursos
+      hint: "(até %{max}; o que o aparelho não tiver não aparece)"
+      less: "Diminuir %{name}"
+      more: "Aumentar %{name}"
+      trend_x: "Tendência de %{name} nas últimas 24 h"
+      no_history: Sem histórico ainda.
+en:
+  dashboards:
+    schema:
+      features_list: "features must be a list (up to %{max})"
+      feature_object: 'a feature must be text or {"type", "point"}'
+      feature_unknown: "invalid features: feature %{key} does not exist"
+      action_unknown: "%{field} needs a known action in action"
+      action_confirmation: "%{field}: confirmation must be true/false or a text"
+      action_bad: "%{field}: %{msg}"
+    act:
+      sure: Are you sure?
+      title: Actions
+      hint: "(empty = the card default)"
+      default: Card default
+      same_point: The card's point
+      command: Command
+      value: Value (optional)
+      navigation_path: View or screen
+      path_hint: "view path or /screen"
+      url: Address
+      confirm: Ask for confirmation
+      gestures:
+        tap: On tap
+        hold: On hold
+        double_tap: On double tap
+    feat:
+      title: Features
+      hint: "(up to %{max}; what the device lacks does not show)"
+      less: "Decrease %{name}"
+      more: "Increase %{name}"
+      trend_x: "%{name} trend over the last 24 h"
+      no_history: No history yet.
+es:
+  dashboards:
+    schema:
+      features_list: "features debe ser una lista (hasta %{max})"
+      feature_object: 'un recurso debe ser texto o {"type", "point"}'
+      feature_unknown: "features no válidas: el recurso %{key} no existe"
+      action_unknown: "%{field} necesita una acción conocida en action"
+      action_confirmation: "%{field}: confirmation debe ser verdadero/falso o un texto"
+      action_bad: "%{field}: %{msg}"
+    act:
+      sure: ¿Seguro?
+      title: Acciones
+      hint: "(vacío = lo predeterminado de la tarjeta)"
+      default: Predeterminado de la tarjeta
+      same_point: El punto de la tarjeta
+      command: Comando
+      value: Valor (opcional)
+      navigation_path: Vista o pantalla
+      path_hint: "camino de la vista o /pantalla"
+      url: Dirección
+      confirm: Pedir confirmación
+      gestures:
+        tap: Al tocar
+        hold: Al mantener
+        double_tap: Al tocar dos veces
+    feat:
+      title: Recursos
+      hint: "(hasta %{max}; lo que el aparato no tenga no aparece)"
+      less: "Bajar %{name}"
+      more: "Subir %{name}"
+      trend_x: "Tendencia de %{name} en las últimas 24 h"
+      no_history: Aún sin historial.

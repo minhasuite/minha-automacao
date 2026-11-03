@@ -181,6 +181,57 @@ module DashboardsHelper
   # Fundo do cartão de área: a foto da área ou um dos gradientes da casa (fixo por área).
   def dw_area_art(area) = "dw-art-#{area['id'].to_s.bytes.sum % AREA_ARTS}"
 
+  # ondaB2 (B9): gestos do widget (Dashboards::Actions) → [atributos do
+  # controlador dw-gesture, elementos escondidos que ele dispara]. Comando vira
+  # formulário (papel, risco e confirmação valem como num botão); o resto, link.
+  def dw_gestures(w, points, dashboard:, live:)
+    gestures = w["gestures"].presence or return [ {}, "".html_safe ]
+
+    items = gestures.filter_map do |g, a|
+      data = { gesture: g, confirm: a["confirm"] }.compact
+      case a["action"]
+      when "toggle", "command"
+        p = points[a["point_id"]]
+        next unless p && p["can_command"] && (a["action"] == "toggle" || a["can_command"])
+
+        params = { command: a["command"], value: a["value"] }.compact
+        params.merge!(dashboard_id: dashboard.id, widget_id: w["id"]) if live
+        confirm = a["confirm"] ? { turbo_confirm: a["confirm"] } : dw_confirm(p)
+        button_to("", command_point_path(p["id"]), params: params, hidden: true, tabindex: -1,
+                                                   form: { hidden: true, data: confirm.merge(gesture: g, turbo_frame: live ? nil : "_top").compact })
+      when "more_info" then a["point_id"] && link_to("", point_path(a["point_id"]), hidden: true, tabindex: -1, data: data.merge(turbo_frame: "_top"))
+      when "navigate"
+        path = a["path"].to_s.start_with?("/") ? a["path"] : dashboard_path(dashboard, view: a["path"])
+        link_to("", path, hidden: true, tabindex: -1, data: data.merge(turbo_frame: "_top"))
+      when "url" then link_to("", a["url"], hidden: true, tabindex: -1, target: "_blank", rel: "noopener noreferrer", data: data)
+      else tag.span(hidden: true, data: data.merge(kind: a["action"]))
+      end
+    end
+    [ { controller: "dw-gesture", dw_gesture_kinds_value: gestures.keys.join(" ") }, safe_join(items) ]
+  end
+
+  # Recurso do tile: o partial do plugin (ou o do kind).
+  def dw_feature_partial(f) = Dashboards::TileFeatures[f["type"]]&.partial || "web/dashboards/features/#{f['kind']}"
+
+  # Linha da tendência (0..1 da faixa) como pontos do <polyline> de 100×28.
+  def dw_spark(values)
+    list = Array(values).grep(Numeric)
+    return "" if list.size < 2
+
+    lo, hi = list.minmax
+    span = (hi - lo).nonzero? || 1
+    list.each_with_index.map { |v, i| "#{(i * 100.0 / (list.size - 1)).round(1)},#{(26 - ((v - lo) / span * 24)).round(1)}" }.join(" ")
+  end
+
+  # Passo do −/+ dentro da faixa.
+  def dw_step(f, dir)
+    v = f["value"].is_a?(Numeric) ? f["value"] : (f["min"] || 0)
+    n = (v + (dir * (f["step"] || 1))).round(2)
+    n = [ n, f["min"] ].max if f["min"]
+    n = [ n, f["max"] ].min if f["max"]
+    n % 1 == 0 ? n.to_i : n
+  end
+
   def dw_view_path(dashboard, view, home:)
     slug = view["path"].presence || view["id"]
     home ? root_path(local: dashboard.site_id, view: slug) : dashboard_path(dashboard, view: slug)

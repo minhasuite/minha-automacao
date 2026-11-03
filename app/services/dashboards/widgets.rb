@@ -83,6 +83,9 @@ module Dashboards
           r.points.find { |p| p.device_id == point.device_id && p.capability == "color" && !p.disabled }
         end
 
+        # ondaB2: o widget aceita tap/hold/double_tap_action (o editor mostra os campos).
+        def gestures? = false
+
         def partial = "web/dashboards/widgets/#{type}"
         def form = nil
       end

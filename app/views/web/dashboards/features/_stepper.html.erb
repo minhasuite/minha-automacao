@@ -1,0 +1,14 @@
+<%# locals: (f:, p:, w:, dashboard:, live:) -%>
+<% can = p["can_command"] && p["quality"] == "good" %>
+<div class="dw-feat dw-feat-row">
+  <span class="dw-feat-label"><%= icon(f["icon"], "size-4") %><%= f["label"] %></span>
+  <div class="dw-stepper" role="group" aria-label="<%= f["label"] %>">
+    <% if can %>
+      <%= dw_command_button(p, f["command"], value: dw_step(f, -1), w: w, dashboard: dashboard, live: live, class: "dw-step", form_class: "contents", "aria-label": t("dashboards.feat.less", name: f["label"])) do %><%= icon("minus", "size-4") %><% end %>
+    <% end %>
+    <span class="dw-step-value num"><%= f["value"].is_a?(Numeric) ? dw_number(f["value"], f["unit"]) : "—" %></span>
+    <% if can %>
+      <%= dw_command_button(p, f["command"], value: dw_step(f, 1), w: w, dashboard: dashboard, live: live, class: "dw-step", form_class: "contents", "aria-label": t("dashboards.feat.more", name: f["label"])) do %><%= icon("plus", "size-4") %><% end %>
+    <% end %>
+  </div>
+</div>

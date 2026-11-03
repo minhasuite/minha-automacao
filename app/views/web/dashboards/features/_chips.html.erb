@@ -1,0 +1,15 @@
+<%# locals: (f:, p:, w:, dashboard:, live:) -%>
+<% can = p["can_command"] && p["quality"] == "good" %>
+<div class="dw-feat">
+  <span class="dw-feat-label"><%= icon(f["icon"], "size-4") %><%= f["label"] %></span>
+  <div class="dw-chips" role="group" aria-label="<%= f["label"] %>">
+    <% Array(f["options"]).each do |o| %>
+      <% on = o.to_s == f["value"].to_s %>
+      <% if can %>
+        <%= dw_command_button(p, f["command"], value: o, w: w, dashboard: dashboard, live: live, class: "dw-chip", form_class: "contents", "aria-pressed": on.to_s) do %><%= o %><% end %>
+      <% else %>
+        <span class="dw-chip" aria-current="<%= on %>"><%= o %></span>
+      <% end %>
+    <% end %>
+  </div>
+</div>

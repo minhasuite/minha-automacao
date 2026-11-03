@@ -31,7 +31,7 @@ RSpec.describe "Cobertura de idiomas" do
 
   it "todo plugin traz en e es para cada texto pt-BR, com a mesma interpolação" do
     Rails.application.eager_load!
-    plugins = ObjectSpace.each_object(Class).select { |c| c.is_a?(PluginTexts) && c.name }
+    plugins = ObjectSpace.each_object(Class).select { |c| c.is_a?(PluginTexts) && c.name&.safe_constantize.equal?(c) } # sem os falsos de stub_const já desfeitos
     expect(plugins.size).to be > 100
     vars = ->(s) { s.to_s.scan(/%\{(\w+)\}/).flatten.sort }
     problems = plugins.flat_map do |plugin|

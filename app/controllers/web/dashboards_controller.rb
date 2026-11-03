@@ -226,6 +226,9 @@ module Web
       type = p[:type].presence_in(Dashboards::Schema.types.keys) || "tile"
       attrs = { "type" => type, "label" => p[:label].presence, "span" => span_param }
       attrs.merge!(Dashboards::Widgets[type]&.attrs(p, @site) || {}) # o plugin do tipo diz as props
+      if Dashboards::Widgets[type]&.gestures? # ondaB2: toque, segurar e duplo toque
+        attrs.merge!(Dashboards::Actions.from_form(params.fetch(:gestures, {}).permit(Dashboards::Actions::GESTURES.keys.index_with { Dashboards::Actions::FORM }).to_h))
+      end
       roles = Array(p[:roles]).compact_blank
       screens = Array(p[:screens]).compact_blank & Dashboards::Schema::SCREENS
       visible = { "role" => (roles if roles.any? && roles.size < SiteMembership::ROLES.size),

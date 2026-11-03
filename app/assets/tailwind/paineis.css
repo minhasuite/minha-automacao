@@ -1,0 +1,53 @@
+/* Painéis ondaB2 (paridade HA, grupo 4): recursos do tile (dw-feat*), gestos,
+   cards novos (termostato, botão, agenda, lista, diário, imagem, iframe,
+   relógio, planta, pilha), tipos de visão e temas do usuário. Só tokens da
+   Lista Clara; claro e escuro pelas mesmas variáveis. */
+@layer components {
+  /* ---- Recursos do tile ------------------------------------------------ */
+  .dw-feats { display: grid; gap: .7rem; flex-basis: 100%; width: 100%; margin-top: .85rem; padding-top: .8rem;
+              border-top: 1px dashed color-mix(in srgb, var(--line) 85%, transparent); }
+  .dw-feat { display: grid; gap: .45rem; min-width: 0; }
+  .dw-feat form { margin: 0; flex-basis: auto; }
+  .dw-feat-row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+  .dw-feat-label { display: inline-flex; align-items: center; gap: .4rem; font-size: .78rem; font-weight: 700; color: var(--ink-2); min-width: 0; }
+  .dw-feat-label svg { color: var(--muted); flex: none; }
+  .dw-feat-value { font-size: .82rem; font-weight: 800; color: var(--ink); white-space: nowrap; }
+  .dw-chips { display: flex; gap: .4rem; overflow-x: auto; scrollbar-width: none; padding: .1rem; margin: -.1rem; }
+  .dw-chips::-webkit-scrollbar { display: none; }
+  .dw-chip { display: inline-flex; align-items: center; gap: .35rem; flex: none; height: 2.1rem; padding: 0 .85rem; border-radius: 999px; cursor: pointer;
+             border: 1px solid var(--line); background: var(--field); color: var(--ink-2); font: inherit; font-size: .8rem; font-weight: 700;
+             transition: background .2s ease, color .2s ease, transform .12s ease, box-shadow .2s ease; }
+  .dw-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .dw-chip:active { transform: scale(.96); }
+  .dw-chip[aria-pressed="true"], .dw-chip[aria-current="true"] { background: var(--grad); color: #fff; border-color: transparent; box-shadow: 0 8px 18px -10px var(--accent); }
+  .dw-amber .dw-chip[aria-pressed="true"] { background: var(--amber-grad); box-shadow: 0 8px 18px -10px #f59e0b; }
+  .dw-chip[aria-disabled="true"] { cursor: default; opacity: .7; }
+  .dw-chip-round { width: 2.1rem; padding: 0; justify-content: center; }
+  .dw-swatch { width: 1.15rem; height: 1.15rem; border-radius: 999px; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15); }
+  .dw-stepper { display: inline-flex; align-items: center; gap: .25rem; padding: .2rem; border-radius: 999px; background: var(--field); border: 1px solid var(--line); }
+  .dw-step { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 999px; border: 0; cursor: pointer; background: var(--surface);
+             color: var(--ink); box-shadow: var(--shadow-card); transition: transform .12s ease, color .2s ease; }
+  .dw-step:hover { color: var(--accent); }
+  .dw-step:active { transform: scale(.9); }
+  .dw-step-value { min-width: 4.2rem; text-align: center; font-weight: 800; font-size: .95rem; color: var(--ink); }
+  .dw-feat-bar { position: relative; height: .55rem; border-radius: 999px; background: var(--field); overflow: hidden; }
+  .dw-feat-bar span { position: absolute; inset: 0 auto 0 0; width: calc(var(--r, 0) * 100%); border-radius: inherit; background: var(--grad); transition: width .5s ease; }
+  .dw-range-temp { accent-color: #fff; height: .6rem; border-radius: 999px; appearance: none; -webkit-appearance: none;
+                   background: linear-gradient(90deg, #ff9f43, #ffd9a8 45%, #f4f7ff 70%, #9cc2ff); }
+  .dw-range-temp::-webkit-slider-thumb { -webkit-appearance: none; width: 1.3rem; height: 1.3rem; border-radius: 999px; background: #fff; box-shadow: 0 1px 6px rgba(0, 0, 0, .35); }
+  .dw-range-temp::-moz-range-thumb { width: 1.3rem; height: 1.3rem; border-radius: 999px; background: #fff; border: 0; box-shadow: 0 1px 6px rgba(0, 0, 0, .35); }
+  .dw-spark { width: 100%; height: 2.4rem; overflow: visible; }
+  .dw-spark-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .dw-spark-fill { fill: color-mix(in srgb, var(--accent) 14%, transparent); }
+
+  /* ---- Gestos ---------------------------------------------------------- */
+  .dw-tappable { cursor: pointer; }
+  .dw-tappable > .dw-card, .dw-tappable.dw-card { transition: transform .15s ease, box-shadow .25s ease; }
+  .dw-tappable:hover > .dw-card { box-shadow: var(--shadow-hover); }
+  .dw-holding > .dw-card, .dw-holding.dw-card { transform: scale(.97); box-shadow: 0 0 0 3px var(--ring); }
+  .dw-act [data-act] { display: none; }
+  .dw-wf-more > summary { cursor: pointer; list-style: none; }
+  .dw-wf-more > summary::before { content: "▸ "; color: var(--muted); }
+  .dw-wf-more[open] > summary::before { content: "▾ "; }
+  @media (prefers-reduced-motion: reduce) { .dw-holding > .dw-card, .dw-holding.dw-card, .dw-chip:active, .dw-step:active { transform: none; } }
+}

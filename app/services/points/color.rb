@@ -38,7 +38,10 @@ module Points
 
     # Valor do comando → valor guardado (levanta Command::Error).
     def normalize(point, value)
-      v = value.is_a?(String) ? { "rgb" => hex(value) } : value.to_h.stringify_keys
+      # "4000" ou "4000K" (slider de temperatura de cor da web, ondaB2) = kelvin.
+      v = if value.is_a?(String) then value.strip.match?(/\A\d{3,5}\s?k?\z/i) ? { "kelvin" => value.to_i } : { "rgb" => hex(value) }
+      else value.to_h.stringify_keys
+      end
       c = if v["kelvin"] || v["mireds"]
         k = v["kelvin"] ? num(v["kelvin"]) : 1_000_000 / num(v["mireds"]).then { |m| m.positive? ? m : raise(error("mireds precisa ser positivo.")) }
         { "mode" => "temp", "kelvin" => k.round.clamp(KELVIN) }

@@ -1,0 +1,5 @@
+<%# locals: (f:, p:, w:, dashboard:, live:) -%>
+<div class="dw-feat">
+  <div class="dw-feat-row"><span class="dw-feat-label"><%= icon(f["icon"], "size-4") %><%= f["label"] %></span><span class="dw-feat-value num"><%= p["text"] %></span></div>
+  <div class="dw-feat-bar" role="meter" aria-valuemin="<%= f['min'] %>" aria-valuemax="<%= f['max'] %>" aria-valuenow="<%= f['value'] %>" aria-label="<%= f["label"] %>"><span style="--r: <%= f['ratio'] || 0 %>"></span></div>
+</div>

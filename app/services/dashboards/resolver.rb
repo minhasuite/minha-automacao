@@ -76,7 +76,9 @@ module Dashboards
       return if w.dig("visible_if", "role") && !(role == "owner" || w.dig("visible_if", "role").include?(role))
 
       data, deps = data_for(w)
-      w.merge("visible" => visible?(w), "data" => data, "deps" => deps.map(&:id).uniq)
+      gestures = Actions.resolve(self, w, [ w["bind"] ].compact.filter_map { |ref| point(ref) })
+      deps += gestures.values.filter_map { |g| point(g["point_id"]) }
+      w.merge("visible" => visible?(w), "data" => data, "deps" => deps.map(&:id).uniq).merge(gestures.any? ? { "gestures" => gestures } : {})
     end
 
     # [data, pontos de que o widget depende (para o tempo real)]: o plugin do

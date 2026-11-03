@@ -10,7 +10,6 @@ module Dashboards
 
     SCREENS = %w[mobile tablet desktop].freeze
     TAPS = %w[toggle more_info navigate none].freeze
-    FEATURES = %w[toggle select slider].freeze
     AGGREGATES = %w[count sum avg min max last].freeze
     RANGES = %w[24h 7d 30d].freeze
     COLORS = %w[accent amber green red blue].freeze
@@ -89,7 +88,8 @@ module Dashboards
       visible_if(w["visible_if"], where, e)
       query(w["query"], where, e) if w.key?("query")
       e << msg(:bad_tap, where: where) if w.key?("tap") && !TAPS.include?(w["tap"])
-      e << msg(:bad_features, where: where) if w.key?("features") && !(w["features"].is_a?(Array) && (w["features"] - FEATURES).empty?)
+      TileFeatures.errors(w["features"]).each { |m| e << "#{where}: #{m}" } if w.key?("features")
+      Actions.errors(w).each { |m| e << "#{where}: #{m}" }
       e << msg(:bad_aggregate, where: where) if w.key?("aggregate") && !AGGREGATES.include?(w["aggregate"])
       e << msg(:bad_range, where: where) if w.key?("range") && !RANGES.include?(w["range"])
       e << msg(:bad_color, where: where) if w.key?("color") && !COLORS.include?(w["color"])

@@ -3,3 +3,13 @@
   <%= select_tag "widget[color]", options_for_select(%w[accent amber green red blue].index_by { |k| t("dashboards.wf.colors.#{k}") }, w["color"]), class: "ss-input", id: "co-#{uid}" %></div>
 <div data-for="<%= types %>"><label class="ss-label" for="tp-<%= uid %>"><%= t("dashboards.wf.tap") %></label>
   <%= select_tag "widget[tap]", options_for_select({ t("dashboards.wf.taps.toggle") => "toggle", t("dashboards.wf.taps.more_info") => "more_info" }, w["tap"]), class: "ss-input", id: "tp-#{uid}" %></div>
+<%# ondaB2 (B9): recursos do tile (Dashboards::TileFeatures); o que não acha alvo no aparelho do ponto não aparece. %>
+<% chosen = Dashboards::TileFeatures.entries(w["features"]).map(&:first) %>
+<details class="sm:col-span-2 dw-wf-more" data-for="<%= types %>" <%= "open" if chosen.any? %>>
+  <summary class="ss-label"><%= t("dashboards.feat.title") %> <span class="font-normal"><%= t("dashboards.feat.hint", max: Dashboards::TileFeatures::MAX) %></span></summary>
+  <div class="mt-2 grid gap-2 sm:grid-cols-3">
+    <% Dashboards::TileFeatures.plugins.each do |f| %>
+      <label class="ss-check"><%= check_box_tag "widget[features][]", f.key, chosen.include?(f.key), id: "ft-#{f.key}-#{uid}" %><%= icon(f.icon, "size-4") %><%= f.label %></label>
+    <% end %>
+  </div>
+</details>

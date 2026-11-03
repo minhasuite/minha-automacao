@@ -1,0 +1,17 @@
+<%# locals: (f:, p:, w:, dashboard:, live:) -%>
+<% can = p["can_command"] && p["quality"] == "good" %>
+<div class="dw-feat">
+  <span class="sr-only"><%= f["label"] %></span>
+  <div class="dw-chips" role="group" aria-label="<%= f["label"] %>">
+    <% Array(f["buttons"]).each do |b| %>
+      <% label = b["label"].to_s %>
+      <% inner = capture do %><% if b["swatch"] %><span class="dw-swatch" style="--sw: <%= b['swatch'] if b['swatch'].to_s.match?(/\A#\h{6}\z/) %>"></span><% elsif b["icon"] %><%= icon(b["icon"], "size-4") %><% end %><span class="<%= 'sr-only' if b['swatch'] %>"><%= label %></span><% end %>
+      <% if can %>
+        <%= dw_command_button(p, b["command"], value: b["value"], w: w, dashboard: dashboard, live: live, class: "dw-chip #{'dw-chip-round' if b['swatch']}", form_class: "contents",
+                              "aria-pressed": (b["active"] ? "true" : nil), title: label) do %><%= inner %><% end %>
+      <% else %>
+        <span class="dw-chip" aria-disabled="true"><%= inner %></span>
+      <% end %>
+    <% end %>
+  </div>
+</div>

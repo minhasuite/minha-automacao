@@ -11,16 +11,25 @@
   <% toggle = w["tap"] != "more_info" && p["can_command"] && Array(p["commands"]).include?("toggle") %>
   <% press = p["can_command"] && p["capability"].in?(%w[command gate script]) %>
   <% press_cmd = { "gate" => "pulse", "script" => "run" }.fetch(p["capability"], "press") %>
-  <div class="relative h-full">
+  <%# ondaB2 (B9): gestos (toque/segurar/duplo toque) e recursos do tile; com recursos, os controles próprios saem. %>
+  <% gattrs, ghidden = dw_gestures(w, points, dashboard: dashboard, live: live) %>
+  <% feats = Array(w.dig("data", "features")).select { |f| points[f["point_id"]] } %>
+  <% builtin = feats.empty? && w["tap"] != "more_info" %>
+  <% name_tag = w.dig("gestures", "tap") ? :span : :a %>
+  <% name_attrs = name_tag == :a ? { href: point_path(p["id"]), data: { turbo_frame: "_top" } } : {} %>
+  <% feats_html = feats.any? ? tag.div(safe_join(feats.map { |f| render(dw_feature_partial(f), f: f, p: points[f["point_id"]], w: w, dashboard: dashboard, live: live) }), class: "dw-feats", data: { no_gesture: true }) : "" %>
+  <div class="relative h-full" <%= tag.attributes(data: gattrs) %>>
+    <%= ghidden %>
     <% if toggle %>
       <%# Liga/desliga (ponto comum ou helper, F8f): o switch fica no próprio tile, como na lista de helpers; o nome abre os detalhes. %>
-      <div class="<%= css %> items-center">
+      <div class="<%= css %> items-center flex-wrap">
         <%= dw_tile_ico(w, p, glow: dw_glow(points[w.dig("data", "color_id")])) %>
-        <%= link_to point_path(p["id"]), class: "min-w-0 flex-1 no-underline", data: { turbo_frame: "_top" } do %>
+        <%= content_tag name_tag, class: "min-w-0 flex-1 no-underline", **name_attrs do %>
           <span class="dw-name"><%= dw_label(w, p) %></span><span class="dw-state" title="<%= p["status_note"] %>"><%= state_line %></span>
         <% end %>
         <%= dw_command_button(p, "toggle", w: w, dashboard: dashboard, live: live, class: "ss-switch", form_class: "contents", "aria-pressed": p["on"].to_s,
                               "aria-label": t(p['on'] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: dw_label(w, p)), title: (p["on"] ? t("dashboards.w.turn_off") : t("dashboards.w.turn_on"))) do %><% end %>
+        <%= feats_html %>
       </div>
     <% elsif press %>
       <%= dw_command_button(p, press_cmd, w: w, dashboard: dashboard, live: live, class: "#{css} dw-press", form_class: "h-full", "aria-label": t(p['capability'] == 'script' ? "dashboards.w.run_x" : "dashboards.w.press_x", name: dw_label(w, p))) do %>
@@ -31,22 +40,22 @@
     <% else %>
       <div class="<%= css %> flex-wrap">
         <%= dw_tile_ico(w, p, glow: dw_glow(points[w.dig("data", "color_id")])) %>
-        <%= link_to point_path(p["id"]), class: "min-w-0 flex-1 no-underline", data: { turbo_frame: "_top" } do %>
+        <%= content_tag name_tag, class: "min-w-0 flex-1 no-underline", **name_attrs do %>
           <span class="dw-name"><%= dw_label(w, p) %></span>
           <span class="dw-state <%= 'dw-big num' if p['value'].is_a?(Numeric) && !off_line %>" title="<%= p["status_note"] %>"><%= state %></span>
           <% if w.dig("data", "context").present? %><span class="dw-state truncate"><%= w.dig("data", "context") %></span><% end %>
         <% end %>
-        <% if p["can_command"] && !off_line && p["capability"].in?(%w[dimmer setpoint]) && p["mode"] != "box" && w["tap"] != "more_info" %>
+        <% if p["can_command"] && !off_line && p["capability"].in?(%w[dimmer setpoint]) && p["mode"] != "box" && builtin %>
           <%= dw_command_form(p, "set", w: w, dashboard: dashboard, live: live) do %>
             <label class="sr-only" for="r_<%= w['id'] %>"><%= t("dashboards.w.adjust_x", name: dw_label(w, p)) %></label>
             <input type="range" id="r_<%= w['id'] %>" name="value" class="dw-range" data-autosubmit min="<%= p['min'] || 0 %>" max="<%= p['max'] || 100 %>" step="<%= p['step'] || 1 %>" value="<%= p['value'] %>">
           <% end %>
-        <% elsif p["can_command"] && !off_line && p["capability"] == "enum" && w["tap"] != "more_info" %>
+        <% elsif p["can_command"] && !off_line && p["capability"] == "enum" && builtin %>
           <%= dw_command_form(p, "select", w: w, dashboard: dashboard, live: live) do %>
             <label class="sr-only" for="s_<%= w['id'] %>"><%= t("dashboards.w.choose_x", name: dw_label(w, p)) %></label>
             <%= select_tag :value, options_for_select(Array(p["options"]), p["value"]), id: "s_#{w['id']}", class: "ss-input", data: { autosubmit: true } %>
           <% end %>
-        <% elsif p["can_command"] && !off_line && p["commands"].include?("set") && p["actions"].blank? && w["tap"] != "more_info" %>
+        <% elsif p["can_command"] && !off_line && p["commands"].include?("set") && p["actions"].blank? && builtin %>
           <%= dw_command_form(p, "set", w: w, dashboard: dashboard, live: live) do %>
             <div class="flex gap-2">
               <label class="sr-only" for="i_<%= w['id'] %>"><%= t("dashboards.w.new_value_x", name: dw_label(w, p)) %></label>
@@ -56,7 +65,7 @@
             </div>
           <% end %>
         <% end %>
-        <% if p["can_command"] && !off_line && p["actions"].present? && w["tap"] != "more_info" %>
+        <% if p["can_command"] && !off_line && p["actions"].present? && builtin %>
           <div class="mt-3 flex w-full flex-wrap gap-2" role="group" aria-label="<%= t("dashboards.w.actions_x", name: dw_label(w, p)) %>">
             <% p["actions"].each do |c| %>
               <% ico, label = PointsHelper::ACTION_BUTTONS.fetch(c, [ "lightning-bolt", c ]) %>
@@ -64,6 +73,7 @@
             <% end %>
           </div>
         <% end %>
+        <%= feats_html %>
       </div>
     <% end %>
   </div>

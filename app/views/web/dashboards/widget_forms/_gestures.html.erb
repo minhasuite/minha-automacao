@@ -1,0 +1,27 @@
+<%# locals: (w:, uid:, types:, point_options:, **) -%>
+<%# ondaB2 (B9): toque, segurar e duplo toque (Dashboards::Actions); os campos de cada ação aparecem quando ela está escolhida (sem JS). %>
+<% actions = Dashboards::Actions.plugins %>
+<style><%= actions.flat_map { |a| a.fields.map { |fd| ".dw-act:has(option[value=#{a.key}]:checked) [data-act~=#{fd}]" } }.join(", ") %> { display: block; }</style>
+<fieldset class="sm:col-span-2" data-for="<%= types %>">
+  <legend class="ss-label"><%= t("dashboards.act.title") %> <span class="font-normal"><%= t("dashboards.act.hint") %></span></legend>
+  <div class="grid gap-3 lg:grid-cols-3">
+    <% Dashboards::Actions::GESTURES.each do |g, field| %>
+      <% a = w[field].is_a?(Hash) ? w[field] : {} %>
+      <div class="dw-act ss-card p-3 grid gap-2 content-start">
+        <label class="ss-label" for="ga-<%= g %>-<%= uid %>"><%= t("dashboards.act.gestures.#{g}") %></label>
+        <%= select_tag "gestures[#{g}][action]", options_for_select([ [ t("dashboards.act.default"), "" ] ] + actions.map { |x| [ x.label, x.key ] }, a["action"]), class: "ss-input", id: "ga-#{g}-#{uid}" %>
+        <div data-act="point"><label class="text-xs text-muted" for="gp-<%= g %>-<%= uid %>"><%= t("dashboards.wf.point") %></label>
+          <%= select_tag "gestures[#{g}][point]", grouped_options_for_select(point_options, a["point"]), include_blank: t("dashboards.act.same_point"), class: "ss-input", id: "gp-#{g}-#{uid}" %></div>
+        <div data-act="command"><label class="text-xs text-muted" for="gc-<%= g %>-<%= uid %>"><%= t("dashboards.act.command") %></label>
+          <%= text_field_tag "gestures[#{g}][command]", a["command"], class: "ss-input", id: "gc-#{g}-#{uid}", placeholder: "toggle, run, set", maxlength: 40 %></div>
+        <div data-act="value"><label class="text-xs text-muted" for="gv-<%= g %>-<%= uid %>"><%= t("dashboards.act.value") %></label>
+          <%= text_field_tag "gestures[#{g}][value]", a["value"], class: "ss-input", id: "gv-#{g}-#{uid}", maxlength: 120 %></div>
+        <div data-act="navigation_path"><label class="text-xs text-muted" for="gn-<%= g %>-<%= uid %>"><%= t("dashboards.act.navigation_path") %></label>
+          <%= text_field_tag "gestures[#{g}][navigation_path]", a["navigation_path"], class: "ss-input", id: "gn-#{g}-#{uid}", placeholder: t("dashboards.act.path_hint"), maxlength: 120 %></div>
+        <div data-act="url"><label class="text-xs text-muted" for="gu-<%= g %>-<%= uid %>"><%= t("dashboards.act.url") %></label>
+          <%= url_field_tag "gestures[#{g}][url]", a["url"], class: "ss-input", id: "gu-#{g}-#{uid}", placeholder: "https://", maxlength: 500 %></div>
+        <label class="ss-check text-xs"><%= check_box_tag "gestures[#{g}][confirmation]", "1", a["confirmation"].present?, id: "gk-#{g}-#{uid}" %><%= t("dashboards.act.confirm") %></label>
+      </div>
+    <% end %>
+  </div>
+</fieldset>

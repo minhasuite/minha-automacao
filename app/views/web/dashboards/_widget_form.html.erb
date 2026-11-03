@@ -21,6 +21,9 @@
   <% plugins.flat_map { |pl| Array(pl.form).map { |form| [ form, pl.type ] } }.group_by(&:first).each do |form, pairs| %>
     <%= render form, w: w, uid: uid, types: pairs.map(&:last).join(" "), point_options: point_options, areas: areas, scenes: scenes %>
   <% end %>
+  <% if (gtypes = plugins.select(&:gestures?).map(&:type)).any? %>
+    <%= render "web/dashboards/widget_forms/gestures", w: w, uid: uid, types: gtypes.join(" "), point_options: point_options %>
+  <% end %>
 
   <fieldset class="sm:col-span-2">
     <legend class="ss-label"><%= t("dashboards.wf.width") %></legend>
