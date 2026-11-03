@@ -12,7 +12,7 @@ module Integrations
           es: { title: "Netatmo", description: "Estación meteorológica Netatmo (temperatura, humedad, CO₂, ruido, presión, lluvia y viento) y termostatos y válvulas por habitación, con la temperatura objetivo.",
                 points: { setpoint: "Temperatura objetivo" }, note: "Crea la app en dev.netatmo.com → My apps e indica su Client ID y secret." }
     oauth authorize: "https://api.netatmo.com/oauth2/authorize", token: "https://api.netatmo.com/oauth2/token",
-          scope: "read_station read_thermostat write_thermostat"
+          scope: "read_station read_thermostat write_thermostat read_camera access_camera read_presence access_presence read_doorbell access_doorbell"
     API = "https://api.netatmo.com/api".freeze
 
     # Medida do dashboard_data → [campo, opções].
@@ -59,11 +59,35 @@ module Integrations
                 points: [ point("temperature", unit: "°C", device_class: "temperature", state_class: "measurement"),
                           point("setpoint", "setpoint", unit: "°C", min: 7, max: 30, step: 0.5) ])
         end
-        weather + heat
+        weather + heat + cameras(integration).map do |c|
+          entry(id: "netatmo:cam:#{c['id']}", name: c["name"], model: c["type"], address: { "home" => c["home"], "camera" => c["id"] }, poll_s: 300,
+                points: [ point("video", "stream", name: I18n.t("resto.cameras.video"), history: "none", writable: false, address: { "on_demand" => true }), point("monitoring", "text", name: I18n.t("resto.cameras.monitoring"), writable: false) ])
+        end
+      end
+
+      # resto: câmeras (NACamera, NOC, NDB) → [{id, name, type, home, vpn_url, monitoring}].
+      CAMERAS = %w[NACamera NOC NDB NSD].freeze
+
+      def cameras(integration)
+        Array(api(integration, :get, "#{API}/homesdata").dig("body", "homes")).flat_map do |h|
+          mods = Array(h["modules"]).select { |m| CAMERAS.include?(m["type"]) }
+          next [] if mods.empty?
+
+          status = Array(api(integration, :get, "#{API}/homestatus?home_id=#{CGI.escape(h['id'].to_s)}").dig("body", "home", "modules")).index_by { |m| m["id"] }
+          mods.map { |m| { "id" => m["id"], "name" => m["name"], "type" => m["type"], "home" => h["id"] }.merge(status[m["id"]].to_h.slice("vpn_url", "monitoring", "is_local")) }
+        end
+      end
+
+      def stream_url(point)
+        c = cameras(point.device.integration).find { |x| x["id"] == point.device.address["camera"] } or return nil
+        "ffmpeg:#{c['vpn_url']}/live/files/high/index.m3u8#video=copy" if c["vpn_url"].present?
       end
 
       def read(device)
         i = device.integration
+        if (cam = device.address["camera"])
+          return { "monitoring" => cameras(i).find { |x| x["id"] == cam }&.dig("monitoring") }
+        end
         if (room = device.address["room"])
           r = rooms(i).find { |x| x["id"] == room }.to_h
           return { "temperature" => r["temperature"], "setpoint" => r["setpoint"] }

@@ -1,0 +1,15 @@
+pt-BR:
+  resto:
+    cameras:
+      video: "Vídeo"
+      monitoring: "Vigilância"
+en:
+  resto:
+    cameras:
+      video: "Video"
+      monitoring: "Monitoring"
+es:
+  resto:
+    cameras:
+      video: "Video"
+      monitoring: "Vigilancia"

@@ -224,4 +224,41 @@ RSpec.describe "Paridade: resto" do
       sock&.close
     end
   end
+
+  describe "câmeras de nuvem: Ring, Nest e Netatmo (grupo 9, #46, #68, #75)" do
+    def cloud(driver, secrets = {}, settings = {})
+      site.integrations.create!(driver: driver, name: "Teste #{driver}", settings: settings, credentials: secrets.to_json)
+    end
+
+    def stream(plugin, integration, address)
+      d = create(:device, site: site, driver: plugin.driver, name: "Teste Câmera", integration: integration, address: address)
+      create(:point, site: site, device: d, name: "Vídeo", key: "teste.video_#{SecureRandom.hex(3)}", capability: "stream", address: { "on_demand" => true, "field" => "video" })
+    end
+
+    before { allow(Integrations::RingPlugin).to receive(:access_token).and_return("x") }
+
+    it "cada uma vira um ponto de vídeo sob demanda que o go2rtc abre pela fonte certa" do
+      ring = stream(Integrations::RingPlugin, cloud("ring", "refresh_token" => "rt/1"), { "id" => "987" })
+      expect(Drivers::Go2rtc.source(ring)).to eq("ring:?refresh_token=rt%2F1&device_id=987")
+
+      allow(Integrations::NestPlugin).to receive(:access_token).and_return("x")
+      nest_i = cloud("nest", { "refresh_token" => "nrt", "client_secret" => "cs" }, { "client_id" => "cid", "project_id" => "proj" })
+      cam = Integrations::NestPlugin.camera_entry("name" => "enterprises/proj/devices/DEV1", "type" => "sdm.devices.types.DOORBELL",
+                                                  "traits" => { "sdm.devices.traits.Info" => { "customName" => "Teste Porta" } })
+      expect(cam).to include("name" => "Teste Porta", "model" => "Doorbell")
+      expect(cam["points"].sole).to include("capability" => "stream", "address" => { "on_demand" => true, "field" => "video" })
+      nest = stream(Integrations::NestPlugin, nest_i, { "name" => "enterprises/proj/devices/DEV1", "camera" => true })
+      expect(Drivers::Go2rtc.source(nest)).to eq("nest:?client_id=cid&client_secret=cs&refresh_token=nrt&project_id=proj&device_id=DEV1")
+
+      net_i = cloud("netatmo")
+      allow(Integrations::NetatmoPlugin).to receive(:api) do |_i, _m, url|
+        url.include?("homesdata") ? { "body" => { "homes" => [ { "id" => "h1", "modules" => [ { "id" => "70:ee:50", "type" => "NOC", "name" => "Teste Quintal" } ] } ] } }
+                                  : { "body" => { "home" => { "modules" => [ { "id" => "70:ee:50", "vpn_url" => "https://vpn.netatmo.net/abc", "monitoring" => "on" } ] } } }
+      end
+      expect(Integrations::NetatmoPlugin.cameras(net_i).sole).to include("name" => "Teste Quintal", "monitoring" => "on")
+      net = stream(Integrations::NetatmoPlugin, net_i, { "home" => "h1", "camera" => "70:ee:50" })
+      expect(Drivers::Go2rtc.source(net)).to eq("ffmpeg:https://vpn.netatmo.net/abc/live/files/high/index.m3u8#video=copy")
+    end
+  end
 end
+

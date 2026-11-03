@@ -29,6 +29,7 @@ module Integrations
 
       def entries(integration)
         devices(integration).filter_map do |d|
+          next camera_entry(d) if d["type"].to_s.end_with?("CAMERA", "DOORBELL", "DISPLAY")
           next unless d["type"].to_s.end_with?("THERMOSTAT")
 
           tr = d["traits"].to_h
@@ -43,7 +44,26 @@ module Integrations
         end
       end
 
+      # resto: câmera/campainha Nest → ponto de vídeo sob demanda (o go2rtc abre pela SDM).
+      def camera_entry(d)
+        tr = d["traits"].to_h
+        name = tr.dig("#{T}Info", "customName").presence || Array(d["parentRelations"]).first&.dig("displayName") || "Nest"
+        entry(id: "nest:#{d['name'].to_s.split('/').last}", name: name, manufacturer: "Google", model: d["type"].to_s.split(".").last.to_s.capitalize,
+              room: Array(d["parentRelations"]).first&.dig("displayName"), address: { "name" => d["name"], "camera" => true }, poll_s: 3600,
+              points: [ point("video", "stream", name: I18n.t("resto.cameras.video"), history: "none", writable: false, address: { "on_demand" => true }) ])
+      end
+
+      def stream_url(point)
+        i = point.device.integration
+        access_token(i)
+        q = { client_id: conf(i, :client_id), client_secret: conf(i, :client_secret), refresh_token: i.reload.secrets["refresh_token"],
+              project_id: conf(i, :project_id), device_id: point.device.address["name"].to_s.split("/").last }
+        "nest:?#{URI.encode_www_form(q)}"
+      end
+
       def read(device)
+        return {} if device.address["camera"]
+
         tr = api(device.integration, :get, "#{API}/#{device.address['name']}")["traits"].to_h
         sp = tr["#{T}ThermostatTemperatureSetpoint"].to_h
         { "temperature" => tr.dig("#{T}Temperature", "ambientTemperatureCelsius")&.round(1), "humidity" => tr.dig("#{T}Humidity", "ambientHumidityPercent"),

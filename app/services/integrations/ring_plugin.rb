@@ -81,7 +81,8 @@ module Integrations
         %w[doorbots authorized_doorbots stickup_cams].flat_map { |k| Array(devs[k]).map { |d| d.merge("kind_of" => k) } }.map do |d|
           pts = [ (point("battery", unit: "%", device_class: "battery") if d["battery_life"]), point("motion", "event", icon: "eye"),
                   (point("ding", "event", icon: "bell") if d["kind_of"] != "stickup_cams"),
-                  (point("floodlight", "onoff", icon: "light-bulb") if d["led_status"]) ]
+                  (point("floodlight", "onoff", icon: "light-bulb") if d["led_status"]),
+                  point("video", "stream", name: I18n.t("resto.cameras.video"), history: "none", writable: false, address: { "on_demand" => true }) ] # resto: vídeo ao vivo pelo go2rtc
           entry(id: "ring:#{d['id']}", name: d["description"].presence || "Ring", manufacturer: "Ring", model: d["kind"], address: { "id" => d["id"].to_s },
                 poll_s: 60, points: pts)
         end
@@ -99,6 +100,13 @@ module Integrations
           out[last["kind"] == "ding" ? "ding" : "motion"] = { "at" => last["created_at"], "answered" => last["answered"] }
         end
         out
+      end
+
+      # resto: vídeo e quadro pelo go2rtc (fonte `ring:` com o refresh token da conta, renovado aqui).
+      def stream_url(point)
+        i = point.device.integration
+        access_token(i)
+        "ring:?refresh_token=#{CGI.escape(i.reload.secrets['refresh_token'].to_s)}&device_id=#{CGI.escape(point.device.address['id'].to_s)}"
       end
 
       def write(point, value) = api(point.device.integration, :put, "doorbots/#{point.device.address['id']}/floodlight_light_#{value ? 'on' : 'off'}")

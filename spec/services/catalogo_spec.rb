@@ -573,8 +573,8 @@ RSpec.describe "Catálogo de integrações (grupo 9)" do
             .with(body: { command: "sdm.devices.commands.ThermostatTemperatureSetpoint.SetCool", params: { coolCelsius: 22.5 } }).to_return(json({}))
       expect(Integrations::NestPlugin.authorize_url(Integration.new(settings: { "project_id" => "proj-teste" }))).to eq("https://nestservices.google.com/partnerconnections/proj-teste/auth")
       i = oauth_add(Integrations::NestPlugin, project_id: "proj-teste")
-      expect(i.devices.map(&:name)).to eq([ "Teste Termostato" ])
-      p = pts(i)
+      expect(i.devices.map(&:name)).to contain_exactly("Teste Termostato", "Nest") # resto: a câmera também entra (vídeo pelo go2rtc)
+      p = i.devices.find_by!(name: "Teste Termostato").points.reload.index_by { |x| x.address["field"] }
       expect([ p["temperature"].value, p["humidity"].value, p["mode"].value, p["cool"].value, p["mode"].options ]).to eq([ 23.4, 48, "COOL", 24.0, %w[COOL OFF] ])
       run(p["cool"], "set", 22.5)
       expect(set).to have_been_requested
