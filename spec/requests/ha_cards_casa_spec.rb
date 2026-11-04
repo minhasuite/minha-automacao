@@ -180,6 +180,19 @@ RSpec.describe "HA: cards da casa" do
     end
   end
 
+  it "data e hora em ISO aparece legível (último backup, servidor ligado desde)" do
+    within(tenant) do
+      dev = create(:device, site: site, name: "Teste Servidor", driver: "virtual")
+      backup = create(:point, site: site, device: dev, name: "Último backup", key: "srv_backup", capability: "datetime", value: "2026-11-03T16:11:21-03:00")
+      dia = create(:point, site: site, device: dev, name: "Dia", key: "srv_dia", capability: "datetime", value: "2026-11-03")
+      livre = create(:point, site: site, device: dev, name: "Livre", key: "srv_livre", capability: "datetime", value: "amanhã")
+      I18n.with_locale(:"pt-BR") do
+        h = ApplicationController.helpers
+        expect([ backup, dia, livre ].map { |p| h.point_value_text(p) }).to eq([ "03 de novembro, 16:11", "03 de novembro de 2026", "amanhã" ])
+      end
+    end
+  end
+
   it "Google Agenda do HA casa com a agenda daqui pelo id (a conta é da pessoa; nada é criado)" do
     within(tenant) do
       integration = site.integrations.create!(driver: "calendar", name: "Google Agenda", settings: { "mode" => "google" })

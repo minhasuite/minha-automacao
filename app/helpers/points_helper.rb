@@ -65,6 +65,17 @@ module PointsHelper
     I18n.t("points.poll.every", time: duration_text(seconds))
   end
 
+  # Data/hora em ISO (o servidor, o robô, o helper Data e hora) → Time/Date para mostrar; nil = texto qualquer.
+  def datetime_of(value)
+    s = value.to_s
+    return Date.iso8601(s) if s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+    return Time.zone.parse(s) if s.match?(/\A\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/)
+
+    nil
+  rescue ArgumentError
+    nil
+  end
+
   def point_value_text(point)
     v = point.value
     if (text = point.helper_type&.value_text(point))
@@ -79,6 +90,8 @@ module PointsHelper
       climate_text(v) # integ2: resumo do ar-condicionado
     elsif v.nil?
       I18n.t("points.value.none")
+    elsif point.capability == "datetime" && (when_at = datetime_of(v))
+      when_at.is_a?(Date) && !when_at.is_a?(DateTime) ? l(when_at, format: :long) : l(when_at, format: :short)
     elsif point.capability == "color" && v.is_a?(Hash)
       v["mode"] == "temp" ? I18n.t("points.value.white", k: v["kelvin"]) : Points::Color.hex_of(v).upcase # Lote 8
     elsif BOOL_TEXT.key?(point.capability)
