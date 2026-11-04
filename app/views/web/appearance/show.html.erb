@@ -51,7 +51,7 @@
             <span class="block text-xs text-muted"><%= [ DashboardTheme::WALLPAPER_LABELS.fetch(th.wall_style, th.wall_style), DashboardTheme::FONT_LABELS.fetch(th.font, th.font), (t("appearance.custom.glass") if th.glass) ].compact.join(" · ") %></span></span>
           <% if current_user.admin? %>
             <%= link_to settings_appearance_path(tema: th.id, anchor: "temas"), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("appearance.custom.edit_x", name: th.name) do %><%= icon("pencil", "size-4") %><% end %>
-            <%= button_to settings_theme_path(th), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("appearance.custom.delete_x", name: th.name), form: { data: { turbo_confirm: t("appearance.custom.delete_confirm", name: th.name) } } do %><%= icon("trash", "size-4") %><% end %>
+            <%= button_to settings_theme_path(th), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("appearance.custom.delete_x", name: th.name), form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("appearance.custom.delete_confirm", name: th.name) } } do %><%= icon("trash", "size-4") %><% end %>
           <% end %>
         </li>
       <% end %>

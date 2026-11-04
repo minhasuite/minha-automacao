@@ -20,10 +20,7 @@
 <% if @tab == "explore" %>
   <%= render "web/packages/catalog", site: @site, catalog: @catalog, entries: @entries, tags: @tags, installed: @installed %>
 <% elsif @packages.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("packages.index.empty") %></p>
-    <p class="mt-1 max-w-md mx-auto"><%= t("packages.index.empty_text") %></p>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("packages.index.empty"), text: t("packages.index.empty_text"), css: "ss-card") %>
 <% else %>
   <ul class="ss-card ss-rows" aria-label="<%= t("packages.index.installed") %>">
     <% @packages.each do |pk| %>

@@ -35,7 +35,7 @@
             <span class="min-w-0 flex-1"><span class="block font-semibold text-ink truncate"><%= tk.device_name %></span>
               <span class="block text-xs text-muted"><%= tk.last_used_at ? t("assist_settings.mcp.used", ago: ago_text(tk.last_used_at)) : t("assist_settings.mcp.never") %></span></span>
             <%= button_to t("assist_settings.mcp.revoke"), site_assist_mcp_token_path(site, tk), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger",
-                          form: { data: { turbo_confirm: t("assist_settings.mcp.confirm_revoke", name: tk.device_name) } } %>
+                          form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("assist_settings.mcp.revoke"), turbo_confirm: t("assist_settings.mcp.confirm_revoke", name: tk.device_name) } } %>
           </li>
         <% end %>
       </ul>

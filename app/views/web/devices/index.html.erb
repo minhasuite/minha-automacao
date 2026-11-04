@@ -12,55 +12,40 @@
 <% end %>
 
 <% if @devices.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= params.values_at(:q, :integracao, :area, :situacao).any?(&:present?) ? t("devices.none_filtered") : t("devices.none") %></p>
-    <p class="mt-1"><%= t("devices.none_hint") %></p>
-    <% if can?(:manage) && params.values_at(:q, :integracao, :area, :situacao).none?(&:present?) %>
-      <div class="mt-4 flex flex-wrap justify-center gap-2">
-        <%= link_to site_integrations_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("link", "size-4") %><%= t("devices.add_integration") %><% end %>
-        <%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("plus", "size-4") %><%= t("devices.add_manual") %><% end %>
-      </div>
-    <% elsif params.values_at(:q, :integracao, :area, :situacao).any?(&:present?) %>
-      <%= link_to t("devices.clear"), site_devices_path(@site), class: "ss-btn ss-btn-ghost mt-3" %>
-    <% end %>
-  </div>
-<% else %>
-  <%= form_with url: bulk_site_devices_path(@site, **params.permit(:integracao, :area, :situacao, :q).to_h.symbolize_keys), method: :post, id: "lote", class: "ss-bulk-scope", data: { controller: "select-all" } do %>
-    <div class="ss-card overflow-x-auto">
-      <table class="ss-table">
-        <thead>
-          <tr>
-            <% if can?(:manage) %><th class="w-8"><input type="checkbox" data-action="select-all#toggle" aria-label="<%= t("devices.check_all") %>"></th><% end %>
-            <th><%= t("devices.name") %></th><th class="hidden md:table-cell"><%= t("devices.maker") %></th><th class="hidden sm:table-cell"><%= t("devices.area") %></th><th class="hidden sm:table-cell"><%= t("devices.integration") %></th><th class="r hidden md:table-cell"><%= t("devices.points") %></th><th><%= t("devices.status") %></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @devices.each do |d| %>
-            <% label, tone, note = device_situation(d) %>
-            <tr>
-              <% if can?(:manage) %><td><input type="checkbox" name="ids[]" value="<%= d.id %>" aria-label="<%= t("devices.check", name: d.name) %>"></td><% end %>
-              <td><div class="flex items-center gap-3 min-w-0">
-                <span class="ss-icon-tile size-9 text-accent max-sm:size-8"><%= icon(device_icon(d)) %></span>
-                <div class="min-w-0"><%= link_to d.name, device_path(d), class: "font-semibold text-ink no-underline hover:text-accent" %><span class="block text-xs text-muted md:hidden"><%= [ d.area&.name, d.manufacturer, d.model ].compact_blank.join(" · ") %></span></div>
-              </div></td>
-              <td class="hidden md:table-cell text-ink-2"><%= [ d.manufacturer, d.model ].compact_blank.join(" · ").presence || d.driver_label %></td>
-              <td class="hidden sm:table-cell"><%= d.area&.name || "—" %></td>
-              <td class="hidden sm:table-cell"><%= d.integration&.name || d.driver_label %></td>
-              <td class="r num hidden md:table-cell"><%= @points.fetch(d.id, 0) %></td>
-              <td><span class="ss-badge ss-badge-dot ss-badge-<%= tone %>" title="<%= note %>"><%= label %></span><% if note && tone != "success" %><span class="block text-xs text-muted mt-1 max-w-48 max-md:hidden"><%= note.truncate(70) %></span><% end %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-    <% if can?(:manage) %>
-      <div class="ss-bulk" role="region" aria-label="<%= t("devices.bulk") %>">
-        <span class="ss-bulk-count"><%= t("devices.checked") %></span>
-        <label for="acao" class="sr-only"><%= t("devices.with_checked") %></label><%= select_tag :acao, options_for_select([ [ t("devices.with_checked_hint"), "" ] ] + Web::DevicesController::BULK.invert.to_a), class: "ss-input", required: true %>
-        <span class="ss-bulk-area contents"><label for="area_id" class="sr-only"><%= t("devices.move_area") %></label><%= select_tag :area_id, options_for_select([ [ t("devices.no_area"), "" ] ] + @areas.map { |a| [ a.name, a.id ] }), class: "ss-input" %></span>
-        <button type="submit" class="ss-btn ss-btn-primary ss-btn-sm" data-turbo-confirm="<%= t("devices.bulk_confirm") %>" data-turbo-confirm-button="<%= t("devices.apply") %>"><%= t("devices.apply") %></button>
-      </div>
+  <% filtered = params.values_at(:q, :integracao, :area, :situacao).any?(&:present?) %>
+  <%= render Ss::EmptyStateComponent.new(variant: (filtered ? :busca : :nada), title: (filtered ? t("devices.none_filtered") : t("devices.none")), text: t("devices.none_hint"), css: "ss-card") do %>
+    <% if filtered %>
+      <%= link_to t("devices.clear"), site_devices_path(@site), class: "ss-btn ss-btn-ghost" %>
+    <% elsif can?(:manage) %>
+      <%= link_to site_integrations_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("link", "size-4") %><%= t("devices.add_integration") %><% end %>
+      <%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("plus", "size-4") %><%= t("devices.add_manual") %><% end %>
     <% end %>
   <% end %>
-  <%= render "web/shared/pagination", pagy: @pagy %>
+<% else %>
+  <%# Tabela da gem: ordena no servidor (?sort=&dir=), marca para as ações em massa (barra da gem) e pagina. -%>
+  <% filters = params.permit(:integracao, :area, :situacao, :q).to_h.symbolize_keys %>
+  <%= render Ss::DataTableComponent.new(rows: @devices, id: "dispositivos", caption: t("devices.title"), sort: @sort, dir: @dir, tools: false,
+                                        selectable: can?(:manage), bulk_url: bulk_site_devices_path(@site, **filters),
+                                        pagination: { page: @pagy.page, pages: @pagy.pages, total: @pagy.count }) do |tb| %>
+    <% tb.column :name, t("devices.name"), sortable: true, hideable: false do |d| %>
+      <%# No celular a linha vira cartão com a caixa de marcar no canto: o nome deixa o espaço dela. %>
+      <div class="flex items-center gap-3 min-w-0 max-sm:pr-7">
+        <span class="ss-icon-tile size-9 text-accent max-sm:size-8"><%= icon(device_icon(d)) %></span>
+        <div class="min-w-0 text-left"><%= link_to d.name, device_path(d), class: "font-semibold text-ink no-underline hover:text-accent" %></div>
+      </div>
+    <% end %>
+    <% tb.column :maker, t("devices.maker") do |d| %><span class="text-ink-2"><%= [ d.manufacturer, d.model ].compact_blank.join(" · ").presence || d.driver_label %></span><% end %>
+    <% tb.column :area, t("devices.area"), sortable: true do |d| %><%= d.area&.name || "—" %><% end %>
+    <% tb.column :integration, t("devices.integration"), sortable: true do |d| %><%= d.integration&.name || d.driver_label %><% end %>
+    <% tb.column :points, t("devices.points"), align: :right do |d| %><span class="num"><%= @points.fetch(d.id, 0) %></span><% end %>
+    <% tb.column :status, t("devices.status") do |d| %>
+      <% label, tone, note = device_situation(d) %>
+      <span class="ss-badge ss-badge-dot ss-badge-<%= tone %>" title="<%= note %>"><%= label %></span><% if note && tone != "success" %><span class="block text-xs text-muted mt-1 max-w-48 max-md:hidden"><%= note.truncate(70) %></span><% end %>
+    <% end %>
+    <% tb.bulk_actions do %>
+      <label for="acao" class="sr-only"><%= t("devices.with_checked") %></label><%= select_tag :acao, options_for_select([ [ t("devices.with_checked_hint"), "" ] ] + Web::DevicesController::BULK.invert.to_a), class: "ss-input", required: true %>
+      <span class="ma-bulk-area contents"><label for="area_id" class="sr-only"><%= t("devices.move_area") %></label><%= select_tag :area_id, options_for_select([ [ t("devices.no_area"), "" ] ] + @areas.map { |a| [ a.name, a.id ] }), class: "ss-input" %></span>
+      <button type="submit" class="ss-btn ss-btn-primary ss-btn-sm" data-turbo-confirm="<%= t("devices.bulk_confirm") %>" data-turbo-confirm-button="<%= t("devices.apply") %>"><%= t("devices.apply") %></button>
+    <% end %>
+  <% end %>
 <% end %>

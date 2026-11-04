@@ -36,5 +36,5 @@
   </div>
   <%= render "web/shared/pagination", pagy: @pagy %>
 <% else %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.notifications.empty") %></p><p class="mt-1"><%= t("automations.notifications.empty_hint") %></p><%= link_to push_subscriptions_path, class: "ss-btn ss-btn-ghost mt-3" do %><%= icon("bell", "size-4") %><%= t("automations.notifications.my_devices") %><% end %></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("automations.notifications.empty"), text: t("automations.notifications.empty_hint"), css: "ss-card") do %><%= link_to push_subscriptions_path, class: "ss-btn ss-btn-ghost" do %><%= icon("bell", "size-4") %><%= t("automations.notifications.my_devices") %><% end %><% end %>
 <% end %>

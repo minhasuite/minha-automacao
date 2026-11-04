@@ -16,5 +16,5 @@
 <% end %>
 <% if index %>
   <%= button_to fields_automation_path(automation), method: :patch, params: { op: "remove", index: index }, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger mt-2",
-                form: { data: { turbo_confirm: t("automations.fields.remove_confirm", label: fd["label"]) } } do %><%= icon("trash", "size-4") %><%= t("automations.fields.remove") %><% end %>
+                form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("automations.fields.remove"), turbo_confirm: t("automations.fields.remove_confirm", label: fd["label"]) } } do %><%= icon("trash", "size-4") %><%= t("automations.fields.remove") %><% end %>
 <% end %>

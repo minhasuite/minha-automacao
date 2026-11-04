@@ -23,7 +23,7 @@
 
 <% if @tab == "resumo" %>
   <% if @logs.empty? %>
-    <div class="ss-card ss-empty"><%= icon("check-circle", "size-8 text-success") %><p class="font-bold text-ink"><%= t("logs.empty") %></p><p class="text-sm text-muted"><%= t("logs.empty_hint") %></p></div>
+    <%= render Ss::EmptyStateComponent.new(title: t("logs.empty"), text: t("logs.empty_hint"), css: "ss-card") %>
   <% else %>
     <ul class="ss-card ss-rows" aria-label="<%= t("logs.tabs.resumo") %>">
       <% @logs.each do |l| %>
@@ -38,11 +38,11 @@
       <% end %>
     </ul>
     <div class="mt-3 flex justify-end">
-      <%= button_to settings_logs_path, method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm: t("logs.clear_confirm"), turbo_confirm_button: t("logs.clear") } } do %><%= icon("trash", "size-4") %><%= t("logs.clear") %><% end %>
+      <%= button_to settings_logs_path, method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("logs.clear_confirm"), turbo_confirm_button: t("logs.clear") } } do %><%= icon("trash", "size-4") %><%= t("logs.clear") %><% end %>
     </div>
   <% end %>
 <% elsif @error %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("logs.raw_unavailable") %></p><p class="text-sm text-muted"><%= @error %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("logs.raw_unavailable"), text: @error, variant: :erro, css: "ss-card") %>
 <% else %>
   <pre class="ss-card ss-card-pad text-xs num overflow-x-auto max-h-[70vh] whitespace-pre-wrap break-all" aria-label="<%= t("logs.tabs.completo") %>"><%= @raw.presence || t("logs.empty") %></pre>
 <% end %>

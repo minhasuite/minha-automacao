@@ -15,17 +15,11 @@ es:
   layout:
     theme: Tema
     language: Idioma
-    change: Cambiar
     skip: Saltar al contenido
-    open_menu: Abrir menú
-    close_menu: Cerrar menú
-    collapse: Contraer menú
-    expand: Expandir menú
     search: Buscar
     back: Volver
-    close: Cerrar
-    menu: Menú
     main_nav: Principal
+    site: Lugar
     values: Valores
     values_toggle: Ocultar o mostrar valores
     logout: Salir
@@ -87,7 +81,6 @@ es:
     label: Bienvenida
   onboarding:
     title: Configuración inicial
-    progress: Progreso de la configuración
     step_of: Paso %{n} de %{total}
     back: Volver
     skip: Ahora no

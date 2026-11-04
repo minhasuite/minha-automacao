@@ -1,21 +1,21 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <% p = points[w["data"]["point_ids"].first] %>
 <% if p.nil? %>
-  <div class="dw-card dw-tile dw-unavailable"><span class="dw-ico"><%= icon("video-camera") %></span><span><span class="dw-name"><%= w["label"].presence || t("dashboards.w.camera_removed") %></span><span class="dw-state"><%= t("dashboards.w.not_found") %></span></span></div>
+  <%= render Ss::DeviceTileComponent.new(name: w["label"].presence || t("dashboards.w.camera_removed"), status: :unavailable, icon: icon("video-camera").to_s,
+                                         unavailable_label: t("dashboards.w.not_found"), css: "h-full") %>
 <% else %>
-  <div class="dw-card dw-camera" data-controller="camera" data-camera-snapshot-value="<%= camera_snapshot_path(p['id']) %>"
-       data-camera-webrtc-value="<%= camera_webrtc_path(p['id']) %>" data-camera-interval-value="<%= w['snapshot_interval'] || 10 %>">
-    <div class="flex items-center gap-2 mb-2">
-      <span class="dw-ico dw-ico-sm"><%= icon("video-camera") %></span>
-      <%= link_to dw_label(w, p), point_path(p["id"]), class: "dw-name flex-1 min-w-0 no-underline", data: { turbo_frame: "_top" } %>
-      <% unless w["live"] == false %>
-        <button type="button" class="dw-camera-live" data-camera-target="liveButton" data-action="camera#toggle" aria-pressed="false"><%= t("dashboards.w.live") %></button>
-      <% end %>
-    </div>
-    <div class="dw-camera-view">
+  <%# Tile de câmera da gem; o quadro (img) e o WebRTC (video) são do controller camera, que troca o data-state. %>
+  <%= render Ss::CameraTileComponent.new(title: dw_label(w, p), state: :loading, age: 0, retry_button: true, url: point_path(p["id"]),
+                                         data: { controller: "camera", camera_snapshot_value: camera_snapshot_path(p["id"]), camera_webrtc_value: camera_webrtc_path(p["id"]),
+                                                 camera_interval_value: w["snapshot_interval"] || 10 }) do |c| %>
+    <% c.with_frame do %>
       <img data-camera-target="img" alt="<%= t("dashboards.w.image_x", name: dw_label(w, p)) %>" hidden>
       <video data-camera-target="video" muted playsinline autoplay hidden aria-label="<%= t("dashboards.w.live_x", name: dw_label(w, p)) %>"></video>
-      <span class="dw-camera-status" data-camera-target="status" role="status"><%= t("dashboards.w.loading") %></span>
-    </div>
-  </div>
+    <% end %>
+    <% unless w["live"] == false %>
+      <% c.with_action do %>
+        <button type="button" data-camera-target="liveButton" data-action="camera#toggle" aria-pressed="false" title="<%= t("dashboards.w.live") %>" aria-label="<%= t("dashboards.w.live_x", name: dw_label(w, p)) %>"><%= icon("status-online", "size-4") %></button>
+      <% end %>
+    <% end %>
+  <% end %>
 <% end %>

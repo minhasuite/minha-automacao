@@ -572,6 +572,10 @@ pt-BR:
         intro_html: O zigbee2mqtt roda no servidor da casa e conversa pelo mesmo broker MQTT. Ele fica <strong>desligado até o coordenador USB chegar</strong>; depois de ligado, cada aparelho pareado aparece sozinho, com os pontos.
         step1_html: Ligue o coordenador no servidor e instale o aplicativo Zigbee2MQTT em Configurações → Aplicativos, com o caminho do coordenador (<code>/dev/serial/by-id/…</code>).
         step2: Pareie os aparelhos pelo frontend do zigbee2mqtt (permitir entrada).
+    wizard:
+      setup: Configurar
+      connect: Conectar
+      found: Encontrados
     found:
       add_all: Adicionar todos
       add_one: Adicionar %{name}
@@ -590,7 +594,6 @@ pt-BR:
       none_read: A conta ainda não tem aparelhos lidos.
       nothing_new: Nada novo para adicionar.
       offline: Fora do ar
-      offline_short: fora do ar
       pending_html: <strong class="num">%{n}</strong> aparelho(s) novo(s). Marque os que quer e a área de cada um (vem do cômodo da conta).
       pick: Escolher
       points: Pontos

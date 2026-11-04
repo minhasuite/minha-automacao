@@ -23,7 +23,7 @@ RSpec.describe "Quiosque, busca global e temas" do
   describe "quiosque" do
     it "?quiosque=1 liga neste aparelho (cookie), sem menu; ajustes e ?quiosque=0 desligam" do
       get "/", params: { quiosque: 1 }
-      expect(response.body).to include("ss-kiosk", 'data-controller="kiosk"', "Protetor de tela").and not_include('id="side"')
+      expect(response.body).to include("ma-kiosk", 'data-controller="kiosk"', "Protetor de tela").and not_include('id="ss-shell-side"')
       get "/"
       expect(response.body).to include('data-controller="kiosk"') # o aparelho lembra
 
@@ -37,17 +37,18 @@ RSpec.describe "Quiosque, busca global e temas" do
 
       get "/", params: { quiosque: 0 }
       expect(response.body).not_to include('data-controller="kiosk"')
-      expect(response.body).to include('id="side"')
+      expect(response.body).to include('id="ss-shell-side"')
     end
   end
 
   describe "busca global" do
     it "acha ponto, área, cena e página; verbo vira ação com confirmação de risco" do
-      get "/busca", params: { q: "abajur" }, headers: { "Turbo-Frame" => "palette-results" }
-      expect(response.body).to include("palette-results", "Teste Abajur", "Ponto")
+      # A paleta (Ss::CommandPaletteComponent, src:) pede só os itens, sem as páginas (já estão nela).
+      get "/busca", params: { q: "abajur", paleta: 1 }
+      expect(response.body).to include("ss-command-item", "Teste Abajur", "Ponto").and not_include("<html")
 
-      get "/busca", params: { q: "apagar teste abajur" }, headers: { "Turbo-Frame" => "palette-results" }
-      expect(response.body).to include("Desligar", %(action="/pontos/#{lamp.id}/comando"))
+      get "/busca", params: { q: "apagar teste abajur", paleta: 1 }
+      expect(response.body).to include("Desligar", %(href="/pontos/#{lamp.id}/comando?command=), 'data-turbo-method="post"')
       expect(within(tenant) { Search.call("desligar teste portao", user) }.first.action).to include(confirm: "Abrir mesmo?", confirm_title: "Crítico")
 
       results = within(tenant) { Search.call("ativar cena teste cinema", user) }

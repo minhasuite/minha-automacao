@@ -1,8 +1,4 @@
-<% { notice: [ "bg-success-soft text-success", "check-circle", "status" ], alert: [ "bg-danger-soft text-danger", "exclamation-circle", "alert" ] }.each do |key, (tone, ico, role)| %>
-  <% next if flash[key].blank? %>
-  <div class="ss-flash mb-5 <%= tone %>" role="<%= role %>" data-controller="flash">
-    <%= icon(ico) %><span class="flex-1"><%= flash[key] %></span>
-    <button type="button" class="grid place-items-center size-7 rounded-lg border-0 bg-transparent text-current opacity-70 hover:opacity-100 cursor-pointer" data-action="flash#close" aria-label="<%= t("layout.close") %>"><%= icon("x", "size-4") %></button>
-    <% if key == :notice %><span class="ss-flash-bar" data-action="animationend->flash#close"></span><% end %>
-  </div>
-<% end %>
+<%# Avisos da requisição na pilha da gem (#ss-toasts): o de sucesso some sozinho, o de erro
+    fica até fechar. Resposta em Turbo Stream empilha com Ss::ToastStackComponent.append(turbo_stream, message:, tone:). %>
+<% toasts = { notice: :good, alert: :bad }.filter_map { |key, tone| { message: flash[key], tone: tone, sticky: tone == :bad } if flash[key].present? } %>
+<%= render Ss::ToastStackComponent.new(toasts: toasts) %>

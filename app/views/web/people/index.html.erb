@@ -15,21 +15,14 @@
   </section>
 <% end %>
 
-<section class="ss-card overflow-x-auto" aria-label="<%= t("maps.people") %>">
-  <table class="ss-table">
-    <thead><tr><th><%= t("logbook.person") %></th><th class="hidden sm:table-cell"><%= t("people.role") %></th><th class="hidden md:table-cell"><%= t("sites.index.title") %></th><th><%= t("devices.status") %></th></tr></thead>
-    <tbody>
-      <% @people.each do |u| %>
-        <tr>
-          <td><%= link_to person_path(u), class: "no-underline text-ink hover:text-accent" do %><span class="block font-semibold"><%= u.name %><%= " (#{t('people.you')})" if u == current_user %></span><span class="block text-xs text-muted break-all"><%= u.email %></span><% end %></td>
-          <td class="hidden sm:table-cell"><span class="ss-badge"><%= u.role_label %></span></td>
-          <td class="hidden md:table-cell text-ink-2"><%= u.admin? ? t("logbook.all") : t("people.sites", count: SiteMembership.active.where(user_id: u.id).count) %></td>
-          <td><span class="ss-badge ss-badge-<%= u.disabled? ? 'danger' : 'success' %>"><%= u.disabled? ? t("people.disabled") : t("people.active") %></span></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-</section>
+<%= render Ss::DataTableComponent.new(rows: @people, id: "pessoas", caption: t("maps.people"), sort: @sort, dir: @dir, tools: false, max_height: "none") do |tb| %>
+  <% tb.column :name, t("logbook.person"), sortable: true do |u| %>
+    <%= link_to person_path(u), class: "no-underline text-ink hover:text-accent text-left" do %><span class="block font-semibold"><%= u.name %><%= " (#{t('people.you')})" if u == current_user %></span><span class="block text-xs text-muted break-all"><%= u.email %></span><% end %>
+  <% end %>
+  <% tb.column :role, t("people.role"), sortable: true do |u| %><span class="ss-badge"><%= u.role_label %></span><% end %>
+  <% tb.column :sites, t("sites.index.title") do |u| %><span class="text-ink-2"><%= u.admin? ? t("logbook.all") : t("people.sites", count: SiteMembership.active.where(user_id: u.id).count) %></span><% end %>
+  <% tb.column :status, t("devices.status") do |u| %><span class="ss-badge ss-badge-<%= u.disabled? ? 'danger' : 'success' %>"><%= u.disabled? ? t("people.disabled") : t("people.active") %></span><% end %>
+<% end %>
 
 <% if owner %>
   <div class="mt-4 grid gap-4 xl:grid-cols-2">
@@ -62,7 +55,7 @@
           <% @invites.each do |i| %>
             <li class="py-2 flex items-center justify-between gap-3 text-sm">
               <span><%= User::ROLE_LABELS[i.role] %><%= " · #{t('people.role_in', role: SiteMembership.role_label(i.site_role), site: i.site.name)}" if i.site %> <span class="text-muted">· <%= t("people.valid_until", at: l(i.expires_at, format: :short)) %></span></span>
-              <%= button_to t("shared.cancel"), invite_path(i), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm: t("people.cancel_invite") } } %>
+              <%= button_to t("shared.cancel"), invite_path(i), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.cancel"), turbo_confirm: t("people.cancel_invite") } } %>
             </li>
           <% end %>
         </ul>

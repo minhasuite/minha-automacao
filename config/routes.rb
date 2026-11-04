@@ -151,7 +151,8 @@ Rails.application.routes.draw do
           get :run, path: "executar", action: :run_form
           patch :fields, path: "campos"
           post :rebuild, path: "refazer"
-          patch :draft, path: "rascunho"
+          # POST também: o Duplicar do Ss::BlockComponent é um link Turbo com POST.
+          match :draft, path: "rascunho", via: %i[patch post]
           post :publish, path: "publicar"
           post :discard, path: "descartar"
           post :revert, path: "voltar"

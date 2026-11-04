@@ -83,7 +83,7 @@
           <div class="min-w-0"><p class="font-semibold text-ink break-words"><%= p.name %></p>
             <p class="text-xs text-muted"><%= t("security.passkeys.added_at", at: l(p.created_at, format: :short)) %><%= " · #{t('security.passkeys.used_at', at: l(p.last_used_at, format: :short))}" if p.last_used_at %></p></div>
           <%= button_to settings_passkey_path(p), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("security.passkeys.remove_of", name: p.name),
-                        form: { data: { turbo_confirm: t("security.passkeys.remove_confirm", name: p.name) } } do %><%= icon("trash", "size-4") %><%= t("security.passkeys.remove") %><% end %>
+                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("security.passkeys.remove"), turbo_confirm: t("security.passkeys.remove_confirm", name: p.name) } } do %><%= icon("trash", "size-4") %><%= t("security.passkeys.remove") %><% end %>
         </li>
       <% end %>
     </ul>

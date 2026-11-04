@@ -1,9 +1,7 @@
 <%# locals: (found:) -%>
 <turbo-frame id="ob-found">
   <% if found.empty? %>
-    <div class="ob-empty" role="status">
-      <%= render "web/shared/empty_art", art: "search", title: t("onboarding.discover.none"), text: t("onboarding.discover.none_hint") %>
-    </div>
+    <div role="status"><%= render Ss::EmptyStateComponent.new(variant: :busca, title: t("onboarding.discover.none"), text: t("onboarding.discover.none_hint"), compact: true) %></div>
   <% else %>
     <p class="text-sm font-semibold text-ink mb-3" role="status"><%= t("onboarding.discover.found", count: found.size) %></p>
     <ul class="ob-found" role="list">

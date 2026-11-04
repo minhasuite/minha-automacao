@@ -3,12 +3,6 @@
    tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
 @layer components {
   /* ---- Categorias e rótulos -------------------------------------------- */
-  .ss-group > summary { list-style: none; }
-  .ss-group > summary::-webkit-details-marker { display: none; }
-  .ss-group-head { display: flex; align-items: center; gap: .55rem; padding: .35rem .25rem .6rem; cursor: pointer; user-select: none; border-radius: var(--r-field); }
-  .ss-group-head:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-  .ss-group-caret { color: var(--muted); transition: transform .18s ease; }
-  .ss-group[open] .ss-group-caret { transform: rotate(90deg); }
   .ss-label-chip { --chip: var(--accent); display: inline-flex; align-items: center; gap: .3rem; padding: .1rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 600;
     color: var(--ink); background: color-mix(in srgb, var(--chip) 14%, transparent); border: 1px solid color-mix(in srgb, var(--chip) 35%, transparent); }
   .ss-label-chip::before { content: ""; width: .45rem; height: .45rem; border-radius: 999px; background: var(--chip); }

@@ -1,10 +1,8 @@
 <%# locals: (f:, integration:) -%>
 <div>
-  <%= f.label :project_id, t("protocols.google.project_id"), class: "ss-label" %>
-  <%= f.text_field :project_id, class: "ss-input font-mono text-sm", value: integration&.settings&.dig("project_id"), placeholder: "minha-casa-12345", autocomplete: "off", spellcheck: false, required: integration.nil? %>
+  <%= f.ss_text_field :project_id, label: t("protocols.google.project_id"), class: "font-mono text-sm", value: integration&.settings&.dig("project_id"), placeholder: "minha-casa-12345", autocomplete: "off", spellcheck: false, required: integration.nil? %>
 </div>
 <div>
-  <%= f.label :service_account, t("protocols.google.service_account"), class: "ss-label" %>
-  <%= f.text_area :service_account, rows: 4, class: "ss-input font-mono text-xs", value: nil, autocomplete: "off", spellcheck: false, placeholder: integration ? t("integrations.forms.common.keep") : '{"type": "service_account", …}' %>
+  <%= f.ss_text_area :service_account, label: t("protocols.google.service_account"), rows: 4, class: "font-mono text-xs", value: nil, autocomplete: "off", spellcheck: false, placeholder: integration ? t("integrations.forms.common.keep") : '{"type": "service_account", …}' %>
 </div>
 <p class="text-xs text-muted"><%= t("protocols.google.form_note_html") %></p>

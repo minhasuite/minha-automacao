@@ -10,26 +10,23 @@
   <% else %>
   <% on = point_on?(point) %>
   <% off_line = point.quality.in?(%w[unavailable error]) %>
-  <div class="ss-card p-3 sm:p-4 flex flex-col gap-3 h-full <%= 'ss-card-grad' if on %> <%= 'opacity-60' if point.disabled %>">
-    <div class="flex items-start gap-3">
-      <span class="grid place-items-center size-8 sm:size-10 shrink-0 rounded-xl <%= on ? 'ss-grad' : 'bg-field text-muted' %>"><%= icon(point_icon(point)) %></span>
-      <div class="min-w-0 flex-1">
-        <p class="font-bold text-ink line-clamp-2 break-words"><%= link_to point.name, point_path(point), data: { turbo_frame: "_top" }, class: "text-ink no-underline hover:text-accent" %></p>
-        <p class="text-xs text-muted truncate"><%= point.capability_label %><%= " · #{point.risk_label}" unless point.risk == "normal" %></p>
-      </div>
-      <% if can?(:manage) %>
-        <%= link_to edit_point_path(point), data: { turbo_frame: "_top" }, class: "grid place-items-center size-8 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", title: t("points.edit.title"), "aria-label": t("shared.edit_name", name: point.name) do %><%= icon("pencil", "size-4") %><% end %>
-      <% end %>
-    </div>
-    <p class="text-xl sm:text-2xl font-bold <%= off_line ? "text-danger" : (point.value.is_a?(Numeric) ? "num text-ink" : (point.value.nil? ? "text-muted" : "text-ink")) %>" aria-live="polite"><%= off_line ? t("points.no_signal") : point_value_text(point) %></p>
-    <% if (note = point_status_note(point)) %><p class="-mt-2 text-xs text-muted"><%= note %></p><% end %>
-    <% if error %><p class="text-sm font-semibold text-danger" role="alert"><%= error %></p><% end %>
-    <% if point.writable && !point.disabled && Points::Command.commands_for(point).any? && can?(:command, risk: point.risk) %>
+  <% can_cmd = point.writable && !point.disabled && Points::Command.commands_for(point).any? && can?(:command, risk: point.risk) %>
+  <% locked = point.writable && !point.disabled && Points::Command.commands_for(point).any? && !can_cmd %>
+  <% switch = can_cmd && point.capability == "onoff" && !point.helper_type %>
+  <%# Tile da gem: nome (detalhes), valor no estado, chave para liga/desliga; o resto dos controles e o lápis no rodapé. %>
+  <%= render Ss::DeviceTileComponent.new(name: point.name, state: [ point_value_text(point), point.capability_label, (point.risk_label unless point.risk == "normal") ].compact_blank.join(" · "),
+                                         on: on, status: off_line ? :unavailable : (locked ? :locked : :ready), icon: icon(point_icon(point)).to_s, url: point_path(point),
+                                         toggle_url: (command_point_path(point) if switch), toggle_params: { command: on ? "off" : "on" },
+                                         confirm: point_confirm_data(point)[:turbo_confirm], unavailable_label: t("points.no_signal"),
+                                         title: point_status_note(point), css: [ "h-full", ("opacity-60" if point.disabled) ].compact.join(" "), aria: { live: "polite" }) do |c| %>
+    <% c.with_footer do %>
+      <% if error %><p class="text-sm font-semibold text-danger" role="alert"><%= error %></p><% end %>
+    <% if can_cmd %>
       <% confirm = point_confirm_data(point) %>
       <% if point.helper_type %>
         <%= render "web/points/control", point: point %>
       <% elsif point.capability == "onoff" %>
-        <%= button_to command_point_path(point), params: { command: on ? "off" : "on" }, class: "ss-btn #{on ? 'ss-btn-outline' : 'ss-btn-primary'} w-full", form: { data: confirm }, "aria-pressed": on do %><%= icon(on ? "x-circle" : "lightning-bolt", "size-4") %><%= on ? t("points.turn_off") : t("points.turn_on") %><% end %>
+        <%# Liga/desliga: a chave do próprio tile. %>
       <% elsif point.capability == "stream" %>
         <%# ondaC2: câmera tem PTZ, gravar e falar na página do ponto (_camera). %>
       <% elsif point.capability.in?(%w[gate command]) %>
@@ -44,7 +41,8 @@
           <% elsif point.capability == "color" %>
             <%= f.color_field :value, value: Points::Color.hex_of(point.value), class: "ss-input flex-1 min-w-0 h-11", id: field_id %>
           <% elsif point.numeric? %>
-            <%= f.number_field :value, value: point.value, min: point.min, max: point.max, step: point.step || "any", class: "ss-input num flex-1 min-w-0", id: field_id, inputmode: "decimal", required: true %>
+            <%= render Ss::StepperInputComponent.new(name: "value", value: dw_plain(point.value), min: dw_plain(point.min), max: dw_plain(point.max), step: dw_plain(point.step || 1),
+                                                     unit: point.unit, id: field_id, css: "flex-1 min-w-0") %>
           <% else %>
             <%= f.text_field :value, value: point.value, maxlength: 255, class: "ss-input flex-1 min-w-0", id: field_id %>
           <% end %>
@@ -54,6 +52,10 @@
     <% elsif point.writable && !point.disabled && Points::Command.commands_for(point).empty? %>
       <p class="text-xs text-muted"><%= t("points.no_control") %></p>
     <% end %>
-  </div>
+      <% if can?(:manage) %>
+        <%= link_to edit_point_path(point), data: { turbo_frame: "_top" }, class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("points.edit.title"), "aria-label": t("shared.edit_name", name: point.name) do %><%= icon("pencil", "size-4") %><% end %>
+      <% end %>
+    <% end %>
+  <% end %>
   <% end %>
 <% end %>

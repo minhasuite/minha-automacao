@@ -3,6 +3,8 @@ module Web
   # retenção) e os registros com filtros (os mesmos da ação "Consultar
   # dados") e exportação CSV. Ver: qualquer papel; cadastro: técnico ou dono.
   class DatasetsController < ApplicationController
+    include TableSort
+
     def index
       @site = Site.find(params[:site_id])
       authorize_site!(@site, :view)
@@ -14,7 +16,8 @@ module Web
       load_for(:view)
       @filters = params[:filtros].to_s
       @days = params[:dias].to_i.clamp(0, 3650)
-      scope = Datasets::Query.new(@dataset, op: "rows", window_s: (@days.days.to_i if @days.positive?), filters: @filters).scope.order(created_at: :desc)
+      scope = Datasets::Query.new(@dataset, op: "rows", window_s: (@days.days.to_i if @days.positive?), filters: @filters).scope
+                       .order(table_sort({ "created_at" => "created_at" }, default: "created_at", dir: "desc"))
       @columns = (@dataset.field_names + scope.limit(200).pluck(:data).flat_map(&:keys)).uniq.first(Dataset::MAX_FIELDS)
       respond_to do |format|
         format.html { @pagy, @records = pagy(scope, limit: 50) }

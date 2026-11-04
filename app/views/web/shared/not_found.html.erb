@@ -1,5 +1,2 @@
-<div class="ss-card ss-empty">
-  <h1 class="text-ink"><%= t("shared.not_found") %></h1>
-  <p class="mt-2"><%= t("shared.not_found_hint") %></p>
-  <%= link_to t("shared.back_home"), root_path, class: "ss-btn ss-btn-ghost mt-4" %>
-</div>
+<%= render Ss::EmptyStateComponent.new(variant: :busca, title: t("shared.not_found"), text: t("shared.not_found_hint"), css: "ss-card",
+                                       secondary: { label: t("shared.back_home"), url: root_path }) %>

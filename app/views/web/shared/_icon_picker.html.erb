@@ -1,12 +1,9 @@
 <%# locals: (name:, selected:, icons:, id:, label: t("shared.icon"), blank: t("shared.icon_default")) -%>
-<%# Escolha do ícone vendo o desenho (no lugar de uma lista com o nome do arquivo). %>
+<%# Escolha do ícone vendo o desenho: Ss::IconPickerComponent com os SVG do produto (icon()), busca e
+    "padrão" (sem ícone), com o nome de cada ícone no idioma (config/locales/icons.yml; busca por ele também). Fora os ícones de interface (setas, fechar, editar): não nomeiam coisa da casa. -%>
+<% names = icons.grep_v(/\A(arrow-|chevron-|x\z|menu\z|dots-|minus|plus\z|logout|zoom-|external-link|filter|search|check\z|duplicate|pencil|trash|share|printer|reply|receipt-|credit-card|eye|refresh|download|upload|document-download)/) %>
 <fieldset>
   <legend class="ss-label"><%= label %></legend>
-  <div class="ss-icons" role="radiogroup" aria-label="<%= label %>">
-    <label class="ss-icon-opt" title="<%= blank %>"><input type="radio" name="<%= name %>" value="" id="<%= id %>" <%= "checked" if selected.blank? %>><span class="text-xs font-bold"><%= blank %></span></label>
-    <%# Fora os ícones de interface (setas, fechar, editar): não servem para nomear coisa da casa. %>
-    <% icons.grep_v(/\A(arrow-|chevron-|x\z|menu\z|dots-|minus|plus\z|logout|zoom-|external-link|filter|search|check\z|duplicate|pencil|trash|share|printer|reply|receipt-|credit-card|eye|refresh|download|upload|document-download)/).each do |ico| %>
-      <label class="ss-icon-opt" title="<%= ico.tr('-', ' ') %>"><input type="radio" name="<%= name %>" value="<%= ico %>" <%= "checked" if selected.to_s == ico %> aria-label="<%= ico.tr('-', ' ') %>"><%= icon(ico, "size-5") %></label>
-    <% end %>
-  </div>
+  <%= render Ss::IconPickerComponent.new(name: name, value: selected, allow_none: true, id: id, labels: { label: label, none: blank },
+                                         icons: names.map { |n| [ n, icon(n, ""), t(n, scope: :icon_names, default: n) ] }) %>
 </fieldset>

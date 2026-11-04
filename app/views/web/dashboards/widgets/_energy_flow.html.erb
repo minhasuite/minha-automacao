@@ -5,15 +5,6 @@
 <% watts = d["watts"] || {} %>
 <% power = ->(v) { v.nil? ? "—" : (v.abs >= 1000 ? "#{number_with_precision(v.abs / 1000.0, precision: 2, strip_insignificant_zeros: true, separator: t("number.format.separator"))} kW" : "#{v.abs.round} W") } %>
 <% idle = Dashboards::Widgets::EnergyFlowWidget::IDLE_W %>
-<% dur = ->(v) { (3.2 - (Math.log10([ v, 1 ].max) * 0.7)).clamp(0.45, 3).round(2) } %>
-<% paths = [
-     [ "grid_home", "M48,120 L252,120", "ef-c-grid", has["grid"] ],
-     [ "solar_home", "M150,38 Q150,120 252,120", "ef-c-solar", has["solar"] ],
-     [ "solar_grid", "M150,38 Q150,120 48,120", "ef-c-solar", has["solar"] && has["grid"] ],
-     [ "solar_battery", "M150,38 L150,202", "ef-c-solar", has["solar"] && has["battery"] ],
-     [ "battery_home", "M150,202 Q150,120 252,120", "ef-c-battery", has["battery"] ],
-     [ "grid_battery", "M48,120 Q150,120 150,202", "ef-c-grid", has["grid"] && has["battery"] ]
-   ] %>
 <div class="dw-card ef-card">
   <div class="flex items-center justify-between gap-2">
     <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.energy_now") %></p>
@@ -22,30 +13,23 @@
   <% if d["missing"] %>
     <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %><%= t("dashboards.w.pick_power") %></p>
   <% else %>
-    <div class="ef-stage" role="img" aria-label="<%= t("dashboards.w.ef.home_x", power: power.(f['home'])) %><%= ", #{t(watts['grid'].to_f.negative? ? 'dashboards.w.ef.grid_in_x' : 'dashboards.w.ef.grid_out_x', power: power.(watts['grid']))}" if has['grid'] %><%= ", #{t('dashboards.w.ef.solar_x', power: power.(watts['solar']))}" if has['solar'] %>">
-      <svg viewBox="0 0 300 240" class="ef-lines" aria-hidden="true">
-        <% paths.each do |key, path, color, on| %>
-          <% next unless on %>
-          <path d="<%= path %>" class="ef-track" />
-          <% if f[key].to_f > idle %><path d="<%= path %>" class="ef-flow <%= color %>" style="--ef-dur: <%= dur.(f[key].to_f) %>s" /><% end %>
-        <% end %>
-      </svg>
-      <% if has["solar"] %>
-        <div class="ef-node ef-solar"><span class="ef-ring"><%= icon("sun", "size-5") %></span><strong class="num"><%= power.(watts["solar"]) %></strong><small><%= t("dashboards.w.ef.solar") %></small></div>
-      <% end %>
-      <% if has["grid"] %>
-        <% g = watts["grid"] %>
-        <div class="ef-node ef-grid"><span class="ef-ring"><%= icon("lightning-bolt", "size-5") %></span><strong class="num"><%= power.(g) %></strong>
-          <small><%= g.nil? ? t("dashboards.w.ef.grid") : (g.negative? ? t("dashboards.w.ef.selling") : t("dashboards.w.ef.buying")) %></small></div>
-      <% end %>
-      <div class="ef-node ef-home"><span class="ef-ring"><%= icon("home", "size-5") %></span><strong class="num"><%= power.(f["home"]) %></strong><small><%= t("dashboards.w.ef.home") %></small></div>
-      <% if has["battery"] %>
-        <% b = watts["battery"] %>
-        <div class="ef-node ef-battery"><span class="ef-ring"><%= icon("battery", "size-5") %></span>
-          <strong class="num"><%= d["soc"] ? "#{d['soc']}%" : power.(b) %></strong>
-          <small><%= b.nil? || b.abs <= idle ? t("dashboards.w.battery") : t(b.negative? ? "dashboards.w.ef.charging_x" : "dashboards.w.ef.using_x", power: power.(b)) %></small></div>
-      <% end %>
-    </div>
+    <%# Fluxo da gem: a casa no meio, rede à esquerda, solar em cima, bateria embaixo; os pontos correm no sentido da energia. %>
+    <% g = watts["grid"] %>
+    <% b = watts["battery"] %>
+    <% around = []
+       around << { id: :solar, kind: :solar, label: t("dashboards.w.ef.solar"), value: power.(watts["solar"]), slot: :top } if has["solar"]
+       around << { id: :grid, kind: :grid, label: g.nil? ? t("dashboards.w.ef.grid") : (g.negative? ? t("dashboards.w.ef.selling") : t("dashboards.w.ef.buying")), value: power.(g), slot: :left } if has["grid"]
+       around << { id: :battery, kind: :battery, label: t("dashboards.w.battery"), value: d["soc"] ? "#{d['soc']}%" : power.(b), slot: :bottom,
+                   caption: (t(b.negative? ? "dashboards.w.ef.charging_x" : "dashboards.w.ef.using_x", power: power.(b)) if b && b.abs > idle) } if has["battery"]
+       links = { "grid_home" => %i[grid home], "solar_home" => %i[solar home], "solar_grid" => %i[solar grid], "solar_battery" => %i[solar battery],
+                 "battery_home" => %i[battery home], "grid_battery" => %i[grid battery] }.filter_map do |key, (from, to)|
+         next unless [ from, to ].all? { |n| n == :home || has[n.to_s] }
+
+         { from: from, to: to, power: f[key].to_f > idle ? f[key].to_f : 0 }
+       end %>
+    <%= render Ss::FlowDiagramComponent.new(center: { id: :home, kind: :home, label: t("dashboards.w.ef.home"), value: power.(f["home"]) }, around: around, links: links,
+                                            label: [ t("dashboards.w.ef.home_x", power: power.(f["home"])), (t(g.to_f.negative? ? "dashboards.w.ef.grid_in_x" : "dashboards.w.ef.grid_out_x", power: power.(g)) if has["grid"]),
+                                                     (t("dashboards.w.ef.solar_x", power: power.(watts["solar"])) if has["solar"]) ].compact.join(", "), css: "mt-2") %>
     <% if has["solar"] && f["home"].to_f.positive? %>
       <% share = ((f["solar_home"].to_f + f["battery_home"].to_f) / f["home"].to_f * 100).round.clamp(0, 100) %>
       <p class="ef-foot"><span class="dw-meter" role="img" aria-label="<%= t("dashboards.w.ef.self_share", pct: share) %>"><span style="width: <%= share %>%"></span></span><%= t("dashboards.w.ef.self_share_now_html", pct: tag.span("#{share}%", class: "num")) %></p>

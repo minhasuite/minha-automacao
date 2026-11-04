@@ -32,7 +32,7 @@
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="excluir-t">
   <h2 id="excluir-t"><%= t("settings.account.delete_title") %></h2>
   <p class="text-sm text-muted mt-1"><%= t("settings.account.delete_text") %></p>
-  <%= form_with url: settings_account_path, method: :delete, class: "mt-3 flex gap-2", data: { turbo_confirm: t("settings.account.delete_confirm") } do %>
+  <%= form_with url: settings_account_path, method: :delete, class: "mt-3 flex gap-2", data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("settings.account.delete_confirm") } do %>
     <%= text_field_tag :confirm, nil, placeholder: t("settings.account.delete_type"), class: "ss-input w-36", "aria-label": t("settings.account.delete_aria") %><%= submit_tag t("settings.account.delete_button"), class: "ss-btn ss-btn-danger", name: nil %>
   <% end %>
 </section>

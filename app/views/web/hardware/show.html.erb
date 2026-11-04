@@ -2,9 +2,7 @@
 <%= render layout: "web/settings/frame", locals: { current: :hardware } do %>
 <% h = @host %>
 <% if !@available || h.empty? %>
-  <div class="ss-card ss-empty"><%= icon("chip", "size-8 text-muted") %>
-    <p class="font-bold text-ink"><%= t("hardware.unavailable") %></p>
-    <p class="text-sm text-muted"><%= @available ? t("hardware.offline") : t("hardware.no_supervisor") %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("hardware.unavailable"), text: (@available ? t("hardware.offline") : t("hardware.no_supervisor")), variant: :erro, css: "ss-card") %>
 <% else %>
   <section class="ss-card ss-card-pad" aria-labelledby="hw-t" data-hardware="system">
     <div class="flex flex-wrap items-center justify-between gap-3">

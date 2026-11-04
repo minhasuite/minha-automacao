@@ -14,25 +14,16 @@
 <% end %>
 
 <% if @keys.empty? %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("api_keys.empty") %></p><p class="mt-1"><%= t("api_keys.empty_hint") %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("api_keys.empty"), text: t("api_keys.empty_hint"), css: "ss-card") %>
 <% else %>
-  <section class="ss-card overflow-x-auto" aria-label="<%= t("api_keys.active") %>">
-    <table class="ss-table">
-      <thead><tr><th><%= t("api_keys.key") %></th><th class="hidden md:table-cell"><%= t("api_keys.sites") %></th><th class="hidden sm:table-cell"><%= t("api_keys.scopes_label") %></th><th class="hidden lg:table-cell"><%= t("api_keys.validity_label") %></th><th class="hidden md:table-cell"><%= t("api_keys.last_used") %></th><th class="r"><span class="sr-only"><%= t("api_keys.revoke") %></span></th></tr></thead>
-      <tbody>
-        <% @keys.each do |k| %>
-          <tr>
-            <td><span class="block font-semibold text-ink"><%= k.name %></span><span class="block text-xs text-muted"><%= t("api_keys.created_on", date: l(k.created_at.to_date)) %><%= " · #{t("api_keys.expired")}" if k.expired? %></span></td>
-            <td class="hidden md:table-cell"><%= k.site_ids.filter_map { |id| site_names[id] }.to_sentence %></td>
-            <td class="hidden sm:table-cell"><div class="flex flex-wrap gap-1"><% k.scopes.each do |s| %><span class="ss-badge"><%= t(s, scope: "api_keys.scopes") %></span><% end %></div></td>
-            <td class="hidden lg:table-cell"><%= k.expires_at ? l(k.expires_at.to_date) : t("api_keys.validity.none") %></td>
-            <td class="hidden md:table-cell"><%= k.last_used_at ? ago_text(k.last_used_at) : t("api_keys.never") %></td>
-            <td class="r"><%= button_to t("api_keys.revoke"), api_key_path(k), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", form: { data: { turbo_confirm: t("api_keys.revoke_confirm", name: k.name), turbo_confirm_button: t("api_keys.revoke") } } %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </section>
+  <%= render Ss::DataTableComponent.new(rows: @keys, id: "chaves", caption: t("api_keys.active"), sort: @sort, dir: @dir, tools: false, max_height: "none") do |tb| %>
+    <% tb.column :name, t("api_keys.key"), sortable: true do |k| %><span class="block font-semibold text-ink text-left"><%= k.name %></span><span class="block text-xs text-muted text-left"><%= t("api_keys.created_on", date: l(k.created_at.to_date)) %><%= " · #{t("api_keys.expired")}" if k.expired? %></span><% end %>
+    <% tb.column :sites, t("api_keys.sites") do |k| %><%= k.site_ids.filter_map { |id| site_names[id] }.to_sentence %><% end %>
+    <% tb.column :scopes, t("api_keys.scopes_label") do |k| %><div class="flex flex-wrap gap-1"><% k.scopes.each do |s| %><span class="ss-badge"><%= t(s, scope: "api_keys.scopes") %></span><% end %></div><% end %>
+    <% tb.column :expires_at, t("api_keys.validity_label"), sortable: true do |k| %><%= k.expires_at ? l(k.expires_at.to_date) : t("api_keys.validity.none") %><% end %>
+    <% tb.column :last_used_at, t("api_keys.last_used"), sortable: true do |k| %><%= k.last_used_at ? ago_text(k.last_used_at) : t("api_keys.never") %><% end %>
+    <% tb.column :actions, t("people.actions"), align: :right, hideable: false do |k| %><%= button_to t("api_keys.revoke"), api_key_path(k), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("api_keys.revoke_confirm", name: k.name), turbo_confirm_button: t("api_keys.revoke") } } %><% end %>
+  <% end %>
 <% end %>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="criar-t">

@@ -1,7 +1,7 @@
 <% rows = DevTools::Statistics.list(@site) %>
 <p class="text-sm text-muted mb-3 max-w-3xl"><%= t("dev_tools.stats.intro") %></p>
 <% if rows.empty? %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("dev_tools.stats.none") %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("dev_tools.stats.none"), css: "ss-card") %>
 <% else %>
   <ul class="ss-card ss-rows" aria-label="<%= t("dev_tools.tabs.estatisticas") %>">
     <% rows.each do |r| %>
@@ -21,7 +21,7 @@
             <button class="ss-btn ss-btn-ghost ss-btn-sm" aria-label="<%= t("dev_tools.stats.adjust_of", name: r.point.name) %>"><%= icon("check", "size-4") %><%= t("dev_tools.stats.adjust") %></button>
           <% end %>
           <%= button_to dev_tools_stats_purge_site_path(@site, point_id: r.point.id), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger",
-                        form: { data: { turbo_confirm: t("dev_tools.stats.confirm", name: r.point.name), turbo_confirm_button: t("dev_tools.stats.purge") } } do %><%= icon("trash", "size-4") %><%= t("dev_tools.stats.purge") %><% end %>
+                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("dev_tools.stats.confirm", name: r.point.name), turbo_confirm_button: t("dev_tools.stats.purge") } } do %><%= icon("trash", "size-4") %><%= t("dev_tools.stats.purge") %><% end %>
         </div>
       </li>
     <% end %>

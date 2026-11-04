@@ -1,29 +1,34 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<%# Agenda (ondaB2 B10): faixa da semana e os próximos dias, uma cor por agenda. %>
+<%# Agenda (ondaB2 B10): hoje no Ss::AgendaComponent (blocos pela hora, linha do agora, dia inteiro em cima) e
+    os próximos dias no Ss::AgendaListComponent, com a faixa da semana; uma cor por agenda. %>
 <% d = w["data"] %>
-<div class="dw-card dw-cal">
+<% zone = ActiveSupport::TimeZone[dashboard.site.timezone] || Time.zone %>
+<% now = Time.current.in_time_zone(zone) %>
+<% days = Array(d["days"]) %>
+<% today = days.find { |day| day["date"] == now.to_date.iso8601 } %>
+<% many = Array(d["calendars"]).size > 1 %>
+<% tone = ->(e) { %i[accent warn success info danger accent][e["color"].to_i % 6] } %>
+<% sub = ->(e) { [ e["location"], (e["calendar"] if many) ].compact.join(" · ").presence } %>
+<% timed = Array(today && today["events"]).reject { |e| e["all_day"] }.map do |e|
+     { title: e["summary"], sub: sub.(e), starts_at: [ Time.zone.parse(e["start"]).in_time_zone(zone), now.beginning_of_day ].max,
+       ends_at: Time.zone.parse(e["end"]).in_time_zone(zone), tone: tone.(e) }
+   end %>
+<div class="dw-card">
   <p class="dw-card-title flex items-center gap-2"><%= icon("calendar", "size-4 text-accent") %><%= w["label"].presence || Dashboards::Widgets::CalendarWidget.label %></p>
-  <ol class="dw-cal-week" aria-hidden="true">
-    <% Array(d["week"]).each_with_index do |day, i| %>
-      <li class="<%= 'is-today' if i.zero? %> <%= 'is-busy' if day['busy'] %>"><span><%= day["dow"] %></span><strong class="num"><%= day["day"] %></strong></li>
-    <% end %>
-  </ol>
-  <% if Array(d["days"]).empty? %>
+  <% if timed.any? %>
+    <% all_day = today["events"].select { |e| e["all_day"] }.map { |e| { title: e["summary"], all_day: true, starts_at: now.to_date, tone: tone.(e) } } %>
+    <% from = timed.map { |e| e[:starts_at].hour }.min.clamp(0, 23) %>
+    <% to = timed.map { |e| e[:ends_at].to_date > now.to_date ? 24 : e[:ends_at].hour + (e[:ends_at].min.positive? ? 1 : 0) }.max.clamp(from + 1, 24) %>
+    <%= render Ss::AgendaComponent.new(events: timed + all_day, days: [ now.to_date ], from: from, to: to, now: now, hour_height: 40, label: today["label"], css: "mt-3") %>
+  <% end %>
+  <% if days.empty? %>
     <p class="text-sm text-muted mt-3"><%= d["empty"] %></p>
   <% else %>
-    <div class="dw-cal-days">
-      <% d["days"].each do |day| %>
-        <section>
-          <h3 class="dw-cal-day"><%= day["label"] %></h3>
-          <ul>
-            <% day["events"].each do |e| %>
-              <li class="dw-cal-ev"><span class="dw-dot dw-bg<%= e['color'].to_i %>"></span>
-                <span class="min-w-0 flex-1"><span class="block truncate font-semibold text-ink"><%= e["summary"] %></span>
-                  <span class="block truncate text-xs text-muted"><%= [ e["time"], e["location"], (e["calendar"] if Array(d["calendars"]).size > 1) ].compact.join(" · ") %></span></span></li>
-            <% end %>
-          </ul>
-        </section>
-      <% end %>
-    </div>
+    <% rest = (timed.any? ? days - [ today ] : days).map do |day|
+         { date: Date.iso8601(day["date"]), label: day["label"],
+           events: day["events"].map { |e| { time: e["time"], title: e["summary"], detail: sub.(e), tone: tone.(e) } } }
+       end %>
+    <%= render Ss::AgendaListComponent.new(days: rest, week_strip: true, selected: now.to_date, now: now,
+                                           label: w["label"].presence || Dashboards::Widgets::CalendarWidget.label, css: "dw-cal-list mt-3") %>
   <% end %>
 </div>

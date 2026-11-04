@@ -1,5 +1,7 @@
 <%# locals: (w:, points:, dashboard:, badge: false, live: true, error: nil) -%>
-<%= turbo_frame_tag "w_#{w['id']}", class: "contents", data: (live ? { points: w["deps"].join(" "), src: widget_dashboard_path(dashboard, widget_id: w["id"], badge: (1 if badge)) } : {}) do %>
+<%# Sem ao vivo (prévia), o que se aperta dentro do quadro vai para a página toda (target _top). %>
+<%= turbo_frame_tag "w_#{w['id']}", class: "contents", target: ("_top" unless live),
+                                    data: (live ? { points: w["deps"].join(" "), src: widget_dashboard_path(dashboard, widget_id: w["id"], badge: (1 if badge)) } : {}) do %>
   <% if badge %>
     <% if w["visible"] %><%= render "web/dashboards/widgets/badge", w: w %><% end %>
   <% else %>

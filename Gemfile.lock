@@ -1,3 +1,13 @@
+GIT
+  remote: https://github.com/minhasuite/componentes-ui.git
+  revision: 201b61be46aebb7dbf96c0bb58cd7c220b220afb
+  tag: v0.10.1
+  specs:
+    componentes_ui (0.10.1)
+      railties (>= 8.0)
+      tailwindcss-rails (>= 4.2)
+      view_component (>= 3.9)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -438,6 +448,10 @@ GEM
     unicode-emoji (4.3.0)
     uri (1.1.1)
     useragent (0.16.11)
+    view_component (4.22.0)
+      actionview (>= 7.1.0)
+      activesupport (>= 7.1.0)
+      prism (>= 1.0)
     web-push (3.1.0)
       jwt (~> 3.0)
       openssl (>= 3.0)
@@ -471,6 +485,7 @@ DEPENDENCIES
   bcrypt (~> 3.1)
   bootsnap
   brakeman
+  componentes_ui!
   debug
   dentaku (~> 4.1)
   factory_bot_rails (~> 6.4)

@@ -1,14 +1,15 @@
 <%# locals: (f:, p:, w:, dashboard:, live:) -%>
+<%# Slider da gem: trilha de brilho/temperatura de cor, envia ao soltar; sem comando, o mesmo slider travado mostra o nível. %>
 <% id = "f_#{w['id']}_#{f['type']}" %>
+<% track = { "temp" => :kelvin }[f["gradient"]] || (:brightness if f["type"] == "brightness") %>
+<% value = f["value"].is_a?(Numeric) ? dw_plain(f["value"]) : dw_plain(f["min"] || 0) %>
+<% range = Ss::RangeComponent.new(name: "value", label: f["label"], value: value, min: dw_plain(f["min"] || 0), max: dw_plain(f["max"] || 100), step: dw_plain(f["step"] || 1),
+                                  format: dw_range_format(f["unit"]), track: track, submit: :release, id: id, disabled: !(p["can_command"] && p["quality"] == "good"),
+                                  tone: (:heat if track == :brightness && dw_light?(p))) %>
 <div class="dw-feat">
-  <div class="dw-feat-row"><label class="dw-feat-label" for="<%= id %>"><%= icon(f["icon"], "size-4") %><%= f["label"] %></label>
-    <output class="dw-feat-value num" for="<%= id %>"><%= f["value"].is_a?(Numeric) ? dw_number(f["value"], f["unit"]) : "—" %></output></div>
   <% if p["can_command"] && p["quality"] == "good" %>
-    <%= dw_command_form(p, f["command"], w: w, dashboard: dashboard, live: live) do %>
-      <input type="range" id="<%= id %>" name="value" class="dw-range <%= "dw-range-#{f['gradient']}" if f["gradient"] %>" data-autosubmit
-             min="<%= f['min'] %>" max="<%= f['max'] %>" step="<%= f['step'] %>" value="<%= f['value'] %>">
-    <% end %>
+    <%= dw_command_form(p, f["command"], w: w, dashboard: dashboard, live: live) do %><%= render range %><% end %>
   <% else %>
-    <div class="dw-feat-bar" aria-hidden="true"><span style="--r: <%= f["value"].is_a?(Numeric) && f["max"].to_f > f["min"].to_f ? ((f["value"] - f["min"].to_f) / (f["max"].to_f - f["min"].to_f)).clamp(0, 1).round(3) : 0 %>"></span></div>
+    <%= render range %>
   <% end %>
 </div>

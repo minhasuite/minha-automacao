@@ -8,7 +8,9 @@
   <div class="flex flex-wrap items-center justify-end gap-2">
     <% if cmds.include?("toggle") %>
       <% on = point_on?(point) %>
-      <%= button_to command_point_path(point), params: { command: "toggle" }, class: "ss-switch", form: { data: confirm }, "aria-pressed": on.to_s, "aria-label": "#{on ? t('points.turn_off') : t('points.turn_on')} #{point.name}", title: on ? t("points.turn_off") : t("points.turn_on") do %><% end %>
+      <%# Chave da gem (vira na hora, volta se falhar); o form fica no quadro do ponto ou na página. %>
+      <%= render Ss::SwitchComponent.new(url: command_point_path(point), on: on, label: "#{on ? t('points.turn_off') : t('points.turn_on')} #{point.name}",
+                                         params: { command: "toggle" }, confirm: confirm[:turbo_confirm], confirm_title: confirm[:turbo_confirm_title]) %>
     <% elsif cmds.include?("run") %>
       <%= button_to command_point_path(point), params: { command: "run" }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: confirm } do %><%= icon("play", "size-4") %><%= t("points.run") %><% end %>
     <% elsif cmds.include?("press") %>
@@ -22,8 +24,8 @@
     <% elsif cmds.include?("set") && point.numeric? && point.address["mode"] != "box" && point.min && point.max %>
       <%= form_with url: command_point_path(point), data: confirm, class: "flex items-center gap-2" do %>
         <%= hidden_field_tag :command, "set", id: nil %>
-        <label for="<%= fid %>" class="sr-only"><%= t("points.adjust", name: point.name) %></label>
-        <input type="range" id="<%= fid %>" name="value" class="dw-range w-36 sm:w-48" data-autosubmit min="<%= point.min %>" max="<%= point.max %>" step="<%= point.step || 'any' %>" value="<%= point.value %>">
+        <%= render Ss::RangeComponent.new(name: "value", label: t("points.adjust", name: point.name), hide_label: true, value: dw_plain(point.value || point.min), min: dw_plain(point.min),
+                                          max: dw_plain(point.max), step: dw_plain(point.step || 1), format: dw_range_format(point.unit), submit: :release, id: fid, css: "w-36 sm:w-48") %>
       <% end %>
     <% elsif cmds.include?("set") && actions.empty? %>
       <%= form_with url: command_point_path(point), data: confirm, class: "flex items-center gap-2" do %>

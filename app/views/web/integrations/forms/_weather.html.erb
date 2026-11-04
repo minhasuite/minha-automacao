@@ -2,16 +2,14 @@
 <% s = integration&.settings || {} %>
 <% site = integration&.site || @site %>
 <% if integration.nil? %>
-  <div><%= f.label :name, t("integrations.forms.common.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: t("integrations.forms.weather.name_hint"), maxlength: 80 %></div>
+  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: t("integrations.forms.weather.name_hint"), maxlength: 80 %></div>
 <% end %>
 <div>
-  <%= f.label :provider, t("integrations.forms.weather.provider"), class: "ss-label" %>
-  <%= f.select :provider, options_for_select(Weather.choices.invert, s["provider"]), {}, class: "ss-input" %>
+  <%= f.ss_select :provider, options_for_select(Weather.choices.invert, s["provider"]), label: t("integrations.forms.weather.provider") %>
 </div>
 <% if Weather.providers.any?(&:needs_key) %>
   <div>
-    <%= f.label :api_key, t("integrations.forms.weather.api_key"), class: "ss-label" %>
-    <%= f.password_field :api_key, class: "ss-input", autocomplete: "off", value: nil, placeholder: integration ? t("integrations.forms.weather.keep") : "" %>
+    <%= f.ss_password_field :api_key, label: t("integrations.forms.weather.api_key"), autocomplete: "off", value: nil, placeholder: integration ? t("integrations.forms.weather.keep") : "" %>
   </div>
 <% end %>
 <fieldset class="grid grid-cols-2 gap-2">

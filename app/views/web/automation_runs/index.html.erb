@@ -1,6 +1,6 @@
 <%= render "web/shared/header", title: t("automations.common.runs"), subtitle: t("automations.runs.subtitle", name: @automation.name, days: AutomationRun::RETENTION_DAYS), back: (can?(:manage) ? edit_automation_path(@automation) : (@automation.script? ? site_scripts_path(@site) : site_automations_path(@site))) %>
 <% if @runs.empty? %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.runs.empty") %></p><p class="mt-1"><%= t("automations.runs.empty_hint") %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("automations.runs.empty"), text: t("automations.runs.empty_hint"), css: "ss-card") %>
 <% else %>
   <ul class="ss-card divide-y divide-line overflow-hidden" aria-label="<%= t("automations.common.runs") %>">
     <% @runs.each do |r| %>

@@ -263,6 +263,7 @@ module Web
       when "move" then editor.move(target, params[:dir])
       when "remove" then editor.remove(target) && nil
       when "toggle" then editor.toggle(target)
+      when "duplicate" then editor.duplicate(target)
       else raise KeyError, "op"
       end
     end

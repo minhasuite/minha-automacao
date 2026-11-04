@@ -382,7 +382,6 @@ en:
         dock: Dock
         parts: Parts
       media: Media
-      controls_x: "%{name} controls"
       mc:
         previous: Previous
         pause: Pause
@@ -429,7 +428,6 @@ en:
       live: Live
       image_x: "%{name} image"
       live_x: "%{name} live"
-      loading: Loading…
       map: Map
       open_map: Open the map
       map_hidden: Your role in this place doesn't show where people are.
@@ -437,7 +435,6 @@ en:
       history: History
       on_for_html: On for %{time} in the period.
       no_readings: No readings in the period.
-      now: now
       alarm: Alarm
       pick_alarm: Pick an alarm panel (Helpers → Alarm panel).
       until: until
@@ -505,12 +502,6 @@ en:
       pick_weather: Pick the weather point (Weather integration).
       no_recent: No recent reading
       wx:
-        feels: Feels like %{v}°
-        humidity: Humidity %{v}%
-        wind: Wind %{v} km/h
-        rain: Rain %{v}%
-        hourly: Hourly forecast
-        daily: Daily forecast
         today: Today
     schema:
       title_required: '%{where}: title is required'

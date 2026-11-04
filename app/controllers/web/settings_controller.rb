@@ -4,6 +4,8 @@ module Web
   # externo); mais "Minha conta". Sem dados de empresa na tela: o tenant
   # continua por dentro (acts_as_tenant).
   class SettingsController < ApplicationController
+    include TableSort
+
     before_action :require_owner!, only: %i[wipe update_system update_server update_updates]
     # Leitor só tem a própria conta (e os aparelhos de push).
     before_action :deny_reader!, except: %i[show account update_account destroy_account]
@@ -15,7 +17,8 @@ module Web
       @sites = Site.visible_to(current_user).order(:name).to_a
       @roles = @sites.to_h { |s| [ s.id, s.role_for(current_user) ] }
       @sites.each { |s| Dashboard.ensure_for(s) }
-      @dashboards = Dashboard.where(site_id: @sites.map(&:id)).includes(:site).order(:name).to_a
+      order = table_sort({ "name" => "dashboards.name", "site" => "(SELECT name FROM sites WHERE sites.id = dashboards.site_id)" }, default: "name")
+      @dashboards = Dashboard.where(site_id: @sites.map(&:id)).includes(:site).order(order).to_a
                              .select { |d| d.visible_to?(@roles[d.site_id]) }
     end
 

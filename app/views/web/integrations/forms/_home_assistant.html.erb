@@ -1,11 +1,9 @@
 <%# locals: (f:, integration:) -%>
 <p class="text-sm text-ink-2"><%= t("integrations.forms.home_assistant.intro") %></p>
 <div>
-  <%= f.label :url, t("integrations.forms.home_assistant.url"), class: "ss-label" %>
-  <%= f.url_field :url, value: integration&.settings&.dig("url"), class: "ss-input", placeholder: "http://192.168.0.10:8123", required: integration.nil? %>
+  <%= f.ss_url_field :url, label: t("integrations.forms.home_assistant.url"), value: integration&.settings&.dig("url"), placeholder: "http://192.168.0.10:8123", required: integration.nil? %>
 </div>
 <div>
-  <%= f.label :token, t("integrations.forms.home_assistant.token"), class: "ss-label" %>
-  <%= f.password_field :token, class: "ss-input", autocomplete: "off", value: nil, placeholder: (integration ? t("integrations.forms.common.keep") : ""), required: integration.nil? %>
+  <%= f.ss_password_field :token, label: t("integrations.forms.home_assistant.token"), autocomplete: "off", value: nil, placeholder: (integration ? t("integrations.forms.common.keep") : ""), required: integration.nil? %>
 </div>
 <p class="text-xs text-muted"><%= t("integrations.forms.home_assistant.note") %></p>

@@ -2,15 +2,15 @@
 <% s = integration&.settings || {} %>
 <% keep = integration ? t("integrations.forms.common.keep") : "" %>
 <% if integration.nil? %>
-  <div><%= f.label :name, t("integrations.forms.common.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "WhatsApp", maxlength: 80 %></div>
+  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "WhatsApp", maxlength: 80 %></div>
 <% end %>
 <p class="text-sm text-ink-2"><%= t("integrations.forms.whatsapp.intro") %></p>
-<div><%= f.label :token, t("integrations.forms.whatsapp.token"), class: "ss-label" %><%= f.password_field :token, class: "ss-input", autocomplete: "off", value: nil, required: integration.nil?, placeholder: keep %></div>
-<div><%= f.label :phone_id, "Phone number ID", class: "ss-label" %><%= f.text_field :phone_id, value: s["phone_id"], class: "ss-input num", required: true %></div>
-<div><%= f.label :to, t("integrations.forms.whatsapp.to"), class: "ss-label" %><%= f.telephone_field :to, value: s["to"], class: "ss-input num", required: true, placeholder: "5585999999999" %></div>
+<div><%= f.ss_password_field :token, label: t("integrations.forms.whatsapp.token"), autocomplete: "off", value: nil, required: integration.nil?, placeholder: keep %></div>
+<div><%= f.ss_text_field :phone_id, label: "Phone number ID", value: s["phone_id"], class: "num", required: true %></div>
+<div><%= f.ss_telephone_field :to, label: t("integrations.forms.whatsapp.to"), value: s["to"], class: "num", required: true, placeholder: "5585999999999" %></div>
 <div class="grid grid-cols-2 gap-2">
-  <div><%= f.label :template, t("integrations.forms.whatsapp.template"), class: "ss-label" %><%= f.text_field :template, value: s["template"], class: "ss-input", placeholder: "aviso_casa" %></div>
-  <div><%= f.label :language, t("integrations.forms.whatsapp.language"), class: "ss-label" %><%= f.text_field :language, value: s["language"], class: "ss-input", placeholder: "pt_BR" %></div>
+  <div><%= f.ss_text_field :template, label: t("integrations.forms.whatsapp.template"), value: s["template"], placeholder: "aviso_casa" %></div>
+  <div><%= f.ss_text_field :language, label: t("integrations.forms.whatsapp.language"), value: s["language"], placeholder: "pt_BR" %></div>
 </div>
 <p class="text-xs text-muted"><%= t("integrations.forms.whatsapp.template_hint") %></p>
-<div><%= f.label :app_secret, t("integrations.forms.whatsapp.app_secret"), class: "ss-label" %><%= f.password_field :app_secret, class: "ss-input", autocomplete: "off", value: nil, placeholder: keep %></div>
+<div><%= f.ss_password_field :app_secret, label: t("integrations.forms.whatsapp.app_secret"), autocomplete: "off", value: nil, placeholder: keep %></div>

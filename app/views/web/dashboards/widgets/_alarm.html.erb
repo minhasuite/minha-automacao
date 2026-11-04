@@ -1,7 +1,7 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <% d = w["data"] %>
 <% p = points[Array(d["point_ids"]).first] %>
-<div class="dw-card dw-alarm" data-controller="keypad">
+<div class="dw-card dw-alarm">
   <% if p.nil? %>
     <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.alarm") %></p>
     <p class="text-sm text-muted"><%= t("dashboards.w.pick_alarm") %></p>
@@ -18,26 +18,22 @@
       </div>
     </div>
     <% if p["can_command"] %>
-      <%= form_with url: command_point_path(p["id"]), data: { turbo_frame: (live ? nil : "_top"), action: "turbo:submit-end->keypad#clear" }.compact, class: "mt-3" do %>
+      <%# O comando vai no botão (name="command"); o código no "value" (nunca fica na tela nem no histórico de comandos). %>
+      <%= form_with url: command_point_path(p["id"]), data: { turbo_frame: (live ? nil : "_top") }.compact, class: "mt-3" do %>
         <% if live %><%= hidden_field_tag :dashboard_id, dashboard.id, id: nil %><%= hidden_field_tag :widget_id, w["id"], id: nil %><% end %>
-        <label for="code_<%= w['id'] %>" class="sr-only"><%= t("dashboards.w.code") %></label>
-        <input type="password" id="code_<%= w['id'] %>" name="value" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="8"
-               class="ss-input num text-center tracking-[.4em] text-lg" placeholder="<%= t("dashboards.w.code") %>" data-keypad-target="input">
-        <div class="dw-keypad" role="group" aria-label="<%= t("dashboards.w.keypad") %>">
-          <% %w[1 2 3 4 5 6 7 8 9].each do |n| %><button type="button" data-action="keypad#press" data-keypad-digit-param="<%= n %>"><%= n %></button><% end %>
-          <button type="button" data-action="keypad#back" aria-label="<%= t("dashboards.w.backspace") %>"><%= icon("backspace", "size-5") %></button>
-          <button type="button" data-action="keypad#press" data-keypad-digit-param="0">0</button>
-          <span></span>
-        </div>
-        <div class="dw-alarm-actions">
-          <% if state == "disarmed" %>
+        <% if state == "disarmed" && !d["code_arm"] %>
+          <%# Armar sem código: só os modos. %>
+          <div class="dw-alarm-actions">
             <% d["modes"].each do |m| %>
               <button type="submit" name="command" value="<%= m['command'] %>" class="ss-btn ss-btn-outline ss-btn-sm"><%= m["label"] %></button>
             <% end %>
-          <% else %>
-            <button type="submit" name="command" value="disarm" class="ss-btn ss-btn-primary"><%= icon("lock-open", "size-4") %><%= t("dashboards.w.disarm") %></button>
-          <% end %>
-        </div>
+          </div>
+        <% else %>
+          <% actions = state == "disarmed" ? d["modes"].map { |m| { label: m["label"], name: "command", value: m["command"] } } :
+                                             [ { label: t("dashboards.w.disarm"), name: "command", value: "disarm", primary: true, icon: icon("lock-open", "size-4").to_s } ] %>
+          <%= render Ss::CodeKeypadComponent.new(name: "value", actions: actions, title: t("dashboards.w.code"), id: "code_#{w['id']}",
+                                                 labels: { keys: t("dashboards.w.keypad"), backspace: t("dashboards.w.backspace") }) %>
+        <% end %>
       <% end %>
     <% end %>
   <% end %>

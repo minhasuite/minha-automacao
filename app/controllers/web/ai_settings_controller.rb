@@ -5,13 +5,17 @@ module Web
   # (cada chamada com modelo, tokens, custo e origem). Ver: administradores;
   # mudar: o Dono. A chave nunca volta para a tela.
   class AiSettingsController < ApplicationController
+    include TableSort
+
     before_action :require_admin_web!
     before_action :require_owner!, except: :show
 
     def show
       @accounts = AiAccount.all.index_by(&:provider)
       @budget = Ai::Budget.for(current_user.tenant)
-      @calls = AiCall.includes(:automation, :site).order(created_at: :desc).limit(50)
+      # As 50 últimas chamadas, na ordem que a tabela pedir.
+      order = table_sort({ "created_at" => "ai_calls.created_at", "tokens" => "ai_calls.tokens", "cost" => "ai_calls.cost" }, default: "created_at", dir: "desc")
+      @calls = AiCall.where(id: AiCall.order(created_at: :desc).limit(50).select(:id)).includes(:automation, :site).order(order)
       @by_source = AiCall.this_month.charged.group(:source).sum(:cost)
     end
 

@@ -1,24 +1,19 @@
 <%# locals: (site:, record:) -%>
-<%= form_with model: record.new_record? ? [ site, record ] : record, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-3 max-w-4xl" do |f| %>
+<%= ss_form_with model: record.new_record? ? [ site, record ] : record, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-3 max-w-4xl" do |f| %>
   <%= render "web/shared/errors", record: record %>
   <%= hidden_field_tag :back, params[:back], id: nil %>
-  <div class="md:col-span-3"><%= f.label :name, t("automations.settings.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: t("automations.schedules.name_ph"), autofocus: true %></div>
-  <div><%= f.label :kind, t("automations.kind_titles.triggers"), class: "ss-label" %><%= f.select :kind, Schedule::KINDS.invert, {}, class: "ss-input" %></div>
-  <div><%= f.label :time_of_day, t("automations.schedules.time"), class: "ss-label" %><%= f.time_field :time_of_day, class: "ss-input num" %></div>
-  <div><%= f.label :offset_min, t("automations.schedules.offset"), class: "ss-label" %><%= f.number_field :offset_min, class: "ss-input num", min: -720, max: 720 %></div>
-  <fieldset class="md:col-span-3">
-    <legend class="ss-label"><%= t("automations.schedules.days") %></legend>
-    <div class="flex flex-wrap gap-3">
-      <%= f.collection_check_boxes :days, Automations::Dsl.days.each_with_index.map { |d, i| [ i, d ] }, :first, :last do |b| %>
-        <label class="ss-check"><%= b.check_box %> <%= b.text %></label>
-      <% end %>
-    </div>
-  </fieldset>
-  <div><%= f.label :point_id, t("automations.labels.field_types.point"), class: "ss-label" %><%= f.select :point_id, point_choices(site, writable: true), { include_blank: t("automations.schedules.no_point") }, class: "ss-input" %></div>
-  <div><%= f.label :command, t("automations.schedules.command"), class: "ss-label" %><%= f.select :command, AutomationHelper::COMMAND_CHOICES, { include_blank: true }, class: "ss-input" %></div>
-  <div><%= f.label :value, t("automations.schedules.value"), class: "ss-label" %><%= f.text_field :value, value: record.value, class: "ss-input" %></div>
-  <div class="md:col-span-3"><%= f.label :scene_id, t("automations.schedules.scene"), class: "ss-label" %><%= f.select :scene_id, site.scenes.order(:name).pluck(:name, :id), { include_blank: t("automations.settings.none") }, class: "ss-input" %></div>
-  <label class="ss-check"><%= f.check_box :enabled %> <%= t("automations.schedules.active") %></label>
+  <div class="md:col-span-3"><%= f.ss_text_field :name, label: t("automations.settings.name"), required: true, placeholder: t("automations.schedules.name_ph"), autofocus: true %></div>
+  <%= f.ss_select :kind, Schedule::KINDS.invert, label: t("automations.kind_titles.triggers") %>
+  <%= f.ss_time_field :time_of_day, label: t("automations.schedules.time"), class: "num" %>
+  <%= render Ss::StepperInputComponent.new(name: "schedule[offset_min]", value: record.offset_min || 0, min: -720, max: 720, step: 5, unit: "min", label: t("automations.schedules.offset"), id: "schedule_offset_min") %>
+  <div class="md:col-span-3">
+    <%= render Ss::WeekdayPickerComponent.new(name: "schedule[days]", selected: record.days, values: [ 1, 2, 3, 4, 5, 6, 0 ], first_day: 7, legend: t("automations.schedules.days")) %>
+  </div>
+  <%= f.ss_select :point_id, point_choices(site, writable: true), label: t("automations.labels.field_types.point"), include_blank: t("automations.schedules.no_point") %>
+  <%= f.ss_select :command, AutomationHelper::COMMAND_CHOICES, label: t("automations.schedules.command"), include_blank: true %>
+  <%= f.ss_text_field :value, label: t("automations.schedules.value"), value: record.value %>
+  <div class="md:col-span-3"><%= f.ss_select :scene_id, site.scenes.order(:name).pluck(:name, :id), label: t("automations.schedules.scene"), include_blank: t("automations.settings.none") %></div>
+  <%= render Ss::SwitchComponent.new(name: "schedule[enabled]", checked: record.enabled, label: t("automations.schedules.active"), show_label: true, id: "schedule_enabled") %>
   <% if record.next_run_at && record.enabled %><p class="md:col-span-2 text-sm text-muted"><%= t("automations.schedules.next", at: l(record.next_run_at.in_time_zone(site.timezone), format: :short)) %></p><% end %>
   <div class="md:col-span-3 flex flex-wrap gap-2">
     <%= f.submit t("automations.schedules.save"), class: "ss-btn ss-btn-primary" %>

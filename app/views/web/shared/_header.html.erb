@@ -1,10 +1,8 @@
 <%# locals: (title:, subtitle: nil, back: nil, badge: nil) -%>
+<%# Cabeçalho da tela: Ss::PageComponent só com o topo (o corpo segue na view, depois). O bloco são as ações. -%>
 <% content_for :title, title %>
-<div class="mb-6 flex flex-wrap items-end justify-between gap-3 ss-rise">
-  <div class="min-w-0">
-    <% if back %><%= link_to back, class: "inline-flex items-center gap-1 min-h-11 -my-2 pr-3 text-sm font-semibold text-muted no-underline hover:text-accent" do %><%= icon("arrow-left", "size-4") %><%= t("layout.back") %><% end %><% end %>
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-1"><h1 class="min-w-0 break-words [text-wrap:balance]"><%= title %></h1><%= badge %></div>
-    <% if subtitle %><p class="text-sm text-muted mt-1 max-w-3xl"><%= subtitle %></p><% end %>
-  </div>
-  <div class="flex flex-wrap items-center gap-2"><%= yield %></div>
-</div>
+<% actions = capture { yield }.presence %>
+<%= render Ss::PageComponent.new(title: title, subtitle: subtitle, back: back, back_label: t("layout.back"), css: "ma-page-head") do |p| %>
+  <% p.with_badge { badge } if badge.present? %>
+  <% p.with_actions { actions } if actions %>
+<% end %>

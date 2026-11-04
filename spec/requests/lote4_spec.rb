@@ -73,7 +73,7 @@ RSpec.describe "Lote 4: telas de clima e painel" do
 
     post "/paineis/#{d.id}/publicar"
     get "/paineis/#{d.id}", params: { view: v }
-    expect(response.body).to include("dw-weather", "Chuva", "21°", "Hoje", "90%", "dw-hide-desktop", "Luz: <strong>Ligado</strong>")
+    expect(response.body).to include("ss-wx", "Chuva", "21°", "Hoje", "dw-hide-desktop", "Luz: <strong>Ligado</strong>")
     get "/paineis/#{d.id}/w/#{md['id']}"
     expect(response.body).to include("<strong>Ligado</strong>")
   end

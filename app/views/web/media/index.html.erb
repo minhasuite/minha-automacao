@@ -3,54 +3,37 @@
 
 <p class="ss-section mb-3"><%= t("media.index.players") %></p>
 <% if @players.empty? %>
-  <div class="ss-card ss-empty mb-6">
-    <p class="font-bold text-ink"><%= t("media.index.no_players") %></p>
-    <p class="mt-1 max-w-lg mx-auto"><%= t("media.index.no_players_hint") %></p>
-    <% if can?(:manage) %><%= link_to new_site_integration_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("media.index.add_player") %><% end %><% end %>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("media.index.no_players"), text: t("media.index.no_players_hint"), css: "ss-card mb-6") do %>
+    <% if can?(:manage) %><%= link_to new_site_integration_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("media.index.add_player") %><% end %><% end %>
+  <% end %>
 <% else %>
   <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 mb-6">
     <% @players.each do |p| %>
       <% v = p.value.is_a?(Hash) ? p.value : {} %>
       <% cmds = Points::Command.commands_for(p) %>
       <% ok = p.quality == "good" && can?(:command, risk: p.risk) %>
+      <% url = ->(cmd) { site_media_control_path(@site, p, command: cmd) if ok && cmds.include?(cmd) } %>
+      <% state = p.quality != "good" ? :unavailable : { "playing" => :playing, "paused" => :paused, "buffering" => :buffering }.fetch(v["state"].to_s, :idle) %>
+      <% others = cmds.include?("join") ? @players.select { |o| o.id != p.id && o.device.driver == p.device.driver && o.capability == "media" } : [] %>
       <section class="ss-card ss-card-pad ma-player" id="player-<%= p.id %>" aria-labelledby="pl-<%= p.id %>" data-state="<%= v["state"] || "idle" %>">
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-3 mb-3">
           <span class="ss-icon-tile text-accent shrink-0"><%= icon(p.capability == "stream" ? "video-camera" : (p.helper.present? ? "collection" : "music-note")) %></span>
           <div class="min-w-0 flex-1">
             <h2 id="pl-<%= p.id %>" class="truncate"><%= Notifier::Channels::Player.name(p) %></h2>
-            <% if v["title"].present? %>
-              <p class="text-sm text-ink truncate font-semibold"><%= v["title"] %></p>
-              <p class="text-xs text-muted truncate"><%= [ v["artist"], v["album"], v["app"] ].compact_blank.join(" · ") %></p>
-            <% else %>
-              <p class="text-sm text-muted"><%= p.quality == "good" ? t("media.states.#{v['state'].presence_in(%w[playing paused buffering on off idle]) || 'idle'}") : t("media.states.unavailable") %></p>
-            <% end %>
+            <p class="text-sm text-muted"><%= p.quality == "good" ? t("media.states.#{v['state'].presence_in(%w[playing paused buffering on off idle]) || 'idle'}") : t("media.states.unavailable") %></p>
           </div>
-          <% if v["state"] == "playing" %><span class="ss-badge ss-badge-accent"><%= t("media.states.playing") %></span><% end %>
         </div>
-        <% if ok %>
-          <div class="flex flex-wrap items-center gap-2 mt-4">
-            <span class="ss-step" role="group" aria-label="<%= t("media.index.controls", name: p.name) %>">
-              <% [ [ "previous", "rewind" ], [ v["state"] == "playing" ? "pause" : "resume", v["state"] == "playing" ? "pause" : "play" ], [ "next", "fast-forward" ] ].each do |c, ico| %>
-                <% next unless cmds.include?(c) %>
-                <%= button_to site_media_control_path(@site, p), params: { command: c }, title: t("media.cmd.#{c}"), "aria-label": "#{t("media.cmd.#{c}")} #{p.name}" do %><%= icon(ico, "size-4") %><span class="sr-only"><%= t("media.cmd.#{c}") %></span><% end %>
-              <% end %>
-            </span>
-            <% if cmds.include?("mute") %>
-              <%= button_to site_media_control_path(@site, p), params: { command: "mute" }, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-pressed": (v["muted"] == true).to_s, title: t("media.cmd.mute") do %><%= icon(v["muted"] ? "volume-off" : "volume-up", "size-4") %><span class="sr-only"><%= t("media.cmd.mute") %></span><% end %>
-            <% end %>
-            <% if cmds.include?("volume") %>
-              <%= form_with url: site_media_control_path(@site, p), class: "flex items-center gap-2 flex-1 min-w-32" do %>
-                <%= hidden_field_tag :command, "volume", id: nil %>
-                <label class="sr-only" for="vol-<%= p.id %>"><%= t("media.index.volume", name: p.name) %></label>
-                <input type="range" id="vol-<%= p.id %>" name="value" class="dw-range flex-1" min="0" max="100" step="1" value="<%= v["volume"] || 0 %>" data-autosubmit>
-              <% end %>
-            <% end %>
-          </div>
-          <% if cmds.include?("join") %>
-            <% others = @players.select { |o| o.id != p.id && o.device.driver == p.device.driver && o.capability == "media" } %>
-            <% if others.any? %>
-              <%= form_with url: site_media_control_path(@site, p), class: "flex flex-wrap items-end gap-2 mt-3" do %>
+        <%# Player da gem: anterior/tocar/próxima, volume (o slider manda "value") e mudo; o comando vai na query da URL. %>
+        <%= render Ss::MediaPlayerComponent.new(title: v["title"].presence, subtitle: [ v["artist"], v["album"] ].compact_blank.uniq.join(" · ").presence,
+                                                art_url: dw_media_image(v), state: state, source: v["app"].presence,
+                                                play_url: url.call("resume"), pause_url: url.call("pause"), previous_url: url.call("previous"), next_url: url.call("next"),
+                                                volume: ((v["volume"].to_f / 100) if cmds.include?("volume")), volume_url: url.call("volume"), volume_param: "value",
+                                                mute_url: url.call("mute"), muted: v["muted"] == true,
+                                                labels: { play: t("media.cmd.resume"), pause: t("media.cmd.pause"), previous: t("media.cmd.previous"), next: t("media.cmd.next"),
+                                                          volume: t("media.index.volume", name: p.name), mute: t("media.cmd.mute"), unmute: t("dashboards.w.mc.unmute") }) do |player| %>
+          <% if ok && others.any? %>
+            <% player.with_media_picker do %>
+              <%= form_with url: site_media_control_path(@site, p), class: "flex flex-wrap items-end gap-2" do %>
                 <%= hidden_field_tag :command, "join", id: nil %>
                 <div class="flex-1 min-w-40">
                   <label class="ss-label" for="join-<%= p.id %>"><%= t("media.index.join") %></label>

@@ -6,6 +6,10 @@ module AutomationsHelper
                     "skipped" => %w[minus-circle text-warn], "tolerated" => %w[exclamation-circle text-warn],
                     "shadow" => %w[moon text-accent] }.freeze
 
+  # Ícone e tom do bloco no editor (Ss::BlockComponent) pelo tipo da lista.
+  KIND_ICONS = { triggers: "lightning-bolt", conditions: "filter", actions: "play", options: "switch-horizontal" }.freeze
+  KIND_TONES = { triggers: :warn, conditions: :info, actions: :accent, options: :success }.freeze
+
   def dsl_type_choices(kind) = Automations::Dsl.catalog(kind).map { |type, s| [ s.label, type ] }
 
   # "Porta · para Aberto · por 5 min" (campos preenchidos, sem as listas).
@@ -75,4 +79,15 @@ module AutomationsHelper
   end
 
   def block_dom_id(path) = "b-#{path.tr('.', '-')}"
+
+  # Ações de um bloco do editor (Ss::BlockComponent) como ops do rascunho no servidor:
+  # mover (dir=up|down), liga/desliga, duplicar e remover. Sem permissão, nada (só leitura).
+  def block_ops(automation, path)
+    return { duplicable: false, deletable: false } unless can?(:manage)
+
+    url = ->(op) { draft_automation_path(automation, op: op, target: path) }
+    { move_url: url.("move"), move_param: :dir, toggle_url: draft_automation_path(automation), toggle_method: :patch,
+      toggle_params: { op: "toggle", target: path }, duplicate_url: url.("duplicate"), delete_url: url.("remove"), delete_method: :patch,
+      delete_confirm_title: t("automations.block.remove") }
+  end
 end

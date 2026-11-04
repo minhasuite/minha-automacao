@@ -61,6 +61,13 @@ module Automations
       path
     end
 
+    # Cópia do bloco logo abaixo dele (o menu do bloco); devolve o caminho da cópia.
+    def duplicate(path)
+      list, i = parent(path)
+      list.insert(i + 1, list[i].deep_dup)
+      path.sub(/\d+\z/, (i + 1).to_s)
+    end
+
     def remove(path)
       list, i = parent(path)
       list.delete_at(i)

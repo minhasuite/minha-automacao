@@ -47,7 +47,7 @@
 <% end %>
 
 <div class="grid gap-6 lg:grid-cols-3 items-start">
-  <div class="lg:col-span-2 flex flex-col gap-4 min-w-0 ss-flow">
+  <div class="lg:col-span-2 flex flex-col gap-4 min-w-0 ma-flow">
     <% if @errors.any? %>
       <div class="rounded-xl bg-warn-soft p-3 text-sm" role="status">
         <p class="font-bold text-ink flex items-center gap-2"><%= icon("exclamation-circle", "size-5 text-warn") %><%= t("automations.edit.missing") %></p>
@@ -62,7 +62,7 @@
 
     <% (script ? [ :actions ] : Automations::Dsl::KINDS).each do |kind| %>
       <section class="ss-card ss-card-pad" aria-labelledby="sec-<%= kind %>">
-        <h2 id="sec-<%= kind %>" class="ss-flow-step"><%= script ? t("automations.edit.sequence") : t("automations.kind_titles.#{kind}") %></h2>
+        <h2 id="sec-<%= kind %>" class="ma-flow-step"><%= script ? t("automations.edit.sequence") : t("automations.kind_titles.#{kind}") %></h2>
         <p class="text-sm text-muted mb-3"><%= script ? t("automations.edit.sequence_hint") : t("automations.kind_hints.#{kind}") %></p>
         <%= render "web/automations/list", list: Array(@draft[kind.to_s]), path: kind.to_s, kind: kind, points: by_id, automation: @automation %>
       </section>
@@ -141,7 +141,7 @@
       <% if @automation.draft? %>
         <%= button_to discard_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents", data: { turbo_confirm: t("automations.edit.discard_confirm") } } do %><%= icon("reply", "size-4") %><%= t("automations.edit.discard") %><% end %>
       <% end %>
-      <%= button_to automation_path(@automation), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", form: { class: "contents", data: { turbo_confirm: t("automations.edit.delete_confirm", noun: noun, name: @automation.name) } } do %><%= icon("trash", "size-4") %><%= t("automations.common.delete") %><% end %>
+      <%= button_to automation_path(@automation), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", form: { class: "contents", data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("automations.edit.delete_confirm", noun: noun, name: @automation.name) } } do %><%= icon("trash", "size-4") %><%= t("automations.common.delete") %><% end %>
     </section>
   </aside>
 </div>

@@ -24,8 +24,6 @@ module PointsHelper
   ACTION_BUTTONS = { "increment" => "plus", "decrement" => "minus", "reset" => "refresh", "start" => "play", "pause" => "pause", "cancel" => "x",
                      "finish" => "check" }.to_h { |c, ico| [ c, [ ico, LocalizedLabel.new("labels.actions.#{c}") ] ] }.freeze
 
-  TONE_CLASSES = { "success" => "text-success", "danger" => "text-danger", "warn" => "text-warn", "muted" => "text-muted" }.freeze
-
   def site_icon(site) = SITE_ICONS.fetch(site.kind, "home")
   def point_icon(point) = point.icon.presence_in(HelperTypes::ICONS) || POINT_ICONS.fetch(point.capability, "cube")
   def point_on?(point) = point.value == true || point.value == "open"

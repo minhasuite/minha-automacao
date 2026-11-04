@@ -66,7 +66,7 @@
     <% end %>
     <% if can?(:manage) && !@blueprint.builtin? %>
       <%= button_to blueprint_path(@blueprint), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger w-fit",
-                    form: { data: { turbo_confirm: t("automations.bp.delete_confirm") } } do %><%= icon("trash", "size-4") %><%= t("automations.common.delete") %><% end %>
+                    form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("automations.bp.delete_confirm") } } do %><%= icon("trash", "size-4") %><%= t("automations.common.delete") %><% end %>
     <% end %>
   </aside>
 </div>

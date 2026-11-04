@@ -33,7 +33,7 @@ RSpec.describe "Web ondaA1: paridade HA" do
         site.automations.create!(name: "Alarme", category: "Segurança") ]
     end
     get "/locais/#{site.id}/automacoes"
-    expect(response.body).to include("ss-group", "Iluminação", "Segurança", "noite")
+    expect(response.body).to include("ss-collapse", "Iluminação", "Segurança", "noite")
     get "/locais/#{site.id}/automacoes", params: { categoria: "Segurança" }
     expect(response.body).to include("Alarme")
     expect(response.body).not_to include("Acender varanda")

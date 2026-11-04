@@ -1,0 +1,15 @@
+<%# Rodapé do menu (slot side_footer do Ss::AppShellComponent): a pessoa e as ações dela.
+    Recolhido, sobra só a inicial (.ss-shell-label some). %>
+<div class="ma-side-user">
+  <span class="ma-side-avatar" title="<%= current_user.name %>"><%= current_user.name.to_s[0]&.upcase %></span>
+  <div class="ss-shell-label min-w-0 flex-1">
+    <p class="truncate text-sm font-semibold text-white"><%= current_user.name %></p>
+    <p class="truncate text-xs text-white/50"><%= current_user.email %></p>
+  </div>
+  <span class="ss-shell-label ma-side-role"><%= current_user.role_label %></span>
+</div>
+<div class="ss-shell-label"><div class="ma-side-actions">
+  <button type="button" data-action="theme#toggle"><%= icon("moon", "size-4") %><%= t("layout.theme") %></button>
+  <%= render "web/shared/privacy_button", css: "", label: t("layout.values") %>
+  <%= button_to logout_path, method: :delete, form: { class: "contents" } do %><%= icon("logout", "size-4") %><%= t("layout.logout") %><% end %>
+</div></div>

@@ -14,25 +14,8 @@
   .ob-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; max-width: 72rem; margin: 0 auto; }
   .ob-main { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; padding: .5rem 1rem 3rem; }
 
-  .ob-locale { display: inline-flex; align-items: center; gap: .35rem; padding: 0 .25rem 0 .6rem; min-height: 2rem; border-radius: 10px;
-               background: color-mix(in srgb, var(--surface) 80%, transparent); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink-2); }
-  .ob-locale-select { background: transparent; border: 0; color: inherit; font: inherit; font-size: .8rem; font-weight: 600; padding: .3rem .2rem; cursor: pointer; }
-  .ob-locale-select:focus-visible { outline: 2px solid var(--accent); border-radius: 6px; }
-
-  /* ---- Passos no topo ---- */
-  .ob-steps { display: flex; gap: .25rem; list-style: none; margin: 0; padding: 0; width: 100%; max-width: 64rem; }
-  .ob-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .4rem; position: relative; text-align: center; min-width: 0; }
-  .ob-step + .ob-step::before { content: ""; position: absolute; top: 1.1rem; right: calc(50% + 1.4rem); left: calc(-50% + 1.4rem); height: 2px; border-radius: 2px;
-                                background: var(--line); }
-  .ob-step-done + .ob-step::before, .ob-step-done + .ob-step-current::before { background: var(--grad); }
-  .ob-dot { display: grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 999px; background: var(--surface); color: var(--muted);
-            box-shadow: inset 0 0 0 1.5px var(--line); transition: transform .3s cubic-bezier(.2, .8, .2, 1), box-shadow .3s; text-decoration: none; }
-  .ob-step-done .ob-dot { background: var(--grad); color: #fff; box-shadow: none; }
-  .ob-step-current .ob-dot { color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 6px var(--ring); transform: scale(1.08); }
-  a.ob-dot:hover { transform: scale(1.12); }
-  .ob-step-label { font-size: .72rem; font-weight: 600; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ob-step-current .ob-step-label { color: var(--ink); }
-  @media (max-width: 639px) { .ob-step-label { display: none; } .ob-step-current .ob-step-label { display: block; position: absolute; top: 2.6rem; white-space: nowrap; overflow: visible; } .ob-steps { margin-bottom: 1rem; } }
+  /* ---- Passos no topo: Ss::WizardComponent (modo servidor); o cartão do passo é o painel ---- */
+  .ob-wizard { width: 100%; max-width: 64rem; }
 
   /* ---- Cartão do passo: ilustração + conteúdo ---- */
   .ob-card { width: 100%; max-width: 64rem; display: grid; overflow: hidden; view-transition-name: ob-card; animation: ob-in .55s cubic-bezier(.2, .8, .2, 1) both; }
@@ -85,7 +68,6 @@
   .ob-found-item:has(input:checked) { box-shadow: inset 0 0 0 2px var(--accent); }
   .ob-found-item.is-added { cursor: default; opacity: .75; }
   .ob-found-ico { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; flex-shrink: 0; border-radius: 12px; background: var(--grad); color: #fff; }
-  .ob-empty .ss-empty-art { padding: 1rem 0; }
 
   /* ---- Áreas: sugestões e quadro de arrastar ---- */
   .ob-chip { display: inline-flex; align-items: center; gap: .45rem; padding: .4rem .8rem .4rem .55rem; border-radius: 999px; cursor: pointer; font-size: .85rem; font-weight: 600;

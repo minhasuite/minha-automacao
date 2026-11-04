@@ -1,10 +1,23 @@
 <%# locals: (list:, path:, kind:, points:, automation:) -%>
+<%# Blocos no Ss::BlockListComponent; o liga/desliga, mover, duplicar e remover são ops do rascunho (PATCH/POST em draft_automation_path com op e target), no servidor. -%>
 <% if list.any? %>
-  <ol class="grid gap-3" aria-label="<%= t(kind.in?(%i[triggers conditions actions options]) ? "automations.kind_titles.#{kind}" : "automations.list.blocks") %>">
+  <%= render Ss::BlockListComponent.new(name: "blocks", label: t(kind.in?(%i[triggers conditions actions options]) ? "automations.kind_titles.#{kind}" : "automations.list.blocks"),
+                                        labels: { move_up: t("automations.block.up"), move_down: t("automations.block.down"), delete: t("automations.block.remove") }) do |l| %>
     <% list.each_with_index do |node, i| %>
-      <%= render "web/automations/block", node: node, path: "#{path}.#{i}", kind: kind, points: points, automation: automation, first: i.zero?, last: i == list.size - 1 %>
+      <% bpath = "#{path}.#{i}" %>
+      <% spec = Automations::Dsl.spec(kind, kind == :options ? "option" : node["type"]) %>
+      <% plain = spec ? spec.fields.reject { |fd| Automations::Dsl.list_kind?(fd.kind) } : [] %>
+      <% nested = spec && spec.fields.any? { |fd| Automations::Dsl.list_kind?(fd.kind) } %>
+      <% focus = params[:b] == bpath %>
+      <% l.with_block(id: bpath, title: spec ? spec.label : t("automations.block.unknown_type", type: node["type"]),
+                      summary: (block_summary(node, spec, points).presence || t("automations.block.tap_to_fill") if plain.any?),
+                      icon: icon(AutomationsHelper::KIND_ICONS.fetch(kind, "puzzle"), ""), tone: AutomationsHelper::KIND_TONES.fetch(kind, :accent),
+                      enabled: node["enabled"] != false, open: focus, focused: focus, html_id: block_dom_id(bpath), css: "scroll-mt-24", **block_ops(automation, bpath),
+                      delete_confirm: (t(nested ? "automations.block.remove_confirm_nested" : "automations.block.remove_confirm") if can?(:manage))) do %>
+        <%= render "web/automations/block", node: node, path: bpath, kind: kind, spec: spec, plain: plain, points: points, automation: automation %>
+      <% end %>
     <% end %>
-  </ol>
+  <% end %>
 <% end %>
 <% if can?(:manage) %>
   <%= form_with url: draft_automation_path(automation), method: :patch, class: "flex flex-wrap items-center gap-2 #{'mt-3' if list.any?}" do %>

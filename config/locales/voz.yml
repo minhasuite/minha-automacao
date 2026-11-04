@@ -89,8 +89,8 @@ pt-BR:
       no_text: (sem texto)
       error: Erro
       bar: Tempo total %{ms} ms
-      ms: '%{ms} ms'
       who: Quem e onde
+      stages: Etapas
     sources:
       web: Web
       app: App
@@ -250,8 +250,8 @@ en:
       no_text: (no text)
       error: Error
       bar: Total time %{ms} ms
-      ms: '%{ms} ms'
       who: Who and where
+      stages: Stages
     sources:
       web: Web
       app: App
@@ -411,8 +411,8 @@ es:
       no_text: (sin texto)
       error: Error
       bar: Tiempo total %{ms} ms
-      ms: '%{ms} ms'
       who: Quién y dónde
+      stages: Etapas
     sources:
       web: Web
       app: App

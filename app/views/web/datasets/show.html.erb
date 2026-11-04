@@ -13,24 +13,16 @@
 <% end %>
 
 <% if @records.empty? %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= @filters.present? || @days.positive? ? t("datasets.show.none_filtered") : t("datasets.show.none") %></p>
-    <p class="mt-1"><%= t("datasets.show.none_text") %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: (@filters.present? || @days.positive? ? t("datasets.show.none_filtered") : t("datasets.show.none")), text: t("datasets.show.none_text"), css: "ss-card") %>
 <% else %>
-  <section class="ss-card sm:overflow-x-auto" aria-label="<%= t("datasets.show.records") %>">
-    <table class="ss-table ss-table-stack">
-      <thead><tr><th><%= t("datasets.show.when") %></th><% @columns.each do |c| %><th><%= c %></th><% end %></tr></thead>
-      <tbody>
-        <% @records.each do |r| %>
-          <tr>
-            <td class="num whitespace-nowrap" data-label="<%= t("datasets.show.when") %>"><%= l(r.created_at.in_time_zone(@site.timezone), format: t("datasets.show.time_format")) %></td>
-            <% @columns.each do |c| %>
-              <% v = r.data[c] %>
-              <td class="<%= 'num r' if v.is_a?(Numeric) %> max-w-xs truncate" data-label="<%= c %>" title="<%= v.to_s.truncate(300) %>"><%= v == true ? t("datasets.show.yes") : (v == false ? t("datasets.show.no") : (v.is_a?(Hash) || v.is_a?(Array) ? v.to_json : v).to_s.truncate(120)) %></td>
-            <% end %>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </section>
-  <%= render "web/shared/pagination", pagy: @pagy %>
+  <%= render Ss::DataTableComponent.new(rows: @records, id: "registros", caption: t("datasets.show.records"), sort: @sort, dir: @dir, tools: false,
+                                        pagination: { page: @pagy.page, pages: @pagy.pages, total: @pagy.count }) do |tb| %>
+    <% tb.column :created_at, t("datasets.show.when"), sortable: true do |r| %><span class="num whitespace-nowrap"><%= l(r.created_at.in_time_zone(@site.timezone), format: t("datasets.show.time_format")) %></span><% end %>
+    <% @columns.each do |c| %>
+      <% tb.column "f_#{c}", c do |r| %>
+        <% v = r.data[c] %>
+        <span class="<%= 'num' if v.is_a?(Numeric) %> block max-w-xs truncate" title="<%= v.to_s.truncate(300) %>"><%= v == true ? t("datasets.show.yes") : (v == false ? t("datasets.show.no") : (v.is_a?(Hash) || v.is_a?(Array) ? v.to_json : v).to_s.truncate(120)) %></span>
+      <% end %>
+    <% end %>
+  <% end %>
 <% end %>

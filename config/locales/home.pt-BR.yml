@@ -221,22 +221,18 @@ pt-BR:
     not_found_hint: Este registro não existe ou não é da sua empresa.
     back_home: Voltar ao início
     pagination: Paginação
-    page_info: "%{count} registros · página %{page} de %{pages}"
-    previous: Anterior
-    next: Próxima
     icon: Ícone
     icon_default: Padrão
     confirm:
       title: Tem certeza?
       back: Voltar
       ok: Confirmar
+      delete: Excluir
+      remove: Remover
+      erase: Apagar
     palette:
       label: Buscar e executar
-      input: Buscar ou mandar
       hint: 'Buscar ou mandar: apagar sala, ativar cena…'
-      navigate: navegar
-      run: abrir ou executar
-      anywhere: abre de qualquer tela
     cancel: Cancelar
     edit: Editar
     edit_name: Editar %{name}
@@ -500,19 +496,14 @@ pt-BR:
     daily: Média por dia (faixa = mín. a máx.)
     drag: Arraste no gráfico para aproximar o trecho.
     no_readings: Sem leituras nesse período.
-    no_readings_short: Sem leituras
     timeline: Linha do tempo
     empty: Escolha os pontos para comparar.
     empty_hint: 'Temperatura com o ar ligado, consumo com a bomba, porta com movimento: tudo no mesmo tempo.'
   logbook:
     title: Diário
     subtitle: 'Tudo o que aconteceu em %{site}: mudanças, comandos, automações, cenas, alertas e acessos.'
-    today: Hoje
-    yesterday: Ontem
-    day_format: "%A, %d de %B"
     loading: Carregando mais…
     start: Início do período.
-    bigger: Ver um período maior
     search: Buscar
     search_hint: Buscar ponto, aparelho, automação ou cena
     more_filters: Mais filtros
@@ -525,6 +516,7 @@ pt-BR:
     empty: Nada aconteceu neste período.
     empty_filtered: Nada aconteceu neste período com esses filtros.
     empty_hint: Tente um período maior ou tire algum filtro.
+    bigger: Ver um período maior
   maps:
     title: Mapa
     subtitle: Onde estão as pessoas de %{site}, as zonas e o caminho de hoje. Só moradores, técnicos e o dono veem.

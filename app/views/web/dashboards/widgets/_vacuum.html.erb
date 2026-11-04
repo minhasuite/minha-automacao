@@ -2,7 +2,8 @@
 <% d = w["data"] %>
 <% p = points[d["point_ids"].first] %>
 <% if p.nil? %>
-  <div class="dw-card dw-tile dw-unavailable"><span class="dw-ico"><%= icon("vacuum") %></span><span><span class="dw-name"><%= w["label"].presence || t("dashboards.w.vacuum_removed") %></span><span class="dw-state"><%= t("dashboards.w.not_found") %></span></span></div>
+  <%= render Ss::DeviceTileComponent.new(name: w["label"].presence || t("dashboards.w.vacuum_removed"), status: :unavailable, icon: icon("vacuum").to_s,
+                                         unavailable_label: t("dashboards.w.not_found"), css: "h-full") %>
 <% else %>
   <% off_line = p["quality"] != "good" %>
   <% detail = points[d["detail"]] %>
@@ -11,17 +12,11 @@
   <% can = p["can_command"] && !off_line %>
   <% busy = p["value"].in?(%w[cleaning returning]) %>
   <% uid = w["id"] %>
-  <div class="dw-card dw-vacuum <%= 'dw-on' if busy %> <%= 'dw-unavailable' if off_line %>">
-    <div class="flex items-center gap-3">
-      <span class="dw-ico"><%= icon(w["icon"].presence || "vacuum") %></span>
-      <%= link_to point_path(p["id"]), class: "min-w-0 flex-1 no-underline", data: { turbo_frame: "_top" } do %>
-        <span class="dw-name"><%= w["label"].presence || p["device"] %></span>
-        <span class="dw-state"><%= off_line ? t("dashboards.w.offline") : [ p["text"], (detail["text"] if detail && detail["text"] != p["text"]) ].compact.uniq.join(" · ") %></span>
-      <% end %>
-      <% if battery && battery["value"].is_a?(Numeric) %>
-        <span class="dw-vac-battery num" title="<%= t("dashboards.w.battery") %>"><%= battery["text"] %></span>
-      <% end %>
-    </div>
+  <%# Robô montado com as peças da gem: o tile (nome, estado, bateria) e, no rodapé, comandos, cômodos e peças. %>
+  <% state = [ p["text"], (detail["text"] if detail && detail["text"] != p["text"]), (battery["text"] if battery && battery["value"].is_a?(Numeric)) ].compact.uniq.join(" · ") %>
+  <%= render Ss::DeviceTileComponent.new(name: w["label"].presence || p["device"], state: state, on: busy, status: dw_tile_status(p, off_line), icon: icon(w["icon"].presence || "vacuum").to_s,
+                                         url: point_path(p["id"]), link_data: { turbo_frame: "_top" }, wide: true, unavailable_label: t("dashboards.w.offline"), css: "dw-vacuum h-full") do |tile| %>
+  <% tile.with_footer do %>
     <% if busy && !off_line %>
       <%# Robô limpando (uiweb): ele percorre o piso em faixas e deixa o rastro; só CSS. %>
       <div class="dw-vac-run dw-anim <%= 'dw-vac-back' if p['value'] == 'returning' %>" aria-hidden="true">
@@ -36,7 +31,7 @@
       <div class="dw-vac-actions" role="group" aria-label="<%= t("dashboards.w.vacuum_commands") %>">
         <% [ [ "start", p["value"] == "paused" ? t("dashboards.w.vac.resume") : t("dashboards.w.vac.start"), "play" ], [ "pause", t("dashboards.w.vac.pause"), "pause" ], [ "stop", t("dashboards.w.vac.stop"), "stop" ], [ "home", t("dashboards.w.vac.home"), "home" ] ].each do |cmd, label, ico| %>
           <% next unless d["actions"].include?(cmd) %>
-          <%= dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "dw-vac-btn #{'dw-vac-main' if cmd == 'start'}", "aria-label": label) do %><%= icon(ico, "size-4") %><span><%= label %></span><% end %>
+          <%= dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "ss-btn #{cmd == 'start' ? 'ss-btn-primary' : 'ss-btn-ghost'}", "aria-label": label) do %><%= icon(ico, "size-4") %><span><%= label %></span><% end %>
         <% end %>
       </div>
     <% end %>
@@ -73,7 +68,7 @@
       <p class="dw-vac-title mt-4"><%= t("dashboards.w.vac.dock") %></p>
       <div class="dw-vac-actions">
         <% base.each do |cmd, label| %>
-          <%= dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "dw-vac-btn") do %><span><%= label %></span><% end %>
+          <%= dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "ss-btn ss-btn-ghost") do %><span><%= label %></span><% end %>
         <% end %>
       </div>
     <% end %>
@@ -86,11 +81,12 @@
           <% pct = part["value"].is_a?(Numeric) ? part["value"].clamp(0, 100) : nil %>
           <li>
             <span class="min-w-0 truncate"><%= part["name"] %></span>
-            <span class="dw-vac-bar" aria-hidden="true"><span class="<%= 'dw-vac-low' if pct && pct < 20 %>" style="width: <%= pct || 0 %>%"></span></span>
+            <span class="ss-progress" aria-hidden="true"><span class="ss-progress-bar <%= 'bg-danger' if pct && pct < 20 %>" style="width: <%= pct || 0 %>%"></span></span>
             <span class="num text-right"><%= pct ? "#{pct.round}%" : "—" %></span>
           </li>
         <% end %>
       </ul>
     <% end %>
-  </div>
+  <% end %>
+  <% end %>
 <% end %>

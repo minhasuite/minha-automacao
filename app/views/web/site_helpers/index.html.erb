@@ -5,11 +5,7 @@
 
 <% filtered = params.values_at(:q, :tipo).any?(&:present?) %>
 <% if @counts.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("site_helpers.index.empty") %></p>
-    <p class="mt-1 max-w-md mx-auto"><%= t("site_helpers.index.empty_text") %></p>
-    <% if can?(:manage) %><%= link_to new_site_helper_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("site_helpers.index.create_first") %><% end %><% end %>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("site_helpers.index.empty"), text: t("site_helpers.index.empty_text"), css: "ss-card") do %><% if can?(:manage) %><%= link_to new_site_helper_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("site_helpers.index.create_first") %><% end %><% end %><% end %>
 <% else %>
   <%= form_with url: site_helpers_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do %>
     <div class="min-w-48 flex-1"><label for="q" class="ss-label"><%= t("site_helpers.index.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("site_helpers.index.search_ph") %></div>
@@ -25,7 +21,7 @@
   </nav>
 
   <% if @helpers.empty? %>
-    <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= filtered ? t("site_helpers.index.none_filtered") : t("site_helpers.index.none") %></p><% if filtered %><%= link_to t("site_helpers.index.clear"), site_helpers_path(@site), class: "ss-btn ss-btn-ghost mt-3" %><% end %></div>
+    <%= render Ss::EmptyStateComponent.new(title: (filtered ? t("site_helpers.index.none_filtered") : t("site_helpers.index.none")), variant: :busca, css: "ss-card") do %><% if filtered %><%= link_to t("site_helpers.index.clear"), site_helpers_path(@site), class: "ss-btn ss-btn-ghost" %><% end %><% end %>
   <% else %>
     <% @helpers.each { |h| %><%= turbo_stream_from h, channel: PointsChannel %><% } %>
     <% groups = category_groups(@helpers) %>

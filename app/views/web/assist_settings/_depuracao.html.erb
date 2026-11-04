@@ -1,7 +1,7 @@
 <%# locals: (site:) -%>
 <p class="text-sm text-muted mb-4 max-w-3xl"><%= t("assist_settings.runs.pitch", keep: AssistRun::KEEP) %></p>
 <% if @runs.empty? %>
-  <div class="ss-card ss-empty"><%= icon("microphone", "size-8 text-muted") %><p class="font-bold text-ink mt-2"><%= t("assist_settings.runs.empty") %></p><p class="mt-1 text-sm"><%= t("assist_settings.runs.empty_hint") %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("assist_settings.runs.empty"), text: t("assist_settings.runs.empty_hint"), css: "ss-card") %>
 <% else %>
   <ol class="grid gap-3" aria-label="<%= t("assist_settings.runs.label") %>">
     <% @runs.each do |r| %>
@@ -23,22 +23,15 @@
           <div class="vz-run-bar" role="img" aria-label="<%= t("assist_settings.runs.bar", ms: r.duration_ms.to_i) %>">
             <% r.stages.each do |s| %><span class="vz-seg vz-seg-<%= s["stage"] %> <%= 'vz-seg-error' if s["error"] %>" style="flex-grow: <%= [ s["ms"].to_i, total / 50, 1 ].max %>"></span><% end %>
           </div>
-          <dl class="vz-run-stages">
-            <% r.stages.each do |s| %>
-              <div class="vz-run-stage">
-                <dt><span class="vz-dot vz-seg-<%= s["stage"] %>"></span><%= t("assist_settings.stages.#{s['stage']}", default: s["stage"]) %></dt>
-                <dd>
-                  <span class="num"><%= t("assist_settings.runs.ms", ms: s["ms"].to_i) %></span>
-                  <% if s["engine"] %> · <%= Assist::Engines[s["engine"]]&.label || s["engine"] %><% end %>
-                  <% if s["text"] %> · “<%= s["text"] %>”<% end %>
-                  <% if s["intent"] %> · <code><%= s["intent"] %></code><% end %>
-                  <% if s["slots"].present? %> · <%= s["slots"].map { |k, v| "#{k}=#{v}" }.join(", ") %><% end %>
-                  <% if s["error"] %><span class="block text-danger"><%= s["error"] %></span><% end %>
-                </dd>
-              </div>
-            <% end %>
-            <div class="vz-run-stage"><dt><%= t("assist_settings.runs.who") %></dt><dd><%= [ r.user&.name, r.pipeline&.name, t("assist_settings.sources.#{r.source}"), r.language ].compact.join(" · ") %></dd></div>
-          </dl>
+          <%# Etapas no Ss::JobProgressComponent (tempo de cada uma e o total); a faixa colorida acima é a proporção. %>
+          <% stages = r.stages.map do |s|
+               detail = [ (Assist::Engines[s["engine"]]&.label || s["engine"] if s["engine"]), (%(“#{s["text"]}”) if s["text"]), s["intent"],
+                          (s["slots"].map { |k, v| "#{k}=#{v}" }.join(", ") if s["slots"].present?), s["error"] ].compact_blank.join(" · ")
+               { name: t("assist_settings.stages.#{s['stage']}", default: s["stage"]), duration: s["ms"].to_i, status: (s["error"] ? :failed : :done), detail: detail.presence }
+             end %>
+          <%= render Ss::JobProgressComponent.new(id: "assist-run-#{r.id}", title: t("assist_settings.runs.stages"), state: (r.error ? :failed : :done), error: r.error,
+                                                  stages: stages, css: "vz-run-job") %>
+          <p class="vz-run-who"><b><%= t("assist_settings.runs.who") %></b> <%= [ r.user&.name, r.pipeline&.name, t("assist_settings.sources.#{r.source}"), r.language ].compact.join(" · ") %></p>
         </details>
       </li>
     <% end %>

@@ -113,6 +113,61 @@ module DashboardsHelper
     tag.span(art, class: css, style: style.join("; ").presence)
   end
 
+  # Ícone do Ss::DeviceTileComponent: a arte do ponto (cortina e portão pela
+  # posição, ventilador girando pela velocidade). O fundo aceso e a cor vêm do
+  # `tone:` do tile (dw_tone), não daqui.
+  def dw_device_icon(w, p)
+    art = if w["icon"].present? then icon(w["icon"])
+    elsif dw_cover?(p) then dw_cover_art(p["value"])
+    elsif p["capability"] == "gate" then dw_gate_art(p["value"])
+    else icon(dw_point_icon(p))
+    end
+    spin = dw_fan?(p) && dw_on?(p)
+    tag.span(art, class: [ "dw-anim dw-ico-art", ("dw-spinning" if spin) ], style: (dw_spin_style(p) if spin)).to_s
+  end
+
+  # Cor do tile aceso: a cor real da luz, âmbar para luz sem cor, a cor do widget ou a marca.
+  WIDGET_TONES = { "amber" => :heat, "green" => :success, "red" => :danger, "blue" => :info }.freeze
+  def dw_tone(w, p, glow: nil)
+    return WIDGET_TONES[w["color"]] if w["color"].present?
+    return glow || :heat if p && dw_light?(p)
+
+    nil
+  end
+
+  # Parâmetros de um comando de widget (vão no form do componente da gem; o
+  # form fica dentro do turbo-frame do widget e volta para ele).
+  def dw_command_params(command, w:, dashboard:, live:, value: nil)
+    params = { command: command, value: value }.compact
+    params.merge!(dashboard_id: dashboard.id, widget_id: w["id"]) if live
+    params
+  end
+
+  # Número sem ".0" para o Ss::RangeComponent (o sprintf do format e o JS mostram o valor cru).
+  def dw_plain(v)
+    return v unless v.is_a?(Numeric)
+
+    (v % 1).zero? ? v.to_i : v.to_f
+  end
+
+  # Formato do Ss::RangeComponent pela unidade ("%s%%", "%s °C"; o % da unidade escapado).
+  def dw_range_format(unit)
+    return "%s" if unit.blank?
+
+    unit == "%" ? "%s%%" : "%s #{unit.to_s.gsub('%', '%%')}"
+  end
+
+  # Texto da confirmação do ponto (risco ou `confirm`), para o `confirm:` da gem.
+  def dw_confirm_text(p) = dw_confirm(p)[:turbo_confirm]
+
+  # Estado do tile pelo ponto: sem sinal, sem permissão (comandaria, mas o papel não deixa) ou pronto.
+  def dw_tile_status(p, off_line)
+    return :unavailable if off_line
+    return :locked if p["locked"]
+
+    :ready
+  end
+
   # Janela com a cortina na posição (0 = fechada, 100 = aberta).
   def dw_cover_art(value)
     open = value.is_a?(Numeric) ? value.to_f.clamp(0, 100) / 100 : 0.5
@@ -129,6 +184,12 @@ module DashboardsHelper
                         tag.g(safe_join([ bars, tag.path(d: "M5 9h12M5 16h12", stroke: "currentColor", "stroke-width": 1.4) ]), class: "dw-gate-bars dw-gate-#{value.presence || 'unknown'}") ]),
             viewBox: "0 0 24 24", class: "size-5", "aria-hidden": true)
   end
+
+  # Condição do clima (Weather::CONDITIONS, as do HA) → a do Ss::WeatherCardComponent.
+  WEATHER_CONDITIONS = { "sunny" => :clear, "clear-night" => :clear_night, "partlycloudy" => :partly_cloudy, "cloudy" => :cloudy,
+                         "fog" => :fog, "rainy" => :rain, "pouring" => :rain, "snowy-rainy" => :rain, "hail" => :rain,
+                         "lightning-rainy" => :storm, "snowy" => :snow, "windy" => :wind }.freeze
+  def dw_weather_condition(c) = WEATHER_CONDITIONS.fetch(c.to_s, :cloudy)
 
   # Capa da mídia só por link seguro (https:// ou do próprio servidor).
   def dw_media_image(m) = m["image"].to_s.match?(%r{\A(https://|/)[^"'()\s<>]+\z}) ? m["image"] : nil
@@ -158,8 +219,8 @@ module DashboardsHelper
   end
 
   # Formulário de valor (slider, seleção) que se envia sozinho ao mudar.
-  def dw_command_form(p, command, w:, dashboard:, live:, &)
-    form_with url: command_point_path(p["id"]), data: dw_confirm(p).merge(turbo_frame: live ? nil : "_top").compact, class: "mt-3" do |f|
+  def dw_command_form(p, command, w:, dashboard:, live:, data: {}, &)
+    form_with url: command_point_path(p["id"]), data: dw_confirm(p).merge(turbo_frame: live ? nil : "_top", **data).compact, class: "mt-3" do |f|
       safe_join([ hidden_field_tag(:command, command, id: nil),
                   (hidden_field_tag(:dashboard_id, dashboard.id, id: nil) if live),
                   (hidden_field_tag(:widget_id, w["id"], id: nil) if live), capture(f, &) ].compact)
@@ -210,27 +271,37 @@ module DashboardsHelper
     [ { controller: "dw-gesture", dw_gesture_kinds_value: gestures.keys.join(" ") }, safe_join(items) ]
   end
 
+  # Controle aprendido (widget remote) → teclas do Ss::DPadComponent pelo nome do botão
+  # ("Cima", "up", "OK", "Vol +"...). Só vira cruz com as 5 teclas da cruz aprendidas; a linha
+  # voltar/início/menu e as gangorras só com todas as delas. O resto vai em extra_buttons.
+  # nil = sem cruz (a tela mostra os botões soltos).
+  REMOTE_KEYS = {
+    up: %w[up cima paracima arriba], down: %w[down baixo parabaixo abajo], left: %w[left esquerda izquierda],
+    right: %w[right direita derecha], ok: %w[ok select enter confirmar], back: %w[back voltar return volver atras],
+    home: %w[home inicio], menu: %w[menu], volume_up: %w[volup volumeup volume+ vol+ aumentarvolume subirvolume],
+    volume_down: %w[voldown volumedown volume- vol- baixarvolume diminuirvolume bajarvolume], mute: %w[mute mudo semsom silencio],
+    channel_up: %w[chup channelup canal+ ch+ proximocanal], channel_down: %w[chdown channeldown canal- ch- canalanterior]
+  }.freeze
+  REMOTE_GROUPS = { cross: %i[up down left right ok], nav: %i[back home menu], volume: %i[volume_up volume_down], channel: %i[channel_up channel_down] }.freeze
+
+  def dw_remote_pad(buttons)
+    norm = ->(b) { I18n.transliterate(b.to_s).downcase.gsub(/[^a-z0-9+-]/, "") }
+    keys = {}
+    Array(buttons).each do |b|
+      key = REMOTE_KEYS.find { |_, names| names.include?(norm.(b)) }&.first
+      keys[key] ||= b if key
+    end
+    return unless REMOTE_GROUPS[:cross].all? { keys.key?(_1) }
+
+    use = ->(g) { REMOTE_GROUPS[g].all? { keys.key?(_1) } }
+    used = keys.slice(*REMOTE_GROUPS[:cross], *(REMOTE_GROUPS[:nav] if use.(:nav)), *(REMOTE_GROUPS[:volume] if use.(:volume)),
+                      *(REMOTE_GROUPS[:channel] if use.(:channel)), *(:mute if keys.key?(:mute)))
+    { keys: used, nav_row: use.(:nav), volume: use.(:volume), channel: use.(:channel), mute: keys.key?(:mute),
+      extra_buttons: (Array(buttons) - used.values).map { |b| { name: b, label: b } } }
+  end
+
   # Recurso do tile: o partial do plugin (ou o do kind).
   def dw_feature_partial(f) = Dashboards::TileFeatures[f["type"]]&.partial || "web/dashboards/features/#{f['kind']}"
-
-  # Linha da tendência (0..1 da faixa) como pontos do <polyline> de 100×28.
-  def dw_spark(values)
-    list = Array(values).grep(Numeric)
-    return "" if list.size < 2
-
-    lo, hi = list.minmax
-    span = (hi - lo).nonzero? || 1
-    list.each_with_index.map { |v, i| "#{(i * 100.0 / (list.size - 1)).round(1)},#{(26 - ((v - lo) / span * 24)).round(1)}" }.join(" ")
-  end
-
-  # Passo do −/+ dentro da faixa.
-  def dw_step(f, dir)
-    v = f["value"].is_a?(Numeric) ? f["value"] : (f["min"] || 0)
-    n = (v + (dir * (f["step"] || 1))).round(2)
-    n = [ n, f["min"] ].max if f["min"]
-    n = [ n, f["max"] ].min if f["max"]
-    n % 1 == 0 ? n.to_i : n
-  end
 
   def dw_view_path(dashboard, view, home:)
     slug = view["path"].presence || view["id"]

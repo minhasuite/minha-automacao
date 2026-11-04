@@ -31,10 +31,10 @@
       <% end %>
       <div class="w-full max-w-md">
         <div class="flex justify-end mb-3"><%= render "web/shared/locale_picker" %></div>
-        <%= render "web/shared/flash" %>
         <div class="ss-card p-7 sm:p-10 ss-rise"><%= yield %></div>
       </div>
     </main>
   </div>
+  <%= render "web/shared/flash" %>
 </body>
 </html>

@@ -16,7 +16,7 @@
 </div>
 <% if @offline %><p class="text-sm text-muted mb-3" role="status"><%= icon("information-circle", "size-4 inline") %> <%= @offline %></p><% end %>
 <% if @apps.empty? %>
-  <div class="ss-card ss-empty"><p><%= t("apps.no_match", q: params[:q]) %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("apps.no_match", q: params[:q]), variant: :busca, css: "ss-card") %>
 <% else %>
   <ul class="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3" aria-label="<%= t("apps.catalog") %>">
     <% @apps.each do |app| %>
@@ -48,7 +48,7 @@
           <div class="min-w-0"><p class="font-semibold text-ink"><%= r["name"] %> <span class="text-xs text-muted"><%= t("resto.apps.repo_apps", count: r["apps"].to_h.size) %></span></p>
             <p class="text-xs text-muted break-all"><%= r["url"] %></p></div>
           <%= button_to app_repositories_path, method: :delete, params: { url: r["url"] }, class: "ss-btn ss-btn-ghost ss-btn-sm",
-                        form: { data: { turbo_confirm: t("resto.apps.remove_confirm", name: r["name"]) } } do %><%= icon("trash", "size-4") %><%= t("integrations.common.remove") %><% end %>
+                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("integrations.common.remove"), turbo_confirm: t("resto.apps.remove_confirm", name: r["name"]) } } do %><%= icon("trash", "size-4") %><%= t("integrations.common.remove") %><% end %>
         </li>
       <% end %>
     </ul>

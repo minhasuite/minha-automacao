@@ -5,41 +5,41 @@
 <% can_cmd = point.writable && can?(:command, risk: point.risk) %>
 <section class="grid gap-4 lg:grid-cols-3 mt-4" aria-labelledby="cam-title">
   <div class="ss-card ss-card-pad lg:col-span-2 ma-cam" data-app="skip">
-    <div class="dw-camera !p-0" data-controller="camera" data-camera-snapshot-value="<%= camera_snapshot_path(point) %>"
-         data-camera-webrtc-value="<%= camera_webrtc_path(point) %>" data-camera-interval-value="5"
-         data-camera-mic-denied-value="<%= t("cameras.mic_denied") %>">
-      <div class="flex flex-wrap items-center gap-2 mb-3">
-        <h2 id="cam-title" class="flex-1 min-w-0"><%= t("cameras.title") %></h2>
-        <button type="button" class="dw-camera-live" data-camera-target="liveButton" data-action="camera#toggle" aria-pressed="false"><%= t("dashboards.w.live") %></button>
-        <% if cmds.include?("play_media") && can_cmd %>
-          <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm ma-talk" data-camera-target="talkButton" data-action="camera#talk" aria-pressed="false"><%= icon("microphone", "size-4") %><%= t("cameras.talk") %></button>
-        <% end %>
-      </div>
-      <div class="dw-camera-view">
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <h2 id="cam-title" class="flex-1 min-w-0"><%= t("cameras.title") %></h2>
+    </div>
+    <%# Tile de câmera da gem; o controller camera (quadro, WebRTC e falar) troca o data-state. O selo diz se grava. %>
+    <%= render Ss::CameraTileComponent.new(title: point.name, state: :loading, age: 0, retry_button: true, status: (t("cameras.modes.#{rec['mode']}") unless rec["mode"] == "off"),
+                                           data: { controller: "camera", camera_snapshot_value: camera_snapshot_path(point), camera_webrtc_value: camera_webrtc_path(point),
+                                                   camera_interval_value: 5, camera_mic_denied_value: t("cameras.mic_denied") }) do |c| %>
+      <% c.with_frame do %>
         <img data-camera-target="img" alt="<%= t("dashboards.w.image_x", name: point.name) %>" hidden>
         <video data-camera-target="video" playsinline autoplay hidden aria-label="<%= t("dashboards.w.live_x", name: point.name) %>"></video>
-        <span class="dw-camera-status" data-camera-target="status" role="status"><%= t("dashboards.w.loading") %></span>
-      </div>
-    </div>
+      <% end %>
+      <% c.with_action do %>
+        <button type="button" data-camera-target="liveButton" data-action="camera#toggle" aria-pressed="false" title="<%= t("dashboards.w.live") %>" aria-label="<%= t("dashboards.w.live_x", name: point.name) %>"><%= icon("status-online", "size-4") %></button>
+      <% end %>
+      <% if cmds.include?("play_media") && can_cmd %>
+        <% c.with_action do %>
+          <button type="button" class="ma-talk" data-camera-target="talkButton" data-action="camera#talk" aria-pressed="false" title="<%= t("cameras.talk") %>" aria-label="<%= t("cameras.talk") %>"><%= icon("microphone", "size-4") %></button>
+        <% end %>
+      <% end %>
+    <% end %>
+    <%# Aviso do controller camera (microfone negado). %>
+    <p class="text-sm font-semibold text-danger mt-2" data-camera-target="status" role="status" hidden></p>
   </div>
 
   <div class="grid gap-4 content-start">
     <% if cmds.include?("ptz") && can_cmd %>
       <div class="ss-card ss-card-pad">
         <h3 class="mb-3"><%= t("cameras.ptz") %></h3>
-        <div class="flex items-center gap-4">
-          <div class="ma-ptz" role="group" aria-label="<%= t("cameras.ptz") %>">
-            <% { "up" => "chevron-up", "left" => "chevron-left", "home" => "home", "right" => "chevron-right", "down" => "chevron-down" }.each do |move, ico| %>
-              <%= button_to command_point_path(point), params: { command: "ptz", value: move }, class: "ma-ptz-#{move}", form_class: "contents",
-                            title: t("cameras.moves.#{move}"), "aria-label": t("cameras.moves.#{move}") do %><%= icon(ico, "size-5") %><span class="sr-only"><%= t("cameras.moves.#{move}") %></span><% end %>
-            <% end %>
-          </div>
-          <span class="ss-step" role="group" aria-label="<%= t("cameras.zoom") %>">
-            <% { "zoom_in" => "zoom-in", "zoom_out" => "zoom-out" }.each do |move, ico| %>
-              <%= button_to command_point_path(point), params: { command: "ptz", value: move }, title: t("cameras.moves.#{move}"), "aria-label": t("cameras.moves.#{move}") do %><%= icon(ico, "size-4") %><span class="sr-only"><%= t("cameras.moves.#{move}") %></span><% end %>
-            <% end %>
-          </span>
-        </div>
+        <%# Ss::DPadComponent sem a linha voltar/início/menu: a cruz move, o meio ("Início") volta à posição inicial e a
+            gangorra aproxima/afasta. Cada tecla manda command=ptz com value= o movimento. %>
+        <%= render Ss::DPadComponent.new(url: command_point_path(point, command: "ptz"), param: :value, nav_row: false, volume: true,
+                                         keys: { ok: "home", volume_up: "zoom_in", volume_down: "zoom_out" },
+                                         labels: { remote: t("cameras.ptz"), up: t("cameras.moves.up"), down: t("cameras.moves.down"), left: t("cameras.moves.left"),
+                                                   right: t("cameras.moves.right"), ok: t("cameras.moves.home_short"), volume_up: t("cameras.moves.zoom_in"),
+                                                   volume_down: t("cameras.moves.zoom_out"), volume: t("cameras.zoom") }, css: "mx-auto") %>
       </div>
     <% end %>
 

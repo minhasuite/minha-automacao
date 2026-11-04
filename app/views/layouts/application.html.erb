@@ -15,29 +15,32 @@
   <%= turbo_refresh_method_tag :morph %>
   <%= turbo_refresh_scroll_tag :preserve %>
   <%= yield :head %>
-  <script>try { if (localStorage.getItem("side") === "collapsed") document.documentElement.classList.add("ss-collapsed"); if (localStorage.getItem("privacy") === "on") document.documentElement.dataset.privacy = "on" } catch (_) {}</script>
+  <%= ss_app_shell_head %>
+  <script>try { if (localStorage.getItem("privacy") === "on") document.documentElement.dataset.privacy = "on" } catch (_) {}</script>
 </head>
 <% body_theme = @body_theme || {} %>
-<body class="min-h-screen<%= " ss-kiosk" if kiosk %> <%= body_theme["class"] %>" style="<%= body_theme["style"] %>" data-controller="theme menu privacy" data-action="keydown.p@window->privacy#key keydown.esc@window->menu#close">
+<body class="min-h-screen<%= " ma-kiosk" if kiosk %> <%= body_theme["class"] %>" style="<%= body_theme["style"] %>" data-controller="theme privacy" data-action="keydown.p@window->privacy#key">
   <a href="#conteudo" class="ss-skip"><%= t("layout.skip") %></a>
-  <% unless kiosk %>
-  <%# Barra do topo no celular (escura, como a sidebar). %>
-  <header class="ss-side lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 h-14 shadow-lg">
-    <button type="button" class="grid place-items-center size-9 rounded-xl hover:bg-white/10 border-0 bg-transparent text-current cursor-pointer" data-action="menu#open" data-menu-target="toggle" aria-label="<%= t("layout.open_menu") %>" aria-controls="side" aria-expanded="false"><%= icon("menu") %></button>
-    <%= link_to root_path, class: "font-bold text-white no-underline flex-1" do %>Minha Automação<% end %>
-    <button type="button" class="grid place-items-center size-9 rounded-xl hover:bg-white/10 border-0 bg-transparent text-current cursor-pointer" data-palette-open aria-label="<%= t("layout.search") %>"><%= icon("search") %></button>
-    <%= render "web/shared/privacy_button", css: "grid place-items-center size-9 rounded-xl hover:bg-white/10" %>
-  </header>
-  <div class="ss-scrim lg:hidden" data-menu-target="scrim" data-action="click->menu#close"></div>
-  <%= render "web/shared/sidebar" %>
-  <% end %>
-  <div class="ss-main <%= "lg:pl-64" unless kiosk %> transition-[padding] duration-300">
-    <main id="conteudo" tabindex="-1" class="outline-none min-w-0 px-4 py-6 lg:px-8 lg:py-8 <%= content_for?(:wide) ? "" : "max-w-7xl" %> mx-auto">
-      <div id="flash"><%= render "web/shared/flash" %></div>
+  <% if kiosk %>
+    <main id="conteudo" tabindex="-1" class="outline-none min-w-0 px-4 py-6 lg:px-8 lg:py-8 <%= content_for?(:wide) ? "" : "max-w-7xl" %> mx-auto"><%= yield %></main>
+  <% else %>
+    <%# Moldura da gem: menu recolhível (o recolhido fica no <html>, ss_app_shell_head no <head>),
+        gaveta no celular, busca (abre a paleta) e troca de local (só nas telas de um local por vez,
+        que a pedem pela web/shared/site_switch). Largura do conteúdo: 80rem, a não ser com :wide. %>
+    <%= render Ss::AppShellComponent.new(brand: "Minha Automação", brand_url: root_path, nav: shell_nav, tenants: @shell_tenants || [], tenant_label: t("layout.site"),
+                                         search_label: t("layout.search"), side_label: t("layout.main_nav"), search_action: ("palette" if current_user),
+                                         main_max: (content_for?(:wide) ? nil : "80rem")) do |s| %>
+      <% s.with_mark do %><img src="/icon-192.png" alt=""><% end %>
+      <% s.with_top do %><%= render "web/shared/privacy_button", css: "ss-btn ss-btn-ghost ss-btn-sm lg:hidden" %><% end %>
+      <% s.with_side_footer do %><%= render "web/shared/side_footer" %><% end %>
       <%= yield %>
-    </main>
-  </div>
+    <% end %>
+  <% end %>
+  <%= render "web/shared/flash" %>
   <%= render "web/shared/palette" if current_user %>
-  <%= render "web/shared/confirm" %>
+  <%# Confirmação da suíte no lugar do confirm() do navegador: com global, todo data-turbo-confirm
+      abre esta caixa. Por elemento: data-turbo-confirm-title, -button (verbo do OK) e
+      -tone="danger" (botão vermelho, para excluir/remover/apagar). %>
+  <%= render Ss::ConfirmDialogComponent.new(id: "confirm", title: t("shared.confirm.title"), ok_label: t("shared.confirm.ok"), cancel_label: t("shared.confirm.back"), global: true) %>
 </body>
 </html>

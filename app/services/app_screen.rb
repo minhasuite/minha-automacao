@@ -150,28 +150,39 @@ module AppScreen
     end
 
     def call
-      menu = @doc.css("aside#side nav a[href]").map { |a| { label: squish(a.text), href: a["href"], icon: icon_of(a) } }
+      # Moldura da gem (Ss::AppShellComponent): menu em #ss-shell-side, a tela em main#conteudo.
+      menu = @doc.css("#ss-shell-side nav a[href]").map { |a| { label: squish(a.at_css(".ss-shell-label")&.text || a.text), href: a["href"], icon: icon_of(a) } }
       root = @doc.at_css("main#conteudo") || @doc.at_css("main") || @doc.at_css("body") || @doc
       @doc.css("label[for]").each { |l| @labels[l["for"]] = squish(l.text) }
-      flash = root.css(".ss-flash").map { |f| { tone: f["class"].to_s.include?("danger") ? "danger" : "success", text: squish(f.at_css("span")&.text || f.text) } }
-      root.css(".ss-flash, #flash").each(&:remove)
+      # Avisos na pilha da gem (Ss::ToastStackComponent, fora do main).
+      flash = @doc.css("#ss-toasts .ss-toast").map { |f| { tone: f["class"].to_s.include?("is-bad") ? "danger" : "success", text: squish(f.at_css(".ss-toast-msg")&.text || f.text) } }
       page = { path: @path, title: squish(@doc.at_css("title")&.text.to_s.split(" — ").first), flash: flash, menu: menu }
       if (h1 = root.at_css("h1"))
+        # Cabeçalho do Ss::PageComponent (web/shared/_header): só o topo, o corpo vem depois.
         header = h1.ancestors.find { |a| a.parent == root || a.parent&.name == "main" } || h1
         page[:title] = squish(h1.text)
-        back = header.css("a[href]").find { |a| icon_of(a) == "arrow-left" }
+        back = header.at_css("a.ss-page-back") || header.css("a[href]").find { |a| icon_of(a) == "arrow-left" }
         page[:back] = back["href"] if back
-        sub = header.at_css("p.text-muted, p.text-sm")
+        sub = header.at_css("p.ss-page-sub, p.text-muted, p.text-sm")
         page[:subtitle] = squish(sub.text) if sub
         [ back, sub, h1 ].compact.each(&:remove)
         page[:actions] = header.equal?(h1) ? [] : blocks(header)
         header.remove
       end
-      page[:blocks] = blocks(root)
+      page[:blocks] = site_switch + blocks(root)
       page
     end
 
     private
+
+    # Troca de local (Diário, Histórico, Mapa): na web fica no menu da moldura (tenants:), fora
+    # do main; no app volta como a faixa de chips do topo da tela (subnav com o atual).
+    def site_switch
+      links = @doc.css("#ss-shell-side .ss-shell-tenant-menu a[href]")
+      return [] if links.size < 2
+
+      [ { t: "subnav", items: links.map { |a| { label: squish(a.children.select(&:text?).map(&:text).join), href: a["href"], current: a["aria-current"] == "true" } } } ]
+    end
 
     def blocks(el) = el.children.flat_map { |c| node(c) }
     def content(el) = inline_only?(el) ? inline(el) : blocks(el)
@@ -183,6 +194,7 @@ module AppScreen
       cls = classes(n)
       return poll(n) if data_controllers(n).include?("poll")
       return [ { t: "reload", every: n["data-reload-every-value"].to_i.nonzero? || 5000, c: blocks(n) } ] if data_controllers(n).include?("reload")
+      return icon_pick(n) if cls.include?("ss-iconpick")
 
       case n.name
       when "svg" then (ic = n["data-icon"]) ? [ { t: "icon", n: ic } ] : []
@@ -375,6 +387,14 @@ module AppScreen
       head = n.css("thead th").map { |th| squish(th.text) }
       rows = n.css("tbody tr").map { |tr| tr.css("td, th").map { |td| content(td) } }
       [ { t: "table", head: head, rows: rows } ]
+    end
+
+    # Ss::IconPickerComponent (botões + hidden, sem campo de formulário): vira um select com os nomes.
+    def icon_pick(n)
+      input = n.at_css("input[type=hidden][name]") or return []
+      options = n.css(".ss-iconpick-cell").map { |b| { label: b["aria-label"].to_s, value: b["data-name"].to_s } }
+      [ { t: "field", kind: "select", name: input["name"], label: @labels[n["id"]] || squish(n.ancestors("fieldset").first&.at_css("legend")&.text).presence,
+          options: options, value: input["value"].to_s }.compact ]
     end
 
     def poll(n)

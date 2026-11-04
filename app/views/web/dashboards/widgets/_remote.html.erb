@@ -2,7 +2,8 @@
 <% d = w["data"] %>
 <% p = points[Array(d["point_ids"]).first] %>
 <% if p.nil? %>
-  <div class="dw-card dw-tile dw-unavailable"><span class="dw-ico"><%= icon("status-online") %></span><span><span class="dw-name"><%= w["label"].presence || t("dashboards.w.remote") %></span><span class="dw-state"><%= t("dashboards.w.pick_remote") %></span></span></div>
+  <%= render Ss::DeviceTileComponent.new(name: w["label"].presence || t("dashboards.w.remote"), status: :unavailable, icon: icon("status-online").to_s,
+                                         unavailable_label: t("dashboards.w.pick_remote"), css: "h-full") %>
 <% else %>
   <% off_line = p["quality"].in?(%w[unavailable error]) %>
   <% can = p["can_command"] && !off_line %>
@@ -14,7 +15,13 @@
         <span class="dw-state"><%= off_line ? t("dashboards.w.offline") : (d["buttons"].empty? ? t("dashboards.w.no_buttons") : t("dashboards.w.buttons", count: d['buttons'].size)) %></span>
       <% end %>
     </div>
-    <% if d["buttons"].any? %>
+    <% pad = dw_remote_pad(d["buttons"]) %>
+    <% if pad %>
+      <%# Controle com cruz aprendida: Ss::DPadComponent (setas do teclado, Enter e Esc também); cada tecla manda
+          "send" com o nome do botão aprendido (keys:), os outros botões numa linha a mais. %>
+      <%= render Ss::DPadComponent.new(url: command_point_path(p["id"], **dw_command_params("send", w: w, dashboard: dashboard, live: live)), param: :value,
+                                       disabled: !can, labels: { remote: t("dashboards.w.buttons_x", name: p["name"]) }, css: "mx-auto mt-3", **pad) %>
+    <% elsif d["buttons"].any? %>
       <div class="dw-media-keys" role="group" aria-label="<%= t("dashboards.w.buttons_x", name: p['name']) %>">
         <% d["buttons"].each do |name| %>
           <%= dw_command_button(p, "send", value: name, w: w, dashboard: dashboard, live: live, class: "dw-vac-btn", disabled: !can) do %><span class="truncate"><%= name %></span><% end %>

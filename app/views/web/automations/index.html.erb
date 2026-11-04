@@ -7,12 +7,10 @@
 <%= render "web/automations/tabs", site: @site, current: :automations %>
 
 <% if @total.zero? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("automations.index.empty") %></p>
-    <p class="mt-1 max-w-lg mx-auto"><%= t("automations.index.empty_example") %></p>
-    <p class="mt-1 text-sm"><%= t("automations.index.empty_hint_html", blueprint: link_to(t("automations.index.empty_blueprint"), site_blueprints_path(@site)), rules: link_to(t("automations.index.empty_rules"), rules_site_path(@site))) %></p>
-    <% if can?(:manage) %><%= link_to new_site_automation_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("automations.index.create_first") %><% end %><% end %>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("automations.index.empty"), css: "ss-card",
+                                         text: safe_join([ t("automations.index.empty_example"), " ", t("automations.index.empty_hint_html", blueprint: link_to(t("automations.index.empty_blueprint"), site_blueprints_path(@site)), rules: link_to(t("automations.index.empty_rules"), rules_site_path(@site))) ])) do %>
+    <% if can?(:manage) %><%= link_to new_site_automation_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("automations.index.create_first") %><% end %><% end %>
+  <% end %>
 <% else %>
   <%= form_with url: site_automations_path(@site), method: :get, class: "mb-3 grid gap-3 sm:flex sm:flex-wrap sm:items-end", role: "search" do %>
     <div class="min-w-0 sm:min-w-48 sm:flex-1"><label for="q" class="ss-label"><%= t("automations.common.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("automations.index.search_placeholder") %></div>
@@ -26,9 +24,9 @@
   <% end %>
 
   <% if @automations.empty? %>
-    <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.index.no_match") %></p><p class="mt-1"><%= link_to t("automations.common.clear_filters"), site_automations_path(@site) %></p></div>
+    <%= render Ss::EmptyStateComponent.new(title: t("automations.index.no_match"), variant: :busca, css: "ss-card") do %><%= link_to t("automations.common.clear_filters"), site_automations_path(@site), class: "ss-btn ss-btn-ghost" %><% end %>
   <% else %>
-    <div class="ss-bulk-scope" data-controller="select-all">
+    <div data-controller="ss-table" data-ss-table-key-value="automations">
     <% site_shadow = Shadow.site?(@site) %>
     <% groups = category_groups(@automations) %>
     <% groups.each do |category, items| %>
@@ -36,7 +34,7 @@
     <ul class="ss-card ss-rows" aria-label="<%= t("automations.index.list") %><%= " · #{category}" if category %>">
       <% items.each do |a| %>
         <li id="automation-<%= a.id %>">
-          <% if can?(:manage) %><input type="checkbox" name="ids[]" value="<%= a.id %>" form="bulk" aria-label="<%= t("automations.common.mark", name: a.name) %>"><% end %>
+          <% if can?(:manage) %><label class="ss-check"><input type="checkbox" name="ids[]" value="<%= a.id %>" form="bulk" aria-label="<%= t("automations.common.mark", name: a.name) %>" data-ss-table-target="check" data-action="ss-table#toggleRow"></label><% end %>
           <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= a.enabled ? 'ss-grad' : 'bg-accent-soft text-muted' %>"><%= icon(a.icon.presence_in(HelperTypes::ICONS) || "lightning-bolt") %></span>
           <div class="min-w-0 flex-1 basis-48">
             <p class="font-bold text-ink break-words"><%= link_to a.name, (can?(:manage) ? edit_automation_path(a) : automation_automation_runs_path(a)), class: "text-ink no-underline hover:text-accent" %>
@@ -53,8 +51,7 @@
           <div class="flex items-center justify-end gap-2 max-sm:ml-auto">
             <%= link_to automation_automation_runs_path(a), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("automations.index.runs_of", name: a.name), title: t("automations.common.runs") do %><%= icon("view-list", "size-4") %><span class="max-sm:hidden"><%= t("automations.common.runs") %></span><% end %>
             <% if a.published? %>
-              <%= button_to automation_path(a), method: :patch, params: { automation: { enabled: !a.enabled }, back: request.fullpath }, class: "ss-switch", form: { class: "contents" },
-                            "aria-pressed": a.enabled.to_s, "aria-label": "#{a.enabled ? t('automations.common.turn_off') : t('automations.common.turn_on')} #{a.name}", title: (a.enabled ? t("automations.common.turn_off") : t("automations.common.turn_on")) do %><% end %>
+              <%= render Ss::SwitchComponent.new(url: automation_path(a), method: :patch, params: { automation: { enabled: !a.enabled }, back: request.fullpath }, on: a.enabled, label: a.name, id: "automation-switch-#{a.id}") %>
             <% end %>
           </div>
           <% end %>
@@ -64,14 +61,17 @@
     <% end %>
     <% end %>
     <% if can?(:manage) %>
-      <%= form_with url: bulk_site_automations_path(@site), id: "bulk", class: "ss-bulk", role: "region", "aria-label": t("automations.index.bulk_actions") do %>
-        <%= hidden_field_tag :back, request.fullpath, id: nil %>
-        <span class="ss-bulk-count"><%= t("automations.index.marked") %></span>
-        <label class="ss-check text-sm text-ink-2"><input type="checkbox" data-action="select-all#toggle"> <%= t("automations.index.mark_all") %></label>
-        <label class="sr-only" for="bulk-op"><%= t("automations.index.bulk_action") %></label>
-        <%= select_tag :op, options_for_select([ [ t("automations.common.turn_on"), "enable" ], [ t("automations.common.turn_off"), "disable" ], [ t("automations.index.shadow_on"), "shadow_on" ], [ t("automations.index.shadow_off"), "shadow_off" ], [ t("automations.common.delete"), "delete" ] ]), id: "bulk-op", class: "ss-input" %>
-        <%= button_tag t("automations.index.apply"), class: "ss-btn ss-btn-primary ss-btn-sm", data: { turbo_confirm: t("automations.index.apply_confirm"), turbo_confirm_button: t("automations.index.apply_button") } %>
-      <% end %>
+      <div class="ss-selection-bar" role="region" aria-label="<%= t("automations.index.bulk_actions") %>" hidden data-ss-table-target="bar">
+        <span><b data-ss-table-target="count">0</b> <%= t("automations.index.marked") %></span>
+        <%= form_with url: bulk_site_automations_path(@site), id: "bulk", class: "ss-dt-bulk" do %>
+          <%= hidden_field_tag :back, request.fullpath, id: nil %>
+          <label class="ss-check text-sm ml-3"><input type="checkbox" data-ss-table-target="all" data-action="ss-table#toggleAll"> <%= t("automations.index.mark_all") %></label>
+          <label class="sr-only" for="bulk-op"><%= t("automations.index.bulk_action") %></label>
+          <%= select_tag :op, options_for_select([ [ t("automations.common.turn_on"), "enable" ], [ t("automations.common.turn_off"), "disable" ], [ t("automations.index.shadow_on"), "shadow_on" ], [ t("automations.index.shadow_off"), "shadow_off" ], [ t("automations.common.delete"), "delete" ] ]), id: "bulk-op", class: "ss-input w-auto min-h-0 py-1.5 ml-2" %>
+          <%= button_tag t("automations.index.apply"), data: { turbo_confirm: t("automations.index.apply_confirm"), turbo_confirm_button: t("automations.index.apply_button") } %>
+        <% end %>
+        <button type="button" data-action="ss-table#clear" aria-label="<%= t("automations.index.clear_selection") %>"><%= icon("x", "size-4") %></button>
+      </div>
     <% end %>
     </div>
   <% end %>

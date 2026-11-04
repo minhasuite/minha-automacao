@@ -64,7 +64,7 @@
           <% @links.each do |tk| %>
             <li class="flex items-center justify-between gap-2 text-sm">
               <span class="min-w-0"><span class="block font-semibold truncate"><%= tk.user.name %></span><span class="text-xs text-muted"><%= t("alexa.since", date: l(tk.created_at.to_date)) %><%= ", #{t("alexa.used_ago", ago: time_ago_in_words(tk.last_used_at))}" if tk.last_used_at %></span></span>
-              <% if admin %><%= button_to t("alexa.unlink"), unlink_site_alexa_path(@site, token_id: tk.id), method: :delete, class: "ss-btn ss-btn-ghost text-sm", form: { data: { turbo_confirm: t("alexa.unlink_confirm") } } %><% end %>
+              <% if admin %><%= button_to t("alexa.unlink"), unlink_site_alexa_path(@site, token_id: tk.id), method: :delete, class: "ss-btn ss-btn-ghost text-sm", form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("alexa.unlink"), turbo_confirm: t("alexa.unlink_confirm") } } %><% end %>
             </li>
           <% end %>
         </ul>

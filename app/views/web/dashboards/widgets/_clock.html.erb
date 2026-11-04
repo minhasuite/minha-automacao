@@ -1,14 +1,14 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<%# Relógio (ondaB2 B10): hora no fuso do local; o controlador dw-clock anda a cada segundo. %>
+<%# Relógio (ondaB2 B10): Ss::ClockComponent no fuso do local e no idioma da tela (o ss-clock anda sozinho);
+    segundos em dígitos, como o relógio do produto, e encolhe no card estreito (fit, size é o teto). %>
 <% d = w["data"] %>
 <% now = Time.zone.parse(d["now"]).in_time_zone(d["tz"]) %>
 <% gattrs, ghidden = dw_gestures(w, points, dashboard: dashboard, live: live) %>
 <div class="relative h-full" <%= tag.attributes(data: gattrs) %>>
   <%= ghidden %>
-  <div class="dw-card dw-clock dw-clock-<%= d['size'] %>" data-controller="dw-clock" data-dw-clock-tz-value="<%= d["tz"] %>" data-dw-clock-h12-value="<%= d["format"] == "12h" %>"
-       data-dw-clock-seconds-value="<%= d["seconds"] %>" data-dw-clock-locale-value="<%= I18n.locale %>">
+  <div class="dw-card dw-clock">
     <% if w["label"].present? %><p class="dw-clock-label"><%= w["label"] %></p><% end %>
-    <time class="dw-clock-time num" data-dw-clock-target="time" datetime="<%= d["now"] %>"><%= now.strftime(d["format"] == "12h" ? (d["seconds"] ? "%I:%M:%S %p" : "%I:%M %p") : (d["seconds"] ? "%H:%M:%S" : "%H:%M")) %></time>
-    <% if d["show_date"] %><p class="dw-clock-date" data-dw-clock-target="date"><%= l(now.to_date, format: :long).upcase_first %></p><% end %>
+    <%= render Ss::ClockComponent.new(now: now, seconds: (:digits if d["seconds"]), fit: true, date: d["show_date"], hour12: d["format"] == "12h", locale: I18n.locale.to_s, time_zone: d["tz"],
+                                      size: { "small" => 36, "large" => 88 }.fetch(d["size"].to_s, 56)) %>
   </div>
 </div>

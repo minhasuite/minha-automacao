@@ -27,7 +27,7 @@
     </div>
     <% if @drive[:connected] %>
       <%= button_to settings_health_drive_path, method: :delete, class: "ss-btn ss-btn-ghost",
-                    form: { data: { turbo_confirm: t("health.drive.confirm"), turbo_confirm_button: t("health.drive.disconnect") } } do %><%= t("health.drive.disconnect") %><% end %>
+                    form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("health.drive.confirm"), turbo_confirm_button: t("health.drive.disconnect") } } do %><%= t("health.drive.disconnect") %><% end %>
     <% else %>
       <%= link_to t("health.drive.connect"), @drive[:auth_url], class: "ss-btn ss-btn-primary", data: { turbo: false } %>
     <% end %>

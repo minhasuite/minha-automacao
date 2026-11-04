@@ -51,11 +51,11 @@ RSpec.describe "Pacote 3: telas e API" do
                                 ] } ] })
       end
       get "/paineis/#{dash.id}"
-      expect(response.body).to include("Pessoas", "1 de 1 em casa", "Desarmado", "Ausente", "data-controller=\"keypad\"", "Falar com a casa")
+      expect(response.body).to include("Pessoas", "1 de 1 em casa", "Desarmado", "Ausente", %(name="command" value="arm_away"), "Falar com a casa")
       post "/pontos/#{alarm.id}/comando", params: { command: "arm_away", dashboard_id: dash.id, widget_id: "a1" }, headers: { "Turbo-Frame" => "w_a1" }
       expect(alarm.reload.value).to eq("armed_away")
       get "/paineis/#{dash.id}/w/a1"
-      expect(response.body).to include("Armado (ausente)", "Desarmar")
+      expect(response.body).to include("Armado (ausente)", "Desarmar", "data-controller=\"ss-code-keypad\"")
       post "/pontos/#{alarm.id}/comando", params: { command: "disarm", value: "0000" }
       expect(flash[:alert]).to eq("Código incorreto.")
       post "/pontos/#{alarm.id}/comando", params: { command: "disarm", value: "2468" }

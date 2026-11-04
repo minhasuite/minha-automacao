@@ -39,9 +39,9 @@ export default class extends Controller {
       addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation() }, { capture: true, once: true })
       setTimeout(() => this.wake(), 0)
     }
-    document.body.classList.remove("ss-kiosk-idle")
+    document.body.classList.remove("ma-kiosk-idle")
     clearTimeout(this.cursorTimer)
-    this.cursorTimer = setTimeout(() => document.body.classList.add("ss-kiosk-idle"), 3000)
+    this.cursorTimer = setTimeout(() => document.body.classList.add("ma-kiosk-idle"), 3000)
     clearTimeout(this.idleTimer)
     if (this.saverValue !== "off") this.idleTimer = setTimeout(() => this.sleep(), this.idleValue * 60000)
   }
@@ -70,7 +70,7 @@ export default class extends Controller {
     const url = list[this.slideIndex++ % list.length]
     const src = this.saverValue === "cameras" ? `${url}?t=${Date.now()}` : url
     const img = new Image()
-    img.onload = () => { this.slideTarget.style.backgroundImage = `url("${src}")`; this.slideTarget.classList.add("ss-saver-on") }
+    img.onload = () => { this.slideTarget.style.backgroundImage = `url("${src}")`; this.slideTarget.classList.add("ma-saver-on") }
     img.src = src
   }
 

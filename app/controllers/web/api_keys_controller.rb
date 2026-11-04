@@ -3,13 +3,17 @@ module Web
   # permissões, validade, último uso e revogar. A chave em claro aparece só na
   # resposta da criação (nada de flash/cookie).
   class ApiKeysController < ApplicationController
+    include TableSort
+
     # Dias de validade ("" = sem validade); rótulos em api_keys.validity.
     VALIDITY = [ "30", "90", "365", "" ].freeze
 
     before_action :require_owner!
 
     def index
-      @keys = ServiceApiKey.active.of_tenant(current_user.tenant).order(created_at: :desc).to_a
+      order = table_sort({ "name" => "name", "created_at" => "created_at", "expires_at" => "expires_at", "last_used_at" => "last_used_at" },
+                         default: "created_at", dir: "desc")
+      @keys = ServiceApiKey.active.of_tenant(current_user.tenant).order(order).to_a
       @sites = Site.order(:name).to_a
     end
 

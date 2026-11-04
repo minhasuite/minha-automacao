@@ -120,32 +120,26 @@
     </svg>
   </section>
 
-  <section class="ss-card xl:col-span-3 overflow-hidden" aria-labelledby="zw-nodes">
-    <h2 id="zw-nodes" class="font-bold text-ink px-4 pt-4"><%= t("protocols.zwave.node_list") %></h2>
-    <% if devices.empty? %>
-      <p class="ss-empty"><%= t("protocols.zwave.no_nodes") %></p>
-    <% else %>
-      <table class="ss-table ss-table-stack mt-2">
-        <thead><tr><th><%= t("protocols.zwave.col_node") %></th><th><%= t("protocols.zwave.col_status") %></th><th><%= t("protocols.zwave.col_security") %></th><th class="r"><span class="sr-only"><%= t("protocols.zwave.col_actions") %></span></th></tr></thead>
-        <tbody>
-          <% devices.each do |n| %>
-            <% st = ZwaveJs::STATUS.fetch(n["status"], "unknown") %>
-            <tr>
-              <td><span class="font-semibold text-ink"><%= n["name"].presence || n.dig("deviceConfig", "description") || t("protocols.zwave.node_n", n: n["nodeId"]) %></span><br><span class="text-xs text-muted num">#<%= n["nodeId"] %> · <%= [ n.dig("deviceConfig", "manufacturer"), n.dig("deviceConfig", "label") ].compact.join(" ") %></span></td>
-              <td><span class="ss-badge ss-badge-<%= { "dead" => "danger", "asleep" => "accent" }.fetch(st, "success") %>"><%= t("protocols.zwave.status.#{st}") %></span></td>
-              <td><%= n["isSecure"] ? t("protocols.zwave.classes.#{classes.fetch(n['highestSecurityClass'].to_i, 's2_unauthenticated')}") : t("protocols.zwave.insecure") %></td>
-              <td class="r">
-                <div class="inline-flex gap-1">
-                  <%= button_to act.call("reinterview"), params: { "panel[node]" => n["nodeId"] }, class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("protocols.zwave.reinterview") do %><%= icon("refresh", "size-4") %><span class="sr-only"><%= t("protocols.zwave.reinterview") %></span><% end %>
-                  <% if st == "dead" %>
-                    <%= button_to act.call("remove_failed"), params: { "panel[node]" => n["nodeId"] }, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", title: t("protocols.zwave.remove_failed"), form: { data: { turbo_confirm: t("protocols.zwave.remove_failed_confirm", n: n["nodeId"]) } } do %><%= icon("trash", "size-4") %><span class="sr-only"><%= t("protocols.zwave.remove_failed") %></span><% end %>
-                  <% end %>
-                </div>
-              </td>
-            </tr>
+  <section class="xl:col-span-3 grid gap-2 content-start" aria-labelledby="zw-nodes">
+    <h2 id="zw-nodes" class="font-bold text-ink"><%= t("protocols.zwave.node_list") %></h2>
+    <%= render Ss::DataTableComponent.new(rows: devices, id: "zw-node-table", caption: t("protocols.zwave.node_list"), row_id: "nodeId", tools: false,
+                                          empty: t("protocols.zwave.no_nodes")) do |tb| %>
+      <% tb.column :node, t("protocols.zwave.col_node") do |n| %>
+        <span class="font-semibold text-ink"><%= n["name"].presence || n.dig("deviceConfig", "description") || t("protocols.zwave.node_n", n: n["nodeId"]) %></span><br><span class="text-xs text-muted num">#<%= n["nodeId"] %> · <%= [ n.dig("deviceConfig", "manufacturer"), n.dig("deviceConfig", "label") ].compact.join(" ") %></span>
+      <% end %>
+      <% tb.column :status, t("protocols.zwave.col_status") do |n| %>
+        <% st = ZwaveJs::STATUS.fetch(n["status"], "unknown") %>
+        <span class="ss-badge ss-badge-<%= { "dead" => "danger", "asleep" => "accent" }.fetch(st, "success") %>"><%= t("protocols.zwave.status.#{st}") %></span>
+      <% end %>
+      <% tb.column :security, t("protocols.zwave.col_security") do |n| %><%= n["isSecure"] ? t("protocols.zwave.classes.#{classes.fetch(n['highestSecurityClass'].to_i, 's2_unauthenticated')}") : t("protocols.zwave.insecure") %><% end %>
+      <% tb.column :actions, t("protocols.zwave.col_actions"), align: :right, hideable: false do |n| %>
+        <div class="inline-flex gap-1">
+          <%= button_to act.call("reinterview"), params: { "panel[node]" => n["nodeId"] }, class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("protocols.zwave.reinterview") do %><%= icon("refresh", "size-4") %><span class="sr-only"><%= t("protocols.zwave.reinterview") %></span><% end %>
+          <% if ZwaveJs::STATUS.fetch(n["status"], "unknown") == "dead" %>
+            <%= button_to act.call("remove_failed"), params: { "panel[node]" => n["nodeId"] }, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", title: t("protocols.zwave.remove_failed"), form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("protocols.zwave.remove_failed_confirm", n: n["nodeId"]) } } do %><%= icon("trash", "size-4") %><span class="sr-only"><%= t("protocols.zwave.remove_failed") %></span><% end %>
           <% end %>
-        </tbody>
-      </table>
+        </div>
+      <% end %>
     <% end %>
   </section>
 </div>

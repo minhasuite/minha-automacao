@@ -1,4 +1,5 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Alertas abertos no Ss::NoticeCardComponent (tom pela gravidade, "Ciente" como ação). %>
 <div class="dw-card">
   <div class="flex items-center justify-between gap-2">
     <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.alerts") %></p>
@@ -7,18 +8,14 @@
   <% if w["data"]["alerts"].empty? %>
     <p class="dw-quiet"><%= icon("check-circle", "size-5 text-success") %><%= t("dashboards.w.no_alerts") %></p>
   <% else %>
-    <ul class="dw-rows">
+    <div class="dw-notices">
       <% w["data"]["alerts"].each do |a| %>
-        <li class="dw-row">
-          <span class="dw-ico dw-ico-sm <%= a['severity'] == 'critical' ? 'bg-danger-soft text-danger' : 'bg-warn-soft text-warn' %>"><%= icon("exclamation-circle", "size-4") %></span>
-          <span class="min-w-0 flex-1"><span class="dw-name text-sm"><%= a["title"] %></span><span class="block text-xs text-muted truncate"><%= a["text"] %> · <%= t("dashboards.w.ago", time: time_ago_in_words(a["opened_at"])) %></span></span>
-          <% if a["acked"] %>
-            <span class="ss-badge"><%= t("dashboards.w.acked") %></span>
-          <% elsif a["can_ack"] %>
-            <%= button_to t("dashboards.w.acked"), ack_alert_path(a["id"]), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_frame: "_top" } } %>
-          <% end %>
-        </li>
+        <% acked = a["acked"] ? [ t("dashboards.w.acked") ] : [] %>
+        <%= render Ss::NoticeCardComponent.new(title: a["title"], text: [ a["text"].presence, *acked ].compact.join(" · ").presence,
+                                               tone: a["severity"] == "critical" ? :critical : :warn, time: t("dashboards.w.ago", time: time_ago_in_words(a["opened_at"])),
+                                               icon: icon("exclamation-circle").to_s,
+                                               actions: (a["can_ack"] && !a["acked"] ? [ { label: t("dashboards.w.acked"), url: ack_alert_path(a["id"]) } ] : [])) %>
       <% end %>
-    </ul>
+    </div>
   <% end %>
 </div>
