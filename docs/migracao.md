@@ -213,7 +213,8 @@ O importador passou a traduzir, sem nada da casa no código:
 - **auto-entities** (HACS): Lista automática. Cada regra `include` vira uma
   consulta (`or`), com entidade fixa ou curinga → `id`, `domain` →
   capacidade (luz e interruptor sem as automações), `label` → etiqueta,
-  `state` (`unavailable` → sem sinal), `last_triggered: "< N"` → `ran_min`;
+  `state` (`unavailable` → sem sinal), `attributes` (`device_class` e
+  atributo do sensor calculado → `attr`), `last_triggered: "< N"` → `ran_min`;
   as `exclude` (entidade, curinga, integração) entram em todas. Card de
   tiles = grade de tiles com o `name` de cada regra; o `else` é o texto de
   vazio.

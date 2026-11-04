@@ -32,6 +32,8 @@ module Points
       "name" => ->(_q, p, v) { list(v).any? { |n| p.name.downcase.include?(n.downcase) } },
       # Pontos escolhidos pela chave (a lista fixa de entidades do HA: `['a', 'b'] | select(...)`).
       "key" => ->(_q, p, v) { list(v).include?(p.key) },
+      # Atributo do ponto (`points.attrs`, do sensor calculado): "nome>0", "nome<5", "nome=texto"; vários com vírgula = todos.
+      "attr" => ->(_q, p, v) { list(v).all? { |c| attr_match?(p, c) } },
       # Pontos escolhidos pelo id (o auto-entities importado do HA: entidades fixas e as que saem).
       "id" => ->(_q, p, v) { list(v).include?(p.id) },
       "not_id" => ->(_q, p, v) { list(v).exclude?(p.id) },
@@ -53,6 +55,18 @@ module Points
     OPTIONS = %w[sort limit].freeze
     KEYS = (FILTERS.keys + OPTIONS).freeze
     MAX = 500
+
+    ATTR = /\A([a-z0-9_]+)\s*(>=|<=|>|<|=)\s*(.*)\z/i
+
+    def self.attr_match?(point, cond)
+      m = cond.to_s.match(ATTR) or return false
+      name, op, want = m.captures
+      have = point.attrs.to_h[name]
+      return have.to_s == want if op == "="
+
+      x = Float(have.to_s, exception: false) or return false
+      x.public_send(op, want.to_f)
+    end
 
     def self.list(v) = Array(v).flat_map { |x| x.to_s.split(",") }.map(&:strip).compact_blank
 

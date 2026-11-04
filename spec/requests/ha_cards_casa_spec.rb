@@ -89,11 +89,23 @@ RSpec.describe "HA: cards da casa" do
       # vertical-stack de tiles = uma coluna.
       att = translate([ { "type" => "grid", "cards" => [ { "type" => "custom:auto-entities", "card" => { "type" => "vertical-stack" },
                                                            "filter" => { "include" => [ { "domain" => "sensor", "attributes" => { "device_class" => "battery" }, "state" => "< 30" },
-                                                                                        { "domain" => "sensor", "attributes" => { "unit_of_measurement" => "W" } } ] } } ] } ], refs)
+                                                                                        { "domain" => "sensor", "nome_estranho" => "x" } ] } } ] } ], refs)
       aw = att.definition.dig("views", 0, "sections", 0, "widgets", 0)
       expect(aw).to include("display" => "tiles", "columns" => 1, "query" => { "capability" => "measure", "device_class" => "battery", "below" => "30" })
       expect(aw).not_to have_key("or")
-      expect(att.notes.join).to include("unit_of_measurement")
+      expect(att.notes.join).to include("nome_estranho")
+
+      # Atributo do sensor calculado (`attributes: {tuya_fora: "> 0"}`).
+      falhas = create(:point, site: site, device: dev, name: "Falhas", key: "luzes_falhas", capability: "measure", value: 1, attrs: { "tuya_fora" => 2 })
+      ExternalRef.link!(site, src, "sensor.falhas", kind: "entity", target: falhas)
+      at2 = translate([ { "type" => "grid", "cards" => [ { "type" => "custom:auto-entities", "card" => { "type" => "vertical-stack" },
+                                                           "filter" => { "include" => [ { "entity_id" => "sensor.falhas", "attributes" => { "tuya_fora" => "> 0" } } ] } } ] } ],
+                      Integrations::HaDashboards.refs_for(site, {}))
+      q2 = at2.definition.dig("views", 0, "sections", 0, "widgets", 0, "query")
+      expect(q2).to eq("id" => falhas.id, "attr" => "tuya_fora>0")
+      expect(Points::Query.new(site).call(q2)).to eq([ falhas ])
+      falhas.update!(attrs: { "tuya_fora" => 0 })
+      expect(Points::Query.new(site).call(q2)).to be_empty
 
       # Firmware com versão nova = o `update.*` ligado do HA.
       fw = create(:point, site: site, device: dev, name: "Firmware", key: "luzes_fw", capability: "update",

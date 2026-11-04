@@ -364,11 +364,12 @@ module Dashboards
     # descarta a regra (melhor faltar item do que a lista encher de pontos que o HA não mostra).
     def ae_rule(rule, labels)
       attrs = rule["attributes"].to_h
-      return note_once("auto-entities: regra com #{(rule.keys - AE_KEYS) | attrs.keys.excluding('device_class')} ficou de fora") && nil if
-        (rule.keys - AE_KEYS).any? || (attrs.keys - %w[device_class]).any?
+      return note_once("auto-entities: regra com #{rule.keys - AE_KEYS} ficou de fora") && nil if (rule.keys - AE_KEYS).any?
 
       q = {}
-      q["device_class"] = attrs["device_class"].to_s if attrs["device_class"].present?
+      q["device_class"] = attrs.delete("device_class").to_s if attrs["device_class"].present?
+      conds = attrs.map { |k, v| (m = v.to_s.strip.match(/\A(>=|<=|>|<)\s*(-?[\d.]+)\z/)) ? "#{k}#{m[1]}#{m[2]}" : "#{k}=#{v}" }
+      q["attr"] = conds.join(",") if conds.any?
       if rule["entity_id"].present?
         ids = ae_entities(rule["entity_id"])
         return nil if ids.empty?
