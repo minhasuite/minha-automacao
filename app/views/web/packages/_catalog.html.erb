@@ -1,0 +1,57 @@
+<%# locals: (site:, catalog:, entries:, tags:, installed:) -%>
+<%# Aba "Explorar" (Packages::Catalog): o catálogo só aponta; instalar passa pela prévia de sempre. %>
+<%= form_with url: site_packages_path(site), method: :get, class: "ss-card ss-card-pad mb-4 flex flex-wrap items-end gap-3" do %>
+  <%= hidden_field_tag :tab, "explorar" %>
+  <div class="min-w-56 flex-1">
+    <label for="q" class="ss-label"><%= t("packages.catalog.search") %></label>
+    <%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("packages.catalog.search_ph") %>
+  </div>
+  <button type="submit" class="ss-btn ss-btn-ghost"><%= icon("search", "size-4") %><%= t("packages.catalog.search") %></button>
+  <% if tags.any? %>
+    <div class="basis-full flex flex-wrap gap-1.5" aria-label="<%= t("packages.catalog.tags") %>">
+      <% tags.each do |tg| %>
+        <%= link_to tg, site_packages_path(site, tab: "explorar", tag: (tg unless params[:tag] == tg), q: params[:q].presence), class: "ss-chip text-xs no-underline", "aria-current": (params[:tag] == tg ? "true" : nil) %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<% catalog.errors.each do |err| %>
+  <p class="ss-card ss-card-pad mb-3 text-sm text-danger" role="alert"><%= err %></p>
+<% end %>
+
+<% if entries.empty? %>
+  <div class="ss-card ss-empty">
+    <p class="font-bold text-ink"><%= t(catalog.entries.empty? ? "packages.catalog.empty" : "packages.catalog.no_match") %></p>
+    <p class="mt-1 max-w-md mx-auto"><%= t("packages.catalog.empty_text") %></p>
+  </div>
+<% else %>
+  <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="<%= t("packages.catalog.explore") %>">
+    <% entries.each do |e| %>
+      <% mine = installed[e.key] %>
+      <li class="ss-card ss-card-pad flex flex-col gap-2">
+        <div class="flex items-start gap-3">
+          <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon("archive") %></span>
+          <div class="min-w-0 flex-1">
+            <p class="font-bold text-ink"><%= e.name %></p>
+            <p class="text-xs text-muted truncate"><%= [ e.author.presence, (e.catalog unless e.official) ].compact.join(" · ") %></p>
+          </div>
+          <% if e.official %><span class="ss-badge ss-badge-accent"><%= t("packages.catalog.official") %></span><% end %>
+        </div>
+        <p class="text-sm text-ink-2 flex-1"><%= e.description %></p>
+        <% if e.tags.any? %><p class="flex flex-wrap gap-1"><% e.tags.each do |tg| %><span class="ss-chip text-xs"><%= tg %></span><% end %></p><% end %>
+        <div class="flex flex-wrap items-center gap-2 pt-1">
+          <% if mine %>
+            <%= link_to t("packages.catalog.installed_v", v: mine.version), package_path(mine), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+          <% end %>
+          <% if can?(:manage) %>
+            <%= button_to preview_site_packages_path(site), params: { url: e.url }, class: "ss-btn #{mine ? 'ss-btn-ghost' : 'ss-btn-primary'} ss-btn-sm", form_class: "contents" do %>
+              <%= icon("eye", "size-4") %><%= t(mine ? "packages.catalog.review" : "packages.index.preview") %>
+            <% end %>
+          <% end %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+<p class="mt-4 text-xs text-muted"><%= t("packages.catalog.footer_html") %></p>

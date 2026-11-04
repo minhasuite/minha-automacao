@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "name": "Catálogo oficial do Minha Automação",
+  "packages": [
+    {
+      "key": "luz-por-movimento",
+      "name": "Luz por movimento",
+      "description": "Acende a luz quando há movimento e apaga depois de um tempo parado. Dá para limitar a um horário (só à noite, por exemplo).",
+      "url": "https://github.com/minhasuite/minha-automacao-marketplace/tree/main/packages/luz-por-movimento",
+      "author": "MinhaSuite",
+      "tags": ["luz", "movimento", "blueprint"],
+      "official": true
+    },
+    {
+      "key": "aviso-porta-aberta",
+      "name": "Aviso de porta aberta",
+      "description": "Avisa no celular quando uma porta, janela ou portão fica aberto por mais tempo do que deveria.",
+      "url": "https://github.com/minhasuite/minha-automacao-marketplace/tree/main/packages/aviso-porta-aberta",
+      "author": "MinhaSuite",
+      "tags": ["segurança", "aviso", "blueprint"],
+      "official": true
+    },
+    {
+      "key": "modo-da-casa",
+      "name": "Modo da casa",
+      "description": "Seletor Em casa / Fora / Noite / Férias e um modelo que desliga o que você escolher quando a casa fica no modo Fora.",
+      "url": "https://github.com/minhasuite/minha-automacao-marketplace/tree/main/packages/modo-da-casa",
+      "author": "MinhaSuite",
+      "tags": ["modo", "helper", "blueprint"],
+      "official": true
+    }
+  ]
+}

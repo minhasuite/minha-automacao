@@ -13,9 +13,33 @@ Na página do pacote: **Procurar versão nova** e **Remover** (tira o que ele
 pôs). Ver: qualquer papel; instalar/atualizar/remover: técnico ou dono.
 API: `/api/v1/sites/:id/packages` (+ `/preview`) e `/api/v1/packages/:id`.
 
+## Catálogo (aba Explorar)
+
+A lista curada, como a padrão do HACS: `Packages::Catalog` lê o `index.json`
+do repositório público
+[minhasuite/minha-automacao-marketplace](https://github.com/minhasuite/minha-automacao-marketplace)
+(pacotes oficiais em `packages/<key>/`, regras de publicação no
+`CONTRIBUTING.md` de lá). **Pacotes › Explorar** (web, e no app pela tela do
+servidor) mostra as entradas com busca e etiquetas; "Ver o que entra" leva à
+prévia de sempre. O catálogo só aponta: nada instala sem a prévia.
+
+- `PACKAGES_CATALOGS` (URLs https separadas por espaço) troca o catálogo ou
+  soma outros no mesmo formato; a chave repetida vale a do primeiro, e só o
+  oficial marca "Oficial".
+- Entrada com chave inválida ou URL que não é fonte (`SOURCES`) fica de
+  fora; catálogo que não responde vira aviso na tela. Cache de 1 h,
+  até 256 KB e 300 entradas.
+
+```json
+{ "format": 1, "name": "Catálogo oficial do Minha Automação", "packages": [
+  { "key": "luz-por-movimento", "name": "Luz por movimento", "description": "…",
+    "url": "https://github.com/minhasuite/minha-automacao-marketplace/tree/main/packages/luz-por-movimento",
+    "author": "MinhaSuite", "tags": ["luz", "blueprint"], "official": true } ] }
+```
+
 ## Fontes (`Packages::SOURCES`)
 
-- `https://github.com/dono/repo[/tree/ref]` → `minha-automacao.json|yml|yaml` na raiz (raw).
+- `https://github.com/dono/repo[/tree/ref[/pasta]]` → `minha-automacao.json|yml|yaml` na raiz ou na pasta (raw).
 - `https://gitlab.com/grupo/repo` → idem.
 - URL https direta do manifesto (`.json`, `.yml`, `.yaml`).
 

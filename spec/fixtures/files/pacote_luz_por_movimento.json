@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "key": "luz-por-movimento",
+  "name": "Luz por movimento",
+  "version": "1.0.0",
+  "description": "Acende a luz quando há movimento e apaga depois de um tempo parado. Opcional: só à noite.",
+  "author": "MinhaSuite",
+  "items": [
+    {
+      "type": "blueprint",
+      "key": "luz-por-movimento",
+      "name": "Luz por movimento",
+      "domain": "automation",
+      "mode": "restart",
+      "inputs": [
+        { "key": "sensor", "label": "Sensor de movimento", "type": "point", "filter": { "capability": ["motion"] } },
+        { "key": "luz", "label": "Luz", "type": "point", "filter": { "capability": ["onoff", "dimmer"], "writable": true } },
+        { "key": "parado", "label": "Apagar depois de parado por", "type": "duration", "default": "2m" },
+        { "key": "depois_de", "label": "Só a partir de", "type": "time", "default": "00:00" },
+        { "key": "antes_de", "label": "Até", "type": "time", "default": "23:59" }
+      ],
+      "definition": {
+        "triggers": [ { "type": "state", "point": { "!input": "sensor" }, "to": true } ],
+        "conditions": [ { "type": "time", "after": { "!input": "depois_de" }, "before": { "!input": "antes_de" } } ],
+        "actions": [
+          { "type": "command", "point": { "!input": "luz" }, "command": "on" },
+          { "type": "wait_for", "conditions": [ { "type": "state", "point": { "!input": "sensor" }, "is": false, "for": { "!input": "parado" } } ], "timeout": "6h" },
+          { "type": "command", "point": { "!input": "luz" }, "command": "off" }
+        ]
+      }
+    }
+  ]
+}

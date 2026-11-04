@@ -7,6 +7,14 @@ module Web
       @site = Site.find(params[:site_id])
       authorize_site!(@site, :view)
       @packages = @site.packages.ordered
+      @tab = params[:tab] == "explorar" ? "explore" : "installed"
+      return unless @tab == "explore"
+
+      # Aba "Explorar": o catálogo (Packages::Catalog); instalar segue pela prévia de sempre.
+      @catalog = Packages::Catalog.call
+      @tags = @catalog.entries.flat_map(&:tags).tally.sort_by { |t, n| [ -n, t ] }.first(12).map(&:first)
+      @entries = Packages::Catalog.search(@catalog.entries, q: params[:q], tag: params[:tag])
+      @installed = @packages.to_h { |pk| [ pk.key, pk ] }
     end
 
     def show

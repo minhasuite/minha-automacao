@@ -12,7 +12,14 @@
   <% end %>
 <% end %>
 
-<% if @packages.empty? %>
+<nav class="mb-4 flex flex-wrap gap-2" aria-label="<%= t("packages.catalog.tabs") %>">
+  <%= link_to t("packages.catalog.installed", n: @packages.size), site_packages_path(@site), class: "ss-chip no-underline", "aria-current": (@tab == "installed" ? "page" : nil) %>
+  <%= link_to site_packages_path(@site, tab: "explorar"), class: "ss-chip no-underline", "aria-current": (@tab == "explore" ? "page" : nil) do %><%= icon("search", "size-4") %><%= t("packages.catalog.explore") %><% end %>
+</nav>
+
+<% if @tab == "explore" %>
+  <%= render "web/packages/catalog", site: @site, catalog: @catalog, entries: @entries, tags: @tags, installed: @installed %>
+<% elsif @packages.empty? %>
   <div class="ss-card ss-empty">
     <p class="font-bold text-ink"><%= t("packages.index.empty") %></p>
     <p class="mt-1 max-w-md mx-auto"><%= t("packages.index.empty_text") %></p>
