@@ -2,6 +2,7 @@
 <% ids = w["data"]["point_ids"] %>
 <% labels = w["labels"].is_a?(Hash) ? w["labels"] : {} %>
 <% tiles = w["display"] == "tiles" %>
+<% cols = (w["columns"].to_i.nonzero? || 3).clamp(1, 4) %>
 <%# Texto de vazio " " = o card some quando não há nada (show_empty: false do HA). %>
 <% unless ids.empty? && w["empty_text"] == " " %>
 <div class="<%= tiles ? '' : 'dw-card' %>">
@@ -18,7 +19,7 @@
     <div class="dw-grid">
       <% ids.each do |id| %>
         <% next unless points[id] %>
-        <div class="dw-w" style="<%= dw_span_style({ 'mobile' => 6, 'tablet' => 4, 'desktop' => 3 }) %>">
+        <div class="dw-w" style="<%= dw_span_style({ 'mobile' => 12, 'tablet' => (cols == 1 ? 12 : 6), 'desktop' => 12 / cols }) %>">
           <%= render "web/dashboards/widgets/tile", w: { "id" => w["id"], "type" => "tile", "bind" => id, "label" => labels[id],
                                                          "data" => { "title" => labels[id].presence || points[id]["name"], "point_ids" => [ id ] } },
                                                     points: points, dashboard: dashboard, live: live %>

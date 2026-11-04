@@ -110,7 +110,8 @@ module Points
     end
 
     def value(p) = @value ? @value.call(p) : p.value
-    def on?(p) = [ true, "open" ].include?(value(p))
+    # Ligado/aberto; firmware (`update`) "ligado" = há versão nova (o `update.*` do HA).
+    def on?(p) = [ true, "open" ].include?(v = value(p)) || (v.is_a?(Hash) && v["state"] == "available")
     def all = @all ||= (@points || @site.points.includes(:device)).to_a
     def area_names = @area_names ||= @site.areas.pluck(:id, :name).to_h
 

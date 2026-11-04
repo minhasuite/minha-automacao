@@ -24,7 +24,7 @@
       <%# Liga/desliga (ponto comum ou helper, F8f): o switch fica no próprio tile, como na lista de helpers; o nome abre os detalhes. %>
       <div class="<%= css %> items-center flex-wrap">
         <%= dw_tile_ico(w, p, glow: dw_glow(points[w.dig("data", "color_id")])) %>
-        <%= content_tag name_tag, class: "min-w-0 flex-1 no-underline", **name_attrs do %>
+        <%= content_tag name_tag, class: "dw-tile-text min-w-0 flex-1 no-underline", **name_attrs do %>
           <span class="dw-name"><%= dw_label(w, p) %></span><span class="dw-state" title="<%= p["status_note"] %>"><%= state_line %></span>
         <% end %>
         <%= dw_command_button(p, "toggle", w: w, dashboard: dashboard, live: live, class: "ss-switch", form_class: "contents", "aria-pressed": p["on"].to_s,
@@ -40,7 +40,7 @@
     <% else %>
       <div class="<%= css %> flex-wrap">
         <%= dw_tile_ico(w, p, glow: dw_glow(points[w.dig("data", "color_id")])) %>
-        <%= content_tag name_tag, class: "min-w-0 flex-1 no-underline", **name_attrs do %>
+        <%= content_tag name_tag, class: "dw-tile-text min-w-0 flex-1 no-underline", **name_attrs do %>
           <span class="dw-name"><%= dw_label(w, p) %></span>
           <span class="dw-state <%= 'dw-big num' if p['value'].is_a?(Numeric) && !off_line %>" title="<%= p["status_note"] %>"><%= state %></span>
           <% if w.dig("data", "context").present? %><span class="dw-state truncate"><%= w.dig("data", "context") %></span><% end %>

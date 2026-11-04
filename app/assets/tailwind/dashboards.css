@@ -112,6 +112,8 @@
   .dw-art-3 { background: linear-gradient(135deg, #7b5cff, #ec4899); }
   .dw-art-4 { background: linear-gradient(135deg, #14b8a6, #3b82f6); }
   .dw-art-5 { background: linear-gradient(135deg, #334155, #5a45e8); }
+  /* O ícone fica no topo; o nome e as pílulas descem sem passar por baixo dele (pílulas em várias linhas no celular). */
+  .dw-area { padding-top: 3.9rem; }
   .dw-area-ico { position: absolute; top: .9rem; left: 1rem; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 12px;
                  background: rgba(255, 255, 255, .2); backdrop-filter: blur(4px); }
   .dw-area-name { font-size: 1.15rem; font-weight: 800; letter-spacing: -.01em; }
@@ -171,7 +173,15 @@
    embaixo. Fora do @layer para vencer o flex-1/items-center do próprio tile. */
 @media (max-width: 639px) {
   .dw-tile:has(.ss-switch) { flex-wrap: wrap; align-items: center; row-gap: .55rem; }
-  .dw-tile:has(.ss-switch) > a { order: 3; flex: 1 0 100%; }
+  .dw-tile:has(.ss-switch) > .dw-tile-text { order: 3; flex: 1 0 100%; }
+  .dw-tile .ss-switch { order: 2; margin-left: auto; }
+}
+/* O mesmo em qualquer tela quando o tile é estreito (4 por linha numa seção, grade de tiles):
+   o nome não quebra no meio da palavra ao lado da chave. */
+.dw-w { container-type: inline-size; }
+@container (max-width: 15rem) {
+  .dw-tile:has(.ss-switch) { flex-wrap: wrap; align-items: center; row-gap: .55rem; }
+  .dw-tile:has(.ss-switch) > .dw-tile-text { order: 3; flex: 1 0 100%; }
   .dw-tile .ss-switch { order: 2; margin-left: auto; }
 }
 @media (min-width: 640px) { .dw-w { grid-column: span var(--t, 6) / span var(--t, 6); } }

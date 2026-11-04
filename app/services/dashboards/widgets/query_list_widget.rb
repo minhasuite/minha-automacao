@@ -6,7 +6,7 @@ module Dashboards
     # O auto-entities do HA traz mais três coisas, todas opcionais:
     #   `or`      — outras consultas somadas à primeira (cada regra `include` do
     #               HA vira uma; a ordem é a do `sort` da primeira);
-    #   `display` — "rows" (lista, o padrão) ou "tiles" (grade de tiles);
+    #   `display` — "rows" (lista, o padrão) ou "tiles" (grade de tiles, `columns` 1–4 no computador);
     #   `labels`  — {id do ponto → nome} para o nome que o painel do HA dava.
     class QueryListWidget < Base
       describe type: "query_list", label: "Lista automática", icon: "filter", required: %w[query], params: %w[empty_text display]
@@ -21,6 +21,7 @@ module Dashboards
         e = []
         e << text(:bad_or, max: MAX_OR) if w.key?("or") && !(w["or"].is_a?(Array) && w["or"].size <= MAX_OR && w["or"].all?(Hash))
         e << text(:bad_display) if w.key?("display") && !DISPLAYS.include?(w["display"])
+        e << text(:bad_display) if w.key?("columns") && !(w["columns"].is_a?(Integer) && w["columns"].between?(1, 4))
         e << text(:bad_or, max: MAX_OR) if w.key?("labels") && !w["labels"].is_a?(Hash)
         e
       end
@@ -51,7 +52,7 @@ module Dashboards
 
       def self.keep(old, new)
         hidden = old["query"].to_h.except(*FORM_QUERY.map(&:to_s))
-        new.merge(old.slice("or", "labels")).merge("query" => hidden.merge(new["query"].to_h).presence).compact
+        new.merge(old.slice("or", "labels", "columns")).merge("query" => hidden.merge(new["query"].to_h).presence).compact
       end
 
       def self.query(p) = p.fetch(:query, {}).to_h.compact_blank

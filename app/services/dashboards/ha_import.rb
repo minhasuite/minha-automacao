@@ -335,7 +335,8 @@ module Dashboards
                    "media_player" => { "capability" => "media" }, "sensor" => { "capability" => "measure" },
                    "binary_sensor" => { "capability" => "contact,motion,tamper,problem" },
                    "automation" => { "automation" => "true" }, "cover" => { "capability" => "gate" },
-                   "camera" => { "capability" => "stream" }, "vacuum" => { "capability" => "vacuum" } }.freeze
+                   "camera" => { "capability" => "stream" }, "vacuum" => { "capability" => "vacuum" },
+                   "update" => { "capability" => "update" } }.freeze
     AE_INTEGRATIONS = { "alexa_media" => "alexa", "tuya" => "tuya", "localtuya" => "tuya_local", "xiaomi_home" => "miio",
                         "mqtt" => "mqtt", "esphome" => "esphome", "hue" => "hue", "shelly" => "shelly" }.freeze
     AE_SORTS = { "name" => "name", "state" => "value", "last_changed" => "changed_at", "last_updated" => "changed_at",
@@ -351,14 +352,23 @@ module Dashboards
       queries[0] = queries[0].merge("sort" => "#{'-' if c.dig('sort', 'reverse') == true}#{sort}") if sort
       inner = c["card"].to_h
       tiles = %w[grid vertical-stack horizontal-stack].include?(inner["type"].to_s)
+      columns = { "vertical-stack" => 1, "horizontal-stack" => 4 }[inner["type"].to_s] || inner["columns"].to_i.nonzero? || 3
       empty = c["show_empty"] == false ? " " : (c.dig("else", "content").to_s.strip.presence if c.dig("else", "type") == "markdown")
-      { "type" => "query_list", "query" => queries.first, "or" => queries.drop(1).presence, "display" => ("tiles" if tiles),
+      { "type" => "query_list", "query" => queries.first, "or" => queries.drop(1).presence, "display" => ("tiles" if tiles), "columns" => (columns.clamp(1, 4) if tiles),
         "labels" => labels.presence, "label" => inner["title"].presence, "empty_text" => empty&.first(200) }.compact
     end
 
-    # Uma regra `include` → consulta (nil = nada daqui casa com ela).
+    AE_KEYS = %w[entity_id domain label area integration state last_triggered options attributes].freeze
+
+    # Uma regra `include` → consulta (nil = nada daqui casa com ela). Campo que não sabemos traduzir
+    # descarta a regra (melhor faltar item do que a lista encher de pontos que o HA não mostra).
     def ae_rule(rule, labels)
+      attrs = rule["attributes"].to_h
+      return note_once("auto-entities: regra com #{(rule.keys - AE_KEYS) | attrs.keys.excluding('device_class')} ficou de fora") && nil if
+        (rule.keys - AE_KEYS).any? || (attrs.keys - %w[device_class]).any?
+
       q = {}
+      q["device_class"] = attrs["device_class"].to_s if attrs["device_class"].present?
       if rule["entity_id"].present?
         ids = ae_entities(rule["entity_id"])
         return nil if ids.empty?
@@ -391,8 +401,9 @@ module Dashboards
     def ae_state(v)
       s = v.to_s.strip
       case s
-      when "on", "playing", "open", "home", "true" then { "state" => "on" }
-      when "off", "idle", "closed", "not_home", "false", "paused" then { "state" => "off" }
+      # Sem sinal no HA é `unavailable`, nem on nem off: aqui o ponto guarda o último valor, então pede sinal.
+      when "on", "playing", "open", "home", "true" then { "state" => "on", "quality" => "good" }
+      when "off", "idle", "closed", "not_home", "false", "paused" then { "state" => "off", "quality" => "good" }
       when "unavailable", "unknown" then { "quality" => "unavailable" }
       when /\A<\s*(-?[\d.]+)\z/ then { "below" => Regexp.last_match(1) }
       when /\A>\s*(-?[\d.]+)\z/ then { "above" => Regexp.last_match(1) }

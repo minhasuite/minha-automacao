@@ -56,7 +56,7 @@ RSpec.describe "HA: cards da casa" do
       w = result.definition.dig("views", 0, "sections", 0, "widgets", 0)
       expect(w).to include("type" => "query_list", "display" => "tiles", "empty_text" => "Todas as luzes estão apagadas.",
                            "labels" => { cozinha.id => "Cozinha", sala.id => "Sala" })
-      expect(w["query"]).to include("id" => cozinha.id, "state" => "on", "sort" => "name", "not_id" => trava.id, "not_integration" => "alexa")
+      expect(w["query"]).to include("id" => cozinha.id, "state" => "on", "quality" => "good", "sort" => "name", "not_id" => trava.id, "not_integration" => "alexa")
       expect(w["or"].last).to include("tag" => "iluminação", "state" => "on")
       expect(result.notes.join).not_to include("auto-entities")
       expect(Dashboards::Schema.errors(result.definition)).to be_empty
@@ -84,6 +84,24 @@ RSpec.describe "HA: cards da casa" do
       expect(q).to eq("automation" => "true", "ran_min" => "1440", "sort" => "-ran_at")
       expect(Points::Query.new(site).call(q).map(&:name)).to eq([ "Rodou agora" ])
       expect(Points::Query.new(site).call({ "capability" => "onoff", "automation" => "false" }).map(&:name)).not_to include("Rodou agora")
+
+      # Bateria pelo atributo device_class (não "todo sensor abaixo de 30"); campo desconhecido descarta a regra;
+      # vertical-stack de tiles = uma coluna.
+      att = translate([ { "type" => "grid", "cards" => [ { "type" => "custom:auto-entities", "card" => { "type" => "vertical-stack" },
+                                                           "filter" => { "include" => [ { "domain" => "sensor", "attributes" => { "device_class" => "battery" }, "state" => "< 30" },
+                                                                                        { "domain" => "sensor", "attributes" => { "unit_of_measurement" => "W" } } ] } } ] } ], refs)
+      aw = att.definition.dig("views", 0, "sections", 0, "widgets", 0)
+      expect(aw).to include("display" => "tiles", "columns" => 1, "query" => { "capability" => "measure", "device_class" => "battery", "below" => "30" })
+      expect(aw).not_to have_key("or")
+      expect(att.notes.join).to include("unit_of_measurement")
+
+      # Firmware com versão nova = o `update.*` ligado do HA.
+      fw = create(:point, site: site, device: dev, name: "Firmware", key: "luzes_fw", capability: "update",
+                          value: { "installed" => "1.0", "latest" => "1.1", "state" => "available" })
+      upd = translate([ { "type" => "grid", "cards" => [ { "type" => "custom:auto-entities", "card" => { "type" => "vertical-stack" },
+                                                           "filter" => { "include" => [ { "domain" => "update", "state" => "on" } ] } } ] } ], refs)
+      q = upd.definition.dig("views", 0, "sections", 0, "widgets", 0, "query")
+      expect(Points::Query.new(site).call(q)).to eq([ fw ])
     end
   end
 

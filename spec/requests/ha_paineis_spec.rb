@@ -87,7 +87,7 @@ RSpec.describe "Painéis importados do HA" do
     expect(w2[3]["widgets"].map { |g| g["binds"].size }).to eq([ 8, 1 ]) # 9 luzes (uma sem par) em grupos de 8
     expect(w2[4]["widgets"].map { |w| w["type"] }).to eq(%w[tile stat])
     expect(w2[5]["visible_if"]["all"]).to contain_exactly(temp, { "state" => { "point" => pts["light.teto_teste"].id, "is" => "on" } })
-    expect(w2[6]["query"]).to eq("capability" => "media", "state" => "on")
+    expect(w2[6]["query"]).to eq("capability" => "media", "state" => "on", "quality" => "good")
     expect(w2[7]).to include("range" => "7d")
     expect(w2[8]["visible_if"]["all"]).to include("state" => { "point" => pts["light.teto_teste"].id, "is" => "off" }) # a condição por pessoa cai
 
