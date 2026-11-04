@@ -75,7 +75,9 @@ module Integrations
 
         point = device.points.find_by("address->>'field' = ?", field) ||
                 device.points.create!(site: site, name: m[:name], capability: m[:capability], unit: m[:unit], device_class: m[:device_class],
-                                      history: "on_change", address: { "field" => field }, key: Integrations.unique_key(site, device, m[:name]))
+                                      history: "on_change", address: { "field" => field }, key: Integrations.unique_key(site, device, m[:name]),
+                                      writable: false)
+        point.update_columns(writable: false) if point.writable # leitura do servidor: data e texto não viram campo de editar
         point.report!(value)
       end
       device.update_columns(last_seen_at: Time.current)

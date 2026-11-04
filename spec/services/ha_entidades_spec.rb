@@ -47,6 +47,7 @@ RSpec.describe "HA: entidades sem par" do
     expect(ExternalRef.find_by(external_id: "button.robo_lavar").kind).to eq("command:wash_mop")
     cpu = Point.find(refs["sensor.home_assistant_core_cpu_percent"])
     expect(cpu).to have_attributes(name: "Processador", value: 7)
+    expect(cpu.device.points.where(writable: true)).to be_empty # leitura do servidor: nada vira campo de editar
     expect(refs).not_to have_key("sensor.speedtest_baixar") # desativada no HA: não cria o speedtest
     expect(site.integrations.pluck(:driver)).to eq([ "system" ])
 
