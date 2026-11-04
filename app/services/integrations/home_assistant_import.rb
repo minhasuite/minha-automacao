@@ -36,16 +36,25 @@ module Integrations
       "counter" => [ "counter", ->(a) { { "initial" => a["initial"], "step" => a["step"], "min" => a["minimum"], "max" => a["maximum"] } } ]
     }.freeze
     # Domínio do HA → capacidade daqui, quando o aparelho tem um ponto só dela.
-    DOMAIN_CAPS = { "vacuum" => "vacuum", "media_player" => "speaker", "camera" => "stream" }.freeze
+    # Lista = a primeira capacidade que o aparelho tem num ponto só (a Echo fala; a Fire TV e o grupo da Alexa só têm a mídia).
+    DOMAIN_CAPS = { "vacuum" => "vacuum", "media_player" => %w[speaker media], "camera" => "stream" }.freeze
     # Classe do sensor do HA → capacidade daqui (Lote 8), também quando o aparelho tem um ponto só dela.
     CLASS_CAPS = { "motion" => "motion", "occupancy" => "motion", "presence" => "motion", "door" => "contact", "window" => "contact" }.freeze
+
+    # Código do DP no Tuya do HA → código no Smart Life daqui (mesmo DP, nome diferente).
+    TUYA_CODES = { "va_humidity" => "humidity_value" }.freeze
+    # Fim do `unique_id` do HA → papel do ponto daqui, quando o HA lê outra propriedade da mesma coisa
+    # (a falha do robô: o HA lê 2.3, aqui é o 2.66 decodificado).
+    UID_ROLES = { /_fault_p_\d+_\d+\z/ => "fault" }.freeze
+    # Tipo do de-para da entidade que é ação de outro ponto: "command:<comando>".
+    COMMAND_KIND = "command:".freeze
 
     Result = Struct.new(:areas, :devices_added, :devices_moved, :entities, :unmapped, :helpers, :helpers_skipped, :scenes, :items, :tags, keyword_init: true)
     # Sensor template da tela do HA → tipo do sensor calculado daqui.
     TEMPLATE_KINDS = { "binary_sensor" => "bool", "sensor" => "number" }.freeze
 
     # Passos na ordem (o assistente "Migre do HA" mostra o progresso por eles).
-    STEPS = { areas!: "Áreas", devices!: "Aparelhos", entities!: "Entidades", helpers!: "Helpers", scenes!: "Cenas",
+    STEPS = { areas!: "Áreas", devices!: "Aparelhos", entities!: "Entidades", services!: "Serviços", helpers!: "Helpers", scenes!: "Cenas",
               scripts!: "Scripts", automations!: "Automações" }.freeze
 
     # `progress`: chamado antes de cada passo com (índice, rótulo, total).
@@ -150,14 +159,35 @@ module Integrations
       registry("entity_registry", "entities").each do |e|
         next if e["disabled_by"].present?
 
-        point = point_for(e) or next
-        link!(e["entity_id"], "entity", point, e["name"] || e["original_name"])
+        point, command = point_for(e)
+        next unless point
+
+        link!(e["entity_id"], command ? "#{COMMAND_KIND}#{command}" : "entity", point, e["name"] || e["original_name"])
+        carry_total!(point, e["entity_id"])
         link!("entity:#{e['id']}", "entity_registry", point) if e["id"].present?
         tag!(point, e["labels"])
         @r.entities += 1
       end
       wanted = registry("entity_registry", "entities").select { |e| e["disabled_by"].blank? && e["device_id"] && @devices[e["device_id"]] }
       @r.unmapped = wanted.map { |e| e["entity_id"] } - ExternalRef.map_for(@site, SOURCE).keys
+    end
+
+    # Entidades de serviço (clima, speedtest, o servidor) → pontos das integrações daqui (HaServiceEntities).
+    def services!
+      HaServiceEntities.reset!
+      HaServiceEntities.call(@site, registry("entity_registry", "entities")).each do |e, point|
+        link!(e["entity_id"], "entity", point, e["name"] || e["original_name"])
+        @r.entities += 1
+      end
+      @r.unmapped -= ExternalRef.map_for(@site, SOURCE).keys
+    end
+
+    # Ponto que soma (energia do Tuya) começa do total que o HA já tinha: o histórico de consumo não recomeça do zero.
+    def carry_total!(point, entity_id)
+      return unless point.address["accumulate"]
+
+      ha = Float(states.dig(entity_id, "state").to_s, exception: false) or return
+      point.report!(ha) if ha > point.value.to_f
     end
 
     # Etiquetas do HA na entidade → etiquetas do ponto (pelo nome).
@@ -168,16 +198,38 @@ module Integrations
       end
     end
 
+    # → [ponto, comando]: o comando só vem quando a entidade do HA é uma ação de
+    # outro ponto (botão "Lavar pano" do robô → ponto do robô + `wash_mop`).
     def point_for(e)
       uid = e["unique_id"].to_s
       device = @devices[e["device_id"]] || device_by_uid(uid) or return
       points = device.points.to_a
-      by_code = points.select { |p| p.address["code"].present? && uid.end_with?(p.address["code"]) }.max_by { |p| p.address["code"].size }
+      action = action_for(uid, points) and return action
+      [ entity_point(e, uid, points), nil ]
+    end
+
+    def entity_point(e, uid, points)
+      by_code = points.select { |p| p.address["code"].present? && code_of(uid).end_with?(p.address["code"]) }.max_by { |p| p.address["code"].size }
       by_code || points.find { |p| p.address["dps"].present? && uid.end_with?("_#{p.address['dps']}") } ||
         (uid =~ /_p_(\d+)_(\d+)\z/ && points.find { |p| p.address["siid"].to_i == ::Regexp.last_match(1).to_i && p.address["piid"].to_i == ::Regexp.last_match(2).to_i }) ||
         (uid =~ /_e_(\d+)_(\d+)\z/ && points.find { |p| p.address["siid"].to_i == ::Regexp.last_match(1).to_i && p.address["eiid"].to_i == ::Regexp.last_match(2).to_i }) ||
-        (cap = DOMAIN_CAPS[e["entity_id"].to_s.split(".").first] || CLASS_CAPS[e["original_device_class"] || e["device_class"]]) &&
-          points.select { |p| p.capability == cap }.then { |l| l.first if l.one? }
+        Array(DOMAIN_CAPS[e["entity_id"].to_s.split(".").first] || CLASS_CAPS[e["original_device_class"] || e["device_class"]]).lazy
+          .map { |cap| points.select { |p| p.capability == cap }.then { |l| l.first if l.one? } }.find(&:itself) ||
+        (role = UID_ROLES.find { |re, _| uid.match?(re) }&.last) && points.find { |p| p.address["role"] == role }
+    end
+
+    # O Tuya do HA e o Smart Life daqui chamam alguns DPs por códigos diferentes.
+    def code_of(uid) = TUYA_CODES.reduce(uid) { |u, (ha, here)| u.end_with?(ha) ? "#{u.delete_suffix(ha)}#{here}" : u }
+
+    # Ação MIoT do HA (`..._a_<siid>_<aiid>`) → o ponto que tem essa ação (o robô) e o comando dela.
+    def action_for(uid, points)
+      m = uid.match(/_a_(\d+)_(\d+)\z/) or return nil
+      siid, aiid = m.captures.map(&:to_i)
+      points.each do |p|
+        cmd = p.address["actions"].to_h.find { |_, v| Array(v).map(&:to_i) == [ siid, aiid ] }&.first
+        return [ p, cmd ] if cmd
+      end
+      nil
     end
 
     # Lote 8: entidade sem aparelho no HA (integração própria, ex.: movimento
@@ -198,6 +250,7 @@ module Integrations
         end
       end
       entries.select { |c| c["domain"] == "template" }.each { |c| template!(c) }
+      yaml_templates!
     end
 
     # Sensor template da tela do HA → sensor calculado (só se o Jinja traduz).
@@ -214,6 +267,61 @@ module Integrations
 
       helper!({ "entity_id" => ext, "attributes" => { "friendly_name" => o["name"].presence || c["title"] } }, "template",
               { "kind" => kind, "expr" => expr, "unit" => o["unit_of_measurement"] })
+    end
+
+    # Sensores template escritos no `configuration.yaml` (a API do HA não os
+    # mostra: vêm do arquivo enviado no assistente, `templates`) → sensor
+    # calculado com os atributos. O com gatilho (`triggers`) é automação aqui:
+    # fica anotado.
+    def yaml_templates!
+      Array(json("templates")).each do |block|
+        next unless block.is_a?(Hash)
+
+        %w[sensor binary_sensor].each do |domain|
+          Array(block[domain]).each do |t|
+            next unless t.is_a?(Hash)
+
+            ext = yaml_template_entity(domain, t)
+            next @r.helpers_skipped << "#{ext}: template com gatilho (refaça como automação)" if block.key?("triggers") || block.key?("trigger")
+
+            yaml_template!(domain, t, ext)
+          end
+        end
+      end
+    end
+
+    def yaml_template_entity(domain, t)
+      uid = t["unique_id"].to_s
+      found = registry("entity_registry", "entities").find { |e| e["platform"] == "template" && uid.present? && e["unique_id"].to_s == uid }
+      found&.dig("entity_id") || "#{domain}.#{t['name'].to_s.parameterize(separator: '_')}"
+    end
+
+    def yaml_template!(domain, t, ext)
+      return if ExternalRef.find_by(site_id: @site.id, source: SOURCE, external_id: ext)&.target
+
+      ids = ExternalRef.map_for(@site, SOURCE, "Point")
+      keys = Point.where(id: ids.values).pluck(:id, :key).to_h
+      jinja = converter(->(e) { keys[ids[e]] })
+      clean = ->(out) { out&.gsub(/\[\[([^\]]+)\]\]/, '\1')&.gsub(/\s*\n\s*/, " ")&.strip }
+      src = t["state"].to_s
+      calc = clean.(jinja.expr(src))
+      kind = yaml_template_kind(domain, t, calc)
+      expr = kind == "text" ? clean.(jinja.text(src)) : (calc || clean.(jinja.text(src)))
+      return @r.helpers_skipped << "#{ext}: template sem tradução" if expr.blank?
+
+      attrs, lost = t["attributes"].to_h.partition { |k, v| k.to_s.match?(Automations::Dsl::VAR) && clean.(jinja.text(v.to_s)).present? }
+      lost.each { |k, _| @r.helpers_skipped << "#{ext}: atributo #{k} sem tradução" }
+      lines = attrs.first(HelperTypes::Template::MAX_ATTRS).map { |k, v| "#{k}: #{clean.(jinja.text(v.to_s))}" }
+      helper!({ "entity_id" => ext, "attributes" => { "friendly_name" => t["name"].presence || ext } }, "template",
+              { "kind" => kind, "expr" => expr, "unit" => t["unit_of_measurement"], "attrs" => lines.join("\n") })
+    end
+
+    # Liga/desliga, data e hora, número (com unidade, classe de medida ou que é conta) ou texto.
+    def yaml_template_kind(domain, t, calc)
+      return "bool" if domain == "binary_sensor"
+      return "timestamp" if t["device_class"] == "timestamp"
+
+      calc || t["unit_of_measurement"].present? || t["state_class"].present? || t["device_class"].present? ? "number" : "text"
     end
 
     def helper!(s, kind, form)

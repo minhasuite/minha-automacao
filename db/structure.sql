@@ -4843,6 +4843,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261104100003'),
 ('20261104100002'),
 ('20261104100001'),
 ('20261103200001'),

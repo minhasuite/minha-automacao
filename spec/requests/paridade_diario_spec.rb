@@ -48,7 +48,9 @@ RSpec.describe "Diário e Histórico" do
   it "filtra por área, ponto, pessoa, tipo e busca" do
     seed!
     get "/diario", params: { area_id: area.id }
-    expect(response.body).to include("Luz do teto").and(exclude("Teste porta aberta", "Indisponível", "Teste chegada"))
+    # só as linhas (o seletor de pontos lista também o liga/desliga das automações)
+    feed = response.body.split('class="lb-list').last
+    expect(feed).to include("Luz do teto").and(exclude("Teste porta aberta", "Indisponível", "Teste chegada"))
     get "/diario", params: { user_id: user.id }
     expect(response.body).to include("Teste cinema", "Ligar").and(exclude("Desligado", "Indisponível"))
     get "/diario", params: { sources: %w[runs] }

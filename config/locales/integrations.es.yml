@@ -189,6 +189,8 @@ es:
     title: Puente %{name}
     waiting: Esperando vinculación
   ha_migration:
+    config_yaml: "Sensores template en YAML (opcional)"
+    config_yaml_hint: "Sube el configuration.yaml del HA: su API no muestra los sensores template escritos a mano. Los sin disparador se vuelven sensor calculado; el archivo no se guarda."
     dash:
       title: Paneles de Home Assistant
       hint: Recrea cada panel de HA aquí con la misma disposición (vistas, secciones, tarjetas, anchos, íconos y fondos). La versión Mobile pasa a ser el panel de la app. Lo que no tenga equivalente aparece en su lugar, con un aviso.
@@ -253,6 +255,7 @@ es:
       automations: Automatizaciones
       devices: Aparatos
       entities: Entidades
+      services: "Servicios"
       helpers: Helpers
       scenes: Escenas
       scripts: Scripts

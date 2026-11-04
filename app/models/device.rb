@@ -53,7 +53,7 @@ class Device < ApplicationRecord
   NEW_SQL = "COALESCE(devices.discovered_at > :since AND devices.last_seen_at IS NULL, false)".freeze
 
   # Fora das listas: os virtuais internos de helpers e scripts (têm aba própria).
-  scope :listed, -> { where("devices.external_id IS NULL OR devices.external_id NOT IN (?)", [ HelperTypes::DEVICE_ID, Scripts::DEVICE_ID ]) }
+  scope :listed, -> { where("devices.external_id IS NULL OR devices.external_id NOT IN (?)", [ HelperTypes::DEVICE_ID, Scripts::DEVICE_ID, AutomationPoints::DEVICE_ID ]) }
 
   scope :in_situation, lambda { |s|
     case s

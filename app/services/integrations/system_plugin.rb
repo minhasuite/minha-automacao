@@ -1,3 +1,4 @@
+require "etc"
 require "open3"
 
 module Integrations
@@ -18,11 +19,21 @@ module Integrations
     STARTED_AT = Time.current
     SYS = ENV.fetch("HOST_SYS", "/sys")
     BACKUP_LATE = 26.hours
+    BACKUP_EVERY = 24.hours
 
     METRICS = {
       "disk_used" => { name: "Disco usado", capability: "measure", unit: "%", read: ->(_site) { SystemPlugin.disk&.dig(:used) } },
       "disk_free" => { name: "Disco livre", capability: "measure", unit: "GB", read: ->(_site) { SystemPlugin.disk&.dig(:free) } },
+      # hassio do HA (CPU e memória do Core): a carga do servidor e a memória em uso.
+      "cpu" => { name: "Processador", capability: "measure", unit: "%", read: ->(_site) { SystemPlugin.cpu } },
+      "memory" => { name: "Memória usada", capability: "measure", unit: "%", read: ->(_site) { SystemPlugin.memory } },
+      # update do HA: versão nova do Minha Automação no canal escolhido (só onde dá para atualizar).
+      "update_available" => { name: "Atualização disponível", capability: "problem", device_class: "update",
+                              read: ->(_site) { Updates.available?(Updates.latest) if Updates.supported? } },
       "backup_at" => { name: "Último backup", capability: "datetime", read: ->(_site) { SystemPlugin.last_backup&.iso8601 } },
+      # backup do HA (próximo agendado e o estado do gerenciador): o local roda 24 h depois do anterior.
+      "backup_next" => { name: "Próximo backup", capability: "datetime", read: ->(_site) { (SystemPlugin.last_backup + BACKUP_EVERY).iso8601 if SystemPlugin.last_backup } },
+      "backup_state" => { name: "Estado do backup", capability: "text", read: ->(_site) { SystemPlugin.backup_state } },
       "backup_late" => { name: "Backup atrasado", capability: "problem", device_class: "problem",
                          read: ->(_site) { (at = SystemPlugin.last_backup) && at < BACKUP_LATE.ago } },
       # G20: só com a cópia externa configurada (sem ela, não cria o ponto).
@@ -93,6 +104,23 @@ module Integrations
       nil
     end
 
+    # Carga do último minuto sobre o número de núcleos, em % (0–100); nil se não der.
+    def self.cpu(loadavg = "/proc/loadavg")
+      (File.read(loadavg).split.first.to_f / Etc.nprocessors * 100).round.clamp(0, 100)
+    rescue SystemCallError
+      nil
+    end
+
+    # Memória em uso (total − disponível), em %; nil se não der.
+    def self.memory(meminfo = "/proc/meminfo")
+      kb = File.read(meminfo).scan(/^(MemTotal|MemAvailable):\s+(\d+)/).to_h.transform_values(&:to_f)
+      return nil unless kb["MemTotal"].to_f.positive? && kb["MemAvailable"]
+
+      ((1 - (kb["MemAvailable"] / kb["MemTotal"])) * 100).round
+    rescue SystemCallError
+      nil
+    end
+
     def self.booted_at(uptime = "/proc/uptime")
       s = File.read(uptime).to_f
       (Time.current - s).change(sec: 0) if s.positive?
@@ -113,6 +141,15 @@ module Integrations
       File.read("#{dir}/in0_lcrit_alarm").strip == "1"
     rescue SystemCallError
       nil
+    end
+
+    # Em dia, atrasado ou com falha (a cópia externa, quando configurada, também conta); nil sem pasta de backup.
+    def self.backup_state
+      at = last_backup or return nil
+      return "Atrasado" if at < BACKUP_LATE.ago
+      return "Cópia externa com falha" if Backups.configured? && !Backups.offsite_ok?
+
+      "Em dia"
     end
 
     # Arquivo mais novo da pasta de backup (`BACKUP_DIR`; no servidor da casa, /backups).

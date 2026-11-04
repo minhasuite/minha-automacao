@@ -29,7 +29,7 @@ module Tuya
     # Mapa com o que os pacotes instalados somam (Pacote 3, DeviceMaps).
     def self.map = DeviceMaps.apply("tuya", MAP)
     # Chaves do mapa que vão para o endereço do ponto (Points::Decode, PointHoldJob, ouvinte).
-    ADDRESS_KEYS = %w[decode field match unmatched hold_s push_only color].freeze
+    ADDRESS_KEYS = %w[decode field match unmatched hold_s push_only accumulate color].freeze
     # Aparelho da nuvem vira `tuya_cloud`; o mesmo device_id já no local como
     # `tuya_local` (LocalTuya importado) casa com ele e continua local.
     DRIVERS = %w[tuya_cloud tuya_local].freeze

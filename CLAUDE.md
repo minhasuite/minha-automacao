@@ -358,7 +358,9 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `Integration` (`credentials` cifrado = {cookie → valor}, `status`,
   `last_error`, `last_ok_at`; tela `/locais/:id/integracoes`, "Atualizar
   lista de Echo" só lê). Importação: `cat <cookies do alexa_media> | rake
-  'alexa:importar[Casa]'` (só família ECHO/KNIGHT/ROOK). Os cookies são uma
+  'alexa:importar[Casa]'` (Echo = família ECHO/KNIGHT/ROOK, com o ponto
+  `speaker`; Fire TV e grupo de alto-falantes = FIRE_TV/WHA, só com a mídia:
+  aviso continua só nas Echo). Os cookies são uma
   cópia: quando o HA renovar e a Amazon recusar (401/403), a integração fica
   "Com erro" e é só importar de novo. Canal `alexa:<id do ponto>` em
   `Notifier` (aviso, alerta, ação "Avisar"): manda `announce` pela fila
@@ -589,6 +591,18 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   nada de `case` por card fora dele); `Integrations::HaDashboards` busca e
   publica. Painel do app à parte (`dashboards.app_default`,
   `Dashboard.default_for(app: true)`). Ícone `mdi:nome` em qualquer lugar.
+  Entidade do HA sem aparelho (clima, speedtest, o servidor) = linha em
+  `HaServiceEntities::SERVICES` (passo "Serviços" do importador; cria só a
+  integração que não pede nada); ação MIoT do HA (`_a_<siid>_<aiid>`) vira
+  de-para `command:<comando>` no ponto que tem a ação, e o painel faz o toque
+  com esse comando; DP do Tuya do HA com outro nome = `TUYA_CODES`. Toda
+  automação tem um ponto `onoff` no dispositivo virtual "Automações"
+  (`AutomationPoints`, fora da lista; ligar exige publicada; roda na sombra).
+  Sensor template em YAML vem do `configuration.yaml` enviado no assistente
+  (`HaMigration.templates_from`; o com gatilho fica anotado). Energia do Tuya
+  (`add_ele`) é acréscimo: o ponto soma o que o aparelho empurra
+  (`accumulate` + `push_only`) e começa do total do HA. Card statistic do HA
+  = stat com `aggregate: "change"` e `period`.
 - **Paridade com o HA (roadmap de vendas, compat)**: Diário = fontes em
   `Logbook::SOURCES` (`describe` + `fetch(filtro)`; cadastro técnico+,
   entradas só dono; cena acionada vira evento `scene`, entrada na web/app

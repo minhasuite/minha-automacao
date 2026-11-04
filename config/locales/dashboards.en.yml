@@ -296,6 +296,11 @@ en:
         empty_text: Text when empty
       scenes_hint: (none checked = all)
       show: Show
+      stat_periods:
+        day: "Today"
+        week: "This week"
+        month: "This month"
+        year: "This year"
       aggregates:
         count: How many
         sum: Sum
@@ -303,6 +308,7 @@ en:
         min: Minimum
         max: Maximum
         last: Point value
+        change: "How much it rose in the period"
       attribute: Attribute
       attribute_hint: (optional, instead of the value)
       attribute_placeholder: phrase

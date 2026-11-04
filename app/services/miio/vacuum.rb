@@ -50,6 +50,7 @@ module Miio
         end,
         { name: "Área da limpeza", capability: "measure", unit: "m²", scale: 0.01, address: address(2, 6, "area") },
         { name: "Duração da limpeza", capability: "measure", unit: "min", scale: BigDecimal("1") / 60, address: address(2, 7, "duration") },
+        { name: "Última limpeza", capability: "datetime", writable: false, history: "on_change", address: address(2, 17, "last_clean", decode: "unix") },
         *PARTS.map { |name, (s, p)| { name: name, capability: "measure", unit: "%", address: address(s, p, "part") } },
         { name: "Detergente", capability: "measure", unit: "%", address: address(18, 1, "detergent") },
         # Lote 8: limpeza em curso (JSON com os cômodos) e os eventos do mapa miot.yml.
@@ -83,9 +84,13 @@ module Miio
       a = point.address
       return a["map"][raw.to_s] if a["map"]
       return fault?(raw) if a["decode"] == "fault"
+      return unix(raw) if a["decode"] == "unix"
 
       point.from_raw(raw)
     end
+
+    # Segundos desde 1970 → data e hora (ISO 8601); zero ou vazio = sem leitura.
+    def unix(raw) = raw.to_i.positive? ? Time.zone.at(raw.to_i).iso8601 : nil
 
     # fault-ids: {"ts":…, "fault":[0]} → algum código diferente de zero.
     def fault?(raw)

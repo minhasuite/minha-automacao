@@ -33,9 +33,10 @@ RSpec.describe "Alexa (anúncio não oficial)" do
     expect(Alexa::Import.cookies_from("a" => 1)).to eq("a" => "1")
   end
 
-  it "importa só as Echo, guarda cookies cifrados e é idempotente" do
+  it "importa as Echo (que falam), a Fire TV e o grupo só com a mídia, guarda cookies cifrados e é idempotente" do
     stub_devices
-    expect(import).to eq(devices: 2, points: 2, echos: 2)
+    expect(import).to eq(devices: 4, points: 2, echos: 2)
+    expect(Device.find_by!(name: "FireTV").points.pluck(:capability)).not_to include("speaker") # aviso só nas Echo
     integration = site.integrations.sole
     expect(integration.status).to eq("ok")
     expect(integration.secrets).to eq("cookies" => { "session-id" => "S1", "csrf" => "C1" })

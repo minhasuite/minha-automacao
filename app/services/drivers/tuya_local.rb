@@ -16,7 +16,8 @@ module Drivers
 
     # Grava nos pontos do aparelho os dps recebidos. `push`: veio do aparelho
     # sozinho (ouvinte); ponto `push_only` (mensagem de evento, como o
-    # movimento da câmera) ignora o estado completo, que repete a última.
+    # movimento da câmera) ignora o estado completo, que repete a última;
+    # ponto `accumulate` (energia `add_ele`) soma o acréscimo ao total.
     def self.report(device, dps, at: Time.current, push: false)
       device.update_columns(status: "online", last_seen_at: at)
       device.points.each do |point|
@@ -25,6 +26,7 @@ module Drivers
         next if point.capability == "remote" # o valor do controle remoto é dos botões aprendidos (Remotes), não do dp
 
         value = point.from_raw(dps[dp])
+        value = point.value.to_f + value if point.address["accumulate"] && value.is_a?(Numeric) # acréscimo → total
         point.report!(value, at: at) unless value.nil? && point.address["decode"] # decodificado nil = mensagem de outro tipo
       end
     end

@@ -17,7 +17,7 @@ module HelperTypes
     # Valor do `previous` quando o ponto ainda não tem valor.
     START = { "number" => 0, "bool" => false, "text" => "", "timestamp" => "" }.freeze
     MAX = 500
-    MAX_ATTRS = 10
+    MAX_ATTRS = 20
     # Consulta ao conjunto de pontos (Lote 4, G8): a origem é o local inteiro.
     DYNAMIC = /\b(?:#{Automations::Expr::AGGREGATES.keys.join('|')})\s*\(|points_where/
 
@@ -60,7 +60,7 @@ module HelperTypes
       return point.errors.add(:base, text(:every)) unless every_ok?(every)
       return point.errors.add(:base, text(:attrs, max: MAX_ATTRS)) if attrs.nil? || attrs.size > MAX_ATTRS
 
-      error = %w[text timestamp].include?(kind) && !expr_like?(expr) ? template_error(expr) : expr_error(expr)
+      error = %w[text timestamp number].include?(kind) && !expr_like?(expr) ? template_error(expr) : expr_error(expr)
       error ||= attrs.values.lazy.filter_map { |t| template_error(t) }.first
       point.errors.add(:base, text(:invalid, error: error)) if error
     end
@@ -101,12 +101,12 @@ module HelperTypes
       ctx = Automations::Context.new(site: point.site, vars: { "previous" => point.value.nil? ? START[kind] : point.value })
       expr = point.address["expr"]
       v = case kind
-      when "text" then ctx.render(expr)
+      when "text" then ctx.render(expr).strip # como o HA: o texto sai sem os espaços das pontas
       when "bool" then [ true, 1 ].include?(ctx.calc(expr))
       when "timestamp" then timestamp(expr_like?(expr) ? ctx.calc(expr) : ctx.render(expr), ctx.now.time_zone)
-      else ctx.calc(expr).then { |n| n.is_a?(Numeric) ? n : Float(n.to_s, exception: false) }
+      else (expr_like?(expr) ? ctx.calc(expr) : ctx.render(expr).strip).then { |n| n.is_a?(Numeric) ? n : Float(n.to_s, exception: false) }
       end
-      attrs = point.address["attrs"].to_h.transform_values { |t| ctx.render(t, limit: 500) }
+      attrs = point.address["attrs"].to_h.transform_values { |t| ctx.render(t, limit: 500).strip }
       point.report_attrs!(attrs)
       point.report!(v)
     rescue Automations::Context::Error => e

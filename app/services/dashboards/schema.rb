@@ -10,7 +10,9 @@ module Dashboards
 
     SCREENS = %w[mobile tablet desktop].freeze
     TAPS = %w[toggle more_info navigate none].freeze
-    AGGREGATES = %w[count sum avg min max last].freeze
+    AGGREGATES = %w[count sum avg min max last change].freeze
+    # Período do `change` (quanto o ponto subiu desde o começo do dia, semana, mês ou ano do local).
+    PERIODS = %w[day week month year].freeze
     RANGES = %w[24h 7d 30d].freeze
     COLORS = %w[accent amber green red blue].freeze
     QUERY_KEYS = Points::Query::KEYS
@@ -95,6 +97,7 @@ module Dashboards
       TileFeatures.errors(w["features"]).each { |m| e << "#{where}: #{m}" } if w.key?("features")
       Actions.errors(w).each { |m| e << "#{where}: #{m}" }
       e << msg(:bad_aggregate, where: where) if w.key?("aggregate") && !AGGREGATES.include?(w["aggregate"])
+      e << msg(:bad_aggregate, where: where) if w["type"] == "stat" && w.key?("period") && !PERIODS.include?(w["period"])
       e << msg(:bad_range, where: where) if w.key?("range") && !RANGES.include?(w["range"])
       e << msg(:bad_color, where: where) if w.key?("color") && !COLORS.include?(w["color"])
       e << msg(:live_bool, where: where) if w.key?("live") && ![ true, false ].include?(w["live"])

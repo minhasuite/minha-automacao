@@ -23,8 +23,9 @@ codes:
   temper_alarm: { name: Violação, capability: tamper, device_class: tamper }
   pir: { name: Movimento, capability: motion, device_class: motion, decode: value, match: pir, unmatched: false }
   presence_state: { name: Presença, capability: motion, device_class: occupancy, decode: value, match: presence, unmatched: false }
-  # Tomada e disjuntor: energia acumulada (kWh).
-  add_ele: { name: Energia, unit: kWh, device_class: energy, state_class: total_increasing }
+  # Tomada e disjuntor: o dp manda o acréscimo desde o último envio (kWh); o
+  # ponto guarda o total (como o HA), somando só o que o aparelho empurra.
+  add_ele: { name: Energia, unit: kWh, device_class: energy, state_class: total_increasing, accumulate: true, push_only: true }
   temp_value: { name: Temperatura de cor }
   temp_value_v2: { name: Temperatura de cor }
   # Lâmpada com cor (Lote 8): o ponto Cor recebe hs, rgb, #rrggbb ou kelvin

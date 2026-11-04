@@ -42,9 +42,15 @@ module Integrations
       files = { "states" => states }
       REGISTRIES.each { |name, (type, key)| files[name] = { "data" => { key => registry_list(transport, name, type) } } }
       ids = ->(domain) { states.select { |s| s["entity_id"].to_s.start_with?("#{domain}.") }.first(MAX_ITEMS) }
-      autos = ids.("automation").filter_map { |s| (id = s.dig("attributes", "id")) && transport.get("/api/config/automation/config/#{CGI.escape(id.to_s)}") }
-      scripts = ids.("script").to_h { |s| (k = s["entity_id"].split(".", 2).last) && [ k, transport.get("/api/config/script/config/#{CGI.escape(k)}") ] }
-      scenes = ids.("scene").filter_map { |s| (id = s.dig("attributes", "id")) && transport.get("/api/config/scene/config/#{CGI.escape(id.to_s)}") }
+      # Item que a API não devolve (escrito fora do automations.yaml, apagado no meio) fica de fora, sem parar a leitura.
+      config = lambda do |kind, id|
+        transport.get("/api/config/#{kind}/config/#{CGI.escape(id.to_s)}")
+      rescue Integrations::Error
+        nil
+      end
+      autos = ids.("automation").filter_map { |s| (id = s.dig("attributes", "id")) && config.("automation", id) }
+      scripts = ids.("script").to_h { |s| (k = s["entity_id"].split(".", 2).last) && [ k, config.("script", k) ] }
+      scenes = ids.("scene").filter_map { |s| (id = s.dig("attributes", "id")) && config.("scene", id) }
       files.merge("automations" => autos.select { |a| a.is_a?(Hash) }.to_yaml, "scripts" => scripts.select { |_, v| v.is_a?(Hash) }.to_yaml,
                   "scenes" => scenes.select { |s| s.is_a?(Hash) }.to_yaml)
     end
@@ -88,10 +94,26 @@ module Integrations
       out
     end
 
+    MAX_CONFIG = 1.megabyte
+    # Tags do YAML do HA que não interessam aqui (e o Psych não conhece) → nulo.
+    HA_TAGS = /!(?:include(?:_dir_\w+)?|secret|env_var|input)\b[^\n]*/
+
+    # `configuration.yaml` enviado → os blocos de `template:` (lista; vazio se não veio ou não lê).
+    def templates_from(file)
+      raw = file.respond_to?(:read) ? file.read(MAX_CONFIG + 1).to_s : file.to_s
+      return [] if raw.blank? || raw.bytesize > MAX_CONFIG
+
+      doc = YAML.safe_load(raw.force_encoding("UTF-8").gsub(HA_TAGS, "null"), aliases: true)
+      Array(doc.is_a?(Hash) ? doc["template"] : nil).select { |b| b.is_a?(Hash) }.first(200)
+    rescue Psych::Exception, ArgumentError
+      []
+    end
+
     # Importa o escolhido com o progresso no estado. → relatório.
     def run!(integration, choice, transport: transport_for(integration))
       site = integration.site
       files = select(fetch(integration, transport: transport), choice)
+      files["templates"] = Array(choice["templates"]) if choice["templates"].is_a?(Array)
       step = lambda do |i, label, total|
         save_state!(integration, state(integration).merge("progress" => { "i" => i, "label" => label, "total" => total }))
       end

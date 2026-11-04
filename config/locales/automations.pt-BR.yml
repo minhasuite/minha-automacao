@@ -231,6 +231,9 @@ pt-BR:
         normal: "Normal"
         high: "Alta"
         critical: "Crítica (fica até tocar, não agrupa)"
+    points:
+      removed: "Automação removida."
+      unpublished: "Publique a automação antes de ligar."
     scripts:
       removed: "Script removido."
       unpublished: "Publique o script antes de executar."

@@ -179,6 +179,42 @@ O importador passou a traduzir, sem nada da casa no código:
   `_e_<siid>_<eiid>`.
 - item publicado e solto do blueprint (assumido à mão) não é refeito.
 
+## Entidades que ficavam sem par (painéis do HA)
+
+- **Ação do aparelho** (`button.*` do `xiaomi_home`, `unique_id` terminando
+  em `_a_<siid>_<aiid>`): não vira ponto próprio. O de-para aponta para o
+  ponto que tem a ação (o robô, `address.actions`) com `kind`
+  `command:<comando>`, e o painel importado faz o toque com esse comando
+  ("Lavar pano" → `wash_mop`).
+- **DP com outro nome**: o Tuya do HA e o Smart Life daqui chamam alguns DPs
+  diferente (`va_humidity` × `humidity_value`): `TUYA_CODES`.
+- **Mesma coisa, outra propriedade**: a falha do robô (o HA lê 2.3, aqui é o
+  2.66 decodificado) casa pelo papel do ponto (`UID_ROLES`).
+- **Serviços** (passo "Serviços"): clima (`met`/`open_meteo`), speedtest e o
+  servidor (`hassio`, `uptime`, `backup`) → pontos das integrações daqui
+  (`HaServiceEntities::SERVICES`). A integração que não pede nada (Clima,
+  Speedtest, Sistema) nasce sozinha; entidade desativada no HA não cria nada.
+- **Automação**: cada uma tem um ponto liga/desliga (`AutomationPoints`), e o
+  interruptor `automation.*` do painel do HA aponta para ele.
+- **Fire TV e grupo da Alexa** (`media_player` do `alexa_media`): a descoberta
+  da Alexa traz as famílias `FIRE_TV` e `WHA` só com a mídia; o
+  `media_player` casa com o `speaker` da Echo ou, sem ele, com a mídia.
+- **Sensor template em YAML**: a API do HA não mostra; o assistente aceita o
+  `configuration.yaml` (não fica guardado). Sem gatilho vira sensor calculado
+  com os atributos (até 20); com gatilho é automação aqui e fica anotado. O
+  tradutor do Jinja conta lista fixa de entidades (`key=`), aceita `none` e
+  `| as_datetime`.
+- **Energia do Tuya** (`add_ele`): o dp é o acréscimo; o ponto soma o que o
+  aparelho empurra e começa do total que o HA tinha (`carry_total!`).
+- **Card statistic** (quanto subiu hoje/no mês): stat com `aggregate:
+  "change"` e `period`, pelo histórico do ponto.
+
+Ficam de fora, e o relatório diz: agenda do Google (precisa ligar a
+integração Agenda), pessoas e bateria dos celulares (precisa do app em cada
+celular), sensor template que só converte a leitura crua de um aparelho (aqui
+o ponto já está na unidade: aponte o painel para ele) e o que vem de comando
+de shell no HA (`shell_command`, de propósito).
+
 ## Fonte de referência nova
 
 Um plugin de integração (`Integrations::PLUGINS`) que responde a:

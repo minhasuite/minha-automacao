@@ -2,8 +2,10 @@ module Dashboards
   module Widgets
     # Contador ou número (F5; também o tipo dos selos): `query` ou `bind` e
     # `aggregate`; com `bind` e `attribute` (Lote 5), o atributo do ponto.
+    # `aggregate: "change"` + `period` (day/week/month/year; o card statistic
+    # do HA): quanto o ponto subiu desde o começo do período, pelo histórico.
     class StatWidget < Base
-      describe type: "stat", label: "Contador / número", icon: "calculator", params: %w[aggregate attribute], bind: true
+      describe type: "stat", label: "Contador / número", icon: "calculator", params: %w[aggregate attribute period], bind: true
       texts en: { label: "Counter / number" },
             es: { label: "Contador / número" }
 
@@ -20,12 +22,23 @@ module Dashboards
         when "avg" then nums.any? ? (nums.sum / nums.size).round(2) : nil
         when "min" then nums.min
         when "max" then nums.max
+        when "change" then change(list.first, w["period"], r.site)
         else list.first&.value
         end
         unit = agg == "count" ? nil : list.filter_map(&:unit).first
         text = w["attribute"].present? && agg == "last" ? list.first&.attrs.to_h[w["attribute"]].to_s.presence || "—" : value_text(value, unit, agg, list.first)
         [ { "value" => value, "unit" => unit, "text" => text, "point_ids" => list.first(Resolver::LIST_LIMIT).map(&:id) },
           w["query"] ? r.query(w["query"], with_state: false) : [] ]
+      end
+
+      # Valor agora − o do começo do período (a última leitura antes dele, ou a primeira depois); nil sem histórico.
+      def self.change(point, period, site)
+        return nil unless point && point.value.is_a?(Numeric)
+
+        start = Time.current.in_time_zone(site.timezone).public_send(:"beginning_of_#{period.presence_in(Schema::PERIODS) || 'day'}")
+        base = Reading.where(point_id: point.id, at: ...start).order(at: :desc).limit(1).pick(:value) ||
+               Reading.where(point_id: point.id, at: start..).order(:at).limit(1).pick(:value)
+        base && (point.value - base).round(2)
       end
 
       def self.value_text(value, unit, agg, first)
@@ -41,7 +54,9 @@ module Dashboards
         return { "query" => query, "aggregate" => p[:aggregate].presence } if query.any?
 
         # Lote 5 (G9): atributo do ponto
-        { "bind" => p[:bind].presence, "aggregate" => p[:aggregate] == "count" ? "last" : p[:aggregate].presence, "attribute" => p[:attribute].presence }
+        agg = p[:aggregate] == "count" ? "last" : p[:aggregate].presence
+        { "bind" => p[:bind].presence, "aggregate" => agg, "attribute" => p[:attribute].presence,
+          "period" => (p[:period].presence_in(Schema::PERIODS) if agg == "change") }
       end
 
       def self.form = %w[web/dashboards/widget_forms/query web/dashboards/widget_forms/stat]

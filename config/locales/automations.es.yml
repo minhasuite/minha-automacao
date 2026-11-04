@@ -231,6 +231,9 @@ es:
         normal: "Normal"
         high: "Alta"
         critical: "Crítica (queda hasta tocarla, no se agrupa)"
+    points:
+      removed: "Automatización eliminada."
+      unpublished: "Publica la automatización antes de activarla."
     scripts:
       removed: "Script eliminado."
       unpublished: "Publica el script antes de ejecutarlo."

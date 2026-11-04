@@ -296,6 +296,11 @@ es:
         empty_text: Texto cuando está vacío
       scenes_hint: (ninguna marcada = todas)
       show: Mostrar
+      stat_periods:
+        day: "Hoy"
+        week: "Esta semana"
+        month: "Este mes"
+        year: "Este año"
       aggregates:
         count: Cuántos son
         sum: Suma
@@ -303,6 +308,7 @@ es:
         min: Mínimo
         max: Máximo
         last: Valor del punto
+        change: "Cuánto subió en el período"
       attribute: Atributo
       attribute_hint: (opcional, en lugar del valor)
       attribute_placeholder: frase

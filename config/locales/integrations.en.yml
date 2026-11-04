@@ -189,6 +189,8 @@ en:
     title: '%{name} bridge'
     waiting: Waiting for pairing
   ha_migration:
+    config_yaml: "YAML template sensors (optional)"
+    config_yaml_hint: "Upload HA's configuration.yaml: its API doesn't show hand-written template sensors. Those without a trigger become calculated sensors; the file isn't kept."
     dash:
       title: Home Assistant dashboards
       hint: Recreates each HA dashboard here with the same layout (views, sections, cards, widths, icons and backgrounds). The Mobile version becomes the app's dashboard. Anything without an equivalent shows up in place, with a note.
@@ -253,6 +255,7 @@ en:
       automations: Automations
       devices: Devices
       entities: Entities
+      services: "Services"
       helpers: Helpers
       scenes: Scenes
       scripts: Scripts

@@ -77,16 +77,26 @@ module Integrations
     def placeholder(title) = { "schema_version" => Dashboards::Schema::VERSION,
                                "views" => [ { "id" => "v-home", "title" => title.to_s.presence || "Início", "sections" => [] } ] }
 
-    # De-para da migração: entidade → ponto (scripts pelo ponto do script), cena, área e os painéis.
+    # De-para da migração: entidade → ponto (script pelo ponto do script, automação pelo liga/desliga dela),
+    # cena, área e os painéis.
     def refs_for(site, dashboards)
       entity = ExternalRef.map_for(site, SOURCE, "Point")
       ExternalRef.map_for(site, SOURCE, "Automation").each do |ext, id|
-        script = site.scripts.find_by(id: id) or next
-        p = Scripts.point_for(script) and entity[ext] = p.id
+        item = Automation.find_by(id: id, site_id: site.id) or next
+        p = item.script? ? Scripts.point_for(item) : (AutomationPoints.point_for(item) || AutomationPoints.sync!(item))
+        entity[ext] = p.id if p
       end
       areas = ExternalRef.map_for(site, SOURCE, "Area").to_h { |ext, id| [ ext.delete_prefix("area:"), id ] }
       { "entity" => entity, "scene" => ExternalRef.map_for(site, SOURCE, "Scene"), "area" => areas,
-        "dashboard" => dashboards.transform_values(&:id), "jinja" => Automations::HaTemplates.translator(site) }
+        "dashboard" => dashboards.transform_values(&:id), "jinja" => Automations::HaTemplates.translator(site),
+        "command" => commands(site) }
+    end
+
+    # Entidade do HA que aqui é comando de outro ponto (de-para "command:<comando>") → {entity_id → comando}.
+    def commands(site)
+      kind = HomeAssistantImport::COMMAND_KIND
+      ExternalRef.where(site_id: site.id, source: SOURCE).mapped.where("kind LIKE ?", "#{kind}%")
+                 .pluck(:external_id, :kind).to_h { |ext, k| [ ext, k.delete_prefix(kind) ] }
     end
 
     # Tema do HA usado nas visões → tema criado daqui (cores do tema, vidro).
@@ -123,10 +133,13 @@ module Integrations
       Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
     end
 
+    # O HA costuma morar na rede local: libera só o host que a própria pessoa cadastrou na integração.
     def download(integration, path)
-      res = SafeHttp.get("#{integration.settings['url']}#{path}", headers: { "Authorization" => "Bearer #{integration.secrets['token']}" }, timeout: 30)
-      res.status == 200 ? [ res.body.to_s.b, res.headers["content-type"].to_s.split(";").first ] : nil
-    rescue SafeHttp::Error, SafeHttp::Blocked
+      base = integration.settings["url"].to_s
+      allow = SafeHttp.current_allow + [ URI.parse(base).host ].compact
+      res = SafeHttp.get("#{base}#{path}", headers: { "Authorization" => "Bearer #{integration.secrets['token']}" }, timeout: 30, allow: allow)
+      res.status == 200 ? [ res.body.to_s.b, Array(res.headers["content-type"]).first.to_s.split(";").first.to_s.strip ] : nil
+    rescue SafeHttp::Error, SafeHttp::Blocked, URI::InvalidURIError
       nil
     end
 

@@ -49,10 +49,10 @@ module Shadow
     within(site_id: site.id, &)
   end
 
-  # Helper que não comanda outros pontos e ponto de script: rodam na sombra.
+  # Helper que não comanda outros pontos, ponto de script e o liga/desliga de automação: rodam na sombra.
   def internal?(point)
     return false unless point.device.virtual?
-    return true if point.capability == "script"
+    return true if point.capability == "script" || AutomationPoints.automation?(point)
 
     (plugin = point.helper_type) ? !plugin.drives_points? : false
   end

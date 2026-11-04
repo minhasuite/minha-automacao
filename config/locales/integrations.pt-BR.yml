@@ -189,6 +189,8 @@ pt-BR:
     title: Ponte %{name}
     waiting: Esperando pareamento
   ha_migration:
+    config_yaml: "Sensores template em YAML (opcional)"
+    config_yaml_hint: "Envie o configuration.yaml do HA: a API dele não mostra os sensores template escritos à mão. Os sem gatilho viram sensor calculado; o arquivo não fica guardado."
     dash:
       title: Painéis do Home Assistant
       hint: Recria cada painel do HA aqui com a mesma disposição (visões, seções, cards, larguras, ícones e fundos). A versão Mobile vira o painel do app. O que não tiver equivalente aparece no lugar, com um aviso.
@@ -253,6 +255,7 @@ pt-BR:
       automations: Automações
       devices: Aparelhos
       entities: Entidades
+      services: "Serviços"
       helpers: Helpers
       scenes: Cenas
       scripts: Scripts

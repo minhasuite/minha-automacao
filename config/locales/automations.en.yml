@@ -231,6 +231,9 @@ en:
         normal: "Normal"
         high: "High"
         critical: "Critical (stays until tapped, not grouped)"
+    points:
+      removed: "Automation removed."
+      unpublished: "Publish the automation before turning it on."
     scripts:
       removed: "Script removed."
       unpublished: "Publish the script before running it."

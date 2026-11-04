@@ -1,5 +1,7 @@
 <%# locals: (w:, uid:, types:, **) -%>
 <div data-for="<%= types %>"><label class="ss-label" for="ag-<%= uid %>"><%= t("dashboards.wf.show") %></label>
-  <%= select_tag "widget[aggregate]", options_for_select(%w[count sum avg min max last].index_by { |k| t("dashboards.wf.aggregates.#{k}") }, w["aggregate"]), class: "ss-input", id: "ag-#{uid}" %></div>
+  <%= select_tag "widget[aggregate]", options_for_select(%w[count sum avg min max last change].index_by { |k| t("dashboards.wf.aggregates.#{k}") }, w["aggregate"]), class: "ss-input", id: "ag-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="pe-<%= uid %>"><%= t("dashboards.wf.period") %></label>
+  <%= select_tag "widget[period]", options_for_select(Dashboards::Schema::PERIODS.index_by { |k| t("dashboards.wf.stat_periods.#{k}") }, w["period"]), include_blank: true, class: "ss-input", id: "pe-#{uid}" %></div>
 <div data-for="<%= types %>"><label class="ss-label" for="at-<%= uid %>"><%= t("dashboards.wf.attribute") %> <span class="font-normal"><%= t("dashboards.wf.attribute_hint") %></span></label>
   <%= text_field_tag "widget[attribute]", w["attribute"], class: "ss-input num", id: "at-#{uid}", maxlength: 40, placeholder: t("dashboards.wf.attribute_placeholder") %></div>

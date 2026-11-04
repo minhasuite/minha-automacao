@@ -60,8 +60,8 @@ class Automation < ApplicationRecord
 
   scope :ordered, -> { order(:name) }
 
-  after_save { Scripts.sync!(self) if script? }
-  after_destroy { Scripts.remove!(self) if script? }
+  after_save { script? ? Scripts.sync!(self) : AutomationPoints.sync!(self) }
+  after_destroy { script? ? Scripts.remove!(self) : AutomationPoints.remove!(self) }
 
   def script? = kind == "script"
   def kind_label = KINDS.fetch(kind, kind)

@@ -2,11 +2,16 @@ module Alexa
   # Conta da Alexa a partir dos cookies de uma sessão já logada (o login
   # próprio fica em Alexa::Auth; este é o caminho de colar cookies: o arquivo
   # `.storage/alexa_media.<email>.cookies` do HA, formato alexapy, ou um
-  # objeto {nome => valor}) e descoberta das Echo (só leitura da lista).
+  # objeto {nome => valor}) e descoberta das Echo, Fire TV e grupos (só leitura da lista).
   # Idempotente: integração por local, Echo pelo número de série.
   module Import
     AREA = "Importados do HA".freeze
-    FAMILIES = %w[ECHO KNIGHT ROOK].freeze # Echo, Echo Show, Echo Studio
+    # Echo, Echo Show e Echo Studio: falam (ponto `speaker`, o canal dos avisos).
+    SPEAKERS = %w[ECHO KNIGHT ROOK].freeze
+    # Fire TV e grupo de alto-falantes (WHA: "Todo lugar", "Terraço" do app Alexa): só a mídia
+    # (os pontos de Alexa::State), como o media_player do alexa_media; aviso continua só nas Echo.
+    MEDIA_ONLY = %w[FIRE_TV WHA].freeze
+    FAMILIES = (SPEAKERS + MEDIA_ONLY).freeze
     STATES = { true => "online", false => "offline" }.freeze
 
     module_function
@@ -41,7 +46,9 @@ module Alexa
                                  model: d["deviceType"], status: STATES.fetch(d["online"] == true),
                                  address: { "device_type" => d["deviceType"], "customer_id" => d["deviceOwnerCustomerId"] })
         device.save!
-        point = device.points.first
+        next Alexa::State.points_for(device) if MEDIA_ONLY.include?(d["deviceFamily"])
+
+        point = device.points.find_by(capability: "speaker")
         unless point
           point = device.points.create!(site: site, name: "Falar", capability: "speaker", history: "none")
           count[:points] += 1
@@ -49,7 +56,7 @@ module Alexa
         point.report!(STATES.fetch(d["online"] == true))
       end
       integration.ok!
-      count.merge(echos: list.size)
+      count.merge(echos: list.count { |d| SPEAKERS.include?(d["deviceFamily"]) })
     rescue Client::Error => e
       integration.error!(e.message)
       raise

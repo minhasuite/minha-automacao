@@ -15,7 +15,10 @@ module Points
   class Query
     FILTERS = {
       "capability" => ->(_q, p, v) { list(v).include?(p.capability) },
-      "device_class" => ->(_q, p, v) { list(v).include?(p.device_class) || (list(v).include?("power") && p.unit == "W" && p.capability == "measure") },
+      "device_class" => lambda { |_q, p, v|
+        l = list(v)
+        l.include?(p.device_class) || (p.capability == "measure" && ((l.include?("power") && p.unit == "W") || (l.include?("energy") && p.unit == "kWh")))
+      },
       "area" => ->(q, p, v) { list(v).any? { |a| a == p.effective_area_id || a.casecmp?(q.area_names[p.effective_area_id].to_s) } },
       # ondaA1 (A1): no andar (o próprio andar e as áreas dentro dele), pelo nome ou id.
       "floor" => ->(q, p, v) { list(v).any? { |f| q.floor_ids(f).include?(p.effective_area_id) } },
@@ -27,6 +30,8 @@ module Points
       "integration" => ->(_q, p, v) { list(v).include?(p.device&.driver) },
       "device" => ->(_q, p, v) { list(v).any? { |d| p.device&.name.to_s.downcase.include?(d.downcase) } },
       "name" => ->(_q, p, v) { list(v).any? { |n| p.name.downcase.include?(n.downcase) } },
+      # Pontos escolhidos pela chave (a lista fixa de entidades do HA: `['a', 'b'] | select(...)`).
+      "key" => ->(_q, p, v) { list(v).include?(p.key) },
       "exclude" => ->(_q, p, v) { list(v).none? { |n| "#{p.name} #{p.key} #{p.device&.name}".downcase.include?(n.downcase) } },
       "above" => ->(q, p, v) { (x = q.value(p)).is_a?(Numeric) && x > v.to_f },
       "below" => ->(q, p, v) { (x = q.value(p)).is_a?(Numeric) && x < v.to_f },

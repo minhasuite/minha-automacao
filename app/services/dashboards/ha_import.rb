@@ -161,7 +161,7 @@ module Dashboards
       w = bound("tile", c) or return missing(c)
       w["features"] = features(c["features"]) if c["features"].present?
       w["color"] = COLORS[c["color"].to_s] if c["color"].present?
-      w.merge(actions(c))
+      keep_command(w, actions(c))
     end
 
     def entity(c)
@@ -212,7 +212,7 @@ module Dashboards
       end
       w["icon"] = c["icon"] if c["icon"].present?
       w["show_state"] = c["show_state"] != false
-      w.merge(actions(c))
+      keep_command(w, actions(c))
     end
 
     def picture_entity(c)
@@ -264,6 +264,9 @@ module Dashboards
 
     def statistic(c)
       w = bound("stat", c) or return missing(c)
+      period = c.dig("period", "calendar", "period").to_s.presence_in(Schema::PERIODS)
+      return w.merge("aggregate" => "change", "period" => period) if c["stat_type"].to_s == "change" && period
+
       w.merge("aggregate" => { "mean" => "avg", "min" => "min", "max" => "max", "change" => "sum" }.fetch(c["stat_type"].to_s, "last"))
     end
 
@@ -323,6 +326,7 @@ module Dashboards
     def bound(type, c)
       id = point(c["entity"]) or return nil
       w = { "type" => type, "bind" => id }
+      cmd = command_of(c["entity"]) and w["tap_action"] = { "action" => "command", "point" => id, "command" => cmd }
       w["label"] = c["name"] if c["name"].is_a?(String) && c["name"].present?
       w["icon"] = c["icon"] if c["icon"].present?
       w
@@ -343,6 +347,9 @@ module Dashboards
         key
       end.uniq.presence
     end
+
+    # O comando que a entidade é (ex.: lavar o pano) vale mais que o toque padrão do card do HA.
+    def keep_command(w, acts) = w.merge(acts) { |k, mine, theirs| k == "tap_action" && mine["action"] == "command" && theirs["action"] != "command" ? mine : theirs }
 
     # tap/hold/double_tap do HA → os mesmos campos daqui (Dashboards::Actions).
     def actions(c)
@@ -375,9 +382,12 @@ module Dashboards
       target = Array(a.dig("target", "entity_id") || a.dig("data", "entity_id") || a.dig("service_data", "entity_id")).first
       target = svc if svc.start_with?("script.") && !svc.end_with?(".turn_on", ".toggle")
       p = point(target) or return nil
-      cmd = { "turn_on" => "on", "turn_off" => "off", "toggle" => "toggle", "press" => "press" }[svc.split(".").last] || "run"
+      cmd = command_of(target) || { "turn_on" => "on", "turn_off" => "off", "toggle" => "toggle", "press" => "press" }[svc.split(".").last] || "run"
       { "action" => "command", "point" => p, "command" => cmd }
     end
+
+    # Entidade do HA que aqui é um comando de outro ponto (botão "Lavar pano" → robô + wash_mop).
+    def command_of(e) = @refs.dig("command", (e.is_a?(Hash) ? e["entity"] : e).to_s)
 
     # "/casa-home/cozinha" → "cozinha" (visão deste painel) ou "/paineis/<id>?view=..." (outro).
     def nav_path(path)

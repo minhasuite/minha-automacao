@@ -29,9 +29,11 @@ module Web
     def import
       integration = Integrations::HaMigration.integration(@site) or return redirect_to(site_ha_migration_path(@site))
       choice = { "helpers" => params[:helpers] == "1" }.merge(%w[automations scripts scenes].to_h { |k| [ k, Array(params[k]).compact_blank.first(500) ] })
+      templates = Integrations::HaMigration.templates_from(params[:config_yaml])
       state = Integrations::HaMigration.state(integration)
-      Integrations::HaMigration.save_state!(integration, state.merge("status" => "importing", "choice" => choice, "progress" => nil, "error" => nil))
-      HaMigrationJob.perform_later(integration.id, "import", choice)
+      Integrations::HaMigration.save_state!(integration, state.merge("status" => "importing", "choice" => choice.merge("templates" => templates.size),
+                                                                    "progress" => nil, "error" => nil))
+      HaMigrationJob.perform_later(integration.id, "import", choice.merge("templates" => templates)) # o arquivo não fica guardado
       redirect_to site_ha_migration_path(@site)
     end
 

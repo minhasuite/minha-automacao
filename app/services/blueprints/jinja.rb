@@ -3,7 +3,8 @@ module Blueprints
   # Uma expressão `{{ ... }}` vira expressão do dentaku (condição, "Definir
   # variável") e um texto com `{{ ... }}` vira Liquid (aviso, título). Cobre
   # states(), is_state(), now() (hora, minuto, dia, mês, dia da semana,
-  # strftime, isoformat), as_timestamp(now()), iif(), `a if c else b`, `in`
+  # strftime, isoformat), as_timestamp(now()), iif(), `a if c else b` (com
+  # `none` = vazio no texto), `x | as_datetime`, `in`
   # com lista, comparações, aritmética, and/or/not e os filtros
   # int/float/round/bool/trim/count/default/join. O que não cobre devolve
   # nil: o importador anota, como antes.
@@ -333,6 +334,7 @@ module Blueprints
       in [ :str, v ] then [ :lit, v ]
       in [ :name, "true" | "True" ] then [ :lit, true ]
       in [ :name, "false" | "False" ] then [ :lit, false ]
+      in [ :name, "none" | "None" ] then [ :lit, nil ]
       in [ :name, v ] then [ :var, v ]
       in [ :op, "(" ] then ternary.tap { expect!(:op, ")") }
       in [ :op, "[" ] then [ :list, args("]") ]
@@ -405,6 +407,7 @@ module Blueprints
     def dentaku(node)
       case node
       in [ :lit, String => s ] then quote(s)
+      in [ :lit, nil ] then fail! # `none` só no texto (vazio); na conta, o `x if c else none` vira bloco if
       in [ :lit, v ] then v.to_s
       in [ :list, _ ] | [ :dict, _ ] | [ :kw, * ] | [ :slice, * ] then fail!
       in [ :neg, x ] then "-#{dentaku(x)}"
@@ -480,6 +483,7 @@ module Blueprints
 
     def dentaku_filter(name, x, args)
       return dentaku(x) if NUMERIC_FILTERS.include?(name)
+      return timestamp_of(x) if %w[as_datetime as_timestamp as_local].include?(name)
       # Lote 8: `expand('a', 'b') | map(attribute='last_changed') | max` → o mais recente dos pontos.
       if %w[max min].include?(name) && (x in [ :filter, "map", [ :call, [ :var, "expand" ], ents ], [ [ :kw, "attribute", [ :lit, "last_changed" | "last_updated" ] ] ] ])
         return "#{name}(#{ents.map { |e| "#{entity_ref(e)}.changed_at" }.join(', ')})"
@@ -538,6 +542,7 @@ module Blueprints
       in [ :filter, "select" | "reject" => f, inner, [ [ :lit, String => test ], *rest ] ] then (q = query(inner)) && join_query(q, select_part(f == "select", test, rest))
       in [ :filter, "selectattr" | "rejectattr" => f, inner, [ [ :lit, "state" ], [ :lit, "eq" | "==" | "equalto" ], [ :lit, String => v ] ] ]
         (q = query(inner)) && join_query(q, state_part(f == "selectattr", v))
+      in [ :list, [ _, *_ ] => items ] if items.all? { |i| (i in [ :lit, String => e ]) && e.match?(ENTITY) } then "key=#{items.map { |i| entity_ref(i) }.join(',')}"
       in [ :var, "states" ] then ""
       in [ :get, [ :var, "states" ], domain ] then "capability=#{HaImport::DOMAIN_CAPS[domain] || fail!}"
       in [ :call, [ :var, "label_entities" ], [ [ :lit, String => l ] ] ] then "tag=#{query_value(@labels.fetch(l, l))}"
@@ -584,6 +589,7 @@ module Blueprints
       case node
       in [ :op, "~", l, r ] then liquid(l) + liquid(r)
       in [ :lit, String => s ] then s.include?("{") ? fail! : s
+      in [ :lit, nil ] then ""
       in [ :if, c, a, b ] then liquid_if(node, c, a, b)
       else "{{ #{liquid_value(node)} }}"
       end

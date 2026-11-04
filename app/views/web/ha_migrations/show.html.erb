@@ -42,7 +42,7 @@
 
 <% elsif status == "preview" %>
   <% p = s["preview"] %>
-  <%= form_with url: import_site_ha_migration_path(@site), class: "mg-review" do %>
+  <%= form_with url: import_site_ha_migration_path(@site), class: "mg-review", multipart: true do %>
     <div class="mg-stats">
       <div class="mg-stat"><span><%= icon("view-boards", "size-5") %></span><strong class="num"><%= p.dig("areas", "total") %></strong><small><%= t("ha_migration.stats.areas_html", n: p.dig("areas", "new")) %></small></div>
       <div class="mg-stat"><span><%= icon("cube", "size-5") %></span><strong class="num"><%= p.dig("devices", "matched") %>/<%= p.dig("devices", "total") %></strong><small><%= t("ha_migration.stats.devices_html") %></small></div>
@@ -57,6 +57,11 @@
     <section class="ss-card ss-card-pad">
       <label class="ss-check font-semibold"><%= check_box_tag :helpers, "1", true, id: "mg-helpers" %><% names = t("ha_migration.helper_kinds").stringify_keys %>
       <%= t("ha_migration.helpers") %> <span class="font-normal text-muted">(<%= p["helpers"].map { |d, n| "#{n} #{names.fetch(d, d)}" }.join(", ").presence || t("ha_migration.none") %>)</span></label>
+      <div class="mt-3">
+        <label class="ss-label" for="mg-config"><%= t("ha_migration.config_yaml") %></label>
+        <%= file_field_tag :config_yaml, id: "mg-config", accept: ".yaml,.yml", class: "ss-input" %>
+        <p class="ss-hint"><%= t("ha_migration.config_yaml_hint") %></p>
+      </div>
     </section>
     <% { "automations" => t("ha_migration.groups.automations"), "scripts" => t("ha_migration.groups.scripts"), "scenes" => t("ha_migration.groups.scenes") }.each do |key, title| %>
       <% list = p[key] %>
