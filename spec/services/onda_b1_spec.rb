@@ -64,7 +64,7 @@ RSpec.describe "ondaB1: paridade HA (voz e Assist)" do
       expect(say("próxima música")["intent"]).to eq("media_next")
       expect(say("começar a limpeza")["text"]).to eq("Comecei a limpeza com Robô.")
       expect(say("mande o robô voltar para a base")["intent"]).to eq("vacuum_dock")
-      expect(Command.where(point: robo).pluck(:command)).to eq(%w[start home])
+      expect(Command.where(point: robo).order(:created_at, :id).pluck(:command)).to eq(%w[start home])
     end
 
     it "timers: cria, diz quanto falta, pausa, continua, cancela e o fim vira evento" do
