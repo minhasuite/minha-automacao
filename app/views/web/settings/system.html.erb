@@ -131,15 +131,5 @@
   <% end %>
 </section>
 
-<section class="ss-card ss-card-pad mt-4" aria-labelledby="plan-t">
-  <h2 id="plan-t"><%= t("settings.system.ai_plan") %></h2>
-  <% b = @billing %>
-  <p class="mt-1">
-    <span class="ss-badge ss-badge-accent"><%= Plans::NAMES[b[:plan]] %></span>
-    <% if b[:status] == "trial" %><span class="text-sm text-muted"><%= t("settings.system.trial") %></span><% end %>
-    <% if b[:expires_at] %><span class="text-sm text-muted"><%= b[:auto_renewing] == false || b[:status] == "canceled" ? t("settings.system.valid_until") : t("settings.system.renews") %> <%= l(b[:expires_at].to_date) %></span><% end %>
-  </p>
-  <p class="text-sm text-muted mt-1"><%= t("settings.system.ai_plan_text") %><%= t("settings.system.trial_days", n: Plans::TRIAL_DAYS) if b[:trial_eligible] %>.</p>
-</section>
 <%= render "web/settings/firmware" %>
 <% end %>

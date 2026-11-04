@@ -200,7 +200,6 @@ es:
       health: Salud
       system: Sistema
       remote: Acceso remoto
-      plan: Plan
       account: Mi cuenta
       push: Mis aparatos
       labels: Etiquetas
@@ -251,12 +250,6 @@ es:
       confirm: Confirmar
       shadow_off: Apagar la sombra
       shadow_on: Encender la sombra
-      ai_plan: Suscripción de la IA
-      trial: prueba gratis
-      valid_until: vale hasta
-      renews: se renueva el
-      ai_plan_text: Todo lo que no usa IA es gratis. La suscripción habilita la IA y se hace en la app Minha Automação del celular (Google Play)
-      trial_days: ', con %{n} días gratis'
   devices:
     title: Aparatos
     subtitle: '%{site} · todos los aparatos del lugar'
@@ -431,28 +424,6 @@ es:
       fields:
         token: Token del túnel
         url: Dirección pública (opcional)
-  plan:
-    subtitle: 'Plan: lo que incluye la instalación y cuánto usa.'
-    current: Tu plan
-    names:
-      free: Gratis
-      plus: Plus
-      pro: Pro
-    limits:
-      devices: aparatos
-      users: personas
-      history_days: historial
-      cloud_backup: copia en la nube
-      remote_access: acceso remoto
-    included: Incluido
-    not_included: No incluido
-    unlimited: Ilimitado
-    days:
-      one: 1 día
-      other: '%{count} días'
-    compare: Comparar planes
-    no_payment: El cambio de plan desde esta pantalla llega con el pago. Para cambiar ahora, habla con soporte.
-    exceeded: Tu plan no incluye más %{what}. Mira Configuración → Plan.
   agenda:
     show:
       title: "Agenda"

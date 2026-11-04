@@ -22,7 +22,6 @@ porta do roteador fica aberta: o servidor da casa abre um túnel de saída.
   `cloudflared` (perfil `tunnel`, `CF_TUNNEL_TOKEN` no `.env`, como no
   servidor de casa de hoje), a tela mostra "Configurado no servidor" e não
   liga outro. Nada aqui mexe nesse túnel.
-- **Plano**: ligar exige `Licensing.allowed?(tenant, "remote_access")`.
 
 ## Serviço gerenciado MinhaSuite (desenho, não implementado)
 
@@ -32,8 +31,8 @@ Cloudflare.
 ### Peças
 
 1. **Central (`relay.minhasuite.com`)**, um serviço novo da suíte:
-   - cadastro da instalação: o servidor da casa se registra com a licença
-     (`Licencas`, mesma conta do cliente) e recebe um **id de instalação** e
+   - cadastro da instalação: o servidor da casa se registra com a conta do
+     cliente na MinhaSuite e recebe um **id de instalação** e
      um **segredo de túnel** (rotacionável);
    - escolha do subdomínio (`[a-z0-9-]{3,30}`, único, palavras reservadas
      bloqueadas), um por instalação, com troca limitada (1 por 30 dias);
@@ -53,12 +52,8 @@ Cloudflare.
 
 ### Cobrança
 
-- Incluído nos planos `plus` e `pro` (`Licensing::PLANS[..]["remote_access"]`);
-  `free` vê o cartão com o convite para mudar de plano.
-- A central confere a licença a cada renovação do segredo (diária); plano
-  vencido = túnel derrubado depois de 7 dias de carência, com aviso no app.
-- Franquia de tráfego por plano (medida no relay), sem cobrar excedente na
-  primeira versão: só aviso.
+O MA é aberto e grátis (sem planos). Se o relay gerenciado virar serviço pago,
+a cobrança fica na central do relay, não no MA.
 
 ### Segurança
 

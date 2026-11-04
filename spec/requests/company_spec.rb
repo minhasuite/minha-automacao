@@ -8,7 +8,7 @@ RSpec.describe "Instalação e convite por link" do
 
   it "mostra e atualiza a instalação (só o dono)" do
     get "/api/v1/company", headers: headers
-    expect(data).to include("id" => tenant.id, "plan" => "free", "members_count" => 1)
+    expect(data).to include("id" => tenant.id, "members_count" => 1)
     patch "/api/v1/company", params: { trade_name: "Casa Boa" }, headers: headers
     expect(data).to include("trade_name" => "Casa Boa")
 

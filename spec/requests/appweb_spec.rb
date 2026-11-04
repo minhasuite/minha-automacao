@@ -120,7 +120,7 @@ RSpec.describe "Telas do servidor no app (appweb)" do
     paths = {
       "configuracoes" => "/configuracoes", "sistema" => "/configuracoes/sistema", "saude" => "/configuracoes/saude",
       "seguranca" => "/configuracoes/seguranca", "pessoas" => "/configuracoes/pessoas", "backups" => "/configuracoes/backups",
-      "aparencia" => "/configuracoes/aparencia", "rotulos" => "/configuracoes/rotulos", "plano" => "/configuracoes/plano",
+      "aparencia" => "/configuracoes/aparencia", "rotulos" => "/configuracoes/rotulos",
       "acesso_remoto" => "/configuracoes/acesso-remoto", "ia" => "/configuracoes/ia", "logs" => "/configuracoes/logs",
       "conta" => "/configuracoes/conta", "paineis" => "/configuracoes/paineis", "aplicativos" => "/configuracoes/aplicativos",
       "local" => "/locais/#{site.id}", "integracoes" => "/locais/#{site.id}/integracoes",

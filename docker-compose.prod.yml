@@ -24,24 +24,12 @@ x-app-env: &app-env
   # meulog (telemetria). Vazio = desligado. A CONTA vai no caminho da URL.
   MEULOG_URL: ${MINHA_AUTOMACAO_MEULOG_URL:-}
   MEULOG_TOKEN: ${MINHA_AUTOMACAO_MEULOG_TOKEN:-}
-  # IA. Provedor/modelo por tier no painel; chave vazia do provedor do tier =
-  # IA daquele tier desligada (app mostra só o manual). Padrão da suíte: Anthropic.
-  GEMINI_API_KEY: ${MINHA_AUTOMACAO_GEMINI_API_KEY:-}
-  ANTHROPIC_API_KEY: ${MINHA_AUTOMACAO_ANTHROPIC_API_KEY:-}
-  OPENAI_API_KEY: ${MINHA_AUTOMACAO_OPENAI_API_KEY:-}
   # Push nativo (FCM HTTP v1). Vazio = sem push (notificação in-app continua).
   FCM_CREDENTIALS_JSON: ${MINHA_AUTOMACAO_FCM_CREDENTIALS_JSON:-}
   FCM_PROJECT_ID: ${MINHA_AUTOMACAO_FCM_PROJECT_ID:-}
   # Web Push da PWA (bin/vapid-keys com PREFIX=MINHA_AUTOMACAO_). Vazio = sem push no navegador.
   VAPID_PUBLIC_KEY: ${MINHA_AUTOMACAO_VAPID_PUBLIC_KEY:-}
   VAPID_PRIVATE_KEY: ${MINHA_AUTOMACAO_VAPID_PRIVATE_KEY:-}
-  # Licenciamento central (licencas/docs/INTEGRACAO.md). Chave vazia = desligado.
-  LICENCAS_URL: ${MINHA_AUTOMACAO_LICENCAS_URL:-https://licencas.minhasuite.com}
-  LICENCAS_API_KEY: ${MINHA_AUTOMACAO_LICENCAS_API_KEY:-}
-  # Assinatura pela Google Play (conta de serviço play-publisher e segredo do RTDN). Vazio = verificação desligada.
-  PLAY_PACKAGE_NAME: ${MINHA_AUTOMACAO_PLAY_PACKAGE_NAME:-com.minhasuite.minhaautomacao}
-  PLAY_SERVICE_ACCOUNT_JSON: ${MINHA_AUTOMACAO_PLAY_SERVICE_ACCOUNT_JSON:-}
-  PLAY_RTDN_TOKEN: ${MINHA_AUTOMACAO_PLAY_RTDN_TOKEN:-}
   # Object storage (Active Storage → Cloudflare R2).
   # Vazio = cloudflare se houver chave do R2, senão disco. `local` força o
   # volume (alavanca de rollback).
@@ -89,7 +77,7 @@ services:
       start_period: 60s
       retries: 3
 
-  # Worker Solid Queue: jobs (push, assinatura, licenças, IA) e as tarefas
+  # Worker Solid Queue: jobs (push, IA, backups) e as tarefas
   # recorrentes de config/recurring.yml.
   minha-automacao-worker:
     image: ${MINHA_AUTOMACAO_IMAGE:-ghcr.io/minhasuite/minha-automacao:latest}

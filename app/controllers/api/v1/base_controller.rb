@@ -33,11 +33,6 @@ module Api
         render_error(:parameter_missing, "Parâmetro obrigatório ausente: #{e.param}.", status: :bad_request)
       end
 
-      rescue_from Ai::QuotaExceeded do |e|
-        details = { feature: e.feature, reason: e.not_in_plan? ? "not_in_plan" : "quota", required_plan: "pro" }
-        render_error(:plan_required, e.user_message, status: :payment_required, details: details)
-      end
-
       rescue_from SiteMembership::Forbidden do |e|
         render_error(:forbidden, e.message, status: :forbidden)
       end

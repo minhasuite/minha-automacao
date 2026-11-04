@@ -1,6 +1,6 @@
 module Accounts
   # "Zerar dados": apaga o CONTEÚDO da empresa e deixa em pé a empresa, os
-  # membros, o login e o plano. AiUsage fica (senão zerar resetaria a cota).
+  # membros e o login.
   # Cada tabela do domínio que chegar entra em MODELS (filhos antes dos pais).
   class WipeData
     MODELS = [ Package, ShadowAction, ShadowReport, ExternalRef, AutomationRun, AutomationVersion, Automation, Blueprint, DashboardVersion, Dashboard, Alert, AlertRule, NotifyRule, Schedule, Scene, PointLink, Command, DatasetRecord, Dataset, Event, Tagging, Tag, SiteMembership, Point, Device, Integration, Area, Site, Notification ].freeze

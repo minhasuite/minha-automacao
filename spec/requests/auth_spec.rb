@@ -98,10 +98,9 @@ RSpec.describe "Auth e conta" do
       expect(data["user"]["email"]).to eq(user.email)
     end
 
-    it "zera a empresa preservando conta e cota de IA (só o dono)" do
+    it "zera a empresa preservando a conta (só o dono)" do
       within(user.tenant) do
         create(:notification, title: "Algo")
-        AiUsage.record!("ask")
       end
       member = create(:user, tenant: user.tenant, role: "member")
       post "/api/v1/me/wipe", headers: auth_headers(member)
@@ -111,7 +110,6 @@ RSpec.describe "Auth e conta" do
       expect(data["deleted"]["notifications"]).to eq(1)
       within(user.tenant) do
         expect(Notification.count).to eq(0)
-        expect(AiUsage.count).to eq(1)
       end
     end
 

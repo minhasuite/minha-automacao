@@ -47,8 +47,7 @@ module MeuLogInstrumented
 
   def meulog_contexto_do_erro
     usuario = meulog_usuario
-    Rails.error.set_context(rota: meulog_operacao, usuario: usuario&.id,
-                            empresa: usuario&.tenant&.plan)
+    Rails.error.set_context(rota: meulog_operacao, usuario: usuario&.id, empresa: usuario&.tenant_id)
   rescue StandardError => e
     Rails.logger.warn("[meulog] contexto não setado: #{e.class}: #{e.message}")
   end
@@ -66,7 +65,7 @@ module MeuLogInstrumented
 
     usuario = meulog_usuario
     MeuLog.track(meulog_operacao,
-               user: usuario&.id&.to_s, customer: usuario&.tenant&.plan&.to_s,
+               user: usuario&.id&.to_s, customer: usuario&.tenant_id&.to_s,
                metodo: request.request_method, status: response&.status)
   rescue StandardError => e
     Rails.logger.warn("[meulog] uso não contado: #{e.class}: #{e.message}")

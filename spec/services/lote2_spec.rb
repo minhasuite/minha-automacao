@@ -42,10 +42,9 @@ RSpec.describe "Lote 2: IA e dados nas automações" do
   end
 
   describe "plugins: o núcleo não muda" do
-    it "um provedor de IA falso registrado funciona na ação, no Ai::Request e na IA da suíte não entra (sem env)" do
+    it "um provedor de IA falso registrado funciona na ação e no Ai::Request" do
       seen = fake_provider!
       expect(Ai.choices).to include("eco" => "Eco de teste")
-      expect(Ai::Provider.names).not_to include("eco")
       run = fire([ { "type" => "ai_task", "prompt" => "Oi {{ site.name }}", "provider" => "eco", "response_variable" => "r" },
                    { "type" => "set", "var" => "t", "value" => "{{ r.data }}" } ])
       expect(run.status).to eq("done")
@@ -142,17 +141,6 @@ RSpec.describe "Lote 2: IA e dados nas automações" do
         b = JSON.parse(r.body)
         b["messages"][1]["images"] == [ png[:data] ] && b["format"]["type"] == "object" && b["options"]["temperature"].zero? && b["stream"] == false
       }).to have_been_made
-    end
-
-    it "IA da suíte (Ai::Client) segue pelos mesmos plugins com a chave do env" do
-      allow(ENV).to receive(:[]).and_call_original
-      allow(ENV).to receive(:[]).with("GEMINI_API_KEY").and_return("g")
-      allow(ENV).to receive(:fetch).and_call_original
-      allow(ENV).to receive(:fetch).with("GEMINI_API_KEY").and_return("g")
-      expect(Ai::Provider).to be_configured("gemini")
-      expect(Ai::Provider).not_to be_configured("ollama")
-      expect(Ai::Provider.for("gemini")).to be_a(Ai::Providers::Gemini)
-      expect { Ai::Provider.for("ollama") }.to raise_error(Ai::Client::Error)
     end
   end
 

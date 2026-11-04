@@ -21,9 +21,8 @@ A mesma stack dos outros produtos da suíte (skill `padrao-suite`).
 | Multi-tenant | `acts_as_tenant` com `require_tenant = true`, modelo `Tenant` |
 | Auth | `ApiToken` (access 30 min + refresh 60 dias rotacionado), `ServiceApiKey` com escopos, sessão em cookie no web |
 | App | Flutter (Riverpod, Dio, go_router, secure storage, Lista Clara) |
-| IA | `Ai::Client` + `Ai::Policy` (cota por plano), nunca no caminho principal |
+| IA | Só a da instalação (`Ai::Request` com a chave da pessoa), nunca no caminho principal |
 | Push | FCM (`Notifier` → `SendPushJob`) |
-| Planos | `Billing::Entitlement` + Google Play + licenciamento central |
 | Telemetria | meulog (`lib/meu_log.rb`, `MeuLogInstrumented`) |
 
 **Um servidor só, no local** (ESQUEMA-V1 §3 e §11, revisto em 2026-10-29):

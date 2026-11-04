@@ -34,7 +34,6 @@ module RemoteAccess
 
   def enable!(tenant, key, form)
     p = provider(key) or raise Error, I18n.t("remote.unknown")
-    raise Error, Licensing.message("remote_access") unless Licensing.allowed?(tenant, "remote_access")
 
     p.enable!(tenant, form)
   rescue Apps::Supervisor::Error => e

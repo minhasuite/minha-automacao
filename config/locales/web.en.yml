@@ -200,7 +200,6 @@ en:
       health: Health
       system: System
       remote: Remote access
-      plan: Plan
       account: My account
       push: My devices
       labels: Labels
@@ -251,12 +250,6 @@ en:
       confirm: Confirm
       shadow_off: Turn shadow off
       shadow_on: Turn shadow on
-      ai_plan: AI subscription
-      trial: free trial
-      valid_until: valid until
-      renews: renews on
-      ai_plan_text: Everything that doesn't use AI is free. The subscription unlocks AI and is made in the Minha Automação phone app (Google Play)
-      trial_days: ', with %{n} free days'
   devices:
     title: Devices
     subtitle: '%{site} · every device in this place'
@@ -431,28 +424,6 @@ en:
       fields:
         token: Tunnel token
         url: Public address (optional)
-  plan:
-    subtitle: 'Plan: what the installation includes and how much it uses.'
-    current: Your plan
-    names:
-      free: Free
-      plus: Plus
-      pro: Pro
-    limits:
-      devices: devices
-      users: people
-      history_days: history
-      cloud_backup: cloud backup
-      remote_access: remote access
-    included: Included
-    not_included: Not included
-    unlimited: Unlimited
-    days:
-      one: 1 day
-      other: '%{count} days'
-    compare: Compare plans
-    no_payment: Changing plans from this page comes with payments. To change now, contact support.
-    exceeded: Your plan doesn't include more %{what}. See Settings → Plan.
   agenda:
     show:
       title: "Calendar"

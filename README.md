@@ -9,3 +9,8 @@ Proposta e esquema: `../docs/PROPOSTA.md` e `../docs/ESQUEMA-V1.md` (workspace `
 
 Ruby só em container. Guia em `docs/DEV_ENV.md` (Postgres `127.0.0.1:6299`, app `:4121`, login de teste
 `teste@teste.com` / `12345678`); regras e armadilhas do repo em `CLAUDE.md`.
+
+## Licença
+
+Código aberto sob a [Apache License 2.0](LICENSE). Use, modifique e distribua à vontade,
+inclusive comercialmente, mantendo o aviso de licença.

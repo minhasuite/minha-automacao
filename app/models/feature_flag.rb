@@ -3,7 +3,6 @@ class FeatureFlag < ApplicationRecord
   CACHE_KEY = "feature_flags/map".freeze
 
   KNOWN = {
-    "ai" => "Nenhuma feature de IA roda; o app mostra só o cadastro manual.",
     "push" => "Nenhum push sai (as notificações in-app continuam)."
   }.freeze
 

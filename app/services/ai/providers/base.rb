@@ -4,15 +4,14 @@ module Ai
   module Providers
     # Interface comum de um provedor de IA (plugin de Ai::PROVIDERS).
     #
-    #   describe key:, label:, default_model:, capabilities:, models:, env:,
+    #   describe key:, label:, default_model:, capabilities:, models:,
     #            base_url:, custom_url:, key_required:, hint:
     #   new(api_key:, base_url:).complete(model:, system:, user:, schema:,
     #       max_tokens:, timeout:, effort: nil, temperature: nil) → Result
     #
     # `user` é texto ou lista de blocos no formato Anthropic (texto + imagem
     # base64); cada provedor traduz. `schema` nil = texto livre (`data` é
-    # String); com schema, `data` é o Hash. `env` = variável da chave na IA
-    # da suíte (Ai::Client); nil = o provedor só existe com chave da instalação.
+    # String); com schema, `data` é o Hash. A chave é sempre a da instalação.
     # Erro: Ai::Client::TransientError (429, 5xx, rede) ou Ai::Client::Error,
     # sempre com mensagem genérica (o corpo cru do provedor só no log).
     #
@@ -25,9 +24,9 @@ module Ai
       translates :label, :hint
 
       class << self
-        attr_reader :key, :default_model, :env, :base_url, :stt_model, :tts_model, :tts_voice
+        attr_reader :key, :default_model, :base_url, :stt_model, :tts_model, :tts_voice
 
-        def describe(key:, label:, default_model:, capabilities:, models: [], env: nil, base_url: nil, custom_url: false, key_required: true, hint: nil,
+        def describe(key:, label:, default_model:, capabilities:, models: [], base_url: nil, custom_url: false, key_required: true, hint: nil,
                      stt_model: nil, tts_model: nil, tts_voice: nil)
           unknown = capabilities - Ai::CAPABILITIES.keys
           raise ArgumentError, "capacidade desconhecida: #{unknown.join(', ')}" if unknown.any?
@@ -37,7 +36,6 @@ module Ai
           @default_model = default_model
           @capabilities = capabilities.freeze
           @models = models.freeze
-          @env = env
           @base_url = base_url
           @custom_url = custom_url
           @key_required = key_required

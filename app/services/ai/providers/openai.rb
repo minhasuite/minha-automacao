@@ -6,7 +6,7 @@ module Ai
     class Openai < Base
       include OpenaiAudio
 
-      describe key: "openai", label: "OpenAI", env: "OPENAI_API_KEY", default_model: "gpt-5-mini", models: %w[gpt-5-mini gpt-5],
+      describe key: "openai", label: "OpenAI", default_model: "gpt-5-mini", models: %w[gpt-5-mini gpt-5],
                base_url: "https://api.openai.com/v1", capabilities: %i[text image structured tools stt tts],
                stt_model: "gpt-4o-mini-transcribe", tts_model: "gpt-4o-mini-tts", tts_voice: "alloy",
                hint: "Chave em platform.openai.com → API keys."

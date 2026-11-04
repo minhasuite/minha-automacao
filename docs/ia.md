@@ -1,16 +1,15 @@
 # IA da instalação (Lote 2)
 
 O equivalente ao `ai_task` e ao `conversation` do Home Assistant. Usa a chave
-do próprio usuário, por provedor, guardada cifrada no banco. Não depende do
-plano nem da cota da suíte (a IA da suíte, `Ai::Client` por tier com chave
-em env, continua para as features do app e usa os mesmos plugins).
+do próprio usuário, por provedor, guardada cifrada no banco. É a única IA do
+MA: não há IA paga da suíte nem plano (produto aberto).
 
 ## Provedores como plugins
 
 Cada provedor é uma classe em `app/services/ai/providers/`, subclasse de
 `Ai::Providers::Base`, registrada em `Ai::PROVIDERS`
 (`app/services/ai.rb`). Nada de `case` por provedor fora dela: a tela, a
-ação, o "Perguntar à casa" e a IA da suíte perguntam ao registro.
+ação e o "Perguntar à casa" perguntam ao registro.
 
 ```ruby
 class Ai::Providers::MeuProvedor < Ai::Providers::Base

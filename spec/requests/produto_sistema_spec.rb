@@ -2,8 +2,8 @@ require "rails_helper"
 require Rails.root.join("supervisor/server").to_s
 
 # Produto: atualização com um clique (fonte de versões + supervisor +
-# bin/ma-update), acesso remoto por provedores e planos com limites.
-RSpec.describe "Produto: sistema, acesso remoto e plano" do
+# bin/ma-update) e acesso remoto por provedores.
+RSpec.describe "Produto: sistema e acesso remoto" do
   let(:owner) { create(:user, email: "teste.dono@ex.com") }
   let(:tenant) { owner.tenant }
   let(:base) { "http://supervisor:8099" }
@@ -265,10 +265,7 @@ RSpec.describe "Produto: sistema, acesso remoto e plano" do
       expect(tenant.reload.settings.dig("remote_access", "enabled")).to be(false)
     end
 
-    it "plano sem acesso remoto não liga; túnel manual aparece como configurado no servidor" do
-      Licensing.set!(tenant, "free")
-      patch "/configuracoes/acesso-remoto", params: { provider: "cloudflare", remote: { token: "a" * 40 } }
-      expect(flash[:alert]).to include("acesso remoto")
+    it "túnel manual aparece como configurado no servidor" do
       stub_request(:get, "#{base}/system/remote").to_return(body: { data: { manual: true } }.to_json)
       get "/configuracoes/acesso-remoto"
       expect(response.body).to include("Configurado no servidor", "configurado à mão")
@@ -288,43 +285,6 @@ RSpec.describe "Produto: sistema, acesso remoto e plano" do
       expect(response.body).to include("Teste Relay", "Relay de teste")
       patch "/configuracoes/acesso-remoto", params: { provider: "teste_relay" }
       expect(tenant.reload.settings["remote_access"]).to include("provider" => "teste_relay", "url" => "https://teste.relay")
-    end
-  end
-
-  describe "plano" do
-    before { sign_in }
-
-    it "o dono atual é pro ilimitado; free limita aparelhos e pessoas" do
-      site = within(tenant) { create(:site) }
-      expect(Licensing.plan(tenant)).to eq("pro")
-      get "/configuracoes/plano"
-      expect(response.body).to include("Seu plano", "Pro", "Ilimitado", "Comparar planos", "Grátis", "Plus")
-
-      Licensing.set!(tenant, "free", limits: { "devices" => 2 })
-      within(tenant) { 2.times { |i| create(:device, site: site, name: "Teste #{i}") } }
-      extra = within(tenant) { build(:device, site: site, name: "Teste 3") }
-      expect(extra).not_to be_valid
-      expect(extra.errors[:base].first).to include("aparelhos")
-      get "/configuracoes/plano"
-      expect(response.body).to include("2 <span", "/ 2", "Não incluído", "30 dias")
-
-      2.times { |i| create(:user, tenant: tenant, email: "teste.p#{i}@ex.com") }
-      expect(build(:user, tenant: tenant)).not_to be_valid
-      expect { Licensing.check!(tenant, "users") }.to raise_error(Licensing::Exceeded)
-      expect(Licensing.allowed?(tenant, "cloud_backup")).to be(false)
-    end
-
-    it "limite novo entra pelo registro (plugin falso)" do
-      fake = Class.new(Licensing::Limit) do
-        describe key: "teste_cenas", kind: :count
-        def self.usage(_tenant) = 4
-      end
-      stub_const("Licensing::TesteCenas", fake)
-      stub_const("Licensing::LIMITS", Licensing::LIMITS + %w[TesteCenas])
-      Licensing.set!(tenant, "plus", limits: { "teste_cenas" => 5 })
-      expect(Licensing.allowed?(tenant, "teste_cenas")).to be(true)
-      expect(Licensing.allowed?(tenant, "teste_cenas", adding: 2)).to be(false)
-      expect(Licensing::PAYMENT_PROVIDERS).to eq([])
     end
   end
 end

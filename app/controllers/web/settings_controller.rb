@@ -20,8 +20,6 @@ module Web
     end
 
     def system
-      Licencas::Sync.throttled(current_user.tenant)
-      @billing = Billing::Status.call(current_user.tenant, current_user)
       @release = Updates.latest(force: params[:verificar].present?)
       @update = Updates.status
     end

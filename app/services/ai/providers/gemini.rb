@@ -10,7 +10,7 @@ module Ai
     class Gemini < Base
       BUDGETS = { "low" => 1_024, "medium" => 8_192, "high" => 24_576 }.freeze
 
-      describe key: "gemini", label: "Google Gemini", env: "GEMINI_API_KEY", default_model: "gemini-3.5-flash",
+      describe key: "gemini", label: "Google Gemini", default_model: "gemini-3.5-flash",
                models: %w[gemini-3.5-flash gemini-3.5-flash-lite gemini-3.1-pro-preview gemini-2.5-flash],
                base_url: "https://generativelanguage.googleapis.com/v1beta/models", capabilities: %i[text image structured tools temperature stt tts],
                stt_model: "gemini-2.5-flash", tts_model: "gemini-2.5-flash-preview-tts", tts_voice: "Kore",

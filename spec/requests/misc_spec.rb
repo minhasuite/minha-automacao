@@ -35,41 +35,6 @@ RSpec.describe "Notificações, push, IA e páginas públicas" do
     end
   end
 
-  describe "IA" do
-    it "mostra a cota por feature" do
-      get "/api/v1/ai/quota", headers: headers
-      expect(data).to include("enabled" => false, "plan" => "free")
-      enable_ai!
-      within(tenant) { AiUsage.record!("ask") }
-      get "/api/v1/ai/quota", headers: headers
-      expect(data["features"]["ask"]).to include("available" => false, "limit" => nil)
-      expect(data["daily"]).to include("limit" => 0)
-      tenant.update!(plan: "pro")
-      get "/api/v1/ai/quota", headers: headers
-      expect(data["features"]["ask"]).to include("available" => true, "limit" => 300, "used" => 1, "remaining" => 299)
-      expect(data["daily"]).to include("limit" => 80)
-    end
-
-    it "pergunta à IA (administrador), debitando a cota" do
-      enable_ai!
-      tenant.update!(plan: "pro")
-      stub_ai({ answer: "Desligue o que não usa." })
-      post "/api/v1/ai/ask", params: { question: "como economizar?" }, headers: headers
-      expect(data).to eq("answer" => "Desligue o que não usa.")
-      expect(within(tenant) { AiUsage.count_for("ask") }).to eq(1)
-      post "/api/v1/ai/ask", params: { question: "x" }, headers: auth_headers(create(:user, tenant: tenant, role: "member"))
-      expect(response).to have_http_status(:forbidden)
-    end
-
-    it "IA fora do ar vira 503" do
-      enable_ai!
-      tenant.update!(plan: "pro")
-      allow(Ai::Client).to receive(:new).and_return(instance_double(Ai::Client).tap { |c| allow(c).to receive(:complete).and_raise(Ai::Client::Error, "caiu") })
-      post "/api/v1/ai/ask", params: { question: "x" }, headers: headers
-      expect(response).to have_http_status(:service_unavailable)
-    end
-  end
-
   it "páginas legais em pt e en" do
     %w[/privacidade /termos /exclusao /privacy /terms /data-deletion].each do |path|
       get path

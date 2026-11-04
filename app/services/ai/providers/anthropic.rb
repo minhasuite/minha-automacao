@@ -5,7 +5,7 @@ module Ai
     # quando pedido (e nunca no Haiku). Sem temperatura: os modelos atuais
     # (Sonnet/Haiku 5.5) recusam valor fora do padrão.
     class Anthropic < Base
-      describe key: "anthropic", label: "Anthropic (Claude)", env: "ANTHROPIC_API_KEY", default_model: "claude-sonnet-5-5",
+      describe key: "anthropic", label: "Anthropic (Claude)", default_model: "claude-sonnet-5-5",
                models: %w[claude-sonnet-5-5 claude-haiku-5-5 claude-opus-5-5], capabilities: %i[text image structured tools],
                hint: "Chave em console.anthropic.com → API keys. claude-haiku-5-5 é a opção barata."
       texts en: { label: "Anthropic (Claude)", hint: "Get a key at console.anthropic.com → API keys. claude-haiku-5-5 is the budget option." },

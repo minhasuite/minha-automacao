@@ -17,8 +17,6 @@ Rails.application.routes.draw do
   # appweb2: o app Android pode criar e usar passkeys deste domínio (Credential Manager).
   get ".well-known/assetlinks.json", to: "legal#assetlinks", format: false
 
-  post "webhooks/google_play", to: "webhooks/google_play#create"
-
   # PWA (Lote 1): manifesto, service worker e o que ele chama sem sessão (a
   # resposta do botão com o token de uso único e a imagem por URL assinada).
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
@@ -260,7 +258,7 @@ Rails.application.routes.draw do
     get "configuracoes/exportar", to: "settings#export", as: :settings_export
     post "configuracoes/zerar", to: "settings#wipe", as: :settings_wipe
     get "configuracoes/paineis", to: "settings#dashboards", as: :settings_dashboards
-    # Produto: atualização do servidor, acesso remoto (provedores) e plano (licença).
+    # Produto: atualização do servidor e acesso remoto (provedores).
     post "configuracoes/sistema/atualizar", to: "settings#update_server", as: :settings_update
     post "configuracoes/sistema/atualizacao", to: "settings#update_updates", as: :settings_updates
     # ondaA1 (A2): rótulos (cor, nome, uso) e a tela Expor (A3).
@@ -268,7 +266,6 @@ Rails.application.routes.draw do
     get "configuracoes/acesso-remoto", to: "remote_access#show", as: :settings_remote
     patch "configuracoes/acesso-remoto", to: "remote_access#update"
     delete "configuracoes/acesso-remoto", to: "remote_access#destroy"
-    get "configuracoes/plano", to: "licenses#show", as: :settings_plan
     # Saúde do sistema (registro Health::CHECKS) e o que falta para a troca (Cutover).
     get "configuracoes/saude", to: "health#show", as: :settings_health
     post "configuracoes/saude/ignorar", to: "health#ignore", as: :settings_health_ignore
@@ -483,11 +480,6 @@ Rails.application.routes.draw do
       end
       resources :automation_runs, only: :show
       post "hooks/automations/:token", to: "automation_hooks#create", as: :automation_hook
-
-      get "billing", to: "billing#show"
-      post "billing/google/verify", to: "billing#verify_google"
-      get "ai/quota", to: "ai#quota"
-      post "ai/ask", to: "ai#ask"
     end
   end
 end
