@@ -62,7 +62,19 @@ imagem em `IMAGE` e o commit em `APP_VERSION`) e a mais nova publicada.
   se o repo for privado). A tag da release é a tag da imagem no GHCR. Fonte
   nova (GHCR direto, servidor próprio) = módulo com `key` e `latest` + nome em
   `SOURCES`.
-- **Publicar uma versão**: `git tag -a v1.2.0 -m "Resumo da versão" && git push
+- **Canais (distribuição, `docs/PROPOSTA-distribuicao.md`)**: todo master
+  verde vira uma **beta** `vX.Y.Z-beta.N` (pré-release + imagem
+  `:vX.Y.Z-beta.N` e `:latest-beta`); toda segunda às 10h o
+  `promover-estavel.yml` promove a beta mais nova com 48 h a **estável**
+  `vX.Y.Z` (mesmo commit; o CI/CD da tag publica a imagem e a release). Em
+  Configurações → Sistema o dono escolhe o canal (Estável/Beta, em
+  `storage/update-settings.json`, por servidor) e liga **Atualizar sozinho**:
+  o `UpdateAutoJob` (a cada 15 min) atualiza na janela de 2 h escolhida,
+  estável só com 2 dias de publicada, e não repete sozinho a versão que voltou
+  ou falhou. O fim de toda atualização vira aviso para dono e administradores.
+  Quem roda `X.Y.Z-beta.N` não "atualiza" para a `X.Y.Z` (beta anterior
+  promovida): espera a próxima estável.
+- **Publicar uma versão à mão** (mudança grande, `vX.Y.0`): `git tag -a v1.2.0 -m "Resumo da versão" && git push
   origin v1.2.0`. O CI (`ci-cd.yml`) roda a qualidade, constrói a imagem com a
   versão gravada (`RELEASE_TAG`), publica `:v1.2.0` e `:latest-stable` e só
   então cria a release `v1.2.0` (notas = mensagem da tag + commits desde a tag

@@ -54,6 +54,27 @@
     <%= link_to settings_system_path(verificar: 1), class: "ss-btn ss-btn-ghost" do %><%= icon("search", "size-4") %><%= t("updates.check") %><% end %>
   </div>
   <p class="text-xs text-muted mt-3"><%= t("updates.how") %></p>
+
+  <% if owner && Updates.supported? %>
+    <% cfg = Updates.settings %>
+    <%= form_with url: settings_updates_path, class: "mt-4 grid gap-3 sm:grid-cols-3 items-end", aria: { label: t("updates.auto_title") } do %>
+      <div>
+        <label for="up-channel" class="ss-label"><%= t("updates.channel") %></label>
+        <%= select_tag :channel, options_for_select(Updates::CHANNELS.map { |c| [ t("updates.channels.#{c}"), c ] }, Updates.channel), id: "up-channel", class: "ss-input" %>
+      </div>
+      <div>
+        <label for="up-window" class="ss-label"><%= t("updates.window") %></label>
+        <%= select_tag :window_start, options_for_select((0..23).map { |h| [ t("updates.window_option", from: format("%02d:00", h), to: format("%02d:00", (h + Updates::WINDOW_HOURS) % 24)), h ] }, cfg["window_start"].to_i), id: "up-window", class: "ss-input" %>
+      </div>
+      <div class="flex items-center gap-2">
+        <%= hidden_field_tag :auto, "0", id: nil %>
+        <%= check_box_tag :auto, "1", cfg["auto"], id: "up-auto" %>
+        <label for="up-auto" class="text-sm"><%= t("updates.auto") %></label>
+      </div>
+      <p class="text-xs text-muted sm:col-span-3"><%= t("updates.auto_hint", days: Updates::AUTO_MIN_AGE.in_days.to_i) %></p>
+      <div class="sm:col-span-3"><%= submit_tag t("updates.save"), class: "ss-btn ss-btn-ghost", name: nil %></div>
+    <% end %>
+  <% end %>
 </section>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="backup-t">

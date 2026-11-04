@@ -387,6 +387,19 @@ es:
     how: Antes de cambiar, el servidor hace una copia de la base; si /up no responde en 5 minutos, vuelve solo a la versión anterior.
     bad_tag: Versión no válida.
     started: La actualización empezó. Síguela aquí.
+    bad_channel: Canal no válido.
+    bad_window: Horario no válido.
+    saved: Actualización guardada.
+    auto_title: Actualizar solo
+    channel: Canal
+    channels:
+      stable: Estable
+      beta: Beta (novedades antes, menos probadas)
+    window: Ventana para actualizar solo
+    window_option: "%{from} a %{to}"
+    auto: Actualizar solo
+    auto_hint: En la ventana elegida, instala la versión nueva del canal y avisa el resultado. La estable solo después de %{days} días publicada; la versión que falló no se intenta de nuevo sola.
+    save: Guardar
   remote:
     subtitle: 'Acceso remoto: ver y controlar la casa desde afuera, sin abrir puertos en el router.'
     intro: 'Elige cómo se ve la casa desde afuera. El túnel sale del servidor hacia el proveedor: ningún puerto del router queda abierto.'

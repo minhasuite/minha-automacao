@@ -586,6 +586,13 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `KEYS`), serializers com `params: { reveal: }` (padrão é ocultar) e
   `reveal_sensitive?` na tela. Echo: ponto novo = linha em
   `Alexa::State::POINTS`.
+- **Distribuição** (`docs/PROPOSTA-distribuicao.md`): master verde = beta
+  `vX.Y.Z-beta.N` (pré-release criada pelo CI), estável = beta promovida pelo
+  `promover-estavel.yml`; canal e "atualizar sozinho" por servidor em
+  `storage/update-settings.json` (`Updates.settings`), `Updates::Auto` no
+  `UpdateAutoJob`. Versão só por `Updates.newer?` (beta < estável do mesmo
+  número; a beta não volta para a estável dela). Fonte nova de versões
+  implementa `latest(channel)`.
 - **Paridade com o HA (roadmap de vendas, compat)**: Diário = fontes em
   `Logbook::SOURCES` (`describe` + `fetch(filtro)`; cadastro técnico+,
   entradas só dono; cena acionada vira evento `scene`, entrada na web/app

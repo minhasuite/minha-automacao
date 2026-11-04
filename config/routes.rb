@@ -262,6 +262,7 @@ Rails.application.routes.draw do
     get "configuracoes/paineis", to: "settings#dashboards", as: :settings_dashboards
     # Produto: atualização do servidor, acesso remoto (provedores) e plano (licença).
     post "configuracoes/sistema/atualizar", to: "settings#update_server", as: :settings_update
+    post "configuracoes/sistema/atualizacao", to: "settings#update_updates", as: :settings_updates
     # ondaA1 (A2): rótulos (cor, nome, uso) e a tela Expor (A3).
     resources :tags, path: "configuracoes/rotulos", only: %i[index update destroy]
     get "configuracoes/acesso-remoto", to: "remote_access#show", as: :settings_remote

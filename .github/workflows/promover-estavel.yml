@@ -1,0 +1,62 @@
+name: Promover estável
+
+# Toda segunda às 10h (BRT), a beta mais nova publicada há pelo menos 48 h vira
+# a estável vX.Y.Z (mesmo commit). Cria a tag anotada e dispara o CI/CD na tag
+# (tag empurrada pelo GITHUB_TOKEN não dispara workflow; workflow_dispatch
+# sim), que roda a qualidade, constrói :vX.Y.Z + :latest-stable e cria a
+# release estável. Manual: Actions → Promover estável → Run (opcional: a beta).
+on:
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+    inputs:
+      beta:
+        description: "Beta a promover (ex.: v0.9.1-beta.4). Vazio = a mais nova com 48 h."
+        required: false
+      min_hours:
+        description: "Idade mínima da beta, em horas"
+        required: false
+        default: "48"
+
+concurrency:
+  group: promover-estavel
+  cancel-in-progress: false
+
+jobs:
+  promover:
+    runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Escolher a beta e criar a tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BETA: ${{ inputs.beta }}
+          MIN_HOURS: ${{ inputs.min_hours || '48' }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          api() { curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "$@"; }
+          git fetch -q --force --tags origin
+          if [ -z "$BETA" ]; then
+            limite=$(date -u -d "-$MIN_HOURS hours" +%Y-%m-%dT%H:%M:%SZ)
+            BETA=$(api "https://api.github.com/repos/$REPO/releases?per_page=50" | jq -r --arg lim "$limite" '
+              [.[] | select(.prerelease and (.draft | not) and (.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+-beta\\.[0-9]+$")) and .published_at <= $lim)]
+              | sort_by(.tag_name | capture("^v(?<a>[0-9]+)\\.(?<b>[0-9]+)\\.(?<c>[0-9]+)-beta\\.(?<n>[0-9]+)$") | [.a, .b, .c, .n] | map(tonumber))
+              | last | .tag_name // empty')
+          fi
+          [ -n "$BETA" ] || { echo "Nenhuma beta com $MIN_HOURS h: nada a promover."; exit 0; }
+          [[ "$BETA" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$ ]] || { echo "Beta inválida: $BETA"; exit 1; }
+          STABLE="${BETA%-beta.*}"
+          if git rev-parse -q --verify "refs/tags/$STABLE" >/dev/null; then echo "$STABLE já existe: nada a promover."; exit 0; fi
+          sha=$(git rev-parse "$BETA^{commit}")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$STABLE" "$sha" -m "Versão estável $STABLE (promovida de $BETA)."
+          git push origin "refs/tags/$STABLE"
+          api -X POST "https://api.github.com/repos/$REPO/actions/workflows/ci-cd.yml/dispatches" -d "$(jq -n --arg r "$STABLE" '{ref: $r}')"
+          echo "Promovida: $BETA → $STABLE ($sha). O CI/CD da tag publica a imagem e a release."

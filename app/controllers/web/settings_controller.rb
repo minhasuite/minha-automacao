@@ -4,7 +4,7 @@ module Web
   # externo); mais "Minha conta". Sem dados de empresa na tela: o tenant
   # continua por dentro (acts_as_tenant).
   class SettingsController < ApplicationController
-    before_action :require_owner!, only: %i[wipe update_system update_server]
+    before_action :require_owner!, only: %i[wipe update_system update_server update_updates]
     # Leitor só tem a própria conta (e os aparelhos de push).
     before_action :deny_reader!, except: %i[show account update_account destroy_account]
 
@@ -30,6 +30,14 @@ module Web
     def update_server
       Updates.start!(params[:tag])
       redirect_to settings_system_path, notice: t("updates.started")
+    rescue Updates::Error => e
+      redirect_to settings_system_path, alert: e.message
+    end
+
+    # Distribuição: canal (estável/beta), atualizar sozinho e a janela de horário.
+    def update_updates
+      Updates.configure!(channel: params[:channel], auto: params[:auto], window_start: params[:window_start])
+      redirect_to settings_system_path, notice: t("updates.saved")
     rescue Updates::Error => e
       redirect_to settings_system_path, alert: e.message
     end

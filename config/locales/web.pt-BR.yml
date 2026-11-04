@@ -387,6 +387,19 @@ pt-BR:
     how: Antes de trocar, o servidor faz backup do banco; se o /up não responder em 5 minutos, volta para a versão anterior sozinho.
     bad_tag: Versão inválida.
     started: Atualização começou. Acompanhe aqui.
+    bad_channel: Canal inválido.
+    bad_window: Horário inválido.
+    saved: Atualização salva.
+    auto_title: Atualizar sozinho
+    channel: Canal
+    channels:
+      stable: Estável
+      beta: Beta (novidades antes, menos testadas)
+    window: Janela para atualizar sozinho
+    window_option: "%{from} às %{to}"
+    auto: Atualizar sozinho
+    auto_hint: Na janela escolhida, instala a versão nova do canal e avisa o resultado. A estável só depois de %{days} dias publicada; a versão que falhou não é tentada de novo sozinha.
+    save: Salvar
   remote:
     subtitle: 'Acesso remoto: ver e comandar a casa de fora, sem abrir porta no roteador.'
     intro: 'Escolha como a casa é vista de fora. O túnel sai do servidor para o provedor: nenhuma porta do roteador fica aberta.'

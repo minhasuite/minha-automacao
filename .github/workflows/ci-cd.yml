@@ -14,6 +14,8 @@ on:
     branches: [master, develop]
     # Versão numerada: tag vX.Y.Z → imagem :vX.Y.Z + :latest-stable e uma
     # release no GitHub (o botão "Atualizar" lê a última). Sem deploy.
+    # O master vira beta (vX.Y.Z-beta.N, pré-release) e a estável é a beta
+    # promovida pelo promover-estavel.yml (que dispara este workflow na tag).
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
     paths-ignore:
       - "**/*.md"
@@ -110,20 +112,34 @@ jobs:
       # docker build/push simples: o buildx não funciona com o podman do runner da WSL.
       - name: Login no GHCR
         run: printf '%s\n' "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-      # master → :latest + :sha-<sha>; tag → :vX.Y.Z + :latest-stable (com a versão gravada na imagem).
+      # Beta do master: próximo patch da última estável + contador (v1.2.4-beta.3).
+      - name: Versão
+        id: ver
+        run: |
+          set -euo pipefail
+          if [ "${{ github.ref_type }}" = tag ]; then echo "release=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git fetch -q --force --tags origin
+          last=$(git tag -l 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)
+          IFS=. read -r ma mi pa <<< "${last:-v0.0.0}"
+          next="${ma#v}.$mi.$((pa + 1))"
+          n=$(git tag -l "v$next-beta.*" | sed 's/.*-beta\.//' | sort -n | tail -1 || true)
+          echo "release=v$next-beta.$(( ${n:-0} + 1 ))" >> "$GITHUB_OUTPUT"
+      # master → :latest + :sha-<sha> + :vX.Y.Z-beta.N + :latest-beta; tag → :vX.Y.Z + :latest-stable
+      # (com a versão gravada na imagem).
       # O push para o GHCR falha sozinho de vez em quando (403 num blob): até 3 tentativas.
       - name: Build e push
         run: |
           set -euo pipefail
           repo=ghcr.io/minhasuite/minha-automacao
+          release="${{ steps.ver.outputs.release }}"
           if [ "${{ github.ref_type }}" = tag ]; then
-            release="${{ github.ref_name }}"; tags=("$release" latest-stable)
-            # O cache do podman do runner ignora a mudança de --build-arg e reaproveitaria a
-            # camada do build do master (RELEASE_TAG vazio): um arquivo no contexto muda o COPY.
-            echo "$release" > RELEASE
+            tags=("$release" latest-stable)
           else
-            release=""; tags=(latest "sha-${{ github.sha }}")
+            tags=(latest "sha-${{ github.sha }}" "$release" latest-beta)
           fi
+          # O cache do podman do runner ignora a mudança de --build-arg e reaproveitaria a
+          # camada de outro build (RELEASE_TAG diferente): um arquivo no contexto muda o COPY.
+          echo "$release" > RELEASE
           docker build -f Dockerfile.prod --build-arg "GIT_SHA=${{ github.sha }}" --build-arg "RELEASE_TAG=$release" \
             "${tags[@]/#/-t$repo:}" .
           if [ -n "$release" ]; then
@@ -138,23 +154,32 @@ jobs:
           done
           exit 1
       # Só depois da imagem no GHCR: a release é o que a tela de atualização consulta.
+      # Estável: notas desde a estável anterior. Beta: pré-release (o GitHub cria a
+      # tag no commit; tag criada pelo GITHUB_TOKEN não dispara outro workflow).
       - name: Release no GitHub
-        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ steps.ver.outputs.release }}
+          STABLE: ${{ github.ref_type == 'tag' }}
         run: |
           set -euo pipefail
-          # O checkout traz a tag como leve (sem a mensagem): busca a anotada de novo.
-          git fetch -q --force origin "refs/tags/$TAG:refs/tags/$TAG"
-          prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$TAG^" 2>/dev/null || true)
+          if [ "$STABLE" = true ]; then
+            # O checkout traz a tag como leve (sem a mensagem): busca a anotada de novo.
+            git fetch -q --force origin "refs/tags/$TAG:refs/tags/$TAG"
+            prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' --exclude '*-beta*' "$TAG^" 2>/dev/null || true)
+            head="$TAG"; also=latest-stable
+          else
+            prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^ 2>/dev/null || true)
+            head=HEAD; also=latest-beta
+          fi
           {
-            git tag -l --format='%(contents)' "$TAG" | sed '/BEGIN PGP/,$d'
+            [ "$STABLE" = true ] && git tag -l --format='%(contents)' "$TAG" | sed '/BEGIN PGP/,$d'
             echo; echo "## Mudanças${prev:+ desde $prev}"; echo
-            git log --no-merges -n "$([ -n "$prev" ] && echo 200 || echo 30)" --format='- %s (%h)' ${prev:+"$prev.."}"$TAG"
-            echo; echo "Imagem: \`ghcr.io/minhasuite/minha-automacao:$TAG\` (também \`latest-stable\`)."
+            git log --no-merges -n "$([ -n "$prev" ] && echo 200 || echo 30)" --format='- %s (%h)' ${prev:+"$prev.."}"$head"
+            echo; echo "Imagem: \`ghcr.io/minhasuite/minha-automacao:$TAG\` (também \`$also\`)."
           } > notes.md
-          jq -n --arg t "$TAG" --rawfile b notes.md '{tag_name: $t, name: $t, body: $b, make_latest: "true"}' \
+          jq -n --arg t "$TAG" --arg sha "$GITHUB_SHA" --rawfile b notes.md --argjson stable "$STABLE" \
+            '{tag_name: $t, target_commitish: $sha, name: $t, body: $b, prerelease: ($stable | not), make_latest: (if $stable then "true" else "false" end)}' \
             | curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
                 "https://api.github.com/repos/${{ github.repository }}/releases" -d @- | jq -r .html_url
 

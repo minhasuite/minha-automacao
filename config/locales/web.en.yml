@@ -387,6 +387,19 @@ en:
     how: Before switching, the server backs up the database; if /up doesn't answer within 5 minutes, it rolls back by itself.
     bad_tag: Invalid version.
     started: Update started. Follow it here.
+    bad_channel: Invalid channel.
+    bad_window: Invalid time.
+    saved: Update settings saved.
+    auto_title: Update automatically
+    channel: Channel
+    channels:
+      stable: Stable
+      beta: Beta (new features first, less tested)
+    window: Window for automatic updates
+    window_option: "%{from} to %{to}"
+    auto: Update automatically
+    auto_hint: In the chosen window, installs the channel's new version and reports the result. Stable only after %{days} days published; a version that failed is not retried automatically.
+    save: Save
   remote:
     subtitle: 'Remote access: see and control your home from outside, without opening router ports.'
     intro: 'Choose how your home is reached from outside. The tunnel goes out from the server to the provider: no router port is opened.'

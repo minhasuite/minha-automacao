@@ -51,5 +51,9 @@ production:
   health_check:
     class: HealthCheckJob
     schedule: every 10 minutes
+  # Distribuição: avisa o fim da atualização e, ligado, atualiza sozinho na janela.
+  update_auto:
+    class: UpdateAutoJob
+    schedule: every 15 minutes
 
 development: {}
