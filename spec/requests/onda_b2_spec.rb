@@ -43,7 +43,7 @@ RSpec.describe "ondaB2: painéis" do
       expect(first_widget(d)["deps"]).to include(target.id, mode.id)
 
       get "/paineis/#{d.id}"
-      expect(response.body).to include("dw-feats", "dw-stepper", %(name="value" value="23.5"), %(name="value" value="22.5"), "Aquecer", %(aria-pressed="true"))
+      expect(response.body).to include("dw-feats", "ss-stepper-input", %(name="value" value="23"), %(step="0.5"), "Aquecer", %(aria-pressed="true"))
     end
 
     it "recusa recurso desconhecido e aceita {type, point}" do
@@ -145,9 +145,9 @@ RSpec.describe "ondaB2: painéis" do
 
       get "/paineis/#{d.id}"
       body = response.body
-      expect(body).to include("dw-dial dw-dial-cool", "Agora 26,5 °C", "dw-dial-humid", "dw-dial-light", "dw-btn", "Teste dentista", "Dia inteiro",
+      expect(body).to include("dw-dial", %(data-mode="cool"), "Agora 26,5 °C", "ss-thermo", "is-adjust-off", "ss-device is-press", "ss-agl", "Teste dentista", "Dia inteiro",
                               "Leite", %(aria-checked="true"), "Concluídos (1)", "https://exemplo.com.br/sala.jpg", "aspect-ratio: 4 / 3",
-                              %(sandbox="allow-scripts allow-same-origin allow-forms allow-popups"), 'data-controller="dw-clock"', "Precisa de atenção: umidade", "Baixo")
+                              %(sandbox="allow-scripts allow-same-origin allow-forms allow-popups"), 'data-controller="ss-clock"', "Precisa de atenção: umidade", "Baixo")
     end
 
     it "recusa link inseguro na imagem e na página" do

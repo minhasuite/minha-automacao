@@ -10,10 +10,7 @@
 <% end %>
 
 <% if @installed.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("apps.empty") %></p>
-    <p class="mt-1"><%= t("apps.empty_hint") %></p>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("apps.empty"), text: t("apps.empty_hint"), css: "ss-card") %>
 <% else %>
   <ul class="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3" aria-label="<%= t("apps.installed_label") %>">
     <% @installed.each do |app| %>

@@ -18,5 +18,5 @@
     </div>
   <% end %>
 <% else %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.scripts.unpublished") %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("automations.scripts.unpublished"), css: "ss-card") %>
 <% end %>

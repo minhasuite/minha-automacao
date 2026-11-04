@@ -572,6 +572,10 @@ es:
         intro_html: zigbee2mqtt corre en el servidor de casa y se comunica por el mismo broker MQTT. Queda <strong>apagado hasta que llegue el coordinador USB</strong>; una vez encendido, cada aparato vinculado aparece solo, con sus puntos.
         step1_html: Conecta el coordinador al servidor e instala la aplicación Zigbee2MQTT en Configuración → Aplicaciones, con la ruta del coordinador (<code>/dev/serial/by-id/…</code>).
         step2: Vincula los aparatos desde el frontend de zigbee2mqtt (permitir unión).
+    wizard:
+      setup: Configurar
+      connect: Conectar
+      found: Encontrados
     found:
       add_all: Agregar todos
       add_one: Agregar %{name}
@@ -590,7 +594,6 @@ es:
       none_read: Todavía no se leyeron aparatos de la cuenta.
       nothing_new: Nada nuevo para agregar.
       offline: Sin conexión
-      offline_short: sin conexión
       pending_html: <strong class="num">%{n}</strong> aparato(s) nuevo(s). Marca los que quieras y el área de cada uno (viene de la habitación de la cuenta).
       pick: Elegir
       points: Puntos

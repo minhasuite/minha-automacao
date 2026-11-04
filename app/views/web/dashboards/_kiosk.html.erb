@@ -9,12 +9,12 @@
 <% photos = k["saver"] == "photos" ? dashboard.files.select(&:image?).map { |f| rails_blob_path(f, only_path: true) } : [] %>
 <div data-controller="kiosk" data-kiosk-idle-value="<%= k['idle'] %>" data-kiosk-saver-value="<%= k['saver'] %>" data-kiosk-motion-value="<%= k['motion'] %>"
      data-kiosk-dim-value="<%= k['dim'] %>" data-kiosk-slides-value="<%= (cameras + photos).to_json %>">
-  <div class="ss-kiosk-bar" data-kiosk-target="bar">
-    <button type="button" class="ss-kiosk-btn" data-action="kiosk#fullscreen" title="<%= t("dashboards.kiosk.fullscreen") %>" aria-label="<%= t("dashboards.kiosk.fullscreen") %>"><%= icon("arrows-expand", "size-5") %></button>
-    <button type="button" class="ss-kiosk-btn" data-action="kiosk#sleep" title="<%= t("dashboards.kiosk.sleep") %>" aria-label="<%= t("dashboards.kiosk.sleep") %>"><%= icon("moon", "size-5") %></button>
+  <div class="ma-kiosk-bar" data-kiosk-target="bar">
+    <button type="button" class="ma-kiosk-btn" data-action="kiosk#fullscreen" title="<%= t("dashboards.kiosk.fullscreen") %>" aria-label="<%= t("dashboards.kiosk.fullscreen") %>"><%= icon("arrows-expand", "size-5") %></button>
+    <button type="button" class="ma-kiosk-btn" data-action="kiosk#sleep" title="<%= t("dashboards.kiosk.sleep") %>" aria-label="<%= t("dashboards.kiosk.sleep") %>"><%= icon("moon", "size-5") %></button>
     <details class="dw-pop relative">
-      <summary class="ss-kiosk-btn" title="<%= t("dashboards.kiosk.settings") %>" aria-label="<%= t("dashboards.kiosk.settings") %>"><%= icon("cog", "size-5") %></summary>
-      <%= form_with url: kiosk_path, method: :patch, class: "ss-card ss-kiosk-form" do %>
+      <summary class="ma-kiosk-btn" title="<%= t("dashboards.kiosk.settings") %>" aria-label="<%= t("dashboards.kiosk.settings") %>"><%= icon("cog", "size-5") %></summary>
+      <%= form_with url: kiosk_path, method: :patch, class: "ss-card ma-kiosk-form" do %>
         <p class="font-bold text-ink"><%= t("dashboards.kiosk.this_tablet") %></p>
         <div><label class="ss-label" for="k-saver"><%= t("dashboards.kiosk.saver") %></label>
           <%= select_tag :saver, options_for_select(KioskMode::SAVERS.keys.map { |s| [ t("dashboards.kiosk.savers.#{s}"), s ] }, k["saver"]), class: "ss-input", id: "k-saver" %></div>
@@ -31,17 +31,17 @@
     </details>
   </div>
 
-  <div class="ss-saver <%= 'ss-saver-dim' if k['dim'] %>" data-kiosk-target="saver" hidden role="dialog" aria-modal="true" aria-label="<%= t("dashboards.kiosk.saver_label") %>">
-    <div class="ss-saver-slide" data-kiosk-target="slide" aria-hidden="true"></div>
-    <div class="ss-saver-info">
-      <p class="ss-saver-clock num" data-kiosk-target="clock">--:--</p>
-      <p class="ss-saver-date" data-kiosk-target="date"></p>
+  <div class="ma-saver <%= 'ma-saver-dim' if k['dim'] %>" data-kiosk-target="saver" hidden role="dialog" aria-modal="true" aria-label="<%= t("dashboards.kiosk.saver_label") %>">
+    <div class="ma-saver-slide" data-kiosk-target="slide" aria-hidden="true"></div>
+    <div class="ma-saver-info">
+      <p class="ma-saver-clock num" data-kiosk-target="clock">--:--</p>
+      <p class="ma-saver-date" data-kiosk-target="date"></p>
       <% if k["saver"] == "weather" && (weather || temperature) %>
-        <p class="ss-saver-weather"><%= icon("cloud", "size-6") %>
+        <p class="ma-saver-weather"><%= icon("cloud", "size-6") %>
           <% if temperature %><span class="num"><%= point_value_text(temperature) %></span><% end %>
           <% if weather %><span><%= point_value_text(weather) %></span><% end %></p>
       <% end %>
-      <p class="ss-saver-hint"><%= site.name %> · <%= t("dashboards.kiosk.touch_back") %></p>
+      <p class="ma-saver-hint"><%= site.name %> · <%= t("dashboards.kiosk.touch_back") %></p>
     </div>
   </div>
 </div>

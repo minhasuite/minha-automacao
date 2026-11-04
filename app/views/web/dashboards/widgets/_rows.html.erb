@@ -9,7 +9,8 @@
         <% title, sub = dw_row_names(p) %><% title = labels[id].presence || title %><span class="dw-name text-sm"><%= title %></span><span class="block text-xs text-muted truncate"><%= sub %></span>
       <% end %>
       <% if p["capability"] == "onoff" && p["can_command"] && !off_line %>
-        <%= dw_command_button(p, "toggle", w: w, dashboard: dashboard, live: live, class: "dw-switch", "aria-pressed": p["on"], "aria-label": t(p['on'] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: p['name'])) do %><span></span><% end %>
+        <%= render Ss::SwitchComponent.new(url: command_point_path(id), on: p["on"], label: t(p["on"] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: p["name"]),
+                                           params: dw_command_params("toggle", w: w, dashboard: dashboard, live: live), confirm: dw_confirm_text(p), confirm_title: dw_confirm(p)[:turbo_confirm_title]) %>
       <% else %>
         <span class="text-sm font-semibold <%= p['value'].is_a?(Numeric) ? 'num text-ink' : 'text-ink-2' %> shrink-0"><%= off_line ? t("dashboards.w.no_signal") : (p["value"].nil? ? "—" : p["text"]) %></span>
       <% end %>

@@ -73,29 +73,18 @@
   <% end %>
 </div>
 
-<section class="ss-card mt-6 overflow-x-auto" aria-labelledby="uso-t" tabindex="0">
-  <div class="ss-card-pad !pb-0 flex flex-wrap items-baseline justify-between gap-2">
+<section class="mt-6" aria-labelledby="uso-t">
+  <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
     <h2 id="uso-t"><%= t("ai_settings.usage_title") %></h2>
     <p class="text-sm text-muted"><%= @by_source.map { |s, c| "#{AiCall.source_text(s)}: #{usd(c)}" }.join(" · ").presence || t("ai_settings.no_spend") %></p>
   </div>
-  <% if @calls.empty? %>
-    <p class="ss-card-pad text-sm text-muted"><%= t("ai_settings.no_calls") %></p>
-  <% else %>
-    <table class="ss-table ss-table-stack mt-3">
-      <thead><tr><th><%= t("datasets.show.when") %></th><th><%= t("ai_settings.source") %></th><th class="hidden sm:table-cell"><%= t("ai_settings.model") %></th><th class="r hidden md:table-cell"><%= t("ai_settings.tokens") %></th><th class="r"><%= t("ai_settings.cost") %></th><th><%= t("ai_settings.result") %></th></tr></thead>
-      <tbody>
-        <% @calls.each do |c| %>
-          <tr>
-            <td class="num whitespace-nowrap" data-label="<%= t("datasets.show.when") %>"><%= l(c.created_at, format: t("ai_settings.time_format")) %></td>
-            <td class="min-w-0" data-label="<%= t("ai_settings.source") %>"><span class="block font-semibold text-ink truncate max-w-[12rem]"><%= c.automation&.name || c.source_label %></span><span class="block text-xs text-muted"><%= [ c.source_label, c.site&.name ].compact.join(" · ") %></span></td>
-            <td class="hidden sm:table-cell"><span class="block"><%= Ai.provider(c.provider)&.label || c.provider %></span><span class="block text-xs text-muted num"><%= c.model %></span></td>
-            <td class="r num hidden md:table-cell"><%= number_with_delimiter(c.tokens) %></td>
-            <td class="r num" data-label="<%= t("ai_settings.cost") %>"><%= usd(c.cost) %></td>
-            <td data-label="<%= t("ai_settings.result") %>"><span class="ss-badge <%= { 'ok' => 'ss-badge-success', 'error' => 'ss-badge-danger', 'blocked' => 'ss-badge-warn' }[c.status] %>" title="<%= c.error %>"><%= c.status_label %></span></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
+  <%= render Ss::DataTableComponent.new(rows: @calls, id: "uso-ia", caption: t("ai_settings.usage_title"), sort: @sort, dir: @dir, tools: false, empty: t("ai_settings.no_calls")) do |tb| %>
+    <% tb.column :created_at, t("datasets.show.when"), sortable: true do |c| %><span class="num whitespace-nowrap"><%= l(c.created_at, format: t("ai_settings.time_format")) %></span><% end %>
+    <% tb.column :source, t("ai_settings.source") do |c| %><span class="block font-semibold text-ink truncate max-w-[12rem]"><%= c.automation&.name || c.source_label %></span><span class="block text-xs text-muted"><%= [ c.source_label, c.site&.name ].compact.join(" · ") %></span><% end %>
+    <% tb.column :model, t("ai_settings.model") do |c| %><span class="block"><%= Ai.provider(c.provider)&.label || c.provider %></span><span class="block text-xs text-muted num"><%= c.model %></span><% end %>
+    <% tb.column :tokens, t("ai_settings.tokens"), align: :right, sortable: true do |c| %><span class="num"><%= number_with_delimiter(c.tokens) %></span><% end %>
+    <% tb.column :cost, t("ai_settings.cost"), align: :right, sortable: true do |c| %><span class="num"><%= usd(c.cost) %></span><% end %>
+    <% tb.column :status, t("ai_settings.result") do |c| %><span class="ss-badge <%= { 'ok' => 'ss-badge-success', 'error' => 'ss-badge-danger', 'blocked' => 'ss-badge-warn' }[c.status] %>" title="<%= c.error %>"><%= c.status_label %></span><% end %>
   <% end %>
 </section>
 <p class="text-xs text-muted mt-3"><%= t("ai_settings.cost_note") %></p>

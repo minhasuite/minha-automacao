@@ -25,8 +25,7 @@
       <%= file_field_tag "theme[upload]", accept: "image/png,image/jpeg,image/webp", class: "ss-input", id: "thu-#{uid}" %>
       <%= hidden_field_tag "theme[image]", theme["image"], id: nil %>
       <% if theme["image"].present? %><label class="ss-check mt-1 text-sm"><%= check_box_tag "theme[remove_image]", "1", false, id: "thr-#{uid}" %><%= t("dashboards.theme.remove_wallpaper") %></label><% end %></div>
-    <div><label class="ss-label" for="thb-<%= uid %>"><%= t("dashboards.theme.blur") %></label>
-      <%= range_field_tag "theme[blur]", theme["blur"] || 0, min: 0, max: 40, class: "dw-range mt-3", id: "thb-#{uid}" %></div>
+    <div><%= render Ss::RangeComponent.new(name: "theme[blur]", label: t("dashboards.theme.blur"), value: (theme["blur"] || 0).to_i, min: 0, max: 40, format: "%s px", id: "thb-#{uid}") %></div>
   </div>
   <div><%= submit_tag t("dashboards.theme.save"), class: "ss-btn ss-btn-ghost" %></div>
 <% end %>

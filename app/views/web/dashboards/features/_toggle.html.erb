@@ -2,8 +2,8 @@
 <div class="dw-feat dw-feat-row">
   <span class="dw-feat-label"><%= icon(f["icon"], "size-4") %><%= f["label"] %></span>
   <% if p["can_command"] && p["quality"] == "good" %>
-    <%= dw_command_button(p, "toggle", w: w, dashboard: dashboard, live: live, class: "ss-switch", form_class: "contents", "aria-pressed": p["on"].to_s,
-                          "aria-label": t(p["on"] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: f["label"])) do %><% end %>
+    <%= render Ss::SwitchComponent.new(url: command_point_path(p["id"]), on: p["on"], label: t(p["on"] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: f["label"]),
+                                       params: dw_command_params("toggle", w: w, dashboard: dashboard, live: live), confirm: dw_confirm_text(p), confirm_title: dw_confirm(p)[:turbo_confirm_title]) %>
   <% else %>
     <span class="dw-feat-value"><%= p["text"] %></span>
   <% end %>

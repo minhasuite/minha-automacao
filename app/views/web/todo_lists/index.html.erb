@@ -3,11 +3,7 @@
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :todo %>
 <% if @lists.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("todo_lists.index.empty") %></p>
-    <p class="mt-1 max-w-lg mx-auto"><%= t("todo_lists.index.empty_hint") %></p>
-    <% if can?(:manage) %><%= link_to new_site_helper_path(@site, tipo: "todo"), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("todo_lists.index.first") %><% end %><% end %>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("todo_lists.index.empty"), text: t("todo_lists.index.empty_hint"), css: "ss-card") do %><% if can?(:manage) %><%= link_to new_site_helper_path(@site, tipo: "todo"), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("todo_lists.index.first") %><% end %><% end %><% end %>
 <% else %>
   <div class="grid gap-4 lg:grid-cols-2 items-start">
     <% @lists.each do |l| %>

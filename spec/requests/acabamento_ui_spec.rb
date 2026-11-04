@@ -22,15 +22,15 @@ RSpec.describe "Acabamento de UI/UX" do
     patch "/paineis/#{d.id}/rascunho", params: { op: "add_view", title: "Cozinha" }
     follow_redirect!
     expect(response.body).to include("Salvo no rascunho")
-    expect(response.body).to include('class="ss-icons"', 'name="icon"')
+    expect(response.body).to include('class="ss-iconpick"', 'name="icon"')
   end
 
   it "ícone escolhido pelo desenho no helper e a zona de perigo do Sistema" do
     post "/locais/#{site.id}/helpers", params: { tipo: "toggle", helper: { name: "Férias", initial: "0", icon: "sun" } }
     p = within(tenant) { site.points.helpers.last }
     get "/helpers/#{p.id}/editar"
-    expect(response.body).to match(/name="helper\[icon\]" value="sun" checked/)
-    expect(response.body).not_to include('value="chevron-down"')
+    expect(response.body).to include(%(name="helper[icon]" value="sun")).and match(/aria-checked="true"[^>]*data-name="sun"/m)
+    expect(response.body).not_to include('data-name="chevron-down"')
     get "/configuracoes/sistema"
     expect(response.body).to include("ss-danger-zone", "Digite ZERAR")
   end
@@ -38,7 +38,11 @@ RSpec.describe "Acabamento de UI/UX" do
   it "rodada 2: ações em massa na barra flutuante, Publicar diz por quê e endereço da visão recolhido" do
     within(tenant) { create(:device, site: site, name: "Lâmpada", driver: "virtual") }
     get "/locais/#{site.id}/dispositivos"
-    expect(response.body).to include("ss-bulk-scope", 'class="ss-bulk"', "Marcar todas", "ss-badge-dot")
+    expect(response.body).to include('class="ss-selection-bar"', 'data-ss-table-target="check"', "ma-bulk-area", "ss-badge-dot", "aria-sort=\"ascending\"")
+    get "/locais/#{site.id}/dispositivos", params: { sort: "area", dir: "desc" }
+    expect(response.body).to include('aria-sort="descending"')
+    get "/locais/#{site.id}/dispositivos", params: { sort: "drop table", dir: "x" }
+    expect(response).to have_http_status(:ok)
     d = within(tenant) { Dashboard.ensure_for(site).first }
     get "/paineis/#{d.id}/editar"
     expect(response.body).to include("Endereço da visão", "ss-summary")

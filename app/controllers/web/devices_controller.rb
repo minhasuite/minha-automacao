@@ -2,6 +2,8 @@ module Web
   # Dispositivos do local: lista no estilo do HA (filtros, busca, ações em
   # massa) e a página do dispositivo com pontos, diagnóstico e onde é usado.
   class DevicesController < ApplicationController
+    include TableSort
+
     BULK = LocalizedLabel.for("labels.device_bulk", %w[area poll_on poll_off remove])
 
     def index
@@ -16,7 +18,11 @@ module Web
       end
       @points = Point.where(device_id: scope.select(:id)).group(:device_id).count
       # Ordem sem acento e sem caixa ("Câmera" junto de "Casa", não depois de "COZ").
-      @pagy, @devices = pagy(scope.order(Arel.sql('devices.name COLLATE "und-x-icu"')), limit: 50)
+      order = table_sort({ "name" => 'devices.name COLLATE "und-x-icu"',
+                           "area" => '(SELECT name FROM areas WHERE areas.id = devices.area_id) COLLATE "und-x-icu"',
+                           "integration" => '(SELECT name FROM integrations WHERE integrations.id = devices.integration_id) COLLATE "und-x-icu"' },
+                         default: "name")
+      @pagy, @devices = pagy(scope.order(order), limit: 50)
       @integrations = @site.integrations.order(:name)
       @areas = @site.areas.order(:name)
     end

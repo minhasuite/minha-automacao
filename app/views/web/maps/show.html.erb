@@ -6,7 +6,7 @@
     <% if @map["center"] %>
       <%= render "web/maps/canvas", map: @map, height: 560, controller: false %>
     <% else %>
-      <div class="ss-empty"><p class="font-bold text-ink"><%= t("maps.no_center") %></p><p class="mt-1"><%= t("maps.no_center_hint") %></p></div>
+      <%= render Ss::EmptyStateComponent.new(title: t("maps.no_center"), text: t("maps.no_center_hint")) %>
     <% end %>
   </section>
   <aside class="mp-side">

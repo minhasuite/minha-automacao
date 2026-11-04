@@ -221,22 +221,18 @@ en:
     not_found_hint: This record doesn't exist or doesn't belong to your company.
     back_home: Back to home
     pagination: Pagination
-    page_info: "%{count} records · page %{page} of %{pages}"
-    previous: Previous
-    next: Next
     icon: Icon
     icon_default: Default
     confirm:
       title: Are you sure?
       back: Go back
       ok: Confirm
+      delete: Delete
+      remove: Remove
+      erase: Erase
     palette:
       label: Search and run
-      input: Search or command
       hint: 'Search or command: turn off living room, activate scene…'
-      navigate: navigate
-      run: open or run
-      anywhere: opens from any screen
     cancel: Cancel
     edit: Edit
     edit_name: Edit %{name}
@@ -500,19 +496,14 @@ en:
     daily: Daily average (band = min. to max.)
     drag: Drag on the chart to zoom into a range.
     no_readings: No readings in this period.
-    no_readings_short: No readings
     timeline: Timeline
     empty: Choose the points to compare.
     empty_hint: 'Temperature with the AC on, power use with the pump, door with motion: all on the same timeline.'
   logbook:
     title: Logbook
     subtitle: 'Everything that happened at %{site}: changes, commands, automations, scenes, alerts and sign-ins.'
-    today: Today
-    yesterday: Yesterday
-    day_format: "%A, %B %d"
     loading: Loading more…
     start: Start of the period.
-    bigger: See a longer period
     search: Search
     search_hint: Search point, device, automation or scene
     more_filters: More filters
@@ -525,6 +516,7 @@ en:
     empty: Nothing happened in this period.
     empty_filtered: Nothing happened in this period with these filters.
     empty_hint: Try a longer period or remove a filter.
+    bigger: See a longer period
   maps:
     title: Map
     subtitle: Where the people of %{site} are, the zones and today's path. Only residents, technicians and the owner can see it.

@@ -163,8 +163,10 @@ module Dashboards
         "device" => p.device.name, "min" => p.min&.to_f, "max" => p.max&.to_f, "step" => p.step&.to_f,
         "commands" => (cmds = Points::Command.commands_for(p)), "actions" => Points::Command.actions_for(p),
         "mode" => p.address["mode"], "input" => helpers.point_input_type(p),
-        "can_command" => p.writable && !p.disabled && !p.device.disabled && Drivers.supported?(p.device) && cmds.any? &&
-                         SiteMembership.allowed?(role, :command, risk: p.risk),
+        "can_command" => (usable = p.writable && !p.disabled && !p.device.disabled && Drivers.supported?(p.device) && cmds.any?) &&
+                         (allowed = SiteMembership.allowed?(role, :command, risk: p.risk)),
+        # Comandaria, mas o papel de quem vê não deixa (tile com cadeado).
+        "locked" => usable && !allowed,
         "title" => title, "context" => context, "status_note" => helpers.point_status_note(p)
       ).stringify_keys
       json.merge("display_icon" => helpers.dw_point_icon(json))

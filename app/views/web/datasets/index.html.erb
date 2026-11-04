@@ -4,11 +4,7 @@
 <%= render "web/sites/tabs", site: @site, current: :datasets %>
 
 <% if @datasets.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("datasets.index.empty") %></p>
-    <p class="mt-1 max-w-md mx-auto"><%= t("datasets.index.empty_text") %></p>
-    <% if can?(:manage) %><%= link_to new_site_dataset_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("site_helpers.index.create_first") %><% end %><% end %>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("datasets.index.empty"), text: t("datasets.index.empty_text"), css: "ss-card") do %><% if can?(:manage) %><%= link_to new_site_dataset_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("site_helpers.index.create_first") %><% end %><% end %><% end %>
 <% else %>
   <ul class="ss-card ss-rows" aria-label="<%= t("datasets.index.list") %>">
     <% @datasets.each do |d| %>

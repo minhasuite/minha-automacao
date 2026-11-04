@@ -170,6 +170,9 @@ tela fixa por tipo no app, e plugin novo aparece no app sem versão nova.
   `checked`, `required`), `submit`, `subnav`, `frame` (turbo-frame com src),
   `poll` e `reload` (o que a web faz por JS). Tipo desconhecido: o app desenha
   os filhos.
+- Troca de local (Diário, Histórico, Mapa): na web fica no menu da moldura
+  (`tenants:` do `Ss::AppShellComponent`, fora do `main`); o `page` traz ela
+  como o primeiro bloco, um `subnav` com o local atual em `current`.
 - Só abre rota do escopo web; sessão, senha, convite, OAuth do Alexa, idioma
   e primeira configuração ficam de fora (`AppScreen::DENY`). Quem pode o quê é
   o controlador da web (papel no local, dono, administrador).

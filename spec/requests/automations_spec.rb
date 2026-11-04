@@ -58,12 +58,27 @@ RSpec.describe "Automações (DSL): web e API" do
       expect(draft["actions"][1]).to eq("type" => "if", "conditions" => [ { "type" => "state", "point" => lamp.id, "is" => false, "for" => "1m" } ],
                                         "then" => [ { "type" => "command", "point" => lamp.id, "command" => "on" } ])
       patch "/automacoes/#{a.id}/rascunho", params: { op: "add", target: "actions", type: "wait" }
+      patch "/automacoes/#{a.id}/rascunho", params: { op: "duplicate", target: "actions.2" }
+      expect(response).to redirect_to("/automacoes/#{a.id}/editar?b=actions.3#b-actions-3")
+      expect(draft["actions"].pluck("type")).to eq(%w[notify if wait wait])
+      patch "/automacoes/#{a.id}/rascunho", params: { op: "remove", target: "actions.3" }
       patch "/automacoes/#{a.id}/rascunho", params: { op: "remove", target: "actions.2" }
       patch "/automacoes/#{a.id}/rascunho", params: { op: "update", target: "actions.9", block: {} }
       expect(flash[:alert]).to eq("Esse bloco não existe mais no rascunho.")
 
       get "/automacoes/#{a.id}/editar", params: { b: "actions.1" }
-      expect(response.body).to include("Se / senão", "Luz · está Desligado · há pelo menos 1 min", "Salvar bloco")
+      expect(response.body).to include("Se / senão", "Luz · está Desligado · há pelo menos 1 min", "Salvar bloco", 'data-id="actions.1"', "ss-blk is-focused")
+      # Ações do bloco no servidor (Ss::BlockComponent): mover, duplicar, remover com confirmação e a chave.
+      html = Nokogiri::HTML5(response.body)
+      blk = html.at_css("li#b-actions-1")
+      expect(blk["data-id"]).to eq("actions.1")
+      expect(blk.at_css("form[action='/automacoes/#{a.id}/rascunho?op=move&target=actions.1'] input[name=dir][value=up]")).to be_present
+      expect(blk.at_css("a[href='/automacoes/#{a.id}/rascunho?op=duplicate&target=actions.1'][data-turbo-method=post]")).to be_present
+      expect(blk.at_css("form[action='/automacoes/#{a.id}/rascunho?op=remove&target=actions.1'][data-turbo-confirm-tone=danger]")).to be_present
+      expect(blk.at_css(".ss-blk-tools form[action='/automacoes/#{a.id}/rascunho'] input[name=op][value=toggle]")).to be_present
+      post "/automacoes/#{a.id}/rascunho", params: { op: "duplicate", target: "actions.0" }
+      expect(draft["actions"].pluck("type")).to eq(%w[notify notify if])
+      patch "/automacoes/#{a.id}/rascunho", params: { op: "remove", target: "actions.1" }
       expect(response.body).not_to include("Falta para publicar")
 
       post "/automacoes/#{a.id}/publicar"

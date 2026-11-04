@@ -2,11 +2,9 @@
 <div class="dw-feat">
   <div class="dw-feat-row"><span class="dw-feat-label"><%= icon(f["icon"], "size-4") %><%= f["label"] %></span>
     <% if f["min"] %><span class="dw-feat-value num"><%= dw_number(f["min"]) %>–<%= dw_number(f["max"], f["unit"]) %></span><% end %></div>
-  <% pts = dw_spark(f["values"]) %>
-  <% if pts.present? %>
-    <svg class="dw-spark" viewBox="0 0 100 28" preserveAspectRatio="none" role="img" aria-label="<%= t("dashboards.feat.trend_x", name: f["label"]) %>">
-      <polygon points="0,28 <%= pts %> 100,28" class="dw-spark-fill"/><polyline points="<%= pts %>" class="dw-spark-line" vector-effect="non-scaling-stroke"/>
-    </svg>
+  <% values = Array(f["values"]).grep(Numeric) %>
+  <% if values.size > 1 %>
+    <div role="img" aria-label="<%= t("dashboards.feat.trend_x", name: f["label"]) %>"><%= ss_sparkline(values, height: 40) %></div>
   <% else %>
     <p class="text-xs text-muted"><%= t("dashboards.feat.no_history") %></p>
   <% end %>

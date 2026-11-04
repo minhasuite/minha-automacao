@@ -1,10 +1,9 @@
 <%# locals: (name:, count:, grouped:) -%>
-<%# ondaA1 (A2): bloco recolhível de uma categoria (sem categorias, só o conteúdo). -%>
+<%# ondaA1 (A2): bloco recolhível de uma categoria (sem categorias, só o conteúdo). Ss::CollapsibleComponent da gem (era .ss-group, que na gem é o título de lista). -%>
 <% if grouped %>
-  <details class="ss-group mb-4" open>
-    <summary class="ss-group-head"><%= icon("chevron-right", "size-4 ss-group-caret") %><span class="font-bold text-ink"><%= name || t("shared.organize.no_category") %></span><span class="ss-badge"><%= count %></span></summary>
+  <%= render Ss::CollapsibleComponent.new(title: name || t("shared.organize.no_category"), count: count, open: true, css: "mb-4") do %>
     <%= yield %>
-  </details>
+  <% end %>
 <% else %>
   <%= yield %>
 <% end %>

@@ -97,7 +97,7 @@ RSpec.describe "Painel de Energia" do
 
     travel_to(now) { get "/paineis/#{d.id}" }
     body = response.body
-    expect(body).to include("Energia agora", "ef-flow", "Comprando", "2,1 kW", "Consumo por aparelho", "Comparação de consumo", "Esta semana", "Este mês")
+    expect(body).to include("Energia agora", "ss-flow", "Comprando", "2,1 kW", "Consumo por aparelho", "Comparação de consumo", "Esta semana", "Este mês")
     expect(body.index(">TV<")).to be < body.index(">Geladeira<") # ranking: a TV gastou mais
 
     resolved = travel_to(now) { within(tenant) { Dashboards::Resolver.new(d, role: "owner").call } }

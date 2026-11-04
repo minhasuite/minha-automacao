@@ -10,7 +10,7 @@
       <h2 id="excluir" class="flex items-center gap-2"><%= icon("trash", "size-5") %><%= t("site_helpers.edit.delete") %></h2>
       <p class="mt-2 text-sm text-muted"><%= @usages.any? ? t("site_helpers.edit.used_in", n: @usages.size) : t("site_helpers.edit.delete_text") %></p>
       <%= button_to helper_path(@point), method: :delete, class: "ss-btn ss-btn-outline ss-btn-sm mt-3 !text-danger",
-                    form: { data: { turbo_confirm: t("site_helpers.edit.confirm", name: @point.name) + (@usages.any? ? t("site_helpers.edit.confirm_used", n: @usages.size) : ""), turbo_confirm_button: t("site_helpers.edit.delete") } } do %><%= icon("trash", "size-4") %><%= t("site_helpers.edit.delete_button") %><% end %>
+                    form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("site_helpers.edit.confirm", name: @point.name) + (@usages.any? ? t("site_helpers.edit.confirm_used", n: @usages.size) : ""), turbo_confirm_button: t("site_helpers.edit.delete") } } do %><%= icon("trash", "size-4") %><%= t("site_helpers.edit.delete_button") %><% end %>
     </section>
   </aside>
 </div>

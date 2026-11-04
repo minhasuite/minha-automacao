@@ -1,7 +1,5 @@
-<%# Idioma da tela (produto): troca na hora (cookie; com sessão, também na pessoa). %>
-<%= form_with url: locale_path, method: :patch, class: "ob-locale", data: { turbo: false } do %>
-  <%= label_tag :locale, t("layout.language"), class: "sr-only" %>
-  <span aria-hidden="true"><%= icon("globe", "size-4") %></span>
-  <%= select_tag :locale, options_for_select(Localized::NAMES.invert.to_a, I18n.locale.to_s), onchange: "this.form.requestSubmit()", class: "ob-locale-select" %>
-  <noscript><%= submit_tag t("layout.change"), class: "ss-btn ss-btn-ghost ss-btn-sm", name: nil %></noscript>
-<% end %>
+<%# Idioma da tela (produto): troca na hora (cookie; com sessão, também na pessoa). Sem Turbo (form: da gem):
+    a página volta inteira no idioma novo (lang do <html> e textos do JS). Sem bandeira (sem emoji na tela). %>
+<%= render Ss::LocalePickerComponent.new(value: I18n.locale, url: locale_path, segmented: true, flags: false, label: t("layout.language"),
+                                         form: { data: { turbo: false } },
+                                         locales: Localized::NAMES.map { |code, name| { code: code, name: name } }) %>

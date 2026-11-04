@@ -382,7 +382,6 @@ es:
         dock: Base
         parts: Piezas
       media: Multimedia
-      controls_x: Controles de %{name}
       mc:
         previous: Anterior
         pause: Pausar
@@ -429,7 +428,6 @@ es:
       live: En vivo
       image_x: Imagen de %{name}
       live_x: "%{name} en vivo"
-      loading: Cargando…
       map: Mapa
       open_map: Abrir el mapa
       map_hidden: Tu rol en este lugar no muestra dónde están las personas.
@@ -437,7 +435,6 @@ es:
       history: Historial
       on_for_html: Encendido durante %{time} en el período.
       no_readings: Sin lecturas en el período.
-      now: ahora
       alarm: Alarma
       pick_alarm: Elige un panel de alarma (Helpers → Panel de alarma).
       until: hasta
@@ -505,12 +502,6 @@ es:
       pick_weather: Elige el punto de clima (integración Clima).
       no_recent: Sin lectura reciente
       wx:
-        feels: Sensación %{v}°
-        humidity: Humedad %{v}%
-        wind: Viento %{v} km/h
-        rain: Lluvia %{v}%
-        hourly: Pronóstico por hora
-        daily: Pronóstico por día
         today: Hoy
     schema:
       title_required: '%{where}: el título es obligatorio'

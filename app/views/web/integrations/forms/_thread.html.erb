@@ -1,9 +1,8 @@
 <%# locals: (f:, integration:) -%>
 <% if integration.nil? %>
-  <div><%= f.label :name, t("integrations.forms.common.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "Thread", maxlength: 80 %></div>
+  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "Thread", maxlength: 80 %></div>
 <% end %>
 <div>
-  <%= f.label :url, t("protocols.thread.url"), class: "ss-label" %>
-  <%= f.text_field :url, class: "ss-input num", value: integration&.settings&.dig("url") || params[:host].presence&.then { |h| "http://#{h}:8081" }, placeholder: "http://192.168.0.10:8081", autocomplete: "off", spellcheck: false %>
+  <%= f.ss_text_field :url, label: t("protocols.thread.url"), class: "num", value: integration&.settings&.dig("url") || params[:host].presence&.then { |h| "http://#{h}:8081" }, placeholder: "http://192.168.0.10:8081", autocomplete: "off", spellcheck: false %>
 </div>
 <p class="text-xs text-muted"><%= t("protocols.thread.form_note_html") %></p>

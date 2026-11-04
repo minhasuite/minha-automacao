@@ -9,11 +9,7 @@
 <%= render "web/sites/tabs", site: @site, current: :areas %>
 
 <% if @areas.empty? && @loose_devices.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("sites.show.empty") %></p>
-    <p class="mt-1"><%= t("sites.show.empty_hint") %></p>
-    <% if can?(:manage) %><%= link_to new_site_area_path(@site), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("sites.show.first_area") %><% end %><% end %>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("sites.show.empty"), text: t("sites.show.empty_hint"), css: "ss-card") do %><% if can?(:manage) %><%= link_to new_site_area_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("sites.show.first_area") %><% end %><% end %><% end %>
 <% else %>
   <% if @areas.any? %>
     <% by_id = @areas.index_by(&:id) %>

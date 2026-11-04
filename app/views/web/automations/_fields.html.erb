@@ -6,24 +6,19 @@
   <% if automation.fields.any? %>
     <ul class="grid gap-2 mb-3">
       <% automation.fields.each_with_index do |fd, i| %>
-        <li class="rounded-2xl border border-line bg-page/40 p-3 min-w-0">
-          <details>
-            <summary class="ss-summary flex-wrap !items-baseline gap-x-2 gap-y-0.5">
-              <span class="font-semibold text-ink"><%= fd["label"] %></span>
-              <code class="text-sm text-muted"><%= fd["name"] %></code>
-              <span class="text-sm text-muted"><%= [ Automation::FIELD_TYPES[fd["type"]], (t("automations.fields.required") if fd["required"]),
-                                                     (t("automations.fields.default", value: fd["type"] == "point" ? by_id[fd["default"]]&.name : { true => t("automations.helper.yes"), false => t("automations.helper.no") }.fetch(fd["default"], fd["default"])) unless fd["default"].nil?) ].compact.join(" · ") %></span>
-            </summary>
+        <li class="rounded-2xl border border-line bg-page/40 px-2 py-1 min-w-0">
+          <% meta = [ fd["name"], Automation::FIELD_TYPES[fd["type"]], (t("automations.fields.required") if fd["required"]),
+                      (t("automations.fields.default", value: fd["type"] == "point" ? by_id[fd["default"]]&.name : { true => t("automations.helper.yes"), false => t("automations.helper.no") }.fetch(fd["default"], fd["default"])) unless fd["default"].nil?) ].compact.join(" · ") %>
+          <%= render Ss::CollapsibleComponent.new(title: fd["label"], label: meta, tone: :neutral) do %>
             <%= render "web/automations/field_form", automation: automation, fd: fd, index: i, points: by_id %>
-          </details>
+          <% end %>
         </li>
       <% end %>
     </ul>
   <% end %>
   <% if can?(:manage) %>
-    <details <%= "open" if automation.fields.empty? %>>
-      <summary class="cursor-pointer ss-btn ss-btn-ghost ss-btn-sm w-fit"><%= icon("plus", "size-4") %><%= t("automations.fields.add") %></summary>
+    <%= render Ss::CollapsibleComponent.new(title: t("automations.fields.add"), icon: icon("plus", ""), open: automation.fields.empty?) do %>
       <%= render "web/automations/field_form", automation: automation, fd: {}, index: nil, points: by_id %>
-    </details>
+    <% end %>
   <% end %>
 </section>

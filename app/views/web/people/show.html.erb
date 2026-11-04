@@ -41,7 +41,7 @@
     <%= button_to toggle_person_path(@person), class: "ss-btn ss-btn-outline", form: { data: { turbo_confirm: @person.disabled? ? t("people.enable_confirm", name: @person.name) : t("people.disable_confirm", name: @person.name) } } do %>
       <%= icon(@person.disabled? ? "check-circle" : "minus-circle", "size-4") %><%= @person.disabled? ? t("people.enable") : t("people.disable") %>
     <% end %>
-    <%= button_to person_path(@person), method: :delete, class: "ss-btn ss-btn-danger", form: { data: { turbo_confirm: t("people.remove_confirm", name: @person.name), turbo_confirm_button: t("people.remove") } } do %><%= icon("trash", "size-4") %><%= t("people.remove") %><% end %>
+    <%= button_to person_path(@person), method: :delete, class: "ss-btn ss-btn-danger", form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("people.remove_confirm", name: @person.name), turbo_confirm_button: t("people.remove") } } do %><%= icon("trash", "size-4") %><%= t("people.remove") %><% end %>
   </section>
 <% end %>
 <% end %>

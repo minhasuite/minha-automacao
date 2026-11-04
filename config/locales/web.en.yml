@@ -15,17 +15,11 @@ en:
   layout:
     theme: Theme
     language: Language
-    change: Change
     skip: Skip to content
-    open_menu: Open menu
-    close_menu: Close menu
-    collapse: Collapse menu
-    expand: Expand menu
     search: Search
     back: Back
-    close: Close
-    menu: Menu
     main_nav: Main
+    site: Place
     values: Values
     values_toggle: Hide or show values
     logout: Sign out
@@ -87,7 +81,6 @@ en:
     label: Welcome
   onboarding:
     title: First setup
-    progress: Setup progress
     step_of: Step %{n} of %{total}
     back: Back
     skip: Not now

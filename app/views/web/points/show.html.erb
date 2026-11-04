@@ -14,26 +14,16 @@
         <% end %>
       </nav>
     </div>
-    <% chart = history_chart(@history) %>
+    <% chart = chart_data(@history) %>
     <% if chart %>
-      <div class="ss-chart mt-4">
-        <div class="flex gap-2">
-          <% if chart[:max] %>
-            <div class="flex flex-col justify-between text-xs text-muted num text-right shrink-0 py-1">
-              <span><%= number_with_precision(chart[:max], precision: 2, strip_insignificant_zeros: true) %></span>
-              <span><%= number_with_precision(chart[:min], precision: 2, strip_insignificant_zeros: true) %></span>
-            </div>
-          <% end %>
-          <div class="flex-1 min-w-0 rounded-xl bg-field overflow-hidden"><%= chart[:svg] %></div>
-        </div>
-        <div class="flex justify-between text-xs text-muted num mt-1 <%= 'pl-10' if chart[:max] %>">
-          <span><%= l(@history.from, format: :short) %></span><span><%= l(@history.to, format: :short) %></span>
-        </div>
-        <% if chart[:on_seconds] %>
-          <p class="text-sm text-ink-2 mt-3"><%= t("points.show.on_for_html", time: duration_text(chart[:on_seconds])) %></p>
-        <% end %>
-        <p class="sr-only"><%= t(@history.raw? ? "points.show.raw" : (@history.resolution == "1h" ? "points.show.hourly" : "points.show.daily"), from: l(@history.from, format: :short), to: l(@history.to, format: :short)) %></p>
-      </div>
+      <%# Gráfico da gem: série com cursor e balão (faixa mín–máx nos rollups) ou faixa de liga/desliga. %>
+      <%= render Ss::TimeSeriesChartComponent.new(title: @point.name, series: [ chart[:series] ].compact, bands: [ chart[:band] ].compact, from: @history.from, to: @history.to,
+                                                  mode: (@point.capability.in?(%w[enum]) ? :step : :line), locale: I18n.locale.to_s,
+                                                  time_zone: @site.timezone, css: "mt-4") %>
+      <% if chart[:on_seconds] %>
+        <p class="text-sm text-ink-2 mt-3"><%= t("points.show.on_for_html", time: duration_text(chart[:on_seconds])) %></p>
+      <% end %>
+      <p class="sr-only"><%= t(@history.raw? ? "points.show.raw" : (@history.resolution == "1h" ? "points.show.hourly" : "points.show.daily"), from: l(@history.from, format: :short), to: l(@history.to, format: :short)) %></p>
     <% elsif @point.numeric? || @point.bool? %>
       <p class="text-sm text-muted mt-4"><%= t("points.show.no_readings") %></p>
     <% else %>
@@ -64,20 +54,11 @@
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="timeline-title">
   <h2 id="timeline-title"><%= t("points.show.timeline") %></h2>
-  <% if @timeline.empty? %>
-    <p class="text-sm text-muted mt-2"><%= t("shared.nothing_yet") %></p>
-  <% else %>
-    <ul class="mt-3 divide-y divide-line">
-      <% @timeline.each do |item| %>
-        <li class="flex items-start gap-3 py-3">
-          <span class="grid place-items-center size-8 shrink-0 rounded-lg bg-field <%= PointsHelper::TONE_CLASSES.fetch(item.tone) %>"><%= icon({ "command" => "lightning-bolt", "event" => "exclamation-circle", "audit" => "pencil" }.fetch(item.kind), "size-4") %></span>
-          <div class="min-w-0 flex-1">
-            <p class="font-semibold text-ink"><%= item.title %><% if item.user %> <span class="font-normal text-muted"><%= t("shared.by", name: item.user) %></span><% end %></p>
-            <% if item.detail %><p class="text-sm text-muted"><%= item.detail %></p><% end %>
-          </div>
-          <time class="text-xs text-muted num shrink-0" datetime="<%= item.at.iso8601 %>"><%= l(item.at, format: :short) %></time>
-        </li>
-      <% end %>
-    </ul>
-  <% end %>
+  <%# Linha do tempo no Ss::LogbookComponent (dia que gruda, hora, ícone tonal); a lista já vem inteira. %>
+  <% entries = @timeline.map do |item|
+       { at: item.at, title: item.title, detail: [ (t("shared.by", name: item.user) if item.user), item.detail ].compact.join(" · ").presence,
+         icon: icon({ "command" => "lightning-bolt", "event" => "exclamation-circle", "audit" => "pencil" }.fetch(item.kind)), tone: item.tone == "muted" ? "neutral" : item.tone }
+     end %>
+  <%= render Ss::LogbookComponent.new(entries: entries, label: t("points.show.timeline"), css: "mt-3", texts: { empty: t("shared.nothing_yet") },
+                                      end_marker: false, time_zone: @site.timezone) %>
 </section>

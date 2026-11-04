@@ -10,11 +10,7 @@
 <% end %>
 
 <% if @points.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("devices.no_points") %></p>
-    <p class="mt-1"><%= t("devices.no_points_hint") %></p>
-    <% if can?(:manage) %><%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("devices.add_point") %><% end %><% end %>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("devices.no_points"), text: t("devices.no_points_hint"), css: "ss-card") do %><% if can?(:manage) %><%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("devices.add_point") %><% end %><% end %><% end %>
 <% else %>
   <% @points.each { |p| %><%= turbo_stream_from p, channel: PointsChannel %><% } %>
   <div class="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-3 lg:grid-cols-3"><%= render partial: "web/points/point", collection: @points, as: :point %></div>

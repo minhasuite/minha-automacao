@@ -7,6 +7,8 @@
   <% end %>
 <% end %>
 
+<%# Ainda no assistente (nada adicionado desta integração): os passos em cima. %>
+<% body = capture do %>
 <% if @integration.status == "syncing" %>
   <div class="ss-card ss-card-pad mb-4 flex items-center gap-3" role="status" data-controller="poll" data-poll-url-value="<%= status_integration_path(@integration, sync: 1) %>">
     <span class="ss-dots" aria-hidden="true"></span>
@@ -30,13 +32,10 @@
 <% end %>
 
 <% if pending.empty? && @integration.status != "syncing" %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("integrations.found.nothing_new") %></p>
-    <p class="mt-1"><%= @entries.empty? ? t("integrations.found.none_read") : t("integrations.found.all_added") %></p>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("integrations.found.nothing_new"), text: (@entries.empty? ? t("integrations.found.none_read") : t("integrations.found.all_added")), css: "ss-card") %>
 <% elsif pending.any? %>
-  <%= form_with url: adopt_integration_path(@integration), method: :post, class: "ss-card overflow-hidden", data: { turbo_submits_with: t("integrations.found.adding") } do %>
-    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-line">
+  <%= form_with url: adopt_integration_path(@integration), method: :post, class: "grid gap-3", data: { turbo_submits_with: t("integrations.found.adding") } do %>
+    <div class="flex flex-wrap items-center justify-between gap-2">
       <p class="text-sm"><%= t("integrations.found.pending_html", n: pending.size) %></p>
       <% if can?(:manage) %>
         <div class="flex gap-2">
@@ -45,32 +44,24 @@
         </div>
       <% end %>
     </div>
-    <div class="overflow-x-auto">
-      <table class="ss-table">
-        <thead><tr><th class="w-8"><span class="sr-only"><%= t("integrations.found.pick") %></span></th><th><%= t("integrations.found.device") %></th><th class="hidden md:table-cell"><%= t("integrations.found.type") %></th><th class="hidden md:table-cell"><%= t("integrations.found.room") %></th><th class="hidden md:table-cell"><%= t("integrations.found.points") %></th><th><%= t("integrations.found.area") %></th></tr></thead>
-        <tbody>
-          <% pending.each do |e| %>
-            <% cid = "pick-#{e['id'].to_s.parameterize}" %>
-            <tr>
-              <td><input type="checkbox" name="pick[]" value="<%= e['id'] %>" id="<%= cid %>" checked aria-label="<%= t("integrations.found.add_one", name: e['name']) %>"></td>
-              <td>
-                <label for="<%= cid %>" class="font-semibold text-ink"><%= e["name"] %></label>
-                <span class="block text-xs text-muted"><%= [ e["manufacturer"], e["model"] ].compact_blank.join(" · ") %><%= " · #{t("integrations.found.ip", ip: e.dig('address', 'host'))}" if e.dig("address", "host").present? %><%= " · #{t("integrations.found.via_hub", hub: names[e.dig('address', 'via')])}" if names[e.dig("address", "via")] %></span>
-                <span class="block text-xs text-muted md:hidden"><%= [ e["category"], e["room"], (t("integrations.found.offline_short") if e["online"] == false) ].compact_blank.join(" · ") %></span>
-              </td>
-              <td class="hidden md:table-cell"><span class="ss-chip"><%= e["category"].presence || "—" %></span><% if e["online"] == false %> <span class="ss-badge ss-badge-warn"><%= t("integrations.found.offline") %></span><% end %></td>
-              <td class="hidden md:table-cell"><%= e["room"].presence || "—" %></td>
-              <td class="num hidden md:table-cell"><%= Array(e["points"]).size %></td>
-              <td>
-                <% suggested = Integrations.suggest_area(@site, e["room"], @areas) %>
-                <% options = [ [ t("integrations.found.no_area"), "" ] ] + @areas.map { |a| [ a.name, a.id ] } + (suggested.to_s.start_with?("new:") ? [ [ t("integrations.found.new_area", name: suggested.delete_prefix('new:')), suggested ] ] : []) %>
-                <%= select_tag "area[#{e['id']}]", options_for_select(options, suggested), class: "ss-input ss-btn-sm min-w-32", "aria-label": t("integrations.found.area_of", name: e['name']) %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
+    <%# Tabela da gem; a escolha é o pick[] deste formulário (marcado por padrão), não a seleção em massa dela. %>
+    <%= render Ss::DataTableComponent.new(rows: pending, id: "found-table", caption: t("integrations.found.title"), row_id: "id", tools: false) do |tb| %>
+      <% tb.column :pick, t("integrations.found.pick"), hideable: false do |e| %>
+        <input type="checkbox" name="pick[]" value="<%= e['id'] %>" id="pick-<%= e['id'].to_s.parameterize %>" checked aria-label="<%= t("integrations.found.add_one", name: e['name']) %>">
+      <% end %>
+      <% tb.column :name, t("integrations.found.device") do |e| %>
+        <label for="pick-<%= e['id'].to_s.parameterize %>" class="font-semibold text-ink"><%= e["name"] %></label>
+        <span class="block text-xs text-muted"><%= [ e["manufacturer"], e["model"] ].compact_blank.join(" · ") %><%= " · #{t("integrations.found.ip", ip: e.dig('address', 'host'))}" if e.dig("address", "host").present? %><%= " · #{t("integrations.found.via_hub", hub: names[e.dig('address', 'via')])}" if names[e.dig("address", "via")] %></span>
+      <% end %>
+      <% tb.column :category, t("integrations.found.type") do |e| %><span class="ss-chip"><%= e["category"].presence || "—" %></span><% if e["online"] == false %> <span class="ss-badge ss-badge-warn"><%= t("integrations.found.offline") %></span><% end %><% end %>
+      <% tb.column :room, t("integrations.found.room") do |e| %><%= e["room"].presence || "—" %><% end %>
+      <% tb.column :points, t("integrations.found.points"), format: :number do |e| %><%= Array(e["points"]).size %><% end %>
+      <% tb.column :area, t("integrations.found.area"), hideable: false do |e| %>
+        <% suggested = Integrations.suggest_area(@site, e["room"], @areas) %>
+        <% options = [ [ t("integrations.found.no_area"), "" ] ] + @areas.map { |a| [ a.name, a.id ] } + (suggested.to_s.start_with?("new:") ? [ [ t("integrations.found.new_area", name: suggested.delete_prefix('new:')), suggested ] ] : []) %>
+        <%= select_tag "area[#{e['id']}]", options_for_select(options, suggested), class: "ss-input ss-btn-sm min-w-32", "aria-label": t("integrations.found.area_of", name: e['name']) %>
+      <% end %>
+    <% end %>
   <% end %>
 <% end %>
 
@@ -80,4 +71,10 @@
     <p class="text-sm text-muted mt-2"><%= t("integrations.found.added_hint") %></p>
     <%= link_to t("integrations.found.see_list"), site_devices_path(@site, integracao: @integration.id), class: "ss-btn ss-btn-ghost ss-btn-sm mt-2" %>
   </details>
+<% end %>
+<% end %>
+<% if added.empty? %>
+  <%= render layout: "web/integrations/wizard", locals: { current: 2, integration: @integration } do %><%= body %><% end %>
+<% else %>
+  <%= body %>
 <% end %>

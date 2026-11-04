@@ -65,30 +65,25 @@
   </section>
 </div>
 
-<section class="ss-card overflow-hidden" aria-labelledby="mt-nodes">
-  <h2 id="mt-nodes" class="font-bold text-ink px-4 pt-4"><%= t("protocols.matter.node_list") %></h2>
-  <% if nodes.empty? %>
-    <p class="ss-empty"><%= t("protocols.matter.no_nodes") %></p>
-  <% else %>
-    <table class="ss-table ss-table-stack mt-2">
-      <thead><tr><th><%= t("protocols.matter.col_device") %></th><th><%= t("protocols.matter.col_status") %></th><th><%= t("protocols.matter.col_fabrics") %></th><th class="r"><span class="sr-only"><%= t("protocols.zwave.col_actions") %></span></th></tr></thead>
-      <tbody>
-        <% nodes.each do |n| %>
-          <% entry = Matter::Map.entry(n) %>
-          <tr>
-            <td><span class="font-semibold text-ink"><%= entry["name"] %></span><br><span class="text-xs text-muted num">#<%= n["node_id"] %> · <%= [ entry["manufacturer"], entry["model"] ].compact.join(" ") %></span></td>
-            <td><span class="ss-badge ss-badge-<%= n['available'] == false ? 'danger' : 'success' %>"><%= n["available"] == false ? t("protocols.matter.offline") : t("protocols.matter.online") %></span></td>
-            <td class="text-sm"><%= Matter::Map.fabrics(n).map { |v| t("protocols.matter.vendors.#{v}", default: v) }.join(", ").presence || "—" %></td>
-            <td class="r">
-              <div class="inline-flex gap-1">
-                <%= button_to act.call("share"), params: { "panel[node]" => n["node_id"] }, class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("protocols.matter.share") do %><%= icon("user-group", "size-4") %><span class="sr-only"><%= t("protocols.matter.share") %></span><% end %>
-                <%= button_to act.call("interview"), params: { "panel[node]" => n["node_id"] }, class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("protocols.zwave.reinterview") do %><%= icon("refresh", "size-4") %><span class="sr-only"><%= t("protocols.zwave.reinterview") %></span><% end %>
-                <%= button_to act.call("remove"), params: { "panel[node]" => n["node_id"] }, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", title: t("protocols.matter.remove"), form: { data: { turbo_confirm: t("protocols.matter.remove_confirm", name: entry["name"]) } } do %><%= icon("trash", "size-4") %><span class="sr-only"><%= t("protocols.matter.remove") %></span><% end %>
-              </div>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
+<section class="grid gap-2" aria-labelledby="mt-nodes">
+  <h2 id="mt-nodes" class="font-bold text-ink"><%= t("protocols.matter.node_list") %></h2>
+  <%= render Ss::DataTableComponent.new(rows: nodes, id: "mt-node-table", caption: t("protocols.matter.node_list"), row_id: "node_id", tools: false,
+                                        empty: t("protocols.matter.no_nodes")) do |tb| %>
+    <% tb.column :device, t("protocols.matter.col_device") do |n| %>
+      <% entry = Matter::Map.entry(n) %>
+      <span class="font-semibold text-ink"><%= entry["name"] %></span><br><span class="text-xs text-muted num">#<%= n["node_id"] %> · <%= [ entry["manufacturer"], entry["model"] ].compact.join(" ") %></span>
+    <% end %>
+    <% tb.column :status, t("protocols.matter.col_status") do |n| %>
+      <span class="ss-badge ss-badge-<%= n['available'] == false ? 'danger' : 'success' %>"><%= n["available"] == false ? t("protocols.matter.offline") : t("protocols.matter.online") %></span>
+    <% end %>
+    <% tb.column :fabrics, t("protocols.matter.col_fabrics") do |n| %><%= Matter::Map.fabrics(n).map { |v| t("protocols.matter.vendors.#{v}", default: v) }.join(", ").presence || "—" %><% end %>
+    <% tb.column :actions, t("protocols.zwave.col_actions"), align: :right, hideable: false do |n| %>
+      <% entry = Matter::Map.entry(n) %>
+      <div class="inline-flex gap-1">
+        <%= button_to act.call("share"), params: { "panel[node]" => n["node_id"] }, class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("protocols.matter.share") do %><%= icon("user-group", "size-4") %><span class="sr-only"><%= t("protocols.matter.share") %></span><% end %>
+        <%= button_to act.call("interview"), params: { "panel[node]" => n["node_id"] }, class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("protocols.zwave.reinterview") do %><%= icon("refresh", "size-4") %><span class="sr-only"><%= t("protocols.zwave.reinterview") %></span><% end %>
+        <%= button_to act.call("remove"), params: { "panel[node]" => n["node_id"] }, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", title: t("protocols.matter.remove"), form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("protocols.matter.remove_confirm", name: entry["name"]) } } do %><%= icon("trash", "size-4") %><span class="sr-only"><%= t("protocols.matter.remove") %></span><% end %>
+      </div>
+    <% end %>
   <% end %>
 </section>

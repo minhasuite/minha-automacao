@@ -572,6 +572,10 @@ en:
         intro_html: zigbee2mqtt runs on the home server and talks over the same MQTT broker. It stays <strong>off until the USB coordinator arrives</strong>; once it's on, each paired device shows up on its own, with its points.
         step1_html: Plug the coordinator into the server and install the Zigbee2MQTT app under Settings → Apps, with the coordinator path (<code>/dev/serial/by-id/…</code>).
         step2: Pair devices from the zigbee2mqtt frontend (permit join).
+    wizard:
+      setup: Set up
+      connect: Connect
+      found: Found
     found:
       add_all: Add all
       add_one: Add %{name}
@@ -590,7 +594,6 @@ en:
       none_read: No devices have been read from the account yet.
       nothing_new: Nothing new to add.
       offline: Offline
-      offline_short: offline
       pending_html: <strong class="num">%{n}</strong> new device(s). Check the ones you want and pick an area for each (suggested from the account's room).
       pick: Select
       points: Points

@@ -44,11 +44,24 @@ module ApplicationHelper
 
   def greeting = t(%w[greeting.morning greeting.afternoon greeting.evening][Time.current.hour < 12 ? 0 : Time.current.hour < 18 ? 1 : 2])
 
-  def nav_link(label, path, icon: nil, badge: nil, **opts)
-    link_to path, "aria-current": (nav_current?(path) ? "page" : nil), title: label, **opts do
-      safe_join([ (icon(icon, "") if icon), tag.span(label, class: "ss-side-label truncate flex-1"),
-                  (tag.span(badge > 99 ? "99+" : badge, class: "ss-nav-badge", "aria-label": t("nav.unread", count: badge)) if badge.to_i.positive?) ].compact)
+  # Menu do Ss::AppShellComponent (nav:): os itens da pessoa (sidebar_entries) num grupo
+  # sem título e, depois de um separador, Configurações. Selo 0 a gem esconde.
+  def shell_nav
+    items = sidebar_entries.map do |e|
+      n = e[:badge]&.call.to_i
+      { key: e[:key], label: e[:label], href: e[:path], icon: icon(e[:icon], ""), current: nav_current?(e[:path]),
+        badge: (n > 99 ? "99+" : n) }
     end
+    fixed, main = items.partition { |i| SIDEBAR_FIXED.include?(i[:key]) }
+    [ { items: main }, ({ separator: true } if fixed.any?), ({ items: fixed } if fixed.any?) ].compact
+  end
+
+  # Troca de local do Ss::AppShellComponent (tenants:): só nas telas que mostram um
+  # local por vez (Diário, Histórico, Mapa), que a pedem pela web/shared/site_switch.
+  def shell_tenants(sites, site, path)
+    return [] if sites.size < 2
+
+    sites.map { |s| { name: s.name, href: "#{path}?site_id=#{s.id}", current: s.id == site.id } }
   end
 
   # ondaB2 (B11): itens do menu lateral, com a ordem e o que a pessoa
@@ -72,7 +85,7 @@ module ApplicationHelper
                 { key: "ask", label: t("nav.ask"), path: ask_path, icon: "sparkles" } ].compact
     end
     list << { key: "notifications", label: t("nav.notifications"), path: notifications_path, icon: "bell", badge: -> { Notification.for_user(user).unread.count } }
-    list << { key: "settings", label: reader ? t("nav.account") : t("nav.settings"), path: reader ? settings_account_path : settings_path, icon: "cog", class: "mt-3" }
+    list << { key: "settings", label: reader ? t("nav.account") : t("nav.settings"), path: reader ? settings_account_path : settings_path, icon: "cog" }
     prefs = user.dashboard_prefs.to_h["sidebar"].to_h
     order = Array(prefs["order"])
     hidden = Array(prefs["hidden"]) - SIDEBAR_FIXED
@@ -106,6 +119,10 @@ module ApplicationHelper
                    .sub("<svg ", %(<svg aria-hidden="true" focusable="false" )).gsub('stroke-width="2"', 'stroke-width="1.75"').strip
   end
 
+  # Devolve o <svg> como String html_safe: serve direto nos parâmetros de SVG cru dos
+  # componentes da gem componentes_ui (icon:, nav:, items com :icon...), que fazem
+  # `.to_s.html_safe` e dimensionam o svg pelo próprio CSS. Para o tamanho ficar com o
+  # componente, passe css vazio: `render Ss::CollapsibleComponent.new(title: "Sala", icon: icon("home", ""))`.
   def icon(name, css = "size-5")
     name = name.to_s
     return (Mdi.svg(name, css) || icon(ICON_FALLBACK, css)).html_safe if Mdi.name?(name) # rubocop:disable Rails/OutputSafety

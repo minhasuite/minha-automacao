@@ -3,5 +3,5 @@
 <section class="ss-card ss-card-pad mt-4 max-w-3xl">
   <h2><%= t("devices.delete") %></h2>
   <p class="text-sm text-muted mt-1"><%= t("devices.delete_hint") %></p>
-  <%= button_to device_path(@device), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm: t("devices.delete_confirm", name: @device.name) } } do %><%= icon("trash", "size-4") %><%= t("devices.delete") %><% end %>
+  <%= button_to device_path(@device), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("devices.delete_confirm", name: @device.name) } } do %><%= icon("trash", "size-4") %><%= t("devices.delete") %><% end %>
 </section>

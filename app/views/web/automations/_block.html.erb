@@ -1,47 +1,19 @@
-<%# locals: (node:, path:, kind:, points:, automation:, first:, last:) -%>
-<% spec = Automations::Dsl.spec(kind, kind == :options ? "option" : node["type"]) %>
+<%# locals: (node:, path:, kind:, spec:, plain:, points:, automation:) -%>
+<%# Corpo de um bloco do editor (dentro do Ss::BlockComponent): o formulário dos campos e as listas de dentro (então/senão, opções…). -%>
 <% dom = block_dom_id(path) %>
-<% focus = params[:b] == path %>
-<% plain = spec ? spec.fields.reject { |fd| Automations::Dsl.list_kind?(fd.kind) } : [] %>
-<% lists = spec ? spec.fields.select { |fd| Automations::Dsl.list_kind?(fd.kind) } : [] %>
-<% off = node["enabled"] == false %>
-<li id="<%= dom %>" class="rounded-2xl border <%= focus ? 'border-accent' : 'border-line' %> bg-page/40 p-3 scroll-mt-24 min-w-0 <%= 'opacity-60 border-dashed' if off %>">
-  <div class="flex items-start gap-2">
-    <% if plain.any? %>
-      <details class="flex-1 min-w-0" <%= "open" if focus %>>
-        <summary class="ss-summary flex-wrap !items-baseline gap-x-2 gap-y-0.5">
-          <span class="font-semibold text-ink"><%= spec.label %></span><% if off %> <span class="ss-badge ss-badge-warn"><%= t("automations.block.disabled") %></span><% end %>
-          <span class="text-sm text-muted break-words min-w-0"><%= block_summary(node, spec, points).presence || t("automations.block.tap_to_fill") %></span>
-        </summary>
-        <%= form_with url: draft_automation_path(automation), method: :patch, class: "grid gap-3 sm:grid-cols-2 mt-3" do %>
-          <%= hidden_field_tag :op, "update", id: nil %><%= hidden_field_tag :target, path, id: nil %>
-          <% plain.each do |fd| %>
-            <%= render "web/automations/field", fd: fd, node: node, dom: dom, points: points, site: automation.site %>
-          <% end %>
-          <% if spec.respond_to?(:returns) && spec.returns %><p class="sm:col-span-2 text-xs text-muted"><%= t("automations.block.returns") %> <span class="num"><%= spec.returns %></span></p><% end %>
-          <div class="sm:col-span-2"><%= submit_tag t("automations.block.save"), class: "ss-btn ss-btn-primary ss-btn-sm" %></div>
-        <% end %>
-      </details>
-    <% else %>
-      <p class="flex-1 min-w-0 font-semibold text-ink"><%= spec ? spec.label : t("automations.block.unknown_type", type: node["type"]) %></p>
+<% if plain.any? %>
+  <%= form_with url: draft_automation_path(automation), method: :patch, class: "grid gap-3 sm:grid-cols-2" do %>
+    <%= hidden_field_tag :op, "update", id: nil %><%= hidden_field_tag :target, path, id: nil %>
+    <% plain.each do |fd| %>
+      <%= render "web/automations/field", fd: fd, node: node, dom: dom, points: points, site: automation.site %>
     <% end %>
-    <div class="flex shrink-0 items-center">
-      <% unless first %>
-        <%= button_to draft_automation_path(automation), method: :patch, params: { op: "move", target: path, dir: "up" }, class: "ss-btn ss-btn-ghost ss-btn-sm px-2", form: { class: "contents" }, "aria-label": t("automations.block.up") do %><%= icon("chevron-up", "size-4") %><% end %>
-      <% end %>
-      <% unless last %>
-        <%= button_to draft_automation_path(automation), method: :patch, params: { op: "move", target: path, dir: "down" }, class: "ss-btn ss-btn-ghost ss-btn-sm px-2", form: { class: "contents" }, "aria-label": t("automations.block.down") do %><%= icon("chevron-down", "size-4") %><% end %>
-      <% end %>
-      <%= button_to draft_automation_path(automation), method: :patch, params: { op: "toggle", target: path }, class: "ss-btn ss-btn-ghost ss-btn-sm px-2", form: { class: "contents" },
-                    "aria-label": t(off ? "automations.block.enable" : "automations.block.disable"), title: t(off ? "automations.block.enable" : "automations.block.disable") do %><%= icon(off ? "eye-off" : "eye", "size-4") %><% end %>
-      <%= button_to draft_automation_path(automation), method: :patch, params: { op: "remove", target: path }, class: "ss-btn ss-btn-ghost ss-btn-sm px-2 text-danger",
-                    form: { class: "contents", data: { turbo_confirm: t(lists.any? ? "automations.block.remove_confirm_nested" : "automations.block.remove_confirm") } }, "aria-label": t("automations.block.remove") do %><%= icon("trash", "size-4") %><% end %>
-    </div>
-  </div>
-  <% lists.each do |fd| %>
-    <div class="mt-3 pl-3 border-l-2 border-line min-w-0">
-      <p class="ss-label"><%= fd.label %></p>
-      <%= render "web/automations/list", list: Array(node[fd.name]), path: "#{path}.#{fd.name}", kind: fd.kind, points: points, automation: automation %>
-    </div>
+    <% if spec.respond_to?(:returns) && spec.returns %><p class="sm:col-span-2 text-xs text-muted"><%= t("automations.block.returns") %> <span class="num"><%= spec.returns %></span></p><% end %>
+    <div class="sm:col-span-2"><%= submit_tag t("automations.block.save"), class: "ss-btn ss-btn-primary ss-btn-sm" %></div>
   <% end %>
-</li>
+<% end %>
+<% (spec ? spec.fields.select { |fd| Automations::Dsl.list_kind?(fd.kind) } : []).each do |fd| %>
+  <div class="mt-3 min-w-0">
+    <p class="ss-label"><%= fd.label %></p>
+    <%= render "web/automations/list", list: Array(node[fd.name]), path: "#{path}.#{fd.name}", kind: fd.kind, points: points, automation: automation %>
+  </div>
+<% end %>

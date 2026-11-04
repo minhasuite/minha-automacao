@@ -15,17 +15,11 @@ pt-BR:
   layout:
     theme: Tema
     language: Idioma
-    change: Trocar
     skip: Pular para o conteúdo
-    open_menu: Abrir menu
-    close_menu: Fechar menu
-    collapse: Recolher menu
-    expand: Expandir menu
     search: Buscar
     back: Voltar
-    close: Fechar
-    menu: Menu
     main_nav: Principal
+    site: Local
     values: Valores
     values_toggle: Esconder ou mostrar valores
     logout: Sair
@@ -87,7 +81,6 @@ pt-BR:
     label: Boas-vindas
   onboarding:
     title: Primeira configuração
-    progress: Progresso da configuração
     step_of: Passo %{n} de %{total}
     back: Voltar
     skip: Agora não

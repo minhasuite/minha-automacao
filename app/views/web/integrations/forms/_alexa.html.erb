@@ -17,7 +17,6 @@
   <summary class="ss-summary text-ink-2"><%= t("integrations.forms.alexa.advanced") %></summary>
   <div class="grid gap-2 mt-2">
     <p class="text-xs text-muted"><%= t("integrations.forms.alexa.cookies_hint") %></p>
-    <%= f.label :cookies, t("integrations.forms.alexa.cookies"), class: "ss-label" %>
-    <%= f.text_area :cookies, rows: 4, class: "ss-input font-mono text-xs", autocomplete: "off", spellcheck: false %>
+    <%= f.ss_text_area :cookies, label: t("integrations.forms.alexa.cookies"), rows: 4, class: "font-mono text-xs", autocomplete: "off", spellcheck: false %>
   </div>
 </details>

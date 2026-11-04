@@ -21,10 +21,7 @@
 <% end %>
 
 <% if entries.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t(catalog.entries.empty? ? "packages.catalog.empty" : "packages.catalog.no_match") %></p>
-    <p class="mt-1 max-w-md mx-auto"><%= t("packages.catalog.empty_text") %></p>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t(catalog.entries.empty? ? "packages.catalog.empty" : "packages.catalog.no_match"), text: t("packages.catalog.empty_text"), css: "ss-card") %>
 <% else %>
   <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="<%= t("packages.catalog.explore") %>">
     <% entries.each do |e| %>

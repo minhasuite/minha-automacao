@@ -1,14 +1,12 @@
 <%# locals: (f:, integration:) -%>
 <% s = integration&.settings || {} %>
 <% if integration.nil? %>
-  <div><%= f.label :name, t("integrations.forms.common.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", placeholder: "Matter", maxlength: 80 %></div>
+  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "Matter", maxlength: 80 %></div>
 <% end %>
 <div>
-  <%= f.label :url, t("integrations.forms.matter.url"), class: "ss-label" %>
-  <%= f.text_field :url, class: "ss-input font-mono text-sm", value: s["url"], placeholder: "ws://192.168.0.10:5580/ws", autocomplete: "off", spellcheck: false %>
+  <%= f.ss_text_field :url, label: t("integrations.forms.matter.url"), class: "font-mono text-sm", value: s["url"], placeholder: "ws://192.168.0.10:5580/ws", autocomplete: "off", spellcheck: false %>
 </div>
 <div>
-  <%= f.label :code, t("integrations.forms.matter.code"), class: "ss-label" %>
-  <%= f.text_field :code, class: "ss-input font-mono text-sm", value: nil, placeholder: t("integrations.forms.matter.code_hint"), autocomplete: "off", spellcheck: false %>
+  <%= f.ss_text_field :code, label: t("integrations.forms.matter.code"), class: "font-mono text-sm", value: nil, placeholder: t("integrations.forms.matter.code_hint"), autocomplete: "off", spellcheck: false %>
 </div>
 <p class="text-xs text-muted"><%= t("integrations.forms.matter.help_html") %></p>

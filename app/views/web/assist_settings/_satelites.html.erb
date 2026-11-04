@@ -43,7 +43,7 @@
         <div class="mt-2 flex flex-wrap gap-2">
           <%= button_to t("assist_settings.satellites.test"), site_assist_satellite_test_path(site, sat), class: "ss-btn ss-btn-outline ss-btn-sm" %>
           <%= button_to t("assist_settings.remove"), site_assist_satellite_path(site, sat), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger",
-                        form: { data: { turbo_confirm: t("assist_settings.satellites.confirm_remove", name: sat.name) } } %>
+                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("assist_settings.satellites.confirm_remove", name: sat.name) } } %>
         </div>
       <% end %>
     </section>

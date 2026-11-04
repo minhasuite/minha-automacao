@@ -19,9 +19,10 @@
         <%= link_to edit_dashboard_path(@dashboard, view: v["id"]), class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
       <% end %>
     </nav>
-      <details class="ss-menu shrink-0 mt-1">
-        <summary class="ss-chip cursor-pointer"><%= icon("plus", "size-4") %><span class="max-sm:sr-only"><%= t("dashboards.ed.new_view") %></span></summary>
-        <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "ss-menu-list !flex gap-2 p-3 w-[min(20rem,calc(100vw-2rem))]" do %>
+      <%# Nova vista: .ss-menu da gem com botão de texto; o painel é o próprio formulário. %>
+      <details class="ss-menu is-end shrink-0">
+        <summary class="ss-menu-btn" aria-label="<%= t("dashboards.ed.new_view") %>"><%= icon("plus", "size-4") %><span class="max-sm:sr-only"><%= t("dashboards.ed.new_view") %></span></summary>
+        <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "!flex gap-2 p-3 w-[min(20rem,calc(100vw-2rem))]" do %>
           <%= hidden_field_tag :op, "add_view", id: nil %>
           <label class="sr-only" for="nv-title"><%= t("dashboards.ed.view_name") %></label>
           <%= text_field_tag :title, nil, class: "ss-input", id: "nv-title", placeholder: t("dashboards.ed.view_placeholder"), required: true, maxlength: 60 %>
@@ -165,6 +166,6 @@
       <% end %>
     </section>
 
-    <%= button_to dashboard_path(@dashboard), method: :delete, class: "ss-btn ss-btn-danger w-full", form: { data: { turbo_confirm: t("dashboards.ed.delete_confirm", name: @dashboard.name) } } do %><%= icon("trash", "size-4") %><%= t("dashboards.ed.delete") %><% end %>
+    <%= button_to dashboard_path(@dashboard), method: :delete, class: "ss-btn ss-btn-danger w-full", form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("dashboards.ed.delete_confirm", name: @dashboard.name) } } do %><%= icon("trash", "size-4") %><%= t("dashboards.ed.delete") %><% end %>
   </aside>
 </div>

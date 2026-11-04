@@ -12,7 +12,7 @@
 <% end %>
 
 <% if @points.empty? %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("exposures.show.empty") %></p><p class="mt-1"><%= link_to t("exposures.show.clear"), site_exposure_path(@site) %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("exposures.show.empty"), variant: :busca, css: "ss-card") do %><%= link_to t("exposures.show.clear"), site_exposure_path(@site), class: "ss-btn ss-btn-ghost" %><% end %>
 <% else %>
   <%= form_with url: site_exposure_path(@site), method: :patch, data: { controller: "expose" } do %>
     <%= hidden_field_tag :back, request.fullpath, id: nil %>

@@ -1,20 +1,25 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Widget de câmera: quadro a cada N segundos (só com a aba visível) e "Ao vivo"
-// por WebRTC. A oferta vai ao Rails, que confere o papel e repassa ao go2rtc.
+// Câmera (no Ss::CameraTileComponent da gem): quadro a cada N segundos (só com a
+// aba visível) e "Ao vivo" por WebRTC. A oferta vai ao Rails, que confere o papel
+// e repassa ao go2rtc. O desenho do estado é da gem (data-state: loading, stale
+// com a idade do quadro, live, offline); aqui só se troca o data-state.
 export default class extends Controller {
   static targets = ["img", "video", "status", "liveButton", "talkButton"]
   static values = { snapshot: String, webrtc: String, interval: Number, micDenied: String }
 
   connect() {
     this.imgTarget.onload = () => this.show(this.imgTarget)
-    this.imgTarget.onerror = () => this.offline("Sem imagem da câmera agora. Tentando de novo…")
+    this.imgTarget.onerror = () => this.offline()
+    this.retry = () => this.refresh()
+    this.element.addEventListener("ss-camera:retry", this.retry)
     this.refresh()
     this.timer = setInterval(() => this.refresh(), this.intervalValue * 1000)
   }
 
   disconnect() {
     clearInterval(this.timer)
+    this.element.removeEventListener("ss-camera:retry", this.retry)
     this.releaseMic()
     this.stopLive()
   }
@@ -31,7 +36,6 @@ export default class extends Controller {
   async startLive() {
     const pc = (this.pc = new RTCPeerConnection())
     this.liveButtonTarget.setAttribute("aria-pressed", "true")
-    this.status("Conectando…")
     pc.addTransceiver("video", { direction: "recvonly" })
     // ondaC2 (C10): com o microfone ligado (Falar), o áudio vai para o alto-falante da câmera (go2rtc).
     const mic = this.mic?.getAudioTracks()[0]
@@ -90,7 +94,6 @@ export default class extends Controller {
 
   liveFailed() {
     this.stopLive()
-    this.status("Ao vivo indisponível; mostrando quadros")
     setTimeout(() => this.refresh(), 1500)
   }
 
@@ -108,18 +111,20 @@ export default class extends Controller {
     if (el === this.imgTarget && this.pc) return
     this.imgTarget.hidden = el !== this.imgTarget
     this.videoTarget.hidden = el !== this.videoTarget
-    this.statusTarget.hidden = true
-    this.element.dataset.state = "on"
+    // Quadro novo: a idade volta a zero (o ss-camera conta de novo).
+    if (el === this.imgTarget) this.element.dataset.ssCameraAgeValue = 0
+    this.element.dataset.state = el === this.videoTarget ? "live" : "stale"
   }
 
-  offline(text) {
+  offline() {
     if (this.pc) return
     this.imgTarget.hidden = true
     this.element.dataset.state = "offline"
-    this.status(text)
   }
 
+  // Aviso fora do quadro (microfone negado), quando a tela tem onde mostrar.
   status(text) {
+    if (!this.hasStatusTarget) return
     this.statusTarget.textContent = text
     this.statusTarget.hidden = false
   }

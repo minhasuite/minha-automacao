@@ -639,9 +639,42 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara em `app/assets/tailwind/application.css`: menu escuro, toasts,
-  `icon("nome")` com os SVG de `app/assets/images/icons` (ícone novo = copiar
-  o .svg). Sem emoji/unicode na tela.
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.10.1`):
+  tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
+  carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
+  `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);
+  classe `.ss-*` solta só onde não há componente; peça genérica que falta nasce na
+  gem (skill `lista-clara`), nunca aqui.
+- Moldura: `Ss::AppShellComponent` no layout (`shell_nav` com separador antes de
+  Configurações, selo 0 some; `tenants:` só no Diário/Histórico/Mapa pela
+  `web/shared/_site_switch`; `main_max: "80rem"` a não ser com `content_for :wide`) e
+  `ss_app_shell_head` no `<head>` (menu recolhido no `<html>`, sobrevive ao morph).
+  Cabeçalho pelo `web/shared/_header` (`Ss::PageComponent` só com o topo); vazio pelo
+  `Ss::EmptyStateComponent` (com a ilustração do produto: `web/shared/_empty_art`,
+  `with_art`); tabelas pelo `Ss::DataTableComponent` com ordem no servidor
+  (`TableSort`); paleta Ctrl+K `Ss::CommandPaletteComponent` (`web/shared/_palette`,
+  grupos e subtítulos do `/busca`).
+- `icon("nome")` (SVG de `app/assets/images/icons`, ou `mdi:nome`) vai direto nos
+  `icon:` dos componentes; passe `icon("x", "")` para o componente dimensionar.
+  Ícone novo = copiar o .svg e pôr o nome em `config/locales/icons.yml` (rótulo do
+  `IconPickerComponent`). Sem emoji/unicode na tela.
+- Confirmação: `Ss::ConfirmDialogComponent` global no layout; todo
+  `data-turbo-confirm` abre ela. Ação que apaga/remove leva
+  `turbo_confirm_tone: "danger"` e `turbo_confirm_button:` (o verbo); comando de
+  ponto com risco vai pelo `confirm_title:` dos componentes (`SwitchComponent`,
+  `DeviceTileComponent`) com o risco no título.
+- Fuso: gráfico, faixas e diário recebem `time_zone:` com o fuso IANA do local
+  (sem `Time.use_zone` na view).
+- CSS: o `application.css` importa o build da gem e depois os CSS de tela
+  (`dw-` painéis, `lb-`/`hx-` diário e histórico, `ef-` energia, `ob-`, `vz-`…).
+  `ponte.css` (por último) guarda só o que o produto tem a mais que a gem: caixas
+  de marcar soltas, chip atual sólido e contador, `.ss-rows`, `.ss-step` (ações do
+  ponto), subnavegação em menu no celular, `.ss-chips`, zona de perigo, `.ss-skip`,
+  `.ss-summary`, `.ma-flow` (passos do editor) e o rodapé do menu (`.ma-side-*`).
+  Cada bloco diz por quê; ao subir algo para a gem, apague de lá. Menus `<details>`
+  (`.ss-menu`, `.dw-pop`): Esc/clique fora no `application.js`.
+- Telas do app: o app lê esta mesma web pelo `AppScreen` (`docs/app.md`); ao mexer
+  em markup, rode os `spec/requests/appweb*_spec.rb`.
 
 ## Armadilhas
 

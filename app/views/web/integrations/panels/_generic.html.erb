@@ -8,7 +8,7 @@
 <% end %>
 <% if rows.any? %>
   <section class="ss-card overflow-hidden">
-    <table class="ss-table ss-table-stack"><tbody>
+    <table class="ss-table"><tbody>
       <% rows.each do |label, value| %><tr><td class="text-muted"><%= label %></td><td class="font-semibold text-ink break-words"><%= value.presence || "—" %></td></tr><% end %>
     </tbody></table>
   </section>

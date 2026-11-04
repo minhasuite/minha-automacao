@@ -41,7 +41,7 @@
         <% end %>
         <% if @source.uploads? && can?(:manage) %>
           <%= button_to site_media_file_delete_path(@site), method: :delete, params: { path: @item.id }, class: "ss-btn ss-btn-ghost ss-btn-sm mt-3",
-                        form: { data: { turbo_confirm: t("media.files.confirm_delete", name: @item.title) } } do %><%= icon("trash", "size-4") %><%= t("media.files.delete") %><% end %>
+                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("media.files.delete"), turbo_confirm: t("media.files.confirm_delete", name: @item.title) } } do %><%= icon("trash", "size-4") %><%= t("media.files.delete") %><% end %>
         <% end %>
       </div>
     </div>
@@ -78,10 +78,7 @@
 <% end %>
 
 <% if @page.items.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("media.browse.empty") %></p>
-    <p class="mt-1 max-w-lg mx-auto"><%= @source.uploads? ? t("media.browse.empty_local") : t("media.browse.empty_hint") %></p>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("media.browse.empty"), text: (@source.uploads? ? t("media.browse.empty_local") : t("media.browse.empty_hint")), css: "ss-card") %>
 <% else %>
   <ul class="ma-grid" aria-label="<%= @page.title %>">
     <% @page.items.each do |i| %>

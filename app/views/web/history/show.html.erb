@@ -10,10 +10,12 @@
 <%= render "web/shared/site_switch", sites: @sites, site: @site, path: history_path %>
 
 <section class="ss-card ss-card-pad hx-toolbar mb-4" aria-label="<%= t("history.period") %>">
-  <nav class="lb-chips" aria-label="<%= t("history.shortcuts") %>">
+  <%# Atalhos na faixa de chips da gem (.ss-chipbar/.ss-fchip): o atual fica marcado. %>
+  <nav class="ss-chipbar flex-wrap" aria-label="<%= t("history.shortcuts") %>">
     <% Points::Overlay::RANGES.each do |k, d| %>
-      <%= link_to Points::Overlay::RANGE_LABELS[k], history_path(site_id: @site.id, point_ids: ids, range: k), class: "ss-chip no-underline",
-                  "aria-current": ((span - d).abs < 1.minute && (now - @to) < 1.minute ? "true" : nil) %>
+      <% on = (span - d).abs < 1.minute && (now - @to) < 1.minute %>
+      <%= link_to Points::Overlay::RANGE_LABELS[k], history_path(site_id: @site.id, point_ids: ids, range: k), class: "ss-fchip no-underline",
+                  "aria-current": (on ? "true" : nil), "aria-pressed": on.to_s %>
     <% end %>
   </nav>
   <div class="hx-zoom">
@@ -77,31 +79,20 @@
 
 <% if @selected.any? %>
   <% index = @selected.each_with_index.to_h { |p, i| [ p.id, i ] } %>
-  <% ticks = hx_ticks(@from, @to, @zone) %>
+  <% chart_url = history_path(site_id: @site.id, point_ids: ids) %>
+  <% zoomed = params[:from].present? %>
+  <% zone = @zone.tzinfo.name %>
   <% @overlay.charts.each do |unit, series| %>
-    <% chart = hx_line_chart(series, @from, @to, index) %>
+    <% unit_name = unit.presence || t("history.no_unit") %>
     <section class="ss-card ss-card-pad mb-4" aria-label="<%= t("history.chart", unit: unit.presence || t("history.no_unit").downcase) %>">
       <div class="flex items-center justify-between gap-2 mb-2">
-        <h2><%= unit.presence || t("history.no_unit") %></h2>
+        <h2><%= unit_name %></h2>
         <span class="text-xs text-muted"><%= series.first.resolution == "raw" ? t("history.readings") : t(series.first.resolution == "1h" ? "history.hourly" : "history.daily") %></span>
       </div>
-      <% if chart %>
-        <div class="hx-chart" data-controller="history-chart" data-history-chart-from-value="<%= (@from.to_f * 1000).round %>"
-             data-history-chart-to-value="<%= (@to.to_f * 1000).round %>" data-history-chart-series-value="<%= hx_cursor_data(series, index) %>"
-             data-history-chart-url-value="<%= history_path(site_id: @site.id, point_ids: ids) %>">
-          <div class="hx-y num"><span><%= dw_number(chart[:max]) %></span><span><%= dw_number((chart[:max] + chart[:min]) / 2) %></span><span><%= dw_number(chart[:min]) %></span></div>
-          <div class="hx-plot" data-history-chart-target="plot" data-action="pointermove->history-chart#move pointerleave->history-chart#leave pointerdown->history-chart#down pointerup->history-chart#up">
-            <%= chart[:svg] %>
-            <span class="hx-cursor" data-history-chart-target="cursor" hidden></span>
-            <span class="hx-brush" data-history-chart-target="brush" hidden></span>
-            <div class="hx-tip" data-history-chart-target="tip" hidden></div>
-          </div>
-          <div class="hx-axis num"><% ticks.each do |t| %><span><%= t %></span><% end %></div>
-        </div>
-        <p class="text-xs text-muted mt-2 max-sm:hidden"><%= t("history.drag") %></p>
-      <% else %>
-        <p class="text-sm text-muted"><%= t("history.no_readings") %></p>
-      <% end %>
+      <%= render Ss::TimeSeriesChartComponent.new(title: t("history.chart", unit: unit_name.downcase), from: @from, to: @to, series: hx_series(series, index, @to),
+                                                  legend: false, height: 240, zoom_url: chart_url, reset_url: chart_url, zoomed: zoomed, time_zone: zone,
+                                                  texts: { empty: t("history.no_readings") }) %>
+      <p class="text-xs text-muted mt-2 max-sm:hidden"><%= t("history.drag") %></p>
       <ul class="dw-legend mt-3">
         <% series.each do |s| %>
           <li><span class="hx-dot" style="background: <%= hx_color(index[s.point.id]) %>"></span><%= link_to Logbook.point_title(s.point), point_path(s.point), class: "truncate no-underline text-ink-2 hover:text-accent" %><strong class="num text-ink ml-auto shrink-0"><%= point_value_text(s.point) %></strong></li>
@@ -112,21 +103,9 @@
   <% if @overlay.timelines.any? %>
     <section class="ss-card ss-card-pad mb-4" aria-labelledby="hx-tl-title">
       <h2 id="hx-tl-title" class="mb-3"><%= t("history.timeline") %></h2>
-      <div class="hx-tl">
-        <% @overlay.timelines.each do |s| %>
-          <div class="hx-tl-row">
-            <p class="hx-tl-name"><span class="hx-dot" style="background: <%= hx_color(index[s.point.id]) %>"></span><span class="truncate"><%= Logbook.point_title(s.point) %></span></p>
-            <div class="hx-tl-bar"><%= s.rows.any? ? hx_bands(s, @from, @to) : tag.span(t("history.no_readings_short"), class: "text-xs text-muted") %></div>
-            <p class="hx-tl-now num"><%= point_value_text(s.point) %></p>
-          </div>
-        <% end %>
-        <div class="hx-tl-row" aria-hidden="true"><span></span><div class="hx-axis num"><% ticks.each do |t| %><span><%= t %></span><% end %></div><span></span></div>
-      </div>
+      <%= render Ss::StateBandsComponent.new(title: t("history.timeline"), from: @from, to: @to, rows: hx_band_rows(@overlay.timelines), time_zone: zone) %>
     </section>
   <% end %>
 <% else %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("history.empty") %></p>
-    <p class="mt-1"><%= t("history.empty_hint") %></p>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("history.empty"), text: t("history.empty_hint"), css: "ss-card") %>
 <% end %>

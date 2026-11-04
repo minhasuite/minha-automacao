@@ -4,7 +4,7 @@ module Web
   class LogbookController < ApplicationController
     include SitePick
 
-    FILTERS = [ :site_id, :period, :from, :until, :area_id, :device_id, :point_id, :user_id, :q, :before, :day, { sources: [] } ].freeze
+    FILTERS = [ :site_id, :period, :from, :until, :area_id, :device_id, :point_id, :user_id, :q, :before, { sources: [] } ].freeze
 
     def show
       return redirect_to(sites_path, notice: t("notices.need_site_logbook")) unless pick_site
@@ -14,7 +14,7 @@ module Web
       @zone = ActiveSupport::TimeZone[@site.timezone] || Time.zone
       return unless params[:before].present? && turbo_frame_request?
 
-      render partial: "page", locals: { items: @items, next_cursor: @next, filter: @filter, zone: @zone, day: params[:day], frame: params[:before] }
+      render partial: "page", locals: { items: @items, next_cursor: @next, filter: @filter, zone: @zone, frame: request.headers["Turbo-Frame"] }
     end
   end
 end

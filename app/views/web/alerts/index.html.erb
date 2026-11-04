@@ -5,21 +5,16 @@
   <% if @open.empty? %>
     <p class="text-sm text-muted mt-2"><%= t("automations.alerts.none_open") %></p>
   <% else %>
-    <ul class="mt-2 divide-y divide-line">
+    <div class="grid gap-3 mt-3">
       <% @open.each do |a| %>
-        <% critical = a.alert_rule.severity == "critical" %>
-        <li class="flex flex-wrap items-center gap-3 py-3">
-          <span class="grid place-items-center size-9 shrink-0 rounded-lg <%= critical ? 'bg-danger-soft text-danger' : 'bg-warn-soft text-warn' %>"><%= icon("exclamation-circle", "size-5") %></span>
-          <div class="min-w-0 flex-1">
-            <p class="font-semibold text-ink"><%= a.alert_rule.name %> <span class="ss-badge <%= critical ? 'ss-badge-danger' : 'ss-badge-warn' %>"><%= a.alert_rule.severity_label %></span></p>
-            <p class="text-sm text-muted"><%= a.point.name %>: <%= point_value_text(a.point) %> · <%= a.site.name %> · <%= t("automations.alerts.opened", at: l(a.opened_at, format: :short)) %> · <%= t("automations.alerts.notices", count: a.level) %><% if a.acked? %> · <%= t("automations.alerts.acked_by", name: a.acked_by&.name || t("automations.alerts.someone")) %><% end %></p>
-          </div>
-          <% if !a.acked? && SiteMembership.allowed?(a.site.role_for(current_user), :command, risk: "sensitive") %>
-            <%= button_to ack_alert_path(a), class: "ss-btn ss-btn-primary ss-btn-sm" do %><%= icon("check", "size-4") %><%= t("automations.alerts.ack") %><% end %>
-          <% end %>
-        </li>
+        <% can_ack = !a.acked? && SiteMembership.allowed?(a.site.role_for(current_user), :command, risk: "sensitive") %>
+        <% details = [ a.alert_rule.severity_label, "#{a.point.name}: #{point_value_text(a.point)}", a.site.name, t("automations.alerts.notices", count: a.level),
+                       (t("automations.alerts.acked_by", name: a.acked_by&.name || t("automations.alerts.someone")) if a.acked?) ].compact %>
+        <%= render Ss::NoticeCardComponent.new(title: a.alert_rule.name, text: details.join(" · "), tone: a.alert_rule.severity == "critical" ? :critical : :warn,
+                                               time: l(a.opened_at, format: :short), id: "alert-#{a.id}",
+                                               actions: (can_ack ? [ { label: t("automations.alerts.ack"), url: ack_alert_path(a), icon: icon("check", "") } ] : [])) %>
       <% end %>
-    </ul>
+    </div>
   <% end %>
 </section>
 
@@ -28,13 +23,12 @@
   <% if @closed.empty? %>
     <p class="text-sm text-muted mt-2"><%= t("automations.alerts.nothing") %></p>
   <% else %>
-    <ul class="mt-2 divide-y divide-line">
+    <div class="grid gap-3 mt-3">
       <% @closed.each do |a| %>
-        <li class="py-3">
-          <p class="font-semibold text-ink"><%= a.alert_rule.name %></p>
-          <p class="text-sm text-muted"><%= a.site.name %> · <%= t("automations.alerts.range", from: l(a.opened_at, format: :short), to: l(a.resolved_at, format: :short)) %><% if a.acked? %> · <%= t("automations.alerts.acked_by", name: a.acked_by&.name || t("automations.alerts.someone")) %><% end %></p>
-        </li>
+        <%= render Ss::NoticeCardComponent.new(title: a.alert_rule.name, tone: :success, id: "alert-#{a.id}",
+                                               text: "#{a.site.name} · #{t("automations.alerts.range", from: l(a.opened_at, format: :short), to: l(a.resolved_at, format: :short))}",
+                                               footer: (t("automations.alerts.acked_by", name: a.acked_by&.name || t("automations.alerts.someone")) if a.acked?)) %>
       <% end %>
-    </ul>
+    </div>
   <% end %>
 </section>

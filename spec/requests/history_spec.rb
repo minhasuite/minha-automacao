@@ -47,7 +47,7 @@ RSpec.describe "Histórico na API e na web" do
       post "/pontos/#{lamp.id}/comando", params: { command: "on" }
       within(tenant) { lamp.reload.report!(true, quality: "unavailable") }
       get "/pontos/#{lamp.id}"
-      expect(response.body).to include("Histórico", "Ligado por", "<rect", "Ligar", "por #{owner.name}", "pelo web", "Ficou indisponível",
+      expect(response.body).to include("Histórico", "Ligado por", "ss-time-chart", "ss-tc-bands", "Ligar", "por #{owner.name}", "pelo web", "Ficou indisponível",
                                        "Ponto criado", "turbo-cable-stream-source", "PointsChannel")
       get "/pontos/#{lamp.id}", params: { range: "7d" }
       expect(response.body).to include(%(aria-current="true"))
@@ -59,10 +59,11 @@ RSpec.describe "Histórico na API e na web" do
       add(temp, 2.hours.ago, 19)
       add(temp, 1.hour.ago, 23.5)
       get "/pontos/#{temp.id}"
-      expect(response.body).to include("<polyline", "23,5").or include("<polyline", "23.5")
+      # Gráfico da gem: os pontos vão em JSON para o ss-time-chart desenhar.
+      expect(response.body).to include("ss-time-chart", ",23.5]")
       RollupReadingsJob.perform_now
       get "/pontos/#{temp.id}", params: { range: "30d" }
-      expect(response.body).to include("<polygon")
+      expect(response.body).to match(/\[\d{13},[\d.]+,[\d.]+,[\d.]+\]/) # rollup: [t, média, mín, máx]
       mode = within(tenant) { create(:point, device: device, capability: "enum", options: %w[Casa]) }
       get "/pontos/#{mode.id}"
       expect(response.body).to include("não tem gráfico")

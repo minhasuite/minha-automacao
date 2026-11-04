@@ -38,6 +38,16 @@ RSpec.describe "Telas do servidor no app (appweb)" do
     expect(all_blocks.select { |b| b["t"] == "heading" }.map { |b| b["icon"] }).to include("shield-check")
   end
 
+  it "cabeçalho do Ss::PageComponent (voltar, subtítulo) e a escolha de ícone da gem como select" do
+    screen("/locais/#{site.id}/helpers/novo?tipo=toggle")
+    expect(page["title"]).to be_present
+    expect(page["back"]).to be_present
+    expect(page["subtitle"]).to be_present
+    pick = all_blocks.find { |b| b["t"] == "field" && b["name"] == "helper[icon]" }
+    expect(pick).to include("kind" => "select")
+    expect(pick["options"].map { |o| o["value"] }).to include("", "sun")
+  end
+
   describe "formulário de plugin de integração (plugin falso por stub_const)" do
     let(:fake) do
       Class.new(Integrations::Plugin) do
@@ -87,6 +97,18 @@ RSpec.describe "Telas do servidor no app (appweb)" do
       expect(page["path"]).to eq("/locais/#{site.id}/integracoes")
       expect(page["flash"]).to include(a_hash_including("tone" => "success", "text" => "Teste App conectado."))
       expect(within(tenant) { site.integrations.find_by(driver: "virtual").settings }).to include("host" => "10.0.0.9", "modo" => "l")
+    end
+  end
+
+  it "Diário, Histórico e Mapa trazem a troca de local (do menu da moldura) como faixa no topo" do
+    other = within(tenant) { create(:site, name: "Teste Loja") }
+    %w[/diario /historico /mapa].each do |path|
+      screen("#{path}?site_id=#{other.id}")
+      expect(response).to have_http_status(:ok), path
+      sub = page["blocks"].first
+      expect(sub["t"]).to eq("subnav"), path
+      expect(sub["items"].map { |i| [ i["label"], i["current"] ] }).to contain_exactly([ "Teste Casa", false ], [ "Teste Loja", true ])
+      expect(sub["items"].map { |i| i["href"] }).to include("#{path}?site_id=#{other.id}")
     end
   end
 

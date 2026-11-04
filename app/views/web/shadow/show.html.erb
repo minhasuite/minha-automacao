@@ -36,8 +36,7 @@
     <% end %>
 
     <% if @actions.empty? %>
-      <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.shadow_page.empty") %></p>
-        <p class="mt-1"><%= t("automations.shadow_page.empty_hint") %></p></div>
+      <%= render Ss::EmptyStateComponent.new(title: t("automations.shadow_page.empty"), text: t("automations.shadow_page.empty_hint"), css: "ss-card") %>
     <% else %>
       <ol class="ss-card ss-rows" aria-label="<%= t("automations.shadow_page.timeline") %>">
         <% @actions.each do |a| %>

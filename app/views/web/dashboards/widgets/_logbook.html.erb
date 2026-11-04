@@ -1,20 +1,16 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<%# Diário (ondaB2 B10): as últimas linhas, com o link para a tela Diário. %>
+<%# Diário (ondaB2 B10): as últimas linhas no Ss::LogbookComponent (dia que gruda, hora, ícone tonal), com o link para a tela Diário. %>
 <% d = w["data"] %>
 <div class="dw-card">
   <div class="flex items-center justify-between gap-2">
     <p class="dw-card-title flex items-center gap-2"><%= icon("view-list", "size-4 text-accent") %><%= w["label"].presence || Dashboards::Widgets::LogbookWidget.label %></p>
     <%= link_to logbook_path(site_id: dashboard.site_id, point_id: (Array(d["point_ids"]).first if Array(d["point_ids"]).one?)), class: "dw-more static", data: { turbo_frame: "_top" }, "aria-label": t("nav.logbook") do %><%= icon("chevron-right", "size-4") %><% end %>
   </div>
-  <% if Array(d["items"]).empty? %>
-    <p class="text-sm text-muted mt-3"><%= d["empty"] %></p>
-  <% else %>
-    <ol class="dw-log">
-      <% d["items"].each do |i| %>
-        <li class="dw-log-row dw-tone-<%= i['tone'] %>"><span class="dw-log-ico"><%= icon(i["icon"].presence_in(HelperTypes::ICONS) || "switch-horizontal", "size-4") %></span>
-          <span class="min-w-0 flex-1"><span class="block truncate text-sm text-ink"><strong><%= i["title"] %></strong><% if i["state"].present? %> · <%= i["state"] %><% end %></span>
-            <span class="block truncate text-xs text-muted"><%= [ l(Time.zone.parse(i["at"]), format: :short), i["user"], i["detail"] ].compact_blank.join(" · ") %></span></span></li>
-      <% end %>
-    </ol>
-  <% end %>
+  <% entries = Array(d["items"]).map do |i|
+       { at: Time.zone.parse(i["at"]), title: i["title"], state: i["state"].presence, detail: [ i["user"], i["detail"] ].compact_blank.join(" · ").presence,
+         icon: icon(i["icon"].presence_in(HelperTypes::ICONS) || "switch-horizontal"), tone: i["tone"] }
+     end %>
+  <%# Prévia: sem "carregar mais" nem o marco de início (a tela Diário tem o resto); dias e horas no fuso do local. %>
+  <%= render Ss::LogbookComponent.new(entries: entries, label: w["label"].presence || Dashboards::Widgets::LogbookWidget.label, css: "mt-2",
+                                      texts: { empty: d["empty"] }, end_marker: false, time_zone: dashboard.site.timezone) %>
 </div>

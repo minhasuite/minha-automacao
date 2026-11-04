@@ -16,11 +16,7 @@
 <% end %>
 <% if @devices.empty? && @children.any? %>
 <% elsif @devices.empty? %>
-  <div class="ss-card ss-empty">
-    <p class="font-bold text-ink"><%= t("areas.show.empty") %></p>
-    <p class="mt-1"><%= t("areas.show.empty_hint") %></p>
-    <% if can?(:manage) %><%= link_to new_site_device_path(@site, area_id: @area.id), class: "ss-btn ss-btn-primary mt-4" do %><%= icon("plus", "size-4") %><%= t("areas.show.add_device") %><% end %><% end %>
-  </div>
+  <%= render Ss::EmptyStateComponent.new(title: t("areas.show.empty"), text: t("areas.show.empty_hint"), css: "ss-card") do %><% if can?(:manage) %><%= link_to new_site_device_path(@site, area_id: @area.id), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("areas.show.add_device") %><% end %><% end %><% end %>
 <% else %>
   <div class="space-y-6">
     <% @devices.each do |device| %>

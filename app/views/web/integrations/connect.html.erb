@@ -1,12 +1,14 @@
 <%= render "web/shared/header", title: t("integrations.connect.title", name: @integration.name), subtitle: [ @plugin.title, @integration.account ].compact.join(" · "), back: site_integrations_path(@site) %>
+<%= render layout: "web/integrations/wizard", locals: { current: 1, integration: @integration } do %>
 <div class="grid gap-4 lg:grid-cols-2 lg:items-start max-w-5xl">
   <% if (connect = integration_connect_partial(@plugin)) %>
     <%= render connect, integration: @integration, **@locals %>
   <% end %>
-  <%= form_with scope: :integration, url: connect_integration_path(@integration), method: :post, multipart: true, class: "ss-card ss-card-pad grid gap-4",
+  <%= ss_form_with scope: :integration, url: connect_integration_path(@integration), method: :post, multipart: true, class: "ss-card ss-card-pad grid gap-4",
                 data: { turbo_submits_with: t("integrations.common.connecting") } do |f| %>
     <h2 class="font-bold"><%= t("integrations.connect.account") %></h2>
     <%= render integration_form_partial(@plugin), f: f, integration: @integration %>
     <div><%= f.submit t("integrations.connect.submit"), class: "ss-btn ss-btn-primary" %></div>
   <% end %>
 </div>
+<% end %>

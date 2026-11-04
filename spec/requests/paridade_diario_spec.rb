@@ -49,7 +49,7 @@ RSpec.describe "Diário e Histórico" do
     seed!
     get "/diario", params: { area_id: area.id }
     # só as linhas (o seletor de pontos lista também o liga/desliga das automações)
-    feed = response.body.split('class="lb-list').last
+    feed = response.body.split('role="feed"').last
     expect(feed).to include("Luz do teto").and(exclude("Teste porta aberta", "Indisponível", "Teste chegada"))
     get "/diario", params: { user_id: user.id }
     expect(response.body).to include("Teste cinema", "Ligar").and(exclude("Desligado", "Indisponível"))
@@ -59,6 +59,18 @@ RSpec.describe "Diário e Histórico" do
     expect(response.body).to include("Teste cinema").and(exclude("Interruptor da sala</a>"))
   end
 
+  it "chips de período e de tipo são links da faixa da gem; o fim oferece um período maior" do
+    seed!
+    get "/diario", params: { period: "7d", q: "luz" }
+    body = response.body
+    expect(body).to include('class="ss-chipbar flex-wrap"', 'aria-current="true" aria-pressed="true"', "Ver um período maior", "ss-lb-end-link")
+    expect(body).to include("period=30d", "q=luz")
+    get "/diario", params: { period: "365d" }
+    expect(response.body).not_to include("ss-lb-end-link")
+    get "/diario", params: { sources: [ "commands" ] }
+    expect(response.body).to include('name="sources[]"')
+  end
+
   it "pagina por cursor num turbo-frame preguiçoso" do
     seed!
     stub_const("Logbook::PAGE", 3)
@@ -66,7 +78,7 @@ RSpec.describe "Diário e Histórico" do
     src = response.body[%r{src="(/diario\?[^"]+)"}, 1]
     expect(src).to include("before=")
     get CGI.unescapeHTML(src), headers: { "Turbo-Frame" => "lb-x" }
-    expect(response.body).to include("<turbo-frame", "lb-item")
+    expect(response.body).to include(%(<turbo-frame id="lb-x"), "ss-lb-item")
   end
 
   it "visitante não vê cadastro nem entradas" do
@@ -106,7 +118,7 @@ RSpec.describe "Diário e Histórico" do
     seed!
     get "/historico", params: { point_ids: [ power.id, luz.id ], range: "6h" }
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("hx-plot", "<polyline", "Linha do tempo", "hx-band-svg", "Ligado ·", "Aproximar", "Exportar CSV")
+    expect(response.body).to include('data-controller="ss-time-chart', "120.5", "Linha do tempo", "ss-sb-bar", 'data-label="Ligado"', "Aproximar", "Exportar CSV")
 
     get "/historico.csv", params: { point_ids: [ power.id, luz.id ], range: "6h" }
     expect(response.media_type).to eq("text/csv")

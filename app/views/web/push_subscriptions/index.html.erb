@@ -28,7 +28,7 @@
             <p class="text-xs text-muted"><%= t("push.web_push", at: l(s.created_at, format: :short)) %><%= " · #{t('push.last_sent', at: l(s.last_used_at, format: :short))}" if s.last_used_at %></p>
           </div>
           <%= button_to push_subscription_path(s), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm px-2 text-danger", "aria-label": t("push.remove", name: s.name),
-                        form: { data: { turbo_confirm: t("push.remove_confirm", name: s.name.presence || t("push.this_device").downcase) } } do %><%= icon("trash", "size-4") %><% end %>
+                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("push.remove_confirm", name: s.name.presence || t("push.this_device").downcase) } } do %><%= icon("trash", "size-4") %><% end %>
         </li>
       <% end %>
       <% @apps.each do |d| %>

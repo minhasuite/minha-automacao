@@ -1,10 +1,10 @@
 <%= render "web/shared/header", title: t("assist_settings.title"), subtitle: t("assist_settings.subtitle", site: @site.name) %>
 <%= render "web/sites/tabs", site: @site, current: :assist %>
-<nav class="vz-tabs" aria-label="<%= t("assist_settings.tabs.label") %>">
+<%= render Ss::TabsComponent.new(label: t("assist_settings.tabs.label"), id: "assist-tabs", css: "mb-5") do |tabs| %>
   <% Web::AssistSettingsController::TABS.each do |tab| %>
-    <%= link_to t("assist_settings.tabs.#{tab}"), site_assist_settings_path(@site, aba: tab), class: "vz-tab", "aria-current": (tab == @tab ? "page" : nil) %>
+    <% tabs.with_tab(label: t("assist_settings.tabs.#{tab}"), href: site_assist_settings_path(@site, aba: tab), current: tab == @tab, id: tab) %>
   <% end %>
-</nav>
+<% end %>
 <% case @tab %>
 <% when "satelites" %><%= render "satelites", site: @site %>
 <% when "depuracao" %><%= render "depuracao", site: @site %>

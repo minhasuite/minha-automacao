@@ -21,17 +21,12 @@
         <% end %>
       </div>
     <% end %>
-  <% elsif fd.kind.in?(%i[days channels bool]) %>
+  <% elsif fd.kind == :days %>
+    <%= render Ss::WeekdayPickerComponent.new(name: name, selected: v.nil? ? (0..6).to_a : Array(v), values: [ 1, 2, 3, 4, 5, 6, 0 ], first_day: 7, legend: fd.label, id: id) %>
+  <% elsif fd.kind.in?(%i[channels bool]) %>
     <fieldset>
       <legend class="ss-label"><%= fd.label %></legend>
-      <% if fd.kind == :days %>
-        <%= hidden_field_tag "#{name}[]", "", id: nil %>
-        <div class="flex flex-wrap gap-x-3 gap-y-1">
-          <% Automations::Dsl.days.each_with_index do |d, i| %>
-            <label class="inline-flex items-center gap-1 text-sm"><%= check_box_tag "#{name}[]", i, v.nil? || v.include?(i), id: "#{id}-#{i}" %><%= d %></label>
-          <% end %>
-        </div>
-      <% elsif fd.kind == :channels %>
+      <% if fd.kind == :channels %>
         <%= hidden_field_tag "#{name}[]", "", id: nil %>
         <div class="flex flex-wrap gap-x-3 gap-y-1">
           <% (fd.options == :speech ? Notifier.speech_choices(site) : Notifier.channel_choices(site)).each do |key, label| %>

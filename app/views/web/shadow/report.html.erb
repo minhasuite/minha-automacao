@@ -13,7 +13,7 @@
 </nav>
 
 <% if @rows.empty? %>
-  <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("automations.shadow_report.none") %></p></div>
+  <%= render Ss::EmptyStateComponent.new(title: t("automations.shadow_report.none"), css: "ss-card") %>
 <% else %>
   <ul class="ss-card ss-rows" aria-label="<%= t("automations.shadow_report.compared") %>">
     <% @rows.each do |r| %>

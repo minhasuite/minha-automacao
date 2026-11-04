@@ -14,7 +14,7 @@
     <button type="submit" class="ss-btn ss-btn-ghost" aria-label="<%= t("datasets.show.filter") %>"><%= icon("search", "size-4") %></button>
   <% end %>
   <% if @states.empty? %>
-    <div class="ss-card ss-empty"><p class="font-bold text-ink"><%= t("dev_tools.none") %></p></div>
+    <%= render Ss::EmptyStateComponent.new(title: t("dev_tools.none"), variant: :busca, css: "ss-card") %>
   <% else %>
     <ul class="ss-card ss-rows" aria-label="<%= t("dev_tools.tabs.estados") %>">
       <% @states.each do |p| %>

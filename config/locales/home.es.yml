@@ -221,22 +221,18 @@ es:
     not_found_hint: Este registro no existe o no es de tu empresa.
     back_home: Volver al inicio
     pagination: Paginación
-    page_info: "%{count} registros · página %{page} de %{pages}"
-    previous: Anterior
-    next: Siguiente
     icon: Ícono
     icon_default: Predeterminado
     confirm:
       title: ¿Estás seguro?
       back: Volver
       ok: Confirmar
+      delete: Eliminar
+      remove: Quitar
+      erase: Borrar
     palette:
       label: Buscar y ejecutar
-      input: Buscar u ordenar
       hint: 'Buscar u ordenar: apagar la sala, activar escena…'
-      navigate: navegar
-      run: abrir o ejecutar
-      anywhere: se abre desde cualquier pantalla
     cancel: Cancelar
     edit: Editar
     edit_name: Editar %{name}
@@ -500,19 +496,14 @@ es:
     daily: Promedio por día (franja = mín. a máx.)
     drag: Arrastra sobre el gráfico para acercar el tramo.
     no_readings: Sin lecturas en ese período.
-    no_readings_short: Sin lecturas
     timeline: Línea de tiempo
     empty: Elige los puntos para comparar.
     empty_hint: 'Temperatura con el aire encendido, consumo con la bomba, puerta con movimiento: todo en el mismo tiempo.'
   logbook:
     title: Diario
     subtitle: 'Todo lo que pasó en %{site}: cambios, comandos, automatizaciones, escenas, alertas e ingresos.'
-    today: Hoy
-    yesterday: Ayer
-    day_format: "%A, %d de %B"
     loading: Cargando más…
     start: Inicio del período.
-    bigger: Ver un período más largo
     search: Buscar
     search_hint: Buscar punto, dispositivo, automatización o escena
     more_filters: Más filtros
@@ -525,6 +516,7 @@ es:
     empty: No pasó nada en este período.
     empty_filtered: No pasó nada en este período con estos filtros.
     empty_hint: Prueba un período más largo o quita algún filtro.
+    bigger: Ver un período más largo
   maps:
     title: Mapa
     subtitle: Dónde están las personas de %{site}, las zonas y el recorrido de hoy. Solo lo ven residentes, técnicos y el dueño.

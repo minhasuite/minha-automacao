@@ -4,23 +4,30 @@
 <%= render "web/shared/site_switch", sites: @sites, site: @site, path: logbook_path %>
 <% f = @filter %>
 <% sources = Logbook.sources_for(@site_role) %>
-<%= form_with url: logbook_path, method: :get, class: "ss-card ss-card-pad lb-filters mb-5", data: { turbo_frame: "logbook", turbo_action: "advance" } do %>
+<%= form_with url: logbook_path, method: :get, class: "ss-card ss-card-pad lb-filters grid-cols-[minmax(0,1fr)] mb-5", data: { turbo_frame: "logbook", turbo_action: "advance" } do %>
   <%= hidden_field_tag :site_id, @site.id, id: nil %>
+  <%# Chips (faixa da gem) são links com o filtro atual; o formulário leva o período e os tipos escolhidos. %>
+  <% all = sources.map(&:key) %>
+  <% unless f.custom_dates? %><%= hidden_field_tag :period, f.period, id: nil %><% end %>
+  <% if f.keys.size < all.size %><% f.keys.each do |k| %><%= hidden_field_tag "sources[]", k, id: nil %><% end %><% end %>
   <div class="lb-search">
     <%= icon("search", "size-5 text-muted") %>
     <%= search_field_tag :q, f.q, class: "ss-input", placeholder: t("logbook.search_hint"), "aria-label": t("logbook.search") %>
     <button class="ss-btn ss-btn-primary"><%= icon("filter", "size-4") %><%= t("devices.filter") %></button>
   </div>
-  <fieldset class="lb-chips" aria-label="<%= t("history.period") %>">
-    <% Logbook::PERIOD_LABELS.each do |k, label| %>
-      <label class="ss-chip"><%= radio_button_tag :period, k, f.period == k && !f.custom_dates?, class: "sr-only" %><%= label %></label>
-    <% end %>
+  <div class="lb-chips">
+    <nav class="ss-chipbar flex-wrap" aria-label="<%= t("history.period") %>">
+      <% Logbook::PERIOD_LABELS.each do |k, label| %>
+        <% on = f.period == k && !f.custom_dates? %>
+        <%= link_to label, lb_period_path(f, k), class: "ss-fchip no-underline", "aria-current": (on ? "true" : nil), "aria-pressed": on.to_s, data: { turbo_frame: "_top" } %>
+      <% end %>
+    </nav>
     <span class="lb-dates">
       <label class="sr-only" for="lb-from"><%= t("history.from") %></label><%= date_field_tag :from, (f.from.to_date if f.custom_dates?), class: "ss-input num", id: "lb-from" %>
       <span class="text-muted text-sm"><%= t("history.until") %></span>
       <label class="sr-only" for="lb-until"><%= t("history.to") %></label><%= date_field_tag :until, params[:until], class: "ss-input num", id: "lb-until" %>
     </span>
-  </fieldset>
+  </div>
   <details class="lb-more" <%= "open" if f.narrowed? || f.user_id || f.keys.size < sources.size %>>
     <summary><%= icon("chevron-down", "size-4") %><%= t("logbook.more_filters") %></summary>
     <div class="lb-grid">
@@ -33,24 +40,25 @@
       <div><label class="ss-label" for="lb-user"><%= t("logbook.person") %></label>
         <%= select_tag :user_id, options_from_collection_for_select(Logbook.people(@site), :id, :name, f.user_id), include_blank: t("devices.all"), class: "ss-input", id: "lb-user" %></div>
     </div>
-    <fieldset class="lb-chips mt-3" aria-label="<%= t("logbook.what") %>">
+    <nav class="ss-chipbar flex-wrap mt-3" aria-label="<%= t("logbook.what") %>">
       <% sources.each do |s| %>
-        <label class="ss-chip"><%= check_box_tag "sources[]", s.key, f.keys.include?(s.key) && f.keys.size < sources.size, class: "sr-only", id: "lb-s-#{s.key}" %><%= icon(s.icon, "size-4") %><%= s.label %></label>
+        <%= link_to lb_source_path(f, s.key, all), class: "ss-fchip no-underline gap-1.5", "aria-pressed": lb_source_on?(f, s.key, all).to_s, data: { turbo_frame: "_top" } do %><%= icon(s.icon, "size-4") %><%= s.label %><% end %>
       <% end %>
-    </fieldset>
+    </nav>
     <p class="text-xs text-muted mt-2"><%= t("logbook.none_checked") %></p>
   </details>
 <% end %>
 
 <%= turbo_frame_tag "logbook", data: { turbo_action: "advance" } do %>
   <% if @items.empty? %>
-    <div class="ss-card ss-empty">
-      <p class="font-bold text-ink"><%= f.narrowed? || f.user_id ? t("logbook.empty_filtered") : t("logbook.empty") %></p>
-      <p class="mt-1"><%= t("logbook.empty_hint") %></p>
-    </div>
+    <% narrowed = f.narrowed? || f.user_id %>
+    <%= render Ss::EmptyStateComponent.new(variant: (narrowed ? :busca : :nada), title: (narrowed ? t("logbook.empty_filtered") : t("logbook.empty")),
+                                           text: t("logbook.empty_hint"), css: "ss-card") do %>
+      <% if (bigger = lb_bigger_path(f)) %><%= link_to t("logbook.bigger"), bigger, class: "ss-btn ss-btn-ghost", data: { turbo_frame: "_top" } %><% end %>
+    <% end %>
   <% else %>
-    <div class="lb-list ss-card" role="feed" aria-busy="false" aria-label="<%= t("logbook.title") %>">
-      <%= render "page", items: @items, next_cursor: @next, filter: f, zone: @zone, day: nil, frame: nil %>
+    <div class="ss-card">
+      <%= render "page", items: @items, next_cursor: @next, filter: f, zone: @zone, frame: nil %>
     </div>
   <% end %>
 <% end %>

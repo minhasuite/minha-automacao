@@ -28,23 +28,17 @@
   </header>
   <main class="ob-main" id="conteudo">
     <% if @steps && @step %>
+      <%# Passos no Ss::WizardComponent em modo servidor: cada passo é uma página; o já feito (e pronto) é link. %>
       <% done = Array(Onboarding.state(@ctx.tenant)["done"]) %>
-      <ol class="ob-steps" aria-label="<%= t("onboarding.progress") %>">
-        <% @steps.each_with_index do |s, i| %>
-          <% state = s == @step ? "current" : (done.include?(s.key) ? "done" : "todo") %>
-          <li class="ob-step ob-step-<%= state %>" <%= 'aria-current="step"'.html_safe if state == "current" %>>
-            <% if state == "done" && s.ready?(@ctx) %>
-              <%= link_to onboarding_step_path(s.key), class: "ob-dot", title: s.title do %><%= icon("check", "size-4") %><% end %>
-            <% else %>
-              <span class="ob-dot"><%= state == "done" ? icon("check", "size-4") : icon(s.icon, "size-4") %></span>
-            <% end %>
-            <span class="ob-step-label"><span class="sr-only"><%= t("onboarding.step_of", n: i + 1, total: @steps.size) %>: </span><%= s.title %></span>
-          </li>
-        <% end %>
-      </ol>
+      <%= render Ss::WizardComponent.new(current: @steps.index(@step) || 0, done: @steps.each_index.select { |i| done.include?(@steps[i].key) },
+                                         css: "ob-wizard") do |w| %>
+        <% @steps.each { |s| w.with_step(title: s.title, url: (onboarding_step_path(s.key) if s != @step && done.include?(s.key) && s.ready?(@ctx))) } %>
+        <%= yield %>
+      <% end %>
+    <% else %>
+      <%= yield %>
     <% end %>
-    <div class="w-full max-w-5xl"><%= render "web/shared/flash" %></div>
-    <%= yield %>
   </main>
+  <%= render "web/shared/flash" %>
 </body>
 </html>

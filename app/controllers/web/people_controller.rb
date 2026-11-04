@@ -4,13 +4,15 @@ module Web
   # de convite (InvitesController). Em cada pessoa: papel na instalação, papel
   # por local, ativar/desativar e remover. O dono não se desativa nem se remove.
   class PeopleController < ApplicationController
+    include TableSort
+
     before_action :require_admin!
     before_action :require_owner!, except: %i[index show]
     before_action :load_person, only: %i[show update destroy toggle sites]
     before_action :protect_owner!, only: %i[update destroy toggle]
 
     def index
-      @people = current_user.tenant.users.order(:name).to_a
+      @people = current_user.tenant.users.order(table_sort({ "name" => "users.name", "role" => "users.role" }, default: "name")).to_a
       @invites = Invite.pending.includes(:site).order(created_at: :desc).to_a
       @sites = Site.order(:name).to_a
     end

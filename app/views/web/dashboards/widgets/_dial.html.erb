@@ -1,41 +1,42 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<%# Mostrador (ondaB2 B10): termostato, umidificador e luz. Anel de 270° com o alvo, −/+ no alvo, modos e liga/desliga. %>
+<%# Mostrador (ondaB2 B10): termostato, umidificador e luz. Ss::ThermostatComponent com o alvo (−/+, arrasto e envio depois de parar), modos e liga/desliga. %>
 <% d = w["data"] %>
 <% target = points[d["target_id"]] %>
 <% power = points[d["power_id"]] %>
 <% mode = points[d["mode_id"]] %>
 <% main = target || power %>
 <% if d["missing"] || main.nil? %>
-  <div class="dw-card dw-tile dw-unavailable"><span class="dw-ico"><%= icon("question-mark-circle") %></span><span><span class="dw-name"><%= w["label"].presence || t("dashboards.w.point_removed") %></span><span class="dw-state"><%= t("dashboards.w.not_found") %></span></span></div>
+  <%= render Ss::DeviceTileComponent.new(name: w["label"].presence || t("dashboards.w.point_removed"), status: :unavailable, icon: icon("question-mark-circle").to_s,
+                                         unavailable_label: t("dashboards.w.not_found"), css: "h-full") %>
 <% else %>
   <% off_line = main["quality"] != "good" %>
   <% can = target && target["can_command"] && !off_line %>
+  <%# Cor do anel pelo tom do aparelho: aquecer âmbar, resfriar azul, luz na cor real (ou âmbar), o resto na marca;
+      desligado, cinza (modo off), mas o alvo ainda muda (adjust_when_off). %>
   <% glow = dw_glow(points[d["color_id"]]) if d["color_id"] %>
-  <% f = { "value" => d["value"], "step" => d["step"], "min" => d["min"], "max" => d["max"] } %>
-  <div class="dw-card dw-dial dw-dial-<%= d['tone'] %> <%= 'dw-unavailable' if off_line %>" style="<%= "--glow: #{glow}" if glow %>">
+  <% ring = { "heat" => "heat", "light" => "heat", "cool" => "cool", "off" => "off" }.fetch(d["tone"].to_s, "auto") %>
+  <% climate = w["type"] == "thermostat" %>
+  <div class="dw-card dw-dial <%= 'dw-unavailable' if off_line %>">
     <div class="dw-dial-head">
       <span class="dw-name truncate"><%= d["title"] %></span>
       <% if power && power["can_command"] && !off_line %>
-        <%= dw_command_button(power, "toggle", w: w, dashboard: dashboard, live: live, class: "dw-dial-power", form_class: "contents", "aria-pressed": power["on"].to_s,
-                              "aria-label": t(power["on"] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: d["title"])) do %><%= icon("power", "size-4") %><% end %>
+        <%= render Ss::SwitchComponent.new(url: command_point_path(power["id"]), on: power["on"], label: t(power["on"] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: d["title"]),
+                                           params: dw_command_params("toggle", w: w, dashboard: dashboard, live: live), confirm: dw_confirm_text(power), confirm_title: dw_confirm(power)[:turbo_confirm_title]) %>
       <% end %>
     </div>
-    <div class="dw-dial-ring">
-      <svg viewBox="0 0 100 100" aria-hidden="true">
-        <circle cx="50" cy="50" r="42" pathLength="100" class="dw-dial-track"/>
-        <circle cx="50" cy="50" r="42" pathLength="100" class="dw-dial-bar" style="--r: <%= d['ratio'].to_f %>"/>
-      </svg>
-      <div class="dw-dial-center">
-        <span class="dw-dial-label"><%= d["on"] ? d["target_label"] : t("dashboards.cards.turned_off") %></span>
-        <strong class="dw-dial-value num"><% if d["value"].is_a?(Numeric) %><%= dw_number(d["value"]) %><small><%= d["unit"] %></small><% else %><%= main["text"].presence || "—" %><% end %></strong>
-        <% if d["current"].is_a?(Numeric) %><span class="dw-dial-now num"><%= icon("thermometer", "size-4") if w["type"] == "thermostat" %><%= t("dashboards.cards.now_x", value: dw_number(d["current"], d["unit"])) %></span><% end %>
-      </div>
-    </div>
-    <% if can %>
-      <div class="dw-dial-steps" role="group" aria-label="<%= d["target_label"] %>">
-        <%= dw_command_button(target, "set", value: dw_step(f, -1), w: w, dashboard: dashboard, live: live, class: "dw-step dw-step-lg", form_class: "contents", "aria-label": t("dashboards.feat.less", name: d["target_label"])) do %><%= icon("minus") %><% end %>
-        <%= dw_command_button(target, "set", value: dw_step(f, 1), w: w, dashboard: dashboard, live: live, class: "dw-step dw-step-lg", form_class: "contents", "aria-label": t("dashboards.feat.more", name: d["target_label"])) do %><%= icon("plus") %><% end %>
-      </div>
+    <% if target %>
+      <%# Fora do clima o alvo não é temperatura: número sem o "°" e a unidade na legenda. %>
+      <% labels = climate ? {} : { idle: [ d["target_label"], d["unit"] ].compact_blank.join(" · ") } %>
+      <% now = t("dashboards.cards.now_x", value: dw_number(d["current"], d["unit"])) if d["current"].is_a?(Numeric) %>
+      <%= dw_command_form(target, "set", w: w, dashboard: dashboard, live: live) do %>
+        <%= render Ss::ThermostatComponent.new(name: "value", target: d["value"].is_a?(Numeric) ? d["value"] : d["min"], current: (d["current"] if d["current"].is_a?(Numeric)),
+                                               min: d["min"], max: d["max"], step: d["step"], mode: (d["on"] ? ring : "off"), modes: [], show_modes: false, unit: d["unit"].to_s,
+                                               color: (glow if d["on"]), adjust_when_off: true, current_label: now,
+                                               action: (climate ? nil : :idle), format: (climate ? nil : "%.0f"), disabled: !can,
+                                               label: d["target_label"], labels: labels.merge(off: t("dashboards.cards.turned_off")), id: "th_#{w['id']}") %>
+      <% end %>
+    <% else %>
+      <p class="dw-dial-state"><%= off_line ? t("dashboards.w.no_signal") : (main["text"].presence || "—") %></p>
     <% end %>
     <% if mode && d["modes"].present? %>
       <div class="dw-chips dw-chips-wrap mt-3" role="group" aria-label="<%= mode["name"] %>">

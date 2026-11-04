@@ -1,4 +1,5 @@
 <%= render "web/shared/header", title: t("integrations.new.title", name: @plugin.title), subtitle: @plugin.description, back: site_integrations_path(@site, anchor: "adicionar") %>
+<%= render layout: "web/integrations/wizard", locals: { current: 0 } do %>
 <% if @plugin.discovers? %>
   <%# Pacote 1: descoberta na rede (mDNS ou a do plugin). Só lista; "Usar" preenche o endereço do formulário. %>
   <section class="ss-card ss-card-pad grid gap-3 max-w-2xl mb-4" aria-labelledby="na-rede">
@@ -26,11 +27,12 @@
     <% end %>
   </section>
 <% end %>
-<%= form_with scope: :integration, url: site_integrations_path(@site, tipo: @plugin.key), multipart: true, class: "ss-card ss-card-pad grid gap-4 max-w-2xl",
+<%= ss_form_with scope: :integration, url: site_integrations_path(@site, tipo: @plugin.key), multipart: true, class: "ss-card ss-card-pad grid gap-4 max-w-2xl",
               data: { turbo_submits_with: t("integrations.common.connecting") } do |f| %>
   <%= render integration_form_partial(@plugin), f: f, integration: nil %>
   <div class="flex flex-wrap gap-2">
     <%= f.submit t("integrations.common.continue"), class: "ss-btn ss-btn-primary" %>
     <%= link_to t("integrations.common.cancel"), site_integrations_path(@site), class: "ss-btn ss-btn-ghost" %>
   </div>
+<% end %>
 <% end %>

@@ -78,6 +78,6 @@ RSpec.describe "Câmeras: proxy do go2rtc com autorização do local" do
   it "o painel mostra o widget de câmera" do
     sign_in
     get "/"
-    expect(response.body).to include("Câmeras", 'data-controller="camera"', "/cameras/#{camera.id}/quadro", "Ao vivo")
+    expect(response.body).to include("Câmeras", 'data-controller="camera ss-camera"', "/cameras/#{camera.id}/quadro", "Ao vivo")
   end
 end

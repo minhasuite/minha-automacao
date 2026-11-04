@@ -1,12 +1,9 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Medidor da gem (ss_gauge): anel com o valor e o nome no meio; mínimo e máximo embaixo. %>
 <% p = points[w["data"]["point_ids"].first] %>
 <% ratio = w["data"]["ratio"] %>
-<div class="dw-card">
-  <p class="dw-card-title"><%= p ? dw_label(w, p) : (w["label"].presence || t("dashboards.w.gauge")) %></p>
-  <svg viewBox="0 0 100 56" class="w-full max-w-56 mx-auto block mt-1" role="img" aria-label="<%= p ? "#{dw_label(w, p)}: #{p['text']}" : 'Sem valor' %>">
-    <path d="M10 50 A40 40 0 0 1 90 50" pathLength="100" class="dw-gauge-track" />
-    <% if ratio %><path d="M10 50 A40 40 0 0 1 90 50" pathLength="100" class="dw-gauge-bar" stroke-dasharray="<%= (ratio * 100).round(2) %> 100" /><% end %>
-  </svg>
-  <p class="text-center -mt-8 text-2xl font-bold num text-ink"><%= p && p["quality"] == "good" ? p["text"] : "—" %></p>
-  <p class="flex justify-between text-xs text-muted num mt-1 max-w-56 mx-auto"><span><%= dw_number(w["data"]["min"]) %></span><span><%= dw_number(w["data"]["max"]) %></span></p>
+<% label = p ? dw_label(w, p) : (w["label"].presence || t("dashboards.w.gauge")) %>
+<div class="dw-card dw-gauge">
+  <%= ss_gauge(ratio || 0, label: label, text: p && p["quality"] == "good" ? p["text"] : "—") %>
+  <p class="dw-gauge-range num"><span><%= dw_number(w["data"]["min"]) %></span><span><%= dw_number(w["data"]["max"]) %></span></p>
 </div>

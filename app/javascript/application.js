@@ -2,27 +2,6 @@
 import { Turbo } from "@hotwired/turbo-rails"
 import "controllers"
 
-// Confirmação (data-turbo-confirm) no <dialog> da suíte, não no confirm() do navegador.
-// O botão leva o verbo da ação (data-turbo-confirm-button="Arquivar" no botão ou no
-// form; sem ele, o verbo do começo da pergunta: "Remover a fase?" → Remover) e fica
-// vermelho quando a ação destrói ou desfaz algo. Título: data-turbo-confirm-title.
-const DANGER = /^(apagar|arquivar|cancelar|desconectar|encerrar|excluir|recusar|remover|tirar|zerar)/i
-Turbo.config.forms.confirm = (message, element, submitter) => {
-  const dialog = document.getElementById("confirm")
-  if (!dialog) return Promise.resolve(confirm(message))
-  const data = { ...element?.dataset, ...submitter?.dataset }
-  const first = message.match(DANGER)?.[0]
-  const verb = data.turboConfirmButton || (first ? first[0].toUpperCase() + first.slice(1).toLowerCase() : "Confirmar")
-  const ok = dialog.querySelector("[value=ok]")
-  dialog.querySelector("[data-title]").textContent = data.turboConfirmTitle || "Tem certeza?"
-  dialog.querySelector("[data-message]").textContent = message
-  ok.textContent = verb
-  ok.classList.toggle("ss-btn-danger", DANGER.test(verb) || DANGER.test(message))
-  ok.classList.toggle("ss-btn-primary", !ok.classList.contains("ss-btn-danger"))
-  dialog.showModal()
-  return new Promise((resolve) => dialog.addEventListener("close", () => resolve(dialog.returnValue === "ok"), { once: true }))
-}
-
 // "Processando" também nos formulários fora do Turbo (data-turbo=false: upload
 // e telas da IA que respondem com página): o Turbo só cuida dos dele.
 document.addEventListener("submit", (e) => {
@@ -73,6 +52,23 @@ document.addEventListener("change", (e) => {
   if (e.target.matches("[data-autosubmit]")) e.target.form.requestSubmit()
 })
 
+// −/+ da gem (Ss::StepperInputComponent) num form de comando de widget
+// (form[data-dw-autosubmit]): vários toques seguidos viram um comando só.
+document.addEventListener("change", (e) => {
+  const form = e.target.closest?.("form[data-dw-autosubmit]")
+  if (!form) return
+  clearTimeout(form.dwTimer)
+  form.dwTimer = setTimeout(() => form.requestSubmit(), 600)
+})
+
+// O título da câmera e as ações do aviso da gem não aceitam data-turbo-frame (o tile
+// usa link_data:): dentro do quadro de um widget abrem a página toda.
+const TOP_IN_WIDGET = "turbo-frame :is(.ss-cam a.ss-cam-title, .ss-notice :is(a[href], button[type=submit])):not([data-turbo-frame])"
+document.addEventListener("click", (e) => {
+  const el = e.target.closest?.(TOP_IN_WIDGET)
+  if (el) el.dataset.turboFrame = "_top"
+}, true)
+
 // Linha de tabela inteira clicável: vai para o primeiro link da linha.
 document.addEventListener("click", (e) => {
   const row = e.target.closest(".ss-table tbody tr")
@@ -114,8 +110,8 @@ if ("serviceWorker" in navigator && window.isSecureContext) {
   navigator.serviceWorker.register("/service-worker.js", { scope: "/" }).catch(() => {})
 }
 
-// Menus em <details> (.ss-menu, .dw-pop): Esc fecha e devolve o foco ao botão,
-// clique fora fecha, e o summary diz se está aberto (aria-expanded).
+// Menus em <details> (.ss-menu da gem e .dw-pop): Esc fecha e devolve o
+// foco ao botão, clique fora fecha, e o summary diz se está aberto (aria-expanded).
 const MENUS = "details.ss-menu, details.dw-pop"
 document.addEventListener("toggle", (e) => {
   if (e.target.matches?.(MENUS)) e.target.querySelector(":scope > summary")?.setAttribute("aria-expanded", e.target.open)

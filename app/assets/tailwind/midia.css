@@ -4,6 +4,8 @@
   .ma-player { position: relative; overflow: hidden; }
   .ma-player::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--line); }
   .ma-player[data-state="playing"]::before { background: linear-gradient(90deg, var(--accent-solid), color-mix(in srgb, var(--accent-solid) 30%, #22c3a6)); }
+  /* O Ss::MediaPlayerComponent já está dentro do cartão do player: sem a moldura dele. */
+  .ma-player .ss-media { padding: 0; background: none; border: 0; box-shadow: none; }
 
   .ma-source { transition: transform .15s, box-shadow .15s; }
   .ma-source:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -20px rgba(30, 20, 90, .55); }
@@ -26,12 +28,6 @@
             background: color-mix(in srgb, var(--accent-solid) 12%, var(--field)); box-shadow: 0 20px 40px -28px rgba(30, 20, 90, .7); }
   .ma-art img { width: 100%; height: 100%; object-fit: cover; }
 
-  /* Câmera: ao vivo, PTZ (cruz) e falar. */
-  .ma-cam .dw-camera-view { aspect-ratio: 16 / 9; }
-  .ma-ptz { display: grid; grid-template-columns: repeat(3, 2.75rem); grid-template-rows: repeat(3, 2.75rem); gap: .35rem; }
-  .ma-ptz form { display: contents; }
-  .ma-ptz button { display: grid; place-items: center; border-radius: .9rem; background: var(--field); color: var(--ink); border: 1px solid var(--line); }
-  .ma-ptz button:hover { border-color: var(--accent-solid); color: var(--accent); }
-  .ma-ptz-up { grid-area: 1 / 2; } .ma-ptz-left { grid-area: 2 / 1; } .ma-ptz-home { grid-area: 2 / 2; } .ma-ptz-right { grid-area: 2 / 3; } .ma-ptz-down { grid-area: 3 / 2; }
+  /* Câmera: falar (o quadro é o Ss::CameraTileComponent, o PTZ o Ss::DPadComponent). */
   .ma-talk[aria-pressed="true"] { background: var(--danger, #e5484d); color: #fff; border-color: transparent; }
 }

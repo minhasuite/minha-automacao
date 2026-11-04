@@ -1,0 +1,131 @@
+/* Ponte entre o produto e a gem componentes_ui (migração W1–W final, v0.10.1).
+   A gem traz os tokens, o tema e as .ss-*; aqui fica só o que o produto tem a mais:
+   1. extensões .ss-* que a gem ainda não tem (candidatas a subir para o componentes-ui);
+   2. ajustes em que o produto difere da gem de propósito (cada um diz por quê);
+   3. as peças do produto que colidiam com nomes da gem, renomeadas para ma-*.
+   Ao subir uma peça para a gem, apague daqui. */
+
+@layer base {
+  /* Caixa de marcar e opção desenhadas em toda a tela (iguais no claro e no escuro), com o
+     visto da marca. A gem só desenha dentro de .ss-check/.ss-option-card; o produto tem
+     caixas soltas (tabelas, listas, editor), que voltariam ao visual nativo. */
+  input[type=checkbox], input[type=radio] { width: 1.15rem; height: 1.15rem; flex-shrink: 0; accent-color: var(--accent); cursor: pointer; }
+  input:is([type=checkbox], [type=radio]):not(.sr-only) { appearance: none; margin: 0; display: inline-grid; place-content: center; vertical-align: middle;
+            background: var(--surface); border: 1.5px solid color-mix(in srgb, var(--muted) 60%, var(--line)); border-radius: 6px;
+            transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+  input[type=radio]:not(.sr-only) { border-radius: 999px; }
+  input:is([type=checkbox], [type=radio]):not(.sr-only):hover { border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring); }
+  input:is([type=checkbox], [type=radio]):not(.sr-only):checked { background: var(--accent-solid); border-color: var(--accent-solid); }
+  input[type=checkbox]:not(.sr-only)::before { content: ""; width: .7rem; height: .7rem; background: #fff; transform: scale(0); transition: transform .12s ease;
+            clip-path: polygon(14% 44%, 0 59%, 40% 100%, 100% 23%, 86% 9%, 40% 70%); }
+  input[type=radio]:not(.sr-only)::before { content: ""; width: .45rem; height: .45rem; border-radius: 999px; background: #fff; transform: scale(0); transition: transform .12s ease; }
+  input:is([type=checkbox], [type=radio]):not(.sr-only):checked::before { transform: scale(1); }
+  input:is([type=checkbox], [type=radio]):disabled { opacity: .5; cursor: not-allowed; }
+}
+
+@layer components {
+  .ss-badge-muted { background: var(--field); color: var(--ink-2); box-shadow: none; }
+
+
+
+  /* Chip atual: fundo sólido com sombra, como o resto do produto (a gem usa o --grad). */
+  .ss-chip[aria-current="true"] { background-image: none; background-color: var(--accent-solid); color: #fff; box-shadow: 0 6px 16px -8px rgba(90, 69, 232, .7); }
+  /* Contador dentro do chip (filtros): pílula própria, legível no chip atual. */
+  .ss-chip-count { min-width: 1.35rem; padding: 0 .35rem; border-radius: 999px; font: 700 .7rem/1.35rem var(--font-mono); text-align: center;
+                   background: color-mix(in srgb, currentColor 14%, transparent); }
+
+  /* Lista de helpers: linha com ícone, nome, valor e o controle na mesma linha. */
+  .ss-rows > li { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--line); }
+  .ss-rows > li:last-child { border-bottom: 0; }
+  .ss-rows > li:hover { background: color-mix(in srgb, var(--accent) 3%, transparent); }
+  /* Botões compactos em grupo que mandam comando a cada toque (ações do ponto, points/_control). */
+  .ss-step { display: inline-flex; align-items: center; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+  .ss-step form { display: contents; }
+  .ss-step button { display: grid; place-items: center; width: 2.2rem; height: 2.2rem; color: var(--ink-2); cursor: pointer; }
+  .ss-step button:hover { background: var(--accent-soft); color: var(--accent); }
+
+}
+
+/* Atalhos de seção (Configurações e local): a atual preenchida, não só contornada. */
+.ss-subnav a { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
+.ss-subnav a[aria-current="page"], .ss-subnav a[aria-current="page"]:hover { background: var(--accent-soft); color: var(--accent); font-weight: 700;
+            border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+/* No celular a faixa vira menu (aba atual + grade com todas), sem rolar de lado. */
+.ss-subnav-menu { margin-bottom: 1rem; }
+.ss-subnav-current { display: flex; align-items: center; gap: .55rem; padding: .7rem .9rem; border-radius: 14px; cursor: pointer;
+                     background: var(--surface); border: 1px solid var(--line); color: var(--accent); font-weight: 700; font-size: .9rem; }
+.ss-subnav-current::before { display: none !important; }
+.ss-subnav-menu[open] .ss-subnav-chevron { transform: rotate(180deg); }
+.ss-subnav-chevron { transition: transform .2s ease; color: var(--ink-2); }
+.ss-subnav-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; margin-top: .5rem; }
+.ss-subnav-grid a { display: flex; align-items: center; gap: .45rem; min-width: 0; padding: .6rem .7rem; border-radius: 12px; font-size: .85rem; font-weight: 600;
+                    color: var(--ink-2); text-decoration: none; background: var(--surface); border: 1px solid var(--line); }
+.ss-subnav-grid a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+
+/* Texto só para leitor de tela dentro de tabela rolável não estica a página. */
+.overflow-x-auto { position: relative; }
+/* Faixa de chips (filtros e sub-abas): rola de lado sem barra aparente. */
+.ss-chips { display: flex; gap: .5rem; overflow-x: auto; padding: .15rem .1rem .45rem; scrollbar-width: none; }
+.ss-chips::-webkit-scrollbar { display: none; }
+.ss-chips > * { flex-shrink: 0; }
+@media (min-width: 640px) { .ss-chips { flex-wrap: wrap; overflow: visible; } }
+/* Ação perigosa separada do resto do cartão. */
+.ss-danger-zone { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed color-mix(in srgb, var(--danger) 35%, var(--line)); }
+@media (max-width: 639px) {
+  /* Faixas que rolam de lado (seções, visões) somem na borda: mostra que tem mais. */
+  .ss-subnav, .dw-tabs, .ss-chips { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent);
+                         mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent); padding-right: 2rem; scrollbar-width: none; }
+  .ss-subnav::-webkit-scrollbar { display: none; }
+}
+
+/* Menos movimento: o produto desliga tudo (a gem desliga as peças dela). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* Pular para o conteúdo: primeiro Tab da página. */
+.ss-skip { position: fixed; white-space: nowrap; left: 50%; transform: translateX(-50%); top: -4rem; z-index: 70; padding: .6rem 1rem; border-radius: 12px; background: var(--accent-solid); color: #fff;
+           font-weight: 700; text-decoration: none; transition: top .15s ease; }
+.ss-skip:focus { top: .5rem; }
+/* <details> de mostrar/esconder: chevron da Lista Clara no lugar do triângulo nativo. */
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
+.ss-summary { display: flex; align-items: center; gap: .5rem; cursor: pointer; border-radius: 10px; }
+.ss-summary::before { content: ""; width: 1rem; height: 1rem; flex-shrink: 0; background: currentColor; opacity: .55; transform: rotate(-90deg);
+                      transition: transform .2s cubic-bezier(.2, .8, .2, 1); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='black' stroke-width='2.4'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='black' stroke-width='2.4'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") center / contain no-repeat; }
+details[open] > .ss-summary::before { transform: none; }
+.ss-summary:hover::before { opacity: 1; color: var(--accent); }
+.ss-summary.flex-wrap::before { align-self: center; }
+/* Ações em massa dos dispositivos (.ss-selection-bar da gem): a área só aparece para "Mover para área". */
+.ss-selection-bar:not(:has(option[value="area"]:checked)) .ma-bulk-area { display: none; }
+/* Situação com ponto colorido antes do texto. */
+.ss-badge-dot::before { content: ""; width: .4rem; height: .4rem; border-radius: 999px; background: currentColor; }
+/* Linhas de lista com seta: a seta anda um pouco no hover. */
+.ss-go > svg:last-child { transition: transform .2s ease, color .2s ease; }
+.ss-go:hover > svg:last-child { transform: translateX(3px); color: var(--accent); }
+/* Passos do editor (Quando → Só se → Então): número em círculo antes do título.
+   Era .ss-flow/.ss-flow-step; na gem .ss-flow é o diagrama de energia. */
+.ma-flow { counter-reset: passo; }
+.ma-flow-step { display: flex; align-items: center; gap: .6rem; counter-increment: passo; }
+.ma-flow-step::before { content: counter(passo); display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 999px; flex-shrink: 0;
+                        font: 800 .78rem/1 var(--font-mono); color: #fff; background: var(--accent-solid); box-shadow: 0 6px 14px -6px rgba(90, 69, 232, .7); }
+
+/* Moldura (Ss::AppShellComponent): o rodapé do menu é a pessoa, o tema, os valores e sair
+   (slot side_footer). Recolhido, sobra a inicial. Na camada components: o
+   .ss-shell-label da gem esconde o resto (recolhido no .ss-shell ou no <html>). */
+@layer components {
+  .ma-side-user { display: flex; align-items: center; gap: .75rem; padding: .35rem .35rem .5rem; }
+  @media (min-width: 1024px) {
+    :is(.ss-shell[data-collapsed], html[data-ss-shell-collapsed] .ss-shell) .ma-side-user { justify-content: center; padding-inline: 0; }
+  }
+  .ma-side-avatar { display: grid; place-items: center; width: 2rem; height: 2rem; flex: none; border-radius: 999px; font-size: .875rem; font-weight: 700; color: #fff;
+                    background: linear-gradient(135deg, rgba(123, 92, 255, .55), rgba(59, 130, 246, .45)); box-shadow: 0 0 0 2px rgba(255, 255, 255, .1); }
+  .ma-side-role { flex: none; padding: .1rem .5rem; border-radius: 999px; font-size: .625rem; font-weight: 600; color: rgba(255, 255, 255, .6); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
+  .ma-side-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .25rem; }
+  .ma-side-actions button { display: flex; align-items: center; justify-content: center; gap: .375rem; width: 100%; padding: .5rem 0; border: 0; border-radius: .5rem;
+                            background: transparent; color: rgba(255, 255, 255, .7); font-size: .75rem; cursor: pointer; }
+  .ma-side-actions button:hover { color: #fff; background: rgba(255, 255, 255, .1); }
+}
+/* Cabeçalho (web/shared/_header = Ss::PageComponent só com o topo; o corpo da tela vem
+   depois, fora do componente): o espaço até o corpo. */
+.ma-page-head { margin-bottom: 1.5rem; }
