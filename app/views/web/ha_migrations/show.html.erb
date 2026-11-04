@@ -144,3 +144,28 @@
     <%= button_to t("ha_migration.import_again"), reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-ghost", form: { class: "contents" } %>
   </div>
 <% end %>
+
+<% if @integration&.secrets&.dig("token").present? && !%w[fetching importing].include?(status) %>
+  <% dz = s["dashboards"].to_h %>
+  <section id="mg-dash" class="ss-card ss-card-pad mt-4 ss-rise" aria-labelledby="mg-dash-t" <%= 'data-controller="reload" data-reload-every-value="2000"'.html_safe if dz["status"] == "running" %>>
+    <h2 id="mg-dash-t" class="flex items-center gap-2"><%= icon("view-boards", "size-5 text-accent") %><%= t("ha_migration.dash.title") %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("ha_migration.dash.hint") %></p>
+    <% if dz["status"] == "running" %>
+      <p class="text-sm mt-3" role="status"><span class="up-spin"></span> <%= t("ha_migration.dash.running") %></p>
+    <% elsif dz["status"] == "failed" %>
+      <p class="mg-error mt-3" role="alert"><%= icon("exclamation-circle", "size-5 shrink-0") %><%= dz["error"] %></p>
+    <% elsif dz["status"] == "done" %>
+      <p class="text-sm mt-3 text-success" role="status"><%= t("ha_migration.dash.done", n: dz["list"].size) %></p>
+      <ul class="mt-2 flex flex-wrap gap-2">
+        <% dz["list"].each do |d| %><li><%= link_to d["name"], dashboard_path(d["id"]), class: "ss-btn ss-btn-outline ss-btn-sm" %></li><% end %>
+      </ul>
+      <% if dz["notes"].any? %>
+        <details class="mt-3"><summary class="text-sm font-semibold text-accent cursor-pointer"><%= t("ha_migration.dash.notes", n: dz["notes"].size) %></summary>
+          <ul class="mg-report mt-2"><% dz["notes"].each do |n| %><li class="mg-warn"><%= icon("minus-circle", "size-5 shrink-0") %><p class="text-sm break-words"><%= n %></p></li><% end %></ul></details>
+      <% end %>
+    <% end %>
+    <% unless dz["status"] == "running" %>
+      <%= button_to dashboards_site_ha_migration_path(@site), class: "ss-btn ss-btn-primary mt-4", form: { data: { turbo_confirm: (t("ha_migration.dash.confirm") if dz["status"] == "done") } } do %><%= icon("download", "size-4") %><%= dz["status"] == "done" ? t("ha_migration.dash.again") : t("ha_migration.dash.import") %><% end %>
+    <% end %>
+  </section>
+<% end %>

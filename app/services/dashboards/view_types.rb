@@ -11,6 +11,7 @@ module Dashboards
   module ViewTypes
     PLUGINS = %w[Sections Masonry Panel Sidebar].freeze
     POSITIONS = %w[main sidebar].freeze
+    BACK = %r{\A(?:[\w-]{1,100}|/paineis/[\w-]{1,40}(?:\?view=[\w-]{1,40})?)\z}
 
     module_function
 
@@ -22,7 +23,7 @@ module Dashboards
       e = []
       e << I18n.t("dashboards.schema.view_type", where: where) if view.key?("type") && !self[view["type"]]
       e << I18n.t("dashboards.schema.view_subview", where: where) if view.key?("subview") && ![ true, false ].include?(view["subview"])
-      e << I18n.t("dashboards.schema.view_back", where: where) if view.key?("back_path") && !view["back_path"].to_s.match?(/\A[\w-]{1,100}\z/)
+      e << I18n.t("dashboards.schema.view_back", where: where) if view.key?("back_path") && !view["back_path"].to_s.match?(BACK)
       Array(view["sections"]).each do |s|
         e << I18n.t("dashboards.schema.section_position", where: where) if s.is_a?(Hash) && s.key?("position") && !POSITIONS.include?(s["position"])
       end
@@ -32,12 +33,20 @@ module Dashboards
     # Visões das abas: as subvisões só aparecem quando abertas.
     def tabs(views, current) = views.reject { |v| v["subview"] == true && v != current }
 
-    # Para onde o "voltar" da subvisão leva.
+    # Para onde o "voltar" da subvisão leva. `back_path` também pode ser outro
+    # painel (`/paineis/<id>?view=<caminho>`, painel importado do HA): `other`.
     def back(views, view)
       return unless view["subview"] == true
+      return other(view["back_path"]) if view["back_path"].to_s.start_with?("/")
 
       ref = view["back_path"]
       views.find { |v| ref && (v["path"] == ref || v["id"] == ref) } || views.find { |v| v["subview"] != true }
+    end
+
+    def other(path)
+      id = path.to_s[%r{\A/paineis/([\w-]+)}, 1]
+      d = id && Dashboard.find_by(id: id) or return nil
+      { "title" => d.name, "href" => path }
     end
 
     class Base

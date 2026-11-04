@@ -1,0 +1,3 @@
+Material Design Icons (@mdi/js 7.4.47, Pictogrammers, Apache 2.0).
+mdi.json = {nome-em-kebab => path do SVG 24x24}, gerado de mdi.js.
+Uso: icon("mdi:stove") (ApplicationHelper#icon).

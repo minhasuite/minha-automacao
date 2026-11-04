@@ -8,7 +8,12 @@ class HaMigrationJob < ApplicationJob
     integration = ActsAsTenant.without_tenant { Integration.find_by(id: integration_id) } or return
     ActsAsTenant.with_tenant(integration.tenant) do
       m = Integrations::HaMigration
-      if phase == "fetch"
+      if phase == "dashboards"
+        r = Integrations::HaDashboards.call(integration.site, integration)
+        result = { "status" => "done", "finished_at" => Time.current.iso8601, "list" => r.dashboards.map { |d| { "id" => d.id, "name" => d.name } },
+                   "notes" => r.notes.first(300) }
+        m.save_state!(integration.reload, m.state(integration).merge("dashboards" => result))
+      elsif phase == "fetch"
         preview = m.preview(integration.site, m.fetch(integration))
         m.save_state!(integration, { "status" => "preview", "preview" => preview, "fetched_at" => Time.current.iso8601 })
       else
@@ -16,7 +21,11 @@ class HaMigrationJob < ApplicationJob
         m.save_state!(integration, m.state(integration).merge("status" => "done", "report" => report, "finished_at" => Time.current.iso8601))
       end
     rescue Integrations::Error, SafeHttp::Error, Psych::Exception, ActiveRecord::RecordInvalid => e
-      m.save_state!(integration.reload, m.state(integration).merge("status" => "failed", "error" => e.message.truncate(200), "phase" => phase))
+      if phase == "dashboards"
+        m.save_state!(integration.reload, m.state(integration).merge("dashboards" => { "status" => "failed", "error" => e.message.truncate(200) }))
+      else
+        m.save_state!(integration.reload, m.state(integration).merge("status" => "failed", "error" => e.message.truncate(200), "phase" => phase))
+      end
     end
   end
 end

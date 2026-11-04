@@ -11,7 +11,7 @@ para validar UI/UX. Produto em
 está na skill `padrao-suite`; aqui só o que é deste repo.
 
 **Estado:** base da suíte (empresa, usuários, auth da API, convites, push,
-notificações, assinatura, IA, licenças, telemetria, páginas legais e conta) +
+notificações, IA da instalação, telemetria, páginas legais e conta) +
 **F1**: locais, áreas, papéis por local, dispositivos, pontos, etiquetas (só
 modelo), na web (`/locais`) e na API + **F2**: comandos rastreados
 (`Command`, `Points::Command` → `ExecuteCommandJob` → `Drivers.for`),
@@ -104,8 +104,9 @@ comparação, painel pronto), Mapa e o assistente "Migre do HA em 10 minutos". +
 pt-BR/en/es (`config/locales/web.*.yml`, `Localized`), instalador `install.sh`,
 atualização com um clique (`Updates`, `bin/ma-update`, supervisor
 `/system/update`; `docs/instalacao.md`), acesso remoto por provedores
-(`RemoteAccess`; `docs/remote-access.md`) e planos com limites (`Licensing`;
-`docs/planos.md`).
+(`RemoteAccess`; `docs/remote-access.md`). **Produto aberto** (04/11/2026,
+Apache 2.0): sem planos, licença, assinatura nem IA paga da suíte; tudo
+liberado, a IA só com a chave da instalação.
 
 ## Rodar
 
@@ -129,10 +130,10 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   primeira configuração; dono sem local também, até concluir ou pular.
   **Texto de tela novo vai para `config/locales/web.{pt-BR,en,es}.yml`** (o
   `spec/i18n_spec.rb` exige as mesmas chaves); idioma da pessoa em
-  `users.dashboard_prefs["locale"]`. Licença do produto (`Licensing`, free/
-  plus/pro) não é a assinatura da IA (`Plans`); sem licença gravada = `pro`.
+  `users.dashboard_prefs["locale"]`. Não há plano nem limite por instalação
+  (repo público e aberto): nada de checar licença ou assinatura.
 
-- **Papéis** (`User::ROLES`): `owner` (Dono: tudo, inclusive plano, chaves de
+- **Papéis** (`User::ROLES`): `owner` (Dono: tudo, inclusive chaves de
   integração, zerar e convidar administrador), `admin` (Administrador:
   convida membro, vê os avisos da empresa, usa a IA), `member` (Membro).
   Dono e administrador da empresa são `owner` em todos os locais.
@@ -163,7 +164,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   em ponto de dispositivo `virtual`.
 - **Zerar / exportar / excluir**: tabela nova do domínio entra em
   `Accounts::WipeData::MODELS` (filhos antes dos pais) e em
-  `Accounts::ExportData`. `AiUsage` não zera (senão zeraria a cota).
+  `Accounts::ExportData`.
 - **Notificação** com `user` vai só para a pessoa; sem `user`, para dono e
   administradores (`Notification.for_user`, `SendPushJob`). Crie pelo
   `Notifier.notify!` (push + `dedup_key`).
@@ -184,8 +185,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (`control?`) aceita `continue_on_error` (passo "erro tolerado").
 - **IA da instalação (Lote 2)**: provedor = classe em `app/services/ai/providers/`
   (`Ai::Providers::Base`: `describe` com `capabilities` e `complete`) + nome
-  em `Ai::PROVIDERS`; a IA da suíte (`Ai::Provider.for`) usa os mesmos
-  plugins, só os que têm `env`. Chave do usuário em `AiAccount.api_key`
+  em `Ai::PROVIDERS`. Não há IA da suíte (chave em env): chave do usuário em `AiAccount.api_key`
   (`encrypts`), nunca na tela, no log ou no `.env`. Toda chamada passa por
   `Ai::Request` (conta, limite `Ai::Budget`, capacidades) e vira um `AiCall`
   sem prompt nem resposta. Ollama pelo `SafeHttp` (IP da LAN em `http_allow`).
@@ -196,16 +196,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `Datasets::OPERATORS`), nunca SQL do usuário. Gravar refaz os helpers
   Consulta pela `address.sources` (= id do conjunto). Campo de select com
   opções vindas de registro: `options: -> { ... }` e `fd.choices`.
-- **IA**: features em `AiPlanFeature::FEATURES` (`ask`, `daily_summary` são
-  placeholders). Grátis não tem IA; Pro no tier light, Max no standard.
-  Feature nova = entrada em `DEFAULTS` (a lista entra na chave do cache).
-- **Credencial vazia = feature desligada:** IA, Google, FCM, R2, meulog, SMTP,
-  licenças.
-- **Licenciamento central** (`Licencas::*`, contrato em
-  `../../licencas-workspace/licencas/docs/INTEGRACAO.md`): o `recompute!`
-  informa as assinaturas, a exclusão da empresa apaga o dono lá e a venda pela
-  web vira `source/plan_provider: licencas`. `LicencasEnviarTudoJob` (e a rake
-  `licencas:enviar_tudo`) reenvia tudo todo dia às 4h.
+- **Credencial vazia = feature desligada:** Google, FCM, R2, meulog, SMTP.
 - `encrypts` exige `AR_ENCRYPTION_*` em produção (dev/teste derivam do
   `secret_key_base`).
 - **Comandos (F2)**: `Points::Command.call(point, cmd, value, source:)` valida
@@ -593,6 +584,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `UpdateAutoJob`. Versão só por `Updates.newer?` (beta < estável do mesmo
   número; a beta não volta para a estável dela). Fonte nova de versões
   implementa `latest(channel)`.
+- **Painéis do HA** (`docs/dashboards.md`, fim): `Dashboards::HaImport` traduz
+  o Lovelace resolvido com a mesma disposição (card novo = entrada em `CARDS`,
+  nada de `case` por card fora dele); `Integrations::HaDashboards` busca e
+  publica. Painel do app à parte (`dashboards.app_default`,
+  `Dashboard.default_for(app: true)`). Ícone `mdi:nome` em qualquer lugar.
 - **Paridade com o HA (roadmap de vendas, compat)**: Diário = fontes em
   `Logbook::SOURCES` (`describe` + `fetch(filtro)`; cadastro técnico+,
   entradas só dono; cena acionada vira evento `scene`, entrada na web/app

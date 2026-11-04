@@ -10,7 +10,7 @@ module Api
         site = Site.find(params[:site_id])
         role = authorize_site!(site, :view)
         list = Dashboard.ensure_for(site).select { |d| d.visible_to?(role) }
-        default = Dashboard.default_for(site, current_user, role)
+        default = Dashboard.default_for(site, current_user, role, app: true) # a API é a do app
         render_data(list.map { |d| summary(d).merge(default: d.id == default&.id) })
       end
 
@@ -106,7 +106,7 @@ module Api
       end
 
       def summary(d)
-        { id: d.id, site_id: d.site_id, name: d.name, kind: d.kind, auto: d.auto, site_default: d.site_default, version: d.version,
+        { id: d.id, site_id: d.site_id, name: d.name, kind: d.kind, auto: d.auto, site_default: d.site_default, app_default: d.app_default, icon: d.icon, version: d.version,
           has_draft: d.draft?, roles: d.roles, schema_version: d.schema_version, updated_at: d.updated_at }
       end
     end

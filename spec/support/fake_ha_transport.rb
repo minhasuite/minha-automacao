@@ -15,8 +15,10 @@ class FakeHaTransport
     @fx["rest"].fetch(path) { raise Integrations::Error, "HTTP 404" }
   end
 
-  def ws(type)
-    @calls << type
-    @fx["ws"].fetch(type)
+  # Com parâmetros (ex. `lovelace/config` + url_path): a chave é "tipo valor".
+  def ws(type, **params)
+    key = ([ type ] + params.values.map(&:to_s)).join(" ")
+    @calls << key
+    @fx["ws"].fetch(key) { @fx["ws"].fetch(type) { raise Integrations::Error, "sem #{key}" } }
   end
 end

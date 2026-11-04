@@ -19,7 +19,7 @@
   <div class="flex flex-wrap items-start justify-between gap-3">
     <div class="min-w-0">
       <% if (back = Dashboards::ViewTypes.back(@resolved["views"], view)) %>
-        <%= link_to dw_view_path(@dashboard, back, home: @home), class: "dw-hero-btn dw-back mb-2", "aria-label": t("dashboards.vt.back_to", name: back["title"]) do %><%= icon("arrow-left", "size-4") %><%= back["title"] %><% end %>
+        <%= link_to back["href"] || dw_view_path(@dashboard, back, home: @home), class: "dw-hero-btn dw-back mb-2", "aria-label": t("dashboards.vt.back_to", name: back["title"]) do %><%= icon("arrow-left", "size-4") %><%= back["title"] %><% end %>
       <% end %>
       <p class="ss-kicker"><%= [ @site.name, l(Date.current, format: :long).upcase_first ].join(" · ") %></p>
       <h1 class="mt-1 text-white truncate"><%= home_view && @home ? "#{greeting}, #{current_user.name.split.first}" : view["title"] %></h1>

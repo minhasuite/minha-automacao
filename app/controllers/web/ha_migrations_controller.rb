@@ -35,6 +35,15 @@ module Web
       redirect_to site_ha_migration_path(@site)
     end
 
+    # Painéis do HA (Integrations::HaDashboards): importa ou reimporta todos, à parte das automações.
+    def dashboards
+      integration = Integrations::HaMigration.integration(@site) or return redirect_to(site_ha_migration_path(@site))
+      state = Integrations::HaMigration.state(integration)
+      Integrations::HaMigration.save_state!(integration, state.merge("dashboards" => { "status" => "running", "started_at" => Time.current.iso8601 }))
+      HaMigrationJob.perform_later(integration.id, "dashboards")
+      redirect_to site_ha_migration_path(@site, anchor: "mg-dash")
+    end
+
     def reset
       integration = Integrations::HaMigration.integration(@site)
       Integrations::HaMigration.save_state!(integration, {}) if integration

@@ -120,6 +120,7 @@ Rails.application.routes.draw do
       resource :ha_migration, path: "migrar-do-ha", only: :show, controller: "ha_migrations" do
         post :connect, path: "conectar"
         post :import, path: "importar"
+        post :dashboards, path: "paineis"
         post :reset, path: "recomecar"
       end
       # Painel pronto (Dashboards::Presets, ex.: Energia): antes de /paineis/:id.

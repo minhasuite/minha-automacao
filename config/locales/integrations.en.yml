@@ -189,6 +189,15 @@ en:
     title: '%{name} bridge'
     waiting: Waiting for pairing
   ha_migration:
+    dash:
+      title: Home Assistant dashboards
+      hint: Recreates each HA dashboard here with the same layout (views, sections, cards, widths, icons and backgrounds). The Mobile version becomes the app's dashboard. Anything without an equivalent shows up in place, with a note.
+      running: Reading and recreating the dashboards…
+      done: "%{n} dashboards imported."
+      notes: "What didn't come over the same (%{n})"
+      import: Import dashboards
+      again: Import again
+      confirm: Importing again publishes a new version of the imported dashboards (changes made here stay in the version history).
     blueprints: Became blueprints
     blueprints_hint: Each HA automation and script became a blueprint here, with the automation created from it.
     came:

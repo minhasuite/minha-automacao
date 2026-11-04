@@ -17,7 +17,7 @@ module Dashboards
     STATES = %w[on off].freeze
     # visible_if (Lote 4, G18b: faixa numérica, OU e tamanho de tela). Dentro do
     # `any` (OU) não entram papel nem tela.
-    VISIBILITY = %w[role state numeric quality time device screen any].freeze
+    VISIBILITY = %w[role state numeric quality time device screen any all].freeze
     MAX_ANY = 10
     TIME = /\A([01]\d|2[0-3]):[0-5]\d\z/
 
@@ -148,14 +148,16 @@ module Dashboards
                                                                                  !(numeric.is_a?(Hash) && numeric["point"].is_a?(String) && (numeric.keys - %w[point above below]).empty? &&
                                                                                    %w[above below].any? { |k| numeric.key?(k) } && numeric.values_at("above", "below").compact.all?(Numeric))
       e << msg(:visible_screen, where: where, screens: SCREENS.join(", ")) if value.key?("screen") && !(value["screen"].is_a?(Array) && value["screen"].any? && (value["screen"] - SCREENS).empty?)
-      if value.key?("any")
-        list = value["any"]
+      %w[any all].each do |k|
+        next unless value.key?(k)
+
+        list = value[k]
         next_level = list.is_a?(Array) && list.size.between?(1, MAX_ANY) && !nested
         e << msg(:visible_any, where: where, max: MAX_ANY) unless next_level
         list.each { |c| visible_if(c, where, e, nested: true) } if next_level
       end
       e << msg(:visible_role, where: where) if value.key?("role") && !(value["role"].is_a?(Array) && (value["role"] - SiteMembership::ROLES).empty?)
-      e << msg(:visible_state, where: where) if value.key?("state") && !(value["state"].is_a?(Hash) && value["state"]["point"].is_a?(String) && value["state"].key?("is"))
+      e << msg(:visible_state, where: where) if value.key?("state") && !(value["state"].is_a?(Hash) && value["state"]["point"].is_a?(String) && (value["state"].key?("is") || value["state"].key?("not")))
       e << msg(:visible_quality, where: where) if value.key?("quality") && !(Array(value["quality"]) - Point::QUALITIES).empty?
       e << msg(:visible_device, where: where) if value.key?("device") && !value["device"].is_a?(Array)
       return unless value.key?("time")

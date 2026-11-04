@@ -106,7 +106,7 @@ module Dashboards
 
     # Regras do visible_if avaliadas aqui (todas valem: E); `any` = OU. Papel
     # sai em `resolve`; tela (`screen`) e aparelho (`device`) são da tela/app.
-    VISIBILITY = { "state" => :state_ok?, "numeric" => :numeric_ok?, "quality" => :quality_ok?, "time" => :time_ok?, "any" => :any_ok? }.freeze
+    VISIBILITY = { "state" => :state_ok?, "numeric" => :numeric_ok?, "quality" => :quality_ok?, "time" => :time_ok?, "any" => :any_ok?, "all" => :all_ok? }.freeze
 
     def visible?(w) = condition_ok?(w["visible_if"], w)
 
@@ -116,7 +116,13 @@ module Dashboards
       cond.all? { |k, v| (m = VISIBILITY[k]).nil? || send(m, v, w) }
     end
 
-    def state_ok?(st, _w) = (p = point(st["point"])) && Array(st["is"]).map(&:to_s).include?(p.value.to_s) || false
+    # `is` (valor ou lista) ou `not` (o "state_not" do HA): ponto que não existe não passa.
+    def state_ok?(st, _w)
+      p = point(st["point"]) or return false
+      return !Array(st["not"]).map(&:to_s).include?(p.value.to_s) if st.key?("not") && !st.key?("is")
+
+      Array(st["is"]).map(&:to_s).include?(p.value.to_s)
+    end
 
     def numeric_ok?(n, _w)
       v = point(n["point"])&.value
@@ -125,12 +131,13 @@ module Dashboards
 
     def quality_ok?(q, w) = (p = point(w["bind"] || Array(w["binds"]).first)) && Array(q).include?(p.quality) || false
     def any_ok?(list, w) = Array(list).any? { |c| condition_ok?(c, w) }
+    def all_ok?(list, w) = Array(list).all? { |c| condition_ok?(c, w) }
 
     # Pontos citados no visible_if (dependências do tempo real), inclusive dentro do `any`.
     def visibility_refs(cond)
       return [] unless cond.is_a?(Hash)
 
-      [ cond.dig("state", "point"), cond.dig("numeric", "point"), *Array(cond["any"]).flat_map { |c| visibility_refs(c) } ].compact
+      [ cond.dig("state", "point"), cond.dig("numeric", "point"), *(Array(cond["any"]) + Array(cond["all"])).flat_map { |c| visibility_refs(c) } ].compact
     end
 
     # Janela que pode passar da meia-noite ("18:00" a "06:00"), no fuso do local.

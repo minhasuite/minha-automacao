@@ -189,6 +189,15 @@ pt-BR:
     title: Ponte %{name}
     waiting: Esperando pareamento
   ha_migration:
+    dash:
+      title: Painéis do Home Assistant
+      hint: Recria cada painel do HA aqui com a mesma disposição (visões, seções, cards, larguras, ícones e fundos). A versão Mobile vira o painel do app. O que não tiver equivalente aparece no lugar, com um aviso.
+      running: Lendo e recriando os painéis…
+      done: "%{n} painéis importados."
+      notes: "O que não veio igual (%{n})"
+      import: Importar painéis
+      again: Importar de novo
+      confirm: Importar de novo publica uma versão nova dos painéis importados (as mudanças feitas aqui neles ficam no histórico de versões).
     blueprints: Viraram blueprints
     blueprints_hint: Cada automação e script do HA virou um blueprint daqui, com a automação criada a partir dele.
     came:

@@ -125,7 +125,7 @@ module Integrations
       def get(path) = HomeAssistantPlugin.get(@integration, path)
 
       # ponytail: o WebSocket checa o endereço no SafeHttp mas conecta pelo nome (sem prender o IP como o HTTP faz).
-      def ws(type)
+      def ws(type, **params)
         uri = URI.parse(@integration.settings["url"].to_s)
         SafeHttp.check!(uri.host)
         url = "#{uri.scheme == 'https' ? 'wss' : 'ws'}://#{uri.host}:#{uri.port}/api/websocket"
@@ -134,7 +134,7 @@ module Integrations
           ws.send_json(type: "auth", access_token: @integration.secrets["token"])
           raise Integrations::Error, "token recusado" unless ws.read_json&.dig("type") == "auth_ok"
 
-          ws.send_json(id: 1, type: type)
+          ws.send_json({ id: 1, type: type }.merge(params))
           loop do
             msg = ws.read_json(30) or raise Integrations::Error, "o HA não respondeu #{type}"
             next unless msg["id"] == 1

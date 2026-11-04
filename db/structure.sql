@@ -112,55 +112,6 @@ CREATE TABLE public.ai_calls (
 
 
 --
--- Name: ai_plan_features; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.ai_plan_features (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    feature character varying NOT NULL,
-    plan character varying NOT NULL,
-    tier character varying,
-    "limit" integer,
-    available boolean DEFAULT true NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: ai_tier_configs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.ai_tier_configs (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    tier character varying NOT NULL,
-    provider character varying NOT NULL,
-    model character varying NOT NULL,
-    effort character varying,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: ai_usages; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.ai_usages (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    tenant_id uuid NOT NULL,
-    feature character varying NOT NULL,
-    period date NOT NULL,
-    count integer DEFAULT 0 NOT NULL,
-    input_tokens integer DEFAULT 0 NOT NULL,
-    output_tokens integer DEFAULT 0 NOT NULL,
-    model character varying,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
 -- Name: alert_rules; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -578,7 +529,8 @@ CREATE TABLE public.dashboards (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     icon character varying,
-    sidebar boolean DEFAULT false NOT NULL
+    sidebar boolean DEFAULT false NOT NULL,
+    app_default boolean DEFAULT false NOT NULL
 );
 
 
@@ -970,8 +922,8 @@ PARTITION BY RANGE (at);
 --
 
 CREATE TABLE public.readings_2026_10 (
-    point_id uuid NOT NULL,
-    at timestamp(6) without time zone NOT NULL,
+    point_id uuid CONSTRAINT readings_point_id_not_null NOT NULL,
+    at timestamp(6) without time zone CONSTRAINT readings_at_not_null NOT NULL,
     value numeric,
     value_text text
 );
@@ -982,8 +934,8 @@ CREATE TABLE public.readings_2026_10 (
 --
 
 CREATE TABLE public.readings_2026_11 (
-    point_id uuid NOT NULL,
-    at timestamp(6) without time zone NOT NULL,
+    point_id uuid CONSTRAINT readings_point_id_not_null NOT NULL,
+    at timestamp(6) without time zone CONSTRAINT readings_at_not_null NOT NULL,
     value numeric,
     value_text text
 );
@@ -994,8 +946,8 @@ CREATE TABLE public.readings_2026_11 (
 --
 
 CREATE TABLE public.readings_default (
-    point_id uuid NOT NULL,
-    at timestamp(6) without time zone NOT NULL,
+    point_id uuid CONSTRAINT readings_point_id_not_null NOT NULL,
+    at timestamp(6) without time zone CONSTRAINT readings_at_not_null NOT NULL,
     value numeric,
     value_text text
 );
@@ -1662,31 +1614,6 @@ ALTER SEQUENCE public.solid_queue_semaphores_id_seq OWNED BY public.solid_queue_
 
 
 --
--- Name: subscriptions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.subscriptions (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    tenant_id uuid NOT NULL,
-    user_id uuid,
-    source character varying(20) NOT NULL,
-    external_id character varying NOT NULL,
-    product_id character varying(100),
-    base_plan_id character varying(100),
-    offer_id character varying(100),
-    plan character varying(20) DEFAULT 'free'::character varying NOT NULL,
-    status character varying(20) NOT NULL,
-    auto_renewing boolean,
-    trial boolean DEFAULT false NOT NULL,
-    expires_at timestamp(6) without time zone,
-    linked_external_id character varying,
-    verified_at timestamp(6) without time zone,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
 -- Name: system_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1745,9 +1672,6 @@ CREATE TABLE public.tenants (
     city character varying,
     uf character varying(2),
     ibge_code character varying(7),
-    plan character varying DEFAULT 'free'::character varying NOT NULL,
-    plan_provider character varying(20),
-    plan_expires_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     settings jsonb DEFAULT '{}'::jsonb NOT NULL
@@ -1941,30 +1865,6 @@ ALTER TABLE ONLY public.ai_accounts
 
 ALTER TABLE ONLY public.ai_calls
     ADD CONSTRAINT ai_calls_pkey PRIMARY KEY (id);
-
-
---
--- Name: ai_plan_features ai_plan_features_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ai_plan_features
-    ADD CONSTRAINT ai_plan_features_pkey PRIMARY KEY (id);
-
-
---
--- Name: ai_tier_configs ai_tier_configs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ai_tier_configs
-    ADD CONSTRAINT ai_tier_configs_pkey PRIMARY KEY (id);
-
-
---
--- Name: ai_usages ai_usages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ai_usages
-    ADD CONSTRAINT ai_usages_pkey PRIMARY KEY (id);
 
 
 --
@@ -2448,14 +2348,6 @@ ALTER TABLE ONLY public.solid_queue_semaphores
 
 
 --
--- Name: subscriptions subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT subscriptions_pkey PRIMARY KEY (id);
-
-
---
 -- Name: system_logs system_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2556,34 +2448,6 @@ CREATE INDEX index_ai_calls_on_site_id ON public.ai_calls USING btree (site_id);
 --
 
 CREATE INDEX index_ai_calls_on_tenant_id_and_created_at ON public.ai_calls USING btree (tenant_id, created_at);
-
-
---
--- Name: index_ai_plan_features_on_feature_and_plan; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_ai_plan_features_on_feature_and_plan ON public.ai_plan_features USING btree (feature, plan);
-
-
---
--- Name: index_ai_tier_configs_on_tier; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_ai_tier_configs_on_tier ON public.ai_tier_configs USING btree (tier);
-
-
---
--- Name: index_ai_usages_on_tenant_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_ai_usages_on_tenant_id ON public.ai_usages USING btree (tenant_id);
-
-
---
--- Name: index_ai_usages_on_tenant_id_and_feature_and_period; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_ai_usages_on_tenant_id_and_feature_and_period ON public.ai_usages USING btree (tenant_id, feature, period);
 
 
 --
@@ -3798,27 +3662,6 @@ CREATE INDEX index_solid_queue_semaphores_on_key_and_value ON public.solid_queue
 
 
 --
--- Name: index_subscriptions_on_source_and_external_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_subscriptions_on_source_and_external_id ON public.subscriptions USING btree (source, external_id);
-
-
---
--- Name: index_subscriptions_on_tenant_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_subscriptions_on_tenant_id ON public.subscriptions USING btree (tenant_id);
-
-
---
--- Name: index_subscriptions_on_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_subscriptions_on_user_id ON public.subscriptions USING btree (user_id);
-
-
---
 -- Name: index_system_logs_on_digest; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3962,22 +3805,6 @@ ALTER TABLE ONLY public.schedules
 
 
 --
--- Name: dashboard_themes fk_rails_0b2b0e7a1d; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dashboard_themes
-    ADD CONSTRAINT fk_rails_0b2b0e7a1d FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
-
-
---
--- Name: subscriptions fk_rails_0cedf77d81; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT fk_rails_0cedf77d81 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
-
-
---
 -- Name: blueprints fk_rails_0da735ddc0; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4066,14 +3893,6 @@ ALTER TABLE ONLY public.alert_rules
 
 
 --
--- Name: bridge_exposures fk_rails_219d1b64ce; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.bridge_exposures
-    ADD CONSTRAINT fk_rails_219d1b64ce FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
-
-
---
 -- Name: schedules fk_rails_228e8ae418; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4151,6 +3970,14 @@ ALTER TABLE ONLY public.solid_queue_recurring_executions
 
 ALTER TABLE ONLY public.schedules
     ADD CONSTRAINT fk_rails_324e2727f9 FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
+
+
+--
+-- Name: bridge_exposures fk_rails_35a12e78e2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bridge_exposures
+    ADD CONSTRAINT fk_rails_35a12e78e2 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -4338,14 +4165,6 @@ ALTER TABLE ONLY public.shadow_actions
 
 
 --
--- Name: ai_usages fk_rails_57ac1b3dfd; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ai_usages
-    ADD CONSTRAINT fk_rails_57ac1b3dfd FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
-
-
---
 -- Name: assist_runs fk_rails_57be696fc2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4367,6 +4186,14 @@ ALTER TABLE ONLY public.alerts
 
 ALTER TABLE ONLY public.events
     ADD CONSTRAINT fk_rails_6844d4946c FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: bridge_exposures fk_rails_6a2184464a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bridge_exposures
+    ADD CONSTRAINT fk_rails_6a2184464a FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -4455,6 +4282,14 @@ ALTER TABLE ONLY public.solid_queue_batch_executions
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT fk_rails_7c99fe0556 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: bridge_exposures fk_rails_7d5484ea00; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bridge_exposures
+    ADD CONSTRAINT fk_rails_7d5484ea00 FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
 
 
 --
@@ -4554,19 +4389,11 @@ ALTER TABLE ONLY public.dashboard_versions
 
 
 --
--- Name: bridge_exposures fk_rails_911bda919e; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: passkeys fk_rails_902db11bce; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.bridge_exposures
-    ADD CONSTRAINT fk_rails_911bda919e FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
-
-
---
--- Name: subscriptions fk_rails_933bdff476; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT fk_rails_933bdff476 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.passkeys
+    ADD CONSTRAINT fk_rails_902db11bce FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -4751,14 +4578,6 @@ ALTER TABLE ONLY public.solid_queue_batch_executions
 
 ALTER TABLE ONLY public.camera_recordings
     ADD CONSTRAINT fk_rails_c03ab3d4a9 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
-
-
---
--- Name: bridge_exposures fk_rails_c1a474917b; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.bridge_exposures
-    ADD CONSTRAINT fk_rails_c1a474917b FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
 
 
 --
@@ -4962,6 +4781,14 @@ ALTER TABLE ONLY public.notify_rules
 
 
 --
+-- Name: dashboard_themes fk_rails_f4493e4c35; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_themes
+    ADD CONSTRAINT fk_rails_f4493e4c35 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
 -- Name: packages fk_rails_f6e97f226b; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5002,14 +4829,6 @@ ALTER TABLE ONLY public.automation_runs
 
 
 --
--- Name: passkeys fk_rails_onda_a2_passkeys_user; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.passkeys
-    ADD CONSTRAINT fk_rails_onda_a2_passkeys_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
-
-
---
 -- Name: readings readings_point_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5024,6 +4843,8 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261104100002'),
+('20261104100001'),
 ('20261103200001'),
 ('20261103100001'),
 ('20261102400003'),

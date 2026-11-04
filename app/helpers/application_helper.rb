@@ -95,12 +95,21 @@ module ApplicationHelper
 
   # Ícone de traço (Heroicons v1 outline, MIT — os mesmos do meu-financeiro),
   # inlinado para herdar a cor do texto. Arquivos em app/assets/images/icons.
+  # Também aceita os ícones do Home Assistant (`mdi:nome`, Mdi). Nome que não
+  # existe cai no FALLBACK (o painel importado nunca quebra por um ícone).
+  ICON_NAME = /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/
+  ICON_FALLBACK = "view-grid".freeze
   ICONS = Hash.new do |h, name|
-    h[name] = Rails.root.join("app/assets/images/icons/#{name}.svg").read
+    file = Rails.root.join("app/assets/images/icons/#{name}.svg") if name.match?(ICON_NAME)
+    file = Rails.root.join("app/assets/images/icons/#{ICON_FALLBACK}.svg") unless file&.exist?
+    h[name] = file.read
                    .sub("<svg ", %(<svg aria-hidden="true" focusable="false" )).gsub('stroke-width="2"', 'stroke-width="1.75"').strip
   end
 
   def icon(name, css = "size-5")
-    ICONS[name.to_s].sub("<svg ", %(<svg data-icon="#{name}" class="#{css}" )).html_safe # rubocop:disable Rails/OutputSafety
+    name = name.to_s
+    return (Mdi.svg(name, css) || icon(ICON_FALLBACK, css)).html_safe if Mdi.name?(name) # rubocop:disable Rails/OutputSafety
+
+    ICONS[name].sub("<svg ", %(<svg data-icon="#{ERB::Util.html_escape(name)}" class="#{css}" )).html_safe # rubocop:disable Rails/OutputSafety
   end
 end

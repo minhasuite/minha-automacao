@@ -356,3 +356,34 @@ parede, vidro, fonte) com prévia ao vivo, que entram na galeria
 perfil (web e app: `PATCH /api/v1/me` `theme`, `GET /api/v1/themes`) ou só
 no aparelho (cookie `ma_theme`); a barra lateral de cada pessoa esconde e
 reordena itens (`dashboard_prefs["sidebar"]`; Configurações fica sempre).
+
+## Painéis importados do Home Assistant (2026-11)
+
+Configurações → Integrações → "Migre do HA" → cartão **Painéis do Home
+Assistant** (`POST /locais/:id/migrar-do-ha/paineis`, `HaMigrationJob`
+fase `dashboards`). `Integrations::HaDashboards` lê pelo WebSocket da
+integração `home_assistant` (só leitura) a lista (`get_panels`), a
+configuração já resolvida de cada painel (`lovelace/config`, com `!include` e
+âncoras expandidos) e os temas (`frontend/get_themes`); imagens `/local/...`
+vêm pelo HTTP e ficam anexadas ao painel (`dashboard.files`).
+
+- **Mesma disposição** (`Dashboards::HaImport`): visão → visão (caminho,
+  ícone, subvisão e voltar, fundo como `theme.image`, tema do HA virando um
+  `DashboardTheme` com vidro), seção → seção (`column_span` sobre
+  `max_columns` vira a largura em 12), card → widget na mesma ordem e com a
+  mesma largura (`grid_options.columns`). Card do HA novo = entrada em
+  `CARDS`; recurso do tile = linha em `FEATURES`; condição = método
+  `cond_<nome>`. Sem equivalente: um Texto no lugar e tamanho, e a nota no
+  relatório.
+- **De-para**: entidade, cena, script (pelo ponto do script) e área pelo
+  `ExternalRef` da migração; o par painel ↔ painel fica em
+  `dashboard:<url_path>` (importar de novo publica uma versão nova do mesmo).
+- **Padrões**: o principal sem "mobile" vira o da web (`site_default`); o
+  primeiro com "mobile" vira o do app (`app_default`; a API do app responde
+  esse como `default`, e a escolha da pessoa no app é `dashboard_prefs["app:<local>"]`).
+- **Ícones do HA** (`mdi:nome`) valem em qualquer card, visão e painel: web
+  pelo `Mdi` (vendor/mdi/mdi.json), app pela fonte MaterialDesignIcons.
+- **Visibilidade**: `state.not` (o `state_not` do HA) e `all` (todas as
+  condições), além do `any`.
+- **Outro painel**: `navigation_path` e `back_path` aceitam
+  `/paineis/<id>?view=<caminho>` (web e app).

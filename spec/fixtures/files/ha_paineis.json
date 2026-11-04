@@ -1,0 +1,344 @@
+{
+ "ws": {
+  "get_panels": {
+   "casa-teste": {
+    "component_name": "lovelace",
+    "url_path": "casa-teste",
+    "title": "Casa",
+    "icon": "mdi:home",
+    "config": {
+     "mode": "yaml"
+    }
+   },
+   "mobile-teste": {
+    "component_name": "lovelace",
+    "url_path": "mobile-teste",
+    "title": "Mobile",
+    "icon": "mdi:cellphone",
+    "config": {
+     "mode": "yaml"
+    }
+   },
+   "energia-teste": {
+    "component_name": "lovelace",
+    "url_path": "energia-teste",
+    "title": "Energia",
+    "icon": "mdi:flash",
+    "require_admin": true
+   },
+   "lovelace": {
+    "component_name": "lovelace",
+    "url_path": "lovelace",
+    "title": null
+   },
+   "config": {
+    "component_name": "config",
+    "url_path": "config"
+   }
+  },
+  "lovelace/config casa-teste": {
+   "title": "Casa",
+   "views": [
+    {
+     "title": "Início",
+     "path": "home",
+     "icon": "mdi:home",
+     "type": "sections",
+     "theme": "vidro-teste",
+     "max_columns": 3,
+     "background": {
+      "image": "/local/teste/bg/home.jpg",
+      "size": "cover"
+     },
+     "badges": [
+      {
+       "type": "entity",
+       "entity": "sensor.resumo_teste",
+       "icon": "mdi:lightbulb-group-outline",
+       "state_content": "luzes",
+       "tap_action": {
+        "action": "none"
+       }
+      },
+      {
+       "type": "entity",
+       "entity": "person.teste",
+       "name": "Pessoa",
+       "show_name": true,
+       "visibility": [
+        {
+         "condition": "state",
+         "entity": "person.teste",
+         "state_not": "unknown"
+        }
+       ]
+      },
+      {
+       "type": "entity",
+       "entity": "sensor.sem_par"
+      }
+     ],
+     "sections": [
+      {
+       "type": "grid",
+       "column_span": 2,
+       "cards": [
+        {
+         "type": "heading",
+         "heading": "Cômodos",
+         "icon": "mdi:floor-plan"
+        },
+        {
+         "type": "area",
+         "area": "cozinha_teste",
+         "navigation_path": "/casa-teste/cozinha",
+         "visibility": [
+          {
+           "condition": "screen",
+           "media_query": "(min-width: 601px)"
+          }
+         ],
+         "grid_options": {
+          "columns": 6,
+          "rows": 2
+         }
+        },
+        {
+         "type": "area",
+         "area": "area_que_nao_existe",
+         "grid_options": {
+          "columns": 6
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "light.teto_teste",
+         "name": "Teto",
+         "icon": "mdi:ceiling-light",
+         "color": "amber",
+         "features": [
+          {
+           "type": "light-brightness"
+          },
+          {
+           "type": "coisa-nova"
+          }
+         ],
+         "hold_action": {
+          "action": "more-info"
+         }
+        },
+        {
+         "type": "tile",
+         "entity": "scene.noite_teste"
+        },
+        {
+         "type": "button",
+         "entity": "script.boa_noite_teste",
+         "name": "Boa noite",
+         "tap_action": {
+          "action": "perform-action",
+          "perform_action": "script.boa_noite_teste"
+         },
+         "grid_options": {
+          "columns": 3
+         }
+        },
+        {
+         "type": "custom:cartao-que-nao-existe",
+         "grid_options": {
+          "columns": "full"
+         }
+        }
+       ]
+      },
+      {
+       "type": "grid",
+       "visibility": [
+        {
+         "condition": "numeric_state",
+         "entity": "sensor.temperatura_teste",
+         "above": "10"
+        }
+       ],
+       "cards": [
+        {
+         "type": "heading",
+         "heading": "Agora",
+         "tap_action": {
+          "action": "navigate",
+          "navigation_path": "/energia-teste/home"
+         }
+        },
+        {
+         "type": "markdown",
+         "content": "Temperatura: {{ states('sensor.temperatura_teste') }} °C"
+        },
+        {
+         "type": "picture-entity",
+         "entity": "camera.camera_teste",
+         "name": "Câmera",
+         "camera_view": "auto"
+        },
+        {
+         "type": "entities",
+         "title": "Muitas",
+         "entities": [
+          "light.l1",
+          "light.l2",
+          "light.l3",
+          "light.l4",
+          "light.l5",
+          "light.l6",
+          "light.l7",
+          "light.l8",
+          "light.l9",
+          {
+           "entity": "light.sem_par"
+          }
+         ]
+        },
+        {
+         "type": "vertical-stack",
+         "cards": [
+          {
+           "type": "tile",
+           "entity": "light.l1"
+          },
+          {
+           "type": "entity",
+           "entity": "sensor.temperatura_teste",
+           "name": "Temp"
+          }
+         ]
+        },
+        {
+         "type": "conditional",
+         "conditions": [
+          {
+           "entity": "light.teto_teste",
+           "state": "on"
+          }
+         ],
+         "card": {
+          "type": "tile",
+          "entity": "light.l2"
+         }
+        },
+        {
+         "type": "custom:auto-entities",
+         "filter": {
+          "include": [
+           {
+            "domain": "media_player",
+            "state": "playing"
+           }
+          ]
+         },
+         "card": {
+          "type": "vertical-stack"
+         }
+        },
+        {
+         "type": "history-graph",
+         "entities": [
+          "sensor.temperatura_teste"
+         ],
+         "hours_to_show": 72
+        },
+        {
+         "type": "tile",
+         "entity": "light.l3",
+         "visibility": [
+          {
+           "condition": "user",
+           "users": [
+            "abc"
+           ]
+          },
+          {
+           "condition": "state",
+           "entity": "light.teto_teste",
+           "state": "off"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Cozinha",
+     "path": "cozinha",
+     "subview": true,
+     "back_path": "/casa-teste/home",
+     "type": "sections",
+     "max_columns": 3,
+     "background": {
+      "image": "/local/teste/bg/cozinha.jpg"
+     },
+     "sections": [
+      {
+       "type": "grid",
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "light.l4"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "lovelace/config mobile-teste": {
+   "views": [
+    {
+     "title": "Início",
+     "path": "home",
+     "type": "sections",
+     "max_columns": 1,
+     "sections": [
+      {
+       "type": "grid",
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "light.teto_teste",
+         "grid_options": {
+          "columns": 12
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "lovelace/config energia-teste": {
+   "views": [
+    {
+     "title": "Energia",
+     "path": "home",
+     "cards": [
+      {
+       "type": "energy-date-selection"
+      },
+      {
+       "type": "energy-devices-graph"
+      }
+     ]
+    }
+   ]
+  },
+  "frontend/get_themes": {
+   "themes": {
+    "vidro-teste": {
+     "primary-color": "#3366ff",
+     "accent-color": "#ff8800 "
+    }
+   }
+  }
+ },
+ "rest": {}
+}
