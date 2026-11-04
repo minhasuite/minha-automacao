@@ -2,7 +2,8 @@
 # Web + API. Sem Node: CSS pelo binário do Tailwind e JS por importmap.
 # libvips para o Active Storage; DejaVu para acento em PDF; ping para o
 # rastreador de rede (Pacote 3, só leitura); openssh-client para a cópia de
-# backup fora de casa por SSH (G20).
+# backup fora de casa por SSH (G20); ffmpeg para a voz gravada que a Echo toca
+# (Alexa::Talk: webm/m4a → MP3).
 FROM ruby:3.3.10-slim
 
 ENV RAILS_ENV=production \
@@ -11,7 +12,7 @@ ENV RAILS_ENV=production \
     BUNDLE_DEPLOYMENT="1"
 
 RUN apt-get update -qq && apt-get install -y --no-install-recommends \
-  build-essential libpq-dev libyaml-dev libvips42 postgresql-client curl fonts-dejavu-core iputils-ping openssh-client \
+  build-essential libpq-dev libyaml-dev libvips42 postgresql-client curl fonts-dejavu-core iputils-ping openssh-client ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
 # resto (7.12): pg_dump da mesma versão do banco (Postgres 18) para o backup

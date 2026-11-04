@@ -11,6 +11,23 @@ en:
             roles:
               invalid_role: has an invalid role
   dashboards:
+    talk:
+      title: "Talk on Alexa"
+      target: "Target Echo"
+      all: "All"
+      message: "Message"
+      placeholder: "Type or record audio"
+      record: "Record audio (tap again to send)"
+      send: "Send"
+      sent: "Sent."
+      recording: "Recording… tap the microphone to send."
+      mic_denied: "The browser didn't allow the microphone."
+      no_echo: "No Alexa Echo in this home."
+      no_permission: "Your role can't talk on the Echos."
+      empty: "Type what the Echo should say."
+      no_audio: "To play recorded voice on the Echo, the server needs its external https address (MEDIA_PUBLIC_URL) and ffmpeg."
+      bad_audio: "Couldn't read the recorded audio."
+      too_big: "Audio too large."
     cancel: Cancel
     save: Save
     copy_name: "%{name} (copy)"

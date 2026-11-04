@@ -208,9 +208,25 @@ O importador passou a traduzir, sem nada da casa no código:
   aparelho empurra e começa do total que o HA tinha (`carry_total!`).
 - **Card statistic** (quanto subiu hoje/no mês): stat com `aggregate:
   "change"` e `period`, pelo histórico do ponto.
+- **Coluna vazia** (markdown só com `&nbsp;`, para alinhar 3 colunas): seção
+  espaçadora (`"spacer": true`), sem texto e escondida no celular.
+- **auto-entities** (HACS): Lista automática. Cada regra `include` vira uma
+  consulta (`or`), com entidade fixa ou curinga → `id`, `domain` →
+  capacidade (luz e interruptor sem as automações), `label` → etiqueta,
+  `state` (`unavailable` → sem sinal), `last_triggered: "< N"` → `ran_min`;
+  as `exclude` (entidade, curinga, integração) entram em todas. Card de
+  tiles = grade de tiles com o `name` de cada regra; o `else` é o texto de
+  vazio.
+- **Falar na Alexa** (`custom:casa-campo-texto` com `seletor`/`audio`): widget
+  `announce`, que manda direto para a Echo (sem o `input_text`, o script e o
+  `shell_command` do HA).
+- **Google Agenda** (`calendar.*` do `google`): casa com a agenda daqui pelo
+  id (o `unique_id` do HA termina nele) depois que a pessoa conecta a conta
+  Google na integração Agenda; os filtros "aniversários" e "local de trabalho"
+  do HA não têm par.
 
-Ficam de fora, e o relatório diz: agenda do Google (precisa ligar a
-integração Agenda), pessoas e bateria dos celulares (precisa do app em cada
+Ficam de fora, e o relatório diz: agenda do Google antes de conectar a
+integração Agenda, pessoas e bateria dos celulares (precisa do app em cada
 celular), sensor template que só converte a leitura crua de um aparelho (aqui
 o ponto já está na unidade: aponte o painel para ele) e o que vem de comando
 de shell no HA (`shell_command`, de propósito).

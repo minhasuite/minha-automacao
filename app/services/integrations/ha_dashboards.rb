@@ -44,7 +44,7 @@ module Integrations
       panels.select! { |p| Array(only).map(&:to_s).include?(p["url_path"]) } if only
       notes = []
       dashboards = ensure_dashboards(site, panels)
-      refs = refs_for(site, dashboards)
+      refs = refs_for(site, dashboards).merge("label" => labels(transport))
       theme = theme_key(site, integration, transport, panels)
       done = panels.map do |p|
         d = dashboards.fetch(p["url_path"])
@@ -90,6 +90,13 @@ module Integrations
       { "entity" => entity, "scene" => ExternalRef.map_for(site, SOURCE, "Scene"), "area" => areas,
         "dashboard" => dashboards.transform_values(&:id), "jinja" => Automations::HaTemplates.translator(site),
         "command" => commands(site) }
+    end
+
+    # Etiquetas do HA {label_id → nome}: o filtro `label:` do auto-entities usa o id; aqui a etiqueta é pelo nome.
+    def labels(transport)
+      Array(transport.ws("config/label_registry/list")).to_h { |l| [ l["label_id"].to_s, l["name"].to_s ] }
+    rescue Integrations::Error
+      {}
     end
 
     # Entidade do HA que aqui é comando de outro ponto (de-para "command:<comando>") → {entity_id → comando}.

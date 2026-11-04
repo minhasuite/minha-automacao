@@ -222,7 +222,7 @@ module Web
     # Formulário do widget → JSON (só o que vale para o tipo; vazio some).
     def widget_attrs
       p = params.fetch(:widget, {}).permit(:type, :label, :bind, *Dashboards::Widgets.plugins.flat_map(&:permit).uniq,
-                                           binds: [], roles: [], screens: [], query: %i[capability state tag area device_class quality integration unchanged_min exclude sort])
+                                           binds: [], roles: [], screens: [], query: Dashboards::Widgets::QueryListWidget::FORM_QUERY)
       type = p[:type].presence_in(Dashboards::Schema.types.keys) || "tile"
       attrs = { "type" => type, "label" => p[:label].presence, "span" => span_param }
       attrs.merge!(Dashboards::Widgets[type]&.attrs(p, @site) || {}) # o plugin do tipo diz as props

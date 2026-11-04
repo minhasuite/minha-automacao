@@ -1,4 +1,4 @@
-<%# locals: (ids:, points:, w:, dashboard:, live:) -%>
+<%# locals: (ids:, points:, w:, dashboard:, live:, labels: {}) -%>
 <ul class="dw-rows">
   <% ids.each do |id| %>
     <% p = points[id] or next %>
@@ -6,7 +6,7 @@
     <li title="<%= p["status_note"] %>" class="dw-row <%= dw_color_class(w, p) %> <%= 'dw-on' if p['on'] && p['capability'] != 'measure' %> <%= 'dw-unavailable' if off_line %>">
       <span class="dw-ico dw-ico-sm"><%= icon(dw_point_icon(p), "size-4") %></span>
       <%= link_to point_path(id), class: "min-w-0 flex-1 no-underline", data: { turbo_frame: "_top" } do %>
-        <% title, sub = dw_row_names(p) %><span class="dw-name text-sm"><%= title %></span><span class="block text-xs text-muted truncate"><%= sub %></span>
+        <% title, sub = dw_row_names(p) %><% title = labels[id].presence || title %><span class="dw-name text-sm"><%= title %></span><span class="block text-xs text-muted truncate"><%= sub %></span>
       <% end %>
       <% if p["capability"] == "onoff" && p["can_command"] && !off_line %>
         <%= dw_command_button(p, "toggle", w: w, dashboard: dashboard, live: live, class: "dw-switch", "aria-pressed": p["on"], "aria-label": t(p['on'] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: p['name'])) do %><span></span><% end %>

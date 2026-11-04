@@ -2,6 +2,7 @@
 <%# Seções (o padrão): grade de 12 colunas, cada seção com a sua largura. %>
 <div class="dw-grid dw-sections mt-5">
   <% view["sections"].each_with_index do |s, i| %>
+    <% if s["spacer"] %><div class="dw-w dw-hide-mobile" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>" aria-hidden="true"></div><% next %><% end %>
     <% next if s["widgets"].empty? %>
     <%= render "web/dashboards/views/section", s: s, i: i, points: points, dashboard: dashboard, live: live %>
   <% end %>

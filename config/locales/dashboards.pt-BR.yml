@@ -11,6 +11,23 @@ pt-BR:
             roles:
               invalid_role: tem papel inválido
   dashboards:
+    talk:
+      title: "Falar na Alexa"
+      target: "Echo de destino"
+      all: "Todas"
+      message: "Mensagem"
+      placeholder: "Escreva ou grave um áudio"
+      record: "Gravar áudio (toque de novo para enviar)"
+      send: "Enviar"
+      sent: "Enviado."
+      recording: "Gravando… toque no microfone para enviar."
+      mic_denied: "O navegador não liberou o microfone."
+      no_echo: "Nenhuma Echo da Alexa nesta casa."
+      no_permission: "Seu papel não pode falar nas Echos."
+      empty: "Escreva o que a Echo deve falar."
+      no_audio: "Para tocar voz gravada na Echo, o servidor precisa do endereço https de fora (MEDIA_PUBLIC_URL) e do ffmpeg."
+      bad_audio: "Não deu para ler o áudio gravado."
+      too_big: "Áudio grande demais."
     cancel: Cancelar
     save: Salvar
     copy_name: "%{name} (cópia)"

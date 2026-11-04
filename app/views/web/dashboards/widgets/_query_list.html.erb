@@ -1,12 +1,32 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<div class="dw-card">
-  <div class="flex items-center justify-between gap-2">
-    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.list") %></p>
-    <% if w["data"]["count"].positive? %><span class="ss-badge ss-badge-accent num"><%= w["data"]["count"] %></span><% end %>
-  </div>
-  <% if w["data"]["point_ids"].empty? %>
-    <p class="dw-quiet"><%= icon("check-circle", "size-5 text-success") %><%= w["empty_text"].presence || t("dashboards.w.nothing_now") %></p>
+<% ids = w["data"]["point_ids"] %>
+<% labels = w["labels"].is_a?(Hash) ? w["labels"] : {} %>
+<% tiles = w["display"] == "tiles" %>
+<%# Texto de vazio " " = o card some quando não há nada (show_empty: false do HA). %>
+<% unless ids.empty? && w["empty_text"] == " " %>
+<div class="<%= tiles ? '' : 'dw-card' %>">
+  <% if w["label"].present? || !tiles %>
+    <div class="flex items-center justify-between gap-2 <%= 'mb-2 px-1' if tiles %>">
+      <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.list") %></p>
+      <% if w["data"]["count"].positive? %><span class="ss-badge ss-badge-accent num"><%= w["data"]["count"] %></span><% end %>
+    </div>
+  <% end %>
+  <% if ids.empty? %>
+    <p class="dw-quiet <%= 'dw-card' if tiles %>"><%= icon("check-circle", "size-5 text-success") %><%= w["empty_text"].presence || t("dashboards.w.nothing_now") %></p>
+  <% elsif tiles %>
+    <%# Grade de tiles (o auto-entities do HA com card grid): cada ponto é um tile, com o nome que o painel dava; o comando refaz a lista inteira (o id é o dela). %>
+    <div class="dw-grid">
+      <% ids.each do |id| %>
+        <% next unless points[id] %>
+        <div class="dw-w" style="<%= dw_span_style({ 'mobile' => 6, 'tablet' => 4, 'desktop' => 3 }) %>">
+          <%= render "web/dashboards/widgets/tile", w: { "id" => w["id"], "type" => "tile", "bind" => id, "label" => labels[id],
+                                                         "data" => { "title" => labels[id].presence || points[id]["name"], "point_ids" => [ id ] } },
+                                                    points: points, dashboard: dashboard, live: live %>
+        </div>
+      <% end %>
+    </div>
   <% else %>
-    <%= render "web/dashboards/widgets/rows", ids: w["data"]["point_ids"], points: points, w: w, dashboard: dashboard, live: live %>
+    <%= render "web/dashboards/widgets/rows", ids: ids, points: points, w: w, dashboard: dashboard, live: live, labels: labels %>
   <% end %>
 </div>
+<% end %>

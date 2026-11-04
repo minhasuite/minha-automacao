@@ -81,7 +81,8 @@ ou `key` do ponto.
 | `stat` | `bind` ou `query`, `aggregate` (`count`/`sum`/`avg`/`min`/`max`/`last`), `attribute?` | contador ("3 ligados") ou número; também é o tipo dos `badges`. Com `bind` e `attribute` (Lote 5), mostra o atributo do ponto (`points.attrs`, escrito pelo sensor calculado) no lugar do valor |
 | `gauge` | `bind`, `min`, `max` (padrão: do ponto, senão 0–100) | medidor em arco |
 | `chart` | `binds`, `range` (`24h`/`7d`/`30d`) | linhas na mesma escala (booleano: faixas ligado) |
-| `query_list` | `query`, `empty_text` | lista automática (até 24) |
+| `query_list` | `query`, `empty_text`, `or?` (outras consultas somadas, até 30), `display?` (`rows`/`tiles`), `labels?` ({id do ponto → nome}) | lista automática (até 24), em lista ou grade de tiles; `empty_text` `" "` = some quando vazia. `or` e `labels` vêm do auto-entities do HA e ficam ao editar pelo formulário (`QueryListWidget.keep`) |
+| `announce` (plugin) | `binds?` (as Echos do seletor; vazio = todas), `placeholder?` | "Falar na Alexa": texto (anúncio), Echo de destino ou todas e microfone (voz gravada até 60 s; só em https). Envio por `Alexa::Talk` (web `POST /locais/:id/falar-na-alexa`, API `POST /api/v1/sites/:id/talk`): a voz vira MP3 (ffmpeg) e a Echo toca `<audio>` do link curto `/fala/<chave>.mp3` em `MEDIA_PUBLIC_URL` (https de fora); sem ele, o microfone some |
 | `area_card` | `area` | cartão da área com ligados, abertos, movimento, potência, sem sinal; navega para a view com `area` igual |
 | `scene_bar` | `scenes` (ids; vazio = todas) | botões de cena |
 | `alerts` | — | alertas abertos com "Ciente" |

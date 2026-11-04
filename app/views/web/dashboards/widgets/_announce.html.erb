@@ -1,0 +1,40 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# "Falar na Alexa" (Alexa::Talk): texto (Enter envia), Echo de destino e microfone (voz gravada, só em https). %>
+<% d = w["data"] %>
+<% targets = Array(d["targets"]) %>
+<div class="dw-card" data-controller="announce" data-announce-url-value="<%= site_talk_path(dashboard.site_id) %>"
+     data-announce-max-value="<%= Alexa::Talk::MAX_SECONDS %>"
+     data-announce-sent-value="<%= t("dashboards.talk.sent") %>" data-announce-recording-value="<%= t("dashboards.talk.recording") %>"
+     data-announce-mic-denied-value="<%= t("dashboards.talk.mic_denied") %>">
+  <div class="flex items-center gap-3">
+    <span class="dw-ico"><%= icon(w["icon"].presence || "mdi:message-text-outline") %></span>
+    <p class="dw-name min-w-0 flex-1"><%= w["label"].presence || t("dashboards.talk.title") %></p>
+    <% if targets.size > 1 %>
+      <label class="sr-only" for="t_<%= w['id'] %>"><%= t("dashboards.talk.target") %></label>
+      <select id="t_<%= w['id'] %>" class="ss-input w-auto max-w-[45%]" data-announce-target="echo">
+        <option value="all"><%= t("dashboards.talk.all") %></option>
+        <% targets.each do |e| %><option value="<%= e['id'] %>"><%= e["name"] %></option><% end %>
+      </select>
+    <% elsif targets.one? %>
+      <input type="hidden" value="<%= targets.first['id'] %>" data-announce-target="echo">
+    <% end %>
+  </div>
+  <% if targets.empty? %>
+    <p class="dw-quiet mt-3"><%= t("dashboards.talk.no_echo") %></p>
+  <% elsif !d["can_command"] %>
+    <p class="dw-quiet mt-3"><%= t("dashboards.talk.no_permission") %></p>
+  <% else %>
+    <form class="mt-3 flex gap-2" data-action="submit->announce#send">
+      <label class="sr-only" for="m_<%= w['id'] %>"><%= t("dashboards.talk.message") %></label>
+      <input id="m_<%= w['id'] %>" type="text" maxlength="250" autocomplete="off" class="ss-input min-w-0 flex-1"
+             placeholder="<%= w["placeholder"].presence || t("dashboards.talk.placeholder") %>" data-announce-target="text">
+      <% if d["audio"] %>
+        <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" hidden data-announce-target="mic" data-action="announce#record"
+                aria-label="<%= t("dashboards.talk.record") %>" title="<%= t("dashboards.talk.record") %>"><%= icon("mdi:microphone", "size-5") %></button>
+      <% end %>
+      <button class="ss-btn ss-btn-primary ss-btn-sm" data-announce-target="send" aria-label="<%= t("dashboards.talk.send") %>"
+              title="<%= t("dashboards.talk.send") %>"><%= icon("mdi:send", "size-4") %></button>
+    </form>
+    <p class="mt-2 text-xs text-muted min-h-4" role="status" aria-live="polite" data-announce-target="status"></p>
+  <% end %>
+</div>

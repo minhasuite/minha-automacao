@@ -121,12 +121,14 @@ module Dashboards
         s = s.to_h
         cond = visibility(s["visibility"])
         cards = s["type"].to_s == "grid" || s.key?("cards") ? Array(s["cards"]) : [ s ]
-        widgets = cards.filter_map { |c| card(c.to_h, extra_visible: cond) }
-        next if widgets.empty?
+        spacer = cards.any? && cards.all? { |c| blank_markdown?(c.to_h) }
+        widgets = spacer ? [] : cards.filter_map { |c| card(c.to_h, extra_visible: cond) }
+        next if widgets.empty? && !spacer
 
         span = (s["column_span"].to_i.nonzero? || 1).clamp(1, max)
         { "id" => uid("s-#{si + 1}"), "span" => { "mobile" => 12, "tablet" => span >= 2 || max == 1 ? 12 : 6,
-                                                   "desktop" => (12 * span / max).clamp(1, 12) }, "widgets" => widgets }
+                                                   "desktop" => (12 * span / max).clamp(1, 12) },
+          "widgets" => widgets, "spacer" => (true if spacer) }.compact
       end
     end
 
@@ -173,7 +175,16 @@ module Dashboards
     def single(c) = (bound(SINGLE.fetch(c["type"]), c) || missing(c))
     def gauge(c) = (w = bound("gauge", c)) ? w.merge(c.slice("min", "max").select { |_, v| v.is_a?(Numeric) }) : missing(c)
     def weather(c) = (w = bound("weather", c)) ? w.merge("forecast" => c["forecast_type"] == "hourly" ? "hourly" : "daily") : missing(c)
-    def text_field(c) = (bound("tile", c) || missing(c)).tap { note(c, "o campo virou o ponto de texto (áudio e destino do card próprio não vêm)") }
+    # Campo de texto da casa: com seletor de Echo ou áudio é o "Falar na Alexa" (widget announce, envia direto
+    # para a Echo); sem isso, o ponto de texto.
+    def text_field(c)
+      if c["seletor"].present? || c["audio"].present? || c["acao"].to_s.include?("alexa")
+        return { "type" => "announce", "label" => c["name"].presence, "icon" => (c["icon"] if Mdi.name?(c["icon"])),
+                 "placeholder" => c["placeholder"].presence }.compact
+      end
+
+      (bound("tile", c) || missing(c)).tap { note(c, "o campo virou o ponto de texto (o botão do card próprio não vem)") }
+    end
     def skip(_c) = :skip
 
     def heading(c)
@@ -182,7 +193,14 @@ module Dashboards
       w.merge(actions(c))
     end
 
+    # Coluna vazia do HA (markdown só com "&nbsp;"/espaço, para segurar o alinhamento): seção espaçadora.
+    def blank_markdown?(c)
+      c["type"] == "markdown" && c["title"].blank? && c["content"].to_s.gsub(/&nbsp;|&#160;|<br\s*\/?>|\s/i, "").empty?
+    end
+
     def markdown(c)
+      return :skip if blank_markdown?(c)
+
       src = c["content"].to_s
       text = jinja&.text(src)
       note(c, "o Jinja do texto não foi traduzido; ficou o texto sem as partes {{ }}") if text.nil? && src.match?(/\{\{|\{%/)
@@ -308,17 +326,95 @@ module Dashboards
       w&.except("id")
     end
 
-    # auto-entities: o filtro mais comum (domínio + estado) vira Lista automática;
-    # o resto, aviso.
-    def auto_entities(c)
-      inc = Array(c.dig("filter", "include")).first.to_h
-      cap = { "light" => "onoff", "switch" => "onoff", "media_player" => "media", "binary_sensor" => "contact" }[inc["domain"].to_s]
-      return missing(c, "o filtro do auto-entities não tem equivalente direto") unless cap
+    # auto-entities (HACS) → Lista automática: cada regra `include` vira uma consulta (somadas pelo `or`),
+    # as `exclude` entram em todas; entidade fixa e curinga (`switch.*_luz`) viram os pontos do de-para.
+    # Card de dentro com tiles (grid/vertical-stack) = grade de tiles; o `else` vira o texto de vazio.
+    AE_DOMAINS = { "light" => { "capability" => "onoff,dimmer", "automation" => "false" },
+                   "switch" => { "capability" => "onoff", "automation" => "false" },
+                   "input_boolean" => { "capability" => "onoff", "automation" => "false" },
+                   "media_player" => { "capability" => "media" }, "sensor" => { "capability" => "measure" },
+                   "binary_sensor" => { "capability" => "contact,motion,tamper,problem" },
+                   "automation" => { "automation" => "true" }, "cover" => { "capability" => "gate" },
+                   "camera" => { "capability" => "stream" }, "vacuum" => { "capability" => "vacuum" } }.freeze
+    AE_INTEGRATIONS = { "alexa_media" => "alexa", "tuya" => "tuya", "localtuya" => "tuya_local", "xiaomi_home" => "miio",
+                        "mqtt" => "mqtt", "esphome" => "esphome", "hue" => "hue", "shelly" => "shelly" }.freeze
+    AE_SORTS = { "name" => "name", "state" => "value", "last_changed" => "changed_at", "last_updated" => "changed_at",
+                 "last_triggered" => "ran_at" }.freeze
 
-      query = { "capability" => cap }
-      query["state"] = %w[on playing open].include?(inc["state"].to_s) ? "on" : "off" if inc["state"].present?
-      note(c, "auto-entities virou Lista automática (#{cap}); o card de dentro não vem")
-      { "type" => "query_list", "query" => query, "empty_text" => c["show_empty"] == false ? " " : nil }.compact
+    def auto_entities(c)
+      labels = {}
+      excluded = ae_exclude(Array(c.dig("filter", "exclude")))
+      queries = Array(c.dig("filter", "include")).filter_map { |rule| ae_rule(rule.to_h, labels) }.map { |q| q.merge(excluded) }
+      return missing(c, "o filtro do auto-entities não tem equivalente direto") if queries.empty?
+
+      sort = AE_SORTS[c.dig("sort", "method").to_s]
+      queries[0] = queries[0].merge("sort" => "#{'-' if c.dig('sort', 'reverse') == true}#{sort}") if sort
+      inner = c["card"].to_h
+      tiles = %w[grid vertical-stack horizontal-stack].include?(inner["type"].to_s)
+      empty = c["show_empty"] == false ? " " : (c.dig("else", "content").to_s.strip.presence if c.dig("else", "type") == "markdown")
+      { "type" => "query_list", "query" => queries.first, "or" => queries.drop(1).presence, "display" => ("tiles" if tiles),
+        "labels" => labels.presence, "label" => inner["title"].presence, "empty_text" => empty&.first(200) }.compact
+    end
+
+    # Uma regra `include` → consulta (nil = nada daqui casa com ela).
+    def ae_rule(rule, labels)
+      q = {}
+      if rule["entity_id"].present?
+        ids = ae_entities(rule["entity_id"])
+        return nil if ids.empty?
+
+        q["id"] = ids.join(",")
+        name = rule.dig("options", "name")
+        ids.each { |id| labels[id] = name } if ids.size == 1 && name.is_a?(String) && name.present?
+      end
+      if rule["domain"].present?
+        d = AE_DOMAINS[rule["domain"].to_s] or return nil
+        q.merge!(d)
+      end
+      if rule["label"].present?
+        name = @refs.dig("label", rule["label"].to_s) || rule["label"].to_s
+        q["tag"] = name.downcase
+      end
+      if rule["area"].present?
+        area = @refs.dig("area", rule["area"].to_s) or return nil
+        q["area"] = area
+      end
+      if rule["integration"].present?
+        driver = AE_INTEGRATIONS[rule["integration"].to_s] or return nil
+        q["integration"] = driver
+      end
+      q.merge!(ae_state(rule["state"])) if rule.key?("state")
+      q["ran_min"] = Regexp.last_match(1) if rule["last_triggered"].to_s =~ /\A\s*<\s*(\d+)/
+      q.presence
+    end
+
+    def ae_state(v)
+      s = v.to_s.strip
+      case s
+      when "on", "playing", "open", "home", "true" then { "state" => "on" }
+      when "off", "idle", "closed", "not_home", "false", "paused" then { "state" => "off" }
+      when "unavailable", "unknown" then { "quality" => "unavailable" }
+      when /\A<\s*(-?[\d.]+)\z/ then { "below" => Regexp.last_match(1) }
+      when /\A>\s*(-?[\d.]+)\z/ then { "above" => Regexp.last_match(1) }
+      else {}
+      end
+    end
+
+    # As `exclude` que têm par aqui: entidades (com curinga) e integrações.
+    def ae_exclude(rules)
+      ids = rules.flat_map { |r| r.to_h["entity_id"].present? ? ae_entities(r["entity_id"]) : [] }
+      drivers = rules.filter_map { |r| AE_INTEGRATIONS[r.to_h["integration"].to_s] }
+      { "not_id" => ids.uniq.join(",").presence, "not_integration" => drivers.uniq.join(",").presence }.compact
+    end
+
+    # entity_id (ou curinga `*`, ou /regex/) → ids dos pontos do de-para.
+    def ae_entities(pattern)
+      pat = pattern.to_s
+      map = @refs["entity"].to_h
+      return [ map[pat] ].compact unless pat.include?("*") || pat.start_with?("/")
+
+      re = pat.start_with?("/") ? (Regexp.new(pat[1...-1], timeout: 0.1) rescue nil) : nil
+      map.select { |ext, _| re ? ext.match?(re) : File.fnmatch(pat, ext) }.values.uniq
     end
 
     # ---- ponto, cena e ações -------------------------------------------

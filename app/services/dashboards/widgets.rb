@@ -10,7 +10,7 @@ module Dashboards
                  AlertsWidget CameraWidget VacuumWidget EnergyWidget HeadingWidget MarkdownWidget WeatherWidget MediaWidget RemoteWidget
                  PeopleWidget AlarmWidget FloorplanWidget EnergyFlowWidget EnergyBreakdownWidget EnergyCompareWidget MapWidget CustomCardWidget
                  ThermostatWidget HumidifierWidget LightWidget ButtonWidget CalendarWidget TodoWidget LogbookWidget ImageWidget IframeWidget
-                 ClockWidget PlantWidget StackWidget UtilityWidget].freeze
+                 ClockWidget PlantWidget StackWidget UtilityWidget AnnounceWidget].freeze
 
     module_function
 
@@ -84,6 +84,10 @@ module Dashboards
 
           r.points.find { |p| p.device_id == point.device_id && p.capability == "color" && !p.disabled }
         end
+
+        # Editar pelo formulário refaz o widget: aqui o plugin devolve o que o formulário não mostra
+        # e precisa ficar (`old` = o widget antes, `new` = o do formulário, mesmo tipo).
+        def keep(_old, new) = new
 
         # ondaB2: o widget aceita tap/hold/double_tap_action (o editor mostra os campos).
         def gestures? = false

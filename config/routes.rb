@@ -82,6 +82,9 @@ Rails.application.routes.draw do
     # ondaC2 (C10): gravação, PTZ e alto-falante da câmera. Arquivo de mídia por link assinado (players da rede, sem sessão).
     patch "cameras/:id/ajustes", to: "cameras#settings", as: :camera_settings
     get "midia/arquivo/:name", to: "media_files#show", as: :media_file, constraints: { name: %r{[^/]+} }, format: false
+    # "Falar na Alexa": a voz gravada (MP3) que a Echo baixa, sem sessão; e o envio do painel.
+    get "fala/:key.mp3", to: "talk_audios#show", as: :talk_audio, constraints: { key: /[a-z0-9]{20,40}/ }, format: false
+    post "locais/:site_id/falar-na-alexa", to: "talks#create", as: :site_talk
 
     # Retorno do OAuth de plugin de integração (F9: Google Agenda); `state` assinado.
     get "integracoes/oauth/retorno", to: "integrations#oauth_callback", as: :integrations_oauth_callback
@@ -455,6 +458,7 @@ Rails.application.routes.draw do
       end
       # Dashboards (F5).
       resources :sites, only: [] do
+        post :talk, on: :member, to: "talks#create" # "Falar na Alexa"
         resources :dashboards, except: %i[new edit], shallow: true do
           post :publish, on: :member
           post :revert, on: :member

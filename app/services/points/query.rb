@@ -32,6 +32,14 @@ module Points
       "name" => ->(_q, p, v) { list(v).any? { |n| p.name.downcase.include?(n.downcase) } },
       # Pontos escolhidos pela chave (a lista fixa de entidades do HA: `['a', 'b'] | select(...)`).
       "key" => ->(_q, p, v) { list(v).include?(p.key) },
+      # Pontos escolhidos pelo id (o auto-entities importado do HA: entidades fixas e as que saem).
+      "id" => ->(_q, p, v) { list(v).include?(p.id) },
+      "not_id" => ->(_q, p, v) { list(v).exclude?(p.id) },
+      "not_integration" => ->(_q, p, v) { list(v).exclude?(p.device&.driver) },
+      # O liga/desliga das automações (AutomationPoints): true = só elas; false = sem elas (as luzes de verdade).
+      "automation" => ->(_q, p, v) { (p.device&.external_id == AutomationPoints::DEVICE_ID) == (v.to_s != "false") },
+      # Automação que rodou nos últimos N minutos (o `last_triggered` do HA).
+      "ran_min" => ->(q, p, v) { (t = q.ran_at(p)) && t > q.now - v.to_f.minutes },
       "exclude" => ->(_q, p, v) { list(v).none? { |n| "#{p.name} #{p.key} #{p.device&.name}".downcase.include?(n.downcase) } },
       "above" => ->(q, p, v) { (x = q.value(p)).is_a?(Numeric) && x > v.to_f },
       "below" => ->(q, p, v) { (x = q.value(p)).is_a?(Numeric) && x < v.to_f },
@@ -40,7 +48,8 @@ module Points
     }.freeze
     # Ordem e corte (não filtram).
     SORTS = { "name" => ->(_q, p) { p.name.downcase }, "value" => ->(q, p) { q.value(p).is_a?(Numeric) ? q.value(p) : Float::INFINITY },
-              "changed_at" => ->(_q, p) { p.changed_at || Time.zone.at(0) } }.freeze
+              "changed_at" => ->(_q, p) { p.changed_at || Time.zone.at(0) },
+              "ran_at" => ->(q, p) { q.ran_at(p) || Time.zone.at(0) } }.freeze
     OPTIONS = %w[sort limit].freeze
     KEYS = (FILTERS.keys + OPTIONS).freeze
     MAX = 500
@@ -112,6 +121,12 @@ module Points
         floor ? Area.subtree_ids(rows.map { |r| r.first(2) }, floor.first) : Set.new
       end
     end
+    # Última execução da automação do ponto (AutomationPoints: `address.automation_id`).
+    def ran_at(p)
+      id = p.address.to_h["automation_id"] or return nil
+      (@runs ||= @site.automations.pluck(:id, :last_run_at).to_h)[id]
+    end
+
     def tagged(name) = (@tags ||= {})[name.to_s.downcase] ||= Tagging.joins(:tag).where(tags: { name: name.to_s.downcase }, taggable_type: %w[Point Device Area]).pluck(:taggable_id).to_set
 
     # Liquid: `{{ "tag=bateria below=30" | points_where | map: "name" | join: ", " }}`.

@@ -55,6 +55,8 @@ module Dashboards
       @queries[[ q, with_state ]] ||= (@point_query ||= Points::Query.new(@site, points: @all)).call(q || {}, with_state: with_state)
     end
 
+    def sort(list, key) = (@point_query ||= Points::Query.new(@site, points: @all)).sort(list, key)
+
     # Põe o ponto no `points` do JSON (o que o widget desenha).
     def use(p)
       @used[p.id] = p if p

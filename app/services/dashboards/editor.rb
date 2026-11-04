@@ -54,6 +54,7 @@ module Dashboards
       w = widget(id)
       visible = (w["visible_if"] || {}).except(*FORM_VISIBILITY).merge(attrs["visible_if"] || {})
       kids = w["widgets"] if Widgets[attrs["type"]]&.container?
+      attrs = Widgets[attrs["type"]].keep(w, attrs) if Widgets[attrs["type"]] && w["type"] == attrs["type"]
       w.replace({ "id" => w["id"] }.merge(attrs).merge("visible_if" => visible.presence, "widgets" => kids).compact)
     end
 
