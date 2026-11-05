@@ -1,11 +1,11 @@
 module ApplicationHelper
   include Pagy::Frontend
 
-  NOTIFICATION_KINDS = { "convite" => [ "users", "bg-accent-soft text-accent" ],
-                         "resumo_diario" => [ "calendar", "bg-accent-soft text-accent" ],
-                         "aviso" => [ "bell", "bg-accent-soft text-accent" ],
-                         "alerta" => [ "exclamation-circle", "bg-danger-soft text-danger" ],
-                         "automacao" => [ "lightning-bolt", "bg-accent-soft text-accent" ] }.freeze
+  NOTIFICATION_KINDS = { "convite" => [ "users", "is-accent" ],
+                         "resumo_diario" => [ "calendar", "is-accent" ],
+                         "aviso" => [ "bell", "is-accent" ],
+                         "alerta" => [ "exclamation-circle", "is-danger" ],
+                         "automacao" => [ "lightning-bolt", "is-accent" ] }.freeze
 
   # catalogo: formulário da integração: a partial própria do plugin ou a gerada dos campos (SchemaPlugin).
   def integration_form_partial(plugin)

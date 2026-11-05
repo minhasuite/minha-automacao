@@ -30,9 +30,9 @@
       <div><dt class="text-muted"><%= t("devices.reading") %></dt><dd class="font-semibold text-ink"><%= Polling.supported?(@device) ? poll_label(@device.poll_s).capitalize : t("devices.no_reading") %></dd></div>
       <div class="col-span-2"><dt class="text-muted"><%= t("devices.maker") %></dt><dd class="font-semibold text-ink"><%= [ @device.manufacturer, @device.model ].compact_blank.join(" · ").presence || "—" %></dd></div>
     </dl>
-    <% if @device.removed_at %><p class="mt-3 text-sm text-warn" role="status"><%= t("devices.removed", at: l(@device.removed_at, format: :short)) %></p><% end %>
-    <% if @device.last_error.present? %><p class="mt-3 text-sm text-danger" role="status"><%= t("devices.last_error") %> <%= reveal_sensitive? ? @device.last_error : Sensitive.scrub(@device.last_error) %></p><% end %>
-    <% if @device.tuya_local? && @device.host.blank? %><p class="mt-3 text-sm text-warn"><%= t("devices.tuya_no_ip") %></p><% end %>
+    <% if @device.removed_at %><%= render(Ss::CalloutComponent.new(tone: :warn, css: "mt-3")) { tag.p(t("devices.removed", at: l(@device.removed_at, format: :short))) } %><% end %>
+    <% if @device.last_error.present? %><%= render(Ss::CalloutComponent.new(tone: :danger, title: t("devices.last_error").delete_suffix(":"), css: "mt-3")) { tag.p(reveal_sensitive? ? @device.last_error : Sensitive.scrub(@device.last_error)) } %><% end %>
+    <% if @device.tuya_local? && @device.host.blank? %><%= render(Ss::CalloutComponent.new(tone: :warn, css: "mt-3")) { tag.p(t("devices.tuya_no_ip")) } %><% end %>
     <% if @problems.any? %>
       <p class="ss-section mt-4"><%= t("devices.failures") %></p>
       <ul class="mt-2 text-sm grid gap-1">

@@ -5,7 +5,7 @@
   <dialog class="ss-dialog dw-assist" data-assist-target="dialog" aria-labelledby="assist-title">
     <div class="flex items-center justify-between gap-2">
       <h2 id="assist-title" class="text-lg font-bold text-ink"><%= t("assist.title") %></h2>
-      <button type="button" class="grid place-items-center size-9 rounded-lg text-muted hover:text-accent" data-action="assist#close" aria-label="<%= t("assist.close") %>"><%= icon("x", "size-5") %></button>
+      <button type="button" class="ss-icon-btn" data-action="assist#close" title="<%= t("assist.close") %>" aria-label="<%= t("assist.close") %>"><%= icon("x", "") %></button>
     </div>
     <p class="text-sm text-muted mt-1"><%= t("assist.examples") %></p>
     <div class="mt-4 grid place-items-center">

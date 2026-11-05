@@ -19,9 +19,13 @@ module Web
       when "my_theme" then prefs["theme"] = theme_key(params[:key])
       when "device_theme" then device_theme(theme_key(params[:key]))
       when "sidebar" then prefs["sidebar"] = sidebar(prefs["sidebar"].to_h)
+      when "sidebar_order" then prefs["sidebar"] = sidebar_order(prefs["sidebar"].to_h)
       when "sidebar_reset" then prefs.delete("sidebar")
       end
       current_user.update!(dashboard_prefs: prefs.compact)
+      # Arrastar na lista (Ss::SortableListComponent) manda PATCH JSON { ids }: sem página de volta.
+      return head(:no_content) if request.format.json?
+
       redirect_to settings_appearance_path(anchor: params[:op].to_s.start_with?("sidebar") ? "barra" : "tema"), notice: t("appearance.saved")
     end
 
@@ -69,6 +73,14 @@ module Web
         end
       end
       { "order" => order, "hidden" => hidden - ApplicationHelper::SIDEBAR_FIXED }
+    end
+
+    # Ordem nova da lista de arrastar: os ids na ordem; o que não veio (Configurações, que
+    # não se move, ou item novo) fica depois, na ordem de antes.
+    def sidebar_order(current)
+      keys = helpers.sidebar_entries(all: true).map { |e| e[:key] }
+      order = (Array(params[:ids]).map(&:to_s) & keys) | (Array(current["order"]) & keys) | keys
+      { "order" => order, "hidden" => Array(current["hidden"]) & keys }
     end
 
     def theme_params

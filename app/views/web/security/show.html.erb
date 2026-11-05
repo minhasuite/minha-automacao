@@ -6,11 +6,10 @@
     <h2 id="codes-t" class="flex items-center gap-2"><%= icon("lock-closed", "size-5 text-accent") %><%= t("security.recovery.title") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("security.recovery.save") %></p>
     <ul class="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 num text-sm font-bold">
-      <% @codes.each do |c| %><li class="bg-field rounded-lg px-2 py-1.5 text-center"><%= c %></li><% end %>
+      <% @codes.each do |c| %><li class="ss-code-inline block py-1.5 text-center"><%= c %></li><% end %>
     </ul>
-    <div class="mt-3" data-controller="clipboard">
-      <textarea class="sr-only" data-clipboard-target="source" aria-hidden="true" tabindex="-1" readonly><%= @codes.join("\n") %></textarea>
-      <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="clipboard#copy"><%= icon("duplicate", "size-4") %><span><%= t("security.recovery.copy") %></span></button>
+    <div class="mt-3" data-controller="ss-copy" data-ss-copy-text-value="<%= @codes.join("\n") %>" data-ss-copy-done-value="<%= ss_t("code_block.copied") %>">
+      <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="ss-copy#copy" data-ss-copy-target="button"><%= icon("duplicate", "size-4") %><span data-ss-copy-target="label"><%= t("security.recovery.copy") %></span></button>
     </div>
   </section>
 <% end %>
@@ -33,11 +32,11 @@
     </div>
   <% else %>
     <div class="mt-3 grid gap-4 sm:grid-cols-[12rem_1fr] items-start">
-      <div class="bg-white rounded-xl p-2 w-48 max-w-full" role="img" aria-label="<%= t("security.totp.qr") %>"><%= qr_svg(Mfa::Totp.uri(@secret, @user.email)) %></div>
+      <div class="ss-qr-box w-48 max-w-full" role="img" aria-label="<%= t("security.totp.qr") %>"><%= qr_svg(Mfa::Totp.uri(@secret, @user.email)) %></div>
       <div class="min-w-0">
         <ol class="text-sm text-ink list-decimal pl-5 space-y-1">
           <li><%= t("security.totp.step1") %></li>
-          <li><%= t("security.totp.step2") %> <code class="num text-xs bg-field rounded px-1 break-all"><%= @secret.scan(/.{1,4}/).join(" ") %></code></li>
+          <li><%= t("security.totp.step2") %> <code class="ss-code-inline num"><%= @secret.scan(/.{1,4}/).join(" ") %></code></li>
           <li><%= t("security.totp.step3") %></li>
         </ol>
         <%= form_with url: settings_security_totp_path, class: "mt-3 flex flex-wrap items-end gap-2" do %>

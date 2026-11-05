@@ -7,11 +7,7 @@
   <section class="ss-card ss-card-grad p-4 mb-4" role="status" aria-labelledby="link-t">
     <h2 id="link-t" class="flex items-center gap-2"><%= icon("link", "size-4") %><%= t("people.invite_link") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("people.invite_link_hint") %></p>
-    <div class="mt-3 flex gap-2" data-controller="clipboard">
-      <label for="invite-url" class="sr-only"><%= t("people.invite_link_label") %></label>
-      <input id="invite-url" class="ss-input num" value="<%= @invite_url %>" readonly data-clipboard-target="source">
-      <button type="button" class="ss-btn ss-btn-primary" data-action="clipboard#copy"><%= icon("duplicate", "size-4") %><%= t("people.copy") %></button>
-    </div>
+    <%= render Ss::CodeBlockComponent.new(text: @invite_url, label: t("people.invite_link_label"), id: "invite-url", css: "mt-3") %>
   </section>
 <% end %>
 

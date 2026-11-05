@@ -1,6 +1,6 @@
 <%= render "web/shared/header", title: t("dev_tools.title"), subtitle: t("dev_tools.subtitle", site: @site.name), back: site_path(@site) %>
 <%= render "web/sites/tabs", site: @site, current: :dev_tools %>
-<nav class="ss-chips mb-4" aria-label="<%= t("dev_tools.title") %>">
+<nav class="ss-chips is-solid mb-4" data-controller="ss-scroll-current" aria-label="<%= t("dev_tools.title") %>">
   <% Web::DevToolsController::TABS.each_key do |key| %>
     <%= link_to t("dev_tools.tabs.#{key}"), dev_tools_site_path(@site, aba: key), class: "ss-chip no-underline", "aria-current": (key == @tab).to_s %>
   <% end %>
@@ -11,7 +11,7 @@
     <%= hidden_field_tag :aba, "estados", id: nil %>
     <div class="min-w-48 flex-1"><label for="q" class="ss-label"><%= t("datasets.show.filter") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("dev_tools.filter_ph") %></div>
     <div><label for="capacidade" class="ss-label"><%= t("dev_tools.type") %></label><%= select_tag :capacidade, options_for_select(Point::CAPABILITY_LABELS.invert.sort, params[:capacidade]), include_blank: t("site_helpers.index.all"), class: "ss-input" %></div>
-    <button type="submit" class="ss-btn ss-btn-ghost" aria-label="<%= t("datasets.show.filter") %>"><%= icon("search", "size-4") %></button>
+    <button type="submit" class="ss-icon-btn is-outline" title="<%= t("datasets.show.filter") %>" aria-label="<%= t("datasets.show.filter") %>"><%= icon("search", "size-4") %></button>
   <% end %>
   <% if @states.empty? %>
     <%= render Ss::EmptyStateComponent.new(title: t("dev_tools.none"), variant: :busca, css: "ss-card") %>
@@ -23,8 +23,8 @@
             <p class="font-bold text-ink truncate"><%= link_to p.name, point_path(p), class: "text-ink no-underline hover:text-accent" %></p>
             <p class="text-xs text-muted truncate num"><%= p.key %> · <%= p.capability_label %><%= " · helper #{p.helper_type&.title}" if p.helper %></p>
             <% if p.attrs.present? %>
-              <details class="mt-1"><summary class="text-xs text-accent cursor-pointer"><%= t("dev_tools.attrs", n: p.attrs.size) %></summary>
-                <pre class="mt-1 text-xs bg-field rounded-lg p-2 overflow-x-auto max-w-full"><%= JSON.pretty_generate(p.attrs) %></pre></details>
+              <details class="mt-1"><summary class="ss-summary text-xs text-accent"><%= t("dev_tools.attrs", n: p.attrs.size) %></summary>
+                <%= render Ss::CodeBlockComponent.new(text: JSON.pretty_generate(p.attrs), max_height: "16rem", class: "mt-1 max-w-full") %></details>
             <% end %>
           </div>
           <div class="text-right shrink-0 max-w-[50%]">
@@ -35,7 +35,7 @@
                 <%= hidden_field_tag :point_id, p.id, id: nil %><%= hidden_field_tag :q, params[:q], id: nil %>
                 <label for="v_<%= p.id %>" class="sr-only"><%= t("dev_tools.new_value_of", name: p.name) %></label>
                 <input id="v_<%= p.id %>" name="value" class="ss-input !py-1 w-32 text-sm" placeholder="<%= t("dev_tools.new_value") %>">
-                <button class="ss-btn ss-btn-ghost ss-btn-sm" title="<%= t("dev_tools.set_value") %>" aria-label="<%= t("dev_tools.set_value_of", name: p.name) %>"><%= icon("check", "size-4") %></button>
+                <button class="ss-icon-btn is-sm" title="<%= t("dev_tools.set_value") %>" aria-label="<%= t("dev_tools.set_value_of", name: p.name) %>"><%= icon("check", "size-4") %></button>
               <% end %>
             <% end %>
           </div>
@@ -47,10 +47,10 @@
 
 <% elsif @tab == "modelo" %>
   <div class="grid gap-4 lg:grid-cols-2">
-    <%= form_with url: dev_tools_template_site_path(@site), class: "ss-card ss-card-pad grid gap-3", data: { controller: "live-form", turbo_frame: "dev-result", action: "input->live-form#queue change->live-form#queue" } do %>
+    <%= form_with url: dev_tools_template_site_path(@site), class: "ss-card ss-card-pad grid gap-3", data: { controller: "ss-autosubmit", turbo_frame: "dev-result", action: "input->ss-autosubmit#queue change->ss-autosubmit#now" } do %>
       <div><label for="mode" class="ss-label"><%= t("dev_tools.type") %></label><%= select_tag :mode, options_for_select([ [ t("dev_tools.liquid"), "liquid" ], [ t("dev_tools.expr"), "expr" ] ]), class: "ss-input" %></div>
       <div><label for="template" class="ss-label"><%= t("dev_tools.tabs.modelo") %></label>
-        <%= text_area_tag :template, @template, rows: 10, class: "ss-input num text-sm", spellcheck: false, maxlength: DevTools::MAX_TEMPLATE %></div>
+        <%= text_area_tag :template, @template, rows: 10, class: "ss-input ss-code-input", spellcheck: false, maxlength: DevTools::MAX_TEMPLATE %></div>
       <p class="text-xs text-muted"><%= t("dev_tools.template_hint_html") %></p>
     <% end %>
     <% result, error = DevTools.render(@site, @template) %>
@@ -75,7 +75,7 @@
     <%= form_with url: dev_tools_event_site_path(@site), class: "ss-card ss-card-pad grid gap-3" do %>
       <p class="font-bold text-ink"><%= t("dev_tools.fire_event") %></p>
       <div><label for="event" class="ss-label"><%= t("site_helpers.form.name") %></label><%= text_field_tag :event, nil, class: "ss-input num", required: true, placeholder: t("dev_tools.event_ph"), maxlength: 60 %></div>
-      <div><label for="data" class="ss-label"><%= t("dev_tools.data") %></label><%= text_area_tag :data, "{}", rows: 4, class: "ss-input num text-sm" %></div>
+      <div><label for="data" class="ss-label"><%= t("dev_tools.data") %></label><%= text_area_tag :data, "{}", rows: 4, class: "ss-input ss-code-input min-h-0" %></div>
       <p class="text-xs text-muted"><%= t("dev_tools.event_hint") %></p>
       <div><button type="submit" class="ss-btn ss-btn-primary"><%= icon("lightning-bolt", "size-4") %><%= t("dev_tools.fire") %></button></div>
     <% end %>

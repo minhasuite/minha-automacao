@@ -1,6 +1,8 @@
-/* Dashboards (F5): grid de 12 colunas com largura por tela (--m/--t/--d no
-   style do widget), tiles que acendem na cor do que fazem (âmbar = luz),
-   cartões de área com arte própria e o editor. Cores só por token. */
+/* Domínio: painéis (F5) — registro de widgets dw-*: grid de 12 colunas com largura por tela
+   (--m/--t/--d), tiles que acendem na cor do que fazem (âmbar = luz), cartões de área, robô,
+   planta baixa dw-fp*, editor ao vivo dw-ed-*, temas do usuário, quiosque e protetor de tela
+   (ma-kiosk-*, ma-saver-*). Botões, chips, avisos, esqueleto e o "recarregando" do widget
+   (turbo-frame.contents.ss-live) são da gem. Cores só por token. */
 :root {
   --amber: #b45309; --amber-soft: #fff3df; --amber-grad: linear-gradient(135deg, #fbbf24 0%, #f59e0b 55%, #f97316 100%);
   --green-grad: linear-gradient(135deg, #34d399, #059669); --red-grad: linear-gradient(135deg, #fb7185, #e11d48);
@@ -27,8 +29,6 @@
   .dw-hero-btn:hover { background: rgba(255, 255, 255, .26); }
   .dw-badge { display: inline-flex; align-items: center; gap: .35rem; padding: .45rem .85rem; border-radius: 999px; color: #fff; font-size: .9rem;
               background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .24); backdrop-filter: blur(6px); }
-  .dw-tabs { display: flex; gap: .5rem; overflow-x: auto; margin-top: 1rem; padding: .25rem .1rem .5rem; scrollbar-width: none; }
-  .dw-tabs::-webkit-scrollbar { display: none; }
 
   .dw-card { position: relative; height: 100%; padding: .95rem 1rem; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card);
              border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); transition: background .35s ease, border-color .35s ease, box-shadow .25s ease, transform .15s ease; }
@@ -40,11 +40,6 @@
   .dw-ico-sm svg { width: 1rem; height: 1rem; }
   .dw-name { display: block; font-weight: 700; color: var(--ink); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dw-state { display: block; margin-top: .1rem; font-size: .8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  /* Seta de detalhes ao lado do play do tile de aperto da gem (o aperto cobre o tile todo). */
-  .ss-device.is-press + .dw-more { z-index: 2; top: 50%; right: .5rem; translate: 0 -50%; }
-  .ss-device.is-press:has(+ .dw-more) .ss-device-end { margin-right: 2.1rem; }
-  .dw-more { position: absolute; top: .4rem; right: .4rem; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 10px; color: var(--muted); }
-  .dw-more:hover { background: var(--field); color: var(--accent); }
   /* Sem sinal: fundo apagado e estado em vermelho, sem opacidade no texto (contraste AA). */
   .dw-unavailable.dw-card { background: var(--field); box-shadow: none; }
   .dw-unavailable .dw-ico, .dw-unavailable .ss-switch { opacity: .5; }
@@ -121,12 +116,6 @@
   .dw-bars span.dw-bar-now { background: var(--amber-grad); }
   .dw-bars span.dw-bar-empty { background: var(--field); }
   .dw-up { color: var(--danger); } .dw-down { color: var(--success, #059669); }
-
-  /* Editor. */
-  .dw-tool { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 9px; border: 1px solid var(--line); background: var(--surface);
-             color: var(--muted); cursor: pointer; }
-  .dw-tool:hover { color: var(--accent); border-color: var(--accent); }
-  .dw-tool-danger:hover { color: var(--danger); border-color: var(--danger); }
   .dw-pop summary { list-style: none; }
   .dw-pop summary::-webkit-details-marker { display: none; }
 
@@ -181,12 +170,6 @@
   .dw-media-player { margin-top: .75rem; padding: 0; background: none; border: 0; box-shadow: none; }
 }
 
-/* Widget ao vivo recarregando (o turbo-frame fica "busy"): faixa fina que corre
-   no topo do cartão, sem esconder o valor de antes. */
-turbo-frame[busy] > .dw-w { position: relative; }
-turbo-frame[busy] > .dw-w::after { content: ""; position: absolute; left: 14px; right: 14px; top: 1px; height: 2px; border-radius: 2px; pointer-events: none;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent) 0 0 / 50% 100% no-repeat; animation: dw-scan 1s ease-in-out infinite; }
-@keyframes dw-scan { from { background-position: -100% 0; } to { background-position: 200% 0; } }
 @keyframes dw-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
 /* Pessoas e painel de alarme (Pacote 3). */
 @layer components {
@@ -360,9 +343,6 @@ turbo-frame[busy] > .dw-w::after { content: ""; position: absolute; left: 14px; 
   .dw-vac-bot span { position: absolute; right: 2px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 999px; background: var(--accent); animation: dw-breathe 1s ease-in-out infinite; }
   .dw-vac-back .dw-vac-bot { top: 30%; animation: dw-dock 4s ease-in-out forwards; }
   .dw-vac-dock { position: absolute; left: 4px; top: 50%; width: 8px; height: 2rem; margin-top: -1rem; border-radius: 4px; background: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
-  /* Esqueleto de carregamento (genérico). */
-  .dw-skel { border-radius: 12px; background: linear-gradient(100deg, var(--field) 40%, color-mix(in srgb, var(--surface) 65%, var(--field)) 50%, var(--field) 60%) 0 0 / 300% 100%;
-             animation: dw-shimmer 1.4s linear infinite; }
   .dw-fp-stage:has(> img:not([data-loaded])) { background: linear-gradient(100deg, var(--field) 40%, color-mix(in srgb, var(--surface) 65%, var(--field)) 50%, var(--field) 60%) 0 0 / 300% 100%; animation: dw-shimmer 1.4s linear infinite; }
 }
 @keyframes dw-blind { from { transform: scaleY(calc(var(--c, .5) + .25)); } }
@@ -371,7 +351,7 @@ turbo-frame[busy] > .dw-w::after { content: ""; position: absolute; left: 14px; 
 @keyframes dw-dock { from { left: 90%; } to { left: 2.5%; } }
 @keyframes dw-trail { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) {
-  .dw-anim, .dw-anim *, .dw-anim::after, .dw-spinning svg, .dw-skel, .dw-vac-bot, .dw-fp-stage { animation: none !important; transition: none !important; }
+  .dw-anim, .dw-anim *, .dw-anim::after, .dw-spinning svg, .dw-vac-bot, .dw-fp-stage { animation: none !important; transition: none !important; }
 }
 /* Quiosque (uiweb): tela cheia sem menu, cursor some parado, protetor de tela. */
 .ma-kiosk main { max-width: none; }
@@ -380,9 +360,6 @@ turbo-frame[busy] > .dw-w::after { content: ""; position: absolute; left: 14px; 
   .ma-kiosk-bar { position: fixed; right: 1rem; bottom: 1rem; z-index: 60; display: flex; gap: .4rem; padding: .3rem; border-radius: 999px;
                   background: color-mix(in srgb, var(--surface) 80%, transparent); backdrop-filter: blur(12px); box-shadow: var(--shadow-card); transition: opacity .4s ease; }
   .ma-kiosk-idle .ma-kiosk-bar { opacity: 0; }
-  .ma-kiosk-btn { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 999px; border: 0; color: var(--ink-2); background: transparent; cursor: pointer; list-style: none; }
-  .ma-kiosk-btn:hover { color: var(--accent); background: var(--field); }
-  .ma-kiosk-btn::-webkit-details-marker { display: none; }
   .ma-kiosk-form { position: absolute; right: 0; bottom: 3.5rem; display: grid; gap: .75rem; width: min(20rem, calc(100vw - 2rem)); padding: 1rem; }
   .ma-saver { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; overflow: hidden; color: #fff; background: #07061a; cursor: none; }
   .ma-saver[hidden] { display: none; }

@@ -65,7 +65,7 @@ RSpec.describe "Protocolos e ecossistemas (ondaC1)" do
       post "/integracoes/#{integration.id}/gerenciar/include", params: { panel: { strategy: "s2" } }
       expect(ZwaveJs::Inclusion.get(integration.id)).to include("state" => "requested", "strategy" => "s2")
       get "/integracoes/#{integration.id}/gerenciar"
-      expect(response.body).to include('data-controller="reload"', "Esperando o aparelho")
+      expect(response.body).to include('data-controller="ss-reload"', "Esperando o aparelho")
       ZwaveJs::Inclusion.update(integration.id, state: "dsk", dsk: "11111-22222-33333-44444-55555-66666-77777-88888")
       get "/integracoes/#{integration.id}/gerenciar"
       expect(response.body).to include("22222-33333", "PIN (5 dígitos)")

@@ -1,0 +1,5 @@
+<%# Antes de pintar: tema e "esconder valores" escolhidos neste navegador. O tema é do ss-theme
+    da gem (chave ss-theme); a chave antiga "theme" (controller do produto até a v0.10.1) vira
+    ss-theme uma vez. Valores continuam na chave "privacy" (ss-privacy com key-value). -%>
+<script>try { var s = localStorage, d = document.documentElement, o = s.getItem("theme"); if (o) { if (!s.getItem("ss-theme")) s.setItem("ss-theme", o); s.removeItem("theme") }
+  var t = s.getItem("ss-theme"); if (t === "light" || t === "dark") d.dataset.theme = t; if (s.getItem("privacy") === "on") d.dataset.privacy = "on" } catch (_) {}</script>

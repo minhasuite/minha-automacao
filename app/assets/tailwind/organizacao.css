@@ -1,6 +1,6 @@
-/* ondaA1 (paridade HA, grupos 1 e 2): categorias recolhíveis, rótulos com
-   cor, tela Expor, editor YAML, listas de tarefas e calendário local. Só
-   tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
+/* Domínio (ondaA1): rótulo com a cor do usuário (.ss-label-chip) e a grade da tela Expor a
+   assistentes (oa-expose*). Editor YAML, tarefas e agenda usam a gem (ss-code-input,
+   ss-checklist, AgendaList). Só tokens; claro e escuro pelas mesmas variáveis. */
 @layer components {
   /* ---- Categorias e rótulos -------------------------------------------- */
   .ss-label-chip { --chip: var(--accent); display: inline-flex; align-items: center; gap: .3rem; padding: .1rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 600;
@@ -23,27 +23,4 @@
     .oa-expose-cell span.sr-only { position: static; width: auto; height: auto; clip: auto; margin: 0; overflow: visible; white-space: normal; }
   }
   @media (min-width: 641px) { .oa-expose-cells { display: contents; } }
-
-  /* ---- Editor YAML ----------------------------------------------------- */
-  .oa-code { font-family: var(--font-mono); font-size: .82rem; line-height: 1.55; min-height: 22rem; tab-size: 2; white-space: pre; overflow: auto; }
-
-  /* ---- Listas de tarefas ----------------------------------------------- */
-  .oa-todo { display: grid; gap: .1rem; }
-  .oa-todo-item { display: flex; align-items: center; gap: .75rem; padding: .6rem .25rem; border-top: 1px solid var(--line); }
-  .oa-todo-item:first-child { border-top: 0; }
-  .oa-todo-item.is-done .oa-todo-text { color: var(--muted); text-decoration: line-through; }
-  .oa-todo-check { width: 1.25rem; height: 1.25rem; border-radius: 999px; border: 2px solid var(--line); display: grid; place-items: center; flex: none; background: transparent; cursor: pointer; color: transparent; }
-  .oa-todo-item.is-done .oa-todo-check { background: var(--accent-solid); border-color: transparent; color: #fff; }
-  .oa-todo-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .oa-due { font-size: .72rem; color: var(--muted); }
-  .oa-due.is-late { color: var(--danger); font-weight: 600; }
-
-  /* ---- Calendário local ------------------------------------------------ */
-  .oa-cal-day { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); gap: .9rem; padding: .85rem 1rem; border-top: 1px solid var(--line); }
-  .oa-cal-day:first-child { border-top: 0; }
-  .oa-cal-date { text-align: center; line-height: 1.1; }
-  .oa-cal-date b { display: block; font-size: 1.5rem; color: var(--ink); }
-  .oa-cal-date span { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-  .oa-cal-event { display: flex; gap: .6rem; align-items: baseline; padding: .2rem 0; }
-  .oa-cal-time { font-size: .78rem; font-weight: 700; color: var(--accent); min-width: 5.5rem; }
 }

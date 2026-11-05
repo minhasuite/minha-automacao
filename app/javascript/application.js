@@ -20,15 +20,6 @@ document.addEventListener("turbo:load", () => {
   if (d) { d.open = true; el.scrollIntoView({ block: "start" }) }
 })
 
-// Faixa de abas que rola de lado (celular): a aba atual aparece, não fica escondida à direita.
-document.addEventListener("turbo:load", () => {
-  document.querySelectorAll(":is(.ss-subnav, .dw-tabs, .ss-chips) [aria-current]:not([aria-current=false])").forEach((a) => {
-    const nav = a.parentElement
-    if (nav.scrollWidth <= nav.clientWidth) return
-    nav.scrollLeft += a.getBoundingClientRect().left - nav.getBoundingClientRect().left - (nav.clientWidth - a.offsetWidth) / 2
-  })
-})
-
 // Dashboards: o servidor avisa "o ponto X mudou" (stream do local, sem HTML) e
 // cada quadro de widget que depende dele (data-points) se recarrega sozinho,
 // renderizado com o papel de quem vê. Junta avisos seguidos em 250 ms.
@@ -82,27 +73,6 @@ document.addEventListener("change", (e) => {
   const form = e.target.closest("form.ss-filters")
   if (form) form.requestSubmit()
 })
-
-// Máscaras (data-mask): o servidor guarda só os dígitos de documento/telefone/CEP;
-// dinheiro se formata ao sair do campo ("1234,5" → "1.234,50").
-const masks = {
-  document: (d) => d.length <= 11
-    ? d.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2")
-    : d.slice(0, 14).replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2"),
-  phone: (d) => d.slice(0, 11).replace(/^(\d{2})(\d)/, "($1) $2").replace(/(\d)(\d{4})$/, "$1-$2"),
-  cep: (d) => d.slice(0, 8).replace(/^(\d{5})(\d)/, "$1-$2")
-}
-const applyMask = (input) => {
-  const fn = masks[input.dataset.mask]
-  if (fn && input.value) input.value = fn(input.value.replace(/\D/g, ""))
-}
-document.addEventListener("input", (e) => { if (e.target.dataset?.mask && e.target.dataset.mask !== "money") applyMask(e.target) })
-document.addEventListener("focusout", (e) => {
-  if (e.target.dataset?.mask !== "money" || !e.target.value.trim()) return
-  const n = parseFloat(e.target.value.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", "."))
-  if (!isNaN(n)) e.target.value = n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-})
-document.addEventListener("turbo:load", () => document.querySelectorAll("[data-mask]:not([data-mask=money])").forEach(applyMask))
 
 // PWA (Lote 1): o service worker recebe o push e responde os botões do aviso.
 // Só em contexto seguro (https ou localhost): pelo http da rede de casa não registra.

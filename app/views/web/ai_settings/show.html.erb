@@ -14,8 +14,8 @@
     <div><dt class="text-muted"><%= t("ai_settings.default") %></dt><dd class="text-xl font-bold text-ink truncate"><%= Ai.provider(b.default_provider)&.label || AiAccount.pick&.plugin&.label || t("ai_settings.none") %></dd></div>
   </dl>
   <% if b.ratio %>
-    <div class="mt-3 h-2 rounded-full bg-line overflow-hidden" role="progressbar" aria-label="<%= t("ai_settings.usage") %>" aria-valuenow="<%= (b.ratio * 100).round %>" aria-valuemin="0" aria-valuemax="100">
-      <div class="h-full <%= b.ratio >= 1 ? 'bg-danger' : (b.ratio >= 0.8 ? 'bg-warn' : 'bg-accent') %>" style="width: <%= (b.ratio * 100).round %>%"></div>
+    <div class="ss-progress mt-3" role="progressbar" aria-label="<%= t("ai_settings.usage") %>" aria-valuenow="<%= (b.ratio * 100).round %>" aria-valuemin="0" aria-valuemax="100">
+      <div class="ss-progress-bar <%= b.ratio >= 1 ? 'bg-danger' : ('bg-warn' if b.ratio >= 0.8) %>" style="width: <%= [ (b.ratio * 100).round, 100 ].min %>%"></div>
     </div>
   <% end %>
   <% if owner %>

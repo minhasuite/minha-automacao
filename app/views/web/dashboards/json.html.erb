@@ -1,10 +1,9 @@
 <%= render "web/shared/header", title: t("dashboards.json.title"), subtitle: "#{@dashboard.name} · #{t("dashboards.json.subtitle")}", back: edit_dashboard_path(@dashboard) %>
 <%= form_with url: json_dashboard_path(@dashboard), method: :patch, class: "ss-card ss-card-pad grid gap-3" do %>
   <% if @errors.present? %>
-    <div class="rounded-xl bg-danger-soft text-danger p-3 text-sm" role="alert">
-      <p class="font-bold"><%= t("dashboards.json.not_saved") %></p>
-      <ul class="list-disc pl-5 mt-1"><% @errors.first(10).each do |e| %><li><%= e %></li><% end %></ul>
-    </div>
+    <%= render Ss::CalloutComponent.new(tone: :danger, title: t("dashboards.json.not_saved")) do %>
+      <ul><% @errors.first(10).each do |e| %><li><%= e %></li><% end %></ul>
+    <% end %>
   <% end %>
   <label class="ss-label" for="definition"><%= t("dashboards.json.definition") %></label>
   <%= text_area_tag :definition, @text, id: "definition", rows: 28, spellcheck: false, class: "ss-input num text-xs leading-relaxed" %>

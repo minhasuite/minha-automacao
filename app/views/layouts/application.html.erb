@@ -16,11 +16,14 @@
   <%= turbo_refresh_scroll_tag :preserve %>
   <%= yield :head %>
   <%= ss_app_shell_head %>
-  <script>try { if (localStorage.getItem("privacy") === "on") document.documentElement.dataset.privacy = "on" } catch (_) {}</script>
+  <%= render "web/shared/theme_head" %>
 </head>
 <% body_theme = @body_theme || {} %>
-<body class="min-h-screen<%= " ma-kiosk" if kiosk %> <%= body_theme["class"] %>" style="<%= body_theme["style"] %>" data-controller="theme privacy" data-action="keydown.p@window->privacy#key">
-  <a href="#conteudo" class="ss-skip"><%= t("layout.skip") %></a>
+<%# ss-inputs: caixas e rádios soltos no desenho da suíte; tema e "esconder valores" pelos controllers da gem
+    (ss-privacy na chave "privacy" de antes, para não perder a escolha de quem já usava). %>
+<body class="ss-base ss-inputs min-h-screen<%= " ma-kiosk" if kiosk %> <%= body_theme["class"] %>" style="<%= body_theme["style"] %>"
+      data-controller="ss-theme ss-privacy" data-ss-privacy-key-value="privacy" data-action="keydown.p@window->ss-privacy#key">
+  <%= ss_skip_link("#conteudo", t("layout.skip")) %>
   <% if kiosk %>
     <main id="conteudo" tabindex="-1" class="outline-none min-w-0 px-4 py-6 lg:px-8 lg:py-8 <%= content_for?(:wide) ? "" : "max-w-7xl" %> mx-auto"><%= yield %></main>
   <% else %>

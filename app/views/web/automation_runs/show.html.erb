@@ -38,7 +38,7 @@
       <% if @run.resume_at && @run.status == "waiting" %><dt class="text-muted"><%= t("automations.runs.resumes") %></dt><dd class="text-ink num"><%= l(@run.resume_at, format: "%d/%m %H:%M:%S") %></dd><% end %>
       <% if @run.depth.positive? %><dt class="text-muted"><%= t("automations.runs.chain") %></dt><dd class="text-ink"><%= t("automations.runs.chain_before", count: @run.depth) %></dd><% end %>
     </dl>
-    <% if @run.error.present? %><p class="mt-3 rounded-xl bg-danger-soft text-danger p-3 text-sm font-semibold break-words"><%= @run.error %></p><% end %>
+    <% if @run.error.present? %><%= render(Ss::CalloutComponent.new(tone: :danger, class: "mt-3")) { @run.error } %><% end %>
     <% vars = @run.state["vars"].to_h.except("repeat_index") %>
     <% if vars.any? %>
       <p class="ss-label mt-4"><%= t("automations.runs.variables") %></p>

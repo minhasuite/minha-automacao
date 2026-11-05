@@ -23,7 +23,7 @@
       <% items.each do |s| %>
         <% risk = s.risk %>
         <li id="scene-<%= s.id %>">
-          <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(s.icon.presence_in(HelperTypes::ICONS) || "sparkles") %></span>
+          <span class="ss-icon-tile is-accent"><%= icon(s.icon.presence_in(HelperTypes::ICONS) || "sparkles") %></span>
           <div class="min-w-0 flex-1 basis-40">
             <p class="font-bold text-ink break-words"><%= can?(:manage) ? link_to(s.name, edit_scene_path(s), class: "text-ink no-underline hover:text-accent") : s.name %>
               <% if risk != "normal" %> <span class="ss-badge ss-badge-warn"><%= Point::RISKS[risk] %></span><% end %></p>

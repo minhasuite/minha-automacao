@@ -96,7 +96,7 @@ RSpec.describe "F9: Alexa Smart Home" do
     it "gera o cliente, autoriza com escolha do local, troca o código uma vez e renova" do
       sign_in
       post "/locais/#{site.id}/alexa/cliente", params: { generate: "1", redirect_uris: "#{redirect}\nhttp://inseguro" }
-      secret = response.body[/Client Secret \(só agora\)<\/dt><dd[^>]*>([^<]+)</, 1]
+      secret = response.body[/Client Secret \(só agora\)<\/dt>.*?<code>([^<]+)</m, 1]
       expect(secret).to be_present
       tenant.reload
       expect(tenant.alexa_redirect_uris).to eq([ redirect ])

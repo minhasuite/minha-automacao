@@ -28,7 +28,7 @@ RSpec.describe "Assistente Migre do HA" do
     post "/locais/#{site.id}/migrar-do-ha/conectar", params: { url: "http://ha.teste:8123/", token: "token-teste" }
     expect(response).to redirect_to("/locais/#{site.id}/migrar-do-ha")
     get "/locais/#{site.id}/migrar-do-ha"
-    expect(response.body).to include("Lendo o Home Assistant", "data-controller=\"reload\"")
+    expect(response.body).to include("Lendo o Home Assistant", "data-controller=\"ss-reload\"")
     perform_enqueued_jobs
   end
 

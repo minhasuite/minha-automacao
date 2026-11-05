@@ -8,10 +8,9 @@
 </section>
 
 <% if @errors.any? %>
-  <div class="ss-card ss-card-pad mb-4" role="alert">
-    <p class="font-bold text-danger"><%= t("packages.preview.problems") %></p>
-    <ul class="mt-2 grid gap-1 text-sm text-ink-2 list-disc pl-5"><% @errors.first(30).each do |e| %><li><%= e %></li><% end %></ul>
-  </div>
+  <%= render Ss::CalloutComponent.new(tone: :danger, title: t("packages.preview.problems"), css: "mb-4") do %>
+    <ul><% @errors.first(30).each do |e| %><li><%= e %></li><% end %></ul>
+  <% end %>
 <% end %>
 
 <% labels = { "add" => [ t("packages.preview.add"), "text-success" ], "update" => [ t("packages.preview.update"), "text-accent" ], "remove" => [ t("packages.preview.remove"), "text-danger" ] } %>

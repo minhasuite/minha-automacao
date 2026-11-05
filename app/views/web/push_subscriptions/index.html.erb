@@ -22,18 +22,18 @@
     <ul class="mt-3 divide-y divide-line">
       <% @subscriptions.each do |s| %>
         <li class="py-3 flex items-center gap-3 min-w-0">
-          <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon("bell", "size-5") %></span>
+          <span class="ss-icon-tile is-accent"><%= icon("bell", "") %></span>
           <div class="min-w-0 flex-1">
             <p class="font-semibold text-ink break-words"><%= s.name.presence || t("push.browser") %></p>
             <p class="text-xs text-muted"><%= t("push.web_push", at: l(s.created_at, format: :short)) %><%= " · #{t('push.last_sent', at: l(s.last_used_at, format: :short))}" if s.last_used_at %></p>
           </div>
-          <%= button_to push_subscription_path(s), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm px-2 text-danger", "aria-label": t("push.remove", name: s.name),
-                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("push.remove_confirm", name: s.name.presence || t("push.this_device").downcase) } } do %><%= icon("trash", "size-4") %><% end %>
+          <%= button_to push_subscription_path(s), method: :delete, class: "ss-icon-btn is-danger", title: t("push.remove", name: s.name), "aria-label": t("push.remove", name: s.name),
+                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("push.remove_confirm", name: s.name.presence || t("push.this_device").downcase) } } do %><%= icon("trash", "") %><% end %>
         </li>
       <% end %>
       <% @apps.each do |d| %>
         <li class="py-3 flex items-center gap-3 min-w-0">
-          <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-field text-muted"><%= icon("cube", "size-5") %></span>
+          <span class="ss-icon-tile is-muted"><%= icon("cube", "") %></span>
           <div class="min-w-0 flex-1">
             <p class="font-semibold text-ink"><%= t("push.app", platform: d.platform == "ios" ? "iPhone" : "Android") %></p>
             <p class="text-xs text-muted"><%= t("push.native", at: l(d.created_at, format: :short)) %></p>

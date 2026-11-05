@@ -17,13 +17,8 @@
              [ t("appearance.nav"), settings_appearance_path, "color-swatch", :appearance, true ],
              [ t("settings.nav.push"), push_subscriptions_path, "bell", :push, true ] ] %>
 <div class="lg:grid lg:grid-cols-[13rem_1fr] lg:gap-6 lg:items-start">
-  <%= render "web/shared/subnav_menu", label: t("settings.nav.label"),
-             items: items.select { |i| i[4] }.map { |label, path, ico, key| { label: label, path: path, icon: ico, current: key == current } } %>
-  <nav class="ss-subnav max-lg:!hidden" aria-label="<%= t("settings.nav.label") %>">
-    <% items.each do |label, path, ico, key, show| %>
-      <% next unless show %>
-      <%= link_to path, "aria-current": (key == current ? "page" : nil) do %><%= icon(ico, "size-4") %><%= label %><% end %>
-    <% end %>
-  </nav>
+  <%# Ss::SubnavComponent: coluna fixa no desktop, menu (atual + grade) no celular. %>
+  <%= render Ss::SubnavComponent.new(label: t("settings.nav.label"),
+                                     items: items.select { |i| i[4] }.map { |label, path, ico, key| { label: label, href: path, icon: icon(ico, "size-4"), current: key == current } }) %>
   <div class="min-w-0"><%= yield %></div>
 </div>

@@ -521,8 +521,6 @@ en:
       add: "Add"
       empty_list: "Empty list."
       items_of: "%{name} items"
-      reopen: "Reopen %{name}"
-      complete: "Complete %{name}"
       due: "· due %{date}"
       remove: "Remove %{name}"
       clear_done:

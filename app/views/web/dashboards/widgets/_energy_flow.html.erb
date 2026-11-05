@@ -8,7 +8,7 @@
 <div class="dw-card ef-card">
   <div class="flex items-center justify-between gap-2">
     <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.energy_now") %></p>
-    <span class="dw-ico dw-ico-sm" style="color: var(--amber)"><%= icon("lightning-bolt") %></span>
+    <span class="ss-icon-tile is-muted is-sm" style="color: var(--amber)"><%= icon("lightning-bolt", "") %></span>
   </div>
   <% if d["missing"] %>
     <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %><%= t("dashboards.w.pick_power") %></p>

@@ -4,10 +4,10 @@
 <% if @notifications.any? %>
   <div class="ss-card divide-y divide-line overflow-hidden">
     <% @notifications.each do |n| %>
-      <% ico, tone = ApplicationHelper::NOTIFICATION_KINDS.fetch(n.kind, [ "bell", "bg-field text-muted" ]) %>
+      <% ico, tone = ApplicationHelper::NOTIFICATION_KINDS.fetch(n.kind, [ "bell", "is-muted" ]) %>
       <div id="<%= dom_id(n) %>" class="<%= 'opacity-70' if n.read_at && !n.actionable? %>">
         <%= button_to read_notification_path(n), method: :patch, class: "w-full text-left px-4 py-3.5 bg-transparent border-0 cursor-pointer hover:bg-field flex items-start gap-3", form_class: "block" do %>
-          <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= tone %>"><%= icon(ico, "size-5") %></span>
+          <span class="ss-icon-tile <%= tone %>"><%= icon(ico, "") %></span>
           <span class="min-w-0 flex-1">
             <span class="flex items-start justify-between gap-3"><span class="<%= n.read_at ? 'font-semibold' : 'font-bold' %> text-ink break-words min-w-0"><%= with_money(n.title) %></span>
               <span class="shrink-0 text-xs text-muted flex items-center gap-1.5 mt-0.5"><%= l(n.created_at, format: :short) %><% unless n.read_at %><span class="size-2 rounded-full bg-accent" aria-label="<%= t("automations.notifications.unread") %>"></span><% end %></span></span>

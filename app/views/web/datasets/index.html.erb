@@ -9,7 +9,7 @@
   <ul class="ss-card ss-rows" aria-label="<%= t("datasets.index.list") %>">
     <% @datasets.each do |d| %>
       <li>
-        <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon("table") %></span>
+        <span class="ss-icon-tile is-accent"><%= icon("table") %></span>
         <div class="min-w-0 flex-1">
           <p class="font-bold text-ink truncate"><%= link_to d.name, dataset_path(d), class: "text-ink no-underline hover:text-accent" %></p>
           <p class="text-xs text-muted truncate"><%= [ t("datasets.key", key: d.key), (d.free? ? t("datasets.free") : d.field_names.join(", ")), (d.retention_days ? t("datasets.keeps", n: d.retention_days) : t("datasets.keeps_all")) ].join(" · ") %></p>

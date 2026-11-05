@@ -1,6 +1,6 @@
 <%= render "web/shared/header", title: t("settings.title"), subtitle: t("logs.subtitle") %>
 <%= render layout: "web/settings/frame", locals: { current: :logs } do %>
-<nav class="ss-chips mb-4" aria-label="<%= t("logs.nav") %>">
+<nav class="ss-chips is-solid mb-4" data-controller="ss-scroll-current" aria-label="<%= t("logs.nav") %>">
   <% %w[resumo completo].each do |key| %>
     <%= link_to t("logs.tabs.#{key}"), settings_logs_path(aba: key), class: "ss-chip no-underline", "aria-current": (key == @tab).to_s %>
   <% end %>
@@ -44,6 +44,6 @@
 <% elsif @error %>
   <%= render Ss::EmptyStateComponent.new(title: t("logs.raw_unavailable"), text: @error, variant: :erro, css: "ss-card") %>
 <% else %>
-  <pre class="ss-card ss-card-pad text-xs num overflow-x-auto max-h-[70vh] whitespace-pre-wrap break-all" aria-label="<%= t("logs.tabs.completo") %>"><%= @raw.presence || t("logs.empty") %></pre>
+  <%= render Ss::CodeBlockComponent.new(text: @raw.presence || t("logs.empty"), max_height: "70vh", label: t("logs.tabs.completo")) %>
 <% end %>
 <% end %>

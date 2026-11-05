@@ -1,9 +1,9 @@
 <%# locals: (integration:, qr_png: nil) -%>
 <% if qr_png %>
   <section class="ss-card ss-card-pad grid gap-3 justify-items-center text-center" aria-labelledby="qr-title"
-           data-controller="poll" data-poll-url-value="<%= status_integration_path(integration) %>">
+           data-controller="ss-poll" data-ss-poll-url-value="<%= status_integration_path(integration) %>">
     <h2 id="qr-title" class="font-bold"><%= t("integrations.connect.xiaomi.title") %></h2>
-    <img src="data:image/png;base64,<%= Base64.strict_encode64(qr_png) %>" alt="<%= t("integrations.connect.xiaomi.qr") %>" class="rounded-2xl bg-white p-2 w-64 max-w-full">
+    <div class="ss-qr-box w-64 max-w-full"><img src="data:image/png;base64,<%= Base64.strict_encode64(qr_png) %>" alt="<%= t("integrations.connect.xiaomi.qr") %>"></div>
     <ol class="list-decimal pl-5 text-sm text-ink-2 text-left grid gap-1">
       <li><%= t("integrations.connect.xiaomi.step1_html") %></li>
       <li><%= t("integrations.connect.xiaomi.step2") %></li>

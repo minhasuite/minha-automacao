@@ -35,7 +35,7 @@
       <% items.each do |a| %>
         <li id="automation-<%= a.id %>">
           <% if can?(:manage) %><label class="ss-check"><input type="checkbox" name="ids[]" value="<%= a.id %>" form="bulk" aria-label="<%= t("automations.common.mark", name: a.name) %>" data-ss-table-target="check" data-action="ss-table#toggleRow"></label><% end %>
-          <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= a.enabled ? 'ss-grad' : 'bg-accent-soft text-muted' %>"><%= icon(a.icon.presence_in(HelperTypes::ICONS) || "lightning-bolt") %></span>
+          <span class="ss-icon-tile <%= a.enabled ? 'is-grad' : 'is-muted' %>"><%= icon(a.icon.presence_in(HelperTypes::ICONS) || "lightning-bolt") %></span>
           <div class="min-w-0 flex-1 basis-48">
             <p class="font-bold text-ink break-words"><%= link_to a.name, (can?(:manage) ? edit_automation_path(a) : automation_automation_runs_path(a)), class: "text-ink no-underline hover:text-accent" %>
               <% unless a.enabled %> <span class="ss-badge ss-badge-warn"><%= a.published? ? t("automations.index.off") : t("automations.index.draft") %></span><% end %>

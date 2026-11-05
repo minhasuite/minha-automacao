@@ -1,7 +1,7 @@
 <%= render "web/shared/header", title: t("apps.store"), subtitle: t("apps.store_subtitle"), back: apps_path %>
 <%= render layout: "web/settings/frame", locals: { current: :apps } do %>
 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-  <nav class="ss-chips" aria-label="<%= t("apps.categories") %>">
+  <nav class="ss-chips is-solid" data-controller="ss-scroll-current" aria-label="<%= t("apps.categories") %>">
     <%= link_to t("apps.all"), apps_store_path(q: params[:q]), class: "ss-chip shrink-0", "aria-current": params[:categoria].blank?.to_s %>
     <% AppCatalog.categories.each do |c| %>
       <%= link_to c, apps_store_path(q: params[:q], categoria: c), class: "ss-chip shrink-0", "aria-current": (params[:categoria] == c).to_s %>
@@ -22,7 +22,7 @@
     <% @apps.each do |app| %>
       <li>
         <%= link_to app_path(app.key), class: "ss-card ss-card-link p-4 no-underline flex items-start gap-3 h-full" do %>
-          <span class="ss-icon-tile text-accent"><%= icon(app.icon) %></span>
+          <span class="ss-icon-tile is-accent"><%= icon(app.icon) %></span>
           <span class="min-w-0 flex-1">
             <span class="flex flex-wrap items-center gap-2">
               <span class="font-bold text-ink"><%= app.name %></span>

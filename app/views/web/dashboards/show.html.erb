@@ -7,12 +7,11 @@
 <% if live %><%= turbo_stream_from @site, :points, channel: PointsChannel %><% end %>
 
 <% if @preview %>
-  <div class="ss-card ss-card-grad p-4 mb-4 flex flex-wrap items-center gap-3" role="status">
-    <span class="ss-icon-tile text-accent"><%= icon("eye") %></span>
-    <p class="flex-1 min-w-0"><strong class="text-ink"><%= t("dashboards.preview") %></strong> <span class="text-muted"><%= t("dashboards.preview_note", n: @dashboard.version) %></span></p>
-    <%= link_to t("dashboards.back_editor"), edit_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
-    <%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary ss-btn-sm", form: { data: { turbo_confirm: t("dashboards.publish_confirm"), turbo_confirm_button: t("dashboards.publish") } } do %><%= icon("upload", "size-4") %><%= t("dashboards.publish") %><% end %>
-  </div>
+  <%= render Ss::CalloutComponent.new(tone: :accent, title: t("dashboards.preview"), icon: icon("eye", ""), css: "mb-4") do |c| %>
+    <% c.with_action { link_to t("dashboards.back_editor"), edit_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost ss-btn-sm" } %>
+    <% c.with_action do %><%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary ss-btn-sm", form: { data: { turbo_confirm: t("dashboards.publish_confirm"), turbo_confirm_button: t("dashboards.publish") } } do %><%= icon("upload", "size-4") %><%= t("dashboards.publish") %><% end %><% end %>
+    <p><%= t("dashboards.preview_note", n: @dashboard.version) %></p>
+  <% end %>
 <% end %>
 
 <section class="ss-hero ss-rise dw-hero" aria-label="<%= view['title'] %>">
@@ -43,7 +42,7 @@
 
 <% tabs = Dashboards::ViewTypes.tabs(@resolved["views"], view) %>
 <% if tabs.size > 1 %>
-  <nav class="dw-tabs" aria-label="<%= t("dashboards.views") %>">
+  <nav class="ss-chips is-solid mt-4" data-controller="ss-scroll-current" aria-label="<%= t("dashboards.views") %>">
     <% tabs.each do |v| %>
       <%= link_to dw_view_path(@dashboard, v, home: @home).then { |p| @preview ? dashboard_path(@dashboard, view: v["path"].presence || v["id"], rascunho: 1) : p }, class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
     <% end %>

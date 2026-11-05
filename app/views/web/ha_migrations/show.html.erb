@@ -1,30 +1,25 @@
 <% s = @state %>
 <% status = s["status"] %>
 <% step = { nil => 1, "failed" => (s["phase"] == "import" ? 3 : 1), "fetching" => 2, "preview" => 2, "importing" => 3, "done" => 4 }.fetch(status, 1) %>
-<% steps = [ [ t("ha_migration.steps.connect"), "link" ], [ t("ha_migration.steps.review"), "clipboard-list" ], [ t("ha_migration.steps.import"), "download" ], [ t("ha_migration.steps.check"), "badge-check" ] ] %>
+<% steps = [ t("ha_migration.steps.connect"), t("ha_migration.steps.review"), t("ha_migration.steps.import"), t("ha_migration.steps.check") ] %>
 <%= render "web/shared/header", title: t("ha_migration.title"), subtitle: t("ha_migration.subtitle"), back: site_integrations_path(@site) %>
 
-<ol class="mg-steps" aria-label="<%= t("ha_migration.steps_label") %>">
-  <% steps.each_with_index do |(label, ico), i| %>
-    <li class="<%= 'mg-done' if i + 1 < step %> <%= 'mg-now' if i + 1 == step %>" <%= 'aria-current="step"'.html_safe if i + 1 == step %>>
-      <span class="mg-dot"><%= i + 1 < step ? icon("check", "size-4") : icon(ico, "size-4") %></span><span class="mg-label"><%= label %></span>
-    </li>
-  <% end %>
-</ol>
-
+<%# Passos no Ss::WizardComponent (modo servidor): o passo atual pelo estado; a tela do passo é o painel. %>
+<%= render Ss::WizardComponent.new(current: step - 1, aria: { label: t("ha_migration.steps_label") }) do |w| %>
+<% steps.each { |label| w.with_step(title: label) } %>
 <% if status.nil? || (status == "failed" && s["phase"] != "import") %>
-  <section class="ss-card ss-card-pad mg-panel ss-rise" aria-labelledby="mg-connect">
+  <section class="ss-card ss-card-pad max-w-[46rem]" aria-labelledby="mg-connect">
     <h2 id="mg-connect"><%= t("ha_migration.connect_title") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("ha_migration.connect_hint") %></p>
     <% if status == "failed" %>
-      <p class="mg-error" role="alert"><%= icon("exclamation-circle", "size-5 shrink-0") %><%= s["error"] %></p>
+      <%= render(Ss::CalloutComponent.new(tone: :danger, class: "mt-3")) { s["error"] } %>
     <% end %>
     <%= form_with url: connect_site_ha_migration_path(@site), class: "grid gap-4 mt-4 sm:grid-cols-2" do %>
       <div class="sm:col-span-2"><label class="ss-label" for="mg-url"><%= t("ha_migration.url") %></label>
         <%= url_field_tag :url, @integration&.settings&.dig("url"), class: "ss-input", id: "mg-url", placeholder: "http://192.168.0.10:8123", required: true %></div>
       <div class="sm:col-span-2"><label class="ss-label" for="mg-token"><%= t("ha_migration.token") %></label>
         <%= password_field_tag :token, nil, class: "ss-input num", id: "mg-token", autocomplete: "off", placeholder: (@integration&.secrets&.dig("token").present? ? t("ha_migration.token_saved") : "eyJhbGciOi…"), required: @integration&.secrets&.dig("token").blank? %></div>
-      <ol class="mg-help sm:col-span-2">
+      <ol class="sm:col-span-2 grid gap-1 pl-5 list-decimal text-sm text-ink-2">
         <li><%= t("ha_migration.help1_html") %></li>
         <li><%= t("ha_migration.help2_html") %></li>
         <li><%= t("ha_migration.help3") %></li>
@@ -34,24 +29,24 @@
   </section>
 
 <% elsif status == "fetching" %>
-  <section class="ss-card ss-card-pad mg-panel mg-wait" data-controller="reload" data-reload-every-value="2000" role="status">
-    <span class="mg-orb" aria-hidden="true"></span>
+  <section class="ss-card ss-card-pad max-w-[46rem] grid justify-items-center gap-2.5 py-10 text-center" data-controller="ss-reload" data-ss-reload-every-value="2000" role="status">
+    <span class="ss-spinner is-lg" aria-hidden="true"></span>
     <h2><%= t("ha_migration.reading") %></h2>
     <p class="text-sm text-muted"><%= t("ha_migration.reading_hint") %></p>
   </section>
 
 <% elsif status == "preview" %>
   <% p = s["preview"] %>
-  <%= form_with url: import_site_ha_migration_path(@site), class: "mg-review", multipart: true do %>
-    <div class="mg-stats">
-      <div class="mg-stat"><span><%= icon("view-boards", "size-5") %></span><strong class="num"><%= p.dig("areas", "total") %></strong><small><%= t("ha_migration.stats.areas_html", n: p.dig("areas", "new")) %></small></div>
-      <div class="mg-stat"><span><%= icon("cube", "size-5") %></span><strong class="num"><%= p.dig("devices", "matched") %>/<%= p.dig("devices", "total") %></strong><small><%= t("ha_migration.stats.devices_html") %></small></div>
-      <div class="mg-stat"><span><%= icon("collection", "size-5") %></span><strong class="num"><%= p["entities"] %></strong><small><%= t("ha_migration.stats.entities_html") %></small></div>
-      <div class="mg-stat"><span><%= icon("calculator", "size-5") %></span><strong class="num"><%= p["helpers"].values.sum %></strong><small><%= t("ha_migration.stats.helpers") %></small></div>
-      <div class="mg-stat"><span><%= icon("sparkles", "size-5") %></span><strong class="num"><%= p["automations"].size + p["scripts"].size %></strong><small><%= t("ha_migration.stats.automations_html") %></small></div>
-    </div>
+  <% plain = ->(key, **o) { strip_tags(t(key, **o).to_s.gsub("<br>", " ")) } %>
+  <%= form_with url: import_site_ha_migration_path(@site), class: "grid gap-4", multipart: true do %>
+    <%= render Ss::KpiStripComponent.new(label: t("ha_migration.steps.review"), items: [
+          { label: plain.call("ha_migration.stats.areas_html", n: p.dig("areas", "new")), value: p.dig("areas", "total").to_s },
+          { label: plain.call("ha_migration.stats.devices_html"), value: "#{p.dig("devices", "matched")}/#{p.dig("devices", "total")}" },
+          { label: plain.call("ha_migration.stats.entities_html"), value: p["entities"].to_s },
+          { label: t("ha_migration.stats.helpers"), value: p["helpers"].values.sum.to_s },
+          { label: plain.call("ha_migration.stats.automations_html"), value: (p["automations"].size + p["scripts"].size).to_s } ]) %>
     <% if p.dig("devices", "matched") < p.dig("devices", "total") %>
-      <p class="mg-note"><%= icon("information-circle", "size-5 shrink-0") %><span><%= t("ha_migration.missing_html", n: p.dig("devices", "total") - p.dig("devices", "matched")) %></span></p>
+      <%= render(Ss::CalloutComponent.new(tone: :warn)) { t("ha_migration.missing_html", n: p.dig("devices", "total") - p.dig("devices", "matched")) } %>
     <% end %>
 
     <section class="ss-card ss-card-pad">
@@ -66,18 +61,17 @@
     <% { "automations" => t("ha_migration.groups.automations"), "scripts" => t("ha_migration.groups.scripts"), "scenes" => t("ha_migration.groups.scenes") }.each do |key, title| %>
       <% list = p[key] %>
       <% next if list.empty? %>
-      <details class="ss-card mg-group" open>
-        <summary><span class="font-bold text-ink"><%= title %></span><span class="ss-chip-count"><%= list.size %></span></summary>
-        <div class="mg-items">
+      <details class="ss-card" open>
+        <summary class="ss-summary px-4 py-3.5"><span class="font-bold text-ink"><%= title %></span><span class="ss-chip-count"><%= list.size %></span></summary>
+        <div class="ss-option-grid grid gap-1.5 px-2.5 pb-3 max-h-96 overflow-auto grid-cols-[repeat(auto-fill,minmax(17rem,1fr))]">
           <% list.each do |it| %>
-            <label class="hx-opt"><%= check_box_tag "#{key}[]", it["id"], true, id: "mg-#{key}-#{it['id'].parameterize}" %>
-              <span class="min-w-0 flex-1 truncate font-semibold text-ink"><%= it["name"] %></span>
-              <% if key == "automations" %><span class="ss-badge <%= it['enabled'] ? 'ss-badge-success' : '' %>"><%= it["enabled"] ? t("ha_migration.enabled_ha") : t("ha_migration.disabled") %></span><% end %></label>
+            <%= render Ss::OptionCardComponent.new(type: :checkbox, name: "#{key}[]", value: it["id"], checked: true, dense: true, id: "mg-#{key}-#{it['id'].parameterize}",
+                                                   title: it["name"], description: (it["enabled"] ? t("ha_migration.enabled_ha") : t("ha_migration.disabled") if key == "automations")) %>
           <% end %>
         </div>
       </details>
     <% end %>
-    <div class="mg-actions">
+    <div class="flex flex-wrap gap-2.5">
       <button class="ss-btn ss-btn-primary"><%= icon("download", "size-4") %><%= t("ha_migration.import_shadow") %></button>
       <%= button_to t("ha_migration.restart"), reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-ghost", form: { class: "contents" } %>
     </div>
@@ -86,39 +80,34 @@
 <% elsif status == "importing" || (status == "failed" && s["phase"] == "import") %>
   <% pr = s["progress"] || {} %>
   <% pct = pr["total"] ? ((pr["i"].to_i + 0.5) / pr["total"] * 100).round : 4 %>
-  <section class="ss-card ss-card-pad mg-panel mg-wait" <%= 'data-controller="reload" data-reload-every-value="1500"'.html_safe if status == "importing" %> role="status">
-    <% if status == "importing" %>
-      <span class="mg-orb" aria-hidden="true"></span>
-      <% phases = Integrations::HomeAssistantImport::STEPS.keys.map { |k| t(k.to_s.delete_suffix("!"), scope: "ha_migration.phases") } %>
-      <h2><%= t("ha_migration.importing") %><%= ": #{phases[pr['i']]}" if pr["i"] %></h2>
-      <div class="mg-bar" role="progressbar" aria-valuenow="<%= pct %>" aria-valuemin="0" aria-valuemax="100"><span style="width: <%= pct %>%"></span></div>
-      <ul class="mg-phases">
-        <% phases.each_with_index do |label, i| %>
-          <li class="<%= 'mg-done' if pr['i'] && i < pr['i'] %> <%= 'mg-now' if pr['i'] == i %>"><%= icon(pr["i"] && i < pr["i"] ? "check-circle" : "clock", "size-4") %><%= label %></li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="mg-error" role="alert"><%= icon("exclamation-circle", "size-5 shrink-0") %><%= t("ha_migration.stopped") %> <%= s["error"] %></p>
-      <%= button_to t("ha_migration.restart"), reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-primary mt-3" %>
-    <% end %>
-  </section>
+  <% if status == "importing" %>
+    <% phases = Integrations::HomeAssistantImport::STEPS.keys.map { |k| t(k.to_s.delete_suffix("!"), scope: "ha_migration.phases") } %>
+    <%# Fases no Ss::JobProgressComponent; a página se recarrega (ss-reload) até terminar. %>
+    <div class="max-w-[46rem]" data-controller="ss-reload" data-ss-reload-every-value="1500">
+      <%= render Ss::JobProgressComponent.new(id: "mg-import", title: "#{t("ha_migration.importing")}#{": #{phases[pr['i']]}" if pr["i"]}", state: :running,
+                                              progress: pct / 100.0, steps: phases, current_step: pr["i"]) %>
+    </div>
+  <% else %>
+    <section class="ss-card ss-card-pad max-w-[46rem] grid gap-3" role="status">
+      <%= render(Ss::CalloutComponent.new(tone: :danger, title: t("ha_migration.stopped").delete_suffix(":"))) { s["error"] } %>
+      <div><%= button_to t("ha_migration.restart"), reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-primary" %></div>
+    </section>
+  <% end %>
 
 <% elsif status == "done" %>
   <% r = s["report"] %>
   <% c = r["came"] %>
-  <section class="ss-card ss-card-pad mg-panel mg-hero ss-rise">
-    <span class="mg-check"><%= icon("check", "size-7") %></span>
+  <section class="ss-card ss-card-pad ss-rise flex items-center gap-4">
+    <span class="ss-icon-tile is-success is-lg is-circle"><%= icon("check", "size-7") %></span>
     <div>
       <h2><%= t("ha_migration.done_title") %></h2>
       <p class="text-sm text-muted mt-1"><%= t("ha_migration.done_hint_html", link: link_to(t("ha_migration.shadow"), site_shadow_path(@site))) %></p>
     </div>
   </section>
-  <div class="mg-stats">
-    <% [ [ "view-boards", c["areas"], t("ha_migration.came.areas") ], [ "cube", c["devices_added"], t("ha_migration.came.devices") ], [ "collection", c["entities"], t("ha_migration.came.entities") ],
-         [ "calculator", c["helpers"], t("ha_migration.came.helpers") ], [ "color-swatch", c["scenes"], t("ha_migration.came.scenes") ], [ "sparkles", c["automations"], t("ha_migration.came.automations") ], [ "play", c["scripts"], t("ha_migration.came.scripts") ] ].each do |ico, n, label| %>
-      <div class="mg-stat"><span><%= icon(ico, "size-5") %></span><strong class="num"><%= n %></strong><small><%= label %></small></div>
-    <% end %>
-  </div>
+  <%= render Ss::KpiStripComponent.new(label: t("ha_migration.steps.check"), class: "mt-4",
+                                       items: [ [ c["areas"], t("ha_migration.came.areas") ], [ c["devices_added"], t("ha_migration.came.devices") ], [ c["entities"], t("ha_migration.came.entities") ],
+                                                [ c["helpers"], t("ha_migration.came.helpers") ], [ c["scenes"], t("ha_migration.came.scenes") ], [ c["automations"], t("ha_migration.came.automations") ],
+                                                [ c["scripts"], t("ha_migration.came.scripts") ] ].map { |n, label| { label: label, value: n.to_s } }) %>
   <div class="grid gap-4 lg:grid-cols-2 mt-4">
     <section class="ss-card ss-card-pad" aria-labelledby="mg-bp">
       <h2 id="mg-bp"><%= t("ha_migration.blueprints") %> <span class="ss-chip-count"><%= r["blueprints"].size %></span></h2>
@@ -143,29 +132,30 @@
       </ul>
     </section>
   </div>
-  <div class="mg-actions">
+  <div class="flex flex-wrap gap-2.5 mt-4">
     <%= link_to site_shadow_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("eye", "size-4") %><%= t("ha_migration.see_shadow") %><% end %>
     <%= link_to site_automations_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("sparkles", "size-4") %><%= t("ha_migration.groups.automations") %><% end %>
     <%= button_to t("ha_migration.import_again"), reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-ghost", form: { class: "contents" } %>
   </div>
 <% end %>
+<% end %>
 
 <% if @integration&.secrets&.dig("token").present? && !%w[fetching importing].include?(status) %>
   <% dz = s["dashboards"].to_h %>
-  <section id="mg-dash" class="ss-card ss-card-pad mt-4 ss-rise" aria-labelledby="mg-dash-t" <%= 'data-controller="reload" data-reload-every-value="2000"'.html_safe if dz["status"] == "running" %>>
+  <section id="mg-dash" class="ss-card ss-card-pad mt-4 ss-rise" aria-labelledby="mg-dash-t" <%= 'data-controller="ss-reload" data-ss-reload-every-value="2000"'.html_safe if dz["status"] == "running" %>>
     <h2 id="mg-dash-t" class="flex items-center gap-2"><%= icon("view-boards", "size-5 text-accent") %><%= t("ha_migration.dash.title") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("ha_migration.dash.hint") %></p>
     <% if dz["status"] == "running" %>
-      <p class="text-sm mt-3" role="status"><span class="up-spin"></span> <%= t("ha_migration.dash.running") %></p>
+      <p class="text-sm mt-3 flex items-center gap-2" role="status"><span class="ss-spinner is-sm" aria-hidden="true"></span><%= t("ha_migration.dash.running") %></p>
     <% elsif dz["status"] == "failed" %>
-      <p class="mg-error mt-3" role="alert"><%= icon("exclamation-circle", "size-5 shrink-0") %><%= dz["error"] %></p>
+      <%= render(Ss::CalloutComponent.new(tone: :danger, class: "mt-3")) { dz["error"] } %>
     <% elsif dz["status"] == "done" %>
       <p class="text-sm mt-3 text-success" role="status"><%= t("ha_migration.dash.done", n: dz["list"].size) %></p>
       <ul class="mt-2 flex flex-wrap gap-2">
         <% dz["list"].each do |d| %><li><%= link_to d["name"], dashboard_path(d["id"]), class: "ss-btn ss-btn-outline ss-btn-sm" %></li><% end %>
       </ul>
       <% if dz["notes"].any? %>
-        <details class="mt-3"><summary class="text-sm font-semibold text-accent cursor-pointer"><%= t("ha_migration.dash.notes", n: dz["notes"].size) %></summary>
+        <details class="mt-3"><summary class="ss-summary text-sm font-semibold text-accent"><%= t("ha_migration.dash.notes", n: dz["notes"].size) %></summary>
           <ul class="mg-report mt-2"><% dz["notes"].each do |n| %><li class="mg-warn"><%= icon("minus-circle", "size-5 shrink-0") %><p class="text-sm break-words"><%= n %></p></li><% end %></ul></details>
       <% end %>
     <% end %>

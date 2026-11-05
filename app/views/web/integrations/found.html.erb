@@ -10,15 +10,15 @@
 <%# Ainda no assistente (nada adicionado desta integração): os passos em cima. %>
 <% body = capture do %>
 <% if @integration.status == "syncing" %>
-  <div class="ss-card ss-card-pad mb-4 flex items-center gap-3" role="status" data-controller="poll" data-poll-url-value="<%= status_integration_path(@integration, sync: 1) %>">
+  <div class="ss-card ss-card-pad mb-4 flex items-center gap-3" role="status" data-controller="ss-poll" data-ss-poll-url-value="<%= status_integration_path(@integration, sync: 1) %>">
     <span class="ss-dots" aria-hidden="true"></span>
     <p class="text-sm"><%= t("integrations.found.scanning_html") %></p>
   </div>
 <% elsif @integration.last_error.present? %>
   <%# Credencial → Reconfigurar; rede ou servidor fora → Tentar de novo (só a varredura, sem novo login). %>
-  <div class="ss-card ss-card-pad mb-4 grid gap-3 text-sm" role="alert">
-    <p class="text-danger"><%= t("integrations.found.read_failed") %> <%= @integration.last_error %></p>
-    <div class="flex flex-wrap gap-2">
+  <%= render Ss::CalloutComponent.new(tone: :danger, title: t("integrations.found.read_failed").delete_suffix(":"), class: "mb-4") do |c| %>
+    <%= @integration.last_error %>
+    <% c.with_action do %>
       <% if can?(:manage) %>
         <% if @integration.auth_error? && @integration.plugin&.reconfigurable? %>
           <%= link_to t("integrations.common.reconfigure"), connect_integration_path(@integration), class: "ss-btn ss-btn-primary ss-btn-sm" %>
@@ -27,8 +27,8 @@
         <% end %>
       <% end %>
       <%= link_to t("integrations.found.back"), site_integrations_path(@site), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
-    </div>
-  </div>
+    <% end %>
+  <% end %>
 <% end %>
 
 <% if pending.empty? && @integration.status != "syncing" %>

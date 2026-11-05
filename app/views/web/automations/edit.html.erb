@@ -26,43 +26,40 @@
   <div id="webhook" class="ss-card ss-card-pad mb-4 border border-accent" role="status">
     <p class="font-bold text-ink"><%= t("automations.edit.webhook_once") %></p>
     <p class="text-sm text-muted"><%= t("automations.edit.webhook_hint_html") %></p>
-    <code class="block mt-2 break-all text-sm"><%= flash[:webhook_url] %></code>
+    <%= render Ss::CodeBlockComponent.new(text: flash[:webhook_url], label: "Webhook", class: "mt-2") %>
   </div>
 <% end %>
 
 <% if Shadow.active?(@automation) %>
-  <div class="rounded-xl bg-accent-soft p-3 mb-4 text-sm flex flex-wrap items-center gap-3" role="status">
-    <p class="flex-1 min-w-48 text-ink"><%= icon("moon", "size-5 inline text-accent") %>
-      <strong><%= t("automations.common.in_shadow") %><%= t("automations.edit.whole_site") if !@automation.shadow %>.</strong> <%= t("automations.edit.shadow_hint") %></p>
-    <%= link_to site_shadow_path(@site, automacao: @automation.id), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("moon", "size-4") %><%= t("automations.edit.would_have_done") %><% end %>
-  </div>
+  <%= render Ss::CalloutComponent.new(tone: :accent, icon: icon("moon", ""), title: "#{t("automations.common.in_shadow")}#{t("automations.edit.whole_site") unless @automation.shadow}.", class: "mb-4") do |c| %>
+    <%= t("automations.edit.shadow_hint") %>
+    <% c.with_action do %><%= link_to site_shadow_path(@site, automacao: @automation.id), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("moon", "size-4") %><%= t("automations.edit.would_have_done") %><% end %><% end %>
+  <% end %>
 <% end %>
 
 <% if @automation.blueprint_outdated? %>
-  <div class="rounded-xl bg-accent-soft p-3 mb-4 text-sm flex flex-wrap items-center gap-3" role="status">
-    <p class="flex-1 min-w-48 text-ink"><%= icon("information-circle", "size-5 inline text-accent") %>
-      <%= t("automations.edit.blueprint_changed_html", blueprint: link_to(@automation.blueprint.name, blueprint_path(@automation.blueprint)), version: @automation.blueprint.version) %></p>
-    <%= button_to rebuild_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents" } do %><%= icon("refresh", "size-4") %><%= t("automations.edit.rebuild") %><% end %>
-  </div>
+  <%= render Ss::CalloutComponent.new(tone: :accent, icon: icon("information-circle", ""), class: "mb-4") do |c| %>
+    <%= t("automations.edit.blueprint_changed_html", blueprint: link_to(@automation.blueprint.name, blueprint_path(@automation.blueprint)), version: @automation.blueprint.version) %>
+    <% c.with_action do %><%= button_to rebuild_automation_path(@automation), class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents" } do %><%= icon("refresh", "size-4") %><%= t("automations.edit.rebuild") %><% end %><% end %>
+  <% end %>
 <% end %>
 
 <div class="grid gap-6 lg:grid-cols-3 items-start">
-  <div class="lg:col-span-2 flex flex-col gap-4 min-w-0 ma-flow">
+  <div class="lg:col-span-2 flex flex-col gap-4 min-w-0 ss-steps">
     <% if @errors.any? %>
-      <div class="rounded-xl bg-warn-soft p-3 text-sm" role="status">
-        <p class="font-bold text-ink flex items-center gap-2"><%= icon("exclamation-circle", "size-5 text-warn") %><%= t("automations.edit.missing") %></p>
-        <ul class="list-disc pl-5 mt-1 text-ink-2"><% @errors.first(8).each do |e| %><li><%= e %></li><% end %></ul>
-      </div>
+      <%= render Ss::CalloutComponent.new(tone: :warn, title: t("automations.edit.missing")) do %>
+        <ul><% @errors.first(8).each do |e| %><li><%= e %></li><% end %></ul>
+      <% end %>
     <% end %>
     <% if critical %>
-      <p class="rounded-xl bg-danger-soft text-danger p-3 text-sm font-semibold flex gap-2"><%= icon("exclamation-circle", "size-5 shrink-0") %><%= t("automations.edit.critical") %></p>
+      <%= render(Ss::CalloutComponent.new(tone: :danger)) { t("automations.edit.critical") } %>
     <% end %>
 
     <% if script %><%= render "web/automations/fields", automation: @automation, points: points %><% end %>
 
     <% (script ? [ :actions ] : Automations::Dsl::KINDS).each do |kind| %>
       <section class="ss-card ss-card-pad" aria-labelledby="sec-<%= kind %>">
-        <h2 id="sec-<%= kind %>" class="ma-flow-step"><%= script ? t("automations.edit.sequence") : t("automations.kind_titles.#{kind}") %></h2>
+        <h2 id="sec-<%= kind %>" class="ss-steps-head"><%= script ? t("automations.edit.sequence") : t("automations.kind_titles.#{kind}") %></h2>
         <p class="text-sm text-muted mb-3"><%= script ? t("automations.edit.sequence_hint") : t("automations.kind_hints.#{kind}") %></p>
         <%= render "web/automations/list", list: Array(@draft[kind.to_s]), path: kind.to_s, kind: kind, points: by_id, automation: @automation %>
       </section>

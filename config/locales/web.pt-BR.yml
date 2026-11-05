@@ -521,8 +521,6 @@ pt-BR:
       add: "Adicionar"
       empty_list: "Lista vazia."
       items_of: "Itens de %{name}"
-      reopen: "Reabrir %{name}"
-      complete: "Concluir %{name}"
       due: "· até %{date}"
       remove: "Remover %{name}"
       clear_done:

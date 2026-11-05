@@ -3,9 +3,9 @@
 <% copy = lambda do |label, value| %>
   <div>
     <p class="ss-label"><%= label %></p>
-    <div class="flex items-center gap-2" data-controller="clipboard">
-      <input type="text" readonly value="<%= value %>" aria-label="<%= label %>" class="ss-input font-mono text-xs flex-1 min-w-0" data-clipboard-target="source">
-      <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="clipboard#copy" title="<%= t("protocols.google.copy") %>"><%= icon("duplicate", "size-4") %><span class="sr-only"><%= t("protocols.google.copy") %></span></button>
+    <div class="flex items-center gap-2" data-controller="ss-copy" data-ss-copy-done-value="<%= ss_t("code_block.copied") %>">
+      <input type="text" readonly value="<%= value %>" aria-label="<%= label %>" class="ss-input font-mono text-xs flex-1 min-w-0" data-ss-copy-target="source" data-action="focus->ss-copy#select">
+      <button type="button" class="ss-icon-btn" data-action="ss-copy#copy" data-ss-copy-target="button" title="<%= t("protocols.google.copy") %>"><%= icon("duplicate", "size-4") %><span class="sr-only" data-ss-copy-target="label"><%= t("protocols.google.copy") %></span></button>
     </div>
   </div>
 <% end %>
@@ -36,7 +36,7 @@
         <% if has_secret %><span class="ss-badge ss-badge-success"><%= t("protocols.google.secret_ok") %></span><% end %>
       </div></li>
     <li class="grid gap-2 content-start"><span class="font-semibold text-ink"><%= t("protocols.google.step_redirect") %></span>
-      <% redirect_uris.each do |u| %><code class="text-xs font-mono break-all text-muted"><%= u %></code><% end %></li>
+      <% redirect_uris.each do |u| %><code class="ss-code-inline text-xs"><%= u %></code><% end %></li>
     <li class="grid gap-2 content-start"><span class="font-semibold text-ink"><%= t("protocols.google.step_graph") %></span>
       <p class="text-sm text-muted"><%= t("protocols.google.step_graph_hint") %></p>
       <%= link_to t("protocols.google.edit"), connect_integration_path(integration), class: "ss-btn ss-btn-ghost ss-btn-sm w-fit" %></li>

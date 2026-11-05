@@ -4,8 +4,8 @@
   <fieldset>
     <legend class="ss-label"><%= t("automations.simulate.what") %></legend>
     <div class="flex flex-wrap gap-2">
-      <%= link_to t("automations.index.draft"), simulate_automation_path(@automation), class: "ss-chip", "aria-current": (!published).to_s %>
-      <% if @automation.published? %><%= link_to t("automations.simulate.published", version: @automation.version), simulate_automation_path(@automation, publicada: 1), class: "ss-chip", "aria-current": published.to_s %><% end %>
+      <%= link_to t("automations.index.draft"), simulate_automation_path(@automation), class: "ss-chip is-solid", "aria-current": (!published).to_s %>
+      <% if @automation.published? %><%= link_to t("automations.simulate.published", version: @automation.version), simulate_automation_path(@automation, publicada: 1), class: "ss-chip is-solid", "aria-current": published.to_s %><% end %>
     </div>
     <%= hidden_field_tag :publicada, published ? "1" : "0", id: nil %>
   </fieldset>

@@ -10,7 +10,7 @@
       <h2 id="chart-title"><%= t("points.show.history") %></h2>
       <nav class="flex gap-2" aria-label="<%= t("points.show.range") %>">
         <% Points::History::RANGES.each_key do |range| %>
-          <%= link_to range, point_path(@point, range: range), class: "ss-chip no-underline", "aria-current": (range == @range ? "true" : nil) %>
+          <%= link_to range, point_path(@point, range: range), class: "ss-chip is-solid no-underline", "aria-current": (range == @range ? "true" : nil) %>
         <% end %>
       </nav>
     </div>

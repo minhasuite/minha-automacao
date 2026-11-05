@@ -1,7 +1,7 @@
 <%# locals: (site:, delay: 0) -%>
 <%= link_to site, class: "ss-card ss-card-pad no-underline ss-rise flex flex-col gap-4", style: "animation-delay: #{delay}ms" do %>
   <div class="flex items-start justify-between gap-3">
-    <span class="grid place-items-center size-11 rounded-xl bg-accent-soft text-accent"><%= icon(site_icon(site)) %></span>
+    <span class="ss-icon-tile is-accent is-lg"><%= icon(site_icon(site), "") %></span>
     <span class="ss-badge"><%= site.kind_label %></span>
   </div>
   <div class="min-w-0">

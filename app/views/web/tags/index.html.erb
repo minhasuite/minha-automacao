@@ -16,7 +16,7 @@
             <%= f.color_field :color, value: tg.color.presence || "#5a45e8", class: "h-10 w-12 rounded-lg border border-line bg-transparent", id: dom_id(tg, :color) %>
             <%= f.submit t("tags.index.save"), class: "ss-btn ss-btn-outline ss-btn-sm" %>
           <% end %>
-          <%= button_to tag_path(tg), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("tags.index.delete", name: tg.name), form: { class: "contents", data: { turbo_confirm_tone: "danger", turbo_confirm: t("tags.index.delete_confirm", name: tg.name), turbo_confirm_button: t("tags.index.delete_button") } } do %><%= icon("trash", "size-4") %><% end %>
+          <%= button_to tag_path(tg), method: :delete, class: "ss-icon-btn is-danger", title: t("tags.index.delete", name: tg.name), "aria-label": t("tags.index.delete", name: tg.name), form: { class: "contents", data: { turbo_confirm_tone: "danger", turbo_confirm: t("tags.index.delete_confirm", name: tg.name), turbo_confirm_button: t("tags.index.delete_button") } } do %><%= icon("trash", "") %><% end %>
         </li>
       <% end %>
     </ul>

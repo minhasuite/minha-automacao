@@ -18,7 +18,7 @@
   <%= render Ss::DataTableComponent.new(rows: @dashboards, id: "paineis", caption: t("settings_dashboards.dashboard"), sort: @sort, dir: @dir, tools: false, max_height: "none") do |tb| %>
     <% tb.column :name, t("settings_dashboards.dashboard"), sortable: true do |d| %>
       <%= link_to dashboard_path(d), class: "flex items-center gap-3 no-underline text-ink hover:text-accent min-w-0 text-left" do %>
-        <span class="grid place-items-center size-9 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(d.icon_name, "size-4") %></span>
+        <span class="ss-icon-tile is-accent is-sm"><%= icon(d.icon_name, "") %></span>
         <span class="min-w-0"><span class="block font-semibold truncate"><%= d.name %></span>
           <span class="block text-xs text-muted"><%= d.auto? ? t("settings_dashboards.auto") : t("settings_dashboards.version", n: d.version) %><%= " · #{t('settings_dashboards.draft')}" if d.draft? %><%= " · #{t('settings_dashboards.site_default')}" if d.site_default %><%= " · #{t('settings_dashboards.your_home')}" if current_user.dashboard_prefs[d.site_id] == d.id %></span></span>
       <% end %>
@@ -30,9 +30,9 @@
     <% tb.column :actions, t("people.actions"), align: :right do |d| %>
       <div class="flex justify-end gap-1">
         <% if SiteMembership.allowed?(@roles[d.site_id], :manage) %>
-          <%= link_to edit_dashboard_path(d), class: "dw-tool", title: t("shared.edit_name", name: d.name), "aria-label": t("shared.edit_name", name: d.name) do %><%= icon("pencil", "size-4") %><% end %>
-          <%= button_to duplicate_dashboard_path(d), class: "dw-tool", title: t("settings_dashboards.duplicate", name: d.name), "aria-label": t("settings_dashboards.duplicate", name: d.name) do %><%= icon("duplicate", "size-4") %><% end %>
-          <%= button_to dashboard_path(d), method: :delete, class: "dw-tool dw-tool-danger", title: t("settings_dashboards.delete", name: d.name), "aria-label": t("settings_dashboards.delete", name: d.name), form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("settings_dashboards.delete_confirm", name: d.name), turbo_confirm_button: t("settings_dashboards.delete_button") } } do %><%= icon("trash", "size-4") %><% end %>
+          <%= link_to edit_dashboard_path(d), class: "ss-icon-btn is-outline is-sm", title: t("shared.edit_name", name: d.name), "aria-label": t("shared.edit_name", name: d.name) do %><%= icon("pencil", "size-4") %><% end %>
+          <%= button_to duplicate_dashboard_path(d), class: "ss-icon-btn is-outline is-sm", title: t("settings_dashboards.duplicate", name: d.name), "aria-label": t("settings_dashboards.duplicate", name: d.name) do %><%= icon("duplicate", "size-4") %><% end %>
+          <%= button_to dashboard_path(d), method: :delete, class: "ss-icon-btn is-outline is-sm is-danger", title: t("settings_dashboards.delete", name: d.name), "aria-label": t("settings_dashboards.delete", name: d.name), form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("settings_dashboards.delete_confirm", name: d.name), turbo_confirm_button: t("settings_dashboards.delete_button") } } do %><%= icon("trash", "size-4") %><% end %>
         <% else %>
           <%= link_to t("settings_dashboards.open"), dashboard_path(d), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
         <% end %>

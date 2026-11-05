@@ -9,7 +9,7 @@
   <span class="ss-shell-label ma-side-role"><%= current_user.role_label %></span>
 </div>
 <div class="ss-shell-label"><div class="ma-side-actions">
-  <button type="button" data-action="theme#toggle"><%= icon("moon", "size-4") %><%= t("layout.theme") %></button>
+  <button type="button" data-action="ss-theme#toggle"><%= icon("moon", "size-4") %><%= t("layout.theme") %></button>
   <%= render "web/shared/privacy_button", css: "", label: t("layout.values") %>
   <%= button_to logout_path, method: :delete, form: { class: "contents" } do %><%= icon("logout", "size-4") %><%= t("layout.logout") %><% end %>
 </div></div>

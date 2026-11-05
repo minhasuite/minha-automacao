@@ -97,7 +97,7 @@ RSpec.describe "Pacote 3: telas e API" do
       post "/locais/#{site.id}/ferramentas/modelo", params: { template: "{{ 2 | times: 4 }}" }, headers: { "Turbo-Frame" => "dev-result" }
       expect(response.body).to include("dev-result", "8")
       post "/locais/#{site.id}/ferramentas/modelo", params: { template: "1 +", mode: "expr" }
-      expect(response.body).to include("text-danger")
+      expect(response.body).to include('data-tone="danger"')
       post "/locais/#{site.id}/ferramentas/acao", params: { point_id: lamp.id, command: "on" }
       expect(lamp.reload.value).to be true
       post "/locais/#{site.id}/ferramentas/acao", params: { point_id: lamp.id, command: "voar" }

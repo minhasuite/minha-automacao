@@ -11,6 +11,3 @@
 @import "./voz.css";
 @import "./paineis.css";
 @import "./midia.css";
-/* Por último, como a Lista Clara local antes da gem: o que o produto ainda tem além da
-   gem (extensões .ss-* sem par lá, ajustes e os renomeados ma-*). Ver o cabeçalho. */
-@import "./ponte.css";

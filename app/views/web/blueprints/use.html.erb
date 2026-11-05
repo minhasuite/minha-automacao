@@ -2,10 +2,9 @@
 <% points = @site.points.includes(:device, :area).ordered.to_a %>
 <%= render "web/shared/header", title: t(script ? "automations.bp.create_script" : "automations.bp.create_automation"), subtitle: t("automations.bp.from", site: @site.name, name: @blueprint.name), back: blueprint_path(@blueprint) %>
 <% if @errors.present? %>
-  <div class="rounded-xl bg-danger-soft text-danger p-3 text-sm mb-4 max-w-3xl" role="alert">
-    <p class="font-bold"><%= t("automations.bp.fix") %></p>
-    <ul class="list-disc pl-5 mt-1"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
-  </div>
+  <%= render Ss::CalloutComponent.new(tone: :danger, title: t("automations.bp.fix"), class: "mb-4 max-w-3xl") do %>
+    <ul><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+  <% end %>
 <% end %>
 <%= form_with url: use_blueprint_path(@blueprint), class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl" do %>
   <div class="sm:col-span-2"><label class="ss-label" for="bp-name"><%= t("automations.settings.name") %></label><%= text_field_tag :name, params[:name] || @blueprint.name, class: "ss-input", id: "bp-name", maxlength: 120, required: true %></div>

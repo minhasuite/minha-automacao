@@ -521,8 +521,6 @@ es:
       add: "Agregar"
       empty_list: "Lista vacía."
       items_of: "Ítems de %{name}"
-      reopen: "Reabrir %{name}"
-      complete: "Completar %{name}"
       due: "· hasta %{date}"
       remove: "Quitar %{name}"
       clear_done:

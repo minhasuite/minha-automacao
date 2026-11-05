@@ -45,7 +45,7 @@
     </ul>
     <% others = Array(h["usb"]) %>
     <% if others.any? %>
-      <details class="mt-2"><summary class="text-sm text-accent cursor-pointer"><%= t("hardware.usb", n: others.size) %></summary>
+      <details class="mt-2"><summary class="ss-summary text-sm text-accent"><%= t("hardware.usb", n: others.size) %></summary>
         <ul class="mt-1 text-sm">
           <% others.each do |u| %><li class="py-1 break-words"><%= [ u["manufacturer"], u["product"] ].compact_blank.join(" ") %> <span class="text-xs text-muted num"><%= u["vid"] %>:<%= u["pid"] %></span></li><% end %>
         </ul></details>

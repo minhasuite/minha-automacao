@@ -1,7 +1,6 @@
-/* Painéis ondaB2 (paridade HA, grupo 4): recursos do tile (dw-feat*), gestos,
-   cards novos (termostato, botão, agenda, lista, diário, imagem, iframe,
-   relógio, planta, pilha), tipos de visão e temas do usuário. Só tokens da
-   Lista Clara; claro e escuro pelas mesmas variáveis. */
+/* Domínio: widgets do painel (ondaB2) — recursos do tile (dw-feat*, dw-chip), gestos, cards
+   (termostato, agenda, lista, imagem, iframe, relógio, planta, pilha), tipos de visão e a
+   prévia dos temas (ap-*). Só tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
 @layer components {
   /* ---- Recursos do tile ------------------------------------------------ */
   .dw-feats { display: grid; gap: .7rem; flex-basis: 100%; width: 100%; margin-top: .85rem; padding-top: .8rem;
@@ -64,8 +63,6 @@
   .dw-todo-list li:hover .dw-todo-del, .dw-todo-del:focus-visible { opacity: 1; }
   @media (hover: none) { .dw-todo-del { opacity: .7; } }
 
-  /* ---- Diário ---------------------------------------------------------- */
-  .dw-more.static { position: static; }
 
   /* ---- Imagem, página e relógio ---------------------------------------- */
   .dw-pic { position: relative; padding: 0; overflow: hidden; margin: 0; background: var(--field); }

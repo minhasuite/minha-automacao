@@ -14,9 +14,9 @@
       <% if @found.empty? %>
         <p class="text-sm text-muted" role="status"><%= t("integrations.new.none_found") %></p>
       <% else %>
-        <ul class="grid gap-2" role="list">
+        <ul class="ss-rows is-compact rounded-xl bg-field" role="list">
           <% @found.each do |s| %>
-            <li class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-field px-3 py-2">
+            <li class="justify-between">
               <span class="min-w-0"><span class="font-semibold text-ink"><%= s["txt"]["friendly_name"].presence || s["txt"]["fn"].presence || s["name"] %></span>
                 <span class="block text-xs text-muted num"><%= [ s["host"], s["port"] ].compact.join(":") %><%= " · #{s['txt']['md'] || s['txt']['app'] || s['txt']['board']}" if s["txt"].values_at("md", "app", "board").any?(&:present?) %></span></span>
               <%= link_to t("integrations.new.use"), new_site_integration_path(@site, tipo: @plugin.key, host: s["host"], port: s["port"], nome: s["txt"]["friendly_name"].presence || s["txt"]["fn"].presence || s["name"]), class: "ss-btn ss-btn-ghost ss-btn-sm" %>

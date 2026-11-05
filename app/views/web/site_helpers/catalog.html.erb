@@ -3,7 +3,7 @@
   <% HelperTypes.plugins.each do |p| %>
     <li>
       <%= link_to new_site_helper_path(@site, tipo: p.key), class: "ss-card ss-card-link p-4 no-underline flex items-start gap-3 h-full" do %>
-        <span class="grid place-items-center size-11 shrink-0 rounded-2xl ss-grad"><%= icon(p.icon) %></span>
+        <span class="ss-icon-tile is-grad is-lg"><%= icon(p.icon) %></span>
         <span class="min-w-0">
           <span class="block font-bold text-ink"><%= p.title %></span>
           <span class="block text-sm text-muted mt-0.5"><%= p.description %></span>

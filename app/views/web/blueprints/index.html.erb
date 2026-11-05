@@ -7,7 +7,7 @@
   <% @blueprints.each do |b| %>
     <article class="ss-card ss-card-pad flex flex-col gap-3 min-w-0" id="blueprint-<%= b.id %>">
       <div class="flex items-start gap-3">
-        <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(b.domain == "script" ? "play" : "duplicate") %></span>
+        <span class="ss-icon-tile is-accent"><%= icon(b.domain == "script" ? "play" : "duplicate") %></span>
         <div class="min-w-0">
           <h2 class="!text-base break-words"><%= link_to b.name, blueprint_path(b), class: "text-ink no-underline hover:text-accent" %></h2>
           <p class="text-xs text-muted"><%= [ b.domain_label, b.source_label, t("automations.bp.created_count", count: @counts.fetch(b.id, 0)) ].join(" · ") %></p>

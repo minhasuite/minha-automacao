@@ -2,13 +2,12 @@
   <%= link_to site_devices_path(@site, integracao: @integration.id), class: "ss-btn ss-btn-outline" do %><%= icon("view-list", "size-4") %><%= t("integrations.index.see_devices") %><% end %>
   <%= button_to sync_integration_path(@integration), class: "ss-btn ss-btn-ghost", form: { data: { turbo_submits_with: t("integrations.common.asking") } } do %><%= icon("refresh", "size-4") %><%= t("integrations.common.sync_now") %><% end %>
 <% end %>
-<div class="grid gap-4 max-w-6xl" <% if @refresh %>data-controller="reload" data-reload-every-value="<%= @refresh %>"<% end %>>
+<div class="grid gap-4 max-w-6xl" <% if @refresh %>data-controller="ss-reload" data-ss-reload-every-value="<%= @refresh %>"<% end %>>
   <% if @locals[:error] %>
-    <div class="ss-card ss-card-pad" role="alert">
-      <p class="font-bold text-danger"><%= t("protocols.panel.unreachable") %></p>
-      <p class="mt-1 text-sm text-muted"><%= reveal_sensitive? ? @locals[:error] : Sensitive.scrub(@locals[:error]) %></p>
-      <%= link_to t("integrations.common.reconfigure"), connect_integration_path(@integration), class: "ss-btn ss-btn-outline ss-btn-sm mt-3" if @plugin.reconfigurable? %>
-    </div>
+    <%= render Ss::CalloutComponent.new(tone: :danger, title: t("protocols.panel.unreachable")) do |c| %>
+      <%= reveal_sensitive? ? @locals[:error] : Sensitive.scrub(@locals[:error]) %>
+      <% if @plugin.reconfigurable? %><% c.with_action { link_to t("integrations.common.reconfigure"), connect_integration_path(@integration), class: "ss-btn ss-btn-outline ss-btn-sm" } %><% end %>
+    <% end %>
   <% else %>
     <% partial = lookup_context.exists?("web/integrations/panels/#{@plugin.key}", [], true) ? @plugin.key : "generic" %>
     <%= render "web/integrations/panels/#{partial}", integration: @integration, plugin: @plugin, **@locals %>

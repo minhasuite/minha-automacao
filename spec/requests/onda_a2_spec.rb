@@ -208,7 +208,7 @@ b [tuya] falha
       expect(flash[:alert]).to eq("Código inválido.")
       post "/configuracoes/seguranca/totp", params: { code: totp_now(secret) }
       follow_redirect!
-      codes = response.body.scan(/<li class="bg-field[^>]*>([a-z0-9-]{11})<\/li>/).flatten
+      codes = response.body.scan(/<li class="ss-code-inline[^>]*>([a-z0-9-]{11})<\/li>/).flatten
       expect(codes.size).to eq(10)
       expect(user.reload.otp_enabled_at).to be_present
 

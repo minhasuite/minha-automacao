@@ -39,7 +39,7 @@ RSpec.describe "Integrações e dispositivos do local (F8c)" do
 
     stub_request(:post, /qrcode\/tokens\?clientid=.*usercode=abc/).to_return(body: { success: true, result: { qrcode: "QR1" } }.to_json)
     get "/integracoes/#{integration.id}/conectar"
-    expect(response.body).to include("Escaneie com o app Smart Life", "<svg", "data-controller=\"poll\"")
+    expect(response.body).to include("Escaneie com o app Smart Life", "<svg", "data-controller=\"ss-poll\"")
 
     stub_request(:get, /qrcode\/tokens\/QR1/).to_return({ body: { success: false }.to_json },
                                                         { body: { success: true, t: 1, result: { endpoint: "https://apigw.tuyaus.com", terminal_id: "T", username: "eu@x",

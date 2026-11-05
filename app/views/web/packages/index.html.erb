@@ -12,7 +12,7 @@
   <% end %>
 <% end %>
 
-<nav class="mb-4 flex flex-wrap gap-2" aria-label="<%= t("packages.catalog.tabs") %>">
+<nav class="ss-chips is-solid mb-4" data-controller="ss-scroll-current" aria-label="<%= t("packages.catalog.tabs") %>">
   <%= link_to t("packages.catalog.installed", n: @packages.size), site_packages_path(@site), class: "ss-chip no-underline", "aria-current": (@tab == "installed" ? "page" : nil) %>
   <%= link_to site_packages_path(@site, tab: "explorar"), class: "ss-chip no-underline", "aria-current": (@tab == "explore" ? "page" : nil) do %><%= icon("search", "size-4") %><%= t("packages.catalog.explore") %><% end %>
 </nav>
@@ -25,12 +25,12 @@
   <ul class="ss-card ss-rows" aria-label="<%= t("packages.index.installed") %>">
     <% @packages.each do |pk| %>
       <li>
-        <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon("archive") %></span>
+        <span class="ss-icon-tile is-accent"><%= icon("archive") %></span>
         <div class="min-w-0 flex-1">
           <p class="font-bold text-ink truncate"><%= link_to pk.name, package_path(pk), class: "text-ink no-underline hover:text-accent" %></p>
           <p class="text-xs text-muted truncate"><span class="num"><%= pk.version %></span> · <%= t("packages.items", n: pk.installed.size) %> · <%= pk.manifest["description"].to_s.truncate(80) %></p>
         </div>
-        <%= link_to package_path(pk), class: "grid place-items-center size-9 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", "aria-label": t("packages.open_name", name: pk.name) do %><%= icon("chevron-right", "size-4") %><% end %>
+        <%= link_to package_path(pk), class: "ss-icon-btn", title: t("packages.open_name", name: pk.name), "aria-label": t("packages.open_name", name: pk.name) do %><%= icon("chevron-right", "") %><% end %>
       </li>
     <% end %>
   </ul>

@@ -10,10 +10,12 @@
     <div class="md:col-span-2"><%= f.submit t("settings.account.save"), class: "ss-btn ss-btn-primary" %></div>
   <% end %>
   <div class="mt-4 flex flex-wrap gap-2 items-center">
-    <span class="text-sm font-semibold text-muted"><%= t("layout.theme") %>:</span>
-    <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#set" data-theme-theme-param="light"><%= t("settings.account.light") %></button>
-    <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#set" data-theme-theme-param="dark"><%= t("settings.account.dark") %></button>
-    <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#set" data-theme-theme-param="system"><%= t("settings.account.system") %></button>
+    <span id="theme-l" class="text-sm font-semibold text-muted"><%= t("layout.theme") %>:</span>
+    <div class="ss-seg w-72 max-w-full" role="group" aria-labelledby="theme-l" data-controller="ss-theme">
+      <button type="button" data-action="ss-theme#set" data-ss-theme-theme-param="light"><%= t("settings.account.light") %></button>
+      <button type="button" data-action="ss-theme#set" data-ss-theme-theme-param="dark"><%= t("settings.account.dark") %></button>
+      <button type="button" data-action="ss-theme#set" data-ss-theme-theme-param="system"><%= t("settings.account.system") %></button>
+    </div>
   </div>
   <div class="mt-4 flex flex-wrap gap-2 items-center">
     <span class="text-sm font-semibold text-muted"><%= t("layout.language") %>:</span>

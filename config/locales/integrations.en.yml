@@ -49,7 +49,6 @@ en:
   api_keys:
     active: Active keys
     allowed_sites: Allowed places
-    copy: Copy
     copy_now: 'Copy it now and store it in the other system: it won''t be shown again.'
     create: Create key
     created: Key %{name} created

@@ -8,10 +8,6 @@
        *Bridges.plugins.map { |b| [ b.title, site_bridge_path(site, b.key), b.icon, :"bridge_#{b.key}" ] },
        [ t("sites.tabs.alerts"), alerts_path, "exclamation-circle", :alerts ], [ t("sites.tabs.packages"), site_packages_path(site), "archive", :packages ],
        ([ t("sites.tabs.dev_tools"), dev_tools_site_path(site), "code", :dev_tools ] if DevTools.admin?(current_user)) ].compact %>
-<%= render "web/shared/subnav_menu", label: t("sites.tabs.label"), css: css,
-           items: tabs.map { |label, path, ico, key| { label: label, path: path, icon: ico, current: key == current } } %>
-<nav class="ss-subnav max-lg:!hidden lg:!flex-row lg:!flex-wrap lg:!static lg:!mb-6 <%= css %>" aria-label="<%= t("sites.tabs.label") %>">
-  <% tabs.each do |label, path, ico, key| %>
-    <%= link_to path, "aria-current": (key == current ? "page" : nil) do %><%= icon(ico, "size-4") %><%= label %><% end %>
-  <% end %>
-</nav>
+<%# Ss::SubnavComponent em abas: numa linha no desktop, menu (atual + grade) no celular. -%>
+<%= render Ss::SubnavComponent.new(label: t("sites.tabs.label"), layout: :tabs, css: css,
+                                   items: tabs.map { |label, path, ico, key| { label: label, href: path, icon: icon(ico, "size-4"), current: key == current } }) %>

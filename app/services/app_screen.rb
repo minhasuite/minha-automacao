@@ -192,8 +192,8 @@ module AppScreen
       return [] unless n.element? && !hidden?(n)
 
       cls = classes(n)
-      return poll(n) if data_controllers(n).include?("poll")
-      return [ { t: "reload", every: n["data-reload-every-value"].to_i.nonzero? || 5000, c: blocks(n) } ] if data_controllers(n).include?("reload")
+      return poll(n) if data_controllers(n).include?("ss-poll")
+      return [ { t: "reload", every: n["data-ss-reload-every-value"].to_i.nonzero? || 5000, c: blocks(n) } ] if data_controllers(n).include?("ss-reload")
       return icon_pick(n) if cls.include?("ss-iconpick")
 
       case n.name
@@ -238,7 +238,8 @@ module AppScreen
       return true if n["aria-hidden"] == "true" && n.name != "svg"
 
       cls = classes(n)
-      cls.include?("hidden") || cls.include?("sr-only") || cls.include?("ss-skip")
+      # .ss-subnav-menu: o menu do celular do Ss::SubnavComponent repete a faixa (.ss-subnav) que o app já lê.
+      cls.include?("hidden") || cls.include?("sr-only") || cls.include?("ss-sr") || cls.include?("ss-skip") || cls.include?("ss-subnav-menu")
     end
 
     def classes(n) = n["class"].to_s.split
@@ -313,6 +314,8 @@ module AppScreen
     end
 
     def btn_kind(cls)
+      # .ss-icon-btn da gem (botão só de ícone): ghost, ou danger com .is-danger.
+      return (cls.include?("is-danger") ? "danger" : "ghost") if cls.include?("ss-icon-btn")
       return unless cls.any? { |c| c.start_with?("ss-btn") }
 
       %w[primary danger outline ghost].find { |k| cls.include?("ss-btn-#{k}") } || "outline"
@@ -398,7 +401,7 @@ module AppScreen
     end
 
     def poll(n)
-      [ { t: "poll", url: n["data-poll-url-value"], every: n["data-poll-every-value"].to_i.nonzero? || 3000, c: blocks(n) } ]
+      [ { t: "poll", url: n["data-ss-poll-url-value"], every: n["data-ss-poll-every-value"].to_i.nonzero? || 3000, c: blocks(n) } ]
     end
   end
 end

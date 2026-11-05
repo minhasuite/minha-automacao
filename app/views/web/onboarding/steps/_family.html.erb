@@ -6,10 +6,10 @@
       <h2 id="ob-invite" class="flex items-center gap-2"><%= icon("users", "size-5 text-accent") %><%= t("onboarding.family.invite_title") %></h2>
       <p class="text-sm text-muted mt-1"><%= t("onboarding.family.invite_text") %></p>
       <% if invite %>
-        <div class="ob-qr mt-3"><%= qr_svg(invite) %></div>
-        <div class="mt-3 flex gap-2" data-controller="clipboard">
-          <%= text_field_tag :invite_link, invite, readonly: true, class: "ss-input num text-xs", data: { clipboard_target: "source" }, "aria-label": t("onboarding.family.invite_link") %>
-          <button type="button" class="ss-btn ss-btn-outline" data-action="clipboard#copy"><%= icon("duplicate", "size-4") %><span><%= t("onboarding.family.copy") %></span></button>
+        <div class="ss-qr-box mt-3 w-40"><%= qr_svg(invite) %></div>
+        <div class="mt-3 flex gap-2" data-controller="ss-copy" data-ss-copy-done-value="<%= ss_t("code_block.copied") %>">
+          <%= text_field_tag :invite_link, invite, readonly: true, class: "ss-input num text-xs", data: { ss_copy_target: "source", action: "focus->ss-copy#select" }, "aria-label": t("onboarding.family.invite_link") %>
+          <button type="button" class="ss-btn ss-btn-outline" data-action="ss-copy#copy" data-ss-copy-target="button"><%= icon("duplicate", "size-4") %><span data-ss-copy-target="label"><%= t("onboarding.family.copy") %></span></button>
         </div>
         <p class="text-xs text-muted mt-2"><%= t("onboarding.family.invite_note") %></p>
       <% else %>
@@ -19,7 +19,7 @@
     <section class="ob-panel" aria-labelledby="ob-app">
       <h2 id="ob-app" class="flex items-center gap-2"><%= icon("device-mobile", "size-5 text-accent") %><%= t("onboarding.family.app_title") %></h2>
       <p class="text-sm text-muted mt-1"><%= t("onboarding.family.app_text") %></p>
-      <div class="ob-qr mt-3"><%= qr_svg(ctx.base_url.to_s) %></div>
+      <div class="ss-qr-box mt-3 w-40"><%= qr_svg(ctx.base_url.to_s) %></div>
       <p class="text-xs text-muted mt-2 num break-all"><%= ctx.base_url %></p>
     </section>
   </div>
