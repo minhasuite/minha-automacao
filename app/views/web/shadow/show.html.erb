@@ -41,7 +41,7 @@
       <ol class="ss-card ss-rows" aria-label="<%= t("automations.shadow_page.timeline") %>">
         <% @actions.each do |a| %>
           <li id="shadow-<%= a.id %>">
-            <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= a.executed ? 'bg-accent-soft text-muted' : 'ss-grad' %>"><%= icon(a.executed ? "check-circle" : "moon") %></span>
+            <span class="ss-icon-tile <%= a.executed ? 'is-muted' : 'is-grad' %>"><%= icon(a.executed ? "check-circle" : "moon") %></span>
             <div class="min-w-0 flex-1 basis-48">
               <p class="font-bold text-ink break-words"><%= a.executed ? t("automations.shadow_page.did") : t("automations.shadow_page.would_have") %> <%= a.title %></p>
               <p class="text-sm text-muted break-words">
@@ -95,7 +95,7 @@
         </tbody></table>
         <% if @unmapped.any? %>
           <details class="mt-2 text-sm"><summary class="ss-summary"><%= t("automations.shadow_page.unmapped", count: @unmapped.size) %></summary>
-            <ul class="mt-1 grid gap-1"><% @unmapped.each do |r| %><li class="break-words"><code><%= r.external_id %></code> <span class="text-muted"><%= r.note %></span></li><% end %></ul>
+            <ul class="mt-1 grid gap-1"><% @unmapped.each do |r| %><li class="break-words"><code class="ss-code-inline"><%= r.external_id %></code> <span class="text-muted"><%= r.note %></span></li><% end %></ul>
           </details>
         <% end %>
       <% end %>

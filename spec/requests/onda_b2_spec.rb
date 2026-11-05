@@ -145,7 +145,7 @@ RSpec.describe "ondaB2: painéis" do
 
       get "/paineis/#{d.id}"
       body = response.body
-      expect(body).to include("dw-dial", %(data-mode="cool"), "Agora 26,5 °C", "ss-thermo", "is-adjust-off", "ss-device is-press", "ss-agl", "Teste dentista", "Dia inteiro",
+      expect(body).to include("dw-dial", %(data-mode="cool"), "Agora 26,5 °C", "ss-thermo", "is-adjust-off", "ss-device is-press", "ss-agl", "Teste dentista", "Dia todo",
                               "Leite", %(aria-checked="true"), "Concluídos (1)", "https://exemplo.com.br/sala.jpg", "aspect-ratio: 4 / 3",
                               %(sandbox="allow-scripts allow-same-origin allow-forms allow-popups"), 'data-controller="ss-clock"', "Precisa de atenção: umidade", "Baixo")
     end
@@ -312,6 +312,14 @@ RSpec.describe "ondaB2: painéis" do
       expect(nav).not_to include(">Diário<")
       expect(nav).to include("Configurações")
       expect(nav.index(">Histórico<")).to be < nav.index(">Notificações<")
+      # Arrastar (Ss::SortableListComponent): PATCH JSON { ids } na ordem nova, sem redirecionar.
+      expect(response.body).to include('data-controller="ss-sortable"', "op=sidebar_order")
+      patch "/configuracoes/aparencia?op=sidebar_order", params: { ids: %w[notifications sites nao-existe] }, as: :json
+      expect(response).to have_http_status(:no_content)
+      order = within(tenant) { user.reload.dashboard_prefs.dig("sidebar", "order") }
+      expect(order.first(2)).to eq(%w[notifications sites])
+      expect(order).not_to include("nao-existe")
+      expect(within(tenant) { user.reload.dashboard_prefs.dig("sidebar", "hidden") }).to eq([ "logbook" ])
       patch "/configuracoes/aparencia", params: { op: "sidebar_reset" }
       expect(within(tenant) { user.reload.dashboard_prefs }).not_to have_key("sidebar")
     end

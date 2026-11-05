@@ -60,7 +60,7 @@ RSpec.describe "Produto: sistema e acesso remoto" do
       with_env("UPDATE_STATUS_FILE" => file.to_s) do
         File.write(file, { state: "running", step: "pull", to: "x:v1.1.0" }.to_json)
         get "/configuracoes/sistema"
-        expect(response.body).to include("Baixando a versão nova", "reload", "up-spin")
+        expect(response.body).to include("Baixando a versão nova", "ss-reload", "ss-job")
         File.write(file, { state: "rolled_back", step: "done", to: "x:v1.1.0", message: "" }.to_json)
         get "/configuracoes/sistema"
         expect(response.body).to include("A atualização para v1.1.0 não deu certo")

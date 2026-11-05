@@ -9,7 +9,7 @@
 <% end %>
 <%= render "web/shared/site_switch", sites: @sites, site: @site, path: history_path %>
 
-<section class="ss-card ss-card-pad hx-toolbar mb-4" aria-label="<%= t("history.period") %>">
+<section class="ss-card ss-card-pad grid gap-3 mb-4" aria-label="<%= t("history.period") %>">
   <%# Atalhos na faixa de chips da gem (.ss-chipbar/.ss-fchip): o atual fica marcado. %>
   <nav class="ss-chipbar flex-wrap" aria-label="<%= t("history.shortcuts") %>">
     <% Points::Overlay::RANGES.each do |k, d| %>
@@ -18,25 +18,25 @@
                   "aria-current": (on ? "true" : nil), "aria-pressed": on.to_s %>
     <% end %>
   </nav>
-  <div class="hx-zoom">
-    <%= link_to hx_path(@site, ids, @from - span, @to - span), class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("history.previous"), "aria-label": t("history.previous") do %><%= icon("chevron-left", "size-4") %><% end %>
-    <p class="hx-window num"><%= l(@from.in_time_zone(@zone), format: "%d/%m %H:%M") %> <span class="text-muted"><%= t("history.until") %></span> <%= l(@to.in_time_zone(@zone), format: "%d/%m %H:%M") %></p>
+  <div class="flex flex-wrap items-center gap-1.5">
+    <%= link_to hx_path(@site, ids, @from - span, @to - span), class: "ss-icon-btn", title: t("history.previous"), "aria-label": t("history.previous") do %><%= icon("chevron-left", "size-4") %><% end %>
+    <p class="mx-1.5 text-sm font-semibold text-ink num"><%= l(@from.in_time_zone(@zone), format: "%d/%m %H:%M") %> <span class="text-muted"><%= t("history.until") %></span> <%= l(@to.in_time_zone(@zone), format: "%d/%m %H:%M") %></p>
     <% if now - @to > 1.minute %>
-      <%= link_to hx_path(@site, ids, @from + span, [ @to + span, now ].min), class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("history.next"), "aria-label": t("history.next") do %><%= icon("chevron-right", "size-4") %><% end %>
+      <%= link_to hx_path(@site, ids, @from + span, [ @to + span, now ].min), class: "ss-icon-btn", title: t("history.next"), "aria-label": t("history.next") do %><%= icon("chevron-right", "size-4") %><% end %>
     <% else %>
-      <span class="ss-btn ss-btn-ghost ss-btn-sm opacity-40" aria-hidden="true"><%= icon("chevron-right", "size-4") %></span>
+      <span class="ss-icon-btn" aria-disabled="true" aria-hidden="true"><%= icon("chevron-right", "size-4") %></span>
     <% end %>
-    <span class="hx-sep" aria-hidden="true"></span>
+    <span class="w-px h-6 mx-1.5 bg-line" aria-hidden="true"></span>
     <%= link_to hx_path(@site, ids, @from + (span / 4), @to - (span / 4)), class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("history.zoom_in") do %><%= icon("zoom-in", "size-4") %><span class="max-sm:sr-only"><%= t("history.zoom_in") %></span><% end %>
     <%= link_to hx_path(@site, ids, @from - (span / 2), [ @to + (span / 2), now ].min), class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("history.zoom_out") do %><%= icon("zoom-out", "size-4") %><span class="max-sm:sr-only"><%= t("history.zoom_out") %></span><% end %>
   </div>
-  <details class="lb-more">
-    <summary><%= icon("calendar", "size-4") %><%= t("history.pick_dates") %></summary>
-    <%= form_with url: history_path, method: :get, class: "hx-dates" do %>
+  <details>
+    <summary class="ss-summary text-sm font-semibold text-ink-2"><%= icon("calendar", "size-4") %><%= t("history.pick_dates") %></summary>
+    <%= form_with url: history_path, method: :get, class: "flex flex-wrap gap-3 mt-2.5" do %>
       <%= hidden_field_tag :site_id, @site.id, id: nil %>
       <% ids.each do |id| %><%= hidden_field_tag "point_ids[]", id, id: nil %><% end %>
-      <div><label class="ss-label" for="hx-from"><%= t("history.from") %></label><%= datetime_local_field_tag :from, @from.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "ss-input num", id: "hx-from" %></div>
-      <div><label class="ss-label" for="hx-to"><%= t("history.to") %></label><%= datetime_local_field_tag :to, @to.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "ss-input num", id: "hx-to" %></div>
+      <div class="flex-[1_1_12rem]"><label class="ss-label" for="hx-from"><%= t("history.from") %></label><%= datetime_local_field_tag :from, @from.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "ss-input num", id: "hx-from" %></div>
+      <div class="flex-[1_1_12rem]"><label class="ss-label" for="hx-to"><%= t("history.to") %></label><%= datetime_local_field_tag :to, @to.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "ss-input num", id: "hx-to" %></div>
       <button class="ss-btn ss-btn-primary self-end"><%= t("points.apply") %></button>
     <% end %>
   </details>
@@ -46,33 +46,36 @@
   <div class="flex flex-wrap items-center gap-2">
     <h2 id="hx-points-title" class="mr-2"><%= t("history.points") %></h2>
     <% @selected.each_with_index do |p, i| %>
-      <span class="hx-pill"><span class="hx-dot" style="background: <%= hx_color(i) %>"></span><%= Logbook.point_title(p) %>
-        <%= link_to history_path(site_id: @site.id, point_ids: ids - [ p.id ], from: @from.iso8601, to: @to.iso8601), class: "hx-x", title: t("history.remove", name: p.name), "aria-label": t("history.remove", name: p.name) do %><%= icon("x", "size-3.5") %><% end %></span>
+      <%# Selo da gem (.ss-tag): o × é o link que tira o ponto. %>
+      <span class="ss-tag gap-1.5"><span class="inline-block size-2.5 shrink-0 rounded-full" style="background: <%= hx_color(i) %>"></span><%= Logbook.point_title(p) %>
+        <%= link_to history_path(site_id: @site.id, point_ids: ids - [ p.id ], from: @from.iso8601, to: @to.iso8601),
+                    title: t("history.remove", name: p.name), "aria-label": t("history.remove", name: p.name) do %><%= icon("x", "size-3.5") %><% end %></span>
     <% end %>
     <% if @selected.empty? %><span class="text-sm text-muted"><%= t("history.none_chosen") %></span><% end %>
   </div>
-  <details class="lb-more" <%= "open" if @selected.empty? %>>
-    <summary><%= icon("plus", "size-4") %><%= t("history.pick_points") %> <span class="text-muted font-normal"><%= t("history.up_to", n: Points::Overlay::MAX) %></span></summary>
-    <%= form_with url: history_path, method: :get, data: { controller: "filter" } do %>
+  <details class="mt-3" <%= "open" if @selected.empty? %>>
+    <summary class="ss-summary text-sm font-semibold text-ink-2"><%= icon("plus", "size-4") %><%= t("history.pick_points") %> <span class="text-muted font-normal"><%= t("history.up_to", n: Points::Overlay::MAX) %></span></summary>
+    <%= form_with url: history_path, method: :get, data: { controller: "ss-filter" } do %>
       <%= hidden_field_tag :site_id, @site.id, id: nil %>
       <%= hidden_field_tag :from, @from.iso8601, id: nil %><%= hidden_field_tag :to, @to.iso8601, id: nil %>
-      <div class="lb-search mt-3">
-        <%= icon("search", "size-5 text-muted") %>
-        <input type="search" class="ss-input" placeholder="<%= t("history.filter_name") %>" aria-label="<%= t("history.filter_points") %>" data-filter-target="input" data-action="input->filter#apply">
+      <div class="flex flex-wrap items-center gap-2.5 mt-3">
+        <label class="ss-search flex-1 min-w-48"><%= icon("search") %>
+          <input type="search" placeholder="<%= t("history.filter_name") %>" aria-label="<%= t("history.filter_points") %>" data-ss-filter-target="input" data-action="input->ss-filter#apply keydown.esc->ss-filter#clear"></label>
         <button class="ss-btn ss-btn-primary"><%= t("history.show") %></button>
       </div>
       <% groups = @site.points.where(hidden: false, disabled: false).where.not(capability: %w[stream calendar command]).includes(:device, :area, device: :area).ordered.group_by { |p| p.area&.name || p.device.area&.name || t("devices.no_area") } %>
-      <div class="hx-pick">
+      <div class="grid gap-4 mt-4 max-h-[26rem] overflow-auto pr-1 grid-cols-[repeat(auto-fill,minmax(15rem,1fr))]">
         <% groups.sort_by { |k, _| k == t("devices.no_area") ? "~" : k }.each do |area, pts| %>
-          <fieldset><legend class="ss-section"><%= area %></legend>
+          <fieldset class="grid gap-2 content-start" data-ss-filter-target="group"><legend class="ss-section"><%= area %></legend>
             <% pts.each do |p| %>
-              <label class="hx-opt" data-filter-target="item"><%= check_box_tag "point_ids[]", p.id, ids.include?(p.id), id: "hx-p-#{p.id}" %>
-                <span class="min-w-0"><span class="block truncate font-semibold text-ink"><%= p.name %></span><span class="block truncate text-xs text-muted"><%= p.device.name %> · <%= p.numeric? ? (p.unit.presence || t("history.number")) : t("history.bands") %></span></span></label>
+              <%= render Ss::OptionCardComponent.new(type: :checkbox, name: "point_ids[]", value: p.id, id: "hx-p-#{p.id}", dense: true, checked: ids.include?(p.id), title: p.name,
+                                                     description: "#{p.device.name} · #{p.numeric? ? (p.unit.presence || t("history.number")) : t("history.bands")}",
+                                                     data: { ss_filter_target: "item" }) %>
             <% end %>
           </fieldset>
         <% end %>
       </div>
-      <p class="text-sm text-muted" data-filter-target="empty" hidden><%= t("history.no_match") %></p>
+      <p class="text-sm text-muted" data-ss-filter-target="empty" hidden><%= t("history.no_match") %></p>
     <% end %>
   </details>
 </section>
@@ -95,7 +98,7 @@
       <p class="text-xs text-muted mt-2 max-sm:hidden"><%= t("history.drag") %></p>
       <ul class="dw-legend mt-3">
         <% series.each do |s| %>
-          <li><span class="hx-dot" style="background: <%= hx_color(index[s.point.id]) %>"></span><%= link_to Logbook.point_title(s.point), point_path(s.point), class: "truncate no-underline text-ink-2 hover:text-accent" %><strong class="num text-ink ml-auto shrink-0"><%= point_value_text(s.point) %></strong></li>
+          <li><span class="inline-block size-2.5 shrink-0 rounded-full" style="background: <%= hx_color(index[s.point.id]) %>"></span><%= link_to Logbook.point_title(s.point), point_path(s.point), class: "truncate no-underline text-ink-2 hover:text-accent" %><strong class="num text-ink ml-auto shrink-0"><%= point_value_text(s.point) %></strong></li>
         <% end %>
       </ul>
     </section>

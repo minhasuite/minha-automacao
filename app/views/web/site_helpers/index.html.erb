@@ -13,7 +13,7 @@
     <% if @labels.any? %><div><label for="rotulo" class="ss-label"><%= t("automations.index.label") %></label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: t("automations.index.all_m"), class: "ss-input", data: { autosubmit: true } %></div><% end %>
     <button type="submit" class="ss-btn ss-btn-ghost" aria-label="<%= t("site_helpers.index.search") %>"><%= icon("search", "size-4") %></button>
   <% end %>
-  <nav class="ss-chips mb-4" aria-label="<%= t("site_helpers.index.filter") %>">
+  <nav class="ss-chips is-solid mb-4" data-controller="ss-scroll-current" aria-label="<%= t("site_helpers.index.filter") %>">
     <%= link_to site_helpers_path(@site, q: params[:q].presence), class: "ss-chip", "aria-current": params[:tipo].blank?.to_s do %><%= t("site_helpers.index.all") %> <span class="ss-chip-count"><%= @counts.values.sum %></span><% end %>
     <% HelperTypes.plugins.select { |p| @counts.key?(p.key) }.each do |p| %>
       <%= link_to site_helpers_path(@site, tipo: p.key, q: params[:q].presence), class: "ss-chip", "aria-current": (params[:tipo] == p.key).to_s do %><%= icon(p.icon, "size-4") %><%= p.title %> <span class="ss-chip-count"><%= @counts[p.key] %></span><% end %>
@@ -32,7 +32,7 @@
         <% plugin = h.helper_type %>
         <li id="<%= dom_id(h) %>">
           <% value_text = h.quality == "good" ? point_value_text(h) : (h.quality == "error" ? t("site_helpers.index.error") : t("site_helpers.index.no_signal")) %>
-          <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= point_on?(h) ? 'ss-grad' : 'bg-accent-soft text-accent' %>"><%= icon(point_icon(h)) %></span>
+          <span class="ss-icon-tile <%= point_on?(h) ? 'is-grad' : 'is-accent' %>"><%= icon(point_icon(h)) %></span>
           <%# Celular: chave e lápis cabem ao lado do nome; campo largo (hora, número) desce para a linha de baixo. %>
           <div class="min-w-0 flex-1 max-sm:basis-40">
             <p class="font-bold text-ink truncate max-sm:whitespace-normal max-sm:line-clamp-2 max-sm:break-words"><%= link_to h.name, point_path(h), class: "text-ink no-underline hover:text-accent" %></p>
@@ -46,7 +46,7 @@
           <div class="ml-auto flex items-center justify-end gap-1 shrink-0">
             <%= render "web/points/control", point: h %>
             <% if can?(:manage) %>
-              <%= link_to edit_helper_path(h), class: "grid place-items-center size-9 rounded-lg text-muted hover:text-accent hover:bg-accent-soft", title: t("site_helpers.index.edit"), "aria-label": t("site_helpers.index.edit_name", name: h.name) do %><%= icon("pencil", "size-4") %><% end %>
+              <%= link_to edit_helper_path(h), class: "ss-icon-btn", title: t("site_helpers.index.edit"), "aria-label": t("site_helpers.index.edit_name", name: h.name) do %><%= icon("pencil", "") %><% end %>
             <% end %>
           </div>
         </li>

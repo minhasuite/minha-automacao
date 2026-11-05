@@ -3,7 +3,7 @@
 <%= render "web/sites/tabs", site: @site, current: :media %>
 
 <% if @error %>
-  <div class="ss-card ss-card-pad mb-4 text-sm" role="alert"><strong><%= t("media.browse.error") %></strong> <%= @error %></div>
+  <%= render(Ss::CalloutComponent.new(tone: :danger, title: t("media.browse.error"), css: "mb-4")) { tag.p(@error) } %>
 <% end %>
 
 <% if @item %>

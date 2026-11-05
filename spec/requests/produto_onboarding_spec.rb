@@ -39,7 +39,7 @@ RSpec.describe "Primeira configuração" do
     allow(Integrations::EsphomePlugin).to receive(:discover).and_return([ { "name" => "teste-sensor", "host" => "192.168.0.50", "port" => 6053, "txt" => { "friendly_name" => "Teste Sensor" } } ])
     allow(Ssdp).to receive(:search).with("urn:lge-com:service:webos-second-screen:1").and_return([ { "name" => "LG", "host" => "192.168.0.60", "port" => 3000, "txt" => {} } ])
     get "/primeira-configuracao/discover"
-    expect(response.body).to include("ob-radar", "/primeira-configuracao/descobrir")
+    expect(response.body).to include("ss-radar", "/primeira-configuracao/descobrir")
     get "/primeira-configuracao/descobrir"
     expect(response.body).to include("2 aparelhos encontrados", "Teste Sensor", "192.168.0.50:6053", "TV LG (webOS)")
     pick = { "plugin" => "esphome", "name" => "Teste Sensor", "host" => "192.168.0.50", "port" => 6053 }.to_json

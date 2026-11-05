@@ -512,7 +512,6 @@ es:
     person: Persona
     all: Todos
     what: Qué mostrar
-    none_checked: Sin ningún tipo marcado, se muestra todo.
     empty: No pasó nada en este período.
     empty_filtered: No pasó nada en este período con estos filtros.
     empty_hint: Prueba un período más largo o quita algún filtro.
@@ -545,7 +544,6 @@ es:
     invite_link: Enlace de invitación
     invite_link_hint: Cópialo y envíalo a la persona. Solo aparece ahora, vale 7 días y se usa una sola vez.
     invite_link_label: Enlace de la invitación
-    copy: Copiar
     role: Rol
     you: tú
     sites:

@@ -12,18 +12,19 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
   <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
+  <%= render "web/shared/theme_head" %>
 </head>
 <%# Primeira configuração (produto): tela cheia, passos no topo, ilustração e formulário no cartão. %>
-<body class="ob-page min-h-screen" data-controller="theme">
+<body class="ss-base ss-inputs ob-page min-h-screen" data-controller="ss-theme">
   <div class="ob-blobs" aria-hidden="true"><span></span><span></span><span></span></div>
   <header class="ob-top">
     <span class="flex items-center gap-2.5 font-bold text-ink">
-      <span class="grid place-items-center size-9 rounded-xl ss-grad text-white"><%= icon("lightning-bolt", "size-5") %></span>
+      <span class="ss-icon-tile is-sm is-grad"><%= icon("lightning-bolt", "size-5") %></span>
       <span class="max-sm:sr-only">Minha Automação</span>
     </span>
     <div class="flex items-center gap-2">
       <%= render "web/shared/locale_picker" %>
-      <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" data-action="theme#toggle" aria-label="<%= t("layout.theme") %>"><%= icon("moon", "size-4") %></button>
+      <button type="button" class="ss-icon-btn" data-action="ss-theme#toggle" title="<%= t("layout.theme") %>" aria-label="<%= t("layout.theme") %>"><%= icon("moon", "") %></button>
     </div>
   </header>
   <main class="ob-main" id="conteudo">

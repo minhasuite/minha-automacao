@@ -8,7 +8,7 @@
   </div>
   <button type="submit" class="ss-btn ss-btn-ghost"><%= icon("search", "size-4") %><%= t("packages.catalog.search") %></button>
   <% if tags.any? %>
-    <div class="basis-full flex flex-wrap gap-1.5" aria-label="<%= t("packages.catalog.tags") %>">
+    <div class="basis-full ss-chips is-solid" data-controller="ss-scroll-current" aria-label="<%= t("packages.catalog.tags") %>">
       <% tags.each do |tg| %>
         <%= link_to tg, site_packages_path(site, tab: "explorar", tag: (tg unless params[:tag] == tg), q: params[:q].presence), class: "ss-chip text-xs no-underline", "aria-current": (params[:tag] == tg ? "true" : nil) %>
       <% end %>
@@ -17,7 +17,7 @@
 <% end %>
 
 <% catalog.errors.each do |err| %>
-  <p class="ss-card ss-card-pad mb-3 text-sm text-danger" role="alert"><%= err %></p>
+  <%= render(Ss::CalloutComponent.new(tone: :danger, css: "mb-3")) { tag.p(err) } %>
 <% end %>
 
 <% if entries.empty? %>
@@ -28,7 +28,7 @@
       <% mine = installed[e.key] %>
       <li class="ss-card ss-card-pad flex flex-col gap-2">
         <div class="flex items-start gap-3">
-          <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon("archive") %></span>
+          <span class="ss-icon-tile is-accent"><%= icon("archive") %></span>
           <div class="min-w-0 flex-1">
             <p class="font-bold text-ink"><%= e.name %></p>
             <p class="text-xs text-muted truncate"><%= [ e.author.presence, (e.catalog unless e.official) ].compact.join(" · ") %></p>

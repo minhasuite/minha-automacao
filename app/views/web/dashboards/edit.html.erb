@@ -14,7 +14,7 @@
 <div class="grid gap-6 lg:grid-cols-3 items-start">
   <div class="lg:col-span-2 flex flex-col gap-4 min-w-0">
     <div class="flex items-start gap-2">
-    <nav class="dw-tabs !mt-0 flex-1 min-w-0" aria-label="<%= t("dashboards.ed.draft_views") %>">
+    <nav class="ss-chips is-solid flex-1 min-w-0" data-controller="ss-scroll-current" aria-label="<%= t("dashboards.ed.draft_views") %>">
       <% views.each do |v| %>
         <%= link_to edit_dashboard_path(@dashboard, view: v["id"]), class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
       <% end %>

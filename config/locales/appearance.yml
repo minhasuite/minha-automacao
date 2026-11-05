@@ -59,13 +59,12 @@ pt-BR:
       sample_mode: Refrigerar
     sidebar:
       title: Barra lateral
-      pitch: A ordem e o que aparece no menu são só seus. Configurações fica sempre.
+      pitch: A ordem e o que aparece no menu são só seus. Arraste pela alça para mudar a ordem; Configurações fica sempre.
       reset: Restaurar o padrão
       hidden: escondido
       show_x: "Mostrar %{name}"
       hide_x: "Esconder %{name}"
-      up_x: "Subir %{name}"
-      down_x: "Descer %{name}"
+      fixed: sempre no fim
 en:
   appearance:
     nav: Appearance
@@ -126,13 +125,12 @@ en:
       sample_mode: Cool
     sidebar:
       title: Sidebar
-      pitch: The order and what shows in the menu are yours only. Settings always stays.
+      pitch: The order and what shows in the menu are yours only. Drag by the handle to reorder; Settings always stays.
       reset: Restore the default
       hidden: hidden
       show_x: "Show %{name}"
       hide_x: "Hide %{name}"
-      up_x: "Move %{name} up"
-      down_x: "Move %{name} down"
+      fixed: always last
 es:
   appearance:
     nav: Apariencia
@@ -193,10 +191,9 @@ es:
       sample_mode: Enfriar
     sidebar:
       title: Barra lateral
-      pitch: El orden y lo que aparece en el menú son solo tuyos. Configuración queda siempre.
+      pitch: El orden y lo que aparece en el menú son solo tuyos. Arrastra por el asa para cambiar el orden; Configuración queda siempre.
       reset: Restaurar lo predeterminado
       hidden: oculto
       show_x: "Mostrar %{name}"
       hide_x: "Ocultar %{name}"
-      up_x: "Subir %{name}"
-      down_x: "Bajar %{name}"
+      fixed: siempre al final

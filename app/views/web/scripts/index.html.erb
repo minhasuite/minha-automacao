@@ -22,7 +22,7 @@
     <ul class="ss-card ss-rows" aria-label="Scripts<%= " · #{category}" if category %>">
       <% items.each do |s| %>
         <li id="script-<%= s.id %>">
-          <span class="grid place-items-center size-10 shrink-0 rounded-xl bg-accent-soft text-accent"><%= icon(s.icon.presence_in(HelperTypes::ICONS) || "play") %></span>
+          <span class="ss-icon-tile is-accent"><%= icon(s.icon.presence_in(HelperTypes::ICONS) || "play") %></span>
           <div class="min-w-0 flex-1 basis-48">
             <p class="font-bold text-ink break-words"><%= link_to s.name, (can?(:manage) ? edit_automation_path(s) : automation_automation_runs_path(s)), class: "text-ink no-underline hover:text-accent" %>
               <% unless s.published? %> <span class="ss-badge ss-badge-warn"><%= t("automations.index.draft") %></span><% end %>

@@ -1,4 +1,4 @@
 <%# locals: (record:) -%>
 <% if record.errors.any? %>
-  <p class="md:col-span-full flex items-center gap-2 rounded-xl bg-danger-soft text-danger p-3 text-sm font-semibold" role="alert"><%= icon("exclamation-circle", "size-5 shrink-0") %><%= record.errors.full_messages.to_sentence %></p>
+  <%= render Ss::CalloutComponent.new(tone: :danger, css: "md:col-span-full") do %><p><%= record.errors.full_messages.to_sentence %></p><% end %>
 <% end %>

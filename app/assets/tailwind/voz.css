@@ -1,5 +1,5 @@
-/* Assist (ondaB1): pipelines, depuração, frases, satélites e MCP (vz-).
-   Só tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
+/* Domínio: assistente de voz (ondaB1, vz-) — pipelines, depuração por etapa, frases e
+   satélites. Chaves e segredos (CodeBlock), avisos (Callout) e abas são da gem. Só tokens. */
 @layer components {
   /* As abas são o Ss::TabsComponent. */
 
@@ -42,12 +42,6 @@
   .vz-run-job { margin: .6rem 1rem 0; padding: 0; border: 0; background: none; box-shadow: none; }
   .vz-run-who { margin: .4rem 1rem .9rem; font-size: .85rem; color: var(--ink); overflow-wrap: anywhere; }
   .vz-run-who b { font-weight: 600; color: var(--ink-2); }
-
-  /* ---- Frases --------------------------------------------------------- */
-  .vz-result { margin-top: 1rem; padding: .8rem .95rem; border-radius: .9rem; background: var(--field); }
-  .vz-result-ok { background: var(--success-soft); color: var(--ink); }
-  .vz-result-ok svg { color: var(--success); }
-  .vz-result-miss svg { color: var(--muted); }
   .vz-intent { padding: 0; }
   .vz-intent > summary { display: flex; align-items: flex-start; justify-content: space-between; gap: .6rem; padding: .85rem 1rem; cursor: pointer; list-style: none; }
   .vz-intent > summary::-webkit-details-marker { display: none; }
@@ -60,8 +54,4 @@
   .vz-sat { display: flex; align-items: center; gap: .8rem; }
   .vz-sat-ico { position: relative; flex: none; display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: .9rem; background: var(--field); color: var(--accent); }
   .vz-sat-ico[data-online="true"]::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: .7rem; height: .7rem; border-radius: 99px; background: var(--success); box-shadow: 0 0 0 3px var(--surface); }
-  .vz-secret { display: flex; gap: .5rem; align-items: center; padding: .6rem .7rem; border-radius: .8rem; background: var(--field); font-size: .8rem; overflow-wrap: anywhere; }
-  .vz-secret code { flex: 1; min-width: 0; }
-  .vz-secret { white-space: pre-wrap; margin: 0; }
-  .vz-token { display: flex; align-items: center; gap: .75rem; padding: .55rem .75rem; border-radius: .8rem; background: var(--field); }
 }

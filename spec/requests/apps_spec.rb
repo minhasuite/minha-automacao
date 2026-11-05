@@ -96,7 +96,7 @@ RSpec.describe "Aplicativos (F8g)" do
 
     stub_sup(:get, "/apps/code_server", { data: kuma.merge("key" => "code_server", "options" => { "password" => nil }, "busy" => "Atualizando") })
     get "/configuracoes/aplicativos/code_server", params: { aba: "config" }
-    expect(response.body).to include("Em branco mantém a atual", 'data-controller="reload"')
+    expect(response.body).to include("Em branco mantém a atual", 'data-controller="ss-reload"')
 
     stub_sup(:get, "/apps/mosquitto", { data: mosq.merge("error" => "falhou") })
     get "/configuracoes/aplicativos/mosquitto"

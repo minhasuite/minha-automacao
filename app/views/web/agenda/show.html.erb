@@ -7,22 +7,15 @@
     <% if @days.empty? %>
       <%= render Ss::EmptyStateComponent.new(title: t("agenda.show.empty"), text: t("agenda.show.empty_hint")) %>
     <% else %>
-      <% @days.each do |day, events| %>
-        <div class="oa-cal-day">
-          <div class="oa-cal-date"><b><%= day.day %></b><span><%= l(day, format: "%b") %> · <%= l(day, format: "%a") %></span></div>
-          <div class="min-w-0">
-            <% events.each do |e| %>
-              <% s = Time.zone.parse(e["start"]).in_time_zone(@zone) %>
-              <% en = Time.zone.parse(e["end"]).in_time_zone(@zone) %>
-              <div class="oa-cal-event">
-                <span class="oa-cal-time"><%= e["all_day"] ? t("agenda.show.all_day") : "#{s.strftime('%H:%M')}–#{en.strftime('%H:%M')}" %></span>
-                <span class="min-w-0 flex-1"><span class="font-semibold text-ink break-words"><%= e["summary"] %></span>
-                  <span class="block text-xs text-muted"><%= [ e["calendar"].name, e["location"] ].compact_blank.join(" · ") %></span></span>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
+      <%# Lista dos dias na peça da gem (mesma do widget de agenda); uma cor por agenda. %>
+      <% now = Time.current.in_time_zone(@zone) %>
+      <% tone = ->(cal) { %i[accent warn success info danger][@calendars.index(cal).to_i % 5] } %>
+      <% hm = ->(v) { Time.zone.parse(v.to_s)&.in_time_zone(@zone)&.strftime("%H:%M") } %>
+      <% days = @days.map do |day, events|
+           { date: day, events: events.map { |e| { time: (hm.(e["start"]) unless e["all_day"]), end: (hm.(e["end"]) unless e["all_day"]), all_day: e["all_day"],
+                                                   title: e["summary"], detail: [ e["calendar"].name, e["location"] ].compact_blank.join(" · "), tone: tone.(e["calendar"]) } } }
+         end %>
+      <%= render Ss::AgendaListComponent.new(days: days, now: now, selected: now.to_date, label: t("agenda.show.upcoming")) %>
     <% end %>
   </section>
   <aside class="grid gap-4">
@@ -50,7 +43,7 @@
           <% list.sort_by { |e| e["start"] }.each do |e| %>
             <li class="flex items-center gap-2 text-sm">
               <span class="min-w-0 flex-1 truncate"><%= e["summary"] %> <span class="text-muted">· <%= l(Time.zone.parse(e["start"]).in_time_zone(@zone), format: :short) %><%= " · #{HelperTypes::LocalCalendar.text("repeat.#{e['repeat']}").downcase}" if e["repeat"].present? && e["repeat"] != "none" %></span></span>
-              <% if can?(:manage) %><%= button_to event_site_agenda_path(@site, c.id, e["uid"]), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm px-2", form: { class: "contents", data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.erase"), turbo_confirm: t("agenda.show.delete_confirm", name: e["summary"]) } }, "aria-label": t("agenda.show.delete", name: e["summary"]) do %><%= icon("trash", "size-4") %><% end %><% end %>
+              <% if can?(:manage) %><%= button_to event_site_agenda_path(@site, c.id, e["uid"]), method: :delete, class: "ss-icon-btn is-sm is-danger", form: { class: "contents", data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.erase"), turbo_confirm: t("agenda.show.delete_confirm", name: e["summary"]) } }, title: t("agenda.show.delete", name: e["summary"]), "aria-label": t("agenda.show.delete", name: e["summary"]) do %><%= icon("trash", "") %><% end %><% end %>
             </li>
           <% end %>
         </ul>

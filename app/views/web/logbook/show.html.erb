@@ -4,50 +4,29 @@
 <%= render "web/shared/site_switch", sites: @sites, site: @site, path: logbook_path %>
 <% f = @filter %>
 <% sources = Logbook.sources_for(@site_role) %>
-<%= form_with url: logbook_path, method: :get, class: "ss-card ss-card-pad lb-filters grid-cols-[minmax(0,1fr)] mb-5", data: { turbo_frame: "logbook", turbo_action: "advance" } do %>
-  <%= hidden_field_tag :site_id, @site.id, id: nil %>
-  <%# Chips (faixa da gem) são links com o filtro atual; o formulário leva o período e os tipos escolhidos. %>
-  <% all = sources.map(&:key) %>
-  <% unless f.custom_dates? %><%= hidden_field_tag :period, f.period, id: nil %><% end %>
-  <% if f.keys.size < all.size %><% f.keys.each do |k| %><%= hidden_field_tag "sources[]", k, id: nil %><% end %><% end %>
-  <div class="lb-search">
-    <%= icon("search", "size-5 text-muted") %>
-    <%= search_field_tag :q, f.q, class: "ss-input", placeholder: t("logbook.search_hint"), "aria-label": t("logbook.search") %>
-    <button class="ss-btn ss-btn-primary"><%= icon("filter", "size-4") %><%= t("devices.filter") %></button>
-  </div>
-  <div class="lb-chips">
-    <nav class="ss-chipbar flex-wrap" aria-label="<%= t("history.period") %>">
-      <% Logbook::PERIOD_LABELS.each do |k, label| %>
-        <% on = f.period == k && !f.custom_dates? %>
-        <%= link_to label, lb_period_path(f, k), class: "ss-fchip no-underline", "aria-current": (on ? "true" : nil), "aria-pressed": on.to_s, data: { turbo_frame: "_top" } %>
-      <% end %>
-    </nav>
-    <span class="lb-dates">
-      <label class="sr-only" for="lb-from"><%= t("history.from") %></label><%= date_field_tag :from, (f.from.to_date if f.custom_dates?), class: "ss-input num", id: "lb-from" %>
-      <span class="text-muted text-sm"><%= t("history.until") %></span>
-      <label class="sr-only" for="lb-until"><%= t("history.to") %></label><%= date_field_tag :until, params[:until], class: "ss-input num", id: "lb-until" %>
-    </span>
-  </div>
-  <details class="lb-more" <%= "open" if f.narrowed? || f.user_id || f.keys.size < sources.size %>>
-    <summary><%= icon("chevron-down", "size-4") %><%= t("logbook.more_filters") %></summary>
-    <div class="lb-grid">
-      <div><label class="ss-label" for="lb-area"><%= t("devices.area") %></label>
-        <%= select_tag :area_id, options_from_collection_for_select(@site.areas.order(:name), :id, :name, f.area_id), include_blank: t("devices.all"), class: "ss-input", id: "lb-area" %></div>
-      <div><label class="ss-label" for="lb-device"><%= t("logbook.device") %></label>
-        <%= select_tag :device_id, options_from_collection_for_select(@site.devices.order(:name), :id, :name, f.device_id), include_blank: t("logbook.all"), class: "ss-input", id: "lb-device" %></div>
-      <div><label class="ss-label" for="lb-point"><%= t("logbook.point") %></label>
-        <%= select_tag :point_id, options_for_select(point_choices(@site), f.point_id), include_blank: t("logbook.all"), class: "ss-input", id: "lb-point" %></div>
-      <div><label class="ss-label" for="lb-user"><%= t("logbook.person") %></label>
-        <%= select_tag :user_id, options_from_collection_for_select(Logbook.people(@site), :id, :name, f.user_id), include_blank: t("devices.all"), class: "ss-input", id: "lb-user" %></div>
-    </div>
-    <nav class="ss-chipbar flex-wrap mt-3" aria-label="<%= t("logbook.what") %>">
-      <% sources.each do |s| %>
-        <%= link_to lb_source_path(f, s.key, all), class: "ss-fchip no-underline gap-1.5", "aria-pressed": lb_source_on?(f, s.key, all).to_s, data: { turbo_frame: "_top" } do %><%= icon(s.icon, "size-4") %><%= s.label %><% end %>
-      <% end %>
-    </nav>
-    <p class="text-xs text-muted mt-2"><%= t("logbook.none_checked") %></p>
+<%# Busca, filtros ativos em chips e "+ Filtro" (tipos, área, aparelho, pessoa): Ss::FilterBarComponent
+    (links e GET; o site_id fica na query do url:). Período em chips; datas próprias em "Mais filtros". %>
+<section class="ss-card ss-card-pad grid gap-3 mb-5" aria-label="<%= t("logbook.search") %>">
+  <%= render Ss::FilterBarComponent.new(url: logbook_path(site_id: @site.id), search: :q, placeholder: t("logbook.search_hint"),
+                                        params: lb_bar_params(f), filters: lb_bar_filters(f, @site, sources)) %>
+  <nav class="ss-chipbar flex-wrap" aria-label="<%= t("history.period") %>">
+    <% Logbook::PERIOD_LABELS.each do |k, label| %>
+      <% on = f.period == k && !f.custom_dates? %>
+      <%= link_to label, lb_period_path(f, k), class: "ss-fchip no-underline", "aria-current": (on ? "true" : nil), "aria-pressed": on.to_s %>
+    <% end %>
+  </nav>
+  <details <%= "open" if f.custom_dates? %>>
+    <summary class="ss-summary text-sm font-semibold text-ink-2"><%= t("logbook.more_filters") %></summary>
+    <%= form_with url: logbook_path, method: :get, class: "flex flex-wrap items-end gap-3 mt-3", data: { turbo_frame: "logbook", turbo_action: "advance" } do %>
+      <%= hidden_field_tag :site_id, @site.id, id: nil %>
+      <% f.to_params.except(:from, :until, :before, :period, :sources).each do |k, v| %><%= hidden_field_tag k, v, id: nil %><% end %>
+      <% if f.keys.size < sources.size %><% f.keys.each do |k| %><%= hidden_field_tag "sources[]", k, id: nil %><% end %><% end %>
+      <%= render Ss::DateRangeComponent.new(from_name: "from", to_name: "until", from: (f.from.to_date.iso8601 if f.custom_dates?), to: params[:until].presence,
+                                            legend: t("history.pick_dates"), id: "lb-range") %>
+      <button class="ss-btn ss-btn-primary"><%= t("points.apply") %></button>
+    <% end %>
   </details>
-<% end %>
+</section>
 
 <%= turbo_frame_tag "logbook", data: { turbo_action: "advance" } do %>
   <% if @items.empty? %>

@@ -639,7 +639,7 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.10.1`):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.10.3`):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);
@@ -665,14 +665,25 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
   `DeviceTileComponent`) com o risco no título.
 - Fuso: gráfico, faixas e diário recebem `time_zone:` com o fuso IANA do local
   (sem `Time.use_zone` na view).
-- CSS: o `application.css` importa o build da gem e depois os CSS de tela
-  (`dw-` painéis, `lb-`/`hx-` diário e histórico, `ef-` energia, `ob-`, `vz-`…).
-  `ponte.css` (por último) guarda só o que o produto tem a mais que a gem: caixas
-  de marcar soltas, chip atual sólido e contador, `.ss-rows`, `.ss-step` (ações do
-  ponto), subnavegação em menu no celular, `.ss-chips`, zona de perigo, `.ss-skip`,
-  `.ss-summary`, `.ma-flow` (passos do editor) e o rodapé do menu (`.ma-side-*`).
-  Cada bloco diz por quê; ao subir algo para a gem, apague de lá. Menus `<details>`
-  (`.ss-menu`, `.dw-pop`): Esc/clique fora no `application.js`.
+- CSS: o `application.css` importa o build da gem e depois os CSS de tela, **só de
+  domínio** (cada arquivo diz no topo o que guarda): `dw-` painéis/widgets/planta/editor
+  e quiosque (`dashboards.css`, `paineis.css`), `hx-`/`ef-`/`mp-`/`mg-` histórico,
+  energia, mapa e relatório do "Migre do HA" (`paridade.css`), `ob-`/`oba-` arte da
+  primeira configuração, `ma-side-*` (rodapé do menu) e `.ma-page-head` (`produto.css`),
+  `.ss-label-chip` e Expor/tarefas/agenda (`organizacao.css`), `vz-` voz (`voz.css`),
+  `ma-` mídia (`midia.css`). Peça genérica (caixa de marcar solta = `ss-inputs` e base
+  — `<summary>` sem marcador, menos movimento — = `ss-base` no `<body>`, `.ss-chip.is-solid`, `.ss-rows`, `.ss-btn-group`, `.ss-steps`, `.ss-icon-tile`,
+  `.ss-icon-btn`, `Ss::CalloutComponent`, `Ss::CodeBlockComponent`, `Ss::SubnavComponent`,
+  `ss_skip_link`…) vem da gem; não recrie aqui. Menus `<details>` (`.ss-menu`,
+  `.dw-pop`): Esc/clique fora no `application.js`.
+- Stimulus: comportamento genérico é da gem (`ss-copy`, `ss-filter`, `ss-poll`,
+  `ss-reload`, `ss-autosubmit`, `ss-check-all`, `ss-sortable`, `ss-scroll-current` nas faixas de chips, `ss-theme` e
+  `ss-privacy` no `<body>`). Os do produto (`controllers/`) são só de domínio:
+  câmera/voz, mapa, planta, quiosque, editor de painel, primeira configuração,
+  Google/passkey/push. Tema na chave `ss-theme` (o `web/shared/_theme_head` migra a
+  antiga `theme` uma vez); "esconder valores" continua na chave `privacy`
+  (`data-ss-privacy-key-value`). O `AppScreen` lê `ss-poll`/`ss-reload` como os
+  blocos `poll`/`reload` do app.
 - Telas do app: o app lê esta mesma web pelo `AppScreen` (`docs/app.md`); ao mexer
   em markup, rode os `spec/requests/appweb*_spec.rb`.
 
@@ -681,6 +692,8 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 - Comentário `<%# locals: (...) -%>` só pode ter a assinatura: texto depois
   dela vira código e quebra o template.
 - ERB `<% case %>` + `<% when %>` em linhas separadas não compila; use if/elsif.
+- Componente com bloco de chaves: `render(Ss::XComponent.new(...)) { ... }`. Sem os parênteses
+  do `render`, o `{ }` vai para o `.new` e o conteúdo some (o `do … end` não tem esse problema).
 - `ai_response("k" => v)` sem chaves vira keyword: passe `({ ... })`.
 - Request spec com array de objetos precisa de `as: :json`.
 - Spec nunca sai para a rede (WebMock): stub de tudo que é externo.

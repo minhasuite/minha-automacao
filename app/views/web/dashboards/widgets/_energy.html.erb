@@ -10,7 +10,7 @@
       <p class="dw-card-title"><%= w["label"].presence || d["title"] || t("dashboards.w.usage_cost") %></p>
       <p class="text-xs text-muted"><%= d["period_label"] %></p>
     </div>
-    <span class="dw-ico dw-ico-sm" style="color: <%= d["tone"] || "var(--amber)" %>"><%= icon(d["icon"] || "lightning-bolt") %></span>
+    <span class="ss-icon-tile is-muted is-sm" style="color: <%= d["tone"] || "var(--amber)" %>"><%= icon(d["icon"] || "lightning-bolt", "") %></span>
   </div>
   <% if d["missing"] %>
     <p class="dw-quiet"><%= icon(d["icon"] || "lightning-bolt", "size-5 text-muted") %><%= d["missing_text"] || t("dashboards.w.pick_energy") %></p>

@@ -10,16 +10,16 @@
       <button class="ss-btn ss-btn-primary"><%= t("assist_settings.sentences.check") %></button>
     <% end %>
     <% if @heard %>
-      <div class="vz-result <%= @understood ? 'vz-result-ok' : 'vz-result-miss' %>" role="status">
-        <% if @understood %>
-          <% intent, slots = @understood %>
-          <p class="font-bold text-ink flex items-center gap-2"><%= icon("check-circle", "size-5") %><code><%= intent.key %></code></p>
+      <% if @understood %>
+        <% intent, slots = @understood %>
+        <%= render Ss::CalloutComponent.new(tone: :success, css: "mt-4") do %>
+          <p class="font-bold text-ink"><code class="ss-code-inline"><%= intent.key %></code></p>
           <p class="text-sm text-muted"><%= intent.description %></p>
           <% if slots.any? %><ul class="ss-chips mt-2"><% slots.each do |k, v| %><li class="ss-chip"><b><%= k %></b>&nbsp;<%= v %></li><% end %></ul><% end %>
-        <% else %>
-          <p class="font-bold text-ink flex items-center gap-2"><%= icon("question-mark-circle", "size-5") %><%= t("assist_settings.sentences.none") %></p>
         <% end %>
-      </div>
+      <% else %>
+        <%= render Ss::CalloutComponent.new(tone: :info, title: t("assist_settings.sentences.none"), icon: icon("question-mark-circle", "ss-callout-ico"), css: "mt-4") %>
+      <% end %>
     <% end %>
   </section>
   <section class="ss-card ss-card-pad min-w-0" aria-labelledby="tpl-t">
@@ -32,13 +32,15 @@
       <div><button class="ss-btn ss-btn-outline"><%= t("assist_settings.sentences.check") %></button></div>
     <% end %>
     <% if @template %>
-      <div class="vz-result <%= @template_match ? 'vz-result-ok' : 'vz-result-miss' %>" role="status">
-        <% if @template_error %><p class="text-danger"><%= @template_error %></p>
-        <% elsif @template_match %>
-          <p class="font-bold text-ink flex items-center gap-2"><%= icon("check-circle", "size-5") %><%= t("assist_settings.sentences.matches") %></p>
+      <% if @template_error %>
+        <%= render(Ss::CalloutComponent.new(tone: :danger, css: "mt-4")) { tag.p(@template_error) } %>
+      <% elsif @template_match %>
+        <%= render Ss::CalloutComponent.new(tone: :success, title: t("assist_settings.sentences.matches"), css: "mt-4") do %>
           <% if @template_match.any? %><ul class="ss-chips mt-2"><% @template_match.each do |k, v| %><li class="ss-chip"><b><%= k %></b>&nbsp;<%= v %></li><% end %></ul><% end %>
-        <% else %><p class="font-bold text-ink"><%= t("assist_settings.sentences.no_match") %></p><% end %>
-      </div>
+        <% end %>
+      <% else %>
+        <%= render Ss::CalloutComponent.new(tone: :info, title: t("assist_settings.sentences.no_match"), css: "mt-4") %>
+      <% end %>
     <% end %>
     <p class="text-xs text-muted mt-3"><%= t("assist_settings.sentences.own_html", link: link_to(t("assist_settings.sentences.automations"), site_automations_path(site))) %></p>
   </section>

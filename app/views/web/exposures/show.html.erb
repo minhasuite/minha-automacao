@@ -14,7 +14,7 @@
 <% if @points.empty? %>
   <%= render Ss::EmptyStateComponent.new(title: t("exposures.show.empty"), variant: :busca, css: "ss-card") do %><%= link_to t("exposures.show.clear"), site_exposure_path(@site), class: "ss-btn ss-btn-ghost" %><% end %>
 <% else %>
-  <%= form_with url: site_exposure_path(@site), method: :patch, data: { controller: "expose" } do %>
+  <%= form_with url: site_exposure_path(@site), method: :patch, data: { controller: "ss-check-all" } do %>
     <%= hidden_field_tag :back, request.fullpath, id: nil %>
     <div class="ss-card oa-expose overflow-hidden" role="table" aria-label="<%= t("exposures.show.table") %>" style="--cols: <%= @targets.size %>">
       <div class="oa-expose-row oa-expose-head" role="row">
@@ -23,14 +23,14 @@
           <% @targets.each do |tg| %>
             <label class="oa-expose-cell" role="columnheader" title="<%= t("exposures.show.column_title", target: tg.title) %>">
               <span class="flex items-center gap-1"><%= icon(tg.icon, "size-4") %><%= tg.title %></span>
-              <% if admin %><input type="checkbox" data-action="expose#column" data-expose-col-param="<%= tg.key %>" aria-label="<%= t("exposures.show.column_all", target: tg.title) %>"><% end %>
+              <% if admin %><input type="checkbox" data-action="ss-check-all#toggle" data-ss-check-all-col-param="<%= tg.key %>" data-ss-check-all-target="all" aria-label="<%= t("exposures.show.column_all", target: tg.title) %>"><% end %>
             </label>
           <% end %>
         </div>
       </div>
       <% @points.each do |p| %>
         <div class="oa-expose-row" role="row" id="expose-<%= p.id %>">
-          <span class="ss-icon-tile text-muted"><%= icon(point_icon(p)) %></span>
+          <span class="ss-icon-tile is-muted"><%= icon(point_icon(p)) %></span>
           <div class="min-w-0" role="cell">
             <p class="font-semibold text-ink truncate"><%= p.name %> <% if p.risk == "critical" %><span class="ss-badge ss-badge-warn"><%= t("exposures.show.critical") %></span><% end %></p>
             <p class="text-xs text-muted truncate"><%= [ p.device&.name, (p.area || p.device&.area)&.name ].compact.uniq.join(" · ") %> <%= label_chips(p) %></p>
@@ -41,7 +41,7 @@
               <span class="oa-expose-cell" role="cell">
                 <% if tg.applies?(p) %>
                   <%= hidden_field_tag "x[#{p.id}][#{tg.key}]", "0", id: nil %>
-                  <input type="checkbox" name="x[<%= p.id %>][<%= tg.key %>]" value="1" data-col="<%= tg.key %>" <%= "checked" if tg.exposed?(p) %> <%= "disabled" unless admin %> aria-label="<%= t("exposures.show.cell", point: p.name, target: tg.title) %>">
+                  <input type="checkbox" name="x[<%= p.id %>][<%= tg.key %>]" value="1" data-col="<%= tg.key %>" data-action="ss-check-all#sync" <%= "checked" if tg.exposed?(p) %> <%= "disabled" unless admin %> aria-label="<%= t("exposures.show.cell", point: p.name, target: tg.title) %>">
                   <span class="sr-only"><%= tg.title %></span>
                 <% else %>
                   <span class="text-muted" title="<%= t("exposures.show.not_applicable", target: tg.title) %>">–</span>

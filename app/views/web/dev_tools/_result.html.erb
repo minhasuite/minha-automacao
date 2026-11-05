@@ -3,9 +3,9 @@
   <section class="ss-card ss-card-pad h-full" aria-label="<%= t("dev_tools.result") %>">
     <p class="font-bold text-ink"><%= t("dev_tools.result") %></p>
     <% if error %>
-      <p class="mt-2 text-sm text-danger break-words" role="alert"><%= error %></p>
+      <%= render(Ss::CalloutComponent.new(tone: :danger, class: "mt-2")) { error } %>
     <% else %>
-      <pre class="mt-2 text-sm text-ink whitespace-pre-wrap break-words bg-field rounded-lg p-3"><%= mode == "expr" ? result.inspect : result %></pre>
+      <%= render Ss::CodeBlockComponent.new(text: mode == "expr" ? result.inspect : result.to_s, label: t("dev_tools.result"), class: "mt-2") %>
       <% if mode == "expr" %><p class="mt-1 text-xs text-muted"><%= t("dev_tools.type") %>: <%= result.class.name %></p><% end %>
     <% end %>
   </section>

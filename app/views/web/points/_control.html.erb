@@ -39,10 +39,10 @@
       <% end %>
     <% end %>
     <% if actions.any? %>
-      <span class="ss-step" role="group" aria-label="<%= t("points.actions", name: point.name) %>">
+      <span class="ss-btn-group" role="group" aria-label="<%= t("points.actions", name: point.name) %>">
         <% actions.each do |c| %>
           <% ico, label = PointsHelper::ACTION_BUTTONS.fetch(c, [ "lightning-bolt", c ]) %>
-          <%= button_to command_point_path(point), params: { command: c }, form: { data: confirm }, title: label, "aria-label": "#{label} #{point.name}" do %><%= icon(ico, "size-4") %><% end %>
+          <%= button_to command_point_path(point), params: { command: c }, form: { data: confirm }, title: label, "aria-label": "#{label} #{point.name}" do %><%= icon(ico, "") %><% end %>
         <% end %>
       </span>
     <% end %>

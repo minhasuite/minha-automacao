@@ -4,7 +4,7 @@
 <% exposed = @items.count { |t, _| t.alexa_exposed } %>
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-  <%= form_with url: site_alexa_path(@site), method: :patch, class: "ss-card min-w-0", aria: { label: t("alexa.items_label") }, data: { controller: "filter" } do %>
+  <%= form_with url: site_alexa_path(@site), method: :patch, class: "ss-card min-w-0", aria: { label: t("alexa.items_label") }, data: { controller: "ss-filter" } do %>
     <div class="ss-card-pad flex flex-wrap items-center justify-between gap-2 border-b border-line">
       <div>
         <h2 class="font-bold"><%= t("alexa.items") %></h2>
@@ -17,18 +17,18 @@
     <% else %>
       <div class="ss-card-pad border-b border-line">
         <label for="ax-busca" class="ss-label"><%= t("bridges.search") %></label>
-        <input type="search" id="ax-busca" class="ss-input" placeholder="<%= t("alexa.search_hint") %>" autocomplete="off" data-filter-target="input" data-action="input->filter#apply">
-        <p class="text-sm text-muted mt-2" data-filter-target="empty" hidden><%= t("bridges.no_match") %> <button type="button" class="font-semibold text-accent" data-action="filter#clear"><%= t("bridges.clear") %></button></p>
+        <input type="search" id="ax-busca" class="ss-input" placeholder="<%= t("alexa.search_hint") %>" autocomplete="off" data-ss-filter-target="input" data-action="input->ss-filter#apply keydown.esc->ss-filter#clear">
+        <p class="text-sm text-muted mt-2" data-ss-filter-target="empty" hidden><%= t("bridges.no_match") %> <button type="button" class="font-semibold text-accent" data-action="ss-filter#clear"><%= t("bridges.clear") %></button></p>
       </div>
       <ul class="ss-rows">
         <% @items.each do |t, ifaces| %>
           <% id = Alexa::SmartHome.endpoint_id(t) %>
           <% critical = t.risk == "critical" %>
-          <li class="flex-wrap" data-filter-target="item">
+          <li class="flex-wrap" data-ss-filter-target="item">
             <label class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
               <%= hidden_field_tag "items[#{id}][exposed]", "0", id: nil %>
-              <%= check_box_tag "items[#{id}][exposed]", "1", t.alexa_exposed, id: "ax-#{id}", disabled: !admin, class: "size-5 accent-[var(--accent)]" %>
-              <span class="grid place-items-center size-10 shrink-0 rounded-xl <%= t.alexa_exposed ? 'ss-grad' : 'bg-accent-soft text-accent' %>"><%= icon(t.is_a?(Scene) ? "sparkles" : point_icon(t)) %></span>
+              <%= check_box_tag "items[#{id}][exposed]", "1", t.alexa_exposed, id: "ax-#{id}", disabled: !admin, class: "size-5" %>
+              <span class="ss-icon-tile <%= t.alexa_exposed ? 'is-grad' : 'is-accent' %>"><%= icon(t.is_a?(Scene) ? "sparkles" : point_icon(t)) %></span>
               <span class="min-w-0">
                 <% title, context = t.is_a?(Scene) ? [ t.name, t("alexa.scene") ] : t.display_names %>
                 <span class="block font-bold text-ink truncate"><%= title %></span>
@@ -74,11 +74,11 @@
     <section class="ss-card ss-card-pad" aria-labelledby="client-t">
       <h2 id="client-t" class="font-bold">Skill (Developer Console)</h2>
       <dl class="mt-2 grid gap-2 text-sm">
-        <div><dt class="text-muted"><%= t("alexa.auth_url") %></dt><dd class="font-mono text-xs break-all"><%= oauth_authorize_url %></dd></div>
-        <div><dt class="text-muted"><%= t("alexa.token_url") %></dt><dd class="font-mono text-xs break-all"><%= request.base_url %>/oauth/token</dd></div>
-        <div><dt class="text-muted">Client ID</dt><dd class="font-mono text-xs break-all"><%= @tenant.alexa_client_id || t("alexa.not_generated") %></dd></div>
+        <div><dt class="text-muted"><%= t("alexa.auth_url") %></dt><dd class="mt-1"><%= render Ss::CodeBlockComponent.new(text: oauth_authorize_url, label: t("alexa.auth_url")) %></dd></div>
+        <div><dt class="text-muted"><%= t("alexa.token_url") %></dt><dd class="mt-1"><%= render Ss::CodeBlockComponent.new(text: "#{request.base_url}/oauth/token", label: t("alexa.token_url")) %></dd></div>
+        <div><dt class="text-muted">Client ID</dt><dd class="mt-1"><% if @tenant.alexa_client_id %><%= render Ss::CodeBlockComponent.new(text: @tenant.alexa_client_id, label: "Client ID") %><% else %><span class="text-muted"><%= t("alexa.not_generated") %></span><% end %></dd></div>
         <% if @secret %>
-          <div class="rounded-xl bg-accent-soft p-2"><dt class="text-muted"><%= t("alexa.secret_once") %></dt><dd class="font-mono text-xs break-all" data-controller="clipboard"><%= @secret %></dd></div>
+          <div><dt class="text-muted"><%= t("alexa.secret_once") %></dt><dd class="mt-1"><%= render Ss::CodeBlockComponent.new(text: @secret, label: t("alexa.secret_once")) %></dd></div>
         <% end %>
       </dl>
       <% if current_user.owner? && admin %>

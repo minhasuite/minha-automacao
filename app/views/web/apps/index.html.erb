@@ -3,10 +3,7 @@
 <% end %>
 <%= render layout: "web/settings/frame", locals: { current: :apps } do %>
 <% if @offline %>
-  <div class="ss-card ss-card-pad mb-4 flex items-start gap-3" role="status">
-    <span class="ss-icon-tile text-accent"><%= icon("information-circle") %></span>
-    <div><p class="font-bold text-ink"><%= t("apps.local_only") %></p><p class="text-sm text-muted mt-0.5"><%= @offline %></p></div>
-  </div>
+  <%= render(Ss::CalloutComponent.new(tone: :info, title: t("apps.local_only"), class: "mb-4")) { @offline } %>
 <% end %>
 
 <% if @installed.empty? %>
@@ -18,7 +15,7 @@
       <% label, tone = app_state(st) %>
       <li class="ss-card ss-card-pad flex flex-col">
         <div class="flex items-start gap-3">
-          <span class="ss-icon-tile text-accent"><%= icon(app.icon) %></span>
+          <span class="ss-icon-tile is-accent"><%= icon(app.icon) %></span>
           <div class="min-w-0 flex-1">
             <h2 class="font-bold text-ink truncate"><%= link_to app.name, app_path(app.key), class: "no-underline text-ink hover:text-accent" %></h2>
             <p class="text-sm text-muted truncate"><%= app.category %><%= " · #{t("apps.system")}" if app.system? %></p>

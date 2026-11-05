@@ -11,33 +11,36 @@
       <% pending, done = items.partition { |i| i["status"] != "completed" } %>
       <section class="ss-card ss-card-pad" id="lista-<%= l.id %>" aria-labelledby="t-<%= l.id %>">
         <div class="flex items-center justify-between gap-2 mb-3">
-          <h2 id="t-<%= l.id %>" class="flex items-center gap-2 min-w-0"><span class="ss-icon-tile text-accent"><%= icon(point_icon(l)) %></span><span class="truncate"><%= l.name %></span></h2>
+          <h2 id="t-<%= l.id %>" class="flex items-center gap-2 min-w-0"><span class="ss-icon-tile is-accent is-sm"><%= icon(point_icon(l), "") %></span><span class="truncate"><%= l.name %></span></h2>
           <span class="ss-badge"><%= t("todo_lists.index.pending", count: pending.size) %></span>
         </div>
         <% if can?(:command, risk: l.risk) %>
           <%= form_with url: items_site_todo_list_path(@site, l), class: "flex gap-2 mb-2" do %>
             <label class="sr-only" for="novo-<%= l.id %>"><%= t("todo_lists.index.new_item", name: l.name) %></label>
             <%= text_field_tag :summary, nil, id: "novo-#{l.id}", class: "ss-input flex-1 min-w-0", placeholder: t("todo_lists.index.add_ph"), maxlength: 255, required: true %>
-            <%= button_tag type: "submit", class: "ss-btn ss-btn-primary", "aria-label": t("todo_lists.index.add") do %><%= icon("plus", "size-4") %><% end %>
+            <%= button_tag type: "submit", class: "ss-btn ss-btn-primary", title: t("todo_lists.index.add"), "aria-label": t("todo_lists.index.add") do %><%= icon("plus", "size-4") %><% end %>
           <% end %>
         <% end %>
         <% if items.empty? %>
           <p class="text-sm text-muted py-3"><%= t("todo_lists.index.empty_list") %></p>
         <% else %>
-          <ul class="oa-todo" aria-label="<%= t("todo_lists.index.items_of", name: l.name) %>">
+          <%# Lista da gem (.ss-checklist de linha inteira): a linha é o <label> da caixa, que manda o
+              PATCH do próprio form (atributo form + data-autosubmit) ao marcar ou desmarcar. %>
+          <ul class="ss-checklist" aria-label="<%= t("todo_lists.index.items_of", name: l.name) %>">
             <% (pending + done).each do |i| %>
               <% is_done = i["status"] == "completed" %>
-              <li class="oa-todo-item <%= 'is-done' if is_done %>">
+              <li>
                 <% if can?(:command, risk: l.risk) %>
-                  <%= button_to toggle_item_site_todo_list_path(@site, l, i["uid"]), method: :patch, class: "oa-todo-check", form: { class: "contents" },
-                                "aria-label": t(is_done ? "todo_lists.index.reopen" : "todo_lists.index.complete", name: i["summary"]), "aria-pressed": is_done.to_s do %><%= icon("check", "size-3") %><% end %>
+                  <% fid = "td-#{l.id}-#{i['uid']}" %>
+                  <%= form_with url: toggle_item_site_todo_list_path(@site, l, i["uid"]), method: :patch, id: fid, class: "hidden" do %><% end %>
+                  <label class="min-w-0 break-words"><%= check_box_tag nil, "1", is_done, id: nil, form: fid, data: { autosubmit: true } %><%= i["summary"] %></label>
                 <% else %>
-                  <span class="oa-todo-check" aria-hidden="true"><%= icon("check", "size-3") %></span>
+                  <label class="min-w-0 break-words"><%= check_box_tag nil, "1", is_done, id: nil, disabled: true %><%= i["summary"] %></label>
                 <% end %>
-                <span class="oa-todo-text"><%= i["summary"] %>
-                  <% if i["due"].present? %><% late = !is_done && (Date.parse(i["due"]) rescue nil)&.past? %><span class="oa-due <%= 'is-late' if late %>"> <%= t("todo_lists.index.due", date: i["due"]) %></span><% end %></span>
+                <% if i["due"].present? %><% late = !is_done && (Date.parse(i["due"]) rescue nil)&.past? %><span class="ss-badge <%= late ? 'ss-badge-danger' : 'ss-badge-muted' %> shrink-0"><%= t("todo_lists.index.due", date: i["due"]) %></span><% end %>
                 <% if can?(:command, risk: l.risk) %>
-                  <%= button_to remove_item_site_todo_list_path(@site, l, i["uid"]), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm px-2", form: { class: "contents" }, "aria-label": t("todo_lists.index.remove", name: i["summary"]) do %><%= icon("x", "size-4") %><% end %>
+                  <%= button_to remove_item_site_todo_list_path(@site, l, i["uid"]), method: :delete, class: "ss-icon-btn is-sm is-danger", form: { class: "contents" },
+                                title: t("todo_lists.index.remove", name: i["summary"]), "aria-label": t("todo_lists.index.remove", name: i["summary"]) do %><%= icon("x", "") %><% end %>
                 <% end %>
               </li>
             <% end %>

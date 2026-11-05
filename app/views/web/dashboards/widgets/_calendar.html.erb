@@ -26,7 +26,9 @@
   <% else %>
     <% rest = (timed.any? ? days - [ today ] : days).map do |day|
          { date: Date.iso8601(day["date"]), label: day["label"],
-           events: day["events"].map { |e| { time: e["time"], title: e["summary"], detail: sub.(e), tone: tone.(e) } } }
+           events: day["events"].map { |e| hm = ->(k) { Time.zone.parse(e[k].to_s)&.in_time_zone(zone)&.strftime("%H:%M") }
+                                           { time: (hm.("start") unless e["all_day"]), end: (hm.("end") unless e["all_day"]), all_day: e["all_day"],
+                                             title: e["summary"], detail: sub.(e), tone: tone.(e) } } }
        end %>
     <%= render Ss::AgendaListComponent.new(days: rest, week_strip: true, selected: now.to_date, now: now,
                                            label: w["label"].presence || Dashboards::Widgets::CalendarWidget.label, css: "dw-cal-list mt-3") %>

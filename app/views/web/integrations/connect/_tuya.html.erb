@@ -1,9 +1,9 @@
 <%# locals: (integration:, qr_svg: nil) -%>
 <section class="ss-card ss-card-pad grid gap-3 justify-items-center text-center" aria-labelledby="qr-title"
-         data-controller="poll" data-poll-url-value="<%= status_integration_path(integration) %>">
+         data-controller="ss-poll" data-ss-poll-url-value="<%= status_integration_path(integration) %>">
   <h2 id="qr-title" class="font-bold"><%= t("integrations.connect.tuya.title") %></h2>
   <% if qr_svg %>
-    <div class="rounded-2xl bg-white p-3 w-64 max-w-full" role="img" aria-label="<%= t("integrations.connect.tuya.qr") %>"><%= qr_svg %></div>
+    <div class="ss-qr-box w-64 max-w-full" role="img" aria-label="<%= t("integrations.connect.tuya.qr") %>"><%= qr_svg %></div>
     <ol class="list-decimal pl-5 text-sm text-ink-2 text-left grid gap-1">
       <li><%= t("integrations.connect.tuya.step1_html") %></li>
       <li><%= t("integrations.connect.tuya.step2_html") %></li>
@@ -12,6 +12,6 @@
     <p class="text-sm text-muted inline-flex items-center gap-2" role="status"><span class="ss-dots" aria-hidden="true"></span><%= t("integrations.connect.tuya.waiting") %></p>
     <%= link_to t("integrations.connect.new_qr"), connect_integration_path(integration), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
   <% else %>
-    <p class="text-sm text-danger"><%= t("integrations.connect.tuya.qr_failed") %></p>
+    <%= render(Ss::CalloutComponent.new(tone: :danger, class: "text-left")) { t("integrations.connect.tuya.qr_failed") } %>
   <% end %>
 </section>

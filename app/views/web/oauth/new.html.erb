@@ -1,7 +1,7 @@
 <% google = @client.kind == "google" %>
 <% content_for :title, google ? t("protocols.google.oauth_page_title") : t("oauth.page_title") %>
 <div class="text-center">
-  <span class="mx-auto grid place-items-center size-12 rounded-2xl bg-accent-soft text-accent"><%= icon("speakerphone", "size-6") %></span>
+  <span class="ss-icon-tile is-accent is-lg mx-auto"><%= icon("speakerphone", "") %></span>
   <h1 class="text-2xl mt-4"><%= google ? t("protocols.google.oauth_title") : t("oauth.title") %></h1>
   <p class="text-sm text-muted mt-1"><%= google ? t("protocols.google.oauth_hint") : t("oauth.hint") %></p>
 </div>

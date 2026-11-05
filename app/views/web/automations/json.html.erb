@@ -1,18 +1,17 @@
 <%= render "web/shared/header", title: t(@yaml ? "automations.json.title_yaml" : "automations.json.title"), subtitle: t("automations.json.subtitle", name: @automation.name), back: edit_automation_path(@automation) %>
-<nav class="ss-chips mb-3" aria-label="<%= t("automations.json.format") %>">
+<nav class="ss-chips is-solid mb-3" data-controller="ss-scroll-current" aria-label="<%= t("automations.json.format") %>">
   <%= link_to "JSON", json_automation_path(@automation), class: "ss-chip", "aria-current": (!@yaml).to_s %>
   <%= link_to "YAML", json_automation_path(@automation, formato: "yaml"), class: "ss-chip", "aria-current": @yaml.to_s %>
 </nav>
 <%= form_with url: json_automation_path(@automation, formato: (@yaml ? "yaml" : nil)), method: :patch, class: "ss-card ss-card-pad grid gap-3" do %>
   <% if @errors.present? %>
-    <div class="rounded-xl bg-danger-soft text-danger p-3 text-sm" role="alert">
-      <p class="font-bold"><%= t(@yaml ? "automations.json.not_saved_yaml" : "automations.json.not_saved") %></p>
-      <ul class="list-disc pl-5 mt-1"><% @errors.first(10).each do |e| %><li><%= e %></li><% end %></ul>
-    </div>
+    <%= render Ss::CalloutComponent.new(tone: :danger, title: t(@yaml ? "automations.json.not_saved_yaml" : "automations.json.not_saved")) do %>
+      <ul><% @errors.first(10).each do |e| %><li><%= e %></li><% end %></ul>
+    <% end %>
   <% end %>
   <label class="ss-label" for="definition"><%= t("automations.json.definition") %></label>
   <% if @yaml %><p class="text-sm text-muted -mt-1"><%= t("automations.json.yaml_hint") %></p><% end %>
-  <%= text_area_tag :definition, @text, id: "definition", rows: 28, spellcheck: false, class: "ss-input num text-xs leading-relaxed #{'oa-code' if @yaml}" %>
+  <%= text_area_tag :definition, @text, id: "definition", rows: 28, spellcheck: false, class: "ss-input ss-code-input" %>
   <div class="flex flex-wrap gap-2">
     <%= submit_tag t("automations.json.save"), class: "ss-btn ss-btn-primary" %>
     <%= link_to t("automations.settings.cancel"), edit_automation_path(@automation), class: "ss-btn ss-btn-ghost" %>

@@ -144,7 +144,6 @@ pt-BR:
       pitch: 'Servidor MCP: Claude, ChatGPT e outros agentes de IA controlam a casa pelas mesmas ferramentas do assistente, com o seu papel e só o que está exposto ao Assist. Crítico nunca.'
       connect: Conectar um cliente MCP
       endpoint: Endereço
-      copy: Copiar
       auth: Autenticação
       auth_hint: 'Cabeçalho Authorization: Bearer com um token deste local. O token age como você.'
       once: 'Token criado. Copie agora: ele não aparece de novo.'
@@ -305,7 +304,6 @@ en:
       pitch: 'MCP server: Claude, ChatGPT and other AI agents control the house with the same tools as the assistant, with your role and only what is exposed to Assist. Critical never.'
       connect: Connect an MCP client
       endpoint: Address
-      copy: Copy
       auth: Authentication
       auth_hint: 'Authorization: Bearer header with a token for this site. The token acts as you.'
       once: 'Token created. Copy it now: it won''t be shown again.'
@@ -466,7 +464,6 @@ es:
       pitch: 'Servidor MCP: Claude, ChatGPT y otros agentes de IA controlan la casa con las mismas herramientas del asistente, con tu rol y solo lo expuesto a Assist. Lo crítico nunca.'
       connect: Conectar un cliente MCP
       endpoint: Dirección
-      copy: Copiar
       auth: Autenticación
       auth_hint: 'Encabezado Authorization: Bearer con un token de este lugar. El token actúa como tú.'
       once: 'Token creado. Cópialo ahora: no vuelve a aparecer.'

@@ -40,7 +40,7 @@
         <ul class="mp-list">
           <% @map["zones"].each do |z| %>
             <li><button type="button" class="mp-person" data-action="map#focus" data-map-id-param="<%= z['id'] %>">
-              <span class="mp-zone-ico <%= 'mp-home' if z['home'] %>"><%= icon(z["home"] ? "home" : "location-marker", "size-4") %></span>
+              <span class="ss-icon-tile <%= z['home'] ? 'is-accent' : 'is-muted' %>"><%= icon(z["home"] ? "home" : "location-marker", "") %></span>
               <span class="min-w-0 flex-1 text-left"><span class="block font-semibold text-ink truncate"><%= z["name"] %></span>
                 <span class="block text-xs text-muted num"><%= t("maps.zone_info", radius: z["radius"], count: z["count"]) %></span></span></button></li>
           <% end %>

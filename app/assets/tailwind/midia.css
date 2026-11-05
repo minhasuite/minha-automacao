@@ -1,5 +1,5 @@
-/* Mídia e câmeras (ondaC2): players, navegador das fontes, PTZ e falar (ma-).
-   Só tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
+/* Domínio: mídia e câmeras (ondaC2, ma-) — players, navegador das fontes e o botão de falar
+   da câmera. O quadro, o PTZ e o player são componentes da gem. Só tokens. */
 @layer components {
   .ma-player { position: relative; overflow: hidden; }
   .ma-player::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--line); }

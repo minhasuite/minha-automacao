@@ -512,7 +512,6 @@ pt-BR:
     person: Pessoa
     all: Todos
     what: O que mostrar
-    none_checked: Sem nenhum tipo marcado, mostra todos.
     empty: Nada aconteceu neste período.
     empty_filtered: Nada aconteceu neste período com esses filtros.
     empty_hint: Tente um período maior ou tire algum filtro.
@@ -545,7 +544,6 @@ pt-BR:
     invite_link: Link de convite
     invite_link_hint: Copie e mande para a pessoa. Ele aparece só agora, vale 7 dias e uma vez só.
     invite_link_label: Link do convite
-    copy: Copiar
     role: Papel
     you: você
     sites:

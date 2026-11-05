@@ -3,17 +3,17 @@
 <%= render layout: "web/settings/frame", locals: { current: :system } do %>
 <% up = @update || {} %>
 <% running = up["state"] == "running" %>
-<section class="ss-card ss-card-pad" aria-labelledby="update-t" <%= tag.attributes(data: { controller: "reload", reload_every_value: 5000 }) if running %>>
+<section class="ss-card ss-card-pad" aria-labelledby="update-t" <%= tag.attributes(data: { controller: "ss-reload", ss_reload_every_value: 5000 }) if running %>>
   <h2 id="update-t" class="flex items-center gap-2"><%= icon("refresh", "size-5 text-accent") %><%= t("updates.title") %></h2>
-  <div class="up-hero mt-3">
+  <div class="mt-3 flex flex-wrap items-center gap-4 rounded-2xl bg-field p-4">
     <div class="min-w-0 flex-1">
       <p class="text-xs font-semibold text-muted"><%= t("updates.current") %></p>
-      <p class="up-ver"><%= Updates.current_tag %><% if Updates.current_commit %> <span class="text-xs text-muted">(<%= Updates.current_commit %>)</span><% end %></p>
+      <p class="num text-lg font-medium text-ink"><%= Updates.current_tag %><% if Updates.current_commit %> <span class="text-xs text-muted">(<%= Updates.current_commit %>)</span><% end %></p>
     </div>
     <div class="min-w-0 flex-1">
       <p class="text-xs font-semibold text-muted"><%= t("updates.latest") %></p>
       <% if @release %>
-        <p class="up-ver"><%= @release["tag"] %></p>
+        <p class="num text-lg font-medium text-ink"><%= @release["tag"] %></p>
         <% if @release["published_at"] %><p class="text-xs text-muted"><%= l(Time.zone.parse(@release["published_at"]).to_date, format: :long) %></p><% end %>
       <% else %>
         <p class="text-sm text-muted"><%= t("updates.unknown") %></p>
@@ -25,12 +25,10 @@
   <% if running %>
     <% steps = %w[backup pull restart] %>
     <% now = steps.index(up["step"]) || (up["step"] == "rollback" ? steps.size : 0) %>
-    <ol class="up-steps" role="status" aria-live="polite">
-      <% steps.each_with_index do |s, i| %>
-        <li class="<%= i < now ? 'is-done' : (i == now ? 'is-now' : '') %>"><%= i < now ? icon("check-circle", "size-4") : (i == now ? tag.span(class: "up-spin") : icon("clock", "size-4")) %><%= t("updates.steps.#{s}") %></li>
-      <% end %>
-      <% if up["step"] == "rollback" %><li class="is-now"><span class="up-spin"></span><%= t("updates.steps.rollback") %></li><% end %>
-    </ol>
+    <% steps << "rollback" if up["step"] == "rollback" %>
+    <%# Etapas no Ss::JobProgressComponent (a página se recarrega pelo ss-reload da seção). %>
+    <%= render Ss::JobProgressComponent.new(id: "update-job", title: t("updates.title"), state: :running, steps: steps.map { |st| t("updates.steps.#{st}") },
+                                            current_step: now, class: "mt-3") %>
     <p class="text-sm text-muted mt-2"><%= t("updates.running_note") %></p>
   <% elsif up["state"].present? %>
     <% tone = { "done" => "text-success", "rolled_back" => "text-warn", "failed" => "text-danger" }[up["state"]] %>
@@ -38,7 +36,7 @@
   <% end %>
 
   <% if @release && @release["notes"].present? && Updates.available?(@release) %>
-    <details class="mt-3"><summary class="text-sm font-semibold text-accent cursor-pointer"><%= t("updates.notes") %></summary>
+    <details class="mt-3"><summary class="ss-summary text-sm font-semibold text-accent"><%= t("updates.notes") %></summary>
       <div class="text-sm text-ink-2 mt-2 whitespace-pre-line"><%= @release["notes"] %></div></details>
   <% end %>
 
@@ -85,8 +83,8 @@
   </div>
   <% if owner %>
     <div class="ss-danger-zone">
-      <h3 class="font-bold text-danger text-sm"><%= t("settings.system.wipe_title") %></h3>
-      <p class="text-sm text-muted mt-1"><%= t("settings.system.wipe_text") %></p>
+      <h3 class="ss-danger-zone-title"><%= t("settings.system.wipe_title") %></h3>
+      <p><%= t("settings.system.wipe_text") %></p>
       <%= form_with url: settings_wipe_path, class: "mt-3 flex flex-wrap gap-2", data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("settings.system.wipe_button"), turbo_confirm: t("settings.system.wipe_confirm") } do %>
         <%= text_field_tag :confirm, nil, placeholder: t("settings.system.wipe_type"), class: "ss-input w-40", "aria-label": t("settings.system.wipe_type") %><%= submit_tag t("settings.system.wipe_button"), class: "ss-btn ss-btn-danger", name: nil %>
       <% end %>

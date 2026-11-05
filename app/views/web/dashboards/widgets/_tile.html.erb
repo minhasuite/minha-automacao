@@ -20,14 +20,14 @@
     <%= ghidden %>
     <% if press && !toggle %>
       <%# Botão (comando, portão, script): tile da gem em modo aperto (o toque manda o comando, com a
-          confirmação do risco); a seta abre os detalhes. %>
+          confirmação do risco); o ⋯ do tile (more_url:, também no clique direito/toque longo) abre os detalhes. %>
       <%= render Ss::DeviceTileComponent.new(name: dw_label(w, p), state: state_line, on: dw_on?(p), status: dw_tile_status(p, off_line), icon: dw_device_icon(w, p),
                                              tone: dw_tone(w, p, glow: glow), action_url: command_point_path(p["id"]),
                                              action_params: dw_command_params(press_cmd, w: w, dashboard: dashboard, live: live),
                                              action_label: t(p["capability"] == "script" ? "dashboards.w.run_x" : "dashboards.w.press_x", name: dw_label(w, p)),
                                              confirm: dw_confirm_text(p), confirm_title: dw_confirm(p)[:turbo_confirm_title],
-                                             unavailable_label: t("dashboards.w.no_signal"), title: p["status_note"].presence, wide: true, css: "h-full") %>
-      <%= link_to point_path(p["id"]), class: "dw-more", data: { turbo_frame: "_top" }, title: t("dashboards.w.details_x", name: dw_label(w, p)), "aria-label": t("dashboards.w.details_x", name: dw_label(w, p)) do %><%= icon("chevron-right", "size-4") %><% end %>
+                                             unavailable_label: t("dashboards.w.no_signal"), title: p["status_note"].presence, wide: true, css: "h-full",
+                                             more_url: point_path(p["id"]), more_label: t("dashboards.w.details_x", name: dw_label(w, p)), more_data: { turbo_frame: "_top" }) %>
     <% else %>
       <% foot = capture do %>
         <% if builtin && !toggle && p["capability"].in?(%w[dimmer setpoint]) && p["mode"] != "box" %>

@@ -56,7 +56,8 @@ RSpec.describe "Diário e Histórico" do
     get "/diario", params: { sources: %w[runs] }
     expect(response.body).to include("Teste chegada").and(exclude("Teste cinema"))
     get "/diario", params: { q: "cinema" }
-    expect(response.body).to include("Teste cinema").and(exclude("Interruptor da sala</a>"))
+    # (o "+ Filtro" da barra lista os aparelhos como links; o que importa é o feed)
+    expect(response.body.split('role="feed"').last).to include("Teste cinema").and(exclude("Interruptor da sala</a>"))
   end
 
   it "chips de período e de tipo são links da faixa da gem; o fim oferece um período maior" do

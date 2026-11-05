@@ -49,7 +49,6 @@ pt-BR:
   api_keys:
     active: Chaves ativas
     allowed_sites: Locais permitidos
-    copy: Copiar
     copy_now: 'Copie agora e guarde no outro sistema: ela não aparece de novo.'
     create: Criar chave
     created: Chave %{name} criada

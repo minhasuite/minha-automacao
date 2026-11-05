@@ -4,12 +4,11 @@
   <div class="col-span-2"><%= f.label :name, t("onboarding.home.name"), class: "ss-label" %><%= f.text_field :name, value: v[:name] || site.name, class: "ss-input", required: true, autofocus: true %></div>
   <fieldset class="col-span-2">
     <legend class="ss-label"><%= t("onboarding.home.kind") %></legend>
-    <div class="grid grid-cols-3 gap-2">
+    <%# Tipo do local: Ss::OptionCardComponent em tiles (ícone em cima) numa grade de três. %>
+    <div class="ss-option-grid is-tiles grid-cols-3" role="radiogroup" aria-label="<%= t("onboarding.home.kind") %>">
       <% { "home" => "home", "store" => "shopping-bag", "plant" => "office-building" }.each do |kind, ico| %>
-        <label class="ob-choice">
-          <%= f.radio_button :kind, kind, checked: (v[:kind] || site.kind) == kind, class: "sr-only" %>
-          <span class="ob-choice-ico"><%= icon(ico, "size-6") %></span><span class="font-semibold text-sm"><%= t("onboarding.home.kinds.#{kind}") %></span>
-        </label>
+        <%= render Ss::OptionCardComponent.new(name: "onboarding[kind]", value: kind, id: "onboarding_kind_#{kind}", checked: (v[:kind] || site.kind) == kind,
+                                               title: t("onboarding.home.kinds.#{kind}"), icon: icon(ico, ""), vertical: true, dense: true) %>
       <% end %>
     </div>
   </fieldset>

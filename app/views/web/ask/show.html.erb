@@ -15,11 +15,10 @@
     <% end %>
 
     <% if @error %>
-      <div class="ss-card ss-card-pad border-l-4 border-danger" role="alert">
-        <p class="font-bold text-ink"><%= t("ask.failed") %></p>
-        <p class="text-sm text-muted mt-1"><%= @error %></p>
-        <% if current_user.admin? %><p class="text-sm mt-2"><%= link_to t("ask.setup"), settings_ai_path, data: { turbo_frame: "_top" } %></p><% end %>
-      </div>
+      <%= render Ss::CalloutComponent.new(tone: :danger, title: t("ask.failed")) do |c| %>
+        <p><%= @error %></p>
+        <% if current_user.admin? %><% c.with_action { link_to t("ask.setup"), settings_ai_path, class: "ss-btn ss-btn-ghost ss-btn-sm", data: { turbo_frame: "_top" } } %><% end %>
+      <% end %>
     <% elsif @response %>
       <section class="ss-card ss-card-pad" aria-labelledby="resp-t" aria-live="polite">
         <h2 id="resp-t" class="flex items-center gap-2"><%= icon("sparkles", "size-5") %><%= t("ask.answer") %></h2>

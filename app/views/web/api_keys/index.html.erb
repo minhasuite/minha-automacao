@@ -5,11 +5,7 @@
   <section class="ss-card ss-card-grad p-4 mb-4" role="status" aria-labelledby="nova-chave-t">
     <h2 id="nova-chave-t" class="flex items-center gap-2"><%= icon("link", "size-4") %><%= t("api_keys.created", name: @created.name) %></h2>
     <p class="text-sm text-muted mt-1"><%= t("api_keys.copy_now") %></p>
-    <div class="mt-3 flex gap-2" data-controller="clipboard">
-      <label for="plain-key" class="sr-only"><%= t("api_keys.key") %></label>
-      <input id="plain-key" class="ss-input num" value="<%= @plain %>" readonly data-clipboard-target="source">
-      <button type="button" class="ss-btn ss-btn-primary" data-action="clipboard#copy"><%= icon("duplicate", "size-4") %><%= t("api_keys.copy") %></button>
-    </div>
+    <%= render Ss::CodeBlockComponent.new(text: @plain, label: t("api_keys.key"), id: "plain-key", css: "mt-3") %>
   </section>
 <% end %>
 
