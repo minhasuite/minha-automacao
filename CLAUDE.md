@@ -639,7 +639,7 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.10.3`):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.11.0`):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);
@@ -684,6 +684,12 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
   antiga `theme` uma vez); "esconder valores" continua na chave `privacy`
   (`data-ss-privacy-key-value`). O `AppScreen` lê `ss-poll`/`ss-reload` como os
   blocos `poll`/`reload` do app.
+- Densidade (v0.11): `ss_density_head` no `<head>` dos layouts (junto do
+  `_theme_head`) e o `Ss::DensityPickerComponent` em Configurações → Aparência
+  (`#densidade`). Como o claro/escuro, é **deste aparelho** (localStorage
+  `ss-density`), não do perfil: o tablet da parede pode ser confortável e o
+  computador compacto. CSS de tela não fixa altura de controle: usa os tokens
+  `--ss-*` da gem (`--ss-control-h`, `--ss-gap`, `--ss-card-pad`…).
 - Telas do app: o app lê esta mesma web pelo `AppScreen` (`docs/app.md`); ao mexer
   em markup, rode os `spec/requests/appweb*_spec.rb`.
 

@@ -20,6 +20,9 @@ pt-BR:
       rounded: Arredondada
       serif: Com serifa
       mono: Monoespaçada
+    density:
+      title: Densidade
+      pitch: "Tamanho de botões, campos e espaços. Compacta cabe mais no painel e no computador; confortável deixa os alvos maiores (o tablet da parede, por exemplo). Vale neste aparelho, junto com o claro/escuro."
     theme:
       title: Meu tema
       pitch: Vale por cima do tema que o painel escolheu. No perfil, vai com você para todo aparelho; neste aparelho, só aqui (o tablet da parede, por exemplo).
@@ -86,6 +89,9 @@ en:
       rounded: Rounded
       serif: Serif
       mono: Monospace
+    density:
+      title: Density
+      pitch: "Size of buttons, fields and spacing. Compact fits more on dashboards and desktops; comfortable makes targets bigger (the wall tablet, for example). Applies to this device, like light/dark."
     theme:
       title: My theme
       pitch: It goes over the theme the dashboard chose. In the profile it follows you to every device; on this device, only here (the wall tablet, for example).
@@ -152,6 +158,9 @@ es:
       rounded: Redondeada
       serif: Con serifa
       mono: Monoespaciada
+    density:
+      title: Densidad
+      pitch: "Tamaño de botones, campos y espacios. Compacta cabe más en el panel y en la computadora; cómoda agranda los objetivos (la tablet de la pared, por ejemplo). Vale en este dispositivo, como claro/oscuro."
     theme:
       title: Mi tema
       pitch: Va por encima del tema que eligió el panel. En el perfil te sigue a todo aparato; en este aparato, solo aquí (la tablet de la pared, por ejemplo).

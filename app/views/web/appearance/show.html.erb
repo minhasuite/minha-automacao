@@ -38,6 +38,14 @@
   </ul>
 </section>
 
+<%# Densidade (componentes-ui v0.11): como o claro/escuro, vale neste aparelho (localStorage
+    ss-density, aplicada antes da 1ª pintura pelo ss_density_head do layout). %>
+<section id="densidade" class="ss-card ss-card-pad mt-4" aria-labelledby="ap-d">
+  <h2 id="ap-d" class="flex items-center gap-2"><%= icon("adjustments", "size-5 text-accent") %><%= t("appearance.density.title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("appearance.density.pitch") %></p>
+  <%= render Ss::DensityPickerComponent.new(label: t("appearance.density.title"), css: "mt-3") %>
+</section>
+
 <%# Temas da casa: criados aqui, entram na galeria do editor de painel e na de cima. %>
 <section id="temas" class="ss-card ss-card-pad mt-4" aria-labelledby="ap-c">
   <h2 id="ap-c" class="flex items-center gap-2"><%= icon("paint-brush", "size-5 text-accent") %><%= t("appearance.custom.title") %></h2>
