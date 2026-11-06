@@ -23,6 +23,7 @@
   <% end %>
   <% if days.empty? %>
     <p class="text-sm text-muted mt-3"><%= d["empty"] %></p>
+    <% if d["connect"] %><%= link_to d["connect"], new_site_integration_path(dashboard.site_id, tipo: "calendar"), class: "ss-btn ss-btn-ghost ss-btn-sm mt-2", data: { turbo_frame: "_top" } %><% end %>
   <% else %>
     <% rest = (timed.any? ? days - [ today ] : days).map do |day|
          { date: Date.iso8601(day["date"]), label: day["label"],

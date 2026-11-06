@@ -1,0 +1,16 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Linha do tempo da IA (AiCall): o mesmo Ss::LogbookComponent do Diário; o link leva ao uso em Configurações → IA. %>
+<% d = w["data"] %>
+<% label = w["label"].presence || Dashboards::Widgets::AiLogWidget.label %>
+<div class="dw-card">
+  <div class="flex items-center justify-between gap-2">
+    <p class="dw-card-title flex items-center gap-2"><%= icon("sparkles", "size-4 text-accent") %><%= label %></p>
+    <% if current_user.admin? %>
+      <%= link_to settings_ai_path, class: "ss-icon-btn is-sm", data: { turbo_frame: "_top" }, title: t("ask.setup"), "aria-label": t("ask.setup") do %><%= icon("chevron-right", "size-4") %><% end %>
+    <% end %>
+  </div>
+  <% entries = Array(d["items"]).map do |i|
+       { at: Time.zone.parse(i["at"]), title: i["title"], state: i["state"].presence, detail: i["detail"].presence, icon: icon(i["icon"]), tone: i["tone"] }
+     end %>
+  <%= render Ss::LogbookComponent.new(entries: entries, label: label, css: "mt-2", texts: { empty: d["empty"] }, end_marker: false, time_zone: dashboard.site.timezone) %>
+</div>

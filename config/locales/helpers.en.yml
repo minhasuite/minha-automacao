@@ -384,6 +384,9 @@ en:
       spoke: "%{name} generated speech (%{model}, %{bytes} bytes)."
       admins: "Admins only."
   ask:
+    blank: "Type the question."
+    not_ready: "Turn on an AI provider in Settings → AI to ask from here."
+    widget_ph: "E.g. is any door open?"
     title: "Ask the house"
     subtitle: "Ask about what's going on right now: the AI reads the place's points and a summary of the last few hours. It only answers; it never runs commands."
     site: "Place"

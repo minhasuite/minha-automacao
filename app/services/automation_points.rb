@@ -28,13 +28,24 @@ module AutomationPoints
 
   def remove!(automation) = point_for(automation)&.destroy!
 
-  # Driver virtual: on/off/toggle liga ou desliga a automação.
+  # Driver virtual: on/off/toggle liga ou desliga a automação; "run" roda agora a versão publicada, sem as
+  # condições (o "Executar agora" da tela e o automation.trigger do HA).
   def execute(point, command, value)
     automation = Automation.find_by(id: point.address["automation_id"], kind: "automation") or raise invalid(I18n.t("automations.points.removed"))
+    return run!(automation) if command == "run"
+
     on = Points::Command.new(point, command, value).new_value
     raise invalid(I18n.t("automations.points.unpublished")) if on && !automation.published?
 
     automation.update!(enabled: on)
+  end
+
+  def run!(automation)
+    raise invalid(I18n.t("automations.points.unpublished")) unless automation.published?
+
+    user = Current.user
+    automation.fire!({ "type" => "manual", "title" => I18n.t("automations.points.run_title", name: user&.name.presence || "painel"),
+                       "user_id" => user&.id }.compact, skip_conditions: true)
   end
 
   def invalid(message) = Points::Command::Error.new(:invalid_value, message)

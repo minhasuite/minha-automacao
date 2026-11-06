@@ -1,6 +1,7 @@
 <% views = @draft["views"] %>
 <% view = views.find { |v| v["id"] == params[:view] } || views.first %>
 <% @body_theme = view && (th = Dashboards::Themes.resolve(@draft, view, @site)) && dw_theme_attrs(th) %>
+<% if th && th["dark"] %><%= render "web/dashboards/force_dark" %><% end %>
 <% point_options = @points.group_by { |p| p.device.name }.sort.map { |dev, ps| [ dev, ps.map { |p| [ "#{p.name}#{t("dashboards.ed.hidden_suffix") if p.hidden}", p.id ] } ] } %>
 <% names = @points.index_by(&:id) %>
 <% scenes = @site.scenes.order(:name).to_a %>

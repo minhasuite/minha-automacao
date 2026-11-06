@@ -310,6 +310,7 @@ Rails.application.routes.draw do
     # Perguntar à casa (Lote 2): só leitura, com os pontos do local como contexto.
     get "perguntar", to: "ask#show", as: :ask
     post "perguntar", to: "ask#create"
+    post "perguntar/painel", to: "ask#widget", as: :ask_widget # card "Perguntar à casa" do painel (resposta no frame dele)
     # Assistente de voz (Pacote 3): áudio ou texto → intenção local ou "Perguntar à casa".
     post "assistente", to: "assist#create", as: :assist
     # Paridade com o HA (roadmap de vendas): Diário, Histórico e Mapa da instalação (um local por vez).
@@ -460,6 +461,7 @@ Rails.application.routes.draw do
       # Dashboards (F5).
       resources :sites, only: [] do
         post :talk, on: :member, to: "talks#create" # "Falar na Alexa"
+        post :ask, on: :member, to: "asks#create" # card "Perguntar à casa" do painel
         resources :dashboards, except: %i[new edit], shallow: true do
           post :publish, on: :member
           post :revert, on: :member

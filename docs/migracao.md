@@ -215,16 +215,24 @@ O importador passou a traduzir, sem nada da casa no código:
   capacidade (luz e interruptor sem as automações), `label` → etiqueta,
   `state` (`unavailable` → sem sinal), `attributes` (`device_class` e
   atributo do sensor calculado → `attr`), `last_triggered: "< N"` → `ran_min`;
-  as `exclude` (entidade, curinga, integração) entram em todas. Card de
-  tiles = grade de tiles com o `name` de cada regra; o `else` é o texto de
-  vazio.
+  as `exclude` (entidade, curinga, integração) entram em todas. Grade e
+  pilha horizontal = tiles com o `name` de cada regra; pilha vertical = a
+  lista num card só (linhas compactas); o `else` é o texto de vazio.
 - **Falar na Alexa** (`custom:casa-campo-texto` com `seletor`/`audio`): widget
   `announce`, que manda direto para a Echo (sem o `input_text`, o script e o
   `shell_command` do HA).
 - **Google Agenda** (`calendar.*` do `google`): casa com a agenda daqui pelo
   id (o `unique_id` do HA termina nele) depois que a pessoa conecta a conta
   Google na integração Agenda; os filtros "aniversários" e "local de trabalho"
-  do HA não têm par.
+  do HA não têm par. Sem par (conta ainda não ligada), o card de agenda fica
+  com todas as agendas do local e, sem nenhuma, mostra "Ligar uma agenda".
+- **Pacote de IA da casa** (`sensor.ia_historico`, `sensor.ia_pergunta`): os
+  tiles seguidos do histórico viram um `ai_usage`, o markdown da linha do tempo
+  um `ai_log`, o campo que pergunta (`acao` com "perguntar") um `ask`; os selos
+  do histórico, a última resposta e a fila de avaliação saem (aqui não há
+  fila; a seção que fica só com o título também sai).
+- **Tema só escuro** (o `casa-glass`: `modes` só com `dark`, ou fundo escuro):
+  as visões vêm com `theme.dark`, e abrem no escuro como no HA.
 
 Ficam de fora, e o relatório diz: agenda do Google antes de conectar a
 integração Agenda, pessoas e bateria dos celulares (precisa do app em cada

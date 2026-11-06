@@ -1,0 +1,12 @@
+<%# Resposta do card "Perguntar à casa" (Web::AskController#widget): o mesmo frame do formulário, com a pergunta de novo no campo. %>
+<%= turbo_frame_tag @frame do %>
+  <%= render "web/ask/widget_form", frame: @frame, site_id: @site_id, question: @question, placeholder: @placeholder %>
+  <% if @error %>
+    <%= render Ss::CalloutComponent.new(tone: :danger, title: t("ask.failed"), css: "mt-3") do %><p><%= @error %></p><% end %>
+  <% elsif @response %>
+    <%= render Ss::AiInsightCardComponent.new(title: @question.truncate(120), css: "mt-3",
+                                              when_text: [ Ai.provider(@response.provider)&.label, @response.model ].compact.join(" · ")) do %>
+      <p class="whitespace-pre-line break-words"><%= @response.data.is_a?(Hash) ? @response.data.to_json : @response.data %></p>
+    <% end %>
+  <% end %>
+<% end %>

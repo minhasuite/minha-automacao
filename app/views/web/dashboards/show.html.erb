@@ -4,6 +4,7 @@
 <% view = @view %>
 <% home_view = view == @resolved["views"].first %>
 <% @body_theme = (th = Dashboards::Themes.resolve(@resolved, view, @site)) && dw_theme_attrs(th) %>
+<% if th && th["dark"] %><%= render "web/dashboards/force_dark" %><% end %>
 <% if live %><%= turbo_stream_from @site, :points, channel: PointsChannel %><% end %>
 
 <% if @preview %>

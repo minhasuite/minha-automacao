@@ -234,6 +234,7 @@ en:
     points:
       removed: "Automation removed."
       unpublished: "Publish the automation before turning it on."
+      run_title: "Run now (%{name})"
     scripts:
       removed: "Script removed."
       unpublished: "Publish the script before running it."

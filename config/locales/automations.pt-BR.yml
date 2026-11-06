@@ -234,6 +234,7 @@ pt-BR:
     points:
       removed: "Automação removida."
       unpublished: "Publique a automação antes de ligar."
+      run_title: "Executar agora (%{name})"
     scripts:
       removed: "Script removido."
       unpublished: "Publique o script antes de executar."

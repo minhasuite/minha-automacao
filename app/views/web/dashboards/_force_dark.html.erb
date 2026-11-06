@@ -1,0 +1,15 @@
+<%# Visão com `theme.dark` (papel de parede escuro, tema só escuro do HA): a página abre no escuro, qualquer que
+    seja o tema da pessoa, e o dela volta quando a navegação sai do painel. Só no `<html>` o escuro da gem vale
+    (os tokens são de :root), por isso o script; o marcador data-dw-dark diz que a página seguinte também quer. -%>
+<span hidden data-dw-dark></span>
+<script>(function () {
+  var d = document.documentElement
+  if (d.dataset.dwDark === undefined) d.dataset.dwDark = d.dataset.theme || ""
+  d.dataset.theme = "dark"
+  addEventListener("turbo:before-render", function back(e) {
+    removeEventListener("turbo:before-render", back)
+    if (d.dataset.dwDark === undefined || (e.detail.newBody && e.detail.newBody.querySelector("[data-dw-dark]"))) return
+    if (d.dataset.dwDark) d.dataset.theme = d.dataset.dwDark; else delete d.dataset.theme
+    delete d.dataset.dwDark
+  })
+})()</script>

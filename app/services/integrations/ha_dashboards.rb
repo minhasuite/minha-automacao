@@ -46,11 +46,12 @@ module Integrations
       dashboards = ensure_dashboards(site, panels)
       refs = refs_for(site, dashboards).merge("label" => labels(transport))
       theme = theme_key(site, integration, transport, panels)
+      dark = theme_dark?(transport, panels)
       done = panels.map do |p|
         d = dashboards.fetch(p["url_path"])
         cache = {}
         image = ->(url) { cache.fetch(url) { cache[url] = attach(d, integration, url, images, notes) } }
-        result = Dashboards::HaImport.new(p["config"], refs: refs, url_path: p["url_path"], image: image, theme: theme).call
+        result = Dashboards::HaImport.new(p["config"], refs: refs, url_path: p["url_path"], image: image, theme: theme, theme_dark: dark).call
         publish(d, result.definition, notes, p["title"])
         notes.concat(result.notes.map { |n| "#{p['title']} › #{n}" })
         d
@@ -123,6 +124,22 @@ module Integrations
       theme.key
     rescue Integrations::Error, ActiveRecord::RecordInvalid
       nil
+    end
+
+    # O tema do HA das visões é só escuro (só `modes.dark`, ou fundo escuro sem modos)? Então as visões abrem
+    # no escuro daqui também: o papel de parede foi feito para ele.
+    def theme_dark?(transport, panels)
+      name = panels.flat_map { |p| Array(p.dig("config", "views")).map { |v| v["theme"] } }.compact.tally.max_by(&:last)&.first
+      return false if name.blank?
+
+      vars = transport.ws("frontend/get_themes").to_h.dig("themes", name).to_h
+      return vars["modes"].keys.map(&:to_s) == [ "dark" ] if vars["modes"].is_a?(Hash)
+
+      hex = vars["primary-background-color"].to_s[/#(\h{6})\b/, 1] or return false
+      r, g, b = hex.scan(/../).map { |c| c.hex / 255.0 }
+      (0.2126 * r) + (0.7152 * g) + (0.0722 * b) < 0.3
+    rescue Integrations::Error
+      false
     end
 
     # Imagem do HA (`/local/...`) → anexo do painel → caminho daqui. nil = não veio.

@@ -6,9 +6,12 @@ module Dashboards
     class CalendarWidget < Base
       DAYS = 1..31
       describe type: "calendar", label: "Agenda", icon: "calendar", params: %w[days], binds: true
-      texts en: { label: "Calendar", today: "Today", tomorrow: "Tomorrow", all_day: "All day", empty: "No events in the period.", bad_days: "days goes from 1 to 31" },
-            es: { label: "Agenda", today: "Hoy", tomorrow: "Mañana", all_day: "Todo el día", empty: "Sin eventos en el período.", bad_days: "days va de 1 a 31" },
-            "pt-BR" => { today: "Hoje", tomorrow: "Amanhã", all_day: "Dia inteiro", empty: "Nada na agenda no período.", bad_days: "days vai de 1 a 31" }
+      texts en: { label: "Calendar", today: "Today", tomorrow: "Tomorrow", all_day: "All day", empty: "No events in the period.", bad_days: "days goes from 1 to 31",
+                  no_calendar: "No calendar connected yet. Connect Google Calendar (or an ICS link) in Integrations.", connect: "Connect a calendar" },
+            es: { label: "Agenda", today: "Hoy", tomorrow: "Mañana", all_day: "Todo el día", empty: "Sin eventos en el período.", bad_days: "days va de 1 a 31",
+                  no_calendar: "Todavía no hay agenda conectada. Conecta Google Calendar (o un enlace ICS) en Integraciones.", connect: "Conectar una agenda" },
+            "pt-BR" => { today: "Hoje", tomorrow: "Amanhã", all_day: "Dia inteiro", empty: "Nada na agenda no período.", bad_days: "days vai de 1 a 31",
+                         no_calendar: "Nenhuma agenda ligada ainda. Ligue o Google Agenda (ou um link ICS) em Integrações.", connect: "Ligar uma agenda" }
 
       def self.errors(w) = w.key?("days") && !DAYS.cover?(w["days"]) ? [ text(:bad_days) ] : []
       def self.attrs(p, site = nil) = super.merge("days" => number(p[:days])&.to_i).compact
@@ -28,7 +31,10 @@ module Dashboards
           d = today + n
           { "date" => d.iso8601, "dow" => I18n.l(d, format: "%a").first(3), "day" => d.day, "busy" => days.any? { |x| x["date"] == d.iso8601 } }
         end
-        [ { "point_ids" => cals.map(&:id), "days" => days, "week" => week, "empty" => text(:empty),
+        empty = cals.empty? ? text(:no_calendar) : text(:empty)
+        [ { "point_ids" => cals.map(&:id), "days" => days, "week" => week, "empty" => empty, "no_calendar" => cals.empty?,
+            "connect" => (text(:connect) if cals.empty? && SiteMembership.allowed?(r.role, :manage)),
+            "connect_path" => (Rails.application.routes.url_helpers.new_site_integration_path(r.site.id, tipo: "calendar") if cals.empty?),
             "calendars" => cals.each_with_index.map { |c, i| { "name" => c.name, "color" => i } } }, [] ]
       end
 

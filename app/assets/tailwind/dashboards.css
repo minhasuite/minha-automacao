@@ -408,3 +408,5 @@ body.dw-themed:not([style*="--wall-img"])::after { display: none; }
   .dw-fp-val { font-size: .58rem; padding: 0 .3rem; }
   .dw-fp-room { padding: .2rem .3rem; border-radius: 7px; }
 }
+/* Falar na Alexa: a Echo à frente do texto, estreita (o texto fica com o resto da linha). */
+.dw-talk-echo { width: auto; max-width: 40%; flex: none; }

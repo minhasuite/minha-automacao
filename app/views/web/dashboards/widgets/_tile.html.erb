@@ -7,10 +7,17 @@
   <% off_line = p["quality"] != "good" %>
   <% state = p["capability"] == "script" ? t("dashboards.w.tap_to_run") : (p["value"].nil? && p["capability"] != "command" ? t("dashboards.w.no_reading") : p["text"]) %>
   <%# Contexto (o aparelho, quando o título é o ponto) vem depois do estado: o estado nunca some no corte. %>
+  <%# Automação como ponto: ao lado de ligada/desligada, quando rodou (o "last_triggered" do HA). %>
+  <% state = [ state, (t("dashboards.w.ran_ago", time: dw_short_ago(Time.zone.parse(p["ran_at"]))) if p["ran_at"]) ].compact.join(" · ") %>
   <% state_line = [ state, w.dig("data", "context") ].compact_blank.join(" · ") %>
-  <% toggle = w["tap"] != "more_info" && p["can_command"] && Array(p["commands"]).include?("toggle") %>
-  <% press = p["can_command"] && p["capability"].in?(%w[command gate script]) %>
-  <% press_cmd = { "gate" => "pulse", "script" => "run" }.fetch(p["capability"], "press") %>
+  <%# Toque que roda a automação do próprio ponto (automation.trigger do HA): botão "rodar", com quando rodou. %>
+  <% tap = w.dig("gestures", "tap") %>
+  <% run = tap && tap["action"] == "command" && tap["command"] == "run" && tap["point_id"] == p["id"] && tap["can_command"] %>
+  <% state = p["ran_at"] ? t("dashboards.w.ran_ago", time: dw_short_ago(Time.zone.parse(p["ran_at"]))) : t("dashboards.w.never_ran") if run %>
+  <% state_line = [ state, w.dig("data", "context") ].compact_blank.join(" · ") if run %>
+  <% toggle = !run && w["tap"] != "more_info" && p["can_command"] && Array(p["commands"]).include?("toggle") %>
+  <% press = run || (p["can_command"] && p["capability"].in?(%w[command gate script])) %>
+  <% press_cmd = run ? "run" : { "gate" => "pulse", "script" => "run" }.fetch(p["capability"], "press") %>
   <%# ondaB2 (B9): gestos (toque/segurar/duplo toque) e recursos do tile; com recursos, os controles próprios saem. %>
   <% gattrs, ghidden = dw_gestures(w, points, dashboard: dashboard, live: live) %>
   <% feats = Array(w.dig("data", "features")).select { |f| points[f["point_id"]] } %>
@@ -24,10 +31,10 @@
       <%= render Ss::DeviceTileComponent.new(name: dw_label(w, p), state: state_line, on: dw_on?(p), status: dw_tile_status(p, off_line), icon: dw_device_icon(w, p),
                                              tone: dw_tone(w, p, glow: glow), action_url: command_point_path(p["id"]),
                                              action_params: dw_command_params(press_cmd, w: w, dashboard: dashboard, live: live),
-                                             action_label: t(p["capability"] == "script" ? "dashboards.w.run_x" : "dashboards.w.press_x", name: dw_label(w, p)),
-                                             confirm: dw_confirm_text(p), confirm_title: dw_confirm(p)[:turbo_confirm_title],
-                                             unavailable_label: t("dashboards.w.no_signal"), title: p["status_note"].presence, wide: true, css: "h-full",
-                                             more_url: point_path(p["id"]), more_label: t("dashboards.w.details_x", name: dw_label(w, p)), more_data: { turbo_frame: "_top" }) %>
+                                             action_label: t(press_cmd == "run" ? "dashboards.w.run_x" : "dashboards.w.press_x", name: dw_label(w, p)),
+                                             confirm: (run && tap["confirm"]) || dw_confirm_text(p), confirm_title: dw_confirm(p)[:turbo_confirm_title],
+                                             unavailable_label: t("dashboards.w.no_signal"), title: p["status_note"].presence, wide: dw_full_row?(w), css: "h-full",
+                                             more_url: (point_path(p["id"]) unless dw_narrow?(w)), more_label: t("dashboards.w.details_x", name: dw_label(w, p)), more_data: { turbo_frame: "_top" }) %>
     <% else %>
       <% foot = capture do %>
         <% if builtin && !toggle && p["capability"].in?(%w[dimmer setpoint]) && p["mode"] != "box" %>

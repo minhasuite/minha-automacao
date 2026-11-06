@@ -1,6 +1,7 @@
 <%# locals: (w:) -%>
 <% d = w["data"] %>
-<% unless d["value"].nil? %>
+<%# Selo sem valor (ponto sem leitura ou atributo que não veio) não aparece: "—" no topo não diz nada. %>
+<% unless d["value"].nil? || d["text"].to_s.strip.in?(["", "—", "-"]) %>
   <span class="dw-badge">
     <% if w["aggregate"] == "count" && d["value"].to_i.zero? %>
       Nenhum <%= w["label"].to_s.delete_suffix("s") %>

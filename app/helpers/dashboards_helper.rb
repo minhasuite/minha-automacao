@@ -161,6 +161,21 @@ module DashboardsHelper
   def dw_confirm_text(p) = dw_confirm(p)[:turbo_confirm]
 
   # Estado do tile pelo ponto: sem sinal, sem permissão (comandaria, mas o papel não deixa) ou pronto.
+  # Widget que ocupa a linha toda no celular: o tile deitado (ícone, nome e ação lado a lado) cabe; em meia
+  # coluna, deitado o nome some entre o ícone e os botões, então ele fica em pé.
+  def dw_full_row?(w) = (w.dig("span", "mobile") || 12).to_i >= 12
+  # Um terço da linha ou menos: o ⋯ de detalhes não cabe ao lado do botão (os detalhes ficam no nome do ponto).
+  def dw_narrow?(w) = (w.dig("span", "mobile") || 12).to_i <= 4
+
+  # "5 min", "3 h", "2 d": cabe no tile estreito (o time_ago_in_words diz "aproximadamente 1 hora").
+  def dw_short_ago(time)
+    secs = (Time.current - time).to_i.clamp(0, nil)
+    return t("dashboards.w.ago_min", n: [ secs / 60, 1 ].max) if secs < 3600
+    return t("dashboards.w.ago_h", n: secs / 3600) if secs < 86_400
+
+    t("dashboards.w.ago_d", n: secs / 86_400)
+  end
+
   def dw_tile_status(p, off_line)
     return :unavailable if off_line
     return :locked if p["locked"]

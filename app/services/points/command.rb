@@ -54,6 +54,8 @@ module Points
       return point.helper_type.commands(point) if point.helper_type
 
       list = COMMANDS.fetch(point.capability, [])
+      # Automação como ponto: além de ligar/desligar, "run" roda agora (o automation.trigger do HA).
+      list += %w[run] if AutomationPoints.automation?(point)
       (s = point.address["supports"]).is_a?(Array) ? list & s : list
     end
 
@@ -91,7 +93,7 @@ module Points
     # Valor pela regra da capacidade (o plugin de helper parte dele).
     def by_capability
       case @point.capability
-      when "onoff" then { "on" => true, "off" => false }.fetch(@command) { !@point.value }
+      when "onoff" then @command == "run" ? nil : { "on" => true, "off" => false }.fetch(@command) { !@point.value }
       when "dimmer", "setpoint" then number
       when "enum" then option
       when "text" then text

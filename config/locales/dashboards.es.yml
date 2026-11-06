@@ -172,6 +172,9 @@ es:
       night: De noche (18 h a 6 h)
       same_day: El mismo del día
       cards: Tarjetas
+      mode: "Modo"
+      mode_person: "Como cada persona eligió"
+      mode_dark: "Siempre oscuro"
       as_theme: Como el tema
       glass: Vidrio (esmerilado)
       solid: Sólidas
@@ -349,6 +352,11 @@ es:
       not_found: Punto no encontrado
       point_removed: Punto eliminado
       tap_to_run: Toca para ejecutar
+      ran_ago: Se ejecutó hace %{time}
+      ago_min: "%{n} min"
+      ago_h: "%{n} h"
+      ago_d: "%{n} d"
+      never_ran: Aún no se ejecutó
       no_signal: Sin señal
       no_reading: Sin lectura
       offline: Sin conexión
@@ -539,7 +547,7 @@ es:
       theme_unknown: '%{where}: theme tiene una clave desconocida'
       theme_image: '%{where}: el fondo de pantalla debe ser un enlace https:// o /'
       theme_blur: '%{where}: blur debe ser de 0 a 40'
-      theme_glass: '%{where}: glass debe ser true o false'
+      theme_glass: '%{where}: glass y dark deben ser true o false'
       json_object: 'debe ser un objeto JSON'
       too_big: 'supera el tamaño máximo (256 KB)'
       schema_version: 'schema_version debe ser %{version}'

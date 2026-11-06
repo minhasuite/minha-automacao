@@ -22,5 +22,20 @@ module Web
       @error = e.message
       render :show, status: :unprocessable_content
     end
+
+    # Card "Perguntar à casa" do painel (Dashboards::Widgets::AskWidget): responde só o frame do card.
+    def widget
+      site = Site.find(params[:site_id])
+      authorize_site!(site, :view)
+      @frame = params[:frame].to_s[/\Aask_[\w-]{1,40}\z/] or return head(:bad_request)
+      @question = params[:question].to_s.strip.truncate(1_000)
+      @placeholder = params[:placeholder].to_s.truncate(120).presence
+      @site_id = site.id
+      @response = Ai::Ask.response(site: site, question: @question) if @question.present?
+      render partial: "web/ask/widget_answer"
+    rescue Ai::Client::Error => e
+      @error = e.message
+      render partial: "web/ask/widget_answer", status: :unprocessable_content
+    end
   end
 end

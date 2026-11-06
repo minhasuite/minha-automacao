@@ -384,6 +384,9 @@ pt-BR:
       spoke: "%{name} gerou a fala (%{model}, %{bytes} bytes)."
       admins: "Só administradores."
   ask:
+    blank: "Escreva a pergunta."
+    not_ready: "Ligue um provedor de IA em Configurações → IA para perguntar por aqui."
+    widget_ph: "Ex.: alguma porta aberta?"
     title: "Perguntar à casa"
     subtitle: "Pergunte sobre o estado atual: a IA lê os pontos do local e o resumo das últimas horas. Só responde, não executa comandos."
     site: "Local"

@@ -86,12 +86,13 @@ RSpec.describe "HA: cards da casa" do
       expect(Points::Query.new(site).call({ "capability" => "onoff", "automation" => "false" }).map(&:name)).not_to include("Rodou agora")
 
       # Bateria pelo atributo device_class (não "todo sensor abaixo de 30"); campo desconhecido descarta a regra;
-      # vertical-stack de tiles = uma coluna.
+      # vertical-stack = a lista num card só (linhas, sem "display" de tiles).
       att = translate([ { "type" => "grid", "cards" => [ { "type" => "custom:auto-entities", "card" => { "type" => "vertical-stack" },
                                                            "filter" => { "include" => [ { "domain" => "sensor", "attributes" => { "device_class" => "battery" }, "state" => "< 30" },
                                                                                         { "domain" => "sensor", "nome_estranho" => "x" } ] } } ] } ], refs)
       aw = att.definition.dig("views", 0, "sections", 0, "widgets", 0)
-      expect(aw).to include("display" => "tiles", "columns" => 1, "query" => { "capability" => "measure", "device_class" => "battery", "below" => "30" })
+      expect(aw).to include("query" => { "capability" => "measure", "device_class" => "battery", "below" => "30" })
+      expect(aw).not_to have_key("display")
       expect(aw).not_to have_key("or")
       expect(att.notes.join).to include("nome_estranho")
 

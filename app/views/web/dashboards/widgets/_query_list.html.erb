@@ -6,9 +6,10 @@
 <%# Texto de vazio " " = o card some quando não há nada (show_empty: false do HA). %>
 <% unless ids.empty? && w["empty_text"] == " " %>
 <div class="<%= tiles ? '' : 'dw-card' %>">
-  <% if w["label"].present? || !tiles %>
-    <div class="flex items-center justify-between gap-2 <%= 'mb-2 px-1' if tiles %>">
-      <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.list") %></p>
+  <%# Sem nome, sem cabeçalho: o título da seção já diz o que é (um "Lista" genérico só ocupa espaço). %>
+  <% if w["label"].present? %>
+    <div class="flex items-center justify-between gap-2 <%= tiles ? 'mb-2 px-1' : 'mb-1' %>">
+      <p class="dw-card-title"><%= w["label"] %></p>
       <% if w["data"]["count"].positive? %><span class="ss-badge ss-badge-accent num"><%= w["data"]["count"] %></span><% end %>
     </div>
   <% end %>

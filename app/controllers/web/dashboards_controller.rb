@@ -239,9 +239,10 @@ module Web
 
     # Tema (uiweb): galeria do editor → JSON; o upload já virou `image` (store_uploads).
     def theme_param
-      p = params.fetch(:theme, {}).permit(:key, :night, :image, :blur, :glass, :remove_image)
+      p = params.fetch(:theme, {}).permit(:key, :night, :image, :blur, :glass, :dark, :remove_image)
       { "key" => p[:key].presence, "night" => p[:night].presence, "image" => (p[:image].presence unless p[:remove_image] == "1"),
-        "blur" => (p[:blur].to_i.clamp(0, 40) if p[:blur].present?), "glass" => ({ "1" => true, "0" => false }[p[:glass]]) }
+        "blur" => (p[:blur].to_i.clamp(0, 40) if p[:blur].present?), "glass" => ({ "1" => true, "0" => false }[p[:glass]]),
+        "dark" => (true if p[:dark] == "1") }
     end
 
     def span_param

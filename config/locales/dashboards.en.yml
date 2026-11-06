@@ -172,6 +172,9 @@ en:
       night: At night (6 pm to 6 am)
       same_day: Same as daytime
       cards: Cards
+      mode: "Mode"
+      mode_person: "As each person chose"
+      mode_dark: "Always dark"
       as_theme: Like the theme
       glass: Glass (frosted)
       solid: Solid
@@ -349,6 +352,11 @@ en:
       not_found: Point not found
       point_removed: Point removed
       tap_to_run: Tap to run
+      ran_ago: Ran %{time} ago
+      ago_min: "%{n} min"
+      ago_h: "%{n} h"
+      ago_d: "%{n} d"
+      never_ran: Never ran
       no_signal: No signal
       no_reading: No reading
       offline: Offline
@@ -539,7 +547,7 @@ en:
       theme_unknown: '%{where}: theme has an unknown key'
       theme_image: '%{where}: wallpaper must be an https:// or / link'
       theme_blur: '%{where}: blur must be from 0 to 40'
-      theme_glass: '%{where}: glass must be true or false'
+      theme_glass: '%{where}: glass and dark must be true or false'
       json_object: 'must be a JSON object'
       too_big: 'exceeds the maximum size (256 KB)'
       schema_version: 'schema_version must be %{version}'

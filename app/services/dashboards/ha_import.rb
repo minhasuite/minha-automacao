@@ -27,8 +27,13 @@ module Dashboards
       "calendar" => :calendar, "custom:atomic-calendar-revive" => :calendar, "todo-list" => :todo,
       "iframe" => :iframe, "conditional" => :conditional, "energy-devices-graph" => :energy_devices,
       "energy-date-selection" => :skip, "custom:auto-entities" => :auto_entities,
-      "custom:casa-campo-texto" => :text_field, "custom:casa-grupo" => :group_card, "custom:casa-contador" => :counter_card
+      "custom:casa-campo-texto" => :text_field, "custom:casa-grupo" => :group_card, "custom:casa-contador" => :counter_card,
+      "ma:ai_usage" => :ai_usage_card
     }.freeze
+    # Pacote de IA do HA da casa: o `sensor.ia_historico` (chamadas, falhas, gasto, histórico) e o `sensor.ia_pergunta`
+    # (última resposta) viram os widgets daqui, que leem o próprio uso de IA (AiCall): `ai_usage`, `ai_log` e `ask`.
+    AI_HISTORY = /\Asensor\.ia_historico\z/
+    AI_ANSWER = /\bsensor\.ia_pergunta\b/
     SINGLE = { "thermostat" => "thermostat", "humidifier" => "humidifier", "light" => "light", "alarm-panel" => "alarm",
                "media-control" => "media" }.freeze
     # Recurso do tile do HA → recurso daqui (Dashboards::TileFeatures).
@@ -57,12 +62,14 @@ module Dashboards
     # refs: {"entity" => {entity_id => point_id}, "scene" => {entity_id => scene_id},
     #        "area" => {ha_area_id => area_id}, "dashboard" => {url_path => dashboard_id}}.
     # image: lambda(url do HA) → url daqui (ou nil); url_path: o caminho deste painel no HA.
-    def initialize(config, refs:, url_path:, image: ->(_) { }, theme: nil)
+    # `theme_dark`: o tema do HA usado nas visões é só escuro (as visões abrem no escuro, `theme.dark`).
+    def initialize(config, refs:, url_path:, image: ->(_) { }, theme: nil, theme_dark: false)
       @config = config.to_h
       @refs = refs
       @url_path = url_path.to_s
       @image = image
       @theme = theme
+      @theme_dark = theme_dark
       @notes = []
       @ids = Hash.new(0)
     end
@@ -105,7 +112,7 @@ module Dashboards
       img = background(v["background"])
       return nil unless img || @theme
 
-      { "key" => @theme || "aurora", "image" => img, "glass" => true }.compact
+      { "key" => @theme || "aurora", "image" => img, "glass" => true, "dark" => (true if @theme_dark) }.compact
     end
 
     def background(bg)
@@ -120,10 +127,13 @@ module Dashboards
       list.each_with_index.filter_map do |s, si|
         s = s.to_h
         cond = visibility(s["visibility"])
-        cards = s["type"].to_s == "grid" || s.key?("cards") ? Array(s["cards"]) : [ s ]
+        raw = s["type"].to_s == "grid" || s.key?("cards") ? Array(s["cards"]) : [ s ]
+        cards = ai_cards(raw)
         spacer = cards.any? && cards.all? { |c| blank_markdown?(c.to_h) }
         widgets = spacer ? [] : cards.filter_map { |c| card(c.to_h, extra_visible: cond) }
         next if widgets.empty? && !spacer
+        # Seção cujos cards saíram (fila de avaliação da IA do HA): sobrou só o título, então ela sai.
+        next if !spacer && cards.size < raw.size && widgets.all? { |w| w["type"] == "heading" }
 
         span = (s["column_span"].to_i.nonzero? || 1).clamp(1, max)
         { "id" => uid("s-#{si + 1}"), "span" => { "mobile" => 12, "tablet" => span >= 2 || max == 1 ? 12 : 6,
@@ -131,6 +141,33 @@ module Dashboards
           "widgets" => widgets, "spacer" => (true if spacer) }.compact
       end
     end
+
+    # Pacote de IA do HA (AI_HISTORY): os tiles seguidos do histórico viram um `ai_usage`; o markdown da linha
+    # do tempo, um `ai_log`; o da última resposta (`sensor.ia_pergunta`) sai, porque o `ask` responde no card; e
+    # o que só aparece pela fila de avaliação do HA (visibilidade pelo histórico) sai, porque aqui não há essa fila.
+    def ai_cards(cards)
+      out = []
+      cards.each do |c|
+        c = c.to_h
+        content = c["content"].to_s
+        if ai_history?(c["entity"])
+          out << { "type" => "ma:ai_usage" } unless out.last&.dig("type") == "ma:ai_usage"
+        elsif ai_history_visibility?(c["visibility"]) || content.match?(AI_ANSWER) || content.include?("pendente()") ||
+              (c["type"] == "markdown" && ai_answer_visibility?(c["visibility"]))
+          note_once("IA: a fila de avaliação e a última resposta do HA ficaram de fora (o card Perguntar à casa responde no painel)")
+        elsif c["type"] == "markdown" && content.include?("linha_do_tempo")
+          out << { "type" => "ma:ai_usage", "log" => true }
+        else
+          out << c
+        end
+      end
+      out
+    end
+
+    def ai_history?(entity) = entity.to_s.match?(AI_HISTORY)
+    def ai_history_visibility?(vis) = Array(vis).any? { |v| v.is_a?(Hash) && ai_history?(v["entity"]) }
+    def ai_answer_visibility?(vis) = Array(vis).any? { |v| v.is_a?(Hash) && v["entity"].to_s.match?(AI_ANSWER) }
+    def ai_usage_card(c) = c["log"] ? { "type" => "ai_log" } : { "type" => "ai_usage" }
 
     # ---- card ----------------------------------------------------------
 
@@ -178,6 +215,11 @@ module Dashboards
     # Campo de texto da casa: com seletor de Echo ou áudio é o "Falar na Alexa" (widget announce, envia direto
     # para a Echo); sem isso, o ponto de texto.
     def text_field(c)
+      # Campo que pergunta à IA (`acao: script.ia_perguntar`) = o Perguntar à casa daqui.
+      if c["acao"].to_s.match?(/perguntar/) || c["entity"].to_s.match?(/\Ainput_text\.ia_pergunta\z/)
+        return { "type" => "ask", "label" => c["name"].presence, "icon" => (c["icon"] if Mdi.name?(c["icon"])),
+                 "placeholder" => c["placeholder"].presence }.compact
+      end
       if c["seletor"].present? || c["audio"].present? || c["acao"].to_s.include?("alexa")
         return { "type" => "announce", "label" => c["name"].presence, "icon" => (c["icon"] if Mdi.name?(c["icon"])),
                  "placeholder" => c["placeholder"].presence }.compact
@@ -299,9 +341,10 @@ module Dashboards
 
     def calendar(c)
       binds = rows(c["entities"]).filter_map { |e| point(e) }.first(MAX_GROUP)
-      return missing(c, "agendas sem par aqui") if binds.empty?
-
-      { "type" => "calendar", "binds" => binds, "days" => (c["maxDaysToShow"] || c["days_to_show"] || 3).to_i.clamp(1, 14) }
+      # Agendas sem par (a conta do Google ainda não ligada aqui): o card fica, com todas as agendas do local, e
+      # mostra como ligar a agenda enquanto não houver nenhuma.
+      note(c, "agendas sem par aqui: o card mostra todas as agendas do local") if binds.empty?
+      { "type" => "calendar", "binds" => binds.presence, "days" => (c["maxDaysToShow"] || c["days_to_show"] || 3).to_i.clamp(1, 14) }.compact
     end
 
     def todo(c) = (bound("todo", c) || missing(c))
@@ -351,8 +394,10 @@ module Dashboards
       sort = AE_SORTS[c.dig("sort", "method").to_s]
       queries[0] = queries[0].merge("sort" => "#{'-' if c.dig('sort', 'reverse') == true}#{sort}") if sort
       inner = c["card"].to_h
-      tiles = %w[grid vertical-stack horizontal-stack].include?(inner["type"].to_s)
-      columns = { "vertical-stack" => 1, "horizontal-stack" => 4 }[inner["type"].to_s] || inner["columns"].to_i.nonzero? || 3
+      # Pilha vertical vira a lista num card só (linhas compactas, como as do resto do painel); grade e pilha
+      # horizontal ficam em tiles.
+      tiles = %w[grid horizontal-stack].include?(inner["type"].to_s)
+      columns = { "horizontal-stack" => 4 }[inner["type"].to_s] || inner["columns"].to_i.nonzero? || 3
       empty = c["show_empty"] == false ? " " : (c.dig("else", "content").to_s.strip.presence if c.dig("else", "type") == "markdown")
       { "type" => "query_list", "query" => queries.first, "or" => queries.drop(1).presence, "display" => ("tiles" if tiles), "columns" => (columns.clamp(1, 4) if tiles),
         "labels" => labels.presence, "label" => inner["title"].presence, "empty_text" => empty&.first(200) }.compact
@@ -577,6 +622,7 @@ module Dashboards
     def badge(b)
       b = b.to_h
       return nil unless b["entity"].present?
+      return nil if ai_history?(b["entity"]) # os números da IA estão no card Uso de IA
 
       p = point(b["entity"]) or return note_once("badge de #{b['entity']} sem par aqui") && nil
       w = { "id" => uid("b"), "type" => "stat", "bind" => p, "aggregate" => "last" }

@@ -1,0 +1,9 @@
+<%# locals: (frame:, site_id:, question: nil, placeholder: nil) -%>
+<%= form_with url: ask_widget_path, class: "flex gap-2", data: { turbo_frame: frame } do %>
+  <%= hidden_field_tag :site_id, site_id, id: nil %><%= hidden_field_tag :frame, frame, id: nil %>
+  <%= hidden_field_tag :placeholder, placeholder, id: nil %>
+  <label class="sr-only" for="q_<%= frame %>"><%= t("ask.question") %></label>
+  <input id="q_<%= frame %>" type="text" name="question" value="<%= question %>" maxlength="1000" required autocomplete="off"
+         class="ss-input min-w-0 flex-1" placeholder="<%= placeholder.presence || t("ask.widget_ph") %>">
+  <button class="ss-btn ss-btn-primary ss-btn-sm" data-turbo-submits-with="…" aria-label="<%= t("ask.ask") %>" title="<%= t("ask.ask") %>"><%= icon("sparkles", "size-4") %></button>
+<% end %>

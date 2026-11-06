@@ -21,6 +21,8 @@
       <%= select_tag "theme[night]", options_for_select(Dashboards::Themes.all.map { |t| [ t.label, t.key ] }, theme["night"]), include_blank: t("dashboards.theme.same_day"), class: "ss-input", id: "thn-#{uid}" %></div>
     <div><label class="ss-label" for="thg-<%= uid %>"><%= t("dashboards.theme.cards") %></label>
       <%= select_tag "theme[glass]", options_for_select({ t("dashboards.theme.as_theme") => "", t("dashboards.theme.glass") => "1", t("dashboards.theme.solid") => "0" }, theme.key?("glass") ? (theme["glass"] ? "1" : "0") : ""), class: "ss-input", id: "thg-#{uid}" %></div>
+    <div><label class="ss-label" for="thd-<%= uid %>"><%= t("dashboards.theme.mode") %></label>
+      <%= select_tag "theme[dark]", options_for_select({ t("dashboards.theme.mode_person") => "", t("dashboards.theme.mode_dark") => "1" }, theme["dark"] ? "1" : ""), class: "ss-input", id: "thd-#{uid}" %></div>
     <div><label class="ss-label" for="thu-<%= uid %>"><%= t("dashboards.theme.wallpaper") %> <span class="font-normal"><%= t("dashboards.theme.formats") %></span></label>
       <%= file_field_tag "theme[upload]", accept: "image/png,image/jpeg,image/webp", class: "ss-input", id: "thu-#{uid}" %>
       <%= hidden_field_tag "theme[image]", theme["image"], id: nil %>

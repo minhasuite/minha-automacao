@@ -82,6 +82,9 @@ ou `key` do ponto.
 | `gauge` | `bind`, `min`, `max` (padrão: do ponto, senão 0–100) | medidor em arco |
 | `chart` | `binds`, `range` (`24h`/`7d`/`30d`) | linhas na mesma escala (booleano: faixas ligado) |
 | `query_list` | `query`, `empty_text`, `or?` (outras consultas somadas, até 30), `display?` (`rows`/`tiles`), `labels?` ({id do ponto → nome}) | lista automática (até 24), em lista ou grade de tiles; `empty_text` `" "` = some quando vazia. `or` e `labels` vêm do auto-entities do HA e ficam ao editar pelo formulário (`QueryListWidget.keep`) |
+| `ask` (plugin) | `placeholder?` | "Perguntar à casa" no painel: a pergunta vai para `Ai::Ask` (o mesmo da tela `/perguntar`, só leitura) e a resposta aparece no card (web `POST /perguntar/painel`, no frame do widget; API `POST /api/v1/sites/:id/ask` → `{answer, provider, model}`). Sem provedor de IA ligado, o card leva a Configurações → IA |
+| `ai_usage` (plugin) | — | Uso de IA do local (`AiCall`): chamadas hoje, no mês, falhas em 30 dias e, para técnico ou dono, o gasto estimado do mês; abaixo, as automações que mais chamaram em 30 dias |
+| `ai_log` (plugin) | `limit?` (3 a 30, padrão 8) | Linha do tempo da IA: as últimas chamadas no formato do Diário (`items` com `at`, `icon`, `tone`, `title`, `state`, `detail`), sem prompt nem resposta |
 | `announce` (plugin) | `binds?` (as Echos do seletor; vazio = todas), `placeholder?` | "Falar na Alexa": texto (anúncio), Echo de destino ou todas e microfone (voz gravada até 60 s; só em https). Envio por `Alexa::Talk` (web `POST /locais/:id/falar-na-alexa`, API `POST /api/v1/sites/:id/talk`): a voz vira MP3 (ffmpeg) e a Echo toca `<audio>` do link curto `/fala/<chave>.mp3` em `MEDIA_PUBLIC_URL` (https de fora); sem ele, o microfone some |
 | `area_card` | `area` | cartão da área com ligados, abertos, movimento, potência, sem sinal; navega para a view com `area` igual |
 | `scene_bar` | `scenes` (ids; vazio = todas) | botões de cena |
@@ -293,8 +296,11 @@ risco e `confirm` do ponto viram a pergunta de confirmação.
 `Dashboards::Themes::PLUGINS` (Lista Clara, Aurora, Oceano, Floresta, Pôr do
 sol, Grafite). No JSON, `theme` no painel e/ou na visão (a visão herda e
 troca): `key`, `night` (tema das 18h às 6h no fuso do local), `image` (papel
-de parede), `blur` (0 a 40) e `glass` (cartões de vidro). Galeria no editor
-(Aparência e "Tema desta visão").
+de parede), `blur` (0 a 40), `glass` (cartões de vidro) e `dark` (a visão
+abre no modo escuro, qualquer que seja o da pessoa: papel de parede escuro; a
+web troca o `data-theme` do `<html>` enquanto o painel está aberto, o app
+desenha a visão com o tema escuro). Galeria no editor (Aparência e "Tema desta
+visão", campo Modo).
 
 ## Paridade de painéis (ondaB2, 2026-11)
 
@@ -317,6 +323,15 @@ para" no topo.
 `container?` guarda filhos; Schema, Resolver (cada filho tem o próprio quadro
 de tempo real) e editor ("Adicionar dentro", mover, editar sem perder os de
 dentro) entendem o aninhamento.
+
+### Tile de automação
+
+Ponto de automação (`AutomationPoints`) aceita também o comando `run` (roda
+agora a versão publicada, sem as condições, como o `automation.trigger` do HA)
+e o ponto resolvido traz `ran_at`. Tile cujo toque é `command` `run` no próprio
+ponto vira botão "rodar" com "Rodou há 5 min" no lugar de ligado/desligado; com
+o interruptor, o "rodou há" vai ao lado do estado. Tile deitado só em linha
+inteira no celular (`span.mobile` 12); em um terço da linha, sem o ⋯.
 
 ### Recursos do tile (`Dashboards::TileFeatures`)
 

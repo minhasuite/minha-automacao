@@ -1,5 +1,5 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<%# "Falar na Alexa" (Alexa::Talk): texto (Enter envia), Echo de destino e microfone (voz gravada, só em https). %>
+<%# "Falar na Alexa" (Alexa::Talk): Echo de destino, texto (Enter envia) e microfone (voz gravada, só em https). %>
 <% d = w["data"] %>
 <% targets = Array(d["targets"]) %>
 <div class="dw-card" data-controller="announce" data-announce-url-value="<%= site_talk_path(dashboard.site_id) %>"
@@ -9,22 +9,23 @@
   <div class="flex items-center gap-3">
     <span class="dw-ico"><%= icon(w["icon"].presence || "mdi:message-text-outline") %></span>
     <p class="dw-name min-w-0 flex-1"><%= w["label"].presence || t("dashboards.talk.title") %></p>
-    <% if targets.size > 1 %>
-      <label class="sr-only" for="t_<%= w['id'] %>"><%= t("dashboards.talk.target") %></label>
-      <select id="t_<%= w['id'] %>" class="ss-input w-auto max-w-[45%]" data-announce-target="echo">
-        <option value="all"><%= t("dashboards.talk.all") %></option>
-        <% targets.each do |e| %><option value="<%= e['id'] %>"><%= e["name"] %></option><% end %>
-      </select>
-    <% elsif targets.one? %>
-      <input type="hidden" value="<%= targets.first['id'] %>" data-announce-target="echo">
-    <% end %>
   </div>
   <% if targets.empty? %>
     <p class="dw-quiet mt-3"><%= t("dashboards.talk.no_echo") %></p>
   <% elsif !d["can_command"] %>
     <p class="dw-quiet mt-3"><%= t("dashboards.talk.no_permission") %></p>
   <% else %>
+    <%# A Echo vai à frente do texto, na mesma linha: "para quem" e "o quê" se leem juntos. %>
     <form class="mt-3 flex gap-2" data-action="submit->announce#send">
+      <% if targets.size > 1 %>
+        <label class="sr-only" for="t_<%= w['id'] %>"><%= t("dashboards.talk.target") %></label>
+        <select id="t_<%= w['id'] %>" class="ss-input dw-talk-echo" data-announce-target="echo">
+          <option value="all"><%= t("dashboards.talk.all") %></option>
+          <% targets.each do |e| %><option value="<%= e['id'] %>"><%= e["name"] %></option><% end %>
+        </select>
+      <% elsif targets.one? %>
+        <input type="hidden" value="<%= targets.first['id'] %>" data-announce-target="echo">
+      <% end %>
       <label class="sr-only" for="m_<%= w['id'] %>"><%= t("dashboards.talk.message") %></label>
       <input id="m_<%= w['id'] %>" type="text" maxlength="250" autocomplete="off" class="ss-input min-w-0 flex-1"
              placeholder="<%= w["placeholder"].presence || t("dashboards.talk.placeholder") %>" data-announce-target="text">

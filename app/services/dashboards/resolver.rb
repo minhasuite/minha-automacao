@@ -71,7 +71,7 @@ module Dashboards
       t = Themes.resolve(@definition, view, @site) or return
       th = t["theme"]
       { "key" => th.key, "label" => th.label, "accent" => th.accent, "accent2" => th.accent2, "glass" => t["glass"],
-        "night" => t["night"], "image" => t["image"], "blur" => t["blur"] }.compact
+        "night" => t["night"], "image" => t["image"], "blur" => t["blur"], "dark" => (true if t["dark"]) }.compact
     end
 
     def resolve(w)
@@ -167,8 +167,10 @@ module Dashboards
                          (allowed = SiteMembership.allowed?(role, :command, risk: p.risk)),
         # Comandaria, mas o papel de quem vê não deixa (tile com cadeado).
         "locked" => usable && !allowed,
-        "title" => title, "context" => context, "status_note" => helpers.point_status_note(p)
-      ).stringify_keys
+        "title" => title, "context" => context, "status_note" => helpers.point_status_note(p),
+        # Automação como ponto: quando rodou pela última vez (o tile "rodar agora" mostra no lugar de ligado/desligado).
+        "ran_at" => (Automation.where(id: p.address["automation_id"]).pick(:last_run_at)&.iso8601 if AutomationPoints.automation?(p))
+      ).compact.stringify_keys
       json.merge("display_icon" => helpers.dw_point_icon(json))
     end
   end

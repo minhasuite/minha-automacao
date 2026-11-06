@@ -7,10 +7,12 @@ module Dashboards
   #
   # `night`: o tema das 18h às 6h (fuso do local); `image`: papel de parede
   # (enviado no editor ou link), com `blur` (0 a 40 px) e véu do tema;
-  # `glass`: cartões de vidro. A visão herda do painel e troca o que disser.
+  # `glass`: cartões de vidro; `dark`: a visão abre no modo escuro, qualquer que seja o da pessoa (papel de
+  # parede escuro, como os temas só escuros do HA: no claro, o véu branco por cima deixava tudo cinza). A
+  # visão herda do painel e troca o que disser.
   module Themes
     PLUGINS = %w[Lista Aurora Oceano Floresta PorDoSol Grafite].freeze
-    KEYS = %w[key night image blur glass].freeze
+    KEYS = %w[key night image blur glass dark].freeze
     NIGHT = (18..23).to_a + (0..5).to_a
     IMAGE = %r{\A(https://|/)[^"'()\s<>]+\z}
     HEX = /\A#\h{6}\z/
@@ -38,7 +40,7 @@ module Dashboards
       %w[key night].each { |k| e << I18n.t("dashboards.schema.theme_missing", where: where, theme: theme[k].inspect) if theme.key?(k) && !self[theme[k]] }
       e << I18n.t("dashboards.schema.theme_image", where: where) if theme.key?("image") && !theme["image"].to_s.match?(IMAGE)
       e << I18n.t("dashboards.schema.theme_blur", where: where) if theme.key?("blur") && !(theme["blur"].is_a?(Integer) && theme["blur"].between?(0, 40))
-      e << I18n.t("dashboards.schema.theme_glass", where: where) if theme.key?("glass") && ![ true, false ].include?(theme["glass"])
+      %w[glass dark].each { |k| e << I18n.t("dashboards.schema.theme_glass", where: where) if theme.key?(k) && ![ true, false ].include?(theme[k]) }
       e
     end
 
@@ -52,7 +54,8 @@ module Dashboards
 
       night = !mine && t["night"].present? && NIGHT.include?(now.in_time_zone(site.timezone).hour)
       theme = mine || self[night ? t["night"] : t["key"]] || Lista
-      { "theme" => theme, "night" => night, "image" => t["image"], "blur" => t["blur"] || 0, "glass" => t.fetch("glass", theme.glass) }
+      { "theme" => theme, "night" => night, "image" => t["image"], "blur" => t["blur"] || 0, "glass" => t.fetch("glass", theme.glass),
+        "dark" => t["dark"] == true }
     end
 
     class Base

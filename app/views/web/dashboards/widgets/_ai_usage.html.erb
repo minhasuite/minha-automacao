@@ -1,0 +1,27 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Uso de IA (AiCall): os números no Ss::KpiStripComponent e as automações que mais chamaram, em linhas. %>
+<% d = w["data"] %>
+<% label = w["label"].presence || Dashboards::Widgets::AiUsageWidget.label %>
+<div class="dw-card">
+  <p class="dw-card-title flex items-center gap-2"><%= icon("sparkles", "size-4 text-accent") %><%= label %></p>
+  <%= render Ss::KpiStripComponent.new(label: label, css: "mt-2",
+                                       items: Array(d["items"]).map { |i| { label: i["label"], value: i["text"].presence || number_with_delimiter(i["value"]),
+                                                                            good: (false if i["bad"] && i["value"].to_i.positive?) }.compact }) %>
+  <% rows = Array(d["by_automation"]) %>
+  <% if rows.any? %>
+    <p class="ss-kicker mt-4 mb-1"><%= d["title"] %></p>
+    <ul class="dw-rows">
+      <% rows.each do |r| %>
+        <li class="dw-row">
+          <span class="dw-ico dw-ico-sm"><%= icon("lightning-bolt", "size-4") %></span>
+          <span class="min-w-0 flex-1"><span class="dw-name text-sm"><%= r["name"] %></span>
+            <span class="block text-xs text-muted truncate"><%= t("dashboards.w.ran_ago", time: dw_short_ago(Time.zone.parse(r["last_at"]))) if r["last_at"] %></span></span>
+          <span class="text-sm font-semibold num text-ink shrink-0"><%= r["calls"] %></span>
+          <% if r["errors"].positive? %><span class="ss-badge ss-badge-danger num shrink-0"><%= r["errors"] %></span><% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% elsif Array(d["items"]).sum { |i| i["key"] == "month" ? i["value"].to_i : 0 }.zero? %>
+    <p class="dw-quiet mt-2"><%= d["empty"] %></p>
+  <% end %>
+</div>
