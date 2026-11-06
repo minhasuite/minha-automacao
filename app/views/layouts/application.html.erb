@@ -16,6 +16,7 @@
   <%= turbo_refresh_scroll_tag :preserve %>
   <%= yield :head %>
   <%= ss_app_shell_head %>
+  <%= ss_density_head %>
   <%= render "web/shared/theme_head" %>
 </head>
 <% body_theme = @body_theme || {} %>
