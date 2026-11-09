@@ -106,7 +106,12 @@ atualização com um clique (`Updates`, `bin/ma-update`, supervisor
 `/system/update`; `docs/instalacao.md`), acesso remoto por provedores
 (`RemoteAccess`; `docs/remote-access.md`). **Produto aberto** (04/11/2026,
 Apache 2.0): sem planos, licença, assinatura nem IA paga da suíte; tudo
-liberado, a IA só com a chave da instalação.
+liberado, a IA só com a chave da instalação. + **Tapo**: câmera TP-Link
+Tapo como plugin (`TapoPlugin`: ONVIF na 2020 com a conta da câmera,
+recursos por modelo em `config/device_maps/tapo.yml`, falar pela fonte
+`tapo://` do go2rtc ao lado do RTSP, privacidade/LED/detecção/sirene pela API
+local `Tapo::Client` atrás do `FeatureFlag` `tapo_control`;
+`docs/cameras.md`).
 
 ## Rodar
 

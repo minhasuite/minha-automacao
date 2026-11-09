@@ -3,7 +3,9 @@ module Drivers
   # (anda ~1 s e para; ou posição salva "preset:<token>"), `record` (grava
   # N segundos na fila, Recordings) e `play_media` (o go2rtc toca o áudio no
   # alto-falante da câmera: fala, aviso, interfone pelo app). O ao vivo e o
-  # quadro seguem pelo Drivers::Go2rtc.
+  # quadro seguem pelo Drivers::Go2rtc. tapo: ponto que não é vídeo
+  # (privacidade, LED, sirene) comanda e lê pelo plugin da integração
+  # (`camera_command`/`camera_poll`); câmera sem integração não lê nada.
   class Camera
     class Error < StandardError; end
 
@@ -12,6 +14,8 @@ module Drivers
               "zoom_in" => [ 0, 0, SPEED ], "zoom_out" => [ 0, 0, -SPEED ] }.freeze
 
     def execute(point, command, value)
+      return self.class.plugin(point.device).camera_command(point, command, value) unless point.capability == "stream"
+
       value = Points::Command.new(point, command, value).tap(&:new_value).value
       case command
       when "ptz" then self.class.ptz(point, value)
@@ -23,7 +27,18 @@ module Drivers
     end
 
     class << self
-      def poll(_device) = nil
+      def plugin(device) = device.integration&.plugin || Integrations::Plugin
+
+      def poll(device) = plugin(device).camera_poll(device)
+
+      # Leitura falhou: só os pontos que vêm da leitura (o vídeo é do go2rtc, o movimento do ONVIF).
+      def unavailable!(device)
+        device.points.each do |p|
+          next if p.capability == "stream" || p.address["onvif"].present? || p.quality == "unavailable"
+
+          p.report!(p.value, quality: "unavailable")
+        end
+      end
 
       # [cliente ONVIF, URL do PTZ, perfil] da câmera do ponto.
       def onvif(point)

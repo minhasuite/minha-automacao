@@ -1,0 +1,78 @@
+pt-BR:
+  tapo:
+    errors:
+      refused: "A câmera recusou a senha da nuvem: use a senha da conta TP-Link (a do app Tapo), não a da conta da câmera."
+      tpap: "O firmware desta câmera só aceita o login novo da TP-Link. No app Tapo, ligue Eu → Tapo Lab → Compatibilidade com terceiros e tente de novo."
+    points:
+      high: "Vídeo (alta)"
+      low: "Vídeo (baixa)"
+      tele_high: "Vídeo tele (alta)"
+      tele_low: "Vídeo tele (baixa)"
+      privacy: "Modo privacidade"
+      led: "LED de status"
+      motion_detection: "Detecção de movimento"
+      siren: "Sirene"
+  integrations:
+    forms:
+      tapo:
+        username: "Usuário da conta da câmera"
+        username_hint: "criado no app Tapo"
+        password: "Senha da conta da câmera"
+        password_hint: "a do RTSP/ONVIF"
+        cloud_password: "Senha da nuvem (opcional)"
+        cloud_password_hint: "a da conta TP-Link, para falar e controlar"
+        note: "No app Tapo: câmera → engrenagem → Configurações avançadas → Conta da câmera. Porta 2020 é a do ONVIF (vídeo, giro e movimento). Deixe a câmera com IP fixo no roteador."
+        control: "Controlar pela API local (privacidade, LED, detecção de movimento e sirene)"
+        control_hint: "Pede a senha da nuvem. Em firmware de 2024 em diante, ligue antes no app Tapo: Eu → Tapo Lab → Compatibilidade com terceiros."
+en:
+  tapo:
+    errors:
+      refused: "The camera refused the cloud password: use the TP-Link account password (the Tapo app one), not the camera account one."
+      tpap: "This camera's firmware only accepts TP-Link's new login. In the Tapo app, turn on Me → Tapo Lab → Third-Party Compatibility and try again."
+    points:
+      high: "Video (high)"
+      low: "Video (low)"
+      tele_high: "Telephoto video (high)"
+      tele_low: "Telephoto video (low)"
+      privacy: "Privacy mode"
+      led: "Status LED"
+      motion_detection: "Motion detection"
+      siren: "Siren"
+  integrations:
+    forms:
+      tapo:
+        username: "Camera account user"
+        username_hint: "created in the Tapo app"
+        password: "Camera account password"
+        password_hint: "the RTSP/ONVIF one"
+        cloud_password: "Cloud password (optional)"
+        cloud_password_hint: "the TP-Link account one, to talk and control"
+        note: "In the Tapo app: camera → gear → Advanced settings → Camera account. Port 2020 is ONVIF (video, pan/tilt and motion). Give the camera a fixed IP on your router."
+        control: "Control through the local API (privacy, LED, motion detection and siren)"
+        control_hint: "Needs the cloud password. On firmware from 2024 on, first turn on in the Tapo app: Me → Tapo Lab → Third-Party Compatibility."
+es:
+  tapo:
+    errors:
+      refused: "La cámara rechazó la contraseña de la nube: usa la contraseña de la cuenta TP-Link (la de la app Tapo), no la de la cuenta de la cámara."
+      tpap: "El firmware de esta cámara solo acepta el inicio de sesión nuevo de TP-Link. En la app Tapo, activa Yo → Tapo Lab → Compatibilidad con terceros e intenta de nuevo."
+    points:
+      high: "Video (alta)"
+      low: "Video (baja)"
+      tele_high: "Video tele (alta)"
+      tele_low: "Video tele (baja)"
+      privacy: "Modo privacidad"
+      led: "LED de estado"
+      motion_detection: "Detección de movimiento"
+      siren: "Sirena"
+  integrations:
+    forms:
+      tapo:
+        username: "Usuario de la cuenta de la cámara"
+        username_hint: "creado en la app Tapo"
+        password: "Contraseña de la cuenta de la cámara"
+        password_hint: "la del RTSP/ONVIF"
+        cloud_password: "Contraseña de la nube (opcional)"
+        cloud_password_hint: "la de la cuenta TP-Link, para hablar y controlar"
+        note: "En la app Tapo: cámara → engranaje → Ajustes avanzados → Cuenta de la cámara. El puerto 2020 es el de ONVIF (video, giro y movimiento). Deja la cámara con IP fija en el router."
+        control: "Controlar por la API local (privacidad, LED, detección de movimiento y sirena)"
+        control_hint: "Pide la contraseña de la nube. En firmware de 2024 en adelante, activa antes en la app Tapo: Yo → Tapo Lab → Compatibilidad con terceros."

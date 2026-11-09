@@ -19,8 +19,8 @@ module Polling
               "zwave_js" => "Drivers::ZwaveJs", "ble_proxy" => "Drivers::BleProxy",
               # ondaC1: Bluetooth do próprio servidor.
               "bluetooth" => "Drivers::Bluetooth", "homekit" => "Drivers::Homekit",
-              # ondaC2: reprodutor DLNA.
-              "dlna" => "Drivers::Dlna" }.freeze
+              # ondaC2: reprodutor DLNA. tapo: câmera do go2rtc com controle (o plugin lê; sem controle, nada).
+              "dlna" => "Drivers::Dlna", "go2rtc" => "Drivers::Camera" }.freeze
   # Integração de conta: varredura (`Integrations.sync!`; Alexa = lista de Echo).
   DUE = "COALESCE(poll_s, 0) > 0 AND (polled_at IS NULL OR polled_at <= now() - make_interval(secs => poll_s))".freeze
 

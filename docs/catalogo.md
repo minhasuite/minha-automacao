@@ -44,6 +44,7 @@ end
 |---|---|---|
 | WiZ | UDP 38899 local (`getPilot`/`setPilot`) | só o IP |
 | TP-Link Kasa / Tapo | Kasa: TCP 9999 (XOR); Tapo: KLAP v2 no HTTP 80 | Tapo: e-mail e senha da conta TP-Link (o aparelho confere o hash na rede) |
+| Câmera Tapo (TP-Link) | ONVIF na 2020 + RTSP 554 (go2rtc); fala por `tapo://`; controle pela API local HTTPS 443 (pytapo) | conta da câmera (app Tapo); senha da nuvem só para falar e controlar (`docs/cameras.md`) |
 | AdGuard Home | API `/control/*` | usuário e senha do painel |
 | Nobreak (NUT) | `upsd` TCP 3493 | usuário/senha do `upsd` se exigir |
 | Fully Kiosk Browser | API REST do app (2323) | ligar "Remote Administration" e a senha |
