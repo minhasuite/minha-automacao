@@ -1,4 +1,5 @@
 <%# locals: (f:, integration:) -%>
-<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::ShellyPlugin,
-           fields: [ [ :password, t("integrations.forms.shelly.password"), t("integrations.forms.shelly.password_hint") ] ],
-           note: t("integrations.forms.shelly.note") %>
+<% keep = integration && t("integrations.forms.common.keep") %>
+<%= render layout: "web/integrations/forms/lan", locals: { f: f, integration: integration, plugin: Integrations::ShellyPlugin } do %>
+  <%= f.ss_password_field :password, label: t("integrations.forms.shelly.password"), help: t("integrations.forms.shelly.password_hint"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+<% end %>

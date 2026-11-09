@@ -7,7 +7,8 @@ module Integrations
   #
   # Plugin novo da rede = subclasse com `describe`, `port`, `secrets` (se
   # tiver), `probe(integration)` → entrada (formato de `Integrations`) e a
-  # partial do formulário (pode só renderizar `forms/lan`).
+  # partial do formulário (sem segredo nem campo próprio, nenhuma: vale a comum
+  # `forms/lan` com a nota `integrations.forms.<key>.note`).
   class LanPlugin < Plugin
     texts "pt-BR" => { no_host: "Informe o IP ou o nome do aparelho na rede.", read_failed: "Não deu para ler o aparelho: %{error}" },
           en: { no_host: "Enter the device's IP or network name.", read_failed: "Couldn't read the device: %{error}" },

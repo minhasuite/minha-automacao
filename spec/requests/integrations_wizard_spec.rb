@@ -27,6 +27,17 @@ RSpec.describe "Integrações e dispositivos do local (F8c)" do
     expect(response).to redirect_to("/locais/#{site.id}/integracoes#adicionar")
   end
 
+  it "todo formulário de integração abre; o aparelho da rede sem partial cai no comum com a nota num aviso" do
+    Integrations.plugins.each do |plugin|
+      get "/locais/#{site.id}/integracoes/nova", params: { tipo: plugin.key }
+      expect(response.status).to eq(200), plugin.key
+    end
+    get "/locais/#{site.id}/integracoes/nova", params: { tipo: "wled" }
+    expect(response.body).to include("integration[host]", "ss-callout", I18n.t("integrations.forms.wled.note"))
+    get "/locais/#{site.id}/integracoes/nova", params: { tipo: "hue" }
+    expect(response.body).to include("integration[app_key]", "ss-field-help", "ss-callout", I18n.t("integrations.forms.hue.note"))
+  end
+
   it "Tuya: código → QR → app confirma → varredura pela fila → encontrados → adicionar todos" do
     post "/locais/#{site.id}/integracoes", params: { tipo: "tuya", integration: { user_code: "" } }
     expect(response).to have_http_status(:unprocessable_content)

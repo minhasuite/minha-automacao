@@ -1,4 +1,6 @@
 <%# locals: (f:, integration:) -%>
-<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::ReolinkPlugin,
-           plain: [ [ :username, t("integrations.forms.common.username"), "admin" ] ], fields: [ [ :password, t("integrations.forms.common.password"), t("integrations.forms.reolink.password_hint") ] ],
-           note: t("integrations.forms.reolink.note") %>
+<% keep = integration && t("integrations.forms.common.keep") %>
+<%= render layout: "web/integrations/forms/lan", locals: { f: f, integration: integration, plugin: Integrations::ReolinkPlugin } do %>
+  <%= f.ss_text_field :username, label: t("integrations.forms.common.username"), value: params[:username].presence || integration&.settings&.dig("username"), placeholder: "admin", autocomplete: "off", spellcheck: false %>
+  <%= f.ss_password_field :password, label: t("integrations.forms.common.password"), help: t("integrations.forms.reolink.password_hint"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+<% end %>

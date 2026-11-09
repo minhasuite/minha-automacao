@@ -1,8 +1,7 @@
 <%# locals: (f:, integration:) -%>
 <% if integration.nil? %>
-  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: Integrations::BluetoothPlugin.title, maxlength: 80 %></div>
+  <%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: Integrations::BluetoothPlugin.title, maxlength: 80 %>
 <% end %>
-<div>
-  <%= f.ss_password_field :bindkeys, label: t("protocols.ble.bindkeys"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: integration ? t("integrations.forms.common.keep") : t("protocols.ble.bindkeys_hint") %>
-</div>
-<p class="text-xs text-muted"><%= t("protocols.ble.note_html") %></p>
+<%= f.ss_password_field :bindkeys, label: t("protocols.ble.bindkeys"), help: t("protocols.ble.bindkeys_hint"), class: "font-mono text-sm", autocomplete: "new-password", value: nil,
+                        placeholder: (t("integrations.forms.common.keep") if integration) %>
+<%= render(Ss::CalloutComponent.new) { t("protocols.ble.note_html") } %>

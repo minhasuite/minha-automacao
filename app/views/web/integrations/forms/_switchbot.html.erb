@@ -1,11 +1,8 @@
 <%# locals: (f:, integration:) -%>
+<% keep = integration && t("integrations.forms.common.keep") %>
 <% if integration.nil? %>
-  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "SwitchBot", maxlength: 80 %></div>
+  <%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "SwitchBot", maxlength: 80 %>
 <% end %>
-<div>
-  <%= f.ss_password_field :token, label: t("integrations.forms.common.token"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: integration ? t("integrations.forms.common.keep") : t("integrations.forms.switchbot.from_app") %>
-</div>
-<div>
-  <%= f.ss_password_field :secret, label: t("integrations.forms.switchbot.secret"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: integration ? t("integrations.forms.common.keep") : t("integrations.forms.switchbot.from_app") %>
-</div>
-<p class="text-xs text-muted"><%= t("integrations.forms.switchbot.help") %></p>
+<%= f.ss_password_field :token, label: t("integrations.forms.common.token"), help: t("integrations.forms.switchbot.from_app"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+<%= f.ss_password_field :secret, label: t("integrations.forms.switchbot.secret"), help: t("integrations.forms.switchbot.from_app"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+<%= render(Ss::CalloutComponent.new) { t("integrations.forms.switchbot.help") } %>

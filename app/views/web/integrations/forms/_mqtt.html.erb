@@ -1,3 +1,3 @@
 <%# locals: (f:, integration:) -%>
-<p class="text-sm text-ink-2"><%= t("integrations.forms.mqtt.intro") %></p>
-<p class="text-sm <%= ENV['MQTT_URL'].present? ? 'text-success' : 'text-warn' %>"><%= ENV["MQTT_URL"].present? ? t("integrations.forms.mqtt.on") : t("integrations.forms.mqtt.off") %></p>
+<% on = ENV["MQTT_URL"].present? %>
+<%= render(Ss::CalloutComponent.new(tone: on ? :success : :warn, title: t("integrations.forms.mqtt.#{on ? 'on' : 'off'}"))) { t("integrations.forms.mqtt.intro") } %>

@@ -1,9 +1,9 @@
 <%# locals: (f:, integration:) -%>
 <% s = integration&.settings || {} %>
-<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::TapoPlugin,
-           plain: [ [ :username, t("integrations.forms.tapo.username"), t("integrations.forms.tapo.username_hint") ] ],
-           fields: [ [ :password, t("integrations.forms.tapo.password"), t("integrations.forms.tapo.password_hint") ],
-                     [ :cloud_password, t("integrations.forms.tapo.cloud_password"), t("integrations.forms.tapo.cloud_password_hint") ] ],
-           note: t("integrations.forms.tapo.note") %>
-<label class="ss-check"><%= f.check_box :control, { checked: s["control"] == "1" }, "1", "0" %><%= t("integrations.forms.tapo.control") %></label>
-<p class="text-xs text-muted"><%= t("integrations.forms.tapo.control_hint") %></p>
+<% keep = integration && t("integrations.forms.common.keep") %>
+<%= render layout: "web/integrations/forms/lan", locals: { f: f, integration: integration, plugin: Integrations::TapoPlugin } do %>
+  <%= f.ss_text_field :username, label: t("integrations.forms.tapo.username"), help: t("integrations.forms.tapo.username_hint"), value: params[:username].presence || s["username"], autocomplete: "off", spellcheck: false %>
+  <%= f.ss_password_field :password, label: t("integrations.forms.tapo.password"), help: t("integrations.forms.tapo.password_hint"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+  <%= f.ss_password_field :cloud_password, label: t("integrations.forms.tapo.cloud_password"), help: t("integrations.forms.tapo.cloud_password_hint"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+  <%= f.ss_check_box :control, label: t("integrations.forms.tapo.control"), help: t("integrations.forms.tapo.control_hint"), checked: s["control"] == "1" %>
+<% end %>

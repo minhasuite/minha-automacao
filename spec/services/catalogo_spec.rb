@@ -88,7 +88,9 @@ RSpec.describe "Catálogo de integrações (grupo 9)" do
 
     it "o formulário sai dos campos (web e app pela mesma partial)" do
       expect(ApplicationController.helpers.integration_form_partial(fake)).to eq("web/integrations/forms/schema")
-      expect(ApplicationController.helpers.integration_form_partial(Integrations::WledPlugin)).to eq("web/integrations/forms/wled")
+      view = ApplicationController.new.view_context
+      expect(view.integration_form_partial(Integrations::WledPlugin)).to eq("web/integrations/forms/lan")
+      expect(view.integration_form_partial(Integrations::HuePlugin)).to eq("web/integrations/forms/hue")
       I18n.with_locale(:en) { expect([ fake.field_label(:area), fake.field_label(:host), fake.option_label(:area, "b") ]).to eq([ "Area", "Address (IP or name)", "b" ]) }
     end
   end

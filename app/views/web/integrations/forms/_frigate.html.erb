@@ -1,12 +1,8 @@
 <%# locals: (f:, integration:) -%>
 <% s = integration&.settings || {} %>
 <% if integration.nil? %>
-  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "Frigate", maxlength: 80 %></div>
+  <%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "Frigate", maxlength: 80 %>
 <% end %>
-<div>
-  <%= f.ss_text_field :url, label: t("integrations.forms.frigate.url"), class: "font-mono text-sm", value: s["url"], placeholder: "http://192.168.0.10:5000", autocomplete: "off", spellcheck: false %>
-</div>
-<div>
-  <%= f.ss_text_field :topic, label: t("integrations.forms.frigate.topic"), class: "font-mono text-sm", value: s["topic"], placeholder: "frigate", autocomplete: "off", spellcheck: false %>
-</div>
-<p class="text-xs text-muted"><%= t("integrations.forms.frigate.help_html") %></p>
+<%= f.ss_text_field :url, label: t("integrations.forms.frigate.url"), class: "font-mono text-sm", value: s["url"], placeholder: "http://192.168.0.10:5000", autocomplete: "off", spellcheck: false %>
+<%= f.ss_text_field :topic, label: t("integrations.forms.frigate.topic"), class: "font-mono text-sm", value: s["topic"], placeholder: "frigate", autocomplete: "off", spellcheck: false %>
+<%= render(Ss::CalloutComponent.new) { t("integrations.forms.frigate.help_html") } %>

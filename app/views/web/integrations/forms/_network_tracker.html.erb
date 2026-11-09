@@ -1,14 +1,13 @@
 <%# locals: (f:, integration:) -%>
 <% s = integration&.settings || {} %>
 <% if integration.nil? %>
-  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: t("integrations.forms.network_tracker.name_hint"), maxlength: 80 %></div>
+  <%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: t("integrations.forms.network_tracker.name_hint"), maxlength: 80 %>
 <% end %>
-<div>
-  <%= f.ss_text_area :hosts, label: t("integrations.forms.network_tracker.hosts"), value: Integrations::NetworkTrackerPlugin.hosts_text(integration), rows: 4, class: "num", required: true, placeholder: t("integrations.forms.network_tracker.hosts_hint") %>
-</div>
+<%= f.ss_text_area :hosts, label: t("integrations.forms.network_tracker.hosts"), value: Integrations::NetworkTrackerPlugin.hosts_text(integration), rows: 4, class: "num", required: true,
+                   placeholder: t("integrations.forms.network_tracker.hosts_hint") %>
 <div class="grid gap-3 sm:grid-cols-3">
-  <div><%= f.ss_select :method, options_for_select(Integrations::NetworkTrackerPlugin.probes.invert, s["method"]), label: t("integrations.forms.network_tracker.method") %></div>
-  <div><%= f.ss_number_field :port, label: t("integrations.forms.network_tracker.port"), value: s["port"] || 80, min: 1, max: 65_535, class: "num" %></div>
-  <div><%= f.ss_text_field :consider_home, label: t("integrations.forms.network_tracker.away"), value: helper_duration(s["consider_home_s"] || Integrations::NetworkTrackerPlugin::CONSIDER_HOME_S), class: "num", placeholder: "3m" %></div>
+  <%= f.ss_select :method, options_for_select(Integrations::NetworkTrackerPlugin.probes.invert, s["method"]), label: t("integrations.forms.network_tracker.method") %>
+  <%= f.ss_number_field :port, label: t("integrations.forms.network_tracker.port"), value: s["port"] || 80, min: 1, max: 65_535, class: "num" %>
+  <%= f.ss_text_field :consider_home, label: t("integrations.forms.network_tracker.away"), value: helper_duration(s["consider_home_s"] || Integrations::NetworkTrackerPlugin::CONSIDER_HOME_S), class: "num", placeholder: "3m" %>
 </div>
-<p class="text-xs text-muted"><%= t("integrations.forms.network_tracker.help") %></p>
+<%= render(Ss::CalloutComponent.new) { t("integrations.forms.network_tracker.help") } %>

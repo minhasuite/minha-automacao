@@ -1,4 +1,5 @@
 <%# locals: (f:, integration:) -%>
-<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::DirigeraPlugin,
-           fields: [ [ :token, t("integrations.forms.dirigera.token"), t("integrations.forms.dirigera.token_hint") ] ],
-           note: t("integrations.forms.dirigera.note") %>
+<% keep = integration && t("integrations.forms.common.keep") %>
+<%= render layout: "web/integrations/forms/lan", locals: { f: f, integration: integration, plugin: Integrations::DirigeraPlugin } do %>
+  <%= f.ss_password_field :token, label: t("integrations.forms.dirigera.token"), help: t("integrations.forms.dirigera.token_hint"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+<% end %>
