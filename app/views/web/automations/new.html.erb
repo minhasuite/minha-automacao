@@ -1,2 +1,6 @@
-<%= render "web/shared/header", title: (@automation.script? ? t("automations.new.script") : t("automations.index.new")), subtitle: @site.name, back: (@automation.script? ? site_scripts_path(@site) : site_automations_path(@site)) %>
-<%= render "web/automations/settings", automation: @automation, site: @site %>
+<% list = @automation.script? ? site_scripts_path(@site) : site_automations_path(@site) %>
+<%= render "web/shared/header", title: (@automation.script? ? t("automations.new.script") : t("automations.index.new")), subtitle: @site.name, back: list %>
+<%= render layout: "web/automations/settings", locals: { automation: @automation, site: @site } do |f| %>
+  <%= f.ss_submit(t("automations.settings.create")) %>
+  <%= link_to t("automations.settings.cancel"), list, class: "ss-btn ss-btn-ghost" %>
+<% end %>

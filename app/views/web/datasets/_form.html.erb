@@ -1,13 +1,9 @@
 <%# locals: (dataset:, url:, method:) -%>
-<%= form_with model: dataset, scope: :dataset, url: url, method: method, class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl w-full" do |f| %>
+<%# Formulário da tabela de dados; o bloco (de new e edit) traz as ações: yield f. -%>
+<%= ss_form_with model: dataset, scope: :dataset, url: url, method: method, class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl w-full" do |f| %>
   <%= render "web/shared/errors", record: dataset %>
-  <div class="sm:col-span-2"><%= f.label :name, t("datasets.form.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, maxlength: 80, autofocus: dataset.new_record?, placeholder: t("datasets.form.name_ph") %></div>
-  <div class="sm:col-span-2"><%= f.label :fields_text, t("datasets.form.fields"), class: "ss-label" %>
-    <%= f.text_area :fields_text, rows: 4, class: "ss-input num text-sm", spellcheck: false, placeholder: t("datasets.form.fields_ph") %>
-    <p class="text-xs text-muted mt-1"><%= t("datasets.form.fields_hint") %></p></div>
-  <div><%= f.label :retention_days, t("datasets.form.retention"), class: "ss-label" %><%= f.number_field :retention_days, class: "ss-input num", min: 1, max: 3650, placeholder: t("datasets.form.retention_ph") %></div>
-  <div class="sm:col-span-2 flex flex-wrap gap-2">
-    <%= f.submit dataset.new_record? ? t("datasets.form.create") : t("site_helpers.form.save"), class: "ss-btn ss-btn-primary" %>
-    <%= link_to t("site_helpers.form.cancel"), dataset.new_record? ? site_datasets_path(dataset.site) : dataset_path(dataset), class: "ss-btn ss-btn-ghost" %>
-  </div>
+  <div class="sm:col-span-2"><%= f.ss_text_field :name, label: t("datasets.form.name"), required: true, maxlength: 80, autofocus: dataset.new_record?, placeholder: t("datasets.form.name_ph") %></div>
+  <div class="sm:col-span-2"><%= f.ss_text_area :fields_text, label: t("datasets.form.fields"), help: t("datasets.form.fields_hint"), rows: 4, class: "num text-sm", spellcheck: false, placeholder: t("datasets.form.fields_ph") %></div>
+  <%= f.ss_number_field :retention_days, label: t("datasets.form.retention"), class: "num", min: 1, max: 3650, placeholder: t("datasets.form.retention_ph") %>
+  <div class="sm:col-span-2 flex flex-wrap gap-2"><%= yield f %></div>
 <% end %>

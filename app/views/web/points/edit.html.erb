@@ -1,5 +1,8 @@
 <%= render "web/shared/header", title: t("points.edit.title"), subtitle: "#{@point.name} · #{@device.name}", back: device_path(@device) %>
-<%= render "web/points/form", device: @device, point: @point %>
+<%= render layout: "web/points/form", locals: { device: @device, point: @point } do |f| %>
+  <%= f.ss_submit(t("points.form.save")) %>
+  <%= link_to t("shared.cancel"), @device, class: "ss-btn ss-btn-ghost" %>
+<% end %>
 <section class="ss-card ss-card-pad mt-4 max-w-4xl">
   <h2><%= t("points.edit.delete") %></h2>
   <p class="text-sm text-muted mt-1"><%= t("points.edit.delete_hint") %></p>

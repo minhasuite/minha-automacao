@@ -1,37 +1,34 @@
 <%# locals: (device:, point:) -%>
-<%= form_with model: point.new_record? ? [ device, point ] : point, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-3 max-w-4xl" do |f| %>
+<%# Formulário do ponto; o bloco (de new e edit) traz as ações: yield f. -%>
+<%= ss_form_with model: point.new_record? ? [ device, point ] : point, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-3 max-w-4xl" do |f| %>
   <%= render "web/shared/errors", record: point %>
-  <div class="md:col-span-2"><%= f.label :name, t("sites.form.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: t("points.form.name_hint"), autofocus: true %></div>
-  <div><%= f.label :capability, t("sites.form.kind"), class: "ss-label" %><%= f.select :capability, Point::CAPABILITY_LABELS.invert, {}, class: "ss-input" %></div>
-  <div><%= f.label :unit, t("points.form.unit"), class: "ss-label" %><%= f.text_field :unit, class: "ss-input", placeholder: "°C, W, %" %></div>
+  <div class="md:col-span-2"><%= f.ss_text_field :name, label: t("sites.form.name"), required: true, placeholder: t("points.form.name_hint"), autofocus: true %></div>
+  <%= f.ss_select :capability, Point::CAPABILITY_LABELS.invert, label: t("sites.form.kind") %>
+  <%= f.ss_text_field :unit, label: t("points.form.unit"), placeholder: "°C, W, %" %>
   <% if (units = Units.compatible(point.unit)).any? %>
-    <div><%= f.label :display_unit, t("points.form.display_unit"), class: "ss-label" %><%= f.select :display_unit, units, { include_blank: t("points.form.display_unit_default", unit: Units.display_unit(point.dup.tap { |p| p.display_unit = nil })) }, class: "ss-input" %></div>
+    <%= f.ss_select :display_unit, units, label: t("points.form.display_unit"),
+                    include_blank: t("points.form.display_unit_default", unit: Units.display_unit(point.dup.tap { |p| p.display_unit = nil })) %>
   <% end %>
-  <div><%= f.label :risk, t("points.form.risk"), class: "ss-label" %><%= f.select :risk, Point::RISKS.invert, {}, class: "ss-input" %>
-    <p class="text-xs text-muted mt-1"><%= t("points.form.risk_hint") %></p></div>
-  <div><%= f.label :area_id, t("devices.area"), class: "ss-label" %><%= f.select :area_id, device.site.areas.order(:name).pluck(:name, :id), { include_blank: t("points.form.device_area") }, class: "ss-input" %></div>
-  <div><%= f.label :min, t("points.form.min"), class: "ss-label" %><%= f.number_field :min, step: "any", class: "ss-input num" %></div>
-  <div><%= f.label :max, t("points.form.max"), class: "ss-label" %><%= f.number_field :max, step: "any", class: "ss-input num" %></div>
-  <div><%= f.label :step, t("points.form.step"), class: "ss-label" %><%= f.number_field :step, step: "any", class: "ss-input num" %></div>
-  <div class="md:col-span-2"><%= f.label :options_text, t("points.form.options"), class: "ss-label" %><%= f.text_field :options_text, class: "ss-input", placeholder: t("points.form.options_hint") %></div>
-  <div><%= f.label :confirm, t("points.form.confirm"), class: "ss-label" %><%= f.text_field :confirm, class: "ss-input", placeholder: t("points.form.confirm_hint") %></div>
-  <details class="md:col-span-3">
-    <summary class="ss-summary ss-section"><%= t("points.form.advanced") %></summary>
-    <div class="mt-3 grid gap-4 md:grid-cols-3">
-      <div><%= f.label :key, t("points.form.key"), class: "ss-label" %><%= f.text_field :key, class: "ss-input num", placeholder: t("points.form.key_hint") %></div>
-      <div><%= f.label :device_class, t("points.form.device_class"), class: "ss-label" %><%= f.text_field :device_class, class: "ss-input", placeholder: "temperature, power, door" %></div>
-      <div><%= f.label :scale, t("points.form.scale"), class: "ss-label" %><%= f.number_field :scale, step: "any", class: "ss-input num" %></div>
-      <div><%= f.label :offset, t("points.form.offset"), class: "ss-label" %><%= f.number_field :offset, step: "any", class: "ss-input num" %></div>
-      <div><%= f.label :pulse_ms, t("points.form.pulse"), class: "ss-label" %><%= f.number_field :pulse_ms, min: 1, class: "ss-input num" %></div>
-      <div><%= f.label :max_on_s, t("points.form.max_on"), class: "ss-label" %><%= f.number_field :max_on_s, min: 1, class: "ss-input num" %></div>
-      <label class="ss-check"><%= f.check_box :writable %> <%= t("points.form.writable") %></label>
-      <label class="ss-check"><%= f.check_box :hidden %> <%= t("points.form.hidden") %></label>
-      <label class="ss-check"><%= f.check_box :disabled %> <%= t("devices.disabled") %></label>
+  <%= f.ss_select :risk, Point::RISKS.invert, label: t("points.form.risk"), help: t("points.form.risk_hint") %>
+  <%= f.ss_select :area_id, device.site.areas.order(:name).pluck(:name, :id), label: t("devices.area"), include_blank: t("points.form.device_area") %>
+  <%= f.ss_number_field :min, label: t("points.form.min"), step: "any", class: "num" %>
+  <%= f.ss_number_field :max, label: t("points.form.max"), step: "any", class: "num" %>
+  <%= f.ss_number_field :step, label: t("points.form.step"), step: "any", class: "num" %>
+  <div class="md:col-span-2"><%= f.ss_text_field :options_text, label: t("points.form.options"), placeholder: t("points.form.options_hint") %></div>
+  <%= f.ss_text_field :confirm, label: t("points.form.confirm"), placeholder: t("points.form.confirm_hint") %>
+  <%= render Ss::CollapsibleComponent.new(title: t("points.form.advanced"), css: "md:col-span-3") do %>
+    <div class="grid gap-4 md:grid-cols-3">
+      <%= f.ss_text_field :key, label: t("points.form.key"), class: "num", placeholder: t("points.form.key_hint") %>
+      <%= f.ss_text_field :device_class, label: t("points.form.device_class"), placeholder: "temperature, power, door" %>
+      <%= f.ss_number_field :scale, label: t("points.form.scale"), step: "any", class: "num" %>
+      <%= f.ss_number_field :offset, label: t("points.form.offset"), step: "any", class: "num" %>
+      <%= f.ss_number_field :pulse_ms, label: t("points.form.pulse"), min: 1, class: "num" %>
+      <%= f.ss_number_field :max_on_s, label: t("points.form.max_on"), min: 1, class: "num" %>
+      <%= f.ss_check_box :writable, label: t("points.form.writable") %>
+      <%= f.ss_check_box :hidden, label: t("points.form.hidden") %>
+      <%= f.ss_check_box :disabled, label: t("devices.disabled") %>
     </div>
-  </details>
+  <% end %>
   <%= render "web/shared/organize_fields", f: f, record: point, span: "md:col-span-3" %>
-  <div class="md:col-span-3 flex flex-wrap gap-2">
-    <%= f.submit point.new_record? ? t("points.form.create") : t("points.form.save"), class: "ss-btn ss-btn-primary" %>
-    <%= link_to t("shared.cancel"), device, class: "ss-btn ss-btn-ghost" %>
-  </div>
+  <div class="md:col-span-3 flex flex-wrap gap-2"><%= yield f %></div>
 <% end %>

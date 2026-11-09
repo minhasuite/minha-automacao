@@ -1,6 +1,9 @@
 <%= render "web/shared/header", title: @dataset.name, subtitle: t("datasets.edit.subtitle", key: @dataset.key), back: dataset_path(@dataset) %>
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
-  <%= render "form", dataset: @dataset, url: dataset_path(@dataset), method: :patch %>
+  <%= render layout: "form", locals: { dataset: @dataset, url: dataset_path(@dataset), method: :patch } do |f| %>
+    <%= f.ss_submit(t("site_helpers.form.save")) %>
+    <%= link_to t("site_helpers.form.cancel"), dataset_path(@dataset), class: "ss-btn ss-btn-ghost" %>
+  <% end %>
   <section class="ss-card ss-card-pad" aria-labelledby="excluir">
     <h2 id="excluir" class="flex items-center gap-2"><%= icon("trash", "size-5") %><%= t("site_helpers.edit.delete") %></h2>
     <p class="mt-2 text-sm text-muted"><%= t("datasets.edit.delete_text") %></p>

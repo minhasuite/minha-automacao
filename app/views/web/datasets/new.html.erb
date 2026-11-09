@@ -1,2 +1,5 @@
 <%= render "web/shared/header", title: t("datasets.new.title"), subtitle: @site.name, back: site_datasets_path(@site) %>
-<%= render "form", dataset: @dataset, url: site_datasets_path(@site), method: :post %>
+<%= render layout: "form", locals: { dataset: @dataset, url: site_datasets_path(@site), method: :post } do |f| %>
+  <%= f.ss_submit(t("datasets.form.create")) %>
+  <%= link_to t("site_helpers.form.cancel"), site_datasets_path(@site), class: "ss-btn ss-btn-ghost" %>
+<% end %>

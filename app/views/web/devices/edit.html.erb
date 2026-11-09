@@ -1,5 +1,8 @@
 <%= render "web/shared/header", title: t("devices.edit_title"), subtitle: @device.name, back: device_path(@device) %>
-<%= render "web/devices/form", site: @site, device: @device %>
+<%= render layout: "web/devices/form", locals: { site: @site, device: @device } do |f| %>
+  <%= f.ss_submit(t("devices.form.save")) %>
+  <%= link_to t("devices.form.cancel"), @device, class: "ss-btn ss-btn-ghost" %>
+<% end %>
 <section class="ss-card ss-card-pad mt-4 max-w-3xl">
   <h2><%= t("devices.delete") %></h2>
   <p class="text-sm text-muted mt-1"><%= t("devices.delete_hint") %></p>

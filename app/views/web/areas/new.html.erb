@@ -1,2 +1,5 @@
 <%= render "web/shared/header", title: t("areas.new.title"), subtitle: @site.name, back: site_path(@site) %>
-<%= render "web/areas/form", site: @site, area: @area %>
+<%= render layout: "web/areas/form", locals: { site: @site, area: @area } do |f| %>
+  <%= f.ss_submit(t("areas.form.create")) %>
+  <%= link_to t("shared.cancel"), @site, class: "ss-btn ss-btn-ghost" %>
+<% end %>
