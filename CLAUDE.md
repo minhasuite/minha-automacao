@@ -647,7 +647,7 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.12.0`):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.13.0`):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);
@@ -681,7 +681,9 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
   `.ss-label-chip` e Expor/tarefas/agenda (`organizacao.css`), `vz-` voz (`voz.css`),
   `ma-` mídia (`midia.css`). Peça genérica (caixa de marcar solta = `ss-inputs` e base
   — `<summary>` sem marcador, menos movimento — = `ss-base` no `<body>`, `.ss-chip.is-solid`, `.ss-rows`, `.ss-btn-group`, `.ss-steps`, `.ss-icon-tile`,
-  `.ss-icon-btn`, `Ss::CalloutComponent`, `Ss::CodeBlockComponent`, `Ss::SubnavComponent`,
+  `.ss-icon-btn`, `Ss::CalloutComponent`, `Ss::CodeBlockComponent`, `Ss::SubnavComponent`, e nos painéis (v0.13)
+  `Ss::SectionComponent`/`SectionHeaderComponent`, `MasonryComponent`, `AsideLayoutComponent`,
+  `MosaicTileComponent` (cartão de área), `PhotoCardComponent`, `.ss-chip[aria-pressed]` e `ComponentesUi.brand_css` (temas),
   `ss_skip_link`…) vem da gem; não recrie aqui. Menus `<details>` (`.ss-menu`,
   `.dw-pop`): Esc/clique fora no `application.js`.
 - Stimulus: comportamento genérico é da gem (`ss-copy`, `ss-filter`, `ss-poll`,

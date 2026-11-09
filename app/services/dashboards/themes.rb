@@ -24,11 +24,10 @@ module Dashboards
     def all = plugins + (ActsAsTenant.current_tenant ? DashboardTheme.order(:name).to_a : [])
     def [](key) = plugins.find { |t| t.key == key.to_s } || (DashboardTheme.find_by(key: key.to_s) if key.to_s.start_with?("u-") && ActsAsTenant.current_tenant)
 
-    # Variáveis CSS da marca a partir das duas cores (já validadas).
+    # Variáveis CSS da marca a partir das duas cores (já validadas): as da gem (ComponentesUi.brand_css, o
+    # mesmo SsBrand.fromColors que o app usa no DashThemes.brand) e o papel de parede.
     def css_vars(accent, accent2, wallpaper = nil)
-      [ "--accent: #{accent}", "--accent-solid: #{accent}", "--accent-hover: #{accent}", "--accent2: #{accent2}", "--accent-soft: color-mix(in srgb, #{accent} 14%, var(--surface))",
-        "--grad: linear-gradient(135deg, #{accent} 0%, #{accent2} 100%)", "--glow: color-mix(in srgb, #{accent} 16%, transparent)", "--ring: color-mix(in srgb, #{accent} 22%, transparent)",
-        ("--wall: #{wallpaper}" if wallpaper) ].compact.join("; ")
+      [ ComponentesUi.brand_css(accent, accent2), ("--wall: #{wallpaper}" if wallpaper) ].compact.join("; ")
     end
 
     def errors(theme, where)

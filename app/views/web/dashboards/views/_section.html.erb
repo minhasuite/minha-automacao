@@ -1,7 +1,0 @@
-<%# locals: (s:, i:, points:, dashboard:, live:, span: true) -%>
-<section class="dw-w ss-rise" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) if span %>; animation-delay: <%= [ i, 6 ].min * 50 %>ms" aria-label="<%= s['title'] || t("dashboards.section") %>">
-  <% if s["title"].present? %><h2 class="dw-sec-title"><%= icon(s["icon"], "size-4") if s["icon"].present? %><%= s["title"] %></h2><% end %>
-  <div class="dw-grid">
-    <% s["widgets"].each do |w| %><%= render "web/dashboards/widget", w: w, points: points, dashboard: dashboard, badge: false, live: live %><% end %>
-  </div>
-</section>
