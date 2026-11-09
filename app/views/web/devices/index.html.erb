@@ -3,13 +3,11 @@
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :devices %>
 
-<%= form_with url: site_devices_path(@site), method: :get, class: "ss-filters mb-4 flex flex-wrap items-end gap-3", role: "search" do %>
-  <div class="min-w-48 flex-1"><label for="q" class="ss-label"><%= t("devices.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("devices.search_hint") %></div>
-  <div><label for="integracao" class="ss-label"><%= t("devices.integration") %></label><%= select_tag :integracao, options_for_select([ [ t("devices.all"), "" ] ] + @integrations.map { |i| [ i.name, i.id ] }, params[:integracao]), class: "ss-input" %></div>
-  <div><label for="area" class="ss-label"><%= t("devices.area") %></label><%= select_tag :area, options_for_select([ [ t("devices.all"), "" ], [ t("devices.no_area"), "none" ] ] + @areas.map { |a| [ a.name, a.id ] }, params[:area]), class: "ss-input" %></div>
-  <div><label for="situacao" class="ss-label"><%= t("devices.status") %></label><%= select_tag :situacao, options_for_select([ [ t("devices.all"), "" ] ] + Device::SITUATIONS.invert.to_a, params[:situacao]), class: "ss-input" %></div>
-  <button type="submit" class="ss-btn ss-btn-ghost"><%= t("devices.filter") %></button>
-<% end %>
+<%# Filtros da gem: busca, chips dos ativos (× tira) e "+ Filtro"; no celular cabe numa linha. %>
+<%= render Ss::FilterBarComponent.new(url: site_devices_path(@site), search: :q, placeholder: t("devices.search_hint"), css: "mb-4",
+                                      filters: [ { param: :integracao, label: t("devices.integration"), options: @integrations.map { |i| [ i.name, i.id ] } },
+                                                 { param: :area, label: t("devices.area"), options: [ [ t("devices.no_area"), "none" ] ] + @areas.map { |a| [ a.name, a.id ] } },
+                                                 { param: :situacao, label: t("devices.status"), options: Device::SITUATIONS.invert.to_a } ]) %>
 
 <% if @devices.empty? %>
   <% filtered = params.values_at(:q, :integracao, :area, :situacao).any?(&:present?) %>
@@ -22,8 +20,27 @@
     <% end %>
   <% end %>
 <% else %>
+  <%# Celular: lista de toque (ícone, nome, área · integração · pontos e a situação), uma linha por aparelho;
+      a tabela (ordem, colunas e ações em massa) fica do tablet para cima. -%>
+  <div class="sm:hidden">
+    <ul class="ss-rows ss-card overflow-hidden" aria-label="<%= t("devices.mobile_list") %>">
+      <% @devices.each do |d| %>
+        <% label, tone, note = device_situation(d) %>
+        <li class="relative">
+          <span class="ss-icon-tile text-accent"><%= icon(device_icon(d), "") %></span>
+          <span class="min-w-0 flex-1">
+            <%= link_to d.name, device_path(d), class: "block font-semibold text-ink no-underline truncate after:absolute after:inset-0" %>
+            <span class="block text-sm text-muted truncate"><%= [ d.area&.name, t("devices.points_count", count: @points.fetch(d.id, 0)), d.integration&.name || d.driver_label ].compact.join(" · ") %></span>
+          </span>
+          <span class="ss-badge ss-badge-dot ss-badge-<%= tone %> shrink-0" title="<%= note %>"><%= label %></span>
+        </li>
+      <% end %>
+    </ul>
+    <%= render "web/shared/pagination", pagy: @pagy %>
+  </div>
   <%# Tabela da gem: ordena no servidor (?sort=&dir=), marca para as ações em massa (barra da gem) e pagina. -%>
   <% filters = params.permit(:integracao, :area, :situacao, :q).to_h.symbolize_keys %>
+  <div class="max-sm:hidden">
   <%= render Ss::DataTableComponent.new(rows: @devices, id: "dispositivos", caption: t("devices.title"), sort: @sort, dir: @dir, tools: false,
                                         selectable: can?(:manage), bulk_url: bulk_site_devices_path(@site, **filters),
                                         pagination: { page: @pagy.page, pages: @pagy.pages, total: @pagy.count }) do |tb| %>
@@ -48,4 +65,5 @@
       <button type="submit" class="ss-btn ss-btn-primary ss-btn-sm" data-turbo-confirm="<%= t("devices.bulk_confirm") %>" data-turbo-confirm-button="<%= t("devices.apply") %>"><%= t("devices.apply") %></button>
     <% end %>
   <% end %>
+  </div>
 <% end %>

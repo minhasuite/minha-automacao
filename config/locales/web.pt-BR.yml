@@ -244,6 +244,10 @@ pt-BR:
       shadow_off: Desligar a sombra
       shadow_on: Ligar a sombra
   devices:
+    points_count:
+      one: 1 ponto
+      other: '%{count} pontos'
+    mobile_list: Lista de dispositivos
     title: Dispositivos
     subtitle: '%{site} · todos os aparelhos do local'
     new: Novo dispositivo

@@ -244,6 +244,10 @@ en:
       shadow_off: Turn shadow off
       shadow_on: Turn shadow on
   devices:
+    points_count:
+      one: 1 point
+      other: '%{count} points'
+    mobile_list: Device list
     title: Devices
     subtitle: '%{site} · every device in this place'
     new: New device
