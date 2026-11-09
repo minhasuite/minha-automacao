@@ -1,5 +1,5 @@
 <%# locals: (site:) -%>
-<p class="text-sm text-muted mb-4 max-w-3xl"><%= t("assist_settings.runs.pitch", keep: AssistRun::KEEP) %></p>
+<%= render(Ss::CalloutComponent.new(css: "mb-4 max-w-3xl")) { t("assist_settings.runs.pitch", keep: AssistRun::KEEP) } %>
 <% if @runs.empty? %>
   <%= render Ss::EmptyStateComponent.new(title: t("assist_settings.runs.empty"), text: t("assist_settings.runs.empty_hint"), css: "ss-card") %>
 <% else %>

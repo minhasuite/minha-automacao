@@ -81,6 +81,17 @@ module AutomationsHelper
     icon(name, "size-5 shrink-0 #{color}")
   end
 
+  # Condições conferidas num passo da execução → nós do Ss::TreeViewComponent: ✓/✗ e o rótulo,
+  # os valores lidos à direita e os grupos (e/ou/não) abertos com os filhos.
+  def run_check_nodes(checks)
+    Array(checks).map do |c|
+      ok = c["result"]
+      label = safe_join([ icon(ok ? "check" : "x", "size-4 inline-block align-text-bottom mr-1.5 #{ok ? 'text-success' : 'text-danger'}"),
+                          tag.span(c["label"], title: c["label"]) ])
+      { label: label, value: c["values"].presence, open: true, children: (run_check_nodes(c["children"]) if c["children"].present?) }.compact
+    end
+  end
+
   def block_dom_id(path) = "b-#{path.tr('.', '-')}"
 
   # Ações de um bloco do editor (Ss::BlockComponent) como ops do rascunho no servidor:
