@@ -49,14 +49,45 @@ module HelperTypes
     true
   end
 
-  # Valor de um ponto mudou: refaz os helpers que dependem dele (grupo, sensor calculado, estatística).
-  def on_change(point) = refresh_dependents(point.site_id, [ point.id ])
+  # Valor de um ponto mudou: refaz os helpers que dependem dele (grupo, sensor
+  # calculado, estatística). Os de origem "*" vão para a fila (`refresh_star_later`);
+  # a mudança de um deles não chama a rodada de novo (sem cascata entre eles).
+  def on_change(point)
+    refresh_exact(point.site_id, [ point.id ])
+    refresh_star_later(point.site_id) unless star?(point)
+  end
 
   # Refaz os helpers cuja origem (`address.sources`) inclui um destes ids
-  # (ponto ou, no helper Consulta, conjunto de dados).
+  # (ponto ou, no helper Consulta, conjunto de dados), e os "*" pela fila.
   def refresh_dependents(site_id, ids)
-    dependents(site_id, ids).find_each { |h| self.for(h)&.refresh!(h) }
+    refresh_exact(site_id, ids)
+    refresh_star_later(site_id)
   end
+
+  def refresh_exact(site_id, ids)
+    Point.where(site_id: site_id).where.not(helper: nil).where.not(id: ids)
+         .where("jsonb_exists_any(points.address->'sources', ARRAY[?]::text[])", ids)
+         .find_each { |h| self.for(h)&.refresh!(h) }
+  end
+
+  # Origem "*" com debounce: refazer os templates a cada leitura (14 importados do
+  # HA × cada ponto da nuvem Tuya) travava um núcleo do worker e segurava o pedido
+  # web do comando por segundos. Um job por local a cada STAR_DEBOUNCE, por
+  # processo; o job lê o estado de quando roda, então nenhuma mudança se perde.
+  STAR_DEBOUNCE = 2
+  @star_at = Concurrent::Map.new
+
+  def refresh_star_later(site_id)
+    now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    last = @star_at[site_id]
+    return if last && now - last < STAR_DEBOUNCE
+
+    @star_at[site_id] = now
+    HelperStarRefreshJob.set(wait: STAR_DEBOUNCE.seconds).perform_later(site_id)
+  end
+
+  def star_helpers(site_id) = Point.where(site_id: site_id).where.not(helper: nil).where("jsonb_exists(points.address->'sources', '*')")
+  def star?(point) = point.helper.present? && Array(point.address["sources"]).include?("*")
 
   # Origem "*" (Lote 4, G8: sensor calculado com consulta ao conjunto de
   # pontos) = refaz em qualquer mudança do local, menos a dele mesmo.
