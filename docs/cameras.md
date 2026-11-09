@@ -13,6 +13,7 @@ o widget mostra "Sem conexão".
 | Plugin | Para quê | Aparelho |
 | --- | --- | --- |
 | `CameraPlugin` "Câmera RTSP / ONVIF" | qualquer câmera IP | um `go2rtc`; RTSP = um ponto; ONVIF = um ponto por perfil + `motion` se houver eventos |
+| `TapoPlugin` "Câmera Tapo (TP-Link)" | câmera Tapo da rede (ONVIF na 2020) | um `go2rtc` como o do ONVIF + recursos do modelo (`tapo.yml`) e, opcional, controles pela API local |
 | `HikvisionPlugin` "Câmeras / DVR" | DVR/NVR Hikvision pela ISAPI | um `go2rtc` com um ponto por canal (substream) |
 | `TuyaPlugin` (Smart Life) | câmera Tuya (categoria `sp`) | `tuya_local` com os dps do mapa: movimento, sirene, holofote, privacidade |
 
@@ -84,3 +85,82 @@ Na página do ponto de vídeo (`/pontos/:id`) e no app (câmera em tela cheia):
   vai por `POST /api/v1/points/:id/talk` e o go2rtc toca
   (`POST /api/streams?dst=<ponto>&src=ffmpeg:<url>`). A câmera também vira
   canal de fala (ação "Falar", avisos).
+
+## Câmeras Tapo (TP-Link)
+
+Plugin `TapoPlugin` (`< LanPlugin`, uma integração por câmera). Por baixo é
+o mesmo caminho das câmeras ONVIF: `Onvif.inventory` na porta **2020** com a
+**conta da câmera**, aparelho `go2rtc`, um ponto `stream` por perfil
+(`/stream1` = "Vídeo (alta)", `/stream2` = "Vídeo (baixa)"), movimento e
+outros eventos pelo `Onvif::Listener` e PTZ pelo `Drivers::Camera`. O que é
+da Tapo:
+
+- **Recursos por modelo** em `config/device_maps/tapo.yml` (`Tapo.preset`,
+  prefixo mais longo do modelo que o ONVIF informa): `ptz`, `siren`,
+  `two_way_audio`, `spotlight`, `rtsp` e `streams` extras (lente tele da
+  C246D/C840 em `/stream6` e `/stream7`). Viram `address.supports` dos
+  pontos de vídeo e `address.features` do aparelho. Modelo novo = linha no
+  YAML. Modelo com `rtsp: false` (bateria C4xx, campainha D230, o que fica
+  atrás do hub H200) é recusado com o aviso.
+- **Falar** (senha da nuvem preenchida e modelo com `two_way_audio`): o
+  vídeo principal ganha `address.talk` e o comando `play_media`; o
+  `Go2rtcSyncJob` põe o stream com duas fontes, o RTSP e o
+  `tapo://<senha da nuvem>@IP` (o PUT do go2rtc 1.9.9 aceita `src` repetido;
+  `Plugin.extra_sources(point)`). O vídeo continua vindo do RTSP; o `tapo://`
+  dá o áudio de volta (o ONVIF da Tapo é só Profile S, sem áudio de volta;
+  codec PCMA/8000, o mesmo do `play_audio`).
+- **Controle pela API local** (`Tapo::Client`, opcional): HTTPS 443 da
+  câmera, usuário `admin` + senha da nuvem, no formato do pytapo (o mesmo
+  do `tapo_control` do HA). Login seguro (`encrypt_type` 3: cnonce →
+  nonce + `device_confirm`, `digest_passwd`, pedidos AES-CBC em
+  `securePassthrough` com `Seq`/`Tapo_tag`) ou o antigo (MD5, às claras).
+  Pontos `onoff` com `address.tapo` (tipos em `controls` do `tapo.yml`):
+  **Modo privacidade** (`setLensMaskConfig`), **LED de status**
+  (`setLedStatus`), **Detecção de movimento** (`setDetectionConfig`) e
+  **Sirene** (alarme manual `do`/`manual_msg_alarm`, risco **crítico**; só nas
+  famílias com `siren`). Entram só com as três chaves: senha da nuvem, caixa
+  "Controlar pela API local" e o `FeatureFlag` `tapo_control` (interruptor
+  geral; desligado, a varredura não cria os pontos e o comando recusa).
+  Comando e leitura passam pelo plugin (`camera_command`/`camera_poll`,
+  chamados pelo `Drivers::Camera` para ponto que não é vídeo); o aparelho
+  nasce com leitura a cada 5 min (`go2rtc` está no `Polling::DEVICES`; câmera
+  sem controle não lê nada). Leitura que falha deixa só os controles
+  indisponíveis (vídeo e movimento seguem com go2rtc e ONVIF). Ligar o
+  controle depois (Reconfigurar) põe os pontos no aparelho já adotado na
+  próxima varredura (`Integrations::IDENTITY` inclui `tapo`).
+- **Procurar na rede**: pelo nome que a câmera pede ao roteador (DHCP
+  `c200_xxxx`, `tc70_xxxx`, `d230_xxxx`, os mesmos do manifesto do
+  `tapo_control`); só lista e preenche o IP.
+
+### Passo a passo (dono)
+
+1. **IP fixo**: no roteador, reserve um IP para a câmera (DHCP estático pelo
+   MAC). Sem isso o go2rtc perde a câmera quando o IP muda.
+2. **Conta da câmera**: no app Tapo, abra a câmera → engrenagem →
+   **Configurações avançadas → Conta da câmera** e crie usuário e senha
+   (só letras e números evitam problema no RTSP). É a conta do RTSP e do
+   ONVIF, diferente da conta TP-Link.
+3. (Opcional, para falar e controlar) **Senha da nuvem** = a senha da conta
+   TP-Link do app. Em firmware de 2024 em diante, ligue no app **Eu → Tapo
+   Lab → Compatibilidade com terceiros** (sem ela a câmera recusa o login
+   local e o MA mostra esse aviso).
+4. No MA: **Integrações → Câmera Tapo (TP-Link)** → IP (ou "Procurar na
+   rede"), porta **2020**, usuário e senha da conta da câmera; senha da nuvem
+   e "Controlar pela API local" se quiser → Continuar → marque a câmera →
+   **Adicionar**.
+5. A Tapo aceita só duas destas três ao mesmo tempo: Tapo Care, gravação no
+   cartão e NVR/ONVIF (o MA conta como NVR). Se o vídeo não abrir, desligue
+   uma das outras.
+
+### Limites e o que falta conferir com a câmera de verdade
+
+Tudo foi conferido só com WebMock (ONVIF e uma câmera de mentira que faz o
+login seguro). Falta ver numa Tapo real: o tópico do movimento no PullPoint
+(`CellMotionDetector`, esperado), PTZ pelo ONVIF da 2020, a fonte `tapo://`
+com a senha da nuvem em firmware novo (o go2rtc pode pedir
+`admin:<SHA-256 em maiúsculas>`), o login local com "Compatibilidade com
+terceiros" ligada e a duração da sirene (o ponto fica ligado até "desligar";
+a câmera para sozinha no tempo do app). Firmware que só fala o login novo
+(TPAP/SPAKE2+) não é suportado: a mensagem pede a "Compatibilidade com
+terceiros". Holofote (`spotlight`) só está declarado no mapa, sem comando.
+Câmera de bateria e atrás do hub H200 não têm RTSP/ONVIF: ficam de fora.

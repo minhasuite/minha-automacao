@@ -109,7 +109,12 @@ Apache 2.0): sem planos, licença, assinatura nem IA paga da suíte; tudo
 liberado, a IA só com a chave da instalação. + **Fila e jobs**:
 Configurações → Fila (`QueueMonitor`: Solid Queue, latência dos comandos fila
 x aparelho por driver, tentar de novo/descartar; só o dono) e
-`GET /api/v1/system/queue` (`docs/fila.md`).
+`GET /api/v1/system/queue` (`docs/fila.md`). + **Tapo**: câmera TP-Link
+Tapo como plugin (`TapoPlugin`: ONVIF na 2020 com a conta da câmera,
+recursos por modelo em `config/device_maps/tapo.yml`, falar pela fonte
+`tapo://` do go2rtc ao lado do RTSP, privacidade/LED/detecção/sirene pela API
+local `Tapo::Client` atrás do `FeatureFlag` `tapo_control`;
+`docs/cameras.md`).
 
 ## Rodar
 

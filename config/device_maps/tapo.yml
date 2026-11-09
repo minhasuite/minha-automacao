@@ -1,0 +1,52 @@
+# Câmeras TP-Link Tapo (TapoPlugin): o que cada família faz, pelo modelo
+# que a câmera informa no ONVIF (GetDeviceInformation → "C200", "C520WS"…).
+# Vale o prefixo mais longo que casar; modelo fora da lista usa `default`
+# (PTZ continua vindo do próprio ONVIF). Modelo novo = linha aqui, nada de código.
+#
+# Chaves de uma família:
+#   ptz           mexe pelo ONVIF (ContinuousMove/GotoPreset na porta 2020)
+#   siren         tem sirene/alarme manual (ponto "Sirene" com o controle local ligado)
+#   two_way_audio tem alto-falante; falar só com a senha da nuvem (fonte tapo:// do go2rtc:
+#                 o ONVIF da Tapo é só Profile S, sem áudio de volta)
+#   spotlight     tem holofote (só declarado: ainda sem comando, ver docs/cameras.md)
+#   rtsp          false = sem RTSP/ONVIF (bateria, campainha, atrás do hub H200): não entra
+#   streams       caminhos extras além dos perfis do ONVIF (lente tele das duas lentes)
+default: { ptz: false, siren: false, two_way_audio: true, spotlight: false, rtsp: true }
+
+families:
+  # Internas fixas.
+  - { models: [C100, C110, C111, C120, C121, C125, TC60, TC65], ptz: false, siren: true, two_way_audio: true }
+  # Internas que giram (pan/tilt). TC7x = mesma câmera com outro nome em alguns países.
+  - { models: [C200, C210, C211, C212, C220, C225, C230, TC70, TC71, TC72, TC73], ptz: true, siren: true, two_way_audio: true }
+  # Externas fixas.
+  - { models: [C310, C325WB, C330], ptz: false, siren: true, two_way_audio: true }
+  - { models: [C320WS], ptz: false, siren: true, two_way_audio: true, spotlight: true }
+  # Externas que giram.
+  - { models: [C500, C501, C540], ptz: true, siren: true, two_way_audio: true }
+  - { models: [C510W, C520WS, C530WS, C560WS], ptz: true, siren: true, two_way_audio: true, spotlight: true }
+  # Duas lentes: a tele vem em stream6 (alta) e stream7 (baixa), fora dos perfis do ONVIF.
+  - { models: [C246D, C840], ptz: true, siren: true, two_way_audio: true,
+      streams: [ { path: /stream6, name: tele_high }, { path: /stream7, name: tele_low } ] }
+  # Sem RTSP: C410, C420, C425 e D230 pela FAQ 4465 da TP-Link; C400/C402/C403/C460 (bateria) por
+  # analogia, a conferir. Câmera atrás do hub H200 é de bateria: também fica de fora.
+  - { models: [C400, C402, C403, C410, C420, C425, C460, D230], rtsp: false }
+
+# Controle pela API local (HTTPS 443, login "admin" + senha da nuvem): tipo →
+# pedido de leitura (`get`: método, parâmetros, caminho do "on"/"off") e de
+# escrita (`set`: `$state` vira "on"/"off"; `raw` = pedido fora do
+# multipleRequest, `$action` vira "start"/"stop"). Só entra o que a família
+# tem (`needs`). Os nomes de método são os do pytapo (o mesmo do tapo_control do HA).
+controls:
+  privacy:
+    get: { method: getLensMaskConfig, params: { lens_mask: { name: [lens_mask_info] } }, path: [lens_mask, lens_mask_info, enabled] }
+    set: { method: setLensMaskConfig, params: { lens_mask: { lens_mask_info: { enabled: $state } } } }
+  led:
+    get: { method: getLedStatus, params: { led: { name: [config] } }, path: [led, config, enabled] }
+    set: { method: setLedStatus, params: { led: { config: { enabled: $state } } } }
+  motion_detection:
+    get: { method: getDetectionConfig, params: { motion_detection: { name: [motion_det] } }, path: [motion_detection, motion_det, enabled] }
+    set: { method: setDetectionConfig, params: { motion_detection: { motion_det: { enabled: $state } } } }
+  siren:
+    needs: siren
+    risk: critical
+    set: { raw: { method: do, msg_alarm: { manual_msg_alarm: { action: $action } } } }

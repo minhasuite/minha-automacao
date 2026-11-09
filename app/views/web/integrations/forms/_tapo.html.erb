@@ -1,0 +1,9 @@
+<%# locals: (f:, integration:) -%>
+<% s = integration&.settings || {} %>
+<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::TapoPlugin,
+           plain: [ [ :username, t("integrations.forms.tapo.username"), t("integrations.forms.tapo.username_hint") ] ],
+           fields: [ [ :password, t("integrations.forms.tapo.password"), t("integrations.forms.tapo.password_hint") ],
+                     [ :cloud_password, t("integrations.forms.tapo.cloud_password"), t("integrations.forms.tapo.cloud_password_hint") ] ],
+           note: t("integrations.forms.tapo.note") %>
+<label class="ss-check"><%= f.check_box :control, { checked: s["control"] == "1" }, "1", "0" %><%= t("integrations.forms.tapo.control") %></label>
+<p class="text-xs text-muted"><%= t("integrations.forms.tapo.control_hint") %></p>

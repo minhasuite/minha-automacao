@@ -149,6 +149,11 @@ varredura e da adoção o plugin grava o estado atual (`Plugin.refresh`).
   conta; lê fabricante, modelo, perfis e o RTSP de cada perfil e, se a
   câmera tem eventos, cria o ponto `motion` (PullPoint, `Onvif::Listener`).
   Vira aparelho `go2rtc` como o do DVR (`docs/cameras.md`).
+- **Câmera Tapo (TP-Link)** (`TapoPlugin`, `Tapo`): a câmera ONVIF acima já
+  na porta 2020 com a conta da câmera, recursos por modelo
+  (`config/device_maps/tapo.yml`), falar pela fonte `tapo://` do go2rtc e,
+  opcional, privacidade/LED/detecção/sirene pela API local
+  (`Tapo::Client`; `docs/cameras.md`).
 - **Câmeras / DVR** (`Isapi`): ISAPI Hikvision com Digest
   (`/ISAPI/System/deviceInfo`, `/ISAPI/Streaming/channels`), um aparelho
   `go2rtc` com um ponto `stream` por canal no substream (x02). O

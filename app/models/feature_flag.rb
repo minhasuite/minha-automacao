@@ -3,7 +3,8 @@ class FeatureFlag < ApplicationRecord
   CACHE_KEY = "feature_flags/map".freeze
 
   KNOWN = {
-    "push" => "Nenhum push sai (as notificações in-app continuam)."
+    "push" => "Nenhum push sai (as notificações in-app continuam).",
+    "tapo_control" => "Câmeras Tapo: nada de privacidade, LED, detecção ou sirene pela API local (o vídeo continua)."
   }.freeze
 
   validates :key, presence: true, uniqueness: true, inclusion: { in: KNOWN.keys }

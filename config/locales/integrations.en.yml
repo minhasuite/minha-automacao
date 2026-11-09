@@ -640,6 +640,7 @@ en:
       use: Use
     plugin:
       no_oauth: This integration doesn't use an external sign-in.
+      no_camera_command: This camera point has no command.
     statuses:
       error: Error
       ok: Connected

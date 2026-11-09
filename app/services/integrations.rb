@@ -25,7 +25,7 @@ module Integrations
   # Ordem = ordem do catálogo. Integração nova: classe + uma linha aqui.
   PLUGINS = %w[TuyaPlugin XiaomiPlugin AlexaPlugin CameraPlugin HikvisionPlugin MqttPlugin Zigbee2mqttPlugin
                EsphomePlugin ShellyPlugin TasmotaPlugin MatterPlugin CastPlugin WebosPlugin TizenPlugin AdbPlugin BroadlinkPlugin SpotifyPlugin
-               FrigatePlugin ReolinkPlugin UnifiProtectPlugin HuePlugin WledPlugin YeelightPlugin SwitchbotPlugin
+               FrigatePlugin ReolinkPlugin TapoPlugin UnifiProtectPlugin HuePlugin WledPlugin YeelightPlugin SwitchbotPlugin
                DaikinPlugin MideaPlugin LgThinqPlugin SunspecPlugin GrowattPlugin DirigeraPlugin SonosPlugin DlnaPlugin GoveePlugin ZwaveJsPlugin BleProxyPlugin BluetoothPlugin ThreadPlugin GoogleHomePlugin HomekitPlugin
                WizPlugin TplinkPlugin AdguardPlugin NutPlugin FullyKioskPlugin HomewizardPlugin SynologyDsmPlugin FritzboxPlugin DenonavrPlugin HeosPlugin BraviatvPlugin
                ForecastSolarPlugin Co2signalPlugin MoonPlugin SeasonPlugin HolidayPlugin
@@ -114,8 +114,8 @@ module Integrations
 
   # Lote 8: ponto que o mapa de dados passou a trazer (cor, evento do robô)
   # entra no aparelho já cadastrado. Casa pelo endereço (dp ou siid/piid/eiid);
-  # o que já existe não muda.
-  IDENTITY = %w[dps siid piid eiid].freeze
+  # o que já existe não muda. tapo: controle da câmera (ligou o controle local depois).
+  IDENTITY = %w[dps siid piid eiid tapo].freeze
   def add_points(device, e)
     have = device.points.map { |p| p.address.slice(*IDENTITY).transform_values(&:to_s) }
     Array(e["points"]).count do |p|

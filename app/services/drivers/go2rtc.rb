@@ -38,8 +38,16 @@ module Drivers
 
     def points = Point.joins(:device).includes(:device).where(capability: "stream", disabled: false, devices: { driver: "go2rtc", disabled: false })
 
-    # Streams desejados (id do ponto → fonte), de todas as empresas do servidor.
-    def wanted = ActsAsTenant.without_tenant { points.to_a }.filter_map { |p| (s = source(p)) && [ p.id, s ] }.to_h
+    # tapo: fontes do stream = a principal + as que o plugin da integração junta
+    # (ex.: tapo:// para falar na Tapo). Uma só vai como texto (como antes).
+    def sources(point)
+      main = source(point) or return
+      extra = point.device.integration&.plugin&.extra_sources(point).to_a
+      extra.empty? ? main : [ main, *extra ]
+    end
+
+    # Streams desejados (id do ponto → fonte ou lista de fontes), de todas as empresas do servidor.
+    def wanted = ActsAsTenant.without_tenant { points.includes(device: :integration).to_a.filter_map { |p| (s = sources(p)) && [ p.id, s ] }.to_h }
 
     # Um stream ruim não derruba os outros: fica no log e o ponto "unavailable".
     def sync!
@@ -48,7 +56,8 @@ module Drivers
       current = JSON.parse(request(Net::HTTP::Get, "/api/streams").body.presence || "{}")
       want = wanted
       want.each do |name, src|
-        next if Array(current.dig(name, "producers")).any? { |pr| pr["url"] == src }
+        have = Array(current.dig(name, "producers")).map { |pr| pr["url"] }
+        next if (Array(src) - have).empty?
 
         # Sem arquivo de config o go2rtc cria/apaga o stream e responde 400
         # ("config file disabled"); o mesmo vale para o DELETE abaixo.

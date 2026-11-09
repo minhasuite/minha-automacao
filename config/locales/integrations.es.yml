@@ -640,6 +640,7 @@ es:
       use: Usar
     plugin:
       no_oauth: Esta integración no usa inicio de sesión externo.
+      no_camera_command: Este punto de la cámara no tiene comando.
     statuses:
       error: Con error
       ok: Conectada

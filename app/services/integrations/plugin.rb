@@ -58,6 +58,15 @@ module Integrations
       # (`address.on_demand`: câmera de nuvem cujo endereço vence); nil = sem vídeo.
       def stream_url(_point) = nil
 
+      # tapo: fontes a mais do go2rtc para um ponto `stream` (o go2rtc junta as
+      # faixas; ex.: tapo:// para o áudio de volta da Tapo); padrão: nenhuma.
+      def extra_sources(_point) = []
+
+      # tapo: ponto de câmera `go2rtc` que não é vídeo (privacidade, LED,
+      # sirene) comanda e lê pelo plugin da integração (Drivers::Camera).
+      def camera_command(_point, _command, _value) = raise(Integrations::Error, I18n.t("integrations.plugin.no_camera_command"))
+      def camera_poll(_device) = nil
+
       # integ: quadro (JPEG) de um ponto de câmera do plugin (detecção com IA:
       # o da detecção de agora); nil = o plugin não tem (o go2rtc assume).
       def snapshot(_point) = nil
