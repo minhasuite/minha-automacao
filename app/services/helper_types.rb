@@ -72,9 +72,9 @@ module HelperTypes
 
   # Origem "*" com debounce: refazer os templates a cada leitura (14 importados do
   # HA × cada ponto da nuvem Tuya) travava um núcleo do worker e segurava o pedido
-  # web do comando por segundos. Um job por local a cada STAR_DEBOUNCE, por
+  # web do comando por segundos. Um job por local a cada STAR_DEBOUNCE (5 s), por
   # processo; o job lê o estado de quando roda, então nenhuma mudança se perde.
-  STAR_DEBOUNCE = 2
+  STAR_DEBOUNCE = ENV.fetch("HELPER_STAR_DEBOUNCE_S", 5).to_f
   @star_at = Concurrent::Map.new
 
   def refresh_star_later(site_id)

@@ -168,7 +168,7 @@ Spec do tipo em `spec/services/helper_types_spec.rb`.
 `count_points("...")` (e sum/min/max/avg) e o texto `points_where`. Nesse
 caso a origem é o local inteiro (`sources` com `"*"`): uma mudança de
 qualquer ponto do local agenda o `HelperStarRefreshJob`, que refaz todos os
-"*" do local de uma vez, no máximo a cada 2 s por processo
-(`HelperTypes::STAR_DEBOUNCE`). A mudança de um helper "*" não agenda outra
+"*" do local de uma vez, no máximo a cada 5 s por processo
+(`HelperTypes::STAR_DEBOUNCE`, `HELPER_STAR_DEBOUNCE_S`). A mudança de um helper "*" não agenda outra
 rodada. Antes era síncrono: 14 templates importados do HA, refeitos a cada
 leitura da nuvem Tuya, seguravam um núcleo do worker e o pedido do comando.

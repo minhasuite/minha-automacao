@@ -89,7 +89,19 @@ module Automations
     end
 
     # Pontos da consulta, com os valores desta execução (os hipotéticos na simulação).
-    def query(q) = Points::Query.new(site, points: site.points.includes(:device, :area), value: method(:value), now: now).call(q)
+    # Uma carga do local serve às consultas do mesmo texto por até QUERY_TTL: o
+    # "Resumo casa" importado do HA faz ~25 count_points e recarregava os ~500
+    # pontos (com aparelho e área) em cada um, 3 s por rodada no Dell.
+    QUERY_TTL = 1.0
+
+    def query(q)
+      at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      if @points_query.nil? || at - @points_query_at > QUERY_TTL
+        @points_query = Points::Query.new(site, points: site.points.includes(:device, :area).to_a, value: method(:value), now: now)
+        @points_query_at = at
+      end
+      @points_query.call(q)
+    end
 
     # Ponto como o Liquid vê (`points["k"]` e cada item do `points_where`).
     def point_drop(p)

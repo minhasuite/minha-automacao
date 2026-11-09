@@ -44,3 +44,21 @@ RSpec.describe "Helpers de origem \"*\" com debounce" do
     expect { Integrations::BluetoothPlugin.tick(Time.current) }.not_to raise_error
   end
 end
+
+RSpec.describe Automations::Context do
+  it "reaproveita a carga dos pontos entre consultas do mesmo texto" do
+    tenant = create(:tenant)
+    ActsAsTenant.with_tenant(tenant) do
+      site = create(:site, tenant: tenant)
+      device = create(:device, site: site)
+      create(:point, device: device, capability: "onoff", value: true)
+      ctx = described_class.new(site: site)
+      loads = 0
+      counter = ->(*, payload) { loads += 1 if payload[:sql].to_s.match?(/FROM "points"/) && payload[:name] != "SCHEMA" }
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+        3.times { expect(ctx.query("capability=onoff state=on").size).to eq(1) }
+      end
+      expect(loads).to eq(1)
+    end
+  end
+end
