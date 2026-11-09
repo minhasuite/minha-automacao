@@ -12,7 +12,7 @@
       <% w["data"]["alerts"].each do |a| %>
         <% acked = a["acked"] ? [ t("dashboards.w.acked") ] : [] %>
         <%= render Ss::NoticeCardComponent.new(title: a["title"], text: [ a["text"].presence, *acked ].compact.join(" · ").presence,
-                                               tone: a["severity"] == "critical" ? :critical : :warn, time: t("dashboards.w.ago", time: time_ago_in_words(a["opened_at"])),
+                                               tone: a["severity"] == "critical" ? :critical : :warn, time: t("dashboards.w.ago", time: dw_short_ago(Time.zone.parse(a["opened_at"].to_s))),
                                                icon: icon("exclamation-circle").to_s,
                                                actions: (a["can_ack"] && !a["acked"] ? [ { label: t("dashboards.w.acked"), url: ack_alert_path(a["id"]) } ] : [])) %>
       <% end %>

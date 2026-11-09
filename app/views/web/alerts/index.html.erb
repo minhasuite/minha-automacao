@@ -11,7 +11,7 @@
         <% details = [ a.alert_rule.severity_label, "#{a.point.name}: #{point_value_text(a.point)}", a.site.name, t("automations.alerts.notices", count: a.level),
                        (t("automations.alerts.acked_by", name: a.acked_by&.name || t("automations.alerts.someone")) if a.acked?) ].compact %>
         <%= render Ss::NoticeCardComponent.new(title: a.alert_rule.name, text: details.join(" · "), tone: a.alert_rule.severity == "critical" ? :critical : :warn,
-                                               time: l(a.opened_at, format: :short), id: "alert-#{a.id}",
+                                               time: t("dashboards.w.ago", time: dw_short_ago(a.opened_at)), id: "alert-#{a.id}",
                                                actions: (can_ack ? [ { label: t("automations.alerts.ack"), url: ack_alert_path(a), icon: icon("check", "") } ] : [])) %>
       <% end %>
     </div>

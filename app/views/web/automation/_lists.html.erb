@@ -2,26 +2,44 @@
 <% lists = automation_lists(site, point) %>
 <% back = request.fullpath %>
 <% q = { back: back, point_id: point&.id }.compact %>
-<div class="grid gap-4 lg:grid-cols-2">
-
-  <%= render layout: "web/automation/section", locals: { title: t("automations.lists.schedules"), items: lists[:schedules], new_path: new_site_schedule_path(site, q), empty: t("automations.lists.schedules_empty") } do %>
-    <% lists[:schedules].each do |s| %>
-      <%= render "web/automation/item", title: s.name, detail: schedule_detail(s), record: s, back: back, enabled: s.enabled %>
+<% sections = [
+     { title: t("automations.lists.schedules"), icon: "clock", items: lists[:schedules], new_path: new_site_schedule_path(site, q), empty: t("automations.lists.schedules_empty"),
+       row: ->(s) { render("web/automation/item", title: s.name, detail: schedule_detail(s), record: s, back: back, enabled: s.enabled) } },
+     { title: t("automations.lists.links"), icon: "switch-horizontal", items: lists[:links], new_path: new_site_point_link_path(site, q), empty: t("automations.lists.links_empty"),
+       row: ->(l) { render("web/automation/item", title: "#{l.source_point.name} → #{l.target_point.name}", detail: link_detail(l), record: l, back: back, enabled: l.enabled) } },
+     { title: t("automations.lists.notify_rules"), icon: "bell", items: lists[:notify_rules], new_path: new_site_notify_rule_path(site, q), empty: t("automations.lists.notify_rules_empty"),
+       row: ->(r) { render("web/automation/item", title: r.point.name, detail: notify_detail(r), record: r, back: back, enabled: r.enabled) } },
+     { title: t("automations.alerts.title"), icon: "exclamation-circle", items: lists[:alert_rules], new_path: new_site_alert_rule_path(site, q), empty: t("automations.lists.alert_rules_empty"),
+       row: ->(r) { render("web/automation/item", title: r.name, detail: alert_rule_detail(r), record: r, back: back, enabled: r.enabled) } }
+   ] %>
+<%# Na página do ponto o que ainda não tem nada vira uma lista só (uma linha por tipo, com o "Novo"),
+    em vez de quatro cartões quase vazios; nas regras do local, um cartão por tipo como sempre. -%>
+<% spare = point ? sections.select { |s| s[:items].empty? } : [] %>
+<% full = sections - spare %>
+<% if full.any? %>
+  <div class="grid gap-4 lg:grid-cols-2">
+    <% full.each do |s| %>
+      <%= render layout: "web/automation/section", locals: s.slice(:title, :items, :new_path, :empty) do %>
+        <% s[:items].each do |r| %><%= s[:row].call(r) %><% end %>
+      <% end %>
     <% end %>
-  <% end %>
-  <%= render layout: "web/automation/section", locals: { title: t("automations.lists.links"), items: lists[:links], new_path: new_site_point_link_path(site, q), empty: t("automations.lists.links_empty") } do %>
-    <% lists[:links].each do |l| %>
-      <%= render "web/automation/item", title: "#{l.source_point.name} → #{l.target_point.name}", detail: link_detail(l), record: l, back: back, enabled: l.enabled %>
-    <% end %>
-  <% end %>
-  <%= render layout: "web/automation/section", locals: { title: t("automations.lists.notify_rules"), items: lists[:notify_rules], new_path: new_site_notify_rule_path(site, q), empty: t("automations.lists.notify_rules_empty") } do %>
-    <% lists[:notify_rules].each do |r| %>
-      <%= render "web/automation/item", title: r.point.name, detail: notify_detail(r), record: r, back: back, enabled: r.enabled %>
-    <% end %>
-  <% end %>
-  <%= render layout: "web/automation/section", locals: { title: t("automations.alerts.title"), items: lists[:alert_rules], new_path: new_site_alert_rule_path(site, q), empty: t("automations.lists.alert_rules_empty") } do %>
-    <% lists[:alert_rules].each do |r| %>
-      <%= render "web/automation/item", title: r.name, detail: alert_rule_detail(r), record: r, back: back, enabled: r.enabled %>
-    <% end %>
-  <% end %>
-</div>
+  </div>
+<% end %>
+<% if spare.any? %>
+  <section class="ss-card overflow-hidden <%= 'mt-4' if full.any? %>" aria-label="<%= t("automations.lists.not_set") %>">
+    <ul class="ss-rows">
+      <% spare.each do |s| %>
+        <li>
+          <span class="ss-icon-tile is-muted"><%= icon(s[:icon], "") %></span>
+          <div class="min-w-0 flex-1 basis-40">
+            <h2 class="text-base"><%= s[:title] %></h2>
+            <p class="text-sm text-muted"><%= s[:empty] %></p>
+          </div>
+          <% if can?(:manage) %>
+            <%= link_to s[:new_path], class: "ss-btn ss-btn-outline ss-btn-sm max-sm:ml-auto", "aria-label": t("automations.lists.new_x", title: s[:title]) do %><%= icon("plus", "size-4") %><%= t("automations.primitive.add") %><% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

@@ -244,6 +244,10 @@ es:
       shadow_off: Apagar la sombra
       shadow_on: Encender la sombra
   devices:
+    points_count:
+      one: 1 punto
+      other: '%{count} puntos'
+    mobile_list: Lista de aparatos
     title: Aparatos
     subtitle: '%{site} · todos los aparatos del lugar'
     new: Nuevo aparato

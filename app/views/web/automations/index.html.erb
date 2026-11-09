@@ -12,16 +12,13 @@
     <% if can?(:manage) %><%= link_to new_site_automation_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("automations.index.create_first") %><% end %><% end %>
   <% end %>
 <% else %>
-  <%= form_with url: site_automations_path(@site), method: :get, class: "mb-3 grid gap-3 sm:flex sm:flex-wrap sm:items-end", role: "search" do %>
-    <div class="min-w-0 sm:min-w-48 sm:flex-1"><label for="q" class="ss-label"><%= t("automations.common.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("automations.index.search_placeholder") %></div>
-    <div class="grid grid-cols-2 gap-2 sm:contents">
-      <div><label for="estado" class="ss-label"><%= t("automations.index.state") %></label><%= select_tag :estado, options_for_select([ [ t("automations.index.active"), "ativas" ], [ t("automations.index.inactive"), "desativadas" ] ], params[:estado]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div>
-      <div><label for="area" class="ss-label"><%= t("automations.index.area") %></label><%= select_tag :area, options_for_select(@site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, params[:area]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div>
-      <div><label for="rotulo" class="ss-label"><%= t("automations.index.label") %></label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: t("automations.index.all_m"), class: "ss-input", data: { autosubmit: true } %></div>
-      <% if @categories.any? %><div><label for="categoria" class="ss-label"><%= t("automations.index.category") %></label><%= select_tag :categoria, options_for_select(@categories, params[:categoria]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div><% end %>
-    </div>
-    <button type="submit" class="ss-btn ss-btn-ghost hidden sm:inline-flex" aria-label="<%= t("automations.common.search") %>"><%= icon("search", "size-4") %></button>
-  <% end %>
+  <%# Filtros da gem: busca, chips dos ativos e "+ Filtro" (uma linha no celular, em vez de quatro campos). %>
+  <% pair = ->(o) { o.is_a?(Array) ? o : [ o, o ] } %>
+  <%= render Ss::FilterBarComponent.new(url: site_automations_path(@site), search: :q, placeholder: t("automations.index.search_placeholder"), css: "mb-3",
+                                        filters: [ { param: :estado, label: t("automations.index.state"), options: [ [ t("automations.index.active"), "ativas" ], [ t("automations.index.inactive"), "desativadas" ] ] },
+                                                   { param: :area, label: t("automations.index.area"), options: @site.areas.order(:position, :name).map { |a| [ a.name, a.id ] } },
+                                                   ({ param: :rotulo, label: t("automations.index.label"), options: @labels.map(&pair) } if @labels.any?),
+                                                   ({ param: :categoria, label: t("automations.index.category"), options: @categories.map(&pair) } if @categories.any?) ].compact) %>
 
   <% if @automations.empty? %>
     <%= render Ss::EmptyStateComponent.new(title: t("automations.index.no_match"), variant: :busca, css: "ss-card") do %><%= link_to t("automations.common.clear_filters"), site_automations_path(@site), class: "ss-btn ss-btn-ghost" %><% end %>
@@ -35,8 +32,9 @@
       <% items.each do |a| %>
         <li id="automation-<%= a.id %>">
           <% if can?(:manage) %><label class="ss-check"><input type="checkbox" name="ids[]" value="<%= a.id %>" form="bulk" aria-label="<%= t("automations.common.mark", name: a.name) %>" data-ss-table-target="check" data-action="ss-table#toggleRow"></label><% end %>
-          <span class="ss-icon-tile <%= a.enabled ? 'is-grad' : 'is-muted' %>"><%= icon(a.icon.presence_in(HelperTypes::ICONS) || "lightning-bolt") %></span>
-          <div class="min-w-0 flex-1 basis-48">
+          <%# No celular o ícone sai (a chave já diz se está ligada) e o texto encolhe: chave e execuções ficam na linha do nome. %>
+          <span class="ss-icon-tile max-sm:hidden <%= a.enabled ? 'is-grad' : 'is-muted' %>"><%= icon(a.icon.presence_in(HelperTypes::ICONS) || "lightning-bolt") %></span>
+          <div class="min-w-0 flex-1 basis-36 sm:basis-48">
             <p class="font-bold text-ink break-words"><%= link_to a.name, (can?(:manage) ? edit_automation_path(a) : automation_automation_runs_path(a)), class: "text-ink no-underline hover:text-accent" %>
               <% unless a.enabled %> <span class="ss-badge ss-badge-warn"><%= a.published? ? t("automations.index.off") : t("automations.index.draft") %></span><% end %>
               <% if a.draft? && a.published? %> <span class="ss-badge"><%= t("automations.index.draft_changes") %></span><% end %>

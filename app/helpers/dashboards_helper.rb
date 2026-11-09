@@ -176,9 +176,12 @@ module DashboardsHelper
     t("dashboards.w.ago_d", n: secs / 86_400)
   end
 
+  # Comando a caminho (Points::Inflight): anel girando e "Enviando…"; falhou há pouco: erro.
   def dw_tile_status(p, off_line)
     return :unavailable if off_line
     return :locked if p["locked"]
+    return :pending if p["pending"]
+    return :error if p["failed"]
 
     :ready
   end

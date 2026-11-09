@@ -831,6 +831,8 @@ pt-BR:
       edit_name: "Editar %{name}"
       add: "Novo"
     lists:
+      not_set: "Ainda não configurado neste ponto"
+      new_x: "Novo: %{title}"
       schedules: "Agendas"
       schedules_empty: "Nenhuma agenda. Ex.: ligar às 17h, desligar às 23h, acender no pôr do sol."
       links: "Espelhar"

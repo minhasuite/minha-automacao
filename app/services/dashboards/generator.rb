@@ -59,7 +59,8 @@ module Dashboards
 
     # ondaA1 (A1): com andares, um bloco de áreas por andar (na ordem do nível).
     def area_sections
-      card = ->(a) { { "id" => "w-area-#{a.id}", "type" => "area_card", "area" => a.id, "span" => span(12, 6, 4) } }
+      # Duas por linha no celular (cartão quadrado, toque grande), como os tiles de luz.
+      card = ->(a) { { "id" => "w-area-#{a.id}", "type" => "area_card", "area" => a.id, "span" => span(6, 6, 4) } }
       floors = @areas.select(&:floor?).sort_by { |f| [ f.level || 0, f.position, f.name ] }
       return [ section("s-home-areas", tr(:areas), "view-boards", @areas.map(&card)) ] if floors.empty?
 

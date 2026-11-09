@@ -1,6 +1,13 @@
 module ApplicationHelper
   include Pagy::Frontend
 
+  # Quando, curto (lista no celular): até 7 dias "há 3 h"; depois a data ("08/11/2026").
+  # Vai num <time> com a data e hora completas no title.
+  def ma_when(time)
+    text = time > 7.days.ago ? t("dashboards.w.ago", time: dw_short_ago(time)) : l(time.to_date)
+    tag.time(text, datetime: time.iso8601, title: l(time, format: :long))
+  end
+
   NOTIFICATION_KINDS = { "convite" => [ "users", "is-accent" ],
                          "resumo_diario" => [ "calendar", "is-accent" ],
                          "aviso" => [ "bell", "is-accent" ],

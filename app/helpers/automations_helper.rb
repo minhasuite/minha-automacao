@@ -70,7 +70,10 @@ module AutomationsHelper
   def last_run_text(automation)
     return t("automations.helper.never_ran") unless automation.last_run_at
 
-    "#{AutomationRun::STATUSES.fetch(automation.last_status, automation.last_status)} #{l(automation.last_run_at, format: :short)}"
+    at = automation.last_run_at
+    # Recente em tempo relativo ("concluída há 3 h"): cabe numa linha no celular.
+    whn = at > 7.days.ago ? t("dashboards.w.ago", time: dw_short_ago(at)) : l(at, format: :short)
+    "#{AutomationRun::STATUSES.fetch(automation.last_status, automation.last_status)} #{whn}"
   end
 
   def result_icon(result)

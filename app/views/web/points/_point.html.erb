@@ -8,18 +8,17 @@
     <%= render wp.partial, w: { "id" => "pt-#{point.id}", "data" => wp.data(nil, {}, [ point ]).first }, points: { point.id => Dashboards::Resolver.point_json(point, @site_role) }, dashboard: nil, live: false %>
     <% if error %><p class="mt-2 text-sm font-semibold text-danger" role="alert"><%= error %></p><% end %>
   <% else %>
+  <%# Comando a caminho do aparelho: o tile já mostra o estado pedido, com "Enviando…" (Points::Inflight). %>
+  <% flight = Points::Inflight.for([ point ])[point.id] || {} %>
+  <% point.value = flight["expect"] if flight.key?("expect") %>
   <% on = point_on?(point) %>
   <% off_line = point.quality.in?(%w[unavailable error]) %>
   <% can_cmd = point.writable && !point.disabled && Points::Command.commands_for(point).any? && can?(:command, risk: point.risk) %>
   <% locked = point.writable && !point.disabled && Points::Command.commands_for(point).any? && !can_cmd %>
   <% switch = can_cmd && point.capability == "onoff" && !point.helper_type %>
-  <%# Tile da gem: nome (detalhes), valor no estado, chave para liga/desliga; o resto dos controles e o lápis no rodapé. %>
-  <%= render Ss::DeviceTileComponent.new(name: point.name, state: [ point_value_text(point), point.capability_label, (point.risk_label unless point.risk == "normal") ].compact_blank.join(" · "),
-                                         on: on, status: off_line ? :unavailable : (locked ? :locked : :ready), icon: icon(point_icon(point)).to_s, url: point_path(point),
-                                         toggle_url: (command_point_path(point) if switch), toggle_params: { command: on ? "off" : "on" },
-                                         confirm: point_confirm_data(point)[:turbo_confirm], unavailable_label: t("points.no_signal"),
-                                         title: point_status_note(point), css: [ "h-full", ("opacity-60" if point.disabled) ].compact.join(" "), aria: { live: "polite" }) do |c| %>
-    <% c.with_footer do %>
+  <%# Tile da gem: nome (detalhes), valor no estado, chave para liga/desliga; o resto dos controles no rodapé
+      (só quando há) e o editar no ⋯ do tile (também no toque longo), sem uma linha só para o lápis. %>
+  <% foot = capture do %>
       <% if error %><p class="text-sm font-semibold text-danger" role="alert"><%= error %></p><% end %>
     <% if can_cmd %>
       <% confirm = point_confirm_data(point) %>
@@ -46,16 +45,20 @@
           <% else %>
             <%= f.text_field :value, value: point.value, maxlength: 255, class: "ss-input flex-1 min-w-0", id: field_id %>
           <% end %>
-          <%= f.submit t("points.apply"), class: "ss-btn ss-btn-primary" %>
+          <%= f.button t("points.apply"), class: "ss-btn ss-btn-primary", name: nil %>
         <% end %>
       <% end %>
     <% elsif point.writable && !point.disabled && Points::Command.commands_for(point).empty? %>
       <p class="text-xs text-muted"><%= t("points.no_control") %></p>
     <% end %>
-      <% if can?(:manage) %>
-        <%= link_to edit_point_path(point), data: { turbo_frame: "_top" }, class: "ss-btn ss-btn-ghost ss-btn-sm", title: t("points.edit.title"), "aria-label": t("shared.edit_name", name: point.name) do %><%= icon("pencil", "size-4") %><% end %>
-      <% end %>
-    <% end %>
+  <% end %>
+  <%= render Ss::DeviceTileComponent.new(name: point.name, state: [ point_value_text(point), point.capability_label, (point.risk_label unless point.risk == "normal") ].compact_blank.join(" · "),
+                                         on: on, status: off_line ? :unavailable : (locked ? :locked : (flight["pending"] ? :pending : (flight["failed"] ? :error : :ready))), icon: icon(point_icon(point)).to_s, url: point_path(point),
+                                         toggle_url: (command_point_path(point) if switch), toggle_params: { command: on ? "off" : "on" },
+                                         confirm: point_confirm_data(point)[:turbo_confirm], unavailable_label: t("points.no_signal"),
+                                         more_url: (edit_point_path(point) if can?(:manage)), more_label: t("shared.edit_name", name: point.name), more_data: { turbo_frame: "_top" },
+                                         title: point_status_note(point), css: [ "h-full", ("opacity-60" if point.disabled) ].compact.join(" "), aria: { live: "polite" }) do |c| %>
+    <% c.with_footer { foot } if foot.present? %>
   <% end %>
   <% end %>
 <% end %>

@@ -3,3 +3,12 @@
     ss-theme uma vez. Valores continuam na chave "privacy" (ss-privacy com key-value). -%>
 <script>try { var s = localStorage, d = document.documentElement, o = s.getItem("theme"); if (o) { if (!s.getItem("ss-theme")) s.setItem("ss-theme", o); s.removeItem("theme") }
   var t = s.getItem("ss-theme"); if (t === "light" || t === "dark") d.dataset.theme = t; if (s.getItem("privacy") === "on") d.dataset.privacy = "on" } catch (_) {}</script>
+<%# Cor da barra do sistema (PWA/Android) = o --page da gem no tema em uso; refaz ao trocar tema, paleta ou OLED. -%>
+<script>(function () { var d = document.documentElement, mq = matchMedia("(prefers-color-scheme: dark)")
+  function bar() { try { var c = getComputedStyle(document.body || d).getPropertyValue("--page").trim(); if (!c) return
+    var ms = document.querySelectorAll('meta[name="theme-color"]'), m = ms[0]; for (var i = 1; i < ms.length; i++) ms[i].remove()
+    if (!m) { m = document.createElement("meta"); m.name = "theme-color"; document.head.appendChild(m) }
+    m.removeAttribute("media"); m.content = c } catch (_) {} }
+  bar(); document.addEventListener("DOMContentLoaded", bar); document.addEventListener("turbo:load", bar)
+  mq.addEventListener && mq.addEventListener("change", bar)
+  new MutationObserver(bar).observe(d, { attributes: true, attributeFilter: ["data-theme", "data-palette", "data-oled"] }) })()</script>

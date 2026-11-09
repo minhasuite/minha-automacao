@@ -831,6 +831,8 @@ en:
       edit_name: "Edit %{name}"
       add: "New"
     lists:
+      not_set: "Not set up for this point yet"
+      new_x: "New: %{title}"
       schedules: "Schedules"
       schedules_empty: "No schedules. E.g.: turn on at 5 PM, turn off at 11 PM, turn on at sunset."
       links: "Mirror"

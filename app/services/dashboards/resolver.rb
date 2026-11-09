@@ -45,7 +45,15 @@ module Dashboards
     def site = @site
     def points = @all
     def definition = @definition
-    def points_payload = @used.transform_values { |p| point_json(p) }
+    # `pending`/`expect`/`failed`: comando a caminho do aparelho (Points::Inflight), para o
+    # tile mostrar o estado pedido com "Enviando…" em vez de voltar ao antigo até o aviso.
+    def points_payload
+      flight = Points::Inflight.for(@used.values)
+      @used.transform_values do |p|
+        f = flight[p.id] or next point_json(p)
+        f.key?("expect") ? Points::Inflight.as_expected(p, f) { point_json(p) }.merge(f) : point_json(p).merge(f)
+      end
+    end
 
     # Filtros do `Points::Query` (Lote 4, G8: também integração, há quanto
     # tempo mudou, faixa, exclusão, ordem e corte). Sem `state`, a lista dos

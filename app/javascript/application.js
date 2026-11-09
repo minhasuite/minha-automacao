@@ -38,6 +38,63 @@ Turbo.StreamActions.point_changed = function () {
   }, 250)
 }
 
+// Comando de ponto (POST /pontos/:id/comando): o aparelho leva segundos, então a tela
+// responde no toque. A chave (ss-switch) já vira sozinha; aqui o tile de aperto (portão,
+// script, cena) entra em "Enviando…" (o anel da gem) e o botão de comando gira
+// (.ss-action-btn.is-loading da gem). Falhou: tile em erro, botão volta.
+const COMMAND_FORM = 'form[action$="/comando"]'
+const sendingTile = (form) => !form.matches('[data-controller~="ss-switch"]') && form.closest(".ss-device")
+document.addEventListener("turbo:submit-start", (e) => {
+  const form = e.target
+  if (!form.matches?.(COMMAND_FORM)) return
+  const tile = sendingTile(form)
+  if (tile) {
+    tile.dataset.maWas = tile.dataset.status || "ready"
+    tile.dataset.status = "pending"
+    tile.dataset.maSending = "1"
+    tile.setAttribute("aria-busy", "true")
+    return
+  }
+  const b = e.detail?.formSubmission?.submitter
+  if (b?.classList.contains("ss-btn")) b.classList.add("ss-action-btn", "is-loading")
+})
+document.addEventListener("turbo:submit-end", (e) => {
+  const form = e.target
+  if (!form.matches?.(COMMAND_FORM)) return
+  const ok = e.detail?.success !== false
+  const frame = form.closest("turbo-frame")
+  if (frame) frame.maChecks = 0 // comando novo: conta de novo as conferências
+  const tile = sendingTile(form)
+  if (tile?.dataset.maSending) {
+    delete tile.dataset.maSending
+    tile.removeAttribute("aria-busy")
+    tile.dataset.status = ok ? tile.dataset.maWas : "error"
+    if (!ok) { const st = tile.querySelector(".ss-device-state"); if (st?.dataset.error) st.textContent = st.dataset.error }
+  }
+  const b = e.detail?.formSubmission?.submitter
+  if (b?.classList.contains("is-loading")) {
+    b.classList.remove("is-loading")
+    if (ok && b.isConnected) { b.classList.add("is-done"); setTimeout(() => b.classList.remove("is-done", "ss-action-btn"), 1200) }
+  }
+})
+
+// Tile que veio do servidor "Enviando…" (comando ainda sem resposta do aparelho, Points::Inflight):
+// confere de novo a cada 4 s, no máximo até o comando expirar, caso o aviso do aparelho não chegue.
+const recheckPending = () => {
+  document.querySelectorAll('.ss-device[data-status="pending"]:not([data-ma-sending])').forEach((tile) => {
+    const f = tile.closest("turbo-frame")
+    if (!f || f.maRecheck || (f.maChecks || 0) >= 15) return
+    f.maChecks = (f.maChecks || 0) + 1
+    f.maRecheck = setTimeout(() => {
+      f.maRecheck = null
+      if (!f.isConnected || document.hidden) return
+      if (f.getAttribute("src")) f.reload(); else f.src = f.dataset.src || location.href
+    }, 4000)
+  })
+}
+document.addEventListener("turbo:load", recheckPending)
+document.addEventListener("turbo:frame-render", recheckPending)
+
 // Slider e seleção de widget se aplicam ao soltar/escolher.
 document.addEventListener("change", (e) => {
   if (e.target.matches("[data-autosubmit]")) e.target.form.requestSubmit()
