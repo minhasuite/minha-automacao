@@ -1,16 +1,14 @@
 <%# locals: (point:, plugin:, url:, method:) -%>
-<%= form_with scope: :helper, url: url, method: method, class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl w-full" do |f| %>
+<%# Formulário do helper; o bloco (de new e edit) traz as ações: yield f. -%>
+<%= ss_form_with scope: :helper, url: url, method: method, class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl w-full" do |f| %>
   <%= render "web/shared/errors", record: point %>
-  <div class="sm:col-span-2"><%= f.label :name, t("site_helpers.form.name"), class: "ss-label" %><%= f.text_field :name, value: point.name, class: "ss-input", required: true, maxlength: 80, autofocus: point.new_record?, placeholder: t("site_helpers.form.name_ph") %></div>
+  <div class="sm:col-span-2"><%= f.ss_text_field :name, label: t("site_helpers.form.name"), value: point.name, required: true, maxlength: 80, autofocus: point.new_record?, placeholder: t("site_helpers.form.name_ph") %></div>
   <div class="sm:col-span-2"><%= render "web/shared/icon_picker", name: "helper[icon]", selected: point.icon, icons: HelperTypes::ICONS, id: "helper_icon", blank: t("site_helpers.form.icon_default") %></div>
-  <div><%= f.label :area_id, t("site_helpers.form.area"), class: "ss-label" %><%= f.select :area_id, point.site.areas.order(:name).pluck(:name, :id), { selected: point.area_id, include_blank: t("site_helpers.form.no_area") }, class: "ss-input" %></div>
+  <%= f.ss_select :area_id, options_for_select(point.site.areas.order(:name).pluck(:name, :id), point.area_id), label: t("site_helpers.form.area"), include_blank: t("site_helpers.form.no_area") %>
   <%= fields_for :helper, point do |o| %><%= render "web/shared/organize_fields", f: o, record: point, categories: category_options(point.site.points.helpers) %><% end %>
-  <%= render "web/site_helpers/forms/#{plugin.key}", f: f, point: point %>
+  <%= render helper_form_partial(plugin), f: f, point: point %>
   <% unless plugin.sourced? %>
-    <label class="ss-check sm:col-span-2"><%= f.check_box :restore, { checked: point.address.fetch("restore", true) != false }, "1", "0" %><%= t("site_helpers.form.restore") %></label>
+    <div class="sm:col-span-2"><%= f.ss_check_box :restore, label: t("site_helpers.form.restore"), checked: point.address.fetch("restore", true) != false %></div>
   <% end %>
-  <div class="sm:col-span-2 flex flex-wrap gap-2">
-    <%= f.submit point.new_record? ? t("site_helpers.form.create") : t("site_helpers.form.save"), class: "ss-btn ss-btn-primary" %>
-    <%= link_to t("site_helpers.form.cancel"), site_helpers_path(point.site), class: "ss-btn ss-btn-ghost" %>
-  </div>
+  <div class="sm:col-span-2 flex flex-wrap gap-2"><%= yield f %></div>
 <% end %>

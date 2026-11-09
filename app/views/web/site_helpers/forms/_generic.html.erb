@@ -5,30 +5,26 @@
 <% plugin.form_spec.each do |name, kind, opts| %>
   <% opts ||= {} %>
   <% label = plugin.text("form.#{name}") %>
+  <% help = plugin.text("hint.#{name}", default: "").presence %>
   <% value = opts[:value] ? opts[:value].call(point) : a[name.to_s] %>
   <% wide = opts[:wide] || %i[point source textarea].include?(kind) %>
-  <div class="<%= 'sm:col-span-2' if wide %>">
+  <div class="<%= class_names("sm:col-span-2": wide, "sm:pt-6": kind == :bool) %>">
     <% case kind %>
     <% when :source, :point %>
       <% list = point.site.points.includes(:device).where.not(id: point.id).ordered.to_a %>
       <% list = list.select(&:numeric?) if kind == :source %>
       <% list = list.select { |p| opts[:filter].call(p) } if opts[:filter] %>
       <% chosen = opts[:index] ? Array(a["sources"])[opts[:index]] : value %>
-      <%= f.label name, label, class: "ss-label" %>
-      <%= f.select name, list.map { |p| [ "#{p.name} · #{p.device.name}#{" (#{p.unit})" if p.unit.present?}", p.id ] }, { selected: chosen, include_blank: opts[:required] == false ? "—" : t("helper_forms.pick_numeric") }, class: "ss-input", required: opts[:required] != false %>
+      <%= f.ss_select name, options_for_select(list.map { |p| [ "#{p.name} · #{p.device.name}#{" (#{p.unit})" if p.unit.present?}", p.id ] }, chosen),
+                      label: label, help: help, include_blank: opts[:required] == false ? "—" : t("helper_forms.pick_numeric"), required: opts[:required] != false %>
     <% when :select %>
-      <%= f.label name, label, class: "ss-label" %>
-      <%= f.select name, opts[:choices].call.map { |k, v| [ v, k ] }, { selected: value }, class: "ss-input" %>
+      <%= f.ss_select name, options_for_select(opts[:choices].call.map { |k, v| [ v, k ] }, value), label: label, help: help %>
     <% when :bool %>
-      <label class="ss-check mt-6"><%= f.check_box name, { checked: value == true }, "1", "0" %><%= label %></label>
+      <%= f.ss_check_box name, label: label, help: help, checked: value == true %>
     <% when :textarea %>
-      <%= f.label name, label, class: "ss-label" %>
-      <%= f.text_area name, value: value, rows: 4, class: "ss-input font-mono text-sm", placeholder: opts[:placeholder] %>
+      <%= f.ss_text_area name, label: label, help: help, value: value, rows: 4, class: "font-mono text-sm", placeholder: opts[:placeholder] %>
     <% else %>
-      <%= f.label name, label, class: "ss-label" %>
-      <%= f.text_field name, value: value, class: "ss-input #{'num' if kind == :number}", inputmode: (kind == :number ? "decimal" : nil), placeholder: opts[:placeholder] %>
+      <%= f.ss_text_field name, label: label, help: help, value: value, class: ("num" if kind == :number), inputmode: (kind == :number ? "decimal" : nil), placeholder: opts[:placeholder] %>
     <% end %>
-    <% hint = plugin.text("hint.#{name}", default: "") %>
-    <% if hint.present? %><p class="text-xs text-muted mt-1"><%= hint %></p><% end %>
   </div>
 <% end %>

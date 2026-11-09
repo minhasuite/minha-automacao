@@ -429,7 +429,7 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
         plugin = HelperTypes.plugin(k)
         expect(plugin).to be_present
         expect(plugin.texts["en"]).to include("title")
-        expect(Rails.root.join("app/views/web/site_helpers/forms/_#{k}.html.erb")).to exist
+        expect(plugin.form_spec).to be_present # formulário genérico (web/site_helpers/forms/_generic)
       end
     end
   end

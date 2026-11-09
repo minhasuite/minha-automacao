@@ -1,6 +1,9 @@
 <%= render "web/shared/header", title: @point.name, subtitle: t("site_helpers.edit.subtitle", type: @plugin.title, key: @point.key), back: site_helpers_path(@site) %>
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
-  <%= render "form", point: @point, plugin: @plugin, url: helper_path(@point), method: :patch %>
+  <%= render layout: "form", locals: { point: @point, plugin: @plugin, url: helper_path(@point), method: :patch } do |f| %>
+    <%= f.ss_submit(t("site_helpers.form.save")) %>
+    <%= link_to t("site_helpers.form.cancel"), site_helpers_path(@site), class: "ss-btn ss-btn-ghost" %>
+  <% end %>
   <aside class="grid gap-4">
     <section class="ss-card ss-card-pad" aria-labelledby="uso">
       <h2 id="uso" class="flex items-center gap-2"><%= icon("collection", "size-5") %><%= t("site_helpers.edit.used") %></h2>

@@ -1,2 +1,5 @@
 <%= render "web/shared/header", title: t("site_helpers.new.title", type: @plugin.title), subtitle: @plugin.description, back: new_site_helper_path(@site) %>
-<%= render "form", point: @point, plugin: @plugin, url: site_helpers_path(@site, tipo: @plugin.key), method: :post %>
+<%= render layout: "form", locals: { point: @point, plugin: @plugin, url: site_helpers_path(@site, tipo: @plugin.key), method: :post } do |f| %>
+  <%= f.ss_submit(t("site_helpers.form.create")) %>
+  <%= link_to t("site_helpers.form.cancel"), site_helpers_path(@site), class: "ss-btn ss-btn-ghost" %>
+<% end %>

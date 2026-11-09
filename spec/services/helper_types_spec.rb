@@ -23,10 +23,13 @@ RSpec.describe HelperTypes do
   it "catálogo: todo plugin tem chave, título, ícone existente, descrição e partial" do
     expect(described_class.keys).to eq(%w[toggle number select text datetime button counter timer group template statistics dataset_query utility_meter integral derivative threshold trend zone person alarm_panel tariff
                                                history_stats times_of_day random filter switch_as_x generic_thermostat generic_hygrostat mold_indicator bayesian compensation todo local_calendar proximity])
+    view = ApplicationController.new.view_context
     described_class.plugins.each do |p|
       expect([ p.title, p.description ]).to all(be_present)
       expect(HelperTypes::ICONS).to include(p.icon)
-      expect(Rails.root.join("app/views/web/site_helpers/forms/_#{p.key}.html.erb")).to exist
+      # A partial própria ou, com form_spec, a genérica.
+      partial = view.helper_form_partial(p).sub(%r{/(?=[^/]+\z)}, "/_")
+      expect(Rails.root.join("app/views/#{partial}.html.erb")).to exist
     end
   end
 
