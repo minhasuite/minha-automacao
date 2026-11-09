@@ -3,10 +3,7 @@
 <% kwh = ->(v) { "#{number_with_precision(v, precision: v.to_f < 10 ? 2 : 1, strip_insignificant_zeros: true, delimiter: '.', separator: ',')} kWh" } %>
 <% money = ->(v) { number_to_currency(v, unit: "R$ ", separator: ",", delimiter: ".") } %>
 <div class="dw-card">
-  <div class="dw-energy-head">
-    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.compare") %></p>
-    <span class="ss-icon-tile is-muted is-sm" style="color: var(--amber)"><%= icon("trending-up", "") %></span>
-  </div>
+  <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.compare"), icon: icon("trending-up", ""), tone: :heat) %>
   <% if d["missing"] %>
     <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %><%= t("dashboards.w.pick_energy") %></p>
   <% else %>

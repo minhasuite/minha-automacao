@@ -99,6 +99,8 @@ RSpec.describe "Painel de Energia" do
     body = response.body
     expect(body).to include("Energia agora", "ss-flow", "Comprando", "2,1 kW", "Consumo por aparelho", "Comparação de consumo", "Esta semana", "Este mês")
     expect(body.index(">TV<")).to be < body.index(">Geladeira<") # ranking: a TV gastou mais
+    # Ranking e cabeçalhos da gem (v0.12): Ss::RankListComponent e Ss::CardHeaderComponent.
+    expect(body).to include('class="ss-rank"', 'class="ss-rank-label">TV<', 'class="ss-card-title">Consumo por aparelho<')
 
     resolved = travel_to(now) { within(tenant) { Dashboards::Resolver.new(d, role: "owner").call } }
     rank = resolved["views"].first["sections"].flat_map { |s| s["widgets"] }.find { |w| w["type"] == "energy_breakdown" }["data"]

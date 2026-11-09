@@ -3,17 +3,10 @@
    números e avisos do assistente vêm da gem (FilterBar, OptionCard, Wizard, KpiStrip, Callout,
    JobProgress). Só tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
 @layer components {
-  /* ---- Energia (widgets energy_flow, energy_breakdown, energy_compare) --- */
+  /* ---- Energia (widgets energy_flow e energy_compare; o ranking é o Ss::RankListComponent) --- */
   .ef-card { display: flex; flex-direction: column; }
   .ef-foot { display: flex; align-items: center; gap: .5rem; margin: .6rem 0 0; font-size: .78rem; color: var(--muted); }
   .ef-foot .dw-meter { flex: 1; margin: 0; }
-  .ef-rank { list-style: none; margin: .7rem 0 0; padding: 0; display: grid; gap: .65rem; }
-  .ef-rank li { display: flex; align-items: flex-start; gap: .65rem; animation: ss-rise .45s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--ef-i) * 45ms); }
-  .ef-rank-n { flex: none; display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: .55rem; background: var(--field); font-size: .75rem; font-weight: 700; color: var(--ink-2); }
-  .ef-rank li:first-child .ef-rank-n { background: var(--amber-grad); color: #fff; }
-  .ef-rank-top { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin: 0; }
-  .ef-rank-bar { height: .45rem; margin-top: .3rem; border-radius: 999px; background: var(--field); overflow: hidden; }
-  .ef-rank-bar span { display: block; height: 100%; border-radius: inherit; background: var(--amber-grad); transform-origin: left; animation: ef-grow .7s cubic-bezier(.2, .8, .2, 1) both; }
   @keyframes ef-grow { from { transform: scaleX(0); } }
   .ef-cmp { display: grid; gap: .9rem; margin-top: .7rem; }
   .ef-cmp-row p { margin: 0; }
@@ -26,7 +19,7 @@
   .ef-down { background: var(--success-soft); color: var(--success); }
   @media (prefers-reduced-motion: reduce) {
     .ef-flow { animation: none; stroke-dasharray: none; }
-    .ef-rank li, .ef-rank-bar span, .ef-cmp-bars span { animation: none; }
+    .ef-cmp-bars span { animation: none; }
   }
 }
 

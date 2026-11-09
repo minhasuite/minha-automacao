@@ -315,8 +315,9 @@ RSpec.describe "F8f: Automações e cenas (web e API)" do
       definition = { "schema_version" => 1, "views" => [ { "id" => "v", "title" => "Casa", "sections" => [ { "id" => "s", "widgets" => widgets } ] } ] }
       d = within(tenant) { site.dashboards.create!(name: "Casa", kind: "custom", definition: definition, version: 1) }
       get "/paineis/#{d.id}"
-      expect(response.body.scan('class="ss-switch"').size).to eq(2)
-      expect(response.body).to include('aria-label="Ligar Férias"', "Executar Boa noite")
+      # componentes_ui v0.12: a chave é o ícone do tile (role=switch, rótulo = nome, title = a ação).
+      expect(response.body.scan('class="ss-device-ico ss-device-toggle" role="switch"').size).to eq(2)
+      expect(response.body).to include('aria-label="Férias"', 'title="Ligar Férias"', "Executar Boa noite")
       within(tenant) { lamp.report!(true) }
       post "/pontos/#{sp.id}/comando", params: { command: "run" }
       expect(within(tenant) { lamp.reload.value }).to be false

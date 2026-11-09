@@ -1,9 +1,3 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<%# Número com rótulo no .ss-kpi da gem (o rótulo em cima, o valor em mono). %>
-<div class="dw-card dw-stat">
-  <span class="ss-icon-tile text-accent"><%= icon(w["icon"].presence || "chart-bar") %></span>
-  <div class="ss-kpi dw-kpi">
-    <span class="ss-kpi-label truncate"><%= w["label"] %></span>
-    <span class="ss-kpi-value num"><%= w["data"]["text"] %></span>
-  </div>
-</div>
+<%# Número com rótulo no card de indicador da gem (cabeçalho padrão de card e valor em mono). %>
+<%= render Ss::KpiCardComponent.new(label: w["label"], value: w["data"]["text"], icon: icon(w["icon"].presence || "chart-bar", ""), css: "h-full") %>

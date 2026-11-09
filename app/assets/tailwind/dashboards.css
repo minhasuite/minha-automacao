@@ -32,7 +32,8 @@
 
   .dw-card { position: relative; height: 100%; padding: .95rem 1rem; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card);
              border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); transition: background .35s ease, border-color .35s ease, box-shadow .25s ease, transform .15s ease; }
-  .dw-card-title { font-size: .82rem; font-weight: 800; color: var(--ink); }
+  /* Mesmo título de card da gem (.ss-card-title do Ss::CardHeaderComponent). */
+  .dw-card-title { font-size: calc(.875rem * var(--ss-font-scale)); font-weight: 800; line-height: 1.3; color: var(--ink); }
   .dw-ico { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex-shrink: 0; border-radius: 14px; background: var(--field);
             color: var(--muted); transition: background .35s ease, color .35s ease, box-shadow .35s ease; }
   .dw-ico svg { width: 1.3rem; height: 1.3rem; }
@@ -62,13 +63,10 @@
   .dw-row a:hover .dw-name { color: var(--accent); }
   .dw-quiet { display: flex; align-items: center; gap: .5rem; margin-top: .6rem; font-size: .875rem; color: var(--muted); }
   .dw-range { width: 100%; accent-color: var(--accent); }
-  .dw-stat { display: flex; align-items: center; gap: .85rem; }
 
-  /* Medidor (ss_gauge da gem) e o kpi do número (.ss-kpi) dentro do cartão. */
+  /* Medidor (ss_gauge da gem) dentro do cartão. */
   .dw-gauge { display: grid; justify-items: center; align-content: center; gap: .35rem; }
   .dw-gauge-range { display: flex; justify-content: space-between; width: min(100%, 12rem); font-size: .75rem; color: var(--muted); }
-  .dw-kpi { padding: 0; border: 0; }
-  .dw-kpi > :last-child:not(.ss-spark) { margin-bottom: 0; }
   .dw-notices { display: grid; gap: .5rem; margin-top: .6rem; }
 
   .dw-s0 { stroke: var(--s0); } .dw-s1 { stroke: var(--s1); } .dw-s2 { stroke: var(--s2); }
@@ -106,7 +104,6 @@
   .dw-scene svg { color: var(--accent); }
 
   /* Consumo e custo (F9): número grande, linha de projeção/meta e barras por dia/hora. */
-  .dw-energy-head { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
   .dw-energy-big { font-size: clamp(1.6rem, 4.5vw, 2.1rem); font-weight: 800; letter-spacing: -.02em; color: var(--ink); line-height: 1.1; }
   .dw-energy-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: .5rem; margin-top: .85rem; }
   .dw-energy-fact { padding: .5rem .65rem; border-radius: 12px; background: var(--field); font-size: .75rem; color: var(--muted); }

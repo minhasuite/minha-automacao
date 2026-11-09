@@ -43,7 +43,8 @@ Turbo.StreamActions.point_changed = function () {
 // script, cena) entra em "Enviando…" (o anel da gem) e o botão de comando gira
 // (.ss-action-btn.is-loading da gem). Falhou: tile em erro, botão volta.
 const COMMAND_FORM = 'form[action$="/comando"]'
-const sendingTile = (form) => !form.matches('[data-controller~="ss-switch"]') && form.closest(".ss-device")
+// A chave do tile (o ícone, componentes_ui v0.12, form com ss-switch) cuida do próprio "Enviando…".
+const sendingTile = (form) => (!form.matches('[data-controller~="ss-switch"]') && form.closest(".ss-device")) || null
 document.addEventListener("turbo:submit-start", (e) => {
   const form = e.target
   if (!form.matches?.(COMMAND_FORM)) return
