@@ -2,6 +2,9 @@
 # ou failed (erro do driver) / expired (ficou na fila além do Command::TTL).
 class ExecuteCommandJob < ApplicationJob
   queue_as :default
+  # Na frente de tudo na fila (Solid Queue: número menor sai antes): quem
+  # apertou o interruptor está olhando para a lâmpada.
+  queue_with_priority(-10)
 
   def perform(command_id)
     command = ActsAsTenant.without_tenant { Command.find_by(id: command_id) }

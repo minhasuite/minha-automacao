@@ -34,6 +34,24 @@ services:
   db:
     image: postgres:18-alpine
     restart: unless-stopped
+    # Servidor de casa costuma ter HD (não SSD): cada leitura de sensor é um
+    # commit, e esperar o fsync de cada um travava a fila e os comandos.
+    # synchronous_commit=off arrisca só os últimos ~0,6 s numa queda de
+    # energia (o banco não corrompe); checkpoints mais espaçados escrevem menos.
+    command:
+      - postgres
+      - -c
+      - synchronous_commit=off
+      - -c
+      - wal_writer_delay=200ms
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-256MB}
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - max_wal_size=2GB
+      - -c
+      - effective_io_concurrency=${PG_IO_CONCURRENCY:-1}
     environment:
       POSTGRES_USER: minha_automacao
       POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
@@ -73,7 +91,8 @@ services:
     command: bundle exec ruby bin/jobs
     environment:
       <<: *app-env
-      DB_POOL: "12" # 3 threads do worker + Solid Queue + uma por aparelho ouvido
+      DB_POOL: "${DB_POOL:-24}" # threads do worker (JOB_THREADS) + Solid Queue + ouvintes e leitura periódica
+      JOB_THREADS: "${JOB_THREADS:-6}"
       MQTT_URL: mqtt://automacao:${MQTT_PASSWORD:?set MQTT_PASSWORD}@mosquitto:1883
 
   # Broker MQTT (driver mqtt, zigbee2mqtt). Com senha; a porta 1883 fica na

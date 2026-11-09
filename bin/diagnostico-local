@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# Raio-x do servidor local da casa (só leitura): máquina, disco, containers,
+# Postgres, fila e a latência real dos comandos (criado → enviado → confirmado)
+# por driver, mais o estado dos aparelhos Xiaomi e Tuya. Nada é alterado.
+#
+#   bin/diagnostico-local > diagnostico.txt
+#   DEPLOY_HOST=herlon@192.168.68.199 DEPLOY_KEY=~/.ssh/id_ed25519 DIAG_SAMPLE_S=20
+set -euo pipefail
+
+HOST="${DEPLOY_HOST:-herlon@192.168.68.199}"
+KEY="${DEPLOY_KEY:-$HOME/.ssh/id_ed25519}"
+DIR="${DEPLOY_DIR:-/opt/minha-automacao}"
+SAMPLE="${DIAG_SAMPLE_S:-20}"
+
+ssh -i "$KEY" -o BatchMode=yes "$HOST" bash -s "$DIR" "$SAMPLE" <<'REMOTE'
+set -uo pipefail
+DIR=$1; SAMPLE=$2
+cd "$DIR"
+sec() { printf '\n===== %s =====\n' "$1"; }
+psql_q() { docker compose exec -T db psql -U minha_automacao -d minha_automacao -P pager=off -c "$1"; }
+
+sec "máquina"
+hostname; uptime; nproc; grep -m1 "model name" /proc/cpuinfo; free -m
+lsblk -d -o NAME,ROTA,SIZE,MODEL
+df -h / /var/lib/docker 2>/dev/null | sort -u
+
+sec "disco: amostra de ${SAMPLE}s (/proc/diskstats)"
+dev=$(lsblk -nd -o NAME,TYPE | awk '$2=="disk"{print $1; exit}')
+read -r r1 w1 io1 < <(awk -v d="$dev" '$3==d{print $4, $8, $13}' /proc/diskstats)
+cpu1=$(awk '/^cpu /{print $2+$3+$4+$5+$6+$7+$8, $6}' /proc/stat)
+sleep "$SAMPLE"
+read -r r2 w2 io2 < <(awk -v d="$dev" '$3==d{print $4, $8, $13}' /proc/diskstats)
+cpu2=$(awk '/^cpu /{print $2+$3+$4+$5+$6+$7+$8, $6}' /proc/stat)
+awk -v r=$((r2-r1)) -v w=$((w2-w1)) -v io=$((io2-io1)) -v s="$SAMPLE" 'BEGIN{printf "%s: leituras %.1f/s, escritas %.1f/s, ocupado %.0f%% do tempo\n", "'"$dev"'", r/s, w/s, io/(s*10)}'
+echo "$cpu1 $cpu2" | awk '{printf "CPU em iowait: %.1f%%\n", ($4-$2)*100/($3-$1)}'
+
+sec "containers (docker stats)"
+docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.BlockIO}}'
+grep -E '^(JOB_THREADS|JOB_POLLING_S|DB_POOL|IMAGE)=' .env || true
+
+sec "Postgres"
+psql_q "SELECT name, setting FROM pg_settings WHERE name IN ('synchronous_commit','shared_buffers','checkpoint_timeout','max_wal_size')"
+psql_q "SELECT relname, n_live_tup, pg_size_pretty(pg_total_relation_size(relid)) total FROM pg_stat_user_tables ORDER BY pg_total_relation_size(relid) DESC LIMIT 12"
+psql_q "SELECT count(*) conexoes, state FROM pg_stat_activity WHERE datname='minha_automacao' GROUP BY state"
+psql_q "SELECT round(100.0*blks_hit/nullif(blks_hit+blks_read,0),1) cache_hit_pct, xact_commit FROM pg_stat_database WHERE datname='minha_automacao'"
+
+sec "latência dos comandos (últimas 24 h, por driver)"
+psql_q "
+SELECT d.driver, count(*) n,
+  round(percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM c.sent_at - c.created_at))::numeric, 2) fila_p50_s,
+  round(percentile_cont(0.95) WITHIN GROUP (ORDER BY extract(epoch FROM c.sent_at - c.created_at))::numeric, 2) fila_p95_s,
+  round(percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM c.confirmed_at - c.sent_at))::numeric, 2) aparelho_p50_s,
+  round(percentile_cont(0.95) WITHIN GROUP (ORDER BY extract(epoch FROM c.confirmed_at - c.sent_at))::numeric, 2) aparelho_p95_s,
+  count(*) FILTER (WHERE c.status='failed') falhas
+FROM commands c JOIN points p ON p.id=c.point_id JOIN devices d ON d.id=p.device_id
+WHERE c.created_at > now() - interval '24 hours'
+GROUP BY d.driver ORDER BY n DESC"
+
+sec "últimos 25 comandos"
+psql_q "
+SELECT to_char(c.created_at,'DD HH24:MI:SS') quando, d.driver, left(p.name,28) ponto, c.command, c.status,
+  round(extract(epoch FROM c.sent_at - c.created_at)::numeric,2) fila_s,
+  round(extract(epoch FROM c.confirmed_at - c.sent_at)::numeric,2) aparelho_s, left(c.error,70) erro
+FROM commands c JOIN points p ON p.id=c.point_id JOIN devices d ON d.id=p.device_id
+ORDER BY c.created_at DESC LIMIT 25"
+
+sec "fila (Solid Queue)"
+psql_q "SELECT (SELECT count(*) FROM solid_queue_ready_executions) prontos, (SELECT count(*) FROM solid_queue_claimed_executions) rodando, (SELECT count(*) FROM solid_queue_scheduled_executions) agendados, (SELECT count(*) FROM solid_queue_failed_executions) com_erro"
+psql_q "SELECT j.class_name, count(*) n, round(avg(extract(epoch FROM j.finished_at - j.created_at))::numeric,2) media_s, round(max(extract(epoch FROM j.finished_at - j.created_at))::numeric,1) max_s FROM solid_queue_jobs j WHERE j.finished_at > now() - interval '24 hours' GROUP BY 1 ORDER BY n DESC LIMIT 20"
+psql_q "SELECT j.class_name, to_char(c.created_at,'DD HH24:MI:SS') desde FROM solid_queue_claimed_executions c JOIN solid_queue_jobs j ON j.id=c.job_id ORDER BY c.created_at"
+psql_q "SELECT j.class_name, count(*) n, left(max(f.error::text),160) erro FROM solid_queue_failed_executions f JOIN solid_queue_jobs j ON j.id=f.job_id GROUP BY 1 ORDER BY n DESC LIMIT 10"
+
+sec "aparelhos Xiaomi e Tuya"
+psql_q "SELECT d.driver, d.status, count(*) FROM devices d WHERE d.driver IN ('xiaomi_miot','tuya_local','tuya_cloud') GROUP BY 1,2 ORDER BY 1,2"
+psql_q "SELECT left(name,30) nome, address->>'host' ip, address->>'model' modelo, status, last_seen_at, left(last_error,90) erro FROM devices WHERE driver='xiaomi_miot'"
+psql_q "SELECT left(name,30) nome, address->>'host' ip, address->>'version' v, (address->>'listen') ouvinte, status, left(last_error,70) erro FROM devices WHERE driver='tuya_local' ORDER BY status, name"
+
+sec "worker: avisos e erros recentes"
+docker compose logs --since 6h worker 2>&1 | grep -iE 'error|erro|timeout|refused|reset|tuya|miio|xiaomi' | tail -60
+REMOTE
