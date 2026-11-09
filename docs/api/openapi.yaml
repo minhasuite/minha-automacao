@@ -267,3 +267,6 @@ paths:
     post: { summary: "{template, mode liquid|expr} → {result} com o contexto do local; 422 invalid_template com a mensagem", responses: { "200": { description: "{result}" }, "422": { $ref: "#/components/responses/Error" } } }
   /sites/{id}/dev/events:
     post: { summary: "Dispara evento {event, data?} (gatilho Evento e Esperar evento); nome do sistema: 422. Escutar = aba Eventos da web (Turbo Stream)", responses: { "200": { description: "{event}" }, "422": { $ref: "#/components/responses/Error" } } }
+  # ---- Fila e jobs (docs/fila.md).
+  /system/queue:
+    get: { summary: "Fila e jobs (só o dono, numa instalação só; chave não): {summary {ready, claimed, scheduled, blocked, failed, finished_24h, oldest_ready_s, processes_alive, processes}, command_latency {1h|24h: {total, drivers[{driver, ...}]}} com {count, failed, expired, queue {p50, p95, max}, device {p50, p95, max}} em segundos (fila = sent_at - created_at; aparelho = confirmed_at - sent_at), processes[{kind, name, pid, hostname, last_heartbeat_at, alive}], recurring[{key, schedule, job, last_run_at, next_run_at}], jobs[{job, count, failed, avg_s, p95_s, max_s}] (24 h, espera + execução)}; meta {generated_at, windows, unit}", responses: { "200": { description: "{summary, command_latency, processes, recurring, jobs}" }, "403": { $ref: "#/components/responses/Error" } } }

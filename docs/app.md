@@ -22,6 +22,7 @@ não conhece nenhuma casa, aparelho ou automação; desenha o painel resolvido
 | Sensores do celular | `POST /sites/:id/mobile_devices`, `POST /mobile_devices/:id/sensors`, `DELETE /mobile_devices/:id` |
 | Pontos do local (widgets, atalhos e controles do Android) | `GET /sites/:id/points?view=app[&commandable=1]`, `GET /points/:id?view=app` |
 | Editor do painel no app (técnico/dono) | `GET /dashboards/:id/definition` (rascunho + `meta.catalog` dos plugins de widget), `PUT /dashboards/:id {definition, publish}` |
+| Fila e jobs (só o dono; `docs/fila.md`) | `GET /api/v1/system/queue` (resumo do Solid Queue + latência dos comandos fila x aparelho, por driver) |
 | Descoberta na rede de casa | mDNS `_minhaautomacao._tcp` (serviço `mdns` do compose local, `bin/mdns-announce`) |
 
 ## Tempo real
