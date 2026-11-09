@@ -2850,6 +2850,13 @@ CREATE INDEX index_commands_on_tenant_id ON public.commands USING btree (tenant_
 
 
 --
+-- Name: index_commands_on_tenant_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_commands_on_tenant_id_and_created_at ON public.commands USING btree (tenant_id, created_at);
+
+
+--
 -- Name: index_commands_on_tenant_id_and_client_uuid; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4843,6 +4850,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261108100001'),
 ('20261104100003'),
 ('20261104100002'),
 ('20261104100001'),

@@ -106,7 +106,10 @@ atualização com um clique (`Updates`, `bin/ma-update`, supervisor
 `/system/update`; `docs/instalacao.md`), acesso remoto por provedores
 (`RemoteAccess`; `docs/remote-access.md`). **Produto aberto** (04/11/2026,
 Apache 2.0): sem planos, licença, assinatura nem IA paga da suíte; tudo
-liberado, a IA só com a chave da instalação.
+liberado, a IA só com a chave da instalação. + **Fila e jobs**:
+Configurações → Fila (`QueueMonitor`: Solid Queue, latência dos comandos fila
+x aparelho por driver, tentar de novo/descartar; só o dono) e
+`GET /api/v1/system/queue` (`docs/fila.md`).
 
 ## Rodar
 

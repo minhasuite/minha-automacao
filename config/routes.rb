@@ -293,6 +293,10 @@ Rails.application.routes.draw do
     post "configuracoes/seguranca/google", to: "security#link_google", as: :settings_security_google
     delete "configuracoes/seguranca/google", to: "security#unlink_google"
     get "configuracoes/logs", to: "logs#show", as: :settings_logs
+    # Fila e jobs (docs/fila.md): Solid Queue + latência dos comandos; só o dono, como os Logs.
+    get "configuracoes/fila", to: "queue#show", as: :settings_queue
+    post "configuracoes/fila/erros/:id/tentar", to: "queue#retry_job", as: :settings_queue_retry
+    delete "configuracoes/fila/erros/:id", to: "queue#discard_job", as: :settings_queue_discard
     get "configuracoes/aparencia", to: "appearance#show", as: :settings_appearance
     patch "configuracoes/aparencia", to: "appearance#update"
     post "configuracoes/aparencia/temas", to: "appearance#create_theme", as: :settings_themes
@@ -442,6 +446,7 @@ Rails.application.routes.draw do
       post "sites/:site_id/dev/states/:point_id", to: "dev_tools#set_state"
       post "sites/:site_id/dev/template", to: "dev_tools#template"
       post "sites/:site_id/dev/events", to: "dev_tools#fire_event"
+      get "system/queue", to: "system_queue#show" # Fila e jobs (docs/fila.md), só o dono
 
       # Automação (F4).
       resources :sites, only: [] do
