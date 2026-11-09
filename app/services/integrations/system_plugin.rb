@@ -30,6 +30,10 @@ module Integrations
       # update do HA: versão nova do Minha Automação no canal escolhido (só onde dá para atualizar).
       "update_available" => { name: "Atualização disponível", capability: "problem", device_class: "update",
                               read: ->(_site) { Updates.available?(Updates.latest) if Updates.supported? } },
+      # update do HA com `installed_version` (os tiles "Core" e "Sistema"): a versão instalada do Minha
+      # Automação e o kernel do servidor (o contêiner divide o kernel com a máquina; o resto do sistema é da imagem).
+      "app_version" => { name: "Versão do Minha Automação", capability: "text", read: ->(_site) { SystemPlugin.app_version } },
+      "kernel" => { name: "Sistema do servidor", capability: "text", read: ->(_site) { SystemPlugin.kernel } },
       "backup_at" => { name: "Último backup", capability: "datetime", read: ->(_site) { SystemPlugin.last_backup&.iso8601 } },
       # backup do HA (próximo agendado e o estado do gerenciador): o local roda 24 h depois do anterior.
       "backup_next" => { name: "Próximo backup", capability: "datetime", read: ->(_site) { (SystemPlugin.last_backup + BACKUP_EVERY).iso8601 if SystemPlugin.last_backup } },
@@ -119,6 +123,19 @@ module Integrations
       return nil unless kb["MemTotal"].to_f.positive? && kb["MemAvailable"]
 
       ((1 - (kb["MemAvailable"] / kb["MemTotal"])) * 100).round
+    rescue SystemCallError
+      nil
+    end
+
+    # Tag da imagem (ou a release gravada pelo CI) e o commit, como em Configurações → Sistema.
+    def self.app_version
+      [ Updates.current_tag, ("(#{Updates.current_commit})" if Updates.current_commit) ].compact.join(" ").presence
+    end
+
+    # "Linux 6.12.96+deb13-amd64": o kernel da máquina (nil se não der para ler).
+    def self.kernel(osrelease = "/proc/sys/kernel/osrelease")
+      v = File.read(osrelease).strip.presence
+      "Linux #{v}" if v
     rescue SystemCallError
       nil
     end

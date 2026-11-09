@@ -29,6 +29,12 @@ Aba **Dados** do local (`/locais/:id/dados`): lista com a contagem, cadastro
 - **`dataset_query` "Consultar dados"**: `op`, `field`, `window`, `filters`,
   `limit`. Resposta `{value}` ou, em `rows`, `{value, rows, count}`, cada
   linha `{id, em, ...campos}`: `{% for r in dados.rows %}` no pedido da IA.
+- **Liquid `dataset_rows`** (o sensor `sql` do HA com a lista num atributo):
+  `{% assign acoes = "robo_historico" | dataset_rows: 10 %}` dá as linhas mais
+  recentes (`{id, em, ...campos}`, `em` no fuso do local; até 50), com os
+  filtros da ação no segundo argumento (`dataset_rows: 10, "tipo = erro"`).
+  Vale no Texto do painel e nos textos das automações; o card não se refaz
+  sozinho a cada linha gravada (refaz ao abrir ou quando um ponto citado muda).
 - **Helper "Consulta"** (`dataset_query`): o mesmo com um valor só; vira
   ponto e se refaz a cada linha gravada no conjunto (`docs/helpers.md`).
 

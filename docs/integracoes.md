@@ -211,7 +211,9 @@ O próprio servidor como pontos do aparelho virtual "Sistema": disco usado
 (%) e livre (GB), último backup e "Backup atrasado" (mais de 26 h; lê a pasta
 `BACKUP_DIR`, padrão `/backups`, montada só leitura no servidor da casa),
 integrações com erro (número e nomes), automações ligadas, execuções e falhas
-em 24 h, execuções em andamento e pontos sem sinal. Lê a cada 5 min. Medida
+em 24 h, execuções em andamento, pontos sem sinal, a versão do Minha Automação
+(tag da imagem e commit) e o sistema do servidor (o kernel, `Linux 6.12…`: o
+`installed_version` dos tiles "Core" e "Sistema" do HA). Lê a cada 5 min. Medida
 nova = uma entrada em `SystemPlugin::METRICS`; medida sem leitura no servidor
 não cria ponto.
 

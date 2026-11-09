@@ -16,6 +16,8 @@ module Automations
   # Lote 5: na expressão, `trigger.id`, `trigger.value`, `trigger.data.x` e
   # `timestamp` (segundos desde 1970); no texto, `{{ "hour * 60" | calc }}`
   # calcula uma expressão (o Jinja traduzido pelo importador usa isso).
+  # Conjuntos de dados: `{{ "robo_historico" | dataset_rows: 10 }}` dá as
+  # linhas mais recentes (`Datasets::LiquidFilter`).
   class Context
     class Error < StandardError; end
 
@@ -79,7 +81,7 @@ module Automations
 
       template = HaTemplates.text(template.to_s, site) || template # ondaA1 (A9): Jinja do HA vira Liquid
       Liquid::Template.parse(template.to_s, error_mode: :strict)
-            .render!(assigns, { strict_filters: true, filters: [ Points::Query::LiquidFilter, CalcFilter ], registers: { automation_context: self } }).truncate(limit)
+            .render!(assigns, { strict_filters: true, filters: [ Points::Query::LiquidFilter, Datasets::LiquidFilter, CalcFilter ], registers: { automation_context: self } }).truncate(limit)
     rescue Liquid::Error => e
       raise Error, "Texto \"#{template.to_s.truncate(60)}\": #{e.message.truncate(120)}"
     end
