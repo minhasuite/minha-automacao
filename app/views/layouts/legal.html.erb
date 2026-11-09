@@ -3,25 +3,25 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= content_for(:title) %> — Minha Automação</title>
-  <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f6f5fb; color: #1f2420; margin: 0; padding: 24px 16px; line-height: 1.6; }
-    main { background: #fff; border-radius: 16px; padding: 28px; max-width: 760px; margin: 0 auto; box-shadow: 0 6px 24px rgba(0,0,0,.06); }
-    h1 { font-size: 1.6rem; margin: 0 0 4px; } h2 { font-size: 1.1rem; margin-top: 28px; }
-    .meta { color: #5d655f; font-size: .85rem; margin: 0 0 20px; }
-    a { color: #5a45e8; } nav { max-width: 760px; margin: 0 auto 12px; font-weight: 700; color: #5a45e8; }
-    footer { max-width: 760px; margin: 16px auto 0; font-size: .85rem; color: #5d655f; }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <%= stylesheet_link_tag "tailwind" %>
+  <%= ss_density_head %>
+  <%= render "web/shared/theme_head" %>
 </head>
-<body class="ss-base">
-  <nav>Minha Automação</nav>
-  <main>
-    <h1><%= content_for(:title) %></h1>
-    <% if @updated_on %><p class="meta"><%= t("legal.updated", date: l(@updated_on)) %></p><% end %>
-    <%= yield %>
-  </main>
-  <footer>
-    <a href="/privacidade"><%= t("legal.privacy") %></a> · <a href="/termos"><%= t("legal.terms") %></a> · <a href="/exclusao"><%= t("legal.deletion") %></a> ·
-    <%= t("legal.contact") %> <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a>
-  </footer>
+<%# Páginas públicas (Play, link do e-mail): sem sessão nem JS da aplicação; a Lista Clara pelo CSS da gem. %>
+<body class="ss-base ss-inputs min-h-screen">
+  <div class="mx-auto grid max-w-3xl gap-4 px-4 py-8 leading-relaxed text-ink-2 [&_a]:font-semibold [&_a]:text-accent">
+    <a href="/" class="flex w-fit items-center gap-2.5 text-lg font-bold no-underline text-ink!">
+      <span class="ss-icon-tile is-sm is-grad"><%= icon("lightning-bolt", "size-5") %></span>Minha Automação
+    </a>
+    <%= render Ss::PageComponent.new(title: content_for(:title), subtitle: (t("legal.updated", date: l(@updated_on)) if @updated_on)) do %>
+      <div class="grid gap-4"><%= yield %></div>
+    <% end %>
+    <footer class="text-sm text-muted">
+      <a href="/privacidade"><%= t("legal.privacy") %></a> · <a href="/termos"><%= t("legal.terms") %></a> · <a href="/exclusao"><%= t("legal.deletion") %></a> ·
+      <%= t("legal.contact") %> <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a>
+    </footer>
+  </div>
 </body>
 </html>

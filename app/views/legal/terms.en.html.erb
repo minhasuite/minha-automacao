@@ -1,11 +1,19 @@
 <% content_for :title, "Terms of Use" %>
-<h2>1. The service</h2>
-<p>A tool to automate and keep an eye on homes, stores and factories: devices, sensors, scenes, automations, notifications
-   and dashboards.</p>
-<h2>2. Responsibilities</h2>
-<p>You are responsible for what you register and for the automations you turn on. Automation does not replace a security system,
-   a certified alarm or machine safety equipment: use it as <strong>support</strong>, not as a guarantee.</p>
-<h2>3. Acceptable use</h2>
-<p>Do not use the service to control devices or places without permission from their owner.</p>
-<h2>4. Closing your account</h2>
-<p>You can delete your account at any time. The home's data is deleted when the last member leaves.</p>
+<section class="ss-card ss-card-pad grid gap-2">
+  <%= render Ss::CardHeaderComponent.new(title: "1. The service", heading: :h2) %>
+  <p>A tool to automate and keep an eye on homes, stores and factories: devices, sensors, scenes, automations, notifications
+     and dashboards.</p>
+</section>
+<section class="ss-card ss-card-pad grid gap-2">
+  <%= render Ss::CardHeaderComponent.new(title: "2. Responsibilities", heading: :h2) %>
+  <p>You are responsible for what you register and for the automations you turn on. Automation does not replace a security system,
+     a certified alarm or machine safety equipment: use it as <strong>support</strong>, not as a guarantee.</p>
+</section>
+<section class="ss-card ss-card-pad grid gap-2">
+  <%= render Ss::CardHeaderComponent.new(title: "3. Acceptable use", heading: :h2) %>
+  <p>Do not use the service to control devices or places without permission from their owner.</p>
+</section>
+<section class="ss-card ss-card-pad grid gap-2">
+  <%= render Ss::CardHeaderComponent.new(title: "4. Closing your account", heading: :h2) %>
+  <p>You can delete your account at any time. The home's data is deleted when the last member leaves.</p>
+</section>
