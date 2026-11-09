@@ -1,16 +1,16 @@
 <%# locals: (f:, integration:) -%>
 <% s = integration&.settings || {} %>
 <% keep = integration ? t("integrations.forms.common.keep") : "" %>
+<%= render(Ss::CalloutComponent.new) { t("integrations.forms.whatsapp.intro") } %>
 <% if integration.nil? %>
-  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "WhatsApp", maxlength: 80 %></div>
+  <%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "WhatsApp", maxlength: 80 %>
 <% end %>
-<p class="text-sm text-ink-2"><%= t("integrations.forms.whatsapp.intro") %></p>
-<div><%= f.ss_password_field :token, label: t("integrations.forms.whatsapp.token"), autocomplete: "off", value: nil, required: integration.nil?, placeholder: keep %></div>
-<div><%= f.ss_text_field :phone_id, label: "Phone number ID", value: s["phone_id"], class: "num", required: true %></div>
-<div><%= f.ss_telephone_field :to, label: t("integrations.forms.whatsapp.to"), value: s["to"], class: "num", required: true, placeholder: "5585999999999" %></div>
+<%= f.ss_password_field :token, label: t("integrations.forms.whatsapp.token"), autocomplete: "off", value: nil, required: integration.nil?, placeholder: keep %>
+<%= f.ss_text_field :phone_id, label: "Phone number ID", value: s["phone_id"], class: "num", required: true %>
+<%= f.ss_telephone_field :to, label: t("integrations.forms.whatsapp.to"), value: s["to"], class: "num", required: true, placeholder: "5585999999999" %>
 <div class="grid grid-cols-2 gap-2">
-  <div><%= f.ss_text_field :template, label: t("integrations.forms.whatsapp.template"), value: s["template"], placeholder: "aviso_casa" %></div>
-  <div><%= f.ss_text_field :language, label: t("integrations.forms.whatsapp.language"), value: s["language"], placeholder: "pt_BR" %></div>
+  <%= f.ss_text_field :template, label: t("integrations.forms.whatsapp.template"), value: s["template"], placeholder: "aviso_casa" %>
+  <%= f.ss_text_field :language, label: t("integrations.forms.whatsapp.language"), value: s["language"], placeholder: "pt_BR" %>
 </div>
-<p class="text-xs text-muted"><%= t("integrations.forms.whatsapp.template_hint") %></p>
-<div><%= f.ss_password_field :app_secret, label: t("integrations.forms.whatsapp.app_secret"), autocomplete: "off", value: nil, placeholder: keep %></div>
+<%= render(Ss::CalloutComponent.new(tone: :warn)) { t("integrations.forms.whatsapp.template_hint") } %>
+<%= f.ss_password_field :app_secret, label: t("integrations.forms.whatsapp.app_secret"), autocomplete: "off", value: nil, placeholder: keep %>

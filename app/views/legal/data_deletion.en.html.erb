@@ -1,8 +1,20 @@
 <% content_for :title, "Data deletion" %>
-<ul>
-  <li><strong>Export:</strong> website › Settings › Export data (JSON with your home's data), or in the app.</li>
-  <li><strong>Reset the home's data (owner only):</strong> deletes the installation's devices, automations and history. The account and members stay.</li>
-  <li><strong>Delete the account:</strong> website › Settings › Delete account, or in the app. If you are the last member,
-      the whole installation is deleted with it.</li>
-</ul>
-<p>Can't access your account? Write to <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a> from the registered e-mail.</p>
+<section class="ss-card">
+  <ul class="ss-rows">
+    <li class="flex-nowrap items-start">
+      <span class="ss-icon-tile is-accent"><%= icon("download") %></span>
+      <span class="min-w-0"><strong class="block text-ink">Export</strong><span class="text-sm text-ink-2">Website › Settings › Export data (JSON with your home's data), or in the app.</span></span>
+    </li>
+    <li class="flex-nowrap items-start">
+      <span class="ss-icon-tile is-accent"><%= icon("refresh") %></span>
+      <span class="min-w-0"><strong class="block text-ink">Reset the home's data (owner only)</strong><span class="text-sm text-ink-2">Deletes the installation's devices, automations and history. The account and members stay.</span></span>
+    </li>
+    <li class="flex-nowrap items-start">
+      <span class="ss-icon-tile is-danger"><%= icon("trash") %></span>
+      <span class="min-w-0"><strong class="block text-ink">Delete the account</strong><span class="text-sm text-ink-2">Website › Settings › Delete account, or in the app. If you are the last member, the whole installation is deleted with it.</span></span>
+    </li>
+  </ul>
+</section>
+<%= render Ss::CalloutComponent.new do %>
+  <p>Can't access your account? Write to <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a> from the registered e-mail.</p>
+<% end %>

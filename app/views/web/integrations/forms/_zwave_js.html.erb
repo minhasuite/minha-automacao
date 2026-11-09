@@ -1,8 +1,6 @@
 <%# locals: (f:, integration:) -%>
 <% if integration.nil? %>
-  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "Z-Wave JS", maxlength: 80 %></div>
+  <%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "Z-Wave JS", maxlength: 80 %>
 <% end %>
-<div>
-  <%= f.ss_text_field :url, label: t("integrations.forms.zwave_js.url"), class: "num", value: integration&.settings&.dig("url"), placeholder: "ws://192.168.0.10:3000", autocomplete: "off", spellcheck: false %>
-</div>
-<p class="text-xs text-muted"><%= t("integrations.forms.zwave_js.note") %></p>
+<%= f.ss_text_field :url, label: t("integrations.forms.zwave_js.url"), class: "num", value: integration&.settings&.dig("url"), placeholder: "ws://192.168.0.10:3000", autocomplete: "off", spellcheck: false %>
+<%= render(Ss::CalloutComponent.new) { t("integrations.forms.zwave_js.note") } %>

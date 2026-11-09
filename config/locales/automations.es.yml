@@ -607,6 +607,7 @@ es:
       script: "Nuevo script"
     runs:
       subtitle: "%{name} · últimos %{days} días"
+      checks: "Condiciones verificadas"
       empty: "Todavía no hay ejecuciones."
       empty_hint: "Cuando un disparador se active (o alguien simule), el paso a paso aparece aquí."
       simulation: "Simulación"

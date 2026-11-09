@@ -1,8 +1,20 @@
 <% content_for :title, "Eliminación de datos" %>
-<ul>
-  <li><strong>Exportar:</strong> sitio › Configuración › Exportar datos (JSON con los datos de tu casa), o desde la app.</li>
-  <li><strong>Reiniciar los datos de la casa (solo el dueño):</strong> borra los dispositivos, automatizaciones e historial de la instalación. La cuenta y los miembros se mantienen.</li>
-  <li><strong>Eliminar la cuenta:</strong> sitio › Configuración › Eliminar cuenta, o desde la app. Si eres el último miembro,
-      se borra toda la instalación junto con ella.</li>
-</ul>
-<p>¿Sin acceso a la cuenta? Escribe a <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a> desde el correo registrado.</p>
+<section class="ss-card">
+  <ul class="ss-rows">
+    <li class="flex-nowrap items-start">
+      <span class="ss-icon-tile is-accent"><%= icon("download") %></span>
+      <span class="min-w-0"><strong class="block text-ink">Exportar</strong><span class="text-sm text-ink-2">Sitio › Configuración › Exportar datos (JSON con los datos de tu casa), o desde la app.</span></span>
+    </li>
+    <li class="flex-nowrap items-start">
+      <span class="ss-icon-tile is-accent"><%= icon("refresh") %></span>
+      <span class="min-w-0"><strong class="block text-ink">Reiniciar los datos de la casa (solo el dueño)</strong><span class="text-sm text-ink-2">Borra los dispositivos, automatizaciones e historial de la instalación. La cuenta y los miembros se mantienen.</span></span>
+    </li>
+    <li class="flex-nowrap items-start">
+      <span class="ss-icon-tile is-danger"><%= icon("trash") %></span>
+      <span class="min-w-0"><strong class="block text-ink">Eliminar la cuenta</strong><span class="text-sm text-ink-2">Sitio › Configuración › Eliminar cuenta, o desde la app. Si eres el último miembro, se borra toda la instalación junto con ella.</span></span>
+    </li>
+  </ul>
+</section>
+<%= render Ss::CalloutComponent.new do %>
+  <p>¿Sin acceso a la cuenta? Escribe a <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a> desde el correo registrado.</p>
+<% end %>

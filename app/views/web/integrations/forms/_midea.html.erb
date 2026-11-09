@@ -1,5 +1,7 @@
 <%# locals: (f:, integration:) -%>
-<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::MideaPlugin,
-           plain: [ [ :device_id, t("integrations.forms.midea.device_id"), t("integrations.forms.midea.device_id_hint") ] ],
-           fields: [ [ :token, t("integrations.forms.midea.token"), t("integrations.forms.midea.from_discover") ], [ :key, t("integrations.forms.midea.key"), t("integrations.forms.midea.from_discover") ] ],
-           note: t("integrations.forms.midea.note") %>
+<% keep = integration && t("integrations.forms.common.keep") %>
+<%= render layout: "web/integrations/forms/lan", locals: { f: f, integration: integration, plugin: Integrations::MideaPlugin } do %>
+  <%= f.ss_text_field :device_id, label: t("integrations.forms.midea.device_id"), value: params[:device_id].presence || integration&.settings&.dig("device_id"), placeholder: t("integrations.forms.midea.device_id_hint"), autocomplete: "off", spellcheck: false %>
+  <%= f.ss_password_field :token, label: t("integrations.forms.midea.token"), help: t("integrations.forms.midea.from_discover"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+  <%= f.ss_password_field :key, label: t("integrations.forms.midea.key"), help: t("integrations.forms.midea.from_discover"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+<% end %>

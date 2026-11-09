@@ -1,6 +1,6 @@
 <%# locals: (site:) -%>
 <% endpoint = "#{request.base_url}/mcp" %>
-<p class="text-sm text-muted mb-4 max-w-3xl"><%= t("assist_settings.mcp.pitch") %></p>
+<%= render(Ss::CalloutComponent.new(css: "mb-4 max-w-3xl")) { t("assist_settings.mcp.pitch") } %>
 <div class="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
   <section class="ss-card ss-card-pad vz-pipe min-w-0" aria-labelledby="mcp-t">
     <h2 id="mcp-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("code", "size-5") %><%= t("assist_settings.mcp.connect") %></h2>

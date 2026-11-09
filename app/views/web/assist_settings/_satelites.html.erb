@@ -1,5 +1,5 @@
 <%# locals: (site:) -%>
-<p class="text-sm text-muted mb-4 max-w-3xl"><%= t("assist_settings.satellites.pitch") %></p>
+<%= render(Ss::CalloutComponent.new(css: "mb-4 max-w-3xl")) { t("assist_settings.satellites.pitch") } %>
 <% areas = site.areas.order(:level, :position, :name).map { |a| [ a.name, a.id ] } %>
 <% devices = site.devices.where(driver: "esphome", removed_at: nil).order(:name).map { |d| [ d.name, d.id ] } %>
 <% pipelines = @pipelines.map { |p| [ p.name, p.id ] } %>

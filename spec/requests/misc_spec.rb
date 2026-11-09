@@ -53,7 +53,7 @@ RSpec.describe "Notificações, push, IA e páginas públicas" do
     h1 = { "pt-BR" => "Exclusão de dados", "en" => "Data deletion", "es" => "Eliminación de datos" }
     %w[pt-BR en es pt-BR es en pt-BR].each do |lang|
       get "/exclusao", headers: { "Accept-Language" => lang }
-      expect(response.body).to include("<html lang=\"#{lang}\">", "<h1>#{h1[lang]}</h1>")
+      expect(response.body).to include("<html lang=\"#{lang}\">", "<h1 class=\"ss-page-title\">#{h1[lang]}</h1>")
     end
     get "/exclusao", headers: { "Accept-Language" => "pt-BR" }
     expect(response.body).to include("dados da sua casa")

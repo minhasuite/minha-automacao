@@ -1,8 +1,7 @@
 <%# locals: (f:, integration:) -%>
 <% if integration.nil? %>
-  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "Growatt", maxlength: 80 %></div>
+  <%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "Growatt", maxlength: 80 %>
 <% end %>
-<div>
-  <%= f.ss_password_field :token, label: t("integrations.forms.growatt.token"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: integration ? t("integrations.forms.common.keep") : t("integrations.forms.growatt.from") %>
-</div>
-<p class="text-xs text-muted"><%= t("integrations.forms.growatt.note") %></p>
+<%= f.ss_password_field :token, label: t("integrations.forms.growatt.token"), help: t("integrations.forms.growatt.from"), class: "font-mono text-sm", autocomplete: "new-password", value: nil,
+                        placeholder: (t("integrations.forms.common.keep") if integration) %>
+<%= render(Ss::CalloutComponent.new) { t("integrations.forms.growatt.note") } %>

@@ -98,7 +98,11 @@
 
     <details class="ss-card ss-card-pad" <%= "open" if @automation.errors.any? %>>
       <summary class="ss-summary font-bold text-ink"><%= t("automations.edit.name_mode") %></summary>
-      <div class="mt-3"><%= render "web/automations/settings", automation: @automation, site: @site %></div>
+      <div class="mt-3">
+        <%= render layout: "web/automations/settings", locals: { automation: @automation, site: @site } do |f| %>
+          <%= f.submit t("automations.settings.save"), class: "ss-btn ss-btn-outline" %>
+        <% end %>
+      </div>
     </details>
 
     <% if Array(@draft["triggers"]).any? { |tr| tr["type"] == "webhook" } %>

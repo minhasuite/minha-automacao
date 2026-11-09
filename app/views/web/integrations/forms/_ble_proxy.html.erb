@@ -1,5 +1,7 @@
 <%# locals: (f:, integration:) -%>
-<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::BleProxyPlugin,
-           fields: [ [ :encryption_key, t("integrations.forms.ble_proxy.key"), t("integrations.forms.ble_proxy.key_hint") ], [ :password, t("integrations.forms.ble_proxy.password"), t("integrations.forms.ble_proxy.password_hint") ],
-                     [ :bindkeys, t("protocols.ble.bindkeys"), t("protocols.ble.bindkeys_hint") ] ],
-           note: t("integrations.forms.ble_proxy.note") %>
+<% keep = integration && t("integrations.forms.common.keep") %>
+<%= render layout: "web/integrations/forms/lan", locals: { f: f, integration: integration, plugin: Integrations::BleProxyPlugin } do %>
+  <%= f.ss_password_field :encryption_key, label: t("integrations.forms.ble_proxy.key"), help: t("integrations.forms.ble_proxy.key_hint"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+  <%= f.ss_password_field :password, label: t("integrations.forms.ble_proxy.password"), help: t("integrations.forms.ble_proxy.password_hint"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+  <%= f.ss_password_field :bindkeys, label: t("protocols.ble.bindkeys"), help: t("protocols.ble.bindkeys_hint"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+<% end %>

@@ -1,5 +1,8 @@
 <%= render "web/shared/header", title: t("areas.edit.title"), subtitle: "#{@area.name} · #{@site.name}", back: area_path(@area) %>
-<%= render "web/areas/form", site: @site, area: @area %>
+<%= render layout: "web/areas/form", locals: { site: @site, area: @area } do |f| %>
+  <%= f.ss_submit(t("areas.form.save")) %>
+  <%= link_to t("shared.cancel"), @area, class: "ss-btn ss-btn-ghost" %>
+<% end %>
 <section class="ss-card ss-card-pad mt-4 max-w-3xl">
   <h2><%= t("areas.edit.delete") %></h2>
   <p class="text-sm text-muted mt-1"><%= t("areas.edit.delete_hint") %></p>

@@ -1,10 +1,6 @@
 <%# locals: (f:, integration:) -%>
 <% s = integration&.settings || {} %>
-<div>
-  <%= f.ss_number_field :home_radius_m, label: t("integrations.forms.mobile_app.radius"), value: s["home_radius_m"] || Integrations::MobileAppPlugin::HOME_RADIUS_M, min: 30, max: 5000, class: "num" %>
-</div>
-<div>
-  <%= f.ss_number_field :location_keep_h, label: t("integrations.forms.mobile_app.keep_h"), value: s.fetch("location_keep_h", Integrations::MobileAppPlugin::KEEP_H), min: 0, max: Integrations::MobileAppPlugin::KEEP_MAX_H, class: "num" %>
-  <p class="text-xs text-muted mt-1"><%= t("integrations.forms.mobile_app.keep_hint") %></p>
-</div>
-<p class="text-sm text-ink-2"><%= t("integrations.forms.mobile_app.intro") %></p>
+<%= render(Ss::CalloutComponent.new) { t("integrations.forms.mobile_app.intro") } %>
+<%= f.ss_number_field :home_radius_m, label: t("integrations.forms.mobile_app.radius"), value: s["home_radius_m"] || Integrations::MobileAppPlugin::HOME_RADIUS_M, min: 30, max: 5000, class: "num" %>
+<%= f.ss_number_field :location_keep_h, label: t("integrations.forms.mobile_app.keep_h"), help: t("integrations.forms.mobile_app.keep_hint"),
+                      value: s.fetch("location_keep_h", Integrations::MobileAppPlugin::KEEP_H), min: 0, max: Integrations::MobileAppPlugin::KEEP_MAX_H, class: "num" %>

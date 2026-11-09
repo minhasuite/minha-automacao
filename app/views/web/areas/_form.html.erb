@@ -1,14 +1,11 @@
 <%# locals: (site:, area:) -%>
-<%= form_with model: area.new_record? ? [ site, area ] : area, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-2 max-w-3xl" do |f| %>
+<%# Formulário da área; o bloco (de new e edit) traz as ações: yield f. -%>
+<%= ss_form_with model: area.new_record? ? [ site, area ] : area, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-2 max-w-3xl" do |f| %>
   <%= render "web/shared/errors", record: area %>
-  <div class="md:col-span-2"><%= f.label :name, t("sites.form.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: t("areas.form.name_hint"), autofocus: true %></div>
-  <div><%= f.label :kind, t("sites.form.kind"), class: "ss-label" %><%= f.select :kind, Area::KINDS.invert, {}, class: "ss-input" %></div>
-  <div><%= f.label :level, t("areas.form.level"), class: "ss-label" %><%= f.number_field :level, class: "ss-input", min: -10, max: 200, placeholder: t("areas.form.level_ph") %>
-    <p class="text-xs text-muted mt-1"><%= t("areas.form.level_hint") %></p></div>
-  <div><%= f.label :parent_id, t("areas.form.parent"), class: "ss-label" %><%= f.select :parent_id, site.areas.where.not(id: area.id).order(:name).pluck(:name, :id), { include_blank: t("areas.form.no_parent") }, class: "ss-input" %></div>
+  <div class="md:col-span-2"><%= f.ss_text_field :name, label: t("sites.form.name"), required: true, placeholder: t("areas.form.name_hint"), autofocus: true %></div>
+  <%= f.ss_select :kind, Area::KINDS.invert, label: t("sites.form.kind") %>
+  <%= f.ss_number_field :level, label: t("areas.form.level"), help: t("areas.form.level_hint"), min: -10, max: 200, placeholder: t("areas.form.level_ph") %>
+  <%= f.ss_select :parent_id, site.areas.where.not(id: area.id).order(:name).pluck(:name, :id), label: t("areas.form.parent"), include_blank: t("areas.form.no_parent") %>
   <%= render "web/shared/organize_fields", f: f, record: area, span: "md:col-span-2" %>
-  <div class="md:col-span-2 flex flex-wrap gap-2">
-    <%= f.submit area.new_record? ? t("areas.form.create") : t("areas.form.save"), class: "ss-btn ss-btn-primary" %>
-    <%= link_to t("shared.cancel"), area.new_record? ? site : area, class: "ss-btn ss-btn-ghost" %>
-  </div>
+  <div class="md:col-span-2 flex flex-wrap gap-2"><%= yield f %></div>
 <% end %>

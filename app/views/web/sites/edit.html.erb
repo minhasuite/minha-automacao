@@ -1,5 +1,8 @@
 <%= render "web/shared/header", title: t("sites.edit.title"), subtitle: @site.name, back: site_path(@site) %>
-<%= render "web/sites/form", site: @site %>
+<%= render layout: "web/sites/form", locals: { site: @site } do |f| %>
+  <%= f.ss_submit(t("sites.form.save")) %>
+  <%= link_to t("shared.cancel"), @site, class: "ss-btn ss-btn-ghost" %>
+<% end %>
 <section class="ss-card ss-card-pad mt-4 max-w-3xl">
   <h2><%= t("sites.edit.delete") %></h2>
   <p class="text-sm text-muted mt-1"><%= t("sites.edit.delete_hint") %></p>

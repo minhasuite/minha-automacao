@@ -47,6 +47,13 @@ module PointsHelper
     I18n.t("shared.ago.text", time: duration_text(secs / 60 * 60))
   end
 
+  # Formulário do tipo de helper: a partial própria (`web/site_helpers/forms/_<key>`) ou, quando o
+  # plugin descreve os campos (`form_spec`), a genérica.
+  def helper_form_partial(plugin)
+    own = "web/site_helpers/forms/#{plugin.key}"
+    lookup_context.exists?(own, [], true) || plugin.form_spec.empty? ? own : "web/site_helpers/forms/generic"
+  end
+
   # Segundos → "1h30m" (campo de duração dos helpers).
   def helper_duration(seconds)
     return if seconds.nil?

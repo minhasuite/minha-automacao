@@ -4,12 +4,12 @@
   <h2 id="sec-fields"><%= t("automations.fields.title") %></h2>
   <p class="text-sm text-muted mb-3"><%= t("automations.fields.hint_html") %></p>
   <% if automation.fields.any? %>
-    <ul class="grid gap-2 mb-3">
+    <ul class="ss-rows is-compact mb-3">
       <% automation.fields.each_with_index do |fd, i| %>
-        <li class="rounded-2xl border border-line bg-page/40 px-2 py-1 min-w-0">
+        <li class="min-w-0">
           <% meta = [ fd["name"], Automation::FIELD_TYPES[fd["type"]], (t("automations.fields.required") if fd["required"]),
                       (t("automations.fields.default", value: fd["type"] == "point" ? by_id[fd["default"]]&.name : { true => t("automations.helper.yes"), false => t("automations.helper.no") }.fetch(fd["default"], fd["default"])) unless fd["default"].nil?) ].compact.join(" · ") %>
-          <%= render Ss::CollapsibleComponent.new(title: fd["label"], label: meta, tone: :neutral) do %>
+          <%= render Ss::CollapsibleComponent.new(title: fd["label"], label: meta, tone: :neutral, css: "w-full min-w-0") do %>
             <%= render "web/automations/field_form", automation: automation, fd: fd, index: i, points: by_id %>
           <% end %>
         </li>

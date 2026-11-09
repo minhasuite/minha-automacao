@@ -1,9 +1,9 @@
 <%# locals: (f:, integration:) -%>
 <% s = integration&.settings || {} %>
 <div class="grid gap-4 md:grid-cols-2">
-  <div><%= f.ss_text_field :host, label: t("integrations.forms.hikvision.host"), class: "num", required: integration.nil?, value: s["host"], placeholder: "192.168.0.10", inputmode: "decimal" %></div>
-  <div><%= f.ss_number_field :http_port, label: t("integrations.forms.hikvision.http_port"), class: "num", value: s["http_port"], placeholder: "80" %></div>
-  <div><%= f.ss_text_field :username, label: t("integrations.forms.common.username"), required: integration.nil?, value: s["username"], autocomplete: "off" %></div>
-  <div><%= f.ss_password_field :password, label: t("integrations.forms.common.password"), required: integration.nil?, autocomplete: "new-password", placeholder: (integration ? t("integrations.forms.common.keep_short") : nil) %></div>
+  <%= f.ss_text_field :host, label: t("integrations.forms.hikvision.host"), class: "num", required: integration.nil?, value: s["host"], placeholder: "192.168.0.10", inputmode: "decimal" %>
+  <%= f.ss_number_field :http_port, label: t("integrations.forms.hikvision.http_port"), class: "num", value: s["http_port"], placeholder: "80" %>
+  <%= f.ss_text_field :username, label: t("integrations.forms.common.username"), required: integration.nil?, value: s["username"], autocomplete: "off" %>
+  <%= f.ss_password_field :password, label: t("integrations.forms.common.password"), required: integration.nil?, autocomplete: "new-password", placeholder: (integration ? t("integrations.forms.common.keep_short") : nil) %>
 </div>
-<p class="text-xs text-muted"><%= t("integrations.forms.hikvision.help") %></p>
+<%= render(Ss::CalloutComponent.new) { t("integrations.forms.hikvision.help") } %>

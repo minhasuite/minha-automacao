@@ -73,17 +73,12 @@
   .oba { width: 100%; max-width: 20rem; height: auto; overflow: visible; }
   .oba-s1 { stop-color: var(--accent); }
   .oba-s2 { stop-color: #3b82f6; }
-  .oba-shadow { fill: color-mix(in srgb, var(--ink) 10%, transparent); }
-  .oba-paper { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
   .oba-roof { stroke: var(--accent); stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; }
   .oba-win { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
   .oba-white { fill: #fff; }
   .oba-ink { fill: #1e1a38; }
-  .oba-acc { fill: var(--accent); }
   .oba-line { stroke: var(--line); stroke-width: 2; fill: none; }
-  .oba-room { fill: var(--accent-soft); }
   .oba-route { fill: none; stroke: var(--accent); stroke-width: 3; stroke-dasharray: 6 7; stroke-linecap: round; animation: oba-dash 2.4s linear infinite; }
-  .oba-ring { fill: none; stroke: color-mix(in srgb, var(--accent) 30%, transparent); stroke-width: 1.5; stroke-dasharray: 3 5; }
   .oba-dev { fill: var(--surface); stroke: var(--accent); stroke-width: 2.5; }
   .oba-chart { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 240; stroke-dashoffset: 240; animation: oba-draw 2.2s .3s ease forwards; }
   .oba-tick { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }

@@ -1,8 +1,20 @@
 <% content_for :title, "Exclusão de dados" %>
-<ul>
-  <li><strong>Exportar:</strong> site › Configurações › Exportar dados (JSON com os dados da sua casa), ou pelo app.</li>
-  <li><strong>Zerar os dados da casa (só o dono):</strong> apaga aparelhos, automações e histórico da instalação. A conta e os membros ficam.</li>
-  <li><strong>Excluir a conta:</strong> site › Configurações › Excluir conta, ou pelo app. Se você for o último membro,
-      a instalação inteira é apagada junto.</li>
-</ul>
-<p>Sem acesso à conta? Escreva para <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a> do e-mail cadastrado.</p>
+<section class="ss-card">
+  <ul class="ss-rows">
+    <li class="flex-nowrap items-start">
+      <span class="ss-icon-tile is-accent"><%= icon("download") %></span>
+      <span class="min-w-0"><strong class="block text-ink">Exportar</strong><span class="text-sm text-ink-2">Site › Configurações › Exportar dados (JSON com os dados da sua casa), ou pelo app.</span></span>
+    </li>
+    <li class="flex-nowrap items-start">
+      <span class="ss-icon-tile is-accent"><%= icon("refresh") %></span>
+      <span class="min-w-0"><strong class="block text-ink">Zerar os dados da casa (só o dono)</strong><span class="text-sm text-ink-2">Apaga aparelhos, automações e histórico da instalação. A conta e os membros ficam.</span></span>
+    </li>
+    <li class="flex-nowrap items-start">
+      <span class="ss-icon-tile is-danger"><%= icon("trash") %></span>
+      <span class="min-w-0"><strong class="block text-ink">Excluir a conta</strong><span class="text-sm text-ink-2">Site › Configurações › Excluir conta, ou pelo app. Se você for o último membro, a instalação inteira é apagada junto.</span></span>
+    </li>
+  </ul>
+</section>
+<%= render Ss::CalloutComponent.new do %>
+  <p>Sem acesso à conta? Escreva para <a href="mailto:herlonfilgueira@gmail.com">herlonfilgueira@gmail.com</a> do e-mail cadastrado.</p>
+<% end %>

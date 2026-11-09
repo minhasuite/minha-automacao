@@ -1,9 +1,8 @@
 <%# locals: (f:, integration:) -%>
 <% if integration.nil? %>
-  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "LG ThinQ", maxlength: 80 %></div>
+  <%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: "LG ThinQ", maxlength: 80 %>
 <% end %>
-<div>
-  <%= f.ss_password_field :token, label: t("integrations.forms.lg_thinq.token"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: integration ? t("integrations.forms.common.keep") : t("integrations.forms.lg_thinq.from") %>
-</div>
-<div><%= f.ss_text_field :country, label: t("integrations.forms.lg_thinq.country"), class: "num w-24", value: integration&.settings&.dig("country") || "BR", maxlength: 2 %></div>
-<p class="text-xs text-muted"><%= t("integrations.forms.lg_thinq.note") %></p>
+<%= f.ss_password_field :token, label: t("integrations.forms.lg_thinq.token"), help: t("integrations.forms.lg_thinq.from"), class: "font-mono text-sm", autocomplete: "new-password", value: nil,
+                        placeholder: (t("integrations.forms.common.keep") if integration) %>
+<div class="w-28"><%= f.ss_text_field :country, label: t("integrations.forms.lg_thinq.country"), class: "num", value: integration&.settings&.dig("country") || "BR", maxlength: 2 %></div>
+<%= render(Ss::CalloutComponent.new) { t("integrations.forms.lg_thinq.note") } %>

@@ -1,11 +1,19 @@
 <% content_for :title, "Termos de Uso" %>
-<h2>1. O serviço</h2>
-<p>Ferramenta para automatizar e acompanhar casas, lojas e fábricas: aparelhos, sensores, cenas, automações, avisos
-   e painéis.</p>
-<h2>2. Responsabilidades</h2>
-<p>Você é responsável pelo que cadastra e pelas automações que liga. Automação não substitui sistema de segurança,
-   alarme certificado nem proteção de máquina: use-a como <strong>apoio</strong>, não como garantia.</p>
-<h2>3. Uso aceitável</h2>
-<p>Não use o serviço para controlar aparelhos ou locais sem autorização de quem é dono deles.</p>
-<h2>4. Encerramento</h2>
-<p>Você pode excluir a conta a qualquer momento. Os dados da casa são apagados quando o último membro sai.</p>
+<section class="ss-card ss-card-pad grid gap-2">
+  <%= render Ss::CardHeaderComponent.new(title: "1. O serviço", heading: :h2) %>
+  <p>Ferramenta para automatizar e acompanhar casas, lojas e fábricas: aparelhos, sensores, cenas, automações, avisos
+     e painéis.</p>
+</section>
+<section class="ss-card ss-card-pad grid gap-2">
+  <%= render Ss::CardHeaderComponent.new(title: "2. Responsabilidades", heading: :h2) %>
+  <p>Você é responsável pelo que cadastra e pelas automações que liga. Automação não substitui sistema de segurança,
+     alarme certificado nem proteção de máquina: use-a como <strong>apoio</strong>, não como garantia.</p>
+</section>
+<section class="ss-card ss-card-pad grid gap-2">
+  <%= render Ss::CardHeaderComponent.new(title: "3. Uso aceitável", heading: :h2) %>
+  <p>Não use o serviço para controlar aparelhos ou locais sem autorização de quem é dono deles.</p>
+</section>
+<section class="ss-card ss-card-pad grid gap-2">
+  <%= render Ss::CardHeaderComponent.new(title: "4. Encerramento", heading: :h2) %>
+  <p>Você pode excluir a conta a qualquer momento. Os dados da casa são apagados quando o último membro sai.</p>
+</section>

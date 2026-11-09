@@ -1,7 +1,8 @@
 <%# locals: (f:, integration:) -%>
-<p class="text-sm text-ink-2"><%= t("integrations.forms.zigbee2mqtt.intro_html") %></p>
-<ol class="list-decimal pl-5 text-sm text-ink-2 grid gap-1">
-  <li><%= t("integrations.forms.zigbee2mqtt.step1_html") %></li>
-  <li><%= t("integrations.forms.zigbee2mqtt.step2") %></li>
-</ol>
+<%= render Ss::CalloutComponent.new(title: t("integrations.forms.zigbee2mqtt.intro_html")) do %>
+  <ol class="list-decimal pl-5 grid gap-1">
+    <li><%= t("integrations.forms.zigbee2mqtt.step1_html") %></li>
+    <li><%= t("integrations.forms.zigbee2mqtt.step2") %></li>
+  </ol>
+<% end %>
 <%= render "web/integrations/forms/mqtt", f: f, integration: integration %>

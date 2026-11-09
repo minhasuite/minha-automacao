@@ -1,12 +1,2 @@
 <%# locals: (checks:) -%>
-<ul class="mt-2 grid gap-1.5 text-sm">
-  <% checks.each do |c| %>
-    <li class="min-w-0">
-      <span class="flex gap-2 items-start">
-        <%= icon(c["result"] ? "check" : "x", "size-4 shrink-0 mt-0.5 #{c['result'] ? 'text-success' : 'text-danger'}") %>
-        <span class="min-w-0 break-words"><span class="text-ink"><%= c["label"] %></span><% if c["values"].present? %> <span class="text-muted">· <%= c["values"] %></span><% end %></span>
-      </span>
-      <% if c["children"].present? %><div class="pl-6"><%= render "web/automation_runs/checks", checks: c["children"] %></div><% end %>
-    </li>
-  <% end %>
-</ul>
+<%= render Ss::TreeViewComponent.new(label: t("automations.runs.checks"), nodes: run_check_nodes(checks), css: "mt-2") %>

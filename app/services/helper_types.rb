@@ -1,7 +1,8 @@
 # Helpers (F8e), como os do HA, abertos para extensão: cada tipo é um plugin
 # (`HelperTypes::Plugin`, um arquivo em app/services/helper_types/)
 # registrado em `PLUGINS`, com a partial de formulário
-# `web/site_helpers/forms/_<key>`. Nada de `case` por tipo fora do plugin.
+# `web/site_helpers/forms/_<key>` (ou, com `form_spec`, a genérica). Nada de
+# `case` por tipo fora do plugin.
 #
 # Um helper é um ponto (`points.helper` = chave do tipo, configuração em
 # `points.address`) do dispositivo virtual "Helpers" do local. Por ser ponto,
@@ -9,7 +10,7 @@
 # novo. Comando: `Points::Command` pergunta ao plugin (`commands`,
 # `new_value`) e o driver virtual entrega a ele (`execute`).
 module HelperTypes
-  # Ordem = ordem do catálogo. Tipo novo: classe + uma linha aqui + partial.
+  # Ordem = ordem do catálogo. Tipo novo: classe + uma linha aqui + partial (ou `form_spec`).
   PLUGINS = %w[Toggle Number Select Text Datetime Button Counter Timer Group Template Statistics DatasetQuery
                 UtilityMeter Integral Derivative Threshold Trend Zone Person AlarmPanel Tariff
                 HistoryStats TimesOfDay RandomValue Filter SwitchAsX GenericThermostat GenericHygrostat MoldIndicator Bayesian Compensation

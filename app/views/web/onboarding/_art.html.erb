@@ -1,17 +1,19 @@
 <%# locals: (art:) -%>
-<%# Ilustrações próprias da primeira configuração (SVG, só cores do tema: accent, surface, field, line). %>
+<%# Ilustrações próprias da primeira configuração (SVG): o desenho usa as peças de ilustração da gem (ss-ill-floor, -card,
+    -soft, -orbit, -accent, as mesmas do EmptyStateComponent) e só o que é desta arte fica em oba- (gradiente, telhado,
+    aparelho, rota e os movimentos). %>
 <svg viewBox="0 0 320 260" class="oba" role="presentation" focusable="false">
   <defs>
     <linearGradient id="oba-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="oba-s1"/><stop offset="1" class="oba-s2"/></linearGradient>
     <radialGradient id="oba-glow" cx=".5" cy=".5" r=".5"><stop offset="0" class="oba-s1" stop-opacity=".35"/><stop offset="1" class="oba-s1" stop-opacity="0"/></radialGradient>
   </defs>
   <circle cx="160" cy="130" r="118" fill="url(#oba-glow)"/>
-  <ellipse cx="160" cy="232" rx="104" ry="9" class="oba-shadow"/>
+  <ellipse cx="160" cy="232" rx="104" ry="9" class="ss-ill-floor"/>
   <% case art %>
   <% when "welcome" %>
     <%# Casa com a chave chegando e brilhos. %>
     <g class="oba-float">
-      <path d="M86 128 160 66l74 62v84a8 8 0 0 1-8 8H94a8 8 0 0 1-8-8z" class="oba-paper"/>
+      <path d="M86 128 160 66l74 62v84a8 8 0 0 1-8 8H94a8 8 0 0 1-8-8z" class="ss-ill-card"/>
       <path d="M72 132 160 58l88 74" class="oba-roof" fill="none"/>
       <rect x="138" y="160" width="44" height="60" rx="6" fill="url(#oba-g)"/>
       <circle cx="173" cy="192" r="3.5" class="oba-white"/>
@@ -24,7 +26,7 @@
   <% when "home" %>
     <%# Mapa com o pino da casa e o sol do clima. %>
     <g class="oba-float">
-      <path d="M58 92 120 70l80 22 62-22v128l-62 22-80-22-62 22z" class="oba-paper"/>
+      <path d="M58 92 120 70l80 22 62-22v128l-62 22-80-22-62 22z" class="ss-ill-card"/>
       <path d="M120 70v128M200 92v128" class="oba-line"/>
       <path d="M70 160c30-10 50 20 90 6s60-36 92-20" class="oba-route"/>
     </g>
@@ -35,7 +37,7 @@
     <g class="oba-spin-slow"><circle cx="252" cy="58" r="14" class="oba-sun"/><path d="M252 34v-8M252 90v-8M228 58h-8M284 58h-8M235 41l-6-6M275 81l-6-6M235 75l-6 6M275 35l-6 6" class="oba-sunray"/></g>
   <% when "radar" %>
     <%# Radar procurando aparelhos na rede. %>
-    <circle cx="160" cy="130" r="92" class="oba-ring"/><circle cx="160" cy="130" r="62" class="oba-ring"/><circle cx="160" cy="130" r="32" class="oba-ring"/>
+    <circle cx="160" cy="130" r="92" class="ss-ill-orbit"/><circle cx="160" cy="130" r="62" class="ss-ill-orbit"/><circle cx="160" cy="130" r="32" class="ss-ill-orbit"/>
     <g class="oba-sweep"><path d="M160 130 160 38A92 92 0 0 1 240 84z" fill="url(#oba-g)" opacity=".35"/></g>
     <circle cx="160" cy="130" r="10" fill="url(#oba-g)"/>
     <g class="oba-ping" style="animation-delay: .2s"><rect x="210" y="72" width="26" height="18" rx="4" class="oba-dev"/></g>
@@ -45,10 +47,10 @@
   <% when "rooms" %>
     <%# Planta com cômodos e um aparelho sendo arrastado. %>
     <g class="oba-float">
-      <rect x="62" y="56" width="196" height="150" rx="14" class="oba-paper"/>
+      <rect x="62" y="56" width="196" height="150" rx="14" class="ss-ill-card"/>
       <path d="M62 128h104M166 56v150M166 150h92" class="oba-line"/>
-      <rect x="76" y="70" width="76" height="44" rx="8" class="oba-room"/>
-      <rect x="180" y="164" width="64" height="30" rx="8" class="oba-room"/>
+      <rect x="76" y="70" width="76" height="44" rx="8" class="ss-ill-soft"/>
+      <rect x="180" y="164" width="64" height="30" rx="8" class="ss-ill-soft"/>
     </g>
     <g class="oba-drag">
       <rect x="196" y="78" width="54" height="34" rx="9" fill="url(#oba-g)"/>
@@ -58,18 +60,18 @@
   <% when "board" %>
     <%# Painel pronto com cartões e gráfico. %>
     <g class="oba-float">
-      <rect x="52" y="52" width="216" height="160" rx="16" class="oba-paper"/>
+      <rect x="52" y="52" width="216" height="160" rx="16" class="ss-ill-card"/>
       <rect x="52" y="52" width="216" height="44" rx="16" fill="url(#oba-g)"/>
       <rect x="66" y="66" width="70" height="8" rx="4" class="oba-white"/><rect x="66" y="79" width="44" height="6" rx="3" class="oba-white" opacity=".7"/>
-      <rect x="66" y="108" width="58" height="40" rx="10" class="oba-room"/><rect x="132" y="108" width="58" height="40" rx="10" class="oba-room"/><rect x="198" y="108" width="56" height="40" rx="10" class="oba-room oba-blink"/>
-      <circle cx="82" cy="124" r="7" class="oba-acc"/><circle cx="148" cy="124" r="7" class="oba-acc" opacity=".5"/>
-      <rect x="66" y="156" width="188" height="44" rx="10" class="oba-room"/>
+      <rect x="66" y="108" width="58" height="40" rx="10" class="ss-ill-soft"/><rect x="132" y="108" width="58" height="40" rx="10" class="ss-ill-soft"/><rect x="198" y="108" width="56" height="40" rx="10" class="ss-ill-soft oba-blink"/>
+      <circle cx="82" cy="124" r="7" class="ss-ill-accent"/><circle cx="148" cy="124" r="7" class="ss-ill-accent" opacity=".5"/>
+      <rect x="66" y="156" width="188" height="44" rx="10" class="ss-ill-soft"/>
       <path d="M74 190l26-14 22 8 26-18 24 10 26-14 24 6 24-10" class="oba-chart"/>
     </g>
   <% when "family" %>
     <%# Família com o celular e o QR. %>
     <g class="oba-float">
-      <circle cx="110" cy="104" r="22" class="oba-room"/><path d="M70 196c0-26 18-46 40-46s40 20 40 46z" class="oba-room"/>
+      <circle cx="110" cy="104" r="22" class="ss-ill-soft"/><path d="M70 196c0-26 18-46 40-46s40 20 40 46z" class="ss-ill-soft"/>
       <circle cx="166" cy="116" r="17" fill="url(#oba-g)"/><path d="M136 196c0-20 13-36 30-36s30 16 30 36z" fill="url(#oba-g)"/>
     </g>
     <g class="oba-drop">

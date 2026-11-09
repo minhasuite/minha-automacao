@@ -1,2 +1,2 @@
 <%# locals: (f:, point:) -%>
-<p class="sm:col-span-2 text-sm text-muted"><%= t("helper_forms.button.hint") %></p>
+<%= render(Ss::CalloutComponent.new(css: "sm:col-span-2")) { t("helper_forms.button.hint") } %>

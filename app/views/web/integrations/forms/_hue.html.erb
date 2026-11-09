@@ -1,4 +1,5 @@
 <%# locals: (f:, integration:) -%>
-<%= render "web/integrations/forms/lan", f: f, integration: integration, plugin: Integrations::HuePlugin,
-           fields: [ [ :app_key, t("integrations.forms.hue.key"), t("integrations.forms.hue.key_hint") ] ],
-           note: t("integrations.forms.hue.note") %>
+<% keep = integration && t("integrations.forms.common.keep") %>
+<%= render layout: "web/integrations/forms/lan", locals: { f: f, integration: integration, plugin: Integrations::HuePlugin } do %>
+  <%= f.ss_password_field :app_key, label: t("integrations.forms.hue.key"), help: t("integrations.forms.hue.key_hint"), class: "font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: keep %>
+<% end %>

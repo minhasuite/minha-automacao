@@ -14,10 +14,15 @@ module ApplicationHelper
                          "alerta" => [ "exclamation-circle", "is-danger" ],
                          "automacao" => [ "lightning-bolt", "is-accent" ] }.freeze
 
-  # catalogo: formulário da integração: a partial própria do plugin ou a gerada dos campos (SchemaPlugin).
+  # catalogo: formulário da integração: a partial própria do plugin, a gerada dos campos (SchemaPlugin) ou,
+  # para aparelho da rede sem segredo (LanPlugin), a comum `forms/lan` com a nota `integrations.forms.<key>.note`.
   def integration_form_partial(plugin)
     own = "web/integrations/forms/#{plugin.key}"
-    lookup_context.exists?(own, [], true) || !plugin.respond_to?(:fields) ? own : "web/integrations/forms/schema"
+    return own if lookup_context.exists?(own, [], true)
+    return "web/integrations/forms/schema" if plugin.respond_to?(:fields)
+    return "web/integrations/forms/lan" if plugin < Integrations::LanPlugin
+
+    own
   end
 
   # Passo de login: a partial própria, a genérica do OAuth (OauthPlugin) ou nenhuma.

@@ -1,29 +1,24 @@
 <%# locals: (site:, device:) -%>
-<%= form_with model: device.new_record? ? [ site, device ] : device, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-2 max-w-3xl" do |f| %>
+<%# Formulário do aparelho; o bloco (de new e edit) traz as ações: yield f. -%>
+<%= ss_form_with model: device.new_record? ? [ site, device ] : device, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-2 max-w-3xl" do |f| %>
   <%= render "web/shared/errors", record: device %>
-  <div class="md:col-span-2"><%= f.label :name, t("devices.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: t("devices.form.name_hint"), autofocus: true %></div>
-  <div><%= f.label :area_id, t("devices.area"), class: "ss-label" %><%= f.select :area_id, site.areas.order(:name).pluck(:name, :id), { include_blank: t("devices.no_area") }, class: "ss-input" %></div>
-  <div><%= f.label :driver, t("devices.form.driver"), class: "ss-label" %><%= f.select :driver, Device::DRIVERS.invert, {}, class: "ss-input" %>
-    <p class="text-xs text-muted mt-1"><%= t("devices.form.driver_hint") %></p></div>
-  <div><%= f.label :manufacturer, t("devices.form.maker"), class: "ss-label" %><%= f.text_field :manufacturer, class: "ss-input" %></div>
-  <div><%= f.label :model, t("devices.form.model"), class: "ss-label" %><%= f.text_field :model, class: "ss-input" %></div>
-  <div><%= f.label :serial, t("devices.form.serial"), class: "ss-label" %><%= f.text_field :serial, class: "ss-input num" %></div>
+  <div class="md:col-span-2"><%= f.ss_text_field :name, label: t("devices.name"), required: true, placeholder: t("devices.form.name_hint"), autofocus: true %></div>
+  <%= f.ss_select :area_id, site.areas.order(:name).pluck(:name, :id), label: t("devices.area"), include_blank: t("devices.no_area") %>
+  <%= f.ss_select :driver, Device::DRIVERS.invert, label: t("devices.form.driver"), help: t("devices.form.driver_hint") %>
+  <%= f.ss_text_field :manufacturer, label: t("devices.form.maker") %>
+  <%= f.ss_text_field :model, label: t("devices.form.model") %>
+  <%= f.ss_text_field :serial, label: t("devices.form.serial"), class: "num" %>
   <% if Polling.supported?(device) %>
-    <div><%= f.label :poll_min, t("devices.form.poll"), class: "ss-label" %><%= f.number_field :poll_min, min: 0, step: "any", class: "ss-input num", placeholder: t("devices.form.poll_hint") %>
-      <p class="text-xs text-muted mt-1"><%= t("devices.form.poll_note") %></p></div>
+    <%= f.ss_number_field :poll_min, label: t("devices.form.poll"), help: t("devices.form.poll_note"), min: 0, step: "any", class: "num", placeholder: t("devices.form.poll_hint") %>
   <% end %>
-  <div class="flex items-end"><label class="ss-check"><%= f.check_box :disabled %> <%= t("devices.form.disabled") %></label></div>
+  <div class="flex items-end"><%= f.ss_check_box :disabled, label: t("devices.form.disabled") %></div>
   <% if device.driver.in?(%w[tuya_local xiaomi_miot go2rtc]) %>
-    <div><%= f.label :host, t("devices.form.host"), class: "ss-label" %><%= f.text_field :host, class: "ss-input num", inputmode: "decimal", placeholder: "192.168.0.50" %></div>
+    <%= f.ss_text_field :host, label: t("devices.form.host"), class: "num", inputmode: "decimal", placeholder: "192.168.0.50" %>
   <% end %>
   <% if device.tuya_local? %>
-    <div><%= f.label :protocol_version, t("devices.form.tuya_version"), class: "ss-label" %><%= f.select :protocol_version, Drivers::TuyaLocal::VERSIONS, { include_blank: t("devices.form.tuya_discover") }, class: "ss-input" %></div>
-    <div class="md:col-span-2"><label class="ss-check"><%= f.check_box :listen %> <%= t("devices.form.listen") %></label>
-      <p class="text-xs text-muted mt-1"><%= t("devices.form.listen_hint") %></p></div>
+    <%= f.ss_select :protocol_version, Drivers::TuyaLocal::VERSIONS, label: t("devices.form.tuya_version"), include_blank: t("devices.form.tuya_discover") %>
+    <div class="md:col-span-2"><%= f.ss_check_box :listen, label: t("devices.form.listen"), help: t("devices.form.listen_hint") %></div>
   <% end %>
   <%= render "web/shared/organize_fields", f: f, record: device, span: "md:col-span-2" %>
-  <div class="md:col-span-2 flex flex-wrap gap-2">
-    <%= f.submit device.new_record? ? t("devices.form.create") : t("devices.form.save"), class: "ss-btn ss-btn-primary" %>
-    <%= link_to t("devices.form.cancel"), device.new_record? ? (device.area || site) : device, class: "ss-btn ss-btn-ghost" %>
-  </div>
+  <div class="md:col-span-2 flex flex-wrap gap-2"><%= yield f %></div>
 <% end %>

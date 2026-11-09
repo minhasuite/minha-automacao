@@ -1,21 +1,16 @@
-<%# locals: (f:, integration:, plugin:, fields: [], plain: [], note: nil) -%>
-<%# Pacote 1: formulário comum dos aparelhos da rede (LanPlugin): nome, endereço, porta e os segredos do plugin.
-    fields: [[campo, rótulo, dica]] guardados cifrados; vazio no Reconfigurar mantém o guardado. %>
+<%# locals: (f:, integration:, plugin: @plugin) -%>
+<%# Pacote 1: formulário comum dos aparelhos da rede (LanPlugin): nome, endereço e porta. O plugin com segredo ou campo
+    próprio tem a partial dele, que usa esta como layout e põe os campos no bloco (segredo vazio no Reconfigurar mantém
+    o guardado); a nota `integrations.forms.<key>.note` sai num aviso no fim. %>
 <% s = integration&.settings || {} %>
 <% if integration.nil? %>
-  <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), value: params[:nome], placeholder: plugin.title, maxlength: 80 %></div>
+  <%= f.ss_text_field :name, label: t("integrations.forms.common.name"), value: params[:nome], placeholder: plugin.title, maxlength: 80 %>
 <% end %>
 <div class="grid gap-4 grid-cols-[1fr_7rem]">
-  <div><%= f.ss_text_field :host, label: t("integrations.forms.common.host"), class: "num", value: params[:host].presence || s["host"], placeholder: "192.168.0.50", autocomplete: "off", spellcheck: false %></div>
-  <div><%= f.ss_number_field :port, label: t("integrations.forms.common.port"), class: "num", value: params[:port].presence || s["port"], placeholder: plugin.port %></div>
+  <%= f.ss_text_field :host, label: t("integrations.forms.common.host"), class: "num", value: params[:host].presence || s["host"], placeholder: "192.168.0.50", autocomplete: "off", spellcheck: false %>
+  <%= f.ss_number_field :port, label: t("integrations.forms.common.port"), class: "num", value: params[:port].presence || s["port"], placeholder: plugin.port&.to_s %>
 </div>
-<% plain.each do |key, label, hint| %>
-  <div><%= f.label key, label, class: "ss-label" %><%= f.text_field key, class: "ss-input", value: params[key].presence || s[key.to_s], placeholder: hint, autocomplete: "off", spellcheck: false %></div>
+<%= yield %>
+<% if (note = t("integrations.forms.#{plugin.key}.note", default: "")).present? %>
+  <%= render(Ss::CalloutComponent.new) { note } %>
 <% end %>
-<% fields.each do |key, label, hint| %>
-  <div>
-    <%= f.label key, label, class: "ss-label" %>
-    <%= f.password_field key, class: "ss-input font-mono text-sm", autocomplete: "new-password", value: nil, placeholder: integration ? t("integrations.forms.common.keep") : hint %>
-  </div>
-<% end %>
-<% if note %><p class="text-xs text-muted"><%= note %></p><% end %>

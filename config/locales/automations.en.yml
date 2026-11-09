@@ -607,6 +607,7 @@ en:
       script: "New script"
     runs:
       subtitle: "%{name} · last %{days} days"
+      checks: "Conditions checked"
       empty: "No runs yet."
       empty_hint: "When a trigger fires (or someone runs a simulation), the step-by-step shows up here."
       simulation: "Simulation"

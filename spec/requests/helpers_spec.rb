@@ -26,6 +26,8 @@ RSpec.describe "Helpers do local (F8e)" do
         get "/locais/#{site.id}/helpers/novo", params: { tipo: p.key }
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Novo helper: #{p.title}")
+        # Tipo sem partial própria e com form_spec: o formulário genérico, campo a campo.
+        p.form_spec.each { |name, *| expect(response.body).to include("helper[#{name}]") }
       end
     end
 

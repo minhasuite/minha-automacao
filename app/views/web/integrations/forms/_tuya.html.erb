@@ -1,9 +1,11 @@
 <%# locals: (f:, integration:) -%>
-<ol class="list-decimal pl-5 text-sm text-ink-2 grid gap-1">
-  <li><%= t("integrations.forms.tuya.step1_html") %></li>
-  <li><%= t("integrations.forms.tuya.step2_html") %></li>
-  <li><%= t("integrations.forms.tuya.step3_html") %></li>
-  <li><%= t("integrations.forms.tuya.step4") %></li>
-</ol>
-<div><%= f.ss_text_field :user_code, label: t("integrations.forms.tuya.user_code"), class: "num", required: true, autocomplete: "off", value: integration&.secrets&.dig("user_code") %></div>
-<p class="text-xs text-muted"><%= t("integrations.forms.tuya.note") %></p>
+<%= render Ss::CalloutComponent.new(tone: :accent, icon: false) do %>
+  <ol class="list-decimal pl-5 grid gap-1">
+    <li><%= t("integrations.forms.tuya.step1_html") %></li>
+    <li><%= t("integrations.forms.tuya.step2_html") %></li>
+    <li><%= t("integrations.forms.tuya.step3_html") %></li>
+    <li><%= t("integrations.forms.tuya.step4") %></li>
+  </ol>
+<% end %>
+<%= f.ss_text_field :user_code, label: t("integrations.forms.tuya.user_code"), class: "num", required: true, autocomplete: "off", value: integration&.secrets&.dig("user_code") %>
+<%= render(Ss::CalloutComponent.new) { t("integrations.forms.tuya.note") } %>

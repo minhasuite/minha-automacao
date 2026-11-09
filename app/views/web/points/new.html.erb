@@ -1,2 +1,5 @@
 <%= render "web/shared/header", title: t("devices.new_point"), subtitle: @device.name, back: device_path(@device) %>
-<%= render "web/points/form", device: @device, point: @point %>
+<%= render layout: "web/points/form", locals: { device: @device, point: @point } do |f| %>
+  <%= f.ss_submit(t("points.form.create")) %>
+  <%= link_to t("shared.cancel"), @device, class: "ss-btn ss-btn-ghost" %>
+<% end %>

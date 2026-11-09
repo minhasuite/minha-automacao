@@ -2,5 +2,5 @@
 <div class="mp-map <%= 'mp-compact' if compact %>" style="--mp-h: <%= height %>px" <% if controller %>data-controller="map" data-map-data-value="<%= map.except('point_ids').to_json %>"<% end %>
      role="region" aria-label="<%= t("maps.aria", people: map['people'].size, zones: map['zones'].size) %>">
   <div class="mp-canvas" data-map-target="canvas"></div>
-  <p class="mp-fallback" data-map-target="fallback" hidden><%= icon("exclamation-circle", "size-5") %><%= t("maps.failed") %></p>
+  <%= render Ss::EmptyStateComponent.new(variant: :erro, compact: true, title: t("maps.failed"), css: "mp-fallback", hidden: true, data: { map_target: "fallback" }) %>
 </div>
