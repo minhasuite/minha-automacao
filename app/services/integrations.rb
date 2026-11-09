@@ -40,7 +40,15 @@ module Integrations
   def auth(error) = error.extend(AuthError)
 
   # A cada minuto (RunSchedulesJob): plugin que precisa do relógio (agenda).
-  def tick(now = Time.current) = plugins.each { |p| p.tick(now) }
+  # Um plugin com erro não derruba os outros nem o resto do RunSchedulesJob
+  # (agendas, helpers e gatilhos de horário rodam depois deste tick).
+  def tick(now = Time.current)
+    plugins.each do |p|
+      p.tick(now)
+    rescue StandardError => e
+      Rails.error.report(e, handled: true, context: { plugin: p.name })
+    end
+  end
 
   # `state` do OAuth (F9), assinado, 15 min: id da integração ou um texto de
   # outro dono do retorno (ex.: "backup_drive:<usuário>", o Drive do backup).

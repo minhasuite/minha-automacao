@@ -457,7 +457,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (lambda); a mesma consulta serve ao painel, ao Liquid (filtro
   `points_where`, registrado só no render do `Automations::Context`) e ao
   dentaku (`Expr::AGGREGATES`, funções por calculadora com o contexto).
-  Sensor calculado com consulta tem `sources` `["*"]`. Evento: plugin de
+  Sensor calculado com consulta tem `sources` `["*"]` (refeito pelo `HelperStarRefreshJob` com debounce, nunca síncrono). Evento: plugin de
   gatilho responde `listens?(nome)`; `Triggers.event(site, nome, dados,
   cause:)` sempre põe `event` e `data` no payload; a ação `fire_event` não usa
   nome reservado (`Triggers::SYSTEM_EVENTS` e os `event` dos plugins). Medida

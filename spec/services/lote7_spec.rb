@@ -231,6 +231,7 @@ RSpec.describe "Lote 7: zerar os rascunhos da migração" do
 
       cozinha = site.points.find_by!(id: ExternalRef.map_for(site, "home_assistant", "Point")["switch.luz_cozinha"])
       cozinha.report!(true)
+      HelperStarRefreshJob.perform_now(site.id) # origem "*": refeito pela fila, com debounce
       expect(luzes.reload.value).to be(true)
 
       aviso = site.automations.find_by!(name: "Aviso")

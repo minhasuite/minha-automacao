@@ -17,7 +17,7 @@ set -uo pipefail
 DIR=$1; SAMPLE=$2
 cd "$DIR"
 sec() { printf '\n===== %s =====\n' "$1"; }
-psql_q() { docker compose exec -T db psql -U minha_automacao -d minha_automacao -P pager=off -c "$1"; }
+psql_q() { docker compose exec -T db psql -U minha_automacao -d minha_automacao -P pager=off -c "$1" </dev/null; }
 
 sec "máquina"
 hostname; uptime; nproc; grep -m1 "model name" /proc/cpuinfo; free -m
@@ -35,7 +35,7 @@ awk -v r=$((r2-r1)) -v w=$((w2-w1)) -v io=$((io2-io1)) -v s="$SAMPLE" 'BEGIN{pri
 echo "$cpu1 $cpu2" | awk '{printf "CPU em iowait: %.1f%%\n", ($4-$2)*100/($3-$1)}'
 
 sec "containers (docker stats)"
-docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.BlockIO}}'
+docker stats </dev/null --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.BlockIO}}'
 grep -E '^(JOB_THREADS|JOB_POLLING_S|DB_POOL|IMAGE)=' .env || true
 
 sec "Postgres"
@@ -76,5 +76,5 @@ psql_q "SELECT left(name,30) nome, address->>'host' ip, address->>'model' modelo
 psql_q "SELECT left(name,30) nome, address->>'host' ip, address->>'version' v, (address->>'listen') ouvinte, status, left(last_error,70) erro FROM devices WHERE driver='tuya_local' ORDER BY status, name"
 
 sec "worker: avisos e erros recentes"
-docker compose logs --since 6h worker 2>&1 | grep -iE 'error|erro|timeout|refused|reset|tuya|miio|xiaomi' | tail -60
+docker compose logs --since 6h worker </dev/null 2>&1 | grep -iE 'error|erro|timeout|refused|reset|tuya|miio|xiaomi' | tail -60
 REMOTE

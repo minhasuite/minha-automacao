@@ -220,7 +220,9 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       expect(HelperTypes.save(helper, { "name" => "Luzes acesas", "kind" => "number", "expr" => %(count_points("capability=onoff state=on")) })).to be(true)
       expect(helper.reload.value).to eq(2)
       expect(helper.address["sources"]).to include("*")
-      off.report!(true)
+      HelperTypes.instance_variable_get(:@star_at).clear
+      expect { off.report!(true) }.to have_enqueued_job(HelperStarRefreshJob).with(site.id) # "*" vai pela fila, com debounce
+      HelperStarRefreshJob.perform_now(site.id)
       expect(helper.reload.value).to eq(3)
     end
   end

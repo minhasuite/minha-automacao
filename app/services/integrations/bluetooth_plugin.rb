@@ -37,7 +37,10 @@ module Integrations
       seen = Ble::Hub.seen(integration)
       integration.devices.where(driver: driver, removed_at: nil, disabled: false).includes(:points).find_each { |d| (s = seen[d.external_id]) && Ble.apply(d, s["values"].to_h) }
     end
-    def self.tick(_now) = Integration.where(driver: "bluetooth").find_each { |i| ActsAsTenant.with_tenant(i.tenant) { Ble::Hub.expire_presence!(i) } }
+    def self.tick(_now)
+      ActsAsTenant.without_tenant { Integration.where(driver: "bluetooth").includes(:tenant).to_a }
+                  .each { |i| ActsAsTenant.with_tenant(i.tenant) { Ble::Hub.expire_presence!(i) } }
+    end
 
     def self.panel? = true
 
