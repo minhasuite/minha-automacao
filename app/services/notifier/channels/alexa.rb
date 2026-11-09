@@ -35,7 +35,7 @@ module Notifier
       def deliver(channel, notifications)
         n = notifications.first
         point = Point.find_by(id: channel[PATTERN, 1], capability: "speaker") or return
-        text = [ n.title, n.body ].compact_blank.join(". ")
+        text = n.data.to_h["ssml"].presence || [ n.title, n.body ].compact_blank.join(". ")
         Points::Command.call(point, "announce", text.truncate(Points::Command::MAX_SPEECH), source: "automation", user: nil)
       rescue Points::Command::Error => e
         Rails.logger.warn("[notifier] #{channel}: #{e.message}")

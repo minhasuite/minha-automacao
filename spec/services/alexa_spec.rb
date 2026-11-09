@@ -73,6 +73,11 @@ RSpec.describe "Alexa (anúncio não oficial)" do
     expect(speak["type"]).to eq("Alexa.Speak")
     expect(speak["operationPayload"]).to include("textToSpeak" => "Bom dia", "deviceSerialNumber" => "G0C", "locale" => "pt-BR")
     expect { client.speak(target, " ") }.to raise_error(Alexa::Client::Error, /vazio/)
+    client.announce([ target ], %(<speak><prosody volume="soft">Portão aberto.</prosody></speak>))
+    last = JSON.parse(WebMock::RequestRegistry.instance.requested_signatures.hash.keys.select { |s| s.uri.path == "/api/behaviors/preview" }.map { |s| JSON.parse(s.body) }.last["sequenceJson"])
+    content = last.dig("startNode", "operationPayload", "content", 0)
+    expect(content["speak"]).to eq("type" => "ssml", "value" => %(<speak><prosody volume="soft">Portão aberto.</prosody></speak>))
+    expect(content.dig("display", "body")).to eq("Portão aberto.")
     expect { Alexa::Client.new(cookies: {}) }.to raise_error(Alexa::Client::Error)
   end
 
@@ -120,6 +125,17 @@ RSpec.describe "Alexa (anúncio não oficial)" do
       expect(described_class.deliver!(channels, kind: "aviso", title: "x", dedup_key: "k")).to be_present
       expect(described_class.deliver!(channels, kind: "aviso", title: "x", dedup_key: "k")).to be_nil
       expect(Command.count).to eq(2)
+    end
+
+    it "aviso em SSML (vindo do HA): a Echo recebe o SSML, a tela e o push o texto puro" do
+      stub_devices
+      import
+      point = echo("Echo Cozinha")
+      ssml = %(<speak><prosody volume="soft">Portão fechado.</prosody></speak>)
+      n = described_class.deliver!([ "in_app", "push", "alexa:#{point.id}" ], kind: "aviso", title: "Aviso", body: ssml)
+      expect(n.body).to eq("Portão fechado.")
+      expect(n.data["ssml"]).to eq(ssml)
+      expect(Command.sole).to have_attributes(command: "announce", value: ssml)
     end
 
     it "regra de aviso aceita Echo como canal" do

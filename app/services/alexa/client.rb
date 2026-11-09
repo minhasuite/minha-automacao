@@ -41,8 +41,8 @@ module Alexa
       customer = devices.first&.dig(:customer_id) or raise Error, "Nenhuma Echo para anunciar."
       sequence(node("AlexaAnnouncement",
                     "expireAfter" => "PT5S", "customerId" => customer,
-                    "content" => [ { "locale" => LOCALE, "display" => { "title" => title.to_s.truncate(60), "body" => text(text) },
-                                     "speak" => { "type" => "text", "value" => text(text) } } ],
+                    "content" => [ { "locale" => LOCALE, "display" => { "title" => title.to_s.truncate(60), "body" => text(Ssml.plain(text)) },
+                                     "speak" => { "type" => Ssml.ssml?(text) ? "ssml" : "text", "value" => text(text) } } ],
                     "target" => { "customerId" => customer,
                                   "devices" => devices.map { |d| { "deviceSerialNumber" => d[:serial], "deviceTypeId" => d[:type] } } }))
     end

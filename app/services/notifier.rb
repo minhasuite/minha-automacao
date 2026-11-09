@@ -93,7 +93,9 @@ module Notifier
     return nil if dedup_key && Notification.exists?(dedup_key: dedup_key)
 
     data = data.to_h.stringify_keys
-    notification = Notification.create!(kind: kind, user: user, title: title.to_s.truncate(200), body: body, data: data, dedup_key: dedup_key)
+    # Fala em SSML (importada do HA): a tela e o push mostram o texto; a Echo usa o SSML.
+    data["ssml"], body = body, Ssml.plain(body) if Ssml.ssml?(body)
+    notification = Notification.create!(kind: kind, user: user, title: Ssml.plain(title.to_s).truncate(200), body: body, data: data, dedup_key: dedup_key)
     notification.image.attach(image) if image
     # Tag igual substitui: o aviso anterior com a mesma tag sai da lista de não lidas.
     Notification.where(user_id: user&.id).tagged(data["tag"]).unread.where.not(id: notification.id).update_all(read_at: Time.current) if data["tag"].present? # rubocop:disable Rails/SkipsModelValidations
