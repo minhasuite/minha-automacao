@@ -1,0 +1,152 @@
+<%= render "web/shared/header", title: t("settings.title"), subtitle: t("queue.subtitle") %>
+<%= render layout: "web/settings/frame", locals: { current: :queue } do %>
+<%# Recarrega a página com morph a cada 10 s (pausa com a aba escondida). %>
+<div data-controller="ss-reload" data-ss-reload-every-value="10000" data-queue="live">
+<% s = @summary %>
+<section aria-labelledby="queue-sum-t">
+  <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+    <h2 id="queue-sum-t"><%= t("queue.summary.title") %></h2>
+    <p class="text-xs text-muted"><%= t("queue.refreshed", at: queue_time(@now)) %></p>
+  </div>
+  <%= render Ss::KpiStripComponent.new(label: t("queue.summary.title"), count: false, items: [
+        { label: t("queue.summary.ready"), value: s[:ready].to_s, hint: (t("queue.summary.oldest", time: queue_secs(s[:oldest_ready_s])) if s[:oldest_ready_s]) },
+        { label: t("queue.summary.claimed"), value: s[:claimed].to_s },
+        { label: t("queue.summary.scheduled"), value: s[:scheduled].to_s },
+        { label: t("queue.summary.failed"), value: s[:failed].to_s, good: (false if s[:failed].positive?), delta: (t("queue.summary.attention") if s[:failed].positive?) }.compact,
+        { label: t("queue.summary.finished_24h"), value: s[:finished_24h].to_s },
+        { label: t("queue.summary.processes"), value: "#{s[:processes_alive]}/#{s[:processes]}", good: (false if s[:processes_alive].zero?), delta: (t("queue.summary.no_worker") if s[:processes_alive].zero?) }.compact
+      ]) %>
+</section>
+
+<section class="mt-6" aria-labelledby="queue-lat-t" data-queue="latency">
+  <h2 id="queue-lat-t"><%= t("queue.latency.title") %></h2>
+  <p class="text-sm text-muted mt-1 mb-3"><%= t("queue.latency.hint") %></p>
+  <% hour = @latency["1h"][:total] %>
+  <% if hour[:count].positive? %>
+    <%= render Ss::CalloutComponent.new(tone: :info, css: "mb-3") do %>
+      <%= t("queue.latency.verdict", n: hour[:count], queue: queue_secs(hour[:queue][:p95]), device: queue_secs(hour[:device][:p95])) %>
+    <% end %>
+  <% end %>
+  <div class="grid gap-4 xl:grid-cols-2">
+    <% QueueMonitor::WINDOWS.each_key do |w| %>
+      <% lat = @latency[w] %>
+      <% rows = [ lat[:total].merge(driver: t("queue.latency.all")) ] + lat[:drivers] %>
+      <div class="min-w-0" data-window="<%= w %>">
+        <h3 class="mb-2 font-bold"><%= t("queue.latency.window.#{w}") %></h3>
+        <%= render Ss::DataTableComponent.new(rows: rows, id: "lat-#{w}", caption: t("queue.latency.window.#{w}"), tools: false, density: :compact, row_id: :driver) do |tb| %>
+          <% tb.column :driver, t("queue.latency.driver") do |r| %><span class="font-semibold text-ink"><%= r[:driver] %></span><% end %>
+          <% tb.column :count, t("queue.latency.count"), align: :right do |r| %><span class="num"><%= r[:count] %></span><% if (r[:failed] + r[:expired]).positive? %> <span class="ss-badge ss-badge-danger num" title="<%= t("queue.latency.failed_hint") %>"><%= r[:failed] + r[:expired] %></span><% end %><% end %>
+          <% tb.column :queue, t("queue.latency.queue"), align: :right do |r| %><span class="num whitespace-nowrap"><%= queue_secs(r[:queue][:p50]) %> · <%= queue_secs(r[:queue][:p95]) %> · <%= queue_secs(r[:queue][:max]) %></span><% end %>
+          <% tb.column :device, t("queue.latency.device"), align: :right do |r| %><span class="num whitespace-nowrap"><%= queue_secs(r[:device][:p50]) %> · <%= queue_secs(r[:device][:p95]) %> · <%= queue_secs(r[:device][:max]) %></span><% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+  <p class="text-xs text-muted mt-2"><%= t("queue.latency.legend") %></p>
+
+  <% if @failed_commands.any? %>
+    <h3 class="mt-5 mb-2 font-bold"><%= t("queue.commands.failed") %></h3>
+    <ul class="ss-card ss-rows" aria-label="<%= t("queue.commands.failed") %>" data-queue="failed-commands">
+      <% @failed_commands.each do |c| %>
+        <li class="!items-start">
+          <%= icon("x-circle", "size-5 shrink-0 mt-0.5 text-danger") %>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm text-ink break-words"><span class="font-semibold"><%= c[:point] %></span> · <%= c[:command] %> <span class="text-muted">(<%= c[:driver] %>)</span></p>
+            <p class="text-xs text-muted break-words num"><%= Command::STATUSES.fetch(c[:status], c[:status]) %> · <%= queue_time(c[:created_at]) %><%= " · #{c[:error]}" if c[:error].present? %></p>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <h3 class="mt-5 mb-2 font-bold"><%= t("queue.commands.recent") %></h3>
+  <%= render Ss::DataTableComponent.new(rows: @recent, id: "comandos", caption: t("queue.commands.recent"), tools: false, density: :compact, max_height: "28rem", empty: t("queue.commands.empty")) do |tb| %>
+    <% tb.column :created_at, t("queue.commands.when") do |c| %><span class="num whitespace-nowrap"><%= queue_time(c[:created_at]) %></span><% end %>
+    <% tb.column :point, t("queue.commands.point") do |c| %><span class="block font-semibold text-ink truncate max-w-[14rem]"><%= c[:point] %></span><span class="block text-xs text-muted"><%= c[:command] %> · <%= c[:driver] %> · <%= Command::SOURCES.fetch(c[:source], c[:source]) %></span><% end %>
+    <% tb.column :queue_s, t("queue.latency.queue_short"), align: :right do |c| %><span class="num"><%= queue_secs(c[:queue_s]) %></span><% end %>
+    <% tb.column :device_s, t("queue.latency.device_short"), align: :right do |c| %><span class="num"><%= queue_secs(c[:device_s]) %></span><% end %>
+    <% tb.column :status, t("queue.commands.status") do |c| %><span class="ss-badge ss-badge-<%= queue_status_tone(c[:status]) %>" title="<%= c[:error] %>"><%= Command::STATUSES.fetch(c[:status], c[:status]) %></span><% end %>
+  <% end %>
+</section>
+
+<section class="mt-6" aria-labelledby="queue-jobs-t" data-queue="jobs">
+  <h2 id="queue-jobs-t"><%= t("queue.jobs.title") %></h2>
+  <p class="text-sm text-muted mt-1 mb-3"><%= t("queue.jobs.hint") %></p>
+  <%= render Ss::DataTableComponent.new(rows: @jobs, id: "jobs", caption: t("queue.jobs.title"), tools: false, density: :compact, row_id: :job, empty: t("queue.jobs.empty")) do |tb| %>
+    <% tb.column :job, t("queue.jobs.job") do |r| %><span class="font-semibold text-ink break-all"><%= r[:job] %></span><% end %>
+    <% tb.column :count, t("queue.jobs.count"), align: :right do |r| %><span class="num"><%= r[:count] %></span><% end %>
+    <% tb.column :failed, t("queue.jobs.failed"), align: :right do |r| %><% if r[:failed].positive? %><span class="ss-badge ss-badge-danger num"><%= r[:failed] %></span><% else %><span class="num text-muted">0</span><% end %><% end %>
+    <% tb.column :avg_s, t("queue.jobs.avg"), align: :right do |r| %><span class="num"><%= queue_secs(r[:avg_s]) %></span><% end %>
+    <% tb.column :p95_s, t("queue.jobs.p95"), align: :right do |r| %><span class="num"><%= queue_secs(r[:p95_s]) %></span><% end %>
+    <% tb.column :max_s, t("queue.jobs.max"), align: :right do |r| %><span class="num"><%= queue_secs(r[:max_s]) %></span><% end %>
+  <% end %>
+</section>
+
+<section class="mt-6" aria-labelledby="queue-list-t">
+  <h2 id="queue-list-t" class="sr-only"><%= t("queue.tabs.label") %></h2>
+  <% counts = { "execucao" => s[:claimed], "agendados" => s[:scheduled], "erros" => s[:failed], "concluidos" => s[:finished_24h] } %>
+  <%= render Ss::TabsComponent.new(label: t("queue.tabs.label"), id: "queue-tabs", css: "mb-3") do |tabs| %>
+    <% QueueMonitor::TABS.each do |key| %>
+      <% tabs.with_tab(label: t("queue.tabs.#{key}"), href: settings_queue_path(aba: key), current: key == @tab, id: key, badge: (counts[key] if counts[key].positive?)) %>
+    <% end %>
+  <% end %>
+  <% if counts[@tab] > @rows.size %><p class="text-xs text-muted mb-2"><%= t("queue.tabs.showing", n: @rows.size, total: counts[@tab]) %></p><% end %>
+
+  <% if @rows.empty? %>
+    <%= render Ss::EmptyStateComponent.new(title: t("queue.tabs.empty.#{@tab}"), css: "ss-card") %>
+  <% elsif @tab == "erros" %>
+    <ul class="ss-card ss-rows" aria-label="<%= t("queue.tabs.erros") %>" data-queue="failed-jobs">
+      <% @rows.each do |r| %>
+        <li class="!items-start" data-failed="<%= r[:id] %>">
+          <%= icon("x-circle", "size-5 shrink-0 mt-0.5 text-danger") %>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold text-ink break-all"><%= r[:job] %> <span class="font-normal text-muted"><%= r[:args] %></span></p>
+            <p class="text-sm text-danger break-words"><%= [ r[:error_class], r[:message] ].compact_blank.join(": ") %></p>
+            <p class="text-xs text-muted num"><%= queue_time(r[:at]) %> · <%= r[:queue] %></p>
+            <% if r[:backtrace].any? %><pre class="mt-1 text-xs text-muted whitespace-pre-wrap break-all"><%= r[:backtrace].join("\n") %></pre><% end %>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <%= button_to settings_queue_retry_path(r[:id]), class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("refresh", "size-4") %><%= t("queue.retry") %><% end %>
+              <%= button_to settings_queue_discard_path(r[:id]), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm",
+                            form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("queue.discard_confirm", job: r[:job]), turbo_confirm_button: t("queue.discard") } } do %><%= icon("trash", "size-4") %><%= t("queue.discard") %><% end %>
+            </div>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <%= render Ss::DataTableComponent.new(rows: @rows, id: "fila-#{@tab}", caption: t("queue.tabs.#{@tab}"), tools: false, density: :compact) do |tb| %>
+      <% tb.column :job, t("queue.jobs.job") do |r| %><span class="block font-semibold text-ink break-all"><%= r[:job] %></span><span class="block text-xs text-muted break-all"><%= r[:args] %></span><% end %>
+      <% if @tab == "execucao" %>
+        <% tb.column :since, t("queue.list.since") do |r| %><span class="num whitespace-nowrap"><%= queue_time(r[:since]) %></span><span class="block text-xs text-muted num"><%= t("queue.list.running_for", time: queue_secs(r[:running_s])) %></span><% end %>
+        <% tb.column :waited_s, t("queue.list.waited"), align: :right do |r| %><span class="num"><%= queue_secs(r[:waited_s]) %></span><% end %>
+        <% tb.column :process, t("queue.list.process") do |r| %><span class="text-sm"><%= r[:process] || "—" %></span><% end %>
+      <% elsif @tab == "agendados" %>
+        <% tb.column :at, t("queue.list.at") do |r| %><span class="num whitespace-nowrap"><%= queue_time(r[:at]) %></span><% end %>
+        <% tb.column :queue, t("queue.list.queue") do |r| %><%= r[:queue] %><% end %>
+      <% else %>
+        <% tb.column :at, t("queue.list.finished_at") do |r| %><span class="num whitespace-nowrap"><%= queue_time(r[:at]) %></span><% end %>
+        <% tb.column :total_s, t("queue.list.total"), align: :right do |r| %><span class="num"><%= queue_secs(r[:total_s]) %></span><% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+</section>
+
+<section class="mt-6 grid gap-4 xl:grid-cols-2" aria-label="<%= t("queue.processes.title") %>">
+  <div class="min-w-0" data-queue="processes">
+    <h2 class="mb-2"><%= t("queue.processes.title") %></h2>
+    <%= render Ss::DataTableComponent.new(rows: @processes, id: "processos", caption: t("queue.processes.title"), tools: false, density: :compact, row_id: :name, empty: t("queue.processes.empty")) do |tb| %>
+      <% tb.column :name, t("queue.processes.name") do |p| %><span class="block font-semibold text-ink"><%= p[:kind] %></span><span class="block text-xs text-muted break-all"><%= p[:name] %> · pid <%= p[:pid] %><%= " · #{p[:hostname]}" if p[:hostname] %></span><% end %>
+      <% tb.column :last_heartbeat_at, t("queue.processes.heartbeat") do |p| %><span class="num whitespace-nowrap"><%= queue_time(p[:last_heartbeat_at]) %></span> <span class="ss-badge ss-badge-<%= p[:alive] ? "success" : "danger" %>"><%= t(p[:alive] ? "queue.processes.alive" : "queue.processes.dead") %></span><% end %>
+    <% end %>
+  </div>
+  <div class="min-w-0" data-queue="recurring">
+    <h2 class="mb-2"><%= t("queue.recurring.title") %></h2>
+    <%= render Ss::DataTableComponent.new(rows: @recurring, id: "recorrentes", caption: t("queue.recurring.title"), tools: false, density: :compact, row_id: :key, max_height: "24rem", empty: t("queue.recurring.empty")) do |tb| %>
+      <% tb.column :key, t("queue.recurring.task") do |r| %><span class="block font-semibold text-ink break-all"><%= r[:key] %></span><span class="block text-xs text-muted break-all"><%= r[:schedule] %></span><% end %>
+      <% tb.column :last_run_at, t("queue.recurring.last") do |r| %><span class="num whitespace-nowrap"><%= queue_time(r[:last_run_at]) %></span><% end %>
+      <% tb.column :next_run_at, t("queue.recurring.next") do |r| %><span class="num whitespace-nowrap"><%= queue_time(r[:next_run_at]&.in_time_zone) %></span><% end %>
+    <% end %>
+  </div>
+</section>
+</div>
+<% end %>

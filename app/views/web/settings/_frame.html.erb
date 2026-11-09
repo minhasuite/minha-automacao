@@ -9,6 +9,7 @@
              [ t("hardware.nav"), settings_hardware_path, "chip", :hardware, current_user.owner? ],
              [ t("backup_restore.nav"), settings_backups_path, "download", :backups, Backups::Restore.allowed?(current_user) ],
              [ t("logs.nav"), settings_logs_path, "document-text", :logs, SystemLog.visible_to?(current_user) ],
+             [ t("queue.nav"), settings_queue_path, "clock", :queue, QueueMonitor.visible_to?(current_user) ],
              [ t("settings.nav.labels"), tags_path, "tag", :labels, current_user.admin? ],
              [ t("settings.nav.system"), settings_system_path, "cog", :system, !reader ],
              [ t("settings.nav.remote"), settings_remote_path, "globe", :remote, current_user.admin? ],
