@@ -191,5 +191,30 @@ RSpec.describe "F9: Google Agenda / ICS" do
       expect(described_class.oauth_callback(integration, { code: "X", redirect_uri: "r" }).alert).to include("invalid_grant")
       expect(described_class.login(integration, {}).to).to eq(:connect)
     end
+
+    it "modo Google: agenda só livre/ocupado vira horários \"Ocupado\" e aniversário guarda o tipo" do
+      stub_const("ENV", ENV.to_h.merge("GOOGLE_CLIENT_ID" => "cid", "GOOGLE_CLIENT_SECRET" => "csec"))
+      integration = setup(mode: "google").integration
+      integration.merge_secrets!("refresh_token" => "R1", "access_token" => "A1", "expires_at" => 1.hour.from_now.to_i)
+      list = stub_request(:get, %r{calendarList\?minAccessRole=freeBusyReader}).to_return(body: { items: [
+        { id: "eu@gmail.com", summary: "Eu", accessRole: "owner" },
+        { id: "herlon@empresa.com", summary: "herlon@empresa.com", accessRole: "freeBusyReader" }
+      ] }.to_json)
+      stub_request(:get, %r{calendars/eu(@|%40)gmail.com/events}).to_return(body: { items: [
+        { summary: "Aniversário de Ana", eventType: "birthday", start: { date: "2026-11-03" }, end: { date: "2026-11-04" } },
+        { summary: "Dentista", eventType: "default", start: { dateTime: "2026-11-02T10:00:00-03:00" }, end: { dateTime: "2026-11-02T11:00:00-03:00" } }
+      ] }.to_json)
+      fb = stub_request(:post, "https://www.googleapis.com/calendar/v3/freeBusy")
+           .with(body: hash_including("items" => [ { "id" => "herlon@empresa.com" } ]))
+           .to_return(body: { calendars: { "herlon@empresa.com" => { busy: [ { start: "2026-11-02T12:00:00Z", end: "2026-11-02T13:00:00Z" } ] } } }.to_json)
+      expect(described_class.sync!(integration)).to include(found: 2)
+      expect([ list, fb ]).to all(have_been_requested)
+      eu = site.points.find_by!(name: "Eu")
+      expect(eu.address["events"]).to include(a_hash_including("summary" => "Aniversário de Ana", "type" => "birthday", "all_day" => true))
+      expect(eu.address["events"].find { |e| e["summary"] == "Dentista" }).not_to have_key("type")
+      empresa = site.points.find_by!(name: "herlon@empresa.com")
+      expect(empresa.address["events"]).to eq([ { "summary" => "Ocupado", "start" => Time.zone.parse("2026-11-02T12:00:00Z").iso8601,
+                                                   "end" => Time.zone.parse("2026-11-02T13:00:00Z").iso8601, "all_day" => false, "busy" => true } ])
+    end
   end
 end

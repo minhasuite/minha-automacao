@@ -167,7 +167,11 @@ varredura e da adoção o plugin grava o estado atual (`Plugin.refresh`).
   links cifrados nas credenciais, baixados pelo `SafeHttp`) ou modo **conta
   Google** (OAuth só leitura, `Calendars::Google`; aparece só com
   `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET`; URI de retorno a cadastrar no
-  Google Cloud: `https://<host>/integracoes/oauth/retorno`). Um ponto
+  Google Cloud: `https://<host>/integracoes/oauth/retorno`). Agenda
+  compartilhada só como "livre/ocupado" entra pelo `POST /freeBusy`, com os
+  horários como eventos `Ocupado` (`busy: true`, sem título); evento de tipo
+  diferente do comum guarda `type` (`birthday`: os aniversários moram na
+  agenda principal desde 2024). Um ponto
   `calendar` por agenda no dispositivo virtual `calendar:<integração>`: eventos
   de ontem a +31 dias em `address.events`, valor = evento de agora ou o
   próximo (`{summary, start, end, all_day, location, now}`), refeito a cada

@@ -40,12 +40,33 @@ module Calendars
       fresh["access_token"]
     end
 
-    # [{id:, name:, events:}] das agendas marcadas na conta.
+    # [{id:, name:, events:}] das agendas marcadas na conta. Agenda compartilhada
+    # só como "livre/ocupado" (a de outra empresa, por exemplo) também entra:
+    # os horários ocupados viram eventos "Ocupado", sem título (BUSY).
+    BUSY = "Ocupado".freeze
+
     def calendars(integration, from, to)
       token = access_token(integration)
-      list = get("#{API}/users/me/calendarList?minAccessRole=reader", token)["items"].to_a.reject { |c| c["hidden"] || c["selected"] == false }
-      list.first(20).map do |c|
-        { id: "google:#{c['id']}", name: c["summaryOverride"].presence || c["summary"].to_s, events: events(token, c["id"], from, to) }
+      list = get("#{API}/users/me/calendarList?minAccessRole=freeBusyReader", token)["items"].to_a.reject { |c| c["hidden"] || c["selected"] == false }.first(20)
+      busy_only, readable = list.partition { |c| c["accessRole"] == "freeBusyReader" }
+      busy = busy_only.any? ? busy(token, busy_only.pluck("id"), from, to) : {}
+      list.map do |c|
+        evs = busy_only.include?(c) ? busy.fetch(c["id"], []) : events(token, c["id"], from, to)
+        { id: "google:#{c['id']}", name: c["summaryOverride"].presence || c["summary"].to_s, events: evs }
+      end
+    end
+
+    # Livre/ocupado: {id => [eventos "Ocupado"]}; agenda com erro fica vazia.
+    def busy(token, ids, from, to)
+      res = SafeHttp.request("POST", "#{API}/freeBusy", headers: { "Authorization" => "Bearer #{token}", "Content-Type" => "application/json" },
+                                                         body: { timeMin: from.utc.iso8601, timeMax: to.utc.iso8601, items: ids.map { |i| { id: i } } }.to_json)
+      body = parse(res)
+      raise Integrations::Error, body.dig("error", "message") || "Google respondeu #{res.status}" unless res.status == 200
+
+      body["calendars"].to_h.transform_values do |c|
+        c["busy"].to_a.first(Calendars::MAX_EVENTS).map do |b|
+          { "summary" => BUSY, "start" => Time.zone.parse(b["start"]).iso8601, "end" => Time.zone.parse(b["end"]).iso8601, "all_day" => false, "busy" => true }
+        end
       end
     end
 
@@ -57,7 +78,10 @@ module Calendars
         s = all_day ? Time.zone.parse(e.dig("start", "date")) : Time.zone.parse(e.dig("start", "dateTime"))
         f = all_day ? Time.zone.parse(e.dig("end", "date")) : Time.zone.parse(e.dig("end", "dateTime"))
         { "summary" => e["summary"].presence || "(sem título)", "start" => s.iso8601, "end" => f.iso8601, "all_day" => all_day,
-          "location" => e["location"].presence }.compact
+          "location" => e["location"].presence,
+          # Tipo do Google fora o comum: "birthday" (os aniversários, que desde 2024 moram
+          # na agenda principal), "outOfOffice", "focusTime"…
+          "type" => (e["eventType"] if e["eventType"].present? && e["eventType"] != "default") }.compact
       end
     end
 
