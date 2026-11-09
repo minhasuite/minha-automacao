@@ -506,6 +506,8 @@ module Blueprints
       elsif domain == "media_player" && MEDIA.include?(name) then media_action(name, a)
       elsif domain == "notify" || service == "persistent_notification.create"
         data = a["data"].is_a?(Hash) ? a["data"] : {}
+        # Anúncio nas Echo (alexa_media): vira aviso; as Echo são escolhidas depois (canal "Falar na Echo").
+        note("anúncio na Alexa (#{service}) virou aviso no app: escolha as Echo no canal do aviso") if name.start_with?("alexa_media")
         [ notify(data, domain == "notify" ? %w[in_app push] : %w[in_app]) ]
       elsif domain == "script" && (k = entity_input(service)) then service_script(a.merge("target" => { "entity_id" => { "!input" => k } }))
       elsif HELPER_DOMAINS.include?(domain) && HELPER_COMMANDS.key?(name) then helper_command(HELPER_COMMANDS[name], a)
