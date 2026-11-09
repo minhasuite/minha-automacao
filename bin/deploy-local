@@ -6,13 +6,13 @@
 # GitHub), gera os segredos lá na primeira vez e sobe o compose.
 #
 #   bin/deploy-local [tag]          # tag padrão: latest
-#   DEPLOY_HOST=herlon@192.168.68.199 DEPLOY_KEY=~/.ssh/dell_automacao
+#   DEPLOY_HOST=herlon@192.168.68.199 DEPLOY_KEY=~/.ssh/id_ed25519
 set -euo pipefail
 
 TAG="${1:-latest}"
 IMAGE="ghcr.io/minhasuite/minha-automacao:$TAG"
 HOST="${DEPLOY_HOST:-herlon@192.168.68.199}"
-KEY="${DEPLOY_KEY:-$HOME/.ssh/dell_automacao}"
+KEY="${DEPLOY_KEY:-$HOME/.ssh/id_ed25519}"
 DIR="${DEPLOY_DIR:-/opt/minha-automacao}"
 SSH=(ssh -i "$KEY" -o BatchMode=yes "$HOST")
 cd "$(dirname "$0")/.."

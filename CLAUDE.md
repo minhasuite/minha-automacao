@@ -629,7 +629,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
 
 ## Servidor local (casa)
 
-Debian `192.168.68.199` (`ssh -i ~/.ssh/dell_automacao herlon@…`), em
+Debian `192.168.68.199` (`ssh -i ~/.ssh/id_ed25519 herlon@…`), em
 `/opt/minha-automacao`: `docker-compose.yml` (= `docker-compose.local.yml`),
 `.env` (chmod 600, segredos gerados lá; nunca no repo: inclui
 `MQTT_PASSWORD`, `Z2M_FRONTEND_TOKEN` e `SUPERVISOR_TOKEN`), `backups/` (pg_dump diário, 7 dias).

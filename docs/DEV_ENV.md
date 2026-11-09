@@ -4,7 +4,7 @@ Ruby só em container (podman rootless como `docker`). Portas próprias:
 Postgres `127.0.0.1:6299`, app `:4121`.
 
 ```bash
-cd ~/projects/minha-automacao-workspace/minha-automacao
+cd ~/Projetos/minhasuite/minha-automacao-workspace/minha-automacao
 docker compose -f .devcontainer/docker-compose.yml up -d
 R() { docker compose -f .devcontainer/docker-compose.yml exec -T app bash -c "cd /app && $*"; }
 
