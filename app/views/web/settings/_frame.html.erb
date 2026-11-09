@@ -1,6 +1,8 @@
 <%# locals: (current:) -%>
 <% reader = current_user.reader? %>
-<% items = [ [ t("settings.nav.dashboards"), settings_dashboards_path, "view-boards", :dashboards, !reader ],
+<%# Locais (cadastro, áreas, aparelhos) moraram no menu lateral até 11/2026; agora aqui. %>
+<% items = [ [ t("nav.sites"), sites_path, "home", :sites, !reader ],
+             [ t("settings.nav.dashboards"), settings_dashboards_path, "view-boards", :dashboards, !reader ],
              [ t("settings.nav.people"), people_path, "users", :people, current_user.admin? ],
              [ t("settings.nav.api_keys"), api_keys_path, "link", :api_keys, current_user.owner? ],
              [ t("settings.nav.apps"), apps_path, "cube", :apps, current_user.owner? ],
