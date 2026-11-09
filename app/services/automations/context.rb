@@ -154,9 +154,29 @@ module Automations
     end
 
     def assigns
-      pts = site.points.includes(:device).to_a.to_h { |p| [ p.key, point_drop(p) ] }
-      vars.merge("trigger" => trigger, "vars" => vars, "points" => pts, "site" => { "name" => site.name }, "now" => now,
+      vars.merge("trigger" => trigger, "vars" => vars, "points" => (@points_drop ||= PointsDrop.new(self)), "site" => { "name" => site.name }, "now" => now,
                  "repeat" => { "index" => vars["repeat_index"], "item" => vars["repeat_item"] })
+    end
+
+    # `points["chave"]` no Liquid, montado só para a chave pedida. Antes o render
+    # montava os ~500 pontos do local (com o texto formatado de cada valor) em todo
+    # texto, mesmo sem usar nenhum: 236 ms por render no Dell.
+    class PointsDrop < Liquid::Drop
+      def initialize(ctx)
+        super()
+        @ctx = ctx
+        @cache = {}
+      end
+
+      def liquid_method_missing(key)
+        key = key.to_s
+        return @cache[key] if @cache.key?(key)
+
+        point = @ctx.site.points.includes(:device).find_by(key: key)
+        @cache[key] = point && @ctx.point_drop(point)
+      end
+
+      def key?(key) = !liquid_method_missing(key).nil?
     end
 
     # Filtro Liquid `calc`: a expressão (texto) calculada nesta execução.

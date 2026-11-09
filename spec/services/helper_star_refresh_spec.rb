@@ -62,3 +62,19 @@ RSpec.describe Automations::Context do
     end
   end
 end
+
+RSpec.describe Automations::Context, "#render" do
+  it "monta só o ponto pedido e mantém o acesso por chave" do
+    tenant = create(:tenant)
+    ActsAsTenant.with_tenant(tenant) do
+      site = create(:site, tenant: tenant)
+      device = create(:device, site: site)
+      lamp = create(:point, device: device, capability: "onoff", value: true)
+      create_list(:point, 3, device: device, capability: "onoff")
+      ctx = described_class.new(site: site)
+      expect(ctx).to receive(:point_drop).once.and_call_original
+      expect(ctx.render(%({{ points["#{lamp.key}"].value }} {{ points["#{lamp.key}"].name }}))).to eq("true #{lamp.name}")
+      expect(ctx.render(%({{ points["nao.existe"].value }}x))).to eq("x")
+    end
+  end
+end
