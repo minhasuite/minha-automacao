@@ -25,10 +25,11 @@
   <section class="ss-card ss-card-pad" aria-labelledby="scene-items">
     <h2 id="scene-items"><%= t("automations.scenes.items") %></h2>
     <p class="text-sm text-muted mb-3"><%= t("automations.scenes.items_hint") %></p>
-    <div class="grid gap-3">
+    <%# Um item por linha da lista da gem (.ss-rows num card): ponto, ação e valor. %>
+    <ol class="ss-rows ss-card">
       <% (record.items + Array.new(record.items.empty? ? 3 : 1) { {} }).each_with_index do |item, i| %>
         <% point = by_id[item["point_id"]] %>
-        <div class="grid gap-2 sm:grid-cols-[2fr_1.3fr_1.3fr] rounded-2xl border border-line bg-page/40 p-3">
+        <li class="grid gap-2 sm:grid-cols-[2fr_1.3fr_1.3fr]">
           <div class="min-w-0"><label class="ss-label" for="item_<%= i %>_point"><%= t("automations.labels.field_types.point") %></label>
             <%= select_tag "scene[items][#{i}][point_id]", grouped_options_for_select(groups, item["point_id"]), include_blank: t("automations.fields.pick_point"), class: "ss-input", id: "item_#{i}_point" %>
             <% if point %><p class="text-xs text-muted mt-1"><%= t("automations.scenes.now", value: point_value_text(point)) %></p><% end %></div>
@@ -44,9 +45,9 @@
             <% else %>
               <%= text_field_tag "scene[items][#{i}][value]", item["value"], class: "ss-input", id: "item_#{i}_value", placeholder: t("automations.scenes.set_select") %>
             <% end %></div>
-        </div>
+        </li>
       <% end %>
-    </div>
+    </ol>
   </section>
 
   <section class="ss-card ss-card-pad">
