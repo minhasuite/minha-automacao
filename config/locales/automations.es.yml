@@ -831,6 +831,8 @@ es:
       edit_name: "Editar %{name}"
       add: "Nuevo"
     lists:
+      not_set: "Aún sin configurar en este punto"
+      new_x: "Nuevo: %{title}"
       schedules: "Programaciones"
       schedules_empty: "Ninguna programación. Ej.: encender a las 17 h, apagar a las 23 h, encender al atardecer."
       links: "Reflejar"

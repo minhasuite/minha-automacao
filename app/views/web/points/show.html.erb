@@ -36,7 +36,7 @@
 <p class="ss-section mt-6 mb-3"><%= t("points.show.automation") %></p>
 <% if @point.capability == "onoff" && @point.writable %>
   <section class="ss-card ss-card-pad mb-4 flex flex-wrap items-center gap-3" aria-labelledby="auto-off-title">
-    <div class="min-w-0 flex-1">
+    <div class="min-w-0 flex-1 basis-64">
       <h2 id="auto-off-title"><%= t("points.show.auto_off") %></h2>
       <p class="text-sm text-muted mt-1">
         <% if @point.pulse_ms || @point.max_on_s %>
