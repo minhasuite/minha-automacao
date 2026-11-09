@@ -1,3 +1,7 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<%# Número com rótulo no card de indicador da gem (cabeçalho padrão de card e valor em mono). %>
-<%= render Ss::KpiCardComponent.new(label: w["label"], value: w["data"]["text"], icon: icon(w["icon"].presence || "chart-bar", ""), css: "h-full") %>
+<%# Número com rótulo no card de indicador da gem (cabeçalho padrão de card e valor em mono).
+    Unidade de moeda vai na frente ("18,42 R$" → "R$ 18,42"), como no resto das telas. %>
+<% text = w["data"]["text"].to_s %>
+<% money = text.match(/\A(.+?)\s*(R\$|US\$|€|£|\$)\z/) %>
+<% text = "#{money[2]} #{money[1]}" if money %>
+<%= render Ss::KpiCardComponent.new(label: w["label"], value: text, money: money.present?, icon: icon(w["icon"].presence || "chart-bar", ""), css: "h-full") %>
