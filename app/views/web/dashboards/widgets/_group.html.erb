@@ -1,5 +1,5 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<div class="dw-card">
-  <% if w["label"].present? %><p class="dw-card-title"><%= w["label"] %></p><% end %>
+<div class="ss-card ss-card-pad h-full">
+  <% if w["label"].present? %><%= render Ss::CardHeaderComponent.new(title: w["label"]) %><% end %>
   <%= render "web/dashboards/widgets/rows", ids: w["data"]["point_ids"], points: points, w: w, dashboard: dashboard, live: live %>
 </div>

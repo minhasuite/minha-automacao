@@ -184,11 +184,11 @@ RSpec.describe "ondaB2: painéis" do
       expect(response.body).to include("Mosaico", "Lateral")
       expect(response.body).not_to include("Teste câmera") # subvisão fora das abas
       get "/paineis/#{d.id}?view=m"
-      expect(response.body).to include("dw-masonry", "dw-masonry-title")
+      expect(response.body).to include("ss-masonry", "ss-section-row")
       get "/paineis/#{d.id}?view=camera"
       expect(response.body).to include("dw-panel", "dw-back", "Teste câmera", "Voltar para Início")
       get "/paineis/#{d.id}?view=sb"
-      expect(response.body).to include("dw-sidebar-main", "dw-sidebar-side")
+      expect(response.body).to include("ss-aside-layout-main", "ss-aside-layout-side")
     end
 
     it "recusa tipo de visão e posição desconhecidos" do
@@ -245,7 +245,7 @@ RSpec.describe "ondaB2: painéis" do
       d = board([ { "id" => "w1", "type" => "tile", "bind" => power.id } ], view: { "type" => "carrossel_teste" })
       expect(Dashboards::Schema.errors(d.definition)).to eq([])
       get "/paineis/#{d.id}"
-      expect(response.body).to include("dw-masonry")
+      expect(response.body).to include("ss-masonry")
       get "/paineis/#{d.id}/editar"
       expect(response.body).to include("Carrossel (teste)")
     end

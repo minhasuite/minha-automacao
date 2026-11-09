@@ -1,12 +1,16 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<div class="flex flex-wrap gap-2">
-  <% w["data"]["scenes"].each do |s| %>
-    <% if s["can_activate"] %>
-      <% confirm = s["confirm"] ? { turbo_confirm: t("dashboards.w.scene_confirm", name: s['name']), turbo_confirm_button: t("dashboards.w.activate") } : {} %>
-      <%= button_to activate_scene_path(s["id"]), params: { back: dashboard_path(dashboard) }, class: "dw-scene", form: { data: { turbo_frame: "_top", **confirm } } do %><%= icon(s["icon"].presence || "sparkles", "size-4") %><%= s["name"] %><% end %>
-    <% else %>
-      <span class="dw-scene opacity-60" title="<%= t("dashboards.w.scene_role") %>"><%= icon(s["icon"].presence || "sparkles", "size-4") %><%= s["name"] %></span>
+<%# Cenas em chips da gem (o SsChipBar + SsFilterChip do app); sem permissão, o chip fica travado. %>
+<% if w["data"]["scenes"].empty? %>
+  <p class="dw-quiet"><%= icon("sparkles", "size-5 text-muted") %><%= t("dashboards.w.no_scenes") %></p>
+<% else %>
+  <div class="ss-chips" role="group" aria-label="<%= w["label"].presence || t("dashboards.w.scenes_label") %>">
+    <% w["data"]["scenes"].each do |s| %>
+      <% if s["can_activate"] %>
+        <% confirm = s["confirm"] ? { turbo_confirm: t("dashboards.w.scene_confirm", name: s['name']), turbo_confirm_button: t("dashboards.w.activate") } : {} %>
+        <%= button_to activate_scene_path(s["id"]), params: { back: dashboard_path(dashboard) }, class: "ss-chip", form_class: "contents", form: { data: { turbo_frame: "_top", **confirm } } do %><%= icon(s["icon"].presence || "sparkles", "size-4") %><%= s["name"] %><% end %>
+      <% else %>
+        <span class="ss-chip" aria-disabled="true" title="<%= t("dashboards.w.scene_role") %>"><%= icon(s["icon"].presence || "sparkles", "size-4") %><%= s["name"] %></span>
+      <% end %>
     <% end %>
-  <% end %>
-  <% if w["data"]["scenes"].empty? %><p class="dw-quiet"><%= icon("sparkles", "size-5 text-muted") %><%= t("dashboards.w.no_scenes") %></p><% end %>
-</div>
+  </div>
+<% end %>

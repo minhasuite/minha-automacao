@@ -488,6 +488,7 @@ es:
       activate: Activar
       scene_role: Tu rol no activa esta escena
       no_scenes: Ninguna escena creada.
+      scenes_label: Escenas
       by_device: Consumo por aparato
       no_energy_points: Ningún punto de energía (kWh) o potencia (W) en el lugar.
       no_usage: Sin consumo registrado en el período.

@@ -1,9 +1,9 @@
 <%# locals: (view:, points:, dashboard:, live:) -%>
-<%# Mosaico (o masonry do HA): os cards em colunas que se encaixam pela altura; o título da seção vira um cabeçalho no fluxo. %>
-<div class="dw-masonry mt-5">
+<%# Mosaico (o masonry do HA): os cards no mosaico em colunas da gem (Ss::MasonryComponent); o título da seção vira um título de seção no fluxo. %>
+<%= render Ss::MasonryComponent.new(css: "mt-5") do %>
   <% view["sections"].each do |s| %>
     <% next if s["widgets"].empty? %>
-    <% if s["title"].present? %><h2 class="dw-sec-title dw-masonry-title"><%= icon(s["icon"], "size-4") if s["icon"].present? %><%= s["title"] %></h2><% end %>
+    <% if s["title"].present? %><%= render Ss::SectionComponent.new(title: s["title"], icon: (icon(s["icon"], "") if s["icon"].present?)) %><% end %>
     <% s["widgets"].each do |w| %><%= render "web/dashboards/widget", w: w, points: points, dashboard: dashboard, badge: false, live: live %><% end %>
   <% end %>
-</div>
+<% end %>

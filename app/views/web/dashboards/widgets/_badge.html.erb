@@ -1,8 +1,9 @@
 <%# locals: (w:) -%>
 <% d = w["data"] %>
-<%# Selo sem valor (ponto sem leitura ou atributo que não veio) não aparece: "—" no topo não diz nada. %>
+<%# Selo do topo do painel: a pílula clara sobre o herói da gem (.ss-hero-chip). Sem valor (ponto sem leitura ou atributo que não veio) não aparece: "—" no topo não diz nada. %>
 <% unless d["value"].nil? || d["text"].to_s.strip.in?(["", "—", "-"]) %>
-  <span class="dw-badge">
+  <span class="ss-hero-chip">
+    <% if w["icon"].present? %><%= icon(w["icon"], "size-4") %><% end %>
     <% if w["aggregate"] == "count" && d["value"].to_i.zero? %>
       Nenhum <%= w["label"].to_s.delete_suffix("s") %>
     <% else %>

@@ -1,9 +1,16 @@
 <%# locals: (view:, points:, dashboard:, live:) -%>
-<%# Com barra lateral (o sidebar do HA): seções marcadas (position: sidebar) na coluna da direita; sem marca, a última vai para lá. %>
+<%# Com barra lateral (o sidebar do HA): seções marcadas (position: sidebar) na coluna da direita; sem marca, a última vai para lá.
+    Conteúdo + coluna lateral da gem (Ss::AsideLayoutComponent); cada seção com o título de seção da gem. %>
 <% list = view["sections"].reject { |s| s["widgets"].empty? } %>
 <% side, main = list.partition { |s| s["position"] == "sidebar" } %>
 <% side, main = [ [ main.pop ].compact, main ] if side.empty? && main.size > 1 %>
-<div class="dw-sidebar-view mt-5">
-  <div class="dw-sidebar-main"><% main.each_with_index do |s, i| %><%= render "web/dashboards/views/section", s: s, i: i, points: points, dashboard: dashboard, live: live, span: false %><% end %></div>
-  <aside class="dw-sidebar-side" aria-label="<%= t("dashboards.vt.sidebar") %>"><% side.each_with_index do |s, i| %><%= render "web/dashboards/views/section", s: s, i: i + main.size, points: points, dashboard: dashboard, live: live, span: false %><% end %></aside>
-</div>
+<% section = lambda do |s, i| %>
+  <section class="dw-w ss-rise" style="animation-delay: <%= [ i, 6 ].min * 50 %>ms" aria-label="<%= s['title'] || t("dashboards.section") %>">
+    <% if s["title"].present? %><%= render Ss::SectionComponent.new(title: s["title"], icon: (icon(s["icon"], "") if s["icon"].present?)) %><% end %>
+    <div class="dw-grid"><% s["widgets"].each do |w| %><%= render "web/dashboards/widget", w: w, points: points, dashboard: dashboard, badge: false, live: live %><% end %></div>
+  </section>
+<% end %>
+<%= render Ss::AsideLayoutComponent.new(label: t("dashboards.vt.sidebar"), css: "mt-5") do |l| %>
+  <% l.with_main do %><% main.each_with_index { |s, i| section.(s, i) } %><% end %>
+  <% if side.any? %><% l.with_aside do %><% side.each_with_index { |s, i| section.(s, i + main.size) } %><% end %><% end %>
+<% end %>

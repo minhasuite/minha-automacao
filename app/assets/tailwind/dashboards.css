@@ -19,16 +19,11 @@
   .dw-sections { gap: 1.75rem 1.25rem; }
   .dw-w { grid-column: span var(--m, 12) / span var(--m, 12); min-width: 0; }
   .dw-w[hidden] { display: none; }
-  .dw-sec-title { display: flex; align-items: center; gap: .45rem; margin: 0 0 .65rem .15rem; font-size: .72rem; font-weight: 700;
-                  text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
-  .dw-heading { display: flex; align-items: center; gap: .5rem; font-size: 1.15rem; font-weight: 800; color: var(--ink); padding: .5rem .15rem 0; }
   .dw-hero { padding: 1.4rem 1.5rem; }
   .dw-hero h1 { font-size: clamp(1.5rem, 4vw, 2rem); }
   .dw-hero-btn { display: inline-flex; align-items: center; gap: .4rem; height: 2.25rem; padding: 0 .8rem; border-radius: 999px; color: #fff;
                  font-weight: 700; font-size: .82rem; text-decoration: none; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .22); }
   .dw-hero-btn:hover { background: rgba(255, 255, 255, .26); }
-  .dw-badge { display: inline-flex; align-items: center; gap: .35rem; padding: .45rem .85rem; border-radius: 999px; color: #fff; font-size: .9rem;
-              background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .24); backdrop-filter: blur(6px); }
 
   .dw-card { position: relative; height: 100%; padding: .95rem 1rem; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card);
              border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); transition: background .35s ease, border-color .35s ease, box-shadow .25s ease, transform .15s ease; }
@@ -76,32 +71,12 @@
   .dw-dot { width: .6rem; height: .6rem; border-radius: 999px; flex-shrink: 0; }
 
   /* Cartão de área: foto (com véu) ou uma das artes da casa. */
-  .dw-area { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 8.5rem; padding: 1rem; overflow: hidden;
-             border-radius: 18px; color: #fff; box-shadow: var(--shadow-card); isolation: isolate; transition: transform .25s cubic-bezier(.2, .8, .2, 1), box-shadow .25s ease; }
-  /* Cartões de área lado a lado (dois por linha no celular) com a mesma altura. */
-  .dw-w:has(> .dw-area), .dw-w:has(> turbo-frame > .dw-area) { align-self: stretch; }
-  .dw-area { height: 100%; }
-  .dw-area:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
-  .dw-area::after { content: ""; position: absolute; inset: auto -20% -60% auto; width: 75%; aspect-ratio: 1; z-index: -1; border-radius: 999px;
-                    background: radial-gradient(circle, rgba(255, 255, 255, .28), transparent 65%); }
-  .dw-area-photo { background: linear-gradient(180deg, rgba(14, 13, 22, .05), rgba(14, 13, 22, .72)), var(--photo) center / cover; }
   .dw-art-0 { background: linear-gradient(135deg, #5a45e8, #3b82f6); }
   .dw-art-1 { background: linear-gradient(135deg, #f59e0b, #ef4444); }
   .dw-art-2 { background: linear-gradient(135deg, #0ea5e9, #10b981); }
   .dw-art-3 { background: linear-gradient(135deg, #7b5cff, #ec4899); }
   .dw-art-4 { background: linear-gradient(135deg, #14b8a6, #3b82f6); }
   .dw-art-5 { background: linear-gradient(135deg, #334155, #5a45e8); }
-  /* O ícone fica no topo; o nome e as pílulas descem sem passar por baixo dele (pílulas em várias linhas no celular). */
-  .dw-area { padding-top: 3.9rem; }
-  .dw-area-ico { position: absolute; top: .9rem; left: 1rem; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 12px;
-                 background: rgba(255, 255, 255, .2); backdrop-filter: blur(4px); }
-  .dw-area-name { font-size: 1.15rem; font-weight: 800; letter-spacing: -.01em; }
-  .dw-area-chip { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 700;
-                  background: rgba(255, 255, 255, .2); }
-  .dw-scene { display: inline-flex; align-items: center; gap: .45rem; padding: .6rem 1rem; border-radius: 14px; font-weight: 700; font-size: .875rem;
-              color: var(--ink); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-card); cursor: pointer; }
-  .dw-scene:hover { border-color: var(--accent); color: var(--accent); }
-  .dw-scene svg { color: var(--accent); }
 
   /* Consumo e custo (F9): número grande, linha de projeção/meta e barras por dia/hora. */
   .dw-energy-big { font-size: clamp(1.6rem, 4.5vw, 2.1rem); font-weight: 800; letter-spacing: -.02em; color: var(--ink); line-height: 1.1; }
@@ -173,15 +148,7 @@
 @keyframes dw-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
 /* Pessoas e painel de alarme (Pacote 3). */
 @layer components {
-  .dw-people { display: grid; gap: .55rem; margin-top: .6rem; }
-  .dw-people li { display: flex; align-items: center; gap: .7rem; min-width: 0; }
-  .dw-avatar { display: grid; place-items: center; flex-shrink: 0; width: 2.4rem; height: 2.4rem; border-radius: 999px; font-size: .8rem; font-weight: 800;
-               color: var(--ink-2); background: var(--field); border: 1px solid var(--line); }
-  .dw-avatar-home { color: #fff; background: var(--grad); border-color: transparent; }
   .dw-dot { flex-shrink: 0; width: .6rem; height: .6rem; border-radius: 999px; }
-  .dw-dot-home { background: var(--success); }
-  .dw-dot-away { background: var(--muted); }
-  .dw-dot-off { background: var(--warn); }
   .dw-alarm-badge { display: grid; place-items: center; flex-shrink: 0; width: 2.75rem; height: 2.75rem; border-radius: 16px; }
   .dw-alarm-off { color: var(--accent); background: var(--accent-soft); }
   .dw-alarm-armed { color: #fff; background: var(--grad); }
@@ -205,12 +172,9 @@
 @layer components {
   .dw-fp { padding: .8rem; }
   .dw-fp-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
-  .dw-fp-head > p { flex: 1; }
   .dw-fp-tabs { display: flex; gap: .25rem; padding: .2rem; border-radius: 999px; background: var(--field); overflow-x: auto; scrollbar-width: none; }
   .dw-fp-tab { padding: .3rem .75rem; border-radius: 999px; font: inherit; font-size: .78rem; font-weight: 700; color: var(--muted); background: transparent; border: 0; cursor: pointer; white-space: nowrap; }
   .dw-fp-tab[aria-selected="true"] { color: var(--ink); background: var(--surface); box-shadow: var(--shadow-card); }
-  .dw-fp-night-btn { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; flex-shrink: 0; border-radius: 999px; color: var(--muted); background: var(--field); border: 0; cursor: pointer; }
-  .dw-fp-night-btn[aria-pressed="true"] { color: #fde68a; background: #1e1b3a; }
   .dw-fp-stage, .dw-fpe-canvas { position: relative; overflow: hidden; border-radius: 14px; background: var(--field); isolation: isolate; container-type: inline-size; }
   .dw-fp-drawn { aspect-ratio: 16 / 10; background: var(--field) radial-gradient(circle, color-mix(in srgb, var(--muted) 22%, transparent) 1px, transparent 1.5px) 0 0 / 18px 18px; }
   .dw-fp-img { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; transition: filter .6s ease; }
@@ -385,7 +349,7 @@ body.dw-has-wall::before { content: ""; position: fixed; inset: calc(var(--wall-
     background: var(--wall-img, none) center / cover no-repeat, var(--wall, none); filter: blur(var(--wall-blur, 0px)); }
 body.dw-has-wall::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: color-mix(in srgb, var(--page) 45%, transparent); }
 body.dw-themed:not([style*="--wall-img"])::after { display: none; }
-.dw-glass .dw-card, .dw-glass .dw-scene, .dw-glass .ss-card { background: color-mix(in srgb, var(--surface) 64%, transparent); backdrop-filter: blur(16px) saturate(1.2);
+.dw-glass .dw-card, .dw-glass .ss-card { background: color-mix(in srgb, var(--surface) 64%, transparent); backdrop-filter: blur(16px) saturate(1.2);
     border-color: color-mix(in srgb, var(--surface) 55%, transparent); }
 .dw-glass .dw-on.dw-card { background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, transparent), color-mix(in srgb, var(--surface) 60%, transparent) 75%); }
 @layer components {

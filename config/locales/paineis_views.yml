@@ -11,6 +11,7 @@ pt-BR:
       children_depth: "%{where}: pilhas dentro de pilhas vão até %{max} níveis"
     vt:
       sidebar: Coluna lateral
+      panel_hidden: Nenhum card visível nesta tela. Mostre um no editor.
       back_to: "Voltar para %{name}"
       form:
         type: Tipo de visão
@@ -39,6 +40,7 @@ en:
       children_depth: "%{where}: stacks inside stacks go up to %{max} levels"
     vt:
       sidebar: Side column
+      panel_hidden: No card is visible on this screen. Show one in the editor.
       back_to: "Back to %{name}"
       form:
         type: View type
@@ -67,6 +69,7 @@ es:
       children_depth: "%{where}: pilas dentro de pilas llegan hasta %{max} niveles"
     vt:
       sidebar: Columna lateral
+      panel_hidden: Ninguna tarjeta visible en esta pantalla. Muestra una en el editor.
       back_to: "Volver a %{name}"
       form:
         type: Tipo de vista

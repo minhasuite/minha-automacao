@@ -1,9 +1,14 @@
 <%# locals: (view:, points:, dashboard:, live:) -%>
-<%# Seções (o padrão): grade de 12 colunas, cada seção com a sua largura. %>
+<%# Seções (o padrão): grade de 12 colunas, cada seção com a sua largura e o título de seção da gem. %>
 <div class="dw-grid dw-sections mt-5">
   <% view["sections"].each_with_index do |s, i| %>
     <% if s["spacer"] %><div class="dw-w dw-hide-mobile" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>" aria-hidden="true"></div><% next %><% end %>
     <% next if s["widgets"].empty? %>
-    <%= render "web/dashboards/views/section", s: s, i: i, points: points, dashboard: dashboard, live: live %>
+    <section class="dw-w ss-rise" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>; animation-delay: <%= [ i, 6 ].min * 50 %>ms" aria-label="<%= s['title'] || t("dashboards.section") %>">
+      <% if s["title"].present? %><%= render Ss::SectionComponent.new(title: s["title"], icon: (icon(s["icon"], "") if s["icon"].present?)) %><% end %>
+      <div class="dw-grid">
+        <% s["widgets"].each do |w| %><%= render "web/dashboards/widget", w: w, points: points, dashboard: dashboard, badge: false, live: live %><% end %>
+      </div>
+    </section>
   <% end %>
 </div>

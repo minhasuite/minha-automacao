@@ -94,10 +94,9 @@
             <% end %>
           </ul>
           <% if Array(s["widgets"]).empty? %><p class="text-sm text-muted mt-3"><%= t("dashboards.ed.empty_section") %></p><% end %>
-          <details class="mt-3 rounded-2xl bg-field p-3">
-            <summary class="cursor-pointer font-semibold text-accent flex items-center gap-2"><%= icon("plus", "size-4") %><%= t("dashboards.ed.add_widget") %></summary>
+          <%= render Ss::CollapsibleComponent.new(title: t("dashboards.ed.add_widget"), icon: icon("plus", ""), css: "mt-3") do %>
             <%= render "web/dashboards/widget_form", dashboard: @dashboard, w: {}, op: "add_widget", target: s["id"], view_id: view["id"], point_options: point_options, areas: @areas, scenes: scenes %>
-          </details>
+          <% end %>
           </details>
         </section>
       <% end %>

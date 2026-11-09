@@ -1,6 +1,6 @@
-/* Domínio: widgets do painel (ondaB2) — recursos do tile (dw-feat*, dw-chip), gestos, cards
-   (termostato, agenda, lista, imagem, iframe, relógio, planta, pilha), tipos de visão e a
-   prévia dos temas (ap-*). Só tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
+/* Domínio: widgets do painel (ondaB2) — recursos do tile (dw-feat*; os chips são .ss-chip da gem), gestos, cards
+   (termostato, agenda, lista, iframe, relógio, planta, pilha), o painel inteiro (o mosaico e a coluna lateral são da
+   gem) e a prévia dos temas (ap-*). Só tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
 @layer components {
   /* ---- Recursos do tile ------------------------------------------------ */
   .dw-feats { display: grid; gap: .7rem; flex-basis: 100%; width: 100%; margin-top: .85rem; padding-top: .8rem;
@@ -11,29 +11,18 @@
   .dw-feat-label { display: inline-flex; align-items: center; gap: .4rem; font-size: .78rem; font-weight: 700; color: var(--ink-2); min-width: 0; }
   .dw-feat-label svg { color: var(--muted); flex: none; }
   .dw-feat-value { font-size: .82rem; font-weight: 800; color: var(--ink); white-space: nowrap; }
-  .dw-chips { display: flex; gap: .4rem; overflow-x: auto; scrollbar-width: none; padding: .1rem; margin: -.1rem; }
-  .dw-chips::-webkit-scrollbar { display: none; }
-  .dw-chip { display: inline-flex; align-items: center; gap: .35rem; flex: none; height: 2.1rem; padding: 0 .85rem; border-radius: 999px; cursor: pointer;
-             border: 1px solid var(--line); background: var(--field); color: var(--ink-2); font: inherit; font-size: .8rem; font-weight: 700;
-             transition: background .2s ease, color .2s ease, transform .12s ease, box-shadow .2s ease; }
-  .dw-chip:hover { border-color: var(--accent); color: var(--accent); }
-  .dw-chip:active { transform: scale(.96); }
-  .dw-chip[aria-pressed="true"], .dw-chip[aria-current="true"] { background: var(--grad); color: #fff; border-color: transparent; box-shadow: 0 8px 18px -10px var(--accent); }
-  .dw-amber .dw-chip[aria-pressed="true"] { background: var(--amber-grad); box-shadow: 0 8px 18px -10px #f59e0b; }
-  .dw-chip[aria-disabled="true"] { cursor: default; opacity: .7; }
-  .dw-chip-round { width: 2.1rem; padding: 0; justify-content: center; }
-  .dw-swatch { width: 1.15rem; height: 1.15rem; border-radius: 999px; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15); }
+  .dw-amber .ss-chip[aria-pressed="true"] { background-image: var(--amber-grad); box-shadow: 0 8px 18px -10px #f59e0b; }
 
   /* ---- Gestos ---------------------------------------------------------- */
   .dw-tappable { cursor: pointer; }
-  .dw-tappable > :is(.dw-card, .ss-device), .dw-tappable.dw-card { transition: transform .15s ease, box-shadow .25s ease; }
-  .dw-tappable:hover > :is(.dw-card, .ss-device) { box-shadow: var(--shadow-hover); }
-  .dw-holding > :is(.dw-card, .ss-device), .dw-holding.dw-card { transform: scale(.97); box-shadow: 0 0 0 3px var(--ring); }
+  .dw-tappable > :is(.dw-card, .ss-card, .ss-device), .dw-tappable.dw-card { transition: transform .15s ease, box-shadow .25s ease; }
+  .dw-tappable:hover > :is(.dw-card, .ss-card, .ss-device) { box-shadow: var(--shadow-hover); }
+  .dw-holding > :is(.dw-card, .ss-card, .ss-device), .dw-holding.dw-card { transform: scale(.97); box-shadow: 0 0 0 3px var(--ring); }
   .dw-act [data-act] { display: none; }
   .dw-wf-more > summary { cursor: pointer; list-style: none; }
   .dw-wf-more > summary::before { content: "▸ "; color: var(--muted); }
   .dw-wf-more[open] > summary::before { content: "▾ "; }
-  @media (prefers-reduced-motion: reduce) { .dw-holding > .dw-card, .dw-holding.dw-card, .dw-chip:active { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .dw-holding > :is(.dw-card, .ss-card), .dw-holding.dw-card { transform: none; } }
 }
 
 @layer components {
@@ -65,13 +54,6 @@
 
 
   /* ---- Imagem, página e relógio ---------------------------------------- */
-  .dw-pic { position: relative; padding: 0; overflow: hidden; margin: 0; background: var(--field); }
-  .dw-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: filter .4s ease, transform .6s ease; }
-  .dw-tappable:hover .dw-pic img { transform: scale(1.03); }
-  .dw-pic-off img { filter: grayscale(.85) brightness(.6); }
-  .dw-pic figcaption { position: absolute; inset: auto 0 0 0; display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: 1.6rem .9rem .7rem;
-                       color: #fff; font-size: .9rem; background: linear-gradient(transparent, rgba(0, 0, 0, .6)); }
-  .dw-pic-state { flex: none; padding: .15rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 700; background: rgba(255, 255, 255, .2); backdrop-filter: blur(6px); }
   .dw-frame-box { border-radius: .9rem; overflow: hidden; background: var(--field); }
   .dw-frame-box iframe { width: 100%; height: 100%; border: 0; display: block; }
   .dw-clock { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .15rem; min-height: 6rem; }
@@ -90,20 +72,8 @@
 
 @layer components {
   /* ---- Tipos de visão e pilhas (B8) ------------------------------------ */
-  .dw-masonry { columns: 1; column-gap: .75rem; }
-  @media (min-width: 640px) { .dw-masonry { columns: 2; } }
-  @media (min-width: 1024px) { .dw-masonry { columns: 3; } }
-  @media (min-width: 1440px) { .dw-masonry { columns: 4; } }
-  .dw-masonry .dw-w { display: block; break-inside: avoid; margin-bottom: .75rem; }
-  .dw-masonry .dw-w[hidden] { display: none; }
-  .dw-masonry-title { break-after: avoid; padding-top: .35rem; }
   .dw-panel .dw-w { min-height: calc(100dvh - 15rem); }
-  .dw-panel .dw-w > *, .dw-panel .dw-w > * > .dw-card { height: 100%; }
-  .dw-sidebar-view { display: grid; gap: 1.25rem; }
-  @media (min-width: 1024px) { .dw-sidebar-view { grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr); align-items: start; } }
-  .dw-sidebar-main, .dw-sidebar-side { display: grid; gap: 1.5rem; min-width: 0; }
-  .dw-sidebar-side { position: sticky; top: 1rem; }
-  .dw-sidebar-side .dw-grid > turbo-frame > .dw-w, .dw-sidebar-side .dw-grid > .dw-w { grid-column: 1 / -1; }
+  .dw-panel .dw-w > *, .dw-panel .dw-w > * > :is(.dw-card, .ss-card) { height: 100%; }
   .dw-back { width: fit-content; }
   .dw-stack { display: grid; gap: .75rem; min-width: 0; }
   .dw-stack .dw-w { grid-column: auto; }
@@ -173,4 +143,4 @@
 }
 
 /* Fora das camadas: vence a largura por tela (.dw-w) de dashboards.css. */
-.dw-sidebar-side .dw-grid .dw-w, .dw-stack .dw-w { grid-column: 1 / -1; }
+.ss-aside-layout-side .dw-grid .dw-w, .dw-stack .dw-w { grid-column: 1 / -1; }

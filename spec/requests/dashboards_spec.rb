@@ -39,7 +39,7 @@ RSpec.describe "Dashboards: web e API" do
       get "/paineis/#{d.id}/w/#{wid}"
       expect(response.body).to include(%(id="w_#{wid}"), "Desligar Luz")
       get "/paineis/#{d.id}/w/b-on", params: { badge: 1 }
-      expect(response.body).to include("dw-badge", "ligado")
+      expect(response.body).to include("ss-hero-chip", "ligado")
       get "/paineis/#{d.id}/w/nada"
       expect(response).to have_http_status(:not_found)
 

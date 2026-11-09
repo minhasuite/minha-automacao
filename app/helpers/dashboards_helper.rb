@@ -260,6 +260,10 @@ module DashboardsHelper
   # Fundo do cartão de área: a foto da área ou um dos gradientes da casa (fixo por área).
   def dw_area_art(area) = "dw-art-#{area['id'].to_s.bytes.sum % AREA_ARTS}"
 
+  # Tom do bloco do cartão de área (variant: do Ss::MosaicTileComponent, 0 a 4): a mesma conta do app
+  # (soma dos códigos do id), para a área ter a mesma cor no web e no app.
+  def dw_area_variant(area) = area["id"].to_s.bytes.sum % 5
+
   # ondaB2 (B9): gestos do widget (Dashboards::Actions) → [atributos do
   # controlador dw-gesture, elementos escondidos que ele dispara]. Comando vira
   # formulário (papel, risco e confirmação valem como num botão); o resto, link.

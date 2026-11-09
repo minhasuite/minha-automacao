@@ -1,6 +1,10 @@
 <%# locals: (view:, points:, dashboard:, live:) -%>
-<%# Painel inteiro (o panel do HA): só o primeiro card, ocupando a tela. %>
+<%# Painel inteiro (o panel do HA): só o primeiro card visível, ocupando a tela; nenhum visível = o vazio da gem. %>
 <% w = view["sections"].flat_map { |s| s["widgets"] }.find { |x| x["visible"] } %>
 <div class="dw-panel mt-5">
-  <% if w %><%= render "web/dashboards/widget", w: w.merge("span" => { "mobile" => 12, "tablet" => 12, "desktop" => 12 }), points: points, dashboard: dashboard, badge: false, live: live %><% end %>
+  <% if w %>
+    <%= render "web/dashboards/widget", w: w.merge("span" => { "mobile" => 12, "tablet" => 12, "desktop" => 12 }), points: points, dashboard: dashboard, badge: false, live: live %>
+  <% else %>
+    <%= render Ss::EmptyStateComponent.new(title: t("dashboards.empty"), text: t("dashboards.vt.panel_hidden"), css: "ss-card") %>
+  <% end %>
 </div>

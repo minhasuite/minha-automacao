@@ -1,26 +1,27 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Pessoas: card da gem com o cabeçalho padrão e uma linha (.ss-item) por pessoa, com o avatar da gem
+    (anel da marca em casa; ponto verde em casa, apagado fora, âmbar sem sinal), como o SsListItem + SsAvatar do app. %>
 <% d = w["data"] %>
 <% people = Array(d["people"]) %>
-<div class="dw-card">
-  <div class="flex items-center justify-between gap-2">
-    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.people") %></p>
-    <% if people.any? %><span class="text-xs text-muted num"><%= t("dashboards.w.home_count", n: d["home_count"], total: people.size) %></span><% end %>
-  </div>
+<div class="ss-card ss-card-pad h-full">
+  <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.people"), subtitle: (t("dashboards.w.home_count", n: d["home_count"], total: people.size) if people.any?),
+                                         icon: icon("users", "")) %>
   <% if people.empty? %>
-    <p class="text-sm text-muted"><%= w["zone"].present? ? t("dashboards.w.no_people_in", zone: w["zone"]) : t("dashboards.w.no_people") %></p>
+    <p class="text-sm text-muted mt-2"><%= w["zone"].present? ? t("dashboards.w.no_people_in", zone: w["zone"]) : t("dashboards.w.no_people") %></p>
   <% else %>
-    <ul class="dw-people" aria-label="<%= t("dashboards.w.people") %>">
+    <ul class="mt-2 grid gap-1" aria-label="<%= t("dashboards.w.people") %>">
       <% people.each do |p| %>
         <% off = p["quality"] != "good" %>
-        <li>
-          <span class="dw-avatar <%= 'dw-avatar-home' if p['home'] && !off %>" aria-hidden="true"><%= p["initials"] %></span>
-          <span class="min-w-0 flex-1">
-            <%= link_to p["name"], point_path(p["id"]), class: "block font-semibold text-ink truncate no-underline hover:text-accent", data: { turbo_frame: "_top" } %>
-            <span class="block text-xs text-muted truncate">
-              <%= off ? t("dashboards.w.no_signal") : (p["zone"].presence || t("dashboards.w.no_reading")) %><% if p["since"] && !off %> · <%= t("dashboards.w.since") %> <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %>
+        <% home = p["home"] && !off %>
+        <li class="min-w-0">
+          <%= link_to point_path(p["id"]), class: "ss-item", data: { turbo_frame: "_top" } do %>
+            <%= ss_avatar(p["name"].to_s, size: 36, status: off ? "warn" : (home ? "success" : "muted"), ring: home) %>
+            <span class="ss-item-main">
+              <span><%= p["name"] %></span>
+              <span><%= off ? t("dashboards.w.no_signal") : (p["zone"].presence || t("dashboards.w.no_reading")) %><% if p["since"] && !off %> · <%= t("dashboards.w.since") %> <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %></span>
             </span>
-          </span>
-          <span class="dw-dot <%= off ? 'dw-dot-off' : (p['home'] ? 'dw-dot-home' : 'dw-dot-away') %>" title="<%= p['home'] ? t("dashboards.w.at_home") : t("dashboards.w.away") %>"></span>
+            <span class="sr-only"><%= home ? t("dashboards.w.at_home") : t("dashboards.w.away") %></span>
+          <% end %>
         </li>
       <% end %>
     </ul>

@@ -30,7 +30,7 @@
         <section class="dw-w dw-ed-sec" data-id="<%= s['id'] %>" data-kind="section" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>" aria-label="<%= t("dashboards.ed.section_label", name: s['title']) %>">
           <div class="dw-ed-bar">
             <span class="dw-ed-grip dw-ed-grip-s" title="<%= t("dashboards.le.drag_section") %>" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
-            <span class="dw-sec-title !m-0 flex-1 truncate"><%= s["title"].presence || t("dashboards.ed.untitled") %></span>
+            <span class="ss-section flex-1 truncate"><%= s["title"].presence || t("dashboards.ed.untitled") %></span>
             <span class="dw-ed-cols num" data-cols aria-hidden="true"></span>
             <span class="dw-ed-resize" title="<%= t("dashboards.le.resize") %>" aria-hidden="true"></span>
           </div>

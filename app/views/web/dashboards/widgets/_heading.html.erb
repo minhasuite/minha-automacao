@@ -1,2 +1,3 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<h2 class="dw-heading"><%= icon(w["icon"], "size-5 text-accent") if w["icon"].present? %><%= w["title"] %></h2>
+<%# Título no meio do painel: o cabeçalho de bloco da gem (o SsSectionHeader do app). %>
+<%= render Ss::SectionHeaderComponent.new(title: w["title"], icon: (icon(w["icon"], "") if w["icon"].present?)) %>

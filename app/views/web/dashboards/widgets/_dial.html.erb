@@ -39,12 +39,12 @@
       <p class="dw-dial-state"><%= off_line ? t("dashboards.w.no_signal") : (main["text"].presence || "—") %></p>
     <% end %>
     <% if mode && d["modes"].present? %>
-      <div class="dw-chips dw-chips-wrap mt-3" role="group" aria-label="<%= mode["name"] %>">
+      <div class="ss-chips dw-chips-wrap mt-3" role="group" aria-label="<%= mode["name"] %>">
         <% d["modes"].each do |o| %>
           <% if mode["can_command"] && mode["quality"] == "good" %>
-            <%= dw_command_button(mode, "select", value: o, w: w, dashboard: dashboard, live: live, class: "dw-chip", form_class: "contents", "aria-pressed": (o.to_s == d["mode"].to_s).to_s) do %><%= o %><% end %>
+            <%= dw_command_button(mode, "select", value: o, w: w, dashboard: dashboard, live: live, class: "ss-chip", form_class: "contents", "aria-pressed": (o.to_s == d["mode"].to_s).to_s) do %><%= o %><% end %>
           <% else %>
-            <span class="dw-chip" aria-current="<%= o.to_s == d['mode'].to_s %>"><%= o %></span>
+            <span class="ss-chip" aria-disabled="true" aria-current="<%= o.to_s == d['mode'].to_s %>"><%= o %></span>
           <% end %>
         <% end %>
       </div>

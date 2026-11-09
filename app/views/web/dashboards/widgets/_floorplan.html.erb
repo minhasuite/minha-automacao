@@ -1,21 +1,22 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <% layers = Array(w.dig("data", "layers")) %>
 <% uid = w["id"] %>
-<div class="dw-card dw-fp" data-controller="floorplan" data-floorplan-key-value="<%= uid %>">
-  <div class="dw-fp-head">
-    <p class="dw-card-title flex items-center gap-2 min-w-0"><%= icon(w["icon"].presence || "map", "size-4 text-accent shrink-0") %><span class="truncate"><%= w["label"].presence || t("dashboards.w.floorplan") %></span></p>
-    <% if layers.size > 1 %>
-      <div class="dw-fp-tabs" role="tablist" aria-label="<%= t("dashboards.w.floors") %>">
-        <% layers.each_with_index do |l, i| %>
-          <button type="button" role="tab" id="fpt-<%= uid %>-<%= i %>" aria-controls="fpl-<%= uid %>-<%= i %>" aria-selected="<%= i.zero? %>" class="dw-fp-tab"
-                  data-floorplan-target="tab" data-action="floorplan#show" data-floorplan-index-param="<%= i %>"><%= l["title"] %></button>
-        <% end %>
-      </div>
+<div class="ss-card ss-card-pad h-full dw-fp" data-controller="floorplan" data-floorplan-key-value="<%= uid %>">
+  <%# Cabeçalho padrão de card da gem; à direita, os andares (abas da planta) e o modo noite (botão de ícone da gem). %>
+  <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.floorplan"), css: "dw-fp-head") do |h| %>
+    <% h.with_action do %>
+      <% if layers.size > 1 %>
+        <div class="dw-fp-tabs" role="tablist" aria-label="<%= t("dashboards.w.floors") %>">
+          <% layers.each_with_index do |l, i| %>
+            <button type="button" role="tab" id="fpt-<%= uid %>-<%= i %>" aria-controls="fpl-<%= uid %>-<%= i %>" aria-selected="<%= i.zero? %>" class="dw-fp-tab"
+                    data-floorplan-target="tab" data-action="floorplan#show" data-floorplan-index-param="<%= i %>"><%= l["title"] %></button>
+          <% end %>
+        </div>
+      <% end %>
+      <button type="button" class="ss-icon-btn is-sm is-tonal" data-action="floorplan#night" data-floorplan-target="nightButton" aria-pressed="false" title="<%= t("dashboards.w.night_mode") %>"
+              aria-label="<%= t("dashboards.w.night_mode") %>"><%= icon("moon", "size-4") %></button>
     <% end %>
-    <button type="button" class="dw-fp-night-btn" data-action="floorplan#night" data-floorplan-target="nightButton" aria-pressed="false" title="<%= t("dashboards.w.night_mode") %>">
-      <%= icon("moon", "size-4") %><span class="sr-only"><%= t("dashboards.w.night_mode") %></span>
-    </button>
-  </div>
+  <% end %>
   <% if layers.empty? %>
     <%= render "web/shared/empty_art", art: "plan", title: t("dashboards.w.fp_empty"), text: t("dashboards.w.fp_empty_hint") %>
   <% end %>

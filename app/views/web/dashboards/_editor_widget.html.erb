@@ -21,9 +21,8 @@
     <ul class="divide-y divide-line">
       <% Array(w["widgets"]).each do |c| %><%= render "web/dashboards/editor_widget", w: c, view: view, names: names, point_options: point_options, scenes: scenes %><% end %>
     </ul>
-    <details class="mt-2 rounded-2xl bg-field p-3">
-      <summary class="cursor-pointer font-semibold text-accent flex items-center gap-2"><%= icon("plus", "size-4") %><%= t("dashboards.vt.form.add_inside") %></summary>
+    <%= render Ss::CollapsibleComponent.new(title: t("dashboards.vt.form.add_inside"), icon: icon("plus", ""), css: "mt-2") do %>
       <%= render "web/dashboards/widget_form", dashboard: @dashboard, w: {}, op: "add_widget", target: w["id"], view_id: view["id"], point_options: point_options, areas: @areas, scenes: scenes %>
-    </details>
+    <% end %>
   </li>
 <% end %>

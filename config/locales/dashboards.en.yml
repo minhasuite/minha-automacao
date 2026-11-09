@@ -488,6 +488,7 @@ en:
       activate: Activate
       scene_role: Your role can't activate this scene
       no_scenes: No scenes yet.
+      scenes_label: Scenes
       by_device: Usage by device
       no_energy_points: No energy (kWh) or power (W) points in this place.
       no_usage: No usage recorded in the period.

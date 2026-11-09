@@ -488,6 +488,7 @@ pt-BR:
       activate: Acionar
       scene_role: Seu papel não aciona esta cena
       no_scenes: Nenhuma cena criada.
+      scenes_label: Cenas
       by_device: Consumo por aparelho
       no_energy_points: Nenhum ponto de energia (kWh) ou potência (W) no local.
       no_usage: Sem consumo registrado no período.

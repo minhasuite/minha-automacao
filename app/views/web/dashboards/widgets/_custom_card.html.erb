@@ -1,7 +1,7 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <% d = w["data"] || {} %>
-<div class="dw-card" data-custom-card="<%= w["card"] %>">
-  <% if w["label"].present? %><p class="dw-card-title"><%= w["label"] %></p><% end %>
+<div class="ss-card ss-card-pad h-full grid gap-3 content-start" data-custom-card="<%= w["card"] %>">
+  <% if w["label"].present? %><%= render Ss::CardHeaderComponent.new(title: w["label"]) %><% end %>
   <% if d["missing"] %>
     <p class="text-sm text-muted"><%= t("cards.missing") %></p>
   <% else %>
