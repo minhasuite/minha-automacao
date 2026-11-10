@@ -16,6 +16,15 @@ module Drivers
     class Error < StandardError; end
 
     SNAPSHOT_TTL = 3 # s: vários olhando a mesma câmera usam o mesmo quadro
+    # Câmera que falhou fica FAIL_HOLD s sem nova tentativa (quadro e ao vivo):
+    # sem isso cada pedido de quadro de cada painel aberto (a cada 3 s) refazia
+    # tudo, e três câmeras de nuvem fora do ar abriam centenas de conexões
+    # para a Tuya em poucos minutos, enchendo o NAT do roteador (10/11/2026:
+    # a internet da casa inteira caía com o servidor ligado).
+    FAIL_HOLD = 60
+    # Endereço da câmera de nuvem (assinado, muda a cada pedido) reaproveitado:
+    # trocar a fonte no go2rtc derruba o vídeo e abre outra conexão.
+    ON_DEMAND_TTL = 240
     SNAPSHOT_DIR = Rails.root.join("tmp/snapshots")
     UUID = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
 
@@ -81,21 +90,40 @@ module Drivers
       return (file.exist? ? file.binread : raise(Error, "Sem quadro da câmera ainda.")) if point.address["image"] == "mqtt" # resto: câmera MQTT
       return file.binread if file.exist? && file.mtime > SNAPSHOT_TTL.seconds.ago
 
+      held!(point)
       prepare(point)
       jpeg = request(Net::HTTP::Get, "/api/frame.jpeg", { src: point.id }).body
       FileUtils.mkdir_p(SNAPSHOT_DIR)
       file.binwrite(jpeg)
       quality!(point, "good")
       jpeg
-    rescue Error
+    rescue Error => e
+      hold!(point, e) unless e.is_a?(Held)
       quality!(point, "unavailable")
       raise
     end
 
+    class Held < Error; end
+
+    # Falhou há pouco: responde "sem conexão" sem tocar na rede.
+    def held!(point)
+      msg = Rails.cache.read("go2rtc:falha:#{point.id}") or return
+      raise Held, msg
+    end
+
+    def hold!(point, error)
+      Rails.cache.write("go2rtc:falha:#{point.id}", error.message.truncate(120), expires_in: FAIL_HOLD)
+      Rails.cache.delete("go2rtc:fonte:#{point.id}")
+    end
+
     # WebRTC: a oferta SDP do navegador vai ao go2rtc e a resposta volta.
     def webrtc(point, offer)
+      held!(point)
       prepare(point)
       request(Net::HTTP::Post, "/api/webrtc", { src: point.id }, body: offer).body
+    rescue Error => e
+      hold!(point, e) unless e.is_a?(Held)
+      raise
     end
 
     # ondaC2 (C10): áudio de duas vias. O go2rtc toca o endereço no
@@ -115,9 +143,20 @@ module Drivers
       raise Error, "Câmera sem conexão (#{e.message.truncate(80)})."
     end
 
+    # Câmera de nuvem: pede o endereço à integração no máximo a cada
+    # ON_DEMAND_TTL e só troca a fonte no go2rtc quando ele mudou.
     def prepare(point)
-      src = (source(point) if url) or raise Error, "Câmera sem conexão."
-      request(Net::HTTP::Put, "/api/streams", { name: point.id, src: src }, ok: [ 400 ]) if point.address["on_demand"]
+      raise Error, "Câmera sem conexão." unless url
+      return source(point) || raise(Error, "Câmera sem conexão.") unless point.address["on_demand"]
+
+      key = "go2rtc:fonte:#{point.id}"
+      cached = Rails.cache.read(key)
+      src = cached || source(point) or raise Error, "Câmera sem conexão."
+      return src if cached
+
+      request(Net::HTTP::Put, "/api/streams", { name: point.id, src: src }, ok: [ 400 ])
+      Rails.cache.write(key, src, expires_in: ON_DEMAND_TTL)
+      src
     end
 
     def request(klass, path, params = {}, body: nil, ok: [])

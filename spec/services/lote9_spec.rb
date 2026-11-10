@@ -173,6 +173,43 @@ RSpec.describe "Lote 9: fechamento da migração" do
       expect(cam.reload.quality).to eq("unavailable")
     end
 
+    # 10/11/2026: câmeras de nuvem fora do ar + painéis abertos pedindo quadro a cada 3 s
+    # abriam centenas de conexões e derrubavam a internet da casa (NAT do roteador cheio).
+    it "endereço da nuvem reaproveitado e câmera que falhou fica FAIL_HOLD s sem tentar de novo" do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      calls = 0
+      fake = Class.new(Integrations::Plugin) do
+        describe key: "nuvem_cam", title: "Nuvem", icon: "video-camera", description: "teste"
+      end
+      fake.define_singleton_method(:stream_url) { |_point| "rtsps://nuvem.exemplo/CAM1?t=#{calls += 1}" }
+      stub_const("Integrations::NuvemCamPlugin", fake)
+      stub_const("Integrations::PLUGINS", Integrations::PLUGINS + [ "NuvemCamPlugin" ])
+      integration = Integration.create!(site: site, driver: "nuvem_cam", name: "Nuvem", status: "ok")
+      cam = cam_point(create(:device, site: site, driver: "virtual", name: "Câmera", external_id: "CAM1", integration: integration))
+      put = stub_request(:put, "http://go2rtc:1984/api/streams").with(query: hash_including(name: cam.id)).to_return(status: 400)
+      frame = stub_request(:get, "http://go2rtc:1984/api/frame.jpeg").with(query: { src: cam.id }).to_return(body: "JPEG")
+      2.times do
+        FileUtils.rm_f(Drivers::Go2rtc::SNAPSHOT_DIR.join("#{cam.id}.jpg"))
+        expect(Drivers::Go2rtc.snapshot(cam)).to eq("JPEG")
+      end
+      expect(calls).to eq(1) # um pedido à nuvem para os dois quadros
+      expect(put).to have_been_requested.once # a fonte no go2rtc não foi trocada
+      expect(frame).to have_been_requested.twice
+
+      Rails.cache.clear
+      WebMock::RequestRegistry.instance.reset!
+      frame = stub_request(:get, "http://go2rtc:1984/api/frame.jpeg").with(query: { src: cam.id }).to_return(status: 500, body: "erro")
+      FileUtils.rm_f(Drivers::Go2rtc::SNAPSHOT_DIR.join("#{cam.id}.jpg"))
+      expect { Drivers::Go2rtc.snapshot(cam) }.to raise_error(Drivers::Go2rtc::Error)
+      expect { Drivers::Go2rtc.snapshot(cam) }.to raise_error(Drivers::Go2rtc::Held) # segura: nem nuvem nem go2rtc
+      expect { Drivers::Go2rtc.webrtc(cam, "SDP") }.to raise_error(Drivers::Go2rtc::Held)
+      expect(frame).to have_been_requested.once
+      expect(calls).to eq(2)
+      Rails.cache.delete("go2rtc:falha:#{cam.id}") # passou o FAIL_HOLD (a marca vence sozinha no cache)
+      expect { Drivers::Go2rtc.snapshot(cam) }.to raise_error(Drivers::Go2rtc::Error) # depois do prazo tenta de novo
+      expect(frame).to have_been_requested.twice
+    end
+
     it "Tuya: câmera (categoria do mapa) ganha o ponto Vídeo e o plugin pede o endereço à nuvem" do
       expect(Tuya::Cloud.stream_points("category" => "sp").first).to include("capability" => "stream", "address" => { "dps" => "video", "on_demand" => true })
       expect(Tuya::Cloud.stream_points("category" => "dj")).to eq([])
