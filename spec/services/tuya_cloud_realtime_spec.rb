@@ -185,6 +185,18 @@ RSpec.describe "Tuya na nuvem (Lote 6)" do # rubocop:disable RSpec/DescribeClass
       expect(described_class.session(SecureRandom.uuid)).to be true # integração sumiu: nada a ouvir
     end
 
+    it "erro passageiro de rede não desliga o tempo real; conectar volta a integração para ok; erro de login para" do
+      integration.error!(Integrations::Error.new("Sem conexão com a Tuya (OpenTimeout)."))
+      expect(described_class.integration_ids).to eq([ integration.id ]) # continua tentando
+      client = instance_double(MQTT::Client, subscribe: true, disconnect: nil)
+      allow(client).to receive(:queue_empty?).and_raise(MQTT::ProtocolException, "caiu")
+      allow(MQTT::Client).to receive(:connect).and_return(client)
+      described_class.session(integration.id)
+      expect(integration.reload).to have_attributes(status: "ok", last_error: nil)
+      integration.error!(Integrations.auth(Integrations::Error.new("login vencido")))
+      expect(described_class.integration_ids).to eq([]) # credencial: espera a pessoa entrar de novo
+    end
+
     it "supervisor liga uma thread por integração com aparelho e encerra a que saiu" do
       allow(described_class).to receive(:listen)
       described_class.scan

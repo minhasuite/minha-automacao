@@ -37,9 +37,14 @@ module Tuya
         Rails.error.report(e, handled: true)
       end
 
+      # "error" passageiro (rede) também conta: antes, um timeout deixava a
+      # integração em erro e o tempo real parava de vez (10/11/2026: o "fechou"
+      # do sensor do portão nunca chegou e o escalonamento avisou por horas).
+      # Só o erro de login (`auth_error?`) para de tentar.
       def integration_ids
-        Integration.where(driver: Integrations::TuyaPlugin.driver, status: %w[ok syncing])
-                   .where(id: Device.where(driver: Cloud::DRIVERS, removed_at: nil, disabled: false).select(:integration_id)).pluck(:id)
+        Integration.where(driver: Integrations::TuyaPlugin.driver, status: %w[ok syncing error])
+                   .where(id: Device.where(driver: Cloud::DRIVERS, removed_at: nil, disabled: false).select(:integration_id))
+                   .reject(&:auth_error?).map(&:id)
       end
 
       def listen(id)
@@ -54,6 +59,7 @@ module Tuya
       def session(id)
         config = with_integration(id) { |i| Cloud.new(i).mqtt_config } or return true
         client = connect(config)
+        with_integration(id) { |i| i.ok! unless i.status == "ok" } # voltou a conectar
         with_integration(id) { |i| refresh(i) }
         pump(id, client, config)
         true
