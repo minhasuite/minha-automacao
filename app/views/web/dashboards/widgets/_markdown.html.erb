@@ -1,6 +1,6 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
-<div class="ss-card ss-card-pad h-full dw-md text-ink-2 leading-relaxed">
+<div class="ss-card ss-card-pad h-full">
   <% if w["label"].present? %><%= render Ss::CardHeaderComponent.new(title: w["label"], css: "mb-2") %><% end %>
-  <%= dw_markdown(w.dig("data", "text") || w["text"]) %>
+  <%= render(Ss::ProseComponent.new(tag: :div)) { dw_markdown(w.dig("data", "text") || w["text"]) } %>
   <% if (err = w.dig("data", "error")) %><p class="text-xs text-danger mt-1" role="alert"><%= err %></p><% end %>
 </div>

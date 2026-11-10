@@ -3,7 +3,7 @@
 <% p = points[w["data"]["point_ids"].first] %>
 <% ratio = w["data"]["ratio"] %>
 <% label = p ? dw_label(w, p) : (w["label"].presence || t("dashboards.w.gauge")) %>
-<div class="dw-card dw-gauge">
+<div class="ss-card ss-card-pad grid h-full content-center justify-items-center gap-1.5">
   <%= ss_gauge(ratio || 0, label: label, text: p && p["quality"] == "good" ? p["text"] : "—") %>
-  <p class="dw-gauge-range num"><span><%= dw_number(w["data"]["min"]) %></span><span><%= dw_number(w["data"]["max"]) %></span></p>
+  <p class="flex w-full max-w-48 justify-between text-xs text-muted num"><span><%= dw_number(w["data"]["min"]) %></span><span><%= dw_number(w["data"]["max"]) %></span></p>
 </div>

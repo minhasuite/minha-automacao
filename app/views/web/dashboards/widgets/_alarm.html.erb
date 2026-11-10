@@ -1,15 +1,15 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <% d = w["data"] %>
 <% p = points[Array(d["point_ids"]).first] %>
-<div class="dw-card dw-alarm">
+<div class="ss-card ss-card-pad h-full">
   <% if p.nil? %>
-    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.alarm") %></p>
-    <p class="text-sm text-muted"><%= t("dashboards.w.pick_alarm") %></p>
+    <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.alarm"), icon: icon("lock-closed", "")) %>
+    <%= render Ss::NoteComponent.new(text: t("dashboards.w.pick_alarm"), icon: icon("shield-check", ""), css: "mt-2") %>
   <% else %>
     <% state = d["state"].to_s %>
-    <% tone = { "triggered" => "dw-alarm-danger", "pending" => "dw-alarm-warn", "arming" => "dw-alarm-warn" }[state] || (d["armed"] ? "dw-alarm-armed" : "dw-alarm-off") %>
+    <% tone = { "triggered" => "is-danger", "pending" => "is-warn", "arming" => "is-warn" }[state] || (d["armed"] ? "is-grad" : "is-accent") %>
     <div class="flex items-center gap-3">
-      <span class="dw-alarm-badge <%= tone %>"><%= icon(d["armed"] || state.in?(%w[pending triggered]) ? "lock-closed" : "lock-open") %></span>
+      <span class="ss-icon-tile is-lg <%= tone %>"><%= icon(d["armed"] || state.in?(%w[pending triggered]) ? "lock-closed" : "lock-open") %></span>
       <div class="min-w-0 flex-1">
         <p class="text-sm text-muted truncate"><%= dw_label(w, p) %></p>
         <p class="font-bold text-ink" aria-live="polite"><%= p["quality"] == "good" ? d["state_text"] : t("dashboards.w.no_signal") %></p>
@@ -23,9 +23,9 @@
         <% if live %><%= hidden_field_tag :dashboard_id, dashboard.id, id: nil %><%= hidden_field_tag :widget_id, w["id"], id: nil %><% end %>
         <% if state == "disarmed" && !d["code_arm"] %>
           <%# Armar sem código: só os modos. %>
-          <div class="dw-alarm-actions">
+          <div class="mt-3 flex flex-wrap gap-2">
             <% d["modes"].each do |m| %>
-              <button type="submit" name="command" value="<%= m['command'] %>" class="ss-btn ss-btn-outline ss-btn-sm"><%= m["label"] %></button>
+              <button type="submit" name="command" value="<%= m['command'] %>" class="ss-btn ss-btn-outline ss-btn-sm flex-auto"><%= m["label"] %></button>
             <% end %>
           </div>
         <% else %>

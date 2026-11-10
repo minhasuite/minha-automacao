@@ -3,11 +3,11 @@
 <% kwh = ->(v) { "#{number_with_precision(v, precision: v.to_f < 10 ? 2 : 1, strip_insignificant_zeros: true, delimiter: '.', separator: ',')} kWh" } %>
 <% money = ->(v) { number_to_currency(v, unit: "R$ ", separator: ",", delimiter: ".") } %>
 <% title = w["label"].presence || t("dashboards.w.by_device") %>
-<div class="dw-card">
+<div class="ss-card ss-card-pad h-full">
   <%= render Ss::CardHeaderComponent.new(title: title, subtitle: [ d["period_label"], kwh.(d["total_kwh"]), (money.(d["total_cost"]) if d["total_cost"]) ].compact.join(" · "),
                                          icon: icon("chart-bar", ""), tone: :heat) %>
   <% if d["rows"].empty? %>
-    <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %><%= d["empty"] ? t("dashboards.w.no_energy_points") : t("dashboards.w.no_usage") %></p>
+    <%= render Ss::NoteComponent.new(text: d["empty"] ? t("dashboards.w.no_energy_points") : t("dashboards.w.no_usage"), icon: icon("lightning-bolt", ""), css: "mt-3") %>
   <% else %>
     <%= render Ss::RankListComponent.new(tone: :heat, label: title, items: d["rows"].map { |r|
           { label: r["name"], value: kwh.(r["kwh"]), amount: r["kwh"].to_f, share: "#{number_with_precision(r['pct'], precision: 0)}%",

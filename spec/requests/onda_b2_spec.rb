@@ -43,7 +43,7 @@ RSpec.describe "ondaB2: painéis" do
       expect(first_widget(d)["deps"]).to include(target.id, mode.id)
 
       get "/paineis/#{d.id}"
-      expect(response.body).to include("dw-feats", "ss-stepper-input", %(name="value" value="23"), %(step="0.5"), "Aquecer", %(aria-pressed="true"))
+      expect(response.body).to include("data-no-gesture", "ss-stepper-input", %(name="value" value="23"), %(step="0.5"), "Aquecer", %(aria-pressed="true"))
     end
 
     it "recusa recurso desconhecido e aceita {type, point}" do
@@ -145,7 +145,7 @@ RSpec.describe "ondaB2: painéis" do
 
       get "/paineis/#{d.id}"
       body = response.body
-      expect(body).to include("dw-dial", %(data-mode="cool"), "Agora 26,5 °C", "ss-thermo", "is-adjust-off", "ss-device is-press", "ss-agl", "Teste dentista", "Dia todo",
+      expect(body).to include("ss-checklist", %(data-mode="cool"), "Agora 26,5 °C", "ss-thermo", "is-adjust-off", "ss-device is-press", "ss-agl", "Teste dentista", "Dia todo",
                               "Leite", %(aria-checked="true"), "Concluídos (1)", "https://exemplo.com.br/sala.jpg", "aspect-ratio: 4 / 3",
                               %(sandbox="allow-scripts allow-same-origin allow-forms allow-popups"), 'data-controller="ss-clock"', "Precisa de atenção: umidade", "Baixo")
     end
@@ -186,7 +186,7 @@ RSpec.describe "ondaB2: painéis" do
       get "/paineis/#{d.id}?view=m"
       expect(response.body).to include("ss-masonry", "ss-section-row")
       get "/paineis/#{d.id}?view=camera"
-      expect(response.body).to include("dw-panel", "dw-back", "Teste câmera", "Voltar para Início")
+      expect(response.body).to include("dw-panel", "is-on-grad", "Teste câmera", "Voltar para Início")
       get "/paineis/#{d.id}?view=sb"
       expect(response.body).to include("ss-aside-layout-main", "ss-aside-layout-side")
     end

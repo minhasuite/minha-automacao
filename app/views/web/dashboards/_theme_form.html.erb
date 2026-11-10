@@ -6,13 +6,13 @@
   <%= hidden_field_tag :op, "theme", id: nil %><%= hidden_field_tag :target, target, id: nil %><%= hidden_field_tag :view_id, view_id, id: nil %>
   <fieldset>
     <legend class="ss-label"><%= t("dashboards.theme.theme") %> <%= tag.span(t("dashboards.theme.empty_inherit"), class: "font-normal") if inherit %></legend>
-    <div class="dw-themes">
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-2">
       <% if inherit %>
-        <label class="dw-theme-opt"><%= radio_button_tag "theme[key]", "", theme["key"].blank?, id: "th-#{uid}-none" %><span class="dw-theme-swatch dw-theme-inherit"><%= icon("duplicate", "size-4") %></span><span class="dw-theme-name"><%= t("dashboards.theme.inherit") %></span></label>
+        <label class="ss-swatch is-block"><%= radio_button_tag "theme[key]", "", theme["key"].blank?, id: "th-#{uid}-none" %><span class="ss-icon-tile is-muted is-sm"><%= icon("duplicate", "") %></span><span class="ss-swatch-name"><%= t("dashboards.theme.inherit") %></span></label>
       <% end %>
       <% Dashboards::Themes.all.each do |t| %>
-        <label class="dw-theme-opt"><%= radio_button_tag "theme[key]", t.key, theme["key"] == t.key || (!inherit && theme["key"].blank? && t == Dashboards::Themes::Lista), id: "th-#{uid}-#{t.key}" %>
-          <span class="dw-theme-swatch" style="<%= t.css %>"><i></i><i></i><i></i></span><span class="dw-theme-name"><%= t.label %></span></label>
+        <label class="ss-swatch is-block" style="<%= dw_swatch_style(t) %>"><%= radio_button_tag "theme[key]", t.key, theme["key"] == t.key || (!inherit && theme["key"].blank? && t == Dashboards::Themes::Lista), id: "th-#{uid}-#{t.key}" %>
+          <span class="ss-swatch-dots"><i></i><i></i><i></i><i></i></span><span class="ss-swatch-bar"></span><span class="ss-swatch-name"><%= t.label %></span></label>
       <% end %>
     </div>
   </fieldset>

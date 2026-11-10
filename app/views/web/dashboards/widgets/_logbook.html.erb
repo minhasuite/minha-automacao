@@ -1,11 +1,10 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <%# Diário (ondaB2 B10): as últimas linhas no Ss::LogbookComponent (dia que gruda, hora, ícone tonal), com o link para a tela Diário. %>
 <% d = w["data"] %>
-<div class="dw-card">
-  <div class="flex items-center justify-between gap-2">
-    <p class="dw-card-title flex items-center gap-2"><%= icon("view-list", "size-4 text-accent") %><%= w["label"].presence || Dashboards::Widgets::LogbookWidget.label %></p>
-    <%= link_to logbook_path(site_id: dashboard.site_id, point_id: (Array(d["point_ids"]).first if Array(d["point_ids"]).one?)), class: "ss-icon-btn is-sm", data: { turbo_frame: "_top" }, title: t("nav.logbook"), "aria-label": t("nav.logbook") do %><%= icon("chevron-right", "size-4") %><% end %>
-  </div>
+<div class="ss-card ss-card-pad h-full">
+  <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || Dashboards::Widgets::LogbookWidget.label, icon: icon("view-list", "")) do |h| %>
+    <% h.with_action do %><%= link_to logbook_path(site_id: dashboard.site_id, point_id: (Array(d["point_ids"]).first if Array(d["point_ids"]).one?)), class: "ss-icon-btn is-sm", data: { turbo_frame: "_top" }, title: t("nav.logbook"), "aria-label": t("nav.logbook") do %><%= icon("chevron-right", "size-4") %><% end %><% end %>
+  <% end %>
   <% entries = Array(d["items"]).map do |i|
        { at: Time.zone.parse(i["at"]), title: i["title"], state: i["state"].presence, detail: [ i["user"], i["detail"] ].compact_blank.join(" · ").presence,
          icon: icon(i["icon"].presence_in(HelperTypes::ICONS) || "switch-horizontal"), tone: i["tone"] }

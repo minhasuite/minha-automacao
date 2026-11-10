@@ -5,16 +5,15 @@
 <% cols = (w["columns"].to_i.nonzero? || 3).clamp(1, 4) %>
 <%# Texto de vazio " " = o card some quando não há nada (show_empty: false do HA). %>
 <% unless ids.empty? && w["empty_text"] == " " %>
-<div class="<%= tiles ? '' : 'dw-card' %>">
+<div class="<%= tiles ? '' : 'ss-card ss-card-pad h-full' %>">
   <%# Sem nome, sem cabeçalho: o título da seção já diz o que é (um "Lista" genérico só ocupa espaço). %>
   <% if w["label"].present? %>
-    <div class="flex items-center justify-between gap-2 <%= tiles ? 'mb-2 px-1' : 'mb-1' %>">
-      <p class="dw-card-title"><%= w["label"] %></p>
-      <% if w["data"]["count"].positive? %><span class="ss-badge ss-badge-accent num"><%= w["data"]["count"] %></span><% end %>
-    </div>
+    <%= render Ss::CardHeaderComponent.new(title: w["label"], css: (tiles ? "mb-2 px-1" : "mb-1")) do |h| %>
+      <% if w["data"]["count"].positive? %><% h.with_action do %><span class="ss-badge ss-badge-accent num"><%= w["data"]["count"] %></span><% end %><% end %>
+    <% end %>
   <% end %>
   <% if ids.empty? %>
-    <p class="dw-quiet <%= 'dw-card' if tiles %>"><%= icon("check-circle", "size-5 text-success") %><%= w["empty_text"].presence || t("dashboards.w.nothing_now") %></p>
+    <%= render Ss::NoteComponent.new(text: w["empty_text"].presence || t("dashboards.w.nothing_now"), icon: icon("check-circle", ""), tone: :success, css: (tiles ? "ss-card ss-card-pad" : "mt-3")) %>
   <% elsif tiles %>
     <%# Grade de tiles (o auto-entities do HA com card grid): cada ponto é um tile, com o nome que o painel dava; o comando refaz a lista inteira (o id é o dela). %>
     <div class="dw-grid">

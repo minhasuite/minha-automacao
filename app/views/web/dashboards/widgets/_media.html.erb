@@ -13,14 +13,10 @@
   <% url = ->(cmd) { command_point_path(p["id"], **dw_command_params(cmd, w: w, dashboard: dashboard, live: live)) if can && c.include?(cmd) } %>
   <% state = off_line ? :unavailable : { "playing" => :playing, "paused" => :paused, "buffering" => :buffering }.fetch(m["state"].to_s, :idle) %>
   <% on = !m["state"].to_s.in?([ "off", "" ]) %>
-  <div class="dw-card dw-media <%= 'dw-unavailable' if off_line %>">
-    <div class="flex items-center gap-3">
-      <span class="dw-ico"><%= icon(w["icon"].presence || p["display_icon"].presence || "desktop-computer") %></span>
-      <%= link_to point_path(p["id"]), class: "min-w-0 flex-1 no-underline", data: { turbo_frame: "_top" } do %>
-        <span class="dw-name"><%= dw_label(w, p) %></span>
-        <span class="dw-state"><%= off_line ? t("dashboards.w.offline") : (m["title"].present? ? PointsHelper::MEDIA_TEXT.fetch(m["state"].to_s, p["text"]) : p["text"]) %></span>
-      <% end %>
-    </div>
+  <div class="ss-card ss-card-pad h-full">
+    <%= render Ss::CardHeaderComponent.new(title: link_to(dw_label(w, p), point_path(p["id"]), data: { turbo_frame: "_top" }),
+                                           subtitle: off_line ? t("dashboards.w.offline") : (m["title"].present? ? PointsHelper::MEDIA_TEXT.fetch(m["state"].to_s, p["text"]) : p["text"]),
+                                           icon: icon(w["icon"].presence || p["display_icon"].presence || "desktop-computer", ""), tone: (off_line ? :danger : :accent)) %>
     <%# Player da gem: liga/desliga no canto, volume (slider manda "value"), −/+ e mudo, e o "o que tocar" embaixo. %>
     <%= render Ss::MediaPlayerComponent.new(title: m["title"].presence, subtitle: [ m["artist"], m["album"] ].compact_blank.uniq.join(" · ").presence, art_url: dw_media_image(m),
                                             state: state, source: m["app"].presence, play_url: url.call("resume"), pause_url: url.call("pause"),
@@ -28,7 +24,7 @@
                                             power: (on if c.include?("on") || c.include?("off")), power_url: url.call(on ? "off" : "on"),
                                             volume: (m["volume"].to_f / 100 if c.include?("volume") && m["volume"].is_a?(Numeric)), volume_url: url.call("volume"), volume_param: "value",
                                             volume_up_url: url.call("volume_up"), volume_down_url: url.call("volume_down"), mute_url: url.call("mute"), muted: m["muted"],
-                                            css: "dw-media-player",
+                                            css: "is-flush mt-3",
                                             labels: { play: t("dashboards.w.mc.resume"), pause: t("dashboards.w.mc.pause"), previous: t("dashboards.w.mc.previous"), next: t("dashboards.w.mc.next"),
                                                       volume: t("dashboards.w.volume_x", name: p["name"]), mute: t("dashboards.w.mc.mute"), unmute: t("dashboards.w.mc.unmute"),
                                                       volume_up: t("dashboards.w.mc.volume_up"), volume_down: t("dashboards.w.mc.volume_down"),

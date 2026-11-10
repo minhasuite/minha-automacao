@@ -4,7 +4,7 @@
 <div class="ss-card ss-card-pad h-full grid gap-2 content-start">
   <% if w["label"].present? %><%= render Ss::CardHeaderComponent.new(title: w["label"], icon: icon("globe-alt", "")) %><% end %>
   <% if d["url"] %>
-    <div class="dw-frame-box" style="aspect-ratio: <%= d['ratio'] %>">
+    <div class="overflow-hidden rounded-xl bg-field [&>iframe]:block [&>iframe]:size-full [&>iframe]:border-0" style="aspect-ratio: <%= d['ratio'] %>">
       <iframe src="<%= d["url"] %>" title="<%= w["label"].presence || Dashboards::Widgets::IframeWidget.label %>" loading="lazy" referrerpolicy="no-referrer"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups" allow="fullscreen"></iframe>
     </div>

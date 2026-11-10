@@ -1,6 +1,6 @@
 <%# locals: (f:, p:, w:, dashboard:, live:) -%>
 <%# Nível só de leitura (bateria, filtro): o slider da gem travado na barra cheia. %>
-<div class="dw-feat">
+<div class="grid min-w-0 gap-1.5">
   <%= render Ss::RangeComponent.new(name: "level", label: f["label"], value: dw_plain(f["value"].is_a?(Numeric) ? f["value"] : (f["min"] || 0)), min: dw_plain(f["min"] || 0),
                                     max: dw_plain(f["max"] || 100), variant: :fill, disabled: true, format: dw_range_format(f["unit"]), icon: icon(f["icon"], "size-4").to_s,
                                     id: "b_#{w['id']}_#{f['type']}") %>

@@ -1,13 +1,13 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <% d = w["data"] %>
-<div class="ss-card ss-card-pad h-full mp-card">
+<div class="ss-card ss-card-pad h-full">
   <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.map")) do |h| %>
     <% unless d["hidden"] %><% h.with_action { link_to t("dashboards.w.open_map"), map_path(site_id: dashboard.site_id), class: "ss-btn ss-btn-ghost ss-btn-sm", data: { turbo_frame: "_top" } } %><% end %>
   <% end %>
   <% if d["hidden"] %>
-    <p class="dw-quiet"><%= icon("lock-closed", "size-5 text-muted") %><%= t("dashboards.w.map_hidden") %></p>
+    <%= render Ss::NoteComponent.new(text: t("dashboards.w.map_hidden"), icon: icon("lock-closed", ""), css: "mt-3") %>
   <% elsif d["center"].nil? %>
-    <p class="dw-quiet"><%= icon("map", "size-5 text-muted") %><%= t("dashboards.w.map_empty") %></p>
+    <%= render Ss::NoteComponent.new(text: t("dashboards.w.map_empty"), icon: icon("map", ""), css: "mt-3") %>
   <% else %>
     <%= render "web/maps/canvas", map: d, height: w["height"] || 320, compact: true %>
   <% end %>

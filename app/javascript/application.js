@@ -138,9 +138,9 @@ if ("serviceWorker" in navigator && window.isSecureContext) {
   navigator.serviceWorker.register("/service-worker.js", { scope: "/" }).catch(() => {})
 }
 
-// Menus em <details> (.ss-menu da gem e .dw-pop): Esc fecha e devolve o
+// Menus em <details> (.ss-menu da gem e o .ma-kiosk-pop do quiosque): Esc fecha e devolve o
 // foco ao botão, clique fora fecha, e o summary diz se está aberto (aria-expanded).
-const MENUS = "details.ss-menu, details.dw-pop"
+const MENUS = "details.ss-menu, details.ma-kiosk-pop"
 document.addEventListener("toggle", (e) => {
   if (e.target.matches?.(MENUS)) e.target.querySelector(":scope > summary")?.setAttribute("aria-expanded", e.target.open)
 }, true)

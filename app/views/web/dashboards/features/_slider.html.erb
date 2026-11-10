@@ -6,9 +6,9 @@
 <% range = Ss::RangeComponent.new(name: "value", label: f["label"], value: value, min: dw_plain(f["min"] || 0), max: dw_plain(f["max"] || 100), step: dw_plain(f["step"] || 1),
                                   format: dw_range_format(f["unit"]), track: track, submit: :release, id: id, disabled: !(p["can_command"] && p["quality"] == "good"),
                                   tone: (:heat if track == :brightness && dw_light?(p))) %>
-<div class="dw-feat">
+<div class="grid min-w-0 gap-1.5">
   <% if p["can_command"] && p["quality"] == "good" %>
-    <%= dw_command_form(p, f["command"], w: w, dashboard: dashboard, live: live) do %><%= render range %><% end %>
+    <%= dw_command_form(p, f["command"], w: w, dashboard: dashboard, live: live, css: nil) do %><%= render range %><% end %>
   <% else %>
     <%= render range %>
   <% end %>

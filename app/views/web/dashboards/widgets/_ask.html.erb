@@ -1,16 +1,13 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <%# Perguntar à casa (Ai::Ask, só leitura): a resposta volta no frame do próprio card, no Ss::AiInsightCardComponent. %>
-<div class="dw-card">
-  <div class="flex items-center gap-3">
-    <span class="ss-icon-tile is-accent"><%= icon(w["icon"].presence || "sparkles") %></span>
-    <p class="dw-name min-w-0 flex-1"><%= w["label"].presence || Dashboards::Widgets::AskWidget.label %></p>
-  </div>
+<div class="ss-card ss-card-pad h-full">
+  <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || Dashboards::Widgets::AskWidget.label, icon: icon(w["icon"].presence || "sparkles", "")) %>
   <% if w["data"]["ready"] %>
     <%= turbo_frame_tag "ask_#{w['id']}", class: "mt-3 block" do %>
       <%= render "web/ask/widget_form", frame: "ask_#{w['id']}", site_id: dashboard.site_id, placeholder: w["placeholder"] %>
     <% end %>
   <% else %>
-    <p class="mt-3 text-sm text-muted"><%= t("ask.not_ready") %></p>
+    <%= render Ss::NoteComponent.new(text: t("ask.not_ready"), icon: icon("sparkles", ""), css: "mt-3") %>
     <% if current_user.admin? %><%= link_to t("ask.setup"), settings_ai_path, class: "ss-btn ss-btn-ghost ss-btn-sm mt-2", data: { turbo_frame: "_top" } %><% end %>
   <% end %>
 </div>

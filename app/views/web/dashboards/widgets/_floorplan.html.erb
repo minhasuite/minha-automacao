@@ -3,7 +3,7 @@
 <% uid = w["id"] %>
 <div class="ss-card ss-card-pad h-full dw-fp" data-controller="floorplan" data-floorplan-key-value="<%= uid %>">
   <%# Cabeçalho padrão de card da gem; à direita, os andares (abas da planta) e o modo noite (botão de ícone da gem). %>
-  <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.floorplan"), css: "dw-fp-head") do |h| %>
+  <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.floorplan"), css: "mb-2.5") do |h| %>
     <% h.with_action do %>
       <% if layers.size > 1 %>
         <div class="dw-fp-tabs" role="tablist" aria-label="<%= t("dashboards.w.floors") %>">

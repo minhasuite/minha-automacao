@@ -49,7 +49,7 @@ export default class extends Controller {
 
   screen(event) {
     this.element.dataset.screen = event.params.screen
-    this.screenButtonTargets.forEach((b) => b.setAttribute("aria-checked", b.dataset.layoutEditorScreenParam === event.params.screen))
+    this.screenButtonTargets.forEach((b) => b.setAttribute("aria-pressed", b.dataset.layoutEditorScreenParam === event.params.screen))
     this.labels()
     this.fit()
   }

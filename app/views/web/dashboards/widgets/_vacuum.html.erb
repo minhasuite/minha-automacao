@@ -15,7 +15,7 @@
   <%# Robô montado com as peças da gem: o tile (nome, estado, bateria) e, no rodapé, comandos, cômodos e peças. %>
   <% state = [ p["text"], (detail["text"] if detail && detail["text"] != p["text"]), (battery["text"] if battery && battery["value"].is_a?(Numeric)) ].compact.uniq.join(" · ") %>
   <%= render Ss::DeviceTileComponent.new(name: w["label"].presence || p["device"], state: state, on: busy, status: dw_tile_status(p, off_line), icon: icon(w["icon"].presence || "vacuum").to_s,
-                                         url: point_path(p["id"]), link_data: { turbo_frame: "_top" }, wide: true, unavailable_label: t("dashboards.w.offline"), css: "dw-vacuum h-full") do |tile| %>
+                                         url: point_path(p["id"]), link_data: { turbo_frame: "_top" }, wide: true, unavailable_label: t("dashboards.w.offline"), css: "h-full") do |tile| %>
   <% tile.with_footer do %>
     <% if busy && !off_line %>
       <%# Robô limpando (uiweb): ele percorre o piso em faixas e deixa o rastro; só CSS. %>
@@ -24,14 +24,14 @@
       </div>
     <% end %>
     <% if fault && fault["value"] == true && !off_line %>
-      <p class="dw-vac-alert" role="status"><%= icon("exclamation-circle", "size-4") %><%= t("dashboards.w.vacuum_fault") %></p>
+      <%= render Ss::NoteComponent.new(text: t("dashboards.w.vacuum_fault"), icon: icon("exclamation-circle", ""), tone: :danger, css: "mt-3") %>
     <% end %>
 
     <% if can %>
-      <div class="dw-vac-actions" role="group" aria-label="<%= t("dashboards.w.vacuum_commands") %>">
+      <div class="mt-3 grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-2" role="group" aria-label="<%= t("dashboards.w.vacuum_commands") %>">
         <% [ [ "start", p["value"] == "paused" ? t("dashboards.w.vac.resume") : t("dashboards.w.vac.start"), "play" ], [ "pause", t("dashboards.w.vac.pause"), "pause" ], [ "stop", t("dashboards.w.vac.stop"), "stop" ], [ "home", t("dashboards.w.vac.home"), "home" ] ].each do |cmd, label, ico| %>
           <% next unless d["actions"].include?(cmd) %>
-          <%= dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "ss-btn #{cmd == 'start' ? 'ss-btn-primary' : 'ss-btn-ghost'}", "aria-label": label) do %><%= icon(ico, "size-4") %><span><%= label %></span><% end %>
+          <%= dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "ss-btn w-full #{cmd == 'start' ? 'ss-btn-primary' : 'ss-btn-outline'}", form_class: "contents", "aria-label": label) do %><%= icon(ico, "size-4") %><span><%= label %></span><% end %>
         <% end %>
       </div>
     <% end %>
@@ -39,19 +39,20 @@
     <% if d["rooms"].any? %>
       <%= dw_command_form(p, "clean_rooms", w: w, dashboard: dashboard, live: live) do %>
         <fieldset>
-          <legend class="dw-vac-title"><%= t("dashboards.w.vac.rooms") %></legend>
-          <div class="dw-vac-rooms">
+          <legend class="ss-kicker mb-2"><%= t("dashboards.w.vac.rooms") %></legend>
+          <%# Cômodos em chips de caixa de marcar da gem (label.ss-chip > input). %>
+          <div class="ss-chips flex-wrap overflow-visible">
             <% d["rooms"].each do |r| %>
-              <label class="dw-vac-room"><input type="checkbox" name="value[rooms][]" value="<%= r['id'] %>" <%= 'disabled' unless can %>><span><%= r["name"] %></span></label>
+              <label class="ss-chip"><input type="checkbox" name="value[rooms][]" value="<%= r['id'] %>" <%= 'disabled' unless can %>><%= r["name"] %></label>
             <% end %>
           </div>
         </fieldset>
         <% if d["settings"].any? %>
-          <div class="dw-vac-settings">
+          <div class="mt-3 grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2.5">
             <% d["settings"].each do |role, id| %>
               <% s = points[id] or next %>
               <div class="min-w-0">
-                <label class="dw-vac-label" for="<%= uid %>-<%= role %>"><%= s["name"] %></label>
+                <label class="ss-label" for="<%= uid %>-<%= role %>"><%= s["name"] %></label>
                 <%= select_tag "value[#{role}]", options_for_select(Array(s["options"]), s["value"]), id: "#{uid}-#{role}", class: "ss-input", disabled: !can %>
               </div>
             <% end %>
@@ -65,21 +66,21 @@
 
     <% base = [ [ "wash_mop", t("dashboards.w.vac.wash_mop") ], [ "dry_mop", t("dashboards.w.vac.dry_mop") ], [ "empty", t("dashboards.w.vac.empty") ] ].select { |cmd, _| d["actions"].include?(cmd) } %>
     <% if can && base.any? %>
-      <p class="dw-vac-title mt-4"><%= t("dashboards.w.vac.dock") %></p>
-      <div class="dw-vac-actions">
+      <p class="ss-kicker mt-4"><%= t("dashboards.w.vac.dock") %></p>
+      <div class="mt-2 grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-2">
         <% base.each do |cmd, label| %>
-          <%= dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "ss-btn ss-btn-ghost") do %><span><%= label %></span><% end %>
+          <%= dw_command_button(p, cmd, w: w, dashboard: dashboard, live: live, class: "ss-btn ss-btn-outline w-full", form_class: "contents") do %><span><%= label %></span><% end %>
         <% end %>
       </div>
     <% end %>
 
     <% parts = d["parts"].filter_map { |id| points[id] } %>
     <% if parts.any? %>
-      <p class="dw-vac-title mt-4"><%= t("dashboards.w.vac.parts") %></p>
-      <ul class="dw-vac-parts">
+      <p class="ss-kicker mt-4"><%= t("dashboards.w.vac.parts") %></p>
+      <ul class="mt-2 grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-x-5 gap-y-2 text-sm text-ink-2">
         <% parts.each do |part| %>
           <% pct = part["value"].is_a?(Numeric) ? part["value"].clamp(0, 100) : nil %>
-          <li>
+          <li class="grid grid-cols-[minmax(0,7.5rem)_1fr_2.6rem] items-center gap-2.5">
             <span class="min-w-0 truncate"><%= part["name"] %></span>
             <span class="ss-progress" aria-hidden="true"><span class="ss-progress-bar <%= 'bg-danger' if pct && pct < 20 %>" style="width: <%= pct || 0 %>%"></span></span>
             <span class="num text-right"><%= pct ? "#{pct.round}%" : "—" %></span>

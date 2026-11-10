@@ -12,7 +12,7 @@
   <div class="ma-kiosk-bar" data-kiosk-target="bar">
     <button type="button" class="ss-icon-btn" data-action="kiosk#fullscreen" title="<%= t("dashboards.kiosk.fullscreen") %>" aria-label="<%= t("dashboards.kiosk.fullscreen") %>"><%= icon("arrows-expand", "size-5") %></button>
     <button type="button" class="ss-icon-btn" data-action="kiosk#sleep" title="<%= t("dashboards.kiosk.sleep") %>" aria-label="<%= t("dashboards.kiosk.sleep") %>"><%= icon("moon", "size-5") %></button>
-    <details class="dw-pop relative">
+    <details class="ma-kiosk-pop relative">
       <summary class="ss-icon-btn" title="<%= t("dashboards.kiosk.settings") %>" aria-label="<%= t("dashboards.kiosk.settings") %>"><%= icon("cog", "size-5") %></summary>
       <%= form_with url: kiosk_path, method: :patch, class: "ss-card ma-kiosk-form" do %>
         <p class="font-bold text-ink"><%= t("dashboards.kiosk.this_tablet") %></p>

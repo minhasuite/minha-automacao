@@ -22,7 +22,7 @@ RSpec.describe "Robô no painel e tela de integrações (F8)" do
   it "o painel automático mostra o widget do robô com cômodos, ajustes, base e peças" do
     get "/"
     body = response.body
-    expect(body).to include("dw-vacuum", "Robô aspirador", "Na base", "96 %", "Sala de estar", "Cozinha", "Limpar selecionados",
+    expect(body).to include("ss-device", "Robô aspirador", "Na base", "96 %", "Sala de estar", "Cozinha", "Limpar selecionados",
                             "Limpar a casa", "Voltar à base", "Lavar pano", "Esvaziar", "Escova principal", "ss-progress-bar bg-danger", "O robô avisou um erro")
     expect(body).to include(%(name="value[rooms][]"), %(name="value[mode]"), %(<option selected="selected" value="Aspirar antes do pano">))
     expect(within(tenant) { Dashboards::Schema.errors(Dashboards::Generator.call(site)) }).to be_empty

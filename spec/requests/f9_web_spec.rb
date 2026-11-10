@@ -37,7 +37,7 @@ RSpec.describe "F9: telas (energia, agenda, ação HTTP, saída HTTP)" do
     expect(w).to include("type" => "energy", "binds" => [ power.id ], "period" => "cycle", "cycle_day" => 10, "tariff_point" => tarifa.id, "goal" => 300, "compare" => true)
     expect(w).not_to have_key("tariff")
     get "/paineis/#{d.id}", params: { rascunho: 1, view: view }
-    expect(response.body).to include("Consumo e custo", "R$", "kWh", "dw-bars")
+    expect(response.body).to include("Consumo e custo", "R$", "kWh", "ss-bars")
   end
 
   it "integração Google Agenda (ICS) pelo assistente e retorno OAuth com state assinado" do

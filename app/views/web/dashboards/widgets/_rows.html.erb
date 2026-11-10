@@ -1,18 +1,25 @@
 <%# locals: (ids:, points:, w:, dashboard:, live:, labels: {}) -%>
-<ul class="dw-rows">
+<%# Linhas da gem (.ss-item): ícone tonal (aceso no gradiente; luz em âmbar), nome que abre o ponto, chave ou valor. %>
+<ul class="mt-1 grid gap-0.5">
   <% ids.each do |id| %>
     <% p = points[id] or next %>
     <% off_line = p["quality"] != "good" %>
-    <li title="<%= p["status_note"] %>" class="dw-row <%= dw_color_class(w, p) %> <%= 'dw-on' if p['on'] && p['capability'] != 'measure' %> <%= 'dw-unavailable' if off_line %>">
-      <span class="dw-ico dw-ico-sm"><%= icon(dw_point_icon(p), "size-4") %></span>
-      <%= link_to point_path(id), class: "min-w-0 flex-1 no-underline", data: { turbo_frame: "_top" } do %>
-        <% title, sub = dw_row_names(p) %><% title = labels[id].presence || title %><span class="dw-name text-sm"><%= title %></span><span class="block text-xs text-muted truncate"><%= sub %></span>
+    <% on = p["on"] && p["capability"] != "measure" %>
+    <% tone = w["color"].presence ? DashboardsHelper::WIDGET_TONES[w["color"]] : (:heat if dw_light?(p)) %>
+    <% tile = if off_line then "is-muted"
+              elsif on then (tone == :heat ? "is-heat is-grad" : "is-grad")
+              else "is-muted"
+              end %>
+    <li title="<%= p["status_note"] %>" class="ss-item">
+      <span class="ss-icon-tile is-sm <%= tile %>"><%= icon(dw_point_icon(p), "") %></span>
+      <%= link_to point_path(id), class: "ss-item-main no-underline", data: { turbo_frame: "_top" } do %>
+        <% title, sub = dw_row_names(p) %><% title = labels[id].presence || title %><span class="text-sm"><%= title %></span><span class="text-xs"><%= sub %></span>
       <% end %>
       <% if p["capability"] == "onoff" && p["can_command"] && !off_line %>
         <%= render Ss::SwitchComponent.new(url: command_point_path(id), on: p["on"], label: t(p["on"] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: p["name"]),
                                            params: dw_command_params("toggle", w: w, dashboard: dashboard, live: live), confirm: dw_confirm_text(p), confirm_title: dw_confirm(p)[:turbo_confirm_title]) %>
       <% else %>
-        <span class="text-sm font-semibold <%= p['value'].is_a?(Numeric) ? 'num text-ink' : 'text-ink-2' %> shrink-0"><%= off_line ? t("dashboards.w.no_signal") : (p["value"].nil? ? "—" : p["text"]) %></span>
+        <span class="shrink-0 text-sm font-semibold <%= off_line ? 'text-danger' : (p['value'].is_a?(Numeric) ? 'num text-ink' : 'text-ink-2') %>"><%= off_line ? t("dashboards.w.no_signal") : (p["value"].nil? ? "—" : p["text"]) %></span>
       <% end %>
     </li>
   <% end %>

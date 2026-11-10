@@ -6,8 +6,8 @@
 <% gattrs, ghidden = dw_gestures(w, points, dashboard: dashboard, live: live) %>
 <div class="relative h-full" <%= tag.attributes(data: gattrs) %>>
   <%= ghidden %>
-  <div class="dw-card dw-clock">
-    <% if w["label"].present? %><p class="dw-clock-label"><%= w["label"] %></p><% end %>
+  <div class="ss-card ss-card-pad h-full flex min-h-24 flex-col items-center justify-center gap-0.5 text-center">
+    <% if w["label"].present? %><p class="ss-kicker"><%= w["label"] %></p><% end %>
     <%= render Ss::ClockComponent.new(now: now, seconds: (:digits if d["seconds"]), fit: true, date: d["show_date"], hour12: d["format"] == "12h", locale: I18n.locale.to_s, time_zone: d["tz"],
                                       size: { "small" => 36, "large" => 88 }.fetch(d["size"].to_s, 56)) %>
   </div>

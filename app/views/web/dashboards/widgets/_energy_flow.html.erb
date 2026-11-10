@@ -5,13 +5,10 @@
 <% watts = d["watts"] || {} %>
 <% power = ->(v) { v.nil? ? "—" : (v.abs >= 1000 ? "#{number_with_precision(v.abs / 1000.0, precision: 2, strip_insignificant_zeros: true, separator: t("number.format.separator"))} kW" : "#{v.abs.round} W") } %>
 <% idle = Dashboards::Widgets::EnergyFlowWidget::IDLE_W %>
-<div class="dw-card ef-card">
-  <div class="flex items-center justify-between gap-2">
-    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.energy_now") %></p>
-    <span class="ss-icon-tile is-muted is-sm" style="color: var(--amber)"><%= icon("lightning-bolt", "") %></span>
-  </div>
+<div class="ss-card ss-card-pad flex h-full flex-col">
+  <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.energy_now"), icon: icon("lightning-bolt", ""), tone: :heat) %>
   <% if d["missing"] %>
-    <p class="dw-quiet"><%= icon("lightning-bolt", "size-5 text-muted") %><%= t("dashboards.w.pick_power") %></p>
+    <%= render Ss::NoteComponent.new(text: t("dashboards.w.pick_power"), icon: icon("lightning-bolt", ""), css: "mt-3") %>
   <% else %>
     <%# Fluxo da gem: a casa no meio, rede à esquerda, solar em cima, bateria embaixo; os pontos correm no sentido da energia. %>
     <% g = watts["grid"] %>
@@ -32,13 +29,13 @@
                                                      (t("dashboards.w.ef.solar_x", power: power.(watts["solar"])) if has["solar"]) ].compact.join(", "), css: "mt-2") %>
     <% if has["solar"] && f["home"].to_f.positive? %>
       <% share = ((f["solar_home"].to_f + f["battery_home"].to_f) / f["home"].to_f * 100).round.clamp(0, 100) %>
-      <p class="ef-foot"><span class="dw-meter" role="img" aria-label="<%= t("dashboards.w.ef.self_share", pct: share) %>"><span style="width: <%= share %>%"></span></span><%= t("dashboards.w.ef.self_share_now_html", pct: tag.span("#{share}%", class: "num")) %></p>
+      <p class="mt-2.5 flex items-center gap-2 text-xs text-muted"><span class="ss-progress flex-1" role="img" aria-label="<%= t("dashboards.w.ef.self_share", pct: share) %>"><span class="ss-progress-bar bg-success" style="width: <%= share %>%"></span></span><%= t("dashboards.w.ef.self_share_now_html", pct: tag.span("#{share}%", class: "num")) %></p>
     <% end %>
     <%# ondaB2 (B12): parcela fóssil da rede e previsão solar de hoje. %>
     <% if d["fossil_pct"] || d["forecast_kwh"] %>
-      <div class="ef-extras">
-        <% if d["fossil_pct"] %><span class="ef-chip ef-co2"><%= icon("globe-alt", "size-4") %><%= t("dashboards.energy_b12.low_carbon", pct: 100 - d["fossil_pct"]) %></span><% end %>
-        <% if d["forecast_kwh"] %><span class="ef-chip ef-fc"><%= icon("sun", "size-4") %><%= t("dashboards.energy_b12.forecast", kwh: number_with_precision(d["forecast_kwh"], precision: 1, strip_insignificant_zeros: true, separator: ",")) %></span><% end %>
+      <div class="mt-2.5 flex flex-wrap gap-1.5">
+        <% if d["fossil_pct"] %><span class="ss-badge ss-badge-success"><%= icon("globe-alt", "size-3.5") %><%= t("dashboards.energy_b12.low_carbon", pct: 100 - d["fossil_pct"]) %></span><% end %>
+        <% if d["forecast_kwh"] %><span class="ss-badge ss-badge-warn"><%= icon("sun", "size-3.5") %><%= t("dashboards.energy_b12.forecast", kwh: number_with_precision(d["forecast_kwh"], precision: 1, strip_insignificant_zeros: true, separator: ",")) %></span><% end %>
       </div>
     <% end %>
   <% end %>

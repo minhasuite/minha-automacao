@@ -3,9 +3,9 @@
 <% p = points[Array(d["point_ids"]).first] %>
 <% c = d["current"] || {} %>
 <% if p.nil? %>
-  <div class="dw-card dw-weather">
-    <p class="dw-card-title"><%= w["label"].presence || t("dashboards.w.weather") %></p>
-    <p class="text-sm text-muted"><%= t("dashboards.w.pick_weather") %></p>
+  <div class="ss-card ss-card-pad h-full">
+    <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.weather"), icon: icon("cloud", "")) %>
+    <%= render Ss::NoteComponent.new(text: t("dashboards.w.pick_weather"), icon: icon("cloud", ""), css: "mt-2") %>
   </div>
 <% else %>
   <%# Card de clima da gem: agora (sensação e chance de chuva), umidade, vento e a faixa de previsão (por hora ou por dia). %>

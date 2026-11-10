@@ -12,9 +12,9 @@
       <h2 id="ed-title" class="flex items-center gap-2"><%= icon("view-boards", "size-5 text-accent") %><%= t("dashboards.le.title") %></h2>
       <p class="text-sm text-muted mt-0.5"><%= t("dashboards.le.hint") %></p>
     </div>
-    <div class="dw-ed-screens" role="radiogroup" aria-label="<%= t("dashboards.le.screen") %>">
+    <div class="ss-seg w-full sm:w-96" role="group" aria-label="<%= t("dashboards.le.screen") %>">
       <% { "mobile" => "device-mobile", "tablet" => "device-mobile", "desktop" => "desktop-computer" }.each do |screen, ico| %><% label = t("dashboards.screens.#{screen}") %>
-        <button type="button" role="radio" class="dw-ed-screen" aria-checked="<%= screen == 'desktop' %>" data-action="layout-editor#screen" data-layout-editor-screen-param="<%= screen %>" data-layout-editor-target="screenButton">
+        <button type="button" class="gap-1.5 text-sm font-bold" aria-pressed="<%= screen == 'desktop' %>" data-action="layout-editor#screen" data-layout-editor-screen-param="<%= screen %>" data-layout-editor-target="screenButton">
           <%= icon(ico, "size-4 #{'rotate-90' if screen == 'tablet'}") %><span class="max-sm:sr-only"><%= label %></span>
         </button>
       <% end %>

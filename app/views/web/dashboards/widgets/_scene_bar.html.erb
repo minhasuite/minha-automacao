@@ -1,7 +1,7 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <%# Cenas em chips da gem (o SsChipBar + SsFilterChip do app); sem permissão, o chip fica travado. %>
 <% if w["data"]["scenes"].empty? %>
-  <p class="dw-quiet"><%= icon("sparkles", "size-5 text-muted") %><%= t("dashboards.w.no_scenes") %></p>
+  <%= render Ss::NoteComponent.new(text: t("dashboards.w.no_scenes"), icon: icon("sparkles", "")) %>
 <% else %>
   <div class="ss-chips" role="group" aria-label="<%= w["label"].presence || t("dashboards.w.scenes_label") %>">
     <% w["data"]["scenes"].each do |s| %>

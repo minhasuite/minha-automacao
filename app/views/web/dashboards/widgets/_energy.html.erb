@@ -4,39 +4,37 @@
 <% unit = d["unit"] || "kWh" %>
 <% kwh = ->(v) { "#{number_with_precision(v, precision: v.to_f < 10 ? 2 : 1, strip_insignificant_zeros: true, delimiter: '.', separator: ',')} #{unit}" } %>
 <% money = ->(v) { number_to_currency(v, unit: "R$ ", separator: ",", delimiter: ".") } %>
-<div class="dw-card">
+<div class="ss-card ss-card-pad h-full">
   <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || d["title"] || t("dashboards.w.usage_cost"), subtitle: d["period_label"],
                                          icon: icon(d["icon"] || "lightning-bolt", ""), tone: d["tone"] || :warn) %>
   <% if d["missing"] %>
-    <p class="dw-quiet"><%= icon(d["icon"] || "lightning-bolt", "size-5 text-muted") %><%= d["missing_text"] || t("dashboards.w.pick_energy") %></p>
+    <%= render Ss::NoteComponent.new(text: d["missing_text"] || t("dashboards.w.pick_energy"), icon: icon(d["icon"] || "lightning-bolt", ""), css: "mt-3") %>
   <% else %>
-    <p class="dw-energy-big num mt-2"><%= d["cost"] ? money.(d["cost"]) : kwh.(d["kwh"]) %></p>
+    <p class="mt-2 text-ink"><%= ss_amount(d["cost"] ? money.(d["cost"]) : kwh.(d["kwh"])) %></p>
     <p class="text-sm text-ink-2 num"><%= d["cost"] ? "#{kwh.(d['kwh'])} · #{money.(d['tariff'])}/#{unit}" : t("dashboards.w.no_tariff") %></p>
-    <div class="dw-energy-facts">
-      <% if d["projection_kwh"] %>
-        <div class="dw-energy-fact"><%= d["period"] == "today" ? t("dashboards.w.projection_day") : t("dashboards.w.projection_period") %>
-          <strong class="num"><%= d["projection_cost"] ? money.(d["projection_cost"]) : kwh.(d["projection_kwh"]) %></strong></div>
-      <% end %>
-      <% if d.key?("previous_kwh") %>
-        <div class="dw-energy-fact"><%= t("dashboards.w.previous_period") %>
-          <strong class="num"><%= kwh.(d["previous_kwh"]) %>
-            <% if d["delta_pct"] %><span class="<%= d['delta_pct'].positive? ? 'dw-up' : 'dw-down' %> text-xs"><%= d["delta_pct"].positive? ? "+" : "" %><%= d["delta_pct"] %>%</span><% end %>
-          </strong></div>
-      <% end %>
-      <% if d["goal"] %>
-        <div class="dw-energy-fact"><%= t("dashboards.w.goal") %> <%= kwh.(d["goal"]) %>
-          <strong class="num"><%= (d["goal_ratio"] * 100).round %>% <span class="text-xs font-normal"><%= d["projection_kwh"] ? t("dashboards.w.of_goal_projected") : t("dashboards.w.of_goal") %></span></strong>
-          <div class="dw-meter<%= ' dw-over' if d['goal_ratio'] > 1 %>" role="img" aria-label="<%= (d['goal_ratio'] * 100).round %>% <%= t("dashboards.w.of_goal") %>"><span style="width: <%= [ d['goal_ratio'] * 100, 100 ].min.round %>%"></span></div></div>
-      <% end %>
-    </div>
+    <%# Fatos do período na faixa de números da gem: projeção, período anterior (variação boa quando cai) e meta. %>
+    <% facts = [] %>
+    <% facts << { label: d["period"] == "today" ? t("dashboards.w.projection_day") : t("dashboards.w.projection_period"),
+                  value: d["projection_cost"] ? money.(d["projection_cost"]) : kwh.(d["projection_kwh"]), count: false } if d["projection_kwh"] %>
+    <% facts << { label: t("dashboards.w.previous_period"), value: kwh.(d["previous_kwh"]), count: false,
+                  delta: (d["delta_pct"] && "#{'+' if d['delta_pct'].positive?}#{d['delta_pct']}%"), good: (!d["delta_pct"].positive? if d["delta_pct"]) }.compact if d.key?("previous_kwh") %>
+    <% facts << { label: "#{t('dashboards.w.goal')} #{kwh.(d['goal'])}", value: "#{(d['goal_ratio'] * 100).round}%", count: false,
+                  hint: d["projection_kwh"] ? t("dashboards.w.of_goal_projected") : t("dashboards.w.of_goal") } if d["goal"] %>
+    <% if facts.any? %><%= render Ss::KpiStripComponent.new(items: facts, label: t("dashboards.w.usage_cost"), count: false, css: "mt-3") %><% end %>
+    <% if d["goal"] %>
+      <div class="ss-progress mt-2 <%= 'is-over' if d['goal_ratio'] > 1 %>" role="img" aria-label="<%= (d['goal_ratio'] * 100).round %>% <%= t("dashboards.w.of_goal") %>"><span class="ss-progress-bar <%= 'bg-success' unless d['goal_ratio'] > 1 %>" style="width: <%= [ d['goal_ratio'] * 100, 100 ].min.round %>%"></span></div>
+    <% end %>
     <% max = d["bars"].filter_map { |b| b["kwh"] }.max.to_f %>
     <% last_filled = d["bars"].rindex { |b| b["kwh"] } %>
-    <div class="dw-bars" role="img" aria-label="<%= d['period'] == 'today' ? t("dashboards.w.usage_hour") : t("dashboards.w.usage_day") %>">
+    <% n = d["bars"].size %>
+    <%# Barras em pílula da gem (o SsPillBars do app): a atual na cor da marca, sem leitura ainda apagada; rótulo no começo, no meio e no fim. %>
+    <div class="ss-bars mt-4" style="--ss-bars-h: 112px" role="img" aria-label="<%= d['period'] == 'today' ? t("dashboards.w.usage_hour") : t("dashboards.w.usage_day") %>">
       <% d["bars"].each_with_index do |b, i| %>
-        <% h = b["kwh"] && max.positive? ? [ (b["kwh"] / max * 100).round, 3 ].max : 3 %>
-        <span class="<%= 'dw-bar-empty' if b['kwh'].nil? %><%= ' dw-bar-now' if i == last_filled %>" style="height: <%= h %>%" title="<%= b['label'] %>: <%= b['kwh'] ? kwh.(b['kwh']) : t("dashboards.w.not_yet") %>"></span>
+        <% v = b["kwh"] && max.positive? ? [ (b["kwh"] / max).round(3), 0.04 ].max : 0.04 %>
+        <div class="ss-bar <%= 'is-today' if i == last_filled %> <%= 'is-empty' if b['kwh'].nil? %>" style="--v: <%= v %>" title="<%= b['label'] %>: <%= b['kwh'] ? kwh.(b['kwh']) : t("dashboards.w.not_yet") %>">
+          <b><%= b["kwh"] ? kwh.(b["kwh"]) : "—" %></b><i></i><span><%= b["label"] if i.zero? || i == n - 1 || i == n / 2 %></span>
+        </div>
       <% end %>
     </div>
-    <div class="flex justify-between text-xs text-muted num mt-1"><span><%= d["bars"].first&.dig("label") %></span><span><%= d["bars"].last&.dig("label") %></span></div>
   <% end %>
 </div>

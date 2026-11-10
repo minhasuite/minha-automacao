@@ -89,30 +89,6 @@ module DashboardsHelper
   COVER = /cortina|persiana|toldo|blackout/i
   def dw_cover?(p) = p["capability"].in?(%w[dimmer setpoint]) && "#{p['name']} #{p['device']}".match?(COVER)
 
-  # Ícone do tile animado pelo estado real (uiweb, só CSS; para com
-  # prefers-reduced-motion): luz brilha na cor real e no nível do dimmer,
-  # ventilador gira pela velocidade, cortina e portão abrem pela posição.
-  def dw_tile_ico(w, p, glow: nil)
-    on = dw_on?(p)
-    css = %w[dw-ico dw-anim]
-    style = []
-    if dw_light?(p) && on
-      css << "dw-glow"
-      style << "--glow: #{glow}" if glow
-      style << "--lvl: #{(p['value'].to_f / 100).clamp(0.3, 1).round(2)}" if p["capability"] == "dimmer"
-    end
-    if dw_fan?(p) && on
-      css << "dw-spinning"
-      style << dw_spin_style(p)
-    end
-    art = if w["icon"].present? then icon(w["icon"])
-    elsif dw_cover?(p) then dw_cover_art(p["value"])
-    elsif p["capability"] == "gate" then dw_gate_art(p["value"])
-    else icon(dw_point_icon(p))
-    end
-    tag.span(art, class: css, style: style.join("; ").presence)
-  end
-
   # Ícone do Ss::DeviceTileComponent: a arte do ponto (cortina e portão pela
   # posição, ventilador girando pela velocidade). O fundo aceso e a cor vêm do
   # `tone:` do tile (dw_tone), não daqui.
@@ -221,7 +197,10 @@ module DashboardsHelper
     { "class" => [ "dw-themed", "dw-theme-#{t.key}", ("dw-glass" if th["glass"]), ("dw-has-wall" if image || t.wallpaper) ].compact.join(" "), "style" => style }
   end
 
-  def dw_color_class(w, p = nil) = "dw-#{w['color'].presence || (p && dw_light?(p) ? 'amber' : 'accent')}"
+  # Amostra de tema (.ss-swatch da gem): as cores do tema nos círculos e o papel de parede atrás deles.
+  def dw_swatch_style(th)
+    [ th.css, "--p1: #{th.accent}", "--p2: #{th.accent2}", "--p3: var(--accent-soft)", ("--ss-swatch-wall: #{th.wallpaper}" if th.wallpaper.present?) ].compact.join("; ")
+  end
 
   # Linha de lista e tile: título e contexto pela regra de Point#display_names (resolver).
   def dw_row_names(p) = [ p["title"] || p["name"], p.key?("title") ? p["context"] : p["device"] ]
@@ -237,8 +216,8 @@ module DashboardsHelper
   end
 
   # Formulário de valor (slider, seleção) que se envia sozinho ao mudar.
-  def dw_command_form(p, command, w:, dashboard:, live:, data: {}, &)
-    form_with url: command_point_path(p["id"]), data: dw_confirm(p).merge(turbo_frame: live ? nil : "_top", **data).compact, class: "mt-3" do |f|
+  def dw_command_form(p, command, w:, dashboard:, live:, data: {}, css: "mt-3", &)
+    form_with url: command_point_path(p["id"]), data: dw_confirm(p).merge(turbo_frame: live ? nil : "_top", **data).compact, class: css do |f|
       safe_join([ hidden_field_tag(:command, command, id: nil),
                   (hidden_field_tag(:dashboard_id, dashboard.id, id: nil) if live),
                   (hidden_field_tag(:widget_id, w["id"], id: nil) if live), capture(f, &) ].compact)

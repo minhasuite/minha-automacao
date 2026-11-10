@@ -91,6 +91,6 @@ RSpec.describe "Mapa" do
 
     sign_in
     get "/paineis/#{dash.id}"
-    expect(response.body).to include("mp-card", "Abrir o mapa", "--mp-h: 260px")
+    expect(response.body).to include("mp-map", "Abrir o mapa", "--mp-h: 260px")
   end
 end

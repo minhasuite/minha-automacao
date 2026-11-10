@@ -1,11 +1,11 @@
 <%# locals: (f:, p:, w:, dashboard:, live:) -%>
-<div class="dw-feat">
-  <div class="dw-feat-row"><span class="dw-feat-label"><%= icon(f["icon"], "size-4") %><%= f["label"] %></span>
-    <% if f["min"] %><span class="dw-feat-value num"><%= dw_number(f["min"]) %>–<%= dw_number(f["max"], f["unit"]) %></span><% end %></div>
+<div class="grid min-w-0 gap-1.5">
+  <div class="ss-value-row p-0"><span class="ss-label mb-0 inline-flex min-w-0 items-center gap-1.5"><%= icon(f["icon"], "size-4") %><%= f["label"] %></span>
+    <% if f["min"] %><span class="num"><%= dw_number(f["min"]) %>–<%= dw_number(f["max"], f["unit"]) %></span><% end %></div>
   <% values = Array(f["values"]).grep(Numeric) %>
   <% if values.size > 1 %>
     <div role="img" aria-label="<%= t("dashboards.feat.trend_x", name: f["label"]) %>"><%= ss_sparkline(values, height: 40) %></div>
   <% else %>
-    <p class="text-xs text-muted"><%= t("dashboards.feat.no_history") %></p>
+    <%= render Ss::NoteComponent.new(text: t("dashboards.feat.no_history")) %>
   <% end %>
 </div>

@@ -13,8 +13,8 @@
      { title: e["summary"], sub: sub.(e), starts_at: [ Time.zone.parse(e["start"]).in_time_zone(zone), now.beginning_of_day ].max,
        ends_at: Time.zone.parse(e["end"]).in_time_zone(zone), tone: tone.(e) }
    end %>
-<div class="dw-card">
-  <p class="dw-card-title flex items-center gap-2"><%= icon("calendar", "size-4 text-accent") %><%= w["label"].presence || Dashboards::Widgets::CalendarWidget.label %></p>
+<div class="ss-card ss-card-pad h-full">
+  <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || Dashboards::Widgets::CalendarWidget.label, icon: icon("calendar", "")) %>
   <% if timed.any? %>
     <% all_day = today["events"].select { |e| e["all_day"] }.map { |e| { title: e["summary"], all_day: true, starts_at: now.to_date, tone: tone.(e) } } %>
     <% from = timed.map { |e| e[:starts_at].hour }.min.clamp(0, 23) %>
@@ -22,7 +22,7 @@
     <%= render Ss::AgendaComponent.new(events: timed + all_day, days: [ now.to_date ], from: from, to: to, now: now, hour_height: 40, label: today["label"], css: "mt-3") %>
   <% end %>
   <% if days.empty? %>
-    <p class="text-sm text-muted mt-3"><%= d["empty"] %></p>
+    <%= render Ss::NoteComponent.new(text: d["empty"], icon: icon("calendar", ""), css: "mt-3") %>
     <% if d["connect"] %><%= link_to d["connect"], new_site_integration_path(dashboard.site_id, tipo: "calendar"), class: "ss-btn ss-btn-ghost ss-btn-sm mt-2", data: { turbo_frame: "_top" } %><% end %>
   <% else %>
     <% rest = (timed.any? ? days - [ today ] : days).map do |day|
@@ -32,6 +32,6 @@
                                              title: e["summary"], detail: sub.(e), tone: tone.(e) } } }
        end %>
     <%= render Ss::AgendaListComponent.new(days: rest, week_strip: true, selected: now.to_date, now: now,
-                                           label: w["label"].presence || Dashboards::Widgets::CalendarWidget.label, css: "dw-cal-list mt-3") %>
+                                           label: w["label"].presence || Dashboards::Widgets::CalendarWidget.label, css: "mt-3 max-h-[26rem] overflow-y-auto") %>
   <% end %>
 </div>

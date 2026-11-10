@@ -1,7 +1,7 @@
 <%# locals: (f:, p:, w:, dashboard:, live:) -%>
 <%# Botões do tile (cores, cenas do aparelho): chips da gem que alternam (aria-pressed); cor = chip redondo com a amostra. %>
 <% can = p["can_command"] && p["quality"] == "good" %>
-<div class="dw-feat">
+<div class="grid min-w-0 gap-1.5">
   <span class="sr-only"><%= f["label"] %></span>
   <div class="ss-chips" role="group" aria-label="<%= f["label"] %>">
     <% Array(f["buttons"]).each do |b| %>

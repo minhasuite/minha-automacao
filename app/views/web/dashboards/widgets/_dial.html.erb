@@ -16,30 +16,29 @@
   <% glow = dw_glow(points[d["color_id"]]) if d["color_id"] %>
   <% ring = { "heat" => "heat", "light" => "heat", "cool" => "cool", "off" => "off" }.fetch(d["tone"].to_s, "auto") %>
   <% climate = w["type"] == "thermostat" %>
-  <div class="dw-card dw-dial <%= 'dw-unavailable' if off_line %>">
-    <div class="dw-dial-head">
-      <span class="dw-name truncate"><%= d["title"] %></span>
+  <div class="ss-card ss-card-pad flex h-full flex-col">
+    <%= render Ss::CardHeaderComponent.new(title: d["title"], subtitle: (t("dashboards.w.no_signal") if off_line)) do |h| %>
       <% if power && power["can_command"] && !off_line %>
-        <%= render Ss::SwitchComponent.new(url: command_point_path(power["id"]), on: power["on"], label: t(power["on"] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: d["title"]),
-                                           params: dw_command_params("toggle", w: w, dashboard: dashboard, live: live), confirm: dw_confirm_text(power), confirm_title: dw_confirm(power)[:turbo_confirm_title]) %>
+        <% h.with_action do %><%= render Ss::SwitchComponent.new(url: command_point_path(power["id"]), on: power["on"], label: t(power["on"] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: d["title"]),
+                                           params: dw_command_params("toggle", w: w, dashboard: dashboard, live: live), confirm: dw_confirm_text(power), confirm_title: dw_confirm(power)[:turbo_confirm_title]) %><% end %>
       <% end %>
-    </div>
+    <% end %>
     <% if target %>
       <%# Fora do clima o alvo não é temperatura: número sem o "°" e a unidade na legenda. %>
       <% labels = climate ? {} : { idle: [ d["target_label"], d["unit"] ].compact_blank.join(" · ") } %>
       <% now = t("dashboards.cards.now_x", value: dw_number(d["current"], d["unit"])) if d["current"].is_a?(Numeric) %>
-      <%= dw_command_form(target, "set", w: w, dashboard: dashboard, live: live) do %>
+      <%= dw_command_form(target, "set", w: w, dashboard: dashboard, live: live, css: "mt-2") do %>
         <%= render Ss::ThermostatComponent.new(name: "value", target: d["value"].is_a?(Numeric) ? d["value"] : d["min"], current: (d["current"] if d["current"].is_a?(Numeric)),
                                                min: d["min"], max: d["max"], step: d["step"], mode: (d["on"] ? ring : "off"), modes: [], show_modes: false, unit: d["unit"].to_s,
                                                color: (glow if d["on"]), adjust_when_off: true, current_label: now,
                                                action: (climate ? nil : :idle), format: (climate ? nil : "%.0f"), disabled: !can,
-                                               label: d["target_label"], labels: labels.merge(off: t("dashboards.cards.turned_off")), id: "th_#{w['id']}") %>
+                                               label: d["target_label"], labels: labels.merge(off: t("dashboards.cards.turned_off")), id: "th_#{w['id']}", css: "mx-auto") %>
       <% end %>
     <% else %>
-      <p class="dw-dial-state"><%= off_line ? t("dashboards.w.no_signal") : (main["text"].presence || "—") %></p>
+      <p class="grid min-h-32 place-items-center text-2xl font-extrabold <%= off_line ? 'text-danger' : 'text-ink' %>"><%= off_line ? t("dashboards.w.no_signal") : (main["text"].presence || "—") %></p>
     <% end %>
     <% if mode && d["modes"].present? %>
-      <div class="ss-chips dw-chips-wrap mt-3" role="group" aria-label="<%= mode["name"] %>">
+      <div class="ss-chips mt-3 flex-wrap justify-center overflow-visible" role="group" aria-label="<%= mode["name"] %>">
         <% d["modes"].each do |o| %>
           <% if mode["can_command"] && mode["quality"] == "good" %>
             <%= dw_command_button(mode, "select", value: o, w: w, dashboard: dashboard, live: live, class: "ss-chip", form_class: "contents", "aria-pressed": (o.to_s == d["mode"].to_s).to_s) do %><%= o %><% end %>
@@ -51,7 +50,7 @@
     <% end %>
     <% feats = Array(d["features"]).select { |x| points[x["point_id"]] } %>
     <% if feats.any? %>
-      <div class="dw-feats" data-no-gesture><% feats.each do |x| %><%= render dw_feature_partial(x), f: x, p: points[x["point_id"]], w: w, dashboard: dashboard, live: live %><% end %></div>
+      <div class="mt-3 grid w-full basis-full gap-3 border-t border-dashed border-line pt-3" data-no-gesture><% feats.each do |x| %><%= render dw_feature_partial(x), f: x, p: points[x["point_id"]], w: w, dashboard: dashboard, live: live %><% end %></div>
     <% end %>
   </div>
 <% end %>
