@@ -1,177 +1,70 @@
-/* Domínio: painéis (F5) — registro de widgets dw-*: grid de 12 colunas com largura por tela
-   (--m/--t/--d), tiles que acendem na cor do que fazem (âmbar = luz), cartões de área, robô,
-   planta baixa dw-fp*, editor ao vivo dw-ed-*, temas do usuário, quiosque e protetor de tela
-   (ma-kiosk-*, ma-saver-*). Botões, chips, avisos, esqueleto e o "recarregando" do widget
-   (turbo-frame.contents.ss-live) são da gem. Cores só por token. */
-:root {
-  --amber: #b45309; --amber-soft: #fff3df; --amber-grad: linear-gradient(135deg, #fbbf24 0%, #f59e0b 55%, #f97316 100%);
-  --green-grad: linear-gradient(135deg, #34d399, #059669); --red-grad: linear-gradient(135deg, #fb7185, #e11d48);
-  --blue-grad: linear-gradient(135deg, #60a5fa, #2563eb);
-  --s0: #6d5cf6; --s1: #f59e0b; --s2: #10b981; --s3: #3b82f6; --s4: #ec4899; --s5: #14b8a6;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --amber: #fbbf24; --amber-soft: #33240c; --s0: #8f80ff; --s1: #fbbf24; --s2: #34d399; --s3: #60a5fa; --s4: #f472b6; --s5: #2dd4bf; }
-}
-[data-theme="dark"] { --amber: #fbbf24; --amber-soft: #33240c; --s0: #8f80ff; --s1: #fbbf24; --s2: #34d399; --s3: #60a5fa; --s4: #f472b6; --s5: #2dd4bf; }
+/* domínio: painéis — só o que não existe fora da casa. Allowlist (bin/conferir-css, CSS_DOMINIO):
+   - cola do painel sem identidade visual: grade de 12 colunas por tela (dw-grid, dw-w, dw-sections,
+     dw-hide-*), painel inteiro (dw-panel) e pilhas (dw-stack*);
+   - arte viva dos pontos dentro do ícone do tile da gem (dw-anim, dw-ico-art, dw-spinning, dw-cover-blind,
+     dw-gate-*) e o robô limpando (dw-vac-run/-trail/-bot/-dock/-back); arte de cada área (dw-art-*);
+   - planta baixa (dw-fp*, com os modificadores dw-on/dw-unavailable dos pinos) e o editor dela (dw-fpe*);
+   - editor do painel (dw-ed*, dw-wf, dw-act) e os gestos do tile (dw-tappable, dw-holding);
+   - temas do painel no <body> (dw-themed, dw-has-wall, dw-glass: papel de parede e os tokens --ss-card-*);
+   - quiosque e protetor de tela (ma-kiosk*, ma-saver*) e a ilustração do estado vazio (ma-ea-*).
+   Card, título, texto, ícone, botão, chip, linha, selo, barra e amostra de tema são da gem (componentes-ui). */
+:root { --red-grad: linear-gradient(135deg, #fb7185, #e11d48); }
 
+/* ---- Grade do painel (12 colunas; largura por tela em --m/--t/--d) ---------------------------- */
 @layer components {
   .dw-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: .75rem; align-items: start; }
   .dw-sections { gap: 1.75rem 1.25rem; }
   .dw-w { grid-column: span var(--m, 12) / span var(--m, 12); min-width: 0; }
   .dw-w[hidden] { display: none; }
-  .dw-hero { padding: 1.4rem 1.5rem; }
-  .dw-hero h1 { font-size: clamp(1.5rem, 4vw, 2rem); }
-  .dw-hero-btn { display: inline-flex; align-items: center; gap: .4rem; height: 2.25rem; padding: 0 .8rem; border-radius: 999px; color: #fff;
-                 font-weight: 700; font-size: .82rem; text-decoration: none; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .22); }
-  .dw-hero-btn:hover { background: rgba(255, 255, 255, .26); }
+}
+.dw-w { container-type: inline-size; }
+@media (min-width: 640px) { .dw-w { grid-column: span var(--t, 6) / span var(--t, 6); } }
+@media (min-width: 1024px) { .dw-w { grid-column: span var(--d, 4) / span var(--d, 4); } }
+/* Visibilidade por tela (Lote 4, G18b): visible_if.screen vira estas classes. */
+@media (max-width: 639.98px) { .dw-hide-mobile { display: none !important; } }
+@media (min-width: 640px) and (max-width: 1023.98px) { .dw-hide-tablet { display: none !important; } }
+@media (min-width: 1024px) { .dw-hide-desktop { display: none !important; } }
+/* Formulário do widget (editor): só os campos do tipo escolhido; fora de @layer (o .grid dos utilitários não mostra o campo). */
+.dw-wf [data-for] { display: none; }
 
-  .dw-card { position: relative; height: 100%; padding: .95rem 1rem; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card);
-             border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); transition: background .35s ease, border-color .35s ease, box-shadow .25s ease, transform .15s ease; }
-  /* Mesmo título de card da gem (.ss-card-title do Ss::CardHeaderComponent). */
-  .dw-card-title { font-size: calc(.875rem * var(--ss-font-scale)); font-weight: 800; line-height: 1.3; color: var(--ink); }
-  .dw-ico { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex-shrink: 0; border-radius: 14px; background: var(--field);
-            color: var(--muted); transition: background .35s ease, color .35s ease, box-shadow .35s ease; }
-  .dw-ico svg { width: 1.3rem; height: 1.3rem; }
-  .dw-ico-sm { width: 2rem; height: 2rem; border-radius: 10px; }
-  .dw-ico-sm svg { width: 1rem; height: 1rem; }
-  .dw-name { display: block; font-weight: 700; color: var(--ink); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dw-state { display: block; margin-top: .1rem; font-size: .8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  /* Sem sinal: fundo apagado e estado em vermelho, sem opacidade no texto (contraste AA). */
-  .dw-unavailable.dw-card { background: var(--field); box-shadow: none; }
-  .dw-unavailable .dw-ico, .dw-unavailable .ss-switch { opacity: .5; }
-  .dw-unavailable .dw-name { color: var(--ink-2); }
-  .dw-unavailable .dw-state, .dw-unavailable > .shrink-0 { color: var(--danger); font-weight: 600; }
-
-  /* Ligado: a cor do widget (roxo da marca; âmbar para luz). */
-  .dw-on.dw-card { border-color: color-mix(in srgb, var(--accent) 38%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 11%, var(--surface)), var(--surface) 75%); }
-  .dw-on .dw-ico { background: var(--grad); color: #fff; box-shadow: 0 8px 20px -8px rgba(90, 69, 232, .7); }
-  .dw-on .dw-state { color: var(--ink-2); font-weight: 600; }
-  .dw-amber.dw-on.dw-card { border-color: color-mix(in srgb, var(--amber) 42%, var(--line)); background: linear-gradient(135deg, var(--amber-soft), var(--surface) 78%); }
-  .dw-amber.dw-on .dw-ico { background: var(--amber-grad); box-shadow: 0 8px 22px -8px rgba(245, 158, 11, .8); }
-  .dw-green.dw-on .dw-ico { background: var(--green-grad); }
-  .dw-red.dw-on .dw-ico { background: var(--red-grad); }
-  .dw-blue.dw-on .dw-ico { background: var(--blue-grad); }
-
-  .dw-rows { margin-top: .4rem; }
-  .dw-row { display: flex; align-items: center; gap: .65rem; padding: .5rem 0; border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
-  .dw-row:first-child { border-top: 0; }
-  .dw-row a:hover .dw-name { color: var(--accent); }
-  .dw-quiet { display: flex; align-items: center; gap: .5rem; margin-top: .6rem; font-size: .875rem; color: var(--muted); }
-  .dw-range { width: 100%; accent-color: var(--accent); }
-
-  /* Medidor (ss_gauge da gem) dentro do cartão. */
-  .dw-gauge { display: grid; justify-items: center; align-content: center; gap: .35rem; }
-  .dw-gauge-range { display: flex; justify-content: space-between; width: min(100%, 12rem); font-size: .75rem; color: var(--muted); }
-  .dw-notices { display: grid; gap: .5rem; margin-top: .6rem; }
-
-  .dw-s0 { stroke: var(--s0); } .dw-s1 { stroke: var(--s1); } .dw-s2 { stroke: var(--s2); }
-  .dw-s3 { stroke: var(--s3); } .dw-s4 { stroke: var(--s4); } .dw-s5 { stroke: var(--s5); }
-  .dw-legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .35rem 1rem; margin-top: .75rem; font-size: .8rem; color: var(--ink-2); }
-  .dw-legend li { display: flex; align-items: center; gap: .45rem; min-width: 0; }
-  .dw-dot { width: .6rem; height: .6rem; border-radius: 999px; flex-shrink: 0; }
-
-  /* Cartão de área: foto (com véu) ou uma das artes da casa. */
+/* ---- Arte viva do ponto no ícone do Ss::DeviceTileComponent (só CSS; parado com menos movimento) ---- */
+@layer components {
+  .dw-ico-art { display: contents; }
+  .dw-spinning svg { animation: dw-spin var(--spin, 1.2s) linear infinite; }
+  .dw-cover-blind { transform-box: fill-box; transform-origin: top; transform: scaleY(var(--c, .5)); opacity: .55; animation: dw-blind .9s cubic-bezier(.2, .8, .2, 1) both; }
+  .dw-gate-bars { transition: transform .8s cubic-bezier(.2, .8, .2, 1); }
+  .dw-gate-open { transform: translateX(9px); opacity: .55; }
+  .dw-gate-opening { animation: dw-gate 1.6s ease-in-out infinite alternate; }
+  /* Robô limpando: percorre o piso em faixas e deixa o rastro. */
+  .dw-vac-run { position: relative; height: 4.2rem; margin-top: .8rem; overflow: hidden; border-radius: 14px;
+                background: repeating-linear-gradient(90deg, var(--field) 0 22px, color-mix(in srgb, var(--field) 70%, var(--surface)) 22px 44px); }
+  .dw-vac-trail { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transform-origin: left; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent);
+                  animation: dw-trail 9s linear infinite; }
+  .dw-vac-bot { position: absolute; width: 1.9rem; height: 1.9rem; border-radius: 999px; background: var(--surface); border: 3px solid var(--accent); box-shadow: 0 6px 14px -6px rgba(40, 30, 120, .6);
+                left: 4%; top: 8%; animation: dw-mow 9s linear infinite; }
+  .dw-vac-bot span { position: absolute; right: 2px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 999px; background: var(--accent); animation: dw-breathe 1s ease-in-out infinite; }
+  .dw-vac-back .dw-vac-bot { top: 30%; animation: dw-dock 4s ease-in-out forwards; }
+  .dw-vac-dock { position: absolute; left: 4px; top: 50%; width: 8px; height: 2rem; margin-top: -1rem; border-radius: 4px; background: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
+  /* Arte de cada área (fundo do ícone na lista de áreas do local): fixa por área. */
   .dw-art-0 { background: linear-gradient(135deg, #5a45e8, #3b82f6); }
   .dw-art-1 { background: linear-gradient(135deg, #f59e0b, #ef4444); }
   .dw-art-2 { background: linear-gradient(135deg, #0ea5e9, #10b981); }
   .dw-art-3 { background: linear-gradient(135deg, #7b5cff, #ec4899); }
   .dw-art-4 { background: linear-gradient(135deg, #14b8a6, #3b82f6); }
   .dw-art-5 { background: linear-gradient(135deg, #334155, #5a45e8); }
-
-  /* Consumo e custo (F9): número grande, linha de projeção/meta e barras por dia/hora. */
-  .dw-energy-big { font-size: clamp(1.6rem, 4.5vw, 2.1rem); font-weight: 800; letter-spacing: -.02em; color: var(--ink); line-height: 1.1; }
-  .dw-energy-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: .5rem; margin-top: .85rem; }
-  .dw-energy-fact { padding: .5rem .65rem; border-radius: 12px; background: var(--field); font-size: .75rem; color: var(--muted); }
-  .dw-energy-fact strong { display: block; font-size: .95rem; color: var(--ink); }
-  .dw-meter { height: .5rem; margin-top: .4rem; border-radius: 999px; background: var(--field); overflow: hidden; }
-  .dw-meter span { display: block; height: 100%; border-radius: 999px; background: var(--green-grad); transition: width .6s ease; }
-  .dw-meter.dw-over span { background: var(--red-grad); }
-  .dw-bars { display: flex; align-items: flex-end; gap: 2px; height: 4.5rem; margin-top: .9rem; }
-  .dw-bars span { flex: 1 1 0; min-width: 0; border-radius: 4px 4px 1px 1px; background: color-mix(in srgb, var(--accent) 70%, transparent); }
-  .dw-bars span.dw-bar-now { background: var(--amber-grad); }
-  .dw-bars span.dw-bar-empty { background: var(--field); }
-  .dw-up { color: var(--danger); } .dw-down { color: var(--success, #059669); }
-  .dw-pop summary { list-style: none; }
-  .dw-pop summary::-webkit-details-marker { display: none; }
-
-  /* Câmera (Ss::CameraTileComponent): "Ao vivo" ligado na cor da marca. */
-  .ss-cam-actions > [aria-pressed="true"] { background: var(--accent-solid); }
 }
-.dw-w { container-type: inline-size; }
-@media (min-width: 640px) { .dw-w { grid-column: span var(--t, 6) / span var(--t, 6); } }
-@media (min-width: 1024px) { .dw-w { grid-column: span var(--d, 4) / span var(--d, 4); } }
-/* Formulário do widget: só os campos do tipo escolhido (sem JS). */
-/* Fora de @layer: senão o .flex/.grid dos utilitários mostra o campo em todo tipo. */
-/* O que aparece por tipo sai dos plugins (`<style>` em _widget_form). */
-.dw-wf [data-for] { display: none; }
-/* Robô aspirador (F8): estado, comandos, cômodos em pílulas, ajustes e peças. */
-@layer components {
-  .dw-vac-alert { display: flex; align-items: center; gap: .4rem; margin-top: .65rem; font-size: .82rem; font-weight: 600; color: var(--danger); }
-  .dw-vac-title { margin: .9rem 0 .45rem; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
-  .dw-vac-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: .5rem; margin-top: .85rem; }
-  .dw-vac-actions form { margin: 0; }
-  .dw-vac-btn { display: inline-flex; width: 100%; align-items: center; justify-content: center; gap: .4rem; min-height: 2.6rem; padding: 0 .75rem;
-                border-radius: 12px; font: inherit; font-size: .84rem; font-weight: 700; color: var(--ink); background: var(--field); cursor: pointer;
-                border: 1px solid transparent; }
-  .dw-vac-btn:hover { color: var(--accent); border-color: var(--accent); }
-  .dw-vac-rooms { display: flex; flex-wrap: wrap; gap: .45rem; }
-  .dw-vac-room { position: relative; cursor: pointer; }
-  .dw-vac-room input { position: absolute; opacity: 0; pointer-events: none; }
-  .dw-vac-room span { display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 .85rem; border-radius: 999px; font-size: .84rem; font-weight: 600;
-                      color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); transition: background .2s ease, color .2s ease, border-color .2s ease; }
-  .dw-vac-room:hover span { border-color: var(--accent); }
-  .dw-vac-room input:checked + span { background: var(--accent-solid); border-color: var(--accent); color: #fff; }
-  .dw-vac-room input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .dw-vac-room input:disabled + span { opacity: .6; cursor: default; }
-  .dw-vac-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: .6rem; margin-top: .9rem; }
-  .dw-vac-label { display: block; margin-bottom: .25rem; font-size: .75rem; font-weight: 700; color: var(--muted); }
-  .dw-vac-parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .45rem 1.25rem; font-size: .84rem; color: var(--ink-2); }
-  .dw-vac-parts li { display: grid; grid-template-columns: minmax(0, 7.5rem) 1fr 2.6rem; align-items: center; gap: .6rem; }
-}
-/* Visibilidade por tela (Lote 4, G18b): visible_if.screen vira estas classes. */
-@media (max-width: 639.98px) { .dw-hide-mobile { display: none !important; } }
-@media (min-width: 640px) and (max-width: 1023.98px) { .dw-hide-tablet { display: none !important; } }
-@media (min-width: 1024px) { .dw-hide-desktop { display: none !important; } }
-/* Texto com Markdown mínimo (Lote 4, G18a). */
-@layer components {
-  .dw-md ul { margin: .35rem 0; }
-  .dw-md p + p, .dw-md ul + p, .dw-md p + ul { margin-top: .5rem; }
-}
-/* Mídia e controle remoto (Pacote 1): botões aprendidos soltos (controle sem cruz). */
-@layer components {
-  .dw-media-keys form { margin: 0; }
-  .dw-media-keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: .5rem; margin-top: .85rem; }
-  /* Player da gem dentro do cartão do aparelho: sem a moldura de cartão de novo. */
-  .dw-media-player { margin-top: .75rem; padding: 0; background: none; border: 0; box-shadow: none; }
-}
-
+@keyframes dw-spin { to { transform: rotate(360deg); } }
+@keyframes dw-breathe { 50% { opacity: .78; transform: scale(.94); } }
+@keyframes dw-ping { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, .55); } 100% { box-shadow: 0 0 0 14px rgba(244, 63, 94, 0); } }
 @keyframes dw-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
-/* Pessoas e painel de alarme (Pacote 3). */
+@keyframes dw-blind { from { transform: scaleY(calc(var(--c, .5) + .25)); } }
+@keyframes dw-gate { from { transform: translateX(0); } to { transform: translateX(9px); } }
+@keyframes dw-mow { 0% { left: 4%; top: 8%; } 40% { left: 90%; top: 8%; } 50% { left: 90%; top: 52%; } 90% { left: 4%; top: 52%; } 100% { left: 4%; top: 8%; } }
+@keyframes dw-dock { from { left: 90%; } to { left: 2.5%; } }
+@keyframes dw-trail { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ---- Planta baixa: imagem ou cômodos desenhados, pinos em % que acendem na cor real, andares e modo noite ---- */
 @layer components {
-  .dw-dot { flex-shrink: 0; width: .6rem; height: .6rem; border-radius: 999px; }
-  .dw-alarm-badge { display: grid; place-items: center; flex-shrink: 0; width: 2.75rem; height: 2.75rem; border-radius: 16px; }
-  .dw-alarm-off { color: var(--accent); background: var(--accent-soft); }
-  .dw-alarm-armed { color: #fff; background: var(--grad); }
-  .dw-alarm-warn { color: var(--warn); background: var(--warn-soft); }
-  .dw-alarm-danger { color: #fff; background: var(--danger); }
-  .dw-alarm-actions { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .7rem; }
-  .dw-alarm-actions .ss-btn { flex: 1 1 auto; justify-content: center; }
-}
-/* Assistente de voz (Pacote 3). */
-@layer components {
-  .dw-assist { width: min(28rem, calc(100vw - 2rem)); padding: 1.25rem; }
-  .dw-mic { display: grid; place-items: center; width: 4.5rem; height: 4.5rem; border-radius: 999px; color: #fff; background: var(--grad); box-shadow: var(--glow); cursor: pointer; border: 0; }
-  .dw-mic[aria-pressed="true"] { background: var(--danger); animation: dw-pulse 1.2s ease-in-out infinite; }
-  .dw-mic:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-  .dw-assist-me { align-self: end; justify-self: end; max-width: 85%; padding: .5rem .8rem; border-radius: 14px 14px 4px 14px; background: var(--accent-soft); color: var(--ink); font-size: .9rem; }
-  .dw-assist-house { max-width: 90%; padding: .5rem .8rem; border-radius: 14px 14px 14px 4px; background: var(--field); color: var(--ink); font-size: .9rem; white-space: pre-line; }
-}
-@keyframes dw-pulse { 50% { transform: scale(1.06); } }
-/* Planta baixa (uiweb): imagem ou cômodos desenhados, pontos em % que acendem
-   na cor real, andares em abas e modo noite (planta escura, luzes brilhando). */
-@layer components {
-  .dw-fp { padding: .8rem; }
-  .dw-fp-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
   .dw-fp-tabs { display: flex; gap: .25rem; padding: .2rem; border-radius: 999px; background: var(--field); overflow-x: auto; scrollbar-width: none; }
   .dw-fp-tab { padding: .3rem .75rem; border-radius: 999px; font: inherit; font-size: .78rem; font-weight: 700; color: var(--muted); background: transparent; border: 0; cursor: pointer; white-space: nowrap; }
   .dw-fp-tab[aria-selected="true"] { color: var(--ink); background: var(--surface); box-shadow: var(--shadow-card); }
@@ -198,7 +91,6 @@
   .dw-fp-alert.dw-on { background: var(--red-grad); animation: dw-ping 1.6s ease-out infinite; }
   .dw-fp-pin.dw-unavailable { color: var(--danger); border-style: dashed; }
   .dw-fp-val { padding: .05rem .4rem; border-radius: 999px; font-size: .68rem; font-weight: 700; color: var(--ink); background: color-mix(in srgb, var(--surface) 88%, transparent); box-shadow: var(--shadow-card); white-space: nowrap; }
-  /* Noite: planta apagada, luz acesa vira um halo grande na cor dela. */
   .dw-fp[data-night] .dw-fp-stage { background-color: #0d0c1d; }
   .dw-fp[data-night] .dw-fp-img { filter: brightness(.32) saturate(.5) contrast(1.1); }
   .dw-fp[data-night] .dw-fp-drawn .dw-fp-room { background: #17152e; border-color: #2a2750; box-shadow: none; }
@@ -209,6 +101,7 @@
       background: radial-gradient(circle, color-mix(in srgb, var(--glow) 55%, transparent) 0%, color-mix(in srgb, var(--glow) 18%, transparent) 35%, transparent 68%);
       mix-blend-mode: screen; animation: dw-breathe 4s ease-in-out infinite; }
   .dw-fp-fan svg { animation: dw-spin var(--spin, 1.2s) linear infinite; }
+  .dw-fp-stage:has(> img:not([data-loaded])) { background: linear-gradient(100deg, var(--field) 40%, color-mix(in srgb, var(--surface) 65%, var(--field)) 50%, var(--field) 60%) 0 0 / 300% 100%; animation: dw-shimmer 1.4s linear infinite; }
   /* Editor da planta. */
   .dw-fpe-canvas { margin-top: .5rem; touch-action: none; }
   .dw-fpe-mark { position: absolute; z-index: 2; cursor: grab; touch-action: none; }
@@ -221,11 +114,15 @@
   .dw-fpe-num { display: flex; align-items: center; gap: .3rem; font-size: .72rem; color: var(--muted); }
   .dw-fpe-num input { width: 4.6rem; }
 }
-@keyframes dw-spin { to { transform: rotate(360deg); } }
-@keyframes dw-breathe { 50% { opacity: .78; transform: scale(.94); } }
-@keyframes dw-ping { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, .55); } 100% { box-shadow: 0 0 0 14px rgba(244, 63, 94, 0); } }
+/* Planta pequena (celular): pinos e rótulos menores para não se atropelarem. */
+@container (max-width: 520px) {
+  .dw-fp-pin { width: 1.75rem; height: 1.75rem; border-width: 1.5px; }
+  .dw-fp-pin svg { width: .85rem; height: .85rem; }
+  .dw-fp-val { font-size: .58rem; padding: 0 .3rem; }
+  .dw-fp-room { padding: .2rem .3rem; border-radius: 7px; }
+}
 
-/* Estado vazio ilustrado (uiweb): SVG próprio nas cores do tema (with_art do Ss::EmptyStateComponent). */
+/* ---- Estado vazio ilustrado (with_art do Ss::EmptyStateComponent): o SVG próprio nas cores do tema ---- */
 @layer components {
   .ma-ea-shadow { fill: color-mix(in srgb, var(--ink) 8%, transparent); }
   .ma-ea-paper { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
@@ -236,16 +133,11 @@
   .ma-ea-pulse { transform-box: fill-box; transform-origin: center; animation: dw-breathe 2.4s ease-in-out infinite; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .dw-fp *, .dw-fp *::before, .ss-empty-art.is-custom *, .dw-anim, .dw-anim * { animation: none !important; transition: none !important; }
+  .dw-fp *, .dw-fp *::before, .ma-ea-pulse, .dw-anim, .dw-anim *, .dw-anim::after, .dw-spinning svg, .dw-vac-bot, .dw-fp-stage { animation: none !important; transition: none !important; }
 }
-/* Editor ao vivo (uiweb): os widgets reais em miniatura de tela, alça de
-   arrastar, alça de largura e a tela simulada (celular, tablet, computador). */
+
+/* ---- Editor ao vivo: os widgets reais em miniatura de tela, alça de arrastar e de largura ---------- */
 @layer components {
-  .dw-ed-screens { display: inline-flex; gap: .2rem; padding: .2rem; border-radius: 999px; background: var(--field); }
-  .dw-ed-screen { display: inline-flex; align-items: center; gap: .35rem; height: 2.1rem; padding: 0 .75rem; border-radius: 999px; border: 0; font: inherit;
-                  font-size: .8rem; font-weight: 700; color: var(--muted); background: transparent; cursor: pointer; }
-  .dw-ed-screen[aria-checked="true"] { color: var(--ink); background: var(--surface); box-shadow: var(--shadow-card); }
-  .dw-ed-screen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .dw-ed-frame { margin-inline: auto; padding: .75rem; border-radius: 18px; background: color-mix(in srgb, var(--field) 70%, transparent);
                  border: 1px dashed var(--line); transition: max-width .35s cubic-bezier(.2, .8, .2, 1); max-width: 100%; }
   .dw-ed[data-screen="mobile"] .dw-ed-frame .dw-w { grid-column: span var(--m, 12) / span var(--m, 12); }
@@ -281,43 +173,8 @@
   .dw-ed-chosen { box-shadow: 0 18px 40px -16px rgba(40, 30, 120, .45); }
   .sortable-fallback { opacity: .92 !important; transform: rotate(1.2deg); }
 }
-/* Cartões vivos (uiweb): luz na cor real, ventilador girando, cortina e
-   portão pela posição, robô limpando, capa e equalizador. Só CSS; com
-   prefers-reduced-motion fica o estado parado (regra no fim do arquivo). */
-@layer components {
-  .dw-glow { --glow: #fbbf24; --lvl: 1; position: relative; }
-  .dw-on .dw-ico.dw-glow { color: #3b2300; background: radial-gradient(circle at 35% 30%, #fff 0%, var(--glow) 55%);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--glow) calc(var(--lvl) * 30%), transparent), 0 8px 26px -4px color-mix(in srgb, var(--glow) calc(var(--lvl) * 90%), transparent); }
-  .dw-on .dw-ico.dw-glow::after { content: ""; position: absolute; inset: -40%; z-index: -1; border-radius: 999px; pointer-events: none; opacity: var(--lvl);
-      background: radial-gradient(circle, color-mix(in srgb, var(--glow) 40%, transparent), transparent 70%); animation: dw-breathe 5s ease-in-out infinite; }
-  .dw-card:has(.dw-glow).dw-on { border-color: color-mix(in srgb, #f59e0b 40%, var(--line)); }
-  .dw-spinning svg { animation: dw-spin var(--spin, 1.2s) linear infinite; }
-  /* Arte do ponto dentro do ícone do Ss::DeviceTileComponent (a cor acesa vem do tone:). */
-  .dw-ico-art { display: contents; }
-  .dw-cover-blind { transform-box: fill-box; transform-origin: top; transform: scaleY(var(--c, .5)); opacity: .55; animation: dw-blind .9s cubic-bezier(.2, .8, .2, 1) both; }
-  .dw-gate-bars { transition: transform .8s cubic-bezier(.2, .8, .2, 1); }
-  .dw-gate-open { transform: translateX(9px); opacity: .55; }
-  .dw-gate-opening { animation: dw-gate 1.6s ease-in-out infinite alternate; }
-  .dw-vac-run { position: relative; height: 4.2rem; margin-top: .8rem; overflow: hidden; border-radius: 14px;
-                background: repeating-linear-gradient(90deg, var(--field) 0 22px, color-mix(in srgb, var(--field) 70%, var(--surface)) 22px 44px); }
-  .dw-vac-trail { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transform-origin: left; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent);
-                  animation: dw-trail 9s linear infinite; }
-  .dw-vac-bot { position: absolute; width: 1.9rem; height: 1.9rem; border-radius: 999px; background: var(--surface); border: 3px solid var(--accent); box-shadow: 0 6px 14px -6px rgba(40, 30, 120, .6);
-                left: 4%; top: 8%; animation: dw-mow 9s linear infinite; }
-  .dw-vac-bot span { position: absolute; right: 2px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 999px; background: var(--accent); animation: dw-breathe 1s ease-in-out infinite; }
-  .dw-vac-back .dw-vac-bot { top: 30%; animation: dw-dock 4s ease-in-out forwards; }
-  .dw-vac-dock { position: absolute; left: 4px; top: 50%; width: 8px; height: 2rem; margin-top: -1rem; border-radius: 4px; background: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
-  .dw-fp-stage:has(> img:not([data-loaded])) { background: linear-gradient(100deg, var(--field) 40%, color-mix(in srgb, var(--surface) 65%, var(--field)) 50%, var(--field) 60%) 0 0 / 300% 100%; animation: dw-shimmer 1.4s linear infinite; }
-}
-@keyframes dw-blind { from { transform: scaleY(calc(var(--c, .5) + .25)); } }
-@keyframes dw-gate { from { transform: translateX(0); } to { transform: translateX(9px); } }
-@keyframes dw-mow { 0% { left: 4%; top: 8%; } 40% { left: 90%; top: 8%; } 50% { left: 90%; top: 52%; } 90% { left: 4%; top: 52%; } 100% { left: 4%; top: 8%; } }
-@keyframes dw-dock { from { left: 90%; } to { left: 2.5%; } }
-@keyframes dw-trail { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@media (prefers-reduced-motion: reduce) {
-  .dw-anim, .dw-anim *, .dw-anim::after, .dw-spinning svg, .dw-vac-bot, .dw-fp-stage { animation: none !important; transition: none !important; }
-}
-/* Quiosque (uiweb): tela cheia sem menu, cursor some parado, protetor de tela. */
+
+/* ---- Quiosque: tela cheia sem menu, cursor some parado, protetor de tela ------------------------ */
 .ma-kiosk main { max-width: none; }
 .ma-kiosk.ma-kiosk-idle, .ma-kiosk.ma-kiosk-idle * { cursor: none !important; }
 @layer components {
@@ -343,34 +200,12 @@
 }
 @keyframes ma-drift { to { transform: translate(6%, -4%) rotate(8deg); } }
 @media (prefers-reduced-motion: reduce) { .ma-saver::before, .ma-saver-slide { animation: none !important; transition: none !important; } }
-/* Temas (uiweb, registro Dashboards::Themes): cores no <body>, papel de
-   parede fixo com desfoque e véu na cor da tela, cartões de vidro. */
+
+/* ---- Temas do painel no <body> (registro Dashboards::Themes): papel de parede fixo com desfoque e véu na
+   cor da tela; o vidro só troca os tokens da superfície do card da gem (--ss-card-*). ---------------- */
 body.dw-has-wall::before { content: ""; position: fixed; inset: calc(var(--wall-blur, 0px) * -2); z-index: -1; pointer-events: none;
     background: var(--wall-img, none) center / cover no-repeat, var(--wall, none); filter: blur(var(--wall-blur, 0px)); }
 body.dw-has-wall::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: color-mix(in srgb, var(--page) 45%, transparent); }
 body.dw-themed:not([style*="--wall-img"])::after { display: none; }
-.dw-glass .dw-card, .dw-glass .ss-card { background: color-mix(in srgb, var(--surface) 64%, transparent); backdrop-filter: blur(16px) saturate(1.2);
-    border-color: color-mix(in srgb, var(--surface) 55%, transparent); }
-.dw-glass .dw-on.dw-card { background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, transparent), color-mix(in srgb, var(--surface) 60%, transparent) 75%); }
-@layer components {
-  .dw-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: .5rem; }
-  .dw-theme-opt { position: relative; display: grid; gap: .35rem; padding: .4rem; border-radius: 14px; border: 1.5px solid var(--line); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
-  .dw-theme-opt input { position: absolute; opacity: 0; pointer-events: none; }
-  .dw-theme-opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring, rgba(90, 69, 232, .2)); }
-  .dw-theme-opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .dw-theme-swatch { position: relative; display: grid; grid-template-columns: 1fr 1fr; align-items: end; gap: 3px; height: 3.4rem; padding: 6px; border-radius: 10px; overflow: hidden;
-                     background: var(--wall, none), var(--field); }
-  .dw-theme-swatch i { height: 1.1rem; border-radius: 5px; background: var(--surface); box-shadow: var(--shadow-card); }
-  .dw-theme-swatch i:first-child { grid-column: 1 / -1; height: .9rem; background: var(--grad); }
-  .dw-theme-inherit { display: grid; place-items: center; color: var(--muted); grid-template-columns: 1fr; }
-  .dw-theme-name { font-size: .75rem; font-weight: 700; color: var(--ink-2); text-align: center; }
-}
-/* Planta pequena (celular): pontos e rótulos menores para não se atropelarem. */
-@container (max-width: 520px) {
-  .dw-fp-pin { width: 1.75rem; height: 1.75rem; border-width: 1.5px; }
-  .dw-fp-pin svg { width: .85rem; height: .85rem; }
-  .dw-fp-val { font-size: .58rem; padding: 0 .3rem; }
-  .dw-fp-room { padding: .2rem .3rem; border-radius: 7px; }
-}
-/* Falar na Alexa: a Echo à frente do texto, estreita (o texto fica com o resto da linha). */
-.dw-talk-echo { width: auto; max-width: 40%; flex: none; }
+.dw-glass { --ss-card-bg: color-mix(in srgb, var(--surface) 64%, transparent); --ss-card-filter: blur(16px) saturate(1.2);
+            --ss-card-border: color-mix(in srgb, var(--surface) 55%, transparent); }

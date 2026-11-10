@@ -1,65 +1,29 @@
-/* Domínio (paridade com o HA): energia (ef-, widgets energy_*), mapa (mp-, Leaflet) e o
-   relatório do assistente "Migre do HA" (mg-report). Filtros do Diário, Histórico, passos,
-   números e avisos do assistente vêm da gem (FilterBar, OptionCard, Wizard, KpiStrip, Callout,
-   JobProgress). Só tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
-@layer components {
-  /* ---- Energia (widgets energy_flow e energy_compare; o ranking é o Ss::RankListComponent) --- */
-  .ef-card { display: flex; flex-direction: column; }
-  .ef-foot { display: flex; align-items: center; gap: .5rem; margin: .6rem 0 0; font-size: .78rem; color: var(--muted); }
-  .ef-foot .dw-meter { flex: 1; margin: 0; }
-  @keyframes ef-grow { from { transform: scaleX(0); } }
-  .ef-cmp { display: grid; gap: .9rem; margin-top: .7rem; }
-  .ef-cmp-row p { margin: 0; }
-  .ef-cmp-bars { display: grid; gap: .2rem; margin: .35rem 0 .3rem; }
-  .ef-cmp-bars span { display: block; height: .5rem; border-radius: 999px; min-width: 2px; transform-origin: left; animation: ef-grow .7s cubic-bezier(.2, .8, .2, 1) both; }
-  .ef-cmp-now { background: var(--amber-grad); }
-  .ef-cmp-prev { background: color-mix(in srgb, var(--muted) 30%, transparent); }
-  .ef-delta { display: inline-flex; align-items: center; gap: .2rem; padding: .05rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 700; }
-  .ef-up { background: var(--danger-soft); color: var(--danger); }
-  .ef-down { background: var(--success-soft); color: var(--success); }
-  @media (prefers-reduced-motion: reduce) {
-    .ef-flow { animation: none; stroke-dasharray: none; }
-    .ef-cmp-bars span { animation: none; }
-  }
+/* domínio: mapa da casa (paridade com o HA) — allowlist (bin/conferir-css, CSS_DOMINIO): a tela do Leaflet
+   (mp-map, mp-compact, mp-canvas, mp-fallback por cima quando o Leaflet falha), os pinos de pessoa no mapa
+   (mp-pin, mp-avatar, mp-home, mp-approx) e as cores de cada pessoa (--s0..--s5, as mesmas no pino, no
+   trajeto e na lista). Listas, cards e a coluna lateral são da gem. */
+:root { --s0: #6d5cf6; --s1: #f59e0b; --s2: #10b981; --s3: #3b82f6; --s4: #ec4899; --s5: #14b8a6; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --s0: #8f80ff; --s1: #fbbf24; --s2: #34d399; --s3: #60a5fa; --s4: #f472b6; --s5: #2dd4bf; }
 }
-
+[data-theme="dark"] { --s0: #8f80ff; --s1: #fbbf24; --s2: #34d399; --s3: #60a5fa; --s4: #f472b6; --s5: #2dd4bf; }
 @layer components {
-  /* ---- Mapa ---------------------------------------------------------------- */
-  .mp-layout { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) 20rem; align-items: start; }
-  .mp-main { overflow: hidden; padding: 0; }
-  .mp-side { display: grid; gap: 1rem; }
   .mp-map { position: relative; height: var(--mp-h, 320px); border-radius: inherit; overflow: hidden; background: var(--field); }
   .mp-compact { margin-top: .6rem; border-radius: 14px; height: var(--mp-h, 320px); }
   .mp-canvas { position: absolute; inset: 0; z-index: 0; }
   .mp-canvas .leaflet-container { font: inherit; background: var(--field); }
-  /* Sem o Leaflet: o Ss::EmptyStateComponent (erro, compacto) por cima do mapa. */
   .mp-fallback { position: absolute; inset: 0; z-index: 1; align-content: center; }
   .mp-fallback[hidden] { display: none; }
-  .mp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; }
-  .mp-person { display: flex; align-items: center; gap: .7rem; width: 100%; padding: .5rem .55rem; border: 0; border-radius: .85rem; background: transparent; cursor: pointer; font: inherit; color: inherit; }
-  .mp-person:hover:not(:disabled) { background: var(--field); }
-  .mp-person:disabled { cursor: default; opacity: .7; }
   .mp-avatar { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; flex: none; border-radius: 999px; font: 700 .8rem/1 var(--font-sans);
                color: #fff; background: var(--mp-c, var(--accent)); border: 3px solid var(--surface); box-shadow: 0 0 0 2px var(--mp-c, var(--accent)), 0 8px 18px -8px rgba(0, 0, 0, .5); }
   .mp-avatar.mp-home { box-shadow: 0 0 0 2px var(--success), 0 8px 18px -8px rgba(0, 0, 0, .5); }
   .mp-avatar.mp-approx { opacity: .85; border-style: dashed; }
   .mp-pin { background: none; border: 0; }
   .mp-pin .mp-avatar { width: 40px; height: 40px; }
-  @media (max-width: 1023px) {
-    .mp-layout { grid-template-columns: 1fr; }
-    .mp-main .mp-map { height: min(var(--mp-h, 560px), 58vh); }
-  }
+  @media (max-width: 1023px) { .mp-map:not(.mp-compact) { height: min(var(--mp-h, 560px), 58vh); } }
 }
 /* Tiles do OSM no escuro: inverte e devolve o matiz (as linhas e pinos ficam fora do filtro). */
 [data-theme="dark"] .mp-canvas .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.9) saturate(.6); }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .mp-canvas .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.9) saturate(.6); }
-}
-
-@layer components {
-  .mg-report { list-style: none; margin: .9rem 0 0; padding: 0; display: grid; gap: .35rem; max-height: 28rem; overflow: auto; }
-  .mg-report li { display: flex; align-items: flex-start; gap: .6rem; padding: .55rem .65rem; border-radius: .8rem; background: var(--field); }
-  .mg-report p { margin: 0; }
-  .mg-ok > svg { color: var(--success); }
-  .mg-warn > svg { color: var(--warn); }
 }

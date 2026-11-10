@@ -1,7 +1,8 @@
-/* Domínio do produto: a primeira configuração (ob- página, cartão do passo, painel do passo,
-   quadro de áreas, galeria de temas e as ilustrações oba-) e a moldura do produto (rodapé do menu
-   ma-side-*, .ma-page-head). Passos, opções, QR, radar, avisos e carregando vêm da gem. Só tokens
-   do tema. */
+/* domínio: a primeira configuração — allowlist (bin/conferir-css, CSS_DOMINIO): a página do assistente com
+   as manchas (ob-page, ob-blobs, ob-top, ob-main, ob-wizard), o cartão do passo com a ilustração (ob-card,
+   ob-art, ob-content, ob-nav, ob-panel, ob-locate), a descoberta (ob-radar-wrap, ob-ticker), o quadro de
+   áreas de arrastar (ob-board, ob-col*, ob-device*, ob-grip) e as ilustrações animadas (oba-*). Passos,
+   opções, amostras de tema, QR, radar, avisos e carregando vêm da gem. Só tokens do tema. */
 
 @layer components {
   /* ---- Página do assistente: fundo com manchas que se mexem devagar ---- */
@@ -53,22 +54,6 @@
   .ob-grip { color: var(--muted); }
   .ob-device-select { flex-basis: 100%; min-height: 1.9rem; border-radius: 8px; border: 1px solid var(--line); background: var(--field); color: var(--ink-2); font-size: .75rem; padding: 0 .4rem; }
 
-  /* ---- Painel: galeria de temas ---- */
-  .ob-themes { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
-  .ob-theme { display: flex; flex-direction: column; gap: .5rem; padding: .55rem; border-radius: 16px; cursor: pointer; background: var(--surface);
-              box-shadow: inset 0 0 0 1px var(--line); transition: transform .2s, box-shadow .2s; }
-  .ob-theme:hover { transform: translateY(-2px); }
-  .ob-theme:has(input:checked) { box-shadow: inset 0 0 0 2px var(--t1), 0 12px 26px -14px var(--t1); }
-  .ob-theme:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .ob-theme-mock { display: grid; gap: .3rem; padding: .4rem; border-radius: 12px; background: var(--field); }
-  .ob-theme-hero { height: 1.6rem; border-radius: 8px; background: linear-gradient(135deg, var(--t1), var(--t2)); }
-  .ob-theme-row { display: flex; gap: .3rem; }
-  .ob-theme-row i { flex: 1; height: 1.1rem; border-radius: 6px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
-  .ob-theme-row i:first-child { background: color-mix(in srgb, var(--t1) 22%, var(--surface)); }
-  .ob-theme-name { display: flex; align-items: center; justify-content: space-between; font-size: .82rem; font-weight: 700; color: var(--ink); padding: 0 .2rem; }
-  .ob-theme-check { display: grid; place-items: center; width: 1.3rem; height: 1.3rem; border-radius: 999px; color: #fff; background: var(--t1); transform: scale(0); transition: transform .2s; }
-  .ob-theme:has(input:checked) .ob-theme-check { transform: scale(1); }
-
   /* ---- Ilustrações ---- */
   .oba { width: 100%; max-width: 20rem; height: auto; overflow: visible; }
   .oba-s1 { stop-color: var(--accent); }
@@ -113,25 +98,3 @@
   .ob-ticker span:first-child { opacity: 1; }
   .oba-chart { stroke-dashoffset: 0; }
 }
-
-/* ---- Moldura do produto (antes em ponte.css) ------------------------------------------------- */
-/* Rodapé do menu (slot side_footer do Ss::AppShellComponent): a pessoa, o tema, os valores e
-   sair. Recolhido, sobra a inicial. Na camada components: o .ss-shell-label da gem esconde o
-   resto (recolhido no .ss-shell ou no <html>). */
-@layer components {
-  .ma-side-user { display: flex; align-items: center; gap: .75rem; padding: .35rem .35rem .5rem; }
-  @media (min-width: 1024px) {
-    :is(.ss-shell[data-collapsed], html[data-ss-shell-collapsed] .ss-shell) .ma-side-user { justify-content: center; padding-inline: 0; }
-  }
-  .ma-side-avatar { display: grid; place-items: center; width: 2rem; height: 2rem; flex: none; border-radius: 999px; font-size: .875rem; font-weight: 700; color: #fff;
-                    background: linear-gradient(135deg, rgba(123, 92, 255, .55), rgba(59, 130, 246, .45)); box-shadow: 0 0 0 2px rgba(255, 255, 255, .1); }
-  .ma-side-role { flex: none; padding: .1rem .5rem; border-radius: 999px; font-size: .625rem; font-weight: 600; color: rgba(255, 255, 255, .6); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
-  .ma-side-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .25rem; }
-  .ma-side-actions button { display: flex; align-items: center; justify-content: center; gap: .375rem; width: 100%; padding: .5rem 0; border: 0; border-radius: .5rem;
-                            background: transparent; color: rgba(255, 255, 255, .7); font-size: .75rem; cursor: pointer; }
-  .ma-side-actions button:hover { color: #fff; background: rgba(255, 255, 255, .1); }
-}
-/* Cabeçalho (web/shared/_header = Ss::PageComponent só com o topo; o corpo vem depois): o espaço até o corpo. */
-.ma-page-head { margin-bottom: 1.5rem; }
-/* Ações em massa dos dispositivos (.ss-selection-bar da gem): a área só aparece para "Mover para área". */
-.ss-selection-bar:not(:has(option[value="area"]:checked)) .ma-bulk-area { display: none; }

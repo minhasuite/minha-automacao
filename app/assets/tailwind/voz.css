@@ -1,5 +1,7 @@
-/* Domínio: assistente de voz (ondaB1, vz-) — pipelines, depuração por etapa, frases e
-   satélites. Chaves e segredos (CodeBlock), avisos (Callout) e abas são da gem. Só tokens. */
+/* domínio: assistente de voz (ondaB1) — allowlist (bin/conferir-css, CSS_DOMINIO): o diagrama do pipeline
+   (vz-pipe*, vz-flow*), a depuração por etapa com a barra de tempo de cada fase (vz-run*, vz-seg*), as frases
+   de cada intenção (vz-intent*, vz-sentences) e o satélite com o ponto de online (vz-sat*). Campos, grupos,
+   etapas (JobProgress sem moldura), chaves (CodeBlock), avisos (Callout) e abas são da gem. Só tokens. */
 @layer components {
   /* As abas são o Ss::TabsComponent. */
 
@@ -15,11 +17,6 @@
   .vz-flow-ico { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: .7rem; color: var(--accent); background: color-mix(in srgb, var(--accent-solid) 12%, var(--surface)); }
   .vz-flow-kind { display: block; font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
   .vz-flow-val { display: block; font-size: .85rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vz-engine { display: grid; gap: .6rem; border: 1px solid var(--line); border-radius: .9rem; padding: .75rem .85rem .85rem; margin: 0; min-width: 0; }
-  .vz-engine > legend { padding: 0 .35rem; margin-bottom: 0; }
-  .vz-engine-fields { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
-  .vz-engine-fields[hidden] { display: none; }
-  .vz-engine-hint { grid-column: 1 / -1; margin: 0; }
 
   /* ---- Depuração ------------------------------------------------------ */
   .vz-run { padding: 0; overflow: hidden; }
@@ -38,8 +35,6 @@
   .vz-seg-intent { background: var(--accent-solid); }
   .vz-seg-tts { background: var(--success); }
   .vz-seg-error { background: var(--danger) !important; }
-  /* Etapas: Ss::JobProgressComponent sem o cartão próprio (já está no cartão da execução). */
-  .vz-run-job { margin: .6rem 1rem 0; padding: 0; border: 0; background: none; box-shadow: none; }
   .vz-run-who { margin: .4rem 1rem .9rem; font-size: .85rem; color: var(--ink); overflow-wrap: anywhere; }
   .vz-run-who b { font-weight: 600; color: var(--ink-2); }
   .vz-intent { padding: 0; }

@@ -3,11 +3,9 @@
    gem componentes_ui: o tailwindcss:build gera o builds/tailwind/componentes_ui.css.
    Componente genérico novo nasce lá, não aqui (skill lista-clara). */
 @import "../builds/tailwind/componentes_ui";
-/* Telas do produto (prefixos dw-, lb-, hx-, ef-, mp-, mg-, ob-, vz-, ma-, ap-, oa-). */
+/* Telas do produto: só domínio (allowlist no topo de cada arquivo e no bin/conferir-css). */
 @import "./dashboards.css";
+@import "./paineis.css";
 @import "./paridade.css";
 @import "./produto.css";
-@import "./organizacao.css";
 @import "./voz.css";
-@import "./paineis.css";
-@import "./midia.css";

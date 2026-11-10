@@ -647,7 +647,7 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.13.0`):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.14.0`):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);
@@ -674,18 +674,21 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 - Fuso: gráfico, faixas e diário recebem `time_zone:` com o fuso IANA do local
   (sem `Time.use_zone` na view).
 - CSS: o `application.css` importa o build da gem e depois os CSS de tela, **só de
-  domínio** (cada arquivo diz no topo o que guarda): `dw-` painéis/widgets/planta/editor
-  e quiosque (`dashboards.css`, `paineis.css`), `hx-`/`ef-`/`mp-`/`mg-` histórico,
-  energia, mapa e relatório do "Migre do HA" (`paridade.css`), `ob-`/`oba-` arte da
-  primeira configuração, `ma-side-*` (rodapé do menu) e `.ma-page-head` (`produto.css`),
-  `.ss-label-chip` e Expor/tarefas/agenda (`organizacao.css`), `vz-` voz (`voz.css`),
-  `ma-` mídia (`midia.css`). Peça genérica (caixa de marcar solta = `ss-inputs` e base
-  — `<summary>` sem marcador, menos movimento — = `ss-base` no `<body>`, `.ss-chip.is-solid`, `.ss-rows`, `.ss-btn-group`, `.ss-steps`, `.ss-icon-tile`,
-  `.ss-icon-btn`, `Ss::CalloutComponent`, `Ss::CodeBlockComponent`, `Ss::SubnavComponent`, e nos painéis (v0.13)
-  `Ss::SectionComponent`/`SectionHeaderComponent`, `MasonryComponent`, `AsideLayoutComponent`,
-  `MosaicTileComponent` (cartão de área), `PhotoCardComponent`, `.ss-chip[aria-pressed]` e `ComponentesUi.brand_css` (temas),
-  `ss_skip_link`…) vem da gem; não recrie aqui. Menus `<details>` (`.ss-menu`,
-  `.dw-pop`): Esc/clique fora no `application.js`.
+  domínio** — a allowlist fica no topo de cada arquivo (comentário "domínio:") e no
+  `bin/conferir-css` (`CSS_DOMINIO`; o `spec/conferir_css_spec.rb` roda ele): grade/pilha do
+  painel, arte viva dos pontos e o robô, planta (`dw-fp*`/`dw-fpe*`), editor (`dw-ed*`, `dw-wf`,
+  `dw-act`), gestos, temas no `<body>` e quiosque (`dashboards.css`, `paineis.css`), tela do
+  Leaflet e pinos (`mp-`, `paridade.css`), primeira configuração e ilustrações (`ob-`/`oba-`,
+  `produto.css`), diagrama da voz (`vz-`, `voz.css`) e a arte do vazio (`ma-ea-*`). **Nada de
+  peça genérica aqui** (v0.14 fechou o resto): card `ss-card ss-card-pad` + `Ss::CardHeaderComponent`,
+  frase no lugar do conteúdo `Ss::NoteComponent`, linhas `.ss-item`, ícone `.ss-icon-tile` (`.is-heat`,
+  foto dentro), botão no herói `.ss-btn.is-on-grad`, tarefa `.ss-checklist [role=checkbox]` + `.ss-checklist-x`,
+  galeria de temas `label.ss-swatch` (`dw_swatch_style`), barras `.ss-bars`, `.ss-progress`, `.ss-delta`,
+  `.ss-label-chip`, player/etapas dentro de card com `css: "is-flush"`, vidro do tema pelos tokens
+  `--ss-card-bg/-border/-filter`; regra em cima de `.ss-*` é proibida (o `conferir-css` barra). Layout
+  sem identidade visual vai em utilitário do Tailwind. Caixa de marcar solta = `ss-inputs` e base
+  (`<summary>` sem marcador, menos movimento) = `ss-base` no `<body>`. Menus `<details>` (`.ss-menu`,
+  `.ma-kiosk-pop`): Esc/clique fora no `application.js`.
 - Stimulus: comportamento genérico é da gem (`ss-copy`, `ss-filter`, `ss-poll`,
   `ss-reload`, `ss-autosubmit`, `ss-check-all`, `ss-sortable`, `ss-scroll-current` nas faixas de chips, `ss-theme` e
   `ss-privacy` no `<body>`). Os do produto (`controllers/`) são só de domínio:

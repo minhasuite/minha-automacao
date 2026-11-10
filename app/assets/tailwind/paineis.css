@@ -1,110 +1,26 @@
-/* Domínio: widgets do painel (ondaB2) — recursos do tile (dw-feat*; os chips são .ss-chip da gem), gestos, cards
-   (termostato, agenda, lista, iframe, relógio, planta, pilha), o painel inteiro (o mosaico e a coluna lateral são da
-   gem) e a prévia dos temas (ap-*). Só tokens da Lista Clara; claro e escuro pelas mesmas variáveis. */
+/* domínio: painéis (ondaB2) — allowlist (bin/conferir-css, CSS_DOMINIO): gestos do tile (dw-tappable, dw-holding,
+   dw-act no formulário de gestos), tipos de visão (dw-panel, dw-stack*, dw-side = seção na coluna lateral) e o papel de parede da prévia do tema
+   (ap-live, ap-wall-*, ap-glass). Os cards, tiles, chips e amostras de tema da prévia são peças da gem. */
 @layer components {
-  /* ---- Recursos do tile ------------------------------------------------ */
-  .dw-feats { display: grid; gap: .7rem; flex-basis: 100%; width: 100%; margin-top: .85rem; padding-top: .8rem;
-              border-top: 1px dashed color-mix(in srgb, var(--line) 85%, transparent); }
-  .dw-feat { display: grid; gap: .45rem; min-width: 0; }
-  .dw-feat form { margin: 0; flex-basis: auto; }
-  .dw-feat-row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
-  .dw-feat-label { display: inline-flex; align-items: center; gap: .4rem; font-size: .78rem; font-weight: 700; color: var(--ink-2); min-width: 0; }
-  .dw-feat-label svg { color: var(--muted); flex: none; }
-  .dw-feat-value { font-size: .82rem; font-weight: 800; color: var(--ink); white-space: nowrap; }
-  .dw-amber .ss-chip[aria-pressed="true"] { background-image: var(--amber-grad); box-shadow: 0 8px 18px -10px #f59e0b; }
-
-  /* ---- Gestos ---------------------------------------------------------- */
-  .dw-tappable { cursor: pointer; }
-  .dw-tappable > :is(.dw-card, .ss-card, .ss-device), .dw-tappable.dw-card { transition: transform .15s ease, box-shadow .25s ease; }
-  .dw-tappable:hover > :is(.dw-card, .ss-card, .ss-device) { box-shadow: var(--shadow-hover); }
-  .dw-holding > :is(.dw-card, .ss-card, .ss-device), .dw-holding.dw-card { transform: scale(.97); box-shadow: 0 0 0 3px var(--ring); }
+  /* ---- Gestos: o toque encolhe o bloco inteiro (o wrapper do widget, não o card da gem) --------------- */
+  .dw-tappable { cursor: pointer; border-radius: var(--r-card); transition: transform .15s ease, box-shadow .25s ease; }
+  .dw-holding { transform: scale(.97); box-shadow: 0 0 0 3px var(--ring); }
+  @media (prefers-reduced-motion: reduce) { .dw-holding { transform: none; } }
   .dw-act [data-act] { display: none; }
-  .dw-wf-more > summary { cursor: pointer; list-style: none; }
-  .dw-wf-more > summary::before { content: "▸ "; color: var(--muted); }
-  .dw-wf-more[open] > summary::before { content: "▾ "; }
-  @media (prefers-reduced-motion: reduce) { .dw-holding > :is(.dw-card, .ss-card), .dw-holding.dw-card { transform: none; } }
-}
 
-@layer components {
-  /* ---- Mostrador: termostato, umidificador e luz ----------------------- */
-  /* O anel, o alvo e o −/+ são do Ss::ThermostatComponent; aqui só o cabeçalho e o estado sem alvo. */
-  .dw-dial { display: flex; flex-direction: column; align-items: stretch; }
-  .dw-dial form { margin: 0; }
-  .dw-dial .ss-thermo { margin-inline: auto; }
-  .dw-dial-state { display: grid; place-items: center; min-height: 8rem; font-size: 1.6rem; font-weight: 800; color: var(--ink); }
-  .dw-dial-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 2.25rem; }
-
-  /* ---- Agenda ---------------------------------------------------------- */
-  /* Lista dos próximos dias (Ss::AgendaListComponent) rola dentro do card. */
-  .dw-cal-list { max-height: 26rem; overflow-y: auto; }
-
-  /* ---- Lista de tarefas ------------------------------------------------ */
-  .dw-todo form { margin: 0; }
-  .dw-todo-add { display: flex; gap: .4rem; margin-top: .7rem; }
-  .dw-todo-add .ss-input { flex: 1; min-width: 0; }
-  .dw-todo-list { display: grid; gap: .15rem; margin-top: .55rem; max-height: 20rem; overflow-y: auto; }
-  /* Item da .ss-checklist da gem: o texto inteiro é o botão (o círculo do ::before marca). */
-  .dw-todo-list li { position: relative; border-radius: .6rem; }
-  .dw-todo-list li:hover { background: var(--field); }
-  .dw-todo-check { flex: 1; min-width: 0; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
-  .dw-todo-check::after { content: ""; position: absolute; inset: 0; }
-  .dw-todo-del { position: relative; z-index: 1; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: .5rem; border: 0; background: transparent; color: var(--muted); cursor: pointer; opacity: 0; }
-  .dw-todo-list li:hover .dw-todo-del, .dw-todo-del:focus-visible { opacity: 1; }
-  @media (hover: none) { .dw-todo-del { opacity: .7; } }
-
-
-  /* ---- Imagem, página e relógio ---------------------------------------- */
-  .dw-frame-box { border-radius: .9rem; overflow: hidden; background: var(--field); }
-  .dw-frame-box iframe { width: 100%; height: 100%; border: 0; display: block; }
-  .dw-clock { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .15rem; min-height: 6rem; }
-  .dw-clock-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
-
-  /* ---- Planta ---------------------------------------------------------- */
-  .dw-plant-head { display: flex; align-items: center; gap: .8rem; }
-  .dw-plant-art { display: grid; place-items: center; flex: none; width: 3.4rem; height: 3.4rem; border-radius: 1.1rem; overflow: hidden; color: #fff;
-                  background: linear-gradient(135deg, #34d399, #059669); }
-  .dw-plant-art img { width: 100%; height: 100%; object-fit: cover; }
-  .dw-plant.is-problem .dw-plant-art { background: linear-gradient(135deg, #fbbf24, #f97316); }
-  .dw-plant-list { display: grid; gap: .65rem; margin-top: .9rem; }
-  .dw-plant-m { display: grid; grid-template-columns: 1fr auto; gap: .3rem .5rem; align-items: center; }
-  .dw-plant-m em { font-style: normal; font-size: .7rem; padding: .05rem .45rem; border-radius: 999px; background: var(--amber-soft); color: var(--amber); margin-left: .25rem; }
-}
-
-@layer components {
   /* ---- Tipos de visão e pilhas (B8) ------------------------------------ */
   .dw-panel .dw-w { min-height: calc(100dvh - 15rem); }
-  .dw-panel .dw-w > *, .dw-panel .dw-w > * > :is(.dw-card, .ss-card) { height: 100%; }
-  .dw-back { width: fit-content; }
+  .dw-panel .dw-w > *, .dw-panel .dw-w > * > * { height: 100%; }
   .dw-stack { display: grid; gap: .75rem; min-width: 0; }
   .dw-stack .dw-w { grid-column: auto; }
   .dw-stack-horizontal { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
   .dw-stack-grid { grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); }
   .dw-stack-title { grid-column: 1 / -1; margin-bottom: 0; }
   .dw-stack-horizontal .dw-stack-title { grid-row: 1; }
-}
 
-@layer components {
-  /* ---- Aparência: galeria de temas, editor com prévia (B11) ------------- */
-  .ap-gallery { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); }
-  .ap-theme { padding: .6rem; border-radius: 1.1rem; border: 1px solid var(--line); background: var(--surface); transition: box-shadow .2s ease, border-color .2s ease; }
-  .ap-theme:hover { box-shadow: var(--shadow-hover); }
-  .ap-theme.is-mine { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
-  .ap-preview { position: relative; height: 7.5rem; border-radius: .85rem; overflow: hidden; background: var(--bg, var(--field)); display: grid;
-                grid-template-columns: 1fr 1fr; grid-template-rows: 2.6rem 1fr; gap: .4rem; padding: .45rem; }
-  .ap-wall { position: absolute; inset: 0; }
-  .ap-hero { position: relative; grid-column: 1 / -1; border-radius: .6rem; background: var(--grad); }
-  .ap-card { position: relative; display: grid; gap: .3rem; align-content: center; padding: .35rem .45rem; border-radius: .6rem; background: var(--surface);
-             box-shadow: 0 1px 2px rgba(0, 0, 0, .06); }
-  .ap-glass .ap-card { background: color-mix(in srgb, var(--surface) 62%, transparent); backdrop-filter: blur(8px); }
-  .ap-dot { width: .9rem; height: .9rem; border-radius: .35rem; background: var(--field); }
-  .ap-on .ap-dot { background: var(--grad); }
-  .ap-line { height: .35rem; width: 70%; border-radius: 999px; background: var(--field); }
-  .ap-swatch { width: 2.2rem; height: 2.2rem; flex: none; border-radius: .8rem; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08); }
-  .ap-editor { display: grid; gap: 1.25rem; padding: 1rem; border-radius: 1.2rem; background: var(--field); }
-  @media (min-width: 1024px) { .ap-editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; } }
-  .ap-color { width: 100%; height: 2.75rem; padding: .2rem; border-radius: .8rem; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
-  .ap-live { position: relative; overflow: hidden; display: grid; gap: .75rem; padding: .9rem; border-radius: 1.1rem; background: var(--bg, var(--surface));
-             font-family: var(--font-sans); box-shadow: var(--shadow-card); isolation: isolate; }
+  /* ---- Prévia do tema (Aparência): o papel de parede atrás das peças da gem; vidro pelos tokens ------ */
+  .ap-live { position: relative; overflow: hidden; display: grid; gap: .75rem; padding: .9rem; border-radius: 1.1rem; background: var(--bg, var(--field));
+             font-family: var(--font-sans); isolation: isolate; }
   .ap-live::before { content: ""; position: absolute; inset: 0; z-index: -1; }
   .ap-wall-glow::before { background: radial-gradient(60% 50% at 10% 0%, color-mix(in srgb, var(--accent) 32%, transparent), transparent),
                                        radial-gradient(55% 55% at 95% 95%, color-mix(in srgb, var(--accent2, var(--accent)) 28%, transparent), transparent); }
@@ -112,35 +28,8 @@
                                        radial-gradient(45% 45% at 80% 30%, color-mix(in srgb, var(--accent2, var(--accent)) 28%, transparent), transparent),
                                        radial-gradient(50% 50% at 50% 100%, color-mix(in srgb, var(--accent) 22%, transparent), transparent); }
   .ap-wall-solid::before { background: linear-gradient(color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent2, var(--accent)) 12%, transparent)); }
-  .ap-live-hero { display: grid; gap: .15rem; padding: 1rem 1.1rem; border-radius: .95rem; color: #fff; background: var(--grad); box-shadow: 0 16px 32px -20px var(--accent); }
-  .ap-live-hero strong { font-size: 1.35rem; font-weight: 800; }
-  .ap-live-kicker { font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
-  .ap-live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
-  .ap-live-card { display: flex; align-items: center; gap: .65rem; padding: .7rem .8rem; border-radius: .95rem; background: var(--surface);
-                  box-shadow: var(--shadow-card); color: var(--ink); }
-  .ap-glass .ap-live-card { background: color-mix(in srgb, var(--surface) 60%, transparent); backdrop-filter: blur(10px); }
-  .ap-live-card b { display: block; font-size: .85rem; }
-  .ap-live-card small { display: block; font-size: .72rem; color: var(--muted); }
-  .ap-live-card.is-on small { color: var(--accent); font-weight: 700; }
-  .ap-live-ico { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; flex: none; border-radius: .8rem; background: var(--field); color: var(--muted); }
-  .ap-live-card.is-on .ap-live-ico { background: var(--grad); color: #fff; }
-  .ap-live-wide { grid-column: 1 / -1; justify-content: space-between; }
-  .ap-live-chips { display: flex; gap: .35rem; }
-  .ap-live-chips span { padding: .3rem .7rem; border-radius: 999px; font-size: .75rem; font-weight: 700; background: var(--field); color: var(--ink-2); }
-  .ap-live-chips .is-on { background: var(--grad); color: #fff; }
+  .ap-glass { --ss-card-bg: color-mix(in srgb, var(--surface) 60%, transparent); --ss-card-filter: blur(10px); }
 }
 
-@layer components {
-  /* ---- Energia (B12): CO2 e previsão solar no fluxo --------------------- */
-  .ef-extras { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
-  .ef-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .7rem; border-radius: 999px; font-size: .75rem; font-weight: 700; background: var(--field); color: var(--ink-2); }
-  .ef-co2 svg { color: #059669; }
-  .ef-fc svg { color: #f59e0b; }
-}
-
-@layer components {
-  .dw-chips-wrap { flex-wrap: wrap; justify-content: center; overflow: visible; }
-}
-
-/* Fora das camadas: vence a largura por tela (.dw-w) de dashboards.css. */
-.ss-aside-layout-side .dw-grid .dw-w, .dw-stack .dw-w { grid-column: 1 / -1; }
+/* Fora das camadas: vence a largura por tela (.dw-w) de dashboards.css (pilha e coluna lateral). */
+.dw-stack .dw-w, .dw-side .dw-grid .dw-w { grid-column: 1 / -1; }
