@@ -40,6 +40,9 @@
       <%= yield %>
     <% end %>
   <% end %>
+  <%# "Falar com a casa" em todas as telas: botão flutuante da gem fora do <main> (o AppScreen lê só o main;
+      o app tem o dele), uma vez por página. No quiosque, acima da barra do canto (.ma-kiosk-bar). %>
+  <% if (site = assist_site) %><%= render "web/assist/fab", site: site, lift: ("4rem" if kiosk) %><% end %>
   <%= render "web/shared/flash" %>
   <%= render "web/shared/palette" if current_user %>
   <%# Confirmação da suíte no lugar do confirm() do navegador: com global, todo data-turbo-confirm

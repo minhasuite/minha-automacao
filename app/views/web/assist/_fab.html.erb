@@ -1,7 +1,9 @@
-<%# locals: (site:) -%>
-<%# Assistente de voz (Pacote 3): microfone → STT → intenção local ou "Perguntar à casa" → texto e fala. %>
-<div data-controller="assist" data-assist-url-value="<%= assist_path %>" data-assist-site-value="<%= site.id %>" data-assist-texts-value="<%= t("assist.js").to_json %>" class="contents">
-  <button type="button" class="ss-btn ss-btn-sm is-on-grad" data-action="assist#open" title="<%= t("assist.title") %>" aria-label="<%= t("assist.title") %>"><%= icon("microphone", "size-4") %><span class="hidden sm:inline"><%= t("assist.talk") %></span></button>
+<%# locals: (site:, lift: nil) -%>
+<%# Assistente de voz (Pacote 3): microfone → STT → intenção local ou "Perguntar à casa" → texto e fala.
+    Botão flutuante da gem (Ss::FabComponent) em todas as telas, uma vez no layout (id estável: o morph
+    do Turbo casa o mesmo nó). O local é o da tela ou o do Início (assist_site). %>
+<div id="assist" data-controller="assist" data-assist-url-value="<%= assist_path %>" data-assist-site-value="<%= site.id %>" data-assist-texts-value="<%= t("assist.js").to_json %>" class="contents">
+  <%= render Ss::FabComponent.new(icon: icon("microphone", ""), label: t("assist.title"), lift: lift, id: "assist-fab", data: { action: "assist#open" }) %>
   <dialog class="ss-dialog" data-assist-target="dialog" aria-labelledby="assist-title">
     <div class="flex items-center justify-between gap-2">
       <h2 id="assist-title" class="text-lg font-bold text-ink"><%= t("assist.title") %></h2>

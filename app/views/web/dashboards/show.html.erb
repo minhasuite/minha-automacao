@@ -15,31 +15,25 @@
   <% end %>
 <% end %>
 
-<section class="ss-hero ss-rise px-6 py-5" aria-label="<%= view['title'] %>">
-  <div class="flex flex-wrap items-start justify-between gap-3">
-    <div class="min-w-0">
-      <% if (back = Dashboards::ViewTypes.back(@resolved["views"], view)) %>
-        <%= link_to back["href"] || dw_view_path(@dashboard, back, home: @home), class: "ss-btn ss-btn-sm is-on-grad mb-2 w-fit", "aria-label": t("dashboards.vt.back_to", name: back["title"]) do %><%= icon("arrow-left", "size-4") %><%= back["title"] %><% end %>
-      <% end %>
-      <p class="ss-kicker"><%= [ @site.name, l(Date.current, format: :long).upcase_first ].join(" · ") %></p>
-      <h1 class="mt-1 truncate text-2xl text-white sm:text-3xl"><%= home_view && @home ? "#{greeting}, #{current_user.name.split.first}" : view["title"] %></h1>
-    </div>
-    <div class="flex items-center gap-2">
-      <% if live && can?(:command, risk: "normal") %><%= render "web/assist/button", site: @site %><% end %>
-      <% if (@dashboards || []).size > 1 || @sites.to_a.size > 1 %>
-        <%= link_to site_dashboards_path(@site), class: "ss-btn ss-btn-sm is-on-grad", title: t("dashboards.others"), "aria-label": t("dashboards.others") do %><%= icon("view-boards", "size-4") %><span class="hidden sm:inline"><%= t("dashboards.title") %></span><% end %>
-      <% end %>
-      <% if @resolved["can_edit"] && live && !kiosk %>
-        <%= link_to edit_dashboard_path(@dashboard, view: view["id"]), class: "ss-btn ss-btn-sm is-on-grad", title: t("dashboards.edit_dashboard"), "aria-label": t("dashboards.edit_dashboard") do %><%= icon("pencil", "size-4") %><span class="hidden sm:inline"><%= t("dashboards.edit") %></span><% end %>
-      <% end %>
-    </div>
-  </div>
-  <% if view["badges"].present? %>
-    <div class="mt-4 flex flex-wrap gap-2" aria-label="<%= t("dashboards.summary") %>">
-      <% view["badges"].each do |b| %><%= render "web/dashboards/widget", w: b, points: points, dashboard: @dashboard, badge: true, live: live %><% end %>
-    </div>
+<%# Topo discreto (Ss::PageComponent compacto da gem): local · data em cima, o nome da visão (ou a saudação
+    no Início) e só o editar, em ícone. O "Falar" é o botão flutuante do layout (web/assist/fab) e os
+    outros painéis ficam no menu lateral. %>
+<% back = Dashboards::ViewTypes.back(@resolved["views"], view) %>
+<%= render Ss::PageComponent.new(title: home_view && @home ? "#{greeting}, #{current_user.name.split.first}" : view["title"],
+                                 eyebrow: [ @site.name, l(Date.current, format: :long) ].join(" · "), compact: true, css: "ss-rise",
+                                 back: (back["href"] || dw_view_path(@dashboard, back, home: @home) if back),
+                                 back_label: (t("dashboards.vt.back_to", name: back["title"]) if back)) do |p| %>
+  <% if @resolved["can_edit"] && live && !kiosk %>
+    <% p.with_actions do %>
+      <%= link_to edit_dashboard_path(@dashboard, view: view["id"]), class: "ss-icon-btn", title: t("dashboards.edit_dashboard"), "aria-label": t("dashboards.edit_dashboard") do %><%= icon("pencil", "") %><% end %>
+    <% end %>
   <% end %>
-</section>
+<% end %>
+<% if view["badges"].present? %>
+  <div class="mt-3 flex flex-wrap gap-2" aria-label="<%= t("dashboards.summary") %>">
+    <% view["badges"].each do |b| %><%= render "web/dashboards/widget", w: b, points: points, dashboard: @dashboard, badge: true, live: live %><% end %>
+  </div>
+<% end %>
 
 <% tabs = Dashboards::ViewTypes.tabs(@resolved["views"], view) %>
 <% if tabs.size > 1 %>

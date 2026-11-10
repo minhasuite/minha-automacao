@@ -126,7 +126,8 @@ RSpec.describe "Web: locais, áreas, dispositivos e pontos" do
     get "/locais/novo"
     expect(response).to redirect_to("/locais")
     get "/dispositivos/#{point.device_id}"
-    expect(response.body).not_to include("Ligar", "Novo ponto")
+    # Só a tela (o main): o "Falar com a casa" do layout traz o exemplo "Ligar a luz da sala".
+    expect(Nokogiri::HTML(response.body).at_css("main").to_html).not_to include("Ligar", "Novo ponto")
     post "/pontos/#{point.id}/comando", params: { command: "on" }
     expect(flash[:alert]).to include("não permite")
     expect(point.reload.value).to be_nil
