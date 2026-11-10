@@ -324,6 +324,26 @@ para" no topo.
 de tempo real) e editor ("Adicionar dentro", mover, editar sem perder os de
 dentro) entendem o aninhamento.
 
+### Visões de cômodo arrumadas (`Dashboards::RoomLayout`)
+
+`bin/rails 'dashboards:comodos[<id do painel>]'` mostra o antes → depois de
+cada visão com `area` (`PUBLICAR=1` publica uma versão nova, que volta pelo
+histórico). Não comanda nada; rodar de novo não muda o que já está arrumado.
+A regra é tabela, não lista de pontos (a primeira que vale):
+
+| Vai para | Quando |
+|---|---|
+| selo do topo (`badges` da visão, `stat` `last` com o nome e o ícone do tile) | `tile`/`stat` de ponto só de leitura de estado: capacidade `contact`/`motion`/`tamper`/`problem` ou classe de porta, janela, movimento, presença, vazamento, fumaça, bateria… (`BADGE_*`); ponto que já tem selo na visão não se repete |
+| coluna 1 (ações) | tipo `thermostat`, `light`, `button`, `vacuum`… (`TYPE_COLUMN`) ou ponto gravável fora de mídia |
+| coluna 2 (cenas e automações) | `scene_bar` (largura toda fora do celular, uma embaixo da outra), ponto de automação (`AutomationPoints`) ou `script` |
+| coluna 3 (mídia e medidas) | `camera`, `chart`, `gauge`, `weather`…, ponto `speaker`/`media`/`stream` e o resto só de leitura (temperatura, potência) |
+
+O título segue o primeiro widget dele que fica numa coluna (sem widget, sai);
+coluna vazia não entra e a largura se divide (4/4/4, 6/6, coluna única 6).
+O chip de cena nunca passa da largura do widget: nome comprido fica com
+reticências (antes, com a quebra de linha da gem, ele vazava sobre o card
+vizinho).
+
 ### Tile de automação
 
 Ponto de automação (`AutomationPoints`) aceita também o comando `run` (roda
