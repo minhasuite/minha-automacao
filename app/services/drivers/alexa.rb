@@ -30,7 +30,7 @@ module Drivers
       raise Error, "Echo sem integração da Alexa." unless integration&.driver == "alexa"
 
       renew = (-> { ::Alexa::Auth.refresh!(integration) } if ::Alexa::Auth.refreshable?(integration))
-      ::Alexa::Client.new(cookies: ::Alexa::Auth.cookies(integration), host: integration.settings["host"], renew: renew)
+      ::Alexa::Client.new(cookies: ::Alexa::Auth.cookies(integration), host: integration.settings["host"], renew: renew, throttle: integration.id)
     end
 
     def self.target(device)
@@ -50,7 +50,22 @@ module Drivers
       point.report!(command == "on") if point.capability == "onoff" # "não perturbe": a Amazon não manda o eco
       integration&.ok!
     rescue ::Alexa::Client::Error => e
-      integration&.error!(e.message)
+      integration&.error!(e.message) unless Transient.retryable?(e) # recusa passageira não é conta com erro
+      raise
+    end
+
+    # Anúncio numa chamada só para várias Echo da mesma conta (lote do
+    # ExecuteCommandJob; docs/confiabilidade.md). Outros comandos: um por Echo.
+    def execute_group(points, command, value)
+      return points.each { |p| execute(p, command, value) } unless command == "announce"
+
+      text = Points::Command.new(points.first, command, value).tap(&:new_value).value
+      integration = points.first.device.integration
+      client = @client || self.class.client_for(integration)
+      client.announce(points.map { |p| self.class.target(p.device) }, text)
+      integration&.ok!
+    rescue ::Alexa::Client::Error => e
+      integration&.error!(e.message) unless Transient.retryable?(e)
       raise
     end
   end

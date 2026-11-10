@@ -23,7 +23,7 @@ module Automations
         title = "Falar: #{text.truncate(60)}"
         return [ title, "simulated", "Não falado (simulação) em #{where}." ] if e.dry_run?
 
-        node["channels"].each { |ch| Notifier.channel_for(ch).speak(ch, text, chime: node["chime"] != false) }
+        Notifier.speak!(node["channels"], text, chime: node["chime"] != false) # Echo da mesma conta: um anúncio só
         [ title, "ok", where ]
       rescue Points::Command::Error => ex
         raise Engine::Failure, "Falar: #{ex.message}"

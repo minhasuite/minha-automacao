@@ -9,6 +9,10 @@ module Alexa
   # rotinas da conta.
   class Client
     class Error < StandardError; end
+    # Recusa sem efeito (429/5xx): repetível (Transient), com o Retry-After.
+    class Busy < Error
+      include Transient::Busy
+    end
 
     HOST = "alexa.amazon.com.br"
     USER_AGENT = "AmazonWebView/Amazon Alexa/2.2.443692.0/iOS/16.6/iPhone"
@@ -17,10 +21,12 @@ module Alexa
 
     # cookies: {"nome" => "valor"}. `renew`: bloco que devolve cookies novos
     # (Alexa::Auth.refresh!); com ele, uma recusa (401/403) renova e repete uma vez.
-    def initialize(cookies:, host: HOST, renew: nil)
+    # `throttle`: chave da conta no Alexa::Throttle (pedidos espaçados por conta).
+    def initialize(cookies:, host: HOST, renew: nil, throttle: nil)
       @cookies = cookies.to_h
       @host = host.presence || HOST
       @renew = renew
+      @throttle = throttle
       raise Integrations.auth(Error.new("Sem cookies da sessão da Alexa.")) if @cookies.empty?
     end
 
@@ -180,12 +186,14 @@ module Alexa
       req["User-Agent"] = USER_AGENT
       req["Accept"] ||= "application/json"
       req["Referer"] = "https://#{@host}/spa/index.html" if host == @host # no site da loja, Referer da Alexa = 403
+      Throttle.wait(@throttle)
       res = Net::HTTP.start(host, 443, use_ssl: true, open_timeout: 5, read_timeout: 15) { |h| h.request(req) }
       if %w[401 403].include?(res.code)
         return renew_and_retry(req, host, json) if @renew && !@renewed
 
         raise Integrations.auth(Error.new("Sessão da Alexa expirada ou recusada (#{res.code}). Entre de novo pela conta Amazon (Reconfigurar)."))
       end
+      busy!(res) if Transient::STATUSES.include?(res.code.to_i)
       raise Error, "A Alexa respondeu #{res.code}." unless res.is_a?(Net::HTTPSuccess)
       return res.body.to_s unless json
 
@@ -194,6 +202,12 @@ module Alexa
       raise Error, "Resposta ilegível da Alexa (sessão expirada?)."
     rescue SystemCallError, SocketError, Timeout::Error, IOError, OpenSSL::SSL::SSLError => e
       raise Error, "Sem conexão com a Alexa (#{e.class.name.demodulize})."
+    end
+
+    def busy!(res)
+      after = Transient.parse_retry_after(res["Retry-After"])
+      Throttle.hold(@throttle, after || Throttle::GAP * 2)
+      raise Busy.new("A Alexa respondeu #{res.code}.", status: res.code.to_i, retry_after: after)
     end
 
     def renew_and_retry(req, host, json)

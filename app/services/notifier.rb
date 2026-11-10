@@ -76,14 +76,37 @@ module Notifier
       key = opts[:dedup_key] && users.size > 1 ? "#{opts[:dedup_key]}:#{user&.id}" : opts[:dedup_key]
       notify!(**opts, user: user, dedup_key: key, push: false, image: image)
     end
-    if created.any?
-      channels.each do |ch|
-        channel_for(ch)&.deliver(ch.to_s, created)
-      rescue StandardError => e
-        Rails.error.report(e, handled: true) # um canal com erro não impede os outros
+    deliver_channels(channels, created) if created.any?
+    created.first
+  end
+
+  # Canal que entrega vários alvos de uma vez (`deliver_all`, ex.: um anúncio
+  # só para as Echo da mesma conta) recebe todos os seus; os outros, um a um.
+  def deliver_channels(channels, created)
+    channels.map(&:to_s).group_by { |ch| channel_for(ch) }.each do |plugin, list|
+      next unless plugin
+
+      if plugin.respond_to?(:deliver_all)
+        safely { plugin.deliver_all(list, created) }
+      else
+        list.each { |ch| safely { plugin.deliver(ch, created) } }
       end
     end
-    created.first
+  end
+
+  # Ação "Falar" nos canais de fala, agrupando como acima (`speak_all`).
+  def speak!(channels, text, chime: true)
+    channels.map(&:to_s).group_by { |ch| channel_for(ch) }.each do |plugin, list|
+      next unless plugin
+
+      plugin.respond_to?(:speak_all) ? plugin.speak_all(list, text, chime: chime) : list.each { |ch| plugin.speak(ch, text, chime: chime) }
+    end
+  end
+
+  def safely
+    yield
+  rescue StandardError => e
+    Rails.error.report(e, handled: true) # um canal com erro não impede os outros
   end
 
   # `image`: blob do Active Storage (quadro de câmera), anexado a cada notificação.
