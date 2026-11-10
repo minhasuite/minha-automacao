@@ -9,7 +9,7 @@
 # clique (`repair(tenant, item_key)` → mensagem). Problema ignorado fica em
 # `tenants.settings["health_ignored"]`: não conta no status nem avisa.
 module Health
-  CHECKS = %w[Integrations Devices Queues Backup Disk Runtime Shadow Cutover].freeze
+  CHECKS = %w[Integrations Devices Reliability Queues Backup Disk Runtime Shadow Cutover].freeze
   STATUSES = %w[ok warn error].freeze
   LABELS = { "ok" => "Ok", "warn" => "Atenção", "error" => "Com erro" }.freeze
   TONES = { "ok" => "success", "warn" => "warn", "error" => "danger" }.freeze
@@ -80,14 +80,18 @@ module Health
     end
   end
 
-  # Aviso aos administradores (canal do app) para cada item com erro: um por problema por dia.
-  def alert!(tenant, now: Time.current)
-    run(tenant).select { |r| r.check.alerts? }.flat_map do |r|
+  # Aviso aos administradores (canal do app e push) para cada item com erro: um por problema por dia.
+  # `only`: só essas verificações. `push_now`: entrega o push aqui mesmo, sem o
+  # SendPushJob (Reliability::Watchdog: a fila pode estar parada).
+  def alert!(tenant, now: Time.current, only: nil, push_now: false)
+    run(tenant, only: only).select { |r| r.check.alerts? }.flat_map do |r|
       r.items.select { |i| i.status == "error" && !i.ignored }.filter_map do |i|
         ActsAsTenant.with_tenant(tenant) do
-          Notifier.notify!(kind: "sistema", title: "#{r.check.label}: #{i.title}", body: i.detail,
-                           data: { "url" => "/configuracoes/saude", "tag" => "saude:#{r.check.key}:#{i.key}" },
-                           dedup_key: "saude:#{tenant.id}:#{r.check.key}:#{i.key}:#{now.to_date}")
+          n = Notifier.notify!(kind: "sistema", title: "#{r.check.label}: #{i.title}", body: i.detail, push: !push_now,
+                               data: { "url" => "/configuracoes/saude", "tag" => "saude:#{r.check.key}:#{i.key}" },
+                               dedup_key: "saude:#{tenant.id}:#{r.check.key}:#{i.key}:#{now.to_date}")
+          Push.deliver(n) if n && push_now && FeatureFlag.on?("push")
+          n
         end
       end
     end

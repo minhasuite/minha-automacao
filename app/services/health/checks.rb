@@ -73,7 +73,8 @@ module Health
                   dead: "Sin señal hace más de 5 min", delay: "Retraso", oldest: "Tarea más antigua esperando: %{s} s · programadas atrasadas: %{late}",
                   failed_24: "Fallas en 24 h", failures: "%{n} tarea(s) fallaron (%{kept} guardadas)" }
       DELAY_WARN = 2.minutes
-      DELAY_ERROR = 10.minutes
+      # Tarefa pronta esperando mais que isso = trabalhador parado (o Reliability::Watchdog avisa de fora do worker).
+      DELAY_ERROR = 5.minutes
       HEARTBEAT = 5.minutes
 
       def self.items(_tenant)
@@ -199,6 +200,83 @@ module Health
       end
 
       def self.divergences(report) = DIVERGENT.sum { |k| report.summary[k].to_i }
+    end
+
+    # Confiabilidade (docs/confiabilidade.md): aparelhos sem sinal há mais de
+    # `dead_device_hours` (a automação já não comanda; só informa), ponto com
+    # comandos falhando em seguida, automação falhando/interrompida em
+    # seguida e pico de comandos com falha. Os itens com erro viram aviso
+    # diário (um por problema) pelo HealthCheckJob.
+    class Reliability < Check
+      describe key: "reliability", label: "Confiabilidade", icon: "shield-check"
+      texts "pt-BR" => { dead: "%{site}: aparelhos sem sinal há mais de %{h} h", none_dead: "Nenhum", skipped: "automações não os comandam (pessoas ainda podem)",
+                         point: "%{name}: %{n} comandos seguidos falharam", automation: "%{name}: %{n} execuções seguidas sem concluir",
+                         last_error: "último erro: %{error}", streaks: "Falhas seguidas", streaks_ok: "Nenhum ponto ou automação falhando em seguida",
+                         spike: "Comandos com falha na última hora", spike_detail: "%{n} falharam (limite %{max})", see: "Ver" },
+            en: { label: "Reliability", dead: "%{site}: devices without signal for over %{h} h", none_dead: "None", skipped: "automations skip them (people can still try)",
+                  point: "%{name}: %{n} commands failed in a row", automation: "%{name}: %{n} runs in a row didn't finish",
+                  last_error: "last error: %{error}", streaks: "Repeated failures", streaks_ok: "No point or automation failing repeatedly",
+                  spike: "Failed commands in the last hour", spike_detail: "%{n} failed (limit %{max})", see: "See" },
+            es: { label: "Confiabilidad", dead: "%{site}: dispositivos sin señal hace más de %{h} h", none_dead: "Ninguno", skipped: "las automatizaciones no los comandan (las personas aún pueden)",
+                  point: "%{name}: %{n} comandos seguidos fallaron", automation: "%{name}: %{n} ejecuciones seguidas sin concluir",
+                  last_error: "último error: %{error}", streaks: "Fallas seguidas", streaks_ok: "Ningún punto o automatización fallando seguido",
+                  spike: "Comandos con falla en la última hora", spike_detail: "%{n} fallaron (límite %{max})", see: "Ver" }
+      # Comandos com falha numa hora a partir do qual é pico.
+      SPIKE = 10
+      RUN_FAILURES = %w[failed interrupted].freeze
+
+      def self.items(tenant)
+        dead(tenant) + streaks(tenant) + [ spike ]
+      end
+
+      def self.dead(tenant)
+        hours = ::Reliability.setting(:dead_device_hours, tenant)
+        Site.order(:name).map do |site|
+          list = ::Reliability.dead_devices(site)
+          detail = list.empty? ? text(:none_dead) : "#{list.first(8).map { |d, s| "#{d.name} (#{::Reliability.duration_text(s)})" }.join(', ')} · #{text(:skipped)}"
+          item(key: "#{site.id}:dead", status: list.empty? ? "ok" : "warn", title: text(:dead, site: site.name, h: hours), detail: detail,
+               fix: ({ label: text(:see), url: url.site_devices_path(site, situacao: "offline") } if list.any?))
+        end
+      end
+
+      def self.streaks(tenant)
+        n = ::Reliability.streak(tenant)
+        list = failing_points(n).map do |point, error|
+          item(key: "point:#{point.id}", status: "error", title: text(:point, name: point.name, n: n), detail: text(:last_error, error: error.to_s.truncate(150)),
+               fix: { label: text(:see), url: url.point_path(point) })
+        end
+        list += failing_automations(n).map do |automation, error|
+          item(key: "automation:#{automation.id}", status: "error", title: text(:automation, name: automation.name, n: n),
+               detail: text(:last_error, error: error.to_s.truncate(150)), fix: { label: text(:see), url: url.automation_automation_runs_path(automation) })
+        end
+        list.presence || [ item(key: "streaks", status: "ok", title: text(:streaks), detail: text(:streaks_ok)) ]
+      end
+
+      # Pontos com falha nas últimas 24 h cujos `n` últimos comandos que chegaram ao fim falharam.
+      def self.failing_points(n)
+        ids = ::Command.where(status: "failed", created_at: 24.hours.ago..).distinct.pluck(:point_id)
+        Point.where(id: ids).order(:name).filter_map do |point|
+          last = ::Command.where(point_id: point.id, status: %w[confirmed failed expired]).order(created_at: :desc).limit(n).pluck(:status, :error)
+          [ point, last.first[1] ] if last.size == n && last.all? { |s, _| s == "failed" }
+        end
+      end
+
+      # Automações com falha/interrupção nas últimas 24 h cujas `n` últimas execuções terminadas falharam.
+      def self.failing_automations(n)
+        ids = AutomationRun.real.where(status: RUN_FAILURES, finished_at: 24.hours.ago..).distinct.pluck(:automation_id)
+        Automation.where(id: ids).order(:name).filter_map do |a|
+          last = AutomationRun.real.where(automation_id: a.id, shadow: false).where.not(finished_at: nil).where.not(status: %w[skipped cancelled loop])
+                              .order(finished_at: :desc).limit(n).pluck(:status, :error)
+          [ a, last.first[1] ] if last.size == n && last.all? { |s, _| RUN_FAILURES.include?(s) }
+        end
+      end
+
+      def self.spike
+        n = ::Command.where(status: "failed", created_at: 1.hour.ago..).count
+        item(key: "spike", status: n >= SPIKE ? "error" : "ok", title: text(:spike), detail: text(:spike_detail, n: n, max: SPIKE))
+      end
+
+      def self.url = Rails.application.routes.url_helpers
     end
 
     # O que falta para trocar o Home Assistant (ou outro sistema) por este (docs/cutover.md). Só informa.
