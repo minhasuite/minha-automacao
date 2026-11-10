@@ -41,11 +41,48 @@ module Points
 
       value = new(point, command.to_s, value).tap(&:new_value).value # valida (e normaliza) antes de criar
       Shadow.intercept!(point, command.to_s, value, source) # F10: em sombra, aparelho não recebe nada
-      record = ::Command.create!(site: point.site, point: point, command: command.to_s, value: value, source: source,
-                                 user: user, client_uuid: client_uuid.presence, origin_point_id: origin&.id,
-                                 automation_run_id: run&.id)
+      attrs = { site: point.site, point: point, command: command.to_s, value: value, source: source, user: user,
+                client_uuid: client_uuid.presence, origin_point_id: origin&.id, automation_run_id: run&.id }
+      skipped = skip_dead(point, source, attrs)
+      return skipped if skipped
+      record = ::Command.create!(attrs)
       point.device.virtual? ? ExecuteCommandJob.perform_now(record.id) : ExecuteCommandJob.perform_later(record.id)
       record.reload
+    end
+
+    # O mesmo comando em vários pontos que o driver entrega numa chamada só
+    # (`execute_group`: anúncio em várias Echo da mesma conta, docs/confiabilidade.md).
+    # Valida todos, cria um comando por ponto (a trilha de cada Echo) num lote
+    # cujo líder executa; devolve o líder. Ponto sem sinal fica de fora (pulado).
+    def self.call_group(points, command, value = nil, source:, user: Current.user, run: nil)
+      return call(points.first, command, value, source: source, user: user, run: run) if points.size == 1
+
+      values = points.map { |p| new(p, command.to_s, value).tap(&:new_value).value }
+      points.each_with_index { |p, i| Shadow.intercept!(p, command.to_s, values[i], source) }
+      rows = points.each_with_index.filter_map do |p, i|
+        attrs = { site: p.site, point: p, command: command.to_s, value: values[i], source: source, user: user, automation_run_id: run&.id }
+        skip_dead(p, source, attrs) ? nil : attrs
+      end
+      return nil if rows.empty?
+
+      lead = ::Command.transaction do
+        first = ::Command.create!(rows.first)
+        first.update!(batch_id: first.id)
+        rows.drop(1).each { |attrs| ::Command.create!(attrs.merge(batch_id: first.id)) }
+        first
+      end
+      ExecuteCommandJob.perform_later(lead.id)
+      lead
+    end
+
+    # Automação não comanda aparelho sem sinal há mais de `dead_device_hours`
+    # (Reliability): o comando fica registrado como `skipped`, sem chamar o
+    # driver. Pessoa (web, app, voz…) sempre tenta.
+    def self.skip_dead(point, source, attrs)
+      return nil unless source.to_s == "automation"
+
+      lost = Reliability.signal_lost(point.device) or return nil
+      ::Command.create!(attrs.merge(status: "skipped", error: "Aparelho sem sinal há #{Reliability.duration_text(lost)}: comando não enviado."))
     end
 
     # Comandos que o ponto aceita: os do plugin, se for helper (F8e), ou os da capacidade.

@@ -136,6 +136,7 @@ pt-BR:
       confirmed: Confirmado
       failed: Falhou
       expired: Expirado
+      skipped: Pulado
     command_sources:
       web: web
       api: app/API

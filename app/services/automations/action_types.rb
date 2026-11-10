@@ -93,6 +93,7 @@ module Automations
 
         c = Points::Command.call(p, node["command"], arg, source: "automation", user: nil, run: e.run)
         raise Engine::Failure, "#{p.name}: #{c.error}" if c.status == "failed"
+        return [ title, "skipped", c.error ] if c.status == "skipped" # aparelho sem sinal (docs/confiabilidade.md)
 
         [ title, "ok", "Comando #{c.status_label.downcase}" ]
       end

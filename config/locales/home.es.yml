@@ -136,6 +136,7 @@ es:
       confirmed: Confirmado
       failed: Falló
       expired: Vencido
+      skipped: Omitido
     command_sources:
       web: web
       api: app/API
