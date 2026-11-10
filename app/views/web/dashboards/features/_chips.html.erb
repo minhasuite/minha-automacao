@@ -2,7 +2,7 @@
 <%# Opções do ponto (modo, velocidade): chips da gem; o atual fica marcado (aria-pressed; sem permissão, aria-current). %>
 <% can = p["can_command"] && p["quality"] == "good" %>
 <div class="grid min-w-0 gap-1.5">
-  <span class="ss-label mb-0 inline-flex min-w-0 items-center gap-1.5"><%= icon(f["icon"], "size-4") %><%= f["label"] %></span>
+  <span class="ss-label mb-0 min-w-0"><%= icon(f["icon"], "") %><%= f["label"] %></span>
   <div class="ss-chips" role="group" aria-label="<%= f["label"] %>">
     <% Array(f["options"]).each do |o| %>
       <% on = o.to_s == f["value"].to_s %>

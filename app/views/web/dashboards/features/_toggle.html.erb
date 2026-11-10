@@ -1,6 +1,6 @@
 <%# locals: (f:, p:, w:, dashboard:, live:) -%>
 <div class="ss-switch-row min-h-0 cursor-default p-0">
-  <span class="ss-label mb-0 inline-flex min-w-0 items-center gap-1.5"><%= icon(f["icon"], "size-4") %><%= f["label"] %></span>
+  <span class="ss-label mb-0 min-w-0"><%= icon(f["icon"], "") %><%= f["label"] %></span>
   <% if p["can_command"] && p["quality"] == "good" %>
     <%= render Ss::SwitchComponent.new(url: command_point_path(p["id"]), on: p["on"], label: t(p["on"] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: f["label"]),
                                        params: dw_command_params("toggle", w: w, dashboard: dashboard, live: live), confirm: dw_confirm_text(p), confirm_title: dw_confirm(p)[:turbo_confirm_title]) %>

@@ -4,7 +4,7 @@
 <% track = { "temp" => :kelvin }[f["gradient"]] || (:brightness if f["type"] == "brightness") %>
 <% value = f["value"].is_a?(Numeric) ? dw_plain(f["value"]) : dw_plain(f["min"] || 0) %>
 <% range = Ss::RangeComponent.new(name: "value", label: f["label"], value: value, min: dw_plain(f["min"] || 0), max: dw_plain(f["max"] || 100), step: dw_plain(f["step"] || 1),
-                                  format: dw_range_format(f["unit"]), track: track, submit: :release, id: id, disabled: !(p["can_command"] && p["quality"] == "good"),
+                                  format: dw_range_format(f["unit"]), track: track, submit: :release, id: id, icon: (icon(f["icon"], "").to_s if f["icon"].present?), disabled: !(p["can_command"] && p["quality"] == "good"),
                                   tone: (:heat if track == :brightness && dw_light?(p))) %>
 <div class="grid min-w-0 gap-1.5">
   <% if p["can_command"] && p["quality"] == "good" %>

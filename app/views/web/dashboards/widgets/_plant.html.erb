@@ -13,7 +13,7 @@
       <% p = points[m["point_id"]] %>
       <li class="grid gap-1">
         <div class="ss-value-row p-0">
-          <span class="inline-flex min-w-0 items-center gap-1.5"><%= icon(m["icon"], "size-4") %><%= m["label"] %></span>
+          <span><%= icon(m["icon"], "") %><%= m["label"] %></span>
           <span class="inline-flex items-center gap-1.5"><%= p ? p["text"] : dw_number(m["value"], m["unit"]) %><% if m["status_text"] %><span class="ss-badge ss-badge-warn"><%= m["status_text"] %></span><% end %></span>
         </div>
         <div class="ss-progress" role="meter" aria-label="<%= m["label"] %>" aria-valuenow="<%= m['value'] %>"><span class="ss-progress-bar <%= { 'ok' => 'bg-success', 'low' => 'bg-warn', 'high' => 'bg-warn' }[m['status']] %>" style="width: <%= ((m['ratio'] || 0).to_f * 100).round(1) %>%"></span></div>

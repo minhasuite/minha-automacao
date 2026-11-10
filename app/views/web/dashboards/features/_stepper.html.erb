@@ -2,7 +2,7 @@
 <%# Campo −/+ da gem; vários toques seguidos viram um comando (form[data-dw-autosubmit]). %>
 <% can = p["can_command"] && p["quality"] == "good" %>
 <% stepper = Ss::StepperInputComponent.new(name: "value", value: (dw_plain(f["value"]) if f["value"].is_a?(Numeric)), min: f["min"], max: f["max"], step: f["step"] || 1, unit: f["unit"],
-                                           label: f["label"], disabled: !can, id: "f_#{w['id']}_#{f['type']}", 
+                                           label: f["label"], icon: (icon(f["icon"], "").to_s if f["icon"].present?), disabled: !can, id: "f_#{w['id']}_#{f['type']}", 
                                            less_label: t("dashboards.feat.less", name: f["label"]), more_label: t("dashboards.feat.more", name: f["label"])) %>
 <div class="grid min-w-0 gap-1.5">
   <% if can %>

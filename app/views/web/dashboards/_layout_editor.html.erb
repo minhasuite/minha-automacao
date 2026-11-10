@@ -29,7 +29,7 @@
       <% resolved_view["sections"].each do |s| %>
         <section class="dw-w dw-ed-sec" data-id="<%= s['id'] %>" data-kind="section" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>" aria-label="<%= t("dashboards.ed.section_label", name: s['title']) %>">
           <div class="dw-ed-bar">
-            <span class="dw-ed-grip dw-ed-grip-s" title="<%= t("dashboards.le.drag_section") %>" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
+            <span class="ss-sortable-handle dw-ed-grip dw-ed-grip-s" title="<%= t("dashboards.le.drag_section") %>" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
             <span class="ss-section flex-1 truncate"><%= s["title"].presence || t("dashboards.ed.untitled") %></span>
             <span class="dw-ed-cols num" data-cols aria-hidden="true"></span>
             <span class="dw-ed-resize" title="<%= t("dashboards.le.resize") %>" aria-hidden="true"></span>
@@ -39,8 +39,8 @@
               <div class="dw-w dw-ed-w <%= 'dw-ed-hidden' unless w['visible'] %>" data-id="<%= w['id'] %>" data-kind="widget" style="<%= dw_span_style(w['span']) %>">
                 <div class="dw-ed-live" inert><%= render Dashboards::Widgets[w["type"]]&.partial || "web/dashboards/widgets/#{w['type']}", w: w, points: points, dashboard: dashboard, live: false %></div>
                 <div class="dw-ed-chrome">
-                  <span class="dw-ed-grip" title="<%= t("dashboards.le.drag") %>" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
-                  <a href="#<%= w['id'] %>" class="dw-ed-edit" title="<%= t("dashboards.le.edit_widget") %>"><%= icon("pencil", "size-3.5") %><span class="sr-only"><%= t("dashboards.edit") %> <%= w["label"].presence || Dashboards::Schema.labels[w["type"]] %></span></a>
+                  <span class="ss-sortable-handle dw-ed-grip" title="<%= t("dashboards.le.drag") %>" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
+                  <a href="#<%= w['id'] %>" class="ss-icon-btn is-sm dw-ed-edit" title="<%= t("dashboards.le.edit_widget") %>"><%= icon("pencil", "size-3.5") %><span class="sr-only"><%= t("dashboards.edit") %> <%= w["label"].presence || Dashboards::Schema.labels[w["type"]] %></span></a>
                   <span class="dw-ed-cols num" data-cols aria-hidden="true"></span>
                 </div>
                 <span class="dw-ed-resize" title="<%= t("dashboards.le.resize") %>" aria-hidden="true"></span>

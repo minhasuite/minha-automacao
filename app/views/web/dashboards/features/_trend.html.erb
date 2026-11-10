@@ -1,6 +1,6 @@
 <%# locals: (f:, p:, w:, dashboard:, live:) -%>
 <div class="grid min-w-0 gap-1.5">
-  <div class="ss-value-row p-0"><span class="ss-label mb-0 inline-flex min-w-0 items-center gap-1.5"><%= icon(f["icon"], "size-4") %><%= f["label"] %></span>
+  <div class="ss-value-row p-0"><span class="ss-label mb-0 min-w-0"><%= icon(f["icon"], "") %><%= f["label"] %></span>
     <% if f["min"] %><span class="num"><%= dw_number(f["min"]) %>–<%= dw_number(f["max"], f["unit"]) %></span><% end %></div>
   <% values = Array(f["values"]).grep(Numeric) %>
   <% if values.size > 1 %>
