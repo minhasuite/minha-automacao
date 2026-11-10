@@ -158,10 +158,6 @@
                   background: color-mix(in srgb, var(--surface) 92%, transparent); box-shadow: var(--shadow-card); opacity: 0; transition: opacity .15s ease; }
   .dw-ed-w:hover .dw-ed-chrome, .dw-ed-w:focus-within .dw-ed-chrome, .dw-ed-chosen .dw-ed-chrome { opacity: 1; }
   @media (hover: none) { .dw-ed-chrome { opacity: 1; } }
-  .dw-ed-grip { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 999px; color: var(--muted); cursor: grab; touch-action: none; }
-  .dw-ed-grip:hover { color: var(--accent); background: var(--field); }
-  .dw-ed-edit { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 999px; color: var(--muted); }
-  .dw-ed-edit:hover { color: var(--accent); background: var(--field); }
   .dw-ed-cols { padding: 0 .45rem; font-size: .7rem; font-weight: 700; color: var(--muted); }
   .dw-ed-resize { position: absolute; top: 50%; right: -5px; z-index: 4; width: 10px; height: 2.6rem; transform: translateY(-50%); border-radius: 999px; cursor: ew-resize;
                   touch-action: none; background: var(--accent); opacity: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); transition: opacity .15s ease; }

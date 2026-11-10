@@ -1,8 +1,8 @@
 /* domínio: a primeira configuração — allowlist (bin/conferir-css, CSS_DOMINIO): a página do assistente com
    as manchas (ob-page, ob-blobs, ob-top, ob-main, ob-wizard), o cartão do passo com a ilustração (ob-card,
-   ob-art, ob-content, ob-nav, ob-panel, ob-locate), a descoberta (ob-radar-wrap, ob-ticker), o quadro de
-   áreas de arrastar (ob-board, ob-col*, ob-device*, ob-grip) e as ilustrações animadas (oba-*). Passos,
-   opções, amostras de tema, QR, radar, avisos e carregando vêm da gem. Só tokens do tema. */
+   ob-art, ob-content, ob-nav), a descoberta (ob-radar-wrap, ob-ticker) e as ilustrações animadas (oba-*).
+   Passos, opções, amostras de tema, painéis (.ss-card.is-soft), o quadro de arrastar das áreas (.ss-kanban),
+   QR, radar, avisos e carregando vêm da gem. Só tokens do tema. */
 
 @layer components {
   /* ---- Página do assistente: fundo com manchas que se mexem devagar ---- */
@@ -35,9 +35,7 @@
   @keyframes ob-out { to { opacity: 0; transform: translateX(-24px); } }
 
   .ob-nav { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
-  .ob-panel { border-radius: 16px; padding: 1.1rem; background: var(--field); }
 
-  .ob-locate { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; padding: 1rem; border-radius: 14px; background: var(--grad-soft); box-shadow: inset 0 0 0 1px var(--line); }
 
   /* ---- Descoberta: o radar é o Ss::ScanRadarComponent; aqui o lugar e a fita de nomes ---- */
   .ob-radar-wrap { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.5rem 0 .5rem; }
@@ -45,14 +43,6 @@
   .ob-ticker { position: relative; height: 1.3rem; width: 16rem; }
   .ob-ticker span { position: absolute; inset: 0; opacity: 0; animation: ob-tick 5.4s ease-in-out infinite; }
   @keyframes ob-tick { 0%, 100% { opacity: 0; transform: translateY(6px); } 4%, 14% { opacity: 1; transform: none; } 18% { opacity: 0; transform: translateY(-6px); } }
-  .ob-board { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); }
-  .ob-col { min-height: 7rem; padding: .7rem; border-radius: 14px; background: var(--field); box-shadow: inset 0 0 0 1px transparent; transition: box-shadow .15s, background .15s; display: flex; flex-direction: column; gap: .45rem; }
-  .ob-col.is-over { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
-  .ob-col-title { display: flex; align-items: center; gap: .4rem; font-size: .78rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-  .ob-device { display: flex; align-items: center; gap: .4rem; padding: .45rem .5rem; border-radius: 10px; background: var(--surface); box-shadow: var(--shadow-card); cursor: grab; flex-wrap: wrap; }
-  .ob-device.is-dragging { opacity: .45; transform: rotate(-2deg); }
-  .ob-grip { color: var(--muted); }
-  .ob-device-select { flex-basis: 100%; min-height: 1.9rem; border-radius: 8px; border: 1px solid var(--line); background: var(--field); color: var(--ink-2); font-size: .75rem; padding: 0 .4rem; }
 
   /* ---- Ilustrações ---- */
   .oba { width: 100%; max-width: 20rem; height: auto; overflow: visible; }

@@ -1,15 +1,9 @@
-/* domínio: assistente de voz (ondaB1) — allowlist (bin/conferir-css, CSS_DOMINIO): o diagrama do pipeline
-   (vz-pipe*, vz-flow*), a depuração por etapa com a barra de tempo de cada fase (vz-run*, vz-seg*), as frases
-   de cada intenção (vz-intent*, vz-sentences) e o satélite com o ponto de online (vz-sat*). Campos, grupos,
-   etapas (JobProgress sem moldura), chaves (CodeBlock), avisos (Callout) e abas são da gem. Só tokens. */
+/* domínio: assistente de voz (ondaB1) — allowlist (bin/conferir-css, CSS_DOMINIO): só os diagramas, o do
+   pipeline (vz-flow*: wake → voz → intenção → fala) e a faixa de tempo de cada fase da execução (vz-run-bar,
+   vz-seg-*). Cards, linhas recolhíveis (Collapsible, .ss-summary + .ss-item), frases (ss-code-inline),
+   satélites (.ss-icon-tile), campos, etapas, chaves, avisos e abas são da gem. Só tokens. */
 @layer components {
-  /* As abas são o Ss::TabsComponent. */
-
   /* ---- Pipelines ------------------------------------------------------ */
-  .vz-pipe { position: relative; overflow: hidden; }
-  .vz-pipe::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, var(--accent-solid), color-mix(in srgb, var(--accent-solid) 30%, var(--success))); opacity: .9; }
-  .vz-pipe-new { border-style: dashed; }
-  .vz-pipe-new::before { display: none; }
   .vz-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin: 1rem 0 0; padding: 0; list-style: none; counter-reset: vz; }
   @media (max-width: 40rem) { .vz-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .vz-flow-step { position: relative; display: flex; align-items: center; gap: .5rem; padding: .55rem .6rem; border-radius: .9rem; background: var(--field); min-width: 0; }
@@ -19,15 +13,6 @@
   .vz-flow-val { display: block; font-size: .85rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* ---- Depuração ------------------------------------------------------ */
-  .vz-run { padding: 0; overflow: hidden; }
-  .vz-run-error { box-shadow: inset 3px 0 0 var(--danger); }
-  .vz-run-head { display: flex; align-items: center; gap: .8rem; padding: .85rem 1rem; cursor: pointer; list-style: none; }
-  .vz-run-head::-webkit-details-marker { display: none; }
-  .vz-run-head:hover { background: color-mix(in srgb, var(--field) 70%, transparent); }
-  .vz-run-src { flex: none; display: grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: .75rem; background: var(--field); color: var(--muted); }
-  .vz-run-heard { display: block; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vz-run-reply { display: block; font-size: .85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vz-run-meta { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; }
   .vz-run-bar { display: flex; gap: 2px; height: .45rem; margin: 0 1rem; border-radius: 99px; overflow: hidden; background: var(--field); }
   .vz-seg { min-width: 4px; flex-basis: 0; }
   .vz-seg-wake { background: var(--warn); }
@@ -35,18 +20,4 @@
   .vz-seg-intent { background: var(--accent-solid); }
   .vz-seg-tts { background: var(--success); }
   .vz-seg-error { background: var(--danger) !important; }
-  .vz-run-who { margin: .4rem 1rem .9rem; font-size: .85rem; color: var(--ink); overflow-wrap: anywhere; }
-  .vz-run-who b { font-weight: 600; color: var(--ink-2); }
-  .vz-intent { padding: 0; }
-  .vz-intent > summary { display: flex; align-items: flex-start; justify-content: space-between; gap: .6rem; padding: .85rem 1rem; cursor: pointer; list-style: none; }
-  .vz-intent > summary::-webkit-details-marker { display: none; }
-  .vz-intent[open] > summary svg:last-child { transform: rotate(180deg); }
-  .vz-intent-key { font-size: .8rem; font-weight: 700; color: var(--accent); }
-  .vz-sentences { display: grid; gap: .35rem; margin: 0; padding: 0 1rem 1rem; list-style: none; }
-  .vz-sentences code { display: block; padding: .4rem .55rem; border-radius: .55rem; background: var(--field); font-size: .78rem; color: var(--ink-2); overflow-wrap: anywhere; }
-
-  /* ---- Satélites e MCP ------------------------------------------------ */
-  .vz-sat { display: flex; align-items: center; gap: .8rem; }
-  .vz-sat-ico { position: relative; flex: none; display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: .9rem; background: var(--field); color: var(--accent); }
-  .vz-sat-ico[data-online="true"]::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: .7rem; height: .7rem; border-radius: 99px; background: var(--success); box-shadow: 0 0 0 3px var(--surface); }
 }
