@@ -114,7 +114,12 @@ Tapo como plugin (`TapoPlugin`: ONVIF na 2020 com a conta da câmera,
 recursos por modelo em `config/device_maps/tapo.yml`, falar pela fonte
 `tapo://` do go2rtc ao lado do RTSP, privacidade/LED/detecção/sirene pela API
 local `Tapo::Client` atrás do `FeatureFlag` `tapo_control`;
-`docs/cameras.md`).
+`docs/cameras.md`). + **Confiabilidade**: nova tentativa só quando nada saiu
+(`Transient`), anúncio único por conta da Alexa com ritmo (`Alexa::Throttle`),
+execuções sem dono fechadas (`Automations::Sweeper`, status `interrupted`),
+automação não comanda aparelho sem sinal (`Reliability`, comando `skipped`) e
+avisos de falha repetida pela Saúde e pelo vigia da fila
+(`docs/confiabilidade.md`).
 
 ## Rodar
 
@@ -211,8 +216,21 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (422 antes de criar), cria o `Command` e roda o `ExecuteCommandJob`: na hora
   no driver `virtual`, na fila nos outros. API responde **202** com o
   comando. Status `pending → sent → confirmed | failed | expired` (na fila há
-  mais de `Command::TTL` = expira, não executa). Driver novo = classe com
-  `execute(point, command, value)` em `Drivers::REGISTRY`.
+  mais de `Command::TTL` = expira, não executa) e `skipped`. Driver novo = classe com
+  `execute(point, command, value)` em `Drivers::REGISTRY` [+ `execute_group(points, …)`
+  se entrega vários pontos numa chamada].
+- **Confiabilidade** (`docs/confiabilidade.md`): repetir só com
+  `Transient.retryable?` (conexão que nem abriu ou 429/5xx marcado com
+  `Transient::Busy`; ponto crítico só a conexão); erro de rede novo de
+  cliente = embrulhe dentro do `rescue` (a `cause` fica) ou inclua
+  `Transient::NotSent`/`Busy`, nunca repita `ReadTimeout`. O comando volta a
+  `pending` (`attempts`) e o `ExecuteCommandJob` se reagenda dentro do TTL;
+  push repete só o aparelho que falhou (`deliver_some`). Alexa: vários
+  `alexa:<ponto>` da mesma conta = um `announce` (`call_group`, `batch_id` =
+  líder; canal com `deliver_all`/`speak_all`). `source: "automation"` em
+  aparelho sem sinal há `dead_device_hours` (24) = `skipped`, sem driver;
+  pessoa sempre tenta. Ajustes em `tenants.settings["reliability"]`. Recorrente
+  própria no bloco "confiabilidade" do `config/recurring.yml`.
 - **Valor novo de ponto só por `Point#report!`**: grava o ponto, a leitura
   (`history`/`deadband`/`interval`), o evento de qualidade e faz
   `broadcast_refresh_to(point)`. Comando não vira AuditEvent (a tabela
