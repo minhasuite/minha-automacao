@@ -665,7 +665,7 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.14.1`):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.17.1`):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);
@@ -675,6 +675,9 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
   Configurações, selo 0 some; `tenants:` só no Diário/Histórico/Mapa pela
   `web/shared/_site_switch`; `main_max: "80rem"` a não ser com `content_for :wide`) e
   `ss_app_shell_head` no `<head>` (menu recolhido no `<html>`, sobrevive ao morph).
+  "Falar com a casa" é o `Ss::FabComponent` do layout (`web/assist/_fab`, fora do `<main>`, local pelo
+  `assist_site`), em toda tela; o topo do painel é o `Ss::PageComponent(eyebrow:, compact: true)` com o
+  editar só em ícone (sem herói em degradê, sem atalho "Painéis").
   Cabeçalho pelo `web/shared/_header` (`Ss::PageComponent` só com o topo); vazio pelo
   `Ss::EmptyStateComponent` (com a ilustração do produto: `web/shared/_empty_art`,
   `with_art`); tabelas pelo `Ss::DataTableComponent` com ordem no servidor

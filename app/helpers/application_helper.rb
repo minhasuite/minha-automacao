@@ -54,6 +54,19 @@ module ApplicationHelper
 
   def phone_text(p) = p.to_s.sub(/\A(\d{2})(\d{4,5})(\d{4})\z/, '(\1) \2-\3').presence
 
+  # Local do "Falar com a casa" (botão flutuante do layout): o da tela, senão o do Início
+  # (o escolhido em "Abrir no Início", senão o primeiro). Nada sem login, no pedido do app
+  # (AppScreen: o app tem o botão dele) ou sem papel para comandar nesse local.
+  def assist_site
+    return @assist_site if defined?(@assist_site)
+    return @assist_site = nil if current_user.nil? || request.env.key?(AppScreen::ENV_KEY)
+
+    site = @site if @site.is_a?(Site) && @site.persisted?
+    site ||= Site.visible_to(current_user).order(:name).to_a.then { |all| all.find { |s| s.id == current_user.dashboard_prefs["site"] } || all.first }
+    role = site&.role_for(current_user)
+    @assist_site = (site if role && SiteMembership.allowed?(role, :command, risk: "normal"))
+  end
+
   def greeting = t(%w[greeting.morning greeting.afternoon greeting.evening][Time.current.hour < 12 ? 0 : Time.current.hour < 18 ? 1 : 2])
 
   # Menu do Ss::AppShellComponent (nav:): os itens da pessoa (sidebar_entries) num grupo
