@@ -2,7 +2,7 @@
 <%# Assistente de adicionar integração (Ss::WizardComponent em modo servidor): Configurar → Conectar → Encontrados.
     Cada passo é uma página; o corpo da página vem no bloco. Conectar vira link quando já passou e o plugin reconecta. -%>
 <% connect_url = connect_integration_path(integration) if integration && current > 1 && integration.plugin&.reconfigurable? && can?(:manage) %>
-<%= render Ss::WizardComponent.new(current: current, css: "ma-int-wizard") do |w| %>
+<%= render Ss::WizardComponent.new(current: current) do |w| %>
   <% w.with_step(title: t("integrations.wizard.setup")) %>
   <% w.with_step(title: t("integrations.wizard.connect"), url: connect_url) %>
   <% w.with_step(title: t("integrations.wizard.found")) %>

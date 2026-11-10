@@ -7,7 +7,7 @@
       <% @tags.each do |tg| %>
         <% use = @usage[tg.id] %>
         <li id="<%= dom_id(tg) %>">
-          <span class="ss-label-chip" style="<%= "--chip: #{tg.color}" if tg.color %>"><%= tg.name %></span>
+          <span class="ss-label-chip" style="<%= "--c: #{tg.color}" if tg.color %>"><%= tg.name %></span>
           <p class="min-w-0 flex-1 basis-40 text-sm text-muted"><%= use.any? ? use.map { |type, n| t("tags.kinds.#{type}", count: n, default: "#{n} #{type}") }.join(" · ") : t("tags.index.unused") %></p>
           <%= form_with model: tg, url: tag_path(tg), method: :patch, class: "flex flex-wrap items-center gap-2" do |f| %>
             <label class="sr-only" for="<%= dom_id(tg, :name) %>"><%= t("tags.index.name_of", name: tg.name) %></label>

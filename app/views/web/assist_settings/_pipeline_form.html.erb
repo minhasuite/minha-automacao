@@ -29,14 +29,14 @@
       <% engines = Assist::Engines.for(kind) %>
       <% next if engines.empty? %>
       <% current = pl.send(kind).to_h %>
-      <fieldset class="sm:col-span-2 vz-engine">
+      <fieldset class="ss-fieldset ss-field-group sm:col-span-2 grid gap-2.5">
         <legend class="ss-label"><%= t("assist_settings.kinds.#{kind}") %></legend>
         <%= select_tag "pipeline[#{kind}_engine]", options_for_select(engines.map { |e| [ e.label, e.key ] }, current["engine"]),
                        include_blank: (kind == :wake ? t("assist_settings.pipelines.none") : t("assist_settings.pipelines.installation_default")), id: "pe-#{kind}-#{id}",
                        class: "ss-input", data: { action: "assist-engines#pick" }, "aria-label": t("assist_settings.kinds.#{kind}") %>
         <% engines.each do |e| %>
-          <div class="vz-engine-fields" data-engine="<%= e.key %>" <%= "hidden" unless current["engine"] == e.key %>>
-            <% if e.hint %><p class="text-xs text-muted vz-engine-hint"><%= e.hint %></p><% end %>
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-2.5" data-engine="<%= e.key %>" <%= "hidden" unless current["engine"] == e.key %>>
+            <% if e.hint %><p class="col-span-full text-xs text-muted"><%= e.hint %></p><% end %>
             <% e.fields.each do |name, type, only| %>
               <% next if only && !only.include?(kind) %>
               <% fid = "pf-#{kind}-#{e.key}-#{name}-#{id}" %>

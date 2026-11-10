@@ -30,7 +30,7 @@
                { name: t("assist_settings.stages.#{s['stage']}", default: s["stage"]), duration: s["ms"].to_i, status: (s["error"] ? :failed : :done), detail: detail.presence }
              end %>
           <%= render Ss::JobProgressComponent.new(id: "assist-run-#{r.id}", title: t("assist_settings.runs.stages"), state: (r.error ? :failed : :done), error: r.error,
-                                                  stages: stages, css: "vz-run-job") %>
+                                                  stages: stages, css: "is-flush mx-4 mt-2.5") %>
           <p class="vz-run-who"><b><%= t("assist_settings.runs.who") %></b> <%= [ r.user&.name, r.pipeline&.name, t("assist_settings.sources.#{r.source}"), r.language ].compact.join(" · ") %></p>
         </details>
       </li>

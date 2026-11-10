@@ -2,16 +2,13 @@
 <%= form_with url: onboarding_step_path(step.key), scope: :onboarding, data: { turbo_submits_with: t("onboarding.saving") } do |f| %>
   <fieldset>
     <legend class="ss-label"><%= t("onboarding.dashboard.theme") %></legend>
-    <div class="ob-themes">
+    <%# Galeria de temas com a amostra da gem (.ss-swatch): o rádio some e a escolhida ganha o anel. %>
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3">
       <% themes.each do |th| %>
-        <label class="ob-theme" style="--t1: <%= th.accent %>; --t2: <%= th.accent2 %>">
-          <%= f.radio_button :theme, th.key, checked: th.key == current, class: "sr-only" %>
-          <span class="ob-theme-mock" aria-hidden="true">
-            <span class="ob-theme-hero"></span>
-            <span class="ob-theme-row"><i></i><i></i><i></i></span>
-            <span class="ob-theme-row"><i></i><i></i></span>
-          </span>
-          <span class="ob-theme-name"><%= th.label %><span class="ob-theme-check"><%= icon("check", "size-4") %></span></span>
+        <label class="ss-swatch ss-swatch-lg is-block" style="<%= dw_swatch_style(th) %>">
+          <%= f.radio_button :theme, th.key, checked: th.key == current %>
+          <span class="ss-swatch-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="ss-swatch-bar" aria-hidden="true"></span>
+          <span class="ss-swatch-name"><%= th.label %></span>
         </label>
       <% end %>
     </div>

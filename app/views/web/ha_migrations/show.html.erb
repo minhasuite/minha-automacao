@@ -112,23 +112,23 @@
     <section class="ss-card ss-card-pad" aria-labelledby="mg-bp">
       <h2 id="mg-bp"><%= t("ha_migration.blueprints") %> <span class="ss-chip-count"><%= r["blueprints"].size %></span></h2>
       <p class="text-sm text-muted mt-1"><%= t("ha_migration.blueprints_hint") %></p>
-      <ul class="mg-report">
+      <ul class="mt-3 grid max-h-[28rem] gap-0.5 overflow-auto">
         <% r["blueprints"].each do |b| %>
-          <li class="<%= b['lossless'] ? 'mg-ok' : 'mg-warn' %>"><%= icon(b["lossless"] ? "check-circle" : "exclamation-circle", "size-5 shrink-0") %>
+          <li class="ss-item items-start"><span class="ss-icon-tile is-sm <%= b['lossless'] ? 'is-success' : 'is-warn' %>"><%= icon(b["lossless"] ? "check-circle" : "exclamation-circle", "") %></span>
             <div class="min-w-0"><p class="font-semibold text-ink"><%= b["name"] %> <span class="text-xs text-muted font-normal"><%= b["kind"] == "script" ? t("ha_migration.kind_script") : t("ha_migration.kind_automation") %><%= " · #{t("ha_migration.enabled")}" if b["enabled"] %></span></p>
               <% if b["notes"].any? %><p class="text-xs text-muted"><%= b["notes"].join(" · ") %></p><% else %><p class="text-xs text-muted"><%= t("ha_migration.lossless") %></p><% end %></div></li>
         <% end %>
-        <% if r["blueprints"].empty? %><li class="text-sm text-muted"><%= t("ha_migration.none_chosen") %></li><% end %>
+        <% if r["blueprints"].empty? %><li><%= render Ss::NoteComponent.new(text: t("ha_migration.none_chosen")) %></li><% end %>
       </ul>
     </section>
     <section class="ss-card ss-card-pad" aria-labelledby="mg-left">
       <h2 id="mg-left"><%= t("ha_migration.left_out") %> <span class="ss-chip-count"><%= r["left_out"].size %></span></h2>
       <p class="text-sm text-muted mt-1"><%= t("ha_migration.left_out_hint") %></p>
-      <ul class="mg-report">
+      <ul class="mt-3 grid max-h-[28rem] gap-0.5 overflow-auto">
         <% r["left_out"].first(100).each do |l| %>
-          <li class="mg-warn"><%= icon("minus-circle", "size-5 shrink-0") %><div class="min-w-0"><p class="font-semibold text-ink break-words"><%= l["what"] %></p><p class="text-xs text-muted"><%= l["why"] %></p></div></li>
+          <li class="ss-item items-start"><span class="ss-icon-tile is-sm is-warn"><%= icon("minus-circle", "") %></span><div class="min-w-0"><p class="font-semibold text-ink break-words"><%= l["what"] %></p><p class="text-xs text-muted"><%= l["why"] %></p></div></li>
         <% end %>
-        <% if r["left_out"].empty? %><li class="mg-ok"><%= icon("check-circle", "size-5 shrink-0") %><p class="text-sm"><%= t("ha_migration.nothing_left") %></p></li><% end %>
+        <% if r["left_out"].empty? %><li><%= render Ss::NoteComponent.new(text: t("ha_migration.nothing_left"), icon: icon("check-circle", ""), tone: :success) %></li><% end %>
       </ul>
     </section>
   </div>
@@ -156,7 +156,7 @@
       </ul>
       <% if dz["notes"].any? %>
         <details class="mt-3"><summary class="ss-summary text-sm font-semibold text-accent"><%= t("ha_migration.dash.notes", n: dz["notes"].size) %></summary>
-          <ul class="mg-report mt-2"><% dz["notes"].each do |n| %><li class="mg-warn"><%= icon("minus-circle", "size-5 shrink-0") %><p class="text-sm break-words"><%= n %></p></li><% end %></ul></details>
+          <ul class="mt-2 grid max-h-[28rem] gap-0.5 overflow-auto"><% dz["notes"].each do |n| %><li class="ss-item items-start"><span class="ss-icon-tile is-sm is-warn"><%= icon("minus-circle", "") %></span><p class="min-w-0 text-sm break-words"><%= n %></p></li><% end %></ul></details>
       <% end %>
     <% end %>
     <% unless dz["status"] == "running" %>

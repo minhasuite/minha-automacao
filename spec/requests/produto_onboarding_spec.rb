@@ -84,7 +84,7 @@ RSpec.describe "Primeira configuração" do
     expect(flash[:notice]).to eq("Tudo pronto! Sua casa está no ar.")
     expect(Onboarding.pending?(owner.reload)).to be(false)
     get "/"
-    expect(response.body).to include("dw-hero")
+    expect(response.body).to include("ss-hero")
     get "/primeira-configuracao"
     expect(response).to have_http_status(:ok) # pode rever, mas o Início não volta para cá
   end

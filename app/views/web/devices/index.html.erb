@@ -61,7 +61,7 @@
     <% end %>
     <% tb.bulk_actions do %>
       <label for="acao" class="sr-only"><%= t("devices.with_checked") %></label><%= select_tag :acao, options_for_select([ [ t("devices.with_checked_hint"), "" ] ] + Web::DevicesController::BULK.invert.to_a), class: "ss-input", required: true %>
-      <span class="ma-bulk-area contents"><label for="area_id" class="sr-only"><%= t("devices.move_area") %></label><%= select_tag :area_id, options_for_select([ [ t("devices.no_area"), "" ] ] + @areas.map { |a| [ a.name, a.id ] }), class: "ss-input" %></span>
+      <span class="contents [.ss-selection-bar:not(:has(option[value=area]:checked))_&]:hidden"><label for="area_id" class="sr-only"><%= t("devices.move_area") %></label><%= select_tag :area_id, options_for_select([ [ t("devices.no_area"), "" ] ] + @areas.map { |a| [ a.name, a.id ] }), class: "ss-input" %></span>
       <button type="submit" class="ss-btn ss-btn-primary ss-btn-sm" data-turbo-confirm="<%= t("devices.bulk_confirm") %>" data-turbo-confirm-button="<%= t("devices.apply") %>"><%= t("devices.apply") %></button>
     <% end %>
   <% end %>

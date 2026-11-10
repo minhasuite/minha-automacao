@@ -15,7 +15,7 @@ module OrganizationHelper
 
   def label_chips(record)
     safe_join(record.tags.sort_by(&:name).map do |t|
-      tag.span(t.name, class: "ss-label-chip", style: ("--chip: #{t.color}" if t.color.to_s.match?(/\A#\h{6}\z/)))
+      tag.span(t.name, class: "ss-label-chip", style: ("--c: #{t.color}" if t.color.to_s.match?(/\A#\h{6}\z/)))
     end, " ")
   end
 end

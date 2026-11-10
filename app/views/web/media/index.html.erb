@@ -15,7 +15,7 @@
       <% url = ->(cmd) { site_media_control_path(@site, p, command: cmd) if ok && cmds.include?(cmd) } %>
       <% state = p.quality != "good" ? :unavailable : { "playing" => :playing, "paused" => :paused, "buffering" => :buffering }.fetch(v["state"].to_s, :idle) %>
       <% others = cmds.include?("join") ? @players.select { |o| o.id != p.id && o.device.driver == p.device.driver && o.capability == "media" } : [] %>
-      <section class="ss-card ss-card-pad ma-player" id="player-<%= p.id %>" aria-labelledby="pl-<%= p.id %>" data-state="<%= v["state"] || "idle" %>">
+      <section class="ss-card ss-card-pad" id="player-<%= p.id %>" aria-labelledby="pl-<%= p.id %>" data-state="<%= v["state"] || "idle" %>">
         <div class="flex items-start gap-3 mb-3">
           <span class="ss-icon-tile text-accent shrink-0"><%= icon(p.capability == "stream" ? "video-camera" : (p.helper.present? ? "collection" : "music-note")) %></span>
           <div class="min-w-0 flex-1">
@@ -28,7 +28,7 @@
                                                 art_url: dw_media_image(v), state: state, source: v["app"].presence,
                                                 play_url: url.call("resume"), pause_url: url.call("pause"), previous_url: url.call("previous"), next_url: url.call("next"),
                                                 volume: ((v["volume"].to_f / 100) if cmds.include?("volume")), volume_url: url.call("volume"), volume_param: "value",
-                                                mute_url: url.call("mute"), muted: v["muted"] == true,
+                                                mute_url: url.call("mute"), muted: v["muted"] == true, css: "is-flush",
                                                 labels: { play: t("media.cmd.resume"), pause: t("media.cmd.pause"), previous: t("media.cmd.previous"), next: t("media.cmd.next"),
                                                           volume: t("media.index.volume", name: p.name), mute: t("media.cmd.mute"), unmute: t("dashboards.w.mc.unmute") }) do |player| %>
           <% if ok && others.any? %>
@@ -71,7 +71,7 @@
 <p class="ss-section mb-3"><%= t("media.index.sources") %></p>
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
   <% @sources.each do |s| %>
-    <section class="ss-card ss-card-pad ma-source relative flex items-start gap-3" aria-labelledby="src-<%= s.key %>">
+    <section class="ss-card ss-card-pad ss-card-link relative flex items-start gap-3" aria-labelledby="src-<%= s.key %>">
       <span class="ss-icon-tile text-accent shrink-0"><%= icon(s.icon) %></span>
       <div class="min-w-0 flex-1">
         <h3 id="src-<%= s.key %>"><%= s.title %></h3>

@@ -38,7 +38,7 @@ RSpec.describe "Acabamento de UI/UX" do
   it "rodada 2: ações em massa na barra flutuante, Publicar diz por quê e endereço da visão recolhido" do
     within(tenant) { create(:device, site: site, name: "Lâmpada", driver: "virtual") }
     get "/locais/#{site.id}/dispositivos"
-    expect(response.body).to include('class="ss-selection-bar"', 'data-ss-table-target="check"', "ma-bulk-area", "ss-badge-dot", "aria-sort=\"ascending\"")
+    expect(response.body).to include(%(id="area_id"), 'class="ss-selection-bar"', 'data-ss-table-target="check"', "ss-badge-dot", "aria-sort=\"ascending\"")
     get "/locais/#{site.id}/dispositivos", params: { sort: "area", dir: "desc" }
     expect(response.body).to include('aria-sort="descending"')
     get "/locais/#{site.id}/dispositivos", params: { sort: "drop table", dir: "x" }

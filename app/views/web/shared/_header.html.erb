@@ -2,7 +2,7 @@
 <%# Cabeçalho da tela: Ss::PageComponent só com o topo (o corpo segue na view, depois). O bloco são as ações. -%>
 <% content_for :title, title %>
 <% actions = capture { yield }.presence %>
-<%= render Ss::PageComponent.new(title: title, subtitle: subtitle, back: back, back_label: t("layout.back"), css: "ma-page-head") do |p| %>
+<%= render Ss::PageComponent.new(title: title, subtitle: subtitle, back: back, back_label: t("layout.back"), css: "mb-6") do |p| %>
   <% p.with_badge { badge } if badge.present? %>
   <% p.with_actions { actions } if actions %>
 <% end %>

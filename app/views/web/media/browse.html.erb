@@ -8,15 +8,15 @@
 
 <% if @item %>
   <% preview = @preview %>
-  <section class="ss-card ss-card-pad ma-now mb-6" aria-labelledby="item-title">
+  <section class="ss-card ss-card-pad mb-6" aria-labelledby="item-title">
     <div class="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center">
-      <div class="ma-preview" data-kind="<%= @item.kind %>">
+      <div data-kind="<%= @item.kind %>">
         <% if preview && @item.kind == "video" %>
-          <video src="<%= preview %>" controls playsinline preload="metadata" aria-label="<%= @item.title %>"></video>
+          <video class="block max-h-96 w-full rounded-2xl bg-ink object-contain" src="<%= preview %>" controls playsinline preload="metadata" aria-label="<%= @item.title %>"></video>
         <% elsif preview && @item.kind == "image" %>
-          <img src="<%= preview %>" alt="<%= @item.title %>">
+          <img class="block max-h-96 w-full rounded-2xl object-contain" src="<%= preview %>" alt="<%= @item.title %>">
         <% else %>
-          <div class="ma-art"><% if @item.thumb %><img src="<%= @item.thumb %>" alt="" loading="lazy"><% else %><%= icon(@item.kind == "radio" ? "globe" : "music-note", "size-12") %><% end %></div>
+          <span class="ss-icon-tile is-accent mx-auto aspect-square size-auto w-full max-w-56 rounded-3xl"><% if @item.thumb %><img src="<%= @item.thumb %>" alt="" loading="lazy"><% else %><%= icon(@item.kind == "radio" ? "globe" : "music-note", "size-12") %><% end %></span>
           <% if preview %><audio src="<%= preview %>" controls preload="none" class="w-full mt-3" aria-label="<%= t("media.browse.listen_here", name: @item.title) %>"></audio><% end %>
         <% end %>
       </div>
@@ -80,16 +80,17 @@
 <% if @page.items.empty? %>
   <%= render Ss::EmptyStateComponent.new(title: t("media.browse.empty"), text: (@source.uploads? ? t("media.browse.empty_local") : t("media.browse.empty_hint")), css: "ss-card") %>
 <% else %>
-  <ul class="ma-grid" aria-label="<%= @page.title %>">
+  <ul class="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))]" aria-label="<%= @page.title %>">
     <% @page.items.each do |i| %>
       <li>
         <% href = i.folder? ? site_media_browse_path(@site, @source.key, path: i.id) : site_media_browse_path(@site, @source.key, path: @path.presence, q: @query, item: i.id) %>
-        <%= link_to href, class: "ma-tile no-underline", "aria-current": (@item&.id == i.id ? "true" : nil) do %>
-          <span class="ma-tile-art" data-kind="<%= i.kind %>">
+        <%# Item da fonte num card-link da gem (sobe no hover): a capa no ícone tonal (foto ou ícone), título e linha menor. %>
+        <%= link_to href, class: "ss-card grid h-full content-start gap-1.5 p-2 no-underline aria-[current=true]:border-accent", "aria-current": (@item&.id == i.id ? "true" : nil) do %>
+          <span class="ss-icon-tile <%= i.folder? ? 'is-muted' : 'is-accent' %> aspect-square size-auto w-full">
             <% if i.thumb %><img src="<%= i.thumb %>" alt="" loading="lazy"><% else %><%= icon({ "folder" => "collection", "audio" => "music-note", "video" => "video-camera", "image" => "photograph", "radio" => "globe" }.fetch(i.kind, "document-text"), "size-7") %><% end %>
           </span>
-          <span class="ma-tile-title"><%= i.title %></span>
-          <% if i.subtitle.present? %><span class="ma-tile-sub"><%= i.subtitle %></span><% end %>
+          <span class="line-clamp-2 text-sm font-bold break-words text-ink"><%= i.title %></span>
+          <% if i.subtitle.present? %><span class="truncate text-xs text-muted"><%= i.subtitle %></span><% end %>
         <% end %>
       </li>
     <% end %>

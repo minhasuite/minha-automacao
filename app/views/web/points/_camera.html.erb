@@ -4,7 +4,7 @@
 <% rec = Recordings.settings(point) %>
 <% can_cmd = point.writable && can?(:command, risk: point.risk) %>
 <section class="grid gap-4 lg:grid-cols-3 mt-4" aria-labelledby="cam-title">
-  <div class="ss-card ss-card-pad lg:col-span-2 ma-cam" data-app="skip">
+  <div class="ss-card ss-card-pad lg:col-span-2" data-app="skip">
     <div class="flex flex-wrap items-center gap-2 mb-3">
       <h2 id="cam-title" class="flex-1 min-w-0"><%= t("cameras.title") %></h2>
     </div>
@@ -21,7 +21,7 @@
       <% end %>
       <% if cmds.include?("play_media") && can_cmd %>
         <% c.with_action do %>
-          <button type="button" class="ma-talk" data-camera-target="talkButton" data-action="camera#talk" aria-pressed="false" title="<%= t("cameras.talk") %>" aria-label="<%= t("cameras.talk") %>"><%= icon("microphone", "size-4") %></button>
+          <button type="button" data-camera-target="talkButton" data-action="camera#talk" aria-pressed="false" title="<%= t("cameras.talk") %>" aria-label="<%= t("cameras.talk") %>"><%= icon("microphone", "size-4") %></button>
         <% end %>
       <% end %>
     <% end %>

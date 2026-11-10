@@ -32,7 +32,7 @@ export default class extends Controller {
       source.connect(node)
       node.connect(ctx.destination)
       this.recording = { stream, ctx, node, source }
-      this.micTarget.setAttribute("aria-pressed", "true")
+      this.micTarget.dataset.ssMicStateValue = "listening"
       this.statusTarget.textContent = this.t("listening")
       this.timeout = setTimeout(() => this.stop(), 15000)
     } catch (_) {
@@ -42,7 +42,7 @@ export default class extends Controller {
 
   stop() {
     clearTimeout(this.timeout)
-    this.micTarget.setAttribute("aria-pressed", "false")
+    this.micTarget.dataset.ssMicStateValue = "idle"
     const rec = this.recording
     if (!rec) return
     this.recording = null
@@ -90,8 +90,8 @@ export default class extends Controller {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || this.t("failed"))
       this.conversation = data.conversation_id
-      this.add(data.heard, "dw-assist-me")
-      this.add(data.text, "dw-assist-house")
+      this.add(data.heard, "ss-bubble is-me")
+      this.add(data.text, "ss-bubble whitespace-pre-line")
       this.statusTarget.textContent = this.t("idle")
       if (data.audio_url) { this.audioTarget.src = data.audio_url; this.audioTarget.play().catch(() => {}) }
     } catch (e) {

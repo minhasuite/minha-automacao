@@ -1,27 +1,31 @@
 <%= render "web/shared/header", title: t("maps.title"), subtitle: t("maps.subtitle", site: @site.name) %>
 <%= render "web/shared/site_switch", sites: @sites, site: @site, path: map_path %>
 <% people = @map["people"] %>
-<div class="mp-layout" <% if @map["center"] %>data-controller="map" data-map-data-value="<%= @map.to_json %>"<% end %>>
-  <section class="ss-card mp-main" aria-label="<%= t("maps.title") %>">
+<%# Mapa + coluna lateral da gem (Ss::AsideLayoutComponent); o mapa (Leaflet, mp-*) é o domínio. %>
+<%= render Ss::AsideLayoutComponent.new(label: t("maps.people"), data: (@map["center"] ? { controller: "map", map_data_value: @map.to_json } : {})) do |lay| %>
+  <% lay.with_main do %>
+  <section class="ss-card overflow-hidden" aria-label="<%= t("maps.title") %>">
     <% if @map["center"] %>
       <%= render "web/maps/canvas", map: @map, height: 560, controller: false %>
     <% else %>
       <%= render Ss::EmptyStateComponent.new(title: t("maps.no_center"), text: t("maps.no_center_hint")) %>
     <% end %>
   </section>
-  <aside class="mp-side">
+  <% end %>
+  <% lay.with_aside do %>
+    <div class="grid gap-4">
     <section class="ss-card ss-card-pad" aria-labelledby="mp-people">
       <h2 id="mp-people" class="mb-3"><%= t("maps.people") %></h2>
       <% if people.empty? %>
-        <p class="text-sm text-muted"><%= t("maps.no_people") %></p>
+        <%= render Ss::NoteComponent.new(text: t("maps.no_people"), icon: icon("users", "")) %>
       <% else %>
-        <ul class="mp-list">
+        <ul class="grid gap-1">
           <% people.each_with_index do |p, i| %>
             <% off = p["quality"] != "good" %>
             <li>
-              <button type="button" class="mp-person" data-action="map#focus" data-map-id-param="<%= p['id'] %>" <%= "disabled" unless p["lat"] %>>
+              <button type="button" class="ss-item" data-action="map#focus" data-map-id-param="<%= p['id'] %>" <%= "disabled" unless p["lat"] %>>
                 <span class="mp-avatar <%= 'mp-home' if p['home'] && !off %>" style="--mp-c: var(--s<%= i % 6 %>)"><%= p["initials"] %></span>
-                <span class="min-w-0 flex-1 text-left">
+                <span class="ss-item-main">
                   <span class="block font-semibold text-ink truncate"><%= p["name"] %></span>
                   <span class="block text-xs text-muted truncate"><%= off ? t("points.no_signal") : (p["zone"].presence || t("maps.no_reading")) %><% if p["since"] && !off %> · <%= t("maps.since") %> <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %></span>
                   <span class="block text-xs text-muted"><%= p["precise"] ? "#{t('maps.phone')}#{" (± #{p['accuracy']} m)" if p['accuracy']}" : (p["lat"] ? t("maps.zone_position") : t("maps.no_position")) %><%= " · #{t('maps.track', count: p['track'].size)}" if p["track"].size > 1 %></span>
@@ -35,17 +39,18 @@
     <section class="ss-card ss-card-pad" aria-labelledby="mp-zones">
       <h2 id="mp-zones" class="mb-3"><%= t("maps.zones") %></h2>
       <% if @map["zones"].empty? %>
-        <p class="text-sm text-muted"><%= t("maps.no_zones") %></p>
+        <%= render Ss::NoteComponent.new(text: t("maps.no_zones"), icon: icon("location-marker", "")) %>
       <% else %>
-        <ul class="mp-list">
+        <ul class="grid gap-1">
           <% @map["zones"].each do |z| %>
-            <li><button type="button" class="mp-person" data-action="map#focus" data-map-id-param="<%= z['id'] %>">
+            <li><button type="button" class="ss-item" data-action="map#focus" data-map-id-param="<%= z['id'] %>">
               <span class="ss-icon-tile <%= z['home'] ? 'is-accent' : 'is-muted' %>"><%= icon(z["home"] ? "home" : "location-marker", "") %></span>
-              <span class="min-w-0 flex-1 text-left"><span class="block font-semibold text-ink truncate"><%= z["name"] %></span>
+              <span class="ss-item-main"><span class="block font-semibold text-ink truncate"><%= z["name"] %></span>
                 <span class="block text-xs text-muted num"><%= t("maps.zone_info", radius: z["radius"], count: z["count"]) %></span></span></button></li>
           <% end %>
         </ul>
       <% end %>
     </section>
-  </aside>
-</div>
+    </div>
+  <% end %>
+<% end %>
