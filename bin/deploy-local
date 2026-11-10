@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Implanta no servidor local da casa (docker-compose.local.yml), rodando no
-# WSL: usa a imagem local (o runner do CI builda neste WSL) ou puxa com o
-# login do GHCR que existir aqui, envia por
+# Implanta no servidor local da casa (docker-compose.local.yml): usa a imagem
+# local (buildada nesta máquina) ou puxa com o login do GHCR, envia por
 # `docker save | ssh docker load` (o servidor não guarda credencial do
-# GitHub), gera os segredos lá na primeira vez e sobe o compose.
+# GitHub), gera os segredos lá na primeira vez e sobe o compose. Se a versão
+# nova não ficar saudável (web /up + worker healthy) em 6 min, volta para a
+# anterior sozinho. Use uma tag por versão (o commit) para a anterior ficar lá.
 #
 #   bin/deploy-local [tag]          # tag padrão: latest
 #   DEPLOY_HOST=herlon@192.168.68.199 DEPLOY_KEY=~/.ssh/id_ed25519
@@ -55,17 +56,33 @@ set -euo pipefail
 cd "$1"
 profiles=()
 grep -q '^CF_TUNNEL_TOKEN=.' .env && profiles+=(--profile tunnel)
-# A tag implantada fica no .env: `docker compose up` à mão sobe a mesma.
-sed -i '/^IMAGE=/d' .env && echo "IMAGE=$2" >> .env
-docker compose "${profiles[@]}" up -d --remove-orphans --quiet-pull
-for _ in $(seq 1 60); do
-  if curl -fsS -o /dev/null "http://127.0.0.1:${WEB_PORT:-80}/up"; then
-    echo "no ar: http://$(hostname -I | awk '{print $1}')/"
-    docker compose "${profiles[@]}" ps --format '{{.Service}}: {{.Status}}'
-    exit 0
-  fi
-  sleep 5
-done
-docker compose logs --tail 50 web
+anterior="$(grep -oP '^IMAGE=\K.*' .env || true)"
+sobe() { # A tag implantada fica no .env: `docker compose up` à mão sobe a mesma.
+  sed -i '/^IMAGE=/d' .env && echo "IMAGE=$1" >> .env
+  docker compose "${profiles[@]}" up -d --remove-orphans --quiet-pull
+}
+# Saudável = /up respondendo e o worker com o healthcheck "healthy"
+# (bin/worker-health: batimento do Solid Queue e fila andando).
+saudavel() {
+  for _ in $(seq 1 72); do # até 6 min (o healthcheck do worker tem 3 min de partida)
+    w="$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q worker)" 2>/dev/null || echo ausente)"
+    if curl -fsS -o /dev/null "http://127.0.0.1:${WEB_PORT:-80}/up" && [ "$w" = healthy ]; then return 0; fi
+    sleep 5
+  done
+  return 1
+}
+sobe "$2"
+if saudavel; then
+  echo "no ar: http://$(hostname -I | awk '{print $1}')/"
+  docker compose "${profiles[@]}" ps --format '{{.Service}}: {{.Status}}'
+  exit 0
+fi
+echo "!! $2 não ficou saudável (web /up e worker healthy em 6 min)"
+docker compose logs --tail 40 web worker || true
+if [ -n "$anterior" ] && [ "$anterior" != "$2" ]; then
+  echo "==> voltando para $anterior"
+  sobe "$anterior"
+  saudavel && echo "voltou para $anterior (no ar)" || echo "!! a anterior também não ficou saudável: veja docker compose ps/logs"
+fi
 exit 1
 REMOTE
