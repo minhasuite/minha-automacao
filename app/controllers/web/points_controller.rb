@@ -52,6 +52,15 @@ module Web
       respond(e.message)
     end
 
+    # "Redefinir estado": sensor que perdeu o evento (técnico+, vira AuditEvent).
+    def reset
+      load_for(:manage)
+      Points::Reset.call(@point, params[:value], user: current_user)
+      redirect_to point_path(@point), notice: t("points.show.reset_done"), status: :see_other
+    rescue Points::Reset::Error => e
+      redirect_to point_path(@point), alert: e.message, status: :see_other
+    end
+
     private
 
     # Leitor (viewer) vê o painel e o que ele abre; comando e cadastro barram pelo papel.
@@ -77,7 +86,7 @@ module Web
 
     def point_params
       params.require(:point).permit(:name, :key, :capability, :unit, :area_id, :min, :max, :step, :options_text, :risk, :confirm,
-                                    :device_class, :scale, :offset, :pulse_ms, :max_on_s, :writable, :hidden, :disabled, :label_list, :alias_list, :display_unit)
+                                    :device_class, :scale, :offset, :pulse_ms, :max_on_s, :writable, :hidden, :disabled, :label_list, :alias_list, :display_unit, :stale_open_min)
     end
   end
 end

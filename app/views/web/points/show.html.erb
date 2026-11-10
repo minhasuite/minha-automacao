@@ -50,6 +50,7 @@
     <% if can?(:manage) %><%= link_to edit_point_path(@point), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("clock", "size-4") %><%= t("points.show.tune") %><% end %><% end %>
   </section>
 <% end %>
+<% if can?(:manage) && Points::Reset.allowed?(@point) %><%= render "web/points/reset", point: @point %><% end %>
 <%= render "web/automation/lists", site: @site, point: @point %>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="timeline-title">

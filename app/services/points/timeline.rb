@@ -6,7 +6,7 @@ module Points
     COMMAND_LABELS = LocalizedLabel.for("labels.commands", %w[on off toggle set select press pulse start pause stop home clean_rooms wash_mop dry_mop
                                                               empty locate announce speak routine increment decrement reset cancel finish run sound play volume])
     QUALITY_LABELS = LocalizedLabel.for("labels.qualities", %w[good stale unavailable error])
-    AUDIT_LABELS = LocalizedLabel.for("labels.point_audit", %w[create update destroy])
+    AUDIT_LABELS = LocalizedLabel.for("labels.point_audit", %w[create update destroy reset])
     TONES = { "confirmed" => "success", "failed" => "danger", "expired" => "warn" }.freeze
 
     def self.call(point, limit: 20) = new(point, limit).call

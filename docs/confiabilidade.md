@@ -77,3 +77,27 @@ pode ser avisada pelo próprio worker: o `Reliability::Watchdog` roda numa
 thread do supervisor do Solid Queue (`SolidQueue.on_start`,
 `RELIABILITY_WATCHDOG=off` desliga), olha a verificação "Fila de tarefas" a
 cada minuto e manda o aviso com o push na hora.
+
+## Estado real dos sensores
+
+Sensor de porta, movimento e afins só fala quando muda: evento perdido deixa o
+ponto preso num valor que já passou (10/11/2026: o "fechou" do portão nunca
+chegou e o escalonamento avisou por horas).
+
+- **Conferência da nuvem Tuya**: com o MQTT da conta conectado, o
+  `Tuya::CloudListener` relê o estado de todos os aparelhos a cada
+  `RECONCILE_EVERY` (10 min, 2 pedidos). Corrige o evento que se perdeu entre a
+  nuvem e o servidor; erro na conferência não derruba o tempo real.
+- **Redefinir estado** (página do ponto, técnico+; `POST /api/v1/points/:id/reset`):
+  ponto que não recebe comando (contato, movimento, violação, problema, enum,
+  medição) ganha o valor informado pelo `report!` (automações e alertas veem a
+  mudança) e um `AuditEvent` `reset` na linha do tempo. Até o aparelho empurrar
+  um evento, a releitura do estado completo (conferência, conexão curta) não
+  desfaz a correção (`address.reset_at`, `Points::Reset.held?`).
+- **Desatualizado**: com "Desatualizado se aberto há mais de (min)" no
+  formulário do ponto (`address.stale_open_s`), o `Points::Stale.tick`
+  (RunSchedulesJob) põe a qualidade `stale` no sensor aberto além do limite e
+  manda **um** aviso (`dedup_key` por abertura). Releitura com o mesmo valor
+  mantém o "desatualizado"; valor novo ou "Redefinir estado" volta a "Bom".
+  Escalonamento que não deve insistir num estado em que ninguém confia usa a
+  condição "Ponto está" com a situação "Bom".

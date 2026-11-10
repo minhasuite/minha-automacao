@@ -110,6 +110,8 @@ class Point < ApplicationRecord
   def report!(new_value, quality: "good", at: Time.current)
     # Evento (botão, campainha) conta a cada aviso, mesmo repetido ("clique" de novo).
     value_changed = new_value != value || (capability.in?(REPEATING) && !new_value.nil?)
+    # Releitura com o mesmo valor não tira o "desatualizado" do sensor parado (Points::Stale).
+    quality = "stale" if quality == "good" && !value_changed && self.quality == "stale" && Points::Stale.due?(self, at)
     value_was = value
     quality_was = self.quality
     self.changed_at = at if value_changed
@@ -129,6 +131,14 @@ class Point < ApplicationRecord
     Recordings.motion!(self) if value_changed && new_value == true && capability == "motion" # ondaC2: câmera em "por evento" grava
     # Só a qualidade mudou (caiu, voltou): os helpers calculados também refazem (Pacote 2).
     HelperTypes.on_change(self) if !value_changed && quality != quality_was
+  end
+
+  # Limite do "aberto" em minutos no formulário (Points::Stale; `address.stale_open_s`).
+  def stale_open_min = address.to_h["stale_open_s"].presence && (address["stale_open_s"].to_i / 60)
+
+  def stale_open_min=(min)
+    s = min.to_s.strip.presence && (Integer(min.to_s.strip, exception: false).to_i * 60)
+    self.address = s.to_i.positive? ? address.to_h.merge("stale_open_s" => s) : address.to_h.except("stale_open_s")
   end
 
   # Onde estes pontos aparecem: [rótulo, registro] (dispositivo e helper).

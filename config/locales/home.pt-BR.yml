@@ -130,6 +130,7 @@ pt-BR:
       create: Ponto criado
       update: Cadastro alterado
       destroy: Ponto excluído
+      reset: Estado redefinido à mão
     command_statuses:
       pending: Pendente
       sent: Enviado
@@ -363,6 +364,12 @@ pt-BR:
     delete_hint: Apaga o dispositivo e os pontos dele.
     delete_confirm: Excluir o dispositivo %{name} e os pontos dele?
   points:
+    reset:
+      not_allowed: Só sensores (pontos que não recebem comando) podem ter o estado redefinido.
+      invalid: Valor inválido para este ponto.
+    stale:
+      title: "%{name}: estado desatualizado"
+      body: Está aberto desde %{since} sem nenhum evento novo. Confira no local; se já fechou, use Redefinir estado na página do ponto.
     turn_on: Ligar
     turn_off: Desligar
     run: Executar
@@ -427,6 +434,8 @@ pt-BR:
       offset: Deslocamento (calibração)
       pulse: Pulso (ms)
       max_on: Desliga sozinho após (s)
+      stale_open: Desatualizado se aberto há mais de (min)
+      stale_open_hint: Sensor que só fala quando muda. Em branco, nunca.
       writable: Recebe comando
       hidden: Escondido
       create: Criar ponto
@@ -453,6 +462,13 @@ pt-BR:
       max_on: desliga depois de %{time} ligado
       any_path: ", ligado por qualquer caminho."
       no_auto_off: Não desliga sozinho. Use pulso para o que só precisa de um toque (liga e desliga em segundos) ou um tempo máximo ligado (uma bomba ou um aquecedor).
+      reset: Redefinir estado
+      reset_hint: O sensor perdeu um evento e o valor aqui não é o real? Informe o estado certo. Vale até o aparelho mandar outro evento e fica na linha do tempo.
+      reset_value: Estado real
+      reset_button: Redefinir
+      reset_confirm: Redefinir o estado de %{name}? Automações e alertas vão ver a mudança.
+      reset_done: Estado redefinido.
+      stale_note: Desatualizado desde que ficou aberto por mais de %{time} sem nenhum evento.
       tune: Ajustar
       timeline: Últimos acontecimentos
   point_links:

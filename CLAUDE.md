@@ -231,6 +231,10 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   aparelho sem sinal há `dead_device_hours` (24) = `skipped`, sem driver;
   pessoa sempre tenta. Ajustes em `tenants.settings["reliability"]`. Recorrente
   própria no bloco "confiabilidade" do `config/recurring.yml`.
+  Estado real: conferência da nuvem Tuya a cada 10 min no `CloudListener`,
+  "Redefinir estado" (`Points::Reset`, técnico+, AuditEvent; releitura não
+  desfaz até o aparelho empurrar) e sensor aberto além de `address.stale_open_s`
+  = qualidade `stale` + um aviso (`Points::Stale`).
 - **Valor novo de ponto só por `Point#report!`**: grava o ponto, a leitura
   (`history`/`deadband`/`interval`), o evento de qualidade e faz
   `broadcast_refresh_to(point)`. Comando não vira AuditEvent (a tabela

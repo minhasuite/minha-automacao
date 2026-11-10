@@ -130,6 +130,7 @@ en:
       create: Point created
       update: Setup changed
       destroy: Point deleted
+      reset: State reset by hand
     command_statuses:
       pending: Pending
       sent: Sent
@@ -363,6 +364,12 @@ en:
     delete_hint: Deletes the device and its points.
     delete_confirm: Delete the device %{name} and its points?
   points:
+    reset:
+      not_allowed: Only sensors (points that take no command) can have their state reset.
+      invalid: Invalid value for this point.
+    stale:
+      title: "%{name}: state is stale"
+      body: Open since %{since} with no new event. Check it on site; if it is already closed, use Reset state on the point page.
     turn_on: Turn on
     turn_off: Turn off
     run: Run
@@ -427,6 +434,8 @@ en:
       offset: Offset (calibration)
       pulse: Pulse (ms)
       max_on: Turns off by itself after (s)
+      stale_open: Stale if open for more than (min)
+      stale_open_hint: For sensors that only report on change. Blank = never.
       writable: Accepts commands
       hidden: Hidden
       create: Create point
@@ -453,6 +462,13 @@ en:
       max_on: turns off after %{time} on
       any_path: ", however it was turned on."
       no_auto_off: Doesn't turn off by itself. Use a pulse for things that just need a tap (on and off within seconds) or a maximum on time (a pump or a heater).
+      reset: Reset state
+      reset_hint: Did the sensor miss an event so the value here is not the real one? Enter the right state. It holds until the device sends another event and goes to the timeline.
+      reset_value: Real state
+      reset_button: Reset
+      reset_confirm: Reset the state of %{name}? Automations and alerts will see the change.
+      reset_done: State reset.
+      stale_note: Stale since it stayed open for more than %{time} with no event.
       tune: Adjust
       timeline: Latest events
   point_links:

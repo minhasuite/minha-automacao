@@ -130,6 +130,7 @@ es:
       create: Punto creado
       update: Registro modificado
       destroy: Punto eliminado
+      reset: Estado restablecido a mano
     command_statuses:
       pending: Pendiente
       sent: Enviado
@@ -363,6 +364,12 @@ es:
     delete_hint: Borra el dispositivo y sus puntos.
     delete_confirm: ¿Eliminar el dispositivo %{name} y sus puntos?
   points:
+    reset:
+      not_allowed: Solo los sensores (puntos que no reciben comandos) pueden restablecer su estado.
+      invalid: Valor no válido para este punto.
+    stale:
+      title: "%{name}: estado desactualizado"
+      body: Abierto desde %{since} sin ningún evento nuevo. Revísalo en el lugar; si ya cerró, usa Restablecer estado en la página del punto.
     turn_on: Encender
     turn_off: Apagar
     run: Ejecutar
@@ -427,6 +434,8 @@ es:
       offset: Desplazamiento (calibración)
       pulse: Pulso (ms)
       max_on: Se apaga solo después de (s)
+      stale_open: Desactualizado si abierto más de (min)
+      stale_open_hint: Sensor que solo avisa al cambiar. En blanco, nunca.
       writable: Recibe comandos
       hidden: Oculto
       create: Crear punto
@@ -453,6 +462,13 @@ es:
       max_on: se apaga después de %{time} encendido
       any_path: ", sin importar cómo se encendió."
       no_auto_off: No se apaga solo. Usa pulso para lo que solo necesita un toque (enciende y apaga en segundos) o un tiempo máximo encendido (una bomba o un calentador).
+      reset: Restablecer estado
+      reset_hint: ¿El sensor perdió un evento y el valor aquí no es el real? Indica el estado correcto. Vale hasta que el aparato envíe otro evento y queda en la línea de tiempo.
+      reset_value: Estado real
+      reset_button: Restablecer
+      reset_confirm: ¿Restablecer el estado de %{name}? Las automatizaciones y alertas verán el cambio.
+      reset_done: Estado restablecido.
+      stale_note: Desactualizado desde que quedó abierto más de %{time} sin ningún evento.
       tune: Ajustar
       timeline: Últimos eventos
   point_links:

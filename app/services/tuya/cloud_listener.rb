@@ -4,7 +4,7 @@ module Tuya
   # o tópico de cada aparelho da integração que está no local. Mensagem
   # `protocol` 4 = status ({dpId|code, value}) → pontos (conta `push_only`,
   # o clique do botão); 20 = online/offline. Ao conectar lê o estado de todos
-  # (2 pedidos). A credencial vence (`expireTime`): reconecta antes. Caiu =
+  # (2 pedidos) e confere de novo a cada RECONCILE_EVERY. A credencial vence (`expireTime`): reconecta antes. Caiu =
   # aparelhos `tuya_cloud` indisponíveis e nova tentativa com espera crescente.
   # Uma thread por integração no processo worker (TUYA_CLOUD_LISTENER=off
   # desliga); sem aparelho adotado, nada conecta.
@@ -12,6 +12,10 @@ module Tuya
     SCAN_EVERY = 30
     MAX_BACKOFF = 60
     MAX_SESSION = 2 * 3600
+    # Conferência do estado real: relê a nuvem (2 pedidos) a cada 10 min para
+    # corrigir o evento que se perdeu entre a nuvem e o servidor (internet
+    # caiu, MQTT desconectado sem perceber). Só leitura; valor igual não muda nada.
+    RECONCILE_EVERY = 600
     REPORT = 4
     OTHER = 20
 
@@ -84,7 +88,12 @@ module Tuya
         until_at = monotonic + config["expireTime"].to_i.clamp(120, MAX_SESSION) - 60
         subscribed = Set.new
         next_scan = 0
+        next_reconcile = monotonic + RECONCILE_EVERY
         while monotonic < until_at
+          if monotonic >= next_reconcile
+            reconcile(id)
+            next_reconcile = monotonic + RECONCILE_EVERY
+          end
           if monotonic >= next_scan
             topics = with_integration(id) { |i| Integrations::TuyaPlugin.devices(i).pluck(:external_id).compact.map { |d| topic(config, d) } }.to_a
             (topics - subscribed.to_a).each { |t| client.subscribe(t => 1) && subscribed << t }
@@ -95,6 +104,13 @@ module Tuya
           _topic, payload = client.get
           with_integration(id) { |i| handle(i, payload) }
         end
+      end
+
+      # Falha da conferência não derruba a sessão do MQTT (o tempo real segue).
+      def reconcile(id)
+        with_integration(id) { |i| refresh(i) }
+      rescue StandardError => e
+        Rails.logger.warn("[tuya-cloud] conferência: #{e.class}: #{e.message}")
       end
 
       def refresh(integration)

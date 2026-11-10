@@ -3,7 +3,7 @@ module Api
     # Pontos do dispositivo e comandos. Cadastro: técnico ou dono. Comando: o
     # papel mínimo depende do risco do ponto (SiteMembership::MIN_ROLE_BY_RISK).
     class PointsController < BaseController
-      self.key_actions = { index: "read", site_index: "read", show: "read", history: "read", command: "command", talk: "command", write_value: "write" }
+      self.key_actions = { index: "read", site_index: "read", show: "read", history: "read", command: "command", talk: "command", write_value: "write", reset: "write" }
       TALK_MAX = 5.megabytes
 
       # ?view=app: cada ponto como no dashboard resolvido (texto, comandos,
@@ -97,6 +97,17 @@ module Api
         render_data(PointSerializer.new(point, params: { reveal: reveal_sensitive? }).to_h)
       rescue Points::Command::Error => e
         render_error(e.code, e.message, status: :unprocessable_content)
+      end
+
+      # POST /points/:id/reset {value} — "Redefinir estado" do sensor que perdeu
+      # o evento (técnico+, AuditEvent); 422 em ponto que recebe comando.
+      def reset
+        point = Point.find(params[:id])
+        authorize_site!(point.site, :manage)
+        Points::Reset.call(point, params.require(:value).to_s, user: current_user)
+        render_data(PointSerializer.new(point.reload, params: { reveal: reveal_sensitive? }).to_h)
+      rescue Points::Reset::Error => e
+        render_error(:not_resettable, e.message, status: :unprocessable_content)
       end
 
       # GET /points/:id/history?from=&to=&resolution=auto|raw|1h|1d (ISO 8601).

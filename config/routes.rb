@@ -248,6 +248,7 @@ Rails.application.routes.draw do
         post :reconnect, on: :member, path: "reconectar"
         resources :points, path: "pontos", except: :index, shallow: true do
           post :command, on: :member, path: "comando"
+          post :reset, on: :member, path: "redefinir" # "Redefinir estado" do sensor (técnico+)
         end
       end
     end
@@ -404,6 +405,7 @@ Rails.application.routes.draw do
           resources :points, except: %i[new edit], shallow: true do
             post :commands, on: :member, action: :command
             post :value, on: :member, action: :write_value
+            post :reset, on: :member # "Redefinir estado" do sensor (técnico+, auditado)
             get :history, on: :member
             get :snapshot, on: :member
             post :talk, on: :member # ondaC2 (C10): áudio gravado no app vai para o alto-falante da câmera

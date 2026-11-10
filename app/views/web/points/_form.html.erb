@@ -24,6 +24,9 @@
       <%= f.ss_number_field :offset, label: t("points.form.offset"), step: "any", class: "num" %>
       <%= f.ss_number_field :pulse_ms, label: t("points.form.pulse"), min: 1, class: "num" %>
       <%= f.ss_number_field :max_on_s, label: t("points.form.max_on"), min: 1, class: "num" %>
+      <% if point.capability == "contact" || (point.bool? && !point.writable) %>
+        <%= f.ss_number_field :stale_open_min, label: t("points.form.stale_open"), help: t("points.form.stale_open_hint"), min: 1, class: "num" %>
+      <% end %>
       <%= f.ss_check_box :writable, label: t("points.form.writable") %>
       <%= f.ss_check_box :hidden, label: t("points.form.hidden") %>
       <%= f.ss_check_box :disabled, label: t("devices.disabled") %>

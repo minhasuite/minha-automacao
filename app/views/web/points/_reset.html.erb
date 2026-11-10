@@ -1,0 +1,21 @@
+<%# locals: (point:) -%>
+<%# "Redefinir estado" (Points::Reset): sensor que perdeu o evento; técnico+, fica na linha do tempo. -%>
+<section class="ss-card ss-card-pad mb-4" aria-labelledby="reset-title">
+  <h2 id="reset-title"><%= t("points.show.reset") %></h2>
+  <% if point.quality == "stale" && Points::Stale.limit(point) %>
+    <%= render Ss::NoteComponent.new(text: t("points.show.stale_note", time: duration_text(Points::Stale.limit(point))), icon: icon("exclamation-circle", ""), css: "mt-2") %>
+  <% end %>
+  <p class="text-sm text-muted mt-1"><%= t("points.show.reset_hint") %></p>
+  <%= form_with url: reset_point_path(point), method: :post, class: "mt-3 flex flex-wrap items-end gap-3",
+                data: { turbo_confirm: t("points.show.reset_confirm", name: point.name), turbo_confirm_button: t("points.show.reset_button") } do %>
+    <div class="min-w-0 basis-48">
+      <%= label_tag :reset_value, t("points.show.reset_value"), class: "ss-label" %>
+      <% if (choices = reset_choices(point)) %>
+        <%= select_tag :value, options_for_select(choices, point.value.to_s), id: "reset_value", class: "ss-input" %>
+      <% else %>
+        <%= number_field_tag :value, point.value, id: "reset_value", step: "any", required: true, class: "ss-input num" %>
+      <% end %>
+    </div>
+    <%= button_tag type: "submit", class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("refresh", "size-4") %><%= t("points.show.reset_button") %><% end %>
+  <% end %>
+</section>

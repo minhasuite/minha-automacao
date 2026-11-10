@@ -81,6 +81,16 @@ module PointsHelper
     nil
   end
 
+  # "Redefinir estado" (Points::Reset): opções do estado real; nil = número digitado.
+  def reset_choices(point)
+    if point.bool?
+      on, off = BOOL_TEXT.fetch(point.capability, [ I18n.t("points.turn_on"), I18n.t("points.turn_off") ])
+      [ [ on.to_s, "true" ], [ off.to_s, "false" ] ]
+    elsif point.option_values.any?
+      point.option_values.map { |o| [ STATE_TEXT.dig(point.capability, o)&.to_s || o, o ] }
+    end
+  end
+
   def point_value_text(point)
     v = point.value
     if (text = point.helper_type&.value_text(point))

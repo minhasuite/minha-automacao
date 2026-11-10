@@ -25,6 +25,10 @@ module Drivers
         next unless dp && dps.key?(dp) && (push || !point.address["push_only"])
         next if point.capability == "remote" # o valor do controle remoto é dos botões aprendidos (Remotes), não do dp
 
+        # Correção manual ("Redefinir estado") vale até o aparelho empurrar um evento.
+        next if !push && Points::Reset.held?(point)
+
+        Points::Reset.release!(point) if push
         value = point.from_raw(dps[dp])
         value = point.value.to_f + value if point.address["accumulate"] && value.is_a?(Numeric) # acréscimo → total
         point.report!(value, at: at) unless value.nil? && point.address["decode"] # decodificado nil = mensagem de outro tipo

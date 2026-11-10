@@ -7,6 +7,7 @@ class RunSchedulesJob < ApplicationJob
     Schedule.run_due
     Integrations.tick # antes dos gatilhos: o "agora" das agendas já anda
     HelperTypes.tick # sensor calculado "a cada" (Lote 5)
+    Points::Stale.tick # sensor parado em "aberto" há tempo demais
     Automations::Triggers.tick
   end
 end
