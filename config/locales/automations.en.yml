@@ -155,6 +155,7 @@ en:
         failed: "Failed"
         cancelled: "Cancelled"
         loop: "Loop prevented"
+        interrupted: "Interrupted"
       blueprint_sources:
         builtin: "Built-in"
         ha: "Imported from HA"

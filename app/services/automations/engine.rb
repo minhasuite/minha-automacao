@@ -59,7 +59,7 @@ module Automations
       ids = wait["all_of"] or return [ true, payload ]
       return [ false, payload ] if AutomationRun.where(id: ids, finished_at: nil).exists?
 
-      error = AutomationRun.where(id: ids, status: "failed").pick(:error)
+      error = AutomationRun.where(id: ids, status: %w[failed interrupted]).pick(:error)
       [ true, payload.merge("error" => error).compact ]
     end
 
@@ -187,7 +187,7 @@ module Automations
       children.each { |c| Engine.new(c, @definition, Context.new(site: @run.site, trigger: @run.trigger, vars: @ctx.vars.deep_dup)).run_branch }
       ids = children.map(&:id)
       unless AutomationRun.where(id: ids, finished_at: nil).exists?
-        error = AutomationRun.where(id: ids, status: "failed").pick(:error)
+        error = AutomationRun.where(id: ids, status: %w[failed interrupted]).pick(:error)
         raise Failure, error if error
 
         return [ title, "ok", done_text ]

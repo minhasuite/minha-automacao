@@ -155,6 +155,7 @@ pt-BR:
         failed: "Falhou"
         cancelled: "Cancelada"
         loop: "Laço evitado"
+        interrupted: "Interrompida"
       blueprint_sources:
         builtin: "Pronto"
         ha: "Importado do HA"

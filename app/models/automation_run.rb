@@ -5,14 +5,16 @@
 class AutomationRun < ApplicationRecord
   acts_as_tenant :tenant
 
-  STATUSES = LocalizedLabel.for("automations.labels.run_statuses", %w[queued running waiting done skipped stopped failed cancelled loop])
-  TONES = { "done" => "success", "failed" => "danger", "loop" => "warn", "cancelled" => "warn", "waiting" => "info",
+  STATUSES = LocalizedLabel.for("automations.labels.run_statuses", %w[queued running waiting done skipped stopped failed cancelled loop interrupted])
+  TONES = { "done" => "success", "failed" => "danger", "loop" => "warn", "cancelled" => "warn", "interrupted" => "danger", "waiting" => "info",
             "running" => "info", "queued" => "info" }.freeze
   RETENTION_DAYS = 30
   KEEP = 200
   # Rodando sem atualizar há esse tempo = morreu junto com o processo; não
   # segura mais o modo single/fila.
   STALE = 2.minutes
+  # `interrupted`: fechada pelo Automations::Sweeper (sem dono: o processo
+  # reiniciou no meio, ou a espera venceu e não foi retomada a tempo).
 
   belongs_to :automation
   belongs_to :site

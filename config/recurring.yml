@@ -47,5 +47,11 @@ production:
   update_auto:
     class: UpdateAutoJob
     schedule: every 15 minutes
+  # --- confiabilidade (docs/confiabilidade.md) — bloco próprio, não misturar ---
+  # Execuções de automação sem dono (rodando > 15 min, espera vencida, fila parada).
+  automation_sweep:
+    class: AutomationSweepJob
+    schedule: every 5 minutes
+  # --- fim confiabilidade ---
 
 development: {}

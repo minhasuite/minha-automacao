@@ -167,11 +167,20 @@ class Automation < ApplicationRecord
   # Chamado pelo motor no fim de cada execução de verdade: última execução na
   # lista e a próxima da fila.
   def after_run(run)
-    update_columns(last_run_at: run.started_at, last_status: run.status, last_error: (run.error if run.status == "failed")) # rubocop:disable Rails/SkipsModelValidations
-    return if runs.active.exists?
+    update_columns(last_run_at: run.started_at, last_status: run.status, last_error: (run.error if %w[failed interrupted].include?(run.status))) # rubocop:disable Rails/SkipsModelValidations
+    start_queued!
+  end
 
-    nxt = runs.real.where(status: "queued").order(:created_at).first or return
-    start(nxt) if AutomationRun.where(id: nxt.id, status: "queued").update_all(status: "running", started_at: Time.current) == 1 # rubocop:disable Rails/SkipsModelValidations
+  # Próxima execução da fila (modo `queued`), se nenhuma está ativa. Também
+  # pelo Automations::Sweeper (a anterior morreu sem chamar o after_run).
+  def start_queued!
+    return false if runs.active.exists?
+
+    nxt = runs.real.where(status: "queued").order(:created_at).first or return false
+    return false unless AutomationRun.where(id: nxt.id, status: "queued").update_all(status: "running", started_at: Time.current, updated_at: Time.current) == 1 # rubocop:disable Rails/SkipsModelValidations
+
+    start(nxt.reload)
+    true
   end
 
   private
