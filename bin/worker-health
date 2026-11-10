@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Healthcheck do worker (docker-compose.local.yml). Saudável = o processo
+# Worker do Solid Queue bateu nos últimos 2 min E nenhum job pronto espera há
+# mais de 5 min (fila andando). O Docker não reinicia container "unhealthy":
+# depois de 3 falhas seguidas este script manda TERM ao PID 1 (supervisor do
+# Solid Queue, que encerra os filhos com calma) e o `restart: unless-stopped`
+# sobe o worker de novo. Banco fora do ar não derruba o worker (reiniciar não
+# resolve): só reporta.
+set -u
+STATE=/tmp/worker-health.falhas
+LIMITE=${WORKER_HEALTH_FALHAS:-3}
+
+q() { psql "$DATABASE_URL" -tAqX -c "$1" 2>/dev/null; }
+
+beat=$(q "SELECT count(*) FROM solid_queue_processes WHERE kind = 'Worker' AND last_heartbeat_at > now() - interval '2 minutes'")
+if [ -z "$beat" ]; then
+  echo "banco não respondeu"
+  exit 1
+fi
+parado=$(q "SELECT count(*) FROM solid_queue_ready_executions WHERE created_at < now() - interval '5 minutes'")
+
+motivo=""
+[ "$beat" -ge 1 ] || motivo="sem batimento do worker há mais de 2 min"
+[ "${parado:-0}" -eq 0 ] || motivo="${motivo:+$motivo; }$parado job(s) pronto(s) esperando há mais de 5 min"
+
+if [ -z "$motivo" ]; then
+  rm -f "$STATE"
+  echo "ok"
+  exit 0
+fi
+
+falhas=$(( $(cat "$STATE" 2>/dev/null || echo 0) + 1 ))
+echo "$falhas" > "$STATE"
+echo "$motivo (falha $falhas de $LIMITE)"
+if [ "$falhas" -ge "$LIMITE" ]; then
+  rm -f "$STATE"
+  echo "reiniciando o worker"
+  kill -TERM 1
+fi
+exit 1

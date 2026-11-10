@@ -89,6 +89,14 @@ services:
       web:
         condition: service_healthy
     command: bundle exec ruby bin/jobs
+    # Saúde = batimento do Worker do Solid Queue + fila andando (bin/worker-health).
+    # 3 falhas seguidas: o script encerra o supervisor e o restart sobe de novo.
+    healthcheck:
+      test: ["CMD", "bin/worker-health"]
+      interval: 60s
+      timeout: 20s
+      start_period: 180s
+      retries: 3
     environment:
       <<: *app-env
       DB_POOL: "${DB_POOL:-24}" # threads do worker (JOB_THREADS) + Solid Queue + ouvintes e leitura periódica
