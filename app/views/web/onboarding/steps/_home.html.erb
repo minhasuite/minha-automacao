@@ -17,13 +17,11 @@
     <%= f.select :timezone, ActiveSupport::TimeZone.all.map { |z| [ z.to_s, z.tzinfo.name ] }.uniq(&:last), { selected: v[:timezone] || site.timezone || "America/Sao_Paulo" },
                  class: "ss-input", data: { onboarding_home_target: "zone", fresh: ctx.site.nil? } %>
   </div>
-  <div class="col-span-2 ob-locate">
-    <div class="min-w-[12rem] flex-1">
-      <p class="font-semibold text-ink flex items-center gap-2"><%= icon("location-marker", "size-5 text-accent") %><%= t("onboarding.home.location") %></p>
-      <p class="text-sm text-muted mt-0.5" data-onboarding-home-target="status" role="status"><%= t("onboarding.home.location_hint") %></p>
-    </div>
-    <button type="button" class="ss-btn ss-btn-outline" data-action="onboarding-home#locate"><%= icon("location-marker", "size-4") %><%= t("onboarding.home.locate") %></button>
-  </div>
+  <%# Localização num aviso da gem com o botão de pedir ao navegador; a linha de status muda pelo controller. %>
+  <%= render Ss::CalloutComponent.new(tone: :accent, title: t("onboarding.home.location"), icon: icon("location-marker", ""), css: "col-span-2") do |c| %>
+    <% c.with_action do %><button type="button" class="ss-btn ss-btn-outline ss-btn-sm" data-action="onboarding-home#locate"><%= icon("location-marker", "size-4") %><%= t("onboarding.home.locate") %></button><% end %>
+    <p data-onboarding-home-target="status" role="status"><%= t("onboarding.home.location_hint") %></p>
+  <% end %>
   <div><%= f.label :latitude, t("onboarding.home.latitude"), class: "ss-label" %><%= f.text_field :latitude, value: v[:latitude] || site.latitude, class: "ss-input num", inputmode: "decimal", placeholder: "-15.79", data: { onboarding_home_target: "lat" } %></div>
   <div><%= f.label :longitude, t("onboarding.home.longitude"), class: "ss-label" %><%= f.text_field :longitude, value: v[:longitude] || site.longitude, class: "ss-input num", inputmode: "decimal", placeholder: "-47.88", data: { onboarding_home_target: "lon" } %></div>
   <label class="col-span-2 ss-check"><%= f.check_box :weather, { checked: weather }, "1", "0" %><span><strong class="text-ink"><%= t("onboarding.home.weather") %></strong> <span class="text-muted text-sm"><%= t("onboarding.home.weather_hint") %></span></span></label>

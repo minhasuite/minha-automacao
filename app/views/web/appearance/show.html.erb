@@ -89,7 +89,7 @@
           <%= render Ss::DeviceTileComponent.new(name: t("appearance.custom.sample_light"), state: t("appearance.custom.sample_on"), on: true, icon: icon("light-bulb", "")) %>
           <%= render Ss::DeviceTileComponent.new(name: t("appearance.custom.sample_fan"), state: t("appearance.custom.sample_off"), icon: icon("fan", "")) %>
           <div class="ss-card ss-card-pad col-span-2 flex flex-wrap items-center justify-between gap-2">
-            <span class="ss-label mb-0 inline-flex items-center gap-1.5"><%= icon("thermometer", "size-4") %><%= t("appearance.custom.sample_target") %></span>
+            <span class="ss-label mb-0"><%= icon("thermometer", "") %><%= t("appearance.custom.sample_target") %></span>
             <span class="ss-chips p-0"><span class="ss-chip" aria-current="true">23 °C</span><span class="ss-chip"><%= t("appearance.custom.sample_mode") %></span></span>
           </div>
         </div>

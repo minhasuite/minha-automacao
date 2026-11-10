@@ -49,12 +49,10 @@
 <h2 class="mt-6 mb-3"><%= t("assist_settings.sentences.catalog", language: t("assist_settings.languages.#{@language.tr('-', '_')}")) %></h2>
 <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
   <% Assist.intents.select { |i| i.respond_to?(:sentences) && i.sentences(@language).any? }.each do |i| %>
-    <details class="ss-card vz-intent">
-      <summary>
-        <span class="min-w-0"><code class="vz-intent-key"><%= i.key %></code><span class="block text-sm text-muted"><%= i.description %></span></span>
-        <span class="flex items-center gap-1 flex-none"><% if i.tool? %><span class="ss-badge" title="<%= t("assist_settings.sentences.tool_hint") %>"><%= icon("sparkles", "size-3") %><%= t("assist_settings.sentences.tool") %></span><% end %><%= icon("chevron-down", "size-4 text-muted") %></span>
-      </summary>
-      <ul class="vz-sentences"><% i.sentences(@language).each do |s| %><li><code><%= s %></code></li><% end %></ul>
-    </details>
+    <%# Intenção num grupo recolhível da gem (Ss::CollapsibleComponent): a chave, a descrição e as frases em código. %>
+    <%= render Ss::CollapsibleComponent.new(title: i.key, count: i.sentences(@language).size, label: (t("assist_settings.sentences.tool") if i.tool?), tone: :accent, css: "ss-card px-3 py-1") do %>
+      <p class="text-sm text-muted"><%= i.description %></p>
+      <ul class="mt-2 grid gap-1.5"><% i.sentences(@language).each do |s| %><li><code class="ss-code-inline break-words"><%= s %></code></li><% end %></ul>
+    <% end %>
   <% end %>
 </div>

@@ -6,21 +6,22 @@
   <ol class="grid gap-3" aria-label="<%= t("assist_settings.runs.label") %>">
     <% @runs.each do |r| %>
       <% total = [ r.stages.sum { |s| s["ms"].to_i }, 1 ].max %>
-      <li class="ss-card vz-run <%= 'vz-run-error' if r.error %>">
+      <li class="ss-card overflow-hidden">
+        <%# Execução num card recolhível: a linha de cima é um .ss-item com a seta da gem (.ss-summary); embaixo, a faixa de tempo (domínio) e as etapas. %>
         <details>
-          <summary class="vz-run-head">
-            <span class="vz-run-src" title="<%= t("assist_settings.sources.#{r.source}") %>"><%= icon({ "satellite" => "status-online", "app" => "device-mobile", "mcp" => "code", "api" => "link" }.fetch(r.source, "desktop-computer"), "size-4") %></span>
-            <span class="min-w-0 flex-1">
-              <span class="vz-run-heard"><%= r.heard.presence || t("assist_settings.runs.no_text") %></span>
-              <span class="vz-run-reply"><%= r.error || r.reply.presence || "—" %></span>
+          <summary class="ss-summary ss-item px-4 py-3">
+            <span class="ss-icon-tile is-sm <%= r.error ? 'is-danger' : 'is-muted' %>" title="<%= t("assist_settings.sources.#{r.source}") %>"><%= icon({ "satellite" => "status-online", "app" => "device-mobile", "mcp" => "code", "api" => "link" }.fetch(r.source, "desktop-computer"), "") %></span>
+            <span class="ss-item-main">
+              <span><%= r.heard.presence || t("assist_settings.runs.no_text") %></span>
+              <span><%= r.error || r.reply.presence || "—" %></span>
             </span>
-            <span class="vz-run-meta">
+            <span class="flex flex-none flex-col items-end gap-1">
               <% if r.intent %><span class="ss-badge <%= r.intent == 'unknown' ? 'ss-badge-warn' : 'ss-badge-accent' %>"><%= r.intent %></span><% end %>
               <% if r.error %><span class="ss-badge ss-badge-danger"><%= t("assist_settings.runs.error") %></span><% end %>
               <time class="text-xs text-muted num" datetime="<%= r.created_at.iso8601 %>"><%= l(r.created_at, format: "%d/%m %H:%M:%S") %></time>
             </span>
           </summary>
-          <div class="vz-run-bar" role="img" aria-label="<%= t("assist_settings.runs.bar", ms: r.duration_ms.to_i) %>">
+          <div class="vz-run-bar mx-4" role="img" aria-label="<%= t("assist_settings.runs.bar", ms: r.duration_ms.to_i) %>">
             <% r.stages.each do |s| %><span class="vz-seg vz-seg-<%= s["stage"] %> <%= 'vz-seg-error' if s["error"] %>" style="flex-grow: <%= [ s["ms"].to_i, total / 50, 1 ].max %>"></span><% end %>
           </div>
           <%# Etapas no Ss::JobProgressComponent (tempo de cada uma e o total); a faixa colorida acima é a proporção. %>
@@ -31,7 +32,7 @@
              end %>
           <%= render Ss::JobProgressComponent.new(id: "assist-run-#{r.id}", title: t("assist_settings.runs.stages"), state: (r.error ? :failed : :done), error: r.error,
                                                   stages: stages, css: "is-flush mx-4 mt-2.5") %>
-          <p class="vz-run-who"><b><%= t("assist_settings.runs.who") %></b> <%= [ r.user&.name, r.pipeline&.name, t("assist_settings.sources.#{r.source}"), r.language ].compact.join(" · ") %></p>
+          <p class="mx-4 mt-1.5 mb-3.5 text-sm text-ink break-words"><b class="font-semibold text-ink-2"><%= t("assist_settings.runs.who") %></b> <%= [ r.user&.name, r.pipeline&.name, t("assist_settings.sources.#{r.source}"), r.language ].compact.join(" · ") %></p>
         </details>
       </li>
     <% end %>

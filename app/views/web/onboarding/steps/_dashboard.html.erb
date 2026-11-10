@@ -13,7 +13,7 @@
       <% end %>
     </div>
   </fieldset>
-  <div class="ob-panel mt-5">
+  <div class="ss-card ss-card-pad is-soft mt-5">
     <p class="font-semibold text-ink flex items-center gap-2"><%= icon("view-boards", "size-5 text-accent") %><%= t("onboarding.dashboard.ready", count: views.size) %></p>
     <div class="mt-2 flex flex-wrap gap-1.5">
       <% views.first(8).each do |v| %><span class="ss-chip"><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %></span><% end %>

@@ -1,7 +1,7 @@
 <%# locals: (site:, pipeline:) -%>
 <% pl = pipeline %>
 <% id = pl.persisted? ? pl.id : "novo" %>
-<section class="ss-card ss-card-pad vz-pipe min-w-0 <%= 'vz-pipe-new' unless pl.persisted? %>" aria-labelledby="pl-<%= id %>">
+<section class="ss-card ss-card-pad min-w-0 <%= 'border-dashed' unless pl.persisted? %>" aria-labelledby="pl-<%= id %>">
   <div class="flex flex-wrap items-center justify-between gap-2">
     <h2 id="pl-<%= id %>" class="text-base font-bold text-ink flex items-center gap-2">
       <%= icon(pl.persisted? ? "volume-up" : "plus", "size-5") %><%= pl.persisted? ? pl.name : t("assist_settings.pipelines.new") %>

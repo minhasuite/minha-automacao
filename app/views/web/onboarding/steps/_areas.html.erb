@@ -20,16 +20,17 @@
     <p class="text-sm text-muted mt-1"><%= t("onboarding.areas.no_devices") %></p>
   <% else %>
     <p class="text-sm text-muted mt-1"><%= t("onboarding.areas.board_hint") %></p>
-    <div class="ob-board mt-3">
+    <%# Quadro de arrastar da gem (.ss-kanban com coluna e cartão; o SsKanban do app). %>
+    <div class="ss-kanban is-wrap mt-3">
       <% ([ nil ] + areas).each do |area| %>
-        <section class="ob-col" data-onboarding-board-target="column" data-area="<%= area&.id %>" data-action="dragover->onboarding-board#over dragleave->onboarding-board#leave drop->onboarding-board#drop" aria-label="<%= area&.name || t("onboarding.areas.loose") %>">
-          <h3 class="ob-col-title"><%= icon(area ? "home" : "inbox", "size-4") %><%= area&.name || t("onboarding.areas.loose") %></h3>
+        <section class="ss-kanban-col" data-onboarding-board-target="column" data-area="<%= area&.id %>" data-action="dragover->onboarding-board#over dragleave->onboarding-board#leave drop->onboarding-board#drop" aria-label="<%= area&.name || t("onboarding.areas.loose") %>">
+          <h3 class="ss-kanban-head"><%= icon(area ? "home" : "inbox", "size-4") %><%= area&.name || t("onboarding.areas.loose") %></h3>
           <% devices.select { |d| d.area_id == area&.id }.each do |d| %>
-            <div class="ob-device" draggable="true" data-onboarding-board-target="card" data-action="dragstart->onboarding-board#start dragend->onboarding-board#end">
-              <span class="ob-grip" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
+            <div class="ss-kanban-card" draggable="true" data-onboarding-board-target="card" data-action="dragstart->onboarding-board#start dragend->onboarding-board#end">
+              <span class="text-muted" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
               <span class="min-w-0 flex-1 truncate font-semibold text-sm text-ink"><%= d.name %></span>
               <%= select_tag "onboarding[device_area][#{d.id}]", options_for_select([ [ t("onboarding.areas.loose"), "" ] ] + areas.map { |a| [ a.name, a.id ] }, d.area_id),
-                             class: "ob-device-select", "aria-label": t("onboarding.areas.move", name: d.name), data: { action: "onboarding-board#pick" } %>
+                             class: "ss-input basis-full h-8 min-h-0 text-xs", "aria-label": t("onboarding.areas.move", name: d.name), data: { action: "onboarding-board#pick" } %>
             </div>
           <% end %>
         </section>

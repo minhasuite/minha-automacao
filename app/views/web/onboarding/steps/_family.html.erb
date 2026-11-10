@@ -2,7 +2,7 @@
 <% invite = ctx.data[:invite_url] %>
 <%= form_with url: onboarding_step_path(step.key), scope: :onboarding, data: { turbo: false } do |f| %>
   <div class="grid gap-4 md:grid-cols-2">
-    <section class="ob-panel" aria-labelledby="ob-invite">
+    <section class="ss-card ss-card-pad is-soft" aria-labelledby="ob-invite">
       <h2 id="ob-invite" class="flex items-center gap-2"><%= icon("users", "size-5 text-accent") %><%= t("onboarding.family.invite_title") %></h2>
       <p class="text-sm text-muted mt-1"><%= t("onboarding.family.invite_text") %></p>
       <% if invite %>
@@ -16,7 +16,7 @@
         <button type="submit" name="onboarding[invite]" value="1" class="ss-btn ss-btn-outline mt-3"><%= icon("link", "size-4") %><%= t("onboarding.family.invite_button") %></button>
       <% end %>
     </section>
-    <section class="ob-panel" aria-labelledby="ob-app">
+    <section class="ss-card ss-card-pad is-soft" aria-labelledby="ob-app">
       <h2 id="ob-app" class="flex items-center gap-2"><%= icon("device-mobile", "size-5 text-accent") %><%= t("onboarding.family.app_title") %></h2>
       <p class="text-sm text-muted mt-1"><%= t("onboarding.family.app_text") %></p>
       <div class="ss-qr-box mt-3 w-40"><%= qr_svg(ctx.base_url.to_s) %></div>

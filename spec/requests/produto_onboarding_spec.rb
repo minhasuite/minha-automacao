@@ -58,7 +58,7 @@ RSpec.describe "Primeira configuração" do
     expect(flash[:notice]).to eq("3 áreas criadas.")
     sala = within(owner.tenant) { site.areas.find_by!(name: "Sala") }
     get "/primeira-configuracao/areas"
-    expect(response.body).to include("Teste Lavanderia", "ob-board", "draggable")
+    expect(response.body).to include("Teste Lavanderia", "ss-kanban-col", "draggable")
     step "areas", device_area: { lamp.id => sala.id }
     expect(lamp.reload.area_id).to eq(sala.id)
     expect(response).to redirect_to("/primeira-configuracao/dashboard")
