@@ -14,7 +14,8 @@ module Push
 
     def project_id = ENV["FCM_PROJECT_ID"].presence || JSON.parse(ENV.fetch("FCM_CREDENTIALS_JSON"))["project_id"]
 
-    # => true (enviado) | :unregistered (token morto) | false
+    # => true (enviado) | :unregistered (token morto) | :retry (429/5xx, recusa sem efeito) | false
+    # Conexão que não abre levanta (o Push::Fcm decide a nova tentativa).
     def deliver(token, title:, body:, data: {})
       return false unless configured?
 
@@ -31,13 +32,14 @@ module Push
       res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 10) { |h| h.request(req) }
       return true if res.is_a?(Net::HTTPSuccess)
       return :unregistered if res.code == "404"
+      return :retry if Transient::STATUSES.include?(res.code.to_i)
 
       Rails.logger.warn("[fcm] envio falhou #{res.code}")
       false
     end
 
     # Push só de DADOS (sem notificação): acorda o app em segundo plano.
-    # => true | :unregistered | false
+    # => true | :unregistered | :retry | false
     def deliver_data(token, data:)
       return false unless configured?
 

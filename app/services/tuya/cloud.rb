@@ -15,6 +15,10 @@ module Tuya
   # SDK; o access token é renovado sozinho e gravado de volta.
   class Cloud
     class Error < Integrations::Error; end
+    # Recusa sem efeito (429/5xx): repetível (Transient), com o Retry-After.
+    class Busy < Error
+      include Transient::Busy
+    end
 
     LOGIN_HOST = "https://apigw.iotbing.com".freeze
     CLIENT_ID = "HA_3y9q4ak7g4ephrvke".freeze # o mesmo do HA
@@ -56,11 +60,17 @@ module Tuya
                      "access_token" => res["access_token"], "refresh_token" => res["refresh_token"] } }
     end
 
+    # Conexão que nem abriu (OpenTimeout, DNS, recusa) tenta de novo na hora uma
+    # vez (Transient.with_retry: nada saiu); o resto, incluindo leitura que
+    # estourou depois do envio, sobe como erro (docs/confiabilidade.md).
     def self.http(method, url, headers: {}, body: nil)
       uri = URI(url)
       req = (method == :post ? Net::HTTP::Post : Net::HTTP::Get).new(uri, headers.merge("Content-Type" => "application/json"))
       req.body = body if body
-      res = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: 30) { |h| h.request(req) }
+      res = Transient.with_retry { Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: 30) { |h| h.request(req) } }
+      if Transient::STATUSES.include?(res.code.to_i)
+        raise Busy.new("A Tuya respondeu #{res.code}.", status: res.code.to_i, retry_after: Transient.parse_retry_after(res["Retry-After"]))
+      end
       raise Error, "A Tuya respondeu #{res.code}." unless res.is_a?(Net::HTTPSuccess)
 
       JSON.parse(res.body)

@@ -19,12 +19,29 @@ module Push
     users.where(disabled_at: nil)
   end
 
-  def deliver(notification)
+  # Entrega a todos (ou só aos aparelhos em `only`: {"Fcm" => [ids]}, a nova
+  # tentativa do SendPushJob). Devolve os aparelhos com falha passageira
+  # (Transient: nada chegou ao serviço) no mesmo formato, para tentar de novo
+  # só esses — quem já recebeu não recebe duas vezes. Transporte com
+  # `deliver_some(user, message, ids)` informa as falhas; o que só tem
+  # `deliver` não é repetido.
+  def deliver(notification, only: nil)
     list = transports
+    failed = Hash.new { |h, k| h[k] = [] }
     recipients(notification).find_each do |user|
       message = Message.new(notification, user)
-      list.each { |t| t.deliver(user, message) }
+      list.each do |t|
+        name = t.name.demodulize
+        next if only && only[name].blank?
+
+        if t.respond_to?(:deliver_some)
+          failed[name].concat(Array(t.deliver_some(user, message, only&.dig(name))))
+        else
+          t.deliver(user, message)
+        end
+      end
     end
+    failed.reject { |_, ids| ids.empty? }
   end
 
   # Apaga dos aparelhos o aviso com a tag (ação "Avisar" com "só apagar").

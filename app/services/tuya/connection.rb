@@ -8,6 +8,11 @@ module Tuya
   class Connection
     PORT = 6668
     class Error < StandardError; end
+    # A conexão (com a negociação de sessão) não se completou: nenhum comando
+    # saiu, então pode repetir (Transient; docs/confiabilidade.md).
+    class ConnectError < Error
+      include Transient::NotSent
+    end
 
     attr_reader :device_id, :protocol
 
@@ -39,7 +44,7 @@ module Tuya
       self
     rescue SystemCallError, IOError, SocketError => e
       close
-      raise Error, "sem conexão com #{@host}: #{e.message}"
+      raise ConnectError, "sem conexão com #{@host}: #{e.message}"
     end
 
     def close

@@ -470,7 +470,9 @@ CREATE TABLE public.commands (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     origin_point_id uuid,
-    automation_run_id uuid
+    automation_run_id uuid,
+    attempts integer DEFAULT 0 NOT NULL,
+    batch_id uuid
 );
 
 
@@ -2689,6 +2691,13 @@ CREATE INDEX index_automation_runs_on_tenant_id ON public.automation_runs USING 
 
 
 --
+-- Name: index_automation_runs_open; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_automation_runs_open ON public.automation_runs USING btree (status, updated_at) WHERE ((status)::text = ANY ((ARRAY['running'::character varying, 'waiting'::character varying, 'queued'::character varying])::text[]));
+
+
+--
 -- Name: index_automation_versions_on_author_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2822,10 +2831,24 @@ CREATE INDEX index_camera_recordings_on_tenant_id ON public.camera_recordings US
 
 
 --
+-- Name: index_commands_failed_recent; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_commands_failed_recent ON public.commands USING btree (status, created_at) WHERE ((status)::text = 'failed'::text);
+
+
+--
 -- Name: index_commands_on_automation_run_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_commands_on_automation_run_id ON public.commands USING btree (automation_run_id);
+
+
+--
+-- Name: index_commands_on_batch_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_commands_on_batch_id ON public.commands USING btree (batch_id) WHERE (batch_id IS NOT NULL);
 
 
 --
@@ -2850,17 +2873,17 @@ CREATE INDEX index_commands_on_tenant_id ON public.commands USING btree (tenant_
 
 
 --
--- Name: index_commands_on_tenant_id_and_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_commands_on_tenant_id_and_created_at ON public.commands USING btree (tenant_id, created_at);
-
-
---
 -- Name: index_commands_on_tenant_id_and_client_uuid; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_commands_on_tenant_id_and_client_uuid ON public.commands USING btree (tenant_id, client_uuid) WHERE (client_uuid IS NOT NULL);
+
+
+--
+-- Name: index_commands_on_tenant_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_commands_on_tenant_id_and_created_at ON public.commands USING btree (tenant_id, created_at);
 
 
 --
@@ -4850,6 +4873,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261109100001'),
 ('20261108100001'),
 ('20261104100003'),
 ('20261104100002'),

@@ -55,7 +55,11 @@ RSpec.describe Drivers::TuyaLocal do
     p = create(:point, device: device, address: { "dps" => "1" })
     command = Points::Command.call(p, "on", source: "web")
     perform_enqueued_jobs
-    expect(command.reload).to have_attributes(status: "failed", error: /sem conexão/)
+    # Conexão recusada = nada saiu: volta para a fila (docs/confiabilidade.md) até o prazo do comando.
+    expect(command.reload).to have_attributes(status: "pending", attempts: 1, error: /sem conexão/)
+    travel(Command::TTL + 1.second)
+    perform_enqueued_jobs(at: Time.current)
+    expect(command.reload).to have_attributes(status: "failed", error: /sem conexão.*prazo esgotado/)
 
     p2 = create(:point, device: create(:device, site: site, driver: "tuya_local"), address: { "dps" => "1" })
     expect { described_class.new.execute(p2, "on", nil) }.to raise_error(described_class::Error, /host/)

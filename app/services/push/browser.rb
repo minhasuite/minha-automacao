@@ -12,9 +12,15 @@ module Push
     def public_key = ENV["VAPID_PUBLIC_KEY"].to_s
     def configured? = public_key.present? && ENV["VAPID_PRIVATE_KEY"].present?
 
-    def deliver(user, message)
+    def deliver(user, message) = deliver_some(user, message, nil)
+
+    # `ids` = só essas inscrições (nova tentativa). Devolve as que falharam de
+    # forma passageira (Transient, docs/confiabilidade.md).
+    def deliver_some(user, message, ids)
       payload = message.to_h(capabilities).to_json
-      user.push_subscriptions.find_each { |sub| send_to(sub, payload, ttl: message.ttl, urgency: message.urgency) }
+      subs = user.push_subscriptions
+      subs = subs.where(id: ids) if ids
+      subs.filter_map { |sub| sub.id if send_to(sub, payload, ttl: message.ttl, urgency: message.urgency) == :retry }
     end
 
     # Pede ao service worker para fechar o aviso com a tag.
@@ -23,7 +29,7 @@ module Push
       user.push_subscriptions.find_each { |sub| send_to(sub, payload, ttl: DEFAULT_TTL, urgency: "normal") }
     end
 
-    # => true | false (inscrição removida ou falha)
+    # => true | false (inscrição removida ou falha) | :retry (falha passageira: nada chegou)
     def send_to(sub, payload, ttl:, urgency:)
       ::WebPush.payload_send(message: payload, endpoint: sub.endpoint, p256dh: sub.p256dh_key, auth: sub.auth_key, ttl: ttl, urgency: urgency,
                              vapid: { subject: ENV.fetch("VAPID_SUBJECT", "mailto:noreply@minhasuite.com"), public_key: public_key,
@@ -34,9 +40,12 @@ module Push
     rescue ::WebPush::ExpiredSubscription, ::WebPush::InvalidSubscription
       sub.destroy
       false
+    rescue ::WebPush::TooManyRequests, ::WebPush::PushServiceError => e
+      Rails.logger.warn("[webpush] #{sub.id}: #{e.class} (nova tentativa)")
+      :retry
     rescue ::WebPush::Error, OpenSSL::OpenSSLError, SocketError, SystemCallError, Timeout::Error, Net::OpenTimeout, Net::ReadTimeout => e
       Rails.logger.warn("[webpush] #{sub.id}: #{e.class} #{e.message.truncate(120)}")
-      false
+      Transient.retryable?(e) ? :retry : false
     end
   end
 end

@@ -11,18 +11,31 @@ module Push
     def configured? = FcmService.configured?
     def capabilities = Notifier::FEATURES
 
-    def deliver(user, message)
+    def deliver(user, message) = deliver_some(user, message, nil)
+
+    # `ids` = só esses aparelhos (nova tentativa do SendPushJob). Devolve os que
+    # falharam de forma passageira (Transient: conexão que nem abriu, 429/5xx);
+    # erro de um aparelho não impede os outros.
+    def deliver_some(user, message, ids)
       h = message.to_h(capabilities)
       data = h.except("title", "body", "data", "actions").merge(h["data"]).merge("kind" => message.notification.kind, "notification_id" => message.notification.id)
       data["actions"] = h["actions"].to_json if h["actions"]
       data = data.compact
-      user.device_tokens.find_each do |device|
+      devices = user.device_tokens
+      devices = devices.where(id: ids) if ids
+      devices.filter_map do |device|
         result = if device.platform == "android"
                    FcmService.deliver_data(device.token, data: data.merge("type" => "notification", "title" => h["title"], "body" => h["body"]))
         else
                    FcmService.deliver(device.token, title: h["title"], body: h["body"], data: data)
         end
         device.destroy if result == :unregistered
+        device.id if result == :retry
+      rescue StandardError => e
+        next device.id if Transient.retryable?(e)
+
+        Rails.error.report(e, handled: true)
+        nil
       end
     end
 

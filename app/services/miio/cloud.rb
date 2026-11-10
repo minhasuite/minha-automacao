@@ -208,7 +208,8 @@ module Miio
                                                                               "Content-Type" => "application/x-www-form-urlencoded" }.merge(headers))
       all = (store ? jar : {}).merge(cookies).compact_blank
       req["Cookie"] = all.map { |k, v| "#{k}=#{v}" }.join("; ") if all.any?
-      res = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: timeout) { |h| h.request(req) }
+      # Conexão que nem abriu tenta de novo na hora uma vez (Transient: nada saiu; docs/confiabilidade.md).
+      res = Transient.with_retry { Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: timeout) { |h| h.request(req) } }
       Array(res.get_fields("set-cookie")).each { |c| k, v = c.split(";").first.split("=", 2); jar[k.strip] = v.to_s if store && v.present? }
       res
     rescue Net::ReadTimeout
