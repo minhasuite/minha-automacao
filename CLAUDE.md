@@ -4,8 +4,8 @@ Monolito Rails 8.1: web (Hotwire) **e** API `/api/v1` do app Flutter
 `minha-automacao-app`, no mesmo processo. É o servidor de automação da
 MinhaSuite (casa, loja e fábrica), no lugar do Home Assistant. Roda inteiro
 num servidor local (Linux com Docker, túnel Cloudflare para fora); não há
-central/borda nem `EDGE=1`. A VPS (`minhaautomacao.minhasuite.com`) serve só
-para validar UI/UX. Produto em
+central/borda nem `EDGE=1`. Não há instância na VPS (a de demonstração,
+`minhaautomacao.minhasuite.com`, foi desligada em 10/11/2026). Produto em
 `../docs/PROPOSTA.md`; modelo de dados, DSL, API e decisões em
 `../docs/ESQUEMA-V1.md`; stack em `docs/adr/0001-stack.md`. O padrão da suíte
 está na skill `padrao-suite`; aqui só o que é deste repo.
@@ -756,8 +756,7 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 ## Deploy
 
-Push no `master` → quality → imagem `ghcr.io/minhasuite/minha-automacao`. O
-deploy em `/opt/minha-automacao` (`ms-minha-automacao-{web,worker}`) roda no
-CI (`deploy-prod`) e avisa o meulog; produção em
-`https://minhaautomacao.minhasuite.com`. Boot com `db:prepare`. Na VPS as variáveis são `MINHA_AUTOMACAO_*`; no
-container, nome curto.
+Push no `master` → quality → imagem `ghcr.io/minhasuite/minha-automacao` e
+release beta (o "Atualizar" das instalações lê). O CI não publica em lugar
+nenhum: a casa recebe por `bin/deploy-local <tag>` (seção "Servidor local")
+ou pelo "Atualizar". Boot com `db:prepare`.

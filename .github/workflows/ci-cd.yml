@@ -1,14 +1,13 @@
 name: CI/CD
 
-# Um pipeline só, em ordem: qualidade → imagem → deploy → aviso ao meulog.
-# Push no master = produção (não há staging); develop e PR rodam só a
-# qualidade. O deploy (e o aviso ao meulog) estão desligados até existir o
-# servidor.
+# Um pipeline só, em ordem: qualidade → imagem (e release beta/estável).
+# Não há deploy pelo CI: a instalação roda no servidor local da casa
+# (bin/deploy-local ou o "Atualizar" de Configurações). A instância de
+# demonstração na VPS foi desligada em 10/11/2026.
 #
 # Autocontido de propósito: este repo é da organização minhasuite (Free) e
 # não alcança os reusable workflows privados de minhasuite/minha-infra (ver
-# minha-infra/runbooks/deploy.md). Os passos são os mesmos de lá; o deploy
-# usa a cópia local da action em .github/actions/deploy-vps.
+# minha-infra/runbooks/deploy.md).
 on:
   push:
     branches: [master, develop]
@@ -182,37 +181,3 @@ jobs:
             '{tag_name: $t, target_commitish: $sha, name: $t, body: $b, prerelease: ($stable | not), make_latest: (if $stable then "true" else "false" end)}' \
             | curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
                 "https://api.github.com/repos/${{ github.repository }}/releases" -d @- | jq -r .html_url
-
-  deploy-prod:
-    needs: build
-    if: github.ref_name == 'master'
-    runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
-    environment: production
-    steps:
-      - uses: actions/checkout@v5
-      - uses: ./.github/actions/deploy-vps
-        with:
-          ssh_key: ${{ secrets.VPS_SSH_KEY }}
-          host: ${{ secrets.VPS_HOST }}
-          user: ${{ secrets.VPS_USER }}
-          app_path: ${{ vars.VPS_APP_PATH }}
-          compose_file: docker-compose.prod.yml
-          health_container: ms-minha-automacao-web
-
-  # Conta ao meulog qual versão subiu. Sem o secret, sai em silêncio.
-  avisa-meulog:
-    needs: deploy-prod
-    if: github.ref_name == 'master'
-    runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
-    steps:
-      - name: POST /api/v1/deploys
-        env:
-          MEULOG_TOKEN: ${{ secrets.MEULOG_API_TOKEN }}
-        run: |
-          if [ -z "$MEULOG_TOKEN" ]; then echo "sem MEULOG_API_TOKEN; nada a avisar"; exit 0; fi
-          corpo=$(jq -n --arg v "$GITHUB_SHA" --arg a "$GITHUB_ACTOR" \
-            --arg u "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA" \
-            '{version: $v, environment: "prod", commit: $v, author: $a, url: $u}')
-          curl -fsS -X POST "https://meulog.minhasuite.com/minhasuite/api/v1/deploys" \
-            -H "Authorization: Bearer $MEULOG_TOKEN" -H "Content-Type: application/json" -d "$corpo" \
-            || echo "meulog não registrou o deploy; a produção está no ar de qualquer forma"

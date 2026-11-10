@@ -54,11 +54,9 @@ Android só emite token para um `serverClientId` do próprio projeto.
    Publique em produção, porque em "teste" só os testadores entram.
 2. **Web** `minha-automacao-web` (tipo "Aplicativo da Web"):
    - Origens JavaScript autorizadas:
-     - `https://minhaautomacao.minhasuite.com` (VPS de demonstração)
      - `https://casa-automacao.minhasuite.com` (instalação local do Dell, acesso externo)
      - `http://localhost:3000` (desenvolvimento, opcional)
    - URIs de redirecionamento (Drive/Agenda, não o login):
-     `https://minhaautomacao.minhasuite.com/integracoes/oauth/retorno` e
      `https://casa-automacao.minhasuite.com/integracoes/oauth/retorno`.
    - O ID vai em `GOOGLE_CLIENT_ID` e o segredo em `GOOGLE_CLIENT_SECRET`.
 3. **Android** `minha-automacao-android-upload`: pacote
