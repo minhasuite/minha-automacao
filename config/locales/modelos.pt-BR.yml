@@ -1,0 +1,115 @@
+# Modelos de card (P1.3), predefinições como dado (P2.2), exportar (P2.3), estilos de card (ideia 19)
+# e biblioteca de painéis prontos (ideia 20) da proposta de personalização.
+pt-BR:
+  dashboards:
+    templates:
+      title: Modelos de card
+      subtitle: "Cards declarativos de %{site}: desenho, espaços e entradas, sem código."
+      new: Novo modelo
+      editing: "Modelo %{name}"
+      builtin: Embutido
+      from_package: De pacote
+      edit: Editar
+      duplicate: Duplicar
+      export: Exportar como pacote
+      remove: Remover
+      remove_confirm: "Remover o modelo %{name}? Os cards que usam ele mostram que o modelo sumiu."
+      pick: Modelo
+      manage: Criar e editar modelos de card
+      missing: "O modelo de card \"%{key}\" não existe mais."
+      missing_vars: "Falta escolher: %{vars}"
+      name: Nome
+      key: Chave
+      description: Descrição
+      layout: Desenho
+      layout_hint: Os desenhos que existem no web e no app (componentes-ui).
+      layouts:
+        mosaic: Bloco com foto (mosaico)
+        tile: Tile
+        row: Linha
+        chip: Pílula
+        stat: Indicador
+      params: Entradas
+      params_hint: "O que quem usa o modelo escolhe no card (vars). Nos espaços: {{ vars.<chave> }}; área e ponto também têm .name, .text, .value."
+      param_key: Chave
+      param_label: Rótulo
+      param_kind: Tipo
+      param_required: Obrigatória
+      kinds:
+        area: Área
+        point: Ponto
+        text: Texto
+        number: Número
+      slots: Espaços
+      slots_hint: "Texto = Liquid. Começando com { ou [ = JSON: consulta e conta ({\"query\": …, \"aggregate\": \"count\"}), regras ([{\"when\": …, \"value\": …}]), itens ou a ação do toque."
+      slot_names:
+        title: Título
+        subtitle: Subtítulo
+        icon: Ícone
+        image: Imagem
+        value: Valor
+        facts: Itens
+        tone: Tom
+        tap: Toque
+      slot_hints:
+        title: "ex.: {{ vars.area.name }}"
+        subtitle: legenda (no bloco, aparece sem itens)
+        icon: "nome do ícone ou mdi:nome"
+        image: "endereço https:// ou /…"
+        value: "ex.: {{ vars.ponto.text }}"
+        facts: "itens do cartão (como em Padrões) ou {\"from\": \"area_defaults\", \"scope\": {\"area\": \"{{ vars.area }}\"}}"
+        tone: "ok, warn, danger, info ou regras"
+        tap: "{\"action\": \"navigate\", \"navigation_path\": \"…\"} (comando só pelos gestos do painel)"
+      sample: Exemplo para a prévia
+      sample_hint: As entradas que a prévia usa agora (não ficam gravadas).
+      save: Salvar modelo
+      preview: Prévia ao vivo
+      preview_hint: A prévia muda enquanto você edita.
+      preview_errors: O modelo ainda tem problemas
+      flash:
+        saved: "Modelo %{name} salvo."
+        removed: "Modelo %{name} removido."
+        duplicated: "Cópia criada: %{name}. Edite os espaços à vontade."
+      errors:
+        object: o modelo precisa ser um objeto.
+        key: "key precisa ter de 2 a 40 letras minúsculas, números, - ou _."
+        name: o modelo precisa de um nome.
+        layout: "layout precisa ser um destes: %{layouts}."
+        params: "params precisa ser uma lista de até %{max} entradas."
+        param: "entrada %{n}: key precisa começar com letra (minúsculas, números e _) e não repetir."
+        param_kind: "entrada %{n}: kind precisa ser %{kinds}."
+        slots: slots precisa ser um objeto.
+        slot_unknown: "espaço desconhecido (use %{slots})."
+        var_unknown: "marcador de entrada que não existe: %{vars}."
+        text: "%{slot}: texto de até %{max} caracteres."
+        tone: "%{slot}: o tom precisa ser %{tones}."
+        rules: "%{slot}: regras são uma lista de 1 a %{max} objetos."
+        rule_value: "%{slot}: a regra %{n} precisa de value (texto)."
+        slot_kind: "%{slot}: use texto, consulta ou regras."
+        liquid: "%{slot}: Liquid inválido: %{error}"
+        facts: "facts precisa ser a lista de itens ou {items|from, scope}."
+        tap: "tap precisa ser uma ação (action e os campos dela)."
+        json: "%{slot}: o JSON não está bem formado."
+    card_styles:
+      title: Estilo dos cards
+      hint: Um clique aplica a todo o painel (vira versão nova).
+      none: Normal
+      applied: "Estilo dos cards: %{name}."
+      unknown: "card_style precisa ser um destes: %{keys}."
+    export:
+      button: Exportar como pacote
+      description: "Painel %{name} exportado do Minha Automação; os pontos e as áreas viram entradas."
+    presets:
+      library: Biblioteca
+      optional: opcional
+      required: "Escolha: %{fields}."
+      import_title: Importar pacote de painel ou modelo
+      import_hint: O arquivo de "Exportar como pacote". Depois, você escolhe os seus pontos e áreas.
+      import_file_label: Arquivo (.json ou .yml)
+      import: Importar
+      import_file: Envie o arquivo do pacote (até 512 KB).
+      errors:
+        fields: "fields precisa ser uma lista de até %{max} campos."
+        field: "campo %{n}: key (letra, minúsculas, números e _), sem repetir, e kind %{kinds}."
+        definition: definition precisa ser o painel (objeto).
+        unknown: "marcador de campo que não existe: %{fields}."

@@ -1,0 +1,16 @@
+# Galeria de estilos de card (ideia 19). Estilo novo = um YAML aqui, sem código:
+# `web`: tokens do componentes-ui (só os de `Dashboards::CardStyles::TOKENS`);
+# `app`: o que o app aplica (`density` do SsDensity: compact/standard/comfortable;
+# `glass`, `flat`, `photo`: superfície). Rótulos nos três idiomas.
+key: compacto
+position: 1
+icon: view-grid
+label: { pt-BR: Compacto, en: Compact, es: Compacto }
+description: { pt-BR: Cards baixos e juntos, para caber mais na tela., en: Short cards close together to fit more on screen., es: Tarjetas bajas y juntas para que quepa más. }
+web:
+  --ss-card-pad: 12px
+  --ss-gap: 10px
+  --ss-radius-card: 14px
+  --r-card: 14px
+app:
+  density: compact

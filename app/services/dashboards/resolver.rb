@@ -28,7 +28,8 @@ module Dashboards
       end
       { "id" => dashboard.id, "site_id" => @site.id, "name" => dashboard.name, "kind" => dashboard.kind, "auto" => dashboard.auto,
         "version" => dashboard.version, "schema_version" => @definition["schema_version"], "role" => role,
-        "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload }.merge(@definition.slice("theme"))
+        "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload }
+        .merge(@definition.slice("theme", "card_style")).merge(CardStyles.now(@definition["card_style"]))
     end
 
     # Um widget só (o quadro que o tempo real recarrega). nil = não existe ou o papel não vê.
@@ -67,6 +68,10 @@ module Dashboards
     end
 
     def sort(list, key) = (@point_query ||= Points::Query.new(@site, points: points)).sort(list, key)
+
+    # P1.3 (modelos de card): a condição do `visible_if`/`style_if` agora, e os pontos que ela cita.
+    def condition?(cond) = condition_ok?(cond, {})
+    def condition_refs(cond) = visibility_refs(cond)
 
     # Põe o ponto no `points` do JSON (o que o widget desenha).
     def use(p)

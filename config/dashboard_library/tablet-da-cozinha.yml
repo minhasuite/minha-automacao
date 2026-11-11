@@ -1,0 +1,36 @@
+format: 1
+key: tablet-da-cozinha
+name: Tablet da cozinha
+version: 1.0.0
+description: Painel de parede para a cozinha.
+items:
+  - type: preset
+    key: tablet-da-cozinha
+    name: { pt-BR: Tablet da cozinha, en: Kitchen tablet, es: Tablet de la cocina }
+    icon: clock
+    description: { pt-BR: "Relógio grande, clima, a luz da bancada, a lista de compras e a câmera da porta, sem o topo (modo parede).", en: "Big clock, weather, the counter light, the shopping list and the door camera, without the header (wall mode).", es: "Reloj grande, clima, la luz de la encimera, la lista de compras y la cámara de la puerta, sin el encabezado (modo pared)." }
+    fields:
+      - { key: cozinha, kind: area, required: true, label: { pt-BR: Cozinha, en: Kitchen, es: Cocina } }
+      - { key: luz, kind: point, filter: { capability: "onoff,dimmer" }, label: { pt-BR: Luz da bancada, en: Counter light, es: Luz de la encimera } }
+      - { key: clima, kind: point, filter: { capability: weather }, label: { pt-BR: Clima, en: Weather, es: Clima } }
+      - { key: lista, kind: point, filter: { capability: todo }, label: { pt-BR: Lista de compras, en: Shopping list, es: Lista de compras } }
+      - { key: camera, kind: point, filter: { capability: stream }, label: { pt-BR: Câmera da porta, en: Door camera, es: Cámara de la puerta } }
+    definition:
+      schema_version: 1
+      card_style: compacto
+      views:
+        - id: cozinha
+          title: Cozinha
+          icon: home
+          hero: { hide: true }
+          sections:
+            - id: tc-topo
+              widgets:
+                - { id: tc-relogio, type: clock, size: large, show_date: true, span: { mobile: 12, tablet: 6, desktop: 6 } }
+                - { id: tc-clima, type: weather, bind: "{{ fields.clima }}", span: { mobile: 12, tablet: 6, desktop: 6 } }
+            - id: tc-casa
+              widgets:
+                - { id: tc-area, type: template, template: area, vars: { area: "{{ fields.cozinha }}" }, span: { mobile: 12, tablet: 6, desktop: 4 } }
+                - { id: tc-luz, type: tile, bind: "{{ fields.luz }}", span: { mobile: 6, tablet: 3, desktop: 4 } }
+                - { id: tc-lista, type: todo, bind: "{{ fields.lista }}", span: { mobile: 12, tablet: 6, desktop: 4 } }
+                - { id: tc-camera, type: camera, bind: "{{ fields.camera }}", span: { mobile: 12, tablet: 12, desktop: 8 } }

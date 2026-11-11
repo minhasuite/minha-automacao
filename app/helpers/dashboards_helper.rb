@@ -106,6 +106,8 @@ module DashboardsHelper
   WIDGET_TONES = { "amber" => :heat, "green" => :success, "red" => :danger, "blue" => :info,
                    "ok" => :success, "warn" => :heat, "danger" => :danger, "info" => :info }.freeze
   # Tom do selo do card (style_if) → classe do .ss-badge da gem.
+  # Tom do modelo de card (P1.3) → tom da linha da gem.
+  TEMPLATE_TONES = { "ok" => :success, "warn" => :warn, "danger" => :danger, "info" => :info }.freeze
   FLAG_TONES = { "ok" => "ss-badge-success", "warn" => "ss-badge-warn", "danger" => "ss-badge-danger", "info" => "ss-badge-accent" }.freeze
   def dw_tone(w, p, glow: nil)
     return WIDGET_TONES[w["color"]] if w["color"].present?

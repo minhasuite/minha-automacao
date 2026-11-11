@@ -13,6 +13,8 @@
         <% if fd.kind == :point %>
           <% list = opts.(fd) %>
           <%= f.select fd.key, list, { include_blank: list.any? ? t("dashboards.presets.none") : t("dashboards.presets.no_point"), selected: @form[fd.key] }, class: "ss-input" %>
+        <% elsif fd.kind == :area %>
+          <%= f.select fd.key, @site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, { include_blank: t("dashboards.presets.none"), selected: @form[fd.key] }, class: "ss-input" %>
         <% elsif fd.kind == :points %>
           <%= f.select fd.key, opts.(fd), { selected: Array(@form[fd.key]) }, multiple: true, size: 6, class: "ss-input" %>
         <% else %>
@@ -21,7 +23,7 @@
       </div>
     <% end %>
   </div>
-  <p class="text-sm text-muted mt-4"><%= t("dashboards.presets.tariff_html") %></p>
+  <% if @kind.fields.any? { |fd| fd.key == "tariff" } %><p class="text-sm text-muted mt-4"><%= t("dashboards.presets.tariff_html") %></p><% end %>
   <div class="flex flex-wrap gap-2 mt-5"><button class="ss-btn ss-btn-primary"><%= icon("check", "size-4") %><%= t("dashboards.create") %></button>
     <%= link_to t("dashboards.cancel"), site_dashboard_presets_path(@site), class: "ss-btn ss-btn-ghost" %></div>
 <% end %>

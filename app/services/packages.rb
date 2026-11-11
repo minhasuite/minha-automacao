@@ -21,7 +21,7 @@ module Packages
   VERSION = /\A\d+(\.\d+){0,3}([-+.][0-9A-Za-z.]+)?\z/
   FILES = %w[minha-automacao.json minha-automacao.yml minha-automacao.yaml].freeze
   SOURCES = %w[GithubRepo GitlabRepo ManifestUrl].freeze
-  ITEMS = %w[DeviceMapItem BlueprintItem DashboardItem HelperItem CardItem PanelItem].freeze
+  ITEMS = %w[DeviceMapItem BlueprintItem DashboardItem HelperItem CardItem PanelItem CardTemplateItem PresetItem].freeze
 
   module_function
 
@@ -94,6 +94,9 @@ module Packages
     gone = Array(package&.installed).reject { |r| items.any? { |i| i["type"] == r["type"] && i["key"] == r["key"] } }
     plan + gone.map { |r| { "type" => r["type"], "type_label" => item_type(r["type"])&.label, "key" => r["key"], "label" => r["key"], "action" => "remove" } }
   end
+
+  # P2.3: o manifesto veio de um arquivo (exportado de outro painel), não de uma fonte.
+  def local?(url) = !url.to_s.start_with?("https://")
 
   # Instala ou atualiza (mesma key no local). Tudo ou nada.
   def install!(site, manifest, url)
@@ -322,6 +325,51 @@ module Packages
             "pt-BR" => { url: "url precisa ser https e terminar em .js.", element: "element precisa ser o nome do elemento do painel (ex.: meu-painel)." }
 
       def self.path(ref) = ref["panel_path"]
+    end
+  end
+end
+
+module Packages
+  module Items
+    # P1.3: modelo de card declarativo (`Dashboards::CardTemplates`). A chave do
+    # item é a chave do modelo no local; validado pelo próprio registro.
+    class CardTemplateItem < Base
+      describe key: "card_template", label: "Modelo de card"
+      texts en: { label: "Card template", taken: "there is already a card template \"%{key}\" that is not from this package." },
+            es: { label: "Plantilla de tarjeta", taken: "ya existe una plantilla de tarjeta \"%{key}\" que no es de este paquete." },
+            "pt-BR" => { taken: "já existe um modelo de card \"%{key}\" que não é deste pacote." }
+
+      def self.attrs(item)
+        { key: item["key"], name: Dashboards::CardTemplates.loc(item["name"]).first(80), description: Dashboards::CardTemplates.loc(item["description"]).presence,
+          layout: item["layout"], slots: item["slots"].is_a?(Hash) ? item["slots"] : {}, params: Array(item["params"]) }
+      end
+
+      def self.build(site, item, record = nil) = (record || site.card_templates.new).tap { |r| r.assign_attributes(attrs(item)) }
+
+      def self.errors(site, item) = build(site, item, site.card_templates.find_by(key: item["key"])).tap(&:valid?).errors.full_messages
+
+      def self.install!(site, item, package, old_id)
+        record = (old_id && site.card_templates.find_by(id: old_id)) || site.card_templates.find_by(key: item["key"])
+        raise Error, text(:taken, key: item["key"]) if record && record.id != old_id && record.source != "package:#{package.key}"
+
+        template = build(site, item, record).tap { |t| t.source = "package:#{package.key}" }
+        template.save!
+        template.id
+      end
+
+      def self.uninstall!(site, ref) = site.card_templates.find_by(id: ref["id"])&.destroy!
+      def self.path(ref) = routes.edit_card_template_path(ref["id"])
+    end
+
+    # P2.2: predefinição de painel como dado (`Dashboards::Presets::DataPreset`):
+    # não cria registro; aparece em Painéis prontos, onde a pessoa escolhe os
+    # pontos (as entradas) e cria o painel.
+    class PresetItem < Base
+      describe key: "preset", label: "Painel pronto"
+      texts en: { label: "Ready-made dashboard" }, es: { label: "Panel listo" }
+
+      def self.title(item) = Dashboards::CardTemplates.loc(item["name"]).presence || item["key"]
+      def self.errors(_site, item) = Dashboards::Presets::DataPreset.errors(item)
     end
   end
 end

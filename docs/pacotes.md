@@ -109,3 +109,17 @@ Card de terceiros em JavaScript (como os "custom cards" do HACS):
   pontos escolhidos (entity_id = chave do ponto), como no HA; cards que só
   mostram estado funcionam sem mudança. Comandar a partir do card não existe
   (de propósito: o código de terceiros não fala com a casa).
+
+## Modelo de card (`card_template`) e painel pronto (`preset`) (11/2026)
+
+- `card_template`: um modelo de card (`docs/dashboards.md`, "Modelos de card"):
+  `key` (a chave do modelo no local), `name`, `description`, `layout`, `params`,
+  `slots`. Validado pelo `Dashboards::CardTemplates`; não sobrescreve modelo do
+  local com a mesma chave que não veio deste pacote.
+- `preset`: painel pronto como dado: `name`, `icon`, `description`, `fields`
+  (entradas: `key`, `label`, `kind` point/points/area/number/text, `filter`,
+  `required`, `default`) e `definition` com `{{ fields.<campo> }}`. Validado
+  pelo `Schema` depois de trocar os marcadores por valores de exemplo. Não cria
+  registro: aparece em Painéis prontos, onde a pessoa escolhe os pontos.
+- "Exportar como pacote" (painel ou modelo) gera esse manifesto; "Importar"
+  instala o arquivo (fonte `arquivo:<nome>`) pelo mesmo `Packages.install!`.

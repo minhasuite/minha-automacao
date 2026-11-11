@@ -3,6 +3,7 @@
 <% points = @resolved["points"] %>
 <% view = @view %>
 <% @body_theme = (th = Dashboards::Themes.resolve(@resolved, view, @site)) && dw_theme_attrs(th) %>
+<% @body_theme = dw_card_style_attrs(@body_theme, @resolved["card_style"]) %>
 <% if th && th["dark"] %><%= render "web/dashboards/force_dark" %><% end %>
 <% if live %><%= turbo_stream_from @site, :points, channel: PointsChannel %><% end %>
 

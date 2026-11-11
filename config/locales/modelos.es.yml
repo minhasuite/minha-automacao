@@ -1,0 +1,113 @@
+es:
+  dashboards:
+    templates:
+      title: Plantillas de tarjeta
+      subtitle: "Tarjetas declarativas de %{site}: diseño, espacios y entradas, sin código."
+      new: Nueva plantilla
+      editing: "Plantilla %{name}"
+      builtin: Incluida
+      from_package: De paquete
+      edit: Editar
+      duplicate: Duplicar
+      export: Exportar como paquete
+      remove: Eliminar
+      remove_confirm: "¿Eliminar la plantilla %{name}? Las tarjetas que la usan mostrarán que ya no existe."
+      pick: Plantilla
+      manage: Crear y editar plantillas de tarjeta
+      missing: "La plantilla de tarjeta \"%{key}\" ya no existe."
+      missing_vars: "Falta elegir: %{vars}"
+      name: Nombre
+      key: Clave
+      description: Descripción
+      layout: Diseño
+      layout_hint: Los diseños que existen en la web y en la app (componentes-ui).
+      layouts:
+        mosaic: Bloque con foto (mosaico)
+        tile: Tile
+        row: Línea
+        chip: Píldora
+        stat: Indicador
+      params: Entradas
+      params_hint: "Lo que elige quien usa la plantilla en la tarjeta (vars). En los espacios: {{ vars.<clave> }}; área y punto también tienen .name, .text, .value."
+      param_key: Clave
+      param_label: Etiqueta
+      param_kind: Tipo
+      param_required: Obligatoria
+      kinds:
+        area: Área
+        point: Punto
+        text: Texto
+        number: Número
+      slots: Espacios
+      slots_hint: "Texto = Liquid. Empezando con { o [ = JSON: consulta y cuenta ({\"query\": …, \"aggregate\": \"count\"}), reglas ([{\"when\": …, \"value\": …}]), ítems o la acción del toque."
+      slot_names:
+        title: Título
+        subtitle: Subtítulo
+        icon: Icono
+        image: Imagen
+        value: Valor
+        facts: Ítems
+        tone: Tono
+        tap: Toque
+      slot_hints:
+        title: "ej.: {{ vars.area.name }}"
+        subtitle: leyenda (en el bloque, aparece sin ítems)
+        icon: "nombre del icono o mdi:nombre"
+        image: "dirección https:// o /…"
+        value: "ej.: {{ vars.ponto.text }}"
+        facts: "ítems de la tarjeta (como en Predeterminados) o {\"from\": \"area_defaults\", \"scope\": {\"area\": \"{{ vars.area }}\"}}"
+        tone: "ok, warn, danger, info o reglas"
+        tap: "{\"action\": \"navigate\", \"navigation_path\": \"…\"} (comandos solo por los gestos del panel)"
+      sample: Ejemplo para la vista previa
+      sample_hint: Las entradas que usa la vista previa ahora (no se guardan).
+      save: Guardar plantilla
+      preview: Vista previa en vivo
+      preview_hint: La vista previa cambia mientras editas.
+      preview_errors: La plantilla todavía tiene problemas
+      flash:
+        saved: "Plantilla %{name} guardada."
+        removed: "Plantilla %{name} eliminada."
+        duplicated: "Copia creada: %{name}. Edita los espacios a gusto."
+      errors:
+        object: la plantilla debe ser un objeto.
+        key: "key debe tener de 2 a 40 letras minúsculas, números, - o _."
+        name: la plantilla necesita un nombre.
+        layout: "layout debe ser uno de: %{layouts}."
+        params: "params debe ser una lista de hasta %{max} entradas."
+        param: "entrada %{n}: key debe empezar con letra (minúsculas, números y _) y no repetirse."
+        param_kind: "entrada %{n}: kind debe ser %{kinds}."
+        slots: slots debe ser un objeto.
+        slot_unknown: "espacio desconocido (usa %{slots})."
+        var_unknown: "marcador de entrada que no existe: %{vars}."
+        text: "%{slot}: texto de hasta %{max} caracteres."
+        tone: "%{slot}: el tono debe ser %{tones}."
+        rules: "%{slot}: las reglas son una lista de 1 a %{max} objetos."
+        rule_value: "%{slot}: la regla %{n} necesita value (texto)."
+        slot_kind: "%{slot}: usa texto, consulta o reglas."
+        liquid: "%{slot}: Liquid no válido: %{error}"
+        facts: "facts debe ser la lista de ítems o {items|from, scope}."
+        tap: "tap debe ser una acción (action y sus campos)."
+        json: "%{slot}: el JSON está mal formado."
+    card_styles:
+      title: Estilo de las tarjetas
+      hint: Un clic lo aplica a todo el panel (se vuelve una versión nueva).
+      none: Normal
+      applied: "Estilo de las tarjetas: %{name}."
+      unknown: "card_style debe ser uno de: %{keys}."
+    export:
+      button: Exportar como paquete
+      description: "Panel %{name} exportado de Minha Automação; los puntos y las áreas se vuelven entradas."
+    presets:
+      library: Biblioteca
+      optional: opcional
+      required: "Elige: %{fields}."
+      import_title: Importar paquete de panel o plantilla
+      import_hint: El archivo de "Exportar como paquete". Después eliges tus puntos y áreas.
+      import_file_label: Archivo (.json o .yml)
+      import: Importar
+      import_file: Envía el archivo del paquete (hasta 512 KB).
+      errors:
+        fields: "fields debe ser una lista de hasta %{max} campos."
+        field: "campo %{n}: key (letra, minúsculas, números y _), sin repetir, y kind %{kinds}."
+        definition: definition debe ser el panel (objeto).
+        unknown: "marcador de campo que no existe: %{fields}."

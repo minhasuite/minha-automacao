@@ -695,3 +695,95 @@ visão e no widget). O Lint olha pela chave, nunca pelo tipo: ponto citado em
 style_if, gestos) que não existe, está desativado, é de aparelho removido ou
 desativado, ou sem leitura há `Lint::SILENT_DAYS` (3) dias; `query` que hoje não
 traz ponto; `area`/`scenes` que sumiram.
+## Modelos de card, painéis prontos como dado e estilos (11/2026, P1.3, P2.2, P2.3, ideias 19 e 20)
+
+### Modelos de card (`Dashboards::CardTemplates`, tabela `card_templates`)
+
+Card novo sem classe Ruby, partial nem widget Dart. O widget
+`{ "type": "template", "template": "<chave>", "vars": { ... } }` é resolvido
+inteiro no servidor (`TemplateWidget`) para `data` = `{layout, title,
+subtitle, icon, image, value, facts[], tone, tap, variant, version}` (mais
+`missing_vars` sem entrada obrigatória e `missing` se o modelo sumiu). A web
+(`widgets/_template` + um partial por desenho em `template_layouts/`) e o app
+(`TemplateCard`) só desenham.
+
+- **Modelo** = `key`, `name`, `description`, `layout`, `params`, `slots`,
+  `version` (sobe ao mudar desenho, espaços ou entradas), `source`
+  (`package:<chave>`/`library`). Por local (multi-tenant). Embutidos em
+  `config/card_templates/*.yml` (`area` = o cartão de área, `ponto`,
+  `contagem`); o do local com a mesma chave vale por cima. Embutido não se
+  edita: **Duplicar**.
+- **`layout`**: só os desenhos que existem no componentes-ui e no app:
+  `mosaic` (`Ss::MosaicTileComponent`/`SsMosaicTile`), `tile`
+  (`DeviceTileComponent`/`SsDeviceTile`), `row` (`ListItemComponent`/
+  `SsListItem`), `chip` (`.ss-badge`/`SsBadge`), `stat`
+  (`KpiCardComponent`/`SsKpiCard`). Desenho novo nasce primeiro no
+  componentes-ui (ERB + Flutter), depois entra em `LAYOUTS`, num partial e no app.
+- **`params`** (até 8): `{key, label, kind: area|point|text|number, required}`.
+  No Liquid, `vars.<key>`; área tem `.name .icon .background .points
+  .caption .link`, ponto tem o mesmo do `points["k"]` (`.name .text .value
+  .quality .unit .device`) mais `.id`.
+- **Espaços de texto** (`title`, `subtitle`, `icon`, `image`, `value`):
+  texto Liquid (sandbox `Automations::Context`, 300 caracteres); consulta +
+  conta (`{query, aggregate, format, label}`, o item do `Dashboards::Facts`);
+  ou regras `[{when, value}]` (a condição do `visible_if`, a primeira que bate).
+- **`facts`**: lista de itens do `Facts`, ou `{items|from, scope}`
+  (`from: "area_defaults"` = o padrão do local; `scope` junta filtros, ex.
+  `{"area": "{{ vars.area }}"}`). Tocar num item abre a lista (`drill`).
+- **`tone`**: `ok|warn|danger|info`, Liquid que dá um deles, regras, ou consulta
+  com `tone` (vale quando o número não é zero).
+- **`tap`**: só uma ação do `Dashboards::Actions` (`navigate`, `more_info`,
+  `url`, `toggle`/`command` com papel x risco do ponto...). O widget nunca comanda direto.
+- Nos espaços de dado (consultas, regras, tap), `{{ vars.x }}` vira o id
+  escolhido e `{{ vars.x.y }}` o campo (`Dashboards::Placeholders`).
+
+Tela: Local → Painéis → Prontos → **Modelos de card**
+(`/locais/:id/modelos-de-card`, técnico ou dono): lista, duplicar, editar com
+**prévia ao vivo** (o formulário envia para `previa` pelo `ss-autosubmit` e só
+o quadro da prévia troca; Salvar troca o destino), exportar e remover. No
+editor do painel, o tipo "Modelo de card" escolhe o modelo e as entradas
+(`widget_forms/_template`).
+
+### Predefinições como dado (P2.2) e biblioteca (ideia 20)
+
+`Dashboards::Presets.all(site)` = as classes (`EnergyPreset` continua) + a
+**biblioteca** (`config/dashboard_library/*.yml`, cada arquivo um manifesto de
+pacote só com dados: casa minimalista, tablet da cozinha, segurança, saúde da
+casa) + os itens `preset` dos pacotes instalados (chave `<pacote>--<item>`).
+O item (`DataPreset`) tem `fields` (`kind` `point|points|area|number|text`,
+`filter` {capability, device_class, unit, numeric}, `required`, `default`) e a
+`definition` com `{{ fields.<campo> }}`. Montar = trocar os marcadores e
+validar pelo `Schema`; widget cujos campos ficaram todos vazios sai (campo
+opcional), seção vazia sai. Os modelos de card do mesmo manifesto da biblioteca
+entram no local ao criar.
+
+### Exportar e importar (P2.3, `Dashboards::Export`)
+
+"Exportar como pacote" no editor do painel (`/paineis/:id/exportar`) e no
+modelo (`/locais/:id/modelos-de-card/exportar?key=`) baixa o manifesto. Ids de
+ponto e de área viram entradas (como no blueprint): no painel, `fields` do item
+`preset` (e os modelos do local que ele usa vão como `card_template`); no
+modelo, `params` novos. Ponto citado pela chave dentro de texto Liquid fica como
+está. **Importar** (em Painéis prontos e em Modelos de card) envia o arquivo,
+instala pelo `Packages.install!` (fonte `arquivo:<nome>`; "procurar versão
+nova" não se aplica) e abre o formulário das entradas.
+
+### Estilos de card (ideia 19, `Dashboards::CardStyles`)
+
+`"card_style": "<chave>"` no painel. Cada estilo é um YAML em
+`config/card_styles/` (compacto, vidro, foto, minimalista): `web` = tokens do
+componentes-ui (só os de `CardStyles::TOKENS`: `--ss-card-bg/-border/-filter/
+-pad`, `--ss-radius-card`, `--r-card`, `--shadow-card`, `--ss-gap`), postos no
+`<body>`; `app` = `density` (o `SsDensity`) e as marcas `glass`/`flat`/`photo`.
+O painel resolvido traz `card_style_now`. No editor, a galeria "Estilo dos
+cards" aplica em um clique (`PATCH /paineis/:id/estilo-dos-cards`: versão nova
+publicada, e o rascunho também).
+
+### Pontos de extensão
+
+Modelo novo = dado (tabela, pacote ou `config/card_templates`); fonte de itens
+por nome = `CardTemplates::FACT_SOURCES`; desenho novo = `LAYOUTS` + partial em
+`template_layouts/` + o app (`TemplateCard`), depois do componentes-ui; estilo
+novo = um YAML; painel pronto novo = um manifesto na biblioteca ou um item
+`preset` de pacote; tipo de item de pacote = `Packages::ITEMS`
+(`CardTemplateItem`, `PresetItem`).

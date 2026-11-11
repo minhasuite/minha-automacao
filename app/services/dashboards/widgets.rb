@@ -6,7 +6,7 @@ module Dashboards
   # Resolver, o editor, o painel automático e a API perguntam ao plugin; os
   # tipos da F5 também são plugins. A ordem é a do seletor de tipo no editor.
   module Widgets
-    PLUGINS = %w[TileWidget GroupWidget StatWidget GaugeWidget ChartWidget QueryListWidget AreaCardWidget SceneBarWidget
+    PLUGINS = %w[TileWidget GroupWidget StatWidget GaugeWidget ChartWidget QueryListWidget AreaCardWidget TemplateWidget SceneBarWidget
                  AlertsWidget CameraWidget VacuumWidget EnergyWidget HeadingWidget MarkdownWidget WeatherWidget MediaWidget RemoteWidget
                  PeopleWidget AlarmWidget FloorplanWidget EnergyFlowWidget EnergyBreakdownWidget EnergyCompareWidget MapWidget CustomCardWidget
                  ThermostatWidget HumidifierWidget LightWidget ButtonWidget CalendarWidget TodoWidget LogbookWidget ImageWidget IframeWidget

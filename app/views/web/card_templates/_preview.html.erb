@@ -1,0 +1,13 @@
+<%# locals: (widget:, errors:, points:, dashboard:) -%>
+<%# Prévia ao vivo do editor de modelo: o card resolvido agora (com as entradas de exemplo), no mesmo partial do painel. %>
+<turbo-frame id="tpl_preview">
+  <% if errors.any? %>
+    <%= render(Ss::CalloutComponent.new(tone: :danger, title: t("dashboards.templates.preview_errors"))) { tag.ul(safe_join(errors.first(6).map { |e| tag.li(e) }), class: "list-disc pl-5 text-sm") } %>
+  <% elsif widget %>
+    <div class="dw-w" style="min-height: 9rem">
+      <%= render "web/dashboards/widgets/template", w: widget, points: points, dashboard: dashboard, live: false %>
+    </div>
+  <% else %>
+    <%= render Ss::NoteComponent.new(text: t("dashboards.templates.preview_hint")) %>
+  <% end %>
+</turbo-frame>

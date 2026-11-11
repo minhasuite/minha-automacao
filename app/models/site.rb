@@ -24,6 +24,7 @@ class Site < ApplicationRecord
   has_many :integrations, dependent: nil
   has_many :datasets, dependent: nil
   has_many :packages, dependent: nil
+  has_many :card_templates, dependent: nil # P1.3 (cascade no banco)
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }

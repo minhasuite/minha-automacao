@@ -1,0 +1,2 @@
+<%# locals: (d:, w:, title:, ico:, tone:, live:) -%>
+<%= render Ss::DeviceTileComponent.new(name: title, state: d["value"] || d["subtitle"], on: tone.present?, icon: ico.to_s, tone: DashboardsHelper::WIDGET_TONES[tone], css: "h-full") %>

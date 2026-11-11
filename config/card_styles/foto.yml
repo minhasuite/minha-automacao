@@ -1,0 +1,13 @@
+key: foto
+position: 3
+icon: photograph
+label: { pt-BR: Foto, en: Photo, es: Foto }
+description: { pt-BR: Cards grandes e arredondados que deixam a foto da área aparecer., en: Large rounded cards that let the area photo show., es: Tarjetas grandes y redondeadas que dejan ver la foto del área. }
+web:
+  --ss-card-pad: 20px
+  --ss-radius-card: 26px
+  --r-card: 26px
+  --ss-card-border: transparent
+app:
+  density: comfortable
+  photo: true

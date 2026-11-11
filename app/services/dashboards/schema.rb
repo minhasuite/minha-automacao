@@ -45,6 +45,7 @@ module Dashboards
 
       e.concat(Themes.errors(defn["theme"], msg(:at_dashboard)))
       e.concat(Arrange.errors(defn["arrange"]).map { |m| "#{msg(:at_dashboard)}: #{m}" }) if defn.key?("arrange")
+      e.concat(CardStyles.errors(defn["card_style"])) # ideia 19: estilo dos cards do painel
       ids = []
       paths = []
       boxes = 0 # visões e seções: dividem os ids, mas não contam no limite de widgets

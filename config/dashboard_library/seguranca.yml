@@ -1,0 +1,38 @@
+format: 1
+key: seguranca
+name: Segurança
+version: 1.0.0
+description: Alarme, portas, movimento e câmeras.
+items:
+  - type: preset
+    key: seguranca
+    name: { pt-BR: Segurança, en: Security, es: Seguridad }
+    icon: shield-check
+    description: { pt-BR: "O alarme, o que está aberto agora, movimento recente, os alertas e até três câmeras. Cards de vidro.", en: "The alarm, what is open now, recent motion, the alerts and up to three cameras. Glass cards.", es: "La alarma, lo que está abierto ahora, movimiento reciente, las alertas y hasta tres cámaras. Tarjetas de vidrio." }
+    fields:
+      - { key: alarme, kind: point, label: { pt-BR: Painel de alarme, en: Alarm panel, es: Panel de alarma } }
+      - { key: camera1, kind: point, filter: { capability: stream }, label: { pt-BR: Câmera 1, en: Camera 1, es: Cámara 1 } }
+      - { key: camera2, kind: point, filter: { capability: stream }, label: { pt-BR: Câmera 2, en: Camera 2, es: Cámara 2 } }
+      - { key: camera3, kind: point, filter: { capability: stream }, label: { pt-BR: Câmera 3, en: Camera 3, es: Cámara 3 } }
+    definition:
+      schema_version: 1
+      card_style: vidro
+      views:
+        - id: seguranca
+          title: Segurança
+          icon: shield-check
+          badges:
+            - { id: sg-abertos, type: stat, label: abertos, icon: view-boards, query: { capability: [contact, gate], state: "on" }, aggregate: count }
+            - { id: sg-mov, type: stat, label: com movimento, icon: eye, query: { capability: motion, state: "on" }, aggregate: count }
+          sections:
+            - id: sg-agora
+              widgets:
+                - { id: sg-alarme, type: alarm, bind: "{{ fields.alarme }}", span: { mobile: 12, tablet: 6, desktop: 4 } }
+                - { id: sg-alertas, type: alerts, span: { mobile: 12, tablet: 6, desktop: 4 } }
+                - { id: sg-portas, type: query_list, label: Aberto agora, query: { capability: [contact, gate], state: "on" }, span: { mobile: 12, tablet: 6, desktop: 4 } }
+                - { id: sg-movimento, type: query_list, label: Movimento na última hora, query: { capability: motion, changed_min: 60 }, span: { mobile: 12, tablet: 6, desktop: 4 } }
+            - id: sg-cameras
+              widgets:
+                - { id: sg-c1, type: camera, bind: "{{ fields.camera1 }}", span: { mobile: 12, tablet: 6, desktop: 4 } }
+                - { id: sg-c2, type: camera, bind: "{{ fields.camera2 }}", span: { mobile: 12, tablet: 6, desktop: 4 } }
+                - { id: sg-c3, type: camera, bind: "{{ fields.camera3 }}", span: { mobile: 12, tablet: 6, desktop: 4 } }

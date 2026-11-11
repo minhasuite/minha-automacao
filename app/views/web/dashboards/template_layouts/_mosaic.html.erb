@@ -1,0 +1,7 @@
+<%# locals: (d:, w:, title:, ico:, tone:, live:) -%>
+<%# Pílulas = itens do Dashboards::Facts (tocar abre a lista dos pontos do item, ideia 14); sem pílula, o subtítulo. %>
+<% facts = Array(d["facts"]).map do |f|
+     { label: f["text"], icon: (icon(f["icon"], "") if f["icon"].present?), num: f["num"], tone: f["tone"]&.to_sym,
+       url: (f["url"] if live), title: (t("dashboards.drill.open", what: f["text"]) if live && f["url"]), link_data: { turbo_frame: "_top" } }.compact
+   end %>
+<%= render Ss::MosaicTileComponent.new(title: title, icon: ico, image_url: d["image"], variant: d["variant"].to_i, facts: facts.presence, caption: (d["subtitle"] if facts.empty?)) %>

@@ -1,0 +1,2 @@
+<%# locals: (d:, w:, title:, ico:, tone:, live:) -%>
+<div class="ss-card h-full"><%= render Ss::ListItemComponent.new(title: title, subtitle: d["subtitle"], value: d["value"], value_tone: DashboardsHelper::TEMPLATE_TONES[tone], icon: ico, tone: DashboardsHelper::TEMPLATE_TONES[tone]) %></div>

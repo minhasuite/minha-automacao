@@ -1,11 +1,15 @@
-<%= render "web/shared/header", title: t("dashboards.preset"), subtitle: t("dashboards.presets.subtitle"), back: site_dashboards_path(@site) %>
+<%= render "web/shared/header", title: t("dashboards.preset"), subtitle: t("dashboards.presets.subtitle"), back: site_dashboards_path(@site) do %>
+  <%= link_to site_card_templates_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("template", "size-4") %><%= t("dashboards.templates.title") %><% end %>
+<% end %>
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
   <% @presets.each_with_index do |p, i| %>
     <%= link_to site_dashboard_preset_path(@site, p.key), class: "ss-card ss-go p-5 no-underline ss-rise flex flex-col gap-3", style: "animation-delay: #{[ i, 6 ].min * 40}ms" do %>
       <span class="ss-icon-tile is-grad is-lg" style="background: var(--amber-grad)"><%= icon(p.icon, "") %></span>
       <span class="block font-bold text-ink text-lg"><%= p.title %></span>
+      <% if p.respond_to?(:origin) %><span class="ss-badge w-fit"><%= p.origin %></span><% end %>
       <span class="block text-sm text-muted"><%= p.description %></span>
       <span class="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-accent"><%= t("dashboards.presets.build") %><%= icon("chevron-right", "size-4") %></span>
     <% end %>
   <% end %>
 </div>
+<%= render "web/dashboard_presets/import", site: @site %>

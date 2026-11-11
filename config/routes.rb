@@ -82,6 +82,9 @@ Rails.application.routes.draw do
     get "busca", to: "search#index", as: :search
     # Modo tablet de parede (uiweb): ajustes deste aparelho (cookie).
     patch "quiosque", to: "dashboards#kiosk_settings", as: :kiosk
+    # P2.3 e ideia 19: exportar o painel como pacote e o estilo dos cards em um clique.
+    get "paineis/:id/exportar", to: "dashboard_exports#show", as: :export_dashboard
+    patch "paineis/:id/estilo-dos-cards", to: "dashboard_card_styles#update", as: :card_style_dashboard
     get "cameras/:id/quadro", to: "cameras#snapshot", as: :camera_snapshot
     post "cameras/:id/ao-vivo", to: "cameras#webrtc", as: :camera_webrtc
     # ondaC2 (C10): gravação, PTZ e alto-falante da câmera. Arquivo de mídia por link assinado (players da rede, sem sessão).
@@ -133,8 +136,16 @@ Rails.application.routes.draw do
       end
       # Painel pronto (Dashboards::Presets, ex.: Energia): antes de /paineis/:id.
       get "paineis/prontos", to: "dashboard_presets#index", as: :dashboard_presets
+      # P2.3: importar o pacote exportado (arquivo) e mapear as entradas; antes de /prontos/:key.
+      post "paineis/prontos/importar", to: "dashboard_presets#import", as: :dashboard_presets_import
       get "paineis/prontos/:key", to: "dashboard_presets#new", as: :dashboard_preset
       post "paineis/prontos/:key", to: "dashboard_presets#create"
+      # P1.3: modelos de card do local (editor com prévia ao vivo, duplicar o embutido, exportar).
+      resources :card_templates, path: "modelos-de-card", except: :show, path_names: { new: "novo", edit: "editar" }, shallow: true do
+        match :preview, on: :collection, path: "previa", via: %i[post patch]
+        post :duplicate, on: :collection, path: "duplicar"
+        get :export, on: :collection, path: "exportar"
+      end
       # Dashboards (F5): editor e versões só para técnico ou dono.
       resources :dashboards, path: "paineis", path_names: { new: "novo", edit: "editar" }, shallow: true do
         member do

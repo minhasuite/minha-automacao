@@ -1,0 +1,29 @@
+<%= render "web/shared/header", title: t("dashboards.templates.title"), subtitle: t("dashboards.templates.subtitle", site: @site.name), back: site_dashboards_path(@site) do %>
+  <%= link_to new_site_card_template_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("dashboards.templates.new") %><% end %>
+<% end %>
+<%# P1.3: modelos do local e embutidos (o cartão de área é um deles). Embutido não se edita: duplica. %>
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <% @templates.each do |tp| %>
+    <article class="ss-card ss-card-pad flex flex-col gap-3">
+      <div class="flex items-start gap-3">
+        <span class="ss-icon-tile"><%= icon("template", "") %></span>
+        <div class="min-w-0 flex-1">
+          <h2 class="font-bold text-ink"><%= Dashboards::CardTemplates.name(tp) %></h2>
+          <p class="text-xs text-muted num"><%= tp["key"] %> · <%= t("dashboards.templates.layouts.#{tp['layout']}") %><%= " · v#{tp['version']}" unless tp["builtin"] %></p>
+        </div>
+        <% if tp["builtin"] %><span class="ss-badge ss-badge-accent"><%= t("dashboards.templates.builtin") %></span><% elsif tp["source"].present? %><span class="ss-badge"><%= t("dashboards.templates.from_package") %></span><% end %>
+      </div>
+      <% if (desc = Dashboards::CardTemplates.loc(tp["description"])).present? %><p class="text-sm text-muted"><%= desc %></p><% end %>
+      <div class="mt-auto flex flex-wrap gap-2">
+        <% unless tp["builtin"] %><%= link_to t("dashboards.templates.edit"), edit_card_template_path(tp["id"]), class: "ss-btn ss-btn-outline ss-btn-sm" %><% end %>
+        <%= button_to duplicate_site_card_templates_path(@site), params: { key: tp["key"] }, class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("duplicate", "size-4") %><%= t("dashboards.templates.duplicate") %><% end %>
+        <%= link_to export_site_card_templates_path(@site, key: tp["key"]), class: "ss-btn ss-btn-ghost ss-btn-sm", data: { turbo: false } do %><%= icon("download", "size-4") %><%= t("dashboards.templates.export") %><% end %>
+        <% unless tp["builtin"] %>
+          <%= button_to t("dashboards.templates.remove"), card_template_path(tp["id"]), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm",
+                        form: { data: { turbo_confirm: t("dashboards.templates.remove_confirm", name: tp["name"]), turbo_confirm_tone: "danger", turbo_confirm_button: t("dashboards.templates.remove") } } %>
+        <% end %>
+      </div>
+    </article>
+  <% end %>
+</div>
+<%= render "web/dashboard_presets/import", site: @site %>
