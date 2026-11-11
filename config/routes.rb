@@ -134,6 +134,7 @@ Rails.application.routes.draw do
       resources :dashboards, path: "paineis", path_names: { new: "novo", edit: "editar" }, shallow: true do
         member do
           get "w/:widget_id", action: :widget, as: :widget
+          get "w/:widget_id/pontos", action: :widget_points, as: :widget_points
           patch :draft, path: "rascunho"
           post :publish, path: "publicar"
           post :discard, path: "descartar"
@@ -264,6 +265,9 @@ Rails.application.routes.draw do
     get "configuracoes/exportar", to: "settings#export", as: :settings_export
     post "configuracoes/zerar", to: "settings#wipe", as: :settings_wipe
     get "configuracoes/paineis", to: "settings#dashboards", as: :settings_dashboards
+    # Padrões dos painéis do local (P1.1/ideia 22): itens do cartão de área e o limite do "dado velho".
+    get "configuracoes/paineis/padroes/:site_id", to: "dashboard_defaults#edit", as: :settings_dashboard_defaults
+    patch "configuracoes/paineis/padroes/:site_id", to: "dashboard_defaults#update"
     # Produto: atualização do servidor e acesso remoto (provedores).
     post "configuracoes/sistema/atualizar", to: "settings#update_server", as: :settings_update
     post "configuracoes/sistema/atualizacao", to: "settings#update_updates", as: :settings_updates

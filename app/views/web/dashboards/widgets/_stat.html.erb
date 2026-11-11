@@ -4,4 +4,6 @@
 <% text = w["data"]["text"].to_s %>
 <% money = text.match(/\A(.+?)\s*(R\$|US\$|€|£|\$)\z/) %>
 <% text = "#{money[2]} #{money[1]}" if money %>
-<%= render Ss::KpiCardComponent.new(label: w["label"], value: text, money: money.present?, icon: icon(w["icon"].presence || "chart-bar", ""), css: "h-full") %>
+<%# Com consulta, o card todo leva à lista dos pontos que entram no número (ideia 14); `caption` = rótulo pela contagem (P1.4). %>
+<%= render Ss::KpiCardComponent.new(label: w["label"], value: text, money: money.present?, icon: icon(w["icon"].presence || "chart-bar", ""), css: "h-full",
+                                    caption: w["data"]["caption"], url: (w["data"]["drill_url"] if live), tone: DashboardsHelper::WIDGET_TONES[w.dig("style", "tone")]) %>

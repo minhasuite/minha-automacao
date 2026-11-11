@@ -12,6 +12,7 @@ PREFIX = /\b(?:dw|hx|ef|mp|mg|ob|oba|ma|vz|ap|oa|lb)-[a-z0-9-]*[a-z0-9]/
 CSS_DOMINIO = {
   "dashboards.css" => [
     /\Adw-(grid|sections|w|side|hide-(mobile|tablet|desktop))\z/, # cola da grade do painel
+    /\Adw-flags\z/, # onde ficam os selos do card (estilo condicional e "dado velho"; o selo é o .ss-badge da gem)
     /\Adw-(anim|ico-art|spinning|cover-blind|gate-(bars|open|opening|closed|unknown|[a-z]+))\z/, # arte viva do ponto
     /\Adw-vac-(run|trail|bot|dock|back)\z/, /\Adw-art-[0-5]\z/, # robô limpando, arte da área
     /\Adw-fpe?(-[a-z-]+)?\z/, /\Adw-(on|unavailable)\z/, # planta baixa (+ estado dos pinos)

@@ -1,0 +1,38 @@
+<%# locals: (facts:, prefix:, uid:, areas:, types: nil, scoped: false) -%>
+<%# Itens do cartão como consultas (P1.1): uma linha por item, com o rótulo pela contagem (zero/um/vários; %{count} =
+    o número), o ícone, a consulta (o mesmo widget_forms/_query do editor), a conta, quando aparece e o tom. Duas
+    linhas vazias a mais para itens novos; linha sem consulta some ao salvar. `scoped`: a área entra sozinha. %>
+<% rows = facts.map(&:deep_stringify_keys) + Array.new([ Dashboards::Facts::MAX - facts.size, 2 ].min.clamp(0, 2)) { {} } %>
+<% rows.each_with_index do |f, i| %>
+  <% fid = "#{uid}-f#{i}" %>
+  <% name = "#{prefix}[#{i}]" %>
+  <% legend = f["label_key"].present? ? t("dashboards.facts.labels.#{f['label_key']}.other", count: "N", default: f["id"]) : (f["id"].presence || t("dashboards.facts.new")) %>
+  <fieldset class="ss-card ss-card-pad grid gap-3 sm:grid-cols-2" <%= tag.attributes(data: { for: types }) %>>
+    <legend class="ss-label"><%= t("dashboards.facts.item", n: i + 1) %> · <%= legend %></legend>
+    <%= hidden_field_tag "#{name}[id]", f["id"], id: nil %>
+    <%= hidden_field_tag "#{name}[label_key]", f["label_key"], id: nil %>
+    <% %w[one other zero].each do |form| %>
+      <div><label class="ss-label" for="<%= fid %>-l<%= form %>"><%= t("dashboards.facts.label_#{form}") %></label>
+        <%= text_field_tag "#{name}[label][#{form}]", (f["label"].is_a?(Hash) ? f["label"][form] : f["label"]), class: "ss-input", id: "#{fid}-l#{form}", maxlength: 80,
+                           placeholder: (t("dashboards.facts.labels.#{f['label_key']}.#{form}", count: "%{count}", default: "") if f["label_key"].present?) %></div>
+    <% end %>
+    <div><label class="ss-label" for="<%= fid %>-ic"><%= t("dashboards.facts.icon") %></label>
+      <%= text_field_tag "#{name}[icon]", f["icon"], class: "ss-input", id: "#{fid}-ic", placeholder: "light-bulb, mdi:door-open" %></div>
+    <div><label class="ss-label" for="<%= fid %>-ag"><%= t("dashboards.facts.aggregate") %></label>
+      <%= select_tag "#{name}[aggregate]", options_for_select(Dashboards::Facts::AGGREGATES.index_by { |k| t("dashboards.facts.aggregates.#{k}") }, f["aggregate"] || "count"), class: "ss-input", id: "#{fid}-ag" %></div>
+    <div><label class="ss-label" for="<%= fid %>-sh"><%= t("dashboards.facts.show") %></label>
+      <%= select_tag "#{name}[show]", options_for_select(Dashboards::Facts::SHOWS.index_by { |k| t("dashboards.facts.shows.#{k}") }, f["show"] || "nonzero"), class: "ss-input", id: "#{fid}-sh" %></div>
+    <div><label class="ss-label" for="<%= fid %>-to"><%= t("dashboards.facts.tone") %></label>
+      <%= select_tag "#{name}[tone]", options_for_select(Dashboards::Facts::TONES.index_by { |k| t("dashboards.facts.tones.#{k}") }, f["tone"]), include_blank: t("dashboards.facts.tones.none"), class: "ss-input", id: "#{fid}-to" %></div>
+    <div><label class="ss-label" for="<%= fid %>-fo"><%= t("dashboards.facts.format") %></label>
+      <%= text_field_tag "#{name}[format]", f["format"], class: "ss-input", id: "#{fid}-fo", maxlength: 12, placeholder: "W" %></div>
+    <% shown, rest = Dashboards::Facts.split_query((f["query"] || {}).except(*(scoped ? %w[area] : []))) %>
+    <%= render "web/dashboards/widget_forms/query", w: { "query" => shown }, uid: fid, types: types, areas: areas, prefix: "#{name}[query]" %>
+    <div class="sm:col-span-2" <%= tag.attributes(data: { for: types }) %>><label class="ss-label" for="<%= fid %>-qt"><%= t("dashboards.facts.query_text") %></label>
+      <%= text_field_tag "#{name}[query_text]", rest, class: "ss-input num", id: "#{fid}-qt", placeholder: "quality=unavailable,error capability=contact,gate" %>
+      <p class="text-xs text-muted mt-1"><%= t("dashboards.facts.query_text_hint") %></p></div>
+    <% if f["query"].present? %>
+      <label class="ss-check sm:col-span-2"><%= check_box_tag "#{name}[remove]", "1", false, id: "#{fid}-rm" %><%= t("dashboards.facts.remove") %></label>
+    <% end %>
+  </fieldset>
+<% end %>

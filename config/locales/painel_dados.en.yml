@@ -1,0 +1,148 @@
+# Data-driven dashboard (P1.1, P1.2, P1.4, ideas 14 and 22 of the customization proposal).
+en:
+  dashboards:
+    facts:
+      labels:
+        "on":
+          zero: Nothing on
+          one: "%{count} on"
+          other: "%{count} on"
+        open:
+          zero: All closed
+          one: "%{count} open"
+          other: "%{count} open"
+        motion:
+          zero: No motion
+          one: Motion
+          other: Motion
+        offline:
+          zero: All online
+          one: "%{count} offline"
+          other: "%{count} offline"
+      errors:
+        list: "items must be a list (up to %{max})"
+        object: "item %{n} must be an object"
+        id: "item %{n} needs a unique id (lowercase, digits, _ and -)"
+        query: "item %{n} needs a query with the dashboard filters"
+        aggregate: "item %{n} has an unknown aggregate (count, sum, avg, min, max or any)"
+        show: "item %{n}: show is nonzero or always"
+        tone: "item %{n}: tone is ok, warn, danger or info"
+        label: "item %{n}: label is a text or {zero, one, other}"
+      new: New item
+      item: "Item %{n}"
+      label_one: Label for 1
+      label_other: Label for many
+      label_zero: Label for none
+      icon: Icon
+      aggregate: Aggregate
+      aggregates:
+        count: How many
+        sum: Sum
+        avg: Average
+        min: Lowest
+        max: Highest
+        any: Any (yes or no)
+      show: Show
+      shows:
+        nonzero: Only when there is some
+        always: Always
+      tone: Tone
+      tones:
+        none: Normal
+        ok: Good
+        warn: Attention
+        danger: Danger
+        info: Info
+      query_text: More filters
+      query_text_hint: "Query filters as text (key=value, space separated; comma = any of them), as in Liquid. Added to the fields above."
+      format: Unit
+      remove: Remove this item
+      own_title: Card items
+      own: Use custom items on this card
+      own_hint: "Unchecked, the site default applies (Settings → Dashboards → Defaults). %{count} in the label becomes the number; the area is added to the query."
+    style:
+      errors:
+        list: "style_if must be a list of 1 to %{max} rules"
+        object: "style rule %{n} must be an object"
+        unknown: "style rule %{n} only accepts %{keys}"
+        empty: "style rule %{n} changes nothing (color, icon, label, tone or badge)"
+        tone: "style rule %{n}: tone is %{tones}"
+        color: "style rule %{n}: color is %{colors}"
+        text: "style rule %{n}: label, icon and badge are texts up to 80 characters"
+      form:
+        title: Style by state
+        hint: The first matching rule sets the card tone, color, icon, label and badge. With no point or time, it always applies.
+        rule: "Rule %{n}"
+        when_point: When the point
+        no_point: No point (time only)
+        is: Is
+        above: Above
+        below: Below
+        negate: Is not this value
+        after: After
+        before: Before
+        advanced: "Advanced condition (edit in JSON):"
+        color: Color
+        label: Label
+        badge: Badge
+        badge_placeholder: Open at night
+        remove: Remove this rule
+    stale:
+      badge: "No reading: %{ago}"
+      form:
+        label: Stale data after (min)
+        placeholder: site default
+        hint: "Badge when the card point sends no reading for longer than this. 0 turns it off; empty uses the site default."
+    hero:
+      errors:
+        object: "the top (hero) must be an object"
+        unknown: "the top only accepts %{keys}"
+        bool: "the top: %{key} is true or false"
+        text: "the top: %{key} is a text up to %{max} characters"
+        liquid: "the top: %{key} with invalid Liquid: %{error}"
+      form:
+        title: View top
+        text: Title
+        text_placeholder: "{{ points[\"living.temperature\"].text }} in the living room"
+        kicker: Top line
+        kicker_placeholder: site · date
+        greeting: Greeting
+        greeting_auto: On the first Home view
+        greeting_on: Always
+        greeting_off: Never
+        hide: Hide the top
+        hint: Title and top line accept Liquid, like the Text card. Without a title, the greeting or the view name is shown.
+    drill:
+      title: Points in this number
+      open: "See the points: %{what}"
+      count:
+        one: 1 point
+        other: "%{count} points"
+      empty: No point matches right now.
+      point: Point
+      value: Value
+      reason: Status
+      last_reading: Last reading
+      never: never
+      device: Device
+    schema:
+      stale_after: "%{where}: stale_after_min is a number of minutes (0 turns it off)"
+      labels: "labels is {zero, one, other} with texts (%{forms})"
+    wf:
+      labels: Label by count
+      labels_hint: "(optional; %{count} becomes the number)"
+  dashboard_defaults:
+    title: Dashboard defaults
+    subtitle: "%{site}: what area cards count and when data gets stale"
+    facts_title: Area card items
+    facts_hint: "Each item is a query over the area points. Applies to every area card without custom items."
+    stale_title: Stale data
+    stale_hint: "Minutes without a reading before the card gets the badge, by measure (temperature, humidity…), capability (measure…) or default. Sensors that only report on change (door, motion) should not be listed."
+    stale_key: Type
+    stale_min: Minutes
+    save: Save defaults
+    reset: Back to default
+    reset_confirm: Reset items and limits to the installation default?
+    saved: Defaults saved.
+    link: Dashboard defaults
+    link_in: "Defaults: %{site}"

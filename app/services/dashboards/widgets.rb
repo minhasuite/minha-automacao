@@ -94,6 +94,15 @@ module Dashboards
         # ondaB2 (B8): o widget guarda outros em `widgets` (pilha, grade).
         def container? = false
 
+        # Ideia 14: os pontos que entram no número ou no item `key` do widget, para a lista com o motivo
+        # (`/paineis/:id/w/:widget_id/pontos`): {title, subtitle?, points}, ou nil (o widget não tem lista).
+        def drill(_r, _w, _key) = nil
+
+        # Caminho da lista (vai no `data` resolvido: `url` do item, `drill_url` do número).
+        def drill_url(r, w, key = nil)
+          Rails.application.routes.url_helpers.widget_points_dashboard_path(r.dashboard, widget_id: w["id"], item: key.presence)
+        end
+
         def partial = "web/dashboards/widgets/#{type}"
         def form = nil
       end

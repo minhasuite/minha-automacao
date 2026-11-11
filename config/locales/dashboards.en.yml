@@ -339,6 +339,10 @@ en:
         green: Green
         red: Red
         blue: Blue
+        ok: Theme green (good)
+        warn: Theme amber (attention)
+        danger: Theme red (danger)
+        info: Theme blue (info)
       tap: Tap
       taps:
         toggle: Turns on and off / adjusts

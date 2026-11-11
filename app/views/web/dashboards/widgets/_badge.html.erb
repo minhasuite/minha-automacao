@@ -1,13 +1,21 @@
 <%# locals: (w:) -%>
 <% d = w["data"] %>
-<%# Selo do topo do painel: a pílula clara sobre o herói da gem (.ss-hero-chip). Sem valor (ponto sem leitura ou atributo que não veio) não aparece: "—" no topo não diz nada. %>
+<%# Selo do topo do painel: a pílula clara sobre o herói da gem (.ss-hero-chip). Sem valor (ponto sem leitura ou
+    atributo que não veio) não aparece: "—" no topo não diz nada. O texto pela contagem vem pronto do servidor
+    (`caption`, dos `labels` {zero, one, other}; P1.4); sem `labels`, "número rótulo". Com consulta, tocar abre a
+    lista dos pontos que entram no número (ideia 14). %>
 <% unless d["value"].nil? || d["text"].to_s.strip.in?(["", "—", "-"]) %>
-  <span class="ss-hero-chip">
+  <% body = capture do %>
     <% if w["icon"].present? %><%= icon(w["icon"], "size-4") %><% end %>
-    <% if w["aggregate"] == "count" && d["value"].to_i.zero? %>
-      Nenhum <%= w["label"].to_s.delete_suffix("s") %>
+    <% if d["caption"].present? %>
+      <span class="font-semibold"><%= d["caption"] %></span>
     <% else %>
-      <strong class="num"><%= d["text"] %></strong><% if w["label"].present? %> <span class="font-semibold opacity-85"><%= w["aggregate"] == "count" && d["value"] == 1 ? w["label"].delete_suffix("s") : w["label"] %></span><% end %>
+      <strong class="num"><%= d["text"] %></strong><% if w["label"].present? %> <span class="font-semibold opacity-85"><%= w["label"] %></span><% end %>
     <% end %>
-  </span>
+  <% end %>
+  <% if d["drill_url"] %>
+    <%= link_to body, d["drill_url"], class: "ss-hero-chip no-underline", data: { turbo_frame: "_top" } %>
+  <% else %>
+    <span class="ss-hero-chip"><%= body %></span>
+  <% end %>
 <% end %>

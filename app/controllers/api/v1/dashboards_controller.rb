@@ -18,6 +18,7 @@ module Api
         dashboard, role = find(:view)
         draft = bool(params[:draft]) && SiteMembership.allowed?(role, :manage)
         payload = Dashboards::Resolver.new(dashboard, role: role, definition: (dashboard.working_draft if draft)).call
+        Dashboards::Hero.apply!(payload, site: dashboard.site, user: current_user) # P1.4: o topo pronto (o app é o Início)
         render_data(payload) if stale?(etag: payload.to_json)
       end
 

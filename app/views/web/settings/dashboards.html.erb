@@ -12,6 +12,14 @@
   <% end %>
 <% end %>
 <%= render layout: "web/settings/frame", locals: { current: :dashboards } do %>
+<%# P1.1/ideia 22: padrões dos painéis de cada local (itens do cartão de área, "dado velho"). %>
+<% if manageable.any? %>
+  <div class="flex flex-wrap items-center gap-2 mb-4">
+    <% manageable.each do |s| %>
+      <%= link_to settings_dashboard_defaults_path(s), class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("adjustments", "size-4") %><%= manageable.size > 1 ? t("dashboard_defaults.link_in", site: s.name) : t("dashboard_defaults.link") %><% end %>
+    <% end %>
+  </div>
+<% end %>
 <% if @dashboards.empty? %>
   <%= render Ss::EmptyStateComponent.new(title: t("settings_dashboards.none"), text: t("settings_dashboards.none_hint"), css: "ss-card") do %><%= link_to new_site_path, class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("sites.form.create") %><% end %><% end %>
 <% else %>

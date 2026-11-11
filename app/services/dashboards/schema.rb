@@ -14,7 +14,9 @@ module Dashboards
     # Período do `change` (quanto o ponto subiu desde o começo do dia, semana, mês ou ano do local).
     PERIODS = %w[day week month year].freeze
     RANGES = %w[24h 7d 30d].freeze
-    COLORS = %w[accent amber green red blue].freeze
+    # As 5 de sempre + os tokens do tema (P1.2): `ok`, `warn`, `danger`, `info` acompanham o claro/escuro.
+    # Hex solto não entra (brigaria com o modo escuro); cor própria é pelo tema da casa.
+    COLORS = %w[accent amber green red blue ok warn danger info].freeze
     QUERY_KEYS = Points::Query::KEYS
     STATES = %w[on off].freeze
     # visible_if (Lote 4, G18b: faixa numérica, OU e tamanho de tela). Dentro do
@@ -55,6 +57,7 @@ module Dashboards
         path(view, where, paths, e)
         e.concat(Themes.errors(view["theme"], where))
         e.concat(ViewTypes.errors(view, where))
+        e.concat(Hero.errors(view["hero"]).map { |m| "#{where}: #{m}" }) if view.key?("hero")
         Array(view["badges"]).each { |b| widget(b, msg(:at_badge, where: where), ids, e) }
         sections = view["sections"]
         next e << msg(:sections_list, where: where) unless sections.is_a?(Array)
@@ -100,6 +103,8 @@ module Dashboards
       e << msg(:bad_aggregate, where: where) if w["type"] == "stat" && w.key?("period") && !PERIODS.include?(w["period"])
       e << msg(:bad_range, where: where) if w.key?("range") && !RANGES.include?(w["range"])
       e << msg(:bad_color, where: where) if w.key?("color") && !COLORS.include?(w["color"])
+      style_if(w["style_if"], where, e) if w.key?("style_if")
+      e << msg(:stale_after, where: where) if w.key?("stale_after_min") && !(w["stale_after_min"].is_a?(Integer) && w["stale_after_min"].between?(0, Staleness::MAX_MIN))
       e << msg(:live_bool, where: where) if w.key?("live") && ![ true, false ].include?(w["live"])
       e << msg(:snapshot_interval, where: where) if w.key?("snapshot_interval") && !(w["snapshot_interval"].is_a?(Integer) && w["snapshot_interval"].between?(2, 300))
       %w[min max].each { |k| e << msg(:number, where: where, prop: k) if w.key?(k) && !w[k].is_a?(Numeric) }
@@ -167,6 +172,16 @@ module Dashboards
 
       t = value["time"]
       e << msg(:visible_time, where: where) unless t.is_a?(Hash) && [ t["after"], t["before"] ].compact.any? && [ t["after"], t["before"] ].compact.all? { |s| s.to_s.match?(TIME) }
+    end
+
+    # P1.2: regras de estilo; o `when` é o mesmo do visible_if, sem papel nem tela.
+    def style_if(rules, where, e)
+      Style.errors(rules) do |cond, n|
+        sub = []
+        visible_if(cond, "#{where} (style_if #{n})", sub)
+        sub << msg(:visible_any_nested, where: "#{where} (style_if #{n})") if cond.is_a?(Hash) && cond.keys.intersect?(%w[role screen device])
+        sub
+      end.each { |m| e << (m.start_with?(where) ? m : "#{where}: #{m}") }
     end
 
     def query(value, where, e)

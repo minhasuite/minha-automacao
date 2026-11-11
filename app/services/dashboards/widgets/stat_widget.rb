@@ -6,10 +6,11 @@ module Dashboards
     # do HA): quanto o ponto subiu desde o começo do período, pelo histórico.
     class StatWidget < Base
       describe type: "stat", label: "Contador / número", icon: "calculator", params: %w[aggregate attribute period], bind: true
+
+      def self.permit = [ *params, { labels: Facts::LABEL_FORMS } ]
       texts en: { label: "Counter / number" },
             es: { label: "Contador / número" }
 
-      def self.errors(w) = w["bind"].blank? && w["query"].blank? ? [ "stat precisa de bind ou query" ] : []
 
       def self.data(r, w, binds)
         list = w["query"] ? r.query(w["query"]) : binds
@@ -27,8 +28,34 @@ module Dashboards
         end
         unit = agg == "count" ? nil : list.filter_map(&:unit).first
         text = w["attribute"].present? && agg == "last" ? list.first&.attrs.to_h[w["attribute"]].to_s.presence || "—" : value_text(value, unit, agg, list.first)
-        [ { "value" => value, "unit" => unit, "text" => text, "point_ids" => list.first(Resolver::LIST_LIMIT).map(&:id) },
+        [ { "value" => value, "unit" => unit, "text" => text, "point_ids" => list.first(Resolver::LIST_LIMIT).map(&:id),
+            "caption" => caption(w, value, text), "drill_url" => (drill_url(r, w) if w["query"]) }.compact,
           w["query"] ? r.query(w["query"], with_state: false) : [] ]
+      end
+
+      # P1.4: rótulo do selo/contador pela contagem (`labels` {zero, one, other}; `%{count}` = o número). Sem
+      # `labels`, nil: a tela mostra "número rótulo" como sempre, sem inventar singular.
+      def self.caption(w, value, text)
+        forms = w["labels"].is_a?(Hash) ? w["labels"].slice(*Facts::LABEL_FORMS).compact_blank : {}
+        return nil if forms.empty? || value.nil?
+
+        n = value.is_a?(Numeric) ? value : 1
+        pick = n.zero? ? forms["zero"] || forms["other"] : (n == 1 ? forms["one"] || forms["other"] : forms["other"])
+        pick&.gsub("%{count}", text.to_s)&.squish
+      end
+
+      def self.errors(w)
+        e = w["bind"].blank? && w["query"].blank? ? [ "stat precisa de bind ou query" ] : []
+        e << I18n.t("dashboards.schema.labels", forms: Facts::LABEL_FORMS.join(", ")) if w.key?("labels") &&
+                                                                                       !(w["labels"].is_a?(Hash) && (w["labels"].keys - Facts::LABEL_FORMS).empty? && w["labels"].values.all?(String))
+        e
+      end
+
+      # Ideia 14: os pontos que entram no número (só com consulta).
+      def self.drill(r, w, _key)
+        return nil unless w["query"]
+
+        { "title" => w["label"].presence || I18n.t("dashboards.drill.title"), "points" => r.query(w["query"]) }
       end
 
       # Valor agora − o do começo do período (a última leitura antes dele, ou a primeira depois); nil sem histórico.
@@ -51,7 +78,8 @@ module Dashboards
 
       def self.attrs(p, _site = nil)
         query = QueryListWidget.query(p)
-        return { "query" => query, "aggregate" => p[:aggregate].presence } if query.any?
+        labels = Facts::LABEL_FORMS.index_with { |k| p.dig(:labels, k).to_s.strip }.compact_blank.presence
+        return { "query" => query, "aggregate" => p[:aggregate].presence, "labels" => labels }.compact if query.any?
 
         # Lote 5 (G9): atributo do ponto
         agg = p[:aggregate] == "count" ? "last" : p[:aggregate].presence

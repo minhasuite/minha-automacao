@@ -1,16 +1,16 @@
-<%# locals: (w:, uid:, types:, areas:, **) -%>
+<%# locals: (w:, uid:, types:, areas:, prefix: "widget[query]", **) -%>
 <% q = w["query"] || {} %>
-<div data-for="<%= types %>"><label class="ss-label" for="qc-<%= uid %>"><%= t("dashboards.wf.q.capability") %></label>
-  <%= select_tag "widget[query][capability]", options_for_select(Point::CAPABILITY_LABELS.invert, q["capability"]), include_blank: t("dashboards.wf.q.any"), class: "ss-input", id: "qc-#{uid}" %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="qs-<%= uid %>"><%= t("dashboards.wf.q.state") %></label>
-  <%= select_tag "widget[query][state]", options_for_select({ t("dashboards.wf.q.on") => "on", t("dashboards.wf.q.off") => "off" }, q["state"]), include_blank: t("dashboards.wf.q.any"), class: "ss-input", id: "qs-#{uid}" %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="qa-<%= uid %>"><%= t("dashboards.wf.area") %></label>
-  <%= select_tag "widget[query][area]", options_from_collection_for_select(areas, :id, :name, q["area"]), include_blank: t("dashboards.wf.q.all"), class: "ss-input", id: "qa-#{uid}" %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="qd-<%= uid %>"><%= t("dashboards.wf.q.measure") %></label>
-  <%= select_tag "widget[query][device_class]", options_for_select(%w[power energy temperature humidity battery].index_by { |k| t("dashboards.wf.q.classes.#{k}") }, q["device_class"]), include_blank: t("dashboards.wf.q.any"), class: "ss-input", id: "qd-#{uid}" %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="qt-<%= uid %>"><%= t("dashboards.wf.q.tag") %></label>
-  <%= text_field_tag "widget[query][tag]", q["tag"], class: "ss-input", id: "qt-#{uid}", placeholder: t("dashboards.wf.q.tag_placeholder") %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="qi-<%= uid %>"><%= t("dashboards.wf.q.unchanged") %></label>
-  <%= number_field_tag "widget[query][unchanged_min]", q["unchanged_min"], min: 1, class: "ss-input num", id: "qi-#{uid}", placeholder: "60" %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="qx-<%= uid %>"><%= t("dashboards.wf.q.exclude") %></label>
-  <%= text_field_tag "widget[query][exclude]", q["exclude"], class: "ss-input", id: "qx-#{uid}", placeholder: t("dashboards.wf.q.exclude_placeholder") %></div>
+<div <%= tag.attributes(data: { for: types }) %>><label class="ss-label" for="qc-<%= uid %>"><%= t("dashboards.wf.q.capability") %></label>
+  <%= select_tag "#{prefix}[capability]", options_for_select(Point::CAPABILITY_LABELS.invert, q["capability"]), include_blank: t("dashboards.wf.q.any"), class: "ss-input", id: "qc-#{uid}" %></div>
+<div <%= tag.attributes(data: { for: types }) %>><label class="ss-label" for="qs-<%= uid %>"><%= t("dashboards.wf.q.state") %></label>
+  <%= select_tag "#{prefix}[state]", options_for_select({ t("dashboards.wf.q.on") => "on", t("dashboards.wf.q.off") => "off" }, q["state"]), include_blank: t("dashboards.wf.q.any"), class: "ss-input", id: "qs-#{uid}" %></div>
+<div <%= tag.attributes(data: { for: types }) %>><label class="ss-label" for="qa-<%= uid %>"><%= t("dashboards.wf.area") %></label>
+  <%= select_tag "#{prefix}[area]", options_from_collection_for_select(areas, :id, :name, q["area"]), include_blank: t("dashboards.wf.q.all"), class: "ss-input", id: "qa-#{uid}" %></div>
+<div <%= tag.attributes(data: { for: types }) %>><label class="ss-label" for="qd-<%= uid %>"><%= t("dashboards.wf.q.measure") %></label>
+  <%= select_tag "#{prefix}[device_class]", options_for_select(%w[power energy temperature humidity battery].index_by { |k| t("dashboards.wf.q.classes.#{k}") }, q["device_class"]), include_blank: t("dashboards.wf.q.any"), class: "ss-input", id: "qd-#{uid}" %></div>
+<div <%= tag.attributes(data: { for: types }) %>><label class="ss-label" for="qt-<%= uid %>"><%= t("dashboards.wf.q.tag") %></label>
+  <%= text_field_tag "#{prefix}[tag]", q["tag"], class: "ss-input", id: "qt-#{uid}", placeholder: t("dashboards.wf.q.tag_placeholder") %></div>
+<div <%= tag.attributes(data: { for: types }) %>><label class="ss-label" for="qi-<%= uid %>"><%= t("dashboards.wf.q.unchanged") %></label>
+  <%= number_field_tag "#{prefix}[unchanged_min]", q["unchanged_min"], min: 1, class: "ss-input num", id: "qi-#{uid}", placeholder: "60" %></div>
+<div <%= tag.attributes(data: { for: types }) %>><label class="ss-label" for="qx-<%= uid %>"><%= t("dashboards.wf.q.exclude") %></label>
+  <%= text_field_tag "#{prefix}[exclude]", q["exclude"], class: "ss-input", id: "qx-#{uid}", placeholder: t("dashboards.wf.q.exclude_placeholder") %></div>

@@ -5,7 +5,15 @@
   <% if badge %>
     <% if w["visible"] %><%= render "web/dashboards/widgets/badge", w: w %><% end %>
   <% else %>
-    <div class="dw-w <%= dw_screen_class(w) %>" style="<%= dw_span_style(w['span']) %>"<%= " hidden" if !w["visible"] %>>
+    <%# P1.2/ideia 22: o servidor decide o tom (`style.tone`), o selo da regra (`style.badge`) e o "dado velho" (`stale`). %>
+    <% style = w["style"] || {} %>
+    <div class="dw-w <%= dw_screen_class(w) %>" style="<%= dw_span_style(w['span']) %>"<%= " hidden" if !w["visible"] %><%= " " if style["tone"] %><%= tag.attributes(data: { tone: style["tone"].presence_in(Dashboards::Style::TONES) }) %>>
+      <% if style["badge"].present? || w["stale"] %>
+        <span class="dw-flags">
+          <% if style["badge"].present? %><span class="ss-badge <%= DashboardsHelper::FLAG_TONES.fetch(style["tone"], "ss-badge-accent") %> is-solid"><%= style["badge"] %></span><% end %>
+          <% if w["stale"] %><span class="ss-badge ss-badge-warn" title="<%= l(Time.zone.parse(w["stale"]["since"]), format: :short) %>"><%= icon("clock", "size-3") %><%= w["stale"]["text"] %></span><% end %>
+        </span>
+      <% end %>
       <%= render Dashboards::Widgets[w["type"]]&.partial || "web/dashboards/widgets/#{w['type']}", w: w, points: points, dashboard: dashboard, live: live %>
       <% if error %><p class="text-sm font-semibold text-danger mt-1 px-1" role="alert"><%= error %></p><% end %>
     </div>

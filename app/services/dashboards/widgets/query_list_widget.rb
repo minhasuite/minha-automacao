@@ -41,6 +41,9 @@ module Dashboards
         r.sort(found, w.dig("query", "sort"))
       end
 
+      # Ideia 14: a lista inteira (sem o corte de 24), com o motivo de cada um.
+      def self.drill(r, w, _key) = { "title" => w["label"].presence || I18n.t("dashboards.drill.title"), "points" => matches(r, w) }
+
       def self.attrs(p, _site = nil)
         q = query(p)
         { "query" => q.presence, "bind" => (p[:bind].presence if q.empty?), "empty_text" => p[:empty_text].presence,

@@ -69,7 +69,9 @@ ou `key` do ponto.
 |---|---|
 | `span` | `{mobile, tablet, desktop}`, de 1 a 12 colunas (padrão 12/6/4). Seção também aceita `span` (padrão 12/12/12). Celular < 640 px ≤ tablet < 1024 px ≤ computador |
 | `visible_if` | `role` (lista de papéis; quem não está some do JSON), `state` `{point, is}` (`is` valor ou lista), `numeric` `{point, above, below}` (faixa aberta, Lote 4), `quality` (lista, do ponto do widget), `time` `{after, before}` em HH:MM no fuso do local (pode passar da meia-noite), `any` (lista de 1 a 10 condições: basta uma, sem `role`/`screen` dentro), `screen` (lista de `mobile`/`tablet`/`desktop`: a tela esconde nas outras; o app usa a mesma lista), `device` (lista; só o app avalia). Todas as chaves valem juntas (E). O formulário do editor cuida de papel e tela; o resto vem do JSON e fica ao salvar pelo formulário |
-| `label`, `icon`, `color` | `color`: `accent`, `amber`, `green`, `red`, `blue` (a cor quando ligado) |
+| `label`, `icon`, `color` | `color`: `accent`, `amber`, `green`, `red`, `blue` (a cor quando ligado) ou os tokens do tema `ok`, `warn`, `danger`, `info` (acompanham claro/escuro; hex solto não entra, cor própria é pelo tema da casa) |
+| `style_if` | lista (1–10) de regras `{when, color, icon, label, tone, badge}`: a primeira cujo `when` bate (as condições do `visible_if`, com `any`/`all`, sem `role`/`screen`/`device`; sem `when` = sempre) vale. Ver "Painel por dado" |
+| `stale_after_min` | minutos sem leitura até o selo "dado velho" nos pontos do widget (`bind`/`binds`); `0` desliga; ausente = o padrão do local por tipo |
 | `tap` | `toggle` (padrão em liga/desliga), `more_info` (só abre o ponto), `navigate`, `none` |
 
 ### Tipos
@@ -78,7 +80,7 @@ ou `key` do ponto.
 |---|---|---|
 | `tile` | `bind`, `features` (`toggle`/`select`/`slider`) | ponto: liga/desliga, valor, seleção, slider (dimmer/setpoint; `mode: box` = caixa de número), campo de texto/data/hora (comando `set`, tipo pelo `input` do ponto), botão (`command`/`gate`) e botões de ação (`actions`: contador, temporizador). Serve a todos os helpers (F8e) |
 | `group` | `binds` (até 8) | lista de pontos com interruptor |
-| `stat` | `bind` ou `query`, `aggregate` (`count`/`sum`/`avg`/`min`/`max`/`last`), `attribute?` | contador ("3 ligados") ou número; também é o tipo dos `badges`. Com `bind` e `attribute` (Lote 5), mostra o atributo do ponto (`points.attrs`, escrito pelo sensor calculado) no lugar do valor |
+| `stat` | `bind` ou `query`, `aggregate` (`count`/`sum`/`avg`/`min`/`max`/`last`), `attribute?`, `labels?` (`{zero, one, other}`, `%{count}` = o número) | contador ("3 ligados") ou número; também é o tipo dos `badges`. Com `bind` e `attribute` (Lote 5), mostra o atributo do ponto (`points.attrs`, escrito pelo sensor calculado) no lugar do valor |
 | `gauge` | `bind`, `min`, `max` (padrão: do ponto, senão 0–100) | medidor em arco |
 | `chart` | `binds`, `range` (`24h`/`7d`/`30d`) | linhas na mesma escala (booleano: faixas ligado) |
 | `query_list` | `query`, `empty_text`, `or?` (outras consultas somadas, até 30), `display?` (`rows`/`tiles`), `labels?` ({id do ponto → nome}) | lista automática (até 24), em lista ou grade de tiles; `empty_text` `" "` = some quando vazia. `or` e `labels` vêm do auto-entities do HA e ficam ao editar pelo formulário (`QueryListWidget.keep`) |
@@ -86,7 +88,7 @@ ou `key` do ponto.
 | `ai_usage` (plugin) | — | Uso de IA do local (`AiCall`): chamadas hoje, no mês, falhas em 30 dias e, para técnico ou dono, o gasto estimado do mês; abaixo, as automações que mais chamaram em 30 dias |
 | `ai_log` (plugin) | `limit?` (3 a 30, padrão 8) | Linha do tempo da IA: as últimas chamadas no formato do Diário (`items` com `at`, `icon`, `tone`, `title`, `state`, `detail`), sem prompt nem resposta |
 | `announce` (plugin) | `binds?` (as Echos do seletor; vazio = todas), `placeholder?` | "Falar na Alexa": texto (anúncio), Echo de destino ou todas e microfone (voz gravada até 60 s; só em https). Envio por `Alexa::Talk` (web `POST /locais/:id/falar-na-alexa`, API `POST /api/v1/sites/:id/talk`): a voz vira MP3 (ffmpeg) e a Echo toca `<audio>` do link curto `/fala/<chave>.mp3` em `MEDIA_PUBLIC_URL` (https de fora); sem ele, o microfone some |
-| `area_card` | `area` | cartão da área com ligados, abertos, movimento, potência, sem sinal; navega para a view com `area` igual |
+| `area_card` | `area`, `facts?` | cartão da área com os itens (`facts`, consultas; sem eles, o padrão do local, que nasce com ligados, abertos, movimento, potência e sem sinal); tocar num item abre a lista dos pontos dele; o resto navega para a view com `area` igual |
 | `scene_bar` | `scenes` (ids; vazio = todas) | botões de cena |
 | `alerts` | — | alertas abertos com "Ciente" |
 | `camera` | `bind` (ponto `stream` de dispositivo `go2rtc`), `live` (padrão true), `snapshot_interval` (2–300 s, padrão 10) | quadro periódico e "Ao vivo" (WebRTC); sem conexão, o aviso no lugar da imagem |
@@ -173,8 +175,10 @@ A definição publicada (ou o rascunho com `?draft=1`, para quem edita) com:
   `value`, `unit`, `text`, `point_ids`; `gauge` → `min`, `max`, `ratio`;
   `query_list` → `point_ids`, `count`; `energy` → `kwh`, `cost`, `projection_kwh`,
   `projection_cost`, `tariff`, `goal`, `goal_ratio`, `previous_kwh`, `delta_pct`, `bars`
-  ([{at, label, kwh}]), `period_label`, `point_ids`, `missing`; `area_card` → `area`, `view_id`, `on`,
-  `open`, `motion`, `power`, `unavailable`, `total`; `scene_bar` → `scenes`
+  ([{at, label, kwh}]), `period_label`, `point_ids`, `missing`; `area_card` → `area`, `view_id`, `facts`
+  ([{id, text, icon, tone, value, count, num, url}]), `caption`, `total` e, para o app antigo, `on`,
+  `open`, `motion`, `power`, `unavailable` (dos fatos de mesmo id); `stat` também `caption` (dos
+  `labels`) e `drill_url` (com consulta); `scene_bar` → `scenes`
   (`can_activate`, `confirm`); `alerts` → `alerts` (`can_ack`);
 - `deps`: ids dos pontos cuja mudança muda o widget (o tempo real usa);
 - `points`: dicionário id → `{key, name, capability, unit, value, text, on,
@@ -187,6 +191,9 @@ A definição publicada (ou o rascunho com `?draft=1`, para quem edita) com:
   `data.context` (o rótulo automático "Aparelho · Ponto" do Início vira título
   + contexto). Soma e média do `stat` ignoram ponto sem sinal. Gráfico: o app
   busca `GET /points/:id/history`;
+- widget com `style_if` que bate: as props `color`/`icon`/`label` já trocadas e `style` `{tone, badge}`;
+  ponto parado além do limite: `stale` `{since, text, point_ids}`;
+- cada visão traz `hero_now` `{title, kicker}` ou `{hide: true}` (o topo resolvido; ver abaixo);
 - `role`, `can_edit`, `version`. Resposta com `ETag` (304 se nada mudou).
 
 O comando sai sempre por `POST /points/:id/commands` (papel × risco e
@@ -423,3 +430,100 @@ vêm pelo HTTP e ficam anexadas ao painel (`dashboard.files`).
   condições), além do `any`.
 - **Outro painel**: `navigation_path` e `back_path` aceitam
   `/paineis/<id>?view=<caminho>` (web e app).
+
+## Painel por dado (11/2026, proposta de personalização P1.1, P1.2, P1.4, ideias 14 e 22)
+
+O painel muda por dado, sem deploy nem versão do app: o servidor resolve e a
+web e o app só desenham.
+
+### O que existe (uma regra só)
+
+`Points::Query.exists?(p)`: ponto oculto ou desativado, e aparelho removido da
+conta (varredura) ou desativado, não entram. Vale para toda consulta (painel,
+cartão de área, Liquid, expressões, sensores calculados) e para o painel
+automático.
+
+### Itens do cartão como consultas (`Dashboards::Facts`)
+
+```json
+{ "id": "ac", "type": "area_card", "area": "<area>",
+  "facts": [ { "id": "abertas", "label": { "zero": "Tudo fechado", "one": "%{count} aberta", "other": "%{count} abertas" },
+               "icon": "mdi:door-open", "query": { "capability": "contact", "state": "on" },
+               "aggregate": "count", "show": "nonzero", "tone": "warn" } ] }
+```
+
+| Campo | Valor |
+|---|---|
+| `id` | único no cartão (`[a-z0-9_-]`, até 40); vai no caminho da lista |
+| `label` | texto (com `%{count}`) ou `{zero, one, other}`; `label_key` = texto da casa em `dashboards.facts.labels.<chave>` (o padrão usa, nos 3 idiomas) |
+| `query` | filtros do `Points::Query` (`Points::Query::KEYS`); no cartão de área a `area` entra sozinha |
+| `aggregate` | `count` (padrão), `sum`/`avg`/`min`/`max` (só leitura boa, como o `stat`) ou `any` (sim/não) |
+| `show` | `nonzero` (padrão: some com 0/nada) ou `always` |
+| `tone` | `ok`, `warn`, `danger`, `info` (a pílula tingida) |
+| `format` | unidade depois do número (sem ela, a do primeiro ponto) |
+
+Até 8 itens. Sem `facts`, vale o padrão do local: Configurações → Painéis →
+"Padrões dos painéis" (`/configuracoes/paineis/padroes/:site_id`, técnico ou
+dono), gravado em `sites.settings["dashboard_defaults"]["area_facts"]`; sem nada
+gravado, `Facts::AREA_DEFAULTS` (as regras de antes, escritas como dado:
+ligados, abertos, movimento, potência, sem sinal com tom `warn`). No editor, o
+cartão tem "Usar itens próprios" com o mesmo formulário (que reaproveita o
+`widget_forms/_query`). `Facts.resolve(r, facts, scope:, url:)` não sabe de
+área: os modelos de card (P1.3) usam o mesmo.
+
+### Estilo condicional (`style_if`, `Dashboards::Style`)
+
+```json
+"style_if": [ { "when": { "state": { "point": "sala.porta", "is": "open" }, "time": { "after": "22:00", "before": "06:00" } },
+                "tone": "danger", "badge": "Aberta à noite", "icon": "mdi:door-open" } ]
+```
+
+Em qualquer widget. Avaliado no `Resolver#decorate` (as mesmas funções do
+`visible_if`); os pontos do `when` entram nas dependências do tempo real.
+`color`/`icon`/`label` trocam as props do widget (app antigo já desenha);
+`tone` e `badge` vão em `style` (web: contorno `.dw-w[data-tone]` e selo
+`.ss-badge` no canto `dw-flags`; app: `WidgetDecor`). O formulário do editor
+faz regras de um ponto (estado ou faixa) e/ou horário; condição maior (OU,
+qualidade) fica como veio e se edita no JSON.
+
+### Topo da visão (`hero`, `Dashboards::Hero`) e selos
+
+```json
+{ "id": "home", "title": "Início", "hero": { "title": "{{ points[\"sala.temp\"].text }} na sala", "kicker": "Casa da praia", "greeting": false, "hide": false } }
+```
+
+`title`/`kicker` com Liquid (o das automações, até 200 letras; erro mostra o
+texto cru). Sem `title`: a saudação ("Boa noite, Ana") na primeira visão do
+Início ou com `greeting: true` (`false` desliga), senão o nome da visão. Sem
+`kicker`: "local · data". `hide: true` tira o topo (na web fica só o lápis; no
+app a barra fica, para trocar de painel). `Hero.apply!` põe `hero_now` em cada
+visão (web e `GET /api/v1/dashboards/:id`). O topo não se refaz pelo tempo real
+(só ao abrir). Selo (`stat`) com `labels` `{zero, one, other}` sai com
+`caption` pronto ("Nada ligado", "1 ligado", "3 ligados"); sem `labels`,
+"número rótulo" (acabou o "Nenhum" fixo e o singular por `delete_suffix`).
+
+### Lista dos pontos de um número (ideia 14)
+
+`GET /paineis/:id/w/:widget_id/pontos[?item=<id do fato>]`: os pontos que entram
+no número, com o valor, a situação (qualidade + `point_status_note`), a última
+leitura e o aparelho (com a situação dele). O plugin do widget diz a lista
+(`drill(r, w, key)` → `{title, subtitle?, points}`, nil = sem lista; hoje
+`area_card`, `stat` com consulta e `query_list`); o caminho vai no `data`
+(`facts[].url`, `drill_url`). No app abre como tela do servidor (AppScreen).
+
+### Dado velho (ideia 22, `Dashboards::Staleness`)
+
+Widget cujo ponto (`bind`/`binds`) está "bom" mas sem leitura (`reported_at`)
+há mais que o limite ganha `stale` `{since, text, point_ids}`. Limite:
+`stale_after_min` do widget (0 desliga), senão o do local por `device_class`,
+capacidade ou `default` (`settings.dashboard_defaults.stale_after_min`,
+editável nos Padrões), senão `Staleness::DEFAULTS` (temperatura e umidade,
+240 min; sensor que só fala quando muda ficaria "velho" sem estar).
+
+### Pontos de extensão
+
+Item novo de cartão = dado (padrão do local ou `facts`); conta nova =
+`Facts::AGGREGATES` + `Facts.value`; regra de estilo = dado; lista de um widget
+= `drill` no plugin; tom novo = `Facts::TONES` (web `FLAG_TONES`, app
+`serverTone`). O editor JSON por widget e os modelos de card (próxima onda)
+validam pelo mesmo `Schema` (`Facts.errors`, `Style.errors`, `Hero.errors`).

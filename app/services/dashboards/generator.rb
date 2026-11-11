@@ -14,7 +14,7 @@ module Dashboards
 
     def initialize(site)
       @site = site
-      @points = site.points.includes(:device).where(hidden: false, disabled: false).order(:name).to_a.reject { |p| p.device.disabled }
+      @points = site.points.includes(:device).where(hidden: false, disabled: false).order(:name).to_a.select { |p| Points::Query.exists?(p) }
       @areas = site.areas.order(:position, :name).to_a
       @lights_tag = Tagging.joins(:tag).where(tags: { name: "iluminacao" }, taggable_type: "Point").pluck(:taggable_id).to_set
       @name_count = @points.map(&:name).tally
@@ -52,7 +52,10 @@ module Dashboards
       sections << section("s-home-scenes", tr(:scenes), "sparkles", [ { "id" => "w-home-scenes", "type" => "scene_bar", "span" => span(12, 12, 12) } ]) if @site.scenes.exists?
       sections.concat(area_sections) if @areas.size > 1
 
-      badges = [ { "id" => "b-on", "type" => "stat", "label" => tr(:on_badge), "query" => { "capability" => "onoff", "state" => "on" }, "aggregate" => "count" } ]
+      # P1.4: o selo diz "Nada ligado"/"1 ligado"/"3 ligados" pelos `labels` (sem singular inventado).
+      on_labels = I18n.t("dashboards.facts.labels.on").transform_keys(&:to_s).slice(*Facts::LABEL_FORMS)
+      badges = [ { "id" => "b-on", "type" => "stat", "label" => tr(:on_badge), "query" => { "capability" => "onoff", "state" => "on" }, "aggregate" => "count",
+                   "labels" => on_labels } ]
       badges << { "id" => "b-power", "type" => "stat", "label" => tr(:now_badge), "query" => { "device_class" => "power" }, "aggregate" => "sum" } if power.any?
       { "id" => "home", "title" => tr(:home), "icon" => "home", "badges" => badges, "sections" => sections }
     end

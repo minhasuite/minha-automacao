@@ -53,6 +53,23 @@
                 <%= select_tag :back_path, options_for_select(Array(@draft["views"]).reject { |x| x["id"] == view["id"] }.map { |x| [ x["title"], x["path"].presence || x["id"] ] }, view["back_path"]),
                                include_blank: t("dashboards.vt.form.back_first"), class: "ss-input", id: "vbk" %></div>
             </div>
+            <%# P1.4: o topo da visão (Dashboards::Hero): título e linha de cima com Liquid, saudação e esconder. %>
+            <% hero = view["hero"].is_a?(Hash) ? view["hero"] : {} %>
+            <details class="basis-full" <%= "open" if hero.any? %>>
+              <summary class="ss-summary text-sm font-semibold text-ink-2 w-fit"><%= t("dashboards.hero.form.title") %></summary>
+              <%= hidden_field_tag "hero[present]", "1", id: nil %>
+              <div class="mt-2 grid gap-3 sm:grid-cols-2">
+                <div><label class="ss-label" for="vht"><%= t("dashboards.hero.form.text") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label>
+                  <%= text_field_tag "hero[title]", hero["title"], class: "ss-input", id: "vht", maxlength: Dashboards::Hero::MAX, placeholder: t("dashboards.hero.form.text_placeholder") %></div>
+                <div><label class="ss-label" for="vhk"><%= t("dashboards.hero.form.kicker") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label>
+                  <%= text_field_tag "hero[kicker]", hero["kicker"], class: "ss-input", id: "vhk", maxlength: Dashboards::Hero::MAX, placeholder: t("dashboards.hero.form.kicker_placeholder") %></div>
+                <div><label class="ss-label" for="vhg"><%= t("dashboards.hero.form.greeting") %></label>
+                  <%= select_tag "hero[greeting]", options_for_select({ t("dashboards.hero.form.greeting_auto") => "", t("dashboards.hero.form.greeting_on") => "1", t("dashboards.hero.form.greeting_off") => "0" },
+                                                                      { true => "1", false => "0" }.fetch(hero["greeting"], "")), class: "ss-input", id: "vhg" %></div>
+                <label class="ss-check self-end pb-2"><%= check_box_tag "hero[hide]", "1", hero["hide"] == true, id: "vhh" %><%= t("dashboards.hero.form.hide") %></label>
+                <p class="sm:col-span-2 text-xs text-muted"><%= t("dashboards.hero.form.hint") %></p>
+              </div>
+            </details>
             <%= submit_tag t("dashboards.save"), class: "ss-btn ss-btn-ghost" %>
           <% end %>
           <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "view", target: view["id"], view_id: view["id"], name: t("dashboards.ed.the_view", name: view["title"]) %>

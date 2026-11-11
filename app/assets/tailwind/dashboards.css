@@ -1,6 +1,7 @@
 /* domínio: painéis — só o que não existe fora da casa. Allowlist (bin/conferir-css, CSS_DOMINIO):
    - cola do painel sem identidade visual: grade de 12 colunas por tela (dw-grid, dw-w, dw-sections,
-     dw-hide-*), painel inteiro (dw-panel) e pilhas (dw-stack*);
+     dw-hide-*), painel inteiro (dw-panel) e pilhas (dw-stack*); o canto dos selos do card (dw-flags: o
+     selo é o .ss-badge da gem) e o contorno do tom do style_if (.dw-w[data-tone]);
    - arte viva dos pontos dentro do ícone do tile da gem (dw-anim, dw-ico-art, dw-spinning, dw-cover-blind,
      dw-gate-*) e o robô limpando (dw-vac-run/-trail/-bot/-dock/-back); arte de cada área (dw-art-*);
    - planta baixa (dw-fp*, com os modificadores dw-on/dw-unavailable dos pinos) e o editor dela (dw-fpe*);
@@ -18,6 +19,14 @@
   .dw-w[hidden] { display: none; }
 }
 .dw-w { container-type: inline-size; }
+/* P1.2/ideia 22: tom decidido no servidor (style_if) e selos no canto do card (estilo, "dado velho"). */
+.dw-w[data-tone] { position: relative; border-radius: var(--ss-card-radius, 1rem); }
+.dw-w[data-tone="danger"] { box-shadow: 0 0 0 2px var(--danger); }
+.dw-w[data-tone="warn"] { box-shadow: 0 0 0 2px var(--warn); }
+.dw-w[data-tone="ok"] { box-shadow: 0 0 0 2px var(--success); }
+.dw-w[data-tone="info"] { box-shadow: 0 0 0 2px var(--accent); }
+.dw-flags { position: absolute; z-index: 2; top: -.5rem; right: .5rem; max-width: calc(100% - 1rem); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .25rem; pointer-events: none; }
+.dw-w:has(> .dw-flags) { position: relative; }
 @media (min-width: 640px) { .dw-w { grid-column: span var(--t, 6) / span var(--t, 6); } }
 @media (min-width: 1024px) { .dw-w { grid-column: span var(--d, 4) / span var(--d, 4); } }
 /* Visibilidade por tela (Lote 4, G18b): visible_if.screen vira estas classes. */

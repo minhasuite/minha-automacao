@@ -25,6 +25,8 @@
     <%= render "web/dashboards/widget_forms/gestures", w: w, uid: uid, types: gtypes.join(" "), point_options: point_options %>
   <% end %>
 
+  <%= render "web/dashboards/widget_forms/style_if", w: w, uid: uid, point_options: point_options %>
+
   <fieldset class="sm:col-span-2">
     <legend class="ss-label"><%= t("dashboards.wf.width") %></legend>
     <div class="grid grid-cols-3 gap-2">
