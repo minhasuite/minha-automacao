@@ -666,6 +666,28 @@ CREATE TABLE public.feature_flags (
 
 
 --
+-- Name: guest_links; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.guest_links (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    dashboard_id uuid NOT NULL,
+    created_by_id uuid,
+    name character varying NOT NULL,
+    role character varying DEFAULT 'viewer'::character varying NOT NULL,
+    token_digest character varying NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
+    revoked_at timestamp(6) without time zone,
+    last_used_at timestamp(6) without time zone,
+    uses integer DEFAULT 0 NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: integrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -776,6 +798,26 @@ CREATE TABLE public.packages (
     source_url character varying NOT NULL,
     manifest jsonb DEFAULT '{}'::jsonb NOT NULL,
     installed jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: panel_devices; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.panel_devices (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    key character varying NOT NULL,
+    kind character varying DEFAULT 'web'::character varying NOT NULL,
+    name character varying NOT NULL,
+    dashboard_id uuid,
+    view character varying,
+    user_id uuid,
+    user_agent character varying,
+    last_seen_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -2087,6 +2129,14 @@ ALTER TABLE ONLY public.feature_flags
 
 
 --
+-- Name: guest_links guest_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.guest_links
+    ADD CONSTRAINT guest_links_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: integrations integrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2132,6 +2182,14 @@ ALTER TABLE ONLY public.notify_rules
 
 ALTER TABLE ONLY public.packages
     ADD CONSTRAINT packages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: panel_devices panel_devices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.panel_devices
+    ADD CONSTRAINT panel_devices_pkey PRIMARY KEY (id);
 
 
 --
@@ -3070,6 +3128,41 @@ CREATE UNIQUE INDEX index_feature_flags_on_key ON public.feature_flags USING btr
 
 
 --
+-- Name: index_guest_links_on_created_by_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_guest_links_on_created_by_id ON public.guest_links USING btree (created_by_id);
+
+
+--
+-- Name: index_guest_links_on_dashboard_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_guest_links_on_dashboard_id ON public.guest_links USING btree (dashboard_id);
+
+
+--
+-- Name: index_guest_links_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_guest_links_on_site_id ON public.guest_links USING btree (site_id);
+
+
+--
+-- Name: index_guest_links_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_guest_links_on_tenant_id ON public.guest_links USING btree (tenant_id);
+
+
+--
+-- Name: index_guest_links_on_token_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_guest_links_on_token_digest ON public.guest_links USING btree (token_digest);
+
+
+--
 -- Name: index_integrations_on_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3179,6 +3272,34 @@ CREATE UNIQUE INDEX index_packages_on_site_id_and_key ON public.packages USING b
 --
 
 CREATE INDEX index_packages_on_tenant_id ON public.packages USING btree (tenant_id);
+
+
+--
+-- Name: index_panel_devices_on_dashboard_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_panel_devices_on_dashboard_id ON public.panel_devices USING btree (dashboard_id);
+
+
+--
+-- Name: index_panel_devices_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_panel_devices_on_tenant_id ON public.panel_devices USING btree (tenant_id);
+
+
+--
+-- Name: index_panel_devices_on_tenant_id_and_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_panel_devices_on_tenant_id_and_key ON public.panel_devices USING btree (tenant_id, key);
+
+
+--
+-- Name: index_panel_devices_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_panel_devices_on_user_id ON public.panel_devices USING btree (user_id);
 
 
 --
@@ -3836,6 +3957,14 @@ ALTER TABLE ONLY public.schedules
 
 
 --
+-- Name: guest_links fk_rails_0862434461; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.guest_links
+    ADD CONSTRAINT fk_rails_0862434461 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: blueprints fk_rails_0da735ddc0; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3897,6 +4026,14 @@ ALTER TABLE ONLY public.service_api_keys
 
 ALTER TABLE ONLY public.point_links
     ADD CONSTRAINT fk_rails_19bdc1fe3f FOREIGN KEY (source_point_id) REFERENCES public.points(id) ON DELETE CASCADE;
+
+
+--
+-- Name: panel_devices fk_rails_1c87187ae5; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.panel_devices
+    ADD CONSTRAINT fk_rails_1c87187ae5 FOREIGN KEY (dashboard_id) REFERENCES public.dashboards(id) ON DELETE SET NULL;
 
 
 --
@@ -4204,6 +4341,14 @@ ALTER TABLE ONLY public.assist_runs
 
 
 --
+-- Name: panel_devices fk_rails_5fbd0450c8; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.panel_devices
+    ADD CONSTRAINT fk_rails_5fbd0450c8 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: alerts fk_rails_61df1056f3; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4273,6 +4418,14 @@ ALTER TABLE ONLY public.site_memberships
 
 ALTER TABLE ONLY public.point_links
     ADD CONSTRAINT fk_rails_734958d827 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: guest_links fk_rails_750035b9d2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.guest_links
+    ADD CONSTRAINT fk_rails_750035b9d2 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -4476,6 +4629,14 @@ ALTER TABLE ONLY public.assist_runs
 
 
 --
+-- Name: guest_links fk_rails_9ad17745eb; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.guest_links
+    ADD CONSTRAINT fk_rails_9ad17745eb FOREIGN KEY (dashboard_id) REFERENCES public.dashboards(id) ON DELETE CASCADE;
+
+
+--
 -- Name: assist_satellites fk_rails_9b6ebdbd7f; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4489,6 +4650,14 @@ ALTER TABLE ONLY public.assist_satellites
 
 ALTER TABLE ONLY public.solid_queue_claimed_executions
     ADD CONSTRAINT fk_rails_9cfe4d4944 FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: guest_links fk_rails_9e7dd78be9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.guest_links
+    ADD CONSTRAINT fk_rails_9e7dd78be9 FOREIGN KEY (created_by_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 --
@@ -4828,6 +4997,14 @@ ALTER TABLE ONLY public.packages
 
 
 --
+-- Name: panel_devices fk_rails_f9ba09ecb1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.panel_devices
+    ADD CONSTRAINT fk_rails_f9ba09ecb1 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: audit_events fk_rails_fcd253d0d8; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4874,6 +5051,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261111120017'),
 ('20261110140717'),
 ('20261109100001'),
 ('20261108100001'),

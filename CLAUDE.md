@@ -509,6 +509,14 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (`Dashboards::Hero`, `hero_now`); lista de um número = `drill` no plugin do widget
   (`/paineis/:id/w/:wid/pontos`); "dado velho" = `Dashboards::Staleness`. Nada disso tem
   `case` por tipo; ver `docs/dashboards.md` ("Painel por dado").
+- **Painel do dia a dia (aberto/fechado, ideias 9–13 e 23)**: condição nova do `visible_if`/`style_if`/
+  `order_if`/`open_if` = classe em `Dashboards::Context::CONDITIONS` (sol e presença hoje); ação em lote =
+  ação `command_query` do `Dashboards::Actions` (`Dashboards::Batch`: consulta só da definição publicada,
+  papel x risco por ponto, crítico nunca); botões rápidos = `quick_actions` (ou o padrão do local por tipo);
+  busca e favoritos pós-cache em `Dashboards::Personal`; painel por aparelho = `PanelDevice` (cookie
+  `ma_device` / cabeçalho `X-MA-Device`); link de convidado = `GuestLink` (`viewer`/`guest`, só widgets com
+  `guest: true`, nunca crítico, auditado); "Saúde da casa" = `Presets::HealthPreset`. Ver
+  `docs/dashboards.md` ("Painel do dia a dia").
 - **Lote 5 (aberto/fechado)**: serviço do HA novo no importador = linha em
   `HaImport::SERVICES` (método) ou `HELPER_COMMANDS`; o `case` do
   `HaImport#trigger`/`#condition` traduz a sintaxe do YAML do HA, não tipos

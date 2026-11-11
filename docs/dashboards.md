@@ -529,3 +529,77 @@ Item novo de cartão = dado (padrão do local ou `facts`); conta nova =
 = `drill` no plugin; tom novo = `Facts::TONES` (web `FLAG_TONES`, app
 `serverTone`). O editor JSON por widget e os modelos de card (próxima onda)
 validam pelo mesmo `Schema` (`Facts.errors`, `Style.errors`, `Hero.errors`).
+
+## Painel do dia a dia (11/2026, proposta de personalização, ideias 9 a 13 e 23)
+
+Tudo resolvido no servidor; a web e o app só desenham. Spec em `spec/requests/experiencia_spec.rb`.
+
+### Contexto: sol, presença, ordem e visão que abre (`Dashboards::Context`)
+
+```json
+{ "open_if": [ { "when": { "presence": { "home": "nobody" } }, "view": "fora" } ],
+  "views": [ { "id": "home", "title": "Início",
+               "order_if": [ { "when": { "sun": { "is": "night" } }, "first": ["s-seguranca", "s-luzes"] } ],
+               "sections": [ ... ] } ] }
+```
+
+- `visible_if`/`style_if` ganham `sun` (`{is: day|night}` ou `{after, before}` com `sunrise`/`sunset` e
+  `after_offset`/`before_offset` em minutos; sem latitude no local, dia = 6h–18h) e `presence`
+  (`{home: anyone|nobody|everyone}` sobre os helpers `person`, ou `{person: <ponto>, home: true|false}`;
+  sem pessoa cadastrada nenhuma regra de presença vale). As pessoas entram nas dependências do tempo real.
+- `order_if` (visão, até 10 regras): a primeira que bate põe as seções de `first` na frente, na ordem dada
+  (`order_now` no resolvido). `open_if` (painel): a primeira que bate escolhe a visão (`open_view` no
+  resolvido; a web usa quando a URL não pede visão, o app quando a pessoa não escolheu).
+- Condição nova = classe em `Context::CONDITIONS` (`key`, `errors`, `ok?(resolver, valor)`, `refs`). O
+  Resolver só pergunta ao registro (`condition_ok?` cai no `Context.ok?` para chave que não é dele).
+- Ordem e visão valem ao abrir (como o topo); o `visible_if` também se refaz pelo tempo real.
+
+### Painel por aparelho (`PanelDevice`, ideia 10)
+
+"Neste aparelho abre o painel X" (o tablet da parede). Web: cookie assinado `ma_device` criado ao dar nome ao
+aparelho em Configurações → Painéis → Aparelhos (`/configuracoes/paineis/aparelhos`); app: cabeçalho
+`X-MA-Device` com o id da instalação em todo pedido (também chega às telas do servidor pelo `AppScreen`). Ordem:
+`?view=`/`?local=` da URL > aparelho (painel e visão, se a pessoa vê o painel) > escolha da pessoa
+(`dashboard_prefs`) > padrão do local. API: `GET /sites/:id/dashboards` marca `device_default` e
+`GET /dashboards/:id` devolve a visão do aparelho em `open_view`. Cada pessoa gerencia os aparelhos que nomeou;
+dono e administrador, todos. Auditado (`AuditEvent`).
+
+### Link de convidado (`GuestLink`, ideia 11)
+
+Configurações → Painéis → Convidados (`/configuracoes/paineis/convidados`, só o dono do local): nome, painel,
+papel `viewer` (só ver) ou `guest` (comando de risco normal) e validade (2 h a 7 dias). O link
+`/convidado/<token>` (token só em digest, mostrado uma vez) abre, sem conta e sem menu (layout `guest`), só os
+widgets marcados com `"guest": true` (e os de dentro de uma pilha marcada), resolvidos com o papel do link.
+Comando só em ponto desses widgets, sem valor (`on`/`off`/`toggle`/`press`/`run`/`pulse`), papel x risco e
+**nunca crítico**; vira `Command` com `source: "guest"` e `AuditEvent` `command` no link (criar e revogar
+também). Revogar corta na hora; vencido ou revogado = "Link inválido".
+
+### Ações em lote (`Dashboards::Batch`, ideia 12)
+
+Ação `command_query` em `Dashboards::Actions` (gesto `tap/hold/double_tap_action` ou botão rápido):
+`{"action": "command_query", "query": "capability=onoff state=on", "command": "off", "value"?}`. Botões rápidos
+em qualquer widget: `"quick_actions": [{"action": ..., "label": "Apagar tudo", "icon"?}]` (até 4, qualquer
+ação registrada); sem eles, o padrão do local por tipo em `sites.settings.dashboard_defaults.quick_actions`
+(o cartão de área tem o formulário em Configurações → Painéis → Padrões). No cartão de área a `area` entra
+sozinha na consulta. O resolvido traz `quick` ([{action, label, icon, slot, count, allowed, can_command,
+confirm}]). Envio: web `POST /paineis/:id/w/:widget_id/lote` e API
+`POST /api/v1/dashboards/:id/widgets/:widget_id/batch` com `slot` (`quick-N`, `tap`, `hold`…): a consulta e o
+comando saem da definição publicada, nunca do pedido; ponto que só lê ou não aceita o comando fica de fora;
+papel x risco por ponto (o resto é pulado e contado); crítico nunca vai em lote; até 100 pontos; resposta
+`{sent, skipped, failed, message}`.
+
+### Busca e favoritos (`Dashboards::Personal`, ideia 13)
+
+Depois do cache (que é por papel), cada widget ganha `search` (rótulo, título, nomes dos pontos, aparelhos e
+áreas) e o painel `favorites_now` (pontos favoritos da pessoa neste local, já em `points`).
+Favoritos em `users.dashboard_prefs["favorites"]` = {site_id → [ids]} (até 12): web "Favoritar" na página do
+ponto (`POST /pontos/:id/favorito`), app pela estrela da folha do ponto (`PUT /api/v1/points/:id/favorite`
+`{favorite}`). Painel com `"favorites": false` não mostra a linha. A web filtra pelo `ss-filter` da gem (a busca
+aparece com mais de 3 cards), o app pelo mesmo texto.
+
+### Saúde da casa (ideia 23)
+
+Predefinição `HealthPreset` (`/locais/:id/paineis/prontos/health`): selos clicáveis (`stat` com consulta e
+`drill`) de sem sinal, bateria baixa (`device_class=battery below=<limite>`, padrão 20) e Wi-Fi fraco
+(`device_class=signal_strength below=<limite>`, padrão -75), listas (`query_list`) de cada um e dos pontos sem
+leitura recente, e, com a integração Sistema, as falhas de automação em 24 h e as integrações com erro.

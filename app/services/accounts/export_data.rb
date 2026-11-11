@@ -36,6 +36,9 @@ module Accounts
           dataset_records: DatasetRecord.order(:created_at).limit(100_000).map { |r| r.as_json(except: "tenant_id") },
           ai_accounts: AiAccount.order(:provider).map { |r| r.as_json(except: %w[tenant_id api_key]) },
           ai_calls: AiCall.order(:created_at).map { |r| r.as_json(except: "tenant_id") },
+          # Ideias 10 e 11: aparelhos com painel e links de convidado (sem o digest do token).
+          panel_devices: PanelDevice.order(:created_at).map { |r| r.as_json(except: "tenant_id") },
+          guest_links: GuestLink.order(:created_at).map { |r| r.as_json(except: %w[tenant_id token_digest]) },
           external_refs: ExternalRef.order(:created_at).map { |r| r.as_json(except: "tenant_id") },
           shadow_reports: ShadowReport.order(:created_at).map { |r| r.as_json(except: "tenant_id") },
           # Integrações (F8): sem as credenciais.

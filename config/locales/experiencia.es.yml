@@ -1,0 +1,123 @@
+es:
+  dashboards:
+    context:
+      errors:
+        rules: 'debe ser una lista de 1 a %{max} reglas'
+        rule: 'regla %{n}: objeto con "when" y el destino'
+        first: 'regla %{n}: "first" es la lista de ids de sección (hasta 20)'
+        view: 'regla %{n}: "view" es el id o la ruta de una vista'
+        sun: 'sun: use {"is": "day"|"night"} o {"after"/"before": "sunrise"|"sunset"} (desfase en minutos, hasta 720)'
+        presence: 'presence: use {"home": "anyone"|"nobody"|"everyone"} o {"person": "<punto>", "home": true|false}'
+    schema:
+      favorites_bool: 'panel: "favorites" es verdadero o falso'
+      guest_bool: '%{where}: "guest" es verdadero o falso'
+      quick_list: 'quick_actions debe ser una lista de 1 a %{max} acciones'
+      quick_label: 'quick_actions[%{n}]: "label" de 1 a 40 letras (e "icon" en texto)'
+    batch:
+      quick: Acciones rápidas
+      confirm: '%{label}: ¿enviar a %{n} punto(s)?'
+      count:
+        one: 1 punto
+        other: '%{count} puntos'
+      sent:
+        zero: Ningún comando enviado
+        one: 1 comando enviado
+        other: '%{count} comandos enviados'
+      skipped:
+        one: 1 omitido por su rol
+        other: '%{count} omitidos por su rol'
+      failed:
+        one: 1 falló
+        other: '%{count} fallaron'
+    search:
+      label: Buscar en el panel
+      placeholder: Buscar tarjeta, aparato o ambiente
+      none: Nada en este panel con ese nombre.
+  favorites:
+    title: Favoritos
+    add: Agregar a favoritos
+    "on": Favorito
+    added: '%{name} se agregó a favoritos.'
+    removed: '%{name} salió de favoritos.'
+  settings_dashboards:
+    devices_link: Aparatos
+    guests_link: Invitados
+  panel_devices:
+    title: Panel por aparato
+    subtitle: 'Elija el panel que abre cada aparato, como la tableta de la pared.'
+    this_device: Este aparato
+    this_hint: Dé un nombre a este aparato para elegir el panel que abre.
+    this_known: 'Este aparato es "%{name}".'
+    name: Nombre del aparato
+    name_hint: Tableta de la cocina
+    dashboard: Panel que abre
+    person_default: El predeterminado de quien entre
+    view: Vista (opcional)
+    view_hint: ruta o id de la vista
+    save_this: Guardar este aparato
+    save: Guardar
+    list: Aparatos
+    list_hint: 'El panel del aparato vale sobre el predeterminado de cada persona, si puede ver el panel.'
+    none: Ningún aparato con nombre
+    none_hint: Abra esta pantalla en la tableta o el celular y guarde el aparato.
+    current: este aparato
+    seen: 'visto hace %{time}'
+    saved: '"%{name}" guardado.'
+    removed: '"%{name}" eliminado.'
+    remove: 'Eliminar %{name}'
+    remove_confirm: '¿Eliminar "%{name}"? Vuelve a abrir el predeterminado de quien entre.'
+    remove_button: Eliminar
+    kinds:
+      web: Navegador
+      app: App
+  guest_links:
+    title: Enlaces de invitado
+    subtitle: 'Un enlace que vence, para que la niñera o una visita vean y usen solo las tarjetas marcadas.'
+    new: Nuevo enlace
+    new_hint: 'Sin cuenta y sin menú. Revóquelo cuando quiera; todo queda en la auditoría.'
+    name: Para quién
+    name_hint: Niñera
+    dashboard: Panel
+    role: Qué puede hacer
+    hours: Vale por
+    ttl:
+      one: 1 hora
+      other: '%{count} horas'
+    roles:
+      viewer: Solo ver
+      guest: Ver y usar lo común (nada sensible ni crítico)
+    mark_hint: 'Solo aparecen las tarjetas marcadas para invitado en el JSON del panel ("guest": true).'
+    create: Crear enlace
+    created: Enlace creado
+    created_hint: 'Cópielo y envíelo ahora: no se mostrará de nuevo.'
+    link_label: Enlace del invitado
+    list: Enlaces
+    none: Ningún enlace
+    none_hint: Cree un enlace para la visita o la niñera.
+    owner_only: Solo el dueño del lugar crea enlaces de invitado.
+    status: Situación
+    uses: Abierto
+    state_active: 'vale hasta %{time}'
+    state_expired: Vencido
+    state_revoked: Revocado
+    revoke: Revocar
+    revoke_confirm: '¿Revocar el enlace "%{name}"? Quien lo tenga pierde el acceso al instante.'
+    revoked: 'Enlace "%{name}" revocado.'
+  guest:
+    eyebrow: '%{site} · %{name}'
+    until: 'Este enlace vale hasta %{time}.'
+    empty: Nada que mostrar
+    empty_hint: Quien envió el enlace aún no marcó ninguna tarjeta para invitado.
+    turn_on: Encender
+    turn_off: Apagar
+    press: Accionar
+    not_allowed: Este enlace no puede hacer eso.
+    invalid_title: Enlace inválido
+    invalid_text: Este enlace venció o fue revocado. Pida uno nuevo a quien lo envió.
+  dashboard_defaults:
+    quick_title: Botones rápidos de la tarjeta de ambiente
+    quick_hint: 'Ej.: "Apagar todo" = consulta capability=onoff state=on tag=iluminacao y comando Apagar. El ambiente de la tarjeta entra solo; rol y riesgo valen por punto y lo crítico nunca va en lote.'
+    quick_label: Texto del botón
+    quick_label_hint: Apagar todo
+    quick_query: Consulta
+    quick_command: Comando

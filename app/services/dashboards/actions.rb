@@ -12,7 +12,11 @@ module Dashboards
   # Sem `tap_action`, o tile segue o `tap` antigo (toggle/more_info/none).
   module Actions
     GESTURES = { "tap" => "tap_action", "hold" => "hold_action", "double_tap" => "double_tap_action" }.freeze
-    PLUGINS = %w[Toggle MoreInfo Navigate Url Command Assist None].freeze
+    PLUGINS = %w[Toggle MoreInfo Navigate Url Command CommandQuery Assist None].freeze
+    # Ideia 12: botões rápidos em qualquer widget (`quick_actions`: até 4 ações
+    # com `label` e `icon`), ex. "Apagar tudo" no cartão de área.
+    QUICK = "quick_actions"
+    MAX_QUICK = 4
     URL = %r{\Ahttps://[^\s"'<>]+\z}
     PATH = %r{\A(/[\w\-/.?=&%]*|[a-z0-9][a-z0-9-]{0,39})\z}
 
@@ -21,7 +25,54 @@ module Dashboards
     def plugins = PLUGINS.map { |n| const_get(n) }
     def [](key) = plugins.find { |a| a.key == key.to_s }
 
-    def errors(w)
+    def errors(w) = gesture_errors(w) + quick_errors(w)
+
+    def quick_errors(w)
+      return [] unless w.key?(QUICK)
+
+      list = w[QUICK]
+      return [ I18n.t("dashboards.schema.quick_list", max: MAX_QUICK) ] unless list.is_a?(Array) && list.size.between?(1, MAX_QUICK)
+
+      list.each_with_index.filter_map do |a, i|
+        plugin = a.is_a?(Hash) && self[a["action"]]
+        next I18n.t("dashboards.schema.action_unknown", field: "#{QUICK}[#{i}]") unless plugin
+        next I18n.t("dashboards.schema.quick_label", n: i + 1) unless a["label"].is_a?(String) && a["label"].strip.size.between?(1, 40) && (a["icon"].nil? || a["icon"].is_a?(String))
+
+        msg = plugin.errors(a) and I18n.t("dashboards.schema.action_bad", field: "#{QUICK}[#{i}]", msg: msg)
+      end
+    end
+
+    # Botões rápidos do widget: os dele ou, sem nenhum, o padrão do local para o tipo
+    # (`sites.settings.dashboard_defaults.quick_actions` = {tipo → lista}; Configurações → Painéis → Padrões).
+    def quick_list(site, w)
+      return Array(w[QUICK]) if w.key?(QUICK)
+
+      list = site&.settings.to_h.dig("dashboard_defaults", "quick_actions", w["type"].to_s)
+      list.is_a?(Array) ? list : []
+    end
+
+    # A ação de um lugar do widget: "tap"/"hold"/"double_tap" ou "quick-<n>" (botão rápido).
+    def slot(w, name, site: nil)
+      return w[GESTURES[name]] if GESTURES.key?(name)
+
+      n = name.to_s[/\Aquick-(\d)\z/, 1] or return
+      quick_list(site, w)[n.to_i]
+    end
+
+    # Botões rápidos resolvidos ([{action, label, icon, slot, ...payload}]), só os que têm o que fazer.
+    def resolve_quick(r, w, binds)
+      quick_list(r.site, w).each_with_index.filter_map do |a, i|
+        plugin = a.is_a?(Hash) && self[a["action"]] or next
+        payload = plugin.payload(r, a.merge("_scope" => scope(w)), binds.first) or next
+        confirm = a["confirmation"].is_a?(String) ? a["confirmation"] : payload["confirm"]
+        { "action" => plugin.key, "label" => a["label"], "icon" => a["icon"], "slot" => "quick-#{i}" }.merge(payload).merge({ "confirm" => confirm }.compact).compact
+      end
+    end
+
+    # O que o widget junta às consultas das ações em lote (o cartão de área: a área).
+    def scope(w) = w["area"].is_a?(String) ? { "area" => w["area"] } : {}
+
+    def gesture_errors(w)
       GESTURES.values.filter_map do |field|
         next unless w.key?(field)
 
@@ -34,7 +85,7 @@ module Dashboards
       end
     end
 
-    FORM = %w[action navigation_path url point command value confirmation].freeze
+    FORM = %w[action navigation_path url point command value confirmation query].freeze
 
     # Formulário do editor ({gesto → campos}) → as props `*_action` (vazio = padrão do widget).
     def from_form(form)
@@ -52,8 +103,9 @@ module Dashboards
       GESTURES.filter_map do |gesture, field|
         a = w[field]
         plugin = a.is_a?(Hash) && self[a["action"]] or next
-        payload = plugin.payload(r, a, binds.first) or next
+        payload = plugin.payload(r, a.merge("_scope" => scope(w)), binds.first) or next
         confirm = a["confirmation"].is_a?(String) ? a["confirmation"] : (I18n.t("dashboards.act.sure") if a["confirmation"] == true)
+        confirm ||= payload["confirm"]
         [ gesture, { "action" => plugin.key }.merge(payload).merge({ "confirm" => confirm }.compact) ]
       end.to_h
     end
@@ -130,6 +182,29 @@ module Dashboards
           h["can_command"] = accepted && Resolver.point_json(p, r.role)["can_command"]
           h["confirm"] = p.confirm.presence || I18n.t("points.confirm", name: p.name) if p.confirm.present? || p.risk != "normal"
         end
+      end
+    end
+
+    # Ideia 12: o mesmo comando em todos os pontos de uma consulta (`Points::Query`;
+    # no cartão de área a área entra sozinha), como a ação "Comandar pontos por
+    # consulta" das automações. O toque vai para `Dashboards::Batch` (papel x risco
+    # por ponto; crítico nunca vai em lote) e sempre pede confirmação com a contagem.
+    class CommandQuery < Base
+      describe key: "command_query", label: "Comandar vários (consulta)", icon: "collection", fields: %w[query command value]
+      texts en: { label: "Command many (query)", bad: "command_query needs a valid query and command" },
+            es: { label: "Enviar a varios (consulta)", bad: "command_query necesita consulta y comando válidos" },
+            "pt-BR" => { bad: "command_query precisa de consulta e comando válidos" }
+
+      def self.errors(a)
+        ok = a["command"].to_s.match?(/\A[a-z_]{1,40}\z/) && (a["query"].is_a?(Hash) || a["query"].is_a?(String)) && a["query"].present? && Points::Query.error(a["query"]).nil?
+        ok ? nil : text(:bad)
+      end
+
+      def self.payload(r, a, _point)
+        targets = Batch.targets(r, a)
+        allowed = targets.count { |p| Batch.allowed?(r.role, p) }
+        { "command" => a["command"], "count" => targets.size, "allowed" => allowed, "can_command" => allowed.positive?,
+          "confirm" => I18n.t("dashboards.batch.confirm", n: allowed, label: a["label"].presence || a["command"]) }
       end
     end
 

@@ -1,0 +1,123 @@
+en:
+  dashboards:
+    context:
+      errors:
+        rules: 'must be a list of 1 to %{max} rules'
+        rule: 'rule %{n}: object with "when" and the target'
+        first: 'rule %{n}: "first" is the list of section ids (up to 20)'
+        view: 'rule %{n}: "view" is the id or path of a view'
+        sun: 'sun: use {"is": "day"|"night"} or {"after"/"before": "sunrise"|"sunset"} (offset in minutes, up to 720)'
+        presence: 'presence: use {"home": "anyone"|"nobody"|"everyone"} or {"person": "<point>", "home": true|false}'
+    schema:
+      favorites_bool: 'dashboard: "favorites" is true or false'
+      guest_bool: '%{where}: "guest" is true or false'
+      quick_list: 'quick_actions must be a list of 1 to %{max} actions'
+      quick_label: 'quick_actions[%{n}]: "label" of 1 to 40 characters (and "icon" as text)'
+    batch:
+      quick: Quick actions
+      confirm: '%{label}: send to %{n} point(s)?'
+      count:
+        one: 1 point
+        other: '%{count} points'
+      sent:
+        zero: No command sent
+        one: 1 command sent
+        other: '%{count} commands sent'
+      skipped:
+        one: 1 skipped by your role
+        other: '%{count} skipped by your role'
+      failed:
+        one: 1 failed
+        other: '%{count} failed'
+    search:
+      label: Search the dashboard
+      placeholder: Search card, device or room
+      none: Nothing on this dashboard with that name.
+  favorites:
+    title: Favorites
+    add: Add to favorites
+    "on": Favorite
+    added: '%{name} added to favorites.'
+    removed: '%{name} removed from favorites.'
+  settings_dashboards:
+    devices_link: Devices
+    guests_link: Guests
+  panel_devices:
+    title: Dashboard per device
+    subtitle: 'Choose the dashboard each device opens, like the wall tablet.'
+    this_device: This device
+    this_hint: Name this device to choose the dashboard it opens.
+    this_known: 'This device is "%{name}".'
+    name: Device name
+    name_hint: Kitchen tablet
+    dashboard: Dashboard it opens
+    person_default: The default of whoever signs in
+    view: View (optional)
+    view_hint: view path or id
+    save_this: Save this device
+    save: Save
+    list: Devices
+    list_hint: "The device's dashboard wins over each person's default, if they can see it."
+    none: No named device
+    none_hint: Open this screen on the tablet or phone and save the device.
+    current: this device
+    seen: 'seen %{time} ago'
+    saved: '"%{name}" saved.'
+    removed: '"%{name}" removed.'
+    remove: 'Remove %{name}'
+    remove_confirm: 'Remove "%{name}"? It goes back to the default of whoever signs in.'
+    remove_button: Remove
+    kinds:
+      web: Browser
+      app: App
+  guest_links:
+    title: Guest links
+    subtitle: 'A link that expires, so the babysitter or a visitor sees and uses only the marked cards.'
+    new: New link
+    new_hint: 'No account and no menu. Revoke it any time; everything is audited.'
+    name: For whom
+    name_hint: Babysitter
+    dashboard: Dashboard
+    role: What they can do
+    hours: Valid for
+    ttl:
+      one: 1 hour
+      other: '%{count} hours'
+    roles:
+      viewer: View only
+      guest: View and use common things (nothing sensitive or critical)
+    mark_hint: 'Only cards marked for guests in the dashboard JSON ("guest": true) appear.'
+    create: Create link
+    created: Link created
+    created_hint: 'Copy and send it now: it will not be shown again.'
+    link_label: Guest link
+    list: Links
+    none: No links
+    none_hint: Create a link for a visitor or the babysitter.
+    owner_only: Only the site owner creates guest links.
+    status: Status
+    uses: Opened
+    state_active: 'valid until %{time}'
+    state_expired: Expired
+    state_revoked: Revoked
+    revoke: Revoke
+    revoke_confirm: 'Revoke the link "%{name}"? Whoever has it loses access at once.'
+    revoked: 'Link "%{name}" revoked.'
+  guest:
+    eyebrow: '%{site} · %{name}'
+    until: 'This link is valid until %{time}.'
+    empty: Nothing to show
+    empty_hint: Whoever sent the link has not marked any card for guests yet.
+    turn_on: Turn on
+    turn_off: Turn off
+    press: Run
+    not_allowed: This link cannot do that.
+    invalid_title: Invalid link
+    invalid_text: This link expired or was revoked. Ask whoever sent it for a new one.
+  dashboard_defaults:
+    quick_title: Area card quick buttons
+    quick_hint: 'E.g. "All off" = query capability=onoff state=on tag=iluminacao and command Turn off. The card area is added by itself; role and risk apply per point and critical never goes in a batch.'
+    quick_label: Button text
+    quick_label_hint: All off
+    quick_query: Query
+    quick_command: Command

@@ -50,6 +50,17 @@
   </nav>
 <% end %>
 
+<%# Ideia 13: favoritos da pessoa no topo e busca dentro do painel (filtra os widgets pelo `search` do servidor). %>
+<% if @resolved["favorites_now"].present? %><%= render "web/dashboards/favorites", ids: @resolved["favorites_now"], points: points, live: live %><% end %>
+<div data-controller="ss-filter">
+<% if view["sections"].sum { |s| s["widgets"].size } > 3 && !kiosk %>
+  <div class="mt-4 max-w-md" role="search">
+    <label class="sr-only" for="dw-search"><%= t("dashboards.search.label") %></label>
+    <input type="search" id="dw-search" class="ss-input" placeholder="<%= t("dashboards.search.placeholder") %>" autocomplete="off"
+           data-ss-filter-target="input" data-action="input->ss-filter#apply keydown.esc->ss-filter#clear">
+    <p class="text-sm text-muted mt-2" data-ss-filter-target="empty" hidden><%= t("dashboards.search.none") %></p>
+  </div>
+<% end %>
 <% if view["sections"].all? { |s| s["widgets"].empty? } %>
   <div class="ss-card ss-empty mt-4">
     <%= render "web/shared/empty_art", art: "board", title: t("dashboards.empty"), text: (t("dashboards.empty_hint") if @resolved["can_edit"]) %>
@@ -59,5 +70,6 @@
   <%# ondaB2 (B8): o tipo da visão (Dashboards::ViewTypes) desenha as seções. %>
   <%= render Dashboards::ViewTypes.for(view).partial, view: view, points: points, dashboard: @dashboard, live: live %>
 <% end %>
+</div>
 
 <%= render "web/dashboards/kiosk", site: @site, dashboard: @dashboard if kiosk && live %>

@@ -69,6 +69,14 @@ module Api
         render_data(CommandSerializer.new(record).to_h, status: :accepted)
       end
 
+      # PUT /points/:id/favorite {favorite: true|false} (ideia 13): a linha de favoritos do painel da pessoa.
+      def favorite
+        point = Point.find(params[:id])
+        authorize_site!(point.site, :view)
+        on = params.key?(:favorite) ? ActiveModel::Type::Boolean.new.cast(params[:favorite]) : nil
+        render_data({ point_id: point.id, favorite: Dashboards::Personal.toggle!(current_user, point, on), favorites: Dashboards::Personal.ids(current_user, point.site) })
+      end
+
       # POST /points/:id/talk (audio = arquivo) — ondaC2 (C10): o "Falar" do app
       # (aperta, fala, solta): o áudio vira anexo de 1 dia e a câmera toca
       # pelo go2rtc (`play_media`). O navegador fala ao vivo pelo WebRTC.

@@ -8,7 +8,7 @@ class Command < ApplicationRecord
   acts_as_tenant :tenant
 
   STATUSES = LocalizedLabel.for("labels.command_statuses", %w[pending sent confirmed failed expired skipped])
-  SOURCES = LocalizedLabel.for("labels.command_sources", %w[web api automation alexa voice push bridge google])
+  SOURCES = LocalizedLabel.for("labels.command_sources", %w[web api automation alexa voice push bridge google guest])
   # Comando que não saiu nesse tempo não sai mais (portão abrindo 5 min depois).
   TTL = 1.minute
   RETENTION_DAYS = 365

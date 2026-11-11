@@ -52,6 +52,13 @@ module Web
       respond(e.message)
     end
 
+    # Ideia 13: liga/desliga o ponto na linha de favoritos do painel da pessoa (qualquer papel que vê).
+    def favorite
+      load_for(:view)
+      on = Dashboards::Personal.toggle!(current_user, @point)
+      redirect_back_or_to point_path(@point), notice: t(on ? "favorites.added" : "favorites.removed", name: @point.name), status: :see_other
+    end
+
     # "Redefinir estado": sensor que perdeu o evento (técnico+, vira AuditEvent).
     def reset
       load_for(:manage)

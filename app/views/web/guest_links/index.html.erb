@@ -1,0 +1,54 @@
+<%= render "web/shared/header", title: t("guest_links.title"), subtitle: t("guest_links.subtitle"), back: settings_dashboards_path %>
+<%= render layout: "web/settings/frame", locals: { current: :dashboards } do %>
+  <div class="grid gap-6">
+    <% if @guest_url %>
+      <section class="ss-card ss-card-grad p-4" role="status" aria-labelledby="gl-new">
+        <h2 id="gl-new" class="flex items-center gap-2"><%= icon("link", "size-4") %><%= t("guest_links.created") %></h2>
+        <p class="text-sm text-muted mt-1"><%= t("guest_links.created_hint") %></p>
+        <%= render Ss::CodeBlockComponent.new(text: @guest_url, label: t("guest_links.link_label"), id: "guest-url", css: "mt-3") %>
+      </section>
+    <% end %>
+
+    <% if @sites.empty? %>
+      <%= render Ss::NoteComponent.new(text: t("guest_links.owner_only")) %>
+    <% else %>
+      <section class="ss-card ss-card-pad grid gap-3" aria-labelledby="gl-form">
+        <%= render Ss::CardHeaderComponent.new(title: t("guest_links.new"), subtitle: t("guest_links.new_hint"), icon: icon("link", ""), id: "gl-form") %>
+        <%= form_with scope: :guest_link, url: settings_guest_links_path, method: :post, data: { turbo: false }, class: "grid gap-3 sm:grid-cols-2 items-end" do |f| %>
+          <div><%= f.label :name, t("guest_links.name"), class: "ss-label", for: "gl-name" %><%= f.text_field :name, class: "ss-input", id: "gl-name", required: true, maxlength: 80, placeholder: t("guest_links.name_hint") %></div>
+          <div><%= f.label :dashboard_id, t("guest_links.dashboard"), class: "ss-label", for: "gl-dash" %><%= f.select :dashboard_id, @dashboards, {}, class: "ss-input", id: "gl-dash" %></div>
+          <div><%= f.label :role, t("guest_links.role"), class: "ss-label", for: "gl-role" %>
+            <%= f.select :role, GuestLink::ROLES.map { |r| [ t("guest_links.roles.#{r}"), r ] }, {}, class: "ss-input", id: "gl-role" %></div>
+          <div><%= f.label :hours, t("guest_links.hours"), class: "ss-label", for: "gl-hours" %>
+            <%= f.select :hours, GuestLink::TTLS.map { |h| [ t("guest_links.ttl", count: h), h ] }, { selected: 8 }, class: "ss-input", id: "gl-hours" %></div>
+          <p class="text-sm text-muted sm:col-span-2"><%= t("guest_links.mark_hint") %></p>
+          <div class="sm:col-span-2"><%= f.submit t("guest_links.create"), class: "ss-btn ss-btn-primary" %></div>
+        <% end %>
+      </section>
+
+      <section class="grid gap-3" aria-labelledby="gl-list">
+        <%= render Ss::SectionHeaderComponent.new(title: t("guest_links.list"), id: "gl-list") %>
+        <% if @links.empty? %>
+          <%= render Ss::EmptyStateComponent.new(title: t("guest_links.none"), text: t("guest_links.none_hint"), css: "ss-card") %>
+        <% else %>
+          <%= render Ss::DataTableComponent.new(rows: @links, id: "convidados", caption: t("guest_links.list"), tools: false, max_height: "none") do |tb| %>
+            <% tb.column :name, t("guest_links.name") do |l| %><span class="block font-semibold"><%= l.name %></span><span class="block text-xs text-muted"><%= l.site.name %> · <%= l.dashboard.name %></span><% end %>
+            <% tb.column :role, t("guest_links.role") do |l| %><span class="ss-badge"><%= t("guest_links.roles.#{l.role}") %></span><% end %>
+            <% tb.column :status, t("guest_links.status") do |l| %>
+              <% if l.revoked_at %><span class="ss-badge ss-badge-danger"><%= t("guest_links.state_revoked") %></span>
+              <% elsif !l.active? %><span class="ss-badge"><%= t("guest_links.state_expired") %></span>
+              <% else %><span class="ss-badge ss-badge-success"><%= t("guest_links.state_active", time: l(l.expires_at, format: :short)) %></span><% end %>
+            <% end %>
+            <% tb.column :uses, t("guest_links.uses") do |l| %><span class="num"><%= l.uses %></span><%= " · #{l(l.last_used_at, format: :short)}" if l.last_used_at %><% end %>
+            <% tb.column :actions, t("people.actions"), align: :right do |l| %>
+              <% if l.active? %>
+                <%= button_to t("guest_links.revoke"), settings_guest_link_path(l), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm is-danger",
+                              form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("guest_links.revoke_confirm", name: l.name), turbo_confirm_button: t("guest_links.revoke") } } %>
+              <% end %>
+            <% end %>
+          <% end %>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
+<% end %>

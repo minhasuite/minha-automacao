@@ -10,8 +10,11 @@ module Api
         site = Site.find(params[:site_id])
         role = authorize_site!(site, :view)
         list = Dashboard.ensure_for(site).select { |d| d.visible_to?(role) }
-        default = Dashboard.default_for(site, current_user, role, app: true) # a API é a do app
-        render_data(list.map { |d| summary(d).merge(default: d.id == default&.id) })
+        device = PanelDevice.current(request) # ideia 10: o id do app em X-MA-Device
+        device&.seen!(request.user_agent)
+        mine = device&.dashboard_for(site, role)
+        default = mine || Dashboard.default_for(site, current_user, role, app: true) # a API é a do app
+        render_data(list.map { |d| summary(d).merge(default: d.id == default&.id, device_default: d.id == mine&.id) })
       end
 
       def show
@@ -19,6 +22,9 @@ module Api
         draft = bool(params[:draft]) && SiteMembership.allowed?(role, :manage)
         payload = draft ? Dashboards::Resolver.new(dashboard, role: role, definition: dashboard.working_draft).call : Dashboards::Resolver.cached(dashboard, role: role).deep_dup
         Dashboards::Hero.apply!(payload, site: dashboard.site, user: current_user) # P1.4: o topo pronto (o app é o Início)
+        Dashboards::Personal.apply!(payload, site: dashboard.site, user: current_user, role: role) # ideia 13: busca e favoritos
+        device = PanelDevice.current(request) # ideia 10: a visão deste aparelho vence o `open_if`
+        payload["open_view"] = device.view if device&.dashboard_id == dashboard.id && device.view.present?
         render_data(payload) if stale?(etag: payload.to_json)
       end
 
@@ -67,6 +73,16 @@ module Api
           { type: p.type, label: p.label, icon: p.icon, required: p.required, bind: p.bind?, binds: p.binds?, params: p.params }
         end
         render_data({ definition: dashboard.working_draft, has_draft: dashboard.draft?, version: dashboard.version }, meta: { catalog: catalog })
+      end
+
+      # POST /dashboards/:id/widgets/:widget_id/batch {slot}: ação em lote (ideia 12). → {sent, skipped, failed}.
+      def batch
+        dashboard, role = find(:view)
+        resolver = Dashboards::Resolver.new(dashboard, role: role)
+        w = resolver.widget(params[:widget_id]) or raise ActiveRecord::RecordNotFound
+        action = Dashboards::Batch.action_for(w, params[:slot].to_s, site: dashboard.site) or raise ActiveRecord::RecordNotFound
+        result = Dashboards::Batch.run(resolver, action, source: "api")
+        render_data(result.to_h.merge("message" => Dashboards::Batch.message(result)))
       end
 
       def versions

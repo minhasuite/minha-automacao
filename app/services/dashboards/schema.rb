@@ -21,7 +21,8 @@ module Dashboards
     STATES = %w[on off].freeze
     # visible_if (Lote 4, G18b: faixa numérica, OU e tamanho de tela). Dentro do
     # `any` (OU) não entram papel nem tela.
-    VISIBILITY = %w[role state numeric quality time device screen any all].freeze
+    # Ideia 9: as condições do registro `Dashboards::Context` (sol, presença) entram junto.
+    VISIBILITY = (%w[role state numeric quality time device screen any all] + Context.keys).freeze
     MAX_ANY = 10
     TIME = /\A([01]\d|2[0-3]):[0-5]\d\z/
 
@@ -44,6 +45,7 @@ module Dashboards
       return e << msg(:views_list) unless views.is_a?(Array) && views.any?
 
       e.concat(Themes.errors(defn["theme"], msg(:at_dashboard)))
+      e << msg(:favorites_bool) if defn.key?("favorites") && ![ true, false ].include?(defn["favorites"])
       ids = []
       paths = []
       boxes = 0 # visões e seções: dividem os ids, mas não contam no limite de widgets
@@ -58,6 +60,7 @@ module Dashboards
         e.concat(Themes.errors(view["theme"], where))
         e.concat(ViewTypes.errors(view, where))
         e.concat(Hero.errors(view["hero"]).map { |m| "#{where}: #{m}" }) if view.key?("hero")
+        context_rules(view["order_if"], "first", where, e) if view.key?("order_if")
         Array(view["badges"]).each { |b| widget(b, msg(:at_badge, where: where), ids, e) }
         sections = view["sections"]
         next e << msg(:sections_list, where: where) unless sections.is_a?(Array)
@@ -76,7 +79,18 @@ module Dashboards
         end
       end
       e << msg(:too_many, max: MAX_WIDGETS) if ids.size - boxes > MAX_WIDGETS
+      context_rules(defn["open_if"], "view", msg(:at_dashboard), e) if defn.key?("open_if")
       e
+    end
+
+    # Ideia 9: `order_if` (visão) e `open_if` (painel); o `when` é o do visible_if, sem papel/tela/aparelho.
+    def context_rules(rules, field, where, e)
+      Context.rule_errors(rules, field) do |cond, n|
+        sub = []
+        visible_if(cond, "#{where} (#{field == 'view' ? 'open_if' : 'order_if'} #{n})", sub)
+        sub << msg(:visible_any_nested, where: "#{where} (#{n})") if cond.is_a?(Hash) && cond.keys.intersect?(%w[role screen device])
+        sub
+      end.each { |m| e << (m.start_with?(where) ? m : "#{where}: #{m}") }
     end
 
     MAX_CHILDREN = 12
@@ -99,6 +113,7 @@ module Dashboards
       e << msg(:bad_tap, where: where) if w.key?("tap") && !TAPS.include?(w["tap"])
       TileFeatures.errors(w["features"]).each { |m| e << "#{where}: #{m}" } if w.key?("features")
       Actions.errors(w).each { |m| e << "#{where}: #{m}" }
+      e << msg(:guest_bool, where: where) if w.key?("guest") && ![ true, false ].include?(w["guest"])
       e << msg(:bad_aggregate, where: where) if w.key?("aggregate") && !AGGREGATES.include?(w["aggregate"])
       e << msg(:bad_aggregate, where: where) if w["type"] == "stat" && w.key?("period") && !PERIODS.include?(w["period"])
       e << msg(:bad_range, where: where) if w.key?("range") && !RANGES.include?(w["range"])
@@ -168,6 +183,7 @@ module Dashboards
       e << msg(:visible_state, where: where) if value.key?("state") && !(value["state"].is_a?(Hash) && value["state"]["point"].is_a?(String) && (value["state"].key?("is") || value["state"].key?("not")))
       e << msg(:visible_quality, where: where) if value.key?("quality") && !(Array(value["quality"]) - Point::QUALITIES).empty?
       e << msg(:visible_device, where: where) if value.key?("device") && !value["device"].is_a?(Array)
+      Context.errors(value).each { |m| e << "#{where}: #{m}" }
       return unless value.key?("time")
 
       t = value["time"]
