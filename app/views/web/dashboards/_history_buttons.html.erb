@@ -1,0 +1,8 @@
+<%# locals: (dashboard:, history:, back: nil) -%>
+<%# Ideia 5: desfazer/refazer o rascunho (Dashboards::History); o rótulo diz o passo (Ctrl+Z / Ctrl+Shift+Z). %>
+<% { "undo" => [ undo_dashboard_path(dashboard), "" ], "redo" => [ redo_dashboard_path(dashboard), "-scale-x-100" ] }.each do |kind, (url, flip)| %>
+  <% count, step = history[kind] %>
+  <% label = count.positive? ? t("dashboards.history.#{kind}_step", step: step.presence || t("dashboards.history.change")) : t("dashboards.history.#{kind}_none") %>
+  <%= button_to url, params: { back: back }.compact, class: "ss-icon-btn is-outline", disabled: count.zero?, title: label, "aria-label": label,
+                form: { class: "contents", data: { dw_key: kind } } do %><%= icon("reply", "size-4 #{flip}") %><% end %>
+<% end %>

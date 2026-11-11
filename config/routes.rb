@@ -65,6 +65,11 @@ Rails.application.routes.draw do
 
   scope module: :web do
     root "dashboard#show"
+    # P1.5: o JSON Schema do painel (gerado do registro de widgets) e, ideia 2, "Adicionar ao painel"
+    # (antes de /paineis/:id).
+    get "paineis/schema", to: "dashboard_schemas#show", as: :dashboard_schema, defaults: { format: :json }
+    get "paineis/adicionar", to: "dashboard_adds#new", as: :new_dashboard_add
+    post "paineis/adicionar", to: "dashboard_adds#create", as: :dashboard_adds
 
     resources :notifications, only: :index, path: "notificacoes" do
       patch :read, on: :member, path: "lida"
@@ -135,7 +140,18 @@ Rails.application.routes.draw do
         member do
           get "w/:widget_id", action: :widget, as: :widget
           get "w/:widget_id/pontos", action: :widget_points, as: :widget_points
-          patch :draft, path: "rascunho"
+          # Agilidade do editor: JSON de um widget (P1.5), ajustes na gaveta (ideia 1), copiar (ideia 4),
+          # desfazer/refazer e comparar versões (ideia 5), revisar e publicar com prévia e avisos (ideias 24 e 25).
+          get "w/:widget_id/json", to: "dashboard_widgets#json", as: :widget_json
+          patch "w/:widget_id/json", to: "dashboard_widgets#update_json"
+          get "w/:widget_id/ajustes", to: "dashboard_widgets#form", as: :widget_form
+          post "copiar", to: "dashboard_widgets#copy", as: :copy
+          post "desfazer", to: "dashboard_versions#undo", as: :undo
+          post "refazer", to: "dashboard_versions#redo", as: :redo
+          get "comparar", to: "dashboard_versions#compare", as: :compare
+          get "revisar", to: "dashboard_reviews#show", as: :review
+          # POST também: as ações rápidas do Ctrl+K são links Turbo com POST.
+          match :draft, path: "rascunho", via: %i[patch post]
           post :publish, path: "publicar"
           post :discard, path: "descartar"
           post :revert, path: "voltar"

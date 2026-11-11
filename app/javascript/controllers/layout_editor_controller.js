@@ -94,10 +94,18 @@ export default class extends Controller {
     handle.addEventListener("pointerup", up)
   }
 
-  // Lápis do bloco: abre o formulário do widget logo abaixo.
+  // Lápis do bloco (ou o clique no próprio card, ideia 1): abre o formulário do widget logo abaixo ou,
+  // na edição na própria tela, na gaveta (link Turbo para o frame dela, sem âncora).
   edit(event) {
-    const link = event.target.closest(".dw-ed-edit")
-    if (!link) return
+    let link = event.target.closest(".dw-ed-edit")
+    if (!link) {
+      const card = event.target.closest(".dw-ed-w")
+      if (!card || event.target.closest(".dw-ed-grip, .dw-ed-resize")) return
+      link = card.querySelector(":scope > .dw-ed-chrome .dw-ed-edit")
+      if (!link) return
+      if (!link.hash) return link.click()
+    }
+    if (!link.hash) return
     const target = document.getElementById(link.hash.slice(1))
     if (!target) return
     event.preventDefault()

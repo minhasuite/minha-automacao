@@ -1,10 +1,12 @@
-<%# locals: (dashboard:, w:, op:, target:, view_id:, point_options:, areas:, scenes:) -%>
+<%# locals: (dashboard:, w:, op:, target:, view_id:, point_options:, areas:, scenes:, back: nil) -%>
 <% span = DashboardsHelper::DEFAULT_SPAN.merge(w["span"] || {}) %>
 <% roles = Array(w.dig("visible_if", "role")) %>
 <% screens = Array(w.dig("visible_if", "screen")) %>
 <% plugins = Dashboards::Widgets.plugins %>
 <% uid = "#{op}-#{target}" %>
-<%= form_with url: draft_dashboard_path(dashboard), method: :patch, multipart: true, class: "dw-wf grid gap-3 sm:grid-cols-2 pt-3" do |f| %>
+<%# `back`: "painel" = a gaveta da edição na própria tela (ideia 1); a resposta é a página toda. %>
+<%= form_with url: draft_dashboard_path(dashboard), method: :patch, multipart: true, class: "dw-wf grid gap-3 sm:grid-cols-2 pt-3", data: ({ turbo_frame: "_top" } if back) do |f| %>
+  <% if back %><%= hidden_field_tag :back, back, id: nil %><% end %>
   <%= hidden_field_tag :op, op, id: nil %><%= hidden_field_tag :target, target, id: nil %><%= hidden_field_tag :view_id, view_id, id: nil %>
   <div><label class="ss-label" for="t-<%= uid %>"><%= t("dashboards.kind") %></label>
     <%= select_tag "widget[type]", options_for_select(Dashboards::Schema.labels.invert, w["type"] || "tile"), class: "ss-input", id: "t-#{uid}" %></div>

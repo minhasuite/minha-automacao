@@ -6,10 +6,30 @@
 <% names = @points.index_by(&:id) %>
 <% scenes = @site.scenes.order(:name).to_a %>
 <%= render "web/shared/header", title: t("dashboards.ed.title", name: @dashboard.name), subtitle: [ @site.name, (@dashboard.auto? ? t("dashboards.ed.auto_note") : t("dashboards.ed.published", n: @dashboard.version)), (t("dashboards.ed.draft_changed") if @dashboard.draft?) ].compact.join(" · "), back: dashboard_path(@dashboard) do %>
-  <%= link_to dashboard_path(@dashboard, rascunho: 1, view: view&.dig("id")), class: "ss-btn ss-btn-outline" do %><%= icon("eye", "size-4") %><%= t("dashboards.ed.preview") %><% end %>
+  <%= render "web/dashboards/history_buttons", dashboard: @dashboard, history: @history %>
+  <%= link_to dashboard_path(@dashboard, editar: 1, view: view&.dig("id")), class: "ss-btn ss-btn-outline", title: t("dashboards.here.hint") do %><%= icon("cursor-click", "size-4") %><%= t("dashboards.here.open") %><% end %>
+  <%# Ideias 24 e 25: publicar passa pela revisão (prévia em todos os tamanhos e temas + avisos que não bloqueiam). %>
   <% why = (t("dashboards.ed.nothing_to_publish") unless @dashboard.draft? || @dashboard.auto?) %>
-  <%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary", disabled: why.present?, title: why, "aria-describedby": ("publish-why" if why), form: { data: { turbo_confirm: t("dashboards.ed.publish_confirm"), turbo_confirm_button: t("dashboards.publish") } } do %><%= icon("upload", "size-4") %><%= t("dashboards.publish") %><% end %>
-  <% if why %><p id="publish-why" class="basis-full text-right text-xs text-muted sm:basis-auto"><%= why %></p><% end %>
+  <% if why %>
+    <button type="button" class="ss-btn ss-btn-primary" disabled title="<%= why %>" aria-describedby="publish-why"><%= icon("upload", "size-4") %><%= t("dashboards.publish") %></button>
+    <p id="publish-why" class="basis-full text-right text-xs text-muted sm:basis-auto"><%= why %></p>
+  <% else %>
+    <%= link_to review_dashboard_path(@dashboard, view: view&.dig("id")), class: "ss-btn ss-btn-primary", data: { dw_key: "publish" } do %><%= icon("upload", "size-4") %><%= t("dashboards.review.publish_btn") %><% end %>
+  <% end %>
+<% end %>
+<%# Ideia 7: ações do painel no Ctrl+K (o grupo aparece primeiro na paleta). %>
+<% @palette_groups = [ { title: t("dashboards.keys.palette_group", name: @dashboard.name), items: [
+     { label: t("dashboards.keys.new_view"), url: edit_dashboard_path(@dashboard, nova_visao: 1), icon: icon("plus", "") },
+     { label: t("dashboards.review.publish_btn"), url: review_dashboard_path(@dashboard, view: view&.dig("id")), icon: icon("upload", "") },
+     { label: t("dashboards.cmp.title"), url: compare_dashboard_path(@dashboard), icon: icon("switch-horizontal", "") },
+     { label: t("dashboards.here.open"), url: dashboard_path(@dashboard, editar: 1, view: view&.dig("id")), icon: icon("cursor-click", "") },
+     { label: t("dashboards.ed.json"), url: json_dashboard_path(@dashboard), icon: icon("code", "") }
+   ] } ] %>
+<%= render "web/dashboards/keys", dashboard: @dashboard, view_id: view&.dig("id") %>
+<% if @clipboard %>
+  <%= render Ss::CalloutComponent.new(tone: :accent, title: t("dashboards.clip.holding", name: @clipboard["label"].presence || t("dashboards.clip.#{@clipboard["kind"]}")), icon: icon("clipboard-list", ""), css: "mb-4") do %>
+    <p><%= t("dashboards.clip.hint_#{@clipboard["kind"]}") %></p>
+  <% end %>
 <% end %>
 
 <div class="grid gap-6 lg:grid-cols-3 items-start">
@@ -21,12 +41,12 @@
       <% end %>
     </nav>
       <%# Nova vista: .ss-menu da gem com botão de texto; o painel é o próprio formulário. %>
-      <details class="ss-menu is-end shrink-0">
+      <details class="ss-menu is-end shrink-0" id="dw-new-view" <%= "open" if params[:nova_visao].present? %>>
         <summary class="ss-menu-btn" aria-label="<%= t("dashboards.ed.new_view") %>"><%= icon("plus", "size-4") %><span class="max-sm:sr-only"><%= t("dashboards.ed.new_view") %></span></summary>
         <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "!flex gap-2 p-3 w-[min(20rem,calc(100vw-2rem))]" do %>
           <%= hidden_field_tag :op, "add_view", id: nil %>
           <label class="sr-only" for="nv-title"><%= t("dashboards.ed.view_name") %></label>
-          <%= text_field_tag :title, nil, class: "ss-input", id: "nv-title", placeholder: t("dashboards.ed.view_placeholder"), required: true, maxlength: 60 %>
+          <%= text_field_tag :title, nil, class: "ss-input", id: "nv-title", placeholder: t("dashboards.ed.view_placeholder"), required: true, maxlength: 60, autofocus: params[:nova_visao].present? %>
           <%= submit_tag t("dashboards.ed.create"), class: "ss-btn ss-btn-primary" %>
         <% end %>
       </details>
@@ -72,7 +92,7 @@
             </details>
             <%= submit_tag t("dashboards.save"), class: "ss-btn ss-btn-ghost" %>
           <% end %>
-          <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "view", target: view["id"], view_id: view["id"], name: t("dashboards.ed.the_view", name: view["title"]) %>
+          <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "view", target: view["id"], view_id: view["id"], name: t("dashboards.ed.the_view", name: view["title"]), clipboard: @clipboard %>
         </div>
         <details class="mt-3" <%= "open" if view["theme"].present? %>>
           <summary class="ss-summary text-sm font-semibold text-ink-2 w-fit"><%= t("dashboards.ed.view_theme") %></summary>
@@ -86,7 +106,7 @@
       <% sections.each do |s| %>
         <%# Seções recolhidas quando são muitas (editor curto no celular); a que tem o widget em edição abre. %>
         <% fold_open = sections.size <= 2 || Array(s["widgets"]).any? { |w| w["id"] == @editing } %>
-        <section class="ss-card ss-card-pad" aria-label="<%= t("dashboards.ed.section_label", name: s['title']) %>">
+        <section class="ss-card ss-card-pad" aria-label="<%= t("dashboards.ed.section_label", name: s['title']) %>" data-dw-section="<%= s['id'] %>">
           <details <%= "open" if fold_open %>>
           <summary class="ss-summary cursor-pointer font-bold text-ink flex items-center gap-2">
             <span class="min-w-0 flex-1 truncate"><%= s["title"].presence || t("dashboards.ed.untitled") %></span>
@@ -102,7 +122,7 @@
               <% if view["type"] == "sidebar" %><label class="ss-check pb-2"><%= check_box_tag :position, "sidebar", s["position"] == "sidebar", id: "spo-#{s['id']}" %><%= t("dashboards.vt.form.in_sidebar") %></label><% end %>
               <%= submit_tag t("dashboards.save"), class: "ss-btn ss-btn-ghost" %>
             <% end %>
-            <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "section", target: s["id"], view_id: view["id"], name: t("dashboards.ed.the_section", name: s["title"]) %>
+            <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "section", target: s["id"], view_id: view["id"], name: t("dashboards.ed.the_section", name: s["title"]), clipboard: @clipboard %>
           </div>
 
           <ul class="mt-4 divide-y divide-line">
@@ -163,7 +183,10 @@
     </section>
 
     <section class="ss-card ss-card-pad" aria-labelledby="versions-title">
-      <h2 id="versions-title"><%= t("dashboards.ed.versions") %></h2>
+      <div class="flex items-center gap-2">
+        <h2 id="versions-title" class="flex-1"><%= t("dashboards.ed.versions") %></h2>
+        <%= link_to compare_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("switch-horizontal", "size-4") %><%= t("dashboards.cmp.short") %><% end %>
+      </div>
       <% versions = @dashboard.versions.includes(:author).limit(15) %>
       <% if versions.empty? %>
         <p class="text-sm text-muted mt-1"><%= @dashboard.auto? ? t("dashboards.ed.no_versions_auto") : t("dashboards.ed.no_versions") %></p>

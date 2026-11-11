@@ -477,6 +477,22 @@ CREATE TABLE public.commands (
 
 
 --
+-- Name: dashboard_draft_steps; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dashboard_draft_steps (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    dashboard_id uuid NOT NULL,
+    author_id uuid,
+    kind character varying NOT NULL,
+    label character varying,
+    definition jsonb,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: dashboard_themes; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2007,6 +2023,14 @@ ALTER TABLE ONLY public.commands
 
 
 --
+-- Name: dashboard_draft_steps dashboard_draft_steps_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_draft_steps
+    ADD CONSTRAINT dashboard_draft_steps_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: dashboard_themes dashboard_themes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2388,6 +2412,13 @@ ALTER TABLE ONLY public.tenants
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_on_dashboard_id_kind_created_at_a30075c698; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_on_dashboard_id_kind_created_at_a30075c698 ON public.dashboard_draft_steps USING btree (dashboard_id, kind, created_at);
 
 
 --
@@ -2892,6 +2923,20 @@ CREATE INDEX index_commands_on_tenant_id_and_created_at ON public.commands USING
 --
 
 CREATE INDEX index_commands_on_user_id ON public.commands USING btree (user_id);
+
+
+--
+-- Name: index_dashboard_draft_steps_on_author_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_dashboard_draft_steps_on_author_id ON public.dashboard_draft_steps USING btree (author_id);
+
+
+--
+-- Name: index_dashboard_draft_steps_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_dashboard_draft_steps_on_tenant_id ON public.dashboard_draft_steps USING btree (tenant_id);
 
 
 --
@@ -4428,6 +4473,14 @@ ALTER TABLE ONLY public.passkeys
 
 
 --
+-- Name: dashboard_draft_steps fk_rails_9155be8a5a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_draft_steps
+    ADD CONSTRAINT fk_rails_9155be8a5a FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: assist_timers fk_rails_95c638fef9; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4481,6 +4534,14 @@ ALTER TABLE ONLY public.assist_runs
 
 ALTER TABLE ONLY public.assist_satellites
     ADD CONSTRAINT fk_rails_9b6ebdbd7f FOREIGN KEY (device_id) REFERENCES public.devices(id) ON DELETE CASCADE;
+
+
+--
+-- Name: dashboard_draft_steps fk_rails_9bb80305ac; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_draft_steps
+    ADD CONSTRAINT fk_rails_9bb80305ac FOREIGN KEY (dashboard_id) REFERENCES public.dashboards(id) ON DELETE CASCADE;
 
 
 --
@@ -4820,6 +4881,14 @@ ALTER TABLE ONLY public.dashboard_themes
 
 
 --
+-- Name: dashboard_draft_steps fk_rails_f5a997c8c7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dashboard_draft_steps
+    ADD CONSTRAINT fk_rails_f5a997c8c7 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: packages fk_rails_f6e97f226b; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4874,6 +4943,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261111100047'),
 ('20261110140717'),
 ('20261109100001'),
 ('20261108100001'),

@@ -1,7 +1,8 @@
-<%# locals: (dashboard:, view:, live:) -%>
+<%# locals: (dashboard:, view:, live:, drawer: false) -%>
 <%# Layout ao vivo (uiweb): os widgets de verdade do rascunho, arrastáveis
     (ordem e troca de seção) e com alça de largura por tela. Cada soltar salva
-    no rascunho; os formulários abaixo continuam valendo (teclado). %>
+    no rascunho; os formulários abaixo continuam valendo (teclado). Com `drawer` (edição na própria tela,
+    ideia 1), o lápis e o clique no card abrem os ajustes do widget na gaveta (`dw-drawer`). %>
 <% resolved_view = live["views"].find { |v| v["id"] == view["id"] } || { "sections" => [] } %>
 <% points = live["points"] %>
 <section class="ss-card ss-card-pad dw-ed" aria-labelledby="ed-title" data-controller="layout-editor" data-screen="desktop"
@@ -40,7 +41,7 @@
                 <div class="dw-ed-live" inert><%= render Dashboards::Widgets[w["type"]]&.partial || "web/dashboards/widgets/#{w['type']}", w: w, points: points, dashboard: dashboard, live: false %></div>
                 <div class="dw-ed-chrome">
                   <span class="ss-sortable-handle dw-ed-grip" title="<%= t("dashboards.le.drag") %>" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
-                  <a href="#<%= w['id'] %>" class="ss-icon-btn is-sm dw-ed-edit" title="<%= t("dashboards.le.edit_widget") %>"><%= icon("pencil", "size-3.5") %><span class="sr-only"><%= t("dashboards.edit") %> <%= w["label"].presence || Dashboards::Schema.labels[w["type"]] %></span></a>
+                  <a href="<%= drawer ? widget_form_dashboard_path(dashboard, widget_id: w['id']) : "##{w['id']}" %>" class="ss-icon-btn is-sm dw-ed-edit" title="<%= t("dashboards.le.edit_widget") %>" <%= tag.attributes(data: { turbo_frame: "dw-drawer-frame" }) if drawer %>><%= icon("pencil", "size-3.5") %><span class="sr-only"><%= t("dashboards.edit") %> <%= w["label"].presence || Dashboards::Schema.labels[w["type"]] %></span></a>
                   <span class="dw-ed-cols num" data-cols aria-hidden="true"></span>
                 </div>
                 <span class="dw-ed-resize" title="<%= t("dashboards.le.resize") %>" aria-hidden="true"></span>

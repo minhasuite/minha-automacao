@@ -1,0 +1,21 @@
+<!doctype html>
+<%# Prévia do painel dentro da revisão (ideia 24): o mesmo show do painel, sem moldura, menu, paleta nem
+    "Falar", no tema pedido (`?tema=light|dark`) qualquer que seja o deste navegador. -%>
+<html lang="<%= I18n.locale %>" data-theme="<%= params[:tema].presence_in(%w[light dark]) || "light" %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title><%= [ content_for(:title), "Minha Automação" ].compact.join(" — ") %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <%= stylesheet_link_tag "tailwind" %>
+  <%= javascript_importmap_tags %>
+  <%= ss_density_head %>
+</head>
+<% body_theme = @body_theme || {} %>
+<body class="ss-base ss-inputs min-h-screen <%= body_theme["class"] %>" style="<%= body_theme["style"] %>">
+  <main id="conteudo" class="min-w-0 px-4 py-6 lg:px-8 mx-auto max-w-7xl"><%= yield %></main>
+</body>
+</html>

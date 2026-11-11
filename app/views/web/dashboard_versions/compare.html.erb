@@ -1,0 +1,71 @@
+<%# Ideia 5: duas versões lado a lado (Dashboards::Diff), por visão, seção e widget: à esquerda a de antes, à direita a
+    outra, com as chaves que mudaram. Voltar uma versão continua no editor (versões) e aqui embaixo. %>
+<% tones = { "added" => "ss-badge-success", "removed" => "ss-badge-danger", "changed" => "ss-badge-warn", "moved" => "ss-badge-accent" } %>
+<% name = ->(ref) { ref == Web::DashboardVersionsController::DRAFT ? t("dashboards.cmp.draft") : t("dashboards.cmp.version", n: ref) } %>
+<%= render "web/shared/header", title: t("dashboards.cmp.title"), subtitle: @dashboard.name, back: edit_dashboard_path(@dashboard) %>
+
+<% if @choices.size < 2 %>
+  <%= render Ss::EmptyStateComponent.new(title: t("dashboards.cmp.nothing"), text: t("dashboards.cmp.nothing_hint"), css: "ss-card") %>
+<% else %>
+  <%= form_with url: compare_dashboard_path(@dashboard), method: :get, class: "ss-card ss-card-pad flex flex-wrap items-end gap-3" do %>
+    <div class="min-w-40 flex-1"><label class="ss-label" for="cmp-a"><%= t("dashboards.cmp.left") %></label><%= select_tag :a, options_for_select(@choices, @a), id: "cmp-a", class: "ss-input", data: { autosubmit: true } %></div>
+    <div class="min-w-40 flex-1"><label class="ss-label" for="cmp-b"><%= t("dashboards.cmp.right") %></label><%= select_tag :b, options_for_select(@choices, @b), id: "cmp-b", class: "ss-input", data: { autosubmit: true } %></div>
+    <%= submit_tag t("dashboards.cmp.submit"), class: "ss-btn ss-btn-outline", name: nil %>
+  <% end %>
+
+  <% if @diff %>
+    <% changed = @diff.reject { |v| v["status"] == "same" } %>
+    <% if changed.empty? %>
+      <%= render Ss::NoteComponent.new(text: t("dashboards.cmp.same", a: name.(@a), b: name.(@b)), css: "mt-4") %>
+    <% end %>
+    <% changed.each do |v| %>
+      <section class="ss-card ss-card-pad mt-4" aria-label="<%= v["title"] %>">
+        <h2 class="flex flex-wrap items-center gap-2"><%= icon("view-boards", "size-5 text-accent") %><%= v["title"] %>
+          <span class="ss-badge <%= tones[v["status"]] %>"><%= t("dashboards.cmp.status.#{v["status"]}") %></span></h2>
+        <div class="hidden sm:grid grid-cols-2 gap-3 mt-3 ss-section"><span><%= name.(@a) %></span><span><%= name.(@b) %></span></div>
+        <% rows = v["changes"].map { |k, from, to| [ t("dashboards.cmp.view_prop", key: k), "changed", from, to ] } +
+                  v["sections"].reject { |s| s["status"] == "same" }.map { |s| [ t("dashboards.cmp.section", name: s["title"].presence || t("dashboards.ed.untitled")), s["status"], s["changes"], nil ] } %>
+        <% (rows + v["widgets"].reject { |w| w["status"] == "same" }.map { |w| [ w["label"], w["status"], w, nil ] }).each do |title, status, a, b| %>
+          <div class="mt-2 grid gap-2 sm:grid-cols-2 border-t border-line pt-2">
+            <% if a.is_a?(Hash) %>
+              <%# widget: à esquerda onde estava/o que tinha, à direita onde ficou/o que tem. %>
+              <div class="min-w-0"><p class="font-semibold text-ink"><%= title %> <span class="ss-badge <%= tones[status] %>"><%= t("dashboards.cmp.status.#{status}") %></span></p>
+                <% if a["from"] %><p class="text-xs text-muted"><%= t("dashboards.cmp.where", section: a["from"]["section_title"].presence || t("dashboards.ed.untitled"), n: a["from"]["index"] + 1) %></p><% else %><p class="text-xs text-muted"><%= t("dashboards.cmp.absent") %></p><% end %>
+                <% a["changes"].each do |k, from, _| %><p class="text-xs num break-all"><span class="font-semibold"><%= k %>:</span> <%= from || t("dashboards.cmp.empty") %></p><% end %></div>
+              <div class="min-w-0"><p class="sm:hidden ss-section"><%= name.(@b) %></p>
+                <% if a["to"] %><p class="text-xs text-muted"><%= t("dashboards.cmp.where", section: a["to"]["section_title"].presence || t("dashboards.ed.untitled"), n: a["to"]["index"] + 1) %></p><% else %><p class="text-xs text-muted"><%= t("dashboards.cmp.absent") %></p><% end %>
+                <% a["changes"].each do |k, _, to| %><p class="text-xs num break-all"><span class="font-semibold"><%= k %>:</span> <%= to || t("dashboards.cmp.empty") %></p><% end %></div>
+            <% elsif a.is_a?(Array) %>
+              <%# seção %>
+              <div class="min-w-0"><p class="font-semibold text-ink"><%= title %> <span class="ss-badge <%= tones[status] %>"><%= t("dashboards.cmp.status.#{status}") %></span></p>
+                <% a.each do |k, from, _| %><p class="text-xs num break-all"><span class="font-semibold"><%= k %>:</span> <%= from || t("dashboards.cmp.empty") %></p><% end %></div>
+              <div class="min-w-0"><% a.each do |k, _, to| %><p class="text-xs num break-all"><span class="font-semibold"><%= k %>:</span> <%= to || t("dashboards.cmp.empty") %></p><% end %></div>
+            <% else %>
+              <%# prop da visão %>
+              <div class="min-w-0"><p class="font-semibold text-ink"><%= title %></p><p class="text-xs num break-all"><%= a || t("dashboards.cmp.empty") %></p></div>
+              <div class="min-w-0"><p class="text-xs num break-all sm:mt-6"><%= b || t("dashboards.cmp.empty") %></p></div>
+            <% end %>
+          </div>
+        <% end %>
+      </section>
+    <% end %>
+  <% end %>
+
+  <% if @versions.any? %>
+    <section class="ss-card ss-card-pad mt-4" aria-labelledby="cmp-versions">
+      <h2 id="cmp-versions"><%= t("dashboards.ed.versions") %></h2>
+      <ul class="mt-2 divide-y divide-line">
+        <% @versions.first(15).each do |v| %>
+          <li class="py-2 flex items-center gap-2">
+            <span class="min-w-0 flex-1"><span class="font-semibold text-ink num">v<%= v.version %></span> <span class="text-xs text-muted"><%= l(v.created_at, format: :short) %><%= " · #{v.author.name.split.first}" if v.author %></span></span>
+            <% if v.version == @dashboard.version %>
+              <span class="ss-badge ss-badge-success"><%= t("dashboards.ed.live") %></span>
+            <% else %>
+              <%= button_to t("dashboards.ed.revert"), revert_dashboard_path(@dashboard), params: { version: v.version }, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm: t("dashboards.ed.revert_confirm", n: v.version), turbo_confirm_button: t("dashboards.publish") } } %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+<% end %>

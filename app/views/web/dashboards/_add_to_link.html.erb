@@ -1,0 +1,3 @@
+<%# locals: (type:, record:, css: "ss-btn ss-btn-ghost") -%>
+<%# Ideia 2: "Adicionar ao painel" nas páginas do ponto, do aparelho, da cena e da automação/script (técnico+). %>
+<%= link_to new_dashboard_add_path(tipo: type, id: record.id), class: css, title: t("dashboards.add_to.title") do %><%= icon("view-boards", "size-4") %><span><%= t("dashboards.add_to.link") %></span><% end %>

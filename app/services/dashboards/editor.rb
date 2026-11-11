@@ -104,6 +104,39 @@ module Dashboards
       theme.empty? ? target.delete("theme") : target["theme"] = theme
     end
 
+    # P1.5: o JSON de um widget inteiro, editado à mão (o id fica o mesmo; quem chama valida pelo Schema).
+    def replace_widget(id, attrs)
+      raise ArgumentError, "widget" unless attrs.is_a?(Hash)
+
+      widget(id).replace(attrs.merge("id" => id))
+    end
+
+    # Ideia 7 (atalho e Ctrl+K): cópia logo depois do original, com ids novos.
+    def duplicate(kind, id)
+      list = container(kind, id)
+      i = list.index { |x| x["id"] == id }
+      list.insert(i + 1, fresh(list[i]))
+      list[i + 1]["id"]
+    end
+
+    # Ideia 4: o que vai para a área de transferência (cópia solta, sem mexer no painel).
+    def item(kind, id) = (kind == "section" ? section(id) : widget(id)).deep_dup
+
+    # Ideia 4: cola um widget numa seção/pilha ou uma seção numa visão (no fim), com ids novos.
+    def paste(kind, target, item)
+      list = kind == "section" ? (view(target)["sections"] ||= []) : holder(target)
+      list << fresh(item)
+      list.last["id"]
+    end
+
+    # "Colar estilo": só as chaves de aparência do widget copiado (sem elas na cópia, saem do alvo).
+    STYLE_KEYS = %w[style_if color icon].freeze
+
+    def paste_style(id, source)
+      w = widget(id)
+      STYLE_KEYS.each { |k| source.key?(k) ? w[k] = source[k].deep_dup : w.delete(k) }
+    end
+
     def remove(kind, id)
       container(kind, id).reject! { |x| x["id"] == id }
     end
@@ -135,6 +168,14 @@ module Dashboards
       when "section" then views.find { |v| Array(v["sections"]).any? { |s| s["id"] == id } }&.dig("sections")
       when "widget" then [ *sections, *widgets ].find { |s| Array(s["widgets"]).any? { |w| w["id"] == id } }&.dig("widgets")
       end || raise(KeyError, "#{kind} #{id}")
+    end
+
+    # Cópia com ids novos (a seção, seus widgets e os de dentro das pilhas).
+    def fresh(item)
+      copy = item.deep_dup
+      copy["id"] = new_id(copy.key?("type") ? "w" : "s")
+      copy["widgets"] = Array(copy["widgets"]).map { |w| fresh(w) } if copy.key?("widgets")
+      copy
     end
 
     def new_id(prefix) = "#{prefix}-#{SecureRandom.alphanumeric(8).downcase}"

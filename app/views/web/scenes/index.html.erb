@@ -30,6 +30,7 @@
             <p class="text-sm text-muted"><%= t("automations.scenes.points", count: s.items.size) %> <%= label_chips(s) %></p>
           </div>
           <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+            <% if can?(:manage) %><%= render "web/dashboards/add_to_link", type: "scene", record: s, css: "ss-btn ss-btn-ghost ss-btn-sm" %><% end %>
             <% if can?(:command, risk: risk) %>
               <%= button_to activate_scene_path(s), params: { back: request.fullpath }, class: "ss-btn ss-btn-primary ss-btn-sm",
                             form: { class: "contents", data: { turbo_confirm: t("automations.scenes.activate_confirm", name: s.name), turbo_confirm_button: t("automations.scenes.activate") } } do %><%= icon("lightning-bolt", "size-4") %><%= t("automations.scenes.activate") %><% end %>

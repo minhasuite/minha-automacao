@@ -4,7 +4,7 @@
 # do que a pessoa vê, com a ação rápida quando o papel deixa ("apagar Sala",
 # "ativar cena Cinema"); risco/confirmação do ponto viram a pergunta da web.
 module Search
-  SOURCES = %w[PagesSource PointsSource ScenesSource AreasSource DashboardsSource AutomationsSource].freeze
+  SOURCES = %w[PagesSource PointsSource ScenesSource AreasSource DashboardsSource DashboardActionsSource AutomationsSource].freeze
   LIMIT = 6
   MAX = 24
 

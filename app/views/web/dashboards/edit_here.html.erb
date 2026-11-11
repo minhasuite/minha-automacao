@@ -1,0 +1,27 @@
+<%# Ideia 1: o painel publicado em modo editar (técnico+). Mostra o RASCUNHO no layout ao vivo do editor: arrastar
+    reordena dentro e entre seções, a alça muda a largura da tela escolhida, e o clique no card abre os ajustes do
+    widget na gaveta (o mesmo formulário do editor). Tudo grava no rascunho; publicar continua explícito (revisão). %>
+<% content_for :title, @dashboard.name %>
+<% view = @view %>
+<% @body_theme = (th = Dashboards::Themes.resolve(@resolved, view, @site)) && dw_theme_attrs(th) %>
+<% if th && th["dark"] %><%= render "web/dashboards/force_dark" %><% end %>
+<%= render "web/shared/header", title: @dashboard.name, subtitle: [ t("dashboards.here.subtitle"), (t("dashboards.ed.draft_changed") if @dashboard.draft?) ].compact.join(" · "),
+                                back: dashboard_path(@dashboard, view: view["path"].presence || view["id"]) do %>
+  <%= render "web/dashboards/history_buttons", dashboard: @dashboard, history: @history, back: "painel" %>
+  <%= link_to edit_dashboard_path(@dashboard, view: view["id"]), class: "ss-btn ss-btn-outline" do %><%= icon("pencil", "size-4") %><%= t("dashboards.here.full_editor") %><% end %>
+  <% if @dashboard.draft? || @dashboard.auto? %>
+    <%= link_to review_dashboard_path(@dashboard, view: view["id"]), class: "ss-btn ss-btn-primary" do %><%= icon("upload", "size-4") %><%= t("dashboards.review.publish_btn") %><% end %>
+  <% end %>
+<% end %>
+<%= render "web/dashboards/keys", dashboard: @dashboard, view_id: view["id"], back: "painel" %>
+
+<% if @resolved["views"].size > 1 %>
+  <nav class="ss-chips is-solid mb-4" data-controller="ss-scroll-current" aria-label="<%= t("dashboards.views") %>">
+    <% @resolved["views"].each do |v| %>
+      <%= link_to dashboard_path(@dashboard, editar: 1, view: v["id"]), class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
+    <% end %>
+  </nav>
+<% end %>
+
+<%= render "web/dashboards/layout_editor", dashboard: @dashboard, view: view, live: @resolved, drawer: true %>
+<%= render Ss::DrawerComponent.new(id: "dw-drawer", title: t("dashboards.here.drawer_title"), frame_id: "dw-drawer-frame", width: "34rem") %>
