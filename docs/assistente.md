@@ -44,6 +44,13 @@ uma frase-modelo por linha, em qualquer idioma, com `{slot}`. A intenção
 gatilho com `{slot}` trocado. Papel x risco pelo maior risco do que a
 automação comanda; crítico nunca por voz.
 
+## Frases e respostas da casa (P3)
+
+Sem automação: aba **Da casa** do Assistente de voz. Frase → cena ou script
+(`AssistCustomIntent`, intenção `custom`, antes das nativas; crítico nunca,
+sombra do local) e resposta própria no lugar da padrão de qualquer intenção
+(`AssistCustomResponse`, por idioma). Detalhes em `personalizacao.md`.
+
 ## IA que controla a casa (agente do pipeline)
 
 Agente "local" (padrão): intenções e, se nenhuma reconhecer, o "Perguntar à

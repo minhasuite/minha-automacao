@@ -24,6 +24,8 @@
       <% end %>
     </div>
   </fieldset>
+  <div class="md:col-span-3"><%= f.label :message, t("custom.alert.message"), class: "ss-label" %><%= f.text_area :message, rows: 3, class: "ss-input", maxlength: MessageTemplate::MAX, placeholder: t("custom.alert.message_ph") %>
+    <%= render "web/shared/message_preview", preview: @preview, css: "mt-2" %></div>
   <label class="ss-check"><%= f.check_box :auto_resolve %> <%= t("automations.alert_rules.auto_resolve") %></label>
   <label class="ss-check"><%= f.check_box :enabled %> <%= t("automations.notify_rules.active") %></label>
   <div class="md:col-span-3 flex flex-wrap gap-2">

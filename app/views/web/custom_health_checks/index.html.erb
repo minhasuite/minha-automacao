@@ -1,0 +1,29 @@
+<%= render "web/shared/header", title: t("custom.health.title"), subtitle: t("custom.health.subtitle"), back: settings_health_path do %>
+  <%= link_to new_settings_health_check_path, class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("custom.health.new") %><% end %>
+<% end %>
+<%= render layout: "web/settings/frame", locals: { current: :health } do %>
+  <% if @checks.empty? %>
+    <%= render Ss::EmptyStateComponent.new(title: t("custom.health.empty"), text: t("custom.health.empty_hint"), css: "ss-card") %>
+  <% else %>
+    <div class="grid gap-4 xl:grid-cols-2">
+      <% @checks.each do |c| %>
+        <% item = @results[c.id] %>
+        <section class="ss-card ss-card-pad min-w-0" aria-labelledby="chc-<%= c.id %>" data-custom-check="<%= c.id %>">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h2 id="chc-<%= c.id %>" class="text-base font-bold text-ink break-words"><%= c.name %></h2>
+              <p class="text-xs text-muted"><%= c.site.name %> · <%= c.severity_label %><%= " · #{t('custom.health.off')}" unless c.enabled %></p>
+            </div>
+            <span class="ss-badge ss-badge-<%= Health::TONES[item.status] %>"><%= Health.label(item.status) %></span>
+          </div>
+          <% if item.detail.present? %><p class="text-sm text-muted mt-2 break-words"><%= item.detail %></p><% end %>
+          <dl class="mt-3 grid gap-1 text-sm">
+            <% if c.query %><div><dt class="text-xs text-muted"><%= t("custom.health.query") %></dt><dd><code class="ss-code-inline break-words"><%= c.query %></code></dd></div><% end %>
+            <% if c.expression %><div><dt class="text-xs text-muted"><%= t("custom.health.expression") %></dt><dd><code class="ss-code-inline break-words"><%= c.expression %></code></dd></div><% end %>
+          </dl>
+          <div class="mt-3"><%= link_to edit_settings_health_check_path(c), class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("pencil", "size-4") %><%= t("custom.health.edit") %><% end %></div>
+        </section>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

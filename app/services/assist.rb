@@ -11,7 +11,7 @@
 # de quem fala, a sombra do local e nunca comanda ponto crítico.
 module Assist
   INTENTS = %w[
-    Conversation Nevermind
+    Conversation Custom Nevermind
     Timers::Start Timers::Cancel Timers::Pause Timers::Resume Timers::Status
     Lists::Add Lists::Complete Lists::Read
     Weather Clock::Time Clock::Date Climate::GetTemperature
@@ -52,17 +52,39 @@ module Assist
     raise ArgumentError, I18n.t("assist.empty") if heard.empty?
 
     lang = language(language || site.language.presence)
-    I18n.with_locale(lang) do
-      # ondaB1 (B6): satélite sem pessoa fala com o papel dele.
-      ctx = Ctx.new(site: site, user: user, role: user ? site.role_for(user) : satellite&.role, heard: heard, language: lang, area: area || satellite&.area, satellite: satellite)
-      reply, slots = agent == "llm" ? [] : recognize(ctx, normalize(heard))
-      conversation_id = conversation_id.presence || SecureRandom.uuid if agent.to_s.include?("llm")
-      reply ||= conversation_id ? Llm.call(ctx, heard, provider: llm_provider, conversation_id: conversation_id) : ask(ctx, heard)
-      out = { "heard" => heard, "text" => reply.text, "intent" => reply.intent, "points" => reply.points.map(&:id), "language" => lang, "slots" => slots.to_h }
-      out["conversation_id"] = conversation_id if conversation_id
-      out["audio_url"] = speech(site, reply.text) if speak && reply.text.present?
-      out
-    end
+    I18n.with_locale(lang) { with_site(site) { answer(site, user, heard, lang, speak:, area:, satellite:, agent:, llm_provider:, conversation_id:) } }
+  end
+
+  # Um pedido já no idioma e no local da conversa.
+  def answer(site, user, heard, lang, speak:, area:, satellite:, agent:, llm_provider:, conversation_id:)
+    # ondaB1 (B6): satélite sem pessoa fala com o papel dele.
+    ctx = Ctx.new(site: site, user: user, role: user ? site.role_for(user) : satellite&.role, heard: heard, language: lang, area: area || satellite&.area, satellite: satellite)
+    reply, slots = agent == "llm" ? [] : recognize(ctx, normalize(heard))
+    conversation_id = conversation_id.presence || SecureRandom.uuid if agent.to_s.include?("llm")
+    reply ||= conversation_id ? Llm.call(ctx, heard, provider: llm_provider, conversation_id: conversation_id) : ask(ctx, heard)
+    out = { "heard" => heard, "text" => reply.text, "intent" => reply.intent, "points" => reply.points.map(&:id), "language" => lang, "slots" => slots.to_h }
+    out["conversation_id"] = conversation_id if conversation_id
+    out["audio_url"] = speech(site, reply.text) if speak && reply.text.present?
+    out
+  end
+
+  # P3: o local da conversa, para as respostas personalizadas (`Intent.text`).
+  # Também usado pelo MCP. Guarda as respostas do local uma vez por conversa.
+  def with_site(site)
+    saved = Thread.current[:assist_site]
+    Thread.current[:assist_site] = { site: site, responses: nil }
+    yield
+  ensure
+    Thread.current[:assist_site] = saved
+  end
+
+  # Resposta personalizada (intenção ou "*", idioma da conversa ou qualquer) ou nil.
+  def custom_response(intent, key)
+    state = Thread.current[:assist_site] or return nil
+    state[:responses] ||= AssistCustomResponse.where(site_id: state[:site].id).to_a
+    lang = I18n.locale.to_s
+    found = state[:responses].select { |r| r.text_key == key && [ intent, AssistCustomResponse::ANY ].include?(r.intent) && [ lang, nil ].include?(r.language) }
+    found.min_by { |r| [ r.intent == intent ? 0 : 1, r.language ? 0 : 1 ] }
   end
 
   # Primeira intenção que reconhece a frase e aceita (handle não nil): [Reply, slots].

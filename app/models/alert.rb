@@ -47,7 +47,7 @@ class Alert < ApplicationRecord
   def notify_step!(step, n)
     minutes = ((Time.current - (point.changed_at || opened_at)) / 60).floor
     Notifier.deliver!(step["channels"], kind: "alerta", title: alert_rule.name,
-                                        body: I18n.t("automations.alerts.push_body", name: point.name, value: ApplicationController.helpers.point_value_text(point), minutes: minutes),
+                                        body: alert_rule.body_for(minutes),
                                         data: { alert_id: id, point_id: point_id, site_id: site_id, severity: alert_rule.severity },
                                         dedup_key: "alert:#{id}:#{n}")
   rescue Shadow::Blocked

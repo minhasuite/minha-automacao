@@ -1,0 +1,14 @@
+<%# locals: (preview:, css: "") -%>
+<%# Prévia de um texto em Liquid (MessageTemplate): o botão manda o formulário com `preview=1` e a tela volta com o resultado, sem salvar. -%>
+<div class="<%= css %> grid gap-2" data-message-preview>
+  <p class="text-xs text-muted"><%= t("custom.preview.hint_html") %></p>
+  <div><button type="submit" name="preview" value="1" class="ss-btn ss-btn-outline ss-btn-sm" formnovalidate><%= icon("eye", "size-4") %><%= t("custom.preview.button") %></button></div>
+  <% if preview %>
+    <% text, error = preview %>
+    <% if error %>
+      <%= render(Ss::CalloutComponent.new(tone: :danger)) { tag.p(error) } %>
+    <% else %>
+      <%= render Ss::CodeBlockComponent.new(text: text.presence || t("custom.preview.empty"), label: t("custom.preview.title")) %>
+    <% end %>
+  <% end %>
+</div>
