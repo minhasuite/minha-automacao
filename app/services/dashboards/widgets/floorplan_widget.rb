@@ -58,8 +58,12 @@ module Dashboards
             area = areas[room["area"]] or next
             lights = r.points.select { |p| p.effective_area_id == area.id && p.capability.in?(%w[onoff dimmer]) && !p.hidden }
             deps.concat(lights)
-            room.slice("x", "y", "w", "h").merge("area_id" => area.id, "name" => area.name, "on" => lights.count { |p| p.value == true || (p.value.is_a?(Numeric) && p.value.positive?) },
-                                                  "view_id" => views.find { |v| v["area"] == area.id }&.dig("id"))
+            lit = lights.select { |p| p.value == true || (p.value.is_a?(Numeric) && p.value.positive?) }
+            # Beleza (ideia 17): o cômodo acende na cor real da primeira lâmpada colorida acesa.
+            glow = lit.lazy.filter_map { |p| color_point(r, p) }.first
+            deps << glow if glow
+            room.slice("x", "y", "w", "h").merge("area_id" => area.id, "name" => area.name, "on" => lit.size, "glow_id" => r.use(glow)&.id,
+                                                  "view_id" => views.find { |v| v["area"] == area.id }&.dig("id")).compact
           end
           { "id" => l["id"], "title" => l["title"].presence || "Planta", "image" => l["image"], "pins" => pins, "rooms" => rooms }.compact
         end

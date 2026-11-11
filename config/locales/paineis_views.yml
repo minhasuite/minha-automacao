@@ -12,10 +12,12 @@ pt-BR:
     vt:
       sidebar: Coluna lateral
       panel_hidden: Nenhum card visível nesta tela. Mostre um no editor.
+      plan_missing: Esta visão ainda não tem uma planta. Adicione o card Planta baixa no editor.
       back_to: "Voltar para %{name}"
       form:
         type: Tipo de visão
         subview: Subvisão (fora das abas, com voltar)
+        start: Abrir o painel nesta visão
         back: Voltar para
         back_first: A primeira visão
         in_sidebar: Na coluna lateral
@@ -41,10 +43,12 @@ en:
     vt:
       sidebar: Side column
       panel_hidden: No card is visible on this screen. Show one in the editor.
+      plan_missing: This view has no floor plan yet. Add the Floor plan card in the editor.
       back_to: "Back to %{name}"
       form:
         type: View type
         subview: Subview (out of the tabs, with back)
+        start: Open the dashboard on this view
         back: Back to
         back_first: The first view
         in_sidebar: In the side column
@@ -70,10 +74,12 @@ es:
     vt:
       sidebar: Columna lateral
       panel_hidden: Ninguna tarjeta visible en esta pantalla. Muestra una en el editor.
+      plan_missing: Esta vista aún no tiene un plano. Agregue la tarjeta Plano de planta en el editor.
       back_to: "Volver a %{name}"
       form:
         type: Tipo de vista
         subview: Subvista (fuera de las pestañas, con volver)
+        start: Abrir el panel en esta vista
         back: Volver a
         back_first: La primera vista
         in_sidebar: En la columna lateral

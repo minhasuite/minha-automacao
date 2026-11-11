@@ -107,6 +107,20 @@ module DashboardsHelper
                    "ok" => :success, "warn" => :heat, "danger" => :danger, "info" => :info }.freeze
   # Tom do selo do card (style_if) → classe do .ss-badge da gem.
   FLAG_TONES = { "ok" => "ss-badge-success", "warn" => "ss-badge-warn", "danger" => "ss-badge-danger", "info" => "ss-badge-accent" }.freeze
+  # Beleza (ideia 16): brilho real da luz (0 a 1) pelo ponto do brilho do tile (`level_id`):
+  # o tile da gem (level:) acende mais fraco ou mais forte. nil = sem dimmer ou não é luz.
+  def dw_level(w, points, p)
+    return unless p && dw_light?(p)
+
+    l = points[w.dig("data", "level_id")] or return
+    v = l["value"]
+    return unless v.is_a?(Numeric)
+
+    min = (l["min"] || 0).to_f
+    max = (l["max"] || 100).to_f
+    max > min ? ((v.to_f - min) / (max - min)).clamp(0.0, 1.0).round(2) : nil
+  end
+
   def dw_tone(w, p, glow: nil)
     return WIDGET_TONES[w["color"]] if w["color"].present?
     return glow || :heat if p && dw_light?(p)
@@ -196,8 +210,12 @@ module DashboardsHelper
   def dw_theme_attrs(th)
     t = th["theme"]
     image = th["image"].to_s.match?(Dashboards::Themes::IMAGE) ? th["image"] : nil
-    style = [ t.css, ("--wall-img: url('#{image}')" if image), "--wall-blur: #{th['blur'].to_i}px" ].compact.join("; ")
-    { "class" => [ "dw-themed", "dw-theme-#{t.key}", ("dw-glass" if th["glass"]), ("dw-has-wall" if image || t.wallpaper) ].compact.join(" "), "style" => style }
+    wall = Dashboards::Themes.wall_css(th["wall"]) # beleza (ideia 15): fundo da faixa do dia (cor/degradê)
+    dim = th["dim"].to_i.clamp(0, 80)
+    style = [ t.css, ("--wall: #{wall}" if wall), ("--wall-img: url('#{image}')" if image), "--wall-blur: #{th['blur'].to_i}px",
+              ("--wall-dim: #{dim}%" if dim.positive?) ].compact.join("; ")
+    { "class" => [ "dw-themed", "dw-theme-#{t.key}", ("dw-glass" if th["glass"]), ("dw-has-wall" if image || t.wallpaper || wall),
+                   ("dw-dim" if dim.positive?), ("dw-night" if th["is_night"]) ].compact.join(" "), "style" => style }
   end
 
   # Amostra de tema (.ss-swatch da gem): as cores do tema nos círculos e o papel de parede atrás deles.

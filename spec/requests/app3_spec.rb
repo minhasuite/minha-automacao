@@ -98,7 +98,7 @@ RSpec.describe "API do app 0.3.0 (app3)" do
         get "/api/v1/dashboards/#{dashboard.id}", headers: auth_headers(user)
         expect(data["theme"]).to include("key" => "teste-mar")
         expect(data["views"].first["theme_now"]).to eq("key" => "teste-mar", "label" => "Teste Mar", "accent" => "#123456", "accent2" => "#abcdef",
-                                                        "glass" => true, "night" => false, "blur" => 8)
+                                                        "glass" => true, "night" => false, "blur" => 8, "is_night" => false)
       end
       travel_to(zone.parse("2026-11-02 22:00")) do
         get "/api/v1/dashboards/#{dashboard.id}", headers: auth_headers(user)

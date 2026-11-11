@@ -291,6 +291,7 @@ vazios ilustrados (`web/shared/_empty_art`, SVG próprio) e esqueleto
 cheia e protetor de tela (relógio, relógio e clima, câmeras ou fotos do
 painel) depois de N minutos; acorda no toque (o toque não aciona nada) ou
 quando o ponto de movimento escolhido muda. Ajustes em `PATCH /quiosque`.
+Relógio grande e álbum de fotos: ver "Beleza" no fim.
 
 ### Busca global (Ctrl+K)
 
@@ -304,7 +305,8 @@ risco e `confirm` do ponto viram a pergunta de confirmação.
 
 `Dashboards::Themes::PLUGINS` (Lista Clara, Aurora, Oceano, Floresta, Pôr do
 sol, Grafite). No JSON, `theme` no painel e/ou na visão (a visão herda e
-troca): `key`, `night` (tema das 18h às 6h no fuso do local), `image` (papel
+troca): `key`, `night` (tema da noite: pelo sol do local ou por horário, ver
+"Beleza" no fim), `image` (papel
 de parede), `blur` (0 a 40), `glass` (cartões de vidro) e `dark` (a visão
 abre no modo escuro, qualquer que seja o da pessoa: papel de parede escuro; a
 web troca o `data-theme` do `<html>` enquanto o painel está aberto, o app
@@ -769,3 +771,82 @@ Predefinição `HealthPreset` (`/locais/:id/paineis/prontos/health`): selos clic
 `drill`) de sem sinal, bateria baixa (`device_class=battery below=<limite>`, padrão 20) e Wi-Fi fraco
 (`device_class=signal_strength below=<limite>`, padrão -75), listas (`query_list`) de cada um e dos pontos sem
 leitura recente, e, com a integração Sistema, as falhas de automação em 24 h e as integrações com erro.
+## Beleza (11/2026, proposta de personalização: ideias 15 a 18 e 21, P2.4 e P2.5)
+
+Tudo por dado ou por registro; spec em `spec/requests/beleza_spec.rb`.
+
+### Noite pelo sol ou por horário (P2.4) e fundo por hora do dia (ideia 15)
+
+No `theme` (painel ou visão; a visão do cômodo é o "fundo por cômodo"):
+
+```json
+"theme": { "key": "aurora", "night": "grafite", "night_by": "sun", "night_from": "19:00", "night_to": "06:00", "dim": 35,
+           "backgrounds": [ { "from": "sunrise", "color": "#fde68a", "color2": "#38bdf8" },
+                            { "from": "12:00", "image": "/rails/active_storage/..." },
+                            { "from": "sunset", "color": "#1e1b4b" } ] }
+```
+
+- `Dashboards::Themes.night?`: `night_by: "sun"` (padrão) usa nascer/pôr do sol (`Sun`) com a
+  latitude/longitude do local; sem coordenadas (ou sol que não nasce/não se põe), `night_by:
+  "window"` ou `night_from`/`night_to` "HH:MM" (padrão `Themes::WINDOW` = 18:00–06:00). O
+  `NIGHT` fixo saiu.
+- `backgrounds` (até 6): vale a faixa que começou por último hoje (`from` = "HH:MM", `sunrise`
+  ou `sunset`); antes da primeira, a última de ontem. `color` = cor lisa, com `color2` =
+  degradê (160°), `image` = foto (troca o papel de parede; faixa de cor tira a foto do tema).
+- `dim` (0 a 80 %): escurece o fundo à noite (`body.dw-dim`, `--wall-dim`).
+- Resolvido (`theme_now` no app): `is_night`, `wall` ({color, color2}) e `dim` (só à noite)
+  além do de antes; `image` já é o da faixa. Web: `dw_theme_attrs` → `--wall`, `--wall-img`,
+  `dw-night` no `<body>` (a planta abre no modo noite).
+- Editor: "Tema" e "Tema desta visão" ganharam "Quando é noite", início/fim, "Escurecer o
+  fundo à noite" e as faixas (horário/sol, cor, degradê ou foto enviada).
+
+### Tile com a cor e o brilho reais (ideia 16)
+
+O `tile` resolve `color_id` (a cor do aparelho) e `level_id` (o brilho: o próprio dimmer ou
+o dimmer irmão de uma luz liga/desliga, `TileFeatures::Brightness`). Web: `tone:` na cor
+real e `level:` (0 a 1, `dw_level`) no `Ss::DeviceTileComponent` (v0.21 da gem); app:
+`SsDeviceTile(color:, level:)`.
+
+### Planta como visão principal e visão inicial (ideia 17)
+
+- Tipo de visão `plan` (`ViewTypes::Plan`, "Planta da casa"): a primeira `floorplan` visível
+  no topo, largura toda; o resto da visão em seções embaixo. Sem planta, um aviso.
+- `start_view` no painel (id de uma visão que não é subvisão): sem `?view=`, a web e o app
+  abrem nela (`Dashboards.pick_view`; o resolvido leva `start_view`). Editor: "Abrir o painel
+  nesta visão" na visão; tirar a visão limpa a chave.
+- Planta ao vivo: o cômodo acende na cor real da primeira lâmpada colorida acesa (`glow_id`
+  do cômodo), porta/portão/cortina aberta (`contact`, `gate`, `cover`) tem o marcador próprio
+  (`dw-fp-door`) e acena ao abrir; luz acena ao acender. A noite da planta segue a noite do
+  local (a escolha manual vale 12 h neste navegador).
+
+### Micro-animações (ideia 18)
+
+`.ss-cue` + `ss_cue_data(kind: :on|:open|:arrive, active:, key:)` da gem (↔ `SsCue` no app):
+toca uma vez quando o estado vira ativo, nunca ao abrir a tela, e "menos movimento" desliga.
+Usado no tile (ligou/abriu/chegou pela capacidade), nos marcadores da planta e no avatar de
+quem chega em casa (`people`). A chave (`key`) é o id do widget/ponto, para o Turbo Frame
+que recarrega saber o estado anterior.
+
+### Quiosque refinado (ideia 21)
+
+- "Relógio grande no canto do painel" (opção `clock` do cookie `ma_kiosk`): hora e data
+  grandes com o painel aceso (`.ma-kiosk-clock`); o protetor continua com o relógio dele.
+- Álbum do protetor: fotos enviadas no próprio quiosque por quem edita o painel
+  (`POST /paineis/:id/album`, `DELETE /paineis/:id/album/:file_id`; PNG/JPG/WebP pelos bytes,
+  8 MB, até `Dashboard::ALBUM_MAX`). São anexos do painel com `metadata.album`
+  (`Dashboard#album`); sem álbum, o protetor "Fotos do álbum" passa as imagens do painel
+  (`saver_photos`). App: `GET /api/v1/dashboards/:id/album` → `[{id, url}]`.
+- Acordar por movimento: o ponto escolhido acorda o protetor e, aceso, adia o próximo (o
+  `point_changed` do local chega para qualquer ponto, esteja ou não no painel).
+- Immich: não há app Immich no catálogo (`config/apps/`), então ficou de fora; quando entrar,
+  o álbum pode ganhar a fonte dele sem mudar o protetor.
+
+### Card de terceiros só na web (P2.5)
+
+Decisão: **só web**. O JS de terceiros roda no iframe sandbox da web (origem opaca, `integrity`);
+num WebView do app teríamos de reproduzir esse isolamento em Android/iOS (sem o token do app
+ao alcance, CSP, ponte de estados e comandos), com plugin nativo novo e superfície de ataque
+maior que o ganho. Mecanismo genérico: `web_only?` no plugin do widget
+(`CustomCardWidget` responde `true`) → `data.web_only` no resolvido, aviso no formulário do
+editor e, no app, um cartão com "Abrir na web".
+

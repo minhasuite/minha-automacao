@@ -1,0 +1,11 @@
+<%# locals: (view:, points:, dashboard:, live:) -%>
+<%# Planta da casa (ideia 17): a primeira planta visível no topo, na largura toda; o resto em seções embaixo. %>
+<% plan, rest = Dashboards::ViewTypes::Plan.split(view) %>
+<% if plan %>
+  <div class="dw-grid dw-fp-full mt-5">
+    <%= render "web/dashboards/widget", w: plan.merge("span" => { "mobile" => 12, "tablet" => 12, "desktop" => 12 }), points: points, dashboard: dashboard, badge: false, live: live %>
+  </div>
+<% else %>
+  <%= render Ss::EmptyStateComponent.new(title: t("dashboards.w.fp_empty"), text: t("dashboards.vt.plan_missing"), css: "ss-card mt-5") %>
+<% end %>
+<%= render "web/dashboards/views/sections", view: rest, points: points, dashboard: dashboard, live: live %>

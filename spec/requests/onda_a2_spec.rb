@@ -466,7 +466,7 @@ b [tuya] falha
       expect(html).not_to include("allow-same-origin")
       expect(Dashboards::Widgets::CustomCardWidget.errors(w.merge("config" => "{x"))).to eq([ "config precisa ser um objeto JSON." ])
       missing, = within(tenant) { Dashboards::Widgets::CustomCardWidget.data(r, w.merge("card" => "nada/nada"), []) }
-      expect(missing).to eq("missing" => true)
+      expect(missing).to eq("missing" => true, "web_only" => true)
     end
   end
 end

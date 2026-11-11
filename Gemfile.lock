@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/minhasuite/componentes-ui.git
-  revision: ac72e2cad38fbb9ad80cf9a5bf920241fb20e793
-  tag: v0.20.3
+  revision: 208eb4aa1ebf6370d447209bb7bcd3fda2a888cf
+  branch: beleza
   specs:
     componentes_ui (0.20.3)
       railties (>= 8.0)

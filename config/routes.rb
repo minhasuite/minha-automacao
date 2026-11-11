@@ -164,6 +164,9 @@ Rails.application.routes.draw do
           patch :json, action: :update_json
           post :prefer, path: "padrao"
           post :duplicate, path: "duplicar"
+          # Quiosque (ideia 21): álbum de fotos do protetor de tela.
+          post :album, path: "album", action: :album_add
+          delete "album/:file_id", action: :album_remove, as: :album_photo
         end
       end
       # Automações da DSL (F6): editor, versões e simulação só para técnico ou dono.
@@ -542,6 +545,7 @@ Rails.application.routes.draw do
           get :versions, on: :member
           get :definition, on: :member
           post "widgets/:widget_id/batch", on: :member, action: :batch # ideia 12
+          get :album, on: :member # quiosque do app: as fotos do protetor de tela
         end
       end
       resources :alerts, only: %i[index show] do

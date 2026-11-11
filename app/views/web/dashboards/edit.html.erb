@@ -69,6 +69,8 @@
               <div><label class="ss-label" for="vty"><%= t("dashboards.vt.form.type") %></label>
                 <%= select_tag :view_type, options_for_select(Dashboards::ViewTypes.plugins.map { |x| [ x.label, x.key, { title: x.description } ] }, view["type"] || "sections"), class: "ss-input", id: "vty" %></div>
               <label class="ss-check pb-2"><%= check_box_tag :subview, "1", view["subview"] == true, id: "vsub" %><%= t("dashboards.vt.form.subview") %></label>
+              <%# Beleza (ideia 17): visão inicial do painel (ex.: a planta como visão principal). %>
+              <label class="ss-check pb-2"><%= hidden_field_tag :start_view, "0", id: nil %><%= check_box_tag :start_view, "1", @draft["start_view"] == view["id"], id: "vstart" %><%= t("dashboards.vt.form.start") %></label>
               <div><label class="ss-label" for="vbk"><%= t("dashboards.vt.form.back") %></label>
                 <%= select_tag :back_path, options_for_select(Array(@draft["views"]).reject { |x| x["id"] == view["id"] }.map { |x| [ x["title"], x["path"].presence || x["id"] ] }, view["back_path"]),
                                include_blank: t("dashboards.vt.form.back_first"), class: "ss-input", id: "vbk" %></div>

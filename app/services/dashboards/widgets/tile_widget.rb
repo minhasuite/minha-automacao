@@ -8,11 +8,21 @@ module Dashboards
             es: { label: "Punto" }
 
       # `color_id`: o ponto de cor do aparelho (lâmpada colorida), para o brilho na cor real.
+      # `level_id` (beleza, ideia 16): o ponto do brilho (o próprio dimmer, ou o dimmer irmão de
+      # uma luz liga/desliga), para o tile acender na intensidade real.
       def self.data(r, w, binds)
         color = r.use(color_point(r, binds.first))
+        level = r.use(level_point(r, binds.first))
         features, used = TileFeatures.resolve(r, w, binds.first)
         [ names(w, binds.first).merge("point_ids" => binds.map(&:id), "missing" => binds.empty? && w["bind"].present?, "color_id" => color&.id,
-                                      "features" => features.presence).compact, [ color, *used ].compact ]
+                                      "level_id" => level&.id, "features" => features.presence).compact, [ color, level, *used ].compact ]
+      end
+
+      def self.level_point(r, point)
+        return unless point&.capability.in?(%w[onoff dimmer])
+        return point if point.capability == "dimmer"
+
+        r.points.find { |p| p.device_id == point.device_id && p.capability == "dimmer" && !p.disabled && TileFeatures::Brightness.match?(p) }
       end
 
       # Título do tile: o rótulo próprio; o automático do Início ("Aparelho · Ponto",

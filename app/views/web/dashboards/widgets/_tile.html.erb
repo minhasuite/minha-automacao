@@ -23,8 +23,12 @@
   <% feats = Array(w.dig("data", "features")).select { |f| points[f["point_id"]] } %>
   <% builtin = feats.empty? && w["tap"] != "more_info" && p["can_command"] && !off_line %>
   <% glow = dw_glow(points[w.dig("data", "color_id")]) %>
+  <%# Beleza (ideia 18): ligar, abrir e chegar acenam (ss-cue da gem; só na mudança, menos movimento desliga). %>
+  <% cue_kind = p["capability"].in?(%w[contact gate cover]) ? :open : (p["capability"].in?(%w[presence occupancy person]) ? :arrive : :on) %>
+  <% cue = ss_cue_data(kind: cue_kind, active: dw_on?(p) && !off_line, key: "tile-#{w['id']}") %>
   <div class="relative h-full" <%= tag.attributes(data: gattrs) %>>
     <%= ghidden %>
+    <%= tag.div(class: "ss-cue h-full", style: ("--tone: #{glow}" if glow), data: cue) do %>
     <% if press && !toggle %>
       <%# Botão (comando, portão, script): tile da gem em modo aperto (o toque manda o comando, com a
           confirmação do risco); o ⋯ do tile (more_url:, também no clique direito/toque longo) abre os detalhes. %>
@@ -76,11 +80,12 @@
       <% end %>
       <%# Tile da gem: o nome abre os detalhes (sem gestos), a chave liga/desliga e volta ao quadro (pendente e erro pelo ss-switch). %>
       <%= render Ss::DeviceTileComponent.new(name: dw_label(w, p), state: state_line, on: dw_on?(p) && p["capability"] != "measure", status: dw_tile_status(p, off_line),
-                                             icon: dw_device_icon(w, p), tone: dw_tone(w, p, glow: glow), url: (point_path(p["id"]) if w["gestures"].blank?), link_data: { turbo_frame: "_top" },
+                                             icon: dw_device_icon(w, p), tone: dw_tone(w, p, glow: glow), level: dw_level(w, points, p), url: (point_path(p["id"]) if w["gestures"].blank?), link_data: { turbo_frame: "_top" },
                                              toggle_url: (command_point_path(p["id"]) if toggle), toggle_params: dw_command_params("toggle", w: w, dashboard: dashboard, live: live),
                                              confirm: dw_confirm_text(p), confirm_title: dw_confirm(p)[:turbo_confirm_title], unavailable_label: t("dashboards.w.no_signal"), title: p["status_note"].presence, wide: !toggle, css: "h-full") do |c| %>
         <% c.with_footer { foot } if foot.present? %>
       <% end %>
+    <% end %>
     <% end %>
   </div>
 <% end %>

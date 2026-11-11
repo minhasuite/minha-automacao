@@ -5,8 +5,9 @@
 module KioskMode
   extend ActiveSupport::Concern
 
-  SAVERS = { "clock" => "Relógio", "weather" => "Relógio e clima", "cameras" => "Câmeras", "photos" => "Fotos do painel", "off" => "Nenhum" }.freeze
-  DEFAULTS = { "saver" => "clock", "idle" => 2, "motion" => nil, "dim" => true }.freeze
+  SAVERS = { "clock" => "Relógio", "weather" => "Relógio e clima", "cameras" => "Câmeras", "photos" => "Fotos do álbum", "off" => "Nenhum" }.freeze
+  # clock (ideia 21): relógio grande no canto do painel, com o painel aceso.
+  DEFAULTS = { "saver" => "clock", "idle" => 2, "motion" => nil, "dim" => true, "clock" => false }.freeze
   COOKIE = :ma_kiosk
 
   included { helper_method :kiosk }
@@ -33,7 +34,8 @@ module KioskMode
 
   def write_kiosk(data)
     clean = { "saver" => data["saver"].to_s.presence_in(SAVERS.keys) || "clock", "idle" => (data["idle"].to_i.nonzero? || 2).clamp(1, 60),
-              "motion" => data["motion"].to_s[/\A[\w-]{1,64}\z/], "dim" => [ true, "1", "true" ].include?(data.fetch("dim", true)) }
+              "motion" => data["motion"].to_s[/\A[\w-]{1,64}\z/], "dim" => [ true, "1", "true" ].include?(data.fetch("dim", true)),
+              "clock" => [ true, "1", "true" ].include?(data.fetch("clock", false)) }
     cookies.permanent[COOKIE] = { value: clean.to_json, httponly: true, same_site: :lax }
   end
 end

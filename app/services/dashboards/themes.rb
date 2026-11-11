@@ -5,15 +5,26 @@ module Dashboards
   #
   #   "theme": { "key": "aurora", "night": "grafite", "image": "/rails/...", "blur": 12, "glass": true }
   #
-  # `night`: o tema das 18h às 6h (fuso do local); `image`: papel de parede
+  # `night`: o tema da noite; a noite é pelo sol do local (`Sun`, padrão quando o local tem
+  # latitude/longitude) ou por janela (`night_by: "window"`, `night_from`/`night_to` "HH:MM",
+  # padrão 18:00–06:00; também quando o sol não nasce/não se põe). `image`: papel de parede
   # (enviado no editor ou link), com `blur` (0 a 40 px) e véu do tema;
   # `glass`: cartões de vidro; `dark`: a visão abre no modo escuro, qualquer que seja o da pessoa (papel de
   # parede escuro, como os temas só escuros do HA: no claro, o véu branco por cima deixava tudo cinza). A
-  # visão herda do painel e troca o que disser.
+  # visão herda do painel e troca o que disser (fundo por cômodo = o tema da visão do cômodo).
+  #
+  # Fundo por hora do dia (beleza, ideia 15): `backgrounds` = até 6 faixas
+  # `{ "from": "HH:MM" | "sunrise" | "sunset", "image" | "color" [+ "color2"] }`; vale a última
+  # que já começou hoje (antes da primeira, a última de ontem). `color` sozinha = cor lisa, com
+  # `color2` = degradê; `image` troca o papel de parede. `dim` (0 a 80, %): escurece o fundo à noite.
   module Themes
     PLUGINS = %w[Lista Aurora Oceano Floresta PorDoSol Grafite].freeze
-    KEYS = %w[key night image blur glass dark].freeze
-    NIGHT = (18..23).to_a + (0..5).to_a
+    KEYS = %w[key night image blur glass dark night_by night_from night_to backgrounds dim].freeze
+    NIGHT_BY = %w[sun window].freeze
+    WINDOW = %w[18:00 06:00].freeze # janela padrão (sem sol)
+    SUN_EVENTS = %w[sunrise sunset].freeze
+    MAX_BACKGROUNDS = 6
+    TIME = /\A([01]\d|2[0-3]):[0-5]\d\z/
     IMAGE = %r{\A(https://|/)[^"'()\s<>]+\z}
     HEX = /\A#\h{6}\z/
 
@@ -40,7 +51,73 @@ module Dashboards
       e << I18n.t("dashboards.schema.theme_image", where: where) if theme.key?("image") && !theme["image"].to_s.match?(IMAGE)
       e << I18n.t("dashboards.schema.theme_blur", where: where) if theme.key?("blur") && !(theme["blur"].is_a?(Integer) && theme["blur"].between?(0, 40))
       %w[glass dark].each { |k| e << I18n.t("dashboards.schema.theme_glass", where: where) if theme.key?(k) && ![ true, false ].include?(theme[k]) }
+      e << I18n.t("dashboards.schema.theme_night_by", where: where) if theme.key?("night_by") && !NIGHT_BY.include?(theme["night_by"])
+      %w[night_from night_to].each { |k| e << I18n.t("dashboards.schema.theme_time", where: where, key: k) if theme.key?(k) && !theme[k].to_s.match?(TIME) }
+      e << I18n.t("dashboards.schema.theme_dim", where: where) if theme.key?("dim") && !(theme["dim"].is_a?(Integer) && theme["dim"].between?(0, 80))
+      e.concat(background_errors(theme["backgrounds"], where)) if theme.key?("backgrounds")
       e
+    end
+
+    def background_errors(list, where)
+      return [ I18n.t("dashboards.schema.theme_backgrounds", where: where, max: MAX_BACKGROUNDS) ] unless list.is_a?(Array) && list.size <= MAX_BACKGROUNDS && list.all?(Hash)
+
+      list.flat_map do |b|
+        e = []
+        e << I18n.t("dashboards.schema.theme_bg_from", where: where) unless b["from"].to_s.match?(TIME) || SUN_EVENTS.include?(b["from"])
+        e << I18n.t("dashboards.schema.theme_image", where: where) if b.key?("image") && !b["image"].to_s.match?(IMAGE)
+        e << I18n.t("dashboards.schema.theme_bg_color", where: where) if %w[color color2].any? { |k| b.key?(k) && !b[k].to_s.match?(HEX) }
+        e << I18n.t("dashboards.schema.theme_bg_empty", where: where) unless b["image"].present? || b["color"].present?
+        e
+      end
+    end
+
+    # É noite no local agora? Pelo sol (padrão com coordenadas) ou pela janela.
+    def night?(theme, site, now = Time.current)
+      local = now.in_time_zone(site.timezone)
+      if theme["night_by"] != "window" && site.latitude.present? && site.longitude.present?
+        rise, set = SUN_EVENTS.map { |ev| Sun.at(ev, local.to_date, site.latitude, site.longitude, local.time_zone) }
+        return local < rise || local >= set if rise && set
+      end
+      from = minutes(theme["night_from"] || WINDOW[0])
+      to = minutes(theme["night_to"] || WINDOW[1])
+      m = (local.hour * 60) + local.min
+      from > to ? (m >= from || m < to) : (m >= from && m < to)
+    end
+
+    # O fundo da faixa do dia que vale agora (nil sem `backgrounds`).
+    def background_now(theme, site, now = Time.current)
+      list = Array(theme["backgrounds"]).select { |b| b.is_a?(Hash) }
+      return if list.empty?
+
+      local = now.in_time_zone(site.timezone)
+      starts = list.filter_map { |b| (m = start_of(b["from"], site, local)) && [ m, b ] }.sort_by(&:first)
+      return if starts.empty?
+
+      m = (local.hour * 60) + local.min
+      bg = (starts.reverse.find { |(start, _)| start <= m } || starts.last).last
+      { "image" => (bg["image"] if bg["image"].to_s.match?(IMAGE)), "color" => (bg["color"] if bg["color"].to_s.match?(HEX)),
+        "color2" => (bg["color2"] if bg["color2"].to_s.match?(HEX)) }.compact.presence
+    end
+
+    def start_of(from, site, local)
+      return minutes(from) if from.to_s.match?(TIME)
+      return unless SUN_EVENTS.include?(from) && site.latitude.present? && site.longitude.present?
+
+      at = Sun.at(from, local.to_date, site.latitude, site.longitude, local.time_zone)&.in_time_zone(local.time_zone) or return
+      (at.hour * 60) + at.min
+    end
+
+    def minutes(hhmm)
+      h, m = hhmm.to_s.split(":").map(&:to_i)
+      (h.to_i * 60) + m.to_i
+    end
+
+    # CSS do fundo da faixa (só cores e link já validados).
+    def wall_css(wall)
+      return unless wall
+      return "linear-gradient(160deg, #{wall['color']}, #{wall['color2']})" if wall["color"] && wall["color2"]
+
+      wall["color"]
     end
 
     # O tema que vale agora para a visão: painel + visão, e o de noite se for
@@ -51,10 +128,13 @@ module Dashboards
       mine = Current.theme_key.presence && self[Current.theme_key]
       return nil if t.empty? && !mine
 
-      night = !mine && t["night"].present? && NIGHT.include?(now.in_time_zone(site.timezone).hour)
+      dark_now = night?(t, site, now)
+      night = !mine && t["night"].present? && dark_now
       theme = mine || self[night ? t["night"] : t["key"]] || Lista
-      { "theme" => theme, "night" => night, "image" => t["image"], "blur" => t["blur"] || 0, "glass" => t.fetch("glass", theme.glass),
-        "dark" => t["dark"] == true }
+      wall = background_now(t, site, now)
+      { "theme" => theme, "night" => night, "image" => wall ? wall["image"] : t["image"], "blur" => t["blur"] || 0, "glass" => t.fetch("glass", theme.glass),
+        "dark" => t["dark"] == true, "is_night" => dark_now, "wall" => wall&.except("image").presence,
+        "dim" => (t["dim"].to_i if dark_now && t["dim"].to_i.positive?) }.compact
     end
 
     class Base

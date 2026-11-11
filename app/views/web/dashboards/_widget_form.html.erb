@@ -19,6 +19,10 @@
     <%= select_tag "widget[bind]", grouped_options_for_select(point_options, w["bind"]), include_blank: t("dashboards.wf.pick_point"), class: "ss-input", id: "b-#{uid}" %></div>
   <div class="sm:col-span-2" data-for="<%= plugins.select(&:binds?).map(&:type).join(" ") %>"><label class="ss-label" for="bs-<%= uid %>"><%= t("dashboards.wf.points") %> <span class="font-normal"><%= t("dashboards.wf.points_hint") %></span></label>
     <%= select_tag "widget[binds][]", grouped_options_for_select(point_options, w["binds"]), multiple: true, size: 6, class: "ss-input", id: "bs-#{uid}" %></div>
+  <%# P2.5: tipos que só aparecem na web (card de terceiros) avisam que o app mostra "abrir na web". %>
+  <% if (web_only = plugins.select(&:web_only?).map(&:type)).any? %>
+    <div class="sm:col-span-2" data-for="<%= web_only.join(" ") %>"><%= render Ss::NoteComponent.new(text: t("dashboards.wf.web_only"), icon: icon("globe-alt", "")) %></div>
+  <% end %>
   <%# Campos próprios do tipo (`form` do plugin); partial de vários tipos sai uma vez só. %>
   <% plugins.flat_map { |pl| Array(pl.form).map { |form| [ form, pl.type ] } }.group_by(&:first).each do |form, pairs| %>
     <%= render form, w: w, uid: uid, types: pairs.map(&:last).join(" "), point_options: point_options, areas: areas, scenes: scenes %>
