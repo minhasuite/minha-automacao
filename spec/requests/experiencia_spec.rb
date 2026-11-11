@@ -335,6 +335,7 @@ RSpec.describe "Experiência do painel" do
       post "/locais/#{site.id}/paineis/prontos/health", params: { preset: { name: "Saúde", battery: "15" } }
       d = within(tenant) { Dashboard.find_by!(name: "Saúde") }
       expect(Dashboards::Schema.errors(d.definition)).to eq([])
+      expect(d.definition["favorites"]).to be(false)
       res = within(tenant) { Dashboards::Resolver.new(d, role: "owner").call }
       badges = res["views"].first["badges"].index_by { _1["id"] }
       expect(badges["hl-b-offline"]["data"]).to include("caption" => "1 sem sinal")

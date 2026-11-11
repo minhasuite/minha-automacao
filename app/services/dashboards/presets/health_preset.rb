@@ -56,7 +56,7 @@ module Dashboards
         ]
         system = system_widgets(site)
         sections << section("hl-system", text("gen.system"), "cog", system) if system.any?
-        { "schema_version" => 1,
+        { "schema_version" => 1, "favorites" => false, # painel de conferência: sem a linha de favoritos
           "views" => [ { "id" => "saude", "title" => title, "icon" => "shield-check", "badges" => badges, "sections" => sections } ] }
       end
 
