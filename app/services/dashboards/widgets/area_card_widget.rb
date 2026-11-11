@@ -11,7 +11,8 @@ module Dashboards
         area = r.site.areas.find_by(id: w["area"])
         return [ { "missing" => true }, [] ] unless area
 
-        inside = r.points.select { |p| p.effective_area_id == area.id && !p.hidden }
+        # Aparelho removido da conta (varredura) ou desativado não conta: senão o queimado vira "sem sinal" para sempre.
+        inside = r.points.select { |p| p.effective_area_id == area.id && !p.hidden && !p.disabled && p.device.removed_at.nil? && !p.device.disabled }
         power = inside.select { |p| p.capability == "measure" && (p.device_class == "power" || p.unit == "W") }.map(&:value).grep(Numeric)
         view = Array(r.definition["views"]).find { |v| v["area"] == area.id }
         [ { "area" => { "id" => area.id, "name" => area.name, "icon" => area.icon, "background" => area.background },
