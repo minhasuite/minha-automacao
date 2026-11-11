@@ -339,6 +339,10 @@ es:
         green: Verde
         red: Rojo
         blue: Azul
+        ok: Verde del tema (bien)
+        warn: Ámbar del tema (atención)
+        danger: Rojo del tema (peligro)
+        info: Azul del tema (información)
       tap: Toque
       taps:
         toggle: Enciende y apaga / ajusta

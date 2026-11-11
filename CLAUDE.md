@@ -502,6 +502,13 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   do Sistema = entrada em `SystemPlugin::METRICS`. Importar do HA: cada
   entidade fixa vira entrada de ponto do blueprint (nada de mapear entity_id
   por nome).
+- **Painel por dado (aberto/fechado)**: "o que existe" é só `Points::Query.exists?`;
+  item de cartão = dado (`Dashboards::Facts`: `facts` no widget ou o padrão do local em
+  `sites.settings["dashboard_defaults"]`, Configurações → Painéis → Padrões); estilo =
+  `style_if` (`Dashboards::Style`, avaliado no `Resolver#decorate`); topo = `hero` da visão
+  (`Dashboards::Hero`, `hero_now`); lista de um número = `drill` no plugin do widget
+  (`/paineis/:id/w/:wid/pontos`); "dado velho" = `Dashboards::Staleness`. Nada disso tem
+  `case` por tipo; ver `docs/dashboards.md` ("Painel por dado").
 - **Lote 5 (aberto/fechado)**: serviço do HA novo no importador = linha em
   `HaImport::SERVICES` (método) ou `HELPER_COMMANDS`; o `case` do
   `HaImport#trigger`/`#condition` traduz a sintaxe do YAML do HA, não tipos
@@ -686,7 +693,7 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.17.1`):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.20.3`):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);

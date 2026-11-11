@@ -1,19 +1,18 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <%# Cartão de área: o bloco do mosaico da gem (Ss::MosaicTileComponent, o SsMosaicTile do app), com a foto da área
-    ou o tom da marca, e as pílulas do que importa agora (ligados, abertos, movimento, potência, sem sinal). %>
+    ou o tom da marca, e as pílulas que o servidor resolveu (`facts`, P1.1: consultas do local ou do widget, com o
+    texto, o ícone e o tom prontos). Tocar numa pílula abre a lista dos pontos dela (ideia 14); no resto, a visão
+    da área. Sem pílula nenhuma, a legenda com o total. %>
 <% d = w["data"] %>
 <% if d["missing"] %>
   <div class="ss-card ss-card-pad h-full"><p class="text-sm font-semibold text-ink-2"><%= t("dashboards.w.area_removed") %></p></div>
 <% else %>
   <% a = d["area"] %>
-  <% facts = [
-       ({ label: t("dashboards.w.n_on", count: d["on"]), icon: icon("light-bulb", "") } if d["on"].positive?),
-       ({ label: t("dashboards.w.n_open", count: d["open"]), icon: icon("view-boards", "") } if d["open"].positive?),
-       ({ label: t("dashboards.w.motion"), icon: icon("eye", "") } if d["motion"]),
-       ({ label: dw_number(d["power"], "W"), icon: icon("lightning-bolt", ""), num: true } if d["power"]),
-       ({ label: t("dashboards.w.n_offline", count: d["unavailable"]) } if d["unavailable"].positive?)
-     ].compact %>
-  <% facts = [ { label: t("dashboards.ed.points", count: d["total"]) } ] if facts.empty? %>
-  <%= render Ss::MosaicTileComponent.new(title: a["name"], icon: icon(a["icon"].presence || "view-boards", ""), image_url: a["background"], variant: dw_area_variant(a), facts: facts,
+  <% facts = Array(d["facts"]).map do |f|
+       { label: f["text"], icon: (icon(f["icon"], "") if f["icon"].present?), num: f["num"], tone: f["tone"]&.to_sym,
+         url: (f["url"] if live), title: (t("dashboards.drill.open", what: f["text"]) if live && f["url"]), link_data: { turbo_frame: "_top" } }.compact
+     end %>
+  <%= render Ss::MosaicTileComponent.new(title: a["name"], icon: icon(a["icon"].presence || "view-boards", ""), image_url: a["background"], variant: dw_area_variant(a),
+                                         facts: facts.presence, caption: (d["caption"] if facts.empty?),
                                          url: d["view_id"] ? dw_view_path(dashboard, { "id" => d["view_id"] }, home: @home) : area_path(a["id"]), link_data: { turbo_frame: "_top" }) %>
 <% end %>

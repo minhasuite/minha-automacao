@@ -241,3 +241,13 @@ tela fixa por tipo no app, e plugin novo aparece no app sem versão nova.
 - **Arquivo pelo seletor nativo:** `POST /api/v1/screen` em multipart
   (`path`, `method`, `fields` em JSON e `files[<campo>]`) vira o mesmo
   multipart que o navegador manda para a tela da web (`AppScreen.multipart`).
+
+## Painel por dado (11/2026)
+
+O app só desenha o que o servidor resolveu (`docs/dashboards.md`, "Painel por
+dado"): as pílulas do cartão de área vêm em `data.facts` (texto, ícone, tom e
+`url`; sem `facts`, servidor antigo, os cinco itens de antes), o selo e o
+contador usam `data.caption` e `data.drill_url`, qualquer widget pode trazer
+`style` (tom e selo, `WidgetDecor`) e `stale` ("dado velho"), e cada visão traz
+`hero_now` (título e linha de cima do topo). Tocar num item ou número abre a
+lista dos pontos (`/paineis/:id/w/:wid/pontos`) como tela do servidor.

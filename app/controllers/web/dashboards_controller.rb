@@ -17,7 +17,8 @@ module Web
       load_dashboard(:view)
       load_kiosk
       preview = params[:rascunho].present? && can?(:manage)
-      @resolved = preview ? Dashboards::Resolver.new(@dashboard, role: @site_role, definition: @dashboard.working_draft).call : Dashboards::Resolver.cached(@dashboard, role: @site_role)
+      @resolved = preview ? Dashboards::Resolver.new(@dashboard, role: @site_role, definition: @dashboard.working_draft).call : Dashboards::Resolver.cached(@dashboard, role: @site_role).deep_dup
+      Dashboards::Hero.apply!(@resolved, site: @site, user: current_user, home: false)
       @preview = preview
       @view = pick_view(@resolved)
       @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role) }
@@ -29,6 +30,16 @@ module Web
       resolver = Dashboards::Resolver.new(@dashboard, role: @site_role)
       w = resolver.widget(params[:widget_id]) or raise ActiveRecord::RecordNotFound
       render partial: "web/dashboards/widget", locals: { w: w, points: resolver.points_payload, dashboard: @dashboard, badge: params[:badge].present?, error: flash[:alert] }
+    end
+
+    # Ideia 14: os pontos que entram num número ou item do widget (`?item=` = o id do item do cartão), com
+    # o motivo de cada um (qualidade, última leitura, aparelho). O plugin do tipo diz a lista (`drill`).
+    def widget_points
+      load_dashboard(:view)
+      resolver = Dashboards::Resolver.new(@dashboard, role: @site_role)
+      w = resolver.widget(params[:widget_id]) or raise ActiveRecord::RecordNotFound
+      @drill = Dashboards::Widgets[w["type"]]&.drill(resolver, w, params[:item].to_s) or raise ActiveRecord::RecordNotFound
+      @points = @drill["points"].first(Points::Query::MAX)
     end
 
     def new
@@ -189,7 +200,9 @@ module Web
       focus = { view: params[:view_id] }
       case params[:op]
       when "add_view" then focus[:view] = editor.add_view(title: params[:title], icon: params[:icon])
-      when "update_view" then editor.update_view(t, title: params[:title], icon: params[:icon], path: params[:path], type: params[:view_type], subview: params[:subview], back_path: params[:back_path])
+      when "update_view"
+        editor.update_view(t, title: params[:title], icon: params[:icon], path: params[:path], type: params[:view_type], subview: params[:subview], back_path: params[:back_path])
+        editor.set_hero(t, hero_param) if params.dig(:hero, :present)
       when "add_section" then editor.add_section(params[:view_id], title: params[:title])
       when "update_section" then editor.update_section(t, title: params[:title], span: span_param, position: params[:position])
       when "add_widget" then focus[:w] = editor.add_widget(t, widget_attrs)
@@ -221,7 +234,7 @@ module Web
 
     # Formulário do widget → JSON (só o que vale para o tipo; vazio some).
     def widget_attrs
-      p = params.fetch(:widget, {}).permit(:type, :label, :bind, *Dashboards::Widgets.plugins.flat_map(&:permit).uniq,
+      p = params.fetch(:widget, {}).permit(:type, :label, :bind, :stale_after_min, *Dashboards::Widgets.plugins.flat_map(&:permit).uniq,
                                            binds: [], roles: [], screens: [], query: Dashboards::Widgets::QueryListWidget::FORM_QUERY)
       type = p[:type].presence_in(Dashboards::Schema.types.keys) || "tile"
       attrs = { "type" => type, "label" => p[:label].presence, "span" => span_param }
@@ -229,12 +242,22 @@ module Web
       if Dashboards::Widgets[type]&.gestures? # ondaB2: toque, segurar e duplo toque
         attrs.merge!(Dashboards::Actions.from_form(params.fetch(:gestures, {}).permit(Dashboards::Actions::GESTURES.keys.index_with { Dashboards::Actions::FORM }).to_h))
       end
+      # P1.2 e ideia 22: estilo condicional e limite do "dado velho" (de qualquer tipo).
+      attrs["style_if"] = Dashboards::Style.from_form(form_rows(:style, Dashboards::Style::FORM_FIELDS))
+      attrs["stale_after_min"] = p[:stale_after_min].to_i.clamp(0, Dashboards::Staleness::MAX_MIN) if p[:stale_after_min].present?
       roles = Array(p[:roles]).compact_blank
       screens = Array(p[:screens]).compact_blank & Dashboards::Schema::SCREENS
       visible = { "role" => (roles if roles.any? && roles.size < SiteMembership::ROLES.size),
                   "screen" => (screens if screens.any? && screens.size < Dashboards::Schema::SCREENS.size) }.compact
       attrs["visible_if"] = visible.presence
       attrs.compact
+    end
+
+    # P1.4: topo da visão pelo formulário → `hero` (vazio some).
+    def hero_param
+      p = params.fetch(:hero, {}).permit(:title, :kicker, :greeting, :hide)
+      { "title" => p[:title].to_s.strip.presence, "kicker" => p[:kicker].to_s.strip.presence,
+        "greeting" => { "1" => true, "0" => false }[p[:greeting]], "hide" => (true if p[:hide] == "1") }.compact
     end
 
     # Tema (uiweb): galeria do editor → JSON; o upload já virou `image` (store_uploads).

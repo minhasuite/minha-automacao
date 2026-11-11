@@ -46,6 +46,8 @@ module Dashboards
     # Pontos do local: lidos na primeira vez que alguém pede, pelo cache curto do local.
     def points = @all ||= Cache.points(@site)
     def definition = @definition
+    # Limites do "dado velho" do local (ideia 22; Configurações → Painéis → Padrões), lidos uma vez.
+    def stale_limits = @stale_limits ||= Staleness.limits(@site)
     # `pending`/`expect`/`failed`: comando a caminho do aparelho (Points::Inflight), para o
     # tile mostrar o estado pedido com "Enviando…" em vez de voltar ao antigo até o aviso.
     def points_payload
@@ -91,10 +93,31 @@ module Dashboards
 
       return container(w) if w["widgets"].is_a?(Array)
 
+      w = styled(w) # P1.2: as props da regra valem também para o `data` do plugin (rótulo do tile)
       data, deps = Perf.measure("widget", w["type"]) { data_for(w) }
       gestures = Actions.resolve(self, w, [ w["bind"] ].compact.filter_map { |ref| point(ref) })
       deps += gestures.values.filter_map { |g| point(g["point_id"]) }
-      w.merge("visible" => visible?(w), "data" => data, "deps" => deps.map(&:id).uniq).merge(gestures.any? ? { "gestures" => gestures } : {})
+      decorate(w, w.merge("visible" => visible?(w), "data" => data, "deps" => deps.map(&:id).uniq).merge(gestures.any? ? { "gestures" => gestures } : {}))
+    end
+
+    # Painel aberto por dado (P1.2 e ideia 22): o estilo que vale agora
+    # (`style_if`, a primeira regra que bate) e o selo de "dado velho" dos pontos
+    # do widget, já decididos aqui; a web e o app só aplicam. As regras de cor,
+    # ícone e rótulo trocam as props do widget (app antigo já desenha); `tone` e
+    # `badge` vão em `style`. Ponto citado no `when` vira dependência do tempo real.
+    def styled(w)
+      rules = Array(w["style_if"]).select { |s| s.is_a?(Hash) }
+      rule = rules.find { |s| condition_ok?(s["when"], w) } or return w
+
+      style = rule.slice(*Style::FLAGS).compact_blank
+      w.merge(rule.slice(*Style::PROPS).compact_blank).merge(style.any? ? { "style" => style } : {})
+    end
+
+    def decorate(w, out)
+      rules = Array(w["style_if"]).select { |s| s.is_a?(Hash) }
+      out["deps"] = (out["deps"] + rules.flat_map { |s| visibility_refs(s["when"]) }.filter_map { |ref| use(point(ref))&.id }).uniq if rules.any?
+      stale = Staleness.for(self, w, [ w["bind"], *Array(w["binds"]) ].compact.filter_map { |ref| point(ref) })
+      stale ? out.merge("stale" => stale) : out
     end
 
     # [data, pontos de que o widget depende (para o tempo real)]: o plugin do

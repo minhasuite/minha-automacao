@@ -68,6 +68,17 @@ module Points
       x.public_send(op, want.to_f)
     end
 
+    # A regra única de "o que existe" (painel, cartão de área, Liquid, sensores,
+    # painel automático): ponto oculto ou desativado e aparelho removido da conta
+    # (varredura) ou desativado não entram. Senão o aparelho queimado vira "sem
+    # sinal" para sempre.
+    def self.exists?(p)
+      return false if p.hidden || p.disabled
+
+      d = p.device
+      d.nil? || (d.removed_at.nil? && !d.disabled)
+    end
+
     def self.list(v) = Array(v).flat_map { |x| x.to_s.split(",") }.map(&:strip).compact_blank
 
     # "capability=onoff state=on" → {"capability" => "onoff", "state" => "on"}. Chave
@@ -104,7 +115,7 @@ module Points
 
     def call(q, with_state: true)
       q = self.class.parse(q)
-      list = all.reject { |p| p.hidden || p.disabled }
+      list = all.select { |p| self.class.exists?(p) }
       q.each do |k, v|
         next if OPTIONS.include?(k) || (!with_state && k == "state")
 

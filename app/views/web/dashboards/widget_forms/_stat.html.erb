@@ -5,3 +5,13 @@
   <%= select_tag "widget[period]", options_for_select(Dashboards::Schema::PERIODS.index_by { |k| t("dashboards.wf.stat_periods.#{k}") }, w["period"]), include_blank: true, class: "ss-input", id: "pe-#{uid}" %></div>
 <div data-for="<%= types %>"><label class="ss-label" for="at-<%= uid %>"><%= t("dashboards.wf.attribute") %> <span class="font-normal"><%= t("dashboards.wf.attribute_hint") %></span></label>
   <%= text_field_tag "widget[attribute]", w["attribute"], class: "ss-input num", id: "at-#{uid}", maxlength: 40, placeholder: t("dashboards.wf.attribute_placeholder") %></div>
+<%# P1.4: rótulo pela contagem (selo do topo e contador); %{count} = o número. Vazio = "número rótulo". %>
+<fieldset class="sm:col-span-2" data-for="<%= types %>">
+  <legend class="ss-label"><%= t("dashboards.wf.labels") %> <span class="font-normal"><%= t("dashboards.wf.labels_hint") %></span></legend>
+  <div class="grid gap-2 sm:grid-cols-3">
+    <% %w[zero one other].each do |form| %>
+      <div><label class="text-xs text-muted" for="lb-<%= form %>-<%= uid %>"><%= t("dashboards.facts.label_#{form}") %></label>
+        <%= text_field_tag "widget[labels][#{form}]", w.dig("labels", form), class: "ss-input", id: "lb-#{form}-#{uid}", maxlength: 80 %></div>
+    <% end %>
+  </div>
+</fieldset>

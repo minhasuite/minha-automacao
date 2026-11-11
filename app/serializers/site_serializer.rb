@@ -10,5 +10,6 @@ class SiteSerializer < ApplicationSerializer
   # Tempo real do app (F7): nome assinado do stream `[site, :points]` para
   # assinar o PointsChannel pelo /cable (chega `point_changed` com o id).
   attribute(:points_stream) { |s| Turbo::StreamsChannel.signed_stream_name([ s, :points ]) }
-  attributes :created_at, :updated_at
+  # Padrões do painel do local (P1.1/ideia 22: itens do cartão de área, limite do "dado velho").
+  attributes :settings, :created_at, :updated_at
 end

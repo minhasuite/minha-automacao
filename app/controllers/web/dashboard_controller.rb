@@ -13,7 +13,7 @@ module Web
       authorize_site!(@site, :view)
       @dashboard = Dashboard.default_for(@site, current_user, @site_role) or return render(:welcome)
       @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role) }
-      @resolved = Dashboards::Resolver.cached(@dashboard, role: @site_role)
+      @resolved = Dashboards::Hero.apply!(Dashboards::Resolver.cached(@dashboard, role: @site_role).deep_dup, site: @site, user: current_user)
       @view = Dashboards.pick_view(@resolved, params[:view])
       @home = true
       load_kiosk

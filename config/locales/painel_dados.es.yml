@@ -1,0 +1,148 @@
+# Panel abierto por datos (P1.1, P1.2, P1.4, ideas 14 y 22 de la propuesta de personalización).
+es:
+  dashboards:
+    facts:
+      labels:
+        "on":
+          zero: Nada encendido
+          one: "%{count} encendido"
+          other: "%{count} encendidos"
+        open:
+          zero: Todo cerrado
+          one: "%{count} abierto"
+          other: "%{count} abiertos"
+        motion:
+          zero: Sin movimiento
+          one: Movimiento
+          other: Movimiento
+        offline:
+          zero: Todos con señal
+          one: "%{count} sin señal"
+          other: "%{count} sin señal"
+      errors:
+        list: "los ítems deben ser una lista (hasta %{max})"
+        object: "el ítem %{n} debe ser un objeto"
+        id: "el ítem %{n} necesita un id único (minúsculas, números, _ y -)"
+        query: "el ítem %{n} necesita una consulta con los filtros del panel"
+        aggregate: "el ítem %{n} tiene una cuenta desconocida (count, sum, avg, min, max o any)"
+        show: "el ítem %{n}: cuándo aparece es nonzero o always"
+        tone: "el ítem %{n}: el tono es ok, warn, danger o info"
+        label: "el ítem %{n}: la etiqueta es un texto o {zero, one, other}"
+      new: Ítem nuevo
+      item: "Ítem %{n}"
+      label_one: Etiqueta con 1
+      label_other: Etiqueta con varios
+      label_zero: Etiqueta con ninguno
+      icon: Icono
+      aggregate: Cuenta
+      aggregates:
+        count: Cuántos
+        sum: Suma
+        avg: Promedio
+        min: Menor
+        max: Mayor
+        any: Alguno (sí o no)
+      show: Cuándo aparece
+      shows:
+        nonzero: Solo cuando haya
+        always: Siempre
+      tone: Tono
+      tones:
+        none: Normal
+        ok: Bien
+        warn: Atención
+        danger: Peligro
+        info: Información
+      query_text: Más filtros
+      query_text_hint: "Los filtros de la consulta en texto (clave=valor, separados por espacio; coma = cualquiera), como en Liquid. Se suman a los campos de arriba."
+      format: Unidad
+      remove: Quitar este ítem
+      own_title: Ítems de la tarjeta
+      own: Usar ítems propios en esta tarjeta
+      own_hint: "Sin marcar, vale el predeterminado del lugar (Configuración → Paneles → Predeterminados). %{count} en la etiqueta se vuelve el número; el área entra sola en la consulta."
+    style:
+      errors:
+        list: "style_if debe ser una lista de 1 a %{max} reglas"
+        object: "la regla de estilo %{n} debe ser un objeto"
+        unknown: "la regla de estilo %{n} solo acepta %{keys}"
+        empty: "la regla de estilo %{n} no cambia nada (color, icono, etiqueta, tono o sello)"
+        tone: "la regla de estilo %{n}: el tono es %{tones}"
+        color: "la regla de estilo %{n}: el color es %{colors}"
+        text: "la regla de estilo %{n}: etiqueta, icono y sello son textos de hasta 80 letras"
+      form:
+        title: Estilo según la situación
+        hint: La primera regla que coincide decide el tono, el color, el icono, la etiqueta y el sello de la tarjeta. Sin punto ni horario, vale siempre.
+        rule: "Regla %{n}"
+        when_point: Cuando el punto
+        no_point: Sin punto (solo horario)
+        is: Está en
+        above: Por encima de
+        below: Por debajo de
+        negate: No está en ese valor
+        after: Después de las
+        before: Antes de las
+        advanced: "Condición avanzada (edítela en el JSON):"
+        color: Color
+        label: Etiqueta
+        badge: Sello
+        badge_placeholder: Abierta de noche
+        remove: Quitar esta regla
+    stale:
+      badge: "Sin lectura: %{ago}"
+      form:
+        label: Dato viejo después de (min)
+        placeholder: predeterminado del lugar
+        hint: "Sello cuando el punto de la tarjeta no envía lectura hace más que esto. 0 lo apaga; vacío usa el predeterminado del lugar."
+    hero:
+      errors:
+        object: "la parte superior (hero) debe ser un objeto"
+        unknown: "la parte superior solo acepta %{keys}"
+        bool: "la parte superior: %{key} es true o false"
+        text: "la parte superior: %{key} es un texto de hasta %{max} letras"
+        liquid: "la parte superior: %{key} con Liquid no válido: %{error}"
+      form:
+        title: Parte superior de la vista
+        text: Título
+        text_placeholder: "{{ points[\"sala.temperatura\"].text }} en la sala"
+        kicker: Línea de arriba
+        kicker_placeholder: lugar · fecha
+        greeting: Saludo
+        greeting_auto: En la primera vista del Inicio
+        greeting_on: Siempre
+        greeting_off: Nunca
+        hide: Ocultar la parte superior
+        hint: Título y línea de arriba aceptan Liquid, como la tarjeta Texto. Sin título, vale el saludo o el nombre de la vista.
+    drill:
+      title: Puntos de este número
+      open: "Ver los puntos: %{what}"
+      count:
+        one: 1 punto
+        other: "%{count} puntos"
+      empty: Ningún punto entra aquí ahora.
+      point: Punto
+      value: Valor
+      reason: Situación
+      last_reading: Última lectura
+      never: nunca
+      device: Aparato
+    schema:
+      stale_after: "%{where}: stale_after_min es un número de minutos (0 lo apaga)"
+      labels: "labels es {zero, one, other} con textos (%{forms})"
+    wf:
+      labels: Etiqueta según la cantidad
+      labels_hint: "(opcional; %{count} se vuelve el número)"
+  dashboard_defaults:
+    title: Predeterminados de los paneles
+    subtitle: "%{site}: qué cuentan las tarjetas de área y cuándo un dato queda viejo"
+    facts_title: Ítems de la tarjeta de área
+    facts_hint: "Cada ítem es una consulta sobre los puntos del área. Vale para toda tarjeta de área sin ítems propios."
+    stale_title: Dato viejo
+    stale_hint: "Minutos sin lectura hasta que la tarjeta reciba el sello, por tipo de medida (temperature, humidity…), capacidad (measure…) o default. Un sensor que solo avisa cuando cambia (puerta, movimiento) no debe entrar."
+    stale_key: Tipo
+    stale_min: Minutos
+    save: Guardar predeterminados
+    reset: Volver al predeterminado
+    reset_confirm: ¿Volver los ítems y límites al predeterminado de la instalación?
+    saved: Predeterminados guardados.
+    link: Predeterminados de los paneles
+    link_in: "Predeterminados: %{site}"

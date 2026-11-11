@@ -73,4 +73,13 @@ class ApplicationController < ActionController::Base
   def back_with_alert(message)
     redirect_back fallback_location: root_path, alert: message
   end
+
+  # Linhas numeradas de formulário (`nome[0][campo]`, `nome[1][campo]`…) com os campos permitidos de cada uma
+  # (itens do cartão, regras de estilo, limites do "dado velho"): {"0" => {...}, ...}.
+  def form_rows(key, fields, from: params)
+    rows = from[key]
+    return {} unless rows.is_a?(ActionController::Parameters)
+
+    rows.keys.select { |k| k.to_s.match?(/\A\d{1,2}\z/) }.to_h { |k| [ k, rows[k].is_a?(ActionController::Parameters) ? rows[k].permit(*fields).to_h : {} ] }
+  end
 end

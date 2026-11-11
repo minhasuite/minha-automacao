@@ -1,0 +1,32 @@
+<%# Ideia 14: os pontos que entram num número ou item do painel ("6 sem sinal"), com o motivo de cada um: a
+    situação (qualidade + nota), o valor, a última leitura e o aparelho. O plugin do widget diz a lista (`drill`);
+    o app abre esta mesma tela (AppScreen). %>
+<%= render "web/shared/header", title: @drill["title"], subtitle: [ @drill["subtitle"], t("dashboards.drill.count", count: @points.size) ].compact.join(" · "),
+                                back: dashboard_path(@dashboard) %>
+<% if @points.empty? %>
+  <%= render Ss::EmptyStateComponent.new(title: t("dashboards.drill.empty"), css: "ss-card") %>
+<% else %>
+  <%= render Ss::DataTableComponent.new(rows: @points, id: "pontos-do-numero", caption: @drill["title"], tools: false, max_height: "none") do |tb| %>
+    <% tb.column :name, t("dashboards.drill.point") do |p| %>
+      <% title, context = p.display_names %>
+      <%= link_to point_path(p), class: "no-underline text-ink hover:text-accent min-w-0", data: { turbo_frame: "_top" } do %>
+        <span class="block font-semibold truncate"><%= title %></span>
+        <span class="block text-xs text-muted truncate"><%= context.presence || p.device.name %></span>
+      <% end %>
+    <% end %>
+    <% tb.column :value, t("dashboards.drill.value") do |p| %><span class="num"><%= point_value_text(p) %></span><% end %>
+    <% tb.column :reason, t("dashboards.drill.reason") do |p| %>
+      <% bad = p.quality != "good" %>
+      <span class="ss-badge <%= bad ? 'ss-badge-warn' : 'ss-badge-success' %>"><%= Points::Timeline::QUALITY_LABELS.fetch(p.quality, p.quality) %></span>
+      <% if (note = point_status_note(p)) %><span class="block text-xs text-muted mt-1"><%= note %></span><% end %>
+    <% end %>
+    <% tb.column :reported_at, t("dashboards.drill.last_reading") do |p| %>
+      <% at = p.reported_at || p.changed_at %><%= at ? ago_text(at) : t("dashboards.drill.never") %>
+    <% end %>
+    <% tb.column :device, t("dashboards.drill.device") do |p| %>
+      <%= link_to p.device.name, device_path(p.device), class: "text-ink-2", data: { turbo_frame: "_top" } %>
+      <% sit = p.device.situation %>
+      <% if sit != "online" %><span class="block text-xs text-muted"><%= Device::SITUATIONS.fetch(sit, sit) %></span><% end %>
+    <% end %>
+  <% end %>
+<% end %>

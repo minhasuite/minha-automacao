@@ -1103,7 +1103,8 @@ CREATE TABLE public.sites (
     currency character varying DEFAULT 'BRL'::character varying NOT NULL,
     elevation integer,
     country character varying DEFAULT 'BR'::character varying,
-    language character varying
+    language character varying,
+    settings jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 
@@ -4873,6 +4874,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261110140717'),
 ('20261109100001'),
 ('20261108100001'),
 ('20261104100003'),

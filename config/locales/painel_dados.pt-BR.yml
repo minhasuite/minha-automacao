@@ -1,0 +1,148 @@
+# Painel aberto por dado (P1.1, P1.2, P1.4, ideias 14 e 22 da proposta de personalização).
+pt-BR:
+  dashboards:
+    facts:
+      labels:
+        "on":
+          zero: Nada ligado
+          one: "%{count} ligado"
+          other: "%{count} ligados"
+        open:
+          zero: Tudo fechado
+          one: "%{count} aberto"
+          other: "%{count} abertos"
+        motion:
+          zero: Sem movimento
+          one: Movimento
+          other: Movimento
+        offline:
+          zero: Todos com sinal
+          one: "%{count} sem sinal"
+          other: "%{count} sem sinal"
+      errors:
+        list: "os itens precisam ser uma lista (até %{max})"
+        object: "o item %{n} precisa ser um objeto"
+        id: "o item %{n} precisa de um id único (minúsculas, números, _ e -)"
+        query: "o item %{n} precisa de uma consulta com os filtros do painel"
+        aggregate: "o item %{n} tem uma conta desconhecida (count, sum, avg, min, max ou any)"
+        show: "o item %{n}: quando aparece é nonzero ou always"
+        tone: "o item %{n}: o tom é ok, warn, danger ou info"
+        label: "o item %{n}: o rótulo é um texto ou {zero, one, other}"
+      new: Item novo
+      item: "Item %{n}"
+      label_one: Rótulo com 1
+      label_other: Rótulo com vários
+      label_zero: Rótulo com nenhum
+      icon: Ícone
+      aggregate: Conta
+      aggregates:
+        count: Quantos
+        sum: Soma
+        avg: Média
+        min: Menor
+        max: Maior
+        any: Algum (sim ou não)
+      show: Quando aparece
+      shows:
+        nonzero: Só quando houver
+        always: Sempre
+      tone: Tom
+      tones:
+        none: Normal
+        ok: Bom
+        warn: Atenção
+        danger: Perigo
+        info: Informação
+      query_text: Mais filtros
+      query_text_hint: "Os filtros da consulta em texto (chave=valor, separados por espaço; vírgula = qualquer um), como no Liquid. Junta-se aos campos acima."
+      format: Unidade
+      remove: Tirar este item
+      own_title: Itens do cartão
+      own: Usar itens próprios neste cartão
+      own_hint: "Sem marcar, vale o padrão do local (Configurações → Painéis → Padrões). %{count} no rótulo vira o número; a área entra sozinha na consulta."
+    style:
+      errors:
+        list: "style_if precisa ser uma lista de 1 a %{max} regras"
+        object: "a regra de estilo %{n} precisa ser um objeto"
+        unknown: "a regra de estilo %{n} só aceita %{keys}"
+        empty: "a regra de estilo %{n} não muda nada (cor, ícone, rótulo, tom ou selo)"
+        tone: "a regra de estilo %{n}: o tom é %{tones}"
+        color: "a regra de estilo %{n}: a cor é %{colors}"
+        text: "a regra de estilo %{n}: rótulo, ícone e selo são textos de até 80 letras"
+      form:
+        title: Estilo pela situação
+        hint: A primeira regra que bate decide o tom, a cor, o ícone, o rótulo e o selo do card. Sem ponto nem horário, vale sempre.
+        rule: "Regra %{n}"
+        when_point: Quando o ponto
+        no_point: Sem ponto (só horário)
+        is: Está em
+        above: Acima de
+        below: Abaixo de
+        negate: Não está nesse valor
+        after: Depois das
+        before: Antes das
+        advanced: "Condição avançada (edite no JSON):"
+        color: Cor
+        label: Rótulo
+        badge: Selo
+        badge_placeholder: Aberta à noite
+        remove: Tirar esta regra
+    stale:
+      badge: "Sem leitura: %{ago}"
+      form:
+        label: Dado velho depois de (min)
+        placeholder: padrão do local
+        hint: "Selo quando o ponto do card não manda leitura há mais que isso. 0 desliga; vazio usa o padrão do local."
+    hero:
+      errors:
+        object: "o topo (hero) precisa ser um objeto"
+        unknown: "o topo só aceita %{keys}"
+        bool: "o topo: %{key} é true ou false"
+        text: "o topo: %{key} é um texto de até %{max} letras"
+        liquid: "o topo: %{key} com Liquid inválido: %{error}"
+      form:
+        title: Topo da visão
+        text: Título
+        text_placeholder: "{{ points[\"sala.temperatura\"].text }} na sala"
+        kicker: Linha de cima
+        kicker_placeholder: local · data
+        greeting: Saudação
+        greeting_auto: Na primeira visão do Início
+        greeting_on: Sempre
+        greeting_off: Nunca
+        hide: Esconder o topo
+        hint: Título e linha de cima aceitam Liquid, como o card Texto. Sem título, vale a saudação ou o nome da visão.
+    drill:
+      title: Pontos deste número
+      open: "Ver os pontos: %{what}"
+      count:
+        one: 1 ponto
+        other: "%{count} pontos"
+      empty: Nenhum ponto entra aqui agora.
+      point: Ponto
+      value: Valor
+      reason: Situação
+      last_reading: Última leitura
+      never: nunca
+      device: Aparelho
+    schema:
+      stale_after: "%{where}: stale_after_min é um número de minutos (0 desliga)"
+      labels: "labels é {zero, one, other} com textos (%{forms})"
+    wf:
+      labels: Rótulo pela contagem
+      labels_hint: "(opcional; %{count} vira o número)"
+  dashboard_defaults:
+    title: Padrões dos painéis
+    subtitle: "%{site}: o que os cartões de área contam e quando um dado fica velho"
+    facts_title: Itens do cartão de área
+    facts_hint: "Cada item é uma consulta sobre os pontos da área. Vale para todo cartão de área sem itens próprios."
+    stale_title: Dado velho
+    stale_hint: "Minutos sem leitura até o card ganhar o selo, por tipo de medida (temperature, humidity…), capacidade (measure…) ou default. Sensor que só fala quando muda (porta, movimento) não deve entrar."
+    stale_key: Tipo
+    stale_min: Minutos
+    save: Salvar padrões
+    reset: Voltar ao padrão
+    reset_confirm: Voltar os itens e limites para o padrão da instalação?
+    saved: Padrões salvos.
+    link: Padrões dos painéis
+    link_in: "Padrões: %{site}"

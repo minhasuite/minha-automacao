@@ -103,7 +103,10 @@ module DashboardsHelper
   end
 
   # Cor do tile aceso: a cor real da luz, âmbar para luz sem cor, a cor do widget ou a marca.
-  WIDGET_TONES = { "amber" => :heat, "green" => :success, "red" => :danger, "blue" => :info }.freeze
+  WIDGET_TONES = { "amber" => :heat, "green" => :success, "red" => :danger, "blue" => :info,
+                   "ok" => :success, "warn" => :heat, "danger" => :danger, "info" => :info }.freeze
+  # Tom do selo do card (style_if) → classe do .ss-badge da gem.
+  FLAG_TONES = { "ok" => "ss-badge-success", "warn" => "ss-badge-warn", "danger" => "ss-badge-danger", "info" => "ss-badge-accent" }.freeze
   def dw_tone(w, p, glow: nil)
     return WIDGET_TONES[w["color"]] if w["color"].present?
     return glow || :heat if p && dw_light?(p)

@@ -27,6 +27,12 @@ module Dashboards
       %w[type subview back_path].each { |k| v.delete(k) if v[k].nil? }
     end
 
+    # P1.4: topo da visão (Dashboards::Hero); vazio tira a chave.
+    def set_hero(id, hero)
+      v = view(id)
+      hero.present? ? v["hero"] = hero : v.delete("hero")
+    end
+
     def add_section(view_id, title:)
       sections = view(view_id)["sections"] ||= []
       sections << { "id" => new_id("s"), "title" => title.presence, "widgets" => [] }.compact

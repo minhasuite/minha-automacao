@@ -1,0 +1,26 @@
+<%= render "web/shared/header", title: t("dashboard_defaults.title"), subtitle: t("dashboard_defaults.subtitle", site: @site.name), back: settings_dashboards_path %>
+<%= render layout: "web/settings/frame", locals: { current: :dashboards } do %>
+  <%= form_with url: settings_dashboard_defaults_path(@site), method: :patch, class: "grid gap-6" do %>
+    <section class="grid gap-3">
+      <%= render Ss::SectionHeaderComponent.new(title: t("dashboard_defaults.facts_title"), subtitle: t("dashboard_defaults.facts_hint")) %>
+      <%= render "web/dashboards/widget_forms/facts_fields", facts: @facts, prefix: "facts", uid: "dd", areas: @site.areas.order(:position, :name).to_a, scoped: true %>
+    </section>
+    <section class="grid gap-3">
+      <%= render Ss::SectionHeaderComponent.new(title: t("dashboard_defaults.stale_title"), subtitle: t("dashboard_defaults.stale_hint")) %>
+      <div class="ss-card ss-card-pad grid gap-3 sm:grid-cols-2">
+        <% rows = @stale.to_a + [ [ "", nil ], [ "", nil ] ] %>
+        <% rows.each_with_index do |(key, min), i| %>
+          <div><label class="ss-label" for="st-k<%= i %>"><%= t("dashboard_defaults.stale_key") %></label>
+            <%= text_field_tag "stale[#{i}][key]", key, class: "ss-input", id: "st-k#{i}", placeholder: "temperature, measure, default", list: "st-keys" %></div>
+          <div><label class="ss-label" for="st-m<%= i %>"><%= t("dashboard_defaults.stale_min") %></label>
+            <%= number_field_tag "stale[#{i}][min]", min, min: 1, max: Dashboards::Staleness::MAX_MIN, class: "ss-input num", id: "st-m#{i}" %></div>
+        <% end %>
+        <datalist id="st-keys"><% (%w[default] + Point::CAPABILITIES.keys + %w[temperature humidity power energy battery]).uniq.each do |k| %><option value="<%= k %>"></option><% end %></datalist>
+      </div>
+    </section>
+    <div class="flex flex-wrap gap-2">
+      <%= submit_tag t("dashboard_defaults.save"), class: "ss-btn ss-btn-primary" %>
+      <%= submit_tag t("dashboard_defaults.reset"), name: "reset", class: "ss-btn ss-btn-ghost", data: { turbo_confirm: t("dashboard_defaults.reset_confirm"), turbo_confirm_button: t("dashboard_defaults.reset") } %>
+    </div>
+  <% end %>
+<% end %>
