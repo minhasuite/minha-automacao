@@ -1,0 +1,27 @@
+<%# locals: (areas:, scope: nil, layout: "columns") -%>
+<%# Ideia 8: cômodos e estilo do assistente (Dashboards::Wizard), na primeira configuração e em Painéis. %>
+<% name = ->(k) { scope ? "#{scope}[#{k}]" : k.to_s } %>
+<fieldset>
+  <legend class="ss-label"><%= t("arrange.wizard.areas") %></legend>
+  <% if areas.empty? %>
+    <p class="text-sm text-muted"><%= t("arrange.wizard.no_areas") %></p>
+  <% else %>
+    <div class="ss-inputs flex flex-wrap gap-x-4 gap-y-2">
+      <% areas.each do |a| %>
+        <label class="ss-check"><%= check_box_tag "#{name.(:areas)}[]", a.id, true, id: "wz-a-#{a.id}" %><%= a.name %></label>
+      <% end %>
+    </div>
+  <% end %>
+  <%= hidden_field_tag "#{name.(:areas)}[]", "", id: nil %>
+</fieldset>
+<fieldset class="mt-4">
+  <legend class="ss-label"><%= t("arrange.wizard.layout") %></legend>
+  <div class="grid gap-2 sm:grid-cols-2">
+    <% Dashboards::Wizard.layouts.each do |key, label, hint| %>
+      <label class="ss-card p-3 flex gap-3 items-start cursor-pointer">
+        <%= radio_button_tag name.(:layout), key, key == layout, id: "wz-l-#{key}" %>
+        <span><span class="block font-semibold text-ink"><%= label %></span><span class="block text-xs text-muted"><%= hint %></span></span>
+      </label>
+    <% end %>
+  </div>
+</fieldset>

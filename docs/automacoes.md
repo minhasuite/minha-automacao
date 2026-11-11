@@ -288,6 +288,10 @@ alertas da F4; `/locais/:id/automacao` redireciona para
 desligar, excluir as marcadas). Rótulos = `Tag`/`Tagging` (campo "Rótulos"
 em "Nome e modo").
 
+**Avisos e alertas (P3)**: a mensagem do aviso e o texto do alerta são Liquid
+com o contexto das automações (`{{ trigger.point }}`, `{{ trigger.text }}`,
+`points_where`, `calc`), com "Ver prévia" no formulário (`personalizacao.md`).
+
 **Cenas**: "Capturar estado agora" lê o valor atual dos pontos escolhidos e
 vira as linhas da cena (comando que repõe o valor: on/off, set, select), sem
 comandar nada; cada linha é ajustável. O modo ao vivo (caixa "aplicar ao

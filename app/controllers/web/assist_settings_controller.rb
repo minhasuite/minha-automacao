@@ -5,7 +5,7 @@ module Web
   # teste ao vivo, sem executar) e, nas abas dos próximos pacotes, satélites
   # e servidor MCP. Ver e mudar: técnico ou dono do local.
   class AssistSettingsController < ApplicationController
-    TABS = %w[pipelines satelites depuracao frases mcp].freeze
+    TABS = %w[pipelines satelites depuracao frases personalizadas mcp].freeze
 
     before_action -> { @site = Site.find(params[:site_id]) }
     before_action -> { authorize_site!(@site, :manage) }
@@ -16,6 +16,7 @@ module Web
       case @tab
       when "depuracao" then @runs = AssistRun.where(site: @site).includes(:user, :pipeline).order(created_at: :desc).limit(50)
       when "frases" then frases
+      when "personalizadas" then customs
       when "mcp" then @mcp_tokens = mcp_tokens
       when "satelites" then @satellites = AssistSatellite.where(site: @site).includes(:area, :pipeline, :device).order(:name).to_a
       end
@@ -55,6 +56,15 @@ module Web
       redirect_to back, alert: e.message
     end
 
+    # P3: intenção personalizada (frase → cena ou script) e resposta personalizada.
+    def create_intent = save_custom(AssistCustomIntent.new(site: @site), :intent, t("custom.voice.flash.saved"))
+    def update_intent = save_custom(AssistCustomIntent.where(site: @site).find(params[:id]), :intent, t("custom.voice.flash.saved"))
+    def create_response = save_custom(AssistCustomResponse.new(site: @site), :response, t("custom.voice.flash.saved"))
+    def update_response = save_custom(AssistCustomResponse.where(site: @site).find(params[:id]), :response, t("custom.voice.flash.saved"))
+
+    def destroy_intent = destroy_custom(AssistCustomIntent)
+    def destroy_response = destroy_custom(AssistCustomResponse)
+
     # Token MCP novo: aparece uma vez na própria página (sem Turbo, sem flash).
     def create_mcp_token
       _token, @new_token = ApiToken.mcp!(current_user, @site, params[:name])
@@ -70,6 +80,27 @@ module Web
     end
 
     private
+
+    CUSTOM_FIELDS = { intent: %i[name language sentences_text target response enabled], response: %i[ref language text] }.freeze
+
+    def customs
+      @intents = AssistCustomIntent.where(site: @site).includes(:scene, :point).order(:name).to_a
+      @responses = AssistCustomResponse.where(site: @site).order(:intent, :text_key, :language).to_a
+    end
+
+    def save_custom(record, kind, notice)
+      f = params.require(kind).permit(*CUSTOM_FIELDS[kind])
+      record.assign_attributes(f.to_h)
+      back = site_assist_settings_path(@site, aba: "personalizadas")
+      return redirect_to(back, notice: notice) if record.save
+
+      redirect_to back, alert: record.errors.full_messages.to_sentence
+    end
+
+    def destroy_custom(model)
+      model.where(site: @site).find(params[:id]).destroy!
+      redirect_to site_assist_settings_path(@site, aba: "personalizadas"), notice: t("custom.voice.flash.removed")
+    end
 
     def mcp_tokens = ApiToken.active.mcp.where(site_id: @site.id, user_id: current_user.id).where("access_expires_at > ?", Time.current).order(:created_at).to_a
 

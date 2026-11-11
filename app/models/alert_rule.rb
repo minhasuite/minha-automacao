@@ -4,6 +4,8 @@
 # ([{wait_s, channels}], cada espera contada da etapa anterior) e depois repete
 # a última a cada `repeat_s` até alguém marcar "ciente" ou a condição sumir
 # (`auto_resolve`). A espera e as etapas são jobs agendados no banco.
+# `message` (opcional) é o texto do aviso em Liquid (`MessageTemplate`), com
+# `trigger.minutes`, `trigger.severity` e `trigger.alert` além do ponto.
 class AlertRule < ApplicationRecord
   include Auditable
 
@@ -27,12 +29,14 @@ class AlertRule < ApplicationRecord
   validates :for_s, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :repeat_s, numericality: { only_integer: true, greater_than_or_equal_to: 60 }, allow_nil: true
   validate :escalation_fits
+  validates :message, length: { maximum: MessageTemplate::MAX }
+  validate { (e = MessageTemplate.syntax_error(message)) && errors.add(:message, :invalid_template, error: e) }
   validate { errors.add(:point, :other_site) if point && point.site_id != site_id }
   validate { errors.add(:value, :not_number) if operator.in?(%w[gt lt]) && !value.is_a?(Numeric) }
 
   normalizes :name, with: ->(v) { v.to_s.squish }
 
-  audited_attributes :name, :enabled, :operator, :value, :for_s, :escalation, :repeat_s
+  audited_attributes :name, :enabled, :operator, :value, :for_s, :escalation, :repeat_s, :message
 
   def severity_label = SEVERITIES.fetch(severity, severity)
   def operator_label = OPERATORS.fetch(operator, operator)
@@ -64,6 +68,28 @@ class AlertRule < ApplicationRecord
     alert.schedule_step
   rescue ActiveRecord::RecordNotUnique
     nil # outro processo abriu ao mesmo tempo
+  end
+
+  # Texto do aviso: a mensagem (Liquid) ou o padrão "Ponto está em X há N min".
+  # Modelo com erro na hora de avisar não cala o alerta: vai o padrão.
+  def body_for(minutes)
+    default = I18n.t("automations.alerts.push_body", name: point.name, value: ApplicationController.helpers.point_value_text(point), minutes: minutes)
+    return default if message.blank?
+
+    MessageTemplate.render(site, message, trigger: trigger_for(minutes)).presence || default
+  rescue Automations::Context::Error => e
+    Rails.logger.info("[alerta] texto com erro: #{e.message}")
+    default
+  end
+
+  def trigger_for(minutes) = MessageTemplate.point_trigger(point, minutes: minutes, severity: severity, alert: name)
+
+  # Prévia do formulário com o valor atual do ponto: [texto, erro].
+  def preview
+    return [ nil, nil ] unless point
+    return [ body_for(0), nil ] if message.blank?
+
+    MessageTemplate.preview(site || point.site, message, trigger: trigger_for(0))
   end
 
   # Formulário: etapas {"0" => {wait_min, channels: []}} (minutos na tela).

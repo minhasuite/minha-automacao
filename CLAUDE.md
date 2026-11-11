@@ -509,6 +509,12 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (`Dashboards::Hero`, `hero_now`); lista de um número = `drill` no plugin do widget
   (`/paineis/:id/w/:wid/pontos`); "dado velho" = `Dashboards::Staleness`. Nada disso tem
   `case` por tipo; ver `docs/dashboards.md` ("Painel por dado").
+- **Arrumação como dado (aberto/fechado)**: colunas, selos e ícones das visões de cômodo e
+  luz/técnico/segurança/potência do painel automático são consultas (`Dashboards::Arrange`:
+  `arrange` no painel ou no local, `auto_rules` no local; Configurações → Painéis → Regras de
+  arrumação); visão com `auto` se refaz a cada leitura até congelar (`Dashboards::AutoViews`);
+  montagem por frase só pela IA da instalação, no rascunho (`Dashboards::Compose`); assistente
+  = `Dashboards::Wizard`. Ver `docs/dashboards.md` ("Arrumação como dado").
 - **Painel do dia a dia (aberto/fechado, ideias 9–13 e 23)**: condição nova do `visible_if`/`style_if`/
   `order_if`/`open_if` = classe em `Dashboards::Context::CONDITIONS` (sol e presença hoje); ação em lote =
   ação `command_query` do `Dashboards::Actions` (`Dashboards::Batch`: consulta só da definição publicada,
@@ -632,6 +638,14 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `KEYS`), serializers com `params: { reveal: }` (padrão é ocultar) e
   `reveal_sensitive?` na tela. Echo: ponto novo = linha em
   `Alexa::State::POINTS`.
+- **P3 personalização (aberto/fechado)**: problema da casa sem código =
+  `CustomHealthCheck` (consulta + expressão + texto, entra pela verificação
+  `custom` de `Health::CHECKS`); texto de aviso/alerta = Liquid pelo
+  `MessageTemplate` (contexto do `Automations::Context`; prévia com
+  `preview=1` no create/update do `AutomationController`); voz = frase → cena
+  ou script (`AssistCustomIntent`, intenção `custom`) e resposta
+  (`AssistCustomResponse`, lida pelo `Intent.text` com `Assist.with_site`).
+  Intenção ou verificação nova do produto continua plugin. `docs/personalizacao.md`.
 - **Distribuição** (`docs/PROPOSTA-distribuicao.md`): master verde = beta
   `vX.Y.Z-beta.N` (pré-release criada pelo CI), estável = beta promovida pelo
   `promover-estavel.yml`; canal e "atualizar sozinho" por servidor em

@@ -47,6 +47,13 @@ module Assist
 
       def handle(_ctx, _slots) = nil
 
+      # P3: resposta personalizada do local da conversa (`AssistCustomResponse`,
+      # pela intenção ou "*" e pelo idioma ou qualquer um) no lugar da padrão.
+      def text(key, default: nil, **vars)
+        custom = Assist.custom_response(self.key || AssistCustomResponse::ANY, key.to_s)
+        custom ? custom.render(vars) : super
+      end
+
       # Descrição de um slot (texto da intenção ou o comum da base).
       def slot_text(slot) = text("slots.#{slot}", default: slot.to_s)
 

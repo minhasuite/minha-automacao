@@ -10,6 +10,7 @@
     <% if QueueMonitor.visible_to?(current_user) %>
       <%= link_to settings_queue_path, class: "ss-btn ss-btn-ghost ss-btn-sm", data: { health_link: "queue" } do %><%= icon("clock", "size-4") %><%= t("queue.from_health") %><% end %>
     <% end %>
+    <%= link_to settings_health_checks_path, class: "ss-btn ss-btn-ghost ss-btn-sm", data: { health_link: "custom" } do %><%= icon("adjustments", "size-4") %><%= t("custom.health.title") %><% end %>
     <span class="ss-badge ss-badge-<%= Health::TONES[@status] %>"><%= overall %></span>
   </div>
 </section>

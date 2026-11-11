@@ -18,6 +18,7 @@ module Web
     def create
       load_site
       @record = model.new(record_params.merge(site: @site))
+      return preview if params[:preview].present?
       return render("web/automation/edit", status: :unprocessable_content) unless @record.save
 
       redirect_to back_path, notice: t("automations.flash.saved", what: label_text)
@@ -30,7 +31,9 @@ module Web
 
     def update
       load_record
-      return render("web/automation/edit", status: :unprocessable_content) unless @record.update(record_params)
+      @record.assign_attributes(record_params)
+      return preview if params[:preview].present?
+      return render("web/automation/edit", status: :unprocessable_content) unless @record.save
 
       redirect_to back_path, notice: t("automations.flash.saved", what: label_text)
     end
@@ -42,6 +45,12 @@ module Web
     end
 
     private
+
+    # P3: "Ver prévia" do texto (Liquid) sem salvar; a tela volta com o resultado.
+    def preview
+      @preview = @record.preview if @record.respond_to?(:preview)
+      render "web/automation/edit", status: :unprocessable_content
+    end
 
     # Rótulo da primitiva no idioma da tela (automations.primitives.<controller>).
     def label_text = t("automations.primitives.#{controller_name}", default: label)

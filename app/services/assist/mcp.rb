@@ -51,7 +51,7 @@ module Assist
       I18n.with_locale(lang) do
         ctx = Ctx.new(site: site, user: user, role: site.role_for(user), heard: "#{name}(#{args.to_json})".first(300), language: lang)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        text, points, known = run(ctx, name, args)
+        text, points, known = Assist.with_site(site) { run(ctx, name, args) }
         ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
         AssistRun.create!(site: site, user: user, source: "mcp", language: lang, heard: ctx.heard, intent: name, reply: text.first(2000),
                           stages: [ { "stage" => "intent", "ms" => ms, "intent" => name, "slots" => args.transform_values(&:to_s) } ], duration_ms: ms)

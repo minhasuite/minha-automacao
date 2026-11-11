@@ -33,6 +33,7 @@ pt-BR:
       pipelines: Pipelines
       depuracao: Depuração
       frases: Frases
+      personalizadas: Da casa
       satelites: Satélites
       mcp: MCP
     flash:
@@ -193,6 +194,7 @@ en:
       pipelines: Pipelines
       depuracao: Debug
       frases: Sentences
+      personalizadas: Custom
       satelites: Satellites
       mcp: MCP
     flash:
@@ -353,6 +355,7 @@ es:
       pipelines: Pipelines
       depuracao: Depuración
       frases: Frases
+      personalizadas: De la casa
       satelites: Satélites
       mcp: MCP
     flash:

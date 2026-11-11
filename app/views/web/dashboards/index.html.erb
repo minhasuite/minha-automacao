@@ -1,6 +1,7 @@
 <%= render "web/shared/header", title: t("dashboards.title"), subtitle: t("dashboards.subtitle", site: @site.name), back: site_path(@site) do %>
   <% if can?(:manage) %><%= link_to new_site_dashboard_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("dashboards.new") %><% end %><% end %>
   <% if can?(:manage) %><%= link_to site_dashboard_presets_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("lightning-bolt", "size-4") %><%= t("dashboards.preset") %><% end %><% end %>
+  <% if can?(:manage) %><%= link_to site_dashboard_wizard_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("sparkles", "size-4") %><%= t("arrange.wizard.button") %><% end %><% end %>
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :dashboards %>
 

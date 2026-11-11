@@ -130,7 +130,8 @@ CREATE TABLE public.alert_rules (
     auto_resolve boolean DEFAULT true NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    message text
 );
 
 
@@ -207,6 +208,43 @@ CREATE TABLE public.areas (
     updated_at timestamp(6) without time zone NOT NULL,
     level integer,
     aliases character varying[] DEFAULT '{}'::character varying[] NOT NULL
+);
+
+
+--
+-- Name: assist_custom_intents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.assist_custom_intents (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    scene_id uuid,
+    point_id uuid,
+    name character varying NOT NULL,
+    language character varying,
+    sentences character varying[] DEFAULT '{}'::character varying[] NOT NULL,
+    response character varying,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: assist_custom_responses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.assist_custom_responses (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    language character varying,
+    intent character varying NOT NULL,
+    text_key character varying NOT NULL,
+    text character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -473,6 +511,25 @@ CREATE TABLE public.commands (
     automation_run_id uuid,
     attempts integer DEFAULT 0 NOT NULL,
     batch_id uuid
+);
+
+
+--
+-- Name: custom_health_checks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.custom_health_checks (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    name character varying NOT NULL,
+    query character varying,
+    expression character varying,
+    severity character varying DEFAULT 'warn'::character varying NOT NULL,
+    message text,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -1953,6 +2010,22 @@ ALTER TABLE ONLY public.areas
 
 
 --
+-- Name: assist_custom_intents assist_custom_intents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_custom_intents
+    ADD CONSTRAINT assist_custom_intents_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: assist_custom_responses assist_custom_responses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_custom_responses
+    ADD CONSTRAINT assist_custom_responses_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: assist_pipelines assist_pipelines_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2046,6 +2119,14 @@ ALTER TABLE ONLY public.camera_recordings
 
 ALTER TABLE ONLY public.commands
     ADD CONSTRAINT commands_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: custom_health_checks custom_health_checks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custom_health_checks
+    ADD CONSTRAINT custom_health_checks_pkey PRIMARY KEY (id);
 
 
 --
@@ -2638,6 +2719,34 @@ CREATE INDEX index_areas_on_tenant_id ON public.areas USING btree (tenant_id);
 
 
 --
+-- Name: index_assist_custom_intents_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_custom_intents_on_site_id ON public.assist_custom_intents USING btree (site_id);
+
+
+--
+-- Name: index_assist_custom_intents_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_custom_intents_on_tenant_id ON public.assist_custom_intents USING btree (tenant_id);
+
+
+--
+-- Name: index_assist_custom_responses_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_assist_custom_responses_on_tenant_id ON public.assist_custom_responses USING btree (tenant_id);
+
+
+--
+-- Name: index_assist_custom_responses_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_assist_custom_responses_unique ON public.assist_custom_responses USING btree (site_id, intent, text_key, language) NULLS NOT DISTINCT;
+
+
+--
 -- Name: index_assist_pipelines_on_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2950,6 +3059,20 @@ CREATE INDEX index_commands_on_tenant_id_and_created_at ON public.commands USING
 --
 
 CREATE INDEX index_commands_on_user_id ON public.commands USING btree (user_id);
+
+
+--
+-- Name: index_custom_health_checks_on_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_custom_health_checks_on_site_id ON public.custom_health_checks USING btree (site_id);
+
+
+--
+-- Name: index_custom_health_checks_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_custom_health_checks_on_tenant_id ON public.custom_health_checks USING btree (tenant_id);
 
 
 --
@@ -4093,6 +4216,14 @@ ALTER TABLE ONLY public.site_memberships
 
 
 --
+-- Name: custom_health_checks fk_rails_2765205c53; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custom_health_checks
+    ADD CONSTRAINT fk_rails_2765205c53 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: scenes fk_rails_28279ad49b; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4117,6 +4248,14 @@ ALTER TABLE ONLY public.automations
 
 
 --
+-- Name: assist_custom_intents fk_rails_2e06b71738; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_custom_intents
+    ADD CONSTRAINT fk_rails_2e06b71738 FOREIGN KEY (scene_id) REFERENCES public.scenes(id) ON DELETE CASCADE;
+
+
+--
 -- Name: automations fk_rails_2f12249e60; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4138,6 +4277,14 @@ ALTER TABLE ONLY public.solid_queue_recurring_executions
 
 ALTER TABLE ONLY public.schedules
     ADD CONSTRAINT fk_rails_324e2727f9 FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
+
+
+--
+-- Name: custom_health_checks fk_rails_333cc99c8d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.custom_health_checks
+    ADD CONSTRAINT fk_rails_333cc99c8d FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -4202,6 +4349,14 @@ ALTER TABLE ONLY public.automation_versions
 
 ALTER TABLE ONLY public.solid_queue_failed_executions
     ADD CONSTRAINT fk_rails_39bbc7a631 FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: assist_custom_intents fk_rails_3b504f2cfd; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_custom_intents
+    ADD CONSTRAINT fk_rails_3b504f2cfd FOREIGN KEY (point_id) REFERENCES public.points(id) ON DELETE CASCADE;
 
 
 --
@@ -4341,6 +4496,14 @@ ALTER TABLE ONLY public.assist_runs
 
 
 --
+-- Name: assist_custom_intents fk_rails_58f0195291; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_custom_intents
+    ADD CONSTRAINT fk_rails_58f0195291 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: panel_devices fk_rails_5fbd0450c8; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4354,6 +4517,14 @@ ALTER TABLE ONLY public.panel_devices
 
 ALTER TABLE ONLY public.alerts
     ADD CONSTRAINT fk_rails_61df1056f3 FOREIGN KEY (acked_by_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: assist_custom_responses fk_rails_67cde2a4bb; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_custom_responses
+    ADD CONSTRAINT fk_rails_67cde2a4bb FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -4578,6 +4749,14 @@ ALTER TABLE ONLY public.dashboard_versions
 
 ALTER TABLE ONLY public.passkeys
     ADD CONSTRAINT fk_rails_902db11bce FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: assist_custom_intents fk_rails_939061b15d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_custom_intents
+    ADD CONSTRAINT fk_rails_939061b15d FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -4941,6 +5120,14 @@ ALTER TABLE ONLY public.device_tokens
 
 
 --
+-- Name: assist_custom_responses fk_rails_ea20703c3e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assist_custom_responses
+    ADD CONSTRAINT fk_rails_ea20703c3e FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: dashboards fk_rails_ea67961578; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5052,6 +5239,7 @@ SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
 ('20261111120017'),
+('20261111100037'),
 ('20261110140717'),
 ('20261109100001'),
 ('20261108100001'),

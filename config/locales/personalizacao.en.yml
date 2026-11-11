@@ -1,0 +1,118 @@
+# P3 da proposta de personalização: verificações da Saúde, texto dos avisos e voz da casa.
+en:
+  activerecord:
+    errors:
+      messages:
+        invalid_template: 'has a broken text: %{error}'
+        invalid_query: 'has a broken query: %{error}'
+        condition_missing: Fill in the query, the expression or both.
+        target_missing: Choose a scene or a script (just one).
+        critical_target: A critical scene or script can't be triggered by voice.
+        not_script: must be a script of this place
+        invalid_sentence: 'has an error in "%{sentence}": %{error}'
+    attributes:
+      custom_health_check:
+        name: Name
+        query: Query
+        expression: Expression
+        message: Text
+        severity: Severity
+        site: Place
+      assist_custom_intent:
+        name: Name
+        sentences: Sentences
+        response: Response
+        scene: Scene
+        point: Script
+        language: Language
+      assist_custom_response:
+        text: Text
+        text_key: Response
+        language: Language
+      notify_rule:
+        message: Message
+      alert_rule:
+        message: Notice text
+  custom:
+    common:
+      site: Place
+      save: Save
+    preview:
+      hint_html: 'Accepts Liquid like the dashboard Text: <code>{{ trigger.point }}</code>, <code>{{ trigger.text }}</code>, <code>{{ points["sala.luz"].text }}</code>, <code>{{ "quality=unavailable" |
+        points_where | size }}</code>, <code>{{ "hour * 60" | calc }}</code>, <code>{{ now | date: "%H:%M" }}</code>.'
+      button: Preview
+      title: Preview
+      empty: (empty text)
+    notify:
+      message_ph: '{{ trigger.point }} is now {{ trigger.text }} at {{ now | date: "%H:%M" }}'
+    alert:
+      message: Notice text
+      message_ph: empty = "Point is X for N min"; accepts {{ trigger.minutes }} and {{ trigger.severity }}
+    health:
+      title: Custom checks
+      subtitle: House problems described by a point query and an expression, in Health and in the daily notice.
+      new: New check
+      empty: No custom checks
+      empty_hint: Describe a house problem (for example, offline points tagged battery) and it shows up in Health.
+      'off': 'off'
+      query: Point query
+      expression: Expression
+      edit: Edit
+      name: Name
+      name_ph: Battery sensors offline
+      query_hint: 'Filters separated by spaces: %{keys}. On its own, there''s a problem when it finds any point.'
+      expression_hint: 'The automations calculator: count_points("..."), points by key, hour, weekday. True = problem. With the query, count is how many it found.'
+      severity: Severity
+      severities:
+        warn: Warning (screen only)
+        error: Error (also daily notice)
+      enabled: 'On'
+      message: Text
+      message_ph: '{{ count }} sensor(s) offline: {% for p in found %}{{ p.name }} {% endfor %}'
+      message_hint: 'Liquid: count, found (the query''s points, with name, text, quality) and the same context as the dashboard Text. Empty = the point names.'
+      count:
+        one: The query found %{count} point.
+        other: The query found %{count} points.
+      confirm_remove: Remove the check %{name}?
+      ok: All good
+      problem: The condition is true
+      found:
+        one: '%{count} point: %{names}'
+        other: '%{count} points: %{names}'
+      flash:
+        created: Check created.
+        saved: Check saved.
+        removed: Check removed.
+    voice:
+      scenes: Scenes
+      scripts: Scripts
+      pitch: Sentences and responses of this house. A sentence activates a scene or runs a script with the speaker's role; critical scenes or scripts never by voice, and a place in shadow mode controls
+        nothing.
+      intents: House sentences
+      new_intent: New sentence
+      'off': 'off'
+      name: Name
+      name_ph: Movie time
+      sentences: Sentences (one per line)
+      sentences_ph: '(movie|cinema) time
+
+        let''s watch {title}'
+      sentences_hint: 'HA format: [optional], (one|other) and {slot}. They run before the built-in intents.'
+      target: Triggers
+      target_hint: Only non-critical scenes and scripts are listed.
+      response: Response
+      response_ph: 'empty = "Done: <name>."; accepts {slot}'
+      enabled: 'On'
+      create: Create
+      confirm_remove: Remove %{name}?
+      responses: House responses
+      responses_hint: Change what the voice answers for a built-in intent, per language. {names}, {name} and the other variables of the default response still work.
+      all_intents: all
+      new_response: New response
+      which: Response to change
+      text: Text
+      text_ph: Sure, {names} on.
+      any_language: Any language
+      flash:
+        saved: Saved.
+        removed: Removed.

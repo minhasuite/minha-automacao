@@ -45,6 +45,7 @@ module Dashboards
       return e << msg(:views_list) unless views.is_a?(Array) && views.any?
 
       e.concat(Themes.errors(defn["theme"], msg(:at_dashboard)))
+      e.concat(Arrange.errors(defn["arrange"]).map { |m| "#{msg(:at_dashboard)}: #{m}" }) if defn.key?("arrange")
       e << msg(:favorites_bool) if defn.key?("favorites") && ![ true, false ].include?(defn["favorites"])
       ids = []
       paths = []
@@ -60,6 +61,7 @@ module Dashboards
         e.concat(Themes.errors(view["theme"], where))
         e.concat(ViewTypes.errors(view, where))
         e.concat(Hero.errors(view["hero"]).map { |m| "#{where}: #{m}" }) if view.key?("hero")
+        e.concat(AutoViews.errors(view["auto"], where)) if view.key?("auto")
         context_rules(view["order_if"], "first", where, e) if view.key?("order_if")
         Array(view["badges"]).each { |b| widget(b, msg(:at_badge, where: where), ids, e) }
         sections = view["sections"]

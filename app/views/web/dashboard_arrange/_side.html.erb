@@ -1,0 +1,21 @@
+<%# locals: (side:, label:) -%>
+<div class="min-w-0">
+  <p class="text-xs font-bold uppercase tracking-wide text-muted mb-2"><%= label %></p>
+  <% if side.nil? %>
+    <p class="text-sm text-muted"><%= t("arrange.diff.none") %></p>
+  <% else %>
+    <% if side.badges.any? %>
+      <div class="flex flex-wrap gap-1.5 mb-2" aria-label="<%= t("arrange.diff.badges") %>">
+        <% side.badges.each do |b| %><span class="ss-label-chip"><%= b %></span><% end %>
+      </div>
+    <% end %>
+    <ol class="grid gap-2">
+      <% side.sections.each_with_index do |s, i| %>
+        <li class="ss-card p-3">
+          <p class="text-sm font-semibold text-ink"><%= s["title"].presence || t("arrange.diff.section", n: i + 1) %></p>
+          <p class="text-xs text-muted mt-1"><%= s["widgets"].presence&.join(" · ") || t("arrange.diff.empty") %></p>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</div>

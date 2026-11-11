@@ -9,7 +9,7 @@
 # clique (`repair(tenant, item_key)` → mensagem). Problema ignorado fica em
 # `tenants.settings["health_ignored"]`: não conta no status nem avisa.
 module Health
-  CHECKS = %w[Integrations Devices Reliability Queues Backup Disk Runtime Performance Shadow Cutover].freeze
+  CHECKS = %w[Integrations Devices Reliability Queues Backup Disk Runtime Performance Shadow Custom Cutover].freeze
   STATUSES = %w[ok warn error].freeze
   LABELS = { "ok" => "Ok", "warn" => "Atenção", "error" => "Com erro" }.freeze
   TONES = { "ok" => "success", "warn" => "warn", "error" => "danger" }.freeze
