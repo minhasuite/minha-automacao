@@ -1,0 +1,59 @@
+name: Speedtest Tracker
+category: Monitoramento
+icon: trending-up
+description: Mede a internet de casa de hora em hora (download, upload e latência) e guarda o histórico. Conecte ao Minha Automação para alertas de "internet ruim".
+image: lscr.io/linuxserver/speedtest-tracker
+version: "1.15.0"
+network: bridge
+ram_mb: 256
+ports:
+  - { container: 80, host: 8765 }
+volumes:
+  - { name: config, path: /config }
+web_ui: { port: 8765 }
+env:
+  TZ: America/Sao_Paulo
+  APP_TIMEZONE: America/Sao_Paulo
+  DISPLAY_TIMEZONE: America/Sao_Paulo
+  DB_CONNECTION: sqlite
+  PUID: "1000"
+  PGID: "1000"
+connect: { integration: speedtest_tracker, url: "http://{host}:8765" }
+options:
+  - key: app_key
+    label: Chave do aplicativo
+    type: string
+    env: APP_KEY
+    secret: true
+    required: true
+    pattern: '\Abase64:[A-Za-z0-9+/=]{40,60}\z'
+    help: "Gere uma vez com: echo base64:$(openssl rand -base64 32)"
+  - key: schedule
+    label: Quando medir (cron)
+    type: string
+    env: SPEEDTEST_SCHEDULE
+    default: "0 * * * *"
+    pattern: '\A[0-9*/,\- ]{9,60}\z'
+    help: Cada medição gasta uns 50 MB de internet.
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Monitoring
+    description: Measures your home internet every hour (download, upload and latency) and keeps the history. Connect it to Minha Automação for "bad internet" alerts.
+    options:
+      app_key:
+        label: Application key
+        help: "Generate it once with: echo base64:$(openssl rand -base64 32)"
+      schedule:
+        label: When to measure (cron)
+        help: Each test uses about 50 MB of internet.
+  es:
+    category: Monitoreo
+    description: Mide la internet de casa cada hora (descarga, subida y latencia) y guarda el historial. Conéctalo a Minha Automação para alertas de "internet mala".
+    options:
+      app_key:
+        label: Clave de la aplicación
+        help: "Genérala una vez con: echo base64:$(openssl rand -base64 32)"
+      schedule:
+        label: Cuándo medir (cron)
+        help: Cada medición gasta unos 50 MB de internet.

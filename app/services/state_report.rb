@@ -3,7 +3,7 @@
 # (StateReportJob), sem segurar o `Point#report!`. Relator novo = classe com
 # `wants?(point)` e `report!(site, points)` + nome em REPORTERS.
 module StateReport
-  REPORTERS = %w[GoogleHome::Reporter Integrations::InfluxdbPlugin].freeze
+  REPORTERS = %w[GoogleHome::Reporter].freeze
 
   module_function
 

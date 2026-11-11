@@ -1,0 +1,30 @@
+name: WireGuard (wg-easy)
+category: Rede e MQTT
+icon: link
+description: VPN WireGuard para entrar na rede de casa de fora, com a interface para criar os acessos (QR code). Pede a capacidade NET_ADMIN e a porta UDP 51820 aberta no roteador. A interface roda sem HTTPS; use só na rede de casa.
+image: ghcr.io/wg-easy/wg-easy
+version: "15.4.0"
+network: bridge
+ram_mb: 64
+cap_add: [NET_ADMIN]
+sysctls:
+  net.ipv4.ip_forward: "1"
+  net.ipv4.conf.all.src_valid_mark: "1"
+ports:
+  - { container: 51820, host: 51820, protocol: udp }
+  - { container: 51821, host: 51821 }
+volumes:
+  - { name: config, path: /etc/wireguard }
+web_ui: { port: 51821 }
+env:
+  TZ: America/Sao_Paulo
+  INSECURE: "true"
+  DISABLE_IPV6: "true"
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Network and MQTT
+    description: WireGuard VPN to reach your home network from outside, with a web interface to create accesses (QR code). Needs the NET_ADMIN capability and UDP port 51820 open on the router. The interface runs without HTTPS; use it only on the home network.
+  es:
+    category: Red y MQTT
+    description: VPN WireGuard para entrar en la red de casa desde fuera, con la interfaz para crear los accesos (código QR). Pide la capacidad NET_ADMIN y el puerto UDP 51820 abierto en el router. La interfaz corre sin HTTPS; úsala solo en la red de casa.

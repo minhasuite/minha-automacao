@@ -1,0 +1,26 @@
+name: OwnTracks Recorder
+category: Presença
+icon: location-marker
+description: Recebe a localização dos celulares com o app OwnTracks (modo HTTP, endereço http://IP-do-servidor:8083/pub). Conectado ao Minha Automação, vira a zona de cada pessoa. Sem senha própria - use só na rede de casa ou atrás da VPN.
+image: owntracks/recorder
+version: "1.0.4"
+network: bridge
+ram_mb: 64
+ports:
+  - { container: 8083, host: 8083 }
+volumes:
+  - { name: store, path: /store }
+web_ui: { port: 8083 }
+env:
+  TZ: America/Sao_Paulo
+  OTR_PORT: "0"
+  OTR_HTTPHOST: 0.0.0.0
+connect: { integration: owntracks, url: "http://{host}:8083" }
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Presence
+    description: Receives the location of phones with the OwnTracks app (HTTP mode, address http://server-IP:8083/pub). Connected to Minha Automação, it becomes each person's zone. No password of its own - use it only on the home network or behind the VPN.
+  es:
+    category: Presencia
+    description: Recibe la ubicación de los celulares con la app OwnTracks (modo HTTP, dirección http://IP-del-servidor:8083/pub). Conectado a Minha Automação, se vuelve la zona de cada persona. Sin contraseña propia - úsalo solo en la red de casa o detrás de la VPN.

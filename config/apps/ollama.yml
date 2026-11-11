@@ -1,0 +1,23 @@
+name: Ollama
+category: Inteligência artificial
+icon: sparkles
+description: Modelo de linguagem rodando no próprio servidor, sem chave nem nuvem. Pede bastante memória e é lento sem placa de vídeo; use um modelo pequeno (qwen2.5:1.5b ou llama3.2:1b). Conectar cria o provedor nas Configurações → IA e baixa o modelo.
+image: ollama/ollama
+version: "0.40.12"
+network: bridge
+ram_mb: 2048
+ports:
+  - { container: 11434, host: 11434 }
+volumes:
+  - { name: models, path: /root/.ollama }
+env:
+  OLLAMA_KEEP_ALIVE: 5m
+connect: { ai: ollama, base_url: "http://{host}:11434", model: "qwen2.5:1.5b" }
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Artificial intelligence
+    description: A language model running on the server itself, with no key and no cloud. It needs plenty of memory and is slow without a graphics card; use a small model (qwen2.5:1.5b or llama3.2:1b). Connecting creates the provider in Settings → AI and downloads the model.
+  es:
+    category: Inteligencia artificial
+    description: Modelo de lenguaje corriendo en el propio servidor, sin clave ni nube. Pide bastante memoria y es lento sin tarjeta de video; usa un modelo pequeño (qwen2.5:1.5b o llama3.2:1b). Conectar crea el proveedor en Configuración → IA y descarga el modelo.

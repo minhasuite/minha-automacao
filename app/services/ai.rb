@@ -6,7 +6,7 @@
 # suíte (Ai::Client, chave em env) perguntam ao registro; nenhum deles tem
 # `case` por provedor. Provedor novo = classe + nome aqui + spec.
 module Ai
-  PROVIDERS = %w[Anthropic Openai Gemini Ollama LocalAudio GoogleTranslate].freeze
+  PROVIDERS = %w[Anthropic Openai Gemini Ollama LocalAudio Wyoming GoogleTranslate].freeze
 
   # O que um provedor pode declarar em `capabilities`.
   CAPABILITIES = { text: "Texto", image: "Imagem na entrada", structured: "Saída estruturada (JSON schema)",

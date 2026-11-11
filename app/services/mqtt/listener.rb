@@ -12,7 +12,8 @@ module Mqtt
     # integ: "Frigate" = ::Frigate (eventos de detecção e contagem por câmera).
     # ondaC1 (C4): HaDiscovery = o formato `homeassistant/` de todo o resto.
     # Descobridor com `connected(client)` publica ao conectar (birth message).
-    DISCOVERY = %w[Z2m Tasmota Frigate HaDiscovery].freeze
+    # apps: DoubleTake (rosto reconhecido) e Espresense (cômodo por Bluetooth).
+    DISCOVERY = %w[Z2m Tasmota Frigate DoubleTake Espresense HaDiscovery].freeze
     SCAN_EVERY = 30
     MAX_BACKOFF = 60
 

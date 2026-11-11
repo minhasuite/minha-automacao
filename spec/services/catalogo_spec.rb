@@ -693,18 +693,16 @@ RSpec.describe "Catálogo de integrações (grupo 9)" do
       expect(req).to have_been_requested.at_least_once
     end
 
-    it "InfluxDB: relator do StateReport manda a leitura nova em line protocol (2.x)" do
+    it "InfluxDB: a leitura nova vai em line protocol (2.x), em lote pelo relógio" do
       ping = stub_request(:post, "http://192.0.2.40:8086/api/v2/write?bucket=casa&org=teste&precision=s").with(headers: { "Authorization" => "Token tok-teste" }).to_return(status: 204, body: "")
       o = Integrations::InfluxdbPlugin.setup(site, form(url: "http://192.0.2.40:8086", org: "teste", bucket: "casa", token: "tok-teste"))
       expect([ o.to, o.alert ]).to eq([ :index, nil ])
       expect(ping).to have_been_requested
       device = site.devices.create!(name: "Teste Medidor", driver: "virtual")
       point = device.points.create!(site: site, name: "Teste Potência", key: "teste.potencia", capability: "measure", unit: "W")
-      point.report!(42.5)
-      expect(Integrations::InfluxdbPlugin.wants?(point)).to be(true)
-      Integrations::InfluxdbPlugin.report!(site, [ point ])
+      travel_to(1.minute.from_now) { point.report!(42.5) }
+      travel_to(2.minutes.from_now) { Integrations.tick(Time.current) }
       expect(a_request(:post, %r{/api/v2/write}).with(body: /\AW,entity_id=teste.potencia,domain=measure value=42.5 \d+\z/)).to have_been_made
-      expect(StateReport.reporters).to include(Integrations::InfluxdbPlugin)
     end
 
     it "Modbus TCP: registradores descritos em texto viram pontos; holding e coil recebem comando" do

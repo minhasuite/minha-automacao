@@ -75,6 +75,20 @@ module Web
       redirect_to "http://#{host}:#{port.to_i}#{@app.web_ui['path']}", allow_other_host: true
     end
 
+    # Ligação com o Minha Automação (manifesto `connect`): integração = vai
+    # ao formulário do plugin já preenchido com o IP do servidor; IA = cria ou
+    # atualiza a conta do provedor (e o provedor prepara o que precisar, como
+    # baixar o modelo do Ollama). Nos dois, o IP do servidor entra na Saída
+    # HTTP (Configurações → Sistema), porque o app responde nele.
+    def connect
+      link = @app.connect or return redirect_to(app_path(@app.key))
+      host = server_ip or return redirect_to(app_path(@app.key), alert: t("apps_link.no_host"))
+      allow_http!(host)
+      values = @app.connect_values(host)
+      audit!("connect", target: link.slice(*AppCatalog::CONNECT_KINDS))
+      link["ai"] ? connect_ai(link["ai"], values) : connect_integration(link["integration"], values)
+    end
+
     def add_repository
       repo = AppRepos.add!(params[:url].to_s.strip, user: current_user)
       redirect_to apps_store_path, notice: t("resto.apps.added", name: repo["name"], n: repo["apps"].size)
@@ -88,6 +102,34 @@ module Web
     end
 
     private
+
+    def connect_integration(key, values)
+      plugin = Integrations.plugin(key) or return redirect_to(app_path(@app.key))
+      site = Site.find_by(id: params[:site_id]) || Site.order(:name).first or return redirect_to(app_path(@app.key))
+      redirect_to new_site_integration_path(site, values.merge(tipo: plugin.key, nome: @app.name))
+    end
+
+    def connect_ai(key, values)
+      plugin = Ai.provider(key) or return redirect_to(app_path(@app.key))
+      account = AiAccount.find_or_initialize_by(provider: plugin.key)
+      account.update!(base_url: values["base_url"], model: values["model"].presence || account.model, enabled: true)
+      notice = t("apps_link.connected_ai", name: plugin.label)
+      if plugin.respond_to?(:prepare)
+        AiPrepareJob.perform_later(account.id)
+        notice += t("apps_link.preparing", model: account.model_or_default)
+      end
+      redirect_to settings_ai_path(anchor: plugin.key), notice: notice
+    end
+
+    # IP do servidor na rede de casa: o do endereço aberto ou o APP_HOST.
+    def server_ip
+      [ request.host, ENV["APP_HOST"].to_s ].find { |h| h.match?(/\A\d{1,3}(\.\d{1,3}){3}\z/) }
+    end
+
+    def allow_http!(host)
+      tenant = current_user.tenant
+      tenant.update!(http_allow_text: (tenant.http_allow + [ host ]).join("\n")) unless tenant.http_allow.include?(host)
+    end
 
     def third_party_manifest = (@app.data if @app.third_party?)
 

@@ -1,0 +1,27 @@
+name: AdGuard Home
+category: Rede e MQTT
+icon: shield-check
+description: Bloqueia propaganda e rastreadores na rede inteira (servidor DNS na porta 53). No assistente inicial, mantenha a porta da interface em 3000. Depois, aponte o DNS do roteador para o IP do servidor.
+image: adguard/adguardhome
+version: "v0.107.79"
+network: bridge
+ram_mb: 128
+ports:
+  - { container: 53, host: 53, protocol: tcp }
+  - { container: 53, host: 53, protocol: udp }
+  - { container: 3000, host: 3080 }
+volumes:
+  - { name: work, path: /opt/adguardhome/work }
+  - { name: conf, path: /opt/adguardhome/conf }
+web_ui: { port: 3080 }
+env:
+  TZ: America/Sao_Paulo
+connect: { integration: adguard, host: "{host}", port: "3080" }
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Network and MQTT
+    description: Blocks ads and trackers for the whole network (DNS server on port 53). In the first-run wizard, keep the web interface port at 3000. Then point the router's DNS to the server's IP.
+  es:
+    category: Red y MQTT
+    description: Bloquea anuncios y rastreadores en toda la red (servidor DNS en el puerto 53). En el asistente inicial, mantén el puerto de la interfaz en 3000. Luego apunta el DNS del router a la IP del servidor.

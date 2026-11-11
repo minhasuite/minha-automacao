@@ -1,0 +1,57 @@
+name: ntfy
+category: Avisos
+icon: bell
+description: Servidor de notificações push próprio, sem Google - o app ntfy (Android/iOS) assina um tópico e recebe os avisos da casa. Conectado ao Minha Automação, vira um canal de aviso.
+image: binwiederhier/ntfy
+version: "v2.35.0"
+network: bridge
+ram_mb: 64
+command: ["serve"]
+ports:
+  - { container: 80, host: 8093 }
+volumes:
+  - { name: cache, path: /var/cache/ntfy }
+  - { name: data, path: /var/lib/ntfy }
+web_ui: { port: 8093 }
+env:
+  TZ: America/Sao_Paulo
+  NTFY_CACHE_FILE: /var/cache/ntfy/cache.db
+  NTFY_AUTH_FILE: /var/lib/ntfy/user.db
+  NTFY_ATTACHMENT_CACHE_DIR: /var/cache/ntfy/attachments
+connect: { integration: ntfy, url: "http://{host}:8093" }
+options:
+  - key: base_url
+    label: Endereço público
+    type: string
+    env: NTFY_BASE_URL
+    pattern: '\Ahttps?://[\w.-]+(:\d+)?\z'
+    help: "Ex.: http://192.168.68.199:8093 ou o endereço HTTPS de fora. Os celulares precisam alcançar este endereço."
+  - key: access
+    label: Acesso sem login
+    type: enum
+    env: NTFY_AUTH_DEFAULT_ACCESS
+    choices: [read-write, read-only, write-only, deny-all]
+    default: read-write
+    help: deny-all exige usuário e token (crie pelo terminal do container).
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Alerts
+    description: Your own push notification server, without Google - the ntfy app (Android/iOS) subscribes to a topic and gets the house alerts. Connected to Minha Automação, it becomes an alert channel.
+    options:
+      base_url:
+        label: Public address
+        help: "E.g. http://192.168.68.199:8093 or the outside HTTPS address. Phones must reach this address."
+      access:
+        label: Access without login
+        help: deny-all requires a user and token (create them in the container terminal).
+  es:
+    category: Avisos
+    description: Servidor propio de notificaciones push, sin Google - la app ntfy (Android/iOS) se suscribe a un tema y recibe los avisos de la casa. Conectado a Minha Automação, se vuelve un canal de aviso.
+    options:
+      base_url:
+        label: Dirección pública
+        help: "Ej.: http://192.168.68.199:8093 o la dirección HTTPS de fuera. Los celulares deben alcanzar esta dirección."
+      access:
+        label: Acceso sin login
+        help: deny-all exige usuario y token (créalos en la terminal del contenedor).

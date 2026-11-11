@@ -1,0 +1,69 @@
+name: InfluxDB
+category: Monitoramento
+icon: table
+description: Banco de séries temporais para guardar as leituras por anos e fazer gráficos no Grafana. Já nasce com a organização "casa" e o bucket "minha_automacao"; conectar liga a exportação das leituras.
+image: influxdb
+version: "2.7.12"
+network: apps
+ram_mb: 512
+ports:
+  - { container: 8086, host: 8086 }
+volumes:
+  - { name: data, path: /var/lib/influxdb2 }
+  - { name: config, path: /etc/influxdb2 }
+web_ui: { port: 8086 }
+env:
+  DOCKER_INFLUXDB_INIT_MODE: setup
+  DOCKER_INFLUXDB_INIT_ORG: casa
+  DOCKER_INFLUXDB_INIT_BUCKET: minha_automacao
+  DOCKER_INFLUXDB_INIT_RETENTION: 0s
+connect: { integration: influxdb, url: "http://{host}:8086", version: v2, org: casa, bucket: minha_automacao }
+options:
+  - key: username
+    label: Usuário administrador
+    type: string
+    env: DOCKER_INFLUXDB_INIT_USERNAME
+    default: admin
+    pattern: '\A[\w.-]{3,40}\z'
+  - key: password
+    label: Senha do administrador
+    type: string
+    env: DOCKER_INFLUXDB_INIT_PASSWORD
+    secret: true
+    required: true
+    pattern: '\A.{8,100}\z'
+    help: No mínimo 8 caracteres.
+  - key: token
+    label: Token de administrador
+    type: string
+    env: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
+    secret: true
+    required: true
+    pattern: '\A[\w=+/-]{20,100}\z'
+    help: "Gere com: openssl rand -hex 32. É o token que o Minha Automação e o Grafana usam."
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Monitoring
+    description: Time-series database to keep readings for years and chart them in Grafana. It starts with the "casa" organization and the "minha_automacao" bucket; connecting turns on the reading export.
+    options:
+      username:
+        label: Admin username
+      password:
+        label: Admin password
+        help: At least 8 characters.
+      token:
+        label: Admin token
+        help: "Generate it with: openssl rand -hex 32. It's the token Minha Automação and Grafana use."
+  es:
+    category: Monitoreo
+    description: Base de series temporales para guardar las lecturas por años y graficar en Grafana. Ya nace con la organización "casa" y el bucket "minha_automacao"; conectar activa la exportación de lecturas.
+    options:
+      username:
+        label: Usuario administrador
+      password:
+        label: Contraseña del administrador
+        help: Mínimo 8 caracteres.
+      token:
+        label: Token de administrador
+        help: "Genéralo con: openssl rand -hex 32. Es el token que usan Minha Automação y Grafana."

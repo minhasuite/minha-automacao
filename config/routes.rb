@@ -347,6 +347,7 @@ Rails.application.routes.draw do
           post :upgrade, path: "atualizar"
           get :logs, path: "log"
           get :launch, path: "abrir"
+          post :connect, path: "conectar"
         end
       end
     end

@@ -1,0 +1,23 @@
+name: CompreFace
+category: Câmeras
+icon: finger-print
+description: Reconhecimento de rosto local (o motor que o Double Take usa). Pesado, pede uns 3 GB de memória e processador com AVX. Crie um serviço de reconhecimento na interface e copie a chave para o Double Take.
+image: exadel/compreface
+version: "1.2.0"
+network: apps
+ram_mb: 3072
+ports:
+  - { container: 80, host: 8000 }
+volumes:
+  - { name: db, path: /var/lib/postgresql/data }
+web_ui: { port: 8000 }
+env:
+  TZ: America/Sao_Paulo
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Cameras
+    description: Local face recognition (the engine Double Take uses). Heavy, it needs about 3 GB of memory and a CPU with AVX. Create a recognition service in its interface and copy the key into Double Take.
+  es:
+    category: Cámaras
+    description: Reconocimiento facial local (el motor que usa Double Take). Pesado, pide unos 3 GB de memoria y procesador con AVX. Crea un servicio de reconocimiento en la interfaz y copia la clave en Double Take.

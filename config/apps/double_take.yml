@@ -1,0 +1,24 @@
+name: Double Take
+category: Câmeras
+icon: user-circle
+description: Junta o Frigate e o CompreFace - quando a câmera vê uma pessoa, diz quem é e publica no MQTT. Conectado ao Minha Automação, o rosto reconhecido vira presença da pessoa e evento. Configure o MQTT (host mosquitto) e o CompreFace (http://ma-app-compreface) no editor dele.
+image: jakowenko/double-take
+version: "1.13.1"
+network: apps
+ram_mb: 256
+ports:
+  - { container: 3000, host: 3005 }
+volumes:
+  - { name: storage, path: /.storage }
+web_ui: { port: 3005 }
+env:
+  TZ: America/Sao_Paulo
+connect: { integration: double_take, url: "http://{host}:3005" }
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Cameras
+    description: Ties Frigate and CompreFace together - when a camera sees a person, it says who it is and publishes it to MQTT. Connected to Minha Automação, the recognized face becomes the person's presence and an event. Set up MQTT (host mosquitto) and CompreFace (http://ma-app-compreface) in its editor.
+  es:
+    category: Cámaras
+    description: Une Frigate y CompreFace - cuando la cámara ve a una persona, dice quién es y lo publica en MQTT. Conectado a Minha Automação, el rostro reconocido se vuelve presencia de la persona y evento. Configura MQTT (host mosquitto) y CompreFace (http://ma-app-compreface) en su editor.

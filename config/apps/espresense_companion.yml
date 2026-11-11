@@ -1,0 +1,24 @@
+name: ESPresense Companion
+category: Presença
+icon: status-online
+description: Junta as distâncias medidas pelas placas ESPresense (Bluetooth) e diz em que cômodo cada celular, relógio ou chaveiro está. Conectado ao Minha Automação, vira o cômodo atual por aparelho e a ocupação por cômodo. Aponte o MQTT para o host mosquitto no config.yaml.
+image: ghcr.io/espresense/espresense-companion
+version: "0.2.21"
+network: apps
+ram_mb: 256
+ports:
+  - { container: 8267, host: 8267 }
+volumes:
+  - { name: config, path: /config/espresense }
+web_ui: { port: 8267 }
+env:
+  TZ: America/Sao_Paulo
+connect: { integration: espresense, topic: espresense }
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Presence
+    description: Combines the distances measured by the ESPresense boards (Bluetooth) and tells which room each phone, watch or tag is in. Connected to Minha Automação, it becomes the current room per device and the occupancy per room. Point MQTT to host mosquitto in config.yaml.
+  es:
+    category: Presencia
+    description: Une las distancias medidas por las placas ESPresense (Bluetooth) y dice en qué cuarto está cada celular, reloj o llavero. Conectado a Minha Automação, se vuelve el cuarto actual por aparato y la ocupación por cuarto. Apunta el MQTT al host mosquitto en el config.yaml.

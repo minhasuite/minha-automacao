@@ -28,6 +28,7 @@
               <span class="font-bold text-ink"><%= app.name %></span>
               <% if @statuses.dig(app.key, "installed") %><span class="ss-badge ss-badge-success"><%= t("apps.installed") %></span><% end %>
               <% if app.system? %><span class="ss-badge"><%= t("apps.system_badge") %></span><% end %>
+              <% if app.heavy? %><span class="ss-badge ss-badge-warn" title="<%= t("apps_link.ram", mb: app.ram_mb) %>"><%= t("apps_link.heavy_badge") %></span><% end %>
               <% if app.third_party? %><span class="ss-badge ss-badge-warn" title="<%= t("resto.apps.third_party_hint") %>"><%= t("resto.apps.third_party", repo: app.repository) %></span><% end %>
             </span>
             <span class="block text-xs text-muted mt-0.5"><%= app.category %> · <%= app.version %></span>

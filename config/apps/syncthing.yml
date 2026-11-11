@@ -1,0 +1,28 @@
+name: Syncthing
+category: Ferramentas
+icon: refresh
+description: Sincroniza pastas entre o servidor, computadores e celulares sem nuvem. Serve de destino para levar cópias para outra casa (veja a documentação de backup).
+image: syncthing/syncthing
+version: "2.1.6"
+network: bridge
+ram_mb: 128
+ports:
+  - { container: 8384, host: 8384 }
+  - { container: 22000, host: 22000, protocol: tcp }
+  - { container: 22000, host: 22000, protocol: udp }
+  - { container: 21027, host: 21027, protocol: udp }
+volumes:
+  - { name: data, path: /var/syncthing }
+web_ui: { port: 8384 }
+env:
+  TZ: America/Sao_Paulo
+  PUID: "1000"
+  PGID: "1000"
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Tools
+    description: Syncs folders between the server, computers and phones without a cloud. Works as a destination to take copies to another house (see the backup docs).
+  es:
+    category: Herramientas
+    description: Sincroniza carpetas entre el servidor, computadoras y celulares sin nube. Sirve de destino para llevar copias a otra casa (ver la documentación de backup).

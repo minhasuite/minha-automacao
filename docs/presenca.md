@@ -58,6 +58,19 @@ valor **ou os atributos** de uma fonte mudam (`Point#report_attrs!` chama
 - A API de pontos não mostra atributos; o app do celular manda a localização
   só com a permissão da pessoa (Mais → Sensores do celular).
 
+## Rastreadores dos apps (11/2026)
+
+- `Face` (Double Take): ponto com `address.tracker = "face"`; visto há pouco
+  (`hold_s`) = em casa; não visto = sem opinião.
+- `Room` (ESPresense): ponto com `address.tracker = "room"`; num cômodo = em
+  casa; `not_home` = sem opinião. O valor é o cômodo (para automações por
+  cômodo) e há o sensor "Ocupado" por cômodo.
+- OwnTracks: o ponto "Presença" da integração `owntracks` usa o `Gps` (valor
+  = zona; coordenada só nos atributos, apagada depois de `location_keep_h`
+  pelo `OwntracksPlugin.tick`, contada da hora da posição).
+
+Ordem: `Gps WifiSsid Face Room Connected`.
+
 ## Estender
 
 - Rastreador novo: classe em `People::Trackers` (`describe label:`, `applies?(ponto)`,

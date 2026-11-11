@@ -12,13 +12,29 @@ module AppCatalog
   LABEL = "minha-automacao.app".freeze
   # Variáveis do servidor que um manifesto pode repassar ao app (server_env).
   SERVER_ENV = %w[MQTT_PASSWORD Z2M_FRONTEND_TOKEN].freeze
-  # Portas do próprio servidor (web, banco, MQTT, mídia do go2rtc).
-  RESERVED_PORTS = [ 80, 443, 1883, 1984, 3000, 5432, 8099, 8555 ].freeze
+  # Portas do próprio servidor (web, banco, MQTT, mídia do go2rtc) e dos
+  # serviços do compose na rede do host (mDNS, Matter, ponte Matter, OTBR,
+  # ponte HomeKit).
+  RESERVED_PORTS = [ 80, 443, 1883, 1984, 3000, 5353, 5432, 5540, 5580, 8081, 8099, 8555, 51_826 ].freeze
+  # Portas baixas (< 1024) que um app do produto pode publicar: só o DNS
+  # (AdGuard Home). App de terceiro nunca publica porta baixa.
+  LOW_PORTS = [ 53 ].freeze
+  # Capacidades extras do kernel que um app do produto pode pedir (wg-easy:
+  # NET_ADMIN para criar a interface do WireGuard). Nada de SYS_ADMIN,
+  # SYS_MODULE e afins; app de terceiro não pede nenhuma.
+  CAPS = %w[NET_ADMIN].freeze
+  # sysctls permitidos (só os de rede, que valem dentro do namespace do container).
+  SYSCTLS = %w[net.ipv4.ip_forward net.ipv4.conf.all.src_valid_mark net.ipv6.conf.all.forwarding net.ipv6.conf.all.disable_ipv6].freeze
+  # Ligação do app com o Minha Automação (botão "Conectar" na página do app):
+  # `integration` = chave do plugin de integração (formulário já preenchido)
+  # ou `ai` = chave do provedor de IA (conta criada com o endereço). `{host}`
+  # nos valores vira o IP do servidor na rede de casa.
+  CONNECT_KINDS = %w[integration ai].freeze
   DEVICE_RE = %r{\A/dev/(serial/by-id/[\w.:-]+|tty(USB|ACM)\d{1,2})\z}
   TYPES = %w[string integer boolean enum device].freeze
   NETWORKS = %w[apps bridge].freeze
   KEYS = %w[name category icon description image version system network ports volumes options env
-            server_env web_ui health shm_mb i18n digest].freeze
+            server_env web_ui health shm_mb i18n digest command cap_add sysctls ram_mb connect].freeze
   # resto (7.13): app de repositório de terceiros só com a imagem fixada por digest.
   DIGEST = /\Asha256:\h{64}\z/
   # Idiomas além do pt-BR que o manifesto traz em `i18n:` (category,
@@ -72,7 +88,7 @@ module AppCatalog
 
     def third_party? = @third_party
 
-    %w[name icon image version network shm_mb web_ui health].each { |k| define_method(k) { data[k] } }
+    %w[name icon image version network shm_mb web_ui health ram_mb connect].each { |k| define_method(k) { data[k] } }
     def category = text("category")
     def description = text("description")
     def text(field) = data.dig("i18n", AppCatalog.locale, field) || data[field]
@@ -82,6 +98,14 @@ module AppCatalog
     def ports = data.fetch("ports", [])
     def volumes = data.fetch("volumes", [])
     def options = data.fetch("options", [])
+    def command = data.fetch("command", [])
+    def cap_add = data.fetch("cap_add", [])
+    def sysctls = data.fetch("sysctls", {})
+    # Pesado: pede 1 GB ou mais de memória (a loja avisa antes de instalar).
+    def heavy? = ram_mb.to_i >= 1024
+
+    # Valores do "Conectar" com o IP do servidor no lugar de `{host}`.
+    def connect_values(host) = connect.to_h.except("integration", "ai").transform_values { |v| v.to_s.gsub("{host}", host.to_s) }
     def image_ref = data["digest"] ? "#{image}@#{data['digest']}" : "#{image}:#{version}"
     def container_name = "#{PREFIX}#{key}"
     def volume_name(vol) = "#{PREFIX}#{key}-#{vol['name']}"
@@ -120,6 +144,7 @@ module AppCatalog
         "Labels" => { LABEL => key, "minha-automacao.version" => version.to_s,
                       "minha-automacao.options" => JSON.generate(public_options(opts)),
                       "minha-automacao.manifest" => (JSON.generate(data.merge("repository" => repository).compact) if third_party?) }.compact,
+        "Cmd" => command.presence,
         "ExposedPorts" => ports.to_h { |p| [ port_spec(p), {} ] },
         "Healthcheck" => health && { "Test" => health["test"], "Interval" => health.fetch("interval_s", 30) * 1_000_000_000 },
         "HostConfig" => {
@@ -129,6 +154,8 @@ module AppCatalog
           "RestartPolicy" => { "Name" => restart },
           "NetworkMode" => network,
           "ShmSize" => shm_mb && shm_mb * 1024 * 1024,
+          "CapAdd" => cap_add.presence,
+          "Sysctls" => sysctls.presence&.transform_values(&:to_s),
           "Privileged" => false
         }.compact
       }.compact
@@ -177,17 +204,36 @@ module AppCatalog
       options.each { |o| validate_option!(o) }
       fail!("health") unless health.nil? || (health["test"].is_a?(Array) && health["test"].all?(String))
       fail!("shm_mb") unless shm_mb.nil? || (shm_mb.is_a?(Integer) && shm_mb.between?(64, 2048))
+      validate_extras!
+    end
+
+    def validate_extras!
+      fail!("command") unless command.is_a?(Array) && command.size <= 20 && command.all? { |c| c.is_a?(String) && c.length <= 200 && !c.match?(/[[:cntrl:]]/) }
+      fail!("cap_add") unless cap_add.is_a?(Array) && (cap_add - CAPS).empty?
+      fail!("sysctls") unless sysctls.is_a?(Hash) && (sysctls.keys - SYSCTLS).empty? && sysctls.values.all? { |v| v.to_s.match?(/\A\d{1,3}\z/) }
+      fail!("ram_mb") unless ram_mb.nil? || (ram_mb.is_a?(Integer) && ram_mb.between?(16, 65_536))
+      validate_connect!
+    end
+
+    def validate_connect!
+      return if connect.nil?
+
+      kinds = connect.is_a?(Hash) ? connect.keys & CONNECT_KINDS : []
+      fail!("connect") unless kinds.size == 1 && connect[kinds.first].to_s.match?(/\A[a-z0-9_]+\z/) &&
+                              connect.except(*CONNECT_KINDS).all? { |k, v| k.match?(/\A[a-z0-9_]+\z/) && !v.is_a?(Enumerable) }
     end
 
     def validate_third_party!
       fail!("digest (imagem de terceiro precisa de sha256:…)") unless data["digest"].to_s.match?(DIGEST)
       fail!("app de terceiro não pode ser do sistema") if data.key?("system")
       fail!("app de terceiro não recebe segredos do servidor") if data.key?("server_env")
+      fail!("app de terceiro não pede capacidades, sysctls nem ligação") if data.key?("cap_add") || data.key?("sysctls") || data.key?("connect")
     end
 
     def validate_ports!
       ports.each do |p|
-        ok = p["container"].is_a?(Integer) && p["host"].is_a?(Integer) && p["host"].between?(1024, 65_535) &&
+        low = !third_party? && LOW_PORTS.include?(p["host"])
+        ok = p["container"].is_a?(Integer) && p["host"].is_a?(Integer) && (p["host"].between?(1024, 65_535) || low) &&
              !RESERVED_PORTS.include?(p["host"]) && %w[tcp udp].include?(p.fetch("protocol", "tcp"))
         fail!("porta #{p}") unless ok
       end
