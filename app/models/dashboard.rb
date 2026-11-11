@@ -68,8 +68,9 @@ class Dashboard < ApplicationRecord
   end
   def visible_to?(role) = roles.empty? || role == "owner" || roles.include?(role)
   # Automático: gerado a cada leitura, com o tema escolhido (primeira configuração) guardado em `definition`.
-  def published = auto? ? Dashboards::Generator.call(site).merge(definition.to_h.slice("theme")) : definition
-  def working_draft = draft || published
+  # Visão com a marca `auto` (ideia 6) se refaz a cada leitura (Dashboards::AutoViews).
+  def published = auto? ? Dashboards::Generator.call(site).merge(definition.to_h.slice("theme")) : Dashboards::AutoViews.expand(definition, site)
+  def working_draft = draft ? Dashboards::AutoViews.expand(draft, site) : published
   def draft? = draft.present?
 
   # Publica o rascunho (ou `new_definition`, da API): vira a versão nova e o

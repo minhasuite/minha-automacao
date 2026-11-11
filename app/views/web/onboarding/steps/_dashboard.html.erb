@@ -1,4 +1,4 @@
-<%# locals: (ctx:, step:, dashboard:, views:, themes:, current:) -%>
+<%# locals: (ctx:, step:, dashboard:, views:, themes:, current:, areas: [], layouts: []) -%>
 <%= form_with url: onboarding_step_path(step.key), scope: :onboarding, data: { turbo_submits_with: t("onboarding.saving") } do |f| %>
   <fieldset>
     <legend class="ss-label"><%= t("onboarding.dashboard.theme") %></legend>
@@ -13,6 +13,8 @@
       <% end %>
     </div>
   </fieldset>
+  <%# Ideia 8: cômodos e estilo (Dashboards::Wizard). %>
+  <div class="ss-card ss-card-pad mt-5"><%= render "web/dashboard_wizard/fields", areas: areas, scope: "onboarding" %></div>
   <div class="ss-card ss-card-pad is-soft mt-5">
     <p class="font-semibold text-ink flex items-center gap-2"><%= icon("view-boards", "size-5 text-accent") %><%= t("onboarding.dashboard.ready", count: views.size) %></p>
     <div class="mt-2 flex flex-wrap gap-1.5">

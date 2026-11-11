@@ -5,18 +5,23 @@ module Dashboards
   # dispositivo). Tensão e corrente ficam de fora (ruído para quem mora); a
   # potência vai para o gráfico. Ids determinísticos (derivados dos ids dos
   # pontos e áreas) para o tempo real e o editor acharem o mesmo widget.
+  #
+  # P2.1: o que é luz, técnico, segurança e potência são consultas do local
+  # (`Dashboards::Arrange.auto_rules`, Configurações → Painéis → Arrumação); a
+  # etiqueta `iluminacao` vem primeiro e o nome (`LIGHT`) é a reserva.
+  # `areas:` limita as áreas (o assistente do painel, ideia 8).
   class Generator
     LIGHT = /l[aâ]mpada|\bluz|\bluzes|ilumina|\bled\b|abajur|spot|pendente|arandela|plafon/i
-    TECHNICAL = %w[voltage current].freeze
-    TECHNICAL_UNITS = %w[V A mA].freeze
 
     def self.call(site) = new(site).call
 
-    def initialize(site)
+    def initialize(site, areas: nil)
       @site = site
       @points = site.points.includes(:device).where(hidden: false, disabled: false).order(:name).to_a.select { |p| Points::Query.exists?(p) }
       @areas = site.areas.order(:position, :name).to_a
-      @lights_tag = Tagging.joins(:tag).where(tags: { name: "iluminacao" }, taggable_type: "Point").pluck(:taggable_id).to_set
+      @only = areas&.map(&:to_s)&.to_set
+      @rules = Arrange.auto_rules(site)
+      @query = Points::Query.new(site, points: @points)
       @name_count = @points.map(&:name).tally
     end
 
@@ -24,12 +29,16 @@ module Dashboards
       { "schema_version" => Schema::VERSION, "views" => [ home, *area_views ] }
     end
 
-    private
+    # A visão de uma área (a visão automática por área, ideia 6); nil sem ponto.
+    def view_for_area(area)
+      points = @points.select { |p| p.effective_area_id == area.id }
+      area_view("a-#{area.id}", area.name, area.icon.presence || "view-boards", points, area: area.id) if points.any?
+    end
 
     def home
       lights = @points.select { |p| light?(p) && p.capability == "onoff" }
       power = @points.select { |p| power?(p) }
-      security = @points.select { |p| p.risk != "normal" || p.capability.in?(%w[gate contact motion]) }
+      security = @points.select { |p| rule?(p, "security") }
       sections = []
       sections << section("s-home-lights", tr(:lights), "light-bulb", lights.map { |p| tile(p, "wh", label: home_label(p), span: span(6, 4, 3)) }) if lights.any?
       sections << section("s-home-now", tr(:now), "lightning-bolt", [
@@ -50,7 +59,7 @@ module Dashboards
       vacuums = @points.select { |p| vacuum?(p) }
       sections << section("s-home-vacuum", tr(:vacuum), "vacuum", vacuums.map { |p| tile(p, "wv", span: span(12, 12, 12)) }) if vacuums.any?
       sections << section("s-home-scenes", tr(:scenes), "sparkles", [ { "id" => "w-home-scenes", "type" => "scene_bar", "span" => span(12, 12, 12) } ]) if @site.scenes.exists?
-      sections.concat(area_sections) if @areas.size > 1
+      sections.concat(area_sections) if chosen_areas.size > 1
 
       # P1.4: o selo diz "Nada ligado"/"1 ligado"/"3 ligados" pelos `labels` (sem singular inventado).
       on_labels = I18n.t("dashboards.facts.labels.on").transform_keys(&:to_s).slice(*Facts::LABEL_FORMS)
@@ -64,22 +73,27 @@ module Dashboards
     def area_sections
       # Duas por linha no celular (cartão quadrado, toque grande), como os tiles de luz.
       card = ->(a) { { "id" => "w-area-#{a.id}", "type" => "area_card", "area" => a.id, "span" => span(6, 6, 4) } }
-      floors = @areas.select(&:floor?).sort_by { |f| [ f.level || 0, f.position, f.name ] }
-      return [ section("s-home-areas", tr(:areas), "view-boards", @areas.map(&card)) ] if floors.empty?
+      areas = chosen_areas
+      floors = areas.select(&:floor?).sort_by { |f| [ f.level || 0, f.position, f.name ] }
+      return [ section("s-home-areas", tr(:areas), "view-boards", areas.map(&card)) ] if floors.empty?
 
       by_id = @areas.index_by(&:id)
-      groups = @areas.reject(&:floor?).group_by { |a| a.floor_area(by_id) }
+      groups = areas.reject(&:floor?).group_by { |a| a.floor_area(by_id) }
       list = floors.filter_map { |f| section("s-home-floor-#{f.id}", f.name, "view-boards", groups[f].map(&card)) if groups[f] }
-      list << section("s-home-areas", "Outras áreas", "view-boards", groups[nil].map(&card)) if groups[nil]
+      list << section("s-home-areas", tr(:other_areas), "view-boards", groups[nil].map(&card)) if groups[nil]
       list
     end
 
     def area_views
       groups = @points.group_by(&:effective_area_id)
-      views = @areas.filter_map { |a| area_view("a-#{a.id}", a.name, a.icon.presence || "view-boards", groups[a.id], area: a.id) if groups[a.id] }
-      views << area_view("a-none", tr(:no_area), "cube", groups[nil]) if groups[nil]
+      views = chosen_areas.filter_map { |a| area_view("a-#{a.id}", a.name, a.icon.presence || "view-boards", groups[a.id], area: a.id) if groups[a.id] }
+      views << area_view("a-none", tr(:no_area), "cube", groups[nil]) if groups[nil] && @only.nil?
       views
     end
+
+    private
+
+    def chosen_areas = @only ? @areas.select { |a| @only.include?(a.id.to_s) } : @areas
 
     def area_view(id, title, icon, points, area: nil)
       useful = points.reject { |p| technical?(p) }
@@ -121,10 +135,15 @@ module Dashboards
     def tr(key) = I18n.t("dashboards.gen.#{key}")
 
     def span(mobile, tablet, desktop) = { "mobile" => mobile, "tablet" => tablet, "desktop" => desktop }
-    def light?(p) = p.capability.in?(%w[onoff dimmer]) && (@lights_tag.include?(p.id) || p.name.match?(LIGHT) || p.device.name.match?(LIGHT))
-    def power?(p) = p.capability == "measure" && (p.device_class == "power" || p.unit == "W")
-    def technical?(p) = p.capability == "measure" && (TECHNICAL.include?(p.device_class) || TECHNICAL_UNITS.include?(p.unit))
-    def top_power(power) = power.first(8)
+    # Luz: a consulta do local (padrão: etiqueta `iluminacao`); o nome é a reserva (`light_names`).
+    def light?(p)
+      rule?(p, "light") || (@rules["light_names"] != false && p.capability.in?(%w[onoff dimmer]) && (p.name.match?(LIGHT) || p.device.name.match?(LIGHT)))
+    end
+
+    def power?(p) = rule?(p, "power")
+    def technical?(p) = rule?(p, "technical")
+    def top_power(power) = power.first(@rules["power_limit"].to_i.clamp(1, 8))
+    def rule?(p, key) = Array(@rules[key]).any? { |q| q.present? && @query.match?(p, q) }
 
     # Fora da tela do dispositivo, nome repetido ("Socket 1", "Potência") leva o dispositivo junto.
     def home_label(p) = @name_count[p.name] > 1 ? "#{p.device.name} · #{p.name}" : p.name

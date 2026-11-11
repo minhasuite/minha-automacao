@@ -39,7 +39,13 @@ module Points
       "not_id" => ->(_q, p, v) { list(v).exclude?(p.id) },
       "not_integration" => ->(_q, p, v) { list(v).exclude?(p.device&.driver) },
       # O liga/desliga das automações (AutomationPoints): true = só elas; false = sem elas (as luzes de verdade).
-      "automation" => ->(_q, p, v) { (p.device&.external_id == AutomationPoints::DEVICE_ID) == (v.to_s != "false") },
+      "automation" => ->(_q, p, v) { (AutomationPoints.automation?(p) || p.device&.external_id == AutomationPoints::DEVICE_ID) == (v.to_s != "false") },
+      # P2.1 (regras de arrumação como dado): o que se comanda (gravável e não só de leitura), capacidade fora da lista,
+      # unidade e risco do ponto.
+      "commandable" => ->(_q, p, v) { (p.writable && !Point::READ_ONLY.include?(p.capability)) == (v.to_s != "false") },
+      "not_capability" => ->(_q, p, v) { list(v).exclude?(p.capability) },
+      "unit" => ->(_q, p, v) { list(v).include?(p.unit.to_s) },
+      "risk" => ->(_q, p, v) { list(v).include?(p.risk) },
       # Automação que rodou nos últimos N minutos (o `last_triggered` do HA).
       "ran_min" => ->(q, p, v) { (t = q.ran_at(p)) && t > q.now - v.to_f.minutes },
       "exclude" => ->(_q, p, v) { list(v).none? { |n| "#{p.name} #{p.key} #{p.device&.name}".downcase.include?(n.downcase) } },
@@ -124,6 +130,17 @@ module Points
       end
       list = sort(list, q["sort"])
       q["limit"].present? ? list.first(q["limit"].to_i.clamp(1, MAX)) : list
+    end
+
+    # O ponto passa na consulta? (só os filtros: sem "o que existe", ordem nem corte; a arrumação das visões e o
+    # painel automático perguntam ponto a ponto.)
+    def match?(point, q, with_state: true)
+      self.class.parse(q).all? do |k, v|
+        next true if OPTIONS.include?(k) || (!with_state && k == "state")
+
+        f = FILTERS[k] or next true
+        f.call(self, point, v)
+      end
     end
 
     def sort(list, key)
