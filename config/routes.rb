@@ -213,6 +213,13 @@ Rails.application.routes.draw do
       delete "assistente/satelites/:id", to: "assist_settings#destroy_satellite"
       post "assistente/satelites/:id/testar", to: "assist_settings#test_satellite", as: :assist_satellite_test
       post "assistente/mcp", to: "assist_settings#create_mcp_token", as: :assist_mcp_tokens
+      # P3: intenções (frase → cena ou script) e respostas personalizadas da voz.
+      post "assistente/intencoes", to: "assist_settings#create_intent", as: :assist_intents
+      patch "assistente/intencoes/:id", to: "assist_settings#update_intent", as: :assist_intent
+      delete "assistente/intencoes/:id", to: "assist_settings#destroy_intent"
+      post "assistente/respostas", to: "assist_settings#create_response", as: :assist_responses
+      patch "assistente/respostas/:id", to: "assist_settings#update_response", as: :assist_response
+      delete "assistente/respostas/:id", to: "assist_settings#destroy_response"
       delete "assistente/mcp/:id", to: "assist_settings#revoke_mcp_token", as: :assist_mcp_token
       # Alexa Smart Home (F9): o que expor, nome falado, vínculos e cliente OAuth.
       resource :alexa, controller: "alexa", path: "alexa", only: %i[show update] do
@@ -280,6 +287,9 @@ Rails.application.routes.draw do
     get "configuracoes/saude", to: "health#show", as: :settings_health
     post "configuracoes/saude/ignorar", to: "health#ignore", as: :settings_health_ignore
     post "configuracoes/saude/reparar", to: "health#repair", as: :settings_health_repair
+    # P3: verificações personalizadas da Saúde (consulta/expressão + texto), só administradores.
+    resources :custom_health_checks, path: "configuracoes/saude/verificacoes", as: :settings_health_checks, except: :show,
+                                     path_names: { new: "nova", edit: "editar" }
     get "configuracoes/hardware", to: "hardware#show", as: :settings_hardware
     # resto (7.3): IP e Wi-Fi do host (NetworkManager pelo supervisor)
     post "configuracoes/hardware/rede", to: "hardware#network", as: :settings_hardware_network
@@ -454,6 +464,15 @@ Rails.application.routes.draw do
       post "sites/:site_id/dev/template", to: "dev_tools#template"
       post "sites/:site_id/dev/events", to: "dev_tools#fire_event"
       get "system/queue", to: "system_queue#show" # Fila e jobs (docs/fila.md), só o dono
+      # P3: Saúde (resultado e verificações personalizadas, só administradores), prévia de texto e voz personalizada.
+      get "health", to: "health#show"
+      post "health_checks/preview", to: "custom_health_checks#preview"
+      resources :custom_health_checks, path: "health_checks", except: %i[new edit]
+      post "sites/:site_id/message_preview", to: "message_previews#create"
+      resources :sites, only: [] do
+        resources :assist_custom_intents, path: "assist/intents", except: %i[new edit], shallow: true
+        resources :assist_custom_responses, path: "assist/responses", except: %i[new edit], shallow: true
+      end
 
       # Automação (F4).
       resources :sites, only: [] do

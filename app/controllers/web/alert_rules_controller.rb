@@ -7,7 +7,7 @@ module Web
     private
 
     def defaults = { point_id: params[:point_id], value: true, for_s: 300 }
-    def permitted = [ :name, :point_id, :operator, :value, :for_min, :severity, :repeat_min, :auto_resolve, :enabled,
+    def permitted = [ :name, :point_id, :operator, :value, :for_min, :severity, :repeat_min, :auto_resolve, :enabled, :message,
                       { steps: [ :wait_min, { channels: [] } ] } ]
   end
 end

@@ -167,7 +167,7 @@ RSpec.describe "Corte: saúde, backup externo e troca" do
       end
 
       results = Health.run(tenant)
-      expect(results.map { |r| r.check.key }).to eq(%w[integrations devices reliability queues backup disk runtime performance shadow cutover falsa])
+      expect(results.map { |r| r.check.key }).to eq(%w[integrations devices reliability queues backup disk runtime performance shadow custom cutover falsa])
       expect(results.find { |r| r.check.key == "integrations" }.items.first).to have_attributes(status: "error", detail: include("401"))
       expect(results.find { |r| r.check.key == "falsa" }.status).to eq("error")
 

@@ -1,0 +1,117 @@
+# P3 da proposta de personalização: verificações da Saúde, texto dos avisos e voz da casa.
+pt-BR:
+  activerecord:
+    errors:
+      messages:
+        invalid_template: 'tem texto com erro: %{error}'
+        invalid_query: 'tem consulta com erro: %{error}'
+        condition_missing: Informe a consulta, a expressão ou as duas.
+        target_missing: Escolha uma cena ou um script (só um).
+        critical_target: Cena ou script crítico não pode ser acionado por voz.
+        not_script: precisa ser um script deste local
+        invalid_sentence: 'com erro em "%{sentence}": %{error}'
+    attributes:
+      custom_health_check:
+        name: Nome
+        query: Consulta
+        expression: Expressão
+        message: Texto
+        severity: Gravidade
+        site: Local
+      assist_custom_intent:
+        name: Nome
+        sentences: Frases
+        response: Resposta
+        scene: Cena
+        point: Script
+        language: Idioma
+      assist_custom_response:
+        text: Texto
+        text_key: Resposta
+        language: Idioma
+      notify_rule:
+        message: Mensagem
+      alert_rule:
+        message: Texto do aviso
+  custom:
+    common:
+      site: Local
+      save: Salvar
+    preview:
+      hint_html: 'Aceita Liquid como o Texto do painel: <code>{{ trigger.point }}</code>, <code>{{ trigger.text }}</code>, <code>{{ points["sala.luz"].text }}</code>, <code>{{ "quality=unavailable" | points_where
+        | size }}</code>, <code>{{ "hour * 60" | calc }}</code>, <code>{{ now | date: "%H:%M" }}</code>.'
+      button: Ver prévia
+      title: Prévia
+      empty: (texto vazio)
+    notify:
+      message_ph: '{{ trigger.point }} ficou {{ trigger.text }} às {{ now | date: "%H:%M" }}'
+    alert:
+      message: Texto do aviso
+      message_ph: vazio = "Ponto está em X há N min"; aceita {{ trigger.minutes }} e {{ trigger.severity }}
+    health:
+      title: Verificações personalizadas
+      subtitle: Problemas da casa descritos por consulta de pontos e expressão, na Saúde e no aviso diário.
+      new: Nova verificação
+      empty: Nenhuma verificação personalizada
+      empty_hint: Descreva um problema da casa (por exemplo, pontos sem sinal com o rótulo bateria) e ele aparece na Saúde.
+      'off': desligada
+      query: Consulta de pontos
+      expression: Expressão
+      edit: Editar
+      name: Nome
+      name_ph: Sensores de bateria sem sinal
+      query_hint: 'Filtros separados por espaço: %{keys}. Sozinha, há problema quando ela acha algum ponto.'
+      expression_hint: 'A calculadora das automações: count_points("..."), pontos pela chave, hour, weekday. Verdadeira = problema. Com a consulta, count é quantos ela achou.'
+      severity: Gravidade
+      severities:
+        warn: Atenção (só na tela)
+        error: Erro (também aviso diário)
+      enabled: Ligada
+      message: Texto
+      message_ph: '{{ count }} sensor(es) sem sinal: {% for p in found %}{{ p.name }} {% endfor %}'
+      message_hint: 'Liquid: count, found (os pontos da consulta, com name, text, quality) e o mesmo contexto do Texto do painel. Vazio = os nomes dos pontos.'
+      count:
+        one: A consulta achou %{count} ponto.
+        other: A consulta achou %{count} pontos.
+      confirm_remove: Remover a verificação %{name}?
+      ok: Tudo certo
+      problem: A condição está verdadeira
+      found:
+        one: '%{count} ponto: %{names}'
+        other: '%{count} pontos: %{names}'
+      flash:
+        created: Verificação criada.
+        saved: Verificação salva.
+        removed: Verificação removida.
+    voice:
+      scenes: Cenas
+      scripts: Scripts
+      pitch: Frases e respostas desta casa. A frase aciona uma cena ou roda um script com o papel de quem fala; cena ou script crítico nunca por voz, e o local em sombra não comanda nada.
+      intents: Frases da casa
+      new_intent: Nova frase
+      'off': desligada
+      name: Nome
+      name_ph: Hora do filme
+      sentences: Frases (uma por linha)
+      sentences_ph: '(hora|modo) [do] filme
+
+        vamos ver {titulo}'
+      sentences_hint: 'Formato do HA: [opcional], (um|outro) e {slot}. Valem antes das intenções nativas.'
+      target: Aciona
+      target_hint: Só aparecem cenas e scripts que não são críticos.
+      response: Resposta
+      response_ph: 'vazio = "Feito: <nome>."; aceita {slot}'
+      enabled: Ligada
+      create: Criar
+      confirm_remove: Remover %{name}?
+      responses: Respostas da casa
+      responses_hint: Troque o que a voz responde numa intenção nativa, por idioma. {names}, {name} e as outras variáveis da resposta padrão continuam valendo.
+      all_intents: todas
+      new_response: Nova resposta
+      which: Resposta a trocar
+      text: Texto
+      text_ph: Pronto, {names} ligado.
+      any_language: Qualquer idioma
+      flash:
+        saved: Salvo.
+        removed: Removido.

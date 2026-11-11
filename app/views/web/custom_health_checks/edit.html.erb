@@ -1,0 +1,40 @@
+<%= render "web/shared/header", title: @check.new_record? ? t("custom.health.new") : @check.name_was.presence || t("custom.health.title"), subtitle: t("custom.health.subtitle"), back: settings_health_checks_path %>
+<%= render layout: "web/settings/frame", locals: { current: :health } do %>
+  <%= form_with model: @check, url: @check.new_record? ? settings_health_checks_path : settings_health_check_path(@check), scope: :custom_health_check,
+                class: "ss-card ss-card-pad grid gap-4 md:grid-cols-2 max-w-4xl" do |f| %>
+    <%= render "web/shared/errors", record: @check %>
+    <div><%= f.label :name, t("custom.health.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", maxlength: 80, required: true, placeholder: t("custom.health.name_ph") %></div>
+    <div><%= f.label :site_id, t("custom.common.site"), class: "ss-label" %><%= f.select :site_id, Site.order(:name).map { |s| [ s.name, s.id ] }, {}, class: "ss-input" %></div>
+    <div class="md:col-span-2"><%= f.label :query, t("custom.health.query"), class: "ss-label" %><%= f.text_field :query, class: "ss-input num", maxlength: 500, placeholder: "quality=unavailable tag=bateria" %>
+      <p class="text-xs text-muted mt-1"><%= t("custom.health.query_hint", keys: Points::Query::KEYS.join(", ")) %></p></div>
+    <div class="md:col-span-2"><%= f.label :expression, t("custom.health.expression"), class: "ss-label" %><%= f.text_field :expression, class: "ss-input num", maxlength: 500, placeholder: "count_points(\"quality=unavailable\") > 0" %>
+      <p class="text-xs text-muted mt-1"><%= t("custom.health.expression_hint") %></p></div>
+    <div><%= f.label :severity, t("custom.health.severity"), class: "ss-label" %><%= f.select :severity, CustomHealthCheck::SEVERITIES.map { |s| [ t("custom.health.severities.#{s}"), s ] }, {}, class: "ss-input" %></div>
+    <label class="ss-check self-end pb-2"><%= f.check_box :enabled %> <%= t("custom.health.enabled") %></label>
+    <div class="md:col-span-2"><%= f.label :message, t("custom.health.message"), class: "ss-label" %><%= f.text_area :message, rows: 3, class: "ss-input", maxlength: MessageTemplate::MAX, placeholder: t("custom.health.message_ph") %>
+      <p class="text-xs text-muted mt-1"><%= t("custom.health.message_hint") %></p></div>
+    <div class="md:col-span-2 grid gap-2" data-message-preview>
+      <div><button type="submit" name="preview" value="1" class="ss-btn ss-btn-outline ss-btn-sm" formnovalidate><%= icon("eye", "size-4") %><%= t("custom.preview.button") %></button></div>
+      <% if @preview %>
+        <% res, error = @preview %>
+        <% if error %>
+          <%= render(Ss::CalloutComponent.new(tone: :danger)) { tag.p(error) } %>
+        <% else %>
+          <% status = res[:problem] ? @check.severity : "ok" %>
+          <%= render Ss::CalloutComponent.new(tone: { "ok" => :success, "warn" => :warn, "error" => :danger }[status], title: Health.label(status)) do %>
+            <p><%= res[:detail] %></p>
+            <% if @check.query %><p class="text-xs text-muted"><%= t("custom.health.count", count: res[:count]) %></p><% end %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+    <div class="md:col-span-2 flex flex-wrap gap-2">
+      <%= f.submit t("custom.common.save"), class: "ss-btn ss-btn-primary", name: nil %>
+      <%= link_to t("automations.settings.cancel"), settings_health_checks_path, class: "ss-btn ss-btn-ghost" %>
+    </div>
+  <% end %>
+  <% if @check.persisted? %>
+    <%= button_to settings_health_check_path(@check), method: :delete, class: "ss-btn ss-btn-ghost text-danger mt-4",
+                  form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("custom.health.confirm_remove", name: @check.name_was) } } do %><%= icon("trash", "size-4") %><%= t("automations.common.delete") %><% end %>
+  <% end %>
+<% end %>
