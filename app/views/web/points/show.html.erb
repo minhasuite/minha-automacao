@@ -1,5 +1,7 @@
 <%= turbo_stream_from @point, channel: PointsChannel %>
-<%= render "web/shared/header", title: @point.name, subtitle: [ @point.capability_label, @device.name, @point.area&.name || @device.area&.name ].compact.join(" · "), back: device_path(@device) %>
+<%= render "web/shared/header", title: @point.name, subtitle: [ @point.capability_label, @device.name, @point.area&.name || @device.area&.name ].compact.join(" · "), back: device_path(@device) do %>
+  <% if can?(:manage) %><%= render "web/dashboards/add_to_link", type: "point", record: @point %><% end %>
+<% end %>
 
 <div class="grid gap-4 lg:grid-cols-3">
   <%# Na página do ponto o comando recarrega a página toda (gráfico e lista juntos). %>

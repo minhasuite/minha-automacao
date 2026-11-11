@@ -605,3 +605,93 @@ cômodos e "por aparelho", continua o painel automático de sempre).
 
 O app não muda: desenha o resolvido (visão automática chega já montada) e as
 telas novas são web lidas pelo `AppScreen`.
+## Agilidade do editor (11/2026, proposta de personalização P1.5 e ideias 1, 2, 4, 5, 7, 24 e 25)
+
+Tudo mexe só no **rascunho**; publicar continua explícito (e passa pela revisão).
+Controllers: `DashboardsController` (ops do rascunho), `DashboardWidgetsController`
+(JSON do widget, gaveta, copiar), `DashboardVersionsController` (desfazer/refazer,
+comparar), `DashboardReviewsController` (revisar e publicar), `DashboardAddsController`
+(adicionar ao painel) e `DashboardSchemasController`; o comum fica no concern
+`DashboardEditing` (`back=painel` = voltar à edição na própria tela).
+
+### JSON de um widget e JSON Schema (P1.5)
+
+- `GET/PATCH /paineis/:id/w/:widget_id/json`: o JSON só do widget (o id fica);
+  salvar troca o widget no rascunho (`Editor#replace_widget`) e valida o painel
+  inteiro pelo `Dashboards::Schema` (que já chama `Facts.errors`, `Style.errors`,
+  `Hero.errors`, `TileFeatures`, `Actions` e o `errors` do plugin). Ao lado, as
+  props do tipo (tocar insere a chave no cursor, controller `dw-json`).
+- `GET /paineis/schema.json`: JSON Schema 2020-12 gerado do registro
+  (`Dashboards::JsonSchema`): `$defs.widget` com `if type = X then widget_X`, e
+  cada `widget_X` com `required`, `bind`/`binds` e os `params` do `describe`;
+  listas fechadas (cores, agregações, telas, papéis, chaves de consulta, tipos de
+  visão) saem das constantes de quem valida. Plugin acrescenta props próprias em
+  `schema_props` (padrão `{}`); prop conhecida pelo nome em `JsonSchema.by_name`.
+  É descrição para pessoas e ferramentas: quem manda é o `Schema`.
+
+### Editar na própria tela (ideia 1)
+
+`/paineis/:id?editar=1` (técnico+, fora do quiosque; botão de cursor ao lado do
+lápis no topo do painel): o rascunho no layout ao vivo do editor (arrastar dentro
+e entre seções, alça de largura por tela) e o clique no card abre os ajustes na
+gaveta (`Ss::DrawerComponent`, frame `dw-drawer-frame`, `GET .../w/:wid/ajustes`
+com o mesmo `_widget_form` e as ferramentas do widget). Formulários com
+`back=painel` voltam para cá.
+
+### Adicionar ao painel (ideia 2)
+
+`GET/POST /paineis/adicionar?tipo=point|device|scene|automation&id=` (técnico+
+do local da coisa; link na página do ponto, do aparelho, na lista de cenas e no
+editor da automação/script publicada). O widget sai do `Dashboards::AddTo`:
+ponto = `Widgets.auto_widget` (capacidade, `describe auto:`) ou `tile`; aparelho
+= o widget do ponto (um) ou `group` (até 8 que existem); cena = `scene_bar` com
+ela; automação = o liga/desliga dela, script = o ponto que roda. Fonte nova =
+linha em `AddTo::SOURCES`. A pessoa escolhe painel · visão · seção e o widget
+entra no rascunho.
+
+### Copiar e colar (ideia 4)
+
+Área de transferência no servidor, por pessoa (`users.dashboard_prefs["clipboard"]`,
+`Dashboards::Clipboard`, até 64 KB, só vale na mesma instalação): `POST
+/paineis/:id/copiar` (`kind` widget/section, `target`). Ops do rascunho: `paste`
+(widget numa seção/pilha, seção numa visão, ids novos) e `paste_style` (só
+`style_if`, `color` e `icon` do widget copiado; os que ele não tem saem do alvo),
+e `duplicate` (cópia logo abaixo).
+
+### Desfazer, refazer e comparar (ideia 5)
+
+`dashboard_draft_steps` (`Dashboards::History`): toda gravação do rascunho pelo
+editor (`Dashboard#save_draft!`) guarda o de antes (`undo`, com o rótulo da op) e
+esvazia o `redo`; `POST /paineis/:id/desfazer|refazer`. `definition` nulo = "sem
+rascunho". Até `History::MAX` (40) passos; publicar zera. `GET
+/paineis/:id/comparar?a=&b=` (número da versão ou `rascunho`): `Dashboards::Diff`
+por visão, seção e widget (nova, saiu, mudou, mudou de lugar entre os irmãos que
+ficaram) com as chaves que mudaram lado a lado, e o "voltar" das versões.
+
+### Atalhos e Ctrl+K (ideia 7)
+
+No editor e na edição na tela (controller `dashboard-keys`): Ctrl+Z / Ctrl+Shift+Z
+(ou Ctrl+Y), e com um widget escolhido (clique/foco) Ctrl+C, Ctrl+V (na seção
+dele), Ctrl+D, Del (com confirmação), Enter (ajustes), Esc; "?" mostra a lista
+(`Ss::ShortcutsComponent`, com "g p" revisar, "g c" comparar, "g n" nova visão,
+"g e" editar na tela). As teclas enviam os formulários do próprio editor. Na
+paleta: o grupo "Painel X" no topo quando o editor está aberto
+(`@palette_groups`, lido pelo `web/shared/_palette`) e a fonte
+`Search::DashboardActionsSource` ("publicar Casa", "nova visão Casa", "voltar
+versão Casa", "desfazer Casa", "editar Casa na tela" e "duplicar <widget>", este
+como ação rápida POST no rascunho); precisa de uma palavra da ação, só o nome do
+painel continua na fonte de painéis.
+
+### Revisar e publicar: prévia e avisos (ideias 24 e 25)
+
+O "Publicar" do editor leva a `GET /paineis/:id/revisar` (`?view=`, `?tema=light|dark`):
+o rascunho em celular (390), tablet (768) e computador (1280) em iframes do
+próprio painel (`/paineis/:id?rascunho=1&embed=1&tema=`, layout `embed`: sem
+moldura, menu, paleta nem "Falar"; nada renderizado duas vezes), o número de
+mudanças (`Diff.count`) e os avisos do `Dashboards::Lint`, que **não bloqueiam**
+(a confirmação de publicar diz quantos são), cada um com "Corrigir" (editor na
+visão e no widget). O Lint olha pela chave, nunca pelo tipo: ponto citado em
+`bind`/`binds`/`point`/`points`/`*_point(s)` em qualquer nível (visible_if,
+style_if, gestos) que não existe, está desativado, é de aparelho removido ou
+desativado, ou sem leitura há `Lint::SILENT_DAYS` (3) dias; `query` que hoje não
+traz ponto; `area`/`scenes` que sumiram.

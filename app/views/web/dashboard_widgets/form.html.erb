@@ -1,0 +1,14 @@
+<%# Ideia 1: ajustes de um widget na gaveta da edição na própria tela (frame dw-drawer-frame). O formulário é o
+    mesmo do editor (op update_widget, back=painel: a resposta volta ao painel em modo editar). %>
+<% point_options = @points.group_by { |p| p.device.name }.sort.map { |dev, ps| [ dev, ps.map { |p| [ "#{p.name}#{t("dashboards.ed.hidden_suffix") if p.hidden}", p.id ] } ] } %>
+<% label = Dashboards::Diff.label(@widget, @names) %>
+<%= turbo_frame_tag "dw-drawer-frame", data: { dialog_title: label } do %>
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="ss-icon-tile is-accent is-sm"><%= icon(Dashboards::Widgets[@widget["type"]]&.icon || "cube", "") %></span>
+    <p class="min-w-0 flex-1 font-bold text-ink truncate"><%= label %> <span class="text-xs font-semibold text-muted"><%= Dashboards::Schema.labels.fetch(@widget["type"], @widget["type"]) %></span></p>
+    <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "widget", target: @widget["id"], view_id: @view_id, name: t("dashboards.ed.the_widget"),
+                                       clipboard: @clipboard, back: "painel", arrows: false %>
+  </div>
+  <%= render "web/dashboards/widget_form", dashboard: @dashboard, w: @widget, op: "update_widget", target: @widget["id"], view_id: @view_id,
+                                           point_options: point_options, areas: @areas, scenes: @scenes, back: "painel" %>
+<% end %>

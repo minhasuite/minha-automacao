@@ -1,0 +1,38 @@
+<%# P1.5: o JSON só deste widget (o id fica), validado pelo Dashboards::Schema no painel inteiro; ao lado, as
+    props do tipo tiradas do registro (Dashboards::JsonSchema): tocar insere a chave no cursor. %>
+<% label = Dashboards::Diff.label(@widget, @names) %>
+<%= render "web/shared/header", title: t("dashboards.wjson.title", name: label), subtitle: "#{@dashboard.name} · #{t("dashboards.wjson.subtitle")}", back: editor_path(view: @view_id, w: @widget["id"], anchor: @widget["id"]) %>
+<div class="grid gap-4 lg:grid-cols-3 items-start" data-controller="dw-json">
+  <%= form_with url: widget_json_dashboard_path(@dashboard, widget_id: @widget["id"]), method: :patch, class: "ss-card ss-card-pad grid gap-3 lg:col-span-2 min-w-0" do %>
+    <%= hidden_field_tag :back, params[:back], id: nil if params[:back].present? %>
+    <% if @errors.present? %>
+      <%= render Ss::CalloutComponent.new(tone: :danger, title: t("dashboards.json.not_saved")) do %>
+        <ul><% @errors.first(10).each do |e| %><li><%= e %></li><% end %></ul>
+      <% end %>
+    <% end %>
+    <label class="ss-label" for="widget_json"><%= t("dashboards.wjson.label", id: @widget["id"]) %></label>
+    <%= text_area_tag :widget_json, @text, id: "widget_json", rows: 22, spellcheck: false, class: "ss-input num text-xs leading-relaxed", data: { dw_json_target: "text" } %>
+    <div class="flex flex-wrap gap-2">
+      <%= submit_tag t("dashboards.wjson.submit"), class: "ss-btn ss-btn-primary" %>
+      <%= link_to t("dashboards.cancel"), editor_path(view: @view_id, w: @widget["id"], anchor: @widget["id"]), class: "ss-btn ss-btn-ghost" %>
+    </div>
+  <% end %>
+  <aside class="ss-card ss-card-pad" aria-labelledby="wj-props">
+    <h2 id="wj-props" class="flex items-center gap-2"><%= icon("code", "size-5 text-accent") %><%= t("dashboards.wjson.props", type: @schema&.dig("label") || @widget["type"]) %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("dashboards.wjson.props_hint") %></p>
+    <% common = Dashboards::JsonSchema.common.keys - %w[id type] %>
+    <% own = Array(@schema&.dig("props")) %>
+    <% [ [ t("dashboards.wjson.own"), own ], [ t("dashboards.wjson.common"), common ] ].each do |title, keys| %>
+      <% next if keys.empty? %>
+      <p class="ss-section mt-3"><%= title %></p>
+      <div class="flex flex-wrap gap-1.5 mt-1">
+        <% keys.each do |k| %>
+          <button type="button" class="ss-fchip num" data-action="dw-json#insert" data-dw-json-key-param="<%= k %>" title="<%= t("dashboards.wjson.insert", key: k) %>">
+            <%= k %><% if Array(@schema&.dig("required")).include?(k) %><span class="ss-badge ss-badge-warn"><%= t("dashboards.wjson.required") %></span><% end %>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+    <p class="text-sm mt-4"><%= link_to t("dashboards.wjson.schema_link"), dashboard_schema_path(format: :json), target: "_blank", rel: "noopener" %></p>
+  </aside>
+</div>

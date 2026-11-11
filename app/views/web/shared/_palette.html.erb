@@ -1,8 +1,9 @@
 <%# Busca global (Ctrl+K): Ss::CommandPaletteComponent. As páginas ficam na própria paleta (filtro
     na hora); o resto vem do servidor a cada letra (src: /busca?paleta=1, fontes do registro Search,
     já cortadas pelo papel, em grupos com título), com a ação rápida ("apagar sala") no lugar do link. As dicas
-    (search.tips) são sugestões fill: que preenchem a busca. -%>
+    (search.tips) são sugestões fill: que preenchem a busca. A tela pode pôr grupos próprios antes (@palette_groups:
+    as ações do editor de painel, ideia 7). -%>
 <% pages = Search::PagesSource.call(Search::Query.parse(""), Search::Context.for(current_user)) %>
 <%= render Ss::CommandPaletteComponent.new(id: "palette", src: search_path(paleta: 1), label: t("shared.palette.label"), placeholder: t("shared.palette.hint"),
-                                           groups: [ { title: t("search.kinds.page"), items: pages.map { |r| { label: r.title, subtitle: r.subtitle.presence, url: r.url, icon: icon(r.icon, "") } } },
+                                           groups: [ *Array(@palette_groups), { title: t("search.kinds.page"), items: pages.map { |r| { label: r.title, subtitle: r.subtitle.presence, url: r.url, icon: icon(r.icon, "") } } },
                                                      { title: t("search.try"), items: t("search.tips").map { |tip| { label: tip, fill: true, icon: icon("search", "") } } } ]) %>

@@ -1,0 +1,571 @@
+# Agilidade do editor de painel (P1.5 e ideias 1, 2, 4, 5, 7, 24 e 25 da proposta de personalização).
+pt-BR:
+  dashboards:
+    tools:
+      copy: Copiar %{name}
+      duplicate: Duplicar %{name}
+      paste: Colar %{name} aqui
+      paste_style: Colar o estilo de %{name}
+      json: JSON de %{name}
+    clip:
+      widget: widget
+      section: seção
+      holding: 'Na área de transferência: %{name}'
+      hint_widget: Cole numa seção (botão de colar dela ou Ctrl+V com um widget escolhido), em qualquer visão ou painel. "Colar estilo" leva só o estilo condicional, a cor e o ícone.
+      hint_section: Cole numa visão pelo botão de colar dela, aqui ou em outro painel.
+      copied_widget: Widget "%{name}" copiado.
+      copied_section: Seção "%{name}" copiada.
+      empty: 'Nada certo para colar: copie um widget ou uma seção antes.'
+      too_big: Grande demais para copiar.
+    history:
+      undo_step: 'Desfazer: %{step}'
+      redo_step: 'Refazer: %{step}'
+      undo_none: Nada para desfazer
+      redo_none: Nada para refazer
+      undo_done: Desfeito.
+      redo_done: Refeito.
+      undo_empty: Nada para desfazer.
+      redo_empty: Nada para refazer.
+      change: mudança
+      ops:
+        add_view: nova visão
+        update_view: mudar a visão
+        add_section: nova seção
+        update_section: mudar a seção
+        add_widget: novo widget
+        update_widget: mudar o widget
+        move: mover
+        place: arrastar
+        theme: aparência
+        resize: largura
+        remove: remover
+        duplicate: duplicar
+        paste: colar
+        paste_style: colar estilo
+        json: JSON do painel
+        widget_json: JSON do widget
+        discard: descartar rascunho
+        add_to: adicionar ao painel
+    wjson:
+      title: JSON de %{name}
+      subtitle: só este widget
+      label: Widget %{id} (o id fica o mesmo)
+      submit: Salvar no rascunho
+      props: Props de %{type}
+      props_hint: Toque para pôr a chave no texto. O painel inteiro é validado ao salvar.
+      own: Deste tipo
+      common: De qualquer widget
+      insert: Inserir %{key}
+      required: obrigatória
+      schema_link: Esquema completo (JSON Schema)
+      object: O widget precisa ser um objeto JSON ({ ... }).
+    json_schema:
+      title: Painel do Minha Automação
+      description: Formato do painel (gerado do registro de widgets). A validação de verdade é a do servidor.
+      span: Colunas (1 a 12) por tela
+      query: Consulta sobre os pontos do local (Points::Query)
+      visible_if: Condição para mostrar
+      style_if: 'Regra de estilo: a primeira que bate decide cor, ícone, rótulo, tom e selo'
+      hero: Topo da visão (Liquid no título e na linha de cima)
+      type: Tipo do widget
+      label: Nome mostrado no card
+      stale_after_min: Minutos sem leitura para o selo de dado velho (0 desliga)
+      bind: Id do ponto
+      binds: Ids dos pontos (até 8)
+      facts: Itens do cartão como consultas
+    lint:
+      missing_point: Aponta para um ponto que não existe mais (%{ref}).
+      device_removed: '%{name}: o aparelho %{device} foi removido da conta.'
+      device_disabled: '%{name}: o aparelho %{device} está desativado.'
+      point_disabled: '%{name} está desativado.'
+      silent: '%{name} está sem leitura há %{days} dias.'
+      empty_query: A consulta não traz nenhum ponto hoje.
+      bad_query: 'Consulta inválida: %{error}'
+      missing_area: A área escolhida não existe mais.
+      missing_scene: Uma das cenas não existe mais.
+      kinds:
+        missing_point: Ponto sumiu
+        device_removed: Aparelho removido
+        device_disabled: Aparelho desativado
+        point_disabled: Ponto desativado
+        silent: Sem sinal
+        empty_query: Consulta vazia
+        bad_query: Consulta inválida
+        missing_area: Área sumiu
+        missing_scene: Cena sumiu
+    cmp:
+      title: Comparar versões
+      short: Comparar
+      draft: Rascunho
+      version: Versão %{n}
+      left: Antes
+      right: Depois
+      submit: Comparar
+      nothing: Ainda não há o que comparar
+      nothing_hint: Publique uma versão ou mexa no rascunho para comparar.
+      same: '%{a} e %{b} são iguais.'
+      status:
+        added: nova
+        removed: saiu
+        changed: mudou
+        moved: mudou de lugar
+        same: igual
+      view_prop: 'Visão: %{key}'
+      section: Seção %{name}
+      where: '%{section}, posição %{n}'
+      absent: não existe aqui
+      empty: (vazio)
+    review:
+      title: Revisar e publicar
+      publish_btn: Revisar e publicar
+      changes:
+        zero: nada mudou
+        one: 1 mudança
+        other: '%{count} mudanças'
+      warnings_title:
+        zero: Nenhum aviso
+        one: 1 aviso
+        other: '%{count} avisos'
+      warnings_hint: Os avisos não impedem publicar; corrija o que quiser antes.
+      no_warnings: Todos os pontos, consultas e áreas do rascunho estão em ordem.
+      fix: Corrigir
+      preview_title: Prévia
+      theme: Tema da prévia
+      themes:
+        light: Claro
+        dark: Escuro
+      frame: Prévia no %{screen}
+      confirm_warnings:
+        zero: Publicar o rascunho?
+        one: Há 1 aviso. Publicar mesmo assim?
+        other: Há %{count} avisos. Publicar mesmo assim?
+    here:
+      open: Editar na tela
+      hint: Arrastar, mudar a largura e ajustar os cards no próprio painel
+      subtitle: editando o rascunho na tela
+      full_editor: Editor completo
+      drawer_title: Ajustes do widget
+    add_to:
+      link: Adicionar ao painel
+      title: Adicionar ao painel
+      becomes: Entra como %{type}
+      where: Painel, visão e seção
+      draft_note: Entra no rascunho do painel; publique no editor para valer.
+      submit: Adicionar
+      added: Adicionado ao rascunho de %{name}. Publique para valer.
+      no_place: Nenhum painel com seção
+      no_place_hint: Crie uma seção no painel antes.
+      open_editor: Abrir o editor
+    keys:
+      title: Atalhos do editor de painel
+      group_edit: No editor (com um widget escolhido)
+      group_go: Ir para
+      undo: Desfazer
+      redo: Refazer
+      copy: Copiar o widget
+      paste: Colar na seção do widget
+      duplicate: Duplicar o widget
+      remove: Remover o widget
+      edit: Abrir os ajustes do widget
+      unpick: Soltar o widget escolhido
+      new_view: Nova visão
+      palette: Ações do painel na busca
+      palette_group: Painel %{name}
+      remove_confirm: Remover o widget escolhido do rascunho?
+  search:
+    kinds:
+      dashboard_action: Ação de painel
+    dashboard_actions:
+      publish: Publicar painel %{name}
+      publish_words: publicar revisar publicacao
+      new_view: Nova visão em %{name}
+      new_view_words: nova visao criar
+      revert: Voltar versão de %{name}
+      revert_words: voltar versao comparar versoes historico
+      undo: Desfazer no painel %{name}
+      undo_words: desfazer
+      edit_here: Editar %{name} na tela
+      edit_here_words: editar tela arrumar
+      duplicate: Duplicar %{name}
+      duplicate_word: duplicar
+      run: Fazer
+en:
+  dashboards:
+    tools:
+      copy: Copy %{name}
+      duplicate: Duplicate %{name}
+      paste: Paste %{name} here
+      paste_style: Paste the style of %{name}
+      json: JSON of %{name}
+    clip:
+      widget: widget
+      section: section
+      holding: 'On the clipboard: %{name}'
+      hint_widget: Paste into a section (its paste button, or Ctrl+V with a widget picked), in any view or dashboard. "Paste style" takes only the conditional style, color and icon.
+      hint_section: Paste into a view with its paste button, here or in another dashboard.
+      copied_widget: Widget "%{name}" copied.
+      copied_section: Section "%{name}" copied.
+      empty: 'Nothing suitable to paste: copy a widget or a section first.'
+      too_big: Too big to copy.
+    history:
+      undo_step: 'Undo: %{step}'
+      redo_step: 'Redo: %{step}'
+      undo_none: Nothing to undo
+      redo_none: Nothing to redo
+      undo_done: Undone.
+      redo_done: Redone.
+      undo_empty: Nothing to undo.
+      redo_empty: Nothing to redo.
+      change: change
+      ops:
+        add_view: new view
+        update_view: edit view
+        add_section: new section
+        update_section: edit section
+        add_widget: new widget
+        update_widget: edit widget
+        move: move
+        place: drag
+        theme: appearance
+        resize: width
+        remove: remove
+        duplicate: duplicate
+        paste: paste
+        paste_style: paste style
+        json: dashboard JSON
+        widget_json: widget JSON
+        discard: discard draft
+        add_to: add to dashboard
+    wjson:
+      title: JSON of %{name}
+      subtitle: this widget only
+      label: Widget %{id} (the id stays)
+      submit: Save to draft
+      props: Props of %{type}
+      props_hint: Tap to put the key in the text. The whole dashboard is validated on save.
+      own: This type
+      common: Any widget
+      insert: Insert %{key}
+      required: required
+      schema_link: Full schema (JSON Schema)
+      object: The widget must be a JSON object ({ ... }).
+    json_schema:
+      title: Minha Automação dashboard
+      description: Dashboard format (generated from the widget registry). The real validation is the server's.
+      span: Columns (1 to 12) per screen
+      query: Query over the site's points (Points::Query)
+      visible_if: Condition to show
+      style_if: 'Style rule: the first match sets color, icon, label, tone and badge'
+      hero: View header (Liquid in the title and the line above)
+      type: Widget type
+      label: Name shown on the card
+      stale_after_min: Minutes without a reading for the stale badge (0 turns off)
+      bind: Point id
+      binds: Point ids (up to 8)
+      facts: Card items as queries
+    lint:
+      missing_point: Points to a point that no longer exists (%{ref}).
+      device_removed: '%{name}: device %{device} was removed from the account.'
+      device_disabled: '%{name}: device %{device} is disabled.'
+      point_disabled: '%{name} is disabled.'
+      silent: '%{name} has had no reading for %{days} days.'
+      empty_query: The query returns no points today.
+      bad_query: 'Invalid query: %{error}'
+      missing_area: The chosen area no longer exists.
+      missing_scene: One of the scenes no longer exists.
+      kinds:
+        missing_point: Point gone
+        device_removed: Device removed
+        device_disabled: Device disabled
+        point_disabled: Point disabled
+        silent: No signal
+        empty_query: Empty query
+        bad_query: Invalid query
+        missing_area: Area gone
+        missing_scene: Scene gone
+    cmp:
+      title: Compare versions
+      short: Compare
+      draft: Draft
+      version: Version %{n}
+      left: Before
+      right: After
+      submit: Compare
+      nothing: Nothing to compare yet
+      nothing_hint: Publish a version or change the draft to compare.
+      same: '%{a} and %{b} are the same.'
+      status:
+        added: new
+        removed: removed
+        changed: changed
+        moved: moved
+        same: same
+      view_prop: 'View: %{key}'
+      section: Section %{name}
+      where: '%{section}, position %{n}'
+      absent: not here
+      empty: (empty)
+    review:
+      title: Review and publish
+      publish_btn: Review and publish
+      changes:
+        zero: nothing changed
+        one: 1 change
+        other: '%{count} changes'
+      warnings_title:
+        zero: No warnings
+        one: 1 warning
+        other: '%{count} warnings'
+      warnings_hint: Warnings do not block publishing; fix what you want first.
+      no_warnings: All points, queries and areas in the draft are fine.
+      fix: Fix
+      preview_title: Preview
+      theme: Preview theme
+      themes:
+        light: Light
+        dark: Dark
+      frame: Preview on %{screen}
+      confirm_warnings:
+        zero: Publish the draft?
+        one: There is 1 warning. Publish anyway?
+        other: There are %{count} warnings. Publish anyway?
+    here:
+      open: Edit on screen
+      hint: Drag, resize and adjust cards right on the dashboard
+      subtitle: editing the draft on screen
+      full_editor: Full editor
+      drawer_title: Widget settings
+    add_to:
+      link: Add to dashboard
+      title: Add to dashboard
+      becomes: Goes in as %{type}
+      where: Dashboard, view and section
+      draft_note: It goes into the dashboard draft; publish it in the editor.
+      submit: Add
+      added: Added to the draft of %{name}. Publish to apply.
+      no_place: No dashboard with a section
+      no_place_hint: Create a section in the dashboard first.
+      open_editor: Open the editor
+    keys:
+      title: Dashboard editor shortcuts
+      group_edit: In the editor (with a widget picked)
+      group_go: Go to
+      undo: Undo
+      redo: Redo
+      copy: Copy the widget
+      paste: Paste into the widget's section
+      duplicate: Duplicate the widget
+      remove: Remove the widget
+      edit: Open the widget settings
+      unpick: Drop the picked widget
+      new_view: New view
+      palette: Dashboard actions in search
+      palette_group: Dashboard %{name}
+      remove_confirm: Remove the picked widget from the draft?
+  search:
+    kinds:
+      dashboard_action: Dashboard action
+    dashboard_actions:
+      publish: Publish dashboard %{name}
+      publish_words: publish review
+      new_view: New view in %{name}
+      new_view_words: new view create
+      revert: Revert version of %{name}
+      revert_words: revert version compare versions history
+      undo: Undo in dashboard %{name}
+      undo_words: undo
+      edit_here: Edit %{name} on screen
+      edit_here_words: edit screen arrange
+      duplicate: Duplicate %{name}
+      duplicate_word: duplicate
+      run: Do it
+es:
+  dashboards:
+    tools:
+      copy: Copiar %{name}
+      duplicate: Duplicar %{name}
+      paste: Pegar %{name} aquí
+      paste_style: Pegar el estilo de %{name}
+      json: JSON de %{name}
+    clip:
+      widget: widget
+      section: sección
+      holding: 'En el portapapeles: %{name}'
+      hint_widget: Pégalo en una sección (su botón de pegar, o Ctrl+V con un widget elegido), en cualquier vista o panel. "Pegar estilo" lleva solo el estilo condicional, el color y el ícono.
+      hint_section: Pégala en una vista con su botón de pegar, aquí o en otro panel.
+      copied_widget: Widget "%{name}" copiado.
+      copied_section: Sección "%{name}" copiada.
+      empty: 'Nada adecuado para pegar: copia antes un widget o una sección.'
+      too_big: Demasiado grande para copiar.
+    history:
+      undo_step: 'Deshacer: %{step}'
+      redo_step: 'Rehacer: %{step}'
+      undo_none: Nada para deshacer
+      redo_none: Nada para rehacer
+      undo_done: Deshecho.
+      redo_done: Rehecho.
+      undo_empty: Nada para deshacer.
+      redo_empty: Nada para rehacer.
+      change: cambio
+      ops:
+        add_view: nueva vista
+        update_view: cambiar la vista
+        add_section: nueva sección
+        update_section: cambiar la sección
+        add_widget: nuevo widget
+        update_widget: cambiar el widget
+        move: mover
+        place: arrastrar
+        theme: apariencia
+        resize: ancho
+        remove: quitar
+        duplicate: duplicar
+        paste: pegar
+        paste_style: pegar estilo
+        json: JSON del panel
+        widget_json: JSON del widget
+        discard: descartar borrador
+        add_to: agregar al panel
+    wjson:
+      title: JSON de %{name}
+      subtitle: solo este widget
+      label: Widget %{id} (el id se mantiene)
+      submit: Guardar en el borrador
+      props: Props de %{type}
+      props_hint: Toca para poner la clave en el texto. Todo el panel se valida al guardar.
+      own: De este tipo
+      common: De cualquier widget
+      insert: Insertar %{key}
+      required: obligatoria
+      schema_link: Esquema completo (JSON Schema)
+      object: El widget debe ser un objeto JSON ({ ... }).
+    json_schema:
+      title: Panel de Minha Automação
+      description: Formato del panel (generado del registro de widgets). La validación de verdad es la del servidor.
+      span: Columnas (1 a 12) por pantalla
+      query: Consulta sobre los puntos del lugar (Points::Query)
+      visible_if: Condición para mostrar
+      style_if: 'Regla de estilo: la primera que coincide decide color, ícono, etiqueta, tono y sello'
+      hero: Encabezado de la vista (Liquid en el título y la línea de arriba)
+      type: Tipo de widget
+      label: Nombre mostrado en la tarjeta
+      stale_after_min: Minutos sin lectura para el sello de dato viejo (0 lo apaga)
+      bind: Id del punto
+      binds: Ids de los puntos (hasta 8)
+      facts: Ítems de la tarjeta como consultas
+    lint:
+      missing_point: Apunta a un punto que ya no existe (%{ref}).
+      device_removed: '%{name}: el aparato %{device} fue quitado de la cuenta.'
+      device_disabled: '%{name}: el aparato %{device} está desactivado.'
+      point_disabled: '%{name} está desactivado.'
+      silent: '%{name} lleva %{days} días sin lectura.'
+      empty_query: La consulta no trae ningún punto hoy.
+      bad_query: 'Consulta inválida: %{error}'
+      missing_area: El área elegida ya no existe.
+      missing_scene: Una de las escenas ya no existe.
+      kinds:
+        missing_point: Punto perdido
+        device_removed: Aparato quitado
+        device_disabled: Aparato desactivado
+        point_disabled: Punto desactivado
+        silent: Sin señal
+        empty_query: Consulta vacía
+        bad_query: Consulta inválida
+        missing_area: Área perdida
+        missing_scene: Escena perdida
+    cmp:
+      title: Comparar versiones
+      short: Comparar
+      draft: Borrador
+      version: Versión %{n}
+      left: Antes
+      right: Después
+      submit: Comparar
+      nothing: Todavía no hay qué comparar
+      nothing_hint: Publica una versión o cambia el borrador para comparar.
+      same: '%{a} y %{b} son iguales.'
+      status:
+        added: nuevo
+        removed: salió
+        changed: cambió
+        moved: cambió de lugar
+        same: igual
+      view_prop: 'Vista: %{key}'
+      section: Sección %{name}
+      where: '%{section}, posición %{n}'
+      absent: no existe aquí
+      empty: (vacío)
+    review:
+      title: Revisar y publicar
+      publish_btn: Revisar y publicar
+      changes:
+        zero: nada cambió
+        one: 1 cambio
+        other: '%{count} cambios'
+      warnings_title:
+        zero: Ningún aviso
+        one: 1 aviso
+        other: '%{count} avisos'
+      warnings_hint: Los avisos no impiden publicar; corrige lo que quieras antes.
+      no_warnings: Todos los puntos, consultas y áreas del borrador están en orden.
+      fix: Corregir
+      preview_title: Vista previa
+      theme: Tema de la vista previa
+      themes:
+        light: Claro
+        dark: Oscuro
+      frame: Vista previa en %{screen}
+      confirm_warnings:
+        zero: ¿Publicar el borrador?
+        one: Hay 1 aviso. ¿Publicar igual?
+        other: Hay %{count} avisos. ¿Publicar igual?
+    here:
+      open: Editar en pantalla
+      hint: Arrastrar, cambiar el ancho y ajustar las tarjetas en el propio panel
+      subtitle: editando el borrador en pantalla
+      full_editor: Editor completo
+      drawer_title: Ajustes del widget
+    add_to:
+      link: Agregar al panel
+      title: Agregar al panel
+      becomes: Entra como %{type}
+      where: Panel, vista y sección
+      draft_note: Entra en el borrador del panel; publícalo en el editor.
+      submit: Agregar
+      added: Agregado al borrador de %{name}. Publica para que valga.
+      no_place: Ningún panel con sección
+      no_place_hint: Crea antes una sección en el panel.
+      open_editor: Abrir el editor
+    keys:
+      title: Atajos del editor de panel
+      group_edit: En el editor (con un widget elegido)
+      group_go: Ir a
+      undo: Deshacer
+      redo: Rehacer
+      copy: Copiar el widget
+      paste: Pegar en la sección del widget
+      duplicate: Duplicar el widget
+      remove: Quitar el widget
+      edit: Abrir los ajustes del widget
+      unpick: Soltar el widget elegido
+      new_view: Nueva vista
+      palette: Acciones del panel en la búsqueda
+      palette_group: Panel %{name}
+      remove_confirm: ¿Quitar el widget elegido del borrador?
+  search:
+    kinds:
+      dashboard_action: Acción de panel
+    dashboard_actions:
+      publish: Publicar panel %{name}
+      publish_words: publicar revisar
+      new_view: Nueva vista en %{name}
+      new_view_words: nueva vista crear
+      revert: Volver versión de %{name}
+      revert_words: volver version comparar versiones historial
+      undo: Deshacer en el panel %{name}
+      undo_words: deshacer
+      edit_here: Editar %{name} en pantalla
+      edit_here_words: editar pantalla ordenar
+      duplicate: Duplicar %{name}
+      duplicate_word: duplicar
+      run: Hacer

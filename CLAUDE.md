@@ -515,6 +515,15 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   arrumação); visão com `auto` se refaz a cada leitura até congelar (`Dashboards::AutoViews`);
   montagem por frase só pela IA da instalação, no rascunho (`Dashboards::Compose`); assistente
   = `Dashboards::Wizard`. Ver `docs/dashboards.md` ("Arrumação como dado").
+- **Agilidade do editor (aberto/fechado)**: tudo vai para o **rascunho** por
+  `Dashboard#save_draft!` (pilha de desfazer `dashboard_draft_steps`,
+  `Dashboards::History`; publicar zera) e publicar passa pela revisão
+  (`/paineis/:id/revisar`: prévia em iframes `?embed=1` + avisos do
+  `Dashboards::Lint`, que não bloqueiam e olham pela chave do JSON). JSON Schema =
+  `Dashboards::JsonSchema` do registro (prop própria do plugin em `schema_props`);
+  "Adicionar ao painel" = linha em `Dashboards::AddTo::SOURCES`; ação de painel
+  no Ctrl+K = `Search::DashboardActionsSource`; área de transferência em
+  `users.dashboard_prefs["clipboard"]`. Ver `docs/dashboards.md` ("Agilidade do editor").
 - **Lote 5 (aberto/fechado)**: serviço do HA novo no importador = linha em
   `HaImport::SERVICES` (método) ou `HELPER_COMMANDS`; o `case` do
   `HaImport#trigger`/`#condition` traduz a sintaxe do YAML do HA, não tipos

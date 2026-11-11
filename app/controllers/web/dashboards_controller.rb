@@ -4,7 +4,10 @@ module Web
   # técnico ou dono. O editor mexe só no rascunho; a tela mostra a versão
   # publicada (ou o rascunho, em `?rascunho=1`, para quem edita).
   class DashboardsController < ApplicationController
+    include DashboardEditing
+
     UploadError = Class.new(StandardError)
+    ClipboardEmpty = Class.new(StandardError)
     UPLOAD_TYPES = %w[image/png image/jpeg image/webp].freeze
 
     def index
@@ -15,13 +18,21 @@ module Web
 
     def show
       load_dashboard(:view)
+      return render_embed if params[:embed].present? && can?(:manage)
+
       load_kiosk
-      preview = params[:rascunho].present? && can?(:manage)
+      # Ideia 1: modo editar na própria tela (técnico+): o rascunho com arrastar, largura e ajustes na gaveta.
+      @edit_here = params[:editar].present? && can?(:manage) && !kiosk
+      preview = (params[:rascunho].present? || @edit_here) && can?(:manage)
       @resolved = preview ? Dashboards::Resolver.new(@dashboard, role: @site_role, definition: @dashboard.working_draft).call : Dashboards::Resolver.cached(@dashboard, role: @site_role).deep_dup
       Dashboards::Hero.apply!(@resolved, site: @site, user: current_user, home: false)
       @preview = preview
       @view = pick_view(@resolved)
       @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role) }
+      return unless @edit_here
+
+      @history = Dashboards::History.state(@dashboard)
+      render :edit_here
     end
 
     # Um widget (Turbo Frame): o tempo real e a resposta de um comando recarregam só ele.
@@ -63,9 +74,10 @@ module Web
     def edit
       load_dashboard(:manage)
       @draft = @dashboard.working_draft
-      @points = @site.points.includes(:device).order(:name).to_a
-      @areas = @site.areas.order(:position, :name).to_a
+      load_form_options
       @editing = params[:w]
+      @clipboard = Dashboards::Clipboard.read(current_user)
+      @history = Dashboards::History.state(@dashboard)
       @live = Dashboards::Resolver.new(@dashboard, role: @site_role, definition: @draft).call # o layout ao vivo
     end
 
@@ -100,7 +112,9 @@ module Web
     rescue KeyError
       return head(:not_found) if request.format.json?
 
-      redirect_to edit_dashboard_path(@dashboard), alert: t("dashboards.flash.gone")
+      redirect_to editor_path(view: nil), alert: t("dashboards.flash.gone")
+    rescue ClipboardEmpty
+      redirect_to editor_path, alert: t("dashboards.clip.empty")
     rescue UploadError
       redirect_to edit_dashboard_path(@dashboard, view: params[:view_id]), alert: t("dashboards.flash.bad_image")
     end
@@ -113,8 +127,8 @@ module Web
 
     def discard
       load_dashboard(:manage)
-      @dashboard.update!(draft: nil)
-      redirect_to edit_dashboard_path(@dashboard), notice: t("dashboards.flash.discarded")
+      store_draft(nil, "discard")
+      redirect_to editor_path, notice: t("dashboards.flash.discarded")
     end
 
     def revert
@@ -135,7 +149,7 @@ module Web
       @errors = Dashboards::Schema.errors(parsed)
       return render(:json, status: :unprocessable_content) if @errors.any?
 
-      @dashboard.update!(draft: parsed)
+      store_draft(parsed, "json")
       redirect_to edit_dashboard_path(@dashboard), notice: t("dashboards.flash.json_saved")
     rescue JSON::ParserError => e
       @errors = [ t("dashboards.flash.bad_json", error: e.message.truncate(160)) ]
@@ -177,13 +191,6 @@ module Web
       node[:image] = rails_blob_path(blob, only_path: true)
     end
 
-    def load_dashboard(action)
-      @dashboard = Dashboard.find(params[:id])
-      @site = @dashboard.site
-      authorize_site!(@site, action)
-      raise ActiveRecord::RecordNotFound unless @dashboard.visible_to?(@site_role)
-    end
-
     def pick_view(resolved)
       Dashboards.pick_view(resolved, params[:view])
     end
@@ -212,9 +219,27 @@ module Web
       when "theme" then editor.set_theme(t, theme_param)
       when "resize" then editor.resize(params[:kind], t, params[:screen].to_s, params[:cols])
       when "remove" then editor.remove(params[:kind], t)
+      # Ideia 7 (atalho, Ctrl+K) e ideia 4 (colar; a área de transferência é da pessoa).
+      when "duplicate" then focus[:w] = editor.duplicate(params[:kind].presence_in(%w[widget section]) || "widget", t)
+      when "paste" then focus[:w] = paste(editor, t)
+      when "paste_style" then editor.paste_style(t, clip!("widget")["item"])
       else raise KeyError, "op"
       end
       focus
+    end
+
+    # Colar o que está na área de transferência: widget numa seção/pilha, seção numa visão.
+    def paste(editor, target)
+      clip = clip!
+      id = editor.paste(clip["kind"], target, clip["item"])
+      id if clip["kind"] == "widget"
+    end
+
+    def clip!(kind = nil)
+      clip = Dashboards::Clipboard.read(current_user)
+      raise ClipboardEmpty unless clip && (kind.nil? || clip["kind"] == kind)
+
+      clip
     end
 
     def save_draft(definition, focus)
@@ -222,14 +247,24 @@ module Web
       if request.format.json? # arrastar e soltar do editor (fetch)
         return render(json: { errors: errors }, status: :unprocessable_content) if errors.any?
 
-        @dashboard.update!(draft: definition)
+        store_draft(definition, params[:op])
         return head(:no_content)
       end
-      return redirect_to(edit_dashboard_path(@dashboard, view: focus[:view], w: focus[:w]), alert: errors.first(3).to_sentence) if errors.any?
+      return redirect_to(editor_path(view: focus[:view], w: focus[:w]), alert: errors.first(3).to_sentence) if errors.any?
 
-      @dashboard.update!(draft: definition)
-      redirect_to edit_dashboard_path(@dashboard, view: focus[:view].presence || params[:view_id], w: focus[:w], anchor: focus[:w]),
-                  notice: t("dashboards.flash.draft_saved")
+      store_draft(definition, params[:op])
+      redirect_to editor_path(view: focus[:view].presence || params[:view_id], w: focus[:w], anchor: focus[:w]), notice: t("dashboards.flash.draft_saved")
+    end
+
+    # Ideia 24: o painel dentro da prévia (iframe da revisão), sem moldura, no tema pedido.
+    def render_embed
+      @resolved = Dashboards::Resolver.new(@dashboard, role: @site_role, definition: @dashboard.working_draft).call
+      Dashboards::Hero.apply!(@resolved, site: @site, user: current_user, home: false)
+      @preview = true
+      @embed = true
+      @view = pick_view(@resolved)
+      @dashboards = []
+      render :show, layout: "embed"
     end
 
     # Formulário do widget → JSON (só o que vale para o tipo; vazio some).

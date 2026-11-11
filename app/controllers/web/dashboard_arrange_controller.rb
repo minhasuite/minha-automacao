@@ -15,7 +15,7 @@ module Web
       return redirect_to(edit_dashboard_path(@dashboard, view: @view["id"]), alert: t("arrange.flash.auto_view")) if Dashboards::AutoViews.auto?(@view)
 
       after = arranged(@dashboard.working_draft, @view["id"])
-      @diff = Dashboards::Diff.call(@dashboard.working_draft, after, names: names, only: [ @view["id"] ])
+      @diff = Dashboards::ArrangeDiff.call(@dashboard.working_draft, after, names: names, only: [ @view["id"] ])
       @same = @diff.all? { _1.status == :same }
     end
 
@@ -53,7 +53,7 @@ module Web
     end
 
     def changes
-      @diff = Dashboards::Diff.call(@dashboard.published, @dashboard.working_draft, names: names)
+      @diff = Dashboards::ArrangeDiff.call(@dashboard.published, @dashboard.working_draft, names: names)
       @focus = params[:view]
       @same = @diff.all? { _1.status == :same }
     end

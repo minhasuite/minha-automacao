@@ -7,6 +7,7 @@
 <% status = [ (@automation.published? ? t("automations.edit.version_published", version: @automation.version) : t("automations.edit.never_published")), (@automation.enabled ? t("automations.edit.on") : t("automations.edit.off") unless script), (t("automations.edit.draft_changes") if @automation.draft?) ].compact %>
 <%= render "web/shared/header", title: @automation.name, subtitle: "#{@site.name} · #{noun} · #{status.join(' · ')}", back: (script ? site_scripts_path(@site) : site_automations_path(@site)) do %>
   <%= link_to simulate_automation_path(@automation), class: "ss-btn ss-btn-outline" do %><%= icon("eye", "size-4") %><%= t("automations.edit.simulate") %><% end %>
+  <% if @automation.published? %><%= render "web/dashboards/add_to_link", type: "automation", record: @automation %><% end %>
   <% if @automation.published? %>
     <% if script && @automation.fields.any? %>
       <%= link_to run_automation_path(@automation), class: "ss-btn ss-btn-outline" do %><%= icon("play", "size-4") %><%= t("automations.edit.run") %><% end %>

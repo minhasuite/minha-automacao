@@ -103,6 +103,10 @@ module Dashboards
           Rails.application.routes.url_helpers.widget_points_dashboard_path(r.dashboard, widget_id: w["id"], item: key.presence)
         end
 
+        # P1.5: esquema (JSON Schema) das props próprias do tipo, além do que sai do `describe` pelo nome
+        # (Dashboards::JsonSchema). Ex.: { "facts" => { "type" => "array" } }.
+        def schema_props = {}
+
         def partial = "web/dashboards/widgets/#{type}"
         def form = nil
       end

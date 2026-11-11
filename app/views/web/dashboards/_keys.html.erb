@@ -1,0 +1,28 @@
+<%# locals: (dashboard:, view_id:, back: nil) -%>
+<%# Ideia 7: atalhos de teclado do editor (dashboard-keys) e a lista deles no "?" (Ss::ShortcutsComponent da gem).
+    O widget escolhido é o último clicado/focado (lista do editor ou layout ao vivo); as ações são os mesmos
+    formulários do editor (rascunho e copiar), nada só de JS. %>
+<% back_field = back ? hidden_field_tag(:back, back, id: nil) : "".html_safe %>
+<div data-controller="dashboard-keys" hidden
+     data-action="keydown@window->dashboard-keys#key click@window->dashboard-keys#pick focusin@window->dashboard-keys#pick"
+     data-dashboard-keys-remove-value="<%= t("dashboards.keys.remove_confirm") %>" data-dashboard-keys-remove-button-value="<%= t("shared.confirm.remove") %>">
+  <%= form_with url: draft_dashboard_path(dashboard), method: :patch, data: { dashboard_keys_target: "form" } do %>
+    <%= hidden_field_tag :op, "", id: nil %><%= hidden_field_tag :kind, "widget", id: nil %><%= hidden_field_tag :target, "", id: nil %><%= hidden_field_tag :view_id, view_id, id: nil %><%= back_field %>
+  <% end %>
+  <%= form_with url: copy_dashboard_path(dashboard), data: { dashboard_keys_target: "copy" } do %>
+    <%= hidden_field_tag :kind, "widget", id: nil %><%= hidden_field_tag :target, "", id: nil %><%= hidden_field_tag :view_id, view_id, id: nil %><%= back_field %>
+  <% end %>
+</div>
+<%= render Ss::ShortcutsComponent.new(title: t("dashboards.keys.title"), groups: [
+      { title: t("dashboards.keys.group_edit"), items: [
+        { keys: "Ctrl Z", label: t("dashboards.keys.undo") }, { keys: "Ctrl Shift Z", label: t("dashboards.keys.redo") },
+        { keys: "Ctrl C", label: t("dashboards.keys.copy") }, { keys: "Ctrl V", label: t("dashboards.keys.paste") },
+        { keys: "Ctrl D", label: t("dashboards.keys.duplicate") }, { keys: "Del", label: t("dashboards.keys.remove") },
+        { keys: "Enter", label: t("dashboards.keys.edit") }, { keys: "Esc", label: t("dashboards.keys.unpick") } ] },
+      { title: t("dashboards.keys.group_go"), items: [
+        { keys: "g p", label: t("dashboards.review.publish_btn"), url: review_dashboard_path(dashboard, view: view_id) },
+        { keys: "g c", label: t("dashboards.cmp.title"), url: compare_dashboard_path(dashboard) },
+        { keys: "g n", label: t("dashboards.keys.new_view"), url: edit_dashboard_path(dashboard, nova_visao: 1) },
+        { keys: "g e", label: t("dashboards.here.open"), url: dashboard_path(dashboard, editar: 1, view: view_id) },
+        { keys: "Ctrl K", label: t("dashboards.keys.palette") } ] }
+    ]) %>

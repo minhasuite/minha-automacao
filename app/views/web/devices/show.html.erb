@@ -6,6 +6,7 @@
   <% if can?(:manage) %>
     <%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("devices.new_point") %><% end %>
     <%= link_to edit_device_path(@device), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %><%= t("devices.edit") %><% end %>
+    <% if @points.any? %><%= render "web/dashboards/add_to_link", type: "device", record: @device %><% end %>
   <% end %>
 <% end %>
 

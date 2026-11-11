@@ -15,6 +15,8 @@ class Dashboard < ApplicationRecord
 
   belongs_to :site
   has_many :versions, -> { order(version: :desc) }, class_name: "DashboardVersion", dependent: nil # cascade no banco
+  # Ideia 5: pilha de desfazer/refazer do rascunho (Dashboards::History).
+  has_many :draft_steps, class_name: "DashboardDraftStep", dependent: nil # cascade no banco
   # Imagens enviadas no editor (planta baixa, papel de parede): o JSON guarda o link.
   has_many_attached :files
 
@@ -80,9 +82,13 @@ class Dashboard < ApplicationRecord
 
     transaction do
       update!(definition: new_definition, draft: nil, auto: false, version: version + 1)
+      DashboardDraftStep.where(dashboard_id: id).delete_all # a pilha de desfazer é do rascunho que acabou de virar versão
       versions.create!(tenant_id: tenant_id, version: version, definition: definition, author: author)
     end
   end
+
+  # Grava o rascunho guardando o de antes na pilha de desfazer (ideia 5).
+  def save_draft!(new_draft, label: nil, author: Current.user) = Dashboards::History.record!(self, new_draft, label: label, author: author)
 
   # Voltar versão: a antiga é publicada de novo como a próxima versão.
   def revert!(number, author: Current.user)
