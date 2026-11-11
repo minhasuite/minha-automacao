@@ -76,6 +76,8 @@ module Dashboards
         end
       end
       e << msg(:too_many, max: MAX_WIDGETS) if ids.size - boxes > MAX_WIDGETS
+      # Beleza (ideia 17): visão inicial = id de uma visão que não é subvisão.
+      e << msg(:start_view) if defn.key?("start_view") && views.none? { |v| v.is_a?(Hash) && v["id"] == defn["start_view"] && v["subview"] != true }
       e
     end
 

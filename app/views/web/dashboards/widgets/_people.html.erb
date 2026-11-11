@@ -15,7 +15,9 @@
         <% home = p["home"] && !off %>
         <li class="min-w-0">
           <%= link_to point_path(p["id"]), class: "ss-item", data: { turbo_frame: "_top" } do %>
-            <%= ss_avatar(p["name"].to_s, size: 36, status: off ? "warn" : (home ? "success" : "muted"), ring: home) %>
+            <%# Beleza (ideia 18): quem chega em casa acena (ss-cue da gem). %>
+            <%= tag.span(ss_avatar(p["name"].to_s, size: 36, status: off ? "warn" : (home ? "success" : "muted"), ring: home), class: "ss-cue inline-flex rounded-full",
+                         data: ss_cue_data(kind: :arrive, active: home, key: "people-#{w['id']}-#{p['id']}")) %>
             <span class="ss-item-main">
               <span><%= p["name"] %></span>
               <span><%= off ? t("dashboards.w.no_signal") : (p["zone"].presence || t("dashboards.w.no_reading")) %><% if p["since"] && !off %> · <%= t("dashboards.w.since") %> <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %></span>

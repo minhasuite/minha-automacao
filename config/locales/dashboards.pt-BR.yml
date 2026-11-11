@@ -58,6 +58,10 @@ pt-BR:
       json_saved: JSON válido, salvo no rascunho.
       bad_json: 'JSON inválido: %{error}'
       kiosk: Quiosque ajustado neste aparelho.
+      album:
+        one: 1 foto entrou no álbum.
+        other: "%{count} fotos entraram no álbum."
+      album_removed: Foto tirada do álbum.
       preferred: "%{name} agora abre no seu Início."
       draft_saved: Salvo no rascunho. Publique para todos verem.
       preset_created: Painel "%{name}" criado. Ajuste no editor quando quiser.
@@ -169,7 +173,29 @@ pt-BR:
       theme: Tema
       empty_inherit: (vazio = o do painel)
       inherit: Do painel
-      night: À noite (18h às 6h)
+      night: À noite
+      night_by: Quando é noite
+      night_sun: Pelo sol (pôr ao nascer)
+      night_window: Por horário
+      night_from: Noite começa
+      night_to: Noite termina
+      night_hint: Sem latitude e longitude no local, vale o horário (padrão 18:00 às 06:00).
+      dim: Escurecer o fundo à noite
+      backgrounds: Fundo por hora do dia
+      backgrounds_hint: "Cada faixa vale a partir da hora dela até a próxima; na visão de um cômodo, é o fundo daquele cômodo."
+      bg_from: A partir de
+      bg_at_time: No horário
+      bg_sunrise: Ao nascer do sol
+      bg_sunset: Ao pôr do sol
+      bg_time: Horário
+      bg_style: Fundo
+      bg_photo: Foto
+      bg_color: Cor lisa
+      bg_gradient: Degradê
+      bg_color1: Cor
+      bg_color2: Segunda cor
+      bg_remove: Tirar esta faixa
+      bg_n: Faixa %{n}
       same_day: O mesmo do dia
       cards: Cartões
       mode: "Modo"
@@ -199,7 +225,7 @@ pt-BR:
         clock: Relógio
         weather: Relógio e clima
         cameras: Câmeras
-        photos: Fotos do painel
+        photos: Fotos do álbum
         "off": Nenhum
       idle: Liga depois de (minutos parado)
       motion: Acordar com o movimento de
@@ -208,6 +234,15 @@ pt-BR:
       exit: Sair do quiosque
       saver_label: 'Protetor de tela: toque para voltar'
       touch_back: toque para voltar
+      clock: Relógio grande no canto do painel
+      album: Álbum do protetor de tela
+      album_hint: "Fotos que passam no protetor (PNG, JPG ou WebP, até 8 MB cada, até %{max}). Sem álbum, passam as imagens do painel."
+      album_add: Enviar fotos
+      album_count:
+        zero: Nenhuma foto no álbum.
+        one: 1 foto no álbum.
+        other: "%{count} fotos no álbum."
+      album_remove: Tirar a foto %{n} do álbum
     presets:
       subtitle: Escolha um modelo, diga quais pontos usar e o painel nasce montado. Depois é um painel como os outros.
       build: Montar
@@ -218,6 +253,7 @@ pt-BR:
       no_point: Nenhum ponto serve
       tariff_html: 'Tarifa branca: crie antes um helper <strong>Tarifa de energia</strong> com as faixas de ponta e intermediária (Helpers do local) e escolha-o aqui.'
     wf:
+      web_only: Este card roda só na web (código de terceiros no iframe isolado). No app aparece um aviso com o botão "Abrir na web".
       label: Rótulo
       label_hint: Usa o nome do ponto
       point: Ponto
@@ -553,6 +589,13 @@ pt-BR:
       theme_image: '%{where}: papel de parede precisa ser um link https:// ou /'
       theme_blur: '%{where}: blur precisa ser de 0 a 40'
       theme_glass: '%{where}: glass e dark precisam ser true ou false'
+      theme_night_by: '%{where}: night_by precisa ser sun ou window'
+      theme_time: '%{where}: %{key} precisa ser HH:MM'
+      theme_dim: '%{where}: dim precisa ser de 0 a 80'
+      theme_backgrounds: '%{where}: backgrounds precisa ser uma lista de até %{max} faixas'
+      theme_bg_from: '%{where}: cada faixa precisa de from (HH:MM, sunrise ou sunset)'
+      theme_bg_color: '%{where}: color e color2 precisam ser #rrggbb'
+      theme_bg_empty: '%{where}: cada faixa precisa de image ou color'
       json_object: 'precisa ser um objeto JSON'
       too_big: 'passa do tamanho máximo (256 KB)'
       schema_version: 'schema_version precisa ser %{version}'
@@ -564,6 +607,7 @@ pt-BR:
       section_object: '%{where}: seção %{n} precisa ser um objeto'
       at_section: 'seção %{id}'
       too_many: 'widgets demais (máximo %{max})'
+      start_view: 'start_view precisa ser o id de uma visão (que não seja subvisão)'
       at_widget: 'widget %{id} (%{where})'
       unknown_type: '%{where}: tipo desconhecido %{type}'
       required: '%{where}: %{prop} obrigatório'

@@ -9,7 +9,7 @@ module Dashboards
   # mudam); o tipo só muda o desenho. `subview`: fora das abas, com "voltar"
   # para `back_path` (caminho ou id; sem ele, a primeira visão).
   module ViewTypes
-    PLUGINS = %w[Sections Masonry Panel Sidebar].freeze
+    PLUGINS = %w[Sections Masonry Panel Sidebar Plan].freeze
     POSITIONS = %w[main sidebar].freeze
     BACK = %r{\A(?:[\w-]{1,100}|/paineis/[\w-]{1,40}(?:\?view=[\w-]{1,40})?)\z}
 
@@ -84,6 +84,23 @@ module Dashboards
       describe key: "panel", label: "Painel inteiro", icon: "arrows-expand", description: "Um card só ocupando a tela (mapa, planta, câmera)."
       texts en: { label: "Panel", description: "A single card filling the screen (map, floor plan, camera)." },
             es: { label: "Panel completo", description: "Una sola tarjeta ocupando la pantalla (mapa, plano, cámara)." }
+    end
+
+    # Beleza (ideia 17): a planta da casa como visão principal. A primeira planta
+    # (`floorplan`) visível vai no topo, na largura toda e alta, ao vivo (luz acende
+    # na cor real, porta abre); o resto da visão segue em seções embaixo. À noite
+    # no local (tema), a planta abre no modo noite.
+    class Plan < Base
+      describe key: "plan", label: "Planta da casa", icon: "map", description: "A planta baixa no topo, grande e ao vivo; o resto embaixo."
+      texts en: { label: "House plan", description: "The floor plan on top, large and live; the rest below." },
+            es: { label: "Plano de la casa", description: "El plano arriba, grande y en vivo; el resto debajo." }
+
+      # A planta da visão (a primeira visível) e as seções sem ela.
+      def self.split(view)
+        plan = view["sections"].flat_map { |s| s["widgets"] }.find { |w| w["type"] == "floorplan" && w["visible"] }
+        rest = view["sections"].map { |s| s.merge("widgets" => s["widgets"].reject { |w| w.equal?(plan) }) }
+        [ plan, view.merge("sections" => rest) ]
+      end
     end
 
     class Sidebar < Base

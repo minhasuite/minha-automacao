@@ -17,7 +17,7 @@ CSS_DOMINIO = {
     /\Adw-vac-(run|trail|bot|dock|back)\z/, /\Adw-art-[0-5]\z/, # robô limpando, arte da área
     /\Adw-fpe?(-[a-z-]+)?\z/, /\Adw-(on|unavailable)\z/, # planta baixa (+ estado dos pinos)
     /\Adw-ed(-[a-z-]+)?\z/, /\Adw-(wf|act)\z/, # editor do painel e formulário do widget
-    /\Adw-(themed|has-wall|glass|theme-[a-z0-9_-]+)\z/, # temas do painel no <body>
+    /\Adw-(themed|has-wall|glass|dim|night|theme-[a-z0-9_-]+)\z/, # temas do painel no <body> (fundo por hora, escurecer à noite)
     /\Ama-kiosk(-[a-z]+)?\z/, /\Ama-saver(-[a-z]+)?\z/, /\Ama-ea-[a-z0-9]+\z/ # quiosque e arte do vazio
   ],
   "paineis.css" => [/\Adw-(tappable|holding|panel|stack(-[a-z]+)?)\z/, /\Aap-(live|glass|wall-[a-z]+)\z/],

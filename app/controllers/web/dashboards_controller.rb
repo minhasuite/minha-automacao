@@ -142,9 +142,33 @@ module Web
       render :json, status: :unprocessable_content
     end
 
+    # Quiosque (ideia 21): fotos enviadas para o álbum do protetor de tela (quem edita o painel).
+    # Mesmo filtro do upload do editor: até 8 MB, PNG/JPG/WebP pelos bytes; até ALBUM_MAX fotos.
+    def album_add
+      load_dashboard(:manage)
+      room = Dashboard::ALBUM_MAX - @dashboard.album.size
+      files = Array(params[:photos]).select { |f| f.respond_to?(:original_filename) }.first([ room, 0 ].max)
+      files.each do |file|
+        type = Marcel::MimeType.for(file.tempfile)
+        raise UploadError unless file.size <= 8.megabytes && UPLOAD_TYPES.include?(type)
+
+        @dashboard.files.attach(ActiveStorage::Blob.create_and_upload!(io: file.tempfile, filename: file.original_filename, content_type: type,
+                                                                       identify: false, metadata: { "album" => true }))
+      end
+      redirect_back_or_to dashboard_path(@dashboard, quiosque: 1), notice: t("dashboards.flash.album", count: files.size)
+    rescue UploadError
+      redirect_back_or_to dashboard_path(@dashboard, quiosque: 1), alert: t("dashboards.flash.bad_image")
+    end
+
+    def album_remove
+      load_dashboard(:manage)
+      @dashboard.album.find { |f| f.id.to_s == params[:file_id].to_s }&.purge_later
+      redirect_back_or_to dashboard_path(@dashboard, quiosque: 1), notice: t("dashboards.flash.album_removed")
+    end
+
     # Ajustes do quiosque deste aparelho (cookie; ver KioskMode).
     def kiosk_settings
-      write_kiosk(params.permit(:saver, :idle, :motion, :dim).to_h)
+      write_kiosk(params.permit(:saver, :idle, :motion, :dim, :clock).to_h)
       redirect_back_or_to root_path(quiosque: 1), notice: t("dashboards.flash.kiosk")
     end
 
@@ -203,6 +227,7 @@ module Web
       when "update_view"
         editor.update_view(t, title: params[:title], icon: params[:icon], path: params[:path], type: params[:view_type], subview: params[:subview], back_path: params[:back_path])
         editor.set_hero(t, hero_param) if params.dig(:hero, :present)
+        editor.set_start(t, params[:start_view] == "1") if params.key?(:start_view)
       when "add_section" then editor.add_section(params[:view_id], title: params[:title])
       when "update_section" then editor.update_section(t, title: params[:title], span: span_param, position: params[:position])
       when "add_widget" then focus[:w] = editor.add_widget(t, widget_attrs)
@@ -262,10 +287,33 @@ module Web
 
     # Tema (uiweb): galeria do editor → JSON; o upload já virou `image` (store_uploads).
     def theme_param
-      p = params.fetch(:theme, {}).permit(:key, :night, :image, :blur, :glass, :dark, :remove_image)
+      p = params.fetch(:theme, {}).permit(:key, :night, :image, :blur, :glass, :dark, :remove_image, :night_by, :night_from, :night_to, :dim,
+                                          backgrounds: %i[kind time style color color2 image used remove])
+      window = p[:night_by] == "window"
       { "key" => p[:key].presence, "night" => p[:night].presence, "image" => (p[:image].presence unless p[:remove_image] == "1"),
         "blur" => (p[:blur].to_i.clamp(0, 40) if p[:blur].present?), "glass" => ({ "1" => true, "0" => false }[p[:glass]]),
-        "dark" => (true if p[:dark] == "1") }
+        "dark" => (true if p[:dark] == "1"), "night_by" => ("window" if window),
+        "night_from" => (p[:night_from] if window && p[:night_from].to_s.match?(Dashboards::Themes::TIME) && p[:night_from] != Dashboards::Themes::WINDOW[0]),
+        "night_to" => (p[:night_to] if window && p[:night_to].to_s.match?(Dashboards::Themes::TIME) && p[:night_to] != Dashboards::Themes::WINDOW[1]),
+        "dim" => (p[:dim].to_i.clamp(0, 80) if p[:dim].to_i.positive?), "backgrounds" => backgrounds_param(p[:backgrounds]).presence }
+    end
+
+    # Faixas do fundo por hora (formulário indexado → lista). Linha nova só entra com horário ou sol e
+    # com foto enviada ou cor escolhida (used); marcada para tirar some.
+    def backgrounds_param(rows)
+      Dashboards::Widgets::FloorplanWidget.rows(rows&.to_h).filter_map do |r|
+        r = r.with_indifferent_access
+        next if r[:remove] == "1"
+
+        from = r[:kind].in?(Dashboards::Themes::SUN_EVENTS) ? r[:kind] : r[:time].presence
+        next unless from.to_s.match?(Dashboards::Themes::TIME) || from.in?(Dashboards::Themes::SUN_EVENTS)
+
+        case r[:style]
+        when "image" then ({ "from" => from, "image" => r[:image] } if r[:image].present?)
+        when "gradient" then { "from" => from, "color" => r[:color].to_s.downcase, "color2" => r[:color2].to_s.downcase }
+        else { "from" => from, "color" => r[:color].to_s.downcase }
+        end
+      end.first(Dashboards::Themes::MAX_BACKGROUNDS)
     end
 
     def span_param

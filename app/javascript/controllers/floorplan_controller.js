@@ -2,7 +2,8 @@ import { Controller } from "@hotwired/stimulus"
 
 // Planta baixa (widget floorplan): troca de andar e modo noite. O quadro se
 // recarrega a cada mudança de ponto, então a escolha fica neste navegador
-// (por widget). Sem escolha, a noite segue o tema escuro.
+// (por widget, por 12 horas). Sem escolha, a noite segue o tema escuro ou a
+// noite do local (o <body> ganha dw-night pelo sol/janela do tema do painel).
 export default class extends Controller {
   static targets = ["tab", "layer", "nightButton"]
   static values = { key: String }
@@ -17,7 +18,8 @@ export default class extends Controller {
     this.select(saved.layer || 0)
     const dark = document.documentElement.dataset.theme === "dark" ||
       (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches)
-    this.applyNight(saved.night ?? dark)
+    const fresh = saved.nightAt && Date.now() - saved.nightAt < 12 * 3600 * 1000
+    this.applyNight(fresh ? saved.night : (dark || document.body.classList.contains("dw-night")))
   }
 
   show(event) {
@@ -28,7 +30,7 @@ export default class extends Controller {
   night() {
     const on = !this.element.hasAttribute("data-night")
     this.applyNight(on)
-    this.write({ night: on })
+    this.write({ night: on, nightAt: Date.now() })
   }
 
   select(index) {

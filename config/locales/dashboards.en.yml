@@ -58,6 +58,10 @@ en:
       json_saved: Valid JSON, saved to the draft.
       bad_json: 'Invalid JSON: %{error}'
       kiosk: Kiosk set up on this device.
+      album:
+        one: 1 photo added to the album.
+        other: "%{count} photos added to the album."
+      album_removed: Photo removed from the album.
       preferred: "%{name} now opens on your Home."
       draft_saved: Saved to the draft. Publish so everyone sees it.
       preset_created: Dashboard "%{name}" created. Fine-tune it in the editor whenever you like.
@@ -169,7 +173,29 @@ en:
       theme: Theme
       empty_inherit: (empty = the dashboard's)
       inherit: Dashboard's
-      night: At night (6 pm to 6 am)
+      night: At night
+      night_by: When it is night
+      night_sun: By the sun (sunset to sunrise)
+      night_window: By time
+      night_from: Night starts
+      night_to: Night ends
+      night_hint: Without latitude and longitude on the site, the time window applies (default 18:00 to 06:00).
+      dim: Darken the background at night
+      backgrounds: Background by time of day
+      backgrounds_hint: "Each slot applies from its time until the next one; on a room's view, it is that room's background."
+      bg_from: Starting
+      bg_at_time: At a time
+      bg_sunrise: At sunrise
+      bg_sunset: At sunset
+      bg_time: Time
+      bg_style: Background
+      bg_photo: Photo
+      bg_color: Solid color
+      bg_gradient: Gradient
+      bg_color1: Color
+      bg_color2: Second color
+      bg_remove: Remove this slot
+      bg_n: Slot %{n}
       same_day: Same as daytime
       cards: Cards
       mode: "Mode"
@@ -199,7 +225,7 @@ en:
         clock: Clock
         weather: Clock and weather
         cameras: Cameras
-        photos: Dashboard photos
+        photos: Album photos
         "off": None
       idle: Starts after (idle minutes)
       motion: Wake up on motion from
@@ -208,6 +234,15 @@ en:
       exit: Leave kiosk mode
       saver_label: 'Screen saver: touch to go back'
       touch_back: touch to go back
+      clock: Large clock in the dashboard corner
+      album: Screensaver album
+      album_hint: "Photos shown by the screensaver (PNG, JPG or WebP, up to 8 MB each, up to %{max}). Without an album, the dashboard images are shown."
+      album_add: Upload photos
+      album_count:
+        zero: No photos in the album.
+        one: 1 photo in the album.
+        other: "%{count} photos in the album."
+      album_remove: Remove photo %{n} from the album
     presets:
       subtitle: Pick a template, choose which points to use and the dashboard comes ready. After that it's a dashboard like any other.
       build: Build
@@ -218,6 +253,7 @@ en:
       no_point: No suitable point
       tariff_html: 'Time-of-use rate: first create a <strong>Energy rate</strong> helper with the peak and shoulder bands (place Helpers) and pick it here.'
     wf:
+      web_only: This card only runs on the web (third-party code in an isolated iframe). The app shows a notice with an "Open on the web" button.
       label: Label
       label_hint: Uses the point name
       point: Point
@@ -553,6 +589,13 @@ en:
       theme_image: '%{where}: wallpaper must be an https:// or / link'
       theme_blur: '%{where}: blur must be from 0 to 40'
       theme_glass: '%{where}: glass and dark must be true or false'
+      theme_night_by: '%{where}: night_by must be sun or window'
+      theme_time: '%{where}: %{key} must be HH:MM'
+      theme_dim: '%{where}: dim must be from 0 to 80'
+      theme_backgrounds: '%{where}: backgrounds must be a list of up to %{max} slots'
+      theme_bg_from: '%{where}: each slot needs from (HH:MM, sunrise or sunset)'
+      theme_bg_color: '%{where}: color and color2 must be #rrggbb'
+      theme_bg_empty: '%{where}: each slot needs image or color'
       json_object: 'must be a JSON object'
       too_big: 'exceeds the maximum size (256 KB)'
       schema_version: 'schema_version must be %{version}'
@@ -564,6 +607,7 @@ en:
       section_object: '%{where}: section %{n} must be an object'
       at_section: 'section %{id}'
       too_many: 'too many widgets (maximum %{max})'
+      start_view: 'start_view must be the id of a view (not a subview)'
       at_widget: 'widget %{id} (%{where})'
       unknown_type: '%{where}: unknown type %{type}'
       required: '%{where}: %{prop} is required'

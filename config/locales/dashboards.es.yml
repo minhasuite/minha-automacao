@@ -58,6 +58,10 @@ es:
       json_saved: JSON válido, guardado en el borrador.
       bad_json: 'JSON no válido: %{error}'
       kiosk: Quiosco configurado en este aparato.
+      album:
+        one: 1 foto entró en el álbum.
+        other: "%{count} fotos entraron en el álbum."
+      album_removed: Foto quitada del álbum.
       preferred: "%{name} ahora abre en tu Inicio."
       draft_saved: Guardado en el borrador. Publícalo para que todos lo vean.
       preset_created: Panel "%{name}" creado. Ajústalo en el editor cuando quieras.
@@ -169,7 +173,29 @@ es:
       theme: Tema
       empty_inherit: (vacío = el del panel)
       inherit: Del panel
-      night: De noche (18 h a 6 h)
+      night: De noche
+      night_by: Cuándo es de noche
+      night_sun: Por el sol (atardecer a amanecer)
+      night_window: Por horario
+      night_from: La noche empieza
+      night_to: La noche termina
+      night_hint: Sin latitud y longitud en el lugar, vale el horario (por defecto 18:00 a 06:00).
+      dim: Oscurecer el fondo de noche
+      backgrounds: Fondo según la hora del día
+      backgrounds_hint: "Cada franja vale desde su hora hasta la siguiente; en la vista de una habitación, es el fondo de esa habitación."
+      bg_from: A partir de
+      bg_at_time: A una hora
+      bg_sunrise: Al amanecer
+      bg_sunset: Al atardecer
+      bg_time: Hora
+      bg_style: Fondo
+      bg_photo: Foto
+      bg_color: Color liso
+      bg_gradient: Degradado
+      bg_color1: Color
+      bg_color2: Segundo color
+      bg_remove: Quitar esta franja
+      bg_n: Franja %{n}
       same_day: El mismo del día
       cards: Tarjetas
       mode: "Modo"
@@ -199,7 +225,7 @@ es:
         clock: Reloj
         weather: Reloj y clima
         cameras: Cámaras
-        photos: Fotos del panel
+        photos: Fotos del álbum
         "off": Ninguno
       idle: Se activa después de (minutos sin uso)
       motion: Despertar con el movimiento de
@@ -208,6 +234,15 @@ es:
       exit: Salir del quiosco
       saver_label: 'Protector de pantalla: toca para volver'
       touch_back: toca para volver
+      clock: Reloj grande en la esquina del panel
+      album: Álbum del protector de pantalla
+      album_hint: "Fotos que pasa el protector (PNG, JPG o WebP, hasta 8 MB cada una, hasta %{max}). Sin álbum, pasan las imágenes del panel."
+      album_add: Subir fotos
+      album_count:
+        zero: Ninguna foto en el álbum.
+        one: 1 foto en el álbum.
+        other: "%{count} fotos en el álbum."
+      album_remove: Quitar la foto %{n} del álbum
     presets:
       subtitle: Elige una plantilla, indica qué puntos usar y el panel nace armado. Después es un panel como cualquier otro.
       build: Armar
@@ -218,6 +253,7 @@ es:
       no_point: Ningún punto sirve
       tariff_html: 'Tarifa horaria: crea antes un helper <strong>Tarifa de energía</strong> con las franjas punta e intermedia (Helpers del lugar) y elígelo aquí.'
     wf:
+      web_only: Esta tarjeta solo funciona en la web (código de terceros en un iframe aislado). La app muestra un aviso con el botón "Abrir en la web".
       label: Etiqueta
       label_hint: Usa el nombre del punto
       point: Punto
@@ -553,6 +589,13 @@ es:
       theme_image: '%{where}: el fondo de pantalla debe ser un enlace https:// o /'
       theme_blur: '%{where}: blur debe ser de 0 a 40'
       theme_glass: '%{where}: glass y dark deben ser true o false'
+      theme_night_by: '%{where}: night_by debe ser sun o window'
+      theme_time: '%{where}: %{key} debe ser HH:MM'
+      theme_dim: '%{where}: dim debe ser de 0 a 80'
+      theme_backgrounds: '%{where}: backgrounds debe ser una lista de hasta %{max} franjas'
+      theme_bg_from: '%{where}: cada franja necesita from (HH:MM, sunrise o sunset)'
+      theme_bg_color: '%{where}: color y color2 deben ser #rrggbb'
+      theme_bg_empty: '%{where}: cada franja necesita image o color'
       json_object: 'debe ser un objeto JSON'
       too_big: 'supera el tamaño máximo (256 KB)'
       schema_version: 'schema_version debe ser %{version}'
@@ -564,6 +607,7 @@ es:
       section_object: '%{where}: la sección %{n} debe ser un objeto'
       at_section: 'sección %{id}'
       too_many: 'demasiados widgets (máximo %{max})'
+      start_view: 'start_view debe ser el id de una vista (que no sea subvista)'
       at_widget: 'widget %{id} (%{where})'
       unknown_type: '%{where}: tipo desconocido %{type}'
       required: '%{where}: %{prop} es obligatorio'

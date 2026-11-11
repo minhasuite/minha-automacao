@@ -94,6 +94,10 @@ module Dashboards
         # ondaB2 (B8): o widget guarda outros em `widgets` (pilha, grade).
         def container? = false
 
+        # P2.5: o widget só aparece na web (o app mostra um aviso com "abrir na web"); o editor
+        # avisa e o `data` resolvido leva `web_only: true`.
+        def web_only? = false
+
         # Ideia 14: os pontos que entram no número ou no item `key` do widget, para a lista com o motivo
         # (`/paineis/:id/w/:widget_id/pontos`): {title, subtitle?, points}, ou nil (o widget não tem lista).
         def drill(_r, _w, _key) = nil

@@ -27,6 +27,16 @@ module Dashboards
       %w[type subview back_path].each { |k| v.delete(k) if v[k].nil? }
     end
 
+    # Beleza (ideia 17): a visão que abre primeiro (`start_view`, ex. a planta); desmarcar a atual tira.
+    def set_start(id, on)
+      view(id)
+      if on
+        @definition["start_view"] = id
+      elsif @definition["start_view"] == id
+        @definition.delete("start_view")
+      end
+    end
+
     # P1.4: topo da visão (Dashboards::Hero); vazio tira a chave.
     def set_hero(id, hero)
       v = view(id)
@@ -105,6 +115,7 @@ module Dashboards
     end
 
     def remove(kind, id)
+      @definition.delete("start_view") if kind == "view" && @definition["start_view"] == id
       container(kind, id).reject! { |x| x["id"] == id }
     end
 

@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // acorda no toque/tecla ou quando o ponto de movimento escolhido muda
 // (evento dw:point-changed do tempo real do painel).
 export default class extends Controller {
-  static targets = ["saver", "slide", "clock", "date", "bar"]
+  static targets = ["saver", "slide", "clock", "date", "bar", "bigClock", "bigDate"]
   static values = { idle: Number, saver: String, motion: String, dim: Boolean, slides: Array }
 
   connect() {
@@ -46,8 +46,11 @@ export default class extends Controller {
     if (this.saverValue !== "off") this.idleTimer = setTimeout(() => this.sleep(), this.idleValue * 60000)
   }
 
+  // Movimento no ponto escolhido: acorda o protetor e, aceso, adia o próximo (tem gente olhando).
   pointChanged(event) {
-    if (this.motionValue && event.detail === this.motionValue && !this.saverTarget.hidden) { this.wake(); this.activity() }
+    if (!this.motionValue || event.detail !== this.motionValue) return
+    if (!this.saverTarget.hidden) this.wake()
+    this.activity()
   }
 
   sleep() {
@@ -76,8 +79,13 @@ export default class extends Controller {
 
   clock() {
     const now = new Date()
-    this.clockTarget.textContent = now.toLocaleTimeString(document.documentElement.lang || "pt-BR", { hour: "2-digit", minute: "2-digit" })
-    this.dateTarget.textContent = now.toLocaleDateString(document.documentElement.lang || "pt-BR", { weekday: "long", day: "numeric", month: "long" })
+    const lang = document.documentElement.lang || "pt-BR"
+    const time = now.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })
+    const date = now.toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" })
+    this.clockTarget.textContent = time
+    this.dateTarget.textContent = date
+    if (this.hasBigClockTarget) this.bigClockTarget.textContent = time
+    if (this.hasBigDateTarget) this.bigDateTarget.textContent = date
   }
 
   async lock() {

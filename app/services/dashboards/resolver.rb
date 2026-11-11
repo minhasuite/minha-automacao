@@ -28,7 +28,7 @@ module Dashboards
       end
       { "id" => dashboard.id, "site_id" => @site.id, "name" => dashboard.name, "kind" => dashboard.kind, "auto" => dashboard.auto,
         "version" => dashboard.version, "schema_version" => @definition["schema_version"], "role" => role,
-        "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload }.merge(@definition.slice("theme"))
+        "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload }.merge(@definition.slice("theme", "start_view"))
     end
 
     # Um widget só (o quadro que o tempo real recarrega). nil = não existe ou o papel não vê.
@@ -85,7 +85,9 @@ module Dashboards
       t = Themes.resolve(@definition, view, @site) or return
       th = t["theme"]
       { "key" => th.key, "label" => th.label, "accent" => th.accent, "accent2" => th.accent2, "glass" => t["glass"],
-        "night" => t["night"], "image" => t["image"], "blur" => t["blur"], "dark" => (true if t["dark"]) }.compact
+        "night" => t["night"], "image" => t["image"], "blur" => t["blur"], "dark" => (true if t["dark"]),
+        # beleza (ideia 15 e P2.4): noite pelo sol/janela, fundo da faixa do dia e o quanto escurece.
+        "is_night" => t["is_night"], "wall" => t["wall"], "dim" => t["dim"] }.compact
     end
 
     def resolve(w)

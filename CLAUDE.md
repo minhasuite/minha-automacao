@@ -509,6 +509,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (`Dashboards::Hero`, `hero_now`); lista de um número = `drill` no plugin do widget
   (`/paineis/:id/w/:wid/pontos`); "dado velho" = `Dashboards::Staleness`. Nada disso tem
   `case` por tipo; ver `docs/dashboards.md` ("Painel por dado").
+- **Beleza dos painéis (aberto/fechado, `docs/dashboards.md` "Beleza")**: noite do tema pelo sol
+  ou janela (`Themes.night?`, sem hora fixa), fundo por hora = faixas `backgrounds` no `theme`
+  (dado), visão `plan` = classe em `ViewTypes::PLUGINS`, visão inicial = `start_view`, aceno de
+  estado = `ss-cue`/`SsCue` da gem (nada de animação própria), widget só da web = `web_only?` no
+  plugin (o app mostra "abrir na web"), álbum do quiosque = anexos do painel com `metadata.album`.
 - **Lote 5 (aberto/fechado)**: serviço do HA novo no importador = linha em
   `HaImport::SERVICES` (método) ou `HELPER_COMMANDS`; o `case` do
   `HaImport#trigger`/`#condition` traduz a sintaxe do YAML do HA, não tipos
@@ -693,7 +698,8 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.20.3`):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.20.3`; no branch `beleza`,
+  temporariamente o branch `beleza` da gem, a v0.21 com `ss-cue` e `level:`):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);

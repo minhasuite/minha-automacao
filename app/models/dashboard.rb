@@ -17,6 +17,12 @@ class Dashboard < ApplicationRecord
   has_many :versions, -> { order(version: :desc) }, class_name: "DashboardVersion", dependent: nil # cascade no banco
   # Imagens enviadas no editor (planta baixa, papel de parede): o JSON guarda o link.
   has_many_attached :files
+  # Quiosque (ideia 21): o álbum do protetor de tela = as imagens enviadas como álbum
+  # (metadata "album"); sem álbum, o protetor usa as imagens do painel (como antes).
+  ALBUM_MAX = 60
+
+  def album = files.select { |f| f.image? && f.blob.metadata["album"] }
+  def saver_photos = album.presence || files.select(&:image?)
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }

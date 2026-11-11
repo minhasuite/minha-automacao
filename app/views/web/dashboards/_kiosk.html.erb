@@ -6,7 +6,8 @@
 <% weather = site.points.where(capability: "weather", disabled: false).first %>
 <% temperature = site.points.where(capability: "measure", device_class: "temperature", disabled: false).order(:name).first %>
 <% cameras = k["saver"] == "cameras" ? site.points.where(capability: "stream", disabled: false).order(:name).limit(12).map { |c| camera_snapshot_path(c.id) } : [] %>
-<% photos = k["saver"] == "photos" ? dashboard.files.select(&:image?).map { |f| rails_blob_path(f, only_path: true) } : [] %>
+<% photos = k["saver"] == "photos" ? dashboard.saver_photos.map { |f| rails_blob_path(f, only_path: true) } : [] %>
+<% can_album = SiteMembership.allowed?(@site_role, :manage) %>
 <div data-controller="kiosk" data-kiosk-idle-value="<%= k['idle'] %>" data-kiosk-saver-value="<%= k['saver'] %>" data-kiosk-motion-value="<%= k['motion'] %>"
      data-kiosk-dim-value="<%= k['dim'] %>" data-kiosk-slides-value="<%= (cameras + photos).to_json %>">
   <div class="ma-kiosk-bar" data-kiosk-target="bar">
@@ -14,6 +15,7 @@
     <button type="button" class="ss-icon-btn" data-action="kiosk#sleep" title="<%= t("dashboards.kiosk.sleep") %>" aria-label="<%= t("dashboards.kiosk.sleep") %>"><%= icon("moon", "size-5") %></button>
     <details class="ma-kiosk-pop relative">
       <summary class="ss-icon-btn" title="<%= t("dashboards.kiosk.settings") %>" aria-label="<%= t("dashboards.kiosk.settings") %>"><%= icon("cog", "size-5") %></summary>
+      <div class="ma-kiosk-panel">
       <%= form_with url: kiosk_path, method: :patch, class: "ss-card ma-kiosk-form" do %>
         <p class="font-bold text-ink"><%= t("dashboards.kiosk.this_tablet") %></p>
         <div><label class="ss-label" for="k-saver"><%= t("dashboards.kiosk.saver") %></label>
@@ -23,13 +25,41 @@
         <div><label class="ss-label" for="k-motion"><%= t("dashboards.kiosk.motion") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label>
           <%= select_tag :motion, options_for_select(site.points.where(capability: "motion").order(:name).map { |p| [ p.name, p.id ] }, k["motion"]), include_blank: t("dashboards.kiosk.touch_only"), class: "ss-input", id: "k-motion" %></div>
         <label class="ss-check"><%= hidden_field_tag :dim, "0", id: nil %><%= check_box_tag :dim, "1", k["dim"], id: "k-dim" %><%= t("dashboards.kiosk.dim") %></label>
+        <label class="ss-check"><%= hidden_field_tag :clock, "0", id: nil %><%= check_box_tag :clock, "1", k["clock"], id: "k-clock" %><%= t("dashboards.kiosk.clock") %></label>
         <div class="flex flex-wrap gap-2">
           <%= submit_tag t("dashboards.save"), class: "ss-btn ss-btn-primary" %>
           <%= link_to t("dashboards.kiosk.exit"), url_for(quiosque: 0), class: "ss-btn ss-btn-ghost" %>
         </div>
       <% end %>
+      <%# Ideia 21: álbum do protetor de tela (fotos enviadas; quem edita o painel). %>
+      <% if can_album %>
+        <% album = dashboard.album %>
+        <div class="ss-card ma-kiosk-form">
+          <p class="font-bold text-ink"><%= t("dashboards.kiosk.album") %></p>
+          <p class="text-xs text-muted"><%= t("dashboards.kiosk.album_hint", max: Dashboard::ALBUM_MAX) %> <%= t("dashboards.kiosk.album_count", count: album.size) %></p>
+          <% if album.any? %>
+            <ul class="grid grid-cols-4 gap-1.5">
+              <% album.each_with_index do |f, i| %>
+                <li class="relative"><%= image_tag rails_blob_path(f, only_path: true), alt: "", class: "aspect-square w-full rounded-lg object-cover", loading: "lazy" %>
+                  <%= button_to album_photo_dashboard_path(dashboard, file_id: f.id), method: :delete, class: "ss-icon-btn is-sm absolute top-0.5 right-0.5", form_class: "contents",
+                                "aria-label": t("dashboards.kiosk.album_remove", n: i + 1), title: t("dashboards.kiosk.album_remove", n: i + 1) do %><%= icon("x", "size-4") %><% end %></li>
+              <% end %>
+            </ul>
+          <% end %>
+          <%= form_with url: album_dashboard_path(dashboard), method: :post, multipart: true, class: "grid gap-2" do %>
+            <label class="ss-label" for="k-album"><%= t("dashboards.kiosk.album_add") %></label>
+            <%= file_field_tag "photos[]", multiple: true, accept: "image/png,image/jpeg,image/webp", class: "ss-input", id: "k-album" %>
+            <%= submit_tag t("dashboards.kiosk.album_add"), class: "ss-btn ss-btn-ghost" %>
+          <% end %>
+        </div>
+      <% end %>
+      </div>
     </details>
   </div>
+  <% if k["clock"] %>
+    <%# Ideia 21: relógio grande com o painel aceso (o mesmo relógio do protetor). %>
+    <p class="ma-kiosk-clock num" aria-hidden="true"><span data-kiosk-target="bigClock">--:--</span><small data-kiosk-target="bigDate"></small></p>
+  <% end %>
 
   <div class="ma-saver <%= 'ma-saver-dim' if k['dim'] %>" data-kiosk-target="saver" hidden role="dialog" aria-modal="true" aria-label="<%= t("dashboards.kiosk.saver_label") %>">
     <div class="ma-saver-slide" data-kiosk-target="slide" aria-hidden="true"></div>

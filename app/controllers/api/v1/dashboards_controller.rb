@@ -22,6 +22,13 @@ module Api
         render_data(payload) if stale?(etag: payload.to_json)
       end
 
+      # Quiosque do app (ideia 21): as fotos do protetor de tela (o álbum; sem álbum, as imagens
+      # do painel), como caminhos do próprio servidor (o app junta com o endereço dele).
+      def album
+        dashboard, = find(:view)
+        render_data(dashboard.saver_photos.map { |f| { id: f.id, url: rails_blob_path(f, only_path: true) } })
+      end
+
       def create
         site = Site.find(params[:site_id])
         authorize_site!(site, :manage)
