@@ -1,0 +1,113 @@
+en:
+  dashboards:
+    templates:
+      title: Card templates
+      subtitle: "Declarative cards for %{site}: layout, slots and inputs, no code."
+      new: New template
+      editing: "Template %{name}"
+      builtin: Built-in
+      from_package: From package
+      edit: Edit
+      duplicate: Duplicate
+      export: Export as package
+      remove: Remove
+      remove_confirm: "Remove the template %{name}? Cards using it will show it is gone."
+      pick: Template
+      manage: Create and edit card templates
+      missing: "The card template \"%{key}\" no longer exists."
+      missing_vars: "Still to choose: %{vars}"
+      name: Name
+      key: Key
+      description: Description
+      layout: Layout
+      layout_hint: The layouts that exist on the web and in the app (componentes-ui).
+      layouts:
+        mosaic: Photo block (mosaic)
+        tile: Tile
+        row: Row
+        chip: Pill
+        stat: Indicator
+      params: Inputs
+      params_hint: "What whoever uses the template picks on the card (vars). In the slots: {{ vars.<key> }}; areas and points also have .name, .text, .value."
+      param_key: Key
+      param_label: Label
+      param_kind: Type
+      param_required: Required
+      kinds:
+        area: Area
+        point: Point
+        text: Text
+        number: Number
+      slots: Slots
+      slots_hint: "Text = Liquid. Starting with { or [ = JSON: query and aggregate ({\"query\": …, \"aggregate\": \"count\"}), rules ([{\"when\": …, \"value\": …}]), items or the tap action."
+      slot_names:
+        title: Title
+        subtitle: Subtitle
+        icon: Icon
+        image: Image
+        value: Value
+        facts: Items
+        tone: Tone
+        tap: Tap
+      slot_hints:
+        title: "e.g. {{ vars.area.name }}"
+        subtitle: caption (in the block, shown without items)
+        icon: "icon name or mdi:name"
+        image: "https:// or /… address"
+        value: "e.g. {{ vars.ponto.text }}"
+        facts: "card items (as in Defaults) or {\"from\": \"area_defaults\", \"scope\": {\"area\": \"{{ vars.area }}\"}}"
+        tone: "ok, warn, danger, info or rules"
+        tap: "{\"action\": \"navigate\", \"navigation_path\": \"…\"} (commands only through dashboard gestures)"
+      sample: Preview example
+      sample_hint: The inputs the preview uses now (not saved).
+      save: Save template
+      preview: Live preview
+      preview_hint: The preview changes while you edit.
+      preview_errors: The template still has problems
+      flash:
+        saved: "Template %{name} saved."
+        removed: "Template %{name} removed."
+        duplicated: "Copy created: %{name}. Edit the slots freely."
+      errors:
+        object: the template must be an object.
+        key: "key must have 2 to 40 lowercase letters, numbers, - or _."
+        name: the template needs a name.
+        layout: "layout must be one of: %{layouts}."
+        params: "params must be a list of up to %{max} inputs."
+        param: "input %{n}: key must start with a letter (lowercase, numbers and _) and not repeat."
+        param_kind: "input %{n}: kind must be %{kinds}."
+        slots: slots must be an object.
+        slot_unknown: "unknown slot (use %{slots})."
+        var_unknown: "input marker that doesn't exist: %{vars}."
+        text: "%{slot}: text up to %{max} characters."
+        tone: "%{slot}: the tone must be %{tones}."
+        rules: "%{slot}: rules are a list of 1 to %{max} objects."
+        rule_value: "%{slot}: rule %{n} needs a value (text)."
+        slot_kind: "%{slot}: use text, a query or rules."
+        liquid: "%{slot}: invalid Liquid: %{error}"
+        facts: "facts must be the list of items or {items|from, scope}."
+        tap: "tap must be an action (action and its fields)."
+        json: "%{slot}: the JSON is malformed."
+    card_styles:
+      title: Card style
+      hint: One click applies it to the whole dashboard (becomes a new version).
+      none: Normal
+      applied: "Card style: %{name}."
+      unknown: "card_style must be one of: %{keys}."
+    export:
+      button: Export as package
+      description: "Dashboard %{name} exported from Minha Automação; points and areas become inputs."
+    presets:
+      library: Library
+      optional: optional
+      required: "Choose: %{fields}."
+      import_title: Import a dashboard or template package
+      import_hint: The file from "Export as package". Then you pick your own points and areas.
+      import_file_label: File (.json or .yml)
+      import: Import
+      import_file: Send the package file (up to 512 KB).
+      errors:
+        fields: "fields must be a list of up to %{max} fields."
+        field: "field %{n}: key (letter, lowercase, numbers and _), not repeated, and kind %{kinds}."
+        definition: definition must be the dashboard (object).
+        unknown: "field marker that doesn't exist: %{fields}."

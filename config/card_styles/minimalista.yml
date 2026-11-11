@@ -1,0 +1,14 @@
+key: minimalista
+position: 4
+icon: minus
+label: { pt-BR: Minimalista, en: Minimal, es: Minimalista }
+description: { pt-BR: Sem sombra nem borda; só o conteúdo., en: No shadow or border; just the content., es: Sin sombra ni borde; solo el contenido. }
+web:
+  --ss-card-border: transparent
+  --shadow-card: none
+  --ss-card-bg: color-mix(in srgb, var(--surface) 70%, transparent)
+  --ss-radius-card: 12px
+  --r-card: 12px
+app:
+  density: standard
+  flat: true

@@ -537,6 +537,13 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (dado), visão `plan` = classe em `ViewTypes::PLUGINS`, visão inicial = `start_view`, aceno de
   estado = `ss-cue`/`SsCue` da gem (nada de animação própria), widget só da web = `web_only?` no
   plugin (o app mostra "abrir na web"), álbum do quiosque = anexos do painel com `metadata.album`.
+- **Modelos de card e painéis prontos como dado (aberto/fechado)**: card novo = modelo (tabela
+  `card_templates`, item de pacote `card_template` ou `config/card_templates/*.yml`; widget `template`,
+  `Dashboards::CardTemplates`), desenho só de `CardTemplates::LAYOUTS` (partial em `template_layouts/` + app,
+  depois do componentes-ui), toque só por `Dashboards::Actions`; painel pronto = item `preset` de pacote ou
+  manifesto em `config/dashboard_library/` (`Presets::DataPreset`, `{{ fields.x }}`); estilo de card = YAML
+  em `config/card_styles/` (só tokens de `CardStyles::TOKENS`); exportar = `Dashboards::Export` (ids viram
+  entradas). Ver `docs/dashboards.md` ("Modelos de card...").
 - **Lote 5 (aberto/fechado)**: serviço do HA novo no importador = linha em
   `HaImport::SERVICES` (método) ou `HELPER_COMMANDS`; o `case` do
   `HaImport#trigger`/`#condition` traduz a sintaxe do YAML do HA, não tipos

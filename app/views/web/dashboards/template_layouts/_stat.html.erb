@@ -1,0 +1,2 @@
+<%# locals: (d:, w:, title:, ico:, tone:, live:) -%>
+<%= render Ss::KpiCardComponent.new(label: title, value: d["value"].presence || "—", icon: ico, css: "h-full", caption: d["subtitle"], tone: DashboardsHelper::WIDGET_TONES[tone]) %>

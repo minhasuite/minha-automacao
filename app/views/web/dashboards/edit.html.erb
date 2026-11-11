@@ -169,6 +169,7 @@
       <p class="text-sm text-muted mt-0.5 mb-3"><%= t("dashboards.ed.appearance_hint") %></p>
       <%= render "web/dashboards/theme_form", dashboard: @dashboard, target: nil, theme: @draft["theme"], view_id: view&.dig("id") %>
     </section>
+    <%= render "web/dashboards/card_styles", dashboard: @dashboard, current: @draft["card_style"] %>
     <% if current_user.dashboard_prefs[@site.id] == @dashboard.id %>
       <p class="ss-badge ss-badge-success w-fit"><%= t("dashboards.mine") %></p>
     <% else %>

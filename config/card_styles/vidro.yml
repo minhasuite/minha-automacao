@@ -1,0 +1,14 @@
+key: vidro
+position: 2
+icon: sparkles
+label: { pt-BR: Vidro, en: Glass, es: Vidrio }
+description: { pt-BR: Cards translúcidos sobre o papel de parede., en: Translucent cards over the wallpaper., es: Tarjetas translúcidas sobre el fondo. }
+web:
+  --ss-card-bg: color-mix(in srgb, var(--surface) 58%, transparent)
+  --ss-card-border: color-mix(in srgb, var(--surface) 35%, transparent)
+  --ss-card-filter: blur(16px) saturate(1.3)
+  --ss-radius-card: 22px
+  --r-card: 22px
+app:
+  density: standard
+  glass: true

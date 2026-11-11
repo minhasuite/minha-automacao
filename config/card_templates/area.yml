@@ -1,0 +1,16 @@
+# Modelo embutido (P1.3): o cartão de área como dado. A pessoa duplica (Local →
+# Modelos de card) e edita os espaços sem mudar código. Os itens são o padrão
+# do local (Configurações → Painéis → Padrões), com a área na consulta.
+key: area
+name: { pt-BR: Cartão de área, en: Area card, es: Tarjeta de área }
+description: { pt-BR: "Foto ou cor da área, o que importa agora em pílulas e o toque que abre a área.", en: "Area photo or color, what matters now as pills, and a tap that opens the area.", es: "Foto o color del área, lo importante ahora en píldoras y un toque que abre el área." }
+layout: mosaic
+params:
+  - { key: area, label: { pt-BR: Área, en: Area, es: Área }, kind: area, required: true }
+slots:
+  title: "{{ vars.area.name }}"
+  icon: "{{ vars.area.icon | default: 'view-boards' }}"
+  image: "{{ vars.area.background }}"
+  subtitle: "{{ vars.area.caption }}"
+  facts: { from: area_defaults, scope: { area: "{{ vars.area }}" } }
+  tap: { action: navigate, navigation_path: "{{ vars.area.link }}" }

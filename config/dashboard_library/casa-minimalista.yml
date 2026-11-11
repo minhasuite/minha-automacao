@@ -1,0 +1,38 @@
+# Biblioteca de painéis prontos (ideia 20): cada arquivo é um manifesto de
+# pacote (docs/pacotes.md), só dados. O item `preset` aparece em Painéis
+# prontos; quem importa escolhe as próprias áreas e pontos (as entradas).
+format: 1
+key: casa-minimalista
+name: Casa minimalista
+version: 1.0.0
+description: Só o que importa agora, uma área por cartão.
+items:
+  - type: preset
+    key: casa-minimalista
+    name: { pt-BR: Casa minimalista, en: Minimal home, es: Casa minimalista }
+    icon: home
+    description: { pt-BR: "Luzes acesas no topo, um cartão por área com o que importa agora e as cenas. Cards sem borda.", en: "Lights on at the top, one card per area with what matters now, and the scenes. Borderless cards.", es: "Luces encendidas arriba, una tarjeta por área con lo importante ahora y las escenas. Tarjetas sin borde." }
+    fields:
+      - { key: area1, kind: area, required: true, label: { pt-BR: Primeira área, en: First area, es: Primera área } }
+      - { key: area2, kind: area, label: { pt-BR: Segunda área, en: Second area, es: Segunda área } }
+      - { key: area3, kind: area, label: { pt-BR: Terceira área, en: Third area, es: Tercera área } }
+      - { key: area4, kind: area, label: { pt-BR: Quarta área, en: Fourth area, es: Cuarta área } }
+    definition:
+      schema_version: 1
+      card_style: minimalista
+      views:
+        - id: casa
+          title: Casa
+          icon: home
+          badges:
+            - { id: cm-luzes, type: stat, label: luzes, icon: light-bulb, query: { capability: [onoff, dimmer], state: "on" }, aggregate: count }
+          sections:
+            - id: cm-areas
+              widgets:
+                - { id: cm-a1, type: template, template: area, vars: { area: "{{ fields.area1 }}" }, span: { mobile: 12, tablet: 6, desktop: 6 } }
+                - { id: cm-a2, type: template, template: area, vars: { area: "{{ fields.area2 }}" }, span: { mobile: 12, tablet: 6, desktop: 6 } }
+                - { id: cm-a3, type: template, template: area, vars: { area: "{{ fields.area3 }}" }, span: { mobile: 12, tablet: 6, desktop: 6 } }
+                - { id: cm-a4, type: template, template: area, vars: { area: "{{ fields.area4 }}" }, span: { mobile: 12, tablet: 6, desktop: 6 } }
+            - id: cm-cenas
+              widgets:
+                - { id: cm-scenes, type: scene_bar, span: { mobile: 12, tablet: 12, desktop: 12 } }

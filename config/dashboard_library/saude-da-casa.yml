@@ -1,0 +1,28 @@
+format: 1
+key: saude-da-casa
+name: Saúde da casa
+version: 1.0.0
+description: O que está sem sinal, sem bateria ou parado.
+items:
+  - type: preset
+    key: saude-da-casa
+    name: { pt-BR: Saúde da casa, en: Home health, es: Salud de la casa }
+    icon: badge-check
+    description: { pt-BR: "Aparelhos sem sinal, bateria baixa, sensores parados há um dia e os alertas abertos, para cuidar da instalação.", en: "Devices without signal, low battery, sensors idle for a day and open alerts, to look after the installation.", es: "Aparatos sin señal, batería baja, sensores parados hace un día y alertas abiertas, para cuidar la instalación." }
+    fields:
+      - { key: bateria, kind: number, default: 20, label: { pt-BR: Bateria baixa abaixo de (%), en: Low battery below (%), es: Batería baja por debajo de (%) }, hint: { pt-BR: "vazio = 20", en: "empty = 20", es: "vacío = 20" } }
+    definition:
+      schema_version: 1
+      views:
+        - id: saude
+          title: Saúde da casa
+          icon: badge-check
+          badges:
+            - { id: sd-sinal, type: stat, label: sem sinal, icon: status-offline, query: { quality: [stale, unavailable, error] }, aggregate: count }
+          sections:
+            - id: sd-lista
+              widgets:
+                - { id: sd-sem-sinal, type: query_list, label: Sem sinal, query: { quality: [stale, unavailable, error] }, span: { mobile: 12, tablet: 6, desktop: 4 } }
+                - { id: sd-bateria, type: query_list, label: "Bateria abaixo de {{ fields.bateria }}%", query: { device_class: battery, below: "{{ fields.bateria }}" }, span: { mobile: 12, tablet: 6, desktop: 4 } }
+                - { id: sd-parados, type: query_list, label: Parados há um dia, query: { capability: [measure, contact, motion], unchanged_min: 1440 }, span: { mobile: 12, tablet: 6, desktop: 4 } }
+                - { id: sd-alertas, type: alerts, span: { mobile: 12, tablet: 6, desktop: 4 } }

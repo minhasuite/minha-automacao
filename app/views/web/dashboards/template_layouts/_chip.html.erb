@@ -1,0 +1,2 @@
+<%# locals: (d:, w:, title:, ico:, tone:, live:) -%>
+<span class="ss-badge <%= DashboardsHelper::FLAG_TONES.fetch(tone, "ss-badge-accent") %>"><%= icon(d["icon"], "size-4") if d["icon"].present? %><% if d["value"].present? %><strong class="num"><%= d["value"] %></strong><% end %> <%= title %></span>

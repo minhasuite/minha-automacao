@@ -5,13 +5,35 @@ module Dashboards
   # versões, API, app). Predefinição nova = classe em `Presets` (herda de
   # `Base`: `describe`, `fields` e `build(site, form)` → definição) + nome em
   # `PLUGINS`; a tela de escolha e a criação não mudam.
+  #
+  # P2.2: predefinição também é **dado** (`DataPreset`), sem classe: o item
+  # `preset` de um pacote (`fields` com os mesmos `kind` + a definição com
+  # `{{ fields.<campo> }}`) e a biblioteca embutida de painéis prontos
+  # (ideia 20, `config/dashboard_library/*.yml`, cada um um manifesto de
+  # pacote). A tela lista os três (`all`): classes, biblioteca e pacotes do local.
   module Presets
     PLUGINS = %w[EnergyPreset HealthPreset].freeze
+    LIBRARY = Rails.root.join("config/dashboard_library")
 
     module_function
 
     def plugins = PLUGINS.map { |n| const_get(n) }
     def [](key) = plugins.find { |p| p.key == key.to_s }
+
+    # Manifestos da biblioteca embutida (só dados, validados pelo spec como pacote).
+    def library_manifests
+      @library_manifests ||= Dir[LIBRARY.join("*.yml")].sort.map { |f| YAML.safe_load_file(f, aliases: false).freeze }.freeze
+    end
+
+    def library = library_manifests.flat_map { |m| DataPreset.from_manifest(m, source: :library) }
+
+    # As dos pacotes instalados no local (chave "<pacote>--<item>").
+    def from_packages(site)
+      site.packages.ordered.flat_map { |pk| DataPreset.from_manifest(pk.manifest, source: :package, package: pk) }
+    end
+
+    def all(site) = plugins + library + from_packages(site)
+    def find(site, key) = all(site).find { |p| p.key == key.to_s }
 
     # Monta, valida pelo Schema e publica. → [painel, erros].
     def create!(site, preset, form, author: Current.user)
@@ -23,6 +45,7 @@ module Dashboards
       errors = Schema.errors(definition)
       return [ nil, errors ] if errors.any?
 
+      preset.prepare!(site) if preset.respond_to?(:prepare!) # modelos de card que a predefinição usa
       dashboard = site.dashboards.create!(name: form[:name].presence&.first(80) || preset.title, kind: "custom", icon: preset.icon.presence_in(Dashboard::ICONS), definition: definition)
       dashboard.publish!(definition, author: author)
       [ dashboard, [] ]

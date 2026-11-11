@@ -1,0 +1,13 @@
+# Modelo embutido (P1.3): um ponto em linha (nome, valor e "dado velho" pelo tom), tocar abre os detalhes.
+key: ponto
+name: { pt-BR: Ponto em linha, en: Point row, es: Punto en línea }
+description: { pt-BR: "Nome e valor de um ponto numa linha; fica em alerta sem sinal.", en: "A point's name and value in a row; turns to warning without signal.", es: "Nombre y valor de un punto en una línea; queda en alerta sin señal." }
+layout: row
+params:
+  - { key: ponto, label: { pt-BR: Ponto, en: Point, es: Punto }, kind: point, required: true }
+slots:
+  title: "{{ vars.ponto.name }}"
+  subtitle: "{{ vars.ponto.device }}"
+  value: "{{ vars.ponto.text }}"
+  tone: "{% if vars.ponto.quality != 'good' %}warn{% endif %}"
+  tap: { action: more_info, point: "{{ vars.ponto }}" }

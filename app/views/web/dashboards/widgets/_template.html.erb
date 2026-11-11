@@ -1,0 +1,23 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Modelo de card (P1.3): o servidor resolveu o desenho (`layout`) e os espaços; aqui só o componente da gem de
+    cada desenho (o mesmo do app): mosaic = Ss::MosaicTileComponent, tile = Ss::DeviceTileComponent, row =
+    Ss::ListItemComponent, chip = .ss-badge, stat = Ss::KpiCardComponent (um partial em template_layouts/ por desenho). O toque é o gesto do servidor
+    (`tap`, uma ação do Dashboards::Actions) pelo dw-gesture, como em qualquer widget. %>
+<% d = w["data"] %>
+<% if d["missing"] %>
+  <div class="ss-card ss-card-pad h-full"><p class="text-sm font-semibold text-ink-2"><%= t("dashboards.templates.missing", key: d["template"]) %></p></div>
+<% else %>
+  <% tone = d["tone"] %>
+  <% tapped = d["tap"] && dashboard.persisted? && (live || !%w[toggle command].include?(d["tap"]["action"])) %>
+  <% gattrs, ghidden = tapped ? dw_gestures(w.merge("gestures" => { "tap" => d["tap"] }), points, dashboard: dashboard, live: live) : [ {}, "".html_safe ] %>
+  <% ico = icon(d["icon"].presence || w["icon"].presence || "template", "") %>
+  <% title = d["title"].presence || w["label"].to_s %>
+  <div class="relative h-full" <%= tag.attributes(data: gattrs, role: ("button" if tapped), tabindex: (0 if tapped)) %>>
+    <%= ghidden %>
+    <% if d["missing_vars"].present? %>
+      <p class="text-xs font-semibold text-warn px-1"><%= t("dashboards.templates.missing_vars", vars: d["missing_vars"].to_sentence) %></p>
+    <% end %>
+    <%# Um partial por desenho (template_layouts/_<layout>); desenho novo nasce no componentes-ui e no app primeiro. %>
+    <%= render "web/dashboards/template_layouts/#{d['layout'].presence_in(Dashboards::CardTemplates::LAYOUTS) || 'mosaic'}", d: d, w: w, title: title, ico: ico, tone: tone, live: live %>
+  </div>
+<% end %>

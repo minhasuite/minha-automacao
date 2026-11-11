@@ -30,7 +30,8 @@ module Dashboards
       { "id" => dashboard.id, "site_id" => @site.id, "name" => dashboard.name, "kind" => dashboard.kind, "auto" => dashboard.auto,
         "version" => dashboard.version, "schema_version" => @definition["schema_version"], "role" => role,
         "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload,
-        "open_view" => Context.open_view(self, @definition, views) }.compact.merge(@definition.slice("theme", "favorites", "start_view"))
+        "open_view" => Context.open_view(self, @definition, views) }.compact.merge(@definition.slice("theme", "favorites", "start_view", "card_style"))
+        .merge(CardStyles.now(@definition["card_style"]))
     end
 
     # Um widget só (o quadro que o tempo real recarrega). nil = não existe ou o papel não vê.
@@ -79,6 +80,7 @@ module Dashboards
       @memo ||= {}
       @memo.key?(key) ? @memo[key] : (@memo[key] = yield)
     end
+    def condition_refs(cond) = visibility_refs(cond) # P1.3 (modelos de card): os pontos que a condição cita
 
     # Põe o ponto no `points` do JSON (o que o widget desenha).
     def use(p)

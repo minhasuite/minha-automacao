@@ -1,0 +1,12 @@
+# Modelo embutido (P1.3): um número de uma consulta como indicador (ex.: luzes acesas com a etiqueta), com tom quando passa de zero.
+key: contagem
+name: { pt-BR: Contagem, en: Count, es: Conteo }
+description: { pt-BR: "Quantos pontos de uma etiqueta estão ligados ou abertos.", en: "How many points with a tag are on or open.", es: "Cuántos puntos de una etiqueta están encendidos o abiertos." }
+layout: stat
+params:
+  - { key: titulo, label: { pt-BR: Título, en: Title, es: Título }, kind: text, required: true }
+  - { key: etiqueta, label: { pt-BR: Etiqueta, en: Tag, es: Etiqueta }, kind: text, required: true }
+slots:
+  title: "{{ vars.titulo }}"
+  value: { query: { tag: "{{ vars.etiqueta }}", state: "on" }, aggregate: count }
+  tone: { query: { tag: "{{ vars.etiqueta }}", state: "on" }, aggregate: count, tone: warn }

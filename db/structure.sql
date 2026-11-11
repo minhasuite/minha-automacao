@@ -488,6 +488,27 @@ CREATE TABLE public.camera_recordings (
 
 
 --
+-- Name: card_templates; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.card_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    key character varying NOT NULL,
+    name character varying NOT NULL,
+    description character varying,
+    layout character varying NOT NULL,
+    slots jsonb DEFAULT '{}'::jsonb NOT NULL,
+    params jsonb DEFAULT '[]'::jsonb NOT NULL,
+    version integer DEFAULT 1 NOT NULL,
+    source character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: commands; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2130,6 +2151,14 @@ ALTER TABLE ONLY public.camera_recordings
 
 
 --
+-- Name: card_templates card_templates_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.card_templates
+    ADD CONSTRAINT card_templates_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: commands commands_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3027,6 +3056,20 @@ CREATE INDEX index_camera_recordings_on_site_id ON public.camera_recordings USIN
 --
 
 CREATE INDEX index_camera_recordings_on_tenant_id ON public.camera_recordings USING btree (tenant_id);
+
+
+--
+-- Name: index_card_templates_on_site_id_and_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_card_templates_on_site_id_and_key ON public.card_templates USING btree (site_id, key);
+
+
+--
+-- Name: index_card_templates_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_card_templates_on_tenant_id ON public.card_templates USING btree (tenant_id);
 
 
 --
@@ -4349,6 +4392,14 @@ ALTER TABLE ONLY public.automation_runs
 
 
 --
+-- Name: card_templates fk_rails_3674279ab8; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.card_templates
+    ADD CONSTRAINT fk_rails_3674279ab8 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: commands fk_rails_37053e57d9; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4925,6 +4976,14 @@ ALTER TABLE ONLY public.points
 
 
 --
+-- Name: card_templates fk_rails_aa36e51403; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.card_templates
+    ADD CONSTRAINT fk_rails_aa36e51403 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: invites fk_rails_aa8931b25d; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5307,6 +5366,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261111143017'),
 ('20261111120017'),
 ('20261111100047'),
 ('20261111100037'),
