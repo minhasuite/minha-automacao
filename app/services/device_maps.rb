@@ -5,7 +5,7 @@
 # arquivo. Mapa novo = arquivo + linha em `FILES` e `MERGEABLE`.
 module DeviceMaps
   FILES = { "tuya" => "config/device_maps/tuya.yml", "miot" => "config/device_maps/miot.yml" }.freeze
-  MERGEABLE = { "tuya" => %w[codes categories streams gateways], "miot" => %w[properties vacuum_events] }.freeze
+  MERGEABLE = { "tuya" => %w[codes categories streams gateways aliases], "miot" => %w[properties vacuum_events] }.freeze
   TTL = 60
 
   module_function

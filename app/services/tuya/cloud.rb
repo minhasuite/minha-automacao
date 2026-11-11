@@ -156,13 +156,27 @@ module Tuya
     def self.state(d) = Array(d["status"]).each_with_object({}) { |s, h| h[s["code"].to_s] = s["value"] if s.is_a?(Hash) && s.key?("code") }
 
     def entry(d)
-      relations = Array(get_hash("/v1.0/m/life/devices/#{d['id']}/status")["dpStatusRelationDTOS"])
+      relations = self.class.aliased(Array(get_hash("/v1.0/m/life/devices/#{d['id']}/status")["dpStatusRelationDTOS"]), self.class.state(d))
       writable = Array(get_hash("/v1.1/m/life/#{d['id']}/specifications")["functions"]).map { |f| f["code"] }
       room = (get_hash("/v1.0/m/thing/ha/#{d['id']}/room") rescue {})["name"]
       { "id" => d["id"], "kind" => "tuya_cloud", "match_drivers" => DRIVERS, "name" => d["name"].to_s.squish.presence || d["id"],
         "manufacturer" => "Tuya", "model" => d["product_name"], "category" => self.class.map["categories"][d["category"]] || d["category"], "room" => room,
         "online" => d["online"] == true, "sub" => d["sub"] == true && !self.class.gateway?(d), "secret" => d["local_key"], "poll_s" => 0,
         "state" => self.class.state(d), "points" => (self.class.remote_points(d) + self.class.points(d["name"].to_s, relations, writable) + self.class.stream_points(d)).uniq { |p| p.dig("address", "dps") } }
+    end
+
+    # Código declarado que não vem no estado → o equivalente que vem (`aliases` do mapa).
+    def self.aliased(relations, state)
+      return relations if state.empty?
+
+      taken = relations.map { |r| r["statusCode"].to_s }
+      relations.map do |r|
+        code = r["statusCode"].to_s
+        next r if state.key?(code)
+
+        alt = Array(map.dig("aliases", code)).find { |c| state.key?(c) && !taken.include?(c) }
+        alt ? r.merge("statusCode" => alt) : r
+      end
     end
 
     # Lote 9: câmera com vídeo pela nuvem (`streams` no mapa) → ponto `stream`
