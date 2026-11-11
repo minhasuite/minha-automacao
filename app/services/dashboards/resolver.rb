@@ -15,11 +15,11 @@ module Dashboards
       @site = dashboard.site
       @role = role
       @definition = definition || dashboard.published
-      @all = @site.points.includes(:device).order(:name).to_a
-      @by_id = @all.index_by(&:id)
-      @by_key = @all.index_by(&:key)
       @used = {}
     end
+
+    # Painel resolvido com cache curto (Dashboards::Cache); a prévia do rascunho não usa.
+    def self.cached(dashboard, role:) = Cache.resolved(dashboard, role: role)
 
     def call
       views = Array(@definition["views"]).map do |view|
@@ -41,9 +41,10 @@ module Dashboards
     end
 
     # O que os plugins de widget (Dashboards::Widgets) usam para calcular o `data`.
-    def point(ref) = ref.is_a?(String) ? (@by_id[ref] || @by_key[ref]) : nil
+    def point(ref) = ref.is_a?(String) ? (by_id[ref] || by_key[ref]) : nil
     def site = @site
-    def points = @all
+    # Pontos do local: lidos na primeira vez que alguém pede, pelo cache curto do local.
+    def points = @all ||= Cache.points(@site)
     def definition = @definition
     # `pending`/`expect`/`failed`: comando a caminho do aparelho (Points::Inflight), para o
     # tile mostrar o estado pedido com "Enviando…" em vez de voltar ao antigo até o aviso.
@@ -60,10 +61,10 @@ module Dashboards
     # pontos que podem entrar (dependência do tempo real).
     def query(q, with_state: true)
       @queries ||= {}
-      @queries[[ q, with_state ]] ||= (@point_query ||= Points::Query.new(@site, points: @all)).call(q || {}, with_state: with_state)
+      @queries[[ q, with_state ]] ||= (@point_query ||= Points::Query.new(@site, points: points)).call(q || {}, with_state: with_state)
     end
 
-    def sort(list, key) = (@point_query ||= Points::Query.new(@site, points: @all)).sort(list, key)
+    def sort(list, key) = (@point_query ||= Points::Query.new(@site, points: points)).sort(list, key)
 
     # Põe o ponto no `points` do JSON (o que o widget desenha).
     def use(p)
@@ -72,6 +73,9 @@ module Dashboards
     end
 
     private
+
+    def by_id = @by_id ||= points.index_by(&:id)
+    def by_key = @by_key ||= points.index_by(&:key)
 
     # app3: o tema que vale agora na visão (painel + visão, noite no fuso do
     # local), já com as cores, para o app desenhar sem repetir a regra.
@@ -87,7 +91,7 @@ module Dashboards
 
       return container(w) if w["widgets"].is_a?(Array)
 
-      data, deps = data_for(w)
+      data, deps = Perf.measure("widget", w["type"]) { data_for(w) }
       gestures = Actions.resolve(self, w, [ w["bind"] ].compact.filter_map { |ref| point(ref) })
       deps += gestures.values.filter_map { |g| point(g["point_id"]) }
       w.merge("visible" => visible?(w), "data" => data, "deps" => deps.map(&:id).uniq).merge(gestures.any? ? { "gestures" => gestures } : {})

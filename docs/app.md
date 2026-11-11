@@ -15,7 +15,7 @@ não conhece nenhuma casa, aparelho ou automação; desenha o painel resolvido
 | Painel | `GET /sites/:id/dashboards`, `GET /dashboards/:id` (resolvido, `points` com `can_command`) |
 | Comando | `POST /points/:id/commands` (papel x risco no servidor; o app pede confirmação quando `risk` ≠ normal ou `confirm`) |
 | Histórico | `GET /points/:id/history` |
-| Câmera | `GET /points/:id/snapshot` (JPEG pelo Rails; o go2rtc nunca fica exposto) |
+| Câmera | `GET /points/:id/snapshot[?w=largura]` (JPEG pelo Rails; o go2rtc nunca fica exposto; `X-Frame-At`, `X-Camera-Offline`) |
 | Cenas e automações | `GET /sites/:id/scenes`, `POST /scenes/:id/activate`, `GET /sites/:id/automations`, `PATCH /automations/:id {enabled}`, `POST /automations/:id/run` (`confirm_critical`) |
 | Alertas e avisos | `GET /alerts`, `POST /alerts/:id/ack`, `GET /notifications` (com `actions`, `url`, `image_url`), `POST /notifications/:id/respond {action_id}` |
 | Push | `POST/DELETE /device_tokens` (FCM) |

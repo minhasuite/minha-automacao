@@ -74,6 +74,10 @@ services:
       <<: *app-env
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
       RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-3}
+      # Conexões por processo do Puma: 3 threads + Action Cable (4) + Solid Cable + quadro
+      # de câmera em segundo plano (2). Com 3 (o padrão antigo) o tempo real esperava
+      # conexão até 5 s (docs/desempenho.md). Só abre quando precisa.
+      DB_POOL: "${DB_POOL_WEB:-10}"
     command: bash -c "bundle exec rails db:prepare && exec bundle exec puma -C config/puma.rb"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/up || exit 1"]
@@ -101,6 +105,7 @@ services:
       <<: *app-env
       DB_POOL: "${DB_POOL:-24}" # threads do worker (JOB_THREADS) + Solid Queue + ouvintes e leitura periódica
       JOB_THREADS: "${JOB_THREADS:-6}"
+      JOB_SLOW_THREADS: "${JOB_SLOW_THREADS:-2}" # tarefas lentas (SlowJob) ao mesmo tempo; o resto fica para comandos
       MQTT_URL: mqtt://automacao:${MQTT_PASSWORD:?set MQTT_PASSWORD}@mosquitto:1883
 
   # Broker MQTT (driver mqtt, zigbee2mqtt). Com senha; a porta 1883 fica na

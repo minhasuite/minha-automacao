@@ -646,6 +646,15 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   atributo `track` do "Presença" do app (some com a coordenada). Assistente
   "Migre do HA" (`Integrations::HaMigration`, `HaMigrationJob`) por cima
   do `HomeAssistantImport` (progresso por `STEPS`); spec só com HA falso.
+- **Desempenho (aberto/fechado, `docs/desempenho.md`)**: pontos do local e painel
+  resolvido em cache curto na memória (`Dashboards::Cache`, chave = carimbo do local
+  pelo `xmin`; painel por papel+minuto, 60 s; desligado nos testes). Aviso de mudança
+  só pelo `Points::Broadcast` (medição agrupada em 1,5 s por ponto, `address.notify_s`).
+  Banda morta padrão por unidade = linha em `config/deadbands.yml`. Tela de câmera usa
+  `Drivers::Go2rtc.frame` (nuvem/caída em segundo plano, `?w=`; o `snapshot` síncrono
+  fica para IA/aviso). Tarefa lenta = `include SlowJob` (fila `slow`, semáforo
+  `JOB_SLOW_THREADS`), nunca um segundo processo de worker. Tempo por tela/widget no
+  `Perf` (Saúde → Desempenho).
 - Nunca acione de teste portão, sirene, ar-condicionado, irrigação ou
   bomba/filtro da piscina; leitura de estado pode.
 

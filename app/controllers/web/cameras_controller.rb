@@ -6,9 +6,13 @@ module Web
 
     before_action :load_camera
 
+    # `?w=` = largura (celular); câmera de nuvem ou caída responde na hora (Drivers::Go2rtc.frame).
     def snapshot
+      frame = Drivers::Go2rtc.frame(@point, width: params[:w])
       response.headers["Cache-Control"] = "no-store"
-      send_data Drivers::Go2rtc.snapshot(@point), type: "image/jpeg", disposition: "inline"
+      response.headers["X-Frame-At"] = frame.at.iso8601
+      response.headers["X-Camera-Offline"] = "1" if frame.offline
+      send_data frame.jpeg, type: "image/jpeg", disposition: "inline"
     rescue Drivers::Go2rtc::Error => e
       render plain: e.message, status: :service_unavailable
     end

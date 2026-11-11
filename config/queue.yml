@@ -3,6 +3,11 @@
 # Comando de aparelho tem prioridade (ExecuteCommandJob, priority -10) e a fila
 # é olhada a cada 0,1 s: com 1 s e 3 threads o comando esperava atrás do resto.
 # JOB_THREADS / JOB_POLLING_S ajustam no servidor sem novo build.
+# Filas (Performance 7): `commands` (ExecuteCommandJob, prioridade -10),
+# `default` e `slow` (SlowJob: varredura, backup, rollup, migração…, prioridade
+# 10 e no máximo JOB_SLOW_THREADS = 2 rodando juntas pelo semáforo do Solid
+# Queue). Continua um processo só com "*": separar em dois `workers` abriria um
+# segundo processo, e os ouvintes (on_worker_start) subiriam duas vezes.
 default: &default
   dispatchers:
     - polling_interval: 0.5

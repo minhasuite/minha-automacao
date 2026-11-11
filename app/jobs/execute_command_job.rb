@@ -10,7 +10,7 @@
 # Lote (`batch_id`, anúncio em várias Echo da mesma conta): o líder executa
 # uma vez para todos (`execute_group` do driver) e os outros acompanham o status.
 class ExecuteCommandJob < ApplicationJob
-  queue_as :default
+  queue_as :commands
   # Na frente de tudo na fila (Solid Queue: número menor sai antes): quem
   # apertou o interruptor está olhando para a lâmpada.
   queue_with_priority(-10)
@@ -88,8 +88,7 @@ class ExecuteCommandJob < ApplicationJob
   def settled(command)
     follow(command)
     [ command.point, *command.followers.includes(:point).map(&:point) ].compact.each do |point|
-      point.broadcast_refresh_to(point)
-      Turbo::StreamsChannel.broadcast_action_to(point.site, :points, action: :point_changed, target: point.id)
+      Points::Broadcast.changed(point)
     end
   rescue StandardError => e
     Rails.error.report(e, handled: true)

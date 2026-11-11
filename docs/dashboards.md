@@ -201,7 +201,9 @@ risco ou `confirm` pede confirmação na web e deve pedir no app.
 stream (`PointsChannel`, exige papel no local) e recarrega só os quadros
 (`turbo-frame[data-points~=id]`) que dependem do ponto, em
 `GET /paineis/:id/w/:widget_id`, renderizados com o papel de quem vê. O
-comando de um widget volta para o próprio quadro.
+comando de um widget volta para o próprio quadro. Medição avisa no máximo uma
+vez a cada 1,5 s por ponto (`Points::Broadcast`) e a recarga usa a lista de
+pontos em cache curto (`docs/desempenho.md`).
 
 ## Painéis em Configurações (F8d)
 

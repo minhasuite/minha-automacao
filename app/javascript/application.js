@@ -22,21 +22,32 @@ document.addEventListener("turbo:load", () => {
 
 // Dashboards: o servidor avisa "o ponto X mudou" (stream do local, sem HTML) e
 // cada quadro de widget que depende dele (data-points) se recarrega sozinho,
-// renderizado com o papel de quem vê. Junta avisos seguidos em 250 ms.
+// renderizado com o papel de quem vê. Junta avisos seguidos em 250 ms, mas nunca
+// segura mais que 1 s (medição mudando sem parar não pode travar a tela), recarrega
+// cada quadro uma vez só e, com a aba escondida, guarda para quando ela voltar.
 const stale = new Set()
-let staleTimer
+let staleTimer, staleSince = 0
+const flushStale = () => {
+  clearTimeout(staleTimer)
+  staleTimer = null
+  staleSince = 0
+  if (document.hidden) return
+  stale.forEach((f) => {
+    if (!f.isConnected) return
+    if (f.getAttribute("src")) f.reload(); else f.src = f.dataset.src
+  })
+  stale.clear()
+}
 Turbo.StreamActions.point_changed = function () {
   document.dispatchEvent(new CustomEvent("dw:point-changed", { detail: this.target })) // quiosque: acordar no movimento
   document.querySelectorAll(`turbo-frame[data-points~="${CSS.escape(this.target)}"]`).forEach((f) => stale.add(f))
+  if (!stale.size || document.hidden) return
+  const now = Date.now()
+  staleSince ||= now
   clearTimeout(staleTimer)
-  staleTimer = setTimeout(() => {
-    stale.forEach((f) => {
-      if (!f.isConnected) return
-      if (f.getAttribute("src")) f.reload(); else f.src = f.dataset.src
-    })
-    stale.clear()
-  }, 250)
+  staleTimer = setTimeout(flushStale, Math.max(0, Math.min(250, staleSince + 1000 - now)))
 }
+document.addEventListener("visibilitychange", () => { if (!document.hidden && stale.size) flushStale() })
 
 // Comando de ponto (POST /pontos/:id/comando): o aparelho leva segundos, então a tela
 // responde no toque. A chave (ss-switch) já vira sozinha; aqui o tile de aperto (portão,

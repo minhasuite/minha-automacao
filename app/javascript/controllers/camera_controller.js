@@ -26,7 +26,9 @@ export default class extends Controller {
 
   refresh() {
     if (document.hidden || this.pc) return
-    this.imgTarget.src = `${this.snapshotValue}?t=${Date.now()}`
+    // Quadro na largura da tela (celular baixa bem menos); o servidor arredonda para poucas larguras.
+    const w = Math.round((this.element.clientWidth || 0) * (window.devicePixelRatio || 1))
+    this.imgTarget.src = `${this.snapshotValue}?t=${Date.now()}${w > 0 && w < 1280 ? `&w=${w}` : ""}`
   }
 
   toggle() {

@@ -1,0 +1,30 @@
+# Banda morta padrão do histórico (Performance 6), por unidade do ponto de
+# medição (`capability: measure`): a leitura só vai para o histórico quando
+# muda mais que isso desde a última gravada. Vale só quando o ponto não tem
+# `deadband` próprio (0 no ponto = grava toda mudança) e não é acumulador
+# (`state_class` total/total_increasing). `device_class` sobrepõe a unidade.
+# O valor do ponto e as telas não mudam: só grava menos linhas em `readings`.
+units:
+  W: 1
+  kW: 0.001
+  V: 0.5
+  A: 0.01
+  mA: 10
+  Hz: 0.05
+  VA: 1
+  var: 1
+  "°C": 0.1
+  "°F": 0.2
+  K: 0.1
+  "%": 1
+  lx: 5
+  hPa: 0.5
+  dBm: 2
+  dB: 1
+  ppm: 5
+  "µg/m³": 1
+  "μg/m³": 1
+device_classes:
+  power_factor: 0.01
+  signal_strength: 2
+  battery: 1

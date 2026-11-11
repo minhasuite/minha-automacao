@@ -2,7 +2,7 @@
 # monta a revisão; `import` importa o escolhido e guarda o relatório. O
 # estado (com o erro, se der) fica em `integration.settings["migration"]`.
 class HaMigrationJob < ApplicationJob
-  queue_as :default
+  include SlowJob
 
   def perform(integration_id, phase, choice = {})
     integration = ActsAsTenant.without_tenant { Integration.find_by(id: integration_id) } or return

@@ -6,7 +6,9 @@ ou canal). O vídeo nunca vai direto do navegador para a câmera: o
 servidor (nome = id do ponto) e a tela pede ao Rails o quadro
 (`GET /cameras/:id/quadro`) e o ao vivo por WebRTC
 (`POST /cameras/:id/ao-vivo`), com o papel no local. Sem `GO2RTC_URL` (VPS)
-o widget mostra "Sem conexão".
+o widget mostra "Sem conexão". Câmera de nuvem ou caída não segura a tela: o
+quadro vem em segundo plano e a resposta sai na hora (último quadro ou 503);
+`?w=` pede um quadro menor (`docs/desempenho.md`).
 
 ## De onde vem a câmera (plugins de integração)
 

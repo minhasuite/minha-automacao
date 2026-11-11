@@ -142,15 +142,21 @@ module Api
       def snapshot
         point = Point.find(params[:id])
         own = point.capability == "detection" # integ: quadro da detecção pelo plugin da câmera
-        raise ActiveRecord::RecordNotFound unless own || (point.capability == "stream" && point.device.driver == "go2rtc")
+        raise ActiveRecord::RecordNotFound unless own || (point.capability == "stream" && (point.device.driver == "go2rtc" || point.address["image"] == "mqtt" || point.address["on_demand"]))
 
         authorize_site!(point.site, :view)
         # app3: `?event=<id>` = quadro de uma detecção antiga (plugin com event_snapshots?); só na memória.
         point.value = point.value.merge("id" => params[:event]) if own && point.value.is_a?(Hash) && params[:event].to_s.match?(DetectionsController::EVENT_ID)
-        jpeg = own ? Integrations.snapshot(point) : Drivers::Go2rtc.snapshot(point)
+        # Performance 9: `?w=` = quadro menor no celular; câmera de nuvem ou caída responde na hora.
+        frame = Drivers::Go2rtc.frame(point, width: params[:w]) unless own
+        jpeg = own ? Integrations.snapshot(point) : frame.jpeg
         return render_error(:camera_unavailable, "Sem quadro desta detecção.", status: :service_unavailable) if jpeg.nil?
 
         response.headers["Cache-Control"] = "no-store"
+        if frame
+          response.headers["X-Frame-At"] = frame.at.iso8601
+          response.headers["X-Camera-Offline"] = "1" if frame.offline
+        end
         send_data jpeg, type: "image/jpeg", disposition: "inline"
       rescue Drivers::Go2rtc::Error, Integrations::Error => e
         render_error(:camera_unavailable, e.message, status: :service_unavailable)

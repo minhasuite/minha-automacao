@@ -11,15 +11,18 @@ class Reading < ApplicationRecord
 
   # Grava a leitura do valor atual do ponto, respeitando `history`
   # (`none` não grava; `interval` grava no máximo uma a cada
-  # history_interval_s) e `deadband` (só grava se mudar mais que isso).
+  # history_interval_s) e a banda morta (só grava se mudar mais que isso: a
+  # do ponto ou a padrão da medida, Points::Deadband).
   def self.record!(point, at)
     return if point.history == "none"
 
     num, text = split(point.value)
-    if point.deadband || point.history == "interval"
+    band = Points::Deadband.for(point)
+    band = nil if band&.zero?
+    if band || point.history == "interval"
       last = where(point_id: point.id).order(at: :desc).first
       return if point.history == "interval" && last && last.at > at - point.history_interval_s.to_i.seconds
-      return if point.deadband && last&.value && num && (num - last.value).abs < point.deadband
+      return if band && last&.value && num && (num - last.value).abs < band
     end
     insert_all!([ { point_id: point.id, at: at, value: num, value_text: text } ], returning: false)
   end

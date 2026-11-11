@@ -3,7 +3,7 @@
 # comandos/eventos com mais de um ano, as execuções de automação velhas e os
 # quadros de câmera dos avisos vencidos.
 class ReadingsMaintenanceJob < ApplicationJob
-  queue_as :default
+  include SlowJob
 
   def perform(now = Time.current)
     Reading.ensure_partitions!(now)

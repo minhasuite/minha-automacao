@@ -17,7 +17,7 @@ module Web
       load_dashboard(:view)
       load_kiosk
       preview = params[:rascunho].present? && can?(:manage)
-      @resolved = Dashboards::Resolver.new(@dashboard, role: @site_role, definition: (@dashboard.working_draft if preview)).call
+      @resolved = preview ? Dashboards::Resolver.new(@dashboard, role: @site_role, definition: @dashboard.working_draft).call : Dashboards::Resolver.cached(@dashboard, role: @site_role)
       @preview = preview
       @view = pick_view(@resolved)
       @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role) }

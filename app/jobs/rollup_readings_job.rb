@@ -5,7 +5,7 @@
 # ponytail: média simples das leituras (não ponderada pelo tempo) e dia no
 # fuso da app, não no do local; refinar quando houver local fora de SP.
 class RollupReadingsJob < ApplicationJob
-  queue_as :default
+  include SlowJob
 
   HOURS_BACK = 3
 

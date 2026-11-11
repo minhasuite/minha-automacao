@@ -4,11 +4,15 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+    queue: slow
+    priority: 10
   # Falha da fila guardada 30 dias (dá para ver e tentar de novo em Configurações →
   # Fila); depois sai com o job. Sem isso ficavam milhares de falhas velhas.
   clear_solid_queue_failed_jobs:
     command: "SolidQueue::Job.where(id: SolidQueue::FailedExecution.where(created_at: ...30.days.ago).select(:job_id)).in_batches(of: 500).delete_all"
     schedule: every day at 3:40am America/Sao_Paulo
+    queue: slow
+    priority: 10
   # ondaA2 A18: versão de firmware dos aparelhos que se atualizam pela rede.
   firmware_check:
     class: FirmwareCheckJob

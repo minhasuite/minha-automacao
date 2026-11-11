@@ -17,7 +17,7 @@ module Api
       def show
         dashboard, role = find(:view)
         draft = bool(params[:draft]) && SiteMembership.allowed?(role, :manage)
-        payload = Dashboards::Resolver.new(dashboard, role: role, definition: (dashboard.working_draft if draft)).call
+        payload = draft ? Dashboards::Resolver.new(dashboard, role: role, definition: dashboard.working_draft).call : Dashboards::Resolver.cached(dashboard, role: role)
         render_data(payload) if stale?(etag: payload.to_json)
       end
 

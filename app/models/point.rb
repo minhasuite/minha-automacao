@@ -122,10 +122,10 @@ class Point < ApplicationRecord
       events.create!(site: site, kind: "quality", payload: { from: quality_was, to: quality }, at: at)
     end
     if value_changed || quality != quality_was || capability == "command"
-      broadcast_refresh_to(self)
       # Dashboards: um aviso por local só com o id do ponto; cada tela recarrega
       # os widgets que dependem dele (Turbo Frame, com o papel de quem vê).
-      Turbo::StreamsChannel.broadcast_action_to(site, :points, action: :point_changed, target: id)
+      # Medição que muda toda hora sai agrupada (Points::Broadcast, 1,5 s por ponto).
+      Points::Broadcast.changed(self, grouped: quality == quality_was && capability != "command")
     end
     Automations.on_change(self, quality_was, value_was) if value_changed
     Recordings.motion!(self) if value_changed && new_value == true && capability == "motion" # ondaC2: câmera em "por evento" grava
