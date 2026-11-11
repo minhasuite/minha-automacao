@@ -449,7 +449,15 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (Mosquitto, go2rtc), só status/log/reiniciar. Web só para o Dono, ação vira
   `AuditEvent` `app.<ação>`. "Abrir interface" redireciona para a porta do app
   na rede de casa (sem proxy: websocket). Sem `SUPERVISOR_URL` (VPS) só o
-  catálogo.
+  catálogo. **Apps (11/2026, aberto/fechado)**: manifesto com `command`,
+  `cap_add` (só `AppCatalog::CAPS`), `sysctls` (só `SYSCTLS`), `ram_mb`
+  (>= 1 GB = "Pesado") e `connect` (`integration:` plugin ou `ai:` provedor,
+  `{host}` = IP do servidor; o "Conectar" libera o IP no `http_allow`); porta
+  baixa só em `LOW_PORTS` (53); app de terceiro não usa nenhum desses.
+  Provedor que prepara algo ao conectar = `self.prepare(account)`
+  (`AiPrepareJob`). Descobridor MQTT novo = módulo em
+  `Mqtt::Listener::DISCOVERY` (`DoubleTake`, `Espresense`). InfluxDB exporta
+  em lote pelo `tick`, fora do `StateReport`. Dozzle fica de fora (socket).
 - **Saída HTTP (F9)**: todo pedido para endereço digitado pelo usuário passa
   por `SafeHttp` (IP interno bloqueado, conexão presa ao IP checado, redirect
   rechecado). Liberação por instalação em `tenants.settings["http_allow"]`

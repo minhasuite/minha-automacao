@@ -1,10 +1,13 @@
 module Integrations
-  # InfluxDB (catalogo): cada leitura nova de ponto (número ou liga/desliga)
-  # vai para o InfluxDB do dono, como o `influxdb` do HA: medição = unidade
-  # (ou "state"), tags entity_id/domain/area e campo `value`. É um relator do
-  # StateReport (StateReport::REPORTERS): roda numa tarefa, fora do
-  # `Point#report!`. InfluxDB 2.x (org, bucket e token) ou 1.x (banco,
-  # usuário e senha).
+  # InfluxDB (catalogo; app do catálogo): as leituras do histórico (número ou
+  # liga/desliga) vão para o InfluxDB do dono, como o `influxdb` do HA:
+  # medição = unidade (ou "state"), tags entity_id/domain/area e campo
+  # `value`. Em lote, pelo worker: a cada minuto (`tick`, RunSchedulesJob) lê
+  # as `readings` novas desde o cursor (`settings.exported_at`) e manda até
+  # BATCH linhas num pedido só. Nada no caminho do `Point#report!` (nenhuma
+  # tarefa por leitura) e nada gravado no banco além do cursor. Falhou: o
+  # cursor fica e tenta no minuto seguinte (atraso máximo de MAX_LAG).
+  # InfluxDB 2.x (org, bucket e token) ou 1.x (banco, usuário e senha).
   class InfluxdbPlugin < SchemaPlugin
     describe key: "influxdb", title: "InfluxDB", icon: "chart-bar",
              description: "Manda cada leitura dos aparelhos para o seu InfluxDB (1.x ou 2.x), para gráficos de longo prazo no Grafana e afins."
@@ -27,6 +30,9 @@ module Integrations
     field :username
     field :password, secret: true
 
+    BATCH = 5000
+    MAX_LAG = 1.day
+
     class << self
       def entries(_integration) = []
       def custom_sync? = true
@@ -39,6 +45,7 @@ module Integrations
       # Varredura = escrever um ponto de teste (confere endereço, bucket e token).
       def sync!(integration)
         write!(integration, [ "ma_ping,source=minha_automacao value=1i #{Time.current.to_i}" ])
+        integration.update_columns(settings: integration.settings.merge("exported_at" => Time.current.iso8601(6))) if integration.settings["exported_at"].blank? # rubocop:disable Rails/SkipsModelValidations
         integration.ok!
         { found: 0, fresh: 0, removed: 0, keys: 0 }
       rescue Integrations::Error => e
@@ -60,25 +67,44 @@ module Integrations
 
       def esc(s) = s.to_s.gsub(/([,= ])/, '\\\\\1')
 
-      def line(point, at = Time.current)
-        v = point.value
-        field = v == true || v == false ? "#{v ? 1 : 0}i" : v.to_f.to_s
+      def line(point, value, at)
+        field = point.bool? ? "#{value.to_i}i" : value.to_f.to_s
         tags = { entity_id: point.key, domain: point.capability, area: (point.area || point.device&.area)&.name }.compact_blank
-        "#{esc(point.unit.presence || 'state')},#{tags.map { |k, x| "#{k}=#{esc(x)}" }.join(',')} value=#{field} #{(point.reported_at || at).to_i}"
+        "#{esc(point.unit.presence || 'state')},#{tags.map { |k, x| "#{k}=#{esc(x)}" }.join(',')} value=#{field} #{at.to_i}"
       end
 
-      # --- relator do StateReport ---
-      def targets(site) = site.integrations.where(driver: driver)
-
-      def wants?(point)
-        v = point.value
-        (v.is_a?(Numeric) || v == true || v == false) &&
-          Rails.cache.fetch("influxdb:#{point.site_id}", expires_in: 1.minute) { targets(point.site).exists? }
+      # --- exportação em lote (Integrations.tick, a cada minuto) ---
+      def tick(now)
+        ActsAsTenant.without_tenant do
+          Integration.where(driver: driver).includes(:tenant).find_each do |i|
+            ActsAsTenant.with_tenant(i.tenant) { export!(i, now) }
+          end
+        end
       end
 
-      def report!(site, points)
-        lines = points.map { |p| line(p) }
-        targets(site).find_each { |i| write!(i, lines) }
+      def cursor(integration)
+        Time.zone.parse(integration.settings["exported_at"].to_s)
+      rescue ArgumentError
+        nil
+      end
+
+      # → quantas leituras foram. Lê só o que o histórico já gravou (números e liga/desliga).
+      def export!(integration, now = Time.current)
+        from = [ cursor(integration) || now, now - MAX_LAG ].max
+        to = now - 2.seconds
+        rows = Reading.joins(:point).where(points: { site_id: integration.site_id }).where(at: from...to).where.not(value: nil)
+                      .order(:at).limit(BATCH).pluck(:point_id, :at, :value)
+        if rows.any?
+          points = Point.where(id: rows.map(&:first).uniq).includes(:area, device: :area).index_by(&:id)
+          write!(integration, rows.filter_map { |pid, at, v| (p = points[pid]) && line(p, v, at) })
+          to = rows.last[1] + 0.000001 if rows.size == BATCH
+        end
+        integration.update_columns(settings: integration.settings.merge("exported_at" => to.iso8601(6))) # rubocop:disable Rails/SkipsModelValidations
+        integration.ok! if integration.status != "ok"
+        rows.size
+      rescue Integrations::Error => e
+        integration.error!(e.message)
+        0
       end
     end
   end

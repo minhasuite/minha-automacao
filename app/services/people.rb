@@ -10,7 +10,7 @@
 module People
   AWAY = "Fora".freeze
   # Ordem = a primeira que se aplica ao ponto lê ele.
-  TRACKERS = %w[Gps WifiSsid Connected].freeze
+  TRACKERS = %w[Gps WifiSsid Face Room Connected].freeze
 
   module_function
 
@@ -93,6 +93,30 @@ module People
         return unless ssids.include?(point.value.to_s.strip.downcase)
 
         HelperTypes::Zone.home_of(zones)&.name
+      end
+    end
+
+    # Rosto reconhecido na câmera (Double Take): visto há pouco = em casa;
+    # não visto não quer dizer fora (sem opinião).
+    class Face < Base
+      describe label: "Rosto na câmera"
+      texts en: { label: "Face on camera" }, es: { label: "Rostro en la cámara" }
+
+      def self.applies?(point) = point.address.to_h["tracker"] == "face" && point.bool?
+      def self.zone(point, _person, zones) = (HelperTypes::Zone.home_of(zones)&.name if point.value == true)
+    end
+
+    # Cômodo atual por Bluetooth (ESPresense): num cômodo = em casa; fora de
+    # alcance não quer dizer fora (sem opinião).
+    class Room < Base
+      describe label: "Cômodo (Bluetooth)"
+      texts en: { label: "Room (Bluetooth)" }, es: { label: "Cuarto (Bluetooth)" }
+
+      def self.applies?(point) = point.address.to_h["tracker"] == "room"
+
+      def self.zone(point, _person, zones)
+        room = point.value.to_s
+        HelperTypes::Zone.home_of(zones)&.name if room.present? && room != Espresense::AWAY
       end
     end
 

@@ -1,0 +1,22 @@
+name: Whisper (voz para texto)
+category: Voz
+icon: microphone
+description: Reconhecimento de fala local em português (Whisper pelo protocolo Wyoming), sem mandar áudio para a nuvem. Conectar cria a voz local nas Configurações → IA.
+image: rhasspy/wyoming-whisper
+version: "3.8.1"
+network: bridge
+ram_mb: 1024
+command: ["--model", "small-int8", "--language", "pt"]
+ports:
+  - { container: 10300, host: 10300 }
+volumes:
+  - { name: data, path: /data }
+connect: { ai: wyoming, base_url: "tcp://{host}" }
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Voice
+    description: Local speech recognition in Portuguese (Whisper over the Wyoming protocol), without sending audio to the cloud. Connecting creates the local voice in Settings → AI.
+  es:
+    category: Voz
+    description: Reconocimiento de voz local en portugués (Whisper por el protocolo Wyoming), sin enviar audio a la nube. Conectar crea la voz local en Configuración → IA.

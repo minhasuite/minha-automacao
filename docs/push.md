@@ -98,6 +98,16 @@ cifradas (`integrations.credentials`).
 - Spec: `spec/services/pacote4_messengers_spec.rb` (WebMock em tudo e um
   mensageiro falso registrado por `stub_const`).
 
+## ntfy (apps, 11/2026)
+
+`Integrations::NtfyPlugin` (servidor do app `ntfy` do catálogo ou o ntfy.sh):
+endereço, tópico (`[\w-]{1,64}`), token (cifrado, Bearer) e prioridade.
+Publica JSON na raiz do servidor pelo `SafeHttp` (`topic`, `title`,
+`message`, `priority`, `click`, `attach` só com https). Botões (até 3) viram
+ações `http` do ntfy para `https://APP_HOST/mensageiros/:id` com o cabeçalho
+`X-MA-Token` (segredo próprio da integração, gerado no salvar) e a
+referência no corpo; sem `APP_HOST`, sem botões. Spec só com WebMock.
+
 ## Resposta aos botões
 
 A primeira resposta vale (`responded_at`/`response`) e vira o evento

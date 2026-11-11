@@ -656,3 +656,18 @@ pt-BR:
     site: Local
     title: Vincular a Alexa
     unknown_client: Cliente da Alexa desconhecido nesta instalação.
+  apps_link:
+    caps: 'Pede permissões extras do sistema: %{caps}.'
+    connect: Conectar
+    connect_ai: 'Cria ou atualiza o provedor %{name} em Configurações → IA com o endereço deste servidor e libera o IP do servidor na Saída HTTP.'
+    connect_integration: 'Abre a integração %{name} já preenchida com o endereço deste servidor e libera o IP do servidor na Saída HTTP.'
+    connect_title: Ligar ao Minha Automação
+    connected_ai: '%{name} ligado em Configurações → IA.'
+    heavy: 'Pesado: pede uns %{gb} GB de memória. Confira se o servidor aguenta antes de instalar.'
+    heavy_badge: Pesado
+    no_host: Não deu para saber o IP deste servidor na rede de casa; abra esta página pelo IP (http://192.168…) ou defina o APP_HOST.
+    preparing: ' O modelo %{model} está sendo baixado em segundo plano (pode levar alguns minutos).'
+    ram: Memória estimada de ~%{mb} MB
+    ram_hint: Leve para a maioria dos servidores.
+    site: Local
+    start_first: Inicie o aplicativo antes de conectar.

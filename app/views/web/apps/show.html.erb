@@ -60,6 +60,7 @@
       <% if @app.web_ui %><p class="text-xs text-muted mt-2"><%= t("apps.ui_hint", port: @app.web_ui["port"]) %></p><% end %>
     <% end %>
   </section>
+  <%= render "web/apps/extras", app: @app, installed: installed, running: running %>
 
   <% if Apps::Supervisor.configured? && !@offline && !installed && !@app.system? %>
     <section class="ss-card ss-card-pad mt-4" aria-labelledby="instalar-t">

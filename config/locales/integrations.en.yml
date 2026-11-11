@@ -656,3 +656,18 @@ en:
     site: Place
     title: Link Alexa
     unknown_client: Unknown Alexa client on this installation.
+  apps_link:
+    caps: 'It asks for extra system permissions: %{caps}.'
+    connect: Connect
+    connect_ai: 'Creates or updates the %{name} provider in Settings → AI with this server address and allows the server IP in HTTP egress.'
+    connect_integration: 'Opens the %{name} integration already filled with this server address and allows the server IP in HTTP egress.'
+    connect_title: Link to Minha Automação
+    connected_ai: '%{name} linked in Settings → AI.'
+    heavy: 'Heavy: it needs about %{gb} GB of memory. Check that the server can handle it before installing.'
+    heavy_badge: Heavy
+    no_host: Couldn't tell this server's IP on the home network; open this page by IP (http://192.168…) or set APP_HOST.
+    preparing: ' The %{model} model is downloading in the background (it may take a few minutes).'
+    ram: Estimated memory of ~%{mb} MB
+    ram_hint: Light for most servers.
+    site: Place
+    start_first: Start the app before connecting.

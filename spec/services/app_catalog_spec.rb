@@ -24,7 +24,7 @@ RSpec.describe AppCatalog do
     keys = described_class.all.map(&:key)
     expect(keys).to include("mosquitto", "go2rtc", "zigbee2mqtt", "node_red", "esphome", "frigate", "music_assistant", "code_server", "uptime_kuma")
     described_class.all.each { |m| expect(Rails.root.join("app/assets/images/icons/#{m.icon}.svg")).to exist }
-    hosts = described_class.all.flat_map { |m| m.ports.map { |p| p["host"] } }
+    hosts = described_class.all.flat_map { |m| m.ports.map { |p| [ p["host"], p.fetch("protocol", "tcp") ] } }
     expect(hosts).to eq(hosts.uniq)
   end
 
@@ -37,7 +37,7 @@ RSpec.describe AppCatalog do
 
   it "procura por texto e categoria" do
     expect(described_class.search("kuma").map(&:key)).to eq([ "uptime_kuma" ])
-    expect(described_class.search("", "Câmeras").map(&:key)).to contain_exactly("go2rtc", "frigate")
+    expect(described_class.search("", "Câmeras").map(&:key)).to contain_exactly("go2rtc", "frigate", "compreface", "double_take", "scrypted")
     expect(described_class.search(nil).size).to eq(described_class.all.size)
     expect(described_class.categories).to include("Monitoramento")
     expect(described_class.find("nada")).to be_nil

@@ -1,0 +1,24 @@
+name: Scrypted
+category: Câmeras
+icon: video-camera
+description: Ponte de câmeras para HomeKit Secure Video, Google Home e Alexa, com gravação. Sem descoberta mDNS (não roda na rede do host) - o pareamento com o HomeKit pode precisar do código manual. Interface por HTTPS na porta 10443.
+image: ghcr.io/koush/scrypted
+version: "v0.146.2-noble-full"
+network: bridge
+ram_mb: 1024
+ports:
+  - { container: 10443, host: 10443 }
+  - { container: 11080, host: 11080 }
+volumes:
+  - { name: data, path: /server/volume }
+web_ui: { port: 11080 }
+env:
+  TZ: America/Sao_Paulo
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Cameras
+    description: Camera bridge to HomeKit Secure Video, Google Home and Alexa, with recording. No mDNS discovery (it doesn't run on the host network) - pairing with HomeKit may need the manual code. HTTPS interface on port 10443.
+  es:
+    category: Cámaras
+    description: Puente de cámaras para HomeKit Secure Video, Google Home y Alexa, con grabación. Sin descubrimiento mDNS (no corre en la red del host) - la vinculación con HomeKit puede necesitar el código manual. Interfaz por HTTPS en el puerto 10443.

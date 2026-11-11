@@ -7,7 +7,8 @@ class AiAccount < ApplicationRecord
 
   validates :provider, presence: true, uniqueness: { scope: :tenant_id }, inclusion: { in: ->(_) { Ai.providers.map(&:key) } }
   validates :model, length: { maximum: 100 }
-  validates :base_url, format: { with: %r{\Ahttps?://[^\s]+\z} }, length: { maximum: 300 }, allow_blank: true
+  # tcp:// = voz Wyoming (Ai::Providers::Wyoming); o resto é HTTP.
+  validates :base_url, format: { with: %r{\A(https?|tcp)://[^\s]+\z} }, length: { maximum: 300 }, allow_blank: true
 
   normalizes :model, :base_url, with: ->(v) { v.to_s.strip.presence }
 

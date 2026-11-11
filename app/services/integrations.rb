@@ -25,15 +25,15 @@ module Integrations
   # Ordem = ordem do catálogo. Integração nova: classe + uma linha aqui.
   PLUGINS = %w[TuyaPlugin XiaomiPlugin AlexaPlugin CameraPlugin HikvisionPlugin MqttPlugin Zigbee2mqttPlugin
                EsphomePlugin ShellyPlugin TasmotaPlugin MatterPlugin CastPlugin WebosPlugin TizenPlugin AdbPlugin BroadlinkPlugin SpotifyPlugin
-               FrigatePlugin ReolinkPlugin TapoPlugin UnifiProtectPlugin HuePlugin WledPlugin YeelightPlugin SwitchbotPlugin
+               FrigatePlugin DoubleTakePlugin ReolinkPlugin TapoPlugin UnifiProtectPlugin HuePlugin WledPlugin YeelightPlugin SwitchbotPlugin
                DaikinPlugin MideaPlugin LgThinqPlugin SunspecPlugin GrowattPlugin DirigeraPlugin SonosPlugin DlnaPlugin GoveePlugin ZwaveJsPlugin BleProxyPlugin BluetoothPlugin ThreadPlugin GoogleHomePlugin HomekitPlugin
                WizPlugin TplinkPlugin AdguardPlugin NutPlugin FullyKioskPlugin HomewizardPlugin SynologyDsmPlugin FritzboxPlugin DenonavrPlugin HeosPlugin BraviatvPlugin
                ForecastSolarPlugin Co2signalPlugin MoonPlugin SeasonPlugin HolidayPlugin
                SmartthingsPlugin NetatmoPlugin HomeConnectPlugin NestPlugin EcowittPlugin OverkizPlugin RingPlugin
-               UnifiPlugin SpeedtestPlugin IppPlugin InfluxdbPlugin ModbusPlugin OnedrivePlugin UpnpPlugin FritzPlugin MusicAssistantPlugin PlexPlugin
+               UnifiPlugin SpeedtestPlugin SpeedtestTrackerPlugin IppPlugin InfluxdbPlugin GrafanaPlugin ModbusPlugin OnedrivePlugin UpnpPlugin FritzPlugin MusicAssistantPlugin PlexPlugin
                BrotherPlugin SmlightPlugin LutronCasetaPlugin
                AndroidtvRemotePlugin AppleTvPlugin XboxPlugin RoborockPlugin SkyconnectPlugin
-               CalendarPlugin WeatherPlugin MobileAppPlugin NetworkTrackerPlugin TelegramPlugin WhatsappPlugin HttpMessengerPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
+               CalendarPlugin WeatherPlugin MobileAppPlugin NetworkTrackerPlugin OwntracksPlugin EspresensePlugin TelegramPlugin WhatsappPlugin HttpMessengerPlugin NtfyPlugin SystemPlugin HaImportPlugin HomeAssistantPlugin].freeze
 
   module_function
 

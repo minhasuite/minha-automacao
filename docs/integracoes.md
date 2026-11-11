@@ -646,3 +646,23 @@ Paridade com o grupo 5 do HA. Tudo por registro, com spec de plugin falso.
   de serviço, estado aos ecossistemas por `StateReport::REPORTERS`. Passo a
   passo do dono em `docs/google-home.md`.
 
+
+## Integrações dos aplicativos (apps, 11/2026)
+
+Plugins para os apps do catálogo (`config/apps/*.yml` com `connect`); todos
+`SchemaPlugin` (formulário gerado, sem partial própria). Spec:
+`spec/services/apps_onda_spec.rb`.
+
+| Plugin | O que faz |
+|---|---|
+| `speedtest_tracker` | `GET /api/v1/results/latest` (token Bearer do Speedtest Tracker): download/upload (Mbit/s, de `*_bits` ou bytes/s), latência e `last_test` (`datetime`). Leitura a cada 10 min; quem mede é o app. |
+| `adguard` (já existia) | Proteção e filtros como chaves; consultas, bloqueadas e %. "Pausar" = comandar o ponto Proteção. |
+| `ntfy` | Mensageiro (`send_message`): canal `messenger:<id>`. Detalhes em `docs/push.md`. |
+| `double_take` | Um aparelho por pessoa ("Rosto: Nome"), pontos `seen` (movimento/ocupação com `hold_s`, rastreador `Face`), `camera` e `last` (evento). Lido pelo descobridor MQTT `::DoubleTake` (`<tópico>/matches/<nome>`), que também dispara o evento `face_recognized` ({name, camera, confidence, zones}). |
+| `owntracks` | `GET /api/0/last` do Recorder; um aparelho por usuário/celular com "Presença" (`text`, `device_class: location`, valor = zona) e bateria. Coordenada só nos atributos e apagada pelo `tick` depois de `location_keep_h`. |
+| `espresense` | Aparelhos listados (`id = nome`) com "Cômodo atual" (rastreador `Room`) e distância; cômodos listados com "Ocupado". Descobridor `::Espresense` (`<tópico>/devices/<id>/<cômodo>` e `<tópico>/companion/<id>`), estado em memória, banco só quando o cômodo muda; a leitura de 60 s tira quem sumiu (`not_home`). |
+| `influxdb` (mudou) | Exportação **em lote pelo relógio** (`tick` a cada minuto): lê as `readings` novas desde `settings.exported_at`, até 5000 linhas por pedido; saiu do `StateReport` (nenhuma tarefa por leitura). Falhou = cursor parado, atraso máximo de 1 dia. |
+| `grafana` | Conectar cria/atualiza pela API a fonte de dados `minha-automacao` (InfluxDB Flux, token cifrado no Grafana) e o painel "Minha Automação" (°C, %, W, Mbit/s). |
+
+Descobridor MQTT novo = módulo com `topics`/`handles?`/`handle` + nome em
+`Mqtt::Listener::DISCOVERY` (aqui: `DoubleTake`, `Espresense`).

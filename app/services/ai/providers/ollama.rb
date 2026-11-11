@@ -13,6 +13,16 @@ module Ai
       texts en: { label: "Ollama (local)", hint: "Allow the Ollama address in Settings → System → HTTP egress (e.g. 192.168.68.50)." },
             es: { label: "Ollama (local)", hint: "Habilita la dirección de Ollama en Configuración → Sistema → Salida HTTP (ej.: 192.168.68.50)." }
 
+      # Baixa o modelo da conta (`/api/pull`, sem streaming): o "Conectar" do
+      # app Ollama chama pela fila (AiPrepareJob). Modelo já baixado volta logo.
+      def self.prepare(account)
+        res = SafeHttp.request("POST", "#{account.base_url.to_s.chomp('/')}/api/pull", headers: { "Content-Type" => "application/json" },
+                                                                                     body: { model: account.model_or_default, stream: false }.to_json, timeout: 1800)
+        raise Ai::Client::Error, "O Ollama não baixou o modelo (#{res.status})." if res.status >= 400
+      rescue SafeHttp::Error => e
+        raise Ai::Client::TransientError, "Ollama: #{e.message}"
+      end
+
       def complete(model:, system:, user:, schema:, max_tokens:, timeout:, effort: nil, temperature: nil) # rubocop:disable Lint/UnusedMethodArgument
         message = { role: "user", content: text_of(user) }
         images = images_of(user).pluck(:data)

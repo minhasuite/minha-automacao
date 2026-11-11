@@ -1,0 +1,23 @@
+<%# locals: (app:, installed:, running:) -%>
+<%# Memória estimada, permissões extras e o "Conectar" (manifesto: ram_mb, cap_add, connect). %>
+<% if app.ram_mb || app.cap_add.any? %>
+  <%= render(Ss::CalloutComponent.new(tone: (app.heavy? || app.cap_add.any? ? :warn : :info), title: t("apps_link.ram", mb: app.ram_mb.to_i), class: "mt-4")) do %>
+    <%= t("apps_link.heavy", gb: (app.ram_mb / 1024.0).round(1)) if app.heavy? %>
+    <%= t("apps_link.caps", caps: app.cap_add.join(", ")) if app.cap_add.any? %>
+    <%= t("apps_link.ram_hint") unless app.heavy? || app.cap_add.any? %>
+  <% end %>
+<% end %>
+<% if app.connect && installed %>
+  <section class="ss-card ss-card-pad mt-4" aria-labelledby="ligar-t" data-apps="connect">
+    <h2 id="ligar-t" class="flex items-center gap-2"><%= icon("link", "size-5 text-accent") %><%= t("apps_link.connect_title") %></h2>
+    <p class="text-sm text-muted mt-1"><%= app.connect["ai"] ? t("apps_link.connect_ai", name: Ai.provider(app.connect["ai"])&.label) : t("apps_link.connect_integration", name: Integrations.plugin(app.connect["integration"])&.title) %></p>
+    <%= form_with url: connect_app_path(app.key), class: "mt-3 flex flex-wrap items-end gap-3" do %>
+      <% sites = Site.order(:name).to_a %>
+      <% if app.connect["integration"] && sites.size > 1 %>
+        <div><%= label_tag :site_id, t("apps_link.site"), class: "ss-label" %><%= select_tag :site_id, options_from_collection_for_select(sites, :id, :name), class: "ss-input" %></div>
+      <% end %>
+      <%= button_tag class: "ss-btn ss-btn-primary", name: nil, disabled: !running do %><%= icon("link", "size-4") %><%= t("apps_link.connect") %><% end %>
+    <% end %>
+    <% unless running %><p class="text-xs text-muted mt-2"><%= t("apps_link.start_first") %></p><% end %>
+  </section>
+<% end %>

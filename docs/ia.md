@@ -52,6 +52,22 @@ fala em PCM, que vira WAV. `Ai::Audio` escolhe a conta com a capacidade
 texto), confere o limite do mês e registra o `AiCall` sem o áudio nem o
 texto. O "Testar conexão" de provedor só de voz gera uma fala curta.
 
+### Voz local Wyoming (apps, 11/2026)
+
+`Ai::Providers::Wyoming` (`wyoming`, capacidades `stt`/`tts`, sem chave):
+fala o protocolo Wyoming (cliente `::Wyoming`, TCP curto com timeout) com os
+apps Whisper (10300) e Piper (10200) do catálogo. Endereço `tcp://IP`
+(portas padrão) ou `tcp://IP:porta-stt?tts=porta-tts`; o `AiAccount` aceita
+`tcp://` além de http(s). Transcrever exige WAV PCM (o botão Falar já grava
+assim); a fala volta em WAV. Voz pt-BR offline (`pt_BR-faber-medium`).
+O "Conectar" da página do app cria a conta.
+
+O **Ollama** já era provedor; o app `ollama` do catálogo liga sozinho:
+Conectar cria a conta com `http://IP:11434` e o modelo pequeno do
+manifesto, libera o IP na Saída HTTP e baixa o modelo pela fila
+(`AiPrepareJob` → `prepare(account)` do provedor, `/api/pull`). Provedor que
+precisa preparar algo implementa `self.prepare(account)`.
+
 ## Configurações → IA
 
 `/configuracoes/ia` (administradores veem, o Dono muda):

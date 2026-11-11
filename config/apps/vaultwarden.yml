@@ -1,0 +1,62 @@
+name: Vaultwarden
+category: Ferramentas
+icon: lock-closed
+description: Cofre de senhas compatível com os apps do Bitwarden, guardado no servidor de casa. O cofre web só abre por HTTPS (use o acesso externo ou um proxy com certificado).
+image: vaultwarden/server
+version: "1.37.4"
+network: bridge
+ram_mb: 64
+ports:
+  - { container: 80, host: 8222 }
+volumes:
+  - { name: data, path: /data }
+web_ui: { port: 8222 }
+env:
+  TZ: America/Sao_Paulo
+options:
+  - key: domain
+    label: Endereço HTTPS do cofre
+    type: string
+    env: DOMAIN
+    pattern: '\Ahttps://[\w.-]+(:\d+)?(/[\w./-]*)?\z'
+    help: "Ex.: https://cofre.minhacasa.com.br (o endereço que os apps vão usar)."
+  - key: signups
+    label: Permitir criar contas
+    type: boolean
+    env: SIGNUPS_ALLOWED
+    default: true
+    help: Desligue depois de criar as contas da casa.
+  - key: admin_token
+    label: Senha do painel /admin
+    type: string
+    env: ADMIN_TOKEN
+    secret: true
+    help: Vazio = painel de administração desligado.
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Tools
+    description: Password vault compatible with the Bitwarden apps, stored on your home server. The web vault only opens over HTTPS (use remote access or a proxy with a certificate).
+    options:
+      domain:
+        label: Vault HTTPS address
+        help: "E.g. https://vault.myhome.com (the address the apps will use)."
+      signups:
+        label: Allow creating accounts
+        help: Turn it off after creating the household accounts.
+      admin_token:
+        label: /admin panel password
+        help: Empty = admin panel off.
+  es:
+    category: Herramientas
+    description: Bóveda de contraseñas compatible con las apps de Bitwarden, guardada en el servidor de casa. La bóveda web solo abre por HTTPS (usa el acceso externo o un proxy con certificado).
+    options:
+      domain:
+        label: Dirección HTTPS de la bóveda
+        help: "Ej.: https://boveda.micasa.com (la dirección que usarán las apps)."
+      signups:
+        label: Permitir crear cuentas
+        help: Desactívalo después de crear las cuentas de la casa.
+      admin_token:
+        label: Contraseña del panel /admin
+        help: Vacío = panel de administración desactivado.

@@ -1,0 +1,22 @@
+name: Piper (texto para fala)
+category: Voz
+icon: volume-up
+description: Fala gerada no próprio servidor com voz em português (Piper pelo protocolo Wyoming), sem internet. Conectar cria a voz local nas Configurações → IA.
+image: rhasspy/wyoming-piper
+version: "2.5.2"
+network: bridge
+ram_mb: 256
+command: ["--voice", "pt_BR-faber-medium"]
+ports:
+  - { container: 10200, host: 10200 }
+volumes:
+  - { name: data, path: /data }
+connect: { ai: wyoming, base_url: "tcp://{host}" }
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Voice
+    description: Speech generated on the server itself with a Portuguese voice (Piper over the Wyoming protocol), no internet needed. Connecting creates the local voice in Settings → AI.
+  es:
+    category: Voz
+    description: Habla generada en el propio servidor con voz en portugués (Piper por el protocolo Wyoming), sin internet. Conectar crea la voz local en Configuración → IA.

@@ -1,0 +1,40 @@
+name: Grafana
+category: Monitoramento
+icon: chart-square-bar
+description: Painéis e gráficos de longo prazo em cima do InfluxDB. Conectado ao Minha Automação, ganha a fonte de dados do InfluxDB e um painel inicial com as leituras da casa.
+image: grafana/grafana
+version: "13.2.4"
+network: apps
+ram_mb: 256
+ports:
+  - { container: 3000, host: 3002 }
+volumes:
+  - { name: data, path: /var/lib/grafana }
+web_ui: { port: 3002 }
+env:
+  GF_ANALYTICS_REPORTING_ENABLED: "false"
+  GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+  GF_USERS_ALLOW_SIGN_UP: "false"
+connect: { integration: grafana, url: "http://{host}:3002", username: admin, influx_url: "http://ma-app-influxdb:8086" }
+options:
+  - key: admin_password
+    label: Senha do usuário admin
+    type: string
+    env: GF_SECURITY_ADMIN_PASSWORD
+    secret: true
+    required: true
+    pattern: '\A.{8,100}\z'
+# Textos em en/es (pt-BR acima); falta = cai no pt-BR.
+i18n:
+  en:
+    category: Monitoring
+    description: Long-term dashboards and charts on top of InfluxDB. Connected to Minha Automação, it gets the InfluxDB data source and a starter dashboard with the house readings.
+    options:
+      admin_password:
+        label: admin user password
+  es:
+    category: Monitoreo
+    description: Paneles y gráficos de largo plazo sobre InfluxDB. Conectado a Minha Automação, recibe la fuente de datos de InfluxDB y un panel inicial con las lecturas de la casa.
+    options:
+      admin_password:
+        label: Contraseña del usuario admin
