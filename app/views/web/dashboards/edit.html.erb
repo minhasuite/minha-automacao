@@ -81,6 +81,7 @@
       </section>
 
       <%= render "web/dashboards/layout_editor", dashboard: @dashboard, view: view, live: @live %>
+      <%= render "web/dashboards/arrange_tools", dashboard: @dashboard, view: view, areas: @areas %>
 
       <% sections = Array(view["sections"]) %>
       <% sections.each do |s| %>

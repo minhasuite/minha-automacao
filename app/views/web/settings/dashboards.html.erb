@@ -17,6 +17,8 @@
   <div class="flex flex-wrap items-center gap-2 mb-4">
     <% manageable.each do |s| %>
       <%= link_to settings_dashboard_defaults_path(s), class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("adjustments", "size-4") %><%= manageable.size > 1 ? t("dashboard_defaults.link_in", site: s.name) : t("dashboard_defaults.link") %><% end %>
+      <%= link_to settings_arrange_rules_path(s), class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("view-boards", "size-4") %><%= manageable.size > 1 ? t("arrange.rules.link_in", site: s.name) : t("arrange.rules.link") %><% end %>
+      <%= link_to site_dashboard_wizard_path(s), class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("sparkles", "size-4") %><%= manageable.size > 1 ? t("arrange.wizard.button_in", site: s.name) : t("arrange.wizard.button") %><% end %>
     <% end %>
   </div>
 <% end %>

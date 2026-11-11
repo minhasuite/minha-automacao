@@ -275,6 +275,17 @@ Rails.application.routes.draw do
     # Padrões dos painéis do local (P1.1/ideia 22): itens do cartão de área e o limite do "dado velho".
     get "configuracoes/paineis/padroes/:site_id", to: "dashboard_defaults#edit", as: :settings_dashboard_defaults
     patch "configuracoes/paineis/padroes/:site_id", to: "dashboard_defaults#update"
+    # P2.1 e ideias 3, 6 e 8: regras de arrumação, "Arrumar esta visão", visão automática, montagem por frase e assistente.
+    get "configuracoes/paineis/arrumacao/:site_id", to: "arrange_rules#edit", as: :settings_arrange_rules
+    patch "configuracoes/paineis/arrumacao/:site_id", to: "arrange_rules#update"
+    get "paineis/:id/arrumar", to: "dashboard_arrange#preview", as: :arrange_dashboard
+    post "paineis/:id/arrumar", to: "dashboard_arrange#apply"
+    post "paineis/:id/visao-automatica", to: "dashboard_arrange#auto_view", as: :auto_view_dashboard
+    post "paineis/:id/congelar", to: "dashboard_arrange#freeze_view", as: :freeze_view_dashboard
+    post "paineis/:id/montar", to: "dashboard_arrange#compose", as: :compose_dashboard
+    get "paineis/:id/mudancas", to: "dashboard_arrange#changes", as: :changes_dashboard
+    get "locais/:site_id/paineis/assistente", to: "dashboard_wizard#new", as: :site_dashboard_wizard
+    post "locais/:site_id/paineis/assistente", to: "dashboard_wizard#create"
     # Produto: atualização do servidor e acesso remoto (provedores).
     post "configuracoes/sistema/atualizar", to: "settings#update_server", as: :settings_update
     post "configuracoes/sistema/atualizacao", to: "settings#update_updates", as: :settings_updates

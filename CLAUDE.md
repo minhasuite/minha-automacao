@@ -509,6 +509,12 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (`Dashboards::Hero`, `hero_now`); lista de um número = `drill` no plugin do widget
   (`/paineis/:id/w/:wid/pontos`); "dado velho" = `Dashboards::Staleness`. Nada disso tem
   `case` por tipo; ver `docs/dashboards.md` ("Painel por dado").
+- **Arrumação como dado (aberto/fechado)**: colunas, selos e ícones das visões de cômodo e
+  luz/técnico/segurança/potência do painel automático são consultas (`Dashboards::Arrange`:
+  `arrange` no painel ou no local, `auto_rules` no local; Configurações → Painéis → Regras de
+  arrumação); visão com `auto` se refaz a cada leitura até congelar (`Dashboards::AutoViews`);
+  montagem por frase só pela IA da instalação, no rascunho (`Dashboards::Compose`); assistente
+  = `Dashboards::Wizard`. Ver `docs/dashboards.md` ("Arrumação como dado").
 - **Lote 5 (aberto/fechado)**: serviço do HA novo no importador = linha em
   `HaImport::SERVICES` (método) ou `HELPER_COMMANDS`; o `case` do
   `HaImport#trigger`/`#condition` traduz a sintaxe do YAML do HA, não tipos

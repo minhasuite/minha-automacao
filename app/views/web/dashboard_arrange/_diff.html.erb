@@ -1,0 +1,19 @@
+<%# locals: (diff:, before_label:, after_label:) -%>
+<div class="grid gap-4">
+  <% diff.each do |v| %>
+    <section class="ss-card ss-card-pad" aria-label="<%= v.title %>">
+      <div class="flex items-center gap-2 mb-3">
+        <h2 class="min-w-0 flex-1 truncate"><%= v.title %></h2>
+        <span class="ss-badge <%= v.status == :same ? "" : "ss-badge-warning" %>"><%= t("arrange.diff.status.#{v.status}") %></span>
+      </div>
+      <% if v.status == :same %>
+        <p class="text-sm text-muted"><%= t("arrange.diff.same") %></p>
+      <% else %>
+        <div class="grid gap-4 md:grid-cols-2">
+          <%= render "web/dashboard_arrange/side", side: v.before, label: before_label %>
+          <%= render "web/dashboard_arrange/side", side: v.after, label: after_label %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+</div>

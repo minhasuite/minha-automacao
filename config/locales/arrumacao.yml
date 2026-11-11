@@ -1,0 +1,411 @@
+pt-BR:
+  dashboards:
+    gen:
+      other_areas: Outras áreas
+  ai_settings:
+    sources:
+      painel: Montar painel
+  arrange:
+    errors:
+      object: as regras precisam ser um objeto
+      badges: os selos precisam ser um objeto
+      badges_where: selos
+      types: '%{where}: tipo de widget desconhecido'
+      icons: 'ícones dos selos: use classe=ícone (até 60)'
+      columns: use de 1 a %{max} colunas
+      column: coluna %{n} precisa ser um objeto
+      column_where: coluna %{id}
+      id: '%{where}: id com letras minúsculas, números, _ ou -, sem repetir'
+      title: '%{where}: título até 60 letras'
+      fallback: a coluna reserva precisa ser uma das colunas
+      match: '%{where}: até %{max} regras'
+      match_item: '%{where}: cada regra é um tipo ou uma consulta'
+      query: '%{where}: %{error}'
+      query_object: consulta vazia
+      query_keys: 'filtro desconhecido: %{keys}'
+      auto_list: '%{list}: até %{max} consultas'
+      power_limit: 'medidores no gráfico: de 1 a 8'
+      auto: visão automática inválida (use a área ou o Início)
+    compose:
+      empty: Escreva o que a visão deve mostrar.
+      no_points: Este local ainda não tem pontos.
+      nothing: A IA não achou pontos do local para essa frase. Tente com os nomes dos aparelhos.
+      bad_answer: A IA respondeu fora do formato. Tente de novo.
+    flash:
+      auto_view: 'Esta visão se monta sozinha: congele para arrumar à mão.'
+      arranged: Visão arrumada no rascunho. Publique para valer.
+      auto_on: A visão agora se monta sozinha (no rascunho).
+      auto_added: Visão automática criada no rascunho.
+      frozen: 'Visão congelada no rascunho: agora é uma visão normal.'
+      composed: Visão montada no rascunho. Confira e publique.
+      dropped: 'Ficaram de fora: %{names}.'
+    tools:
+      title: Arrumar e montar
+      subtitle: Tudo entra no rascunho; nada muda até publicar.
+      auto_note: 'Esta visão se monta sozinha: aparelho novo da área entra sem você mexer. Congele para editar à mão.'
+      freeze_confirm: Congelar esta visão? Ela fica como está e para de se montar sozinha.
+      freeze: Congelar
+      arrange: Arrumar esta visão
+      make_auto: Montar sozinha
+      auto_area: Visão automática da área
+      auto_add: Criar
+      composing: Montando…
+      compose: Montar por frase (IA da instalação)
+      compose_placeholder: 'Ex.: monte a visão do escritório com luzes, ar e câmera'
+      compose_hint: Usa a chave de IA de Configurações → IA e só os pontos deste local. O resultado vai para o rascunho.
+      compose_submit: Montar
+      changes: Ver mudanças do rascunho
+      rules: Regras de arrumação
+    diff:
+      none: Não existe.
+      badges: Selos
+      section: Seção %{n}
+      empty: Vazia
+      status:
+        added: Nova
+        removed: Removida
+        same: Igual
+        changed: Mudou
+      same: Nada muda nesta visão.
+      before: Antes
+      after: Depois
+      published: Publicado
+      draft: Rascunho
+    preview:
+      title: Arrumar %{name}
+      subtitle: Selos no topo e colunas pelas regras do painel ou do local.
+      apply: Aplicar ao rascunho
+      same: A visão já está arrumada.
+      hint: As colunas e o que vira selo são regras que você pode mudar.
+    changes:
+      title: Mudanças em %{name}
+      subtitle: O que está publicado e o que o rascunho vai publicar.
+      same: O rascunho é igual ao publicado.
+    wizard:
+      layouts:
+        columns: Arrumado em colunas
+        columns_hint: Sensores no topo; comandos, cenas e mídia em colunas.
+        devices: Por aparelho
+        devices_hint: Uma seção por aparelho, como o painel automático.
+      default_name: Minha casa
+      areas: Cômodos
+      no_areas: 'Nenhuma área ainda: o painel sai só com o Início.'
+      layout: Estilo dos cômodos
+      title: Assistente do painel
+      subtitle: Escolha os cômodos e o estilo; o painel de %{site} sai pronto.
+      creating: Criando…
+      name: Nome do painel
+      hint: Cada cômodo vira uma visão que se monta sozinha quando entra aparelho novo, até você congelar.
+      submit: Criar painel
+      created: Painel criado.
+      button: Assistente
+      button_in: Assistente em %{site}
+    rules:
+      saved: Regras salvas.
+      title: Regras de arrumação
+      subtitle: Como %{site} arruma as visões e monta o painel automático.
+      query_help: 'Uma consulta por linha, no formato chave=valor (vírgula = qualquer um). Filtros: %{keys}.'
+      badges_title: Selos no topo
+      badges_hint: Sensor só de leitura que vira selo em vez de cartão.
+      widget_types: Tipos de widget que viram selo
+      queries: Consultas (uma por linha)
+      icons: Ícone do selo (classe=ícone, um por linha)
+      columns_title: Colunas
+      columns_hint: Cada widget vai para a primeira coluna cujo tipo bate; senão, pela consulta do ponto, na ordem.
+      column_n: Coluna %{n}
+      column_id: 'Coluna %{n}: id'
+      column_id_placeholder: vazia = sem coluna
+      column_title: Título
+      full: Tipos de largura inteira
+      types: Tipos de widget
+      remove_column: Remover coluna
+      fallback: Coluna reserva (id)
+      widget_types_hint: 'Tipos: %{types}.'
+      auto_title: Painel automático
+      auto_hint: O que conta como luz, técnico (fica fora), segurança e potência.
+      auto:
+        light: Luzes
+        technical: Técnico (fica fora das visões)
+        security: Segurança
+        power: Potência
+        light_names: Reconhecer luz também pelo nome (reserva)
+        power_limit: Medidores no gráfico
+      save: Salvar regras
+      reset: Voltar ao padrão
+      reset_confirm: Voltar as regras de arrumação ao padrão?
+      link: Regras de arrumação
+      link_in: Arrumação de %{site}
+en:
+  dashboards:
+    gen:
+      other_areas: Other areas
+  ai_settings:
+    sources:
+      painel: Build dashboard
+  arrange:
+    errors:
+      object: the rules must be an object
+      badges: badges must be an object
+      badges_where: badges
+      types: '%{where}: unknown widget type'
+      icons: 'badge icons: use class=icon (up to 60)'
+      columns: use 1 to %{max} columns
+      column: column %{n} must be an object
+      column_where: column %{id}
+      id: '%{where}: id with lowercase letters, digits, _ or -, unique'
+      title: '%{where}: title up to 60 characters'
+      fallback: the fallback column must be one of the columns
+      match: '%{where}: up to %{max} rules'
+      match_item: '%{where}: each rule is a type or a query'
+      query: '%{where}: %{error}'
+      query_object: empty query
+      query_keys: 'unknown filter: %{keys}'
+      auto_list: '%{list}: up to %{max} queries'
+      power_limit: 'meters in the chart: 1 to 8'
+      auto: invalid automatic view (use an area or Home)
+    compose:
+      empty: Write what the view should show.
+      no_points: This place has no points yet.
+      nothing: The AI found no points of this place for that sentence. Try the device names.
+      bad_answer: The AI answered in the wrong format. Try again.
+    flash:
+      auto_view: 'This view builds itself: freeze it to arrange by hand.'
+      arranged: View arranged in the draft. Publish to apply.
+      auto_on: The view now builds itself (in the draft).
+      auto_added: Automatic view created in the draft.
+      frozen: 'View frozen in the draft: it is now a regular view.'
+      composed: View built in the draft. Review and publish.
+      dropped: 'Left out: %{names}.'
+    tools:
+      title: Arrange and build
+      subtitle: Everything goes to the draft; nothing changes until you publish.
+      auto_note: 'This view builds itself: new devices in the area show up on their own. Freeze it to edit by hand.'
+      freeze_confirm: Freeze this view? It stays as it is and stops building itself.
+      freeze: Freeze
+      arrange: Arrange this view
+      make_auto: Build automatically
+      auto_area: Automatic view of the area
+      auto_add: Create
+      composing: Building…
+      compose: Build from a sentence (installation AI)
+      compose_placeholder: 'E.g.: build the office view with lights, AC and camera'
+      compose_hint: Uses the AI key from Settings → AI and only this place's points. The result goes to the draft.
+      compose_submit: Build
+      changes: See draft changes
+      rules: Arrangement rules
+    diff:
+      none: Does not exist.
+      badges: Badges
+      section: Section %{n}
+      empty: Empty
+      status:
+        added: New
+        removed: Removed
+        same: Same
+        changed: Changed
+      same: Nothing changes in this view.
+      before: Before
+      after: After
+      published: Published
+      draft: Draft
+    preview:
+      title: Arrange %{name}
+      subtitle: Badges on top and columns by the dashboard or place rules.
+      apply: Apply to draft
+      same: The view is already arranged.
+      hint: The columns and what becomes a badge are rules you can change.
+    changes:
+      title: Changes in %{name}
+      subtitle: What is published and what the draft will publish.
+      same: The draft matches the published version.
+    wizard:
+      layouts:
+        columns: Arranged in columns
+        columns_hint: Sensors on top; controls, scenes and media in columns.
+        devices: By device
+        devices_hint: One section per device, like the automatic dashboard.
+      default_name: My home
+      areas: Rooms
+      no_areas: 'No areas yet: the dashboard will only have Home.'
+      layout: Room style
+      title: Dashboard assistant
+      subtitle: Pick the rooms and the style; the %{site} dashboard comes out ready.
+      creating: Creating…
+      name: Dashboard name
+      hint: Each room becomes a view that builds itself when new devices arrive, until you freeze it.
+      submit: Create dashboard
+      created: Dashboard created.
+      button: Assistant
+      button_in: Assistant in %{site}
+    rules:
+      saved: Rules saved.
+      title: Arrangement rules
+      subtitle: How %{site} arranges views and builds the automatic dashboard.
+      query_help: 'One query per line, as key=value (comma = any of them). Filters: %{keys}.'
+      badges_title: Badges on top
+      badges_hint: Read-only sensor that becomes a badge instead of a card.
+      widget_types: Widget types that become badges
+      queries: Queries (one per line)
+      icons: Badge icon (class=icon, one per line)
+      columns_title: Columns
+      columns_hint: Each widget goes to the first column whose type matches; otherwise by the point query, in order.
+      column_n: Column %{n}
+      column_id: 'Column %{n}: id'
+      column_id_placeholder: empty = no column
+      column_title: Title
+      full: Full-width types
+      types: Widget types
+      remove_column: Remove column
+      fallback: Fallback column (id)
+      widget_types_hint: 'Types: %{types}.'
+      auto_title: Automatic dashboard
+      auto_hint: What counts as light, technical (left out), security and power.
+      auto:
+        light: Lights
+        technical: Technical (left out of views)
+        security: Security
+        power: Power
+        light_names: Also recognize lights by name (fallback)
+        power_limit: Meters in the chart
+      save: Save rules
+      reset: Back to default
+      reset_confirm: Reset the arrangement rules to default?
+      link: Arrangement rules
+      link_in: Arrangement of %{site}
+es:
+  dashboards:
+    gen:
+      other_areas: Otras áreas
+  ai_settings:
+    sources:
+      painel: Armar panel
+  arrange:
+    errors:
+      object: las reglas deben ser un objeto
+      badges: las insignias deben ser un objeto
+      badges_where: insignias
+      types: '%{where}: tipo de widget desconocido'
+      icons: 'íconos de insignias: use clase=ícono (hasta 60)'
+      columns: use de 1 a %{max} columnas
+      column: la columna %{n} debe ser un objeto
+      column_where: columna %{id}
+      id: '%{where}: id con minúsculas, números, _ o -, sin repetir'
+      title: '%{where}: título de hasta 60 caracteres'
+      fallback: la columna de reserva debe ser una de las columnas
+      match: '%{where}: hasta %{max} reglas'
+      match_item: '%{where}: cada regla es un tipo o una consulta'
+      query: '%{where}: %{error}'
+      query_object: consulta vacía
+      query_keys: 'filtro desconocido: %{keys}'
+      auto_list: '%{list}: hasta %{max} consultas'
+      power_limit: 'medidores en el gráfico: de 1 a 8'
+      auto: vista automática no válida (use un área o el Inicio)
+    compose:
+      empty: Escriba qué debe mostrar la vista.
+      no_points: Este lugar aún no tiene puntos.
+      nothing: La IA no encontró puntos del lugar para esa frase. Pruebe con los nombres de los aparatos.
+      bad_answer: La IA respondió fuera del formato. Intente de nuevo.
+    flash:
+      auto_view: 'Esta vista se arma sola: congélela para ordenarla a mano.'
+      arranged: Vista ordenada en el borrador. Publique para aplicar.
+      auto_on: La vista ahora se arma sola (en el borrador).
+      auto_added: Vista automática creada en el borrador.
+      frozen: 'Vista congelada en el borrador: ahora es una vista normal.'
+      composed: Vista armada en el borrador. Revise y publique.
+      dropped: 'Quedaron fuera: %{names}.'
+    tools:
+      title: Ordenar y armar
+      subtitle: Todo va al borrador; nada cambia hasta publicar.
+      auto_note: 'Esta vista se arma sola: los aparatos nuevos del área entran solos. Congélela para editarla a mano.'
+      freeze_confirm: ¿Congelar esta vista? Queda como está y deja de armarse sola.
+      freeze: Congelar
+      arrange: Ordenar esta vista
+      make_auto: Armar sola
+      auto_area: Vista automática del área
+      auto_add: Crear
+      composing: Armando…
+      compose: Armar con una frase (IA de la instalación)
+      compose_placeholder: 'Ej.: arme la vista de la oficina con luces, aire y cámara'
+      compose_hint: Usa la clave de IA de Configuración → IA y solo los puntos de este lugar. El resultado va al borrador.
+      compose_submit: Armar
+      changes: Ver cambios del borrador
+      rules: Reglas de orden
+    diff:
+      none: No existe.
+      badges: Insignias
+      section: Sección %{n}
+      empty: Vacía
+      status:
+        added: Nueva
+        removed: Eliminada
+        same: Igual
+        changed: Cambió
+      same: Nada cambia en esta vista.
+      before: Antes
+      after: Después
+      published: Publicado
+      draft: Borrador
+    preview:
+      title: Ordenar %{name}
+      subtitle: Insignias arriba y columnas según las reglas del panel o del lugar.
+      apply: Aplicar al borrador
+      same: La vista ya está ordenada.
+      hint: Las columnas y lo que se vuelve insignia son reglas que puede cambiar.
+    changes:
+      title: Cambios en %{name}
+      subtitle: Lo publicado y lo que el borrador va a publicar.
+      same: El borrador es igual a lo publicado.
+    wizard:
+      layouts:
+        columns: Ordenado en columnas
+        columns_hint: Sensores arriba; mandos, escenas y medios en columnas.
+        devices: Por aparato
+        devices_hint: Una sección por aparato, como el panel automático.
+      default_name: Mi casa
+      areas: Ambientes
+      no_areas: 'Aún no hay áreas: el panel tendrá solo el Inicio.'
+      layout: Estilo de los ambientes
+      title: Asistente del panel
+      subtitle: Elija los ambientes y el estilo; el panel de %{site} sale listo.
+      creating: Creando…
+      name: Nombre del panel
+      hint: Cada ambiente se vuelve una vista que se arma sola cuando entra un aparato nuevo, hasta que la congele.
+      submit: Crear panel
+      created: Panel creado.
+      button: Asistente
+      button_in: Asistente en %{site}
+    rules:
+      saved: Reglas guardadas.
+      title: Reglas de orden
+      subtitle: Cómo %{site} ordena las vistas y arma el panel automático.
+      query_help: 'Una consulta por línea, como clave=valor (coma = cualquiera). Filtros: %{keys}.'
+      badges_title: Insignias arriba
+      badges_hint: Sensor de solo lectura que se vuelve insignia en lugar de tarjeta.
+      widget_types: Tipos de widget que se vuelven insignia
+      queries: Consultas (una por línea)
+      icons: Ícono de la insignia (clase=ícono, uno por línea)
+      columns_title: Columnas
+      columns_hint: Cada widget va a la primera columna cuyo tipo coincide; si no, por la consulta del punto, en orden.
+      column_n: Columna %{n}
+      column_id: 'Columna %{n}: id'
+      column_id_placeholder: vacía = sin columna
+      column_title: Título
+      full: Tipos de ancho completo
+      types: Tipos de widget
+      remove_column: Eliminar columna
+      fallback: Columna de reserva (id)
+      widget_types_hint: 'Tipos: %{types}.'
+      auto_title: Panel automático
+      auto_hint: Qué cuenta como luz, técnico (queda fuera), seguridad y potencia.
+      auto:
+        light: Luces
+        technical: Técnico (queda fuera de las vistas)
+        security: Seguridad
+        power: Potencia
+        light_names: Reconocer luces también por el nombre (reserva)
+        power_limit: Medidores en el gráfico
+      save: Guardar reglas
+      reset: Volver al estándar
+      reset_confirm: ¿Volver las reglas de orden al estándar?
+      link: Reglas de orden
+      link_in: Orden de %{site}

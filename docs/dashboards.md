@@ -338,7 +338,8 @@ dentro) entendem o aninhamento.
 `bin/rails 'dashboards:comodos[<id do painel>]'` mostra o antes → depois de
 cada visão com `area` (`PUBLICAR=1` publica uma versão nova, que volta pelo
 histórico). Não comanda nada; rodar de novo não muda o que já está arrumado.
-A regra é tabela, não lista de pontos (a primeira que vale):
+A regra é dado (`Dashboards::Arrange`, ver "Arrumação como dado" no fim); o
+padrão (`Arrange::DEFAULT`) é a tabela abaixo (a primeira que vale):
 
 | Vai para | Quando |
 |---|---|
@@ -529,3 +530,78 @@ Item novo de cartão = dado (padrão do local ou `facts`); conta nova =
 = `drill` no plugin; tom novo = `Facts::TONES` (web `FLAG_TONES`, app
 `serverTone`). O editor JSON por widget e os modelos de card (próxima onda)
 validam pelo mesmo `Schema` (`Facts.errors`, `Style.errors`, `Hero.errors`).
+
+## Arrumação como dado (11/2026, proposta de personalização P2.1, ideias 3, 6 e 8)
+
+### Regras (`Dashboards::Arrange`)
+
+Duas listas por local em `sites.settings["dashboard_defaults"]`, editadas em
+Configurações → Painéis → **Regras de arrumação**
+(`/configuracoes/paineis/arrumacao/:site_id`, técnico ou dono; "Voltar ao
+padrão" apaga só estas chaves):
+
+- `arrange` (visões de cômodo, `RoomLayout`); o painel pode ter a sua em
+  `definition["arrange"]` (validada pelo `Schema`), que vale no lugar da do local:
+
+  ```json
+  { "badges": { "widgets": ["tile", "stat"], "match": [{ "query": { "capability": "contact,motion", "commandable": "false" } }],
+                "icons": { "door": "mdi:door" } },
+    "columns": [ { "id": "actions", "title": "Comandos", "match": [{ "type": ["light", "thermostat"] }, { "query": { "commandable": "true" } }] },
+                 { "id": "scenes", "full": ["scene_bar"], "match": [{ "type": ["scene_bar"] }, { "query": { "automation": "true" } }] },
+                 { "id": "media", "match": [{ "query": { "capability": "speaker,media,stream" } }] } ],
+    "fallback": "media" }
+  ```
+
+  Ordem: coluna cujo `type` tem o tipo do widget; pilha/grade = a do primeiro
+  de dentro (nunca vira selo); sem ponto = `fallback`; selo; coluna (na ordem)
+  com alguma consulta que o ponto do `bind` satisfaz; `fallback`. Até 4 colunas.
+- `auto_rules` (painel automático, `Generator`): `light` (padrão
+  `capability=onoff,dimmer tag=iluminacao`; o nome pela regex `LIGHT` só de
+  reserva, com `light_names`), `technical` (fica fora das visões), `security`,
+  `power` e `power_limit` (medidores no gráfico, 1–8). "Outras áreas" e os
+  demais títulos vêm do I18n.
+
+As consultas são as do `Points::Query`, com 4 filtros novos: `commandable`
+(gravável e fora de `Point::READ_ONLY`), `not_capability`, `unit` e `risk`;
+`automation` passou a valer também para o ponto com `address.automation_id`.
+`Points::Query#match?(ponto, consulta)` testa um ponto (sem "o que existe").
+O padrão serializado reproduz as regras de antes: o `spec/services/arrumacao_spec.rb`
+compara com a cópia congelada do código antigo (`spec/support/legacy/`).
+Diferenças de propósito: a etiqueta `iluminacao` também vale no aparelho e na
+área (como em toda consulta), ponto do aparelho "Automações" sem
+`automation_id` vai para cenas, e pilha que começa com selo vai para a reserva
+(antes quebrava).
+
+### No editor (`web/dashboards/_arrange_tools`, `Web::DashboardArrangeController`)
+
+Tudo entra no **rascunho**; nada muda até publicar.
+
+- **Arrumar esta visão** (`GET/POST /paineis/:id/arrumar?view=`): prévia antes →
+  depois (`Dashboards::Diff`) e "Aplicar ao rascunho".
+- **Visão automática** (ideia 6, `Dashboards::AutoViews`): visão com
+  `"auto": {"area": id}` (ou `{"home": true, "areas": [...]}`) se refaz a cada
+  leitura (`Dashboard#published`/`#working_draft`), arrumada pelas regras (a não
+  ser com `"arrange": false`); aparelho novo entra sozinho. Ids levam o da visão
+  na frente (`<visão>--<id>`). "Congelar" (`POST /paineis/:id/congelar`) tira a
+  marca e a visão fica como está, normal. Criar: `POST /paineis/:id/visao-automatica`
+  com `area_id` (visão nova) ou `view` (a visão com `area` passa a se montar).
+- **Montar por frase** (ideia 3, `Dashboards::Compose`, `POST /paineis/:id/montar`):
+  a IA da instalação (`Ai::Request`, origem `painel`; nunca IA da suíte) recebe a
+  frase, os tipos de widget de um ponto e a lista de pontos do local e devolve
+  `{title, sections: [{title, widgets: [{type, point, label}]}]}` (saída
+  estruturada quando o provedor tem; senão o JSON do texto). Só ponto do local,
+  cada widget conferido pelo `Schema` (senão o widget do aparelho, senão `tile`,
+  senão sai e aparece em "Ficaram de fora"). Substitui a visão de mesmo nome ou
+  entra no fim; abre **Mudanças** (`GET /paineis/:id/mudancas`: publicado →
+  rascunho, com Publicar e Descartar).
+
+### Assistente (ideia 8, `Dashboards::Wizard`)
+
+Cômodos + estilo (`columns` = arrumado pelas regras, `devices` = um bloco por
+aparelho) + tema → Início automático (cartões só dos cômodos escolhidos) e
+uma visão automática por cômodo. Em Painéis (`/locais/:id/paineis/assistente`,
+cria e publica) e na primeira configuração (passo `dashboard`: com todos os
+cômodos e "por aparelho", continua o painel automático de sempre).
+
+O app não muda: desenha o resolvido (visão automática chega já montada) e as
+telas novas são web lidas pelo `AppScreen`.

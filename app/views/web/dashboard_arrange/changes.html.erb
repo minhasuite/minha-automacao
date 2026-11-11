@@ -1,0 +1,10 @@
+<%= render "web/shared/header", title: t("arrange.changes.title", name: @dashboard.name), subtitle: t("arrange.changes.subtitle"), back: edit_dashboard_path(@dashboard, view: @focus) do %>
+  <% if @dashboard.draft? %>
+    <%= button_to discard_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost", form: { data: { turbo_confirm: t("dashboards.ed.discard_confirm") } } do %><%= t("dashboards.ed.discard") %><% end %>
+    <%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary", form: { data: { turbo_confirm: t("dashboards.ed.publish_confirm"), turbo_confirm_button: t("dashboards.publish") } } do %><%= icon("upload", "size-4") %><%= t("dashboards.publish") %><% end %>
+  <% end %>
+<% end %>
+<% if @same %>
+  <%= render Ss::NoteComponent.new(text: t("arrange.changes.same"), icon: icon("check", ""), css: "mb-4") %>
+<% end %>
+<%= render "web/dashboard_arrange/diff", diff: @diff.reject { _1.status == :same && _1.id != @focus }, before_label: t("arrange.diff.published"), after_label: t("arrange.diff.draft") %>
