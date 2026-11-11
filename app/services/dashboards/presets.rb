@@ -6,7 +6,7 @@ module Dashboards
   # `Base`: `describe`, `fields` e `build(site, form)` → definição) + nome em
   # `PLUGINS`; a tela de escolha e a criação não mudam.
   module Presets
-    PLUGINS = %w[EnergyPreset].freeze
+    PLUGINS = %w[EnergyPreset HealthPreset].freeze
 
     module_function
 

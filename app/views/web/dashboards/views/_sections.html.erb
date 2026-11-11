@@ -4,7 +4,7 @@
   <% view["sections"].each_with_index do |s, i| %>
     <% if s["spacer"] %><div class="dw-w dw-hide-mobile" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>" aria-hidden="true"></div><% next %><% end %>
     <% next if s["widgets"].empty? %>
-    <section class="dw-w ss-rise" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>; animation-delay: <%= [ i, 6 ].min * 50 %>ms" aria-label="<%= s['title'] || t("dashboards.section") %>">
+    <section class="dw-w ss-rise" data-ss-filter-target="group" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>; animation-delay: <%= [ i, 6 ].min * 50 %>ms" aria-label="<%= s['title'] || t("dashboards.section") %>">
       <% if s["title"].present? %><%= render Ss::SectionComponent.new(title: s["title"], icon: (icon(s["icon"], "") if s["icon"].present?)) %><% end %>
       <div class="dw-grid">
         <% s["widgets"].each do |w| %><%= render "web/dashboards/widget", w: w, points: points, dashboard: dashboard, badge: false, live: live %><% end %>

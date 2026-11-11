@@ -147,6 +147,7 @@ en:
       push: notification button
       bridge: bridge (Matter, HomeKit)
       google: Google Home
+      guest: guest link
     media:
       "off": "Off"
       "on": "On"

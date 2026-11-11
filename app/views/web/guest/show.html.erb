@@ -1,0 +1,31 @@
+<% content_for :title, @link.dashboard.name %>
+<%= render Ss::PageComponent.new(title: @link.dashboard.name, eyebrow: t("guest.eyebrow", site: @link.site.name, name: @link.name), compact: true) %>
+<p class="text-sm text-muted mt-1"><%= t("guest.until", time: l(@link.expires_at.in_time_zone(@link.site.timezone), format: :short)) %></p>
+<% if @cards.empty? %>
+  <%= render Ss::EmptyStateComponent.new(title: t("guest.empty"), text: t("guest.empty_hint"), css: "ss-card mt-4") %>
+<% else %>
+  <div class="grid gap-4 mt-4 sm:grid-cols-2">
+    <% @cards.each do |c| %>
+      <section class="ss-card ss-card-pad grid gap-2" aria-label="<%= c["title"] %>">
+        <%= render Ss::CardHeaderComponent.new(title: c["title"].to_s, icon: (icon(c["icon"], "") if c["icon"].present?)) %>
+        <% c["point_ids"].each do |id| %>
+          <% p = @points[id] %>
+          <% cmds = Array(p["commands"]) & Web::GuestController::SIMPLE %>
+          <div class="ss-item">
+            <span class="min-w-0 flex-1"><span class="block font-semibold truncate"><%= p["title"].presence || p["name"] %></span>
+              <span class="block text-sm text-muted"><%= p["text"] %></span></span>
+            <% if p["can_command"] && p["risk"] != "critical" %>
+              <% cmd = (cmds & %w[toggle]).first || (cmds & %w[press run pulse]).first %>
+              <% if cmd %>
+                <%= button_to guest_command_path(params[:token]), params: { point_id: id, command: cmd }, class: "ss-btn ss-btn-outline ss-btn-sm",
+                              form: { data: ({ turbo_confirm: t("points.confirm", name: p["name"]) } if p["confirm"].present? || p["risk"] != "normal") } do %>
+                  <%= cmd == "toggle" ? (p["on"] ? t("guest.turn_off") : t("guest.turn_on")) : t("guest.press") %>
+                <% end %>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
+<% end %>

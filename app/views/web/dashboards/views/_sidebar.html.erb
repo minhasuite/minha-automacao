@@ -5,7 +5,7 @@
 <% side, main = list.partition { |s| s["position"] == "sidebar" } %>
 <% side, main = [ [ main.pop ].compact, main ] if side.empty? && main.size > 1 %>
 <% section = lambda do |s, i, side = false| %>
-  <section class="dw-w ss-rise <%= 'dw-side' if side %>" style="animation-delay: <%= [ i, 6 ].min * 50 %>ms" aria-label="<%= s['title'] || t("dashboards.section") %>">
+  <section class="dw-w ss-rise <%= 'dw-side' if side %>" data-ss-filter-target="group" style="animation-delay: <%= [ i, 6 ].min * 50 %>ms" aria-label="<%= s['title'] || t("dashboards.section") %>">
     <% if s["title"].present? %><%= render Ss::SectionComponent.new(title: s["title"], icon: (icon(s["icon"], "") if s["icon"].present?)) %><% end %>
     <div class="dw-grid"><% s["widgets"].each do |w| %><%= render "web/dashboards/widget", w: w, points: points, dashboard: dashboard, badge: false, live: live %><% end %></div>
   </section>

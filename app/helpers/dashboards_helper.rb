@@ -264,6 +264,11 @@ module DashboardsHelper
         confirm = a["confirm"] ? { turbo_confirm: a["confirm"] } : dw_confirm(p)
         button_to("", command_point_path(p["id"]), params: params, hidden: true, tabindex: -1,
                                                    form: { hidden: true, data: confirm.merge(gesture: g, turbo_frame: live ? nil : "_top").compact })
+      when "command_query" # ideia 12: lote (a consulta fica no servidor; aqui só o lugar tocado)
+        next unless a["can_command"]
+
+        button_to("", widget_batch_dashboard_path(dashboard, widget_id: w["id"]), params: { slot: g }, hidden: true, tabindex: -1,
+                                                                                    form: { hidden: true, data: { gesture: g, turbo_confirm: a["confirm"], turbo_frame: "_top" }.compact })
       when "more_info" then a["point_id"] && link_to("", point_path(a["point_id"]), hidden: true, tabindex: -1, data: data.merge(turbo_frame: "_top"))
       when "navigate"
         path = a["path"].to_s.start_with?("/") ? a["path"] : dashboard_path(dashboard, view: a["path"])
@@ -306,6 +311,9 @@ module DashboardsHelper
 
   # Recurso do tile: o partial do plugin (ou o do kind).
   def dw_feature_partial(f) = Dashboards::TileFeatures[f["type"]]&.partial || "web/dashboards/features/#{f['kind']}"
+
+  # Ideia 12: caminho de um botão rápido que navega (visão do painel ou tela "/...").
+  def dw_quick_path(dashboard, a) = a["path"].to_s.start_with?("/") ? a["path"] : dashboard_path(dashboard, view: a["path"])
 
   def dw_view_path(dashboard, view, home:)
     slug = view["path"].presence || view["id"]

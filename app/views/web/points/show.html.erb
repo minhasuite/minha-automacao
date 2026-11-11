@@ -1,6 +1,9 @@
 <%= turbo_stream_from @point, channel: PointsChannel %>
 <%= render "web/shared/header", title: @point.name, subtitle: [ @point.capability_label, @device.name, @point.area&.name || @device.area&.name ].compact.join(" · "), back: device_path(@device) do %>
   <% if can?(:manage) %><%= render "web/dashboards/add_to_link", type: "point", record: @point %><% end %>
+  <%# Ideia 13: favorito da pessoa (a linha fixa no topo do painel). %>
+  <% fav = Dashboards::Personal.favorite?(current_user, @point) %>
+  <%= button_to favorite_point_path(@point), class: "ss-btn #{fav ? 'ss-btn-primary' : 'ss-btn-outline'}", "aria-pressed": fav.to_s do %><%= icon("star", "size-4") %><%= fav ? t("favorites.on") : t("favorites.add") %><% end %>
 <% end %>
 
 <div class="grid gap-4 lg:grid-cols-3">

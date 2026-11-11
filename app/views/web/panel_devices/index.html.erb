@@ -1,0 +1,44 @@
+<%= render "web/shared/header", title: t("panel_devices.title"), subtitle: t("panel_devices.subtitle"), back: settings_dashboards_path %>
+<%= render layout: "web/settings/frame", locals: { current: :dashboards } do %>
+  <div class="grid gap-6">
+    <section class="ss-card ss-card-pad grid gap-3" aria-labelledby="pd-this">
+      <%= render Ss::CardHeaderComponent.new(title: t("panel_devices.this_device"), subtitle: @current ? t("panel_devices.this_known", name: @current.name) : t("panel_devices.this_hint"), icon: icon("device-mobile", ""), id: "pd-this") %>
+      <%= form_with model: PanelDevice.new, scope: :panel_device, url: settings_panel_devices_path, method: :post, class: "grid gap-3 sm:grid-cols-3 items-end" do |f| %>
+        <div><%= f.label :name, t("panel_devices.name"), class: "ss-label", for: "pd-new-name" %>
+          <%= f.text_field :name, value: @current&.name, class: "ss-input", id: "pd-new-name", required: true, maxlength: 60, placeholder: t("panel_devices.name_hint") %></div>
+        <div><%= f.label :dashboard_id, t("panel_devices.dashboard"), class: "ss-label", for: "pd-new-dash" %>
+          <%= f.select :dashboard_id, options_for_select(@dashboards, @current&.dashboard_id), { include_blank: t("panel_devices.person_default") }, class: "ss-input", id: "pd-new-dash" %></div>
+        <div><%= f.label :view, t("panel_devices.view"), class: "ss-label", for: "pd-new-view" %>
+          <%= f.text_field :view, value: @current&.view, class: "ss-input", id: "pd-new-view", maxlength: 100, placeholder: t("panel_devices.view_hint") %></div>
+        <div class="sm:col-span-3"><%= f.submit t("panel_devices.save_this"), class: "ss-btn ss-btn-primary" %></div>
+      <% end %>
+    </section>
+
+    <section class="grid gap-3" aria-labelledby="pd-list">
+      <%= render Ss::SectionHeaderComponent.new(title: t("panel_devices.list"), subtitle: t("panel_devices.list_hint"), id: "pd-list") %>
+      <% if @devices.empty? %>
+        <%= render Ss::EmptyStateComponent.new(title: t("panel_devices.none"), text: t("panel_devices.none_hint"), css: "ss-card") %>
+      <% else %>
+        <% @devices.each do |d| %>
+          <div class="ss-card ss-card-pad grid gap-3">
+            <%= render Ss::CardHeaderComponent.new(title: d.name, subtitle: [ t("panel_devices.kinds.#{d.kind}"), (t("panel_devices.current") if d.key == @current_key),
+                                                                              (t("panel_devices.seen", time: time_ago_in_words(d.last_seen_at)) if d.last_seen_at), d.user&.name ].compact.join(" · "),
+                                                   icon: icon(d.kind == "app" ? "device-mobile" : "desktop-computer", "")) do |h| %>
+              <% h.with_action do %>
+                <%= button_to settings_panel_device_path(d), method: :delete, class: "ss-icon-btn is-outline is-sm is-danger", title: t("panel_devices.remove", name: d.name), "aria-label": t("panel_devices.remove", name: d.name),
+                              form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("panel_devices.remove_confirm", name: d.name), turbo_confirm_button: t("panel_devices.remove_button") } } do %><%= icon("trash", "size-4") %><% end %>
+              <% end %>
+            <% end %>
+            <%= form_with model: d, scope: :panel_device, url: settings_panel_device_path(d), method: :patch, class: "grid gap-3 sm:grid-cols-3 items-end" do |f| %>
+              <div><%= f.label :name, t("panel_devices.name"), class: "ss-label", for: "pd-#{d.id}-name" %><%= f.text_field :name, class: "ss-input", id: "pd-#{d.id}-name", required: true, maxlength: 60 %></div>
+              <div><%= f.label :dashboard_id, t("panel_devices.dashboard"), class: "ss-label", for: "pd-#{d.id}-dash" %>
+                <%= f.select :dashboard_id, options_for_select(@dashboards, d.dashboard_id), { include_blank: t("panel_devices.person_default") }, class: "ss-input", id: "pd-#{d.id}-dash" %></div>
+              <div><%= f.label :view, t("panel_devices.view"), class: "ss-label", for: "pd-#{d.id}-view" %><%= f.text_field :view, class: "ss-input", id: "pd-#{d.id}-view", maxlength: 100 %></div>
+              <div class="sm:col-span-3"><%= f.submit t("panel_devices.save"), class: "ss-btn ss-btn-outline ss-btn-sm" %></div>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    </section>
+  </div>
+<% end %>

@@ -19,6 +19,7 @@ class Dashboard < ApplicationRecord
   has_many :draft_steps, class_name: "DashboardDraftStep", dependent: nil # cascade no banco
   # Imagens enviadas no editor (planta baixa, papel de parede): o JSON guarda o link.
   has_many_attached :files
+  has_many :guest_links, dependent: nil # cascade no banco
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }
@@ -41,8 +42,10 @@ class Dashboard < ApplicationRecord
   # Padrão da pessoa no local; senão o padrão do local; senão o primeiro.
   # No app (`app: true`): a escolha da pessoa no app; senão o painel marcado
   # para o app (`app_default`, ex. a versão Mobile importada do HA); senão o da web.
-  def self.default_for(site, user, role, app: false)
+  # `device` (ideia 10, PanelDevice): "neste aparelho abre o painel X" vale antes de tudo.
+  def self.default_for(site, user, role, app: false, device: nil)
     list = ensure_for(site).select { |d| d.visible_to?(role) }
+    mine = device&.dashboard_for(site, role) and return mine
     if app
       mine = list.find { |d| d.id == user.dashboard_prefs["app:#{site.id}"] }
       return mine || list.find(&:app_default?) || default_for(site, user, role)

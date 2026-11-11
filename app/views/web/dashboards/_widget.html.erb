@@ -7,7 +7,7 @@
   <% else %>
     <%# P1.2/ideia 22: o servidor decide o tom (`style.tone`), o selo da regra (`style.badge`) e o "dado velho" (`stale`). %>
     <% style = w["style"] || {} %>
-    <div class="dw-w <%= dw_screen_class(w) %>" style="<%= dw_span_style(w['span']) %>"<%= " hidden" if !w["visible"] %><%= " " if style["tone"] %><%= tag.attributes(data: { tone: style["tone"].presence_in(Dashboards::Style::TONES) }) %>>
+    <div class="dw-w <%= dw_screen_class(w) %>" style="<%= dw_span_style(w['span']) %>"<%= " hidden" if !w["visible"] %> data-ss-filter-target="item" data-ss-filter-text="<%= w["search"] %>"<%= " " if style["tone"] %><%= tag.attributes(data: { tone: style["tone"].presence_in(Dashboards::Style::TONES) }) %>>
       <% if style["badge"].present? || w["stale"] %>
         <span class="dw-flags">
           <% if style["badge"].present? %><span class="ss-badge <%= DashboardsHelper::FLAG_TONES.fetch(style["tone"], "ss-badge-accent") %> is-solid"><%= style["badge"] %></span><% end %>
@@ -15,6 +15,7 @@
         </span>
       <% end %>
       <%= render Dashboards::Widgets[w["type"]]&.partial || "web/dashboards/widgets/#{w['type']}", w: w, points: points, dashboard: dashboard, live: live %>
+      <% if w["quick"].present? %><%= render "web/dashboards/quick", w: w, points: points, dashboard: dashboard, live: live %><% end %>
       <% if error %><p class="text-sm font-semibold text-danger mt-1 px-1" role="alert"><%= error %></p><% end %>
     </div>
   <% end %>

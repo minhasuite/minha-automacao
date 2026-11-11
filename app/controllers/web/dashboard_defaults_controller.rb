@@ -10,6 +10,7 @@ module Web
     def edit
       @facts = Dashboards::Facts.area_defaults(@site)
       @stale = Dashboards::Staleness.limits(@site)
+      @quick = Dashboards::Actions.quick_list(@site, { "type" => AREA })
     end
 
     def update
@@ -21,13 +22,30 @@ module Web
         errors = Dashboards::Facts.errors(facts)
         return redirect_to(settings_dashboard_defaults_path(@site), alert: errors.first(3).to_sentence) if errors.any?
 
-        defaults = defaults.merge("area_facts" => facts.presence, "stale_after_min" => Dashboards::Staleness.from_form(form_rows(:stale, %i[key min]))).compact
+        quick = quick_from_form
+        errors = Dashboards::Actions.quick_errors(Dashboards::Actions::QUICK => quick) if quick
+        return redirect_to(settings_dashboard_defaults_path(@site), alert: errors.first(3).to_sentence) if errors.present?
+
+        defaults = defaults.merge("area_facts" => facts.presence, "stale_after_min" => Dashboards::Staleness.from_form(form_rows(:stale, %i[key min])),
+                                  "quick_actions" => ({ AREA => quick } if quick)).compact
       end
       @site.update!(settings: @site.settings.to_h.merge("dashboard_defaults" => defaults.presence).compact)
       redirect_to settings_dashboard_defaults_path(@site), notice: t("dashboard_defaults.saved")
     end
 
     private
+
+    AREA = "area_card"
+
+    # Ideia 12: botões rápidos do cartão de área (lote por consulta), linha a linha.
+    def quick_from_form
+      form_rows(:quick, %i[label icon query command value]).values.filter_map do |r|
+        next if r["label"].blank? || r["query"].blank?
+
+        { "action" => "command_query", "label" => r["label"].strip, "icon" => r["icon"].presence, "query" => r["query"].strip,
+          "command" => r["command"].to_s, "value" => r["value"].presence }.compact
+      end.presence
+    end
 
     def load_site
       @site = Site.find(params[:site_id])

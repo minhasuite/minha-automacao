@@ -26,9 +26,11 @@ module Dashboards
         view.merge({ "theme_now" => theme_now(view) }.compact).merge("badges" => Array(view["badges"]).filter_map { |w| resolve(w) },
                    "sections" => Array(view["sections"]).map { |s| s.merge("widgets" => Array(s["widgets"]).filter_map { |w| resolve(w) }) })
       end
+      views = views.map { |v| Context.arrange(self, v) } # ideia 9: ordem das seções pelo contexto (`order_if`)
       { "id" => dashboard.id, "site_id" => @site.id, "name" => dashboard.name, "kind" => dashboard.kind, "auto" => dashboard.auto,
         "version" => dashboard.version, "schema_version" => @definition["schema_version"], "role" => role,
-        "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload }.merge(@definition.slice("theme"))
+        "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload,
+        "open_view" => Context.open_view(self, @definition, views) }.compact.merge(@definition.slice("theme", "favorites"))
     end
 
     # Um widget só (o quadro que o tempo real recarrega). nil = não existe ou o papel não vê.
@@ -68,6 +70,16 @@ module Dashboards
 
     def sort(list, key) = (@point_query ||= Points::Query.new(@site, points: points)).sort(list, key)
 
+    # Ideia 9: condição do visible_if (sol, presença, hora…) avaliada fora de um widget
+    # (`order_if` das visões, `open_if` do painel). Sem condição = vale.
+    def condition?(cond) = cond.nil? || (cond.is_a?(Hash) && condition_ok?(cond, {}))
+
+    # Valor calculado uma vez por resolução (ex.: a zona "casa" das condições de presença).
+    def memo(key)
+      @memo ||= {}
+      @memo.key?(key) ? @memo[key] : (@memo[key] = yield)
+    end
+
     # Põe o ponto no `points` do JSON (o que o widget desenha).
     def use(p)
       @used[p.id] = p if p
@@ -97,7 +109,9 @@ module Dashboards
       data, deps = Perf.measure("widget", w["type"]) { data_for(w) }
       gestures = Actions.resolve(self, w, [ w["bind"] ].compact.filter_map { |ref| point(ref) })
       deps += gestures.values.filter_map { |g| point(g["point_id"]) }
-      decorate(w, w.merge("visible" => visible?(w), "data" => data, "deps" => deps.map(&:id).uniq).merge(gestures.any? ? { "gestures" => gestures } : {}))
+      out = w.merge("visible" => visible?(w), "data" => data, "deps" => deps.map(&:id).uniq).merge(gestures.any? ? { "gestures" => gestures } : {})
+      quick = Actions.resolve_quick(self, w, [ w["bind"] ].compact.filter_map { |ref| point(ref) }) # ideia 12
+      decorate(w, quick.present? ? out.merge("quick" => quick) : out)
     end
 
     # Painel aberto por dado (P1.2 e ideia 22): o estilo que vale agora
@@ -150,7 +164,7 @@ module Dashboards
     def condition_ok?(cond, w)
       return true unless cond.is_a?(Hash)
 
-      cond.all? { |k, v| (m = VISIBILITY[k]).nil? || send(m, v, w) }
+      cond.all? { |k, v| (m = VISIBILITY[k]) ? send(m, v, w) : Context.ok?(self, k, v) } # ideia 9: sol e presença no registro
     end
 
     # `is` (valor ou lista) ou `not` (o "state_not" do HA): ponto que não existe não passa.
@@ -174,7 +188,8 @@ module Dashboards
     def visibility_refs(cond)
       return [] unless cond.is_a?(Hash)
 
-      [ cond.dig("state", "point"), cond.dig("numeric", "point"), *(Array(cond["any"]) + Array(cond["all"])).flat_map { |c| visibility_refs(c) } ].compact
+      [ cond.dig("state", "point"), cond.dig("numeric", "point"), *Context.refs(self, cond),
+        *(Array(cond["any"]) + Array(cond["all"])).flat_map { |c| visibility_refs(c) } ].compact
     end
 
     # Janela que pode passar da meia-noite ("18:00" a "06:00"), no fuso do local.

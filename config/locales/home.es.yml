@@ -147,6 +147,7 @@ es:
       push: botón del aviso
       bridge: puente (Matter, HomeKit)
       google: Google Home
+      guest: enlace de invitado
     media:
       "off": Apagada
       "on": Encendida

@@ -70,6 +70,9 @@ Rails.application.routes.draw do
     get "paineis/schema", to: "dashboard_schemas#show", as: :dashboard_schema, defaults: { format: :json }
     get "paineis/adicionar", to: "dashboard_adds#new", as: :new_dashboard_add
     post "paineis/adicionar", to: "dashboard_adds#create", as: :dashboard_adds
+    # Ideia 11: painel do convidado (público, pelo link; sem menu).
+    get "convidado/:token", to: "guest#show", as: :guest, constraints: { token: /[A-Za-z0-9_-]{20,80}/ }
+    post "convidado/:token/comando", to: "guest#command", as: :guest_command, constraints: { token: /[A-Za-z0-9_-]{20,80}/ }
 
     resources :notifications, only: :index, path: "notificacoes" do
       patch :read, on: :member, path: "lida"
@@ -152,6 +155,8 @@ Rails.application.routes.draw do
           get "revisar", to: "dashboard_reviews#show", as: :review
           # POST também: as ações rápidas do Ctrl+K são links Turbo com POST.
           match :draft, path: "rascunho", via: %i[patch post]
+          # Ideia 12: ação em lote de um lugar do widget (`slot`: tap/hold/double_tap/quick-N).
+          post "w/:widget_id/lote", action: :batch, as: :widget_batch
           post :publish, path: "publicar"
           post :discard, path: "descartar"
           post :revert, path: "voltar"
@@ -273,6 +278,7 @@ Rails.application.routes.draw do
         resources :points, path: "pontos", except: :index, shallow: true do
           post :command, on: :member, path: "comando"
           post :reset, on: :member, path: "redefinir" # "Redefinir estado" do sensor (técnico+)
+          post :favorite, on: :member, path: "favorito" # ideia 13: liga/desliga o favorito da pessoa
         end
       end
     end
@@ -289,6 +295,15 @@ Rails.application.routes.draw do
     post "configuracoes/zerar", to: "settings#wipe", as: :settings_wipe
     get "configuracoes/paineis", to: "settings#dashboards", as: :settings_dashboards
     # Padrões dos painéis do local (P1.1/ideia 22): itens do cartão de área e o limite do "dado velho".
+    # Ideia 10: painel por aparelho (tablet da parede: cookie na web, id do app).
+    get "configuracoes/paineis/aparelhos", to: "panel_devices#index", as: :settings_panel_devices
+    post "configuracoes/paineis/aparelhos", to: "panel_devices#create"
+    patch "configuracoes/paineis/aparelhos/:id", to: "panel_devices#update", as: :settings_panel_device
+    delete "configuracoes/paineis/aparelhos/:id", to: "panel_devices#destroy"
+    # Ideia 11: links de convidado (temporários, revogáveis, auditados).
+    get "configuracoes/paineis/convidados", to: "guest_links#index", as: :settings_guest_links
+    post "configuracoes/paineis/convidados", to: "guest_links#create"
+    delete "configuracoes/paineis/convidados/:id", to: "guest_links#destroy", as: :settings_guest_link
     get "configuracoes/paineis/padroes/:site_id", to: "dashboard_defaults#edit", as: :settings_dashboard_defaults
     patch "configuracoes/paineis/padroes/:site_id", to: "dashboard_defaults#update"
     # P2.1 e ideias 3, 6 e 8: regras de arrumação, "Arrumar esta visão", visão automática, montagem por frase e assistente.
@@ -446,6 +461,7 @@ Rails.application.routes.draw do
         resources :devices, except: %i[new edit], shallow: true do
           resources :points, except: %i[new edit], shallow: true do
             post :commands, on: :member, action: :command
+            put :favorite, on: :member # ideia 13: {favorite: true|false}
             post :value, on: :member, action: :write_value
             post :reset, on: :member # "Redefinir estado" do sensor (técnico+, auditado)
             get :history, on: :member
@@ -525,6 +541,7 @@ Rails.application.routes.draw do
           post :revert, on: :member
           get :versions, on: :member
           get :definition, on: :member
+          post "widgets/:widget_id/batch", on: :member, action: :batch # ideia 12
         end
       end
       resources :alerts, only: %i[index show] do

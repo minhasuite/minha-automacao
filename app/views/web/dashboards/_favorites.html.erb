@@ -1,0 +1,18 @@
+<%# locals: (ids:, points:, live:) -%>
+<%# Ideia 13: linha fixa de favoritos da pessoa (`favorites_now`, resolvido no servidor). O ícone é a chave
+    quando o papel comanda (confirmação pelo risco); o nome abre o ponto. Favoritar: na página do ponto. %>
+<section class="mt-4" aria-label="<%= t("favorites.title") %>">
+  <%= render Ss::SectionComponent.new(title: t("favorites.title"), icon: icon("star", "")) %>
+  <div class="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-2">
+    <% ids.each do |id| %>
+      <% p = points[id] or next %>
+      <% toggle = live && p["can_command"] && Array(p["commands"]).include?("toggle") %>
+      <% confirm = dw_confirm(p) %>
+      <%= render Ss::DeviceTileComponent.new(name: p["title"].presence || p["name"], state: p["text"], on: p["on"], icon: icon(p["display_icon"].presence || "light-bulb", ""),
+                                             url: point_path(id), link_data: { turbo_frame: "_top" },
+                                             toggle_url: (command_point_path(id) if toggle), toggle_params: { command: "toggle" },
+                                             confirm: confirm[:turbo_confirm], confirm_title: confirm[:turbo_confirm_title],
+                                             status: (p["quality"] == "unavailable" ? :unavailable : (p["locked"] ? :locked : :ready))) %>
+    <% end %>
+  </div>
+</section>

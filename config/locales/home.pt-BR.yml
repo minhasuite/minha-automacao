@@ -147,6 +147,7 @@ pt-BR:
       push: botão do aviso
       bridge: ponte (Matter, HomeKit)
       google: Google Home
+      guest: link de convidado
     media:
       "off": Desligada
       "on": Ligada

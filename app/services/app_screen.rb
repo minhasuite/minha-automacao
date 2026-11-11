@@ -81,7 +81,9 @@ module AppScreen
                                          "HTTP_ACCEPT" => "text/html", "HTTP_HOST" => request.host_with_port,
                                          "HTTPS" => request.ssl? ? "on" : "off", "HTTP_USER_AGENT" => UA,
                                          "HTTP_ACCEPT_LANGUAGE" => request.headers["Accept-Language"].to_s,
-                                         "REMOTE_ADDR" => request.remote_ip)
+                                         "REMOTE_ADDR" => request.remote_ip,
+                                         # Ideia 10: o id do app chega à tela (Configurações → Painéis → Aparelhos: "este aparelho").
+                                         "HTTP_X_MA_DEVICE" => request.headers[PanelDevice::HEADER].to_s)
     env["HTTP_COOKIE"] = cookie if cookie
     env[ENV_KEY] = user.id
     env.merge!(Rails.application.env_config)

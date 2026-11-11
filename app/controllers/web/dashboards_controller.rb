@@ -26,6 +26,7 @@ module Web
       preview = (params[:rascunho].present? || @edit_here) && can?(:manage)
       @resolved = preview ? Dashboards::Resolver.new(@dashboard, role: @site_role, definition: @dashboard.working_draft).call : Dashboards::Resolver.cached(@dashboard, role: @site_role).deep_dup
       Dashboards::Hero.apply!(@resolved, site: @site, user: current_user, home: false)
+      Dashboards::Personal.apply!(@resolved, site: @site, user: current_user, role: @site_role) # ideia 13: busca e favoritos
       @preview = preview
       @view = pick_view(@resolved)
       @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role) }
@@ -40,7 +41,9 @@ module Web
       load_dashboard(:view)
       resolver = Dashboards::Resolver.new(@dashboard, role: @site_role)
       w = resolver.widget(params[:widget_id]) or raise ActiveRecord::RecordNotFound
-      render partial: "web/dashboards/widget", locals: { w: w, points: resolver.points_payload, dashboard: @dashboard, badge: params[:badge].present?, error: flash[:alert] }
+      points = resolver.points_payload
+      w["search"] = Dashboards::Personal.search_text(w, points, @site.areas.pluck(:id, :name).to_h) # a busca continua achando depois da recarga
+      render partial: "web/dashboards/widget", locals: { w: w, points: points, dashboard: @dashboard, badge: params[:badge].present?, error: flash[:alert] }
     end
 
     # Ideia 14: os pontos que entram num número ou item do widget (`?item=` = o id do item do cartão), com
@@ -51,6 +54,18 @@ module Web
       w = resolver.widget(params[:widget_id]) or raise ActiveRecord::RecordNotFound
       @drill = Dashboards::Widgets[w["type"]]&.drill(resolver, w, params[:item].to_s) or raise ActiveRecord::RecordNotFound
       @points = @drill["points"].first(Points::Query::MAX)
+    end
+
+    # Ideia 12: ação em lote ("Apagar tudo do cômodo"). A consulta e o comando vêm da definição
+    # publicada do widget (o pedido só diz o lugar tocado); papel x risco por ponto em Dashboards::Batch.
+    def batch
+      load_dashboard(:view)
+      resolver = Dashboards::Resolver.new(@dashboard, role: @site_role)
+      w = resolver.widget(params[:widget_id]) or raise ActiveRecord::RecordNotFound
+      action = Dashboards::Batch.action_for(w, params[:slot].to_s, site: @site) or raise ActiveRecord::RecordNotFound
+      result = Dashboards::Batch.run(resolver, action, source: "web")
+      flash_key = result.sent.zero? && (result.failed.any? || result.skipped.positive?) ? :alert : :notice
+      redirect_back_or_to dashboard_path(@dashboard), flash_key => Dashboards::Batch.message(result), status: :see_other
     end
 
     def new

@@ -18,6 +18,23 @@
         <datalist id="st-keys"><% (%w[default] + Point::CAPABILITIES.keys + %w[temperature humidity power energy battery]).uniq.each do |k| %><option value="<%= k %>"></option><% end %></datalist>
       </div>
     </section>
+    <section class="grid gap-3">
+      <%= render Ss::SectionHeaderComponent.new(title: t("dashboard_defaults.quick_title"), subtitle: t("dashboard_defaults.quick_hint")) %>
+      <div class="ss-card ss-card-pad grid gap-3">
+        <% rows = @quick + [ {}, {} ] %>
+        <% rows.first(Dashboards::Actions::MAX_QUICK).each_with_index do |q, i| %>
+          <div class="grid gap-3 sm:grid-cols-4 items-end">
+            <div><label class="ss-label" for="qa-l<%= i %>"><%= t("dashboard_defaults.quick_label") %></label>
+              <%= text_field_tag "quick[#{i}][label]", q["label"], class: "ss-input", id: "qa-l#{i}", maxlength: 40, placeholder: t("dashboard_defaults.quick_label_hint") %></div>
+            <div class="sm:col-span-2"><label class="ss-label" for="qa-q<%= i %>"><%= t("dashboard_defaults.quick_query") %></label>
+              <%= text_field_tag "quick[#{i}][query]", q["query"].is_a?(Hash) ? q["query"].map { |k, v| "#{k}=#{v}" }.join(" ") : q["query"], class: "ss-input", id: "qa-q#{i}", placeholder: "capability=onoff state=on tag=iluminacao" %></div>
+            <div><label class="ss-label" for="qa-c<%= i %>"><%= t("dashboard_defaults.quick_command") %></label>
+              <%= select_tag "quick[#{i}][command]", options_for_select(%w[off on toggle press].map { |c| [ Points::Timeline::COMMAND_LABELS.fetch(c, c), c ] }, q["command"] || "off"), class: "ss-input", id: "qa-c#{i}" %></div>
+            <%= hidden_field_tag "quick[#{i}][icon]", q["icon"] %>
+          </div>
+        <% end %>
+      </div>
+    </section>
     <div class="flex flex-wrap gap-2">
       <%= submit_tag t("dashboard_defaults.save"), class: "ss-btn ss-btn-primary" %>
       <%= submit_tag t("dashboard_defaults.reset"), name: "reset", class: "ss-btn ss-btn-ghost", data: { turbo_confirm: t("dashboard_defaults.reset_confirm"), turbo_confirm_button: t("dashboard_defaults.reset") } %>

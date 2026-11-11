@@ -1,0 +1,23 @@
+<%# locals: (w:, points:, dashboard:, live:) -%>
+<%# Ideia 12: botões rápidos do widget (`quick`, resolvidos no servidor): lote por consulta (confirmação com a
+    contagem; papel x risco por ponto no servidor), comando de um ponto, ir para visão/tela ou link. %>
+<div class="flex flex-wrap gap-2 mt-2 px-1" aria-label="<%= t("dashboards.batch.quick") %>">
+  <% w["quick"].each do |a| %>
+    <% label = capture do %><%= icon(a["icon"], "size-4") if a["icon"].present? %><%= a["label"] %><% end %>
+    <% if a["action"] == "command_query" %>
+      <%= button_to widget_batch_dashboard_path(dashboard, widget_id: w["id"]), params: { slot: a["slot"] }, class: "ss-btn ss-btn-outline ss-btn-sm", disabled: !a["can_command"] || !live,
+                    title: (t("dashboards.batch.count", count: a["count"]) if a["can_command"]),
+                    form: { data: { turbo_frame: "_top", turbo_confirm: a["confirm"], turbo_confirm_button: a["label"] } } do %><%= label %><% end %>
+    <% elsif a["action"] == "command" %>
+      <% p = points[a["point_id"]] %>
+      <% if p && a["can_command"] %>
+        <%= button_to command_point_path(p["id"]), params: { command: a["command"], value: a["value"] }.compact, class: "ss-btn ss-btn-outline ss-btn-sm", disabled: !live,
+                      form: { data: { turbo_frame: "_top", turbo_confirm: a["confirm"] }.compact } do %><%= label %><% end %>
+      <% end %>
+    <% elsif a["action"] == "navigate" %>
+      <%= link_to dw_quick_path(dashboard, a), class: "ss-btn ss-btn-ghost ss-btn-sm", data: { turbo_frame: "_top" } do %><%= label %><% end %>
+    <% elsif a["action"] == "url" %>
+      <%= link_to a["url"], class: "ss-btn ss-btn-ghost ss-btn-sm", target: "_blank", rel: "noopener noreferrer" do %><%= label %><% end %>
+    <% end %>
+  <% end %>
+</div>
