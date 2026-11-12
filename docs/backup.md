@@ -100,7 +100,7 @@ mostra o erro e é só conectar de novo.
 ### Destino na VPS por SSH
 
 ```bash
-# no Dell, em /opt/minha-automacao
+# no servidor da casa, em /opt/minha-automacao
 mkdir -p secrets && ssh-keygen -t ed25519 -N '' -C ma-backup -f secrets/backup_ssh_key
 chmod 700 secrets && chmod 600 secrets/backup_ssh_key
 # o container roda como root: ele lê a chave mesmo com 600

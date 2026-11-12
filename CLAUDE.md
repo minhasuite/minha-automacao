@@ -189,7 +189,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (`responded_at`), token assinado por notificação + pessoa no service worker
   (`POST /push/resposta`), evento `notification_action` por
   `Automations::Triggers.event` (gatilho com `event` no plugin e espera
-  `kind: "event"` no motor). Web Push exige https (Dell: só pelo acesso
+  `kind: "event"` no motor). Web Push exige https (servidor da casa: só pelo acesso
   externo) e as chaves `VAPID_*` (`bin/vapid-keys`; nunca no repo). Nunca
   mande push de teste para o celular de alguém: teste com navegador headless.
 - **`response_variable` e `continue_on_error` (Lote 1)**: ação que devolve
@@ -300,7 +300,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   execução na thread ou comando com `automation_run_id` no ponto há < 10 s;
   própria automação ou corrente > 3 = "laço evitado". Comando sempre por
   `Points::Command` (`run:`), nunca direto no driver. Notificação `kind:
-  "automacao"`. No Dell o local Casa fica em sombra (F10) até o corte.
+  "automacao"`. O local Casa saiu da sombra (F10) no corte de 09/11/2026.
 - **Gatilho, condição ou ação nova (F8f)**: cada tipo é um plugin
   (`Automations::Block`) registrado em `Automations::TriggerTypes::PLUGINS`,
   `ConditionTypes::PLUGINS` ou `ActionTypes::PLUGINS`; **nada de `case` por
@@ -343,7 +343,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   propriedade, chave `nome_z2m.propriedade`; exposes binário/numérico/enum/
   texto → onoff, contato, movimento, problema, medição, dimmer, setpoint,
   enum, evento). Local: `Z2M_SITE_ID` ou o único local do servidor.
-  **Para ligar:** no Dell, `ls /dev/serial/by-id/`; em Configurações →
+  **Para ligar:** no servidor da casa, `ls /dev/serial/by-id/`; em Configurações →
   Aplicativos → Zigbee2MQTT, instale com esse caminho e o tipo (`ember` para
   Sonoff ZBDongle-E/EFR32, `zstack` para ZBDongle-P/CC2652). Frontend do z2m
   em `:8080` com `Z2M_FRONTEND_TOKEN` do `.env`. Parear pelo frontend.
@@ -484,7 +484,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   instalação em `tenants.settings["alexa"]` (segredo só em digest). Interface
   nova = classe em `Alexa::SmartHome::Interfaces::PLUGINS` (`applies?`,
   `capability`, `properties`, `handle`). Exposição: `points/scenes.alexa_exposed`
-  (padrão falso) e `alexa_name`; crítico só com `alexa_risk_confirmed`. No Dell
+  (padrão falso) e `alexa_name`; crítico só com `alexa_risk_confirmed`. No servidor da casa
   nada fica exposto: teste com token temporário e revogue.
 - **Lote 4 (aberto/fechado)**: widget novo = classe em
   `Dashboards::Widgets::PLUGINS` (`describe type:, label:, required:, params:,
@@ -718,7 +718,10 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
 
 ## Servidor local (casa)
 
-Debian `192.168.68.199` (`ssh -i ~/.ssh/id_ed25519 herlon@…`), em
+HP (`hdx-ma`: 4 núcleos, 7,6 GB, SSD 120 GB; Debian 13) em `192.168.68.199` por reserva
+no Deco (`ssh -i ~/.ssh/id_ed25519 herlon@…`; sudo pede senha, `herlon` no grupo `docker`),
+trocado com o Dell em 12/11/2026 (o Dell ficou desligado, com o restart dos containers
+desligado, como volta; o hub Zigbee do escritório estava na USB dele). Em
 `/opt/minha-automacao`: `docker-compose.yml` (= `docker-compose.local.yml`),
 `.env` (chmod 600, segredos gerados lá; nunca no repo: inclui
 `MQTT_PASSWORD`, `Z2M_FRONTEND_TOKEN` e `SUPERVISOR_TOKEN`), `backups/` (pg_dump diário, 7 dias).
@@ -728,8 +731,10 @@ backup e cloudflared (perfil `tunnel`). Apps instalados (`ma-app-*`) ficam
 fora do compose, na rede `minha-automacao-apps` ou na `bridge`. `bin/deploy-local [tag]` no WSL: usa a imagem local do
 runner (ou puxa), `docker save | ssh docker load`, sobe e espera o `/up`. Web
 em `http://192.168.68.199/` (HTTP na rede: `ASSUME_SSL`/`FORCE_SSL=false`).
-Túnel: serviço `cloudflared` (perfil `tunnel`) liga sozinho quando o `.env`
-tem `CF_TUNNEL_TOKEN`. sudo pede senha; use `docker run -v` para mexer fora
+Acesso externo (`casa-automacao.minhasuite.com`): container `tunel-casa` fora do
+compose (`~/tunel-casa`, autossh reverso para o `ms-tunel-casa` da VPS); se a
+porta ficar presa no lado da VPS (troca de IP), encerre a sessão `sshd: casa` antiga lá.
+O serviço `cloudflared` (perfil `tunnel`) só liga com `CF_TUNNEL_TOKEN` no `.env`. sudo pede senha; use `docker run -v` para mexer fora
 de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 ## Web

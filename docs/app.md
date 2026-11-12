@@ -53,7 +53,7 @@ em `vault/android/minha-automacao-google-services.json`, em
 `GOOGLE_SERVICES_JSON_BASE64` do CI. O servidor envia com a conta
 `fcm-sender@minha-automacao-114798.iam.gserviceaccount.com` (só o papel
 `roles/firebasecloudmessaging.admin`; chave em
-`vault/firebase/minha-automacao-adminsdk.json`): no Dell `FCM_CREDENTIALS_JSON`
+`vault/firebase/minha-automacao-adminsdk.json`): no servidor da casa `FCM_CREDENTIALS_JSON`
 e `FCM_PROJECT_ID` em `/opt/minha-automacao/.env`; na VPS
 `MINHA_AUTOMACAO_FCM_CREDENTIALS_JSON`/`MINHA_AUTOMACAO_FCM_PROJECT_ID` no
 `.env` de `/opt/minha-automacao` (o compose repassa ao web e ao worker). Valor
@@ -93,7 +93,7 @@ com ele aberto (leitura em segundo plano fica para a próxima rodada).
   `lote1_spec` para o FCM).
 - App: `flutter test` (smoke de todas as telas com respostas reais em
   `test/fixtures/api.json`, regravadas por `test/fixtures/capturar.rb`).
-- Contra o Dell: usuário de teste próprio (criar e apagar no fim); nunca a
+- Contra o servidor da casa: usuário de teste próprio (criar e apagar no fim); nunca a
   conta do dono, nunca comandar aparelho real além do combinado.
 
 ## Pacote 3 no app

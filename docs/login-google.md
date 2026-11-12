@@ -54,7 +54,7 @@ Android só emite token para um `serverClientId` do próprio projeto.
    Publique em produção, porque em "teste" só os testadores entram.
 2. **Web** `minha-automacao-web` (tipo "Aplicativo da Web"):
    - Origens JavaScript autorizadas:
-     - `https://casa-automacao.minhasuite.com` (instalação local do Dell, acesso externo)
+     - `https://casa-automacao.minhasuite.com` (instalação local da casa, acesso externo)
      - `http://localhost:3000` (desenvolvimento, opcional)
    - URIs de redirecionamento (Drive/Agenda, não o login):
      `https://casa-automacao.minhasuite.com/integracoes/oauth/retorno`.
@@ -73,7 +73,7 @@ Android só emite token para um `serverClientId` do próprio projeto.
 
 ## Instalação local e outras instalações
 
-- **Dell / instalação local**: ponha `GOOGLE_CLIENT_ID` (o client web acima)
+- **Servidor da casa / instalação local**: ponha `GOOGLE_CLIENT_ID` (o client web acima)
   no `.env` e acesse pelo endereço externo `https://casa-automacao.minhasuite.com`.
   Pela rede de casa por IP (`http://192.168.x.x`), o botão da web some, e
   continuam a senha e a passkey. O app entra com Google em qualquer endereço,

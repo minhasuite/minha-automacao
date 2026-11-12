@@ -137,12 +137,12 @@ sai sem imagem e o trace diz.
   (`app/views/pwa/`), ícones em `public/` (`icon-192`, `icon-512`,
   `apple-touch-icon`, `badge-96`).
 - Chaves VAPID: `bin/vapid-keys [.env]` gera o par P-256 e grava só se não
-  existir (a privada nunca aparece). No Dell, o `bin/deploy-local` roda isso
+  existir (a privada nunca aparece). No servidor da casa, o `bin/deploy-local` roda isso
   no servidor. Na VPS: `PREFIX=MINHA_AUTOMACAO_ bin/vapid-keys
   /opt/minha-automacao/.env` (o compose passa `VAPID_PUBLIC_KEY` e
   `VAPID_PRIVATE_KEY`). Sem as chaves, o transporte Web Push fica desligado.
   Trocar as chaves invalida as inscrições.
-- **Exige https.** No Dell vale pelo acesso externo
+- **Exige https.** No servidor da casa vale pelo acesso externo
   (`https://casa-automacao.minhasuite.com`); pelo `http://192.168.68.199` o
   navegador não registra o service worker e a tela avisa.
 - **Android (Chrome):** instale a PWA (menu → "Instalar app") e inscreva em
