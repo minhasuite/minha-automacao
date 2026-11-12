@@ -1,0 +1,34 @@
+# "Substituir aparelho" (docs/integracoes.md): dados da sugestão de pares
+# ponto antigo → ponto novo. Aberto/fechado: equivalência nova = uma linha aqui.
+#
+# aliases: grupos de nomes de propriedade/dp que são a mesma coisa em drivers
+# diferentes (código do dp Tuya, `json_path` do MQTT/zigbee2mqtt, propriedade
+# MIoT…). Comparação sem caixa, pelo último trecho do caminho.
+aliases:
+  - [doorcontact_state, contact]
+  - [pir, pir_state, occupancy, presence, presence_state]
+  - [va_temperature, temp_current, temp_value, temperature, local_temperature]
+  - [va_humidity, humidity_value, humidity]
+  - [battery_percentage, battery_value, battery]
+  - [battery_state, battery_low]
+  - [switch, switch_1, switch_led, state, state_l1]
+  - [switch_2, state_l2]
+  - [switch_3, state_l3]
+  - [switch_4, state_l4]
+  - [bright_value, bright_value_v2, brightness]
+  - [temp_value_v2, colour_temp, color_temp]
+  - [watersensor_state, water_leak]
+  - [smoke_sensor_status, smoke_sensor_state, smoke]
+  - [temper_alarm, tamper]
+  - [cur_power, power]
+  - [cur_voltage, voltage]
+  - [cur_current, current]
+  - [add_ele, energy]
+  - [bright_value_lux, illuminance_lux, illuminance]
+  - [switch_type, action]
+# closed_when_true: propriedades binárias em que o bruto verdadeiro quer dizer
+# "fechado/normal" (o oposto do ponto daqui, em que verdadeiro = aberto/ativo).
+# Ex.: no zigbee2mqtt `contact: true` = FECHADO (a descoberta já guarda
+# `payload_on: false`, e aí não inverte). Serve para sugerir "inverter".
+closed_when_true:
+  - contact

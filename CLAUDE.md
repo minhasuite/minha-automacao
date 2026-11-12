@@ -704,6 +704,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   atributo `track` do "Presença" do app (some com a coordenada). Assistente
   "Migre do HA" (`Integrations::HaMigration`, `HaMigrationJob`) por cima
   do `HomeAssistantImport` (progresso por `STEPS`); spec só com HA falso.
+- **Substituir aparelho (aberto/fechado, `docs/integracoes.md`)**: `Devices::Replace` passa os
+  pontos antigos (mesmo id: tudo que aponta continua certo) para o aparelho novo com o endereço do
+  ponto novo, apaga o duplicado, AuditEvent `device.replace` com o antes (desfazer). Equivalência de
+  propriedade/sentido para a sugestão = linha em `config/device_replace.yml`; inverter = `address.invert`
+  genérico (`Points::Decode.invert`, no `from_raw`/`to_raw` e no MQTT). Técnico+, web/API/app.
 - **Desempenho (aberto/fechado, `docs/desempenho.md`)**: pontos do local e painel
   resolvido em cache curto na memória (`Dashboards::Cache`, chave = carimbo do local
   pelo `xmin`; painel por papel+minuto, 60 s; desligado nos testes). Aviso de mudança

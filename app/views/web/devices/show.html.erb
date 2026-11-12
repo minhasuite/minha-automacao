@@ -6,10 +6,20 @@
   <% if can?(:manage) %>
     <%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("devices.new_point") %><% end %>
     <%= link_to edit_device_path(@device), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %><%= t("devices.edit") %><% end %>
+    <% if @points.any? %><%= link_to replace_device_path(@device), class: "ss-btn ss-btn-ghost" do %><%= icon("switch-horizontal", "size-4") %><%= t("devices.replace.action") %><% end %><% end %>
     <% if @points.any? %><%= render "web/dashboards/add_to_link", type: "device", record: @device %><% end %>
   <% end %>
 <% end %>
 
+<% if @replaced && can?(:manage) %>
+  <%= render(Ss::CalloutComponent.new(tone: :info, title: t("devices.replace.replaced_title"), css: "mb-4")) do %>
+    <p><%= t("devices.replace.replaced", name: @replaced.details["new_device_name"], at: l(@replaced.created_at, format: :short), count: @replaced.details["pairs"].size) %></p>
+    <div class="mt-2 flex flex-wrap gap-2">
+      <% if (nd = Device.find_by(id: @replaced.details["new_device_id"])) %><%= link_to t("devices.replace.open_new"), device_path(nd), class: "ss-btn ss-btn-outline" %><% end %>
+      <%= button_to t("devices.replace.undo"), undo_replace_device_path(@device), class: "ss-btn ss-btn-ghost", form: { data: { turbo_confirm: t("devices.replace.undo_confirm"), turbo_confirm_button: t("devices.replace.undo") } } %>
+    </div>
+  <% end %>
+<% end %>
 <% if @points.empty? %>
   <%= render Ss::EmptyStateComponent.new(title: t("devices.no_points"), text: t("devices.no_points_hint"), css: "ss-card") do %><% if can?(:manage) %><%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("devices.add_point") %><% end %><% end %><% end %>
 <% else %>

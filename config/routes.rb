@@ -289,6 +289,12 @@ Rails.application.routes.draw do
         post :bulk, on: :collection, path: "lote"
         post :refresh, on: :member, path: "atualizar"
         post :reconnect, on: :member, path: "reconectar"
+        # "Substituir aparelho" (técnico+): mapeia os pontos para o aparelho novo e desfaz.
+        member do
+          get "substituir", to: "device_replacements#show", as: :replace
+          post "substituir", to: "device_replacements#create"
+          post "desfazer-substituicao", to: "device_replacements#undo", as: :undo_replace
+        end
         resources :points, path: "pontos", except: :index, shallow: true do
           post :command, on: :member, path: "comando"
           post :reset, on: :member, path: "redefinir" # "Redefinir estado" do sensor (técnico+)
@@ -473,6 +479,12 @@ Rails.application.routes.draw do
         resources :areas, except: %i[new edit], shallow: true
         resources :members, controller: :site_memberships, only: %i[index create update destroy], shallow: true
         resources :devices, except: %i[new edit], shallow: true do
+          # "Substituir aparelho": sugestão (GET), aplicar/prévia (POST) e desfazer.
+          member do
+            get :replace, to: "device_replacements#show"
+            post :replace, to: "device_replacements#create"
+            post "replace/undo", to: "device_replacements#undo", as: :undo_replace
+          end
           resources :points, except: %i[new edit], shallow: true do
             post :commands, on: :member, action: :command
             put :favorite, on: :member # ideia 13: {favorite: true|false}

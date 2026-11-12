@@ -173,7 +173,10 @@ class Point < ApplicationRecord
 
   # Bruto do aparelho ↔ valor do ponto (calibração: valor = bruto × scale + offset).
   # Endereço com `decode` (mapa de dados): Points::Decode desembrulha antes (nil = ignorar).
-  def from_raw(raw)
+  # `address.invert` troca verdadeiro ↔ falso (Points::Decode.invert), nos dois sentidos.
+  def from_raw(raw) = Points::Decode.invert(address, raw_to_value(raw))
+
+  def raw_to_value(raw)
     return Points::Decode.call(address, raw) if address["decode"].present?
     return Points::Color.decode(address, raw) if address["color"].present?
     return raw unless numeric? && raw.is_a?(Numeric)
@@ -199,7 +202,7 @@ class Point < ApplicationRecord
   end
 
   def to_raw(value)
-    return value unless numeric?
+    return Points::Decode.invert(address, value) unless numeric?
     raise ArgumentError, "Escala zero no ponto #{key}." if scale.zero?
 
     ((BigDecimal(value.to_s) - offset) / scale).round.to_i
