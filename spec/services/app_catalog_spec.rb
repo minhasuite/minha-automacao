@@ -85,7 +85,7 @@ RSpec.describe AppCatalog do
     end
 
     it "Zigbee2MQTT aceita coordenador pela rede (Dongle Max) no lugar da USB" do
-      z2m = AppCatalog.find("zigbee2mqtt")
+      z2m = described_class.find("zigbee2mqtt")
       opts, errors = z2m.clean_options({ "network_address" => "tcp://192.168.68.50:6638", "adapter" => "ember" })
       expect(errors).to be_empty
       body = z2m.container_body(opts, network: "bridge", restart: "no", server_env: {})
