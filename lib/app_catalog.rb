@@ -144,7 +144,7 @@ module AppCatalog
         "Labels" => { LABEL => key, "minha-automacao.version" => version.to_s,
                       "minha-automacao.options" => JSON.generate(public_options(opts)),
                       "minha-automacao.manifest" => (JSON.generate(data.merge("repository" => repository).compact) if third_party?) }.compact,
-        "Cmd" => command.presence,
+        "Cmd" => (command unless command.nil? || command.empty?), # Ruby puro: o supervisor roda sem o ActiveSupport
         "ExposedPorts" => ports.to_h { |p| [ port_spec(p), {} ] },
         "Healthcheck" => health && { "Test" => health["test"], "Interval" => health.fetch("interval_s", 30) * 1_000_000_000 },
         "HostConfig" => {
@@ -154,8 +154,8 @@ module AppCatalog
           "RestartPolicy" => { "Name" => restart },
           "NetworkMode" => network,
           "ShmSize" => shm_mb && shm_mb * 1024 * 1024,
-          "CapAdd" => cap_add.presence,
-          "Sysctls" => sysctls.presence&.transform_values(&:to_s),
+          "CapAdd" => (cap_add unless cap_add.nil? || cap_add.empty?),
+          "Sysctls" => (sysctls.transform_values(&:to_s) unless sysctls.nil? || sysctls.empty?),
           "Privileged" => false
         }.compact
       }.compact
