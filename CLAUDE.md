@@ -343,9 +343,10 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   propriedade, chave `nome_z2m.propriedade`; exposes binário/numérico/enum/
   texto → onoff, contato, movimento, problema, medição, dimmer, setpoint,
   enum, evento). Local: `Z2M_SITE_ID` ou o único local do servidor.
-  **Para ligar:** no servidor da casa, `ls /dev/serial/by-id/`; em Configurações →
-  Aplicativos → Zigbee2MQTT, instale com esse caminho e o tipo (`ember` para
-  Sonoff ZBDongle-E/EFR32, `zstack` para ZBDongle-P/CC2652). Frontend do z2m
+  **Para ligar:** coordenador USB = `ls /dev/serial/by-id/` no servidor e esse
+  caminho em "Coordenador USB"; coordenador pela rede (Sonoff Dongle Max, SLZB-06)
+  = `tcp://IP:6638` em "Coordenador pela rede" (vale no lugar da USB). Tipo `ember`
+  para EFR32 (ZBDongle-E, Dongle Max), `zstack` para CC2652 (ZBDongle-P). Frontend do z2m
   em `:8080` com `Z2M_FRONTEND_TOKEN` do `.env`. Parear pelo frontend.
 - **Câmeras (F8; Lote 3 em `docs/cameras.md`)**: plugin `CameraPlugin` para
   câmera avulsa (RTSP colado, usuário/senha tirados da URL; ou ONVIF com
@@ -741,8 +742,7 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.21.0`; no branch `beleza`,
-  temporariamente o branch `beleza` da gem, a v0.21 com `ss-cue` e `level:`):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.21.0`):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);

@@ -2922,7 +2922,7 @@ CREATE INDEX index_automation_runs_on_tenant_id ON public.automation_runs USING 
 -- Name: index_automation_runs_open; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_automation_runs_open ON public.automation_runs USING btree (status, updated_at) WHERE ((status)::text = ANY (ARRAY[('running'::character varying)::text, ('waiting'::character varying)::text, ('queued'::character varying)::text]));
+CREATE INDEX index_automation_runs_open ON public.automation_runs USING btree (status, updated_at) WHERE ((status)::text = ANY ((ARRAY['running'::character varying, 'waiting'::character varying, 'queued'::character varying])::text[]));
 
 
 --

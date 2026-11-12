@@ -1,7 +1,7 @@
 name: Zigbee2MQTT
 category: Rede e MQTT
 icon: lightning-bolt
-description: Controla aparelhos Zigbee pelo coordenador USB e publica tudo no MQTT; os aparelhos pareados aparecem sozinhos nos locais.
+description: Controla aparelhos Zigbee pelo coordenador (USB ou pela rede, como o Sonoff Dongle Max) e publica tudo no MQTT; os aparelhos pareados aparecem sozinhos nos locais.
 image: koenkk/zigbee2mqtt
 version: "2.6.2"
 network: apps
@@ -30,15 +30,20 @@ options:
     label: Coordenador USB
     type: device
     path: /dev/zigbee
-    required: true
-    help: "No servidor: ls /dev/serial/by-id/ (ex.: /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00-port0)."
+    help: "Coordenador na USB do servidor: ls /dev/serial/by-id/ (ex.: /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00-port0). Deixe vazio se ele for pela rede."
+  - key: network_address
+    label: Coordenador pela rede
+    type: string
+    env: ZIGBEE2MQTT_CONFIG_SERIAL_PORT
+    pattern: '\Atcp://[A-Za-z0-9.-]+:\d{2,5}\z'
+    help: "Coordenador Ethernet/Wi-Fi (Sonoff Dongle Max, SLZB-06…): tcp://IP:6638. Preenchido, vale no lugar da USB."
   - key: adapter
     label: Tipo do coordenador
     type: enum
     choices: [ember, zstack, deconz, zigate]
     default: ember
     env: ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER
-    help: ember para Sonoff ZBDongle-E (EFR32); zstack para ZBDongle-P (CC2652).
+    help: ember para Sonoff ZBDongle-E e Dongle Max (EFR32); zstack para ZBDongle-P (CC2652).
 # Textos em en/es (pt-BR acima); falta = cai no pt-BR.
 i18n:
   en:
@@ -47,17 +52,23 @@ i18n:
     options:
       serial_port:
         label: USB coordinator
-        help: 'On the server: ls /dev/serial/by-id/ (e.g. /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00-port0).'
+        help: 'Coordinator on the server USB: ls /dev/serial/by-id/ (e.g. /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00-port0). Leave empty for a network coordinator.'
+      network_address:
+        label: Network coordinator
+        help: 'Ethernet/Wi-Fi coordinator (Sonoff Dongle Max, SLZB-06…): tcp://IP:6638. When filled, it replaces the USB one.'
       adapter:
         label: Coordinator type
-        help: ember for Sonoff ZBDongle-E (EFR32); zstack for ZBDongle-P (CC2652).
+        help: ember for Sonoff ZBDongle-E and Dongle Max (EFR32); zstack for ZBDongle-P (CC2652).
   es:
     category: Red y MQTT
     description: Controla aparatos Zigbee mediante el coordinador USB y publica todo en MQTT; los aparatos vinculados aparecen solos en los lugares.
     options:
       serial_port:
         label: Coordinador USB
-        help: 'En el servidor: ls /dev/serial/by-id/ (ej.: /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00-port0).'
+        help: 'Coordinador en el USB del servidor: ls /dev/serial/by-id/ (ej.: /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00-port0). Déjelo vacío si va por la red.'
+      network_address:
+        label: Coordinador por la red
+        help: 'Coordinador Ethernet/Wi-Fi (Sonoff Dongle Max, SLZB-06…): tcp://IP:6638. Si se completa, reemplaza al USB.'
       adapter:
         label: Tipo de coordinador
-        help: ember para Sonoff ZBDongle-E (EFR32); zstack para ZBDongle-P (CC2652).
+        help: ember para Sonoff ZBDongle-E y Dongle Max (EFR32); zstack para ZBDongle-P (CC2652).

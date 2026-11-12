@@ -84,6 +84,19 @@ RSpec.describe AppCatalog do
       expect(clean["senha"]).to eq("antiga")
     end
 
+    it "Zigbee2MQTT aceita coordenador pela rede (Dongle Max) no lugar da USB" do
+      z2m = AppCatalog.find("zigbee2mqtt")
+      opts, errors = z2m.clean_options({ "network_address" => "tcp://192.168.68.50:6638", "adapter" => "ember" })
+      expect(errors).to be_empty
+      body = z2m.container_body(opts, network: "bridge", restart: "no", server_env: {})
+      expect(body["Env"]).to include("ZIGBEE2MQTT_CONFIG_SERIAL_PORT=tcp://192.168.68.50:6638", "ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER=ember")
+      expect(body["Env"]).not_to include("ZIGBEE2MQTT_CONFIG_SERIAL_PORT=/dev/zigbee")
+      expect(body["HostConfig"]["Devices"]).to eq([])
+      expect(z2m.clean_options({ "network_address" => "http://x; rm -rf /" }).last).to have_key("network_address")
+      usb, = z2m.clean_options({ "serial_port" => "/dev/ttyUSB0" })
+      expect(z2m.container_body(usb, network: "bridge", restart: "no", server_env: {})["Env"]).to include("ZIGBEE2MQTT_CONFIG_SERIAL_PORT=/dev/zigbee")
+    end
+
     it "monta o container só com o que o manifesto prevê" do
       app = manifest("ports" => [ { "container" => 3001, "host" => 3001 } ], "volumes" => [ { "name" => "data", "path" => "/data" } ],
                      "env" => { "TZ" => "America/Sao_Paulo" }, "server_env" => { "MQTT_PASS" => "MQTT_PASSWORD" },
