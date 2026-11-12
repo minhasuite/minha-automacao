@@ -11,6 +11,7 @@ module Drivers
   # (estado diferente do comando), `payload_press` (botão) e `retain`.
   # resto: `command_map` (nome do comando → payload: robô), `payload_install`
   # (firmware) e `image` ("mqtt": o payload é o JPEG da câmera, guardado como quadro).
+  # `invert`: ponto bool com o sentido trocado (Points::Decode.invert).
   class Mqtt
     class Error < StandardError; end
 
@@ -45,7 +46,7 @@ module Drivers
     def self.plain_payload(point, value)
       a = point.address
       raw = if point.bool?
-        value ? a.fetch("payload_on", true) : a.fetch("payload_off", false)
+        ::Points::Decode.invert(a, value) ? a.fetch("payload_on", true) : a.fetch("payload_off", false)
       else
         point.numeric? ? raw_number(point, value) : point.to_raw(value)
       end
@@ -64,7 +65,7 @@ module Drivers
 
       raw = a["value_map"][raw.to_s] if a["value_map"].is_a?(Hash)
       return if raw.nil?
-      return bool(point, raw) if point.bool?
+      return ::Points::Decode.invert(a, bool(point, raw)) if point.bool?
       return point.from_raw(raw.is_a?(String) ? Float(raw, exception: false) : raw) if point.numeric?
 
       point.data_type == "json" ? json(raw) : raw.to_s

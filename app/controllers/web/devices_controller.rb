@@ -50,6 +50,7 @@ module Web
       load_for(:view)
       @points = @device.points.ordered
       @usages = @device.usages
+      @replaced = Devices::Replace.last_event(@device) # "Substituído por…" com o desfazer
       @problems = Event.where(point_id: @points.map(&:id), kind: "quality").where("payload->>'to' <> 'good'").order(at: :desc).limit(5)
     end
 

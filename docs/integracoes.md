@@ -232,6 +232,61 @@ recentes de qualidade), **Reconectar** (`PollDeviceJob` com `reconnect`),
 espelhamentos, avisos, alertas e agendas que citam os pontos, por id ou
 chave).
 
+## Substituir aparelho (`Devices::Replace`)
+
+Troca o aparelho (ou o caminho até ele) sem refazer painéis, automações,
+cenas, ligações, avisos, alertas, helpers, de-para e histórico. Serve para
+qualquer driver; o caso que motivou foi o hub Zigbee da Tuya (`tuya_cloud`
+com `address.via`) trocado por um coordenador próprio com o Zigbee2MQTT: o
+sensor pareado de novo entra pelo `Mqtt::Z2m.discover!` como aparelho **novo**
+(`mqtt`, `external_id` = ieee).
+
+**Como:** página do aparelho antigo → **Substituir por…** (técnico+) →
+escolhe o aparelho novo do mesmo local → mapeamento ponto antigo → ponto
+novo, já sugerido e editável (caixa **Inverter** nos pontos verdadeiro/falso)
+→ **Ver prévia** (o que muda, quantas referências continuam certas, ponto
+novo que já era usado em algo, pontos sem par, destino do aparelho antigo) →
+**Substituir**. Na API: `GET /api/v1/devices/:id/replace?new_device_id=`
+(aparelhos possíveis e pares sugeridos), `POST /api/v1/devices/:id/replace`
+(`new_device_id`, `pairs: [{old, new, invert}]` ou `map: {antigo: novo}` +
+`invert: [antigos]`, `retire`, `preview: true` só mostra) e
+`POST /api/v1/devices/:id/replace/undo`. O app usa a tela da web (AppScreen).
+
+**O que acontece** (uma transação): para cada par, o **ponto antigo fica**
+(mesmo id, chave, nome, área, risco, histórico, ícone, exposição) e passa ao
+aparelho novo levando do ponto novo `address`, `scale`, `offset`, `writable`,
+`data_type`, `unit`, `min`/`max`/`step` (e as opções, em enum). Ajustes da
+pessoa guardados no endereço (`stale_open_s`, `notify_s`) ficam; ponto sem
+área própria fica com a área do aparelho antigo. O ponto novo duplicado é
+apagado (o que já apontasse para ele se perde: a prévia avisa). Como o id do
+ponto não muda, nada que aponta para ele muda. Ponto novo sem par fica como
+está; ponto antigo sem par fica no aparelho antigo. Aparelho antigo
+(`retire`): `remove` = `removed_at` se não sobrou ponto, senão desativado;
+`disable`; `keep`. A descoberta do z2m depois não duplica (casa pelo
+`json_path`, que agora está no ponto antigo).
+
+**Sugestão** (`config/device_replace.yml`, aberto/fechado: equivalência nova
+= uma linha): nota por capacidade, tipo do valor, `device_class`, unidade,
+nome e propriedade equivalente (`aliases`: `doorcontact_state` ↔ `contact`,
+`va_temperature` ↔ `temperature`…), escolha gulosa sem repetir ponto novo.
+Par com tipo de valor incompatível é recusado.
+
+**Inverter:** campo genérico `address.invert` (`Points::Decode.invert`),
+aplicado no `Point#from_raw`/`to_raw` (Tuya, Shelly, Z-Wave, SwitchBot…) e no
+MQTT (leitura e payload do comando). A sugestão compara o sentido do
+verdadeiro dos dois pontos (`closed_when_true` no YAML lista as propriedades
+em que o bruto verdadeiro = fechado, como o `contact` do z2m, e
+`payload_on: false` desfaz isso). Atenção: a descoberta do z2m já guarda
+`payload_on: false` no contato (aberto = verdadeiro, como o
+`doorcontact_state` da Tuya), então do hub Tuya para o z2m **não** inverte;
+um ponto MQTT feito à mão com `contact` cru é que pede inverter.
+
+**Desfazer:** AuditEvent `device.replace` (no aparelho antigo) guarda o antes
+de cada ponto e os atributos do ponto novo apagado. **Desfazer** (página do
+aparelho antigo ou API) devolve os pontos com o endereço de antes, recria os
+pontos novos com o mesmo id e devolve `removed_at`/`disabled`; marca
+`undone_at` e grava `device.replace_undo`. Uma vez só por substituição.
+
 ## Conectar (passo a passo do usuário)
 
 **Smart Life:** no app, Eu → engrenagem → Conta e segurança → copiar o

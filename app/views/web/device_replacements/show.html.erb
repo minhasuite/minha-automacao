@@ -1,0 +1,50 @@
+<%= render "web/shared/header", title: t("devices.replace.title", name: @device.name), subtitle: t("devices.replace.subtitle"), back: device_path(@device) %>
+
+<%= render(Ss::CalloutComponent.new(css: "mb-4 max-w-3xl")) { tag.p(t("devices.replace.pitch")) } %>
+
+<%= form_with url: replace_device_path(@device), method: :get, class: "ss-card ss-card-pad grid gap-3 max-w-3xl mb-4", data: { turbo: false } do %>
+  <div>
+    <%= label_tag :por, t("devices.replace.new_device"), class: "ss-label" %>
+    <%= select_tag :por, options_for_select(@candidates.map { |d| [ [ d.name, d.driver_label, d.area&.name ].compact.join(" · "), d.id ] }, @new_device&.id), include_blank: t("devices.replace.choose"), class: "ss-input" %>
+    <p class="text-xs text-muted mt-1"><%= t("devices.replace.new_device_hint") %></p>
+  </div>
+  <div><button type="submit" class="ss-btn ss-btn-outline"><%= t("devices.replace.load") %></button></div>
+<% end %>
+
+<% if @new_device %>
+  <%# A prévia responde 200 com a tela: sem Turbo (ele só aceita redirect no envio). -%>
+  <%= form_with url: replace_device_path(@device), method: :post, class: "ss-card ss-card-pad grid gap-4 max-w-3xl", data: { turbo: false } do %>
+    <%= hidden_field_tag :new_device_id, @new_device.id %>
+    <%= render Ss::CardHeaderComponent.new(title: t("devices.replace.mapping"), subtitle: t("devices.replace.mapping_hint", old: @device.name, new: @new_device.name), icon: icon("switch-horizontal", "")) %>
+    <% if @pairs.empty? %>
+      <%= render(Ss::NoteComponent.new) { t("devices.replace.no_points") } %>
+    <% end %>
+    <% @pairs.each do |pair| %>
+      <% o = pair.old %>
+      <div class="ss-item grid gap-2 md:grid-cols-[1fr_1fr] md:items-end">
+        <div>
+          <p class="font-semibold text-ink"><%= o.name %></p>
+          <p class="text-xs text-muted"><%= [ o.capability_label, o.device_class, o.unit, Devices::Replace.property(o) ].compact_blank.join(" · ") %></p>
+        </div>
+        <div>
+          <%= label_tag "map_#{o.id}", t("devices.replace.becomes"), class: "ss-label" %>
+          <%= select_tag "map[#{o.id}]", options_for_select(@news.select { |n| Devices::Replace.compatible?(o, n) }.map { |n| [ [ n.name, n.capability_label, n.unit, Devices::Replace.property(n) ].compact_blank.join(" · "), n.id ] }, pair.new&.id),
+                         include_blank: t("devices.replace.keep_old"), id: "map_#{o.id}", class: "ss-input" %>
+          <% if o.bool? %>
+            <label class="mt-2 flex items-center gap-2 text-sm"><%= hidden_field_tag "invert[#{o.id}]", "0", id: nil %><%= check_box_tag "invert[#{o.id}]", "1", pair.invert, id: "invert_#{o.id}" %><%= t("devices.replace.invert") %></label>
+            <% if pair.invert %><p class="text-xs text-muted mt-1"><%= t("devices.replace.invert_suggested") %></p><% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    <div>
+      <%= label_tag :retire, t("devices.replace.retire"), class: "ss-label" %>
+      <%= select_tag :retire, options_for_select(Devices::Replace::RETIRE.map { |k| [ t("devices.replace.retire_options.#{k}"), k ] }, @retire), class: "ss-input" %>
+      <p class="text-xs text-muted mt-1"><%= t("devices.replace.retire_hint") %></p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="submit" name="preview" value="1" class="ss-btn ss-btn-primary"><%= icon("eye", "size-4") %><%= t("devices.replace.preview") %></button>
+      <%= link_to t("devices.replace.cancel"), device_path(@device), class: "ss-btn ss-btn-ghost" %>
+    </div>
+  <% end %>
+<% end %>

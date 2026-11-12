@@ -7,6 +7,9 @@ module Points
   # `initiative_message` da câmera Tuya é base64 de um JSON com `cmd:
   # ipc_motion` no movimento. `unmatched` = valor quando não casa (enum
   # `pir`/`none` → verdadeiro/falso). Decodificador novo = uma linha em DECODERS.
+  # `invert` (genérico, qualquer driver que lê por `Point#from_raw`/`to_raw` e o
+  # MQTT): troca verdadeiro ↔ falso na leitura e no comando de ponto bool (ex.:
+  # contato em que o bruto verdadeiro = fechado; "Substituir aparelho").
   module Decode
     DECODERS = {
       "base64_json" => ->(raw) { JSON.parse(Base64.decode64(raw.to_s)) },
@@ -15,6 +18,10 @@ module Points
     }.freeze
 
     module_function
+
+    # Verdadeiro ↔ falso quando o endereço pede (`invert`); o resto passa igual.
+    def invert(address, value) = flip(value, address.to_h["invert"])
+    def flip(value, on) = on && [ true, false ].include?(value) ? !value : value
 
     def call(address, raw)
       value = DECODERS.fetch(address["decode"]).call(raw)
