@@ -1,0 +1,72 @@
+<% fp = params.permit(*Web::DeviceHealthController::FILTERS).to_h.symbolize_keys %>
+<% open = Diagnostics.problems(@all) %>
+<%= render "web/shared/header", title: t("device_health.title"), subtitle: t("device_health.subtitle", site: @site.name) do %>
+  <%= link_to site_devices_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("chip", "size-4") %><%= t("device_health.devices") %><% end %>
+  <% if current_user.admin? %>
+    <%= link_to settings_health_path, class: "ss-btn ss-btn-ghost" do %><%= icon("shield-check", "size-4") %><%= t("device_health.system_health") %><% end %>
+  <% end %>
+<% end %>
+<%= render "web/shared/site_switch", sites: @sites, site: @site, path: device_health_path %>
+
+<%= render Ss::KpiStripComponent.new(label: t("device_health.summary"), count: false, css: "mb-4", items: [
+      { label: t("device_health.kpi.open"), value: open.size.to_s },
+      { label: t("device_health.kpi.error"), value: open.count { |f| f.severity == "error" }.to_s },
+      { label: t("device_health.kpi.warn"), value: open.count { |f| f.severity == "warn" }.to_s },
+      { label: t("device_health.kpi.info"), value: @all.count { |f| f.severity == "info" && !f.snoozed? }.to_s },
+      { label: t("device_health.kpi.snoozed"), value: @all.count(&:snoozed?).to_s }
+    ]) %>
+
+<%# Filtros por GET da gem: agrupar (visões), problema, área, severidade e mostrar os silenciados. %>
+<%= render Ss::FilterBarComponent.new(url: device_health_path(site_id: @site.id), search: nil, css: "mb-4",
+                                      views: [ { label: t("device_health.by_rule"), params: {} }, { label: t("device_health.by_area"), params: { agrupar: "area" } } ],
+                                      filters: [ { param: :problema, label: t("device_health.problem"), options: Diagnostics.rules.map { |r| [ r.label, r.key ] } },
+                                                 { param: :area, label: t("device_health.area"), options: [ [ t("device_health.no_area"), "none" ] ] + @areas.map { |a| [ a.name, a.id ] } },
+                                                 { param: :severidade, label: t("device_health.severity"), options: Diagnostics::SEVERITIES.map { |s| [ t("device_health.severities.#{s}"), s ] } },
+                                                 { param: :silenciados, label: t("device_health.snoozed_filter"), options: [ [ t("device_health.show_snoozed"), "1" ] ] } ]) %>
+
+<% if @findings.empty? %>
+  <% filtered = fp.except(:agrupar).values.any?(&:present?) %>
+  <%= render Ss::EmptyStateComponent.new(variant: (filtered ? :busca : :nada), title: (filtered ? t("device_health.none_filtered") : t("device_health.none")),
+                                         text: t("device_health.none_hint"), css: "ss-card") do %>
+    <% if filtered %><%= link_to t("device_health.clear"), device_health_path(site_id: @site.id), class: "ss-btn ss-btn-ghost" %><% end %>
+  <% end %>
+<% else %>
+  <% groups = @group == "area" ? @findings.group_by(&:area).sort_by { |a, _| a ? [ 0, a.name.downcase ] : [ 1, "" ] } : @findings.group_by(&:rule).sort_by { |r, _| Diagnostics.rules.index(r) } %>
+  <div class="grid gap-4">
+    <% groups.each do |key, list| %>
+      <% by_area = @group == "area" %>
+      <% gid = "dh-#{by_area ? (key&.id || 'none') : key.key}" %>
+      <section class="ss-card ss-card-pad min-w-0" aria-labelledby="<%= gid %>" data-group="<%= by_area ? (key&.id || 'none') : key.key %>">
+        <%= render(Ss::CardHeaderComponent.new(title: by_area ? (key&.name || t("device_health.no_area")) : key.label, id: gid, heading: :h2,
+                                               subtitle: (key.description unless by_area), icon: icon(by_area ? "home" : key.icon, ""),
+                                               tone: (by_area ? nil : Diagnostics::TONES[Diagnostics.worst(list)]))) do |h| %>
+          <% h.with_action { tag.span(list.size, class: "ss-badge ss-badge-muted", "aria-label": t("device_health.count", count: list.size)) } %>
+        <% end %>
+        <ul class="mt-2 divide-y divide-line">
+          <% list.each do |f| %>
+            <%= render "web/device_health/finding", f: f, fp: fp, show_rule: by_area %>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+  </div>
+<% end %>
+
+<%# Ajustes do local: limiares e o aviso de bateria (o padrão vem do config/device_diagnostics.yml). %>
+<section class="ss-card ss-card-pad mt-6" aria-labelledby="dh-settings" data-device-health="settings">
+  <%= render Ss::CardHeaderComponent.new(title: t("device_health.settings.title"), subtitle: t("device_health.settings.subtitle"), id: "dh-settings", heading: :h2, icon: icon("adjustments", "")) %>
+  <%= form_with url: device_health_settings_path(site_id: @site.id, **fp), method: :patch, class: "mt-3 grid gap-3 sm:grid-cols-2" do %>
+    <% Diagnostics.config.fetch("editable").each do |k, spec| %>
+      <% if spec["type"] == "boolean" %>
+        <%= hidden_field_tag "settings[#{k}]", "0", id: nil %>
+        <label class="ss-check sm:col-span-2" for="dh-<%= k %>"><%= check_box_tag "settings[#{k}]", "1", @settings[k], id: "dh-#{k}" %><%= t("device_health.settings.#{k}") %></label>
+      <% else %>
+        <div>
+          <label for="dh-<%= k %>" class="ss-label"><%= t("device_health.settings.#{k}") %></label>
+          <%= number_field_tag "settings[#{k}]", @settings[k], id: "dh-#{k}", min: spec["min"], max: spec["max"], class: "ss-input num" %>
+        </div>
+      <% end %>
+    <% end %>
+    <div class="sm:col-span-2"><button type="submit" class="ss-btn ss-btn-primary"><%= t("device_health.settings.save") %></button></div>
+  <% end %>
+</section>

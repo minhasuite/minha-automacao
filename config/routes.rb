@@ -396,6 +396,11 @@ Rails.application.routes.draw do
     post "assistente", to: "assist#create", as: :assist
     # Paridade com o HA (roadmap de vendas): Diário, Histórico e Mapa da instalação (um local por vez).
     get "diario", to: "logbook#show", as: :logbook
+    # Saúde dos aparelhos (Diagnostics): achados, reparos seguros, silenciar e ajustes do local.
+    get "saude-aparelhos", to: "device_health#show", as: :device_health
+    post "saude-aparelhos/reparar", to: "device_health#fix", as: :device_health_fix
+    post "saude-aparelhos/silenciar", to: "device_health#snooze", as: :device_health_snooze
+    patch "saude-aparelhos/ajustes", to: "device_health#update_settings", as: :device_health_settings
     get "historico", to: "history#show", as: :history
     get "paineis-extras/:package_id/:key", to: "custom_panels#show", as: :custom_panel, constraints: { key: /[a-z0-9_-]+/ } # resto: panel_custom
     get "mapa", to: "maps#show", as: :map

@@ -1,4 +1,5 @@
 <%= render "web/shared/header", title: t("devices.title"), subtitle: t("devices.subtitle", site: @site.name), back: site_path(@site) do %>
+  <% if can?(:manage) %><%= link_to device_health_path(site_id: @site.id), class: "ss-btn ss-btn-ghost" do %><%= icon("shield-check", "size-4") %><%= t("device_health.nav") %><% end %><% end %>
   <% if can?(:manage) %><%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("plus", "size-4") %><%= t("devices.new") %><% end %><% end %>
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :devices %>
