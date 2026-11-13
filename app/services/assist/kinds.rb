@@ -66,7 +66,7 @@ module Assist
       names = Array(rule["names"])
       return false if names.empty? || !point.capability.in?(Array(rule["name_capabilities"]).presence || Point::CAPABILITIES.keys)
 
-      text = Assist.normalize([ point.name, point.device&.name ].compact.join(" "))
+      text = Assist.normalize([ point.name, *point.aliases, point.alexa_name, point.device&.name ].compact.join(" "))
       names.any? { |n| text.match?(/\b#{Regexp.escape(n)}/) }
     end
   end

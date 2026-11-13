@@ -30,8 +30,8 @@ module Assist
   end
 
   # Quem pergunta, onde (área do satélite) e em que idioma.
-  Ctx = Data.define(:site, :user, :role, :heard, :language, :area, :satellite) do
-    def initialize(site:, user:, role:, heard: "", language: "pt-BR", area: nil, satellite: nil) = super
+  Ctx = Data.define(:site, :user, :role, :heard, :language, :area, :satellite, :pending_key) do
+    def initialize(site:, user:, role:, heard: "", language: "pt-BR", area: nil, satellite: nil, pending_key: nil) = super
   end
 
   module_function
@@ -60,8 +60,15 @@ module Assist
   # Um pedido já no idioma e no local da conversa.
   def answer(site, user, heard, lang, speak:, area:, satellite:, agent:, llm_provider:, conversation_id:, cloud: true)
     # ondaB1 (B6): satélite sem pessoa fala com o papel dele.
-    ctx = Ctx.new(site: site, user: user, role: user ? site.role_for(user) : satellite&.role, heard: heard, language: lang, area: area || satellite&.area, satellite: satellite)
-    reply, slots = agent == "llm" ? [] : recognize(ctx, prepare(heard))
+    ctx = Ctx.new(site: site, user: user, role: user ? site.role_for(user) : satellite&.role, heard: heard, language: lang, area: area || satellite&.area, satellite: satellite,
+                  pending_key: Clarify.key(site, conversation_id, user, satellite))
+    # "Qual delas?" pendente: a resposta ("a do teto", "a segunda", "todas", "cancela") fecha o pedido.
+    unless agent == "llm"
+      reply = Clarify.answer(ctx, heard)
+      reply, slots = recognize(ctx, prepare(heard)) if reply.nil?
+      Clarify.clear(ctx) if slots && reply&.intent != "clarify" # pedido novo: a pergunta antiga sai
+      reply ||= Clarify.again(ctx, heard)
+    end
     conversation_id = conversation_id.presence || SecureRandom.uuid if agent.to_s.include?("llm")
     unless reply
       provider = agent == "intents" ? nil : ai_provider(site, llm_provider, structured: agent.to_s.include?("llm"), cloud: cloud)
@@ -193,11 +200,19 @@ module Assist
     want = clean(phrase)
     return [] if want.empty?
 
-    found = match_points(site, want, scope)
-    return found unless area && found.size > 1
+    find_points_how(site, phrase, scope: scope, area: area).first
+  end
+
+  # → [pontos, como] (:exact nome/apelido, :area cômodo inteiro, :kind tipo falado, :words palavras do nome).
+  def find_points_how(site, phrase, scope: nil, area: nil)
+    want = clean(phrase)
+    return [ [], nil ] if want.empty?
+
+    found, how = match_points(site, want, scope)
+    return [ found, how ] unless area && found.size > 1
 
     here = found.select { |p| area.subtree_ids.include?(p.effective_area_id) }
-    here.presence || found
+    [ here.presence || found, how ]
   end
 
   def match_points(site, want, scope)
@@ -205,18 +220,18 @@ module Assist
     points = exposed(scope || site.points)
     names = ->(p) { [ p.name, p.alexa_name, *p.aliases, p.display_names.compact.join(" "), *area_names(p) ].compact.map { |n| clean(n) }.uniq }
     exact = points.select { |p| names.call(p).include?(want) }
-    return exact if exact.any?
+    return [ exact, :exact ] if exact.any?
 
     # ondaA1 (A1): a área ou o andar inteiro ("apague o térreo"), com as áreas de dentro.
     area = site.areas.to_a.find { |a| a.all_names.any? { |n| clean(n) == want } }
-    return points.select { |p| area.subtree_ids.include?(p.effective_area_id) && !Kinds.setting?(site, p) } if area
+    return [ points.select { |p| area.subtree_ids.include?(p.effective_area_id) && !Kinds.setting?(site, p) }, :area ] if area
 
     # voz-offline: tipo falado ("as luzes da sala", "janelas", "ventilador do quarto"; Assist::Kinds).
     by_kind = kind_points(site, want, points)
-    return by_kind if by_kind&.any?
+    return [ by_kind, :kind ] if by_kind&.any?
 
     words = want.split.map { |w| stem(w) }
-    points.select { |p| names.call(p).any? { |n| (have = n.split.map { |w| stem(w) }) && words.all? { |w| have.include?(w) } } }
+    [ points.select { |p| names.call(p).any? { |n| (have = n.split.map { |w| stem(w) }) && words.all? { |w| have.include?(w) } } }, :words ]
   end
 
   def exposed(scope) = scope.where(disabled: false, hidden: false).includes(:area, :tags, device: %i[area points]).reject { |p| p.expose.to_h["assist"] == false }

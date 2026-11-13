@@ -168,14 +168,65 @@ RSpec.describe "voz-offline: voz de ponta a ponta sem internet" do
       ulmos_sw = create(:point, site: site, device: ulmos, name: "Liga/desliga", value: true)
       trava = create(:point, site: site, device: ulmos, name: "Trava infantil", value: true)
       led = create(:point, site: site, device: dev.call("Security Camera"), name: "Luz indicadora", value: true)
-      expect(say("desligar a luz do escritório")["points"]).to contain_exactly(monitor.id, ulmos_sw.id)
+      expect(say("desligar as luzes do escritório")["points"]).to contain_exactly(monitor.id, ulmos_sw.id)
       expect(say("desligar o escritório")["points"]).to contain_exactly(monitor.id, teto.id, ulmos_sw.id)
       expect(say("desligar a luz indicadora")["points"]).to eq([ led.id ])
       teto.update!(aliases: [ "luz do teto" ])
       expect(say("desligar a luz do teto")["points"]).to eq([ teto.id ])
+      expect(say("desligar as luzes do escritório")["points"]).to contain_exactly(monitor.id, ulmos_sw.id, teto.id) # o apelido com "luz" conta
       [ fundo, trava ].each { |p| expect(p.reload.value).to be true }
       site.update!(settings: site.settings.to_h.merge("assist_settings" => [ "Liga/desliga" ]))
-      expect(say("desligar a luz do escritório")["points"]).to eq([ monitor.id ])
+      expect(say("desligar as luzes do escritório")["points"]).to contain_exactly(monitor.id, teto.id)
+    end
+
+    describe "qual delas? (pedido no singular com várias opções)" do
+      let(:esc) { create(:area, site: site, name: "Escritório") }
+      let!(:m1) { create(:point, site: site, device: create(:device, site: site, area: esc, name: "ESC Lampada Monitor 1"), name: "Lâmpada Monitor 1", value: true) }
+      let!(:m2) { create(:point, site: site, device: create(:device, site: site, area: esc, name: "ESC Lampada Monitor 2"), name: "Lâmpada Monitor 2", value: true) }
+      let!(:teto) do
+        create(:point, site: site, device: create(:device, site: site, area: esc, name: "ESC Interruptor"), name: "Interruptor 4", aliases: [ "luz do teto" ],
+                       value: true)
+      end
+
+      before { allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new) }
+
+      it "pergunta, não comanda, e a resposta curta escolhe pelo nome, pela ordem ou todas" do
+        out = say("desligue a luz do escritório")
+        expect(out).to include("intent" => "clarify", "points" => [])
+        expect(out["text"]).to include("Achei 3", "Lâmpada Monitor 1", "Interruptor 4", "Qual delas?")
+        expect(Command.count).to eq(0)
+
+        expect(say("a do teto")).to include("intent" => "turn_off", "points" => [ teto.id ])
+        expect(say("a do teto")["intent"]).not_to eq("turn_off") # a pergunta já foi respondida
+
+        say("desligue a luz do escritório")
+        expect(say("a segunda")["points"]).to eq([ m2.id ])
+        say("desligue a luz do escritório")
+        expect(say("monitor")).to include("intent" => "clarify") # ainda duas: pergunta de novo só com elas
+        expect(say("1")["points"]).to eq([ m1.id ])
+        say("desligue a luz do escritório")
+        expect(say("todas")["points"]).to contain_exactly(m1.id, m2.id, teto.id)
+      end
+
+      it "plural, cômodo inteiro e nome exato fazem direto; cancela e resposta sem opção" do
+        expect(say("desligue as luzes do escritório")["points"]).to contain_exactly(m1.id, m2.id, teto.id)
+        expect(say("desligue o escritório")["points"]).to contain_exactly(m1.id, m2.id, teto.id)
+        expect(say("desligue a luz do teto")["points"]).to eq([ teto.id ])
+
+        say("desligue a luz do escritório")
+        expect(say("cancela")["text"]).to eq("Tudo bem, não mexi em nada.")
+        say("desligue a luz do escritório")
+        expect(say("a da varanda")["text"]).to start_with("Não achei \"a da varanda\" entre as opções")
+        expect(say("ligar a luz da sala")).to include("intent" => "turn_on", "points" => [ luz.id ]) # pedido novo descarta a pergunta
+        expect(say("monitor 1")["intent"]).not_to eq("turn_off")
+      end
+
+      it "a pergunta é da conversa: outra pessoa não responde por ela" do
+        say("desligue a luz do escritório")
+        outro = create(:user, tenant: tenant, role: "owner")
+        expect(Assist.call(site: site, user: outro, text: "todas")["points"]).to eq([])
+        expect(say("todas")["points"]).to contain_exactly(m1.id, m2.id, teto.id)
+      end
     end
 
     it "o local pode somar tipos falados (sites.settings)" do

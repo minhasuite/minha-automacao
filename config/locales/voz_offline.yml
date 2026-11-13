@@ -1,6 +1,11 @@
 # voz-offline: pipeline local primeiro, modo offline, aba Testar e tempo de resposta.
 pt-BR:
   assist:
+    clarify:
+      which: "Achei %{n}: %{names}. Qual delas? Diga o nome, \"todas\" ou \"cancela\"."
+      many: "Achei %{n}, como %{names}. Seja mais específico ou diga \"todas\"."
+      again: "Não achei \"%{heard}\" entre as opções: %{names}. Qual delas? Ou diga \"cancela\"."
+      cancelled: Tudo bem, não mexi em nada.
     offline:
       badge: Modo offline
       hint: Sem internet, a casa entende os comandos dela ("ligar a luz da sala"); perguntas livres ficam para quando a internet voltar.
@@ -63,6 +68,11 @@ pt-BR:
       p95: p95 %{ms} ms · %{n} execuções
 en:
   assist:
+    clarify:
+      which: "I found %{n}: %{names}. Which one? Say the name, \"all\" or \"cancel\"."
+      many: "I found %{n}, like %{names}. Be more specific or say \"all\"."
+      again: "I didn't find \"%{heard}\" among the options: %{names}. Which one? Or say \"cancel\"."
+      cancelled: OK, I didn't change anything.
     offline:
       badge: Offline mode
       hint: Without internet the house understands its own commands ("turn on the living room light"); free questions wait until the internet is back.
@@ -125,6 +135,11 @@ en:
       p95: p95 %{ms} ms · %{n} runs
 es:
   assist:
+    clarify:
+      which: "Encontré %{n}: %{names}. ¿Cuál? Di el nombre, \"todas\" o \"cancela\"."
+      many: "Encontré %{n}, como %{names}. Sé más específico o di \"todas\"."
+      again: "No encontré \"%{heard}\" entre las opciones: %{names}. ¿Cuál? O di \"cancela\"."
+      cancelled: Está bien, no cambié nada.
     offline:
       badge: Modo sin conexión
       hint: Sin internet la casa entiende sus comandos ("enciende la luz de la sala"); las preguntas libres esperan a que vuelva internet.

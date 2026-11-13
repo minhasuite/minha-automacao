@@ -171,6 +171,15 @@ Referência medida no spec: a intenção com ~60 pontos fica em poucos ms
   escritório"): lista `Assist::Kinds::SETTINGS` pelo nome do ponto; o local
   soma nomes em `sites.settings["assist_settings"]`. Pelo nome exato continua
   valendo ("desligue a luz indicadora").
+- **"Qual delas?"** (`Assist::Clarify`): pedido no singular ("desligue a luz
+  do escritório") que casa com vários pontos pelo tipo ou por parte do nome
+  não executa: a casa lista as opções e guarda o pedido por 60 s, pela
+  conversa (`conversation_id`) ou, sem ela, pela pessoa/satélite. A próxima
+  frase escolhe pelo nome ("a do teto", "monitor 1"), pela ordem ("a
+  segunda", "2"), "todas" ou "cancela"; outra frase que não escolhe repete as
+  opções, e um pedido novo descarta a pergunta. Plural ("as luzes"), cômodo
+  inteiro e nome exato fazem direto. O apelido do ponto conta para o tipo
+  ("luz do teto" faz o interruptor ser luz).
 
 ### Recomendação para o servidor da casa (HP: 4 núcleos, 7,6 GB)
 

@@ -8,7 +8,11 @@ module Assist
 
         def self.handle(ctx, slots)
           phrase = [ slots["name"], slots["area"] ].compact.join(" ")
-          points = Assist.find_points(ctx.site, phrase, area: ctx.area).select { |p| p.writable && Points::Command.commands_for(p).include?(command) }
+          points, how = Assist.find_points_how(ctx.site, phrase, area: ctx.area)
+          points = points.select { |p| p.writable && Points::Command.commands_for(p).include?(command) }
+          # "a luz do escritório" com várias: pergunta qual (o plural, o cômodo e o nome exato fazem todas).
+          return Assist::Clarify.ask(ctx, self, points, command) if Assist::Clarify.ask?(slots["name"], how, points)
+
           run(ctx, points, command, done: :done)
         end
       end
