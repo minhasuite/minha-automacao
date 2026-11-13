@@ -251,3 +251,15 @@ contador usam `data.caption` e `data.drill_url`, qualquer widget pode trazer
 `style` (tom e selo, `WidgetDecor`) e `stale` ("dado velho"), e cada visão traz
 `hero_now` (título e linha de cima do topo). Tocar num item ou número abre a
 lista dos pontos (`/paineis/:id/w/:wid/pontos`) como tela do servidor.
+
+## Câmeras (cameras2)
+
+- `GET /sites/:id/cameras` → `[{id, name, device, area, quality, features: {live, talk, ptz, playback}}]`.
+- `GET /cameras/:id/hls` → `{url}`: caminho assinado (`/cameras/:id/hls/<token>/stream.m3u8`,
+  6 h) do ao vivo; o app soma a raiz do servidor e toca no `video_player`. É o caminho de fora
+  de casa (o WebRTC só tem mídia na rede de casa): `LiveCamera` tenta WebRTC e, sem vídeo em
+  4 s, vai ao HLS.
+- `GET /cameras/:id/timeline?day=AAAA-MM-DD` → `{day, from, to, time_zone, available,
+  recordings: [{from, to}], events: [{from, to, kind, label}], error}`.
+- `POST /cameras/:id/playback` `{start, replace?}` → `{stream, start, url}` (HLS da gravação);
+  `DELETE /cameras/:id/playback?stream=` para. Detalhes em `docs/cameras.md`.

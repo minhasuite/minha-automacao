@@ -365,6 +365,15 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   na entrada padrão (senha nunca em arquivo nem argumento).
   Widget `camera` com `autoplay: true` abre o WebRTC sozinho quando visível (limite
   `autoplay_max`/`CameraWidget::AUTOPLAY_MAX` por página; `docs/dashboards.md`).
+- **Câmeras fora de casa e DVR (cameras2, aberto/fechado, `docs/cameras.md`)**: sem vídeo
+  WebRTC em 4 s o cliente cai para o MSE do go2rtc por WebSocket pelo Rails
+  (`/cameras/:id/mse`, Rack hijack + `Cameras::WsProxy`, mesma origem) ou HLS com link
+  assinado (`Cameras::HlsToken`, app pelo `video_player`); vagas por pessoa em
+  `Cameras::Streams` (`CAMERA_STREAMS_PER_USER`). Reprodução do DVR por perfil de fabricante
+  = bloco em `config/device_maps/dvr.yml`; lista de gravações = módulo em
+  `Cameras::Timeline::FINDERS` (Dahua `mediaFileFind.cgi`, ISAPI). Stream `pb_<hex>` com dono
+  no cache, tirado pelo sync. Tela `/cameras` (grade, câmera com troca rápida e linha do
+  tempo); API `/api/v1/sites/:id/cameras`, `/cameras/:id/{hls,timeline,playback}`.
 - **Xiaomi (F8)**: protocolo local miIO/MIoT (UDP 54321) em `Miio::Protocol`
   (quadros, sem rede) → `Miio::Client` → `Drivers::XiaomiMiot`. Nada passa pela
   nuvem: o `xiaomi_home` do HA usa OAuth e girar o token dele derruba o robô no

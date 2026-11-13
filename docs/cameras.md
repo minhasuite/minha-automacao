@@ -166,3 +166,108 @@ a câmera para sozinha no tempo do app). Firmware que só fala o login novo
 (TPAP/SPAKE2+) não é suportado: a mensagem pede a "Compatibilidade com
 terceiros". Holofote (`spotlight`) só está declarado no mapa, sem comando.
 Câmera de bateria e atrás do hub H200 não têm RTSP/ONVIF: ficam de fora.
+
+## Tela de Câmeras, ao vivo fora de casa e gravações do DVR (cameras2)
+
+### Ao vivo fora de casa
+
+O WebRTC entrega a mídia pela porta 8555 do servidor, anunciada em `APP_HOST`:
+só a rede de casa chega nela. Pelo acesso externo (`casa-automacao.minhasuite.com`,
+túnel HTTP reverso) a oferta SDP passa, mas o vídeo não. Por isso há dois
+caminhos que passam pelo próprio Rails:
+
+- **MSE por WebSocket** (web): `GET /cameras/:id/mse` com `Upgrade: websocket`.
+  O controller confere sessão, papel no local (qualquer papel, como o
+  `/quadro`), origem (`Origin` = o host do pedido: outro site não abre o
+  WebSocket com o cookie) e a vaga do limite; toma a conexão do Puma (Rack
+  hijack: a thread do Puma volta na hora) e o `Cameras::WsProxy` abre
+  `/api/ws?src=<stream>` no go2rtc com a mesma `Sec-WebSocket-Key` do navegador
+  (o 101 do go2rtc vale para ele) e só copia bytes, numa thread própria. Nada de
+  Action Cable. Túnel: o vídeo não para de passar; conexão sem byte por 30 s
+  fecha, e nenhuma passa de 30 min (o navegador abre de novo sozinho).
+- **HLS** (app e Safari sem MSE): `GET /cameras/:id/hls` (web, sessão) ou
+  `GET /api/v1/cameras/:id/hls` (app) devolvem um caminho assinado
+  `/cameras/:id/hls/<token>/stream.m3u8` (`Cameras::HlsToken`: ponto, pessoa e
+  stream; 6 h). O player não leva sessão nem cabeçalho; os endereços relativos do
+  go2rtc (`hls/playlist.m3u8?id=…`, `init.mp4`, `segment.m4s`) caem embaixo do
+  token. O índice principal confere de novo a pessoa e o papel, ocupa uma vaga e
+  prende a sessão HLS do go2rtc ao token (cache); os pedaços só passam com essa
+  sessão. HLS fMP4 só de vídeo (`mp4=`), pedidos curtos (bom para o túnel).
+- **Limite por pessoa** (`Cameras::Streams`): `CAMERA_STREAMS_PER_USER`
+  (padrão 8) vídeos pelo proxy ao mesmo tempo; vaga renovada enquanto o vídeo
+  passa e solta ao fechar ou 45 s sem uso. Excedente: 429 (o card fica na foto).
+  Fica no cache (Solid Cache: vale para os processos do Puma).
+
+**Cliente web** (`camera_controller.js`): tenta WebRTC; sem vídeo em 4 s cai para
+o MSE pelo proxy (protocolo do `video-rtc.js` do go2rtc: manda os codecs, recebe
+`{type: "mse"}`, junta os pedaços num `SourceBuffer` perto do vivo); sem MSE
+(`MediaSource`/`ManagedMediaSource`), o HLS nativo. Depois de um WebRTC que não
+conectou, a página vai direto ao MSE por 5 min (as outras câmeras não esperam).
+"Falar" precisa do WebRTC (o microfone vai por ele): fora de casa avisa
+("só na rede de casa") e segue com o vídeo; no app o falar é o `POST /talk`, que
+funciona de qualquer lugar.
+
+**App** (`LiveCamera`): mesma ordem; o fallback é o HLS tocado pelo
+`video_player` (ExoPlayer/AVPlayer tocam HLS sem nada a mais, não há MSE no app e
+o WebSocket+MSE exigiria um player próprio). Escolhido por ser o caminho mais
+simples e seguro: só HTTP curto pelo túnel, link assinado, sem cabeçalho.
+
+### Gravações do DVR (linha do tempo e reprodução)
+
+Perfil por fabricante como **dado** em `config/device_maps/dvr.yml`
+(`Cameras::Playback`): como achar o perfil (`match` no caminho do ponto,
+`manufacturers`, ou `address.playback` do aparelho = chave/`off`), o canal
+(regex), o caminho RTSP da reprodução (`{channel}`, `{start}`, `{end}` com
+`time_format`), `source_suffix` (`#backchannel=0`), `window_s`, a porta HTTP e o
+`finder` que lista as gravações. Hoje: Dahua/Intelbras
+(`/cam/playback?channel=N&starttime=AAAA_MM_DD_HH_MM_SS&endtime=…`) e Hikvision
+(`/Streaming/tracks/N01?starttime=…Z`). Hora = hora local do DVR = fuso do local.
+
+**Aberto/fechado**: fabricante novo = bloco no YAML; se ele lista gravações de
+outro jeito, módulo com `find(http, canal, de, até)` em
+`Cameras::Timeline::FINDERS` (hoje `dahua_cgi` = `mediaFileFind.cgi`
+factory.create → findFile → findNextFile em páginas → close/destroy; `isapi` =
+`POST /ISAPI/ContentMgmt/search` em páginas enquanto vier `MORE`). Digest MD5 ou
+SHA-256 (`Cameras::Http`, reaproveita o `Isapi.digest`). Nome do evento do DVR →
+tipo (motion, person, vehicle, line, region, alarm) no `events` do perfil.
+
+- **Linha do tempo** (`Cameras::Timeline.for(ponto, dia)`): trechos gravados
+  (arquivos emendados) e os de evento, com o rótulo traduzido. Cache 2 min (hoje)
+  ou 1 h (dias passados); até 90 dias. Erro do DVR (senha, fora do ar) vira
+  `error` na resposta, nunca exceção. Web: `GET /cameras/:id/linha-do-tempo`
+  (quadro ou `.json`); app: `GET /api/v1/cameras/:id/timeline?day=`.
+- **Reprodução** sob demanda, como o `on_demand`: `POST /cameras/:id/reproduzir`
+  (`inicio`, `troca`) / `POST /api/v1/cameras/:id/playback` (`start`,
+  `replace`) põem no go2rtc o stream `pb_<hex>` com a fonte do perfil e o dono
+  (ponto + pessoa) no cache por 2 min, renovado enquanto alguém assiste;
+  `DELETE` para; o `Go2rtcSyncJob` tira os `pb_` sem dono. A reprodução toca pelos
+  mesmos caminhos do ao vivo com `?pb=` (WebRTC, MSE) ou pelo HLS assinado;
+  `?pb=` de outra pessoa ou de outra câmera = 404. Pular ±30 s = nova reprodução
+  a partir da posição (início + tempo tocando); velocidade só 1x.
+
+### Tela de Câmeras
+
+- **Web**: menu "Câmeras" (`/cameras`, aparece com alguma câmera visível; local
+  pela troca de local da moldura): grade com o ao vivo automático do card
+  (`autoplay`, `CameraWidget::AUTOPLAY_MAX`), setas entre os cards e Enter abre.
+  `/cameras/:id`: a câmera grande com ← → / PageUp/PageDown / arrastar para
+  trocar, F ou o botão para tela cheia, Falar onde o ponto tem `play_media` (e
+  quem vê pode comandar), e a linha do tempo (`Ss::StateBandsComponent`; tocar
+  na faixa, num evento ou no campo de hora toca dali; ±30 s; voltar ao vivo).
+  Controllers `camera-nav` e `camera-playback`.
+- **App**: Mais → Câmeras (`/mais/cameras`, `CamerasScreen`): a grade com
+  `AutoplayCamera`; tocar abre `CameraViewerScreen` (arrastar troca de câmera,
+  tela cheia deitada, `CameraControls` para falar/mover/gravar) e
+  `CameraTimelineScreen` (`SsStateBands`, eventos, horário, ±30 s, ao vivo).
+  Lista: `GET /api/v1/sites/:id/cameras` (com `features`: live, talk, ptz,
+  playback, resolvidos no servidor).
+
+### Limites e o que falta conferir com o DVR de verdade
+
+Tudo conferido só com go2rtc e DVR falsos (WebMock e socket local). Falta ver no
+MHDX 3216: o formato exato do `findNextFile` (o `Channel` da resposta é 0-based; o
+pedido usa o canal do caminho, 1-based), se o `findFile` sem gravação volta 400
+nesse firmware, o tempo de abertura do `cam/playback` no go2rtc 1.9.9 e se o túnel
+(`ms-tunel-casa`) repassa o `Upgrade: websocket` (o Action Cable já passa por ele).
+Sem áudio no HLS (só vídeo). DVR com relógio fora do fuso do local desloca a
+linha do tempo.
