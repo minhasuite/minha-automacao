@@ -1,0 +1,31 @@
+<%= render "web/shared/header", title: t("pairing.title", protocol: @adapter.label), subtitle: t("pairing.subtitle", site: @site.name), back: site_devices_path(@site) do %>
+  <%= link_to site_pairing_network_path(@site, @adapter.key), class: "ss-btn ss-btn-ghost" do %><%= icon("chart-bar", "size-4") %><%= t("pairing.network.link", protocol: @adapter.label) %><% end %>
+<% end %>
+
+<div class="grid gap-4 max-w-4xl">
+  <%= render(Ss::CalloutComponent.new(tone: :info, title: t("pairing.how_title"))) do %>
+    <ol class="list-decimal pl-5 grid gap-1">
+      <% %w[open reset wait decide].each do |s| %><li><%= t("pairing.how.#{s}") %></li><% end %>
+    </ol>
+  <% end %>
+
+  <% if Drivers::Mqtt.url.blank? %>
+    <%= render(Ss::NoteComponent.new(tone: :warn, icon: icon("exclamation-circle", ""))) { t("pairing.no_broker") } %>
+  <% end %>
+
+  <%= form_with url: site_pairing_open_path(@site, @adapter.key), method: :post, class: "ss-card ss-card-pad grid gap-3" do %>
+    <%= render Ss::CardHeaderComponent.new(title: t("pairing.open_title"), subtitle: t("pairing.open_hint", min: (@adapter.max_seconds / 60.0).round), icon: icon("plus", "")) %>
+    <% if @routers.any? %>
+      <div>
+        <%= label_tag :via, t("pairing.via"), class: "ss-label" %>
+        <%= select_tag :via, options_for_select(@routers, @bridge.info["via"]), include_blank: t("pairing.via_all"), class: "ss-input max-w-md" %>
+        <p class="text-xs text-muted mt-1"><%= t("pairing.via_hint") %></p>
+      </div>
+    <% end %>
+    <div><button type="submit" class="ss-btn ss-btn-primary"><%= icon("status-online", "size-4") %><%= @bridge.open? ? t("pairing.renew") : t("pairing.open") %></button></div>
+  <% end %>
+
+  <turbo-frame id="pairing-live" src="<%= site_pairing_live_path(@site, @adapter.key) %>" target="_top" data-controller="ss-reload" data-ss-reload-every-value="2000">
+    <%= render "web/pairings/live", site: @site, adapter: @adapter, bridge: @bridge, joins: @joins %>
+  </turbo-frame>
+</div>

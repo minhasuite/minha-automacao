@@ -53,7 +53,8 @@ module Mqtt
           subscribed = Set.new
           next_scan = 0
           loop do
-            if monotonic >= next_scan
+            if @rescan || monotonic >= next_scan
+              @rescan = false
               (topics - subscribed.to_a).each { |t| client.subscribe(t => 0) && subscribed << t }
               next_scan = monotonic + SCAN_EVERY
             end
@@ -70,6 +71,9 @@ module Mqtt
       ensure
         @client = nil
       end
+
+      # Assina já os tópicos novos (aparelho que acabou de parear), sem esperar a volta de 30 s.
+      def rescan! = (@rescan = true)
 
       def discoverers = DISCOVERY.map { |name| Mqtt.const_get(name) }
 
@@ -95,6 +99,8 @@ module Mqtt
               point.report!(value)
             end
           end
+          # Descobridor com `observe` vê toda mensagem de aparelho (z2m: sinal e último visto).
+          discoverers.each { |d| d.observe(topic, payload) if d.respond_to?(:observe) }
         end
       rescue StandardError => e
         Rails.error.report(e, handled: true)

@@ -2,7 +2,7 @@ module Api
   module V1
     # "Substituir aparelho" (técnico+), o mesmo serviço da web (`Devices::Replace`):
     # GET  /devices/:id/replace?new_device_id=   → aparelhos possíveis e pares sugeridos
-    # POST /devices/:id/replace                  → {new_device_id, pairs: [{old, new, invert}] | map, retire, preview}
+    # POST /devices/:id/replace                  → {new_device_id, pairs: [{old, new, invert}] | map, retire, take_name, preview}
     # POST /devices/:id/replace/undo             → desfaz a última substituição
     class DeviceReplacementsController < BaseController
       def show
@@ -29,7 +29,7 @@ module Api
                                old_points_left: pv[:old_left].map { |p| point_json(p) }, new_points_left: pv[:new_left].map { |p| point_json(p) }, retire: pv[:retire] })
         end
 
-        event = Devices::Replace.call(device, new_device, pairs, user: current_user, retire: retire)
+        event = Devices::Replace.call(device, new_device, pairs, user: current_user, retire: retire, take_name: ActiveModel::Type::Boolean.new.cast(params[:take_name]) == true)
         render_data({ audit_event_id: event.id, retire: event.details["retire"], pairs: event.details["pairs"].map { |e| e.slice("old_point_id", "new_point_id", "invert") } })
       rescue Devices::Replace::Error => e
         render_error(:replace_failed, e.message, status: :unprocessable_content)

@@ -108,6 +108,17 @@ Rails.application.routes.draw do
       # Seção "Automações e cenas" (F8f): Automações · Cenas · Scripts ·
       # Blueprints · Regras (agendas, espelhamentos, avisos e alertas da F4).
       get :rules, on: :member, path: "regras"
+      # Assistente de pareamento e saúde da rede de malha (docs/integracoes.md, "Zigbee"):
+      # o protocolo é a chave do plugin de integração que pareia (hoje zigbee2mqtt).
+      get "parear/:protocolo", to: "pairings#show", as: :pairing
+      get "parear/:protocolo/ao-vivo", to: "pairings#live", as: :pairing_live
+      post "parear/:protocolo/abrir", to: "pairings#open", as: :pairing_open
+      post "parear/:protocolo/fechar", to: "pairings#close", as: :pairing_close
+      get "parear/:protocolo/aparelho/:join_id", to: "pairings#join", as: :pairing_join
+      post "parear/:protocolo/aparelho/:join_id/novo", to: "pairings#create_new", as: :pairing_join_new
+      post "parear/:protocolo/aparelho/:join_id/dispensar", to: "pairings#dismiss", as: :pairing_join_dismiss
+      get "rede/:protocolo", to: "pairing_networks#show", as: :pairing_network
+      post "rede/:protocolo/mapa", to: "pairing_networks#map", as: :pairing_network_map
       get :automation, on: :member, path: "automacao" # antiga: redireciona para Regras
       # Primitivas de automação (F4): criadas a partir do local ou do ponto.
       resources :point_links, path: "espelhamentos", except: %i[index show], shallow: true

@@ -3,6 +3,8 @@
 <%= form_with url: replace_device_path(@device), method: :post, class: "grid gap-4 max-w-3xl", data: { turbo_confirm: t("devices.replace.confirm", old: @device.name, new: @new_device.name), turbo_confirm_button: t("devices.replace.apply") } do %>
   <%= hidden_field_tag :new_device_id, @new_device.id %>
   <%= hidden_field_tag :retire, @retire %>
+  <%= hidden_field_tag :take_name, @take_name ? "1" : "0" %>
+  <% if @assistant %><%= hidden_field_tag :assistente, @assistant %><% end %>
   <section class="ss-card ss-card-pad">
     <%= render Ss::CardHeaderComponent.new(title: t("devices.replace.moves"), subtitle: t("devices.replace.moves_hint"), icon: icon("switch-horizontal", "")) %>
     <ul class="mt-3 grid gap-2 text-sm">
@@ -22,9 +24,10 @@
     <p class="mt-2 text-sm"><%= t("devices.replace.old_left", count: @preview[:old_left].size, names: @preview[:old_left].map(&:name).join(", ")) %></p>
     <p class="mt-1 text-sm"><%= t("devices.replace.new_left", count: @preview[:new_left].size, names: @preview[:new_left].map(&:name).join(", ")) %></p>
     <p class="mt-1 text-sm"><%= t("devices.replace.retire_result.#{@preview[:retire]}", name: @device.name) %></p>
+    <% if @take_name %><p class="mt-1 text-sm"><%= t("devices.replace.take_name_result", old: @device.name, new: @new_device.name) %></p><% end %>
   </section>
   <div class="flex flex-wrap gap-2">
     <button type="submit" class="ss-btn ss-btn-primary"><%= icon("check", "size-4") %><%= t("devices.replace.apply") %></button>
-    <%= link_to t("devices.replace.back_edit"), replace_device_path(@device, por: @new_device.id), class: "ss-btn ss-btn-ghost" %>
+    <%= link_to t("devices.replace.back_edit"), replace_device_path(@device, por: @new_device.id, assistente: @assistant), class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>

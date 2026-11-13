@@ -3,6 +3,7 @@
 <%= render(Ss::CalloutComponent.new(css: "mb-4 max-w-3xl")) { tag.p(t("devices.replace.pitch")) } %>
 
 <%= form_with url: replace_device_path(@device), method: :get, class: "ss-card ss-card-pad grid gap-3 max-w-3xl mb-4", data: { turbo: false } do %>
+  <% if @assistant %><%= hidden_field_tag :assistente, @assistant, id: nil %><% end %>
   <div>
     <%= label_tag :por, t("devices.replace.new_device"), class: "ss-label" %>
     <%= select_tag :por, options_for_select(@candidates.map { |d| [ [ d.name, d.driver_label, d.area&.name ].compact.join(" · "), d.id ] }, @new_device&.id), include_blank: t("devices.replace.choose"), class: "ss-input" %>
@@ -15,6 +16,7 @@
   <%# A prévia responde 200 com a tela: sem Turbo (ele só aceita redirect no envio). -%>
   <%= form_with url: replace_device_path(@device), method: :post, class: "ss-card ss-card-pad grid gap-4 max-w-3xl", data: { turbo: false } do %>
     <%= hidden_field_tag :new_device_id, @new_device.id %>
+    <% if @assistant %><%= hidden_field_tag :assistente, @assistant, id: nil %><% end %>
     <%= render Ss::CardHeaderComponent.new(title: t("devices.replace.mapping"), subtitle: t("devices.replace.mapping_hint", old: @device.name, new: @new_device.name), icon: icon("switch-horizontal", "")) %>
     <% if @pairs.empty? %>
       <%= render(Ss::NoteComponent.new) { t("devices.replace.no_points") } %>
@@ -42,6 +44,7 @@
       <%= select_tag :retire, options_for_select(Devices::Replace::RETIRE.map { |k| [ t("devices.replace.retire_options.#{k}"), k ] }, @retire), class: "ss-input" %>
       <p class="text-xs text-muted mt-1"><%= t("devices.replace.retire_hint") %></p>
     </div>
+    <label class="flex items-center gap-2 text-sm"><%= hidden_field_tag :take_name, "0", id: nil %><%= check_box_tag :take_name, "1", @take_name, id: "take_name" %><%= t("devices.replace.take_name", name: @device.name) %></label>
     <div class="flex flex-wrap gap-2">
       <button type="submit" name="preview" value="1" class="ss-btn ss-btn-primary"><%= icon("eye", "size-4") %><%= t("devices.replace.preview") %></button>
       <%= link_to t("devices.replace.cancel"), device_path(@device), class: "ss-btn ss-btn-ghost" %>

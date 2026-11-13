@@ -1,4 +1,9 @@
 <%= render "web/shared/header", title: t("devices.title"), subtitle: t("devices.subtitle", site: @site.name), back: site_path(@site) do %>
+  <%# Assistente de pareamento e rede de malha: um botão por plugin com ponte (hoje Zigbee2MQTT). -%>
+  <% Pairing.for_site(@site).each do |pa| %>
+    <% if can?(:manage) %><%= link_to site_pairing_path(@site, pa.key), class: "ss-btn ss-btn-primary" do %><%= icon("status-online", "size-4") %><%= t("pairing.button", protocol: pa.label) %><% end %><% end %>
+    <%= link_to site_pairing_network_path(@site, pa.key), class: "ss-btn ss-btn-ghost" do %><%= icon("chart-bar", "size-4") %><%= t("pairing.network.link", protocol: pa.label) %><% end %>
+  <% end %>
   <% if can?(:manage) %><%= link_to new_site_device_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("plus", "size-4") %><%= t("devices.new") %><% end %><% end %>
 <% end %>
 <%= render "web/sites/tabs", site: @site, current: :devices %>

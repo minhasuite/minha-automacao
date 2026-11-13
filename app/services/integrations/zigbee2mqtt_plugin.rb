@@ -8,5 +8,8 @@ module Integrations
     # ondaA2 A19: coordenadores USB comuns (Sonoff ZBDongle-P/E, ConBee II, CC2652, SkyConnect).
     usb({ vid: "10C4", pid: "EA60", description: "*sonoff*" }, { vid: "1A86", pid: "55D4", description: "*sonoff*" }, { vid: "1CF1", pid: "0030" },
         { vid: "0451", pid: "BEF3" }, { vid: "10C4", pid: "EA60", description: "*skyconnect*" })
+
+    # Assistente de pareamento, renome que chega ao z2m e mapa da rede.
+    def self.pairing_bridge = Mqtt::Z2m::Bridge
   end
 end

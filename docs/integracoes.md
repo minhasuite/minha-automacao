@@ -161,7 +161,8 @@ varredura e da adoção o plugin grava o estado atual (`Plugin.refresh`).
   DELETE respondem 400 e valem; stream que falha vai para o log e o ponto
   fica `unavailable`, sem parar os outros). Câmera avulsa de qualquer marca: "Câmera RTSP / ONVIF" abaixo.
 - **MQTT / Zigbee2MQTT**: sem conta; o card liga os aparelhos `mqtt` do local
-  (a descoberta continua no `Mqtt::Z2m`).
+  (a descoberta continua no `Mqtt::Z2m`). Pareamento, nome e rede do Zigbee:
+  seção "Zigbee" abaixo.
 - **Google Agenda / ICS** (F9, `CalendarPlugin`, `Calendars`): modo **link
   iCal** (o "endereço secreto no formato iCal" do Google ou qualquer .ics;
   links cifrados nas credenciais, baixados pelo `SafeHttp`) ou modo **conta
@@ -286,6 +287,98 @@ de cada ponto e os atributos do ponto novo apagado. **Desfazer** (página do
 aparelho antigo ou API) devolve os pontos com o endereço de antes, recria os
 pontos novos com o mesmo id e devolve `removed_at`/`disabled`; marca
 `undone_at` e grava `device.replace_undo`. Uma vez só por substituição.
+
+**Ficar com o nome antigo** (`take_name`, caixa na tela e parâmetro na API):
+o aparelho novo passa a se chamar como o antigo; num aparelho do z2m o nome
+vai também para a ponte (ver "Zigbee" abaixo).
+
+## Zigbee: assistente de pareamento, nome e rede (`Pairing`)
+
+O que antes era feito à mão por comandos na migração dos 28 aparelhos
+(`permit_join` por MQTT, ler o log do z2m, adivinhar quem entrou por
+bateria/estado/ordem, `Devices::Replace` e `bridge/request/device/rename`)
+virou produto. É genérico: a **capacidade de pareamento é do plugin de
+integração** (`Integrations::Plugin.pairing_bridge` → adaptador
+`< Pairing::Adapter`); o zigbee2mqtt é o primeiro (`Mqtt::Z2m::Bridge`).
+Telas, sugestão, regra do nome e desenho do mapa ficam em `Pairing` e não
+sabem de z2m. **Aberto/fechado:** outra ponte (Z-Wave JS, ZHA por MQTT…) =
+adaptador com `key` (= chave do plugin), `available?`, `owns?`, `owned`,
+`open!`/`close!`, `rename!`/`name_error`, `request_map!`/`graph`, `routers`
++ `pairing_bridge` no plugin; o ouvinte dele grava `PairingBridge` e
+`PairingJoin`.
+
+**Onde:** Dispositivos do local → **Parear aparelho Zigbee** (técnico+; só
+aparece com broker, no local do z2m e depois de a ponte ter falado ou de
+haver aparelho dela) e **Rede Zigbee** (qualquer papel). Rotas:
+`/locais/:id/parear/:protocolo` (+ `ao-vivo`, `abrir`, `fechar`,
+`aparelho/:join_id`, `.../novo`, `.../dispensar`) e `/locais/:id/rede/:protocolo`
+(+ `mapa`). O app abre as mesmas telas pelo AppScreen (o quadro ao vivo vira
+o bloco `reload`; o mapa em SVG é só da web, a tabela traz o "Ligado a").
+
+**Assistente:**
+1. **Abrir pareamento** publica `zigbee2mqtt/bridge/request/permit_join`
+   `{value: true, time: 254[, device: <roteador>]}` (`value` para o z2m 1.x,
+   `time` para o 2.x; "Abrir por" um roteador perto do aparelho). Abrir de
+   novo renova; **Fechar** manda `time: 0`. O prazo mostrado vem do
+   `bridge/info` (`permit_join_end` do 2.x ou `permit_join_timeout` do 1.x) e
+   do `bridge/response/permit_join`, gravado em `pairing_bridges.permit_until`
+   pelo ouvinte.
+2. **Ao vivo** (quadro que se recarrega a cada 2 s): os eventos do
+   `bridge/event` (`device_joined`, `device_interview` started/successful/failed,
+   `device_leave`) viram `pairing_joins` (um por aparelho; entrar de novo
+   recomeça a decisão) com modelo, fabricante, descrição e suportado; a
+   descoberta (`bridge/devices`) liga ao aparelho daqui (`device_id`), grava
+   a alimentação e assina o tópico na hora (`Mqtt::Listener.rescan!`); o sinal
+   chega na primeira mensagem do aparelho. Entrevista que falhou mostra a dica
+   "resete de novo perto de um roteador".
+3. **Continuar** (aparelho entrevistado): **É novo** = nome + área (o nome vai
+   para a ponte) ou **Substitui um aparelho existente** = lista do
+   `Pairing::Suggest`, do mais provável ao menos, com os motivos: pontos que
+   combinam (nota do `Devices::Replace`), bateria nos dois (ou só num: perde
+   nota), mesmo estado agora nos pares verdadeiro/falso, o antigo parou de
+   responder (mais nota se foi nas últimas 2 h: é o que acabou de ser
+   resetado; empate = quem parou por último) e mesmo modelo. "Substituir este"
+   abre a tela do Substituir já com o novo, a caixa "fica com o nome" marcada
+   e a volta para o assistente; aplicar marca a entrada como resolvida (o
+   desfazer reabre). **Ignorar** só tira da lista.
+
+**Renomear de verdade (escolha: o nome vai para o z2m).** O nome daqui
+continua seguindo o `friendly_name` (fonte única, tópicos e frontend do z2m
+iguais), e renomear aqui (web, API, app, "É novo", "fica com o nome") publica
+`bridge/request/device/rename` `{from: <ieee>, to, homeassistant_rename: true,
+transaction: "ma-rename-<id>"}` (`Device` → `Pairing.renamed`, fora quando o
+nome veio da própria descoberta: `bridge_naming`). Até o z2m confirmar, o
+aparelho guarda `address.rename_to` e a descoberta **não** sobrescreve o nome
+com o antigo; broker fora na hora = fica pendente e vai de novo ao reconectar
+(`Z2m.connected`) e a cada `bridge/devices` (no máximo 1 por minuto). Se o
+z2m recusa (nome em uso…), o nome volta ao de lá e a página do aparelho
+mostra o erro (`address.rename_error`). Nome que o z2m não aceita (`#`, `+`,
+barra no começo/fim, "/número" no fim) é recusado na validação. Por que não
+a alternativa "a descoberta deixa de sobrescrever quando a pessoa renomeou":
+o z2m e o MA ficariam com nomes diferentes para sempre (tópico com um nome,
+tela com outro, frontend do z2m com o ieee) e renomear no z2m depois não
+chegaria mais aqui.
+
+**Rede:** `Pairing::Network` = uma linha por aparelho da ponte com papel
+(coordenador/roteador/final, do `type` do `bridge/devices` em
+`address.mesh.role`), alimentação, sinal (`linkquality` de cada mensagem, em
+`address.mesh.lqi`, regravado só com mudança de 10+ ou a cada 5 min),
+último visto, bateria (`battery_point_id`, que a descoberta agora preenche) e
+situação (a disponibilidade `<nome>/availability` do z2m marca
+online/offline); resumo com sinal fraco (< 40), bateria baixa (< 20%) e sem
+resposta. **Atualizar mapa** pede `bridge/request/networkmap`
+`{type: "raw", routes: false}`; a resposta (`bridge/response/networkmap`, pode
+levar um minuto; a tela espera recarregando) fica em
+`pairing_bridges.network_map` e vira grafo genérico (`Bridge.graph`) e
+desenho (`Pairing::MapLayout`: coordenador no meio, roteadores no anel de
+dentro, finais no de fora perto do pai; linha grossa = pai/filho; cor pelo
+sinal) num SVG simples, sem biblioteca. A tela de Saúde dos aparelhos pode
+linkar para `/locais/:id/rede/zigbee2mqtt`.
+
+**Testes:** `spec/support/fake_mqtt_broker.rb` (broker falso: guarda o que
+seria publicado e entrega mensagens ao ouvinte de verdade);
+`spec/services/zigbee_pairing_spec.rb` e `spec/requests/zigbee_pairing_spec.rb`.
+Nunca publique em MQTT real nos testes.
 
 ## Conectar (passo a passo do usuário)
 

@@ -347,7 +347,14 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   caminho em "Coordenador USB"; coordenador pela rede (Sonoff Dongle Max, SLZB-06)
   = `tcp://IP:6638` em "Coordenador pela rede" (vale no lugar da USB). Tipo `ember`
   para EFR32 (ZBDongle-E, Dongle Max), `zstack` para CC2652 (ZBDongle-P). Frontend do z2m
-  em `:8080` com `Z2M_FRONTEND_TOKEN` do `.env`. Parear pelo frontend.
+  em `:8080` com `Z2M_FRONTEND_TOKEN` do `.env`. Parear pelo assistente (abaixo) ou pelo frontend.
+- **Pareamento e rede (aberto/fechado, `docs/integracoes.md` "Zigbee")**: ponte que pareia =
+  adaptador `< Pairing::Adapter` devolvido por `pairing_bridge` no plugin de integração (hoje
+  `Mqtt::Z2m::Bridge`); telas `/locais/:id/parear/:protocolo` e `/rede/:protocolo`, sugestão
+  (`Pairing::Suggest`), saúde (`Pairing::Network`) e mapa SVG (`Pairing::MapLayout`) não sabem de z2m.
+  Estado em `pairing_bridges`/`pairing_joins`, gravado só pelo ouvinte. Nome do aparelho da ponte:
+  renomear aqui publica o rename no z2m (`Pairing.renamed`, pendente em `address.rename_to` até
+  confirmar; a descoberta não sobrescreve e marca `bridge_naming`). Spec só com `FakeMqttBroker`.
 - **Câmeras (F8; Lote 3 em `docs/cameras.md`)**: plugin `CameraPlugin` para
   câmera avulsa (RTSP colado, usuário/senha tirados da URL; ou ONVIF com
   perfis e ponto `motion` por PullPoint no `Onvif::Listener`,
