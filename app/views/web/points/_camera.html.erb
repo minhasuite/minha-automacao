@@ -11,6 +11,7 @@
     <%# Tile de câmera da gem; o controller camera (quadro, WebRTC e falar) troca o data-state. O selo diz se grava. %>
     <%= render Ss::CameraTileComponent.new(title: point.name, state: :loading, age: 0, retry_button: true, status: (t("cameras.modes.#{rec['mode']}") unless rec["mode"] == "off"),
                                            data: { controller: "camera", camera_snapshot_value: camera_snapshot_path(point), camera_webrtc_value: camera_webrtc_path(point),
+                                                   camera_mse_value: camera_mse_path(point), camera_hls_value: camera_hls_path(point), camera_talk_home_value: t("cameras.talk_home_only"),
                                                    camera_interval_value: 5, camera_mic_denied_value: t("cameras.mic_denied") }) do |c| %>
       <% c.with_frame do %>
         <img data-camera-target="img" alt="<%= t("dashboards.w.image_x", name: point.name) %>" hidden>
@@ -47,6 +48,7 @@
       <h3><%= t("cameras.recordings") %></h3>
       <p class="text-sm text-muted mt-1"><%= t("cameras.mode_now", mode: t("cameras.modes.#{rec['mode']}"), days: rec["retention_days"]) %></p>
       <div class="flex flex-wrap gap-2 mt-3">
+        <%= link_to camera_path(point), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("clock", "size-4") %><%= t("cameras.screen.open_timeline") %><% end %>
         <%= link_to site_media_browse_path(site, "recordings", path: point.id), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("video-camera", "size-4") %><%= t("cameras.see_recordings") %><% end %>
         <% if cmds.include?("record") && can_cmd %>
           <%= button_to command_point_path(point), params: { command: "record", value: rec["event_s"] }, class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("stop", "size-4") %><%= t("cameras.record_now", s: rec["event_s"]) %><% end %>

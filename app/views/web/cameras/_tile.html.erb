@@ -1,0 +1,27 @@
+<%# locals: (point:, url: nil, autoplay: true, interval: 10, talk: false, fullscreen: false, extra: {}) -%>
+<%# cameras2: card de câmera da tela de Câmeras (Ss::CameraTileComponent da gem + controller camera:
+    WebRTC em casa, MSE/HLS pelo Rails fora). talk: botão Falar; fullscreen: botão de tela cheia. -%>
+<%= render Ss::CameraTileComponent.new(title: point.name, state: :loading, age: 0, retry_button: true, url: url,
+                                       data: { controller: "camera", camera_snapshot_value: camera_snapshot_path(point), camera_webrtc_value: camera_webrtc_path(point),
+                                               camera_mse_value: camera_mse_path(point), camera_hls_value: camera_hls_path(point),
+                                               camera_interval_value: interval, camera_autoplay_value: autoplay,
+                                               camera_autoplay_max_value: Dashboards::Widgets::CameraWidget::AUTOPLAY_MAX,
+                                               camera_mic_denied_value: t("cameras.mic_denied"), camera_talk_home_value: t("cameras.talk_home_only"), **extra }) do |c| %>
+  <% c.with_frame do %>
+    <img data-camera-target="img" alt="<%= t("dashboards.w.image_x", name: point.name) %>" hidden>
+    <video data-camera-target="video" <%= "muted" unless talk %> playsinline autoplay hidden aria-label="<%= t("dashboards.w.live_x", name: point.name) %>"></video>
+  <% end %>
+  <% c.with_action do %>
+    <button type="button" data-camera-target="liveButton" data-action="camera#toggle" aria-pressed="false" title="<%= t("dashboards.w.live") %>" aria-label="<%= t("dashboards.w.live_x", name: point.name) %>"><%= icon("status-online", "size-4") %></button>
+  <% end %>
+  <% if talk %>
+    <% c.with_action do %>
+      <button type="button" data-camera-target="talkButton" data-action="camera#talk" aria-pressed="false" title="<%= t("cameras.talk") %>" aria-label="<%= t("cameras.talk") %>"><%= icon("microphone", "size-4") %></button>
+    <% end %>
+  <% end %>
+  <% if fullscreen %>
+    <% c.with_action do %>
+      <button type="button" data-action="camera#fullscreen" title="<%= t("cameras.screen.fullscreen") %>" aria-label="<%= t("cameras.screen.fullscreen") %>"><%= icon("arrows-expand", "size-4") %></button>
+    <% end %>
+  <% end %>
+<% end %>

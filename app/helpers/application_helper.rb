@@ -104,6 +104,8 @@ module ApplicationHelper
     list = [ { key: "home", label: home&.name || t("nav.home"), path: root_path, icon: home&.icon_name || "lightning-bolt" } ]
     list += Dashboard.sidebar_for(user).reject { |d| d.id == home&.id }.map { |d| { key: "dash:#{d.id}", label: d.name, path: dashboard_path(d), icon: d.icon_name } }
     list += Cards.panels(Site.visible_to(user)).map { |p| { key: "panel:#{p['package'].id}:#{p['key']}", label: p["name"], path: custom_panel_path(p["package"], p["key"]), icon: p["icon"] } } # resto
+    # cameras2: tela de Câmeras (qualquer papel vê câmera), só com câmera em algum local.
+    list << { key: "cameras", label: t("nav.cameras"), path: cameras_path, icon: "video-camera" } if any_camera?(user)
     unless reader
       list += [ { key: "logbook", label: t("nav.logbook"), path: logbook_path, icon: "view-list" },
                 { key: "history", label: t("nav.history"), path: history_path, icon: "chart-bar" },
@@ -122,6 +124,10 @@ module ApplicationHelper
     list = list.sort_by.with_index { |e, i| [ e[:key] == "settings" ? 1 : 0, order.index(e[:key]) || (order.size + i) ] }
     list.each { |e| e[:hidden] = hidden.include?(e[:key]) }
     all ? list : list.reject { |e| e[:hidden] }
+  end
+
+  def any_camera?(user)
+    Point.joins(:device).where(site_id: Site.visible_to(user).select(:id), capability: "stream", disabled: false, devices: { disabled: false }).exists?
   end
 
   # Item ativo: a própria página ou uma página abaixo dela.

@@ -1,0 +1,59 @@
+# Reprodução das gravações do DVR/NVR por fabricante (Cameras::Playback; docs/cameras.md).
+# Aberto/fechado: fabricante novo = um bloco aqui (e, se ele lista as gravações de outro
+# jeito, um "finder" novo em Cameras::Timeline::FINDERS). Nada de `case` por marca no código.
+#
+# Como o perfil é escolhido para um ponto `stream` de aparelho go2rtc:
+#   1. `address.playback` do aparelho = chave daqui (ou "off" para desligar);
+#   2. senão, o primeiro perfil cujo `match` (regex) casa com o caminho do ponto
+#      ou cujo `manufacturers` contém o fabricante do aparelho.
+#
+# Campos:
+#   name          rótulo
+#   match         regex no caminho do ponto (`address.path`)
+#   manufacturers fabricantes (Device#manufacturer, sem diferença de maiúsculas)
+#   channel       regex que tira o canal do caminho (1º grupo)
+#   playback      caminho RTSP da reprodução; {channel}, {start}, {end}
+#   time_format   strftime das horas no caminho (hora local do DVR = fuso do local)
+#   source_suffix sufixo da fonte no go2rtc (ex.: sem áudio de volta na reprodução)
+#   window_s      duração pedida a partir do início (o DVR para no fim)
+#   finder        quem lista as gravações do dia (Cameras::Timeline::FINDERS)
+#   http_port     porta HTTP da lista (o aparelho pode trocar com `address.http_port`)
+#   events        nome do evento no DVR → tipo na linha do tempo (motion, person, vehicle,
+#                 line, region, alarm; o que não estiver aqui vira "event")
+dahua:
+  name: Dahua / Intelbras
+  match: '\A/cam/realmonitor'
+  manufacturers: [Dahua, Intelbras]
+  channel: 'channel=(\d+)'
+  playback: '/cam/playback?channel={channel}&starttime={start}&endtime={end}'
+  time_format: '%Y_%m_%d_%H_%M_%S'
+  source_suffix: '#backchannel=0'
+  window_s: 7200
+  finder: dahua_cgi
+  http_port: 80
+  events:
+    VideoMotion: motion
+    SmartMotionHuman: person
+    SmartMotionVehicle: vehicle
+    CrossLineDetection: line
+    CrossRegionDetection: region
+    AlarmLocal: alarm
+
+hikvision:
+  name: Hikvision
+  match: '\A/Streaming/Channels/'
+  manufacturers: [Hikvision, HiLook]
+  # 102 = canal 1, substream; 1702 = canal 17.
+  channel: '\A/Streaming/Channels/(\d+)\d\d\z'
+  playback: '/Streaming/tracks/{channel}01?starttime={start}&endtime={end}'
+  time_format: '%Y%m%dT%H%M%SZ'
+  source_suffix: '#backchannel=0'
+  window_s: 7200
+  finder: isapi
+  http_port: 80
+  events:
+    MOTION: motion
+    VMD: motion
+    LINEDETECTION: line
+    FIELDDETECTION: region
+    ALARMINPUT: alarm

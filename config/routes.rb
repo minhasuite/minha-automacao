@@ -90,6 +90,18 @@ Rails.application.routes.draw do
     patch "paineis/:id/estilo-dos-cards", to: "dashboard_card_styles#update", as: :card_style_dashboard
     get "cameras/:id/quadro", to: "cameras#snapshot", as: :camera_snapshot
     post "cameras/:id/ao-vivo", to: "cameras#webrtc", as: :camera_webrtc
+    # cameras2: tela de Câmeras, ao vivo fora de casa (MSE por WebSocket e HLS pelo Rails),
+    # linha do tempo e reprodução do DVR.
+    get "cameras", to: "cameras#index", as: :cameras
+    get "cameras/:id", to: "cameras#show", as: :camera, constraints: { id: /\h{8}-\h{4}-\h{4}-\h{4}-\h{12}/ }
+    get "cameras/:id/mse", to: "cameras#mse", as: :camera_mse
+    get "cameras/:id/hls", to: "cameras#hls", as: :camera_hls
+    get "cameras/:id/linha-do-tempo", to: "cameras#timeline", as: :camera_timeline
+    post "cameras/:id/reproduzir", to: "cameras#playback", as: :camera_playback
+    delete "cameras/:id/reproduzir", to: "cameras#stop_playback"
+    get "cameras/:id/hls/:token/stream.m3u8", to: "camera_hls#master", as: :camera_hls_master, format: false, constraints: { token: /[A-Za-z0-9_=-]+/ }
+    get "cameras/:id/hls/:token/hls/:file", to: "camera_hls#file", as: :camera_hls_file, format: false,
+                                             constraints: { token: /[A-Za-z0-9_=-]+/, file: /[a-z0-9]+\.(m3u8|mp4|m4s|ts)/ }
     # ondaC2 (C10): gravação, PTZ e alto-falante da câmera. Arquivo de mídia por link assinado (players da rede, sem sessão).
     patch "cameras/:id/ajustes", to: "cameras#settings", as: :camera_settings
     get "midia/arquivo/:name", to: "media_files#show", as: :media_file, constraints: { name: %r{[^/]+} }, format: false
@@ -529,6 +541,12 @@ Rails.application.routes.draw do
       # Diário, Histórico de vários pontos e Mapa (paridade com o HA).
       get "sites/:site_id/logbook", to: "logbook#index"
       get "sites/:site_id/detections", to: "detections#index"
+      # cameras2: tela de Câmeras do app, ao vivo por HLS (fora de casa) e DVR.
+      get "sites/:site_id/cameras", to: "cameras#index"
+      get "cameras/:id/hls", to: "cameras#hls"
+      get "cameras/:id/timeline", to: "cameras#timeline"
+      post "cameras/:id/playback", to: "cameras#playback"
+      delete "cameras/:id/playback", to: "cameras#stop_playback"
       get "sites/:site_id/history", to: "history#index"
       get "sites/:site_id/map", to: "maps#index"
       post "sites/:site_id/assist", to: "assist#create"
