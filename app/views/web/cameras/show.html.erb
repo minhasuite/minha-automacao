@@ -1,0 +1,51 @@
+<%= render "web/shared/header", title: @point.name, subtitle: [ @point.area&.name, @point.device.name ].compact.join(" · "), back: cameras_path(site_id: @point.site_id) do %>
+  <% if @prev %>
+    <%= render Ss::IconButtonComponent.new(icon: icon("chevron-left", ""), label: t("cameras.screen.prev_x", name: @prev.name), href: camera_path(@prev), variant: :outline) %>
+  <% end %>
+  <% if @next %>
+    <%= render Ss::IconButtonComponent.new(icon: icon("chevron-right", ""), label: t("cameras.screen.next_x", name: @next.name), href: camera_path(@next), variant: :outline) %>
+  <% end %>
+  <%= link_to point_path(@point), class: "ss-btn ss-btn-ghost" do %><%= icon("cog", "size-4") %><%= t("cameras.screen.details") %><% end %>
+<% end %>
+<% can_talk = @features["talk"] && @point.writable && can?(:command, risk: @point.risk) %>
+<%# Uma câmera grande: ← → (ou arrastar) troca, F = tela cheia. A reprodução do DVR toca no mesmo card. %>
+<div data-controller="camera-nav camera-playback" data-camera-nav-prev-value="<%= (camera_path(@prev) if @prev) %>" data-camera-nav-next-value="<%= (camera_path(@next) if @next) %>"
+     data-camera-playback-url-value="<%= camera_playback_path(@point) %>" data-camera-playback-zone-value="<%= @point.site.timezone %>"
+     data-camera-playback-locale-value="<%= I18n.locale %>" class="grid gap-4">
+  <div data-camera-nav-target="stage" data-camera-playback-target="tile" data-action="pointerdown->camera-nav#down pointerup->camera-nav#up" class="touch-pan-y">
+    <%= render "web/cameras/tile", point: @point, autoplay: true, interval: 5, talk: can_talk, fullscreen: true %>
+    <p class="text-sm font-semibold text-danger mt-2" data-camera-target="status" role="status" hidden></p>
+  </div>
+  <p class="text-xs text-muted"><%= t("cameras.screen.keys_one") %></p>
+
+  <% if @features["playback"] %>
+    <section class="ss-card ss-card-pad" aria-labelledby="cam-dvr">
+      <%= render Ss::CardHeaderComponent.new(title: t("cameras.timeline.title"), subtitle: t("cameras.timeline.subtitle"), icon: icon("clock", ""), heading: :h2, id: "cam-dvr") %>
+      <%# Dia (GET no quadro da linha do tempo), hora + Tocar, ±30 s e Ao vivo. %>
+      <div class="flex flex-wrap items-end gap-3 mt-3">
+        <%= form_with url: camera_timeline_path(@point), method: :get, data: { turbo_frame: "camera-timeline", controller: "ss-autosubmit" }, class: "contents" do %>
+          <div>
+            <label class="ss-label" for="cam-day"><%= t("cameras.timeline.day") %></label>
+            <%= date_field_tag :dia, @day, id: "cam-day", class: "ss-input", max: Cameras::Playback.zone(@point).today, min: Cameras::Playback.zone(@point).today - Cameras::Timeline::MAX_DAYS,
+                               data: { camera_playback_target: "day", action: "change->ss-autosubmit#submit" } %>
+          </div>
+        <% end %>
+        <div>
+          <label class="ss-label" for="cam-time"><%= t("cameras.timeline.time") %></label>
+          <input type="time" step="1" id="cam-time" class="ss-input" data-camera-playback-target="time">
+        </div>
+        <button type="button" class="ss-btn ss-btn-primary" data-action="camera-playback#playTime"><%= icon("play", "size-4") %><%= t("cameras.timeline.play") %></button>
+        <div class="flex gap-2" role="group" aria-label="<%= t("cameras.timeline.jump") %>">
+          <button type="button" class="ss-btn ss-btn-outline" data-camera-playback-target="jump" data-action="camera-playback#jump" data-camera-playback-seconds-param="-30" disabled><%= icon("rewind", "size-4") %><%= t("cameras.timeline.back30") %></button>
+          <button type="button" class="ss-btn ss-btn-outline" data-camera-playback-target="jump" data-action="camera-playback#jump" data-camera-playback-seconds-param="30" disabled><%= icon("fast-forward", "size-4") %><%= t("cameras.timeline.fwd30") %></button>
+        </div>
+        <button type="button" class="ss-btn ss-btn-ghost" data-camera-playback-target="liveButton" data-action="camera-playback#live" hidden><%= icon("status-online", "size-4") %><%= t("cameras.timeline.back_live") %></button>
+      </div>
+      <p class="text-sm text-muted mt-2 num" aria-live="polite"><span class="sr-only"><%= t("cameras.timeline.position") %></span><span data-camera-playback-target="position"></span></p>
+      <p class="text-sm font-semibold text-danger mt-1" data-camera-playback-target="error" role="alert" hidden></p>
+      <%= turbo_frame_tag "camera-timeline", src: camera_timeline_path(@point, dia: @day), loading: :lazy, class: "block mt-4" do %>
+        <%= render Ss::SkeletonComponent.new(lines: 3, label: t("cameras.timeline.loading")) %>
+      <% end %>
+    </section>
+  <% end %>
+</div>

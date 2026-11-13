@@ -41,6 +41,14 @@ module Drivers
     ON_DEMAND_TTL = 240
     SNAPSHOT_DIR = Rails.root.join("tmp/snapshots")
     UUID = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
+    # cameras2: reprodução do DVR sob demanda = stream `pb_<hex>` no go2rtc, com dono
+    # (ponto + pessoa) no cache por PLAYBACK_TTL s, renovado enquanto alguém assiste; o
+    # `sync!` tira os que perderam o dono.
+    PLAYBACK = /\Apb_\h{16}\z/
+    PLAYBACK_TTL = 120
+    # Arquivos do HLS do go2rtc que o proxy repassa (`/api/hls/<arquivo>?id=&n=`).
+    HLS_FILES = { "playlist.m3u8" => "application/vnd.apple.mpegurl", "init.mp4" => "video/mp4",
+                  "segment.m4s" => "video/iso.segment", "segment.ts" => "video/mp2t" }.freeze
 
     module_function
 
@@ -90,7 +98,8 @@ module Drivers
         p = ActsAsTenant.without_tenant { Point.find_by(id: name) }
         ActsAsTenant.with_tenant(p.tenant) { quality!(p, "unavailable") } if p
       end
-      (current.keys.grep(UUID) - want.keys).each do |name|
+      stale = current.keys.grep(PLAYBACK).reject { |name| playback_owner(name) }
+      ((current.keys.grep(UUID) - want.keys) + stale).each do |name|
         request(Net::HTTP::Delete, "/api/streams", { src: name }, ok: [ 400 ])
       rescue Error => e
         Rails.logger.warn("[go2rtc] remover stream #{name}: #{e.message}")
@@ -211,13 +220,80 @@ module Drivers
     end
 
     # WebRTC: a oferta SDP do navegador vai ao go2rtc e a resposta volta.
-    def webrtc(point, offer)
+    # `src`: outro stream do ponto (reprodução `pb_…`, já posto pelo `playback!`).
+    def webrtc(point, offer, src: nil)
+      return request(Net::HTTP::Post, "/api/webrtc", { src: src }, body: offer).body if src && src != point.id
+
       held!(point)
       prepare(point)
       request(Net::HTTP::Post, "/api/webrtc", { src: point.id }, body: offer).body
     rescue Error => e
-      hold!(point, e) unless e.is_a?(Held)
+      hold!(point, e) unless e.is_a?(Held) || (src && src != point.id)
       raise
+    end
+
+    # cameras2: ao vivo fora de casa. Antes de abrir o MSE/HLS do ponto: câmera na espera
+    # da falha responde na hora; a de nuvem ganha a fonte de agora.
+    def ready!(point, src)
+      return if src != point.id
+
+      held!(point)
+      prepare(point)
+    end
+
+    # Endereço do WebSocket MSE do go2rtc para o `Cameras::WsProxy`.
+    def ws_target(src)
+      raise Error, "Câmera sem conexão." unless url
+
+      uri = URI.join(url, "/api/ws")
+      uri.query = URI.encode_www_form(src: src)
+      uri.to_s
+    end
+
+    # HLS fMP4 só de vídeo (`mp4` vazio): índice principal. Devolve [corpo, id da sessão].
+    def hls_master(src)
+      body = request(Net::HTTP::Get, "/api/stream.m3u8", { src: src, mp4: "" }).body.to_s
+      [ body, body[/[?&]id=(\w+)/, 1] ]
+    end
+
+    # Índice da sessão, init e pedaços (nome do arquivo de HLS_FILES).
+    def hls_file(file, id, n = nil)
+      raise Error, "Arquivo inválido." unless HLS_FILES.key?(file)
+
+      request(Net::HTTP::Get, "/api/hls/#{file}", { id: id, n: n }.compact).body.to_s
+    end
+
+    # cameras2: reprodução do DVR a partir de `from` (perfil do fabricante em
+    # `Cameras::Playback`). Troca (`replace`) a reprodução anterior da mesma pessoa.
+    def playback!(point, from, user:, replace: nil)
+      raise Error, "Câmera sem conexão." unless url
+
+      src = Cameras::Playback.source(point, from)
+      stop_playback!(replace, user: user) if replace.present?
+      name = "pb_#{SecureRandom.hex(8)}"
+      request(Net::HTTP::Put, "/api/streams", { name: name, src: src }, ok: [ 400 ])
+      Rails.cache.write("go2rtc:pb:#{name}", { "point" => point.id, "user" => user.id }, expires_in: PLAYBACK_TTL)
+      name
+    rescue Cameras::Error => e
+      raise Error, e.message
+    end
+
+    # {"point", "user"} do stream de reprodução (nil = não existe ou venceu).
+    def playback_owner(name) = PLAYBACK.match?(name.to_s) ? Rails.cache.read("go2rtc:pb:#{name}") : nil
+
+    def touch_playback(name)
+      owner = playback_owner(name) or return
+      Rails.cache.write("go2rtc:pb:#{name}", owner, expires_in: PLAYBACK_TTL)
+    end
+
+    def stop_playback!(name, user:)
+      owner = playback_owner(name)
+      return unless owner && owner["user"] == user.id
+
+      Rails.cache.delete("go2rtc:pb:#{name}")
+      request(Net::HTTP::Delete, "/api/streams", { src: name }, ok: [ 400 ])
+    rescue Error => e
+      Rails.logger.info("[go2rtc] parar reprodução: #{e.message}")
     end
 
     # ondaC2 (C10): áudio de duas vias. O go2rtc toca o endereço no

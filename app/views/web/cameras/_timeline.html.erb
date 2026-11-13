@@ -1,0 +1,32 @@
+<%# locals: (point:, timeline:) -%>
+<%# cameras2: o dia gravado no DVR (faixas da gem) e os eventos; tocar na faixa ou num evento toca dali. -%>
+<%= turbo_frame_tag "camera-timeline" do %>
+  <% zone = ActiveSupport::TimeZone[timeline["time_zone"]] %>
+  <% if timeline["error"] %>
+    <%= render Ss::NoteComponent.new(text: t("cameras.timeline.error", reason: timeline["error"]), icon: icon("exclamation-circle", ""), tone: :danger) %>
+  <% elsif timeline["recordings"].empty? %>
+    <%= render Ss::NoteComponent.new(text: t("cameras.timeline.nothing"), icon: icon("video-camera", "")) %>
+  <% else %>
+    <% kind = ->(k) { t("cameras.timeline.kinds.#{k}") } %>
+    <% rows = [ { label: t("cameras.timeline.recorded"), segments: timeline["recordings"].map { |r| { from: Time.iso8601(r["from"]), to: Time.iso8601(r["to"]), state: "rec", label: t("cameras.timeline.recorded") } } } ] %>
+    <% if timeline["events"].any? %>
+      <% rows << { label: t("cameras.timeline.events"), segments: timeline["events"].map { |e| { from: Time.iso8601(e["from"]), to: Time.iso8601(e["to"]), state: e["kind"], label: kind.call(e["kind"]) } } } %>
+    <% end %>
+    <%= render Ss::StateBandsComponent.new(title: t("cameras.timeline.title"), from: Time.iso8601(timeline["from"]), to: Time.iso8601(timeline["to"]), rows: rows,
+                                           tones: { "rec" => :info, "motion" => :warn, "person" => :danger, "vehicle" => :accent, "alarm" => :danger },
+                                           label_position: :top, time_zone: timeline["time_zone"], locale: I18n.locale.to_s, css: "cursor-pointer") %>
+    <p class="text-xs text-muted mt-2"><%= t("cameras.timeline.tap_hint") %></p>
+    <% if timeline["events"].any? %>
+      <h3 class="mt-4 mb-2"><%= t("cameras.timeline.events_list", count: timeline["events"].size) %></h3>
+      <div class="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+        <% timeline["events"].last(200).reverse_each do |e| %>
+          <% at = Time.iso8601(e["from"]).in_time_zone(zone) %>
+          <button type="button" class="ss-btn ss-btn-outline ss-btn-sm num" data-action="camera-playback#playAt" data-camera-playback-at-param="<%= e["from"] %>"
+                  aria-label="<%= t("cameras.timeline.play_event", kind: kind.call(e["kind"]), at: at.strftime("%H:%M:%S")) %>">
+            <%= at.strftime("%H:%M:%S") %> · <%= kind.call(e["kind"]) %>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

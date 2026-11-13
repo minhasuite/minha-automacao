@@ -1,0 +1,17 @@
+<%= render "web/shared/header", title: t("cameras.screen.title"), subtitle: t("cameras.screen.subtitle", site: @site.name, count: @cameras.size) %>
+<%= render "web/shared/site_switch", sites: @sites, site: @site, path: cameras_path %>
+<% if @cameras.empty? %>
+  <%= render "web/shared/empty_art", art: "board", title: t("cameras.screen.empty"), text: t("cameras.screen.empty_hint") %>
+<% else %>
+  <%# Grade com ao vivo automático (até CameraWidget::AUTOPLAY_MAX por vez); setas andam entre os cards, Enter abre. %>
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" data-controller="camera-nav" aria-label="<%= t("cameras.screen.grid") %>" role="list">
+    <% @cameras.each do |c| %>
+      <div role="listitem" tabindex="0" data-camera-nav-target="item" data-action="keydown.enter->camera-nav#open" data-url="<%= camera_path(c) %>"
+           aria-label="<%= t("cameras.screen.open_x", name: c.name) %>" class="rounded-[var(--ss-radius,12px)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+        <%= render "web/cameras/tile", point: c, url: camera_path(c), autoplay: true %>
+        <% if c.area %><p class="text-xs text-muted mt-1 truncate"><%= c.area.name %></p><% end %>
+      </div>
+    <% end %>
+  </div>
+  <p class="text-xs text-muted mt-4"><%= t("cameras.screen.keys_grid") %></p>
+<% end %>
