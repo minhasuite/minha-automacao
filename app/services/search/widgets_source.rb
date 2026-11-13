@@ -1,7 +1,7 @@
 module Search
   # Cards dos painéis publicados: "em qual painel e visão" está o card (rótulo, título
   # ou o nome do ponto). Abre o painel na visão, com o card em foco (âncora). Só o
-  # que o papel vê (painel e `visible_if.role`); card sem nome próprio fica de fora.
+  # que o papel vê (painel e `visible_if.role` da visão e do card); card sem nome próprio fica de fora.
   class WidgetsSource < Source
     MAX_WIDGETS = 400
 
@@ -24,10 +24,9 @@ module Search
       names = Point.where(site_id: dashboards.map(&:site_id).uniq).pluck(:id, :name).to_h
       dashboards.flat_map do |d|
         role = ctx.roles[d.site_id]
-        Array((d.auto? ? {} : d.definition.to_h)["views"]).flat_map do |v|
+        Array((d.auto? ? {} : d.definition.to_h)["views"]).select { |v| v.is_a?(Hash) && Dashboards.role_ok?(v["visible_if"], role) }.flat_map do |v|
           Dashboards::Resolver.flatten([ *Array(v["badges"]), *Array(v["sections"]).flat_map { |s| Array(s["widgets"]) } ]).first(MAX_WIDGETS).filter_map do |w|
-            roles = w.dig("visible_if", "role")
-            next if roles && role != "owner" && !Array(roles).include?(role)
+            next unless Dashboards.role_ok?(w["visible_if"], role)
 
             title = w["label"].presence || w["title"].presence || names[w["bind"]]
             { dashboard: d, view: v, widget: w, title: title } if title.present? && w["id"].present?

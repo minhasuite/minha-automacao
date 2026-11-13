@@ -19,6 +19,14 @@ import { Controller } from "@hotwired/stimulus"
 // `autoplayMax` (padrão 8, CameraWidget::AUTOPLAY_MAX) ao vivo abertos por
 // página: os excedentes ficam na foto e entram quando abrir uma vaga. Tocar no
 // botão para desligar deixa o card na foto até tocar de novo.
+//
+// visao-entrega (card do painel): `sound` = o ao vivo começa com som; se o navegador
+// recusar o som sem um toque (autoplay), fica mudo e o botão de som pisca. O botão
+// de som aparece sempre que o vídeo toca. "Falar" do card (`talkUrl`): com o ao vivo
+// por WebRTC (casa) é o falar ao vivo de sempre (`talk`); com MSE/HLS (fora de casa,
+// sem microfone no caminho) grava (MediaRecorder) e, no segundo toque, manda para
+// `/cameras/:id/falar` (a câmera toca pelo go2rtc). Se o WebRTC cair com o microfone
+// ligado, a fala segue gravando no mesmo microfone.
 // Sem framework de teste de JS: o request spec confere os data-attributes e o
 // comportamento foi conferido à mão no navegador (docs/cameras.md).
 const open = new Set() // controllers com ao vivo aberto (qualquer origem)
@@ -30,6 +38,9 @@ const WEBRTC_MS = 4000
 const WEBRTC_SKIP_MS = 5 * 60 * 1000
 const MSE_CODECS = ["avc1.640029", "avc1.64002A", "avc1.640033", "hvc1.1.6.L153.B0", "mp4a.40.2", "mp4a.40.5", "flac", "opus"]
 const MAX_QUEUE = 60
+const TALK_MAX_MS = 30000
+const STATUS_MS = 5000
+const RECORD_TYPES = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus", "audio/webm"]
 let webrtcFailedAt = 0
 
 function freeSlot() {
@@ -42,9 +53,10 @@ function withPb(url, pb) {
 }
 
 export default class extends Controller {
-  static targets = ["img", "video", "status", "liveButton", "talkButton"]
+  static targets = ["img", "video", "status", "liveButton", "talkButton", "soundButton", "soundOn", "soundOff"]
   static values = { snapshot: String, webrtc: String, mse: String, hls: String, interval: Number, micDenied: String,
-                    talkHome: String, autoplay: Boolean, autoplayMax: { type: Number, default: 8 } }
+                    talkHome: String, autoplay: Boolean, autoplayMax: { type: Number, default: 8 },
+                    sound: Boolean, talkUrl: String, texts: Object }
 
   connect() {
     this.imgTarget.onload = () => this.show(this.imgTarget)
@@ -53,6 +65,7 @@ export default class extends Controller {
     this.element.addEventListener("ss-camera:retry", this.retry)
     this.refresh()
     this.timer = setInterval(() => this.refresh(), this.intervalValue * 1000)
+    this.soundOn = this.soundValue
     if (this.autoplayValue) this.watch()
   }
 
@@ -92,6 +105,8 @@ export default class extends Controller {
     this.retryTimer = null
     waiting.delete(this)
     this.element.removeEventListener("ss-camera:retry", this.retry)
+    this.cancelRecording()
+    clearTimeout(this.statusTimer)
     this.releaseMic()
     this.stopLive()
   }
@@ -172,8 +187,13 @@ export default class extends Controller {
     this.videoTarget.srcObject = null
     if (!this.hasMseValue) return this.liveFailed()
     webrtcFailedAt = Date.now()
-    // Falar precisa do WebRTC (o microfone vai por ele): fora de casa, avisa e segue só com o vídeo.
-    if (this.mic) { this.releaseMic(); this.status(this.talkHomeValue) }
+    // Falar precisa do WebRTC (o microfone vai por ele): fora de casa, o card grava e manda
+    // (visao-entrega); a página do ponto avisa e segue só com o vídeo.
+    if (this.mic && this.hasTalkUrlValue) {
+      const stream = this.mic
+      this.mic = null
+      this.startRecording(stream)
+    } else if (this.mic) { this.releaseMic(); this.status(this.talkHomeValue) }
     this.startMse(session)
   }
 
@@ -276,6 +296,7 @@ export default class extends Controller {
     this.playing = true
     this.backoff = 0
     this.show(this.videoTarget)
+    this.applySound(true)
     this.dispatch("playing", { detail: { pb: this.pb } })
   }
 
@@ -348,7 +369,107 @@ export default class extends Controller {
     if (video.getAttribute("src")) { video.removeAttribute("src"); video.load() }
     video.hidden = true
     if (this.hasLiveButtonTarget) this.liveButtonTarget.setAttribute("aria-pressed", "false")
+    if (this.hasSoundButtonTarget) this.soundButtonTarget.hidden = true
     this.refresh()
+  }
+
+  // Som do ao vivo (visao-entrega). `auto` = sem toque da pessoa: o navegador pode recusar o som;
+  // aí fica mudo, o botão pisca e o aviso diz para tocar nele.
+  applySound(auto = false) {
+    const video = this.videoTarget
+    video.muted = !this.soundOn
+    this.paintSound()
+    if (!this.soundOn) return
+    video.play().catch(() => {
+      if (!auto || !this.soundOn) return
+      this.soundOn = false
+      video.muted = true
+      video.play().catch(() => {})
+      this.paintSound(true)
+      this.status(this.textsValue.soundBlocked)
+    })
+  }
+
+  toggleSound() {
+    this.soundOn = !this.soundOn
+    this.applySound()
+  }
+
+  paintSound(attention = false) {
+    if (!this.hasSoundButtonTarget) return
+    const b = this.soundButtonTarget
+    b.hidden = !this.playing
+    b.setAttribute("aria-pressed", this.soundOn ? "true" : "false")
+    b.classList.toggle("ring-2", attention)
+    b.classList.toggle("ring-white", attention)
+    b.classList.toggle("animate-pulse", attention)
+    if (this.hasSoundOnTarget) this.soundOnTarget.hidden = !this.soundOn
+    if (this.hasSoundOffTarget) this.soundOffTarget.hidden = this.soundOn
+  }
+
+  // "Falar" no card (visao-entrega): ao vivo pelo WebRTC = microfone no próprio ao vivo; MSE/HLS
+  // (ou WebRTC que falhou há pouco) = grava e manda no segundo toque.
+  talkCard() {
+    if (this.recorder) return this.sendRecording()
+    if (this.mic) return this.talk()
+    const webrtc = this.pc || (!this.active && Date.now() - webrtcFailedAt >= WEBRTC_SKIP_MS)
+    return webrtc ? this.talk() : this.startRecording()
+  }
+
+  async startRecording(stream = null) {
+    if (!window.MediaRecorder || !this.hasTalkUrlValue) return this.status(this.textsValue.failed)
+    if (!stream) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
+      } catch {
+        return this.status(this.micDeniedValue)
+      }
+    }
+    const type = RECORD_TYPES.find((t) => MediaRecorder.isTypeSupported?.(t))
+    const rec = new MediaRecorder(stream, type ? { mimeType: type } : undefined)
+    const chunks = []
+    this.recorder = rec
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }
+    rec.onstop = () => {
+      stream.getTracks().forEach((t) => t.stop())
+      if (rec.discard) return
+      this.upload(new Blob(chunks, { type: (rec.mimeType || type || "audio/webm").split(";")[0] }))
+    }
+    rec.start()
+    if (this.hasTalkButtonTarget) this.talkButtonTarget.setAttribute("aria-pressed", "true")
+    this.status(this.textsValue.recording, false)
+    this.recTimer = setTimeout(() => this.sendRecording(), TALK_MAX_MS)
+  }
+
+  sendRecording() {
+    clearTimeout(this.recTimer)
+    const rec = this.recorder
+    this.recorder = null
+    if (this.hasTalkButtonTarget) this.talkButtonTarget.setAttribute("aria-pressed", "false")
+    if (rec && rec.state !== "inactive") rec.stop()
+  }
+
+  cancelRecording() {
+    if (this.recorder) this.recorder.discard = true
+    this.sendRecording()
+  }
+
+  async upload(blob) {
+    if (!blob.size) return
+    this.status(this.textsValue.sending, false)
+    const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm"
+    const body = new FormData()
+    body.append("audio", blob, `fala.${ext}`)
+    try {
+      const res = await fetch(this.talkUrlValue, {
+        method: "POST", body,
+        headers: { Accept: "application/json", "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content }
+      })
+      const json = await res.json().catch(() => ({}))
+      this.status(res.ok ? json.message || this.textsValue.sent : json.error || this.textsValue.failed)
+    } catch {
+      this.status(this.textsValue.failed)
+    }
   }
 
   // Tela cheia do card (botão ou tecla F na tela da câmera).
@@ -374,11 +495,14 @@ export default class extends Controller {
   }
 
   // Aviso fora do quadro (microfone negado, falar só em casa), quando a tela tem onde mostrar.
-  status(text) {
+  // `fades`: no card do painel o aviso some sozinho (menos o "gravando").
+  status(text, fades = true) {
     // O aviso pode ficar logo depois do card (fora do controller), como na página do ponto.
     const el = this.hasStatusTarget ? this.statusTarget : this.element.parentElement?.querySelector(":scope > [data-camera-target='status']")
     if (!el || !text) return
     el.textContent = text
     el.hidden = false
+    clearTimeout(this.statusTimer)
+    if (fades && this.hasTextsValue) this.statusTimer = setTimeout(() => { el.hidden = true }, STATUS_MS)
   }
 }

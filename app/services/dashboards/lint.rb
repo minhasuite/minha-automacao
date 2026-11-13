@@ -8,7 +8,8 @@ module Dashboards
   # - ponto desativado, ou de aparelho removido da conta / desativado;
   # - ponto "bom" sem leitura há SILENT_DAYS dias ou mais, ou sem sinal há tanto tempo;
   # - `query` que hoje não devolve ponto nenhum (ou que nem é uma consulta válida);
-  # - `area` / `scenes` que não existem mais.
+  # - `area` / `scenes` que não existem mais;
+  # - visão só para algumas telas (`visible_if.screen`): a inicial que some numa tela e a tela sem aba.
   #
   #   Lint.call(site, definition) → [{ "view_id", "view_title", "widget_id", "label", "kind", "text" }]
   module Lint
@@ -33,7 +34,30 @@ module Dashboards
         end
         walk(Array(view["badges"]), view, ctx, out)
       end
+      views(definition.to_h, out)
       out.uniq.first(MAX)
+    end
+
+    # visao-entrega: `visible_if.screen` das visões. A inicial que some numa tela (lá abre outra) e a
+    # tela sem nenhuma aba (lá a visão aberta aparece mesmo assim).
+    def views(definition, out)
+      list = Array(definition["views"]).select { |v| v.is_a?(Hash) && v["subview"] != true }
+      start = list.find { |v| v["id"] == definition["start_view"] }
+      if start && (screens = Dashboards.view_screens(start)).any?
+        out << view_row(start, "view_start_screen", screens: screens.map { |s| I18n.t("dashboards.screens.#{s}") }.join(", "))
+      end
+      return unless list.any? { |v| Dashboards.view_screens(v).any? }
+
+      Schema::SCREENS.each do |screen|
+        next if list.any? { |v| Dashboards.view_shown_on?(v, screen) }
+
+        out << view_row(list.first, "view_no_screen", screen: I18n.t("dashboards.screens.#{screen}"))
+      end
+    end
+
+    def view_row(view, kind, **vars)
+      { "view_id" => view["id"], "view_title" => view["title"], "widget_id" => nil, "label" => view["title"], "kind" => kind,
+        "text" => I18n.t("dashboards.lint.#{kind}", **vars) }
     end
 
     def walk(list, view, ctx, out)

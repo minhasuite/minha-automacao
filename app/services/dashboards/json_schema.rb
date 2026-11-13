@@ -64,6 +64,11 @@ module Dashboards
         "id" => id, "title" => STRING, "icon" => STRING, "path" => { "type" => "string", "pattern" => "^[a-z0-9][a-z0-9-]{0,39}$" },
         "type" => { "enum" => ViewTypes.plugins.map(&:key) }, "subview" => { "type" => "boolean" }, "back_path" => STRING,
         "area" => STRING, "theme" => { "$ref" => "#/$defs/theme" },
+        # visao-entrega: a visão só para algumas telas, papéis ou aparelhos.
+        "visible_if" => { "type" => "object", "description" => t(:view_visible_if), "additionalProperties" => false, "minProperties" => 1,
+                          "properties" => { "role" => { "type" => "array", "items" => { "enum" => SiteMembership::ROLES } },
+                                            "screen" => { "type" => "array", "minItems" => 1, "items" => { "enum" => Schema::SCREENS } },
+                                            "device" => { "type" => "array" } } },
         "hero" => { "type" => "object", "description" => t(:hero), "additionalProperties" => false,
                     "properties" => { "title" => STRING, "kicker" => STRING, "greeting" => { "type" => "boolean" }, "hide" => { "type" => "boolean" } } },
         "badges" => { "type" => "array", "items" => { "$ref" => "#/$defs/widget" } },

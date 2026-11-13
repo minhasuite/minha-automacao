@@ -75,6 +75,26 @@
               <%= f.ss_select :back_path, Array(@draft["views"]).reject { |x| x["id"] == view["id"] }.map { |x| [ x["title"], x["path"].presence || x["id"] ] },
                               label: t("dashboards.vt.form.back"), selected: view["back_path"], include_blank: t("dashboards.vt.form.back_first"), id: "vbk" %>
             </div>
+            <%# visao-entrega: a visão só em algumas telas (ex.: só no celular) e para alguns papéis (`visible_if` da visão). %>
+            <% vscreens = Dashboards.view_screens(view) %>
+            <% vroles = Array(view.dig("visible_if", "role")) %>
+            <%= hidden_field_tag "view_visible[present]", "1", id: nil %>
+            <fieldset class="basis-full">
+              <legend class="ss-label"><%= t("dashboards.wf.show_on") %> <span class="font-normal"><%= t("dashboards.view_visible.screens_hint") %></span></legend>
+              <div class="flex flex-wrap gap-3">
+                <% Dashboards::Schema::SCREENS.each do |screen| %>
+                  <label class="ss-check"><%= check_box_tag "view_visible[screens][]", screen, vscreens.include?(screen), id: "vsc-#{screen}" %><%= t("dashboards.screens.#{screen}") %></label>
+                <% end %>
+              </div>
+            </fieldset>
+            <fieldset class="basis-full">
+              <legend class="ss-label"><%= t("dashboards.ed.who_sees") %> <span class="font-normal"><%= t("dashboards.view_visible.roles_hint") %></span></legend>
+              <div class="flex flex-wrap gap-3">
+                <% SiteMembership::ROLES.each do |r| %>
+                  <label class="ss-check"><%= check_box_tag "view_visible[roles][]", r, vroles.include?(r), id: "vro-#{r}" %><%= SiteMembership.role_label(r) %></label>
+                <% end %>
+              </div>
+            </fieldset>
             <%# P1.4: o topo da visão (Dashboards::Hero): título e linha de cima com Liquid, saudação e esconder. %>
             <% hero = view["hero"].is_a?(Hash) ? view["hero"] : {} %>
             <details class="basis-full" <%= "open" if hero.any? %>>

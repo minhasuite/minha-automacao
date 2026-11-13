@@ -1,0 +1,88 @@
+# visao-entrega: visão só em algumas telas/papéis (visible_if da visão) e o card de câmera com som e falar.
+pt-BR:
+  dashboards:
+    view_visible:
+      screens_hint: "(nenhum marcado = todas as telas; ex.: só Celular = a aba some no computador)"
+      roles_hint: "(nenhum marcado = todos; o dono vê sempre)"
+      hidden_here: "Esta visão não aparece nesta tela."
+      open_other: "Abrir %{name}"
+    schema:
+      view_visible: "%{where}: visible_if da visão aceita só %{keys}"
+    json_schema:
+      view_visible_if: "Onde a visão aparece (papel, tela, aparelho)"
+    lint:
+      view_start_screen: "A visão inicial só aparece em %{screens}; nas outras telas abre a primeira aba que aparece lá."
+      view_no_screen: "Nenhuma aba aparece em %{screen}: lá a visão aberta é mostrada mesmo assim."
+      kinds:
+        view_start_screen: Visão inicial por tela
+        view_no_screen: Tela sem aba
+    w:
+      camera_sound: "Som da câmera"
+      camera_sound_blocked: "O navegador bloqueou o som automático: toque no alto-falante para ouvir."
+      camera_talk_recording: "Gravando: toque em Falar de novo para mandar."
+      camera_talk_sending: "Mandando o áudio…"
+      camera_talk_sent: "Áudio enviado para a câmera."
+      camera_talk_failed: "Não deu para mandar o áudio."
+    wf:
+      camera_talk: "Botão Falar no card"
+      camera_talk_hint: "Só aparece se a câmera aceita falar e o seu papel pode comandar ela."
+      camera_sound: "Ao vivo com som"
+      camera_sound_hint: "Se o navegador bloquear o som automático, começa mudo e o botão de som fica em destaque."
+en:
+  dashboards:
+    view_visible:
+      screens_hint: "(none checked = every screen; e.g. only Phone = the tab disappears on the computer)"
+      roles_hint: "(none checked = everyone; the owner always sees it)"
+      hidden_here: "This view is not shown on this screen."
+      open_other: "Open %{name}"
+    schema:
+      view_visible: "%{where}: a view's visible_if only accepts %{keys}"
+    json_schema:
+      view_visible_if: "Where the view is shown (role, screen, device)"
+    lint:
+      view_start_screen: "The start view only shows on %{screens}; other screens open the first tab shown there."
+      view_no_screen: "No tab shows on %{screen}: the open view is shown there anyway."
+      kinds:
+        view_start_screen: Start view per screen
+        view_no_screen: Screen without tabs
+    w:
+      camera_sound: "Camera sound"
+      camera_sound_blocked: "The browser blocked autoplay with sound: tap the speaker to listen."
+      camera_talk_recording: "Recording: tap Talk again to send."
+      camera_talk_sending: "Sending the audio…"
+      camera_talk_sent: "Audio sent to the camera."
+      camera_talk_failed: "Could not send the audio."
+    wf:
+      camera_talk: "Talk button on the card"
+      camera_talk_hint: "Only shows if the camera can talk and your role can command it."
+      camera_sound: "Live with sound"
+      camera_sound_hint: "If the browser blocks autoplay with sound, it starts muted and the sound button is highlighted."
+es:
+  dashboards:
+    view_visible:
+      screens_hint: "(ninguno marcado = todas las pantallas; ej.: solo Celular = la pestaña desaparece en la computadora)"
+      roles_hint: "(ninguno marcado = todos; el dueño siempre la ve)"
+      hidden_here: "Esta vista no aparece en esta pantalla."
+      open_other: "Abrir %{name}"
+    schema:
+      view_visible: "%{where}: el visible_if de la vista solo acepta %{keys}"
+    json_schema:
+      view_visible_if: "Dónde aparece la vista (rol, pantalla, aparato)"
+    lint:
+      view_start_screen: "La vista inicial solo aparece en %{screens}; las otras pantallas abren la primera pestaña que aparece allí."
+      view_no_screen: "Ninguna pestaña aparece en %{screen}: allí se muestra la vista abierta igual."
+      kinds:
+        view_start_screen: Vista inicial por pantalla
+        view_no_screen: Pantalla sin pestañas
+    w:
+      camera_sound: "Sonido de la cámara"
+      camera_sound_blocked: "El navegador bloqueó el sonido automático: toque el altavoz para escuchar."
+      camera_talk_recording: "Grabando: toque Hablar de nuevo para enviar."
+      camera_talk_sending: "Enviando el audio…"
+      camera_talk_sent: "Audio enviado a la cámara."
+      camera_talk_failed: "No se pudo enviar el audio."
+    wf:
+      camera_talk: "Botón Hablar en la tarjeta"
+      camera_talk_hint: "Solo aparece si la cámara acepta hablar y su rol puede comandarla."
+      camera_sound: "En vivo con sonido"
+      camera_sound_hint: "Si el navegador bloquea el sonido automático, empieza en silencio y el botón de sonido queda destacado."

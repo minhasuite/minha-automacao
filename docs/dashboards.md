@@ -59,6 +59,40 @@ entram sozinhos. A primeira publicação (editor ou API) o torna manual.
 }
 ```
 
+### Visão só em algumas telas ou para alguns papéis (`visible_if` da visão)
+
+A visão aceita `visible_if` com as chaves que não mudam com o tempo: `role`,
+`screen` e `device` (o mesmo formato e a mesma validação do widget, pelo
+`Dashboards::Schema.visible_if`; outra chave = erro). Ex.: a visão "Entrega" só no
+celular:
+
+```json
+{ "id": "entrega", "title": "Entrega", "visible_if": { "screen": ["mobile"] }, "sections": [...] }
+```
+
+- `role`: quem não está na lista não recebe a visão no JSON (web e app), como o
+  widget; o dono vê sempre. O link (`?view=`), a visão inicial (`start_view`, que
+  some do JSON), o `open_if`, a busca de cards e o quadro do tempo real
+  (`/paineis/:id/w/:wid`) também não acham a visão escondida: abre a próxima regra
+  (contexto, inicial, a primeira). Se o papel não vê nenhuma, fica uma visão vazia
+  com o nome do painel.
+- `screen` (`mobile` < 640 px ≤ `tablet` < 1024 px ≤ `desktop`): a aba some nas
+  outras telas (web: classes `dw-hide-*`; app: `DashView.shownOn(largura)`, o
+  celular conta como `mobile` e o tablet grande como `tablet`, igual ao widget).
+  **Abriu a visão numa tela em que ela some** (link, visão inicial ou `open_if`
+  só do celular aberto no computador): a web mostra o aviso "Esta visão não aparece
+  nesta tela" só naquela tela e troca sozinha (`view-fallback`, sem guardar no
+  histórico) para a primeira aba que aparece nela; o app abre a primeira aba
+  visível na largura dele. Tela sem nenhuma aba: lá a visão aberta aparece mesmo
+  assim (a revisão avisa). Subvisão escondida volta pelo mesmo caminho, e o
+  "voltar" (`back_path`) para uma visão escondida cai na primeira visível.
+- `device`: aceita e guarda (como no widget); ainda não é avaliado.
+- Editor: na configuração da visão, "Mostrar em" (Celular/Tablet/Computador) e
+  "Quem vê" (nenhum ou todos marcados = sem a chave; o `device` do JSON fica).
+- JSON Schema (`$defs.view.properties.visible_if`), revisão (`Dashboards::Lint`:
+  `view_start_screen` = a visão inicial some em alguma tela; `view_no_screen` =
+  tela sem nenhuma aba) e Exportar (a chave vai junto no `preset`).
+
 Regras: ids únicos no dashboard inteiro (`[A-Za-z0-9_-]`, até 100), até 400
 widgets, até 256 KB. `bind` aceita id (preferido: não quebra se a `key` mudar)
 ou `key` do ponto.
@@ -91,7 +125,7 @@ ou `key` do ponto.
 | `area_card` | `area`, `facts?` | cartão da área com os itens (`facts`, consultas; sem eles, o padrão do local, que nasce com ligados, abertos, movimento, potência e sem sinal); tocar num item abre a lista dos pontos dele; o resto navega para a view com `area` igual |
 | `scene_bar` | `scenes` (ids; vazio = todas) | botões de cena |
 | `alerts` | — | alertas abertos com "Ciente" |
-| `camera` | `bind` (ponto `stream` de dispositivo `go2rtc`), `live` (padrão true), `snapshot_interval` (2–300 s, padrão 10), `autoplay` (padrão false), `autoplay_max` (1–16, padrão 8) | quadro periódico e "Ao vivo" (WebRTC); sem conexão, o aviso no lugar da imagem; com `autoplay` o ao vivo abre sozinho (ver "Câmera ao vivo automático") |
+| `camera` | `bind` (ponto `stream` de dispositivo `go2rtc`), `live` (padrão true), `snapshot_interval` (2–300 s, padrão 10), `autoplay` (padrão false), `autoplay_max` (1–16, padrão 8), `sound` (padrão false), `talk` (padrão false) | quadro periódico e "Ao vivo" (WebRTC); sem conexão, o aviso no lugar da imagem; com `autoplay` o ao vivo abre sozinho (ver "Câmera ao vivo automático"); `sound` = ao vivo com som e `talk` = botão Falar no card (ver "Câmera: ouvir e falar no card") |
 | `vacuum` | `bind` (ponto `vacuum` de dispositivo `xiaomi_miot`) | estado, bateria, aviso de erro, Limpar a casa/Pausar/Parar/Voltar à base, cômodos do mapa em pílulas + ajustes (modo, potência, água, caminho, vezes) e "Limpar selecionados" (`clean_rooms`), base (lavar, secar, esvaziar) e peças com barra; os irmãos do aparelho entram pelo `address.role` |
 | `energy` | `binds` (pontos kWh/Wh acumulados ou W/kW, somados), `period` (`today`/`week`/`month`/`cycle`), `cycle_day` (1–28), `tariff` (R$/kWh) **ou** `tariff_point` (ponto, ex. helper Número), `goal` (kWh), `compare` | "Consumo e custo" (F9): consumo, custo, projeção linear até o fim do período, meta, comparação com o mesmo trecho do período anterior e barras por hora (hoje) ou dia, pelos rollups de hora (`Dashboards::Energy`) |
 | `heading` | `title` | título |
@@ -972,4 +1006,26 @@ Sem `autoplay`, nada muda. Web: `camera_controller.js` (`data-camera-autoplay-va
 confere os atributos e o comportamento foi conferido no navegador. App:
 `CameraWidget` com `LiveCamera(compact: true)` dentro do `SsCameraTile`
 (`CameraLiveSlots` = o limite por tela).
+
+## Câmera: ouvir e falar no card (`sound`, `talk`)
+
+- `sound: true`: o ao vivo começa com som. O botão de som (alto-falante) aparece
+  sempre que o vídeo toca, com ou sem `sound`. Se o navegador recusar som sem um
+  toque (regra de autoplay), o vídeo fica mudo, o botão pisca e o aviso diz para
+  tocar nele. Fora de casa (MSE), o go2rtc manda o PCMA do DVR como FLAC; no HLS
+  depende do player.
+- `talk: true`: o servidor põe `data.talk: true` no widget só quando a câmera fala
+  (`Cameras.features(point)["talk"]`, `play_media` nos `address.supports`) e o papel
+  de quem vê comanda pelo risco do ponto; a web e o app só desenham o botão.
+  - Web: com o ao vivo por WebRTC (na rede de casa) o Falar é o de sempre (microfone
+    no próprio WebRTC, ida e volta ao vivo). Com MSE/HLS (fora de casa, sem
+    microfone no caminho) o Falar **grava** (MediaRecorder, até 30 s) e, no segundo
+    toque, manda para `POST /cameras/:id/falar` (sessão + CSRF, papel x risco). Se
+    o WebRTC cair com o microfone ligado, a fala segue gravando no mesmo microfone.
+  - App: segurar para falar no próprio card (grava WAV 16 kHz mono, solta = manda
+    pelo `POST /api/v1/points/:id/talk`).
+  - Servidor (`Cameras::Talk`, usado pelos dois): o áudio vira WAV PCM antes de ir
+    para o go2rtc (o WAV passa direto; webm/opus e m4a passam pelo ffmpeg do
+    servidor; sem ffmpeg, vai o original, que o ffmpeg do go2rtc também lê), anexo
+    de 1 dia e `play_media` (`ffmpeg:<url>#audio=pcma#input=file`), até 5 MB.
 

@@ -4,7 +4,7 @@ module Api
     # papel mínimo depende do risco do ponto (SiteMembership::MIN_ROLE_BY_RISK).
     class PointsController < BaseController
       self.key_actions = { index: "read", site_index: "read", show: "read", history: "read", command: "command", talk: "command", write_value: "write", reset: "write" }
-      TALK_MAX = 5.megabytes
+      TALK_MAX = Cameras::Talk::MAX
 
       # ?view=app: cada ponto como no dashboard resolvido (texto, comandos,
       # can_command para o papel de quem pede), para o app desenhar os controles.
@@ -86,8 +86,7 @@ module Api
         audio = params.require(:audio)
         return render_error(:invalid_value, "Áudio grande demais.", status: :unprocessable_content) if audio.size > TALK_MAX
 
-        _blob, path = Ai::Audio.store(audio.read, audio.content_type.presence || "audio/mp4", "falar-#{Time.current.to_i}")
-        record = Points::Command.call(point, "play_media", MediaSources.public_url(path), source: "api")
+        record = Cameras::Talk.call(point, audio.read, audio.content_type, source: "api")
         render_data(CommandSerializer.new(record).to_h, status: :accepted)
       end
 

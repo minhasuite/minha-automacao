@@ -45,17 +45,29 @@
 <% end %>
 
 <% tabs = Dashboards::ViewTypes.tabs(@resolved["views"], view) %>
+<% tab_href = ->(v) { @preview ? dashboard_path(@dashboard, view: v["path"].presence || v["id"], rascunho: 1) : dw_view_path(@dashboard, v, home: @home) } %>
 <% if tabs.size > 1 %>
   <nav class="ss-chips is-solid mt-4" data-controller="ss-scroll-current" aria-label="<%= t("dashboards.views") %>">
     <% tabs.each do |v| %>
-      <%= link_to dw_view_path(@dashboard, v, home: @home).then { |p| @preview ? dashboard_path(@dashboard, view: v["path"].presence || v["id"], rascunho: 1) : p }, class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
+      <%# visao-entrega: aba de visão só para algumas telas (`visible_if.screen`) some nas outras. %>
+      <%= link_to tab_href.call(v), class: "ss-chip no-underline #{dw_screen_class(v)}".strip, "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
     <% end %>
   </nav>
+<% end %>
+<%# visao-entrega: a visão aberta não é desta tela (link ou visão inicial só do celular aberto no computador):
+    o aviso só aparece nessa tela e leva sozinho (view-fallback) à primeira aba que aparece nela. %>
+<% fallbacks = dw_view_fallbacks(@resolved["views"], view) %>
+<% fallbacks.each do |screen, other| %>
+  <div class="mt-4 <%= dw_only_on(screen) %>" data-controller="view-fallback" data-view-fallback-url-value="<%= tab_href.call(other) %>">
+    <%= render Ss::CalloutComponent.new(tone: :accent, title: t("dashboards.view_visible.hidden_here"), icon: icon("eye-off", "")) do |c| %>
+      <% c.with_action { link_to t("dashboards.view_visible.open_other", name: other["title"]), tab_href.call(other), class: "ss-btn ss-btn-primary ss-btn-sm" } %>
+    <% end %>
+  </div>
 <% end %>
 
 <%# Ideia 13: favoritos da pessoa no topo e busca dentro do painel (filtra os widgets pelo `search` do servidor). %>
 <% if @resolved["favorites_now"].present? %><%= render "web/dashboards/favorites", ids: @resolved["favorites_now"], points: points, live: live %><% end %>
-<div data-controller="ss-filter">
+<div data-controller="ss-filter" class="<%= fallbacks.keys.map { |s| "dw-hide-#{s}" }.join(" ") %>">
 <% if view["sections"].sum { |s| s["widgets"].size } > 3 && !kiosk %>
   <div class="mt-4 max-w-md" role="search">
     <%= ss_fields do |f| %><%= f.ss_search_field :dw_search, label: t("dashboards.search.label"), hide_label: true, id: "dw-search", placeholder: t("dashboards.search.placeholder"), autocomplete: "off",

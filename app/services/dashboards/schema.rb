@@ -64,6 +64,7 @@ module Dashboards
         e.concat(Hero.errors(view["hero"]).map { |m| "#{where}: #{m}" }) if view.key?("hero")
         e.concat(AutoViews.errors(view["auto"], where)) if view.key?("auto")
         context_rules(view["order_if"], "first", where, e) if view.key?("order_if")
+        view_visible(view["visible_if"], where, e) if view.key?("visible_if")
         Array(view["badges"]).each { |b| widget(b, msg(:at_badge, where: where), ids, e) }
         sections = view["sections"]
         next e << msg(:sections_list, where: where) unless sections.is_a?(Array)
@@ -96,6 +97,14 @@ module Dashboards
         sub << msg(:visible_any_nested, where: "#{where} (#{n})") if cond.is_a?(Hash) && cond.keys.intersect?(%w[role screen device])
         sub
       end.each { |m| e << (m.start_with?(where) ? m : "#{where}: #{m}") }
+    end
+
+    # visao-entrega: `visible_if` da visão = só papel, tela e aparelho (o mesmo formato do widget).
+    def view_visible(value, where, e)
+      ok = value.is_a?(Hash) && value.any? && (value.keys - Dashboards::VIEW_VISIBILITY).empty?
+      return e << msg(:view_visible, where: where, keys: Dashboards::VIEW_VISIBILITY.join(", ")) unless ok
+
+      visible_if(value, where, e)
     end
 
     MAX_CHILDREN = 12

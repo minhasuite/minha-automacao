@@ -16,6 +16,19 @@ module DashboardsHelper
     (Dashboards::Schema::SCREENS - Array(screens)).map { |s| "ss-hide-#{s}" }.join(" ")
   end
 
+  # visao-entrega: visão só para algumas telas. Para cada tela em que a visão aberta some, a que abre
+  # no lugar (a primeira aba que aparece lá). Tela sem nenhuma aba fica de fora: lá a visão aparece.
+  def dw_view_fallbacks(views, view)
+    screens = Dashboards.view_screens(view)
+    return {} if screens.empty?
+
+    tabs = views.reject { |v| v["subview"] == true || v == view }
+    (Dashboards::Schema::SCREENS - screens).filter_map { |s| (f = tabs.find { |v| Dashboards.view_shown_on?(v, s) }) && [ s, f ] }.to_h
+  end
+
+  # Classes que deixam o bloco só numa tela.
+  def dw_only_on(screen) = (Dashboards::Schema::SCREENS - [ screen ]).map { |s| "dw-hide-#{s}" }.join(" ")
+
   # Texto do widget Texto (Lote 4, G18a): escapa tudo e aplica um Markdown
   # mínimo: "# título" (até ###), "- item", **negrito**, *itálico*; linha em
   # branco separa parágrafos.

@@ -114,6 +114,20 @@ module Web
     end
 
     # ondaC2 (C10): gravação (modo, retenção, segundos por evento), PTZ e alto-falante da câmera.
+    # visao-entrega: o "Falar" gravado do card do painel (fora de casa o ao vivo é MSE/HLS e não leva o
+    # microfone): o navegador grava (MediaRecorder) e manda aqui; a câmera toca pelo go2rtc. Mesmo papel
+    # x risco do comando e do `POST /api/v1/points/:id/talk`.
+    def talk
+      authorize_site!(@point.site, :command, risk: @point.risk)
+      audio = params.require(:audio)
+      return render(json: { error: t("dashboards.w.camera_talk_failed") }, status: :unprocessable_content) unless audio.respond_to?(:read)
+
+      Cameras::Talk.call(@point, audio.read, audio.content_type, source: "web")
+      render json: { ok: true, message: t("dashboards.w.camera_talk_sent") }, status: :accepted
+    rescue Cameras::Talk::TooBig, Points::Command::Error => e
+      render json: { error: e.is_a?(Cameras::Talk::TooBig) ? t("dashboards.w.camera_talk_failed") : e.message }, status: :unprocessable_content
+    end
+
     def settings
       authorize_site!(@point.site, :manage)
       Recordings.configure!(@point, params)

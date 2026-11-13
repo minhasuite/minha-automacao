@@ -1,5 +1,16 @@
 <%# locals: (w:, uid:, types:, **) -%>
-<div class="sm:col-span-2" data-ss-reveal-for="<%= types %>">
-  <%= ss_fields { |f| f.ss_check_box "widget[autoplay]", label: t("dashboards.wf.camera_autoplay"), checked: w["autoplay"] == true, id: "cap-#{uid}" } %>
-  <p class="text-xs text-muted mt-1"><%= t("dashboards.wf.camera_autoplay_hint", max: w["autoplay_max"] || Dashboards::Widgets::CameraWidget::AUTOPLAY_MAX) %></p>
+<div class="sm:col-span-2 grid gap-3" data-ss-reveal-for="<%= types %>">
+  <div>
+    <%= ss_fields { |f| f.ss_check_box "widget[autoplay]", label: t("dashboards.wf.camera_autoplay"), checked: w["autoplay"] == true, id: "cap-#{uid}" } %>
+    <p class="text-xs text-muted mt-1"><%= t("dashboards.wf.camera_autoplay_hint", max: w["autoplay_max"] || Dashboards::Widgets::CameraWidget::AUTOPLAY_MAX) %></p>
+  </div>
+  <%# visao-entrega: ouvir (ao vivo com som) e falar no próprio card. %>
+  <div>
+    <%= ss_fields { |f| f.ss_check_box "widget[sound]", label: t("dashboards.wf.camera_sound"), checked: w["sound"] == true, id: "csd-#{uid}" } %>
+    <p class="text-xs text-muted mt-1"><%= t("dashboards.wf.camera_sound_hint") %></p>
+  </div>
+  <div>
+    <%= ss_fields { |f| f.ss_check_box "widget[talk]", label: t("dashboards.wf.camera_talk"), checked: w["talk"] == true, id: "ctk-#{uid}" } %>
+    <p class="text-xs text-muted mt-1"><%= t("dashboards.wf.camera_talk_hint") %></p>
+  </div>
 </div>

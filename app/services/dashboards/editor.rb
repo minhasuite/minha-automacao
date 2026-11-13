@@ -37,6 +37,13 @@ module Dashboards
       end
     end
 
+    # visao-entrega: papel e tela da visão pelo formulário ("Mostrar em", "Quem vê"); o `device` do JSON fica.
+    def set_view_visible(id, attrs)
+      v = view(id)
+      visible = (v["visible_if"].is_a?(Hash) ? v["visible_if"] : {}).except("role", "screen").merge(attrs.compact)
+      visible.present? ? v["visible_if"] = visible : v.delete("visible_if")
+    end
+
     # P1.4: topo da visão (Dashboards::Hero); vazio tira a chave.
     def set_hero(id, hero)
       v = view(id)

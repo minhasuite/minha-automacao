@@ -249,6 +249,7 @@ module Web
       when "update_view"
         editor.update_view(t, title: params[:title], icon: params[:icon], path: params[:path], type: params[:view_type], subview: params[:subview], back_path: params[:back_path])
         editor.set_hero(t, hero_param) if params.dig(:hero, :present)
+        editor.set_view_visible(t, visibility_param(params.fetch(:view_visible, {}).permit(roles: [], screens: []))) if params.dig(:view_visible, :present)
         editor.set_start(t, params[:start_view] == "1") if params.key?(:start_view)
       when "add_section" then editor.add_section(params[:view_id], title: params[:title])
       when "update_section" then editor.update_section(t, title: params[:title], span: span_param, position: params[:position])
@@ -320,12 +321,16 @@ module Web
       # P1.2 e ideia 22: estilo condicional e limite do "dado velho" (de qualquer tipo).
       attrs["style_if"] = Dashboards::Style.from_form(form_rows(:style, Dashboards::Style::FORM_FIELDS))
       attrs["stale_after_min"] = p[:stale_after_min].to_i.clamp(0, Dashboards::Staleness::MAX_MIN) if p[:stale_after_min].present?
-      roles = Array(p[:roles]).compact_blank
-      screens = Array(p[:screens]).compact_blank & Dashboards::Schema::SCREENS
-      visible = { "role" => (roles if roles.any? && roles.size < SiteMembership::ROLES.size),
-                  "screen" => (screens if screens.any? && screens.size < Dashboards::Schema::SCREENS.size) }.compact
-      attrs["visible_if"] = visible.presence
+      attrs["visible_if"] = visibility_param(p).presence
       attrs.compact
+    end
+
+    # Papel e tela marcados no formulário (widget ou visão) → `visible_if`; tudo ou nada marcado = sem a chave.
+    def visibility_param(p)
+      roles = Array(p[:roles]).compact_blank & SiteMembership::ROLES
+      screens = Array(p[:screens]).compact_blank & Dashboards::Schema::SCREENS
+      { "role" => (roles if roles.any? && roles.size < SiteMembership::ROLES.size),
+        "screen" => (screens if screens.any? && screens.size < Dashboards::Schema::SCREENS.size) }.compact
     end
 
     # P1.4: topo da visão pelo formulário → `hero` (vazio some).

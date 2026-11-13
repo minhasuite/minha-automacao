@@ -28,7 +28,7 @@ module Dashboards
 
     def call
       target = target_view_id
-      views = Array(@definition["views"]).map do |view|
+      views = role_views.map do |view|
         next lazy_view(view) if target && view["id"] != target
 
         view.merge({ "theme_now" => theme_now(view) }.compact).merge("badges" => Array(view["badges"]).filter_map { |w| resolve(w) },
@@ -38,13 +38,14 @@ module Dashboards
       { "id" => dashboard.id, "site_id" => @site.id, "name" => dashboard.name, "kind" => dashboard.kind, "auto" => dashboard.auto,
         "version" => dashboard.version, "schema_version" => @definition["schema_version"], "role" => role,
         "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload,
-        "open_view" => Context.open_view(self, @definition, views) }.compact.merge(@definition.slice("theme", "favorites", "start_view", "card_style"))
+        "open_view" => Context.open_view(self, @definition, views) }.compact.merge(@definition.slice("theme", "favorites", "card_style"))
+        .merge(views.any? { |v| v["id"] == @definition["start_view"] } ? @definition.slice("start_view") : {})
         .merge(CardStyles.now(@definition["card_style"]))
     end
 
     # Um widget só (o quadro que o tempo real recarrega). nil = não existe ou o papel não vê.
     def widget(id)
-      Array(@definition["views"]).each do |view|
+      role_views.each do |view|
         found = Resolver.flatten([ *Array(view["badges"]), *Array(view["sections"]).flat_map { |s| Array(s["widgets"]) } ]).find { |w| w["id"] == id }
         return resolve(found) if found
       end
@@ -106,9 +107,20 @@ module Dashboards
     def target_view_id
       return if @only_view.nil?
 
-      views = Array(@definition["views"])
+      views = role_views
       slug = @only_view == :open ? nil : @only_view.to_s
       Dashboards.pick_view({ "views" => views, "open_view" => Context.open_view(self, @definition, views), "start_view" => @definition["start_view"] }, slug)&.dig("id")
+    end
+
+    # visao-entrega: as visões que o papel vê (`visible_if.role` da visão; quem não está, ela some do
+    # JSON como o widget). Se o papel não vê nenhuma, fica uma visão vazia com o nome do painel (a tela
+    # mostra o "painel vazio" em vez de quebrar). Tela e aparelho são da web/app (`Dashboards.view_screens`).
+    def role_views
+      @role_views ||= begin
+        all = Array(@definition["views"])
+        mine = all.select { |v| Dashboards.role_ok?(v["visible_if"], role) }
+        mine.empty? && all.any? ? [ { "id" => all.first["id"], "title" => dashboard.name, "badges" => [], "sections" => [] } ] : mine
+      end
     end
 
     # Visão ainda não resolvida: o que a aba e o topo usam (título, ícone, caminho, tema), sem widgets.
@@ -131,7 +143,7 @@ module Dashboards
     end
 
     def resolve(w)
-      return if w.dig("visible_if", "role") && !(role == "owner" || w.dig("visible_if", "role").include?(role))
+      return unless Dashboards.role_ok?(w["visible_if"], role)
 
       return container(w) if w["widgets"].is_a?(Array)
 

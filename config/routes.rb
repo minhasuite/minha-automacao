@@ -110,6 +110,7 @@ Rails.application.routes.draw do
                                              constraints: { token: /[A-Za-z0-9_=-]+/, file: /[a-z0-9]+\.(m3u8|mp4|m4s|ts)/ }
     # ondaC2 (C10): gravação, PTZ e alto-falante da câmera. Arquivo de mídia por link assinado (players da rede, sem sessão).
     patch "cameras/:id/ajustes", to: "cameras#settings", as: :camera_settings
+    post "cameras/:id/falar", to: "cameras#talk", as: :camera_talk # visao-entrega: falar gravado no card do painel
     get "midia/arquivo/:name", to: "media_files#show", as: :media_file, constraints: { name: %r{[^/]+} }, format: false
     # "Falar na Alexa": a voz gravada (MP3) que a Echo baixa, sem sessão; e o envio do painel.
     get "fala/:key.mp3", to: "talk_audios#show", as: :talk_audio, constraints: { key: /[a-z0-9]{20,40}/ }, format: false

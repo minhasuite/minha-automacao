@@ -4,21 +4,42 @@
   <%= render Ss::DeviceTileComponent.new(name: w["label"].presence || t("dashboards.w.camera_removed"), status: :unavailable, icon: icon("video-camera").to_s,
                                          unavailable_label: t("dashboards.w.not_found"), css: "h-full") %>
 <% else %>
+  <%# visao-entrega: `talk` no data = o servidor já conferiu que a câmera fala e o papel comanda; `sound` = ao vivo com som. %>
+  <% talk = w["data"]["talk"] == true %>
+  <% texts = { soundBlocked: t("dashboards.w.camera_sound_blocked"), recording: t("dashboards.w.camera_talk_recording"), sending: t("dashboards.w.camera_talk_sending"),
+               sent: t("dashboards.w.camera_talk_sent"), failed: t("dashboards.w.camera_talk_failed") } %>
   <%# Tile de câmera da gem; o quadro (img) e o WebRTC (video) são do controller camera, que troca o data-state. %>
   <%= render Ss::CameraTileComponent.new(title: dw_label(w, p), state: :loading, age: 0, retry_button: true, url: point_path(p["id"]),
                                          data: { controller: "camera", camera_snapshot_value: camera_snapshot_path(p["id"]), camera_webrtc_value: camera_webrtc_path(p["id"]),
                                                  camera_mse_value: camera_mse_path(p["id"]), camera_hls_value: camera_hls_path(p["id"]),
                                                  camera_interval_value: w["snapshot_interval"] || 10, camera_autoplay_value: w["autoplay"] == true,
-                                                 camera_autoplay_max_value: w["autoplay_max"] || Dashboards::Widgets::CameraWidget::AUTOPLAY_MAX }) do |c| %>
+                                                 camera_autoplay_max_value: w["autoplay_max"] || Dashboards::Widgets::CameraWidget::AUTOPLAY_MAX,
+                                                 camera_sound_value: w["sound"] == true, camera_texts_value: texts.to_json,
+                                                 camera_talk_url_value: (camera_talk_path(p["id"]) if talk), camera_mic_denied_value: (t("cameras.mic_denied") if talk) }.compact) do |c| %>
     <% c.with_frame do %>
       <img data-camera-target="img" alt="<%= t("dashboards.w.image_x", name: dw_label(w, p)) %>" hidden>
       <video data-camera-target="video" muted playsinline autoplay hidden aria-label="<%= t("dashboards.w.live_x", name: dw_label(w, p)) %>"></video>
     <% end %>
     <% unless w["live"] == false %>
       <% c.with_action do %>
+        <%# Som do ao vivo: aparece com o vídeo tocando; aria-pressed = com som (o ícone troca pela gem). %>
+        <%= render Ss::IconButtonComponent.new(icon: icon("volume-off", ""), pressed_icon: icon("volume-up", ""), label: t("dashboards.w.camera_sound"), pressed: false,
+                                               hidden: true, data: { camera_target: "soundButton", action: "camera#toggleSound" }) %>
+      <% end %>
+      <% c.with_action do %>
         <%= render Ss::IconButtonComponent.new(icon: icon("status-online", "size-4"), label: t("dashboards.w.live_x", name: dw_label(w, p)), title: t("dashboards.w.live"), pressed: false,
                                                data: { camera_target: "liveButton", action: "camera#toggle" }) %>
       <% end %>
     <% end %>
+    <% if talk %>
+      <% c.with_action do %>
+        <%= render Ss::IconButtonComponent.new(icon: icon("microphone", "size-4"), label: t("cameras.talk"), pressed: false,
+                                               data: { camera_target: "talkButton", action: "camera#talkCard" }) %>
+      <% end %>
+    <% end %>
+  <% end %>
+  <% if talk || w["sound"] == true %>
+    <%# Aviso do controller camera (gravando, enviado, microfone negado, som bloqueado). %>
+    <p class="text-xs font-semibold text-ink-2 mt-1" data-camera-target="status" role="status" hidden></p>
   <% end %>
 <% end %>

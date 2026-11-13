@@ -378,7 +378,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   "Sem conexão". Importação: `... | rake 'go2rtc:importar[Casa]'` com o JSON
   na entrada padrão (senha nunca em arquivo nem argumento).
   Widget `camera` com `autoplay: true` abre o WebRTC sozinho quando visível (limite
-  `autoplay_max`/`CameraWidget::AUTOPLAY_MAX` por página; `docs/dashboards.md`).
+  `autoplay_max`/`CameraWidget::AUTOPLAY_MAX` por página; `docs/dashboards.md`). `sound`/`talk` no
+  card: som do ao vivo e Falar (o servidor decide `data.talk`; áudio gravado vira WAV em `Cameras::Talk`,
+  web `POST /cameras/:id/falar`, app `/api/v1/points/:id/talk`). Visão com `visible_if` (só `role`/
+  `screen`/`device`, `Dashboards::VIEW_VISIBILITY`): papel some do JSON; tela some a aba e a web troca
+  sozinha (`view-fallback`) para a primeira aba da tela (`docs/dashboards.md`).
 - **Câmeras fora de casa e DVR (cameras2, aberto/fechado, `docs/cameras.md`)**: sem vídeo
   WebRTC em 4 s o cliente cai para o MSE do go2rtc por WebSocket pelo Rails
   (`/cameras/:id/mse`, Rack hijack + `Cameras::WsProxy`, mesma origem) ou HLS com link
