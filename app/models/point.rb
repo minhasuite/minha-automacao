@@ -126,6 +126,7 @@ class Point < ApplicationRecord
       # os widgets que dependem dele (Turbo Frame, com o papel de quem vê).
       # Medição que muda toda hora sai agrupada (Points::Broadcast, 1,5 s por ponto).
       Points::Broadcast.changed(self, grouped: quality == quality_was && capability != "command")
+      Dashboards::Prewarm.touch(site_id) # o painel padrão de cada um fica pronto para a próxima abertura
     end
     Automations.on_change(self, quality_was, value_was) if value_changed
     Recordings.motion!(self) if value_changed && new_value == true && capability == "motion" # ondaC2: câmera em "por evento" grava

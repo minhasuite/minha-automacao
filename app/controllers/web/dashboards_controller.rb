@@ -24,7 +24,7 @@ module Web
       # Ideia 1: modo editar na própria tela (técnico+): o rascunho com arrastar, largura e ajustes na gaveta.
       @edit_here = params[:editar].present? && can?(:manage) && !kiosk
       preview = (params[:rascunho].present? || @edit_here) && can?(:manage)
-      @resolved = preview ? Dashboards::Resolver.new(@dashboard, role: @site_role, definition: @dashboard.working_draft).call : Dashboards::Resolver.cached(@dashboard, role: @site_role).deep_dup
+      @resolved = preview ? Dashboards::Resolver.new(@dashboard, role: @site_role, definition: @dashboard.working_draft).call : Dashboards::Resolver.cached(@dashboard, role: @site_role, view: params[:view].presence, lazy: true).deep_dup
       Dashboards::Hero.apply!(@resolved, site: @site, user: current_user, home: false)
       Dashboards::Personal.apply!(@resolved, site: @site, user: current_user, role: @site_role) # ideia 13: busca e favoritos
       @preview = preview

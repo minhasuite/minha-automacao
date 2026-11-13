@@ -61,17 +61,47 @@ module Dashboards
     end
 
     # Painel resolvido (o mesmo hash do `Resolver#call`). Rascunho/prévia não passa por aqui.
-    def resolved(dashboard, role:)
-      return Resolver.new(dashboard, role: role).call unless enabled?
+    # `lazy`: só a visão `view` (id/caminho; nil = a que abre) resolvida, as outras com `lazy: true`.
+    #
+    # Dois níveis: a memória do processo (STORE) e o `Rails.cache` (Solid Cache em produção,
+    # comum aos processos), onde o pré-aquecimento (`Dashboards::Prewarm`, no worker) deixa o
+    # painel padrão de cada papel pronto para a web e a API acharem na primeira abertura.
+    def resolved(dashboard, role:, view: nil, lazy: false)
+      only = (lazy ? view.presence || :open : nil)
+      return Resolver.new(dashboard, role: role, only_view: only).call unless enabled?
 
-      key = [ "painel", dashboard.id, dashboard.updated_at.to_f, dashboard.version, role, I18n.locale, Time.current.to_i / 60, stamp(dashboard.site) ].join(":")
-      hit = STORE.read(key) and return hit
+      key = resolved_key(dashboard, role, lazy ? "v=#{view}" : "all")
+      hit = STORE.read(key) || shared_read(key) and return remember(key, hit)
 
-      Resolver.new(dashboard, role: role).call.tap do |payload|
+      Resolver.new(dashboard, role: role, only_view: only).call.tap do |payload|
         STORE.write(key, payload, expires_in: RESOLVED_TTL)
+        shared_write(key, payload) if lazy
       rescue TypeError => e # algo no `data` de um widget que não se copia: só não guarda
         Rails.logger.warn("[painel] cache: #{e.message}")
       end
+    end
+
+    def resolved_key(dashboard, role, part)
+      [ "painel", dashboard.id, dashboard.updated_at.to_f, dashboard.version, role, I18n.locale, Time.current.to_i / 60, stamp(dashboard.site), part ].join(":")
+    end
+
+    def remember(key, payload)
+      STORE.write(key, payload, expires_in: RESOLVED_TTL) unless STORE.exist?(key)
+      payload
+    end
+
+    # O nível comum: falha de cache nunca derruba o painel (só resolve de novo).
+    def shared_read(key)
+      Rails.cache.read(key)
+    rescue StandardError => e
+      Rails.logger.warn("[painel] cache comum: #{e.message}")
+      nil
+    end
+
+    def shared_write(key, payload)
+      Rails.cache.write(key, payload, expires_in: RESOLVED_TTL)
+    rescue StandardError => e
+      Rails.logger.warn("[painel] cache comum: #{e.message}")
     end
 
     # Nos testes o painel resolvido não fica guardado (cada exemplo mexe no

@@ -551,7 +551,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `Dashboards::Lint`, que não bloqueiam e olham pela chave do JSON). JSON Schema =
   `Dashboards::JsonSchema` do registro (prop própria do plugin em `schema_props`);
   "Adicionar ao painel" = linha em `Dashboards::AddTo::SOURCES`; ação de painel
-  no Ctrl+K = `Search::DashboardActionsSource`; área de transferência em
+  no Ctrl+K = `Search::DashboardActionsSource`; **busca global (aberto/fechado,
+  `docs/busca.md`)**: fonte nova = classe `< Search::Source` (`call`, `prefix`, `lookup`) +
+  nome em `Search::SOURCES`; tolerância e nota no `Search::Match` (Ruby, sem pg_trgm),
+  recentes/favoritos em `Search::Recent`, item de Configurações = linha em `SettingsNav`
+  (menu e busca); app pela `GET /api/v1/search` (`target`/`action`), web por `/busca/abrir`; área de transferência em
   `users.dashboard_prefs["clipboard"]`. Ver `docs/dashboards.md` ("Agilidade do editor").
 - **Painel do dia a dia (aberto/fechado, ideias 9–13 e 23)**: condição nova do `visible_if`/`style_if`/
   `order_if`/`open_if` = classe em `Dashboards::Context::CONDITIONS` (sol e presença hoje); ação em lote =
@@ -751,7 +755,12 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   AppScreen), verificação `device_health` na Saúde e aviso semanal de bateria pelo `HealthCheckJob`.
 - **Desempenho (aberto/fechado, `docs/desempenho.md`)**: pontos do local e painel
   resolvido em cache curto na memória (`Dashboards::Cache`, chave = carimbo do local
-  pelo `xmin`; painel por papel+minuto, 60 s; desligado nos testes). Aviso de mudança
+  pelo `xmin`; painel por papel+minuto, 60 s; desligado nos testes), com o nível comum
+  `Rails.cache` para o pré-aquecido (`Dashboards::Prewarm`/`DashboardPrewarmJob`, debounce 5 s
+  por local, painel padrão de cada pessoa/papel). Web e app (`?lazy=1`) resolvem só a visão
+  aberta (`Resolver only_view:`; as outras `lazy: true`). No Resolver, irmãos por
+  `device_points`, áreas por `area`, nada de consulta por widget (`bin/rails perf:painel`
+  mede com `perf:seed_paineis`). Aviso de mudança
   só pelo `Points::Broadcast` (medição agrupada em 1,5 s por ponto, `address.notify_s`).
   Banda morta padrão por unidade = linha em `config/deadbands.yml`. Tela de câmera usa
   `Drivers::Go2rtc.frame` (nuvem/caída em segundo plano, `?w=`; o `snapshot` síncrono

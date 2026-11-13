@@ -10,23 +10,31 @@ module Dashboards
 
     attr_reader :dashboard, :role
 
-    def initialize(dashboard, role:, definition: nil)
+    # `only_view`: resolve só uma visão (abertura mais rápida, `docs/desempenho.md`): o id ou caminho
+    # pedido, ou `:open` = a que abriria sem pedido (`open_if`, `start_view`, a primeira). As outras
+    # vêm com `lazy: true` e sem widgets; a tela pede cada uma quando a pessoa troca de aba. nil = todas.
+    def initialize(dashboard, role:, definition: nil, only_view: nil)
       @dashboard = dashboard
       @site = dashboard.site
       @role = role
       @definition = definition || dashboard.published
+      @only_view = only_view
       @used = {}
     end
 
     # Painel resolvido com cache curto (Dashboards::Cache); a prévia do rascunho não usa.
-    def self.cached(dashboard, role:) = Cache.resolved(dashboard, role: role)
+    # `lazy: true` = só a visão `view` (ou a que abre); as outras sob demanda.
+    def self.cached(dashboard, role:, view: nil, lazy: false) = Cache.resolved(dashboard, role: role, view: view, lazy: lazy)
 
     def call
+      target = target_view_id
       views = Array(@definition["views"]).map do |view|
+        next lazy_view(view) if target && view["id"] != target
+
         view.merge({ "theme_now" => theme_now(view) }.compact).merge("badges" => Array(view["badges"]).filter_map { |w| resolve(w) },
                    "sections" => Array(view["sections"]).map { |s| s.merge("widgets" => Array(s["widgets"]).filter_map { |w| resolve(w) }) })
       end
-      views = views.map { |v| Context.arrange(self, v) } # ideia 9: ordem das seções pelo contexto (`order_if`)
+      views = views.map { |v| v["lazy"] ? v : Context.arrange(self, v) } # ideia 9: ordem das seções pelo contexto (`order_if`)
       { "id" => dashboard.id, "site_id" => @site.id, "name" => dashboard.name, "kind" => dashboard.kind, "auto" => dashboard.auto,
         "version" => dashboard.version, "schema_version" => @definition["schema_version"], "role" => role,
         "can_edit" => SiteMembership.allowed?(role, :manage), "views" => views, "points" => points_payload,
@@ -48,6 +56,10 @@ module Dashboards
     def site = @site
     # Pontos do local: lidos na primeira vez que alguém pede, pelo cache curto do local.
     def points = @all ||= Cache.points(@site)
+    # Os pontos de um aparelho (irmãos do tile: brilho, cor, recursos), sem varrer o local a cada widget.
+    def device_points(device_id) = (@by_device ||= points.group_by(&:device_id)).fetch(device_id, [])
+    # Áreas do local por id (cartão de área, planta), lidas uma vez por resolução.
+    def area(id) = (@areas ||= @site.areas.index_by(&:id))[id]
     def definition = @definition
     # Limites do "dado velho" do local (ideia 22; Configurações → Painéis → Padrões), lidos uma vez.
     def stale_limits = @stale_limits ||= Staleness.limits(@site)
@@ -89,6 +101,20 @@ module Dashboards
     end
 
     private
+
+    # A visão a resolver quando só uma vale (nil = todas): a mesma escolha do `Dashboards.pick_view`.
+    def target_view_id
+      return if @only_view.nil?
+
+      views = Array(@definition["views"])
+      slug = @only_view == :open ? nil : @only_view.to_s
+      Dashboards.pick_view({ "views" => views, "open_view" => Context.open_view(self, @definition, views), "start_view" => @definition["start_view"] }, slug)&.dig("id")
+    end
+
+    # Visão ainda não resolvida: o que a aba e o topo usam (título, ícone, caminho, tema), sem widgets.
+    def lazy_view(view)
+      view.merge({ "theme_now" => theme_now(view) }.compact).merge("lazy" => true, "badges" => [], "sections" => [])
+    end
 
     def by_id = @by_id ||= points.index_by(&:id)
     def by_key = @by_key ||= points.index_by(&:key)
@@ -204,11 +230,15 @@ module Dashboards
       after <= before ? now >= after && now < before : now >= after || now < before
     end
 
-    def point_json(p) = self.class.point_json(p, role)
+    def point_json(p) = self.class.point_json(p, role, runs: automation_runs)
+
+    # Última execução das automações do local (o tile "rodar agora"), numa consulta só.
+    def automation_runs = @automation_runs ||= Automation.where(site_id: @site.id).pluck(:id, :last_run_at).to_h
 
     # O ponto como o app desenha (valor, texto, comandos e se este papel comanda);
     # também é o `?view=app` de GET /devices/:id/points.
-    def self.point_json(p, role)
+    # `runs`: {id da automação → last_run_at} já lido (o Resolver lê uma vez; sem ele, uma consulta por ponto).
+    def self.point_json(p, role, runs: nil)
       helpers = ApplicationController.helpers
       on = p.value == true || p.value == "open"
       title, context = p.display_names
@@ -223,9 +253,14 @@ module Dashboards
         "locked" => usable && !allowed,
         "title" => title, "context" => context, "status_note" => helpers.point_status_note(p),
         # Automação como ponto: quando rodou pela última vez (o tile "rodar agora" mostra no lugar de ligado/desligado).
-        "ran_at" => (Automation.where(id: p.address["automation_id"]).pick(:last_run_at)&.iso8601 if AutomationPoints.automation?(p))
+        "ran_at" => (ran_at(p, runs)&.iso8601 if AutomationPoints.automation?(p))
       ).compact.stringify_keys
       json.merge("display_icon" => helpers.dw_point_icon(json))
+    end
+
+    def self.ran_at(p, runs)
+      id = p.address["automation_id"]
+      runs ? runs[id] : Automation.where(id: id).pick(:last_run_at)
     end
   end
 end

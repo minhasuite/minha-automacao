@@ -46,7 +46,7 @@ module Dashboards
     end
 
     # Irmãos do ponto (mesmo aparelho, à vista) para achar o alvo.
-    def siblings(r, point) = r.points.select { |p| p.device_id == point.device_id && p.id != point.id && !p.hidden && !p.disabled }
+    def siblings(r, point) = r.device_points(point.device_id).select { |p| p.id != point.id && !p.hidden && !p.disabled }
 
     # Payload dos recursos do tile → [lista, pontos usados]. Recurso sem alvo some.
     def resolve(r, w, point)

@@ -20,7 +20,7 @@ module Dashboards
       def self.errors(w) = w.key?("facts") ? Facts.errors(w["facts"]) : []
 
       def self.data(r, w, _binds)
-        area = r.site.areas.find_by(id: w["area"])
+        area = r.area(w["area"])
         return [ { "missing" => true }, [] ] unless area
 
         scope = { "area" => area.id }
@@ -41,7 +41,7 @@ module Dashboards
 
       # Ideia 14: os pontos de um item (o toque no "6 sem sinal").
       def self.drill(r, w, key)
-        area = r.site.areas.find_by(id: w["area"]) or return nil
+        area = r.area(w["area"]) or return nil
         fact = facts_for(r, w).find { |f| f["id"] == key } or return nil
         { "title" => Facts.one(fact, Facts.points(r, fact, scope: { "area" => area.id }), nil)&.dig("text") || area.name,
           "subtitle" => area.name, "points" => Facts.points(r, fact, scope: { "area" => area.id }) }

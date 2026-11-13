@@ -219,7 +219,7 @@ module Dashboards
         key = p["key"]
         case p["kind"]
         when "area"
-          area = (@r.site.areas.find_by(id: value) if value.present?) or return
+          area = (@r.area(value) if value.present?) or return
           view = Array(@r.definition["views"]).find { |v| v["area"] == area.id }
           count = @r.query({ "area" => area.id }).size
           @raw[key] = area.id

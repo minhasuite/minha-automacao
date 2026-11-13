@@ -82,7 +82,7 @@ module Dashboards
         def color_point(r, point)
           return unless point&.capability.in?(%w[onoff dimmer])
 
-          r.points.find { |p| p.device_id == point.device_id && p.capability == "color" && !p.disabled }
+          r.device_points(point.device_id).find { |p| p.capability == "color" && !p.disabled }
         end
 
         # Editar pelo formulário refaz o widget: aqui o plugin devolve o que o formulário não mostra

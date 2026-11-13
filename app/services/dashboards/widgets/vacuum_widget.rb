@@ -11,7 +11,7 @@ module Dashboards
         point = binds.first
         return [ { "point_ids" => [], "missing" => true }, [] ] unless point&.capability == "vacuum"
 
-        siblings = r.points.select { |p| p.device_id == point.device_id && p.id != point.id && !p.disabled }.each { |p| r.use(p) }
+        siblings = r.device_points(point.device_id).select { |p| p.id != point.id && !p.disabled }.each { |p| r.use(p) }
         by_role = siblings.group_by { |p| p.address["role"] }
         one = ->(role) { by_role[role]&.first&.id }
         [ { "point_ids" => [ point.id ], "rooms" => Array(point.address["rooms"]), "actions" => Array(point.address["actions"]&.keys),

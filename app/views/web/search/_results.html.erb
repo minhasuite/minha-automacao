@@ -1,9 +1,23 @@
-<%# locals: (results:, q:) -%>
-<%# Resultados da busca: na página /busca e na paleta (Ctrl+K, src: da gem), em grupos com título por tipo (.ss-command-group) e o subtítulo na 2ª linha. -%>
+<%# locals: (results:, q:, recent: []) -%>
+<%# Resultados da busca: na página /busca e na paleta (Ctrl+K, src: da gem), em grupos com título por tipo (.ss-command-group) e o subtítulo na 2ª linha.
+    Link de resultado passa por /busca/abrir (recentes); ação rápida é POST direto. -%>
 <% if q.blank? %>
+  <% if recent.any? %>
+    <div class="ss-command-list" role="listbox" aria-label="<%= t("search.recent") %>">
+      <div class="ss-command-group" role="group" aria-labelledby="busca-recentes">
+        <p class="ss-command-group-title" id="busca-recentes"><%= t("search.recent") %></p>
+        <% recent.each do |r| %>
+          <%= link_to search_open_path(k: r.key), class: "ss-command-item", role: "option", data: { turbo_frame: "_top" } do %>
+            <%= icon(r.icon, "") %><span class="ss-command-text"><span data-ss-command-label><%= r.title %></span><span class="ss-command-sub"><%= [ r.kind, r.subtitle ].compact_blank.join(" · ") %></span></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
   <div class="p-2">
     <p class="ss-command-group-title"><%= t("search.try") %></p>
     <nav class="ss-chipbar flex-wrap px-2" aria-label="<%= t("search.try") %>"><% t("search.tips").each do |tip| %><%= link_to tip, search_path(q: tip), class: "ss-fchip no-underline" %><% end %></nav>
+    <p class="text-sm text-muted px-2 mt-3"><%= t("search.keys") %></p>
   </div>
 <% elsif results.empty? %>
   <%= render Ss::EmptyStateComponent.new(variant: :busca, title: t("search.nothing", q: q), text: t("search.nothing_text"), compact: true) %>
@@ -17,10 +31,10 @@
             <%# Ação rápida: link POST do Turbo (a paleta só aproveita a.ss-command-item); confirmação da suíte. %>
             <%= link_to [ r.action[:url], r.action[:params].presence&.to_query ].compact.join("?"), class: "ss-command-item", role: "option",
                         data: { turbo_method: :post, turbo_frame: "_top", turbo_confirm: r.action[:confirm], turbo_confirm_title: r.action[:confirm_title] }.compact do %>
-              <%= icon(r.icon, "") %><span data-ss-command-label><%= r.title %></span><small><%= r.action[:label] %></small>
+              <%= icon(r.icon, "") %><span class="ss-command-text"><span data-ss-command-label><%= r.title %></span><% if r.subtitle.present? %><span class="ss-command-sub"><%= r.subtitle %></span><% end %></span><small><%= r.action[:label] %></small>
             <% end %>
           <% else %>
-            <%= link_to r.url, class: "ss-command-item", role: "option", data: { turbo_frame: "_top" } do %>
+            <%= link_to r.key ? search_open_path(k: r.key) : r.url, class: "ss-command-item", role: "option", data: { turbo_frame: "_top" } do %>
               <%= icon(r.icon, "") %><% if r.subtitle.present? %><span class="ss-command-text"><span data-ss-command-label><%= r.title %></span><span class="ss-command-sub"><%= r.subtitle %></span></span><% else %><span data-ss-command-label><%= r.title %></span><% end %>
             <% end %>
           <% end %>

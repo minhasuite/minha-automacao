@@ -24,6 +24,51 @@ que relia os ~507 pontos do local a cada quadro. O que mudou:
   (histórico do gráfico, agenda, diário) fica no máximo 60 s atrasado. Nos testes o
   painel resolvido não fica guardado (`Dashboards::Cache.enabled = true` liga).
 
+
+## Primeira abertura do painel (11/2026)
+
+Na casa, o `Dashboards::Resolver` do painel "Casa" (11 visões, ~507 pontos) levava ~2,3 s
+frio; o cache só ajudava quente. Três mudanças, sem mexer em facts/style/hero/autoplay:
+
+- **Só a visão aberta** (`Resolver.new(..., only_view:)`, `Resolver.cached(..., view:, lazy: true)`):
+  a web (Início e `/paineis/:id`) resolve só a visão que abre (`?view=`, a do aparelho,
+  `open_if`, `start_view`, a primeira: a mesma escolha do `Dashboards.pick_view`); as outras
+  vêm com `lazy: true`, sem widgets (título, ícone, caminho, tema e topo continuam). As abas
+  da web já são links, então cada visão se resolve ao abrir. O app pede
+  `GET /api/v1/dashboards/:id?lazy=1` e, ao trocar de aba, `?lazy=1&view=<id>`; sem `lazy`
+  (app antigo) continua tudo.
+- **Pré-aquecimento** (`Dashboards::Prewarm` + `DashboardPrewarmJob`): ponto que muda
+  (`Point#report!`) ou painel publicado/padrão trocado chama `Prewarm.touch(site)`; no máximo um
+  job por local a cada 5 s resolve a visão que abre do painel padrão de cada pessoa/papel
+  (web e app, `Dashboard.default_for`) e guarda no `Rails.cache` (Solid Cache, comum aos
+  processos). `Dashboards::Cache.resolved` lê a memória do processo, depois o cache comum,
+  e só então resolve. A chave continua com o carimbo do local (qualquer gravação de ponto
+  troca): o pré-aquecido vale até a próxima leitura de aparelho; numa casa com medição
+  chegando a cada segundo, ele acerta menos, e quem salva é o caminho frio curto.
+- **Menos consultas e menos voltas no Resolver**: `Points::Query` calcula "o que existe" uma
+  vez por resolução e começa pelos pontos da área quando a consulta tem `area` (cartão de
+  área, modelo de card); irmãos do tile (brilho, cor, recursos, robô) por
+  `Resolver#device_points`; áreas por `Resolver#area` (sem `find_by` por cartão); última
+  execução das automações numa consulta (`Resolver#automation_runs`, antes uma por tile);
+  risco da cena pelos pontos já lidos (`Scene.max_risk`); modelo de card uma vez por chave
+  (`Resolver#memo`).
+
+Medido no banco de dev (`bin/rails perf:seed_paineis` = "Casa Perf": 10 cômodos, 500 pontos,
+20 automações como tiles, 6 cenas, cartão de área e modelo por cômodo, 12 visões;
+`bin/rails perf:painel`, frio = sem cache, mediana de 5):
+
+| | antes | depois |
+|---|---|---|
+| painel inteiro (12 visões) | 311,8 ms, 64 consultas | 81,4 ms, 9 consultas |
+| só a visão que abre (Início, a mais pesada) | — (resolvia todas) | 52,4 ms, 9 consultas |
+| outra visão sob demanda (troca de aba) | — | 10,6 ms, 5 consultas |
+| visão que abre, pré-aquecida (outro processo) | — | 3,7 ms |
+| um widget (tempo real) | 24,4 ms, 5 consultas | 8,8 ms, 3 consultas |
+
+O servidor da casa é mais lento que a máquina de dev (a proporção de ~2,3 s para os 312 ms
+daqui é de ~7x); pela mesma proporção, a primeira abertura do Início deve ficar perto de
+0,4 s e a troca de aba perto de 0,1 s. Conferir no Saúde → Desempenho depois do deploy.
+
 ## Tempo real
 
 - **Avisos agrupados** (`Points::Broadcast`): medição (`measure`, `counter`) avisa

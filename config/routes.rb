@@ -88,6 +88,7 @@ Rails.application.routes.draw do
     # Câmeras (F8): quadro e ao vivo (WebRTC) passando pelo Rails.
     # Busca global (Ctrl+K, uiweb).
     get "busca", to: "search#index", as: :search
+    get "busca/abrir", to: "search#open", as: :search_open
     # Modo tablet de parede (uiweb): ajustes deste aparelho (cookie).
     patch "quiosque", to: "dashboards#kiosk_settings", as: :kiosk
     # P2.3 e ideia 19: exportar o painel como pacote e o estilo dos cards em um clique.
@@ -582,6 +583,8 @@ Rails.application.routes.draw do
       post "sites/:site_id/dev/states/:point_id", to: "dev_tools#set_state"
       post "sites/:site_id/dev/template", to: "dev_tools#template"
       post "sites/:site_id/dev/events", to: "dev_tools#fire_event"
+      get "search", to: "search#index" # busca global do app (docs/busca.md)
+      post "search/recent", to: "search#recent"
       get "system/queue", to: "system_queue#show" # Fila e jobs (docs/fila.md), só o dono
       # P3: Saúde (resultado e verificações personalizadas, só administradores), prévia de texto e voz personalizada.
       get "health", to: "health#show"

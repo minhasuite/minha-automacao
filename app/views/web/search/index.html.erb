@@ -5,4 +5,4 @@
   <%= search_field_tag :q, @q, class: "ss-input flex-1", placeholder: t("search.placeholder"), autofocus: true %>
   <%= submit_tag t("search.title"), class: "ss-btn ss-btn-primary" %>
 <% end %>
-<div class="ss-card p-2"><%= render "web/search/results", results: @results, q: @q %></div>
+<div class="ss-card p-2"><%= render "web/search/results", results: @results, q: @q, recent: @recent %></div>

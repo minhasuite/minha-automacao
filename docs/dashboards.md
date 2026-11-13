@@ -168,6 +168,12 @@ botões), `mode` e `input` (`number`, `text`, `password`, `date`, `time`,
 
 A definição publicada (ou o rascunho com `?draft=1`, para quem edita) com:
 
+- `?lazy=1` (app novo; a web faz o mesmo): só **uma** visão resolvida, a de `?view=<id ou
+  caminho>` ou, sem ela, a que abre (aparelho, `open_if`, `start_view`, a primeira); as outras
+  vêm com `"lazy": true`, `sections: []` e `badges: []` (título, ícone, caminho, `subview`,
+  `theme_now` e `hero_now` continuam) e `points` só da visão resolvida. A aba pede
+  `?lazy=1&view=<id>` e junta. Sem `lazy`, todas resolvidas (`docs/desempenho.md`);
+
 - widgets que o papel não vê removidos; cada widget ganha `visible` (estado,
   qualidade, hora agora), `data` e `deps`;
 - `data` por tipo: `tile`/`group`/`chart`/`camera` → `point_ids`, `missing`; `vacuum` → `point_ids`,
