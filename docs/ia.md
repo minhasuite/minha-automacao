@@ -62,6 +62,10 @@ apps Whisper (10300) e Piper (10200) do catálogo. Endereço `tcp://IP`
 assim); a fala volta em WAV. Voz pt-BR offline (`pt_BR-faber-medium`).
 O "Conectar" da página do app cria a conta.
 
+Provedor que roda na rede da casa declara `local: true` no `describe`
+(Ollama, Voz local, Wyoming): o Assistente de voz o prefere e o usa sem
+internet (`docs/assistente.md`, "Voz offline").
+
 O **Ollama** já era provedor; o app `ollama` do catálogo liga sozinho:
 Conectar cria a conta com `http://IP:11434` e o modelo pequeno do
 manifesto, libera o IP na Saída HTTP e baixa o modelo pela fila

@@ -5,7 +5,8 @@ module Web
   # teste ao vivo, sem executar) e, nas abas dos próximos pacotes, satélites
   # e servidor MCP. Ver e mudar: técnico ou dono do local.
   class AssistSettingsController < ApplicationController
-    TABS = %w[pipelines satelites depuracao frases personalizadas mcp].freeze
+    TABS = %w[pipelines testar satelites depuracao frases personalizadas mcp].freeze
+    MAX_AUDIO = 10.megabytes
 
     before_action -> { @site = Site.find(params[:site_id]) }
     before_action -> { authorize_site!(@site, :manage) }
@@ -14,7 +15,10 @@ module Web
       @tab = params[:aba].presence_in(self.class::TABS) || "pipelines"
       @pipelines = AssistPipeline.where(site: @site).order(preferred: :desc, created_at: :asc).to_a
       case @tab
-      when "depuracao" then @runs = AssistRun.where(site: @site).includes(:user, :pipeline).order(created_at: :desc).limit(50)
+      when "depuracao"
+        @runs = AssistRun.where(site: @site).includes(:user, :pipeline).order(created_at: :desc).limit(50)
+        @latency = Assist::Latency.for(@site)
+      when "testar" then testar
       when "frases" then frases
       when "personalizadas" then customs
       when "mcp" then @mcp_tokens = mcp_tokens
@@ -54,6 +58,28 @@ module Web
     rescue Wyoming::Error => e
       sat.update_columns(last_error: e.message.truncate(200))
       redirect_to back, alert: e.message
+    end
+
+    # voz-offline: "fale e veja o texto" — roda o pipeline escolhido com o
+    # áudio gravado ou o texto e mostra o que ouviu, a intenção, a resposta, a
+    # fala e o tempo de cada etapa. Sem "executar", só reconhece (não comanda).
+    # Formulário sem Turbo (a resposta é a própria página).
+    def test_pipeline
+      @tab = "testar"
+      @pipelines = AssistPipeline.where(site: @site).order(preferred: :desc, created_at: :asc).to_a
+      pipeline = AssistPipeline.for(@site, params[:pipeline_id])
+      audio = params[:audio] if params[:audio].respond_to?(:read)
+      @test_error = t("assist.too_big") if audio && audio.size > MAX_AUDIO
+      @test_error ||= begin
+        @test = Assist::Pipeline.run(site: @site, user: current_user, text: params[:texto].to_s, audio: audio&.read, media_type: audio&.content_type.to_s,
+                                     speak: params[:falar] != "0", pipeline: pipeline, source: "test", execute: params[:executar] == "1")
+        nil
+      rescue ArgumentError, Ai::Client::Error => e
+        e.message
+      end
+      @test_run = AssistRun.where(site: @site, source: "test").order(created_at: :desc).first if @test_error
+      testar(pipeline)
+      render :show
     end
 
     # P3: intenção personalizada (frase → cena ou script) e resposta personalizada.
@@ -116,6 +142,14 @@ module Web
       redirect_to back, alert: sat.errors.full_messages.to_sentence
     end
 
+    # Aba Testar: o estado da voz (local/nuvem/offline), o tempo das últimas execuções
+    # e, com `verificar=1`, a resposta dos servidores Wyoming da casa.
+    def testar(pipeline = AssistPipeline.for(@site, params[:pipeline_id]))
+      @test_pipeline = pipeline
+      @status = Assist::Status.for(@site, pipeline, check: params[:verificar] == "1")
+      @latency = Assist::Latency.for(@site)
+    end
+
     # Teste de frase (GET, não executa nada): qual intenção e quais slots; e
     # uma frase-modelo contra um exemplo.
     def frases
@@ -133,7 +167,7 @@ module Web
     end
 
     def save_pipeline(pipeline, notice)
-      f = params.require(:pipeline).permit(:name, :language, :agent, :llm_provider, :preferred)
+      f = params.require(:pipeline).permit(:name, :language, :agent, :llm_provider, :preferred, :cloud)
       pipeline.assign_attributes(f.to_h)
       %w[stt tts wake].each { |kind| pipeline[kind] = engine_cfg(kind) }
       return redirect_to(site_assist_settings_path(@site), notice: notice) if pipeline.save

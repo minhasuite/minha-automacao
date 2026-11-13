@@ -2,13 +2,15 @@
 # agente (local, local + IA com ferramentas, só IA), STT e TTS por motor
 # (Assist::Engines: o da instalação, Wyoming...) e a palavra de ativação dos
 # satélites. Um por local é o preferido (o que o botão Falar usa).
+# voz-offline: `cloud` falso = STT, TTS e IA só da rede da casa; o agente
+# "intents" não usa IA nenhuma.
 class AssistPipeline < ApplicationRecord
   acts_as_tenant :tenant
 
   belongs_to :site
   has_many :runs, class_name: "AssistRun", foreign_key: :pipeline_id, inverse_of: :pipeline, dependent: nil
 
-  AGENTS = LocalizedLabel.for("assist_settings.agents", %w[local local_llm llm])
+  AGENTS = LocalizedLabel.for("assist_settings.agents", %w[intents local local_llm llm])
 
   validates :name, presence: true, length: { maximum: 60 }, uniqueness: { scope: :site_id }
   validates :language, inclusion: { in: Assist::LANGUAGES }

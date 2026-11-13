@@ -10,7 +10,7 @@ module Ai
     # Transcrever exige WAV PCM (o botão Falar e os satélites já mandam
     # assim); a fala volta em WAV.
     class Wyoming < Base
-      describe key: "wyoming", label: "Voz local Wyoming (Whisper / Piper)", default_model: "whisper", models: %w[whisper],
+      describe key: "wyoming", local: true, label: "Voz local Wyoming (Whisper / Piper)", default_model: "whisper", models: %w[whisper],
                base_url: "tcp://localhost", custom_url: true, key_required: false,
                capabilities: %i[stt tts], stt_model: "whisper", tts_model: "piper", tts_voice: "pt_BR-faber-medium",
                hint: "Endereço tcp://IP-do-servidor (Whisper na 10300, Piper na 10200). Instale os apps Whisper e Piper em " \
@@ -32,6 +32,9 @@ module Ai
         out = ::Wyoming.synthesize(host, port(:tts), text, voice: voice, timeout: timeout)
         { media_type: out[:media_type], data: out[:data] }
       end
+
+      # voz-offline: onde estão o Whisper e o Piper ({stt: [host, porta], tts: [...]}), para a verificação da tela.
+      def servers = { stt: [ host, port(:stt) ], tts: [ host, port(:tts) ] }
 
       private
 

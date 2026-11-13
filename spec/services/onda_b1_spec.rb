@@ -478,6 +478,7 @@ modo festa", "response" => "Boa noite, {quem}!" })
       expect(Assist.language("fr")).to eq("pt-BR")
       site.update!(language: "es")
       expect(say("enciende la luz de la sala")["text"]).to eq("Encendí Luz.")
+      AiAccount.create!(provider: "anthropic", api_key: "sk-teste") # voz-offline: sem conta de IA, nem pergunta
       allow(Ai::Ask).to receive(:call).and_return("?")
       expect(say("ligar a luz da sala", language: "en")["intent"]).to eq("ask")
     end

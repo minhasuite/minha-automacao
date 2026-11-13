@@ -17,7 +17,14 @@ module Web
                                         speak: ActiveModel::Type::Boolean.new.cast(params[:speak]), pipeline: AssistPipeline.for(site, params[:pipeline_id]),
                                         conversation_id: params[:conversation_id].presence, source: "web")
     rescue ArgumentError, Ai::Client::Error => e
-      render json: { error: e.message }, status: :unprocessable_content
+      render json: { error: e.message, offline: Internet.offline? }, status: :unprocessable_content
+    end
+
+    # voz-offline: o diálogo pergunta ao abrir (modo offline e de onde vem cada etapa).
+    def status
+      site = Site.find(params[:site_id])
+      authorize_site!(site, :view)
+      render json: Assist::Status.for(site, AssistPipeline.for(site, params[:pipeline_id]))
     end
   end
 end

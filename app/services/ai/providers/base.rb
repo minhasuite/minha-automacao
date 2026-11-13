@@ -5,7 +5,7 @@ module Ai
     # Interface comum de um provedor de IA (plugin de Ai::PROVIDERS).
     #
     #   describe key:, label:, default_model:, capabilities:, models:,
-    #            base_url:, custom_url:, key_required:, hint:
+    #            base_url:, custom_url:, key_required:, hint:, local:
     #   new(api_key:, base_url:).complete(model:, system:, user:, schema:,
     #       max_tokens:, timeout:, effort: nil, temperature: nil) → Result
     #
@@ -18,6 +18,9 @@ module Ai
     # Voz (Lote 5, G14), para quem declara `stt`/`tts` e os modelos:
     #   transcribe(audio:, media_type:, model:, language:, timeout:) → texto
     #   speak(text:, model:, voice:, timeout:) → {media_type:, data: bytes}
+    #
+    # `local: true` (voz-offline): roda na rede da casa (Ollama, Voz local,
+    # Wyoming) e funciona sem internet; o pipeline do Assist o prefere.
     class Base
       Result = Data.define(:data, :usage)
       extend PluginTexts
@@ -27,7 +30,7 @@ module Ai
         attr_reader :key, :default_model, :base_url, :stt_model, :tts_model, :tts_voice
 
         def describe(key:, label:, default_model:, capabilities:, models: [], base_url: nil, custom_url: false, key_required: true, hint: nil,
-                     stt_model: nil, tts_model: nil, tts_voice: nil)
+                     stt_model: nil, tts_model: nil, tts_voice: nil, local: false)
           unknown = capabilities - Ai::CAPABILITIES.keys
           raise ArgumentError, "capacidade desconhecida: #{unknown.join(', ')}" if unknown.any?
 
@@ -43,6 +46,7 @@ module Ai
           @stt_model = stt_model
           @tts_model = tts_model
           @tts_voice = tts_voice
+          @local = local
         end
 
         def capabilities = @capabilities || []
@@ -50,6 +54,7 @@ module Ai
         def supports?(capability) = capabilities.include?(capability.to_sym)
         def custom_url? = @custom_url == true
         def key_required? = @key_required != false
+        def local? = @local == true
       end
 
       def initialize(api_key: nil, base_url: nil)

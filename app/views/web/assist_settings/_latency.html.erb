@@ -1,0 +1,9 @@
+<%# locals: (latency:) -%>
+<% if latency.empty? %>
+  <p class="text-sm text-muted mt-2"><%= t("assist_settings.latency.empty") %></p>
+<% else %>
+  <p class="text-sm text-muted mt-1"><%= t("assist_settings.latency.hint") %></p>
+  <%= render Ss::KpiStripComponent.new(label: t("assist_settings.latency.title"), css: "mt-3",
+        items: latency.map { |stage, v| { label: t("assist_settings.stages.#{stage}", default: t("assist_settings.latency.total")), value: t("assist_settings.test.ms", ms: v["p50"]),
+                                          hint: t("assist_settings.latency.p95", ms: v["p95"], n: v["n"]) } }) %>
+<% end %>

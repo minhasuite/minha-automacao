@@ -10,7 +10,7 @@ class AssistRun < ApplicationRecord
   belongs_to :user, optional: true
 
   KEEP = 100
-  SOURCES = %w[web app satellite api mcp].freeze
+  SOURCES = %w[web app satellite api mcp test].freeze
 
   validates :source, inclusion: { in: SOURCES }
 

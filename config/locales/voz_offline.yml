@@ -1,0 +1,187 @@
+# voz-offline: pipeline local primeiro, modo offline, aba Testar e tempo de resposta.
+pt-BR:
+  assist:
+    offline:
+      badge: Modo offline
+      hint: Sem internet, a casa entende os comandos dela ("ligar a luz da sala"); perguntas livres ficam para quando a internet voltar.
+      no_stt: Sem voz para texto agora. Instale o app Whisper (voz local) ou ligue a internet.
+      no_tts: Sem fala agora. Instale o app Piper (voz local) ou ligue a internet.
+    test:
+      would: 'Entendi: %{intent}'
+      none: Não reconheci nenhum comando da casa nesta frase.
+  assist_settings:
+    tabs:
+      testar: Testar
+    agents:
+      intents: Só os comandos da casa (sem IA, funciona sem internet)
+    sources:
+      test: Teste
+    pipelines:
+      auto_default: Automático (local primeiro)
+      cloud: Pode usar a nuvem quando a voz local falhar ou para perguntas livres
+      cloud_hint: Desmarcado, nada sai da casa — voz para texto, fala e IA só da rede local (Whisper, Piper, Ollama). Sem internet, a nuvem é pulada sozinha.
+    test:
+      pitch: Fale ou escreva e veja o que a casa ouviu, que comando entendeu, a resposta, a fala e quanto tempo levou cada etapa. Sem "executar de verdade", nada é comandado.
+      title: Fale e veja
+      hint: Toque no microfone, fale e toque de novo; ou escreva a frase e envie.
+      pipeline: Pipeline
+      no_pipeline: Padrão do local
+      text: Ou escreva
+      execute: Executar de verdade (comanda os aparelhos)
+      speak: Gerar a fala
+      send: Testar
+      failed: O teste falhou
+      result: Resultado do teste
+      heard: Ouvi
+      intent: Comando
+      reply: Resposta
+      voice: Fala gerada
+      stages: Etapas e tempo
+      status: Agora
+      online: Com internet
+      no_cloud: Nuvem proibida neste pipeline
+      check: Verificar a voz local
+      no_servers: Nenhum servidor Wyoming configurado (instale os apps Whisper e Piper e use Conectar).
+      ms: "%{ms} ms"
+      kinds:
+        stt: Voz para texto
+        ai: Frases fora dos comandos
+        tts: Fala
+      modes:
+        local: Local (na casa)
+        cloud: Nuvem
+        none: Indisponível
+        "off": Só comandos da casa
+      where:
+        local: local
+        cloud: nuvem
+    latency:
+      title: Tempo de resposta
+      hint: Mediana das últimas execuções sem erro (p95 e quantas ao lado).
+      empty: Nenhuma execução ainda. Faça um teste.
+      total: Total
+      p95: p95 %{ms} ms · %{n} execuções
+en:
+  assist:
+    offline:
+      badge: Offline mode
+      hint: Without internet the house understands its own commands ("turn on the living room light"); free questions wait until the internet is back.
+      no_stt: No speech-to-text right now. Install the Whisper app (local voice) or restore the internet.
+      no_tts: No speech right now. Install the Piper app (local voice) or restore the internet.
+    test:
+      would: 'Understood: %{intent}'
+      none: I didn't recognize any house command in this sentence.
+  assist_settings:
+    tabs:
+      testar: Test
+    agents:
+      intents: House commands only (no AI, works offline)
+    sources:
+      test: Test
+    pipelines:
+      auto_default: Automatic (local first)
+      cloud: May use the cloud when the local voice fails or for free questions
+      cloud_hint: Unchecked, nothing leaves the house — speech-to-text, speech and AI only from the local network (Whisper, Piper, Ollama). Without internet the cloud is skipped automatically.
+    test:
+      pitch: Speak or type and see what the house heard, which command it understood, the answer, the speech and how long each step took. Without "really run", nothing is controlled.
+      title: Speak and see
+      hint: Tap the microphone, speak and tap again; or type the sentence and send.
+      pipeline: Pipeline
+      no_pipeline: Site default
+      text: Or type
+      execute: Really run (controls the devices)
+      speak: Generate speech
+      send: Test
+      failed: The test failed
+      result: Test result
+      heard: Heard
+      intent: Command
+      reply: Answer
+      voice: Generated speech
+      stages: Steps and time
+      status: Now
+      online: Online
+      no_cloud: Cloud not allowed in this pipeline
+      check: Check the local voice
+      no_servers: No Wyoming server configured (install the Whisper and Piper apps and use Connect).
+      ms: "%{ms} ms"
+      kinds:
+        stt: Speech to text
+        ai: Sentences outside the commands
+        tts: Speech
+      modes:
+        local: Local (in the house)
+        cloud: Cloud
+        none: Unavailable
+        "off": House commands only
+      where:
+        local: local
+        cloud: cloud
+    latency:
+      title: Response time
+      hint: Median of the latest runs without errors (p95 and count beside it).
+      empty: No runs yet. Run a test.
+      total: Total
+      p95: p95 %{ms} ms · %{n} runs
+es:
+  assist:
+    offline:
+      badge: Modo sin conexión
+      hint: Sin internet la casa entiende sus comandos ("enciende la luz de la sala"); las preguntas libres esperan a que vuelva internet.
+      no_stt: Sin voz a texto ahora. Instala la app Whisper (voz local) o restablece internet.
+      no_tts: Sin habla ahora. Instala la app Piper (voz local) o restablece internet.
+    test:
+      would: 'Entendí: %{intent}'
+      none: No reconocí ningún comando de la casa en esta frase.
+  assist_settings:
+    tabs:
+      testar: Probar
+    agents:
+      intents: Solo comandos de la casa (sin IA, funciona sin internet)
+    sources:
+      test: Prueba
+    pipelines:
+      auto_default: Automático (local primero)
+      cloud: Puede usar la nube cuando la voz local falle o para preguntas libres
+      cloud_hint: Desmarcado, nada sale de la casa — voz a texto, habla e IA solo de la red local (Whisper, Piper, Ollama). Sin internet, la nube se omite sola.
+    test:
+      pitch: Habla o escribe y mira lo que la casa oyó, qué comando entendió, la respuesta, el habla y cuánto tardó cada etapa. Sin "ejecutar de verdad", nada se controla.
+      title: Habla y mira
+      hint: Toca el micrófono, habla y toca de nuevo; o escribe la frase y envía.
+      pipeline: Pipeline
+      no_pipeline: Predeterminado del lugar
+      text: O escribe
+      execute: Ejecutar de verdad (controla los aparatos)
+      speak: Generar el habla
+      send: Probar
+      failed: La prueba falló
+      result: Resultado de la prueba
+      heard: Oí
+      intent: Comando
+      reply: Respuesta
+      voice: Habla generada
+      stages: Etapas y tiempo
+      status: Ahora
+      online: Con internet
+      no_cloud: Nube prohibida en este pipeline
+      check: Verificar la voz local
+      no_servers: Ningún servidor Wyoming configurado (instala las apps Whisper y Piper y usa Conectar).
+      ms: "%{ms} ms"
+      kinds:
+        stt: Voz a texto
+        ai: Frases fuera de los comandos
+        tts: Habla
+      modes:
+        local: Local (en la casa)
+        cloud: Nube
+        none: No disponible
+        "off": Solo comandos de la casa
+      where:
+        local: local
+        cloud: nube
+    latency:
+      title: Tiempo de respuesta
+      hint: Mediana de las últimas ejecuciones sin error (p95 y cuántas al lado).
+      empty: Ninguna ejecución todavía. Haz una prueba.
+      total: Total
+      p95: p95 %{ms} ms · %{n} ejecuciones

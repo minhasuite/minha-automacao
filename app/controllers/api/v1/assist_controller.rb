@@ -23,6 +23,13 @@ module Api
         render_error(:ai_unavailable, e.message.truncate(200), status: :service_unavailable)
       end
 
+      # voz-offline: modo offline e de onde vêm STT, TTS e IA agora (o app mostra "modo offline").
+      def status
+        site = Site.find(params[:site_id])
+        authorize_site!(site, :view)
+        render_data(Assist::Status.for(site, AssistPipeline.for(site, params[:pipeline_id])))
+      end
+
       # appweb2 (D5): pipelines do local para o app escolher, e se cada um ouve
       # a palavra de ativação (motor `wake` configurado).
       def pipelines

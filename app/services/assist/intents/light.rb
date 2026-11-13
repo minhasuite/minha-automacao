@@ -25,6 +25,8 @@ module Assist
               es: { description: "Cambia el brillo de una lámpara o del área (0 a 100%). Sin número, \"sube\" o \"baja\" lo mueve un cuarto.",
                     done: "Brillo de %{names} al %{value}%.", slots: { brightness: "Brillo de 0 a 100" } }
 
+        def self.accepts?(_ctx, slots) = slots["direction"].nil? || Assist.normalize(slots["direction"]).in?(UP + DOWN)
+
         def self.handle(ctx, slots)
           dir = Assist.normalize(slots["direction"]) if slots["direction"]
           return if dir && !dir.in?(UP + DOWN)

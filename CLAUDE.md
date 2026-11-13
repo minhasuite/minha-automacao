@@ -703,6 +703,14 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   ou script (`AssistCustomIntent`, intenção `custom`) e resposta
   (`AssistCustomResponse`, lida pelo `Intent.text` com `Assist.with_site`).
   Intenção ou verificação nova do produto continua plugin. `docs/personalizacao.md`.
+- **Voz offline (aberto/fechado, `docs/assistente.md` "Voz offline")**: motor `auto` de
+  `Assist::Engines` (padrão) usa a voz da rede da casa (provedor `local: true` no `describe`) e só
+  depois a nuvem, se `assist_pipelines.cloud` e `Internet.online?` (HEAD em `INTERNET_CHECK_URL`,
+  60 s; `MA_OFFLINE=1` força); IA do "não entendi" só por `Assist.ai_provider` (agente `intents` =
+  nunca). Tipo de aparelho falado = entrada em `Assist::Kinds::DEFAULT` (ou
+  `sites.settings["assist_kinds"]`); intenção que só casa pela forma recusa em `accepts?`. Estado da
+  voz/modo offline = `Assist::Status` (web `/assistente/estado`, API `assist/status`). Spec: o
+  `spec/support/internet.rb` dá internet por padrão; o offline chama o probe com a WebMock.
 - **Distribuição** (`docs/PROPOSTA-distribuicao.md`): master verde = beta
   `vX.Y.Z-beta.N` (pré-release criada pelo CI), estável = beta promovida pelo
   `promover-estavel.yml`; canal e "atualizar sozinho" por servidor em

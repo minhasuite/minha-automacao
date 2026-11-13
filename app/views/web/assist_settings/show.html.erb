@@ -6,6 +6,7 @@
   <% end %>
 <% end %>
 <% case @tab %>
+<% when "testar" %><%= render "testar", site: @site %>
 <% when "satelites" %><%= render "satelites", site: @site %>
 <% when "depuracao" %><%= render "depuracao", site: @site %>
 <% when "frases" %><%= render "frases", site: @site %>
