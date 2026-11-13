@@ -165,6 +165,12 @@ Referência medida no spec: a intenção com ~60 pontos fica em poucos ms
 - Estado com o verbo antes: "está aberta a porta da cozinha?".
 - Continuam: nome, apelidos (`alias_list`), área e andar, "qual a
   temperatura da sala", cenas e scripts, timers, listas, mídia, cortinas.
+- Ajuste do aparelho com liga/desliga que não é o aparelho (luz de fundo,
+  luz indicadora, trava infantil, modo privacidade…) nunca conta como tipo
+  ("as luzes do escritório") nem entra no cômodo inteiro ("desligue o
+  escritório"): lista `Assist::Kinds::SETTINGS` pelo nome do ponto; o local
+  soma nomes em `sites.settings["assist_settings"]`. Pelo nome exato continua
+  valendo ("desligue a luz indicadora").
 
 ### Recomendação para o servidor da casa (HP: 4 núcleos, 7,6 GB)
 

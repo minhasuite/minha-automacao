@@ -23,6 +23,19 @@ module Assist
     }.freeze
     LINKS = %w[da do de das dos na no nas nos em in on of the del la el en los las].freeze
 
+    # Ajustes do aparelho que têm liga/desliga mas não são o aparelho (o LED do
+    # interruptor, a trava do botão, a luz da câmera): nunca contam como tipo
+    # ("as luzes") nem entram no "desligue o escritório". Pelo nome dito à
+    # pessoa (já normalizado); o local soma em `sites.settings["assist_settings"]`.
+    # Chamar pelo nome continua valendo ("desligue a luz indicadora da câmera").
+    SETTINGS = [
+      "luz de fundo", "luz indicadora", "indicador", "led indicador", "trava infantil", "bloqueio infantil",
+      "modo privacidade", "hora na imagem", "imagem invertida", "deteccao de", "agenda da deteccao",
+      "gravar ao detectar", "gravacao", "seguir movimento", "so pessoas", "contorno de objetos",
+      "sirene automatica", "nao perturbe", "ultimo chamado", "power on behavior", "comportamento ao ligar",
+      "backlight", "indicator", "child lock", "do not disturb", "luz de fondo", "bloqueo infantil"
+    ].freeze
+
     module_function
 
     def all(site) = DEFAULT.merge(site.settings.to_h["assist_kinds"].to_h.select { |_k, v| v.is_a?(Hash) })
@@ -38,8 +51,14 @@ module Assist
       [ kind, rest.join(" ") ]
     end
 
+    def setting?(site, point)
+      text = Assist.normalize(point.name)
+      (SETTINGS + Array(site.settings.to_h["assist_settings"]).map { |n| Assist.normalize(n) }).any? { |n| text.match?(/\b#{Regexp.escape(n)}\b/) }
+    end
+
     def match?(site, kind, point)
       rule = all(site)[kind] or return false
+      return false if setting?(site, point)
       return true if point.capability.in?(Array(rule["capabilities"]))
       return true if point.device_class.present? && point.device_class.in?(Array(rule["device_classes"]))
       return true if (Array(rule["tags"]) & point.label_names).any?

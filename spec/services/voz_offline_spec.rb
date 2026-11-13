@@ -157,6 +157,27 @@ RSpec.describe "voz-offline: voz de ponta a ponta sem internet" do
       expect(say("quantas portas estão abertas")["text"]).to start_with("1:")
     end
 
+    it "ajuste do aparelho (luz de fundo, luz indicadora, trava infantil) não é luz nem entra no cômodo inteiro" do
+      esc = create(:area, site: site, name: "Escritório")
+      dev = ->(name) { create(:device, site: site, area: esc, name: name) }
+      monitor = create(:point, site: site, device: dev.call("ESC Lampada Monitor 1"), name: "Lâmpada Monitor 1", value: true)
+      interruptor = dev.call("ESC Interruptor 4 Botoes")
+      teto = create(:point, site: site, device: interruptor, name: "Interruptor 4", value: true)
+      fundo = create(:point, site: site, device: interruptor, name: "Luz de fundo", value: true)
+      ulmos = dev.call("Iluminação Ulmos")
+      ulmos_sw = create(:point, site: site, device: ulmos, name: "Liga/desliga", value: true)
+      trava = create(:point, site: site, device: ulmos, name: "Trava infantil", value: true)
+      led = create(:point, site: site, device: dev.call("Security Camera"), name: "Luz indicadora", value: true)
+      expect(say("desligar a luz do escritório")["points"]).to contain_exactly(monitor.id, ulmos_sw.id)
+      expect(say("desligar o escritório")["points"]).to contain_exactly(monitor.id, teto.id, ulmos_sw.id)
+      expect(say("desligar a luz indicadora")["points"]).to eq([ led.id ])
+      teto.update!(aliases: [ "luz do teto" ])
+      expect(say("desligar a luz do teto")["points"]).to eq([ teto.id ])
+      [ fundo, trava ].each { |p| expect(p.reload.value).to be true }
+      site.update!(settings: site.settings.to_h.merge("assist_settings" => [ "Liga/desliga" ]))
+      expect(say("desligar a luz do escritório")["points"]).to eq([ monitor.id ])
+    end
+
     it "o local pode somar tipos falados (sites.settings)" do
       site.update!(settings: site.settings.to_h.merge("assist_kinds" => { "lamp_post" => { "words" => %w[poste], "names" => %w[abajur] } }))
       expect(say("ligar o poste")["points"]).to eq([ abajur.id ])

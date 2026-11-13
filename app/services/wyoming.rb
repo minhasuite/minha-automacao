@@ -1,4 +1,5 @@
 require "socket"
+require "open3"
 
 # Protocolo Wyoming (ondaB1, B6; o do HA para voz local): Whisper (STT),
 # Piper (TTS), openWakeWord (palavra de ativação) e o wyoming-satellite. Cada
@@ -78,7 +79,8 @@ module Wyoming
   # WAV (RIFF, PCM) → [pcm, rate, width, channels]; outro formato → Error.
   def pcm_of(bytes, media_type = nil)
     b = bytes.to_s.b
-    raise Error, "Wyoming precisa de áudio WAV (PCM); veio #{media_type.presence || 'outro formato'}." unless b[0, 4] == "RIFF" && b[8, 4] == "WAVE"
+    # m4a do app antigo, webm/ogg do navegador, WAV que não é PCM: o ffmpeg passa para PCM 16 kHz mono.
+    return to_pcm(b, media_type) unless b[0, 4] == "RIFF" && b[8, 4] == "WAVE" && pcm_wav?(b)
 
     pos = 12
     fmt = nil
@@ -95,6 +97,18 @@ module Wyoming
       pos += 8 + size + (size.odd? ? 1 : 0)
     end
     raise Error, "WAV sem áudio."
+  end
+
+  def pcm_wav?(b) = (i = b.index("fmt ")) && b[i + 8, 2].to_s.unpack1("v") == 1
+
+  def to_pcm(bytes, media_type)
+    out, err, status = Open3.capture3("ffmpeg", "-hide_banner", "-loglevel", "error", "-i", "pipe:0", "-f", "s16le", "-ac", "1", "-ar", RATE.to_s, "pipe:1",
+                                      stdin_data: bytes, binmode: true)
+    raise Error, "Não deu para ler o áudio (#{media_type.presence || 'formato desconhecido'}): #{err.to_s.strip.truncate(120)}" unless status.success? && out.bytesize.positive?
+
+    [ out, RATE, 2, 1 ]
+  rescue Errno::ENOENT
+    raise Error, "Wyoming precisa de áudio WAV (PCM) e o ffmpeg não está instalado; veio #{media_type.presence || 'outro formato'}."
   end
 
   def wav(pcm, rate, width, channels)

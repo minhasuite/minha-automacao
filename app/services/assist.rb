@@ -209,7 +209,7 @@ module Assist
 
     # ondaA1 (A1): a área ou o andar inteiro ("apague o térreo"), com as áreas de dentro.
     area = site.areas.to_a.find { |a| a.all_names.any? { |n| clean(n) == want } }
-    return points.select { |p| area.subtree_ids.include?(p.effective_area_id) } if area
+    return points.select { |p| area.subtree_ids.include?(p.effective_area_id) && !Kinds.setting?(site, p) } if area
 
     # voz-offline: tipo falado ("as luzes da sala", "janelas", "ventilador do quarto"; Assist::Kinds).
     by_kind = kind_points(site, want, points)

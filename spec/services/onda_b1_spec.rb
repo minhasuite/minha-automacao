@@ -325,6 +325,13 @@ modo festa", "response" => "Boa noite, {quem}!" })
         expect(types["transcribe"]).to eq("language" => "pt")
         expect(types["synthesize"]).to eq("text" => "Oi", "voice" => { "name" => "pt_BR-faber-medium" })
       end
+      # Fora de WAV PCM (m4a do app antigo, webm do navegador): o ffmpeg converte; sem ele, erro claro.
+      ok = instance_double(Process::Status, success?: true)
+      allow(Open3).to receive(:capture3).with("ffmpeg", any_args).and_return([ "\x01\x00".b * 50, "", ok ])
+      expect(Wyoming.pcm_of("m4a", "audio/mp4")).to eq([ "\x01\x00".b * 50, 16_000, 2, 1 ])
+      allow(Open3).to receive(:capture3).with("ffmpeg", any_args).and_return([ "", "Invalid data", instance_double(Process::Status, success?: false) ])
+      expect { Wyoming.pcm_of("lixo", "audio/webm") }.to raise_error(Wyoming::Error, /Não deu para ler o áudio \(audio\/webm\)/)
+      allow(Open3).to receive(:capture3).with("ffmpeg", any_args).and_raise(Errno::ENOENT)
       expect { Wyoming.pcm_of("webm") }.to raise_error(Wyoming::Error, /WAV/)
       expect { Wyoming.describe("127.0.0.1", 1, timeout: 1) }.to raise_error(Wyoming::Error)
     end

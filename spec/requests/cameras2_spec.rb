@@ -31,9 +31,13 @@ RSpec.describe "Câmeras: tela própria, ao vivo pelo Rails e DVR" do
 
   def sign_in(u = user) = post("/entrar", params: { email: u.email, password: "12345678" })
 
+  after { travel_back }
+
   def start_playback(at = "2026-11-12 14:03:10")
     stub_request(:put, %r{#{go}/api/streams\?name=pb_}).to_return(status: 400)
-    travel_to(Time.zone.parse("2026-11-13 12:00")) { post "/cameras/#{garagem.id}/reproduzir", params: { inicio: at }, as: :json }
+    # Sem bloco: o resto do exemplo fica no mesmo relógio (o dono da reprodução vale PLAYBACK_TTL s no cache).
+    travel_to(Time.zone.parse("2026-11-13 12:00"))
+    post "/cameras/#{garagem.id}/reproduzir", params: { inicio: at }, as: :json
     JSON.parse(response.body)
   end
 
