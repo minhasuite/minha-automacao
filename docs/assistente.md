@@ -171,19 +171,21 @@ Referência medida no spec: a intenção com ~60 pontos fica em poucos ms
 O integrador instala (Configurações → Aplicativos → Whisper e Piper →
 Conectar); nada disto é instalado sozinho.
 
-| Peça | Escolha | RAM (aprox.) | Tempo esperado (frase de 2–4 s, CPU de 4 núcleos) |
-|---|---|---|---|
-| Whisper `base-int8` (pt) | comandos curtos, mais rápido | ~300–400 MB | ~0,6–1,2 s |
-| Whisper `small-int8` (pt, padrão do catálogo) | entende melhor nomes e frases longas | ~0,9–1,1 GB | ~1,5–3 s |
-| Whisper `medium` | **não** use no HP | ~2–2,5 GB | 6 s ou mais |
-| Piper `pt_BR-faber-medium` (padrão) | voz natural | ~150–250 MB | ~0,2–0,5 s por frase curta |
-| Piper `pt_BR-edresson-low` | mais leve, voz pior | ~100 MB | ~0,1–0,3 s |
+Medido no HP em 13/11/2026 (Intel i3 M 350 de 2010, sem AVX: o Whisper vai
+bem mais devagar que numa CPU atual), frase de 2 s gerada pelo Piper:
 
-- Comece com `--model small-int8 --language pt --beam-size 1` (o
-  `beam-size 1` corta ~30% do tempo); se a mediana de STT na aba Testar
-  passar de ~2,5 s, troque para `base-int8`.
-- Com MA + Postgres + go2rtc + Zigbee2MQTT (~2,5–3 GB), Whisper small +
-  Piper somam ~1,3 GB: cabe nos 7,6 GB com folga para o cache do disco. Não
+| Peça | Escolha | RAM (aprox.) | Medido no HP |
+|---|---|---|---|
+| Whisper `tiny-int8` (pt, padrão do catálogo, `--beam-size 1`) | comandos curtos | ~200–300 MB | ~2,3–2,8 s |
+| Whisper `base-int8` (`--beam-size 1`) | entende um pouco melhor | ~300–400 MB | ~6 s |
+| Whisper `small-int8` | **não** use no HP | ~0,9–1,1 GB | ~16 s |
+| Piper `pt_BR-faber-medium` (padrão) | voz natural | ~150–250 MB | ~0,6 s (2 s de fala) |
+
+- O catálogo sobe o Whisper com `--model tiny-int8 --language pt --beam-size 1`.
+  Num servidor com CPU atual (com AVX2), `small-int8` cabe no tempo e entende
+  melhor nomes e frases longas.
+- Com MA + Postgres + go2rtc + Zigbee2MQTT (~2,5–3 GB), Whisper tiny +
+  Piper somam ~0,5 GB: cabe nos 7,6 GB com folga para o cache do disco. Não
   rode Ollama junto no HP (um modelo de 1,5 B já pede ~1,5–2 GB e segundos
   por resposta): sem IA local, deixe o agente "Só os comandos da casa" ou
   "Local" (a IA da nuvem entra só com internet).

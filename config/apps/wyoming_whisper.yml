@@ -5,8 +5,8 @@ description: Reconhecimento de fala local em português (Whisper pelo protocolo 
 image: rhasspy/wyoming-whisper
 version: "3.8.1"
 network: bridge
-ram_mb: 1024
-command: ["--model", "small-int8", "--language", "pt"]
+ram_mb: 512
+command: ["--model", "tiny-int8", "--language", "pt", "--beam-size", "1"]
 ports:
   - { container: 10300, host: 10300 }
 volumes:

@@ -179,7 +179,7 @@ manifesto (por exemplo `cap_add`) é decisão de segurança: entra em
   kernel do Debian carrega o módulo sozinho). Abra a UDP 51820 no roteador
   para o IP do servidor. A interface (51821) roda sem HTTPS (`INSECURE=true`):
   só na rede de casa. IPv6 desligado (`DISABLE_IPV6`).
-- **Whisper/Piper**: argumentos fixos para pt-BR (`small-int8 --language pt`,
+- **Whisper/Piper**: argumentos fixos para pt-BR (`tiny-int8 --language pt --beam-size 1`,
   voz `pt_BR-faber-medium`). O motor `wyoming` do Assistente de voz também
   pode usar `tcp://IP:10300/10200`.
 - **Ollama**: modelo pequeno (padrão `qwen2.5:1.5b`; `llama3.2:1b` também
