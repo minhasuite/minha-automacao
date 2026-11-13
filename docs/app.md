@@ -251,3 +251,13 @@ contador usam `data.caption` e `data.drill_url`, qualquer widget pode trazer
 `style` (tom e selo, `WidgetDecor`) e `stale` ("dado velho"), e cada visão traz
 `hero_now` (título e linha de cima do topo). Tocar num item ou número abre a
 lista dos pontos (`/paineis/:id/w/:wid/pontos`) como tela do servidor.
+
+## Busca e painel sob demanda (11/2026)
+
+- Lupa no topo do Início abre a busca nativa: `GET /api/v1/search?q=` (sem `q`, os
+  recentes), grupos e ordem do servidor, ação rápida pelo `action` (POST com `body`,
+  confirmação com `confirm`/`confirm_title`), `target` abre ponto (folha) e painel/visão
+  no próprio Início, o resto pela tela do servidor (`url`); `POST /api/v1/search/recent`
+  ao abrir/executar. Formato em `docs/busca.md`.
+- O Início pede `GET /api/v1/dashboards/:id?lazy=1`: só a visão aberta vem resolvida; a aba
+  com `lazy: true` pede `?lazy=1&view=<id>` ao aparecer e junta visão e `points`.

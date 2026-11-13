@@ -1,27 +1,8 @@
 <%# locals: (current:) -%>
-<% reader = current_user.reader? %>
-<%# Locais (cadastro, áreas, aparelhos) moraram no menu lateral até 11/2026; agora aqui. %>
-<% items = [ [ t("nav.sites"), sites_path, "home", :sites, !reader ],
-             [ t("settings.nav.dashboards"), settings_dashboards_path, "view-boards", :dashboards, !reader ],
-             [ t("settings.nav.people"), people_path, "users", :people, current_user.admin? ],
-             [ t("settings.nav.api_keys"), api_keys_path, "link", :api_keys, current_user.owner? ],
-             [ t("settings.nav.apps"), apps_path, "cube", :apps, current_user.owner? ],
-             [ t("settings.nav.ai"), settings_ai_path, "sparkles", :ai, current_user.admin? ],
-             [ t("settings.nav.health"), settings_health_path, "shield-check", :health, current_user.admin? ],
-             [ t("hardware.nav"), settings_hardware_path, "chip", :hardware, current_user.owner? ],
-             [ t("backup_restore.nav"), settings_backups_path, "download", :backups, Backups::Restore.allowed?(current_user) ],
-             [ t("logs.nav"), settings_logs_path, "document-text", :logs, SystemLog.visible_to?(current_user) ],
-             [ t("queue.nav"), settings_queue_path, "clock", :queue, QueueMonitor.visible_to?(current_user) ],
-             [ t("settings.nav.labels"), tags_path, "tag", :labels, current_user.admin? ],
-             [ t("settings.nav.system"), settings_system_path, "cog", :system, !reader ],
-             [ t("settings.nav.remote"), settings_remote_path, "globe", :remote, current_user.admin? ],
-             [ t("settings.nav.account"), settings_account_path, "user-group", :account, true ],
-             [ t("security.nav"), settings_security_path, "shield-check", :security, true ],
-             [ t("appearance.nav"), settings_appearance_path, "color-swatch", :appearance, true ],
-             [ t("settings.nav.push"), push_subscriptions_path, "bell", :push, true ] ] %>
+<%# Locais (cadastro, áreas, aparelhos) moraram no menu lateral até 11/2026; agora aqui. A lista é a do SettingsNav (a busca usa a mesma). %>
 <div class="lg:grid lg:grid-cols-[13rem_1fr] lg:gap-6 lg:items-start">
   <%# Ss::SubnavComponent: coluna fixa no desktop, menu (atual + grade) no celular. %>
   <%= render Ss::SubnavComponent.new(label: t("settings.nav.label"),
-                                     items: items.select { |i| i[4] }.map { |label, path, ico, key| { label: label, href: path, icon: icon(ico, "size-4"), current: key == current } }) %>
+                                     items: SettingsNav.items(current_user).map { |i| { label: i[:label], href: i[:path], icon: icon(i[:icon], "size-4"), current: i[:key] == current } }) %>
   <div class="min-w-0"><%= yield %></div>
 </div>
