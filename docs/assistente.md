@@ -98,6 +98,108 @@ kinds:, fields:` + `transcribe`/`speak`/`detect`/`check`) e o nome em
   `http://APP_HOST`). O `Assist::Satellites::Listener` sobe no worker
   (`ASSIST_SATELLITES=off` desliga). Fim da fala: `ASSIST_VAD_RMS`.
 
+## Voz offline (local primeiro, voz-offline)
+
+A casa entende e responde sem internet: o microfone vai ao Whisper da rede,
+as intenções rodam no próprio servidor e a resposta sai pelo Piper.
+
+### Pipeline
+
+- **Motor Automático** (`Assist::Engines::Auto`, chave `auto`, padrão de
+  STT e TTS quando o pipeline não escolhe outro — e quando não há pipeline):
+  tenta as contas de voz **locais** (provedor com `local: true` em
+  `Ai::Providers::Base`: Wyoming, Voz local) e, se nenhuma responder, as da
+  **nuvem** (OpenAI, Gemini; a padrão primeiro) — só se o pipeline deixar
+  (`assist_pipelines.cloud`, "Pode usar a nuvem…") e houver internet. A
+  etapa da Depuração guarda quem atendeu (`provider`, `where` local/nuvem).
+  Sem conta de voz nenhuma, cai no caminho de antes (IA da instalação).
+- **Entendimento**: intenções locais (`Assist::INTENTS` + frases da casa)
+  primeiro. Não reconheceu: a IA só entra se alcançável agora
+  (`Assist.ai_provider`): a pedida/padrão se for da rede da casa (Ollama) ou
+  da nuvem com internet e `cloud`; senão a primeira local; senão a resposta
+  "Estou sem internet: entendo só os comandos da casa" (intenção `offline`)
+  na hora, sem esperar a rede. Agente **"Só os comandos da casa"**
+  (`intents`) nunca usa IA.
+- `cloud` desmarcado = nada sai da casa: STT, TTS e IA só da rede local.
+
+### Internet e "modo offline"
+
+`Internet.online?`: HEAD curto (2 s) em `INTERNET_CHECK_URL` (padrão
+`https://connectivitycheck.gstatic.com/generate_204`), resposta guardada 60 s
+no processo. `MA_OFFLINE=1` força o modo offline (para testar a casa sem
+nuvem). `Assist::Status.for(site, pipeline)` diz `offline`, `cloud` e o modo
+de cada etapa (`local`/`cloud`/`none`; IA também `off`):
+- web: o diálogo "Falar com a casa" pergunta `GET /assistente/estado` ao abrir
+  e mostra o selo **Modo offline**; toda resposta do `POST /assistente` traz
+  `offline` (e `stages`).
+- app: `GET /api/v1/sites/:id/assist/status` e o `offline` da resposta do
+  `POST /api/v1/sites/:id/assist`; o `AssistSheet` mostra o selo. O app grava
+  em **WAV 16 kHz mono** (o Whisper do Wyoming não lê AAC).
+
+### Aba Testar
+
+Local → Assistente de voz → **Testar** (`POST /locais/:id/assistente/testar`,
+sem Turbo): grave (WAV pelo `assist-test` / `controllers/voice/wav_recorder.js`)
+ou escreva, escolha o pipeline e veja o que ouviu, a intenção, os slots, a
+resposta, a fala e o **tempo de cada etapa** (motor, provedor, local/nuvem).
+Sem "Executar de verdade" só reconhece (`Assist::Pipeline.run(execute:
+false)`, nada é comandado; a intenção que só casa pela forma é recusada por
+`Intent.accepts?`). "Verificar a voz local" pergunta `describe` aos
+servidores Wyoming das contas e do pipeline (tempo de resposta e modelos).
+A execução vai para a Depuração com origem "Teste".
+
+**Tempo de resposta** (`Assist::Latency`): mediana e p95 de STT, intenção,
+TTS e total das últimas execuções sem erro, na aba Testar e na Depuração.
+Referência medida no spec: a intenção com ~60 pontos fica em poucos ms
+(limite do spec: < 1 s); o que pesa é o STT.
+
+### Intenções sem IA (o que entende)
+
+- Cortesia e palavra de ativação no começo saem antes das intenções
+  (`Assist::LEAD`: "ok casa", "por favor", "pode", "você pode", "me diga se"…).
+- **Tipos falados** (`Assist::Kinds`, dado): "as luzes da sala", "janelas",
+  "o ventilador do quarto", "tomadas", "portas", "cortinas", "tv", sem ponto
+  com esse nome — por capacidade, `device_class`, rótulo ou parte do nome.
+  O local soma ou troca tipos em `sites.settings["assist_kinds"]` (mesmo
+  formato de `Kinds::DEFAULT`).
+- Estado com o verbo antes: "está aberta a porta da cozinha?".
+- Continuam: nome, apelidos (`alias_list`), área e andar, "qual a
+  temperatura da sala", cenas e scripts, timers, listas, mídia, cortinas.
+
+### Recomendação para o servidor da casa (HP: 4 núcleos, 7,6 GB)
+
+O integrador instala (Configurações → Aplicativos → Whisper e Piper →
+Conectar); nada disto é instalado sozinho.
+
+| Peça | Escolha | RAM (aprox.) | Tempo esperado (frase de 2–4 s, CPU de 4 núcleos) |
+|---|---|---|---|
+| Whisper `base-int8` (pt) | comandos curtos, mais rápido | ~300–400 MB | ~0,6–1,2 s |
+| Whisper `small-int8` (pt, padrão do catálogo) | entende melhor nomes e frases longas | ~0,9–1,1 GB | ~1,5–3 s |
+| Whisper `medium` | **não** use no HP | ~2–2,5 GB | 6 s ou mais |
+| Piper `pt_BR-faber-medium` (padrão) | voz natural | ~150–250 MB | ~0,2–0,5 s por frase curta |
+| Piper `pt_BR-edresson-low` | mais leve, voz pior | ~100 MB | ~0,1–0,3 s |
+
+- Comece com `--model small-int8 --language pt --beam-size 1` (o
+  `beam-size 1` corta ~30% do tempo); se a mediana de STT na aba Testar
+  passar de ~2,5 s, troque para `base-int8`.
+- Com MA + Postgres + go2rtc + Zigbee2MQTT (~2,5–3 GB), Whisper small +
+  Piper somam ~1,3 GB: cabe nos 7,6 GB com folga para o cache do disco. Não
+  rode Ollama junto no HP (um modelo de 1,5 B já pede ~1,5–2 GB e segundos
+  por resposta): sem IA local, deixe o agente "Só os comandos da casa" ou
+  "Local" (a IA da nuvem entra só com internet).
+- Os números acima são estimativas para CPU x86 de 4 núcleos sem GPU: meça
+  na aba Testar (mediana e p95) depois de instalar.
+
+### Testar sem internet
+
+Specs (`spec/services/voz_offline_spec.rb`, `spec/requests/voz_offline_spec.rb`)
+derrubam a verificação de internet e a nuvem pela WebMock (HEAD com tempo
+esgotado, Anthropic/OpenAI/Gemini com erro de rede) e conferem que nenhum
+pedido saiu: fala → Whisper local → intenção → Piper, frase livre → "modo
+offline", sem voz local → erro claro. Wyoming por stub; nunca provedor real.
+Na casa: `MA_OFFLINE=1` no `.env` (ou tire o cabo da internet do roteador) e
+use a aba Testar.
+
 ## Servidor MCP
 
 `POST /mcp` (JSON-RPC 2.0, transporte "streamable HTTP" sem SSE; `GET` =

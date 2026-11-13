@@ -45,27 +45,56 @@ module Assist
   end
 
   # → { text:, intent:, heard:, points:, slots:, audio_url? }
-  # `agent`: "local" (padrão: intenções + Perguntar à casa), "local_llm"
-  # (intenções e, se não reconhecer, a IA com ferramentas) ou "llm".
-  def call(site:, user:, text:, speak: false, language: nil, area: nil, satellite: nil, agent: "local", llm_provider: nil, conversation_id: nil)
+  # `agent`: "intents" (só as intenções da casa, sem IA), "local" (padrão:
+  # intenções + Perguntar à casa), "local_llm" (intenções e, se não
+  # reconhecer, a IA com ferramentas) ou "llm". voz-offline: a IA só entra se
+  # for da rede da casa (Ollama) ou se houver internet e `cloud` deixar.
+  def call(site:, user:, text:, speak: false, language: nil, area: nil, satellite: nil, agent: "local", llm_provider: nil, conversation_id: nil, cloud: true)
     heard = text.to_s.squish.first(MAX_TEXT)
     raise ArgumentError, I18n.t("assist.empty") if heard.empty?
 
     lang = language(language || site.language.presence)
-    I18n.with_locale(lang) { with_site(site) { answer(site, user, heard, lang, speak:, area:, satellite:, agent:, llm_provider:, conversation_id:) } }
+    I18n.with_locale(lang) { with_site(site) { answer(site, user, heard, lang, speak:, area:, satellite:, agent:, llm_provider:, conversation_id:, cloud:) } }
   end
 
   # Um pedido já no idioma e no local da conversa.
-  def answer(site, user, heard, lang, speak:, area:, satellite:, agent:, llm_provider:, conversation_id:)
+  def answer(site, user, heard, lang, speak:, area:, satellite:, agent:, llm_provider:, conversation_id:, cloud: true)
     # ondaB1 (B6): satélite sem pessoa fala com o papel dele.
     ctx = Ctx.new(site: site, user: user, role: user ? site.role_for(user) : satellite&.role, heard: heard, language: lang, area: area || satellite&.area, satellite: satellite)
-    reply, slots = agent == "llm" ? [] : recognize(ctx, normalize(heard))
+    reply, slots = agent == "llm" ? [] : recognize(ctx, prepare(heard))
     conversation_id = conversation_id.presence || SecureRandom.uuid if agent.to_s.include?("llm")
-    reply ||= conversation_id ? Llm.call(ctx, heard, provider: llm_provider, conversation_id: conversation_id) : ask(ctx, heard)
+    unless reply
+      provider = agent == "intents" ? nil : ai_provider(site, llm_provider, structured: agent.to_s.include?("llm"), cloud: cloud)
+      reply = if provider.nil? then fallback(ctx, heard, agent)
+      elsif conversation_id then Llm.call(ctx, heard, provider: provider, conversation_id: conversation_id)
+      else ask(ctx, heard, provider)
+      end
+    end
     out = { "heard" => heard, "text" => reply.text, "intent" => reply.intent, "points" => reply.points.map(&:id), "language" => lang, "slots" => slots.to_h }
     out["conversation_id"] = conversation_id if conversation_id
     out["audio_url"] = speech(site, reply.text) if speak && reply.text.present?
     out
+  end
+
+  # voz-offline: nenhuma intenção reconheceu e a IA não pode responder (agente
+  # "intents", IA só da nuvem sem internet ou com a nuvem proibida) → a
+  # resposta de "não entendi" da casa, sem esperar a rede.
+  def fallback(ctx, heard, agent)
+    offline = agent != "intents" && Internet.offline?
+    Reply.new(text: Intent.text(offline ? :offline : :not_understood, heard: heard), intent: offline ? "offline" : "unknown")
+  end
+
+  # Conta de IA que responde agora (chave do provedor) ou nil: a pedida ou a
+  # padrão, se alcançável; senão a primeira da rede da casa (Ollama). A da
+  # nuvem só com internet e `cloud`.
+  def ai_provider(site, provider = nil, structured: false, cloud: true)
+    capability = structured ? :structured : :text
+    reachable = ->(a) { a && (a.plugin.local? || (cloud && Internet.online?)) }
+    picked = AiAccount.pick(provider, default: Ai::Budget.for(site.tenant).default_provider, capability: capability)
+    return picked.provider if reachable.call(picked)
+    return if provider.present?
+
+    AiAccount.usable.find { |a| a.plugin.supports?(capability) && a.plugin.local? }&.provider
   end
 
   # P3: o local da conversa, para as respostas personalizadas (`Intent.text`).
@@ -103,11 +132,12 @@ module Assist
   def understand(site, text, language: nil)
     lang = language(language || site.language.presence)
     ctx = Ctx.new(site: site, user: nil, role: nil, heard: text.to_s, language: lang)
-    norm = normalize(text)
+    norm = prepare(text)
     intents.each do |i|
       next unless i.respond_to?(:match)
 
-      slots = i.match(ctx, norm) and return [ i, slots.reject { |k, _| k.start_with?("_") } ]
+      slots = i.match(ctx, norm)
+      return [ i, slots.reject { |k, _| k.start_with?("_") } ] if slots && (!i.respond_to?(:accepts?) || i.accepts?(ctx, slots))
     end
     nil
   end
@@ -126,8 +156,8 @@ module Assist
     nil
   end
 
-  def ask(ctx, heard)
-    Reply.new(text: Ai::Ask.call(site: ctx.site, question: heard), intent: "ask")
+  def ask(ctx, heard, provider = nil)
+    Reply.new(text: Ai::Ask.call(site: ctx.site, question: heard, provider: provider), intent: "ask")
   rescue Ai::Client::Error => e
     Reply.new(text: Intent.text(:unknown, error: e.message.truncate(80)), intent: "unknown")
   end
@@ -141,6 +171,17 @@ module Assist
   # Artigos e "todos" no começo (pt, en, es) e cortesia no fim.
   STOP = /\A(?:(?:o|a|os|as|do|da|dos|das|de|no|na|nos|nas|em|um|uma|todas?|todos?|the|all|el|la|los|las|del|un|unos|unas|my|meu|minha|mi)\s+)+/
   TAIL = /\s+(?:por favor|agora|pra mim|para mim|please|now|ahora)\z/
+
+  # voz-offline: cortesia, palavra de ativação e "pode..." no começo da frase
+  # ("ok casa, pode ligar a luz", "por favor apague", "me diga se a porta está aberta").
+  LEAD = /\A(?:(?:ok|ei|oi|hey|ola|alo)\s+(?:casa|google|alexa|assistente)\s+)?(?:(?:por favor|please|pode|podes|poderia|voce pode|voce poderia|consegue|quero que|eu quero|queria|gostaria de|can you|could you|would you|i want to|puedes|podrias|quiero que|quiero|me diga se|me diz se|me fala se|diga se|me diga|me diz|me fala|saber se|tell me if|tell me|dime si|dime)\s+)+/
+
+  # A frase como as intenções a recebem: normalizada e sem a cortesia do começo.
+  def prepare(text)
+    norm = normalize(text)
+    cut = norm.sub(LEAD, "")
+    cut.empty? ? norm : cut
+  end
 
   def clean(phrase) = normalize(phrase).sub(TAIL, "").sub(STOP, "").strip
   def stem(word) = word.length > 3 ? word.sub(/ces\z/, "z").sub(/(?:es|s)\z/, "") : word
@@ -170,11 +211,27 @@ module Assist
     area = site.areas.to_a.find { |a| a.all_names.any? { |n| clean(n) == want } }
     return points.select { |p| area.subtree_ids.include?(p.effective_area_id) } if area
 
+    # voz-offline: tipo falado ("as luzes da sala", "janelas", "ventilador do quarto"; Assist::Kinds).
+    by_kind = kind_points(site, want, points)
+    return by_kind if by_kind&.any?
+
     words = want.split.map { |w| stem(w) }
     points.select { |p| names.call(p).any? { |n| (have = n.split.map { |w| stem(w) }) && words.all? { |w| have.include?(w) } } }
   end
 
-  def exposed(scope) = scope.where(disabled: false, hidden: false).includes(:area, device: %i[area points]).reject { |p| p.expose.to_h["assist"] == false }
+  def exposed(scope) = scope.where(disabled: false, hidden: false).includes(:area, :tags, device: %i[area points]).reject { |p| p.expose.to_h["assist"] == false }
+
+  # Pontos do tipo falado, na área dita (se houver) ou em qualquer uma; nil = a frase não começa por um tipo.
+  def kind_points(site, want, points)
+    kind, rest = Kinds.split(site, want)
+    return unless kind
+
+    found = points.select { |p| Kinds.match?(site, kind, p) }
+    return found if rest.blank?
+
+    area = site.areas.to_a.find { |a| a.all_names.any? { |n| clean(n) == rest } } or return []
+    found.select { |p| area.subtree_ids.include?(p.effective_area_id) }
+  end
 
   # Nome falado com a área, nos três idiomas ("luz da sala", "kitchen light", "luz de la cocina").
   def area_names(p)

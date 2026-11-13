@@ -2,12 +2,17 @@
 <%# Assistente de voz (Pacote 3): microfone → STT → intenção local ou "Perguntar à casa" → texto e fala.
     Botão flutuante da gem (Ss::FabComponent) em todas as telas, uma vez no layout (id estável: o morph
     do Turbo casa o mesmo nó). O local é o da tela ou o do Início (assist_site). %>
-<div id="assist" data-controller="assist" data-assist-url-value="<%= assist_path %>" data-assist-site-value="<%= site.id %>" data-assist-texts-value="<%= t("assist.js").to_json %>" class="contents">
+<div id="assist" data-controller="assist" data-assist-url-value="<%= assist_path %>" data-assist-status-url-value="<%= assist_status_path %>" data-assist-site-value="<%= site.id %>" data-assist-texts-value="<%= t("assist.js").to_json %>" class="contents">
   <%= render Ss::FabComponent.new(icon: icon("microphone", ""), label: t("assist.title"), lift: lift, id: "assist-fab", data: { action: "assist#open" }) %>
   <dialog class="ss-dialog" data-assist-target="dialog" aria-labelledby="assist-title">
     <div class="flex items-center justify-between gap-2">
       <h2 id="assist-title" class="text-lg font-bold text-ink"><%= t("assist.title") %></h2>
       <button type="button" class="ss-icon-btn" data-action="assist#close" title="<%= t("assist.close") %>" aria-label="<%= t("assist.close") %>"><%= icon("x", "") %></button>
+    </div>
+    <%# voz-offline: sem internet a casa entende só os comandos locais (o diálogo pergunta ao abrir). %>
+    <div class="mt-2" data-assist-target="offline" hidden>
+      <span class="ss-badge ss-badge-warn"><%= icon("status-offline", "size-3") %><%= t("assist.offline.badge") %></span>
+      <p class="text-xs text-muted mt-1"><%= t("assist.offline.hint") %></p>
     </div>
     <p class="text-sm text-muted mt-1"><%= t("assist.examples") %></p>
     <div class="mt-4 grid place-items-center">

@@ -1,5 +1,11 @@
 <%# locals: (site:) -%>
 <%= render(Ss::CalloutComponent.new(css: "mb-4 max-w-3xl")) { t("assist_settings.runs.pitch", keep: AssistRun::KEEP) } %>
+<% if @latency.present? %>
+  <section class="ss-card ss-card-pad mb-4" aria-labelledby="dl-t">
+    <h2 id="dl-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("clock", "size-5") %><%= t("assist_settings.latency.title") %></h2>
+    <%= render "latency", latency: @latency %>
+  </section>
+<% end %>
 <% if @runs.empty? %>
   <%= render Ss::EmptyStateComponent.new(title: t("assist_settings.runs.empty"), text: t("assist_settings.runs.empty_hint"), css: "ss-card") %>
 <% else %>
@@ -26,7 +32,8 @@
           </div>
           <%# Etapas no Ss::JobProgressComponent (tempo de cada uma e o total); a faixa colorida acima é a proporção. %>
           <% stages = r.stages.map do |s|
-               detail = [ (Assist::Engines[s["engine"]]&.label || s["engine"] if s["engine"]), (%(“#{s["text"]}”) if s["text"]), s["intent"],
+               detail = [ (Assist::Engines[s["engine"]]&.label || s["engine"] if s["engine"]), s["provider"], (t("assist_settings.test.where.#{s['where']}") if s["where"]),
+                          (%(“#{s["text"]}”) if s["text"]), s["intent"],
                           (s["slots"].map { |k, v| "#{k}=#{v}" }.join(", ") if s["slots"].present?), s["error"] ].compact_blank.join(" · ")
                { name: t("assist_settings.stages.#{s['stage']}", default: s["stage"]), duration: s["ms"].to_i, status: (s["error"] ? :failed : :done), detail: detail.presence }
              end %>

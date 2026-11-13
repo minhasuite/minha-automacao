@@ -1,0 +1,82 @@
+<%# locals: (site:) -%>
+<%= render(Ss::CalloutComponent.new(css: "mb-4 max-w-3xl")) { t("assist_settings.test.pitch") } %>
+<% st = @status %>
+<div class="grid gap-4 lg:grid-cols-2">
+  <section class="ss-card ss-card-pad min-w-0" aria-labelledby="vt-t" data-controller="assist-test" data-assist-test-texts-value="<%= t("assist.js").to_json %>">
+    <h2 id="vt-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("microphone", "size-5") %><%= t("assist_settings.test.title") %></h2>
+    <p class="text-sm text-muted mt-1"><%= t("assist_settings.test.hint") %></p>
+    <%= form_with url: site_assist_test_path(site), method: :post, multipart: true, class: "mt-3 grid gap-3", data: { turbo: false, assist_test_target: "form" } do %>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div><label for="vt-pl" class="ss-label"><%= t("assist_settings.test.pipeline") %></label>
+          <%= select_tag :pipeline_id, options_for_select(@pipelines.map { |p| [ p.name, p.id ] }, @test_pipeline&.id), include_blank: (t("assist_settings.test.no_pipeline") if @pipelines.empty?), id: "vt-pl", class: "ss-input" %></div>
+        <div><label for="vt-tx" class="ss-label"><%= t("assist_settings.test.text") %></label>
+          <%= text_field_tag :texto, params[:texto], id: "vt-tx", class: "ss-input", maxlength: 300, placeholder: t("assist_settings.sentences.text_ph") %></div>
+      </div>
+      <%= file_field_tag :audio, accept: "audio/wav", class: "hidden", id: "vt-audio", data: { assist_test_target: "file" }, "aria-hidden": true, tabindex: -1 %>
+      <div class="flex flex-wrap gap-x-5 gap-y-2">
+        <label class="ss-check text-sm"><%= check_box_tag :executar, "1", params[:executar] == "1", id: "vt-ex" %> <%= t("assist_settings.test.execute") %></label>
+        <label class="ss-check text-sm"><%= hidden_field_tag :falar, "0", id: nil %><%= check_box_tag :falar, "1", params[:falar] != "0", id: "vt-sp" %> <%= t("assist_settings.test.speak") %></label>
+      </div>
+      <div class="grid place-items-center">
+        <%= render Ss::MicButtonComponent.new(size: 64, labels: { idle: t("assist.record") }, data: { assist_test_target: "mic", action: "ss-mic:press->assist-test#toggle" }) %>
+        <p class="mt-2 text-xs text-muted text-center" data-assist-test-target="status" aria-live="polite"><%= t("assist.js.idle") %></p>
+      </div>
+      <button class="ss-btn ss-btn-primary justify-self-start"><%= t("assist_settings.test.send") %></button>
+    <% end %>
+    <% if @test_error %>
+      <%= render Ss::CalloutComponent.new(tone: :danger, title: t("assist_settings.test.failed"), css: "mt-4") do %><p class="text-sm"><%= @test_error %></p><% end %>
+    <% end %>
+    <% stages = @test ? @test["stages"] : @test_run&.stages %>
+    <% if @test %>
+      <dl class="mt-4 grid gap-2 text-sm" aria-label="<%= t("assist_settings.test.result") %>">
+        <div><dt class="ss-label"><%= t("assist_settings.test.heard") %></dt><dd class="text-ink font-semibold">“<%= @test["heard"] %>”</dd></div>
+        <div><dt class="ss-label"><%= t("assist_settings.test.intent") %></dt><dd><span class="ss-badge <%= @test['intent'].in?(%w[unknown offline]) ? 'ss-badge-warn' : 'ss-badge-accent' %>"><%= @test["intent"] %></span>
+          <% @test["slots"].to_h.each do |k, v| %> <span class="ss-chip"><b><%= k %></b>&nbsp;<%= v %></span><% end %></dd></div>
+        <div><dt class="ss-label"><%= t("assist_settings.test.reply") %></dt><dd class="text-ink"><%= @test["text"] %></dd></div>
+      </dl>
+      <% if @test["audio_url"] %><audio controls src="<%= @test["audio_url"] %>" class="mt-3 w-full" aria-label="<%= t("assist_settings.test.voice") %>"></audio><% end %>
+    <% end %>
+    <% if stages.present? %>
+      <% rows = stages.map do |s|
+           where = s["where"] ? t("assist_settings.test.where.#{s['where']}") : nil
+           detail = [ (Assist::Engines[s["engine"]]&.label if s["engine"]), s["provider"], where, (%(“#{s["text"]}”) if s["text"]), s["error"] ].compact_blank.join(" · ")
+           { name: t("assist_settings.stages.#{s['stage']}", default: s["stage"]), duration: s["ms"].to_i, status: (s["error"] ? :failed : :done), detail: detail.presence }
+         end %>
+      <%= render Ss::JobProgressComponent.new(id: "assist-test-run", title: t("assist_settings.test.stages"), state: (@test_error ? :failed : :done), stages: rows, css: "is-flush mt-4") %>
+    <% end %>
+  </section>
+  <div class="grid gap-4 content-start min-w-0">
+    <section class="ss-card ss-card-pad min-w-0" aria-labelledby="vs-t">
+      <h2 id="vs-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon(st["offline"] ? "status-offline" : "cloud", "size-5") %><%= t("assist_settings.test.status") %></h2>
+      <p class="mt-2">
+        <% if st["offline"] %><span class="ss-badge ss-badge-warn"><%= t("assist.offline.badge") %></span>
+        <% else %><span class="ss-badge ss-badge-success"><%= t("assist_settings.test.online") %></span><% end %>
+        <% unless st["cloud"] %><span class="ss-badge"><%= t("assist_settings.test.no_cloud") %></span><% end %>
+      </p>
+      <ul class="mt-3 grid gap-1" aria-label="<%= t("assist_settings.test.status") %>">
+        <% %w[stt ai tts].each do |kind| %>
+          <% s = st[kind] %>
+          <li class="ss-item">
+            <span class="ss-icon-tile is-sm <%= s['mode'] == 'local' ? 'is-success' : (s['mode'] == 'cloud' ? 'is-accent' : 'is-muted') %>"><%= icon({ "stt" => "microphone", "ai" => "sparkles", "tts" => "volume-up" }[kind], "") %></span>
+            <span class="ss-item-main"><span><%= t("assist_settings.test.kinds.#{kind}") %></span><span><%= [ t("assist_settings.test.modes.#{s['mode']}"), s["provider"] ].compact.join(" · ") %></span></span>
+          </li>
+        <% end %>
+      </ul>
+      <%= link_to t("assist_settings.test.check"), site_assist_settings_path(site, aba: "testar", verificar: 1, pipeline_id: @test_pipeline&.id), class: "ss-btn ss-btn-ghost ss-btn-sm mt-3" %>
+      <% if st["servers"] %>
+        <% if st["servers"].empty? %><p class="text-sm text-muted mt-2"><%= t("assist_settings.test.no_servers") %></p><% end %>
+        <ul class="mt-2 grid gap-1">
+          <% st["servers"].each do |sv| %>
+            <li class="ss-item"><span class="ss-icon-tile is-sm <%= sv['ok'] ? 'is-success' : 'is-danger' %>"><%= icon(sv["ok"] ? "check" : "x", "") %></span>
+              <span class="ss-item-main"><span><%= t("assist_settings.kinds.#{sv['kind']}") %> · <span class="num"><%= sv["host"] %>:<%= sv["port"] %></span></span><span><%= sv["detail"].presence || "—" %></span></span>
+              <span class="text-xs text-muted num"><%= t("assist_settings.test.ms", ms: sv["ms"]) %></span></li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+    <section class="ss-card ss-card-pad min-w-0" aria-labelledby="vl-t">
+      <h2 id="vl-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("clock", "size-5") %><%= t("assist_settings.latency.title") %></h2>
+      <%= render "latency", latency: @latency %>
+    </section>
+  </div>
+</div>

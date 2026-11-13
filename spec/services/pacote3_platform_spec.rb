@@ -52,6 +52,7 @@ RSpec.describe "Pacote 3: plataforma" do
       expect(lamp.reload.value).to be true
       expect(scene).to be_persisted
 
+      AiAccount.create!(provider: "anthropic", api_key: "sk-teste") # voz-offline: sem conta de IA, nem pergunta
       allow(Ai::Ask).to receive(:call).and_return("Está tudo calmo.")
       expect(say("tem alguém na varanda?")).to include("intent" => "ask", "text" => "Está tudo calmo.")
       allow(Ai::Ask).to receive(:call).and_raise(Ai::Client::Error, "sem provedor")

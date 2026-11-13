@@ -6,7 +6,7 @@ module Ai
     class LocalAudio < Base
       include OpenaiAudio
 
-      describe key: "local_audio", label: "Voz local (Whisper / Piper)", default_model: "whisper-1",
+      describe key: "local_audio", local: true, label: "Voz local (Whisper / Piper)", default_model: "whisper-1",
                models: %w[whisper-1 Systran/faster-whisper-small], base_url: "http://localhost:8000/v1", custom_url: true, key_required: false,
                capabilities: %i[stt tts], stt_model: "whisper-1", tts_model: "tts-1", tts_voice: "alloy",
                hint: "Servidor compatível com /v1/audio (faster-whisper-server, openedai-speech). Libere o IP em Configurações → Sistema → " \

@@ -26,11 +26,14 @@ module Assist
       def self.line(point) = "#{point.display_names.compact.join(' ')}: #{point.quality == 'good' ? Assist.value_text(point) : Read.text(:no_signal)}"
 
       class Is < Intent
+        def self.accepts?(_ctx, slots) = !State.expected(slots["state"]).nil?
+
         describe key: "state_is", slots: %w[name state], tool: false,
                  description: "Responde sim ou não: a porta está aberta? a luz está ligada?",
-                 sentences: { "pt-BR" => [ "[o|a|os|as] {name} (esta|ta|estao|ficou|ficaram) {state}" ],
+                 sentences: { "pt-BR" => [ "[o|a|os|as] {name} (esta|ta|estao|ficou|ficaram) {state}", "(esta|ta|estao|ficou) {state} [o|a|os|as] {name}" ],
                               "en" => [ "(is|are) [the] {name} {state}" ],
-                              "es" => [ "(esta|estan) [el|la|los|las] {name} {state}", "[el|la|los|las] {name} (esta|estan) {state}" ] }
+                              "es" => [ "(esta|estan) [el|la|los|las] {name} {state}", "[el|la|los|las] {name} (esta|estan) {state}",
+                                        "(esta|estan) {state} [el|la|los|las] {name}" ] }
         texts "pt-BR" => { yes: "Sim. %{lines}.", no: "Não. %{lines}." },
               en: { description: "Answers yes or no: is the door open? is the light on?", yes: "Yes. %{lines}.", no: "No. %{lines}." },
               es: { description: "Responde sí o no: ¿la puerta está abierta? ¿la luz está encendida?", yes: "Sí. %{lines}.", no: "No. %{lines}." }
@@ -47,6 +50,8 @@ module Assist
       end
 
       class Which < Intent
+        def self.accepts?(_ctx, slots) = !State.expected(slots["state"]).nil?
+
         describe key: "state_which", slots: %w[name state], tool: false,
                  description: "Lista ou conta o que está num estado: quais luzes estão ligadas, quantas janelas abertas.",
                  sentences: { "pt-BR" => [ "(quais|que|quantos|quantas) [as|os] {name} (estao|esta|ficaram) {state}" ],

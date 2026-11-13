@@ -11,7 +11,7 @@
   <% if pl.persisted? %>
     <ol class="vz-flow" aria-label="<%= t("assist_settings.pipelines.flow") %>">
       <% [ [ :wake, "bell" ], [ :stt, "microphone" ], [ :agent, "sparkles" ], [ :tts, "volume-up" ] ].each do |kind, ico| %>
-        <% label = kind == :agent ? AssistPipeline::AGENTS[pl.agent] : (pl.engine(kind)&.label || (kind == :wake ? t("assist_settings.pipelines.none") : Assist::Engines::Installation.label)) %>
+        <% label = kind == :agent ? AssistPipeline::AGENTS[pl.agent] : (pl.engine(kind)&.label || (kind == :wake ? t("assist_settings.pipelines.none") : Assist::Engines::Auto.label)) %>
         <li class="vz-flow-step"><span class="vz-flow-ico"><%= icon(ico, "size-4") %></span><span class="min-w-0"><span class="vz-flow-kind"><%= t("assist_settings.kinds.#{kind}") %></span><span class="vz-flow-val"><%= label %></span></span></li>
       <% end %>
     </ol>
@@ -32,7 +32,7 @@
       <fieldset class="ss-fieldset ss-field-group sm:col-span-2 grid gap-2.5">
         <legend class="ss-label"><%= t("assist_settings.kinds.#{kind}") %></legend>
         <%= select_tag "pipeline[#{kind}_engine]", options_for_select(engines.map { |e| [ e.label, e.key ] }, current["engine"]),
-                       include_blank: (kind == :wake ? t("assist_settings.pipelines.none") : t("assist_settings.pipelines.installation_default")), id: "pe-#{kind}-#{id}",
+                       include_blank: (kind == :wake ? t("assist_settings.pipelines.none") : t("assist_settings.pipelines.auto_default")), id: "pe-#{kind}-#{id}",
                        class: "ss-input", data: { action: "assist-engines#pick" }, "aria-label": t("assist_settings.kinds.#{kind}") %>
         <% engines.each do |e| %>
           <div class="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-2.5" data-engine="<%= e.key %>" <%= "hidden" unless current["engine"] == e.key %>>
@@ -54,6 +54,11 @@
         <% end %>
       </fieldset>
     <% end %>
+    <%# voz-offline: desmarcado = STT, TTS e IA só da rede da casa (nada sai da casa). %>
+    <div class="sm:col-span-2">
+      <label class="ss-check text-sm"><%= f.check_box :cloud, id: "pc-#{id}" %> <%= t("assist_settings.pipelines.cloud") %></label>
+      <p class="text-xs text-muted mt-1"><%= t("assist_settings.pipelines.cloud_hint") %></p>
+    </div>
     <label class="ss-check text-sm sm:col-span-2"><%= f.check_box :preferred, id: "pr-#{id}" %> <%= t("assist_settings.pipelines.make_preferred") %></label>
     <div class="sm:col-span-2 flex flex-wrap gap-2">
       <%= f.submit pl.persisted? ? t("assist_settings.save") : t("assist_settings.pipelines.create"), class: "ss-btn ss-btn-primary", name: nil %>

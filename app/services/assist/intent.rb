@@ -12,12 +12,18 @@ module Assist
 
     texts "pt-BR" => { denied_only: "Por voz não posso comandar %{names}.", failed: "Não consegui: %{names}.", denied: "Sem permissão por voz: %{names}.",
                        unknown: "Não entendi e não consegui perguntar à IA (%{error}). Tente \"ligar a luz da sala\".",
+                       not_understood: "Não entendi \"%{heard}\". Tente \"ligar a luz da sala\" ou \"a porta da cozinha está aberta?\".",
+                       offline: "Estou sem internet: entendo só os comandos da casa, como \"ligar a luz da sala\". Não entendi \"%{heard}\".",
                        slots: { name: "Nome do ponto, aparelho, área ou andar, como a pessoa fala", area: "Área ou andar" } },
           en: { denied_only: "I can't control %{names} by voice.", failed: "Couldn't do it: %{names}.", denied: "Not allowed by voice: %{names}.",
                 unknown: "I didn't understand and couldn't ask the AI (%{error}). Try \"turn on the living room light\".",
+                not_understood: "I didn't understand \"%{heard}\". Try \"turn on the living room light\" or \"is the kitchen door open?\".",
+                offline: "I'm offline: I only understand house commands, like \"turn on the living room light\". I didn't understand \"%{heard}\".",
                 slots: { name: "Name of the point, device, area or floor, as people say it", area: "Area or floor" } },
           es: { denied_only: "Por voz no puedo controlar %{names}.", failed: "No pude: %{names}.", denied: "Sin permiso por voz: %{names}.",
                 unknown: "No entendí y no pude preguntarle a la IA (%{error}). Prueba \"enciende la luz de la sala\".",
+                not_understood: "No entendí \"%{heard}\". Prueba \"enciende la luz de la sala\" o \"¿está abierta la puerta de la cocina?\".",
+                offline: "Estoy sin internet: solo entiendo los comandos de la casa, como \"enciende la luz de la sala\". No entendí \"%{heard}\".",
                 slots: { name: "Nombre del punto, aparato, área o piso, como lo dice la persona", area: "Área o piso" } }
 
     class << self
@@ -46,6 +52,12 @@ module Assist
       end
 
       def handle(_ctx, _slots) = nil
+
+      # voz-offline: os slots fazem sentido para esta intenção? Usado pelo
+      # reconhecer sem executar (teste de frase e aba Testar), que não pode
+      # chamar o `handle`: a frase "ligar a luz" casa com "{direction} {name}"
+      # do brilho, mas "ligar" não é direção. Padrão: sim.
+      def accepts?(_ctx, _slots) = true
 
       # P3: resposta personalizada do local da conversa (`AssistCustomResponse`,
       # pela intenção ou "*" e pelo idioma ou qualquer um) no lugar da padrão.

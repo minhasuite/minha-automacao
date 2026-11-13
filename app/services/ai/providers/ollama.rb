@@ -6,7 +6,7 @@ module Ai
     # para quem põe o Ollama atrás de um proxy). Imagem só em modelo de visão
     # (llava, qwen2.5vl, gemma3); `format` aceita JSON schema.
     class Ollama < Base
-      describe key: "ollama", label: "Ollama (local)", default_model: "llama3.2", models: %w[llama3.2 gemma3 qwen2.5vl llava],
+      describe key: "ollama", local: true, label: "Ollama (local)", default_model: "llama3.2", models: %w[llama3.2 gemma3 qwen2.5vl llava],
                base_url: "http://localhost:11434", custom_url: true, key_required: false,
                capabilities: %i[text image structured tools temperature],
                hint: "Libere o endereço do Ollama em Configurações → Sistema → Saída HTTP (ex.: 192.168.68.50)."

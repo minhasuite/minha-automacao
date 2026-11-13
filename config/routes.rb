@@ -247,6 +247,7 @@ Rails.application.routes.draw do
       patch "assistente/satelites/:id", to: "assist_settings#update_satellite", as: :assist_satellite
       delete "assistente/satelites/:id", to: "assist_settings#destroy_satellite"
       post "assistente/satelites/:id/testar", to: "assist_settings#test_satellite", as: :assist_satellite_test
+      post "assistente/testar", to: "assist_settings#test_pipeline", as: :assist_test # voz-offline: fale e veja o texto e o tempo de cada etapa
       post "assistente/mcp", to: "assist_settings#create_mcp_token", as: :assist_mcp_tokens
       # P3: intenções (frase → cena ou script) e respostas personalizadas da voz.
       post "assistente/intencoes", to: "assist_settings#create_intent", as: :assist_intents
@@ -394,6 +395,7 @@ Rails.application.routes.draw do
     post "perguntar/painel", to: "ask#widget", as: :ask_widget # card "Perguntar à casa" do painel (resposta no frame dele)
     # Assistente de voz (Pacote 3): áudio ou texto → intenção local ou "Perguntar à casa".
     post "assistente", to: "assist#create", as: :assist
+    get "assistente/estado", to: "assist#status", as: :assist_status # voz-offline: modo offline e de onde vem cada etapa
     # Paridade com o HA (roadmap de vendas): Diário, Histórico e Mapa da instalação (um local por vez).
     get "diario", to: "logbook#show", as: :logbook
     get "historico", to: "history#show", as: :history
@@ -523,6 +525,7 @@ Rails.application.routes.draw do
       get "sites/:site_id/map", to: "maps#index"
       post "sites/:site_id/assist", to: "assist#create"
       get "sites/:site_id/assist/pipelines", to: "assist#pipelines" # appweb2 D5
+      get "sites/:site_id/assist/status", to: "assist#status" # voz-offline
       post "sites/:site_id/assist/wake", to: "assist#wake" # appweb2 D5: palavra de ativação no celular
       get "sites/:site_id/packages", to: "packages#index"
       post "sites/:site_id/packages/preview", to: "packages#preview"
