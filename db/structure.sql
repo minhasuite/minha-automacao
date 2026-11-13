@@ -265,7 +265,8 @@ CREATE TABLE public.assist_pipelines (
     wake jsonb DEFAULT '{}'::jsonb NOT NULL,
     preferred boolean DEFAULT false NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    cloud boolean DEFAULT true NOT NULL
 );
 
 
@@ -5509,6 +5510,7 @@ SET search_path TO "$user", public;
 INSERT INTO "schema_migrations" (version) VALUES
 ('20261113120731'),
 ('20261113120437'),
+('20261112160041'),
 ('20261111143017'),
 ('20261111120017'),
 ('20261111100047'),
