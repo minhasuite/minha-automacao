@@ -34,15 +34,12 @@ module Backups
 
     def dump!(path, exclude)
       db = ActiveRecord::Base.connection_db_config.configuration_hash[:database].to_s
-      cmd = [ "pg_dump", "--no-owner", "--no-privileges", *exclude.map { |t| "--exclude-table-data=#{t}" } ]
       tmp = "#{path}.tmp"
-      Zlib::GzipWriter.open(tmp) do |gz|
-        Open3.popen3(Backups.pg_env(db), *cmd) do |stdin, out, err, wait|
-          stdin.close
-          IO.copy_stream(out, gz)
-          raise Error, I18n.t("resto.backup.failed", error: err.read.strip.truncate(200)) unless wait.value.success?
-        end
-      end
+      # O próprio pg_dump comprime (formato texto + --compress = um .sql.gz igual ao do gzip):
+      # o GzipWriter do Ruby às vezes levantava Zlib::BufError no meio da cópia.
+      cmd = [ "pg_dump", "--no-owner", "--no-privileges", "--compress=6", "--file=#{tmp}", *exclude.map { |t| "--exclude-table-data=#{t}" } ]
+      _out, err, status = Open3.capture3(Backups.pg_env(db), *cmd)
+      raise Error, I18n.t("resto.backup.failed", error: err.strip.truncate(200)) unless status.success?
       File.rename(tmp, path)
     ensure
       FileUtils.rm_f(tmp) if tmp
