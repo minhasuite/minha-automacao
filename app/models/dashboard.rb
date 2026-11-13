@@ -32,6 +32,8 @@ class Dashboard < ApplicationRecord
   validate :icon_known
   validate :roles_known
   validate :definitions_valid
+  # Publicou ou trocou o padrão: o painel de cada um fica pronto para a próxima abertura (Dashboards::Prewarm).
+  after_commit(on: %i[create update]) { Dashboards::Prewarm.touch(site_id) if saved_change_to_version? || saved_change_to_site_default? }
 
   normalizes :name, with: ->(v) { v.to_s.squish }
   normalizes :icon, with: ->(v) { v.presence }

@@ -24,7 +24,7 @@ module Dashboards
         e
       end
 
-      def self.data(r, w, _binds) = CardTemplates.render(r, CardTemplates.find(r.site, w["template"]), w["vars"], widget: w)
+      def self.data(r, w, _binds) = CardTemplates.render(r, r.memo([ :card_template, w["template"] ]) { CardTemplates.find(r.site, w["template"]) }, w["vars"], widget: w)
 
       # Ideia 14: os pontos de um item do modelo (o toque na pílula).
       def self.drill(r, w, key)

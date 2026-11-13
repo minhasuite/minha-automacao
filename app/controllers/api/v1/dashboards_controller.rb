@@ -20,11 +20,19 @@ module Api
       def show
         dashboard, role = find(:view)
         draft = bool(params[:draft]) && SiteMembership.allowed?(role, :manage)
-        payload = draft ? Dashboards::Resolver.new(dashboard, role: role, definition: dashboard.working_draft).call : Dashboards::Resolver.cached(dashboard, role: role).deep_dup
+        device = PanelDevice.current(request) # ideia 10: a visão deste aparelho vence o `open_if`
+        device_view = device.view if device&.dashboard_id == dashboard.id && device.view.present?
+        # `?lazy=1` (app novo): só uma visão resolvida (`view`, ou a que abre); as outras com `lazy: true`,
+        # pedidas com `?lazy=1&view=<id>` ao trocar de aba. Sem `lazy`, todas (app antigo).
+        lazy = bool(params[:lazy])
+        payload = if draft
+          Dashboards::Resolver.new(dashboard, role: role, definition: dashboard.working_draft, only_view: (params[:view].presence || device_view || :open if lazy)).call
+        else
+          Dashboards::Resolver.cached(dashboard, role: role, view: params[:view].presence || device_view, lazy: lazy).deep_dup
+        end
         Dashboards::Hero.apply!(payload, site: dashboard.site, user: current_user) # P1.4: o topo pronto (o app é o Início)
         Dashboards::Personal.apply!(payload, site: dashboard.site, user: current_user, role: role) # ideia 13: busca e favoritos
-        device = PanelDevice.current(request) # ideia 10: a visão deste aparelho vence o `open_if`
-        payload["open_view"] = device.view if device&.dashboard_id == dashboard.id && device.view.present?
+        payload["open_view"] = device_view if device_view
         render_data(payload) if stale?(etag: payload.to_json)
       end
 

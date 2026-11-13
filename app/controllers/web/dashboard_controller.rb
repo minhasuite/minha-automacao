@@ -15,10 +15,12 @@ module Web
       authorize_site!(@site, :view)
       @dashboard = Dashboard.default_for(@site, current_user, @site_role, device: device) or return render(:welcome)
       @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role) }
-      @resolved = Dashboards::Hero.apply!(Dashboards::Resolver.cached(@dashboard, role: @site_role).deep_dup, site: @site, user: current_user)
-      Dashboards::Personal.apply!(@resolved, site: @site, user: current_user, role: @site_role)
       # A visão do aparelho (ideia 10) vale quando a URL não pede outra; depois o contexto (`open_if`).
-      @view = Dashboards.pick_view(@resolved, params[:view].presence || (device.view if device&.dashboard_id == @dashboard.id))
+      slug = params[:view].presence || (device.view.presence if device&.dashboard_id == @dashboard.id)
+      # Só a visão aberta é resolvida (as abas são links: cada uma resolve a sua ao abrir).
+      @resolved = Dashboards::Hero.apply!(Dashboards::Resolver.cached(@dashboard, role: @site_role, view: slug, lazy: true).deep_dup, site: @site, user: current_user)
+      Dashboards::Personal.apply!(@resolved, site: @site, user: current_user, role: @site_role)
+      @view = Dashboards.pick_view(@resolved, slug)
       @home = true
       load_kiosk
       render "web/dashboards/show"

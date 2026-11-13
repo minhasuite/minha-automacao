@@ -22,7 +22,7 @@ module Dashboards
         return unless point&.capability.in?(%w[onoff dimmer])
         return point if point.capability == "dimmer"
 
-        r.points.find { |p| p.device_id == point.device_id && p.capability == "dimmer" && !p.disabled && TileFeatures::Brightness.match?(p) }
+        r.device_points(point.device_id).find { |p| p.capability == "dimmer" && !p.disabled && TileFeatures::Brightness.match?(p) }
       end
 
       # Título do tile: o rótulo próprio; o automático do Início ("Aparelho · Ponto",

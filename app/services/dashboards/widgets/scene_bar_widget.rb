@@ -10,7 +10,7 @@ module Dashboards
         list = r.site.scenes.order(:name)
         list = list.where(id: w["scenes"]) if w["scenes"].present?
         scenes = list.map do |s|
-          risk = s.risk
+          risk = Scene.max_risk(Array(s.items).filter_map { |i| r.point(i["point_id"].to_s)&.risk }) # sem uma consulta por cena
           { "id" => s.id, "name" => s.name, "icon" => s.icon, "confirm" => risk != "normal", "can_activate" => SiteMembership.allowed?(r.role, :command, risk: risk) }
         end
         [ { "scenes" => scenes }, [] ]

@@ -121,7 +121,7 @@ module Points
 
     def call(q, with_state: true)
       q = self.class.parse(q)
-      list = all.select { |p| self.class.exists?(p) }
+      list = candidates(q)
       q.each do |k, v|
         next if OPTIONS.include?(k) || (!with_state && k == "state")
 
@@ -149,6 +149,20 @@ module Points
       by = SORTS[key.delete_prefix("-")] or return list
       list = list.sort_by { |p| by.call(self, p) }
       key.start_with?("-") ? list.reverse : list
+    end
+
+    # Os que existem, uma vez por consulta (o painel faz dezenas de consultas sobre os mesmos ~500 pontos).
+    def existing = @existing ||= all.select { |p| self.class.exists?(p) }
+
+    # Por onde começar: com `area` (o cartão de área, os itens do cômodo), só os pontos daquelas áreas
+    # (por id ou nome); o filtro continua valendo depois, então o resultado é o mesmo.
+    def candidates(q)
+      return existing unless q["area"].present?
+
+      @by_area ||= existing.group_by(&:effective_area_id)
+      @area_ids_by_name ||= area_names.group_by { |_, name| name.to_s.downcase }.transform_values { |rows| rows.map(&:first) }
+      ids = self.class.list(q["area"]).flat_map { |a| area_names.key?(a) ? [ a ] : @area_ids_by_name.fetch(a.downcase, []) }.uniq
+      ids.size == 1 ? @by_area.fetch(ids.first, []) : existing.select { |p| ids.include?(p.effective_area_id) }
     end
 
     def value(p) = @value ? @value.call(p) : p.value

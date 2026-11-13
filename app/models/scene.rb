@@ -44,7 +44,9 @@ class Scene < ApplicationRecord
   end
 
   # Risco mais alto entre os pontos: define quem pode acionar.
-  def risk = points.values.map(&:risk).max_by { |r| Point::RISKS.keys.index(r) } || "normal"
+  def risk = Scene.max_risk(points.values.map(&:risk))
+  # O maior risco da lista (o painel passa os riscos dos pontos que já tem na memória).
+  def self.max_risk(risks) = risks.max_by { |r| Point::RISKS.keys.index(r) } || "normal"
 
   # Aciona tudo; um ponto com problema não impede os outros. Devolve os
   # comandos criados e os erros ("Ponto: motivo").
