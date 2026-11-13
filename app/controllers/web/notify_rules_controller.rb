@@ -7,6 +7,6 @@ module Web
     private
 
     def defaults = { point_id: params[:point_id] }
-    def permitted = [ :point_id, :to_value, :message, :enabled, { channels: [] } ]
+    def permitted = [ :point_id, :to_value, :message, :enabled, :priority, :merge_s, { channels: [] } ]
   end
 end

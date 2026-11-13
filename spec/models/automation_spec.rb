@@ -197,15 +197,17 @@ RSpec.describe "Automação: primitivas declarativas" do
   end
 
   describe "NotifyRule" do
-    it "avisa o portão aberto e, sem valor, toda mudança" do
+    it "avisa o portão aberto e, sem valor, toda mudança (seguidas da mesma regra viram um aviso só)" do
       gate = point(capability: "contact", name: "Portão")
       NotifyRule.create!(point: gate, to_value: "true", message: "{ponto} ficou {valor}")
-      NotifyRule.create!(point: gate, channels: %w[in_app])
+      every = NotifyRule.create!(point: gate, channels: %w[in_app])
       gate.report!(true)
       gate.report!(false)
-      expect(Notification.pluck(:kind, :title)).to contain_exactly(
-        [ "aviso", "Portão ficou Aberto" ], [ "aviso", "Portão: Aberto" ], [ "aviso", "Portão: Fechado" ]
-      )
+      expect(Notification.pluck(:kind, :title)).to contain_exactly([ "aviso", "Portão ficou Aberto" ], [ "aviso", "Portão" ])
+      expect(Notification.find_by(title: "Portão").body).to match(/\AAberto às \d\d:\d\d e Fechado às \d\d:\d\d\z/)
+      every.update!(merge_s: 0)
+      gate.report!(true)
+      expect(Notification.where(title: "Portão: Aberto").count).to eq(1)
       expect(NotifyRule.new(point: gate, channels: %w[alexa])).not_to be_valid
     end
   end

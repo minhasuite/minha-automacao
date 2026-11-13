@@ -1,0 +1,17 @@
+<%= render "web/shared/header", title: t("notifications.digest.title"), subtitle: t("notifications.digest.subtitle"), back: notifications_path do %>
+  <%= link_to settings_notifications_path(anchor: "resumo"), class: "ss-btn ss-btn-ghost" do %><%= icon("adjustments", "size-4") %><%= t("notifications.digest.configure") %><% end %>
+<% end %>
+<% if @parts.any? %>
+  <div class="grid gap-4 md:grid-cols-2">
+    <% @parts.each do |part| %>
+      <section class="ss-card ss-card-pad" aria-labelledby="resumo-<%= part["key"] %>">
+        <h2 id="resumo-<%= part["key"] %>" class="flex items-center gap-2"><%= icon(part["icon"], "size-4") %><%= part["label"] %></h2>
+        <ul class="mt-2 grid gap-1.5">
+          <% part["lines"].each do |line| %><li class="text-sm"><%= line %></li><% end %>
+        </ul>
+      </section>
+    <% end %>
+  </div>
+<% else %>
+  <%= render Ss::EmptyStateComponent.new(title: t("notifications.digest.quiet_day"), text: t("notifications.digest.quiet_hint"), css: "ss-card") %>
+<% end %>

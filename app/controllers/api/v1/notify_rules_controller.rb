@@ -3,7 +3,7 @@ module Api
     # Avisos (NotifyRule).
     class NotifyRulesController < AutomationController
       self.model = NotifyRule
-      self.fields = [ :point_id, :to_value, :message, :enabled, { channels: [] } ]
+      self.fields = [ :point_id, :to_value, :message, :enabled, :priority, :merge_s, { channels: [] } ]
     end
   end
 end

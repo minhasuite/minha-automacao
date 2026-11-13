@@ -16,6 +16,10 @@ class Alert < ApplicationRecord
     Automations.safely { Automations::Triggers.alert(self, "resolve") } if saved_change_to_resolved_at? && resolved_at
   end
 
+  # Nível do aviso pela gravidade: crítico fura o horário de silêncio; a tag
+  # faz a etapa seguinte substituir a anterior no aparelho.
+  PRIORITY = { "info" => "normal", "warning" => "high", "critical" => "critical" }.freeze
+
   scope :active, -> { where(resolved_at: nil) }
   scope :recent, -> { order(opened_at: :desc) }
 
@@ -48,7 +52,8 @@ class Alert < ApplicationRecord
     minutes = ((Time.current - (point.changed_at || opened_at)) / 60).floor
     Notifier.deliver!(step["channels"], kind: "alerta", title: alert_rule.name,
                                         body: alert_rule.body_for(minutes),
-                                        data: { alert_id: id, point_id: point_id, site_id: site_id, severity: alert_rule.severity },
+                                        data: { alert_id: id, point_id: point_id, site_id: site_id, severity: alert_rule.severity,
+                                                priority: PRIORITY.fetch(alert_rule.severity, "high"), tag: "alerta:#{id}" },
                                         dedup_key: "alert:#{id}:#{n}")
   rescue Shadow::Blocked
     nil

@@ -1,5 +1,30 @@
 <%= render "web/shared/header", title: t("automations.notifications.title"), subtitle: t("automations.notifications.subtitle") do %>
-  <%= button_to read_all_notifications_path, method: :patch, class: "ss-btn ss-btn-ghost" do %><%= icon("check", "size-4") %><%= t("automations.notifications.read_all") %><% end %>
+  <%= link_to digest_notifications_path, class: "ss-btn ss-btn-ghost" do %><%= icon("calendar", "size-4") %><%= t("notifications.digest.open") %><% end %>
+  <%= link_to settings_notifications_path, class: "ss-btn ss-btn-ghost" do %><%= icon("adjustments", "size-4") %><%= t("notifications.settings.open") %><% end %>
+  <%= button_to read_all_notifications_path(@filters), method: :patch, class: "ss-btn ss-btn-ghost" do %><%= icon("check", "size-4") %><%= t(@filters.any? ? "notifications.filters.read_these" : "automations.notifications.read_all") %><% end %>
+<% end %>
+<%= form_with url: notifications_path, method: :get, class: "ss-card ss-card-pad mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end",
+              data: { controller: "ss-autosubmit", action: "change->ss-autosubmit#now", turbo_action: "replace" } do %>
+  <div><%= label_tag :kind, t("notifications.filters.kind"), class: "ss-label" %><%= select_tag :kind, options_for_select(@choices[:kinds].map(&:reverse), @filters[:kind]), include_blank: t("notifications.filters.all"), class: "ss-input" %></div>
+  <% if @choices[:areas].any? %>
+    <div><%= label_tag :area_id, t("notifications.filters.area"), class: "ss-label" %><%= select_tag :area_id, options_for_select(@choices[:areas].map(&:reverse), @filters[:area_id]), include_blank: t("notifications.filters.all"), class: "ss-input" %></div>
+  <% end %>
+  <div><%= label_tag :level, t("notifications.level.label"), class: "ss-label" %><%= select_tag :level, options_for_select(@choices[:levels].map(&:reverse), @filters[:level]), include_blank: t("notifications.filters.all"), class: "ss-input" %></div>
+  <label class="ss-check"><%= check_box_tag :unread, "1", @filters[:unread].present? %> <%= t("notifications.filters.unread") %></label>
+  <noscript><%= submit_tag t("notifications.filters.apply"), class: "ss-btn ss-btn-outline", name: nil %></noscript>
+<% end %>
+<% if @mutes.any? %>
+  <section class="ss-card ss-card-pad mb-4" aria-labelledby="silencios-t">
+    <h2 id="silencios-t" class="flex items-center gap-2"><%= icon("volume-off", "size-4") %><%= t("notifications.mute.active") %></h2>
+    <ul class="mt-2 grid gap-2">
+      <% @mutes.each do |m| %>
+        <li class="flex flex-wrap items-center justify-between gap-2">
+          <span class="min-w-0"><span class="font-semibold"><%= m["label"] %></span> <span class="text-sm text-muted"><%= t("notifications.mute.until", time: l(m["until"].in_time_zone(Notifications.zone(current_user.tenant)), format: :short)) %></span></span>
+          <%= button_to unmute_notifications_path(key: m["key"]), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("bell", "size-4") %><%= t("notifications.mute.undo") %><% end %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
 <% end %>
 <% if @notifications.any? %>
   <div class="ss-card divide-y divide-line overflow-hidden">
@@ -7,14 +32,20 @@
       <% ico, tone = ApplicationHelper::NOTIFICATION_KINDS.fetch(n.kind, [ "bell", "is-muted" ]) %>
       <div id="<%= dom_id(n) %>" class="<%= 'opacity-70' if n.read_at && !n.actionable? %>">
         <%= button_to read_notification_path(n), method: :patch, class: "w-full text-left px-4 py-3.5 bg-transparent border-0 cursor-pointer hover:bg-field flex items-start gap-3", form_class: "block" do %>
-          <span class="ss-icon-tile <%= tone %>"><%= icon(ico, "") %></span>
+          <span class="ss-icon-tile <%= n.critical? ? 'is-danger' : tone %>"><%= icon(ico, "") %></span>
           <span class="min-w-0 flex-1">
             <span class="flex items-start justify-between gap-3"><span class="<%= n.read_at ? 'font-semibold' : 'font-bold' %> text-ink break-words min-w-0"><%= with_money(n.title) %></span>
               <span class="shrink-0 text-xs text-muted flex items-center gap-1.5 mt-0.5"><%= ma_when(n.created_at) %><% unless n.read_at %><span class="size-2 rounded-full bg-accent" aria-label="<%= t("automations.notifications.unread") %>"></span><% end %></span></span>
             <% if n.body.present? %><span class="block text-sm text-muted mt-0.5 break-words"><%= with_money(n.body) %></span><% end %>
+            <% if n.level != "normal" || n.count > 1 %>
+              <span class="flex flex-wrap gap-1.5 mt-1.5">
+                <% if n.level != "normal" %><span class="ss-badge <%= n.critical? ? 'ss-badge-danger' : 'ss-badge-warning' %>"><%= t("notifications.level.#{n.level}") %></span><% end %>
+                <% if n.count > 1 %><span class="ss-badge"><%= t("notifications.merge.count", count: n.count) %></span><% end %>
+              </span>
+            <% end %>
           </span>
         <% end %>
-        <% if n.image_url || n.actions.any? || n.open_url %>
+        <% if n.image_url || n.actions.any? || n.open_url || n.mute_key %>
           <div class="px-4 pb-3.5 pl-[4.25rem] grid gap-2 min-w-0">
             <% if n.image_url %><img src="<%= n.image_url %>" alt="<%= t("automations.notifications.image") %>" loading="lazy" class="rounded-xl max-h-56 w-auto max-w-full border border-line"><% end %>
             <div class="flex flex-wrap items-center gap-2">
@@ -28,6 +59,16 @@
               <% if n.open_url %>
                 <%= link_to n.open_url, class: "ss-btn ss-btn-ghost ss-btn-sm", **(n.open_url.start_with?("/") ? {} : { target: "_blank", rel: "noopener" }) do %><%= icon("external-link", "size-4") %><%= t("automations.notifications.open") %><% end %>
               <% end %>
+              <% if n.mute_key %>
+                <details class="ss-menu">
+                  <summary class="ss-menu-btn" aria-label="<%= t("notifications.mute.of", name: n.mute_label) %>"><%= icon("volume-off", "size-4") %><span><%= t("notifications.mute.button") %></span></summary>
+                  <div class="min-w-48">
+                    <% Notifications::MUTE_HOURS.each do |h| %>
+                      <%= button_to mute_notification_path(n, hours: h), method: :patch do %><%= icon("clock", "size-4") %><%= t("notifications.mute.for", count: h) %><% end %>
+                    <% end %>
+                  </div>
+                </details>
+              <% end %>
             </div>
           </div>
         <% end %>
@@ -35,6 +76,8 @@
     <% end %>
   </div>
   <%= render "web/shared/pagination", pagy: @pagy %>
+<% elsif @filters.any? %>
+  <%= render Ss::EmptyStateComponent.new(title: t("notifications.filters.empty"), text: t("notifications.filters.empty_hint"), css: "ss-card") do %><%= link_to notifications_path, class: "ss-btn ss-btn-ghost" do %><%= icon("filter", "size-4") %><%= t("notifications.filters.clear") %><% end %><% end %>
 <% else %>
   <%= render Ss::EmptyStateComponent.new(title: t("automations.notifications.empty"), text: t("automations.notifications.empty_hint"), css: "ss-card") do %><%= link_to push_subscriptions_path, class: "ss-btn ss-btn-ghost" do %><%= icon("bell", "size-4") %><%= t("automations.notifications.my_devices") %><% end %><% end %>
 <% end %>

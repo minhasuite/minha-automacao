@@ -82,9 +82,14 @@ module Notifier
 
   # Canal que entrega vários alvos de uma vez (`deliver_all`, ex.: um anúncio
   # só para as Echo da mesma conta) recebe todos os seus; os outros, um a um.
+  # Canal da casa (`quiet_scope` :house: fala, mensageiro) fica calado no
+  # horário de silêncio da casa, a não ser em aviso crítico; o push (:person)
+  # decide por pessoa (Push.deliver). Docs: docs/push.md, "Menos ruído".
   def deliver_channels(channels, created)
+    house_quiet = Notifications.hold_house?(created.first)
     channels.map(&:to_s).group_by { |ch| channel_for(ch) }.each do |plugin, list|
       next unless plugin
+      next if house_quiet && plugin.respond_to?(:quiet_scope) && plugin.quiet_scope == :house
 
       if plugin.respond_to?(:deliver_all)
         safely { plugin.deliver_all(list, created) }
@@ -118,6 +123,13 @@ module Notifier
     data = data.to_h.stringify_keys
     # Fala em SSML (importada do HA): a tela e o push mostram o texto; a Echo usa o SSML.
     data["ssml"], body = body, Ssml.plain(body) if Ssml.ssml?(body)
+    # Mesmo assunto dentro da janela: atualiza o aviso que já existe (Notifications::Merge).
+    if !dedup_key && (merged = Notifications::Merge.into(user, Ssml.plain(title.to_s), body, data))
+      merged.image.attach(image) if image
+      Channels::Push.deliver("push", [ merged ]) if push
+      return merged
+    end
+    data = Notifications::Merge.prepare(Ssml.plain(title.to_s), data)
     notification = Notification.create!(kind: kind, user: user, title: Ssml.plain(title.to_s).truncate(200), body: body, data: data, dedup_key: dedup_key)
     notification.image.attach(image) if image
     # Tag igual substitui: o aviso anterior com a mesma tag sai da lista de não lidas.

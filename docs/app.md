@@ -17,7 +17,7 @@ não conhece nenhuma casa, aparelho ou automação; desenha o painel resolvido
 | Histórico | `GET /points/:id/history` |
 | Câmera | `GET /points/:id/snapshot[?w=largura]` (JPEG pelo Rails; o go2rtc nunca fica exposto; `X-Frame-At`, `X-Camera-Offline`) |
 | Cenas e automações | `GET /sites/:id/scenes`, `POST /scenes/:id/activate`, `GET /sites/:id/automations`, `PATCH /automations/:id {enabled}`, `POST /automations/:id/run` (`confirm_critical`) |
-| Alertas e avisos | `GET /alerts`, `POST /alerts/:id/ack`, `GET /notifications` (com `actions`, `url`, `image_url`), `POST /notifications/:id/respond {action_id}` |
+| Alertas e avisos | `GET /alerts`, `POST /alerts/:id/ack`, `GET /notifications` (com `actions`, `url`, `image_url`, `level`, `count`, `mute_key`; filtros `kind`/`area_id`/`level` e as opções em `meta.filters`), `POST /notifications/:id/respond {action_id}`, `POST /notifications/:id/mute {hours}`, `DELETE /notifications/mutes?key=`, `GET /notifications/digest`, `GET|PATCH /notifications/preferences` (`docs/push.md`, "Menos ruído") |
 | Push | `POST/DELETE /device_tokens` (FCM) |
 | Sensores do celular | `POST /sites/:id/mobile_devices`, `POST /mobile_devices/:id/sensors`, `DELETE /mobile_devices/:id` |
 | Pontos do local (widgets, atalhos e controles do Android) | `GET /sites/:id/points?view=app[&commandable=1]`, `GET /points/:id?view=app` |

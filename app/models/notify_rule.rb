@@ -1,6 +1,8 @@
 # Aviso (ESQUEMA-V1 §4.5, G4: push ao abrir/fechar o portão): o ponto mudou
 # (ou chegou em `to_value`) → notificação nos canais escolhidos. Vai para os
-# administradores (destinatários e horário de silêncio ficam para depois).
+# administradores. `priority` = nível (crítico fura o horário de silêncio);
+# `merge_s` = janela para juntar avisos seguidos do ponto (nil = a da
+# instalação, 0 = não junta; Notifications::Merge).
 # `message` é Liquid com o contexto das automações (`MessageTemplate`;
 # {ponto} e {valor} continuam valendo).
 class NotifyRule < ApplicationRecord
@@ -15,19 +17,24 @@ class NotifyRule < ApplicationRecord
   before_validation { self.to_value = point.cast(to_value) if point && to_value.is_a?(String) }
   before_validation { self.channels = Array(channels).compact_blank }
 
+  validates :priority, inclusion: { in: Notifications::LEVELS }
+  validates :merge_s, numericality: { only_integer: true, in: 0..6.hours.to_i }, allow_nil: true
   validates :message, length: { maximum: MessageTemplate::MAX }
   validate { (e = MessageTemplate.syntax_error(message)) && errors.add(:message, :invalid_template, error: e) }
   validate :channels_fit
   validate { errors.add(:point, :other_site) if point && point.site_id != site_id }
 
-  audited_attributes :enabled, :to_value, :channels
+  audited_attributes :enabled, :to_value, :channels, :priority, :merge_s
 
   def self.fire(point)
     where(point_id: point.id, enabled: true).find_each { |r| r.deliver(point) if r.to_value.nil? || r.to_value == point.value }
   end
 
   def deliver(point)
-    Notifier.deliver!(channels, kind: "aviso", title: title_for(point), data: { point_id: point.id, site_id: point.site_id })
+    window = merge_s.nil? ? Notifications.merge_window(tenant) : merge_s
+    Notifier.deliver!(channels, kind: "aviso", title: title_for(point),
+                                data: { point_id: point.id, site_id: point.site_id, priority: priority, merge_key: "notify_rule:#{id}",
+                                        merge_s: window, merge_subject: point.name })
   end
 
   # Texto do aviso: a mensagem (Liquid) ou "Ponto: valor". Modelo com erro na

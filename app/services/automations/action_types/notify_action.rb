@@ -23,6 +23,9 @@ module Automations
                          f("url", :template, "Ao tocar, abrir (/paineis/..., /locais/... ou https://...)", en: "On tap, open (/paineis/..., /locais/... or https://...)", es: "Al tocar, abrir (/paineis/..., /locais/... o https://...)"),
                          f("priority", :select, "Prioridade", options: Push::PRIORITIES, en: "Priority", es: "Prioridad"),
                          f("tag", :template, "Tag (substitui o aviso anterior com a mesma)", en: "Tag (replaces the previous notification with the same one)", es: "Etiqueta (reemplaza el aviso anterior con la misma)"),
+                         f("merge", :duration, "Juntar avisos seguidos desta automação em um só (janela, ex.: 2m; vazio = não junta)",
+                           en: "Merge back-to-back notifications from this automation into one (window, e.g. 2m; empty = never)",
+                           es: "Juntar avisos seguidos de esta automatización en uno (ventana, ej.: 2m; vacío = nunca)"),
                          f("group", :text, "Grupo", en: "Group", es: "Grupo"), f("ttl", :duration, "Validade no push (ex.: 1h)", en: "Push expiration (e.g. 1h)", es: "Validez del push (ej.: 1h)"),
                          f("sticky", :bool, "Fixo (fica até tocar)", en: "Sticky (stays until tapped)", es: "Fijo (queda hasta tocarlo)"),
                          f("progress", :template, "Progresso 0–100 no app (contínuo, atualiza no lugar pela tag)", en: "Progress 0–100 in the app (ongoing, updates in place by tag)", es: "Progreso 0–100 en la app (continuo, se actualiza en el lugar por la etiqueta)"),
@@ -79,7 +82,21 @@ module Automations
           "tag" => (e.ctx.render(node["tag"]).strip.presence if node["tag"]), "priority" => node["priority"], "group" => node["group"].presence,
           "ttl" => (Dsl.seconds(node["ttl"]) if node["ttl"]), "sticky" => (true if node["sticky"] == true),
           "progress" => (progress(e.ctx.render(node["progress"])) if node["progress"].present?),
-          "command" => node["phone_command"].presence_in(PHONE_COMMAND_KEYS) }.compact
+          "command" => node["phone_command"].presence_in(PHONE_COMMAND_KEYS) }.compact.merge(merge_for(e, node))
+      end
+
+      # Menos ruído (só quando o bloco pede `merge`: uma automação pode mandar
+      # avisos diferentes de propósito): chave = tag ou a automação; assunto =
+      # nome da automação (Notifications::Merge).
+      def self.merge_for(e, node)
+        return {} if node["merge"].blank? || e.run.automation_id.nil?
+
+        window = Dsl.seconds(node["merge"]).to_i
+        return {} unless window.positive?
+
+        tag = (e.ctx.render(node["tag"]).strip.presence if node["tag"])
+        { "merge_key" => tag ? "tag:#{tag}" : "automation:#{e.run.automation_id}", "merge_s" => window,
+          "merge_subject" => (tag ? nil : e.run.automation&.name) }.compact
       end
 
       # Botão com `point` (chave ou id) e `command`: leva o id do ponto (Notification#run_command).
