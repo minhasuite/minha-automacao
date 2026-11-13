@@ -22,10 +22,31 @@ module Mqtt
     def base = ENV.fetch("Z2M_BASE_TOPIC", "zigbee2mqtt")
     def devices_topic = "#{base}/bridge/devices"
 
-    # Descobridor do Mqtt::Listener (Pacote 1).
-    def topics = site ? [ devices_topic ] : []
-    def handles?(topic) = topic == devices_topic
-    def handle(_topic, payload) = (s = site) && discover!(s, payload)
+    PROTOCOL = "zigbee2mqtt".freeze
+    ROLES = { "Coordinator" => "coordinator", "Router" => "router", "EndDevice" => "end_device" }.freeze
+
+    def bridge_topic(name) = "#{base}/bridge/#{name}"
+
+    # Descobridor do Mqtt::Listener (Pacote 1). Além do bridge/devices, a
+    # ponte inteira (eventos de pareamento, info, estado e respostas) e a
+    # disponibilidade dos aparelhos (docs/integracoes.md, "Zigbee").
+    def topics = site ? [ devices_topic, bridge_topic("event"), bridge_topic("info"), bridge_topic("state"), bridge_topic("response/#"), "#{base}/+/availability" ] : []
+    def handles?(topic) = topic.start_with?("#{base}/bridge/") || availability?(topic)
+    def availability?(topic) = topic.start_with?("#{base}/") && topic.end_with?("/availability")
+
+    def handle(topic, payload)
+      s = site or return
+      return discover!(s, payload) if topic == devices_topic
+      return Bridge.availability(s, topic.delete_suffix("/availability"), payload) if availability?(topic)
+
+      Bridge.receive(s, topic.delete_prefix("#{base}/bridge/"), payload)
+    end
+
+    # Ao conectar: os renomes que ficaram pendentes (broker fora na hora) vão de novo.
+    def connected(_client) = (s = site) && Bridge.retry_renames(s)
+
+    # Toda mensagem de aparelho (fora a descoberta): sinal (linkquality) e último visto.
+    def observe(topic, payload) = Bridge.observe(topic, payload)
 
     def site
       return Site.find_by(id: ENV["Z2M_SITE_ID"]) if ENV["Z2M_SITE_ID"].present?
@@ -51,7 +72,10 @@ module Mqtt
       device = site.devices.find_or_initialize_by(driver: "mqtt", external_id: d["ieee_address"])
       count[:devices] += 1 if device.new_record?
       topic = "#{base}/#{d['friendly_name']}"
-      device.update!(name: d["friendly_name"], manufacturer: d.dig("definition", "vendor"), model: d.dig("definition", "model"))
+      device.bridge_naming = true
+      device.update!(name: name_for(device, d["friendly_name"]), manufacturer: d.dig("definition", "vendor"), model: d.dig("definition", "model"),
+                     address: bridge_address(device, d, topic))
+      Bridge.adopted(site, device, d)
       existing = device.points.index_by { |p| p.address["json_path"] }
       slug = d["friendly_name"].parameterize(separator: "_")
       Firmware.ensure_point!(device, address: { "topic" => topic, "json_path" => "update" }) if d.dig("definition", "supports_ota") # ondaA2 A18
@@ -65,6 +89,31 @@ module Mqtt
           count[:points] += 1
         end
       end
+      battery = device.battery_point_id.nil? && device.points.find_by("points.address->>'json_path' = 'battery'")
+      device.update_columns(battery_point_id: battery.id) if battery
+    end
+
+    # O nome daqui segue o friendly_name do z2m, menos enquanto um renome feito
+    # aqui não chegou lá (`rename_to`): aí fica o daqui (Pairing.renamed).
+    def name_for(device, friendly)
+      pending = device.address.to_h["rename_to"]
+      return friendly if pending.blank? || pending == friendly
+
+      device.name.presence || friendly
+    end
+
+    def bridge_address(device, d, topic)
+      a = device.address.to_h.merge("bridge" => PROTOCOL, "topic" => topic, "friendly_name" => d["friendly_name"])
+      a.delete("rename_to") && a.delete("rename_at") if a["rename_to"] == d["friendly_name"]
+      mesh = a["mesh"].to_h.merge("role" => ROLES[d["type"]], "power" => power(d["power_source"]), "power_source" => d["power_source"],
+                                  "nwk" => d["network_address"]).compact
+      a.merge("mesh" => mesh)
+    end
+
+    def power(source)
+      return if source.blank?
+
+      source.to_s.casecmp?("battery") ? "battery" : "mains"
     end
 
     # Tipos compostos (switch, light, lock, climate…) trazem os campos em `features`.

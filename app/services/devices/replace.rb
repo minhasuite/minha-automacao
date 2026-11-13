@@ -149,12 +149,14 @@ module Devices
       left ? "disable" : "remove"
     end
 
-    def self.call(old_device, new_device, pairs, user:, retire: "remove")
-      new(old_device, new_device, pairs, user: user, retire: retire).call
+    # take_name: o aparelho novo fica com o nome do antigo (no zigbee2mqtt o nome
+    # vai também para a ponte, `Pairing.renamed`).
+    def self.call(old_device, new_device, pairs, user:, retire: "remove", take_name: false)
+      new(old_device, new_device, pairs, user: user, retire: retire, take_name: take_name).call
     end
 
-    def initialize(old_device, new_device, pairs, user:, retire:)
-      @old_device, @new_device, @pairs, @user = old_device, new_device, pairs, user
+    def initialize(old_device, new_device, pairs, user:, retire:, take_name: false)
+      @old_device, @new_device, @pairs, @user, @take_name = old_device, new_device, pairs, user, take_name
       @retire = self.class.retire_for(old_device, pairs, retire)
     end
 
@@ -175,7 +177,17 @@ module Devices
                                               "retire" => @retire, "device_before" => before, "pairs" => entries })
       end
       @pairs.each { |p| Points::Broadcast.changed(p.old.reload, grouped: false) }
+      @new_device.update(name: @old_device.name) if @take_name && @new_device.name != @old_device.name
+      resolve_joins
       event
+    end
+
+    # Assistente de pareamento: o aparelho que entrou e substituiu fica decidido.
+    def resolve_joins
+      PairingJoin.where(device_id: @new_device.id, resolution: nil).find_each do |j|
+        j.update!(resolution: "replaced", resolved_at: Time.current,
+                  details: j.details.merge("replaced_device_id" => @old_device.id, "replaced_device_name" => @old_device.name))
+      end
     end
 
     # Desfaz a última substituição do aparelho antigo: os pontos voltam com o
@@ -194,6 +206,7 @@ module Devices
           attrs = attrs.merge("key" => free_key(point.site, attrs["key"]))
           Point.create!(attrs)
         end
+        PairingJoin.where(resolution: "replaced").where("details->>'replaced_device_id' = ?", old_device.id).update_all(resolution: nil, resolved_at: nil)
         b = event.details["device_before"].to_h
         old_device.update!(removed_at: b["removed_at"], disabled: b["disabled"] ? true : false)
         event.update!(details: event.details.merge("undone_at" => Time.current.iso8601, "undone_by" => user&.id))

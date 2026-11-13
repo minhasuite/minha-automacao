@@ -1,0 +1,79 @@
+<% lqi_tone = { "good" => "success", "fair" => "warn", "weak" => "danger", "muted" => "muted" } %>
+<% colors = { "good" => "var(--success)", "fair" => "var(--warn)", "weak" => "var(--danger)", "muted" => "var(--muted)" } %>
+<%= render "web/shared/header", title: t("pairing.network.title", protocol: @adapter.label), subtitle: t("pairing.network.subtitle", site: @site.name), back: site_devices_path(@site) do %>
+  <% if can?(:manage) %>
+    <%= link_to site_pairing_path(@site, @adapter.key), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("pairing.button", protocol: @adapter.label) %><% end %>
+    <%= button_to site_pairing_network_map_path(@site, @adapter.key), class: "ss-btn ss-btn-outline", form: { data: { turbo_submits_with: t("pairing.network.asking") } } do %><%= icon("refresh", "size-4") %><%= t("pairing.network.refresh_map") %><% end %>
+  <% end %>
+<% end %>
+
+<div class="grid gap-4">
+  <%= render Ss::KpiStripComponent.new(count: false, label: t("pairing.network.summary"), items: [
+        { label: t("pairing.network.kpi.total"), value: @summary[:total].to_s, hint: t("pairing.network.kpi.split", routers: @summary[:routers], ends: @summary[:ends]) },
+        { label: t("pairing.network.kpi.weak"), value: @summary[:weak].to_s, hint: t("pairing.network.kpi.weak_hint", n: Pairing::Network::WEAK) },
+        { label: t("pairing.network.kpi.battery"), value: @summary[:low_battery].to_s, hint: t("pairing.network.kpi.battery_hint", n: Pairing::Network::LOW_BATTERY) },
+        { label: t("pairing.network.kpi.offline"), value: @summary[:offline].to_s }
+      ]) %>
+
+  <section class="ss-card ss-card-pad" aria-labelledby="mesh-map">
+    <%= render Ss::CardHeaderComponent.new(title: t("pairing.network.map"), subtitle: (@bridge.network_map_at ? t("pairing.network.map_at", ago: time_ago_in_words(@bridge.network_map_at)) : t("pairing.network.map_hint")), icon: icon("map", ""), heading: :h2) %>
+    <% if @bridge.map_pending? %>
+      <div class="mt-3" data-controller="ss-reload" data-ss-reload-every-value="5000">
+        <%= render Ss::ScanRadarComponent.new(state: :searching, compact: true, icon: icon("map", ""), labels: { searching: t("pairing.network.waiting") }) %>
+      </div>
+    <% end %>
+    <% if @bridge.network_map_error.present? %>
+      <%= render(Ss::NoteComponent.new(tone: :danger, css: "mt-3")) { t("pairing.network.map_error", error: @bridge.network_map_error) } %>
+    <% end %>
+    <% if @layout %>
+      <% pos = @layout[:nodes].index_by { |n| n[:id] } %>
+      <div data-app="skip">
+        <svg viewBox="-60 -40 1120 1080" class="mt-3 w-full max-w-2xl mx-auto" role="img" aria-label="<%= t("pairing.network.map") %>">
+          <% @layout[:edges].each do |e| %>
+            <% a, b = pos[e[:a]], pos[e[:b]] %>
+            <line x1="<%= a[:x] %>" y1="<%= a[:y] %>" x2="<%= b[:x] %>" y2="<%= b[:y] %>" stroke="<%= colors[Pairing::MapLayout.tone(e[:lqi])] %>" stroke-width="<%= e[:parent] ? 3 : 1.2 %>" stroke-opacity="<%= e[:parent] ? 0.85 : 0.35 %>"><title><%= "#{a[:name]} ↔ #{b[:name]} · #{t("pairing.lqi", n: e[:lqi])}" %></title></line>
+          <% end %>
+          <% @layout[:nodes].each do |n| %>
+            <% r = { "coordinator" => 22, "router" => 14 }.fetch(n[:role], 9) %>
+            <% fill = n[:role] == "coordinator" ? "var(--accent)" : (n[:failed] ? "var(--danger)" : colors[Pairing::MapLayout.tone(n[:lqi])]) %>
+            <g>
+              <title><%= [ n[:name], t("pairing.roles.#{n[:role]}"), (t("pairing.lqi", n: n[:lqi]) if n[:lqi]) ].compact.join(" · ") %></title>
+              <% if n[:device_id] %><a href="<%= device_path(n[:device_id]) %>"><% end %>
+              <circle cx="<%= n[:x] %>" cy="<%= n[:y] %>" r="<%= r %>" fill="<%= fill %>" stroke="var(--surface, #fff)" stroke-width="3" />
+              <text x="<%= n[:x] %>" y="<%= n[:y] + r + 18 %>" text-anchor="middle" font-size="<%= n[:role] == "end_device" ? 17 : 20 %>" fill="currentColor" stroke="var(--surface, #fff)" stroke-width="5" paint-order="stroke"><%= (n[:role] == "coordinator" ? t("pairing.roles.coordinator") : n[:name]).to_s.truncate(22) %></text>
+              <% if n[:device_id] %></a><% end %>
+            </g>
+          <% end %>
+        </svg>
+        <ul class="mt-2 flex flex-wrap justify-center gap-3 text-xs text-muted" aria-label="<%= t("pairing.network.legend") %>">
+          <% %w[good fair weak].each do |k| %>
+            <li class="inline-flex items-center gap-1"><span class="ss-badge ss-badge-dot ss-badge-<%= lqi_tone[k] %>"><%= t("pairing.network.tones.#{k}", good: Pairing::Network::GOOD, weak: Pairing::Network::WEAK) %></span></li>
+          <% end %>
+          <li><%= t("pairing.network.legend_lines") %></li>
+        </ul>
+      </div>
+    <% elsif !@bridge.map_pending? %>
+      <%= render(Ss::NoteComponent.new(css: "mt-3")) { t("pairing.network.no_map") } %>
+    <% end %>
+  </section>
+
+  <%= render Ss::DataTableComponent.new(rows: @rows, id: "rede", caption: t("pairing.network.devices"), sort: @sort, dir: @dir, tools: false,
+                                        empty: t("pairing.network.empty")) do |tb| %>
+    <% tb.column :name, t("pairing.network.cols.name"), sortable: true, hideable: false do |r| %>
+      <%= link_to r.device.name, device_path(r.device), class: "font-semibold text-ink no-underline hover:text-accent" %>
+      <% if r.device.area %><span class="block text-xs text-muted"><%= r.device.area.name %></span><% end %>
+    <% end %>
+    <% tb.column :role, t("pairing.network.cols.role"), sortable: true do |r| %><%= t("pairing.roles.#{r.role}") %><% if r.power %><span class="block text-xs text-muted"><%= t("pairing.power.#{r.power}") %></span><% end %><% end %>
+    <% tb.column :lqi, t("pairing.network.cols.lqi"), sortable: true do |r| %>
+      <% if r.lqi %><span class="ss-badge ss-badge-<%= lqi_tone[Pairing::MapLayout.tone(r.lqi)] %> num"><%= r.lqi %></span><% else %>—<% end %>
+    <% end %>
+    <% tb.column :parent, t("pairing.network.cols.parent") do |r| %><%= (p = @parents[r.device.external_id]) ? (@roles[p] == "coordinator" ? t("pairing.roles.coordinator") : @names[p]) : "—" %><% end %>
+    <% tb.column :seen, t("pairing.network.cols.seen"), sortable: true do |r| %><%= r.seen_at ? t("pairing.ago", ago: time_ago_in_words(r.seen_at)) : t("pairing.network.never") %><% end %>
+    <% tb.column :battery, t("pairing.network.cols.battery"), sortable: true do |r| %>
+      <% if r.battery %><span class="<%= r.low_battery? ? 'text-danger font-semibold' : '' %> num"><%= r.battery %>%</span><% else %>—<% end %>
+    <% end %>
+    <% tb.column :situation, t("pairing.network.cols.situation") do |r| %>
+      <% label, tone, note = device_situation(r.device) %><span class="ss-badge ss-badge-dot ss-badge-<%= tone %>" title="<%= note %>"><%= label %></span>
+    <% end %>
+  <% end %>
+</div>

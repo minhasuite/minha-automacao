@@ -157,6 +157,10 @@ module Integrations
       def panel_action(integration, _action, _params) = outcome(:panel, integration: integration)
       def panel_refresh(_integration) = nil
 
+      # Assistente de pareamento e mapa da rede (docs/integracoes.md, "Zigbee"):
+      # o adaptador da ponte (`< Pairing::Adapter`) ou nil (padrão: não pareia).
+      def pairing_bridge = nil
+
       # catalogo: tipos de aparelho que o próprio plugin dirige (SchemaPlugin); padrão: nenhum.
       def device_kinds = []
       def device_driver(_kind) = nil

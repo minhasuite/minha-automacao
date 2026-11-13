@@ -900,6 +900,54 @@ CREATE TABLE public.packages (
 
 
 --
+-- Name: pairing_bridges; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.pairing_bridges (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    protocol character varying NOT NULL,
+    state character varying,
+    permit_until timestamp(6) without time zone,
+    info jsonb DEFAULT '{}'::jsonb NOT NULL,
+    network_map jsonb,
+    network_map_at timestamp(6) without time zone,
+    network_map_requested_at timestamp(6) without time zone,
+    network_map_error character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: pairing_joins; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.pairing_joins (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    site_id uuid NOT NULL,
+    device_id uuid,
+    protocol character varying NOT NULL,
+    external_id character varying NOT NULL,
+    name character varying,
+    status character varying DEFAULT 'joined'::character varying NOT NULL,
+    model character varying,
+    manufacturer character varying,
+    description character varying,
+    power_source character varying,
+    supported boolean,
+    resolution character varying,
+    resolved_at timestamp(6) without time zone,
+    joined_at timestamp(6) without time zone NOT NULL,
+    details jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: panel_devices; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2321,6 +2369,22 @@ ALTER TABLE ONLY public.packages
 
 
 --
+-- Name: pairing_bridges pairing_bridges_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pairing_bridges
+    ADD CONSTRAINT pairing_bridges_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pairing_joins pairing_joins_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pairing_joins
+    ADD CONSTRAINT pairing_joins_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: panel_devices panel_devices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2924,7 +2988,7 @@ CREATE INDEX index_automation_runs_on_tenant_id ON public.automation_runs USING 
 -- Name: index_automation_runs_open; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_automation_runs_open ON public.automation_runs USING btree (status, updated_at) WHERE ((status)::text = ANY ((ARRAY['running'::character varying, 'waiting'::character varying, 'queued'::character varying])::text[]));
+CREATE INDEX index_automation_runs_open ON public.automation_runs USING btree (status, updated_at) WHERE ((status)::text = ANY (ARRAY[('running'::character varying)::text, ('waiting'::character varying)::text, ('queued'::character varying)::text]));
 
 
 --
@@ -3485,6 +3549,41 @@ CREATE UNIQUE INDEX index_packages_on_site_id_and_key ON public.packages USING b
 --
 
 CREATE INDEX index_packages_on_tenant_id ON public.packages USING btree (tenant_id);
+
+
+--
+-- Name: index_pairing_bridges_on_site_id_and_protocol; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_pairing_bridges_on_site_id_and_protocol ON public.pairing_bridges USING btree (site_id, protocol);
+
+
+--
+-- Name: index_pairing_bridges_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pairing_bridges_on_tenant_id ON public.pairing_bridges USING btree (tenant_id);
+
+
+--
+-- Name: index_pairing_joins_on_device_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pairing_joins_on_device_id ON public.pairing_joins USING btree (device_id);
+
+
+--
+-- Name: index_pairing_joins_on_site_id_and_protocol_and_external_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_pairing_joins_on_site_id_and_protocol_and_external_id ON public.pairing_joins USING btree (site_id, protocol, external_id);
+
+
+--
+-- Name: index_pairing_joins_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pairing_joins_on_tenant_id ON public.pairing_joins USING btree (tenant_id);
 
 
 --
@@ -4274,6 +4373,14 @@ ALTER TABLE ONLY public.alert_rules
 
 
 --
+-- Name: pairing_bridges fk_rails_213b91684b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pairing_bridges
+    ADD CONSTRAINT fk_rails_213b91684b FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: schedules fk_rails_228e8ae418; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4602,6 +4709,14 @@ ALTER TABLE ONLY public.assist_custom_intents
 
 
 --
+-- Name: pairing_joins fk_rails_5e66261051; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pairing_joins
+    ADD CONSTRAINT fk_rails_5e66261051 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
 -- Name: panel_devices fk_rails_5fbd0450c8; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4631,6 +4746,14 @@ ALTER TABLE ONLY public.assist_custom_responses
 
 ALTER TABLE ONLY public.events
     ADD CONSTRAINT fk_rails_6844d4946c FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: pairing_joins fk_rails_69d7fd6fe7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pairing_joins
+    ADD CONSTRAINT fk_rails_69d7fd6fe7 FOREIGN KEY (device_id) REFERENCES public.devices(id) ON DELETE SET NULL;
 
 
 --
@@ -4775,6 +4898,14 @@ ALTER TABLE ONLY public.alerts
 
 ALTER TABLE ONLY public.automations
     ADD CONSTRAINT fk_rails_80f17165a8 FOREIGN KEY (blueprint_id) REFERENCES public.blueprints(id) ON DELETE SET NULL;
+
+
+--
+-- Name: pairing_bridges fk_rails_815c089a06; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pairing_bridges
+    ADD CONSTRAINT fk_rails_815c089a06 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -5266,6 +5397,14 @@ ALTER TABLE ONLY public.commands
 
 
 --
+-- Name: pairing_joins fk_rails_ed32764624; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pairing_joins
+    ADD CONSTRAINT fk_rails_ed32764624 FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: assist_runs fk_rails_f0a13a53a9; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5369,6 +5508,7 @@ SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
 ('20261113120731'),
+('20261113120437'),
 ('20261111143017'),
 ('20261111120017'),
 ('20261111100047'),

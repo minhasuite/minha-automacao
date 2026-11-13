@@ -11,6 +11,21 @@
   <% end %>
 <% end %>
 
+<% if (pa = Pairing.for_device(@device)) %>
+  <% a = @device.address.to_h %>
+  <% if a["rename_error"].present? %>
+    <%= render(Ss::NoteComponent.new(tone: :warn, css: "mb-4")) { t("pairing.rename_error", error: a["rename_error"]) } %>
+  <% elsif a["rename_to"].present? %>
+    <%= render(Ss::NoteComponent.new(css: "mb-4")) { t("pairing.rename_pending", name: a["rename_to"]) } %>
+  <% end %>
+  <% mesh = Pairing.mesh(@device) %>
+  <% if mesh.any? %>
+    <p class="mb-4 text-sm text-muted">
+      <%= [ (t("pairing.roles.#{mesh['role']}") if mesh["role"]), (t("pairing.power.#{mesh['power']}") if mesh["power"]), (t("pairing.lqi", n: mesh["lqi"]) if mesh["lqi"]) ].compact.join(" · ") %>
+      · <%= link_to t("pairing.network.link", protocol: pa.label), site_pairing_network_path(@site, pa.key) %>
+    </p>
+  <% end %>
+<% end %>
 <% if @replaced && can?(:manage) %>
   <%= render(Ss::CalloutComponent.new(tone: :info, title: t("devices.replace.replaced_title"), css: "mb-4")) do %>
     <p><%= t("devices.replace.replaced", name: @replaced.details["new_device_name"], at: l(@replaced.created_at, format: :short), count: @replaced.details["pairs"].size) %></p>

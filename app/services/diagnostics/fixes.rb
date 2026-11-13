@@ -82,7 +82,11 @@ module Diagnostics
         !!(d && route && routes.respond_to?("#{route}_path") && Array(Diagnostics.config["pair_drivers"]).include?(d.driver))
       end
 
-      def self.url(finding) = routes.public_send("#{route}_path", site_id: finding.site_id, device_id: finding.device.id)
+      # `pair_params` completa a rota (ex.: o protocolo); o aparelho vai junto como `device_id`.
+      def self.url(finding)
+        extra = Diagnostics.config["pair_params"].to_h.transform_keys(&:to_sym)
+        routes.public_send("#{route}_path", site_id: finding.site_id, device_id: finding.device.id, **extra)
+      end
     end
 
     # "Substituir aparelho" (Devices::Replace): os pontos passam para o aparelho novo.

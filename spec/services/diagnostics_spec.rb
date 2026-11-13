@@ -236,11 +236,13 @@ RSpec.describe "Saúde dos aparelhos: diagnóstico (Diagnostics)" do
 
     it "parear de novo só aparece com a rota configurada" do
       d = dev("Teste Zigbee", driver: "mqtt", status: "offline", last_seen_at: 3.hours.ago)
+      cfg = Diagnostics.config
+      allow(Diagnostics).to receive(:config).and_return(cfg.merge("pair_route" => nil))
       expect(run.first.fixes).not_to include("pair")
-      allow(Diagnostics).to receive(:config).and_return(Diagnostics.config.merge("pair_route" => "device_health"))
+      allow(Diagnostics).to receive(:config).and_return(cfg)
       f = run.first
       expect(f.fixes).to include("pair")
-      expect(Diagnostics.fix("pair").url(f)).to include("site_id=#{site.id}", "device_id=#{d.id}")
+      expect(Diagnostics.fix("pair").url(f)).to eq("/locais/#{site.id}/parear/zigbee2mqtt?device_id=#{d.id}")
     end
   end
 end

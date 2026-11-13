@@ -52,8 +52,9 @@ sensors:
 # caminho e hub entram para não acusar as câmeras de um mesmo DVR.
 duplicate_address_keys: [host, port, channel, path, camera, node, endpoint, via, stream, dps]
 
-# Rota nomeada do pareamento Zigbee (assistente do branch zigbee-assistente).
-# Vazio = o reparo "Parear de novo" não aparece. Ver docs/saude-aparelhos.md.
-pair_route:
+# Rota nomeada do pareamento (assistente de pareamento) e o que ela pede além do
+# local. Vazio = o reparo "Parear de novo" não aparece. Ver docs/saude-aparelhos.md.
+pair_route: site_pairing
+pair_params: { protocolo: zigbee2mqtt }
 # Drivers que o pareamento cobre.
 pair_drivers: [mqtt]

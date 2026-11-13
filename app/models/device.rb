@@ -40,6 +40,14 @@ class Device < ApplicationRecord
 
   audited_attributes :name, :driver, :area_id
 
+  # Nome de aparelho de ponte de pareamento (zigbee2mqtt): quem renomeia aqui
+  # renomeia lá (`Pairing.renamed`); a descoberta marca `bridge_naming` para o
+  # nome que veio da ponte não voltar para ela.
+  attr_accessor :bridge_naming
+
+  validate :bridge_name, if: -> { will_save_change_to_name? && !bridge_naming && persisted? }
+  after_update_commit :rename_on_bridge, if: -> { saved_change_to_name? && !bridge_naming }
+
   def virtual? = driver == "virtual"
   def tuya_local? = driver == "tuya_local"
   def driver_label = DRIVERS.fetch(driver) { Integrations.for_driver(driver)&.title || driver }
@@ -90,6 +98,12 @@ class Device < ApplicationRecord
   def usages = Point.usages(site, points)
 
   private
+
+  def bridge_name
+    (msg = Pairing.name_error(self, name)) && errors.add(:name, msg)
+  end
+
+  def rename_on_bridge = Pairing.renamed(self)
 
   def area_in_same_site
     errors.add(:area, :other_site) if area && area.site_id != site_id

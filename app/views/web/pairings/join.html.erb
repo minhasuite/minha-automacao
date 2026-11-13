@@ -1,0 +1,61 @@
+<% mesh = @device ? Pairing.mesh(@device) : {} %>
+<%= render "web/shared/header", title: @device&.name || @join.name || @join.external_id, subtitle: t("pairing.join_subtitle", protocol: @adapter.label), back: site_pairing_path(@site, @adapter.key) %>
+
+<div class="grid gap-4 max-w-4xl">
+  <section class="ss-card ss-card-pad">
+    <%= render Ss::CardHeaderComponent.new(title: [ @join.manufacturer, @join.model ].compact_blank.join(" · ").presence || t("pairing.unknown_model"), subtitle: @join.description, icon: icon(@join.battery? ? "battery" : "chip", "")) %>
+    <dl class="mt-3 grid gap-2 sm:grid-cols-4 text-sm">
+      <div><dt class="text-muted"><%= t("pairing.fields.status") %></dt><dd class="font-semibold text-ink"><%= t("pairing.statuses.#{@join.status}") %></dd></div>
+      <div><dt class="text-muted"><%= t("pairing.fields.signal") %></dt><dd class="font-semibold text-ink"><%= mesh["lqi"] || "—" %></dd></div>
+      <div><dt class="text-muted"><%= t("pairing.fields.power") %></dt><dd class="font-semibold text-ink"><%= @join.power_source.present? ? (@join.battery? ? t("pairing.power.battery") : t("pairing.power.mains")) : "—" %></dd></div>
+      <div><dt class="text-muted"><%= t("pairing.fields.joined") %></dt><dd class="font-semibold text-ink"><%= t("pairing.joined_ago", ago: time_ago_in_words(@join.joined_at)) %></dd></div>
+    </dl>
+    <% if @join.status == "failed" %><%= render(Ss::NoteComponent.new(tone: :danger, css: "mt-3")) { t("pairing.failed_hint") } %><% end %>
+  </section>
+
+  <% if @join.resolved? %>
+    <%= render(Ss::NoteComponent.new(tone: :success)) { t("pairing.resolutions.#{@join.resolution}", name: @join.details["replaced_device_name"]) } %>
+    <% if @device %><div><%= link_to t("pairing.open_device"), device_path(@device), class: "ss-btn ss-btn-outline" %></div><% end %>
+  <% elsif @device.nil? %>
+    <% if @join.status.in?(%w[joined interviewing successful]) %>
+      <div data-controller="ss-reload" data-ss-reload-every-value="3000"><%= render(Ss::NoteComponent.new) { t("pairing.waiting_interview") } %></div>
+    <% end %>
+  <% else %>
+    <%= form_with url: site_pairing_join_new_path(@site, @adapter.key, @join), method: :post, class: "ss-card ss-card-pad grid gap-3" do %>
+      <%= render Ss::CardHeaderComponent.new(title: t("pairing.new_title"), subtitle: t("pairing.new_hint"), icon: icon("plus", ""), heading: :h2) %>
+      <div>
+        <%= label_tag :name, t("pairing.fields.name"), class: "ss-label" %>
+        <%= text_field_tag :name, params[:name] || @device.name, class: "ss-input", required: true, maxlength: 120 %>
+        <p class="text-xs text-muted mt-1"><%= t("pairing.name_hint") %></p>
+      </div>
+      <div>
+        <%= label_tag :area_id, t("pairing.fields.area"), class: "ss-label" %>
+        <%= select_tag :area_id, options_for_select(@areas.map { |a| [ a.name, a.id ] }, params[:area_id] || @device.area_id), include_blank: t("pairing.no_area"), class: "ss-input" %>
+      </div>
+      <div><button type="submit" class="ss-btn ss-btn-primary"><%= icon("check", "size-4") %><%= t("pairing.save_new") %></button></div>
+    <% end %>
+
+    <section class="ss-card ss-card-pad" aria-labelledby="pairing-replace">
+      <%= render Ss::CardHeaderComponent.new(title: t("pairing.replace_title"), subtitle: t("pairing.replace_sub"), icon: icon("switch-horizontal", ""), heading: :h2) %>
+      <p class="mt-2 text-sm text-muted"><%= t("pairing.replace_hint") %></p>
+      <% if @suggestions.empty? %>
+        <%= render(Ss::NoteComponent.new(css: "mt-3")) { t("pairing.no_candidates") } %>
+      <% else %>
+        <ul class="mt-3 grid gap-2">
+          <% @suggestions.each_with_index do |s, i| %>
+            <li class="ss-item flex flex-wrap items-center gap-3">
+              <div class="min-w-0 flex-1 basis-56">
+                <p class="font-semibold text-ink"><%= s.device.name %><% if i.zero? %> <span class="ss-badge ss-badge-accent"><%= t("pairing.best") %></span><% end %></p>
+                <p class="text-xs text-muted"><%= [ s.device.area&.name, s.device.driver_label, [ s.device.manufacturer, s.device.model ].compact_blank.join(" ") ].compact_blank.join(" · ") %></p>
+                <p class="text-sm text-ink-2 mt-1"><%= s.reasons.join(" · ") %></p>
+              </div>
+              <%= link_to replace_device_path(s.device, por: @device.id, assistente: @adapter.key), class: "ss-btn #{i.zero? ? 'ss-btn-primary' : 'ss-btn-outline'} ss-btn-sm" do %><%= t("pairing.replace_this") %><% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+
+    <div><%= button_to t("pairing.dismiss"), site_pairing_join_dismiss_path(@site, @adapter.key, @join), class: "ss-btn ss-btn-ghost", form: { data: { turbo_confirm: t("pairing.dismiss_confirm") } } %></div>
+  <% end %>
+</div>

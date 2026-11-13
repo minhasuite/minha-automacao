@@ -85,6 +85,8 @@ RSpec.describe "Driver mqtt e zigbee2mqtt" do
       expect(other.reload.value).to eq(12)
       expect(device.reload.status).to eq("online")
       expect(described_class.topics).to contain_exactly("z/rele", "zigbee2mqtt/bridge/devices", "tasmota/discovery/#", # único local: descoberta ligada
+                                                         "zigbee2mqtt/bridge/event", "zigbee2mqtt/bridge/info", "zigbee2mqtt/bridge/state", # assistente de pareamento
+                                                         "zigbee2mqtt/bridge/response/#", "zigbee2mqtt/+/availability",
                                                          "homeassistant/+/+/config", "homeassistant/+/+/+/config") # ondaC1: formato do HA
     end
 
