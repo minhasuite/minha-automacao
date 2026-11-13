@@ -363,6 +363,8 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (tcp/udp) anunciada em `APP_HOST`. Sem `GO2RTC_URL` (VPS) o widget mostra
   "Sem conexão". Importação: `... | rake 'go2rtc:importar[Casa]'` com o JSON
   na entrada padrão (senha nunca em arquivo nem argumento).
+  Widget `camera` com `autoplay: true` abre o WebRTC sozinho quando visível (limite
+  `autoplay_max`/`CameraWidget::AUTOPLAY_MAX` por página; `docs/dashboards.md`).
 - **Xiaomi (F8)**: protocolo local miIO/MIoT (UDP 54321) em `Miio::Protocol`
   (quadros, sem rede) → `Miio::Client` → `Drivers::XiaomiMiot`. Nada passa pela
   nuvem: o `xiaomi_home` do HA usa OAuth e girar o token dele derruba o robô no

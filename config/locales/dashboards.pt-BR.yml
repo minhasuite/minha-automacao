@@ -253,6 +253,8 @@ pt-BR:
       no_point: Nenhum ponto serve
       tariff_html: 'Tarifa branca: crie antes um helper <strong>Tarifa de energia</strong> com as faixas de ponta e intermediária (Helpers do local) e escolha-o aqui.'
     wf:
+      camera_autoplay: Ao vivo automático
+      camera_autoplay_hint: "Abre o vídeo sozinho quando o card aparece na tela e fecha ao sair (até %{max} por página; os outros ficam na foto)."
       web_only: Este card roda só na web (código de terceiros no iframe isolado). No app aparece um aviso com o botão "Abrir na web".
       label: Rótulo
       label_hint: Usa o nome do ponto

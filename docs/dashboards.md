@@ -91,7 +91,7 @@ ou `key` do ponto.
 | `area_card` | `area`, `facts?` | cartão da área com os itens (`facts`, consultas; sem eles, o padrão do local, que nasce com ligados, abertos, movimento, potência e sem sinal); tocar num item abre a lista dos pontos dele; o resto navega para a view com `area` igual |
 | `scene_bar` | `scenes` (ids; vazio = todas) | botões de cena |
 | `alerts` | — | alertas abertos com "Ciente" |
-| `camera` | `bind` (ponto `stream` de dispositivo `go2rtc`), `live` (padrão true), `snapshot_interval` (2–300 s, padrão 10) | quadro periódico e "Ao vivo" (WebRTC); sem conexão, o aviso no lugar da imagem |
+| `camera` | `bind` (ponto `stream` de dispositivo `go2rtc`), `live` (padrão true), `snapshot_interval` (2–300 s, padrão 10), `autoplay` (padrão false), `autoplay_max` (1–16, padrão 8) | quadro periódico e "Ao vivo" (WebRTC); sem conexão, o aviso no lugar da imagem; com `autoplay` o ao vivo abre sozinho (ver "Câmera ao vivo automático") |
 | `vacuum` | `bind` (ponto `vacuum` de dispositivo `xiaomi_miot`) | estado, bateria, aviso de erro, Limpar a casa/Pausar/Parar/Voltar à base, cômodos do mapa em pílulas + ajustes (modo, potência, água, caminho, vezes) e "Limpar selecionados" (`clean_rooms`), base (lavar, secar, esvaziar) e peças com barra; os irmãos do aparelho entram pelo `address.role` |
 | `energy` | `binds` (pontos kWh/Wh acumulados ou W/kW, somados), `period` (`today`/`week`/`month`/`cycle`), `cycle_day` (1–28), `tariff` (R$/kWh) **ou** `tariff_point` (ponto, ex. helper Número), `goal` (kWh), `compare` | "Consumo e custo" (F9): consumo, custo, projeção linear até o fim do período, meta, comparação com o mesmo trecho do período anterior e barras por hora (hoje) ou dia, pelos rollups de hora (`Dashboards::Energy`) |
 | `heading` | `title` | título |
@@ -942,3 +942,28 @@ por nome = `CardTemplates::FACT_SOURCES`; desenho novo = `LAYOUTS` + partial em
 novo = um YAML; painel pronto novo = um manifesto na biblioteca ou um item
 `preset` de pacote; tipo de item de pacote = `Packages::ITEMS`
 (`CardTemplateItem`, `PresetItem`).
+
+## Câmera ao vivo automático (`autoplay`)
+
+A foto da câmera (`snapshot_interval`) espera o quadro-chave do DVR (3–6 s em
+muitas câmeras), então uma grade de fotos parece travada. Com `"autoplay": true`
+no widget `camera` (editor: caixa "Ao vivo automático"), o card abre o vídeo
+WebRTC sozinho, como o app do DVR:
+
+- abre quando o card está ao menos 25% na tela e a aba/app está visível; fecha ao
+  sair da tela ou com a aba oculta (app em segundo plano, outra tela por cima) e
+  reabre na volta;
+- até o vídeo chegar, a foto continua; sem vídeo em 10 s (web) / 8 s (app) ou
+  conexão caída = volta às fotos e tenta de novo com espera crescente
+  (5 s, 10 s, 20 s... até 2 min);
+- no máximo `autoplay_max` (padrão 8, `Dashboards::Widgets::CameraWidget::AUTOPLAY_MAX`)
+  ao vivo abertos ao mesmo tempo na página: os excedentes ficam na foto e entram
+  quando abre uma vaga (o limite vale para o card que quer abrir);
+- desligar o ao vivo pelo botão do card segura aquele card na foto até ligar de novo.
+
+Sem `autoplay`, nada muda. Web: `camera_controller.js` (`data-camera-autoplay-value`,
+`data-camera-autoplay-max-value`); não há framework de teste de JS, o request spec
+confere os atributos e o comportamento foi conferido no navegador. App:
+`CameraWidget` com `LiveCamera(compact: true)` dentro do `SsCameraTile`
+(`CameraLiveSlots` = o limite por tela).
+

@@ -253,6 +253,8 @@ en:
       no_point: No suitable point
       tariff_html: 'Time-of-use rate: first create a <strong>Energy rate</strong> helper with the peak and shoulder bands (place Helpers) and pick it here.'
     wf:
+      camera_autoplay: Auto live
+      camera_autoplay_hint: "Opens the video by itself when the card is on screen and closes it when it leaves (up to %{max} per page; the rest stay on the snapshot)."
       web_only: This card only runs on the web (third-party code in an isolated iframe). The app shows a notice with an "Open on the web" button.
       label: Label
       label_hint: Uses the point name

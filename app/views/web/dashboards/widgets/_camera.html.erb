@@ -7,7 +7,8 @@
   <%# Tile de câmera da gem; o quadro (img) e o WebRTC (video) são do controller camera, que troca o data-state. %>
   <%= render Ss::CameraTileComponent.new(title: dw_label(w, p), state: :loading, age: 0, retry_button: true, url: point_path(p["id"]),
                                          data: { controller: "camera", camera_snapshot_value: camera_snapshot_path(p["id"]), camera_webrtc_value: camera_webrtc_path(p["id"]),
-                                                 camera_interval_value: w["snapshot_interval"] || 10 }) do |c| %>
+                                                 camera_interval_value: w["snapshot_interval"] || 10, camera_autoplay_value: w["autoplay"] == true,
+                                                 camera_autoplay_max_value: w["autoplay_max"] || Dashboards::Widgets::CameraWidget::AUTOPLAY_MAX }) do |c| %>
     <% c.with_frame do %>
       <img data-camera-target="img" alt="<%= t("dashboards.w.image_x", name: dw_label(w, p)) %>" hidden>
       <video data-camera-target="video" muted playsinline autoplay hidden aria-label="<%= t("dashboards.w.live_x", name: dw_label(w, p)) %>"></video>

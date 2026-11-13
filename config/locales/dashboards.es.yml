@@ -253,6 +253,8 @@ es:
       no_point: Ningún punto sirve
       tariff_html: 'Tarifa horaria: crea antes un helper <strong>Tarifa de energía</strong> con las franjas punta e intermedia (Helpers del lugar) y elígelo aquí.'
     wf:
+      camera_autoplay: En vivo automático
+      camera_autoplay_hint: "Abre el video solo cuando la tarjeta aparece en pantalla y lo cierra al salir (hasta %{max} por página; las demás quedan en la foto)."
       web_only: Esta tarjeta solo funciona en la web (código de terceros en un iframe aislado). La app muestra un aviso con el botón "Abrir en la web".
       label: Etiqueta
       label_hint: Usa el nombre del punto

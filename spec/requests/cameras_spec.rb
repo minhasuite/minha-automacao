@@ -80,4 +80,51 @@ RSpec.describe "Câmeras: proxy do go2rtc com autorização do local" do
     get "/"
     expect(response.body).to include("Câmeras", 'data-controller="camera ss-camera"', "/cameras/#{camera.id}/quadro", "Ao vivo")
   end
+
+  describe "ao vivo automático (autoplay)" do
+    def painel(widget)
+      within(tenant) do
+        Dashboard.create!(site: site, name: "Câmeras", kind: "custom", site_default: true,
+                          definition: { "schema_version" => 1, "views" => [ { "id" => "v", "title" => "V", "sections" => [ { "id" => "s", "widgets" => [ widget ] } ] } ] })
+      end
+    end
+
+    it "o card leva o autoplay e o limite nos data-attributes; sem autoplay, desligado" do
+      sign_in
+      d = painel({ "id" => "c1", "type" => "camera", "bind" => camera.id, "autoplay" => true, "autoplay_max" => 3 })
+      get "/paineis/#{d.id}"
+      card = Nokogiri::HTML(response.body).at_css("[data-controller~='camera']")
+      expect(card["data-camera-autoplay-value"]).to eq("true")
+      expect(card["data-camera-autoplay-max-value"]).to eq("3")
+
+      within(tenant) { d.update!(definition: d.definition.deep_merge("views" => [ d.definition["views"].first.merge("sections" => [ { "id" => "s", "widgets" => [ { "id" => "c1", "type" => "camera", "bind" => camera.id } ] } ]) ])) }
+      get "/paineis/#{d.id}"
+      card = Nokogiri::HTML(response.body).at_css("[data-controller~='camera']")
+      expect(card["data-camera-autoplay-value"]).to eq("false")
+      expect(card["data-camera-autoplay-max-value"]).to eq(Dashboards::Widgets::CameraWidget::AUTOPLAY_MAX.to_s)
+    end
+
+    it "Schema e JSON Schema validam autoplay e autoplay_max" do
+      ok = { "id" => "c1", "type" => "camera", "bind" => camera.id, "autoplay" => true, "autoplay_max" => 8 }
+      defn = ->(w) { { "schema_version" => 1, "views" => [ { "id" => "v", "title" => "V", "sections" => [ { "id" => "s", "widgets" => [ w ] } ] } ] } }
+      expect(Dashboards::Schema.errors(defn.(ok))).to eq([])
+      errs = Dashboards::Schema.errors(defn.(ok.merge("autoplay" => "sim", "autoplay_max" => 40)))
+      expect(errs.join).to include("autoplay", "autoplay_max")
+      props = Dashboards::JsonSchema.call.dig("$defs", "widget_camera", "properties") || Dashboards::JsonSchema.call.to_json
+      expect(props.to_json).to include("autoplay_max")
+    end
+
+    it "editor: caixa \"Ao vivo automático\" grava autoplay e editar não perde o intervalo" do
+      sign_in
+      d = painel({ "id" => "c1", "type" => "camera", "bind" => camera.id, "snapshot_interval" => 30 })
+      within(tenant) { d.update!(draft: d.definition) }
+      get "/paineis/#{d.id}/editar"
+      expect(response.body).to include("Ao vivo automático")
+      patch "/paineis/#{d.id}/rascunho", params: { op: "update_widget", target: "c1", view_id: "v", widget: { type: "camera", bind: camera.id, autoplay: "1" } }
+      w = within(tenant) { d.reload.draft["views"].first["sections"].first["widgets"].first }
+      expect(w).to include("autoplay" => true, "live" => true, "snapshot_interval" => 30)
+      patch "/paineis/#{d.id}/rascunho", params: { op: "update_widget", target: "c1", view_id: "v", widget: { type: "camera", bind: camera.id, autoplay: "0" } }
+      expect(within(tenant) { d.reload.draft["views"].first["sections"].first["widgets"].first }).not_to have_key("autoplay")
+    end
+  end
 end
