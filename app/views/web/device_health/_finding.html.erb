@@ -1,0 +1,53 @@
+<%# locals: (f:, fp:, show_rule:) -%>
+<% safe = ->(s) { s.present? && !@reveal ? Sensitive.scrub(s) : s } %>
+<% sev_icon = { "info" => "information-circle", "warn" => "exclamation-circle", "error" => "x-circle" }[f.severity] %>
+<% sev_tone = { "info" => "text-info", "warn" => "text-warn", "error" => "text-danger" }[f.severity] %>
+<% dom = "f-#{f.ref.parameterize}" %>
+<li class="py-3 flex items-start gap-3 <%= "opacity-60" if f.snoozed? %>" data-finding="<%= f.ref %>" data-severity="<%= f.severity %>">
+  <%= icon(sev_icon, "size-5 shrink-0 mt-0.5 #{sev_tone}") %>
+  <div class="min-w-0 flex-1">
+    <p class="flex flex-wrap items-center gap-2">
+      <% href = if f.point then point_path(f.point) elsif f.device then device_path(f.device) else site_integrations_path(@site) end %>
+      <%= link_to f.name, href, class: "font-semibold text-ink no-underline hover:text-accent break-words" %>
+      <% ctx = [ (f.device.name if f.point), (f.area&.name unless show_rule), (f.integration&.name if f.device) ].compact_blank.uniq %>
+      <% if ctx.any? %><span class="text-sm text-muted break-words"><%= ctx.join(" · ") %></span><% end %>
+      <span class="ss-badge ss-badge-<%= Diagnostics::TONES[f.severity] %>"><%= t("device_health.severities.#{f.severity}") %></span>
+      <% if show_rule %><span class="ss-badge ss-badge-muted"><%= f.rule.label %></span><% end %>
+      <% if f.snoozed? %><span class="ss-badge ss-badge-muted"><%= t("device_health.snoozed_until", date: l(f.snoozed_until.to_date)) %></span><% end %>
+    </p>
+    <p class="text-sm text-ink-2 mt-1 break-words"><%= safe.(f.reason) %></p>
+    <% if f.detail.present? %><p class="text-sm text-muted break-words"><%= safe.(f.detail) %></p><% end %>
+    <div class="mt-2 flex flex-wrap items-center gap-2" data-fixes="<%= f.ref %>">
+      <% unless f.snoozed? %>
+        <% f.fixes.each do |key| %>
+          <% fx = Diagnostics.fix(key) %>
+          <% next unless fx.allowed?(@site_role) %>
+          <% if fx.kind == :link %>
+            <%= link_to fx.url(f), class: "ss-btn ss-btn-outline ss-btn-sm", data: { fix: key } do %><%= icon(fx.icon, "size-4") %><%= fx.label %><% end %>
+          <% elsif fx.kind == :form %>
+            <%= form_with url: device_health_fix_path(site_id: @site.id, **fp), class: "flex flex-wrap items-center gap-2", data: { fix: key } do %>
+              <%= hidden_field_tag :ref, f.ref, id: nil %><%= hidden_field_tag :fix, key, id: nil %>
+              <label for="<%= dom %>-<%= key %>" class="sr-only"><%= fx.label %></label>
+              <%= select_tag :area_id, options_for_select(fx.options(f, nil)), id: "#{dom}-#{key}", class: "ss-input ss-input-sm w-auto" %>
+              <button type="submit" class="ss-btn ss-btn-outline ss-btn-sm"><%= icon(fx.icon, "size-4") %><%= fx.label %></button>
+            <% end %>
+          <% else %>
+            <% confirm = fx.confirm? ? { turbo_confirm: (fx.respond_to?(:confirm_text) ? fx.confirm_text(f) : Diagnostics::Fix.text(:confirm, label: fx.label, name: f.name)),
+                                         turbo_confirm_button: fx.label, turbo_confirm_tone: (fx.danger? ? "danger" : nil) }.compact : {} %>
+            <%= button_to device_health_fix_path(site_id: @site.id, **fp), params: { ref: f.ref, fix: key },
+                          class: "ss-btn #{fx.danger? ? 'ss-btn-ghost is-danger' : 'ss-btn-primary'} ss-btn-sm", form: { data: confirm.merge(fix: key) } do %><%= icon(fx.icon, "size-4") %><%= fx.label %><% end %>
+          <% end %>
+        <% end %>
+        <%= form_with url: device_health_snooze_path(site_id: @site.id, **fp), class: "flex flex-wrap items-center gap-2", data: { snooze: f.ref } do %>
+          <%= hidden_field_tag :ref, f.ref, id: nil %>
+          <label for="<%= dom %>-days" class="sr-only"><%= t("device_health.snooze_for", name: f.name) %></label>
+          <%= select_tag :days, options_for_select(Diagnostics.config.fetch("snooze_days").map { |d| [ t("device_health.days", count: d), d ] }), id: "#{dom}-days", class: "ss-input ss-input-sm w-auto" %>
+          <button type="submit" class="ss-btn ss-btn-ghost ss-btn-sm"><%= icon("bell", "size-4") %><%= t("device_health.snooze") %></button>
+        <% end %>
+      <% else %>
+        <%= button_to device_health_snooze_path(site_id: @site.id, **fp), params: { ref: f.ref, on: "0" }, class: "ss-btn ss-btn-ghost ss-btn-sm",
+                      "aria-label": t("device_health.unsnooze_of", name: f.name) do %><%= t("device_health.unsnooze") %><% end %>
+      <% end %>
+    </div>
+  </div>
+</li>

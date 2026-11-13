@@ -712,6 +712,14 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   ponto novo, apaga o duplicado, AuditEvent `device.replace` com o antes (desfazer). Equivalência de
   propriedade/sentido para a sugestão = linha em `config/device_replace.yml`; inverter = `address.invert`
   genérico (`Points::Decode.invert`, no `from_raw`/`to_raw` e no MQTT). Técnico+, web/API/app.
+- **Saúde dos aparelhos (aberto/fechado, `docs/saude-aparelhos.md`)**: regra de diagnóstico = classe
+  `< Diagnostics::Rule` (`describe key:, label:, description:, subject: :device|:point|:integration, severity:`,
+  `applies?(sujeito, ctx)` [+ `finding`, `fixes`], textos pt/en/es na classe) + nome em `Diagnostics::RULES`;
+  reparo = `< Diagnostics::Fix` (`kind` ação/link/formulário, `role`, `available?`, `call`/`url`) + nome em
+  `Diagnostics::FIXES`, **nunca comanda aparelho** (lê de novo, varre, muda cadastro, apaga órfão com AuditEvent
+  `device.orphan_delete`). Limiares = `config/device_diagnostics.yml` (o local muda por cima em
+  `sites.settings["device_health"]`, junto dos silenciados). Tela `/saude-aparelhos` (técnico+, web e app pelo
+  AppScreen), verificação `device_health` na Saúde e aviso semanal de bateria pelo `HealthCheckJob`.
 - **Desempenho (aberto/fechado, `docs/desempenho.md`)**: pontos do local e painel
   resolvido em cache curto na memória (`Dashboards::Cache`, chave = carimbo do local
   pelo `xmin`; painel por papel+minuto, 60 s; desligado nos testes). Aviso de mudança

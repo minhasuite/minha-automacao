@@ -8,6 +8,7 @@
              [ t("settings.nav.apps"), apps_path, "cube", :apps, current_user.owner? ],
              [ t("settings.nav.ai"), settings_ai_path, "sparkles", :ai, current_user.admin? ],
              [ t("settings.nav.health"), settings_health_path, "shield-check", :health, current_user.admin? ],
+             [ t("device_health.nav"), device_health_path, "chip", :device_health, !reader ],
              [ t("hardware.nav"), settings_hardware_path, "chip", :hardware, current_user.owner? ],
              [ t("backup_restore.nav"), settings_backups_path, "download", :backups, Backups::Restore.allowed?(current_user) ],
              [ t("logs.nav"), settings_logs_path, "document-text", :logs, SystemLog.visible_to?(current_user) ],

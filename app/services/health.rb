@@ -9,7 +9,7 @@
 # clique (`repair(tenant, item_key)` → mensagem). Problema ignorado fica em
 # `tenants.settings["health_ignored"]`: não conta no status nem avisa.
 module Health
-  CHECKS = %w[Integrations Devices Reliability Queues Backup Disk Runtime Performance Shadow Custom Cutover].freeze
+  CHECKS = %w[Integrations Devices DeviceHealth Reliability Queues Backup Disk Runtime Performance Shadow Custom Cutover].freeze
   STATUSES = %w[ok warn error].freeze
   LABELS = { "ok" => "Ok", "warn" => "Atenção", "error" => "Com erro" }.freeze
   TONES = { "ok" => "success", "warn" => "warn", "error" => "danger" }.freeze
@@ -84,7 +84,8 @@ module Health
   # `only`: só essas verificações. `push_now`: entrega o push aqui mesmo, sem o
   # SendPushJob (Reliability::Watchdog: a fila pode estar parada).
   def alert!(tenant, now: Time.current, only: nil, push_now: false)
-    run(tenant, only: only).select { |r| r.check.alerts? }.flat_map do |r|
+    # Só roda as verificações que avisam (as só informativas, como o diagnóstico dos aparelhos, ficam para a tela).
+    run(tenant, only: only || checks.select(&:alerts?).map(&:key)).select { |r| r.check.alerts? }.flat_map do |r|
       r.items.select { |i| i.status == "error" && !i.ignored }.filter_map do |i|
         ActsAsTenant.with_tenant(tenant) do
           n = Notifier.notify!(kind: "sistema", title: "#{r.check.label}: #{i.title}", body: i.detail, push: !push_now,

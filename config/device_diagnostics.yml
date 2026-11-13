@@ -1,0 +1,59 @@
+# Limiares da "Saúde dos aparelhos" (Diagnostics; docs/saude-aparelhos.md).
+# O que está em `settings` o local muda por cima, na própria tela
+# ("Ajustes deste local", gravado em sites.settings["device_health"]).
+# Mexer aqui não exige código: as regras (Diagnostics::RULES) só leem.
+settings:
+  # Bateria em % que já conta como baixa / crítica (erro).
+  battery_low_pct: 20
+  battery_critical_pct: 5
+  # Avisar (notificação, uma por aparelho por semana) quando a bateria baixar.
+  battery_notify: true
+  # Sem sinal há mais que isso (horas) = achado; mais que `offline_error_days` = erro.
+  offline_hours: 1
+  offline_error_days: 2
+
+# Ajustes do local que a tela mostra no formulário (tipo e faixa aceita).
+editable:
+  battery_low_pct: { type: integer, min: 1, max: 90 }
+  battery_critical_pct: { type: integer, min: 0, max: 50 }
+  battery_notify: { type: boolean }
+  offline_hours: { type: integer, min: 1, max: 720 }
+  offline_error_days: { type: integer, min: 1, max: 60 }
+
+# Aparelho sem pontos só vira achado depois desse tempo do cadastro (horas):
+# a varredura e a adoção ainda podem estar trazendo os pontos.
+no_points_grace_hours: 2
+# Hub/coordenador fora: pelo menos tantos filhos sem sinal junto.
+hub_min_children: 1
+# Integração (conta, coordenador Zigbee, servidor) com erro e pelo menos
+# tantos aparelhos dela sem sinal = um achado só, no lugar de um por aparelho.
+integration_min_devices: 2
+# Prazos oferecidos no "Silenciar por…" (dias).
+snooze_days: [1, 7, 30]
+# Pulo absurdo: olha as leituras das últimas tantas horas.
+jump_lookback_hours: 24
+
+# Leituras suspeitas por `device_class` do ponto de medida (capacidade
+# `measure`). Chave ausente = a regra não olha aquela classe.
+#   stuck_hours: valor igual há mais que isso com o aparelho respondendo.
+#   zero_hours:  valor <= 0 há mais que isso (umidade 0% = sensor fora da terra).
+#   jump:        diferença entre duas leituras seguidas maior que isso…
+#   jump_minutes: …num intervalo de até tantos minutos.
+sensors:
+  temperature: { stuck_hours: 24, jump: 15, jump_minutes: 30 }
+  humidity: { stuck_hours: 24, zero_hours: 3, jump: 40, jump_minutes: 30 }
+  moisture: { stuck_hours: 48, zero_hours: 3, jump: 60, jump_minutes: 30 }
+  pressure: { stuck_hours: 24, jump: 30, jump_minutes: 30 }
+  illuminance: { stuck_hours: 48 }
+  battery: { jump: 50, jump_minutes: 60 }
+
+# Endereço que identifica o aparelho na rede: dois aparelhos ativos do mesmo
+# driver com esses campos iguais (e host preenchido) = duplicados. Canal,
+# caminho e hub entram para não acusar as câmeras de um mesmo DVR.
+duplicate_address_keys: [host, port, channel, path, camera, node, endpoint, via, stream, dps]
+
+# Rota nomeada do pareamento Zigbee (assistente do branch zigbee-assistente).
+# Vazio = o reparo "Parear de novo" não aparece. Ver docs/saude-aparelhos.md.
+pair_route:
+# Drivers que o pareamento cobre.
+pair_drivers: [mqtt]
