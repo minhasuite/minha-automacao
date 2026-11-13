@@ -7,4 +7,8 @@ class NotificationSerializer < ApplicationSerializer
   attribute(:response_title, &:response_title)
   attribute(:url, &:open_url)
   attribute(:image_url, &:image_url)
+  # Menos ruído: nível, quantos avisos juntos e a origem que dá para silenciar.
+  attribute(:level, &:level)
+  attribute(:count, &:count)
+  attribute(:mute_key, &:mute_key)
 end

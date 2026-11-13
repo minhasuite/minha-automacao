@@ -26,6 +26,38 @@ class Notification < ApplicationRecord
   scope :for_user, ->(u) { u.admin? ? where(user_id: [ u.id, nil ]) : where(user_id: u.id) }
   scope :tagged, ->(tag) { where("notifications.data->>'tag' = ?", tag) }
 
+  # Botão do sistema no push (docs/push.md, "Menos ruído"): silencia a
+  # automação/ponto deste aviso para quem tocou, sem responder ao aviso.
+  MUTE_ACTION = "ma-mute".freeze
+
+  # Nível do aviso: normal, high (importante) ou critical (fura o silêncio).
+  def level = Notifications.level(self)
+  def critical? = level == "critical"
+  # Quantos avisos estão juntos aqui (Notifications::Merge).
+  def count = [ Array(data["entries"]).size, 1 ].max
+
+  # O que dá para silenciar por X horas: a automação que avisou ou o ponto.
+  def mute_key
+    return "automation:#{data['automation_id']}" if data["automation_id"].present?
+
+    "point:#{data['point_id']}" if data["point_id"].present?
+  end
+
+  def mute_label
+    if data["automation_id"].present?
+      Automation.unscoped.where(tenant_id: tenant_id).find_by(id: data["automation_id"])&.name
+    elsif data["point_id"].present?
+      Point.unscoped.where(tenant_id: tenant_id).find_by(id: data["point_id"])&.name
+    end || title
+  end
+
+  # Silencia a origem do aviso para a pessoa por `hours`. → Time ou nil (nada a silenciar).
+  def mute!(user, hours = nil)
+    return unless mute_key
+
+    Notifications.mute!(user, mute_key, hours || Notifications.user_prefs(user)["mute_hours"], label: mute_label)
+  end
+
   def actions = Array(data["actions"]).select { |a| a.is_a?(Hash) && a["id"].present? }.first(MAX_ACTIONS)
   def actionable? = actions.any? && responded_at.nil?
   def response_title = response && actions.find { |a| a["id"] == response["action"] }&.dig("title") || response&.dig("action")

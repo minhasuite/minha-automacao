@@ -192,6 +192,13 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `kind: "event"` no motor). Web Push exige https (servidor da casa: só pelo acesso
   externo) e as chaves `VAPID_*` (`bin/vapid-keys`; nunca no repo). Nunca
   mande push de teste para o celular de alguém: teste com navegador headless.
+- **Menos ruído nos avisos (aberto/fechado, `docs/push.md` "Menos ruído")**: nível =
+  `data["priority"]` (crítico fura silêncio e "silenciar", nunca junta); juntar = `merge_key`/
+  `merge_s`/`merge_subject` no `data` (`Notifications::Merge`; regra de aviso por padrão com a
+  janela da instalação, ação "Avisar" só com `merge`); silêncio = `quiet_scope` (:person/:house)
+  no plugin do canal + janelas em `users.dashboard_prefs["notifications"]` e
+  `tenants.settings["notifications"]`; silenciar = `Notification#mute_key` (+ botão `ma-mute` no
+  push); parte nova do resumo diário = classe em `Notifications::Digest::SECTIONS`.
 - **`response_variable` e `continue_on_error` (Lote 1)**: ação que devolve
   dados declara `returns` e chama `respond`; a variável é objeto (Liquid
   `{{ r.x }}`, dentaku `r.x`, `lista.count`). Toda ação fora as de controle

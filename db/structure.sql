@@ -874,7 +874,9 @@ CREATE TABLE public.notify_rules (
     channels character varying[] DEFAULT '{in_app,push}'::character varying[] NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    priority character varying DEFAULT 'normal'::character varying NOT NULL,
+    merge_s integer
 );
 
 
@@ -5366,6 +5368,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261113120731'),
 ('20261111143017'),
 ('20261111120017'),
 ('20261111100047'),

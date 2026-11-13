@@ -78,7 +78,12 @@ Rails.application.routes.draw do
       patch :read, on: :member, path: "lida"
       patch :respond, on: :member, path: "responder"
       patch :read_all, on: :collection, path: "todas-lidas"
+      patch :mute, on: :member, path: "silenciar"
+      delete :unmute, on: :collection, path: "silencios"
+      get :digest, on: :collection, path: "resumo"
     end
+    get "configuracoes/notificacoes", to: "notification_settings#show", as: :settings_notifications
+    patch "configuracoes/notificacoes", to: "notification_settings#update"
 
     # Câmeras (F8): quadro e ao vivo (WebRTC) passando pelo Rails.
     # Busca global (Ctrl+K, uiweb).
@@ -470,6 +475,12 @@ Rails.application.routes.draw do
         patch :read, on: :member
         post :respond, on: :member
         patch :read, on: :collection, action: :read_all
+        # Menos ruído (docs/push.md): silenciar a origem, resumo e preferências.
+        post :mute, on: :member
+        delete :mutes, on: :collection, action: :unmute
+        get :digest, on: :collection
+        get :preferences, on: :collection
+        patch :preferences, on: :collection, action: :update_preferences
       end
       resources :device_tokens, only: %i[create destroy], param: :token, constraints: { token: %r{[^/]+} }
       resources :api_keys, only: %i[index create destroy]

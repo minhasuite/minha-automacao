@@ -12,6 +12,10 @@
       <%= f.collection_check_boxes :channels, Notifier.channel_choices(site), :first, :last do |b| %><label class="ss-check"><%= b.check_box %> <%= b.text %></label><% end %>
     </div>
   </fieldset>
+  <div><%= f.label :priority, t("notifications.level.label"), class: "ss-label" %><%= f.select :priority, notification_level_choices, {}, class: "ss-input" %>
+    <p class="text-xs text-muted mt-1"><%= t("notifications.level.hint") %></p></div>
+  <div><%= f.label :merge_s, t("notifications.merge.label"), class: "ss-label" %><%= f.select :merge_s, notification_merge_choices(include_default: true), {}, class: "ss-input" %>
+    <p class="text-xs text-muted mt-1"><%= t("notifications.merge.hint") %></p></div>
   <label class="ss-check"><%= f.check_box :enabled %> <%= t("automations.notify_rules.active") %></label>
   <div class="md:col-span-2 flex flex-wrap gap-2">
     <%= f.submit t("automations.notify_rules.save"), class: "ss-btn ss-btn-primary" %>

@@ -14,6 +14,9 @@ module Notifier
 
       module_function
 
+      # Horário de silêncio (Notifications): :person = o de cada pessoa; :house = o da casa.
+      def quiet_scope = :house
+
       def owns?(channel) = PATTERN.match?(channel)
       def capabilities = %i[text]
 

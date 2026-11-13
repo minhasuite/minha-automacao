@@ -29,6 +29,8 @@ module Push
     list = transports
     failed = Hash.new { |h, k| h[k] = [] }
     recipients(notification).find_each do |user|
+      next if Notifications.hold_push?(user, notification) # silêncio da pessoa ou "silenciado" (crítico fura)
+
       message = Message.new(notification, user)
       list.each do |t|
         name = t.name.demodulize

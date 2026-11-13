@@ -10,6 +10,9 @@ module Notifier
 
       module_function
 
+      # Horário de silêncio (Notifications): :person = o de cada pessoa; :house = o da casa.
+      def quiet_scope = :person
+
       def default = KEY
       def owns?(channel) = channel == KEY
       def choices(_site) = [ [ KEY, text(:label) ] ]

@@ -35,7 +35,8 @@ module Points
       I18n.with_locale(I18n.default_locale) do
         Notifier.notify!(kind: "alerta", title: I18n.t("points.stale.title", name: point.name),
                          body: I18n.t("points.stale.body", since: I18n.l(point.changed_at.in_time_zone(point.site.timezone), format: :short)),
-                         data: { "url" => "/pontos/#{point.id}", "tag" => "stale:#{point.id}" },
+                         data: { "url" => "/pontos/#{point.id}", "tag" => "stale:#{point.id}", "point_id" => point.id,
+                                 "site_id" => point.site_id, "priority" => "high" },
                          dedup_key: "stale:#{point.id}:#{point.changed_at.to_i}")
       end
     rescue Shadow::Blocked

@@ -9,5 +9,6 @@ class RunSchedulesJob < ApplicationJob
     HelperTypes.tick # sensor calculado "a cada" (Lote 5)
     Points::Stale.tick # sensor parado em "aberto" há tempo demais
     Automations::Triggers.tick
+    Notifications::Digest.tick # resumo diário de quem escolheu a hora
   end
 end
