@@ -1,0 +1,91 @@
+<%= render "web/shared/header", title: t("energy.title"), subtitle: t("energy.subtitle", site: @site.name) do %>
+  <% if @manage %><%= render "web/dashboards/add_to_link", type: "energy_month", record: @site %><% end %>
+<% end %>
+<%= render "web/shared/site_switch", sites: @sites, site: @site, path: energy_path %>
+<% r = @report %>
+<% kwh = ->(v) { "#{number_with_precision(v.to_f, precision: v.to_f < 10 ? 2 : 1, strip_insignificant_zeros: true, delimiter: '.', separator: ',')} kWh" } %>
+<% money = ->(v) { number_to_currency(v.to_f, unit: "R$ ", separator: ",", delimiter: ".") } %>
+<% delta = ->(pct) { pct.nil? ? "—" : "#{pct.positive? ? '+' : ''}#{pct}%" } %>
+<nav class="ss-chips is-solid mb-4" data-controller="ss-scroll-current" aria-label="<%= t("energy.period") %>">
+  <% EnergyUse::PERIODS.each_key do |k| %>
+    <%= link_to t("energy.periods.#{k}"), energy_path(site_id: @site.id, periodo: k), class: "ss-chip shrink-0", "aria-current": (@period == k).to_s %>
+  <% end %>
+</nav>
+<div class="grid gap-4 sm:grid-cols-3 mb-6">
+  <%= render Ss::KpiCardComponent.new(label: t("energy.used"), value: kwh.(r["total_kwh"]), icon: icon("lightning-bolt", ""), tone: :heat, caption: r["label"]) %>
+  <%= render Ss::KpiCardComponent.new(label: t("energy.cost"), value: r["priced"] ? money.(r["total_cost"]) : "—", money: r["priced"], icon: icon("cash", ""),
+                                      caption: (r["priced"] ? nil : t("energy.no_tariff"))) %>
+  <%= render Ss::KpiCardComponent.new(label: t("energy.vs_previous"), value: delta.(r["delta_pct"]), icon: icon((r["delta_pct"].to_i.positive? ? "trending-up" : "trending-down"), ""),
+                                      caption: t("energy.previous_was", kwh: kwh.(r["prev_kwh"]), cost: (r["priced"] ? money.(r["prev_cost"]) : "—"))) %>
+</div>
+
+<% if @anomalies.any? %>
+  <%= render Ss::CalloutComponent.new(tone: :warn, title: t("energy.watch.now_title"), css: "mb-6") do %>
+    <ul class="grid gap-1">
+      <% @anomalies.each do |a| %>
+        <li><%= t("energy.watch.line", name: a["name"], kwh: number_with_precision(a["kwh"], precision: 2, strip_insignificant_zeros: true, separator: ","),
+                  avg: number_with_precision(a["avg"], precision: 2, strip_insignificant_zeros: true, separator: ","), hour: a["hour"].strftime("%H:%M")) %></li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>
+
+<div class="grid gap-4 lg:grid-cols-2 mb-6">
+  <section class="ss-card ss-card-pad" aria-label="<%= t("energy.ranking") %>">
+    <%= render Ss::CardHeaderComponent.new(title: t("energy.ranking"), subtitle: (r["priced"] ? t("energy.by_cost") : t("energy.by_kwh")), icon: icon("chart-bar", ""), tone: :heat) %>
+    <% if r["rows"].empty? %>
+      <%= render Ss::NoteComponent.new(text: t("energy.empty"), icon: icon("lightning-bolt", ""), css: "mt-3") %>
+    <% else %>
+      <%= render Ss::RankListComponent.new(tone: :heat, label: t("energy.ranking"), css: "mt-3", items: r["rows"].first(10).map { |x|
+            { label: x["name"], value: r["priced"] ? money.(x["cost"]) : kwh.(x["kwh"]), amount: (r["priced"] ? x["cost"] : x["kwh"]).to_f,
+              share: "#{number_with_precision(x['pct'], precision: 0)}%", caption: (kwh.(x["kwh"]) if r["priced"]) } }) %>
+    <% end %>
+  </section>
+
+  <section class="ss-card ss-card-pad" aria-label="<%= t("energy.compare") %>">
+    <%= render Ss::CardHeaderComponent.new(title: t("energy.compare"), subtitle: t("energy.compare_hint"), icon: icon("trending-up", "")) %>
+    <ul class="grid gap-1 mt-3" aria-label="<%= t("energy.compare") %>">
+      <% r["rows"].each do |x| %>
+        <li class="ss-item">
+          <span class="ss-item-main"><span><%= x["name"] %></span>
+            <span class="num"><%= kwh.(x["kwh"]) %><%= " · #{money.(x['cost'])}" if x["cost"] %> · <%= t("energy.before", kwh: kwh.(x["prev_kwh"])) %></span></span>
+          <span class="ss-badge num <%= x['delta_pct'].to_i > 20 ? 'is-warn' : (x['delta_pct'].to_i < -5 ? 'is-success' : '') %>"><%= delta.(x["delta_pct"]) %></span>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+</div>
+
+<section id="regra" class="ss-card ss-card-pad grid gap-4" aria-label="<%= t("energy.settings") %>">
+  <%= render Ss::CardHeaderComponent.new(title: t("energy.settings"), subtitle: t("energy.settings_hint"), icon: icon("cog", "")) %>
+  <p class="text-sm text-muted">
+    <%= @tariff_point ? t("energy.tariff_now_point", name: @tariff_point.name) : (@tariff ? t("energy.tariff_now_fixed", value: money.(@tariff)) : t("energy.no_tariff")) %>
+    · <%= @watch["enabled"] ? t("energy.watch.on", factor: number_with_precision(@watch["factor"], precision: 1, strip_insignificant_zeros: true, separator: ","), min: number_with_precision(@watch["min_kwh"], precision: 2, strip_insignificant_zeros: true, separator: ",")) : t("energy.watch.off") %>
+  </p>
+  <% if @manage %>
+    <%= form_with url: energy_path, method: :patch, scope: :energy, class: "grid gap-4 sm:grid-cols-2" do |f| %>
+      <%= hidden_field_tag :site_id, @site.id, id: nil %>
+      <div><label class="ss-label" for="en-tp"><%= t("energy.form.tariff_point") %></label>
+        <%= f.select :tariff_point, EnergyUse.tariff_choices(@site).map { |p| [ p.name, p.id ] }, { selected: EnergyUse.settings(@site)["tariff_point"], include_blank: t("energy.form.auto") }, id: "en-tp", class: "ss-input" %></div>
+      <div><label class="ss-label" for="en-tf"><%= t("energy.form.tariff") %></label>
+        <%= f.text_field :tariff, value: @tariff, id: "en-tf", class: "ss-input num", inputmode: "decimal", placeholder: "0,95" %></div>
+      <div class="sm:col-span-2"><label class="flex items-center gap-2"><%= f.check_box :enabled, { checked: @watch["enabled"], id: "en-on" } %><span><%= t("energy.form.enabled") %></span></label>
+        <p class="text-xs text-muted mt-1"><%= t("energy.form.enabled_hint") %></p></div>
+      <div><label class="ss-label" for="en-fa"><%= t("energy.form.factor") %></label>
+        <%= f.text_field :factor, value: @watch["factor"], id: "en-fa", class: "ss-input num", inputmode: "decimal" %></div>
+      <div><label class="ss-label" for="en-mk"><%= t("energy.form.min_kwh") %></label>
+        <%= f.text_field :min_kwh, value: @watch["min_kwh"], id: "en-mk", class: "ss-input num", inputmode: "decimal" %></div>
+      <% devices = EnergyUse.devices(@site).keys.sort_by(&:name) %>
+      <% if devices.any? %>
+        <fieldset class="sm:col-span-2"><legend class="ss-label"><%= t("energy.form.ignore") %></legend>
+          <div class="grid gap-1 sm:grid-cols-2">
+            <% devices.each do |d| %>
+              <label class="flex items-center gap-2 text-sm"><%= check_box_tag "energy[ignore][]", d.id, Array(@watch["ignore"]).include?(d.id), id: "en-ig-#{d.id}" %><span><%= d.name %></span></label>
+            <% end %>
+          </div>
+        </fieldset>
+      <% end %>
+      <div class="sm:col-span-2"><%= f.submit t("energy.form.save"), class: "ss-btn ss-btn-primary" %></div>
+    <% end %>
+  <% end %>
+</section>

@@ -1,6 +1,6 @@
 <%# Ideia 2: "Adicionar ao painel". O widget sai da coisa (Dashboards::AddTo, pela capacidade); a pessoa escolhe o
     painel, a visão e a seção (uma lista só, agrupada por painel). Entra no rascunho; publicar é no editor. %>
-<% name = @record.try(:name) %>
+<% name = (@record.try(:name) unless @record.is_a?(Site)) %>
 <% type_label = Dashboards::Schema.labels.fetch(@widget["type"], @widget["type"]) %>
 <%= render "web/shared/header", title: t("dashboards.add_to.title"), subtitle: [ name, @site.name ].compact.join(" · "), back: (request.referer.presence if request.referer.to_s.start_with?(request.base_url)) %>
 <% if @places.empty? %>

@@ -11,7 +11,10 @@ module Dashboards
       "device" => [ "Device", ->(d, id) { AddTo.for_device(d, id) } ],
       "scene" => [ "Scene", ->(s, id) { { "id" => id, "type" => "scene_bar", "label" => s.name, "scenes" => [ s.id ] } } ],
       # Automação: o liga/desliga dela (AutomationPoints); script: o ponto que roda (Scripts).
-      "automation" => [ "Automation", ->(a, id) { AddTo.for_point(a.script? ? Scripts.point_for(a) : AutomationPoints.point_for(a), id, label: a.name) } ]
+      "automation" => [ "Automation", ->(a, id) { AddTo.for_point(a.script? ? Scripts.point_for(a) : AutomationPoints.point_for(a), id, label: a.name) } ],
+      # Telas Pessoas e Energia (o registro é o local): "Quem está em casa" e "Gasto do mês por aparelho".
+      "people" => [ "Site", ->(_s, id) { { "id" => id, "type" => "people", "label" => I18n.t("presence.card_title") } } ],
+      "energy_month" => [ "Site", ->(_s, id) { { "id" => id, "type" => "energy_breakdown", "label" => I18n.t("energy.card_title"), "period" => "month", "metric" => "cost" } } ]
     }.freeze
 
     module_function
@@ -23,6 +26,9 @@ module Dashboards
       model, = SOURCES[type.to_s]
       model&.constantize&.find_by(id: id)
     end
+
+    # Local da coisa (o próprio, quando a fonte é o local).
+    def site_of(record) = record.is_a?(Site) ? record : record.site
 
     def widget(type, record)
       SOURCES.fetch(type.to_s).last.call(record, "w-#{SecureRandom.alphanumeric(8).downcase}")

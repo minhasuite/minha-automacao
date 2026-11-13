@@ -1,7 +1,8 @@
 <%# locals: (f:, point:) -%>
 <% a = point.address %>
 <% chosen = Array(a["sources"]) %>
-<% options = People.trackable(point.site).map { |p| [ "#{p.name} · #{p.device.name} (#{People.tracker_for(p).label})", p.id ] } %>
+<% options = People.by_confidence(People.trackable(point.site)).map { |p| [ "#{p.name} · #{p.device.name} (#{People.tracker_for(p).label} · #{t("presence.confidence.#{People.tracker_for(p).confidence}")})", p.id ] } %>
+<% delay = point.new_record? && !a.key?("away_delay_s") ? People::AWAY_DELAY_S : a["away_delay_s"].to_i %>
 <div><%= f.label :user_id, t("helper_forms.person.user"), class: "ss-label" %><%= f.select :user_id, User.where(disabled_at: nil).order(:name).pluck(:name, :id), { selected: a["user_id"], include_blank: t("helper_forms.person.no_user") }, class: "ss-input" %></div>
 <fieldset class="sm:col-span-2 min-w-0">
   <legend class="ss-label"><%= t("helper_forms.person.sources") %></legend>
@@ -18,4 +19,7 @@
   <p class="text-xs text-muted mt-1"><%= t("helper_forms.person.sources_hint") %></p>
 </fieldset>
 <div class="sm:col-span-2"><%= f.label :home_ssids, t("helper_forms.person.ssids"), class: "ss-label" %><%= f.text_field :home_ssids, value: Array(a["home_ssids"]).join(", "), class: "ss-input", placeholder: "MinhaRede, MinhaRede-5G" %></div>
+<div><%= label_tag "helper_away_delay_min", t("helper_forms.person.away_delay"), class: "ss-label" %>
+  <%= number_field_tag "helper[away_delay_min]", (delay / 60.0).round(1).to_s.delete_suffix(".0"), in: 0..60, step: "any", id: "helper_away_delay_min", class: "ss-input num" %>
+  <p class="text-xs text-muted mt-1"><%= t("helper_forms.person.away_delay_hint") %></p></div>
 <p class="sm:col-span-2 text-xs text-muted"><%= t("helper_forms.person.privacy") %></p>

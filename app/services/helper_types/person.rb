@@ -13,7 +13,8 @@ module HelperTypes
 
     describe key: "person", title: "Pessoa", icon: "user-circle", capability: "enum",
              description: "Quem está em casa ou em outra zona, pelo celular (GPS, Wi-Fi) e pela rede. Vários rastreadores, com prioridade."
-    fields [ :user_id, :home_ssids, { sources: [] } ]
+    MAX_AWAY_DELAY_S = 3600
+    fields [ :user_id, :home_ssids, :away_delay_min, { sources: [] } ]
     texts "pt-BR" => { no_source: "Escolha ao menos uma fonte de rastreio.", no_tracker: "Fonte sem rastreador: %{names}.",
                        user: "Usuário não é desta instalação.", sources: "%{n} fonte(s)", via: "agora por %{source}" },
           en: { title: "Person", description: "Who is home or in another zone, from the phone (GPS, Wi-Fi) and the network. Several trackers, by priority.",
@@ -34,11 +35,16 @@ module HelperTypes
       user_id = form["user_id"].presence
       point.errors.add(:base, text(:user)) if user_id && !User.exists?(id: user_id)
       ssids = form["home_ssids"].to_s.split(/[,\n]/).map { |s| s.strip.delete('"') }.compact_blank.first(10)
-      point.address = point.address.merge("sources" => sources.map(&:id), "user_id" => user_id, "home_ssids" => ssids).compact
+      delay = form.key?("away_delay_min") ? (number(form["away_delay_min"]).to_f * 60).round.clamp(0, MAX_AWAY_DELAY_S) : point.address["away_delay_s"]
+      point.address = point.address.merge("sources" => sources.map(&:id), "user_id" => user_id, "home_ssids" => ssids, "away_delay_s" => delay).compact
       point.options = options(point.site)
     end
 
     def self.sourced? = true
+    # Tolerância para sair: o relógio confirma a saída depois de `away_delay_s`.
+    def self.clocked? = true
+    def self.tick(point, now) = (refresh!(point, now) if point.attrs.to_h["leaving_at"])
+    def self.away_delay(person) = person.address["away_delay_s"].to_i
     def self.home_ssids(person) = Array(person.address["home_ssids"]).map { |s| s.to_s.downcase }
     def self.options(site) = People.zones(site).map(&:name).sort + [ People::AWAY ]
 
@@ -52,16 +58,45 @@ module HelperTypes
       Array(person.address["sources"]).filter_map { |id| found[id] }
     end
 
-    def self.refresh!(person)
+    def self.refresh!(person, now = Time.current)
       Zone.home(person.site) # a casa existe desde a primeira pessoa
       zones = People.zones(person.site)
       zone, source = locate(person, zones)
       was = person.value
       person.options = options(person.site)
       person.save! if person.options_changed?
-      person.report!(zone || person.value, quality: zone ? "good" : "unavailable")
-      person.report_attrs!(person.attrs.to_h.except("source").merge("source" => source&.name).compact)
+      zone, source, leaving_at, at = hold(person, zone, source, now)
+      person.report!(zone || person.value, quality: zone ? "good" : "unavailable", at: at)
+      attrs = person.attrs.to_h
+      src = leaving_at ? attrs["source"] : source&.name # saindo: continua valendo a fonte de antes
+      person.report_attrs!(attrs.except("source", "room", "leaving_at").merge("source" => src, "room" => room(person), "leaving_at" => leaving_at&.iso8601).compact)
       zones.each { |z| Zone.refresh!(z) } if person.value != was
+    end
+
+    # Tolerância (não "piscar"): sair de uma zona para "Fora" só vale depois de
+    # `away_delay_s` dizendo fora; nesse meio a pessoa fica onde estava, com
+    # `leaving_at` nos atributos. Chegar e trocar de zona valem na hora.
+    # → [zona, fonte, saindo desde, hora da mudança].
+    def self.hold(person, zone, source, now)
+      delay = away_delay(person)
+      current = person.value
+      return [ zone, source, nil, now ] unless delay.positive? && zone == People::AWAY && current.present? && current != People::AWAY
+
+      since = Time.zone.parse(person.attrs.to_h["leaving_at"].to_s) rescue nil # rubocop:disable Style/RescueModifier
+      since ||= now
+      return [ zone, source, nil, since ] if now - since >= delay
+
+      [ current, source, since, now ]
+    end
+
+    # Cômodo agora (ESPresense): o da primeira fonte de cômodo que sabe.
+    def self.room(person)
+      sources(person).each do |s|
+        t = People.tracker_for(s)
+        r = t.respond_to?(:room) && t.room(s)
+        return r if r
+      end
+      nil
     end
 
     # → [zona, ponto que decidiu]; [nil, nil] = sem sinal de ninguém.

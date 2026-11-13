@@ -10,7 +10,8 @@
     <%= render Ss::NoteComponent.new(text: d["empty"] ? t("dashboards.w.no_energy_points") : t("dashboards.w.no_usage"), icon: icon("lightning-bolt", ""), css: "mt-3") %>
   <% else %>
     <%= render Ss::RankListComponent.new(tone: :heat, label: title, items: d["rows"].map { |r|
-          { label: r["name"], value: kwh.(r["kwh"]), amount: r["kwh"].to_f, share: "#{number_with_precision(r['pct'], precision: 0)}%",
-            caption: (money.(r["cost"]) if r["cost"]) } }) %>
+          by_cost = d["metric"] == "cost"
+          { label: r["name"], value: by_cost ? money.(r["cost"].to_f) : kwh.(r["kwh"]), amount: (by_cost ? r["cost"] : r["kwh"]).to_f,
+            share: "#{number_with_precision(r['pct'], precision: 0)}%", caption: by_cost ? kwh.(r["kwh"]) : (money.(r["cost"]) if r["cost"]) } }) %>
   <% end %>
 </div>

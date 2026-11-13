@@ -25,11 +25,51 @@ souber, a pessoa fica sem sinal com o último valor. A pessoa refaz quando o
 valor **ou os atributos** de uma fonte mudam (`Point#report_attrs!` chama
 `HelperTypes.on_change`).
 
+## Tolerância, confiança e cômodo (11/2026)
+
+- **Tolerância para sair** (`address.away_delay_s`, campo "Tolerância para
+  sair (min)", até 60): sair de uma zona para "Fora" só vale depois desse
+  tempo sem nenhuma fonte dizer uma zona. No meio a pessoa fica onde estava
+  com o atributo `leaving_at`; o relógio dos helpers (`Person.tick`, a cada
+  minuto) confirma, e a mudança conta de quando começou a sair. Chegar e
+  trocar de zona valem na hora. Pessoa nova nasce com 3 min
+  (`People::AWAY_DELAY_S`); a antiga, sem a chave, sai na hora como antes.
+- **Confiança** do rastreador (`describe confidence:`): `Gps` e `WifiSsid`
+  alta, `Connected` média, `Room` e `Face` baixa. A lista de fontes do
+  formulário e a ordem do assistente vêm por ela (`People.by_confidence`:
+  celular > rede > cômodo/rosto). A prioridade continua a ordem escolhida.
+- **Cômodo**: a primeira fonte `Room` (ESPresense) que sabe o cômodo vira o
+  atributo `room` da pessoa (widget, API `people` e a tela).
+
+## Tela Pessoas (`/pessoas`)
+
+Menu lateral (e no app, Mais → Pessoas, pela tela do servidor). Só morador
+para cima (como o Mapa). Mostra quem está em casa, fora e sem sinal; por
+pessoa a zona, o cômodo, desde quando, a fonte que decidiu, a saída pendente
+(tolerância), **o que cada fonte diz agora** com a confiança
+(`People.opinions`) e **as chegadas e saídas do dia** pelas leituras da
+pessoa (`People.timeline`, só o nome da zona).
+
+**Assistente "Presença pelo celular"** (`People::Setup`): para cada morador
+do local, os passos conta → app → localização → pessoa. Conta: o dono gera ali
+o convite de morador (link de uso único). App: celular registrado
+(`MobileAppPlugin`, aparelho com `address.user_id`). Localização: o ponto
+"Presença" do celular já recebeu leitura (a pessoa ligou em Mais → Sensores
+do celular e deu a permissão). Pessoa: técnico+ toca "Criar pessoa" e nasce o
+helper ligado ao usuário com as fontes do celular pela confiança e a
+tolerância padrão (`POST /pessoas`). Nada de coordenada aqui.
+
+Card **"Quem está em casa"**: o widget `people` (agora com o cômodo e um
+atalho para a tela), pelo "Adicionar ao painel" da tela
+(`Dashboards::AddTo::SOURCES["people"]`).
+
 ## Automações
 
 - Gatilho **Pessoa entrou ou saiu de zona** (`zone`): `point` = pessoa, `zone` = zona, `event` enter|leave.
 - Gatilho **Presença na zona** (`presence`): `point` = zona, `event` first_arrived (0 → 1) | all_left (1 → 0).
-- Condição **Alguém na zona** (`zone`): `point` = zona, `state` someone|nobody.
+- Condição **Alguém na zona** (`zone`): `point` = zona, `state` someone|nobody ("se ninguém em casa").
+- Condição **Pessoa na zona** (`person`): `point` = pessoa, `zone` = zona, `state` in|out ("se a Kadidja estiver em casa").
+- "Quando a Kadidja chegar" = gatilho **Pessoa entrou ou saiu de zona** com a zona Casa e `enter`.
 - O gatilho "Ponto mudou" também serve (a pessoa é um ponto enum).
 
 ## Painel e API
@@ -73,7 +113,7 @@ Ordem: `Gps WifiSsid Face Room Connected`.
 
 ## Estender
 
-- Rastreador novo: classe em `People::Trackers` (`describe label:`, `applies?(ponto)`,
+- Rastreador novo: classe em `People::Trackers` (`describe label:, confidence:`, `applies?(ponto)`,
   `zone(ponto, pessoa, zonas)`) + nome em `TRACKERS`. Spec com `stub_const` em
   `spec/services/pacote3_presence_alarm_spec.rb`.
 - Sonda de rede nova: módulo com `label` e `up?(host, settings)` + linha em

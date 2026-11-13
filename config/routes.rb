@@ -399,6 +399,11 @@ Rails.application.routes.draw do
     get "historico", to: "history#show", as: :history
     get "paineis-extras/:package_id/:key", to: "custom_panels#show", as: :custom_panel, constraints: { key: /[a-z0-9_-]+/ } # resto: panel_custom
     get "mapa", to: "maps#show", as: :map
+    # Pessoas (quem está em casa, fontes, dia, assistente do celular) e Energia por aparelho (docs/presenca.md, docs/energia.md).
+    get "pessoas", to: "presence#show", as: :presence
+    post "pessoas", to: "presence#create"
+    get "energia", to: "energy#show", as: :energy
+    patch "energia", to: "energy#update"
     # Meus aparelhos (Lote 1): navegadores inscritos no Web Push.
     resources :push_subscriptions, path: "configuracoes/aparelhos", only: %i[index create destroy] do
       post :test, on: :collection, path: "teste"

@@ -4,8 +4,10 @@
 <% d = w["data"] %>
 <% people = Array(d["people"]) %>
 <div class="ss-card ss-card-pad h-full">
-  <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.people"), subtitle: (t("dashboards.w.home_count", n: d["home_count"], total: people.size) if people.any?),
-                                         icon: icon("users", "")) %>
+  <%= render(Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.people"), subtitle: (t("dashboards.w.home_count", n: d["home_count"], total: people.size) if people.any?),
+                                         icon: icon("users", ""))) do |h| %>
+    <% h.with_action { link_to icon("chevron-right", "size-4"), presence_path(site_id: dashboard.site_id), class: "ss-icon-btn is-sm", data: { turbo_frame: "_top" }, title: t("nav.presence"), "aria-label": t("nav.presence") } %>
+  <% end %>
   <% if people.empty? %>
     <p class="text-sm text-muted mt-2"><%= w["zone"].present? ? t("dashboards.w.no_people_in", zone: w["zone"]) : t("dashboards.w.no_people") %></p>
   <% else %>
@@ -20,7 +22,7 @@
                          data: ss_cue_data(kind: :arrive, active: home, key: "people-#{w['id']}-#{p['id']}")) %>
             <span class="ss-item-main">
               <span><%= p["name"] %></span>
-              <span><%= off ? t("dashboards.w.no_signal") : (p["zone"].presence || t("dashboards.w.no_reading")) %><% if p["since"] && !off %> · <%= t("dashboards.w.since") %> <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %></span>
+              <span><%= off ? t("dashboards.w.no_signal") : (p["zone"].presence || t("dashboards.w.no_reading")) %><% if p["room"] && !off %> · <%= p["room"] %><% end %><% if p["since"] && !off %> · <%= t("dashboards.w.since") %> <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %></span>
             </span>
             <span class="sr-only"><%= home ? t("dashboards.w.at_home") : t("dashboards.w.away") %></span>
           <% end %>

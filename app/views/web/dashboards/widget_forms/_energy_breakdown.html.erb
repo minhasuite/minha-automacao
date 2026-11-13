@@ -7,4 +7,6 @@
   <%= text_field_tag "widget[tariff]", w["tariff"], class: "ss-input num", id: "tf-#{uid}", inputmode: "decimal", placeholder: t("dashboards.wf.tariff_placeholder") %></div>
 <div data-for="<%= types %>"><label class="ss-label" for="tp3-<%= uid %>"><%= t("dashboards.wf.tariff_point") %> <span class="font-normal"><%= t("dashboards.wf.tariff_point_hint2") %></span></label>
   <%= select_tag "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), include_blank: t("dashboards.wf.use_fixed"), class: "ss-input", id: "tp3-#{uid}" %></div>
+<div data-for="<%= types %>"><label class="ss-label" for="mb-<%= uid %>"><%= t("energy.wf.metric") %></label>
+  <%= select_tag "widget[metric]", options_for_select(Dashboards::Widgets::EnergyBreakdownWidget::METRICS.index_by { |k| t("energy.wf.metrics.#{k}") }, w["metric"] || "kwh"), class: "ss-input", id: "mb-#{uid}" %></div>
 <p data-for="<%= types %>" class="text-xs text-muted sm:col-span-2"><%= t("dashboards.wf.breakdown_hint") %></p>

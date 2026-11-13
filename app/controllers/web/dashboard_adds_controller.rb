@@ -31,7 +31,7 @@ module Web
     def load_source
       @type = params[:tipo].to_s.presence_in(Dashboards::AddTo.types) or raise ActiveRecord::RecordNotFound
       @record = Dashboards::AddTo.find(@type, params[:id]) or raise ActiveRecord::RecordNotFound
-      @site = @record.site
+      @site = Dashboards::AddTo.site_of(@record)
       authorize_site!(@site, :manage)
       @widget = Dashboards::AddTo.widget(@type, @record) or raise ActiveRecord::RecordNotFound
       @dashboards = Dashboard.ensure_for(@site).select { |d| d.visible_to?(@site_role) }

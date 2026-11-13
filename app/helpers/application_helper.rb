@@ -82,7 +82,7 @@ module ApplicationHelper
   end
 
   # Troca de local do Ss::AppShellComponent (tenants:): só nas telas que mostram um
-  # local por vez (Diário, Histórico, Mapa), que a pedem pela web/shared/site_switch.
+  # local por vez (Diário, Histórico, Mapa, Pessoas, Energia), que a pedem pela web/shared/site_switch.
   def shell_tenants(sites, site, path)
     return [] if sites.size < 2
 
@@ -108,6 +108,8 @@ module ApplicationHelper
       list += [ { key: "logbook", label: t("nav.logbook"), path: logbook_path, icon: "view-list" },
                 { key: "history", label: t("nav.history"), path: history_path, icon: "chart-bar" },
                 ({ key: "map", label: t("nav.map"), path: map_path, icon: "map" } if Maps.allowed?(user)),
+                ({ key: "presence", label: t("nav.presence"), path: presence_path, icon: "users" } if Maps.allowed?(user)),
+                { key: "energy", label: t("nav.energy"), path: energy_path, icon: "lightning-bolt" },
                 { key: "alerts", label: t("nav.alerts"), path: alerts_path, icon: "exclamation-circle",
                   badge: -> { Alert.active.where(acked_at: nil, site_id: Site.visible_to(user).select(:id)).count } },
                 { key: "ask", label: t("nav.ask"), path: ask_path, icon: "sparkles" } ].compact

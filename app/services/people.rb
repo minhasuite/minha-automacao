@@ -11,6 +11,11 @@ module People
   AWAY = "Fora".freeze
   # Ordem = a primeira que se aplica ao ponto lê ele.
   TRACKERS = %w[Gps WifiSsid Face Room Connected].freeze
+  # Confiança de cada rastreador (maior primeiro): a ordem sugerida das
+  # fontes (celular > rede > cômodo/rosto) e o selo na tela Pessoas.
+  CONFIDENCE = %w[high medium low].freeze
+  # Tolerância padrão para sair (não "piscar" quando o Wi-Fi cai um minuto).
+  AWAY_DELAY_S = 180
 
   module_function
 
@@ -43,7 +48,50 @@ module People
   def summary(site)
     persons(site).map do |p|
       { "id" => p.id, "name" => p.name, "zone" => p.value, "home" => HelperTypes::Person.home?(p), "since" => p.changed_at&.iso8601,
-        "source" => p.attrs.to_h["source"], "user_id" => p.address["user_id"], "quality" => p.quality }
+        "source" => p.attrs.to_h["source"], "room" => p.attrs.to_h["room"], "user_id" => p.address["user_id"], "quality" => p.quality }
+    end
+  end
+
+  def move_kind(was, now)
+    return "left" if now == AWAY
+    return "arrived" if was.nil? || was == AWAY
+
+    "moved"
+  end
+
+  # Ordem sugerida das fontes: pela confiança do rastreador e, empatado, pela
+  # ordem do registro (GPS do celular antes do Wi-Fi, a rede antes do cômodo).
+  def by_confidence(points)
+    points.sort_by do |p|
+      t = tracker_for(p)
+      [ CONFIDENCE.index(t&.confidence.to_s) || CONFIDENCE.size, trackers.index(t) || trackers.size ]
+    end
+  end
+
+  # O que cada fonte da pessoa diz agora: [{point, tracker, zone, good}] na
+  # ordem de prioridade (zona nil = sem opinião).
+  def opinions(person, zones = self.zones(person.site))
+    HelperTypes::Person.sources(person).map do |s|
+      t = tracker_for(s)
+      good = s.quality == "good"
+      { "point" => s, "tracker" => t, "good" => good, "zone" => (t.zone(s, person, zones) if t && good) }
+    end
+  end
+
+  # Chegadas e saídas do dia (no fuso do local), pelas leituras da pessoa:
+  # [{at, zone, from, kind: arrived|left|moved}], da mais antiga para a mais nova.
+  def timeline(person, day: Time.current)
+    zone = ActiveSupport::TimeZone[person.site.timezone] || Time.zone
+    from = day.in_time_zone(zone).beginning_of_day
+    before = Reading.where(point_id: person.id).where(at: ...from.utc).order(at: :desc).limit(1).pick(:value_text)
+    rows = Reading.where(point_id: person.id, at: from.utc..(from + 1.day).utc).order(:at).limit(200).pluck(:at, :value_text)
+    prev = before
+    rows.filter_map do |at, z|
+      next if z == prev
+
+      item = { "at" => at.in_time_zone(zone), "zone" => z, "from" => prev, "kind" => move_kind(prev, z) }
+      prev = z
+      item
     end
   end
 
@@ -53,7 +101,12 @@ module People
       translates :label
 
       class << self
-        def describe(label:) = (@label = label)
+        def describe(label:, confidence: "medium")
+          @label = label
+          @confidence = confidence
+        end
+
+        def confidence = @confidence || "medium"
         def applies?(_point) = false
         # → nome da zona, People::AWAY ou nil (sem opinião agora).
         def zone(_point, _person, _zones) = nil
@@ -65,7 +118,7 @@ module People
     # app do celular já manda a zona resolvida (`zone`), que vale mesmo
     # depois que a coordenada exata some pela retenção.
     class Gps < Base
-      describe label: "Localização (GPS)"
+      describe label: "Localização (GPS)", confidence: "high"
       texts en: { label: "Location (GPS)" }, es: { label: "Ubicación (GPS)" }
 
       def self.applies?(point) = point.attrs.to_h.key?("latitude") || point.device_class == "location"
@@ -83,7 +136,7 @@ module People
     # Nome do Wi-Fi: numa das redes de casa da pessoa = em casa. Fora delas não
     # diz nada (pode estar só no 4G dentro de casa).
     class WifiSsid < Base
-      describe label: "Wi-Fi de casa"
+      describe label: "Wi-Fi de casa", confidence: "high"
       texts en: { label: "Home Wi-Fi" }, es: { label: "Wi-Fi de casa" }
 
       def self.applies?(point) = point.device_class == "wifi_ssid"
@@ -99,7 +152,7 @@ module People
     # Rosto reconhecido na câmera (Double Take): visto há pouco = em casa;
     # não visto não quer dizer fora (sem opinião).
     class Face < Base
-      describe label: "Rosto na câmera"
+      describe label: "Rosto na câmera", confidence: "low"
       texts en: { label: "Face on camera" }, es: { label: "Rostro en la cámara" }
 
       def self.applies?(point) = point.address.to_h["tracker"] == "face" && point.bool?
@@ -109,10 +162,16 @@ module People
     # Cômodo atual por Bluetooth (ESPresense): num cômodo = em casa; fora de
     # alcance não quer dizer fora (sem opinião).
     class Room < Base
-      describe label: "Cômodo (Bluetooth)"
+      describe label: "Cômodo (Bluetooth)", confidence: "low"
       texts en: { label: "Room (Bluetooth)" }, es: { label: "Cuarto (Bluetooth)" }
 
       def self.applies?(point) = point.address.to_h["tracker"] == "room"
+
+      # Cômodo em que a pessoa está (nil = fora de alcance).
+      def self.room(point)
+        room = point.value.to_s
+        room if point.quality == "good" && room.present? && room != Espresense::AWAY
+      end
 
       def self.zone(point, _person, zones)
         room = point.value.to_s
@@ -122,7 +181,7 @@ module People
 
     # Conectado na rede (rastreador de rede, ping): ligado = em casa; desligado = fora.
     class Connected < Base
-      describe label: "Conectado na rede"
+      describe label: "Conectado na rede", confidence: "medium"
       texts en: { label: "Connected to the network" }, es: { label: "Conectado a la red" }
 
       def self.applies?(point) = point.device_class.in?(%w[presence connectivity]) && point.bool?

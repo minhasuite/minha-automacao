@@ -467,8 +467,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (Configurações → Sistema). Nunca use `Net::HTTP` direto com URL do usuário.
 - **Ação `http` (F9)**: campo `:secret` cifrado na DSL (`{"enc" => …}`),
   `{{ secret }}` só na montagem dos textos; trace mostra só o host.
-- **Energia (F9)**: é só o widget `energy` (`Dashboards::Energy`, rollups de
-  hora + valor atual), sem tabela nem tela própria. Tarifa = número ou ponto.
+- **Energia (F9; por aparelho 11/2026, aberto/fechado)**: widget `energy` (`Dashboards::Energy`,
+  rollups de hora + valor atual) e a tela `/energia` (`EnergyUse`: custo por aparelho pela tarifa
+  do local, comparação, média aprendida por hora), sem tabela: tarifa e regra do aviso em
+  `sites.settings["energy"]`; aviso fora do normal pelo `EnergyWatchJob` (:15) num `Notifier`
+  agrupado por tag. Regra nova = chave em `watch`. `docs/energia.md`.
 - **Agenda (F9)**: plugin `calendar` (`Integrations::CalendarPlugin`,
   `Calendars`): ponto `calendar` por agenda com `address.events`; o relógio
   das integrações é `Integrations.tick` (plugin com `tick(now)`), chamado pelo
@@ -611,7 +614,10 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   atributos do "Presença" do celular, apagada pelo `MobileAppPlugin.tick`
   (`location_keep_h`). Voz e Ferramentas comandam por `Shadow.for_site` e a
   voz nunca comanda ponto/cena crítica. Pacote nunca executa nada.
-  Ferramentas: só `user.admin?`. Docs: `presenca.md`, `alarme.md`,
+  Ferramentas: só `user.admin?`. Tela `/pessoas` (morador+): fontes com confiança
+  (`describe confidence:` no rastreador), tolerância para sair (`away_delay_s`, `Person.tick`),
+  cômodo (`attrs.room`), dia pelas leituras e o assistente do celular (`People::Setup`);
+  condição `person`. Docs: `presenca.md`, `alarme.md`,
   `assistente.md`, `pacotes.md`, `ferramentas.md`.
 - **Sombra (F10)**: `Shadow.active?` = marca da automação/cena, `sites.shadow`
   ou `tenants.settings["shadow"]`; a execução guarda `automation_runs.shadow`

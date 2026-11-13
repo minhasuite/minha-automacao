@@ -1,0 +1,358 @@
+# Pessoas (presença por pessoa) e Energia por aparelho (docs/presenca.md, docs/energia.md).
+pt-BR:
+  nav:
+    presence: Pessoas
+    energy: Energia
+  notices:
+    need_site_presence: Crie um local para ver as pessoas.
+    need_site_energy: Crie um local para ver a energia.
+  helper_forms:
+    person:
+      away_delay: Tolerância para sair (min)
+      away_delay_hint: Só vira "Fora" depois de tanto tempo sem nenhuma fonte dizer uma zona. Evita "piscar" quando o Wi-Fi cai um minuto. 0 = na hora.
+  presence:
+    title: Pessoas
+    subtitle: "Quem está em casa e onde · %{site}"
+    at_home: Em casa
+    away_now: Fora
+    no_signal: Sem sinal
+    no_home_zone: Sem zona da casa
+    no_people: Ninguém cadastrado ainda. Use o assistente abaixo para ligar a presença pelo celular de cada morador.
+    room: "no(a) %{room}"
+    decided_by: "Decidido agora por: %{source}"
+    leaving: "Saindo desde %{time}: confirma \"Fora\" em até %{min} min se nenhuma fonte voltar a dizer uma zona."
+    sources: Fontes, em ordem de prioridade
+    tolerance: "· tolerância para sair: %{min} min"
+    no_tolerance: "· sem tolerância para sair"
+    no_tracker: Sem rastreador
+    no_opinion: Sem opinião
+    confidence:
+      high: confiança alta
+      medium: confiança média
+      low: confiança baixa
+    today: Hoje
+    no_moves: Nenhuma chegada ou saída hoje.
+    moves:
+      arrived: "Chegou em %{zone}"
+      moved: "Foi de %{from} para %{zone}"
+      left: "Saiu de %{from}"
+    edit_person: Editar fontes e tolerância
+    card_title: Quem está em casa
+    setup:
+      title: Presença pelo celular
+      subtitle: O app do Minha Automação já manda a presença; falta só ligar para cada morador.
+      steps:
+        account: "Conta: o morador entra na instalação (convite com papel de morador)."
+        app: "App: instala o app no celular e entra com a conta dele."
+        location: "Localização: no app, Mais → Sensores do celular → liga \"Localização\" e permite \"o tempo todo\"."
+        person: "Pessoa: cria a pessoa ligada ao celular dele (GPS e Wi-Fi, pela confiança)."
+      short:
+        account: Conta
+        app: App
+        location: Localização
+        person: Pessoa
+      next:
+        account: Falta a conta.
+        app: Falta instalar o app e entrar com a conta.
+        location: Falta ligar a localização no app (Mais → Sensores do celular).
+        person: Falta criar a pessoa.
+      ok: feito
+      missing: falta
+      see: Ver
+      create: Criar pessoa
+      created: "Pessoa %{name} criada com as fontes do celular."
+      invite: Gerar convite de morador
+      invite_hint: Morador que ainda não tem conta recebe um link de convite (uso único, 7 dias).
+      privacy: A pessoa guarda só a zona. A localização exata fica no ponto do celular, aqui no servidor, pelo tempo de retenção da integração "App do celular".
+      not_resident: Essa pessoa não tem papel neste local.
+  energy:
+    title: Energia
+    subtitle: "Consumo e custo por aparelho · %{site}"
+    period: Período
+    periods:
+      day: Hoje
+      week: Semana
+      month: Mês
+    used: Consumo
+    cost: Custo
+    no_tariff: Sem tarifa definida
+    vs_previous: Contra o período anterior
+    previous_was: "Mesmo trecho antes: %{kwh} · %{cost}"
+    ranking: Ranking por aparelho
+    by_cost: Pelo custo, com a tarifa do local
+    by_kwh: Pelo consumo (defina a tarifa para ver o custo)
+    empty: Nenhum aparelho com medição de energia ou potência neste local.
+    compare: Comparação
+    compare_hint: Mesmo trecho do período anterior
+    before: "antes %{kwh}"
+    settings: Tarifa e aviso de consumo fora do normal
+    settings_hint: A média de cada aparelho por hora do dia é aprendida do histórico.
+    tariff_now_point: "Tarifa: %{name}"
+    tariff_now_fixed: "Tarifa fixa: %{value}/kWh"
+    saved: Energia atualizada.
+    card_title: Gasto do mês por aparelho
+    errors:
+      tariff_point: A tarifa precisa ser um helper Tarifa ou Número deste local.
+      tariff: A tarifa fixa precisa ser um número maior ou igual a zero.
+      factor: O fator precisa ser de 1,1 a 20.
+      min_kwh: O excesso mínimo precisa ser de 0 a 100 kWh.
+    watch:
+      now_title: Consumo fora do normal na última hora
+      line: "%{name}: %{kwh} kWh às %{hour} (média do horário %{avg} kWh)"
+      title_one: "Consumo fora do normal: %{name}"
+      title_many: "Consumo fora do normal em %{n} aparelhos"
+      "on": "Aviso ligado: acima de %{factor}× a média do horário e ao menos %{min} kWh a mais"
+      "off": Aviso de consumo fora do normal desligado
+    form:
+      tariff_point: Tarifa do local
+      auto: Automática (o helper Tarifa, se houver)
+      tariff: Ou tarifa fixa (R$/kWh)
+      enabled: Avisar consumo fora do normal
+      enabled_hint: A cada hora, compara o consumo de cada aparelho com a média dele naquele horário (até 28 dias; avisa depois de 7 dias de dado). Um aviso por hora, com todos os aparelhos juntos.
+      factor: Vezes a média do horário
+      min_kwh: Excesso mínimo (kWh)
+      ignore: Não avisar destes aparelhos
+      save: Salvar
+    wf:
+      metric: Mostrar
+      metrics:
+        kwh: Consumo (kWh)
+        cost: Custo
+en:
+  nav:
+    presence: People
+    energy: Energy
+  notices:
+    need_site_presence: Create a place to see the people.
+    need_site_energy: Create a place to see the energy.
+  helper_forms:
+    person:
+      away_delay: Delay before away (min)
+      away_delay_hint: Only becomes "Away" after this long without any source naming a zone. Avoids flapping when the Wi-Fi drops for a minute. 0 = right away.
+  presence:
+    title: People
+    subtitle: "Who is home and where · %{site}"
+    at_home: Home
+    away_now: Away
+    no_signal: No signal
+    no_home_zone: No home zone
+    no_people: No one set up yet. Use the assistant below to turn on phone presence for each resident.
+    room: "in the %{room}"
+    decided_by: "Decided now by: %{source}"
+    leaving: "Leaving since %{time}: becomes \"Away\" within %{min} min unless a source names a zone again."
+    sources: Sources, by priority
+    tolerance: "· delay before away: %{min} min"
+    no_tolerance: "· no delay before away"
+    no_tracker: No tracker
+    no_opinion: No opinion
+    confidence:
+      high: high confidence
+      medium: medium confidence
+      low: low confidence
+    today: Today
+    no_moves: No arrivals or departures today.
+    moves:
+      arrived: "Arrived at %{zone}"
+      moved: "Went from %{from} to %{zone}"
+      left: "Left %{from}"
+    edit_person: Edit sources and delay
+    card_title: Who is home
+    setup:
+      title: Phone presence
+      subtitle: The Minha Automação app already sends presence; it only needs turning on for each resident.
+      steps:
+        account: "Account: the resident joins the installation (invite with the resident role)."
+        app: "App: installs the app on the phone and signs in with their account."
+        location: "Location: in the app, More → Phone sensors → turn on \"Location\" and allow \"all the time\"."
+        person: "Person: create the person linked to their phone (GPS and Wi-Fi, by confidence)."
+      short:
+        account: Account
+        app: App
+        location: Location
+        person: Person
+      next:
+        account: Missing the account.
+        app: Needs to install the app and sign in.
+        location: Needs to turn on location in the app (More → Phone sensors).
+        person: Needs the person created.
+      ok: done
+      missing: missing
+      see: See
+      create: Create person
+      created: "Person %{name} created with the phone sources."
+      invite: Create resident invite
+      invite_hint: A resident without an account gets an invite link (single use, 7 days).
+      privacy: The person only stores the zone. The exact location stays on the phone's point, here on the server, for the retention time of the "Phone app" integration.
+      not_resident: This person has no role in this place.
+  energy:
+    title: Energy
+    subtitle: "Usage and cost by device · %{site}"
+    period: Period
+    periods:
+      day: Today
+      week: Week
+      month: Month
+    used: Usage
+    cost: Cost
+    no_tariff: No rate set
+    vs_previous: Versus the previous period
+    previous_was: "Same stretch before: %{kwh} · %{cost}"
+    ranking: Ranking by device
+    by_cost: By cost, with the place's rate
+    by_kwh: By usage (set the rate to see the cost)
+    empty: No device measuring energy or power in this place.
+    compare: Comparison
+    compare_hint: Same stretch of the previous period
+    before: "before %{kwh}"
+    settings: Rate and unusual usage alert
+    settings_hint: Each device's average for each hour of the day is learned from history.
+    tariff_now_point: "Rate: %{name}"
+    tariff_now_fixed: "Flat rate: %{value}/kWh"
+    saved: Energy updated.
+    card_title: This month's cost by device
+    errors:
+      tariff_point: The rate must be a Rate or Number helper of this place.
+      tariff: The flat rate must be a number greater than or equal to zero.
+      factor: The factor must be from 1.1 to 20.
+      min_kwh: The minimum excess must be from 0 to 100 kWh.
+    watch:
+      now_title: Unusual usage in the last hour
+      line: "%{name}: %{kwh} kWh at %{hour} (hourly average %{avg} kWh)"
+      title_one: "Unusual usage: %{name}"
+      title_many: "Unusual usage on %{n} devices"
+      "on": "Alert on: above %{factor}× the hourly average and at least %{min} kWh more"
+      "off": Unusual usage alert off
+    form:
+      tariff_point: Place rate
+      auto: Automatic (the Rate helper, if any)
+      tariff: Or flat rate (per kWh)
+      enabled: Alert on unusual usage
+      enabled_hint: Every hour, compares each device's usage with its average for that hour (up to 28 days; alerts after 7 days of data). One alert per hour, all devices together.
+      factor: Times the hourly average
+      min_kwh: Minimum excess (kWh)
+      ignore: Don't alert for these devices
+      save: Save
+    wf:
+      metric: Show
+      metrics:
+        kwh: Usage (kWh)
+        cost: Cost
+es:
+  nav:
+    presence: Personas
+    energy: Energía
+  notices:
+    need_site_presence: Crea un lugar para ver las personas.
+    need_site_energy: Crea un lugar para ver la energía.
+  helper_forms:
+    person:
+      away_delay: Tolerancia para salir (min)
+      away_delay_hint: Solo pasa a "Fuera" después de ese tiempo sin que ninguna fuente diga una zona. Evita "parpadeos" cuando el Wi-Fi cae un minuto. 0 = al instante.
+  presence:
+    title: Personas
+    subtitle: "Quién está en casa y dónde · %{site}"
+    at_home: En casa
+    away_now: Fuera
+    no_signal: Sin señal
+    no_home_zone: Sin zona de casa
+    no_people: Todavía no hay nadie. Usa el asistente de abajo para activar la presencia por el celular de cada residente.
+    room: "en %{room}"
+    decided_by: "Decidido ahora por: %{source}"
+    leaving: "Saliendo desde %{time}: pasa a \"Fuera\" en hasta %{min} min si ninguna fuente vuelve a decir una zona."
+    sources: Fuentes, en orden de prioridad
+    tolerance: "· tolerancia para salir: %{min} min"
+    no_tolerance: "· sin tolerancia para salir"
+    no_tracker: Sin rastreador
+    no_opinion: Sin opinión
+    confidence:
+      high: confianza alta
+      medium: confianza media
+      low: confianza baja
+    today: Hoy
+    no_moves: Ninguna llegada ni salida hoy.
+    moves:
+      arrived: "Llegó a %{zone}"
+      moved: "Pasó de %{from} a %{zone}"
+      left: "Salió de %{from}"
+    edit_person: Editar fuentes y tolerancia
+    card_title: Quién está en casa
+    setup:
+      title: Presencia por el celular
+      subtitle: La app de Minha Automação ya envía la presencia; solo falta activarla para cada residente.
+      steps:
+        account: "Cuenta: el residente entra en la instalación (invitación con papel de residente)."
+        app: "App: instala la app en el celular y entra con su cuenta."
+        location: "Ubicación: en la app, Más → Sensores del celular → activa \"Ubicación\" y permite \"todo el tiempo\"."
+        person: "Persona: crea la persona vinculada a su celular (GPS y Wi-Fi, por la confianza)."
+      short:
+        account: Cuenta
+        app: App
+        location: Ubicación
+        person: Persona
+      next:
+        account: Falta la cuenta.
+        app: Falta instalar la app y entrar con la cuenta.
+        location: Falta activar la ubicación en la app (Más → Sensores del celular).
+        person: Falta crear la persona.
+      ok: hecho
+      missing: falta
+      see: Ver
+      create: Crear persona
+      created: "Persona %{name} creada con las fuentes del celular."
+      invite: Generar invitación de residente
+      invite_hint: El residente que aún no tiene cuenta recibe un enlace de invitación (un solo uso, 7 días).
+      privacy: La persona guarda solo la zona. La ubicación exacta queda en el punto del celular, aquí en el servidor, durante el tiempo de retención de la integración "App del celular".
+      not_resident: Esta persona no tiene papel en este lugar.
+  energy:
+    title: Energía
+    subtitle: "Consumo y costo por aparato · %{site}"
+    period: Período
+    periods:
+      day: Hoy
+      week: Semana
+      month: Mes
+    used: Consumo
+    cost: Costo
+    no_tariff: Sin tarifa definida
+    vs_previous: Contra el período anterior
+    previous_was: "Mismo tramo antes: %{kwh} · %{cost}"
+    ranking: Ranking por aparato
+    by_cost: Por costo, con la tarifa del lugar
+    by_kwh: Por consumo (define la tarifa para ver el costo)
+    empty: Ningún aparato con medición de energía o potencia en este lugar.
+    compare: Comparación
+    compare_hint: Mismo tramo del período anterior
+    before: "antes %{kwh}"
+    settings: Tarifa y aviso de consumo fuera de lo normal
+    settings_hint: El promedio de cada aparato por hora del día se aprende del historial.
+    tariff_now_point: "Tarifa: %{name}"
+    tariff_now_fixed: "Tarifa fija: %{value}/kWh"
+    saved: Energía actualizada.
+    card_title: Gasto del mes por aparato
+    errors:
+      tariff_point: La tarifa debe ser un helper Tarifa o Número de este lugar.
+      tariff: La tarifa fija debe ser un número mayor o igual a cero.
+      factor: El factor debe ser de 1,1 a 20.
+      min_kwh: El exceso mínimo debe ser de 0 a 100 kWh.
+    watch:
+      now_title: Consumo fuera de lo normal en la última hora
+      line: "%{name}: %{kwh} kWh a las %{hour} (promedio del horario %{avg} kWh)"
+      title_one: "Consumo fuera de lo normal: %{name}"
+      title_many: "Consumo fuera de lo normal en %{n} aparatos"
+      "on": "Aviso activado: más de %{factor}× el promedio del horario y al menos %{min} kWh más"
+      "off": Aviso de consumo fuera de lo normal desactivado
+    form:
+      tariff_point: Tarifa del lugar
+      auto: Automática (el helper Tarifa, si hay)
+      tariff: O tarifa fija (por kWh)
+      enabled: Avisar consumo fuera de lo normal
+      enabled_hint: Cada hora compara el consumo de cada aparato con su promedio en ese horario (hasta 28 días; avisa después de 7 días de datos). Un aviso por hora, con todos los aparatos juntos.
+      factor: Veces el promedio del horario
+      min_kwh: Exceso mínimo (kWh)
+      ignore: No avisar de estos aparatos
+      save: Guardar
+    wf:
+      metric: Mostrar
+      metrics:
+        kwh: Consumo (kWh)
+        cost: Costo

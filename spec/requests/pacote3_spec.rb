@@ -33,7 +33,7 @@ RSpec.describe "Pacote 3: telas e API" do
       end
       gps = within(tenant) { phone.points.find_by!(device_class: "location") }
       get "/locais/#{site.id}/helpers/novo", params: { tipo: "person" }
-      expect(response.body).to include("Presença · Celular (Localização (GPS))")
+      expect(response.body).to include("Presença · Celular (Localização (GPS) · confiança alta)")
       post "/locais/#{site.id}/helpers", params: { tipo: "person", helper: { name: "Ana", user_id: user.id, sources: [ gps.id, "" ], home_ssids: "Rede" } }
       expect(helper_point("Ana").value).to eq("Casa")
       post "/locais/#{site.id}/helpers", params: { tipo: "alarm_panel", helper: { name: "Alarme", code: "2468", trigger_time: "1m",

@@ -101,6 +101,10 @@ module Dashboards
 
     public
 
+    # kWh por hora ({início da hora no fuso do local → kWh}) de `from` a `to`
+    # (tela Energia: média aprendida por hora e consumo fora do normal).
+    def hourly(from, to) = kwh_by_hour(from - 1.hour, to).select { |at, _| at >= from && at < to }
+
     # Custo de `from` a `to` com a mesma tarifa do widget (ranking e comparação).
     def cost_between(from, to)
       hourly = kwh_by_hour(from - 1.hour, [ to, @now ].min)

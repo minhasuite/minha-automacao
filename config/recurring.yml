@@ -25,6 +25,10 @@ production:
   rollup_readings:
     class: RollupReadingsJob
     schedule: every hour at minute 5
+  # Energia por aparelho: consumo fora do normal na hora que fechou (depois dos rollups).
+  energy_watch:
+    class: EnergyWatchJob
+    schedule: every hour at minute 15
   # Automação (F4): agendas vencidas.
   run_schedules:
     class: RunSchedulesJob

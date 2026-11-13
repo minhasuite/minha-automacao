@@ -1,0 +1,112 @@
+<%= render "web/shared/header", title: t("presence.title"), subtitle: t("presence.subtitle", site: @site.name) do %>
+  <%= link_to map_path(site_id: @site.id), class: "ss-btn ss-btn-ghost" do %><%= icon("map", "size-4") %><span><%= t("nav.map") %></span><% end %>
+  <% if @manage %><%= render "web/dashboards/add_to_link", type: "people", record: @site %><% end %>
+<% end %>
+<%= render "web/shared/site_switch", sites: @sites, site: @site, path: presence_path %>
+<% home_n = @persons.count { |p| HelperTypes::Person.home?(p) && p.quality == "good" } %>
+<% when_text = ->(at) { at && l(at.in_time_zone(@tz), format: at.in_time_zone(@tz).to_date == Time.current.in_time_zone(@tz).to_date ? "%H:%M" : "%d/%m %H:%M") } %>
+<div class="grid gap-4 sm:grid-cols-3 mb-6">
+  <%= render Ss::KpiCardComponent.new(label: t("presence.at_home"), value: "#{home_n} / #{@persons.size}", icon: icon("home", ""), tone: :accent,
+                                      caption: (@home ? @home.name : t("presence.no_home_zone"))) %>
+  <%= render Ss::KpiCardComponent.new(label: t("presence.away_now"), value: @persons.count { |p| p.value == People::AWAY }.to_s, icon: icon("logout", "")) %>
+  <%= render Ss::KpiCardComponent.new(label: t("presence.no_signal"), value: @persons.count { |p| p.quality != "good" }.to_s, icon: icon("exclamation-circle", ""), tone: :warn) %>
+</div>
+
+<% if @persons.empty? %>
+  <%= render Ss::NoteComponent.new(text: t("presence.no_people"), icon: icon("users", ""), css: "mb-6") %>
+<% end %>
+<div class="grid gap-4 lg:grid-cols-2 mb-8">
+  <% @persons.each do |p| %>
+    <% a = p.attrs.to_h %>
+    <% off = p.quality != "good" %>
+    <% home = HelperTypes::Person.home?(p) && !off %>
+    <% leaving = Time.zone.parse(a["leaving_at"].to_s) if a["leaving_at"].present? %>
+    <% delay = HelperTypes::Person.away_delay(p) %>
+    <section id="p-<%= p.id %>" class="ss-card ss-card-pad grid gap-4" aria-labelledby="ph-<%= p.id %>">
+      <div class="flex items-center gap-3">
+        <%= ss_avatar(p.name.to_s, size: 44, status: off ? "warn" : (home ? "success" : "muted"), ring: home) %>
+        <div class="min-w-0 flex-1">
+          <h2 id="ph-<%= p.id %>" class="font-bold text-ink truncate"><%= link_to p.name, point_path(p) %></h2>
+          <p class="text-sm text-muted">
+            <%= off ? t("points.no_signal") : (p.value.presence || t("maps.no_reading")) %><% if a["room"].present? && !off %> · <%= t("presence.room", room: a["room"]) %><% end %><% if p.changed_at && !off %> · <%= t("maps.since") %> <%= when_text.(p.changed_at) %><% end %>
+          </p>
+          <% if a["source"].present? %><p class="text-xs text-muted"><%= t("presence.decided_by", source: a["source"]) %></p><% end %>
+        </div>
+        <span class="ss-badge <%= home ? 'is-success' : (off ? 'is-warn' : '') %>"><%= home ? t("dashboards.w.at_home") : (off ? t("points.no_signal") : t("dashboards.w.away")) %></span>
+      </div>
+      <% if leaving %>
+        <%= render Ss::NoteComponent.new(text: t("presence.leaving", time: when_text.(leaving), min: (delay / 60.0).ceil), icon: icon("clock", ""), tone: :warn) %>
+      <% end %>
+
+      <div>
+        <h3 class="ss-label"><%= t("presence.sources") %> <span class="font-normal"><%= delay.positive? ? t("presence.tolerance", min: (delay / 60.0).round(1).to_s.delete_suffix(".0")) : t("presence.no_tolerance") %></span></h3>
+        <ol class="grid gap-1" aria-label="<%= t("presence.sources") %>">
+          <% People.opinions(p, @zones).each_with_index do |o, i| %>
+            <% s = o["point"] %>
+            <li class="ss-item">
+              <span class="text-xs text-muted num w-5"><%= i + 1 %>.</span>
+              <span class="ss-item-main">
+                <span><%= s.name %> · <%= s.device&.name %></span>
+                <span><%= o["tracker"]&.label || t("presence.no_tracker") %> · <%= t("presence.confidence.#{o['tracker']&.confidence || 'low'}") %></span>
+              </span>
+              <span class="ss-badge <%= o['zone'] && o['zone'] != People::AWAY ? 'is-success' : '' %>"><%= !o["good"] ? t("points.no_signal") : (o["zone"] || t("presence.no_opinion")) %></span>
+            </li>
+          <% end %>
+        </ol>
+      </div>
+
+      <div>
+        <h3 class="ss-label"><%= t("presence.today") %></h3>
+        <% moves = People.timeline(p) %>
+        <% if moves.empty? %>
+          <p class="text-sm text-muted"><%= t("presence.no_moves") %></p>
+        <% else %>
+          <ul class="grid gap-1" aria-label="<%= t("presence.today") %>">
+            <% moves.last(12).reverse_each do |m| %>
+              <li class="ss-item">
+                <span class="ss-icon-tile <%= m['kind'] == 'left' ? 'is-muted' : 'is-accent' %>"><%= icon(m["kind"] == "left" ? "logout" : "login", "") %></span>
+                <span class="ss-item-main"><span><%= t("presence.moves.#{m['kind']}", zone: m["zone"], from: m["from"].presence || "—") %></span></span>
+                <span class="num text-sm text-muted"><%= m["at"].strftime("%H:%M") %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </div>
+      <% if @manage %>
+        <div><%= link_to t("presence.edit_person"), edit_helper_path(p), class: "ss-btn ss-btn-ghost ss-btn-sm" %></div>
+      <% end %>
+    </section>
+  <% end %>
+</div>
+
+<section class="ss-card ss-card-pad grid gap-4" id="assistente">
+  <%= render Ss::CardHeaderComponent.new(title: t("presence.setup.title"), subtitle: t("presence.setup.subtitle"), icon: icon("device-mobile", "")) %>
+  <ol class="grid gap-1 text-sm text-muted list-decimal ps-5">
+    <% People::Setup::STEPS.each do |st| %><li><%= t("presence.setup.steps.#{st}") %></li><% end %>
+  </ol>
+  <ul class="grid gap-2" aria-label="<%= t("presence.setup.title") %>">
+    <% @setup.each do |row| %>
+      <li class="ss-item">
+        <%= ss_avatar(row.user.name.to_s, size: 36, status: row.complete? ? "success" : "muted") %>
+        <span class="ss-item-main">
+          <span><%= row.user.name %></span>
+          <span class="flex flex-wrap gap-1 mt-1"><% People::Setup::STEPS.each do |st| %><span class="ss-badge <%= 'is-success' if row.step_done?(st) %>"><%= t("presence.setup.short.#{st}") %><span class="sr-only"> · <%= row.step_done?(st) ? t("presence.setup.ok") : t("presence.setup.missing") %></span></span><% end %></span>
+          <% if (nxt = row.next_step) %><span><%= t("presence.setup.next.#{nxt}") %></span><% end %>
+        </span>
+        <% if row.complete? %>
+          <%= link_to t("presence.setup.see"), "#p-#{row.person.id}", class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+        <% elsif row.next_step == "person" && @manage %>
+          <%= button_to t("presence.setup.create"), presence_path, params: { site_id: @site.id, user_id: row.user.id }, class: "ss-btn ss-btn-primary ss-btn-sm" %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+  <% if current_user.owner? %>
+    <%= form_with url: invite_people_path, class: "flex flex-wrap items-end gap-3", data: { turbo: false } do %>
+      <%= hidden_field_tag "invite[site_id]", @site.id, id: nil %><%= hidden_field_tag "invite[site_role]", "resident", id: nil %><%= hidden_field_tag "invite[role]", "member", id: nil %>
+      <p class="text-sm text-muted flex-1 min-w-48"><%= t("presence.setup.invite_hint") %></p>
+      <%= submit_tag t("presence.setup.invite"), class: "ss-btn ss-btn-ghost" %>
+    <% end %>
+  <% end %>
+  <p class="text-xs text-muted"><%= t("presence.setup.privacy") %></p>
+</section>
