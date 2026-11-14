@@ -19,12 +19,11 @@
     </div>
   <% end %>
   <% if owner %>
-    <%= form_with url: settings_ai_path, method: :patch, scope: :ai, class: "mt-4 grid gap-3 sm:grid-cols-3 items-end" do |f| %>
-      <div><%= f.label :default_provider, t("ai_settings.default"), class: "ss-label" %>
-        <%= f.select :default_provider, Ai.providers.map { |p| [ p.label, p.key ] }, { selected: b.default_provider, include_blank: t("ai_settings.first") }, class: "ss-input" %></div>
-      <div><%= f.label :limit_usd, t("ai_settings.limit_usd"), class: "ss-label" %><%= f.text_field :limit_usd, value: b.limit_usd&.then { |v| v % 1 == 0 ? v.to_i : v }, class: "ss-input num", inputmode: "decimal", placeholder: t("ai_settings.no_limit") %></div>
-      <div><%= f.label :limit_calls, t("ai_settings.limit_calls"), class: "ss-label" %><%= f.number_field :limit_calls, value: b.limit_calls, min: 1, class: "ss-input num", placeholder: t("ai_settings.no_limit") %></div>
-      <div class="sm:col-span-3"><%= f.submit t("ai_settings.save_limit"), class: "ss-btn ss-btn-primary", name: nil %></div>
+    <%= ss_form_with url: settings_ai_path, method: :patch, scope: :ai, class: "mt-4 grid gap-3 sm:grid-cols-3 items-end" do |f| %>
+      <%= f.ss_select :default_provider, Ai.providers.map { |p| [ p.label, p.key ] }, label: t("ai_settings.default"), selected: b.default_provider, include_blank: t("ai_settings.first") %>
+      <%= f.ss_text_field :limit_usd, label: t("ai_settings.limit_usd"), value: b.limit_usd&.then { |v| v % 1 == 0 ? v.to_i : v }, class: "num", inputmode: "decimal", placeholder: t("ai_settings.no_limit") %>
+      <%= f.ss_number_field :limit_calls, label: t("ai_settings.limit_calls"), value: b.limit_calls, min: 1, class: "num", placeholder: t("ai_settings.no_limit") %>
+      <div class="sm:col-span-3"><%= f.ss_submit t("ai_settings.save_limit"), name: nil %></div>
     <% end %>
   <% end %>
 </section>
@@ -49,24 +48,24 @@
       <% if acc&.last_error %><p class="mt-2 text-sm text-danger" role="alert"><%= acc.last_error %></p><% end %>
       <% if acc&.last_ok_at %><p class="mt-1 text-xs text-muted"><%= t("ai_settings.last_ok", ago: ago_text(acc.last_ok_at)) %></p><% end %>
       <% if owner %>
-        <%= form_with url: settings_ai_provider_path(plugin.key), method: :patch, scope: :account, class: "mt-3 grid gap-3" do |f| %>
-          <div><%= f.label :api_key, plugin.key_required? ? t("ai_settings.api_key") : t("ai_settings.key_opt"), class: "ss-label", for: "k-#{plugin.key}" %>
-            <%= f.password_field :api_key, id: "k-#{plugin.key}", class: "ss-input", autocomplete: "new-password", maxlength: 300,
-                                 placeholder: acc&.api_key.present? ? t("ai_settings.key_kept") : t("ai_settings.key_paste") %></div>
+        <%= ss_form_with url: settings_ai_provider_path(plugin.key), method: :patch, scope: :account, class: "mt-3 grid gap-3" do |f| %>
+          <%= f.ss_password_field :api_key, label: plugin.key_required? ? t("ai_settings.api_key") : t("ai_settings.key_opt"), id: "k-#{plugin.key}", autocomplete: "new-password", maxlength: 300,
+                                            placeholder: acc&.api_key.present? ? t("ai_settings.key_kept") : t("ai_settings.key_paste") %>
           <% if plugin.custom_url? %>
-            <div><%= f.label :base_url, t("ai_settings.base_url"), class: "ss-label", for: "u-#{plugin.key}" %><%= f.url_field :base_url, id: "u-#{plugin.key}", value: acc&.base_url, class: "ss-input num", placeholder: plugin.base_url %></div>
+            <%= f.ss_url_field :base_url, label: t("ai_settings.base_url"), id: "u-#{plugin.key}", value: acc&.base_url, class: "num", placeholder: plugin.base_url %>
           <% end %>
-          <div><%= f.label :model, t("ai_settings.model_default", model: plugin.default_model), class: "ss-label", for: "m-#{plugin.key}" %>
-            <%= f.text_field :model, id: "m-#{plugin.key}", value: acc&.model, class: "ss-input num", list: "models-#{plugin.key}", maxlength: 100, placeholder: plugin.default_model %>
+          <div>
+            <%= f.ss_text_field :model, label: t("ai_settings.model_default", model: plugin.default_model), id: "m-#{plugin.key}", value: acc&.model, class: "num", list: "models-#{plugin.key}", maxlength: 100, placeholder: plugin.default_model %>
             <datalist id="models-<%= plugin.key %>"><% plugin.models.each do |m| %><option value="<%= m %>"></option><% end %></datalist></div>
           <div class="flex flex-wrap gap-x-4 gap-y-1">
-            <label class="ss-check"><%= f.check_box :enabled, { checked: acc.nil? || acc.enabled, id: "e-#{plugin.key}" }, "1", "0" %><%= t("ai_settings.enabled") %></label>
-            <% if acc&.api_key.present? %><label class="ss-check"><%= f.check_box :remove_key, { id: "r-#{plugin.key}" }, "1", nil %><%= t("ai_settings.remove_key") %></label><% end %>
+            <%= f.ss_check_box :enabled, label: t("ai_settings.enabled"), checked: acc.nil? || acc.enabled, id: "e-#{plugin.key}" %>
+            <% if acc&.api_key.present? %><%= f.ss_check_box :remove_key, label: t("ai_settings.remove_key"), id: "r-#{plugin.key}", unchecked_value: nil %><% end %>
           </div>
-          <div><%= f.submit t("site_helpers.form.save"), class: "ss-btn ss-btn-primary ss-btn-sm", name: nil %></div>
+          <div><%= f.ss_submit t("site_helpers.form.save"), small: true, name: nil %></div>
         <% end %>
         <% if acc&.usable? %>
-          <%= button_to settings_ai_check_path(plugin.key), class: "ss-btn ss-btn-outline ss-btn-sm mt-2" do %><%= icon("lightning-bolt", "size-4") %><%= t("ai_settings.test") %><% end %>
+          <%= render Ss::ButtonComponent.new(label: t("ai_settings.test"), icon: icon("lightning-bolt", ""), href: settings_ai_check_path(plugin.key), method: :post,
+                                             variant: :outline, size: :sm, class: "mt-2") %>
         <% end %>
       <% end %>
     </section>

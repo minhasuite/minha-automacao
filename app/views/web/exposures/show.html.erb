@@ -1,67 +1,56 @@
 <%= render "web/shared/header", title: t("exposures.show.title"), subtitle: t("exposures.show.subtitle", site: @site.name) %>
 <%= render "web/sites/tabs", site: @site, current: :exposure %>
 <% admin = can?(:admin) %>
-<%= form_with url: site_exposure_path(@site), method: :get, class: "mb-3 grid gap-3 sm:flex sm:flex-wrap sm:items-end", role: "search" do %>
-  <div class="min-w-0 sm:min-w-48 sm:flex-1"><label for="q" class="ss-label"><%= t("exposures.show.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("exposures.show.search_ph") %></div>
+<%= ss_form_with url: site_exposure_path(@site), method: :get, class: "mb-3 grid gap-3 sm:flex sm:flex-wrap sm:items-end", role: "search" do |f| %>
+  <%= f.ss_search_field :q, label: t("exposures.show.search"), value: params[:q], wrapper_class: "min-w-0 sm:min-w-48 sm:flex-1", placeholder: t("exposures.show.search_ph") %>
   <div class="grid grid-cols-3 gap-2 sm:contents">
-    <div><label for="area" class="ss-label"><%= t("exposures.show.area") %></label><%= select_tag :area, options_for_select(@site.areas.order(:level, :position, :name).map { |a| [ a.name, a.id ] }, params[:area]), include_blank: t("exposures.show.all_f"), class: "ss-input", data: { autosubmit: true } %></div>
-    <div><label for="rotulo" class="ss-label"><%= t("exposures.show.label") %></label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: t("exposures.show.all_m"), class: "ss-input", data: { autosubmit: true } %></div>
-    <div><label for="so" class="ss-label"><%= t("exposures.show.show") %></label><%= select_tag :so, options_for_select([ [ t("exposures.show.only_exposed"), "expostos" ] ], params[:so]), include_blank: t("exposures.show.all_m"), class: "ss-input", data: { autosubmit: true } %></div>
+    <%= f.ss_select :area, @site.areas.order(:level, :position, :name).map { |a| [ a.name, a.id ] }, label: t("exposures.show.area"), selected: params[:area], include_blank: t("exposures.show.all_f"), data: { autosubmit: true } %>
+    <%= f.ss_select :rotulo, @labels, label: t("exposures.show.label"), selected: params[:rotulo], include_blank: t("exposures.show.all_m"), data: { autosubmit: true } %>
+    <%= f.ss_select :so, [ [ t("exposures.show.only_exposed"), "expostos" ] ], label: t("exposures.show.show"), selected: params[:so], include_blank: t("exposures.show.all_m"), data: { autosubmit: true } %>
   </div>
-  <button type="submit" class="ss-btn ss-btn-ghost hidden sm:inline-flex" aria-label="<%= t("exposures.show.search") %>"><%= icon("search", "size-4") %></button>
+  <%= render Ss::ButtonComponent.new(type: :submit, icon: icon("search", ""), variant: :ghost, class: "hidden sm:inline-flex", aria: { label: t("exposures.show.search") }) %>
 <% end %>
 
 <% if @points.empty? %>
   <%= render Ss::EmptyStateComponent.new(title: t("exposures.show.empty"), variant: :busca, css: "ss-card") do %><%= link_to t("exposures.show.clear"), site_exposure_path(@site), class: "ss-btn ss-btn-ghost" %><% end %>
 <% else %>
-  <%= form_with url: site_exposure_path(@site), method: :patch, data: { controller: "ss-check-all" } do %>
+  <%= ss_form_with url: site_exposure_path(@site), method: :patch, data: { controller: "ss-check-all" } do |f| %>
     <%= hidden_field_tag :back, request.fullpath, id: nil %>
-    <%# Grade ponto × assistente na tabela da gem (.ss-table); rola de lado dentro do card no celular. %>
-    <div class="ss-card overflow-x-auto">
-      <table class="ss-table" aria-label="<%= t("exposures.show.table") %>">
-        <thead>
-          <tr>
-            <th scope="col"><%= t("exposures.show.point") %></th>
-            <% @targets.each do |tg| %>
-              <th scope="col" class="text-center" title="<%= t("exposures.show.column_title", target: tg.title) %>">
-                <span class="inline-flex flex-col items-center gap-1"><span class="inline-flex items-center gap-1 whitespace-nowrap"><%= icon(tg.icon, "size-4") %><%= tg.title %></span>
-                  <% if admin %><input type="checkbox" data-action="ss-check-all#toggle" data-ss-check-all-col-param="<%= tg.key %>" data-ss-check-all-target="all" aria-label="<%= t("exposures.show.column_all", target: tg.title) %>"><% end %></span>
-              </th>
+    <%# Grade ponto × assistente na tabela da gem; rola de lado no celular (stack: false). %>
+    <%= render(Ss::DataTableComponent.new(rows: @points, id: "exposure", caption: t("exposures.show.table"), tools: false, stack: false,
+                                          row_attrs: ->(p) { { id: "expose-#{p.id}" } })) do |t| %>
+      <% t.column :point, t("exposures.show.point") do |p| %>
+        <div class="flex items-center gap-3 min-w-48">
+          <span class="ss-icon-tile is-muted is-sm"><%= icon(point_icon(p), "") %></span>
+          <div class="min-w-0">
+            <p class="font-semibold text-ink truncate"><%= p.name %> <% if p.risk == "critical" %><span class="ss-badge ss-badge-warn"><%= t("exposures.show.critical") %></span><% end %></p>
+            <p class="text-xs text-muted truncate"><%= [ p.device&.name, (p.area || p.device&.area)&.name ].compact.uniq.join(" · ") %> <%= label_chips(p) %></p>
+            <% if p.aliases.any? %><p class="text-xs text-muted truncate"><%= t("exposures.show.aliases", list: p.aliases.join(", ")) %></p><% end %>
+          </div>
+        </div>
+      <% end %>
+      <% @targets.each do |tg| %>
+        <% head = capture do %>
+          <span class="inline-flex flex-col items-center gap-1" title="<%= t("exposures.show.column_title", target: tg.title) %>"><span class="inline-flex items-center gap-1 whitespace-nowrap"><%= icon(tg.icon, "size-4") %><%= tg.title %></span>
+            <% if admin %><%= f.ss_check_box :"all_#{tg.key}", label: t("exposures.show.column_all", target: tg.title), hide_label: true, name: nil, id: "all-#{tg.key}", unchecked_value: nil,
+                                             data: { action: "ss-check-all#toggle", ss_check_all_col_param: tg.key, ss_check_all_target: "all" } %><% end %></span>
+        <% end %>
+        <% t.column tg.key, tg.title, header: head, hideable: false do |p| %>
+          <div class="flex justify-center">
+            <% if tg.applies?(p) %>
+              <%= f.ss_check_box :"x_#{p.id}_#{tg.key}", label: t("exposures.show.cell", point: p.name, target: tg.title), hide_label: true, name: "x[#{p.id}][#{tg.key}]",
+                                 id: "x-#{p.id}-#{tg.key}", checked: tg.exposed?(p), disabled: !admin, data: { col: tg.key, action: "ss-check-all#sync" } %>
+            <% else %>
+              <span class="text-muted" title="<%= t("exposures.show.not_applicable", target: tg.title) %>">–</span>
             <% end %>
-          </tr>
-        </thead>
-        <tbody>
-          <% @points.each do |p| %>
-            <tr id="expose-<%= p.id %>">
-              <td class="min-w-48">
-                <div class="flex items-center gap-3">
-                  <span class="ss-icon-tile is-muted is-sm"><%= icon(point_icon(p), "") %></span>
-                  <div class="min-w-0">
-                    <p class="font-semibold text-ink truncate"><%= p.name %> <% if p.risk == "critical" %><span class="ss-badge ss-badge-warn"><%= t("exposures.show.critical") %></span><% end %></p>
-                    <p class="text-xs text-muted truncate"><%= [ p.device&.name, (p.area || p.device&.area)&.name ].compact.uniq.join(" · ") %> <%= label_chips(p) %></p>
-                    <% if p.aliases.any? %><p class="text-xs text-muted truncate"><%= t("exposures.show.aliases", list: p.aliases.join(", ")) %></p><% end %>
-                  </div>
-                </div>
-              </td>
-              <% @targets.each do |tg| %>
-                <td class="text-center">
-                  <% if tg.applies?(p) %>
-                    <%= hidden_field_tag "x[#{p.id}][#{tg.key}]", "0", id: nil %>
-                    <input type="checkbox" name="x[<%= p.id %>][<%= tg.key %>]" value="1" data-col="<%= tg.key %>" data-action="ss-check-all#sync" <%= "checked" if tg.exposed?(p) %> <%= "disabled" unless admin %> aria-label="<%= t("exposures.show.cell", point: p.name, target: tg.title) %>">
-                  <% else %>
-                    <span class="text-muted" title="<%= t("exposures.show.not_applicable", target: tg.title) %>">–</span>
-                  <% end %>
-                </td>
-              <% end %>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
     <% if admin %>
       <div class="mt-4 flex flex-wrap items-center gap-3">
-        <label class="ss-check text-sm"><%= check_box_tag :confirm, "1", false, id: "confirm" %> <%= t("exposures.show.confirm") %></label>
-        <%= submit_tag t("exposures.show.save"), class: "ss-btn ss-btn-primary" %>
+        <%= f.ss_check_box :confirm, label: t("exposures.show.confirm"), id: "confirm", unchecked_value: nil %>
+        <%= f.ss_submit t("exposures.show.save") %>
       </div>
       <p class="text-xs text-muted mt-2"><%= t("exposures.show.hint") %></p>
     <% end %>
