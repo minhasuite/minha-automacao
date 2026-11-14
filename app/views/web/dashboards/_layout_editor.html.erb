@@ -5,7 +5,7 @@
     ideia 1), o lápis e o clique no card abrem os ajustes do widget na gaveta (`dw-drawer`). %>
 <% resolved_view = live["views"].find { |v| v["id"] == view["id"] } || { "sections" => [] } %>
 <% points = live["points"] %>
-<section class="ss-card ss-card-pad dw-ed" aria-labelledby="ed-title" data-controller="layout-editor" data-ss-screen="desktop"
+<section class="ss-card ss-card-pad" aria-labelledby="ed-title" data-controller="layout-editor" data-ss-screen="desktop"
          data-layout-editor-url-value="<%= draft_dashboard_path(dashboard) %>" data-layout-editor-view-value="<%= view['id'] %>"
          data-layout-editor-saved-value="<%= t("dashboards.le.saved") %>" data-layout-editor-failed-value="<%= t("dashboards.le.failed") %>">
   <div class="flex flex-wrap items-center gap-3">
@@ -18,30 +18,31 @@
             { html: safe_join([ icon(ico, "size-4 #{'rotate-90' if screen == 'tablet'}"), tag.span(t("dashboards.screens.#{screen}"), class: "max-sm:sr-only") ]), pressed: screen == "desktop",
               data: { action: "layout-editor#screen", layout_editor_screen_param: screen, layout_editor_target: "screenButton" } } }) %>
   </div>
-  <p id="ed-status" data-turbo-permanent class="text-xs font-semibold mt-2 min-h-4" role="status" aria-live="polite" data-layout-editor-target="status"></p>
-  <div class="dw-ed-frame mt-2" data-layout-editor-target="frame">
+  <p id="ed-status" data-turbo-permanent class="text-xs font-semibold mt-2 min-h-4 text-muted [&.is-error]:text-danger" role="status" aria-live="polite" data-layout-editor-target="status"></p>
+  <%# Editor ao vivo: os widgets reais em miniatura de tela (largura e zoom por --frame-w/--frame-zoom, do layout_editor), alça de arrastar e de largura. %>
+  <div class="mx-auto mt-2 p-3 rounded-[18px] bg-[color-mix(in_srgb,var(--field)_70%,transparent)] border border-dashed border-line transition-[max-width] duration-[.35s] max-w-full w-[var(--frame-w,100%)] [zoom:var(--frame-zoom,1)]" data-layout-editor-target="frame">
     <% if resolved_view["sections"].empty? %>
       <%= render "web/shared/empty_art", art: "board", title: t("dashboards.le.empty"), text: t("dashboards.le.empty_hint") %>
     <% end %>
     <div class="ss-span-grid [--ss-span-gap:1.75rem_1.25rem]" data-layout-editor-target="sections">
       <% resolved_view["sections"].each do |s| %>
-        <section class="ss-span dw-ed-sec" data-id="<%= s['id'] %>" data-kind="section" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>" aria-label="<%= t("dashboards.ed.section_label", name: s['title']) %>">
-          <div class="dw-ed-bar">
+        <section class="ss-span dw-ed-sec group/sec relative p-2 rounded-[16px] border border-transparent transition-[border-color,background] duration-200 hover:border-[color-mix(in_srgb,var(--accent)_35%,var(--line))] hover:bg-[color-mix(in_srgb,var(--surface)_40%,transparent)] [&.is-ghost]:opacity-35 [&.is-fallback]:opacity-92! [&.is-fallback]:rotate-[1.2deg] [&.is-chosen]:shadow-[0_18px_40px_-16px_color-mix(in_srgb,var(--accent)_45%,transparent)] [&.is-picked]:outline-2 [&.is-picked]:outline-accent [&.is-picked]:outline-offset-2 [&.is-resizing]:outline-2 [&.is-resizing]:outline-accent [&.is-resizing]:outline-offset-2" data-id="<%= s['id'] %>" data-kind="section" style="<%= dw_span_style(s['span'], DashboardsHelper::SECTION_SPAN) %>" aria-label="<%= t("dashboards.ed.section_label", name: s['title']) %>">
+          <div class="dw-ed-bar flex items-center gap-[.4rem] mb-2 pr-4">
             <span class="ss-sortable-handle dw-ed-grip dw-ed-grip-s" title="<%= t("dashboards.le.drag_section") %>" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
             <span class="ss-section flex-1 truncate"><%= s["title"].presence || t("dashboards.ed.untitled") %></span>
-            <span class="dw-ed-cols num" data-cols aria-hidden="true"></span>
-            <span class="dw-ed-resize" title="<%= t("dashboards.le.resize") %>" aria-hidden="true"></span>
+            <span class="num px-[.45rem] text-[.7rem] font-bold text-muted" data-cols aria-hidden="true"></span>
+            <span class="dw-ed-resize absolute z-[4] w-[10px] rounded-full cursor-ew-resize touch-none bg-accent opacity-0 shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_25%,transparent)] transition-opacity duration-150 [@media(hover:none)]:opacity-80 top-[1.1rem] -right-[4px] h-[1.8rem] group-hover/sec:opacity-100 group-[.is-resizing]/sec:opacity-100" title="<%= t("dashboards.le.resize") %>" aria-hidden="true"></span>
           </div>
-          <div class="ss-span-grid dw-ed-drop" data-section="<%= s['id'] %>" data-layout-editor-target="widgets">
+          <div class="ss-span-grid min-h-14 rounded-[12px] empty:border-2 empty:border-dashed empty:border-line" data-section="<%= s['id'] %>" data-layout-editor-target="widgets">
             <% s["widgets"].each do |w| %>
-              <div class="ss-span dw-ed-w <%= 'dw-ed-hidden' unless w['visible'] %>" data-id="<%= w['id'] %>" data-kind="widget" style="<%= dw_span_style(w['span']) %>">
-                <div class="dw-ed-live" inert><%= render Dashboards::Widgets[w["type"]]&.partial || "web/dashboards/widgets/#{w['type']}", w: w, points: points, dashboard: dashboard, live: false %></div>
-                <div class="dw-ed-chrome">
+              <div class="ss-span dw-ed-w group/w relative rounded-[18px] cursor-pointer [&.is-ghost]:opacity-35 [&.is-fallback]:opacity-92! [&.is-fallback]:rotate-[1.2deg] [&.is-chosen]:shadow-[0_18px_40px_-16px_color-mix(in_srgb,var(--accent)_45%,transparent)] [&.is-picked]:outline-2 [&.is-picked]:outline-accent [&.is-picked]:outline-offset-2 [&.is-resizing]:outline-2 [&.is-resizing]:outline-accent [&.is-resizing]:outline-offset-2" data-id="<%= w['id'] %>" data-kind="widget" style="<%= dw_span_style(w['span']) %>">
+                <div class="pointer-events-none select-none h-full <%= 'opacity-45' unless w['visible'] %>" inert><%= render Dashboards::Widgets[w["type"]]&.partial || "web/dashboards/widgets/#{w['type']}", w: w, points: points, dashboard: dashboard, live: false %></div>
+                <div class="dw-ed-chrome absolute top-[.35rem] right-[.35rem] z-[3] flex items-center gap-[.2rem] p-[.15rem] rounded-full bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] shadow-[var(--shadow-card)] opacity-0 transition-opacity duration-150 group-hover/w:opacity-100 group-focus-within/w:opacity-100 group-[.is-chosen]/w:opacity-100 [@media(hover:none)]:opacity-100">
                   <span class="ss-sortable-handle dw-ed-grip" title="<%= t("dashboards.le.drag") %>" aria-hidden="true"><%= icon("dots-horizontal", "size-4") %></span>
                   <a href="<%= drawer ? widget_form_dashboard_path(dashboard, widget_id: w['id']) : "##{w['id']}" %>" class="ss-icon-btn is-sm dw-ed-edit" title="<%= t("dashboards.le.edit_widget") %>" <%= tag.attributes(data: { turbo_frame: "dw-drawer-frame" }) if drawer %>><%= icon("pencil", "size-3.5") %><span class="sr-only"><%= t("dashboards.edit") %> <%= w["label"].presence || Dashboards::Schema.labels[w["type"]] %></span></a>
-                  <span class="dw-ed-cols num" data-cols aria-hidden="true"></span>
+                  <span class="num px-[.45rem] text-[.7rem] font-bold text-muted" data-cols aria-hidden="true"></span>
                 </div>
-                <span class="dw-ed-resize" title="<%= t("dashboards.le.resize") %>" aria-hidden="true"></span>
+                <span class="dw-ed-resize absolute z-[4] w-[10px] rounded-full cursor-ew-resize touch-none bg-accent opacity-0 shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_25%,transparent)] transition-opacity duration-150 [@media(hover:none)]:opacity-80 top-1/2 -right-[5px] h-[2.6rem] -translate-y-1/2 group-hover/w:opacity-100 group-[.is-resizing]/w:opacity-100" title="<%= t("dashboards.le.resize") %>" aria-hidden="true"></span>
               </div>
             <% end %>
           </div>

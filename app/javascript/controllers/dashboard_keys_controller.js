@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // Atalhos do editor de painel (ideia 7). O widget escolhido é o último clicado
 // ou focado ([data-dw-widget] na lista do editor, .dw-ed-w[data-id] no layout ao
-// vivo) e ganha .dw-ed-picked. As ações enviam os formulários do próprio editor
+// vivo) e ganha .is-picked. As ações enviam os formulários do próprio editor
 // (op do rascunho, copiar) ou clicam nos botões marcados [data-dw-key] (desfazer,
 // refazer); fora de campo de texto e sem texto selecionado.
 export default class extends Controller {
@@ -13,8 +13,8 @@ export default class extends Controller {
     const el = event.target.closest?.("[data-dw-widget], .dw-ed-w[data-id]")
     if (!el) return
     this.picked = el.dataset.dwWidget || el.dataset.id
-    document.querySelectorAll(".dw-ed-picked").forEach((x) => x.classList.remove("dw-ed-picked"))
-    el.classList.add("dw-ed-picked")
+    document.querySelectorAll(".is-picked").forEach((x) => x.classList.remove("is-picked"))
+    el.classList.add("is-picked")
   }
 
   key(event) {
@@ -82,6 +82,6 @@ export default class extends Controller {
 
   unpick() {
     this.picked = null
-    document.querySelectorAll(".dw-ed-picked").forEach((x) => x.classList.remove("dw-ed-picked"))
+    document.querySelectorAll(".is-picked").forEach((x) => x.classList.remove("is-picked"))
   }
 }

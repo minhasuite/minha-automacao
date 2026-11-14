@@ -13,7 +13,7 @@ export default class extends Controller {
   static values = { url: String, view: String, saved: String, failed: String }
 
   connect() {
-    const common = { animation: 180, easing: "cubic-bezier(.2, .8, .2, 1)", ghostClass: "dw-ed-ghost", chosenClass: "dw-ed-chosen", forceFallback: true, fallbackTolerance: 4 }
+    const common = { animation: 180, easing: "cubic-bezier(.2, .8, .2, 1)", ghostClass: "is-ghost", chosenClass: "is-chosen", fallbackClass: "is-fallback", forceFallback: true, fallbackTolerance: 4 }
     this.sortables = [
       new Sortable(this.sectionsTarget, { ...common, handle: ".dw-ed-grip-s", draggable: ".dw-ed-sec",
         onEnd: (e) => e.oldIndex !== e.newIndex && this.save({ op: "place", kind: "section", target: e.item.dataset.id, index: e.newIndex }) }),
@@ -41,8 +41,8 @@ export default class extends Controller {
   fit() {
     const width = { mobile: 390, tablet: 768, desktop: 1180 }[this.screenName]
     const room = this.frameTarget.parentElement.clientWidth
-    this.frameTarget.style.width = `${width}px`
-    this.frameTarget.style.zoom = Math.min(1, room / width)
+    this.frameTarget.style.setProperty("--frame-w", `${width}px`)
+    this.frameTarget.style.setProperty("--frame-zoom", Math.min(1, room / width))
   }
 
   get screenName() { return this.element.dataset.ssScreen }
@@ -78,14 +78,14 @@ export default class extends Controller {
     const x0 = event.clientX
     let n = start
     handle.setPointerCapture(event.pointerId)
-    block.classList.add("dw-ed-resizing")
+    block.classList.add("is-resizing")
     const move = (e) => {
       n = Math.min(12, Math.max(1, start + Math.round((e.clientX - x0) / colWidth)))
       block.style.setProperty(VAR[this.screenName], n)
       this.labels()
     }
     const up = () => {
-      block.classList.remove("dw-ed-resizing")
+      block.classList.remove("is-resizing")
       handle.removeEventListener("pointermove", move)
       handle.removeEventListener("pointerup", up)
       if (n !== start) this.save({ op: "resize", kind: block.dataset.kind, target: block.dataset.id, screen: this.screenName, cols: n })
@@ -131,7 +131,6 @@ export default class extends Controller {
 
   status(text, error = false) {
     this.statusTarget.textContent = text
-    this.statusTarget.classList.toggle("text-danger", error)
-    this.statusTarget.classList.toggle("text-muted", !error)
+    this.statusTarget.classList.toggle("is-error", error)
   }
 }

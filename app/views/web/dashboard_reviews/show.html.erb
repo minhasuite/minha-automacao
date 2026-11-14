@@ -51,7 +51,7 @@
       <% width = Web::DashboardReviewsController::SCREENS[screen] %>
       <figure class="min-w-0">
         <figcaption class="text-xs font-semibold text-muted mb-1"><%= t("dashboards.screens.#{screen}") %> · <span class="num"><%= width %> px</span></figcaption>
-        <div class="dw-ed-shot dw-ed-shot-box" style="--w: <%= width %>px; --h: <%= height %>px; --z: <%= zoom %>">
+        <div class="overflow-hidden rounded-[18px] border border-line bg-surface w-[calc(var(--w)*var(--z))] h-[var(--h)] max-w-full [&_iframe]:block [&_iframe]:border-0 [&_iframe]:w-[var(--w)] [&_iframe]:h-[calc(var(--h)/var(--z))] [&_iframe]:scale-[var(--z)] [&_iframe]:origin-top-left" style="--w: <%= width %>px; --h: <%= height %>px; --z: <%= zoom %>">
           <iframe src="<%= dashboard_path(@dashboard, rascunho: 1, embed: 1, view: @view&.dig("id"), tema: @theme) %>" title="<%= t("dashboards.review.frame", screen: t("dashboards.screens.#{screen}")) %>"
                   loading="lazy" sandbox="allow-same-origin allow-scripts" tabindex="-1"></iframe>
         </div>

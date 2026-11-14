@@ -86,6 +86,6 @@ export default class extends Controller {
 
   say(text, error = false) {
     this.statusTarget.textContent = text
-    this.statusTarget.classList.toggle("text-danger", error)
+    this.statusTarget.classList.toggle("is-error", error)
   }
 }

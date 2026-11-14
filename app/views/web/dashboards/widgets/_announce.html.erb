@@ -29,6 +29,6 @@
       <%= render Ss::ButtonComponent.new(icon: icon("mdi:send", "size-4"), type: :submit, size: :sm, title: t("dashboards.talk.send"),
                                          aria: { label: t("dashboards.talk.send") }, data: { announce_target: "send" }) %>
     <% end %>
-    <p class="mt-2 text-xs text-muted min-h-4" role="status" aria-live="polite" data-announce-target="status"></p>
+    <p class="mt-2 text-xs text-muted [&.is-error]:text-danger min-h-4" role="status" aria-live="polite" data-announce-target="status"></p>
   <% end %>
 </div>

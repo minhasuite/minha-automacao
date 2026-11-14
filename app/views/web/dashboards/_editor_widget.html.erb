@@ -2,7 +2,7 @@
 <%# Um widget na lista do editor; pilha/grade (ondaB2 B8) mostra os de dentro e "adicionar aqui". %>
 <% bound = [ w["bind"], *Array(w["binds"]) ].compact.filter_map { |id| names[id]&.name } %>
 <% sp = DashboardsHelper::DEFAULT_SPAN.merge(w["span"] || {}) %>
-<li id="<%= w['id'] %>" class="py-2 flex items-start gap-2" data-dw-widget="<%= w['id'] %>">
+<li id="<%= w['id'] %>" class="py-2 flex items-start gap-2 rounded-[18px] [&.is-picked]:outline-2 [&.is-picked]:outline-accent [&.is-picked]:outline-offset-2" data-dw-widget="<%= w['id'] %>">
   <details class="flex-1 min-w-0" <%= "open" if @editing == w["id"] %>>
     <summary class="flex items-center gap-3 cursor-pointer list-none">
       <span class="ss-icon-tile is-accent is-sm"><%= icon(Dashboards::Widgets[w["type"]]&.icon || "cube", "") %></span>
