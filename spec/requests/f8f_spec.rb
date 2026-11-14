@@ -64,7 +64,7 @@ RSpec.describe "F8f: Automações e cenas (web e API)" do
       sign_in(member("guest"))
       automation("Sala acende", on_motion)
       get "/locais/#{site.id}/automacoes"
-      expect(response.body).not_to include("Marcar todas")
+      expect(response.body[%r{<main.*</main>}m]).not_to include("Marcar todas") # o sino do topo tem o dos avisos
       %w[cenas scripts blueprints regras].each do |tab|
         get "/locais/#{site.id}/#{tab}"
         expect(response).to have_http_status(:ok)

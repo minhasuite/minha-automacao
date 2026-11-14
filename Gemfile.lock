@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/minhasuite/componentes-ui.git
-  revision: ba6ff758e196391f0ec1b93faf72aedfaecddf17
+  revision: 98dfd726b64b0b21c7c9e34be0e74df9e7d2454d
   branch: shell-sino
   specs:
     componentes_ui (0.23.6)

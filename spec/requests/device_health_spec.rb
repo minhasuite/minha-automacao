@@ -106,7 +106,8 @@ RSpec.describe "Saúde dos aparelhos" do
     get "/api/v1/screen", params: { path: "/saude-aparelhos?site_id=#{site.id}" }, headers: auth_headers(user)
     expect(response).to have_http_status(:ok)
     page = response.parsed_body.dig("data", "page")
-    expect(page["title"]).to eq("Saúde dos aparelhos")
+    expect(page["title"]).to eq("Configurações") # dentro do quadro de Configurações (shell-sino)
+    expect(page.to_json).to include("Saúde dos aparelhos")
     text = page.to_json
     expect(text).to include("Teste Tomada", "/saude-aparelhos/reparar", "/saude-aparelhos/silenciar")
   end
