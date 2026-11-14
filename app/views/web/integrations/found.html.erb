@@ -3,7 +3,8 @@
 <% names = @entries.to_h { |e| [ e["id"], e["name"] ] } %>
 <%= render "web/shared/header", title: t("integrations.found.title"), subtitle: "#{@integration.name} · #{@integration.driver_label}#{" · #{@integration.account}" if @integration.account}", back: site_integrations_path(@site) do %>
   <% if can?(:manage) %>
-    <%= button_to sync_integration_path(@integration), class: "ss-btn ss-btn-ghost", form: { data: { turbo_submits_with: t("integrations.common.asking") } } do %><%= icon("refresh", "size-4") %><%= t("integrations.common.sync_now") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("integrations.common.sync_now"), icon: icon("refresh", ""), href: sync_integration_path(@integration), method: :post, variant: :ghost,
+                                       form: { data: { turbo_submits_with: t("integrations.common.asking") } }) %>
   <% end %>
 <% end %>
 
@@ -23,7 +24,8 @@
         <% if @integration.auth_error? && @integration.plugin&.reconfigurable? %>
           <%= link_to t("integrations.common.reconfigure"), connect_integration_path(@integration), class: "ss-btn ss-btn-primary ss-btn-sm" %>
         <% elsif !@integration.auth_error? %>
-          <%= button_to sync_integration_path(@integration), class: "ss-btn ss-btn-primary ss-btn-sm", form: { data: { turbo_submits_with: t("integrations.common.asking") } } do %><%= icon("refresh", "size-4") %><%= t("integrations.common.retry") %><% end %>
+          <%= render Ss::ButtonComponent.new(label: t("integrations.common.retry"), icon: icon("refresh", ""), href: sync_integration_path(@integration), method: :post, size: :sm,
+                                             form: { data: { turbo_submits_with: t("integrations.common.asking") } }) %>
         <% end %>
       <% end %>
       <%= link_to t("integrations.found.back"), site_integrations_path(@site), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
@@ -34,20 +36,20 @@
 <% if pending.empty? && @integration.status != "syncing" %>
   <%= render Ss::EmptyStateComponent.new(title: t("integrations.found.nothing_new"), text: (@entries.empty? ? t("integrations.found.none_read") : t("integrations.found.all_added")), css: "ss-card") %>
 <% elsif pending.any? %>
-  <%= form_with url: adopt_integration_path(@integration), method: :post, class: "grid gap-3", data: { turbo_submits_with: t("integrations.found.adding") } do %>
+  <%= ss_form_with url: adopt_integration_path(@integration), method: :post, class: "grid gap-3", data: { turbo_submits_with: t("integrations.found.adding") } do |f| %>
     <div class="flex flex-wrap items-center justify-between gap-2">
       <p class="text-sm"><%= t("integrations.found.pending_html", n: pending.size) %></p>
       <% if can?(:manage) %>
         <div class="flex gap-2">
-          <button type="submit" class="ss-btn ss-btn-outline ss-btn-sm"><%= t("integrations.found.add_selected") %></button>
-          <button type="submit" name="all" value="1" class="ss-btn ss-btn-primary ss-btn-sm"><%= icon("plus", "size-4") %><%= t("integrations.found.add_all") %></button>
+          <%= render Ss::ButtonComponent.new(label: t("integrations.found.add_selected"), type: :submit, variant: :outline, size: :sm) %>
+          <%= render Ss::ButtonComponent.new(label: t("integrations.found.add_all"), icon: icon("plus", ""), type: :submit, name: "all", value: "1", size: :sm) %>
         </div>
       <% end %>
     </div>
     <%# Tabela da gem; a escolha é o pick[] deste formulário (marcado por padrão), não a seleção em massa dela. %>
     <%= render Ss::DataTableComponent.new(rows: pending, id: "found-table", caption: t("integrations.found.title"), row_id: "id", tools: false) do |tb| %>
       <% tb.column :pick, t("integrations.found.pick"), hideable: false do |e| %>
-        <input type="checkbox" name="pick[]" value="<%= e['id'] %>" id="pick-<%= e['id'].to_s.parameterize %>" checked aria-label="<%= t("integrations.found.add_one", name: e['name']) %>">
+        <%= f.ss_check_box "pick[]", label: t("integrations.found.add_one", name: e['name']), hide_label: true, checked_value: e['id'], unchecked_value: nil, checked: true, id: "pick-#{e['id'].to_s.parameterize}" %>
       <% end %>
       <% tb.column :name, t("integrations.found.device") do |e| %>
         <label for="pick-<%= e['id'].to_s.parameterize %>" class="font-semibold text-ink"><%= e["name"] %></label>
@@ -59,7 +61,7 @@
       <% tb.column :area, t("integrations.found.area"), hideable: false do |e| %>
         <% suggested = Integrations.suggest_area(@site, e["room"], @areas) %>
         <% options = [ [ t("integrations.found.no_area"), "" ] ] + @areas.map { |a| [ a.name, a.id ] } + (suggested.to_s.start_with?("new:") ? [ [ t("integrations.found.new_area", name: suggested.delete_prefix('new:')), suggested ] ] : []) %>
-        <%= select_tag "area[#{e['id']}]", options_for_select(options, suggested), class: "ss-input ss-btn-sm min-w-32", "aria-label": t("integrations.found.area_of", name: e['name']) %>
+        <%= f.ss_select "area[#{e['id']}]", options, selected: suggested, label: t("integrations.found.area_of", name: e['name']), hide_label: true, wrapper_class: "min-w-32", id: "area-#{e['id'].to_s.parameterize}" %>
       <% end %>
     <% end %>
   <% end %>
