@@ -186,7 +186,7 @@ RSpec.describe "ondaB2: painéis" do
       get "/paineis/#{d.id}?view=m"
       expect(response.body).to include("ss-masonry", "ss-section-row")
       get "/paineis/#{d.id}?view=camera"
-      expect(response.body).to include("dw-panel", "is-on-grad", "Teste câmera", "Voltar para Início")
+      expect(response.body).to include("[&_.ss-span]:min-h-[calc(100dvh-15rem)]", "is-on-grad", "Teste câmera", "Voltar para Início")
       get "/paineis/#{d.id}?view=sb"
       expect(response.body).to include("ss-aside-layout-main", "ss-aside-layout-side")
     end
@@ -204,7 +204,7 @@ RSpec.describe "ondaB2: painéis" do
       w = first_widget(d)
       expect(w["widgets"].map { |c| c["data"]["point_ids"] }).to eq([ [ power.id ], [ target.id ] ])
       get "/paineis/#{d.id}"
-      expect(response.body).to include("dw-stack dw-stack-grid", "--cols: 3", %(id="w_c1"), %(id="w_c2"))
+      expect(response.body).to include("grid-cols-[repeat(var(--cols,2),minmax(0,1fr))]", "--cols: 3", %(id="w_c1"), %(id="w_c2"))
       get "/paineis/#{d.id}/w/c2"
       expect(response.body).to include(%(id="w_c2"))
 

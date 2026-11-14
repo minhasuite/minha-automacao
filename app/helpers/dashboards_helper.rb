@@ -4,16 +4,16 @@ module DashboardsHelper
   SECTION_SPAN = { "mobile" => 12, "tablet" => 12, "desktop" => 12 }.freeze
   AREA_ARTS = 6
 
-  # Largura no grid de 12 colunas por tela, em variáveis CSS (.dw-w).
+  # Largura na grade de 12 colunas por tela da gem (.ss-span-grid / .ss-span), em variáveis CSS.
   def dw_span_style(span, default = DEFAULT_SPAN)
     s = default.merge(span || {})
-    "--m: #{s['mobile']}; --t: #{s['tablet']}; --d: #{s['desktop']}"
+    "--ss-span-m: #{s['mobile']}; --ss-span-t: #{s['tablet']}; --ss-span-d: #{s['desktop']}"
   end
 
   # Visibilidade por tela (Lote 4, G18b): `visible_if.screen` → classes que escondem nas outras.
   def dw_screen_class(w)
     screens = w.dig("visible_if", "screen") or return ""
-    (Dashboards::Schema::SCREENS - Array(screens)).map { |s| "dw-hide-#{s}" }.join(" ")
+    (Dashboards::Schema::SCREENS - Array(screens)).map { |s| "ss-hide-#{s}" }.join(" ")
   end
 
   # Texto do widget Texto (Lote 4, G18a): escapa tudo e aplica um Markdown

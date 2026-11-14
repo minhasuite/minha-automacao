@@ -1,6 +1,9 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <%# Pilha/grade (ondaB2 B8): os widgets de dentro, cada um no próprio quadro; o rótulo é o título de seção da gem. %>
-<div class="dw-stack dw-stack-<%= w["direction"].presence || "vertical" %>" style="--cols: <%= (w["columns"] || 2).to_i.clamp(2, 4) %>">
-  <% if w["label"].present? %><%= render Ss::SectionComponent.new(title: w["label"], icon: (icon(w["icon"], "") if w["icon"].present?), heading: :p, css: "dw-stack-title") %><% end %>
+<% dir = w["direction"].presence || "vertical" %>
+<%# Cada widget de dentro ocupa a linha toda da pilha (vence a largura por tela da grade da gem). %>
+<div class="grid gap-3 min-w-0 [&_.ss-span]:col-[1/-1]! <%= { "horizontal" => "grid-flow-col auto-cols-[minmax(0,1fr)]", "grid" => "grid-cols-[repeat(var(--cols,2),minmax(0,1fr))]" }[dir] %>"
+     style="--cols: <%= (w["columns"] || 2).to_i.clamp(2, 4) %>">
+  <% if w["label"].present? %><%= render Ss::SectionComponent.new(title: w["label"], icon: (icon(w["icon"], "") if w["icon"].present?), heading: :p, css: "col-span-full mb-0 #{'row-start-1' if dir == 'horizontal'}") %><% end %>
   <% Array(w["widgets"]).each do |c| %><%= render "web/dashboards/widget", w: c, points: points, dashboard: dashboard, live: live %><% end %>
 </div>

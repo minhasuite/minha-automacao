@@ -7,9 +7,10 @@
   <% else %>
     <%# P1.2/ideia 22: o servidor decide o tom (`style.tone`), o selo da regra (`style.badge`) e o "dado velho" (`stale`). %>
     <% style = w["style"] || {} %>
-    <div class="dw-w <%= dw_screen_class(w) %>" style="<%= dw_span_style(w['span']) %>"<%= " hidden" if !w["visible"] %> data-ss-filter-target="item" data-ss-filter-text="<%= w["search"] %>"<%= " " if style["tone"] %><%= tag.attributes(data: { tone: style["tone"].presence_in(Dashboards::Style::TONES) }) %>>
+    <%# Gestos (dw-gesture): o toque encolhe o bloco inteiro (is-gesture-tap/-hold que o controller põe). %>
+    <div class="ss-span <%= dw_screen_class(w) %> [&_.is-gesture-tap]:cursor-pointer [&_.is-gesture-tap]:rounded-[var(--r-card)] [&_.is-gesture-tap]:transition-[transform,box-shadow] [&_.is-gesture-tap]:duration-150 [&_.is-gesture-hold]:scale-[.97] [&_.is-gesture-hold]:shadow-[0_0_0_3px_var(--ring)] motion-reduce:[&_.is-gesture-hold]:scale-100" style="<%= dw_span_style(w['span']) %>"<%= " hidden" if !w["visible"] %> data-ss-filter-target="item" data-ss-filter-text="<%= w["search"] %>"<%= " " if style["tone"] %><%= tag.attributes(data: { tone: style["tone"].presence_in(Dashboards::Style::TONES) }) %>>
       <% if style["badge"].present? || w["stale"] %>
-        <span class="dw-flags">
+        <span class="ss-span-flags">
           <% if style["badge"].present? %><span class="ss-badge <%= DashboardsHelper::FLAG_TONES.fetch(style["tone"], "ss-badge-accent") %> is-solid"><%= style["badge"] %></span><% end %>
           <% if w["stale"] %><span class="ss-badge ss-badge-warn" title="<%= l(Time.zone.parse(w["stale"]["since"]), format: :short) %>"><%= icon("clock", "size-3") %><%= w["stale"]["text"] %></span><% end %>
         </span>

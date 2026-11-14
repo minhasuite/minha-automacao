@@ -19,7 +19,7 @@ export default class extends Controller {
     this.element.addEventListener("pointerdown", this.onDown)
     for (const e of ["pointerup", "pointerleave", "pointercancel"]) this.element.addEventListener(e, this.onUp)
     this.element.addEventListener("click", this.onClick, true)
-    if (this.kinds.has("tap") || this.kinds.has("double_tap")) this.element.classList.add("dw-tappable")
+    if (this.kinds.has("tap") || this.kinds.has("double_tap")) this.element.classList.add("is-gesture-tap")
   }
 
   disconnect() {
@@ -38,10 +38,10 @@ export default class extends Controller {
   down(e) {
     if (!this.kinds.has("hold") || e.button > 0 || !this.own(e.target)) return
     this.held = false
-    this.element.classList.add("dw-holding")
+    this.element.classList.add("is-gesture-hold")
     this.timer = setTimeout(() => {
       this.held = true
-      this.element.classList.remove("dw-holding")
+      this.element.classList.remove("is-gesture-hold")
       navigator.vibrate?.(12)
       this.run("hold")
     }, HOLD_MS)
@@ -49,7 +49,7 @@ export default class extends Controller {
 
   cancelHold() {
     clearTimeout(this.timer)
-    this.element.classList.remove("dw-holding")
+    this.element.classList.remove("is-gesture-hold")
   }
 
   click(e) {

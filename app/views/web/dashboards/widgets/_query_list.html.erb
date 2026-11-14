@@ -16,10 +16,10 @@
     <%= render Ss::NoteComponent.new(text: w["empty_text"].presence || t("dashboards.w.nothing_now"), icon: icon("check-circle", ""), tone: :success, css: (tiles ? "ss-card ss-card-pad" : "mt-3")) %>
   <% elsif tiles %>
     <%# Grade de tiles (o auto-entities do HA com card grid): cada ponto é um tile, com o nome que o painel dava; o comando refaz a lista inteira (o id é o dela). %>
-    <div class="dw-grid">
+    <div class="ss-span-grid">
       <% ids.each do |id| %>
         <% next unless points[id] %>
-        <div class="dw-w" style="<%= dw_span_style({ 'mobile' => 12, 'tablet' => (cols == 1 ? 12 : 6), 'desktop' => 12 / cols }) %>">
+        <div class="ss-span" style="<%= dw_span_style({ 'mobile' => 12, 'tablet' => (cols == 1 ? 12 : 6), 'desktop' => 12 / cols }) %>">
           <%= render "web/dashboards/widgets/tile", w: { "id" => w["id"], "type" => "tile", "bind" => id, "label" => labels[id],
                                                          "data" => { "title" => labels[id].presence || points[id]["name"], "point_ids" => [ id ] } },
                                                     points: points, dashboard: dashboard, live: live %>

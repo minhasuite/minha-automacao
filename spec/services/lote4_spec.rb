@@ -143,7 +143,7 @@ RSpec.describe "Lote 4: clima, widgets plugáveis e visibilidade" do
       expect(list.map { |x| [ x["id"], x["visible"] ] }).to eq([ [ "a", true ], [ "b", false ], [ "c", true ] ])
       expect(list[0]["deps"]).to eq([ temp.id ])
       expect(list[1]["deps"]).to contain_exactly(lamp.id, temp.id)
-      expect(ApplicationController.helpers.dw_screen_class(list[2])).to eq("dw-hide-tablet dw-hide-desktop")
+      expect(ApplicationController.helpers.dw_screen_class(list[2])).to eq("ss-hide-tablet ss-hide-desktop")
       temp.update!(value: 5)
       expect(widgets_of(resolve([ { "id" => "b", "type" => "markdown", "text" => "b", "visible_if" => either } ])).first["visible"]).to be(true)
 

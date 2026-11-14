@@ -1,7 +1,7 @@
 <%# locals: (view:, points:, dashboard:, live:) -%>
 <%# Painel inteiro (o panel do HA): só o primeiro card visível, ocupando a tela; nenhum visível = o vazio da gem. %>
 <% w = view["sections"].flat_map { |s| s["widgets"] }.find { |x| x["visible"] } %>
-<div class="dw-panel mt-5">
+<div class="mt-5 [&_.ss-span]:min-h-[calc(100dvh-15rem)] [&_.ss-span>*]:h-full [&_.ss-span>*>*]:h-full">
   <% if w %>
     <%= render "web/dashboards/widget", w: w.merge("span" => { "mobile" => 12, "tablet" => 12, "desktop" => 12 }), points: points, dashboard: dashboard, badge: false, live: live %>
   <% else %>

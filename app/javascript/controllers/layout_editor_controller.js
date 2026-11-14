@@ -6,7 +6,7 @@ import Sortable from "sortablejs"
 // podem trocar de seção) e alça própria para a largura (1 a 12 colunas da tela
 // escolhida). Cada mudança vai para o rascunho (op place/resize, JSON) e a
 // página se atualiza por morph; se o servidor recusar, volta ao que estava.
-const VAR = { mobile: "--m", tablet: "--t", desktop: "--d" }
+const VAR = { mobile: "--ss-span-m", tablet: "--ss-span-t", desktop: "--ss-span-d" }
 
 export default class extends Controller {
   static targets = ["sections", "widgets", "status", "screenButton", "frame"]
@@ -45,10 +45,10 @@ export default class extends Controller {
     this.frameTarget.style.zoom = Math.min(1, room / width)
   }
 
-  get screenName() { return this.element.dataset.screen }
+  get screenName() { return this.element.dataset.ssScreen }
 
   screen(event) {
-    this.element.dataset.screen = event.params.screen
+    this.element.dataset.ssScreen = event.params.screen
     this.screenButtonTargets.forEach((b) => b.setAttribute("aria-pressed", b.dataset.layoutEditorScreenParam === event.params.screen))
     this.labels()
     this.fit()

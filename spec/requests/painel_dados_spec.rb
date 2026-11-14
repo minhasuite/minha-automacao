@@ -149,8 +149,8 @@ RSpec.describe "Painel por dado" do
       expect(html.text).not_to include("Nenhum")
       expect(html.at_css("a.ss-hero-chip")["href"]).to eq("/paineis/#{dashboard.id}/w/b-on/pontos")
       expect(html.at_css("a.ss-mosaic-fact[href$='item=offline']").text).to include("1 sem sinal")
-      expect(html.at_css(".dw-w[data-tone=danger] .dw-flags").text).to include("Aberta")
-      expect(html.css(".dw-flags").text).to include("Sem leitura")
+      expect(html.at_css(".ss-span[data-tone=danger] .ss-span-flags").text).to include("Aberta")
+      expect(html.css(".ss-span-flags").text).to include("Sem leitura")
 
       get "/api/v1/dashboards/#{dashboard.id}", headers: auth_headers(user)
       expect(data["views"][0]["hero_now"]["title"]).to include("Ana")

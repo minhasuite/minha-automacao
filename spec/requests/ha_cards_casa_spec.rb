@@ -33,7 +33,7 @@ RSpec.describe "HA: cards da casa" do
     sign_in(user)
     get "/paineis/#{dash.id}"
     expect(response.body).not_to include("&amp;nbsp;")
-    expect(response.body).to include('dw-hide-mobile" style="--m: 12')
+    expect(response.body).to include('ss-hide-mobile" style="--ss-span-m: 12')
   end
 
   it "auto-entities: entidades fixas + etiqueta viram consultas somadas, com nomes, tiles, exclusões e automações que rodaram" do
