@@ -1,9 +1,9 @@
 GIT
   remote: https://github.com/minhasuite/componentes-ui.git
-  revision: acbe73954e5c31abd9e5884327b5a0cb570be176
-  branch: pwa-ios
+  revision: 0e69268ce7e5c56b7dd9ba188c4a2f38b61e2283
+  tag: v0.23.5
   specs:
-    componentes_ui (0.23.4)
+    componentes_ui (0.23.5)
       railties (>= 8.0)
       tailwindcss-rails (>= 4.2)
       view_component (>= 3.9)
@@ -448,7 +448,7 @@ GEM
     unicode-emoji (4.3.0)
     uri (1.1.2)
     useragent (0.16.11)
-    view_component (4.23.0)
+    view_component (4.24.0)
       actionview (>= 7.1.0)
       activesupport (>= 7.1.0)
       prism (>= 1.0)
