@@ -18,25 +18,25 @@
     <% tb.column :scopes, t("api_keys.scopes_label") do |k| %><div class="flex flex-wrap gap-1"><% k.scopes.each do |s| %><span class="ss-badge"><%= t(s, scope: "api_keys.scopes") %></span><% end %></div><% end %>
     <% tb.column :expires_at, t("api_keys.validity_label"), sortable: true do |k| %><%= k.expires_at ? l(k.expires_at.to_date) : t("api_keys.validity.none") %><% end %>
     <% tb.column :last_used_at, t("api_keys.last_used"), sortable: true do |k| %><%= k.last_used_at ? ago_text(k.last_used_at) : t("api_keys.never") %><% end %>
-    <% tb.column :actions, t("people.actions"), align: :right, hideable: false do |k| %><%= button_to t("api_keys.revoke"), api_key_path(k), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger", form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("api_keys.revoke_confirm", name: k.name), turbo_confirm_button: t("api_keys.revoke") } } %><% end %>
+    <% tb.column :actions, t("people.actions"), align: :right, hideable: false do |k| %><%= render Ss::ButtonComponent.new(label: t("api_keys.revoke"), href: api_key_path(k), method: :delete, variant: :ghost, tone: :danger, size: :sm, confirm: t("api_keys.revoke_confirm", name: k.name), confirm_tone: :danger, confirm_button: t("api_keys.revoke")) %><% end %>
   <% end %>
 <% end %>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="criar-t">
   <h2 id="criar-t"><%= t("api_keys.new") %></h2>
-  <%= form_with scope: :api_key, url: api_keys_path, class: "mt-3 grid gap-4 md:grid-cols-2", data: { turbo: false } do |f| %>
-    <div><%= f.label :name, t("integrations.forms.common.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, maxlength: 60, placeholder: t("api_keys.name_hint") %></div>
-    <div><%= f.label :validity, t("api_keys.validity_label"), class: "ss-label" %><%= f.select :validity, Web::ApiKeysController::VALIDITY.map { |d| [ t(d.presence || "none", scope: "api_keys.validity"), d ] }, { selected: "365" }, class: "ss-input" %></div>
+  <%= ss_form_with scope: :api_key, url: api_keys_path, class: "mt-3 grid gap-4 md:grid-cols-2", data: { turbo: false } do |f| %>
+    <%= f.ss_text_field :name, label: t("integrations.forms.common.name"), required: true, maxlength: 60, placeholder: t("api_keys.name_hint") %>
+    <%= f.ss_select :validity, Web::ApiKeysController::VALIDITY.map { |d| [ t(d.presence || "none", scope: "api_keys.validity"), d ] }, label: t("api_keys.validity_label"), selected: "365" %>
     <fieldset><legend class="ss-label"><%= t("api_keys.allowed_sites") %></legend>
       <div class="flex flex-wrap gap-3">
-        <% @sites.each do |s| %><label class="ss-check"><%= check_box_tag "api_key[site_ids][]", s.id, @sites.one?, id: "ak-site-#{s.id}" %><%= s.name %></label><% end %>
+        <% @sites.each do |s| %><%= f.ss_check_box :site_ids, multiple: true, label: s.name, checked_value: s.id, unchecked_value: nil, checked: @sites.one?, id: "ak-site-#{s.id}" %><% end %>
       </div></fieldset>
     <fieldset><legend class="ss-label"><%= t("api_keys.scopes_label") %></legend>
       <div class="flex flex-wrap gap-3">
-        <% ServiceApiKey::KNOWN_SCOPES.each do |key| %><label class="ss-check"><%= check_box_tag "api_key[scopes][]", key, key == "read", id: "ak-scope-#{key}" %><%= t(key, scope: "api_keys.scopes") %></label><% end %>
+        <% ServiceApiKey::KNOWN_SCOPES.each do |key| %><%= f.ss_check_box :scopes, multiple: true, label: t(key, scope: "api_keys.scopes"), checked_value: key, unchecked_value: nil, checked: key == "read", id: "ak-scope-#{key}" %><% end %>
       </div></fieldset>
     <p class="md:col-span-2 text-sm text-muted"><%= t("api_keys.scopes_help_html") %></p>
-    <div class="md:col-span-2"><%= f.submit t("api_keys.create"), class: "ss-btn ss-btn-primary" %></div>
+    <div class="md:col-span-2"><%= f.ss_submit t("api_keys.create") %></div>
   <% end %>
 </section>
 <% end %>

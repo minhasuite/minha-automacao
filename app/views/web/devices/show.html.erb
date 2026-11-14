@@ -1,7 +1,7 @@
 <%= render "web/shared/header", title: @device.name, subtitle: [ @device.driver_label, @device.area&.name || t("devices.no_area"), @site.name ].join(" · "), back: (@device.area ? area_path(@device.area) : site_path(@site)), badge: (tag.span(t("devices.disabled"), class: "ss-badge ss-badge-warn") if @device.disabled) do %>
   <% if Polling.supported?(@device) && can?(:command, risk: "sensitive") %>
-    <%= button_to refresh_device_path(@device), class: "ss-btn ss-btn-outline", form: { data: { turbo_submits_with: t("devices.asking") } } do %><%= icon("refresh", "size-4") %><%= t("devices.refresh") %><% end %>
-    <%= button_to reconnect_device_path(@device), class: "ss-btn ss-btn-ghost", form: { data: { turbo_submits_with: t("devices.reconnecting") } } do %><%= icon("switch-horizontal", "size-4") %><%= t("devices.reconnect") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("devices.refresh"), icon: icon("refresh", ""), href: refresh_device_path(@device), method: :post, variant: :outline, form: { data: { turbo_submits_with: t("devices.asking") } }) %>
+    <%= render Ss::ButtonComponent.new(label: t("devices.reconnect"), icon: icon("switch-horizontal", ""), href: reconnect_device_path(@device), method: :post, variant: :ghost, form: { data: { turbo_submits_with: t("devices.reconnecting") } }) %>
   <% end %>
   <% if can?(:manage) %>
     <%= link_to new_device_point_path(@device), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("devices.new_point") %><% end %>
@@ -31,7 +31,7 @@
     <p><%= t("devices.replace.replaced", name: @replaced.details["new_device_name"], at: l(@replaced.created_at, format: :short), count: @replaced.details["pairs"].size) %></p>
     <div class="mt-2 flex flex-wrap gap-2">
       <% if (nd = Device.find_by(id: @replaced.details["new_device_id"])) %><%= link_to t("devices.replace.open_new"), device_path(nd), class: "ss-btn ss-btn-outline" %><% end %>
-      <%= button_to t("devices.replace.undo"), undo_replace_device_path(@device), class: "ss-btn ss-btn-ghost", form: { data: { turbo_confirm: t("devices.replace.undo_confirm"), turbo_confirm_button: t("devices.replace.undo") } } %>
+      <%= render Ss::ButtonComponent.new(label: t("devices.replace.undo"), href: undo_replace_device_path(@device), method: :post, variant: :ghost, confirm: t("devices.replace.undo_confirm"), confirm_button: t("devices.replace.undo")) %>
     </div>
   <% end %>
 <% end %>

@@ -1,6 +1,6 @@
 <%= render "web/shared/header", title: t("arrange.preview.title", name: @view["title"]), subtitle: t("arrange.preview.subtitle"), back: edit_dashboard_path(@dashboard, view: @view["id"]) do %>
   <% unless @same %>
-    <%= button_to arrange_dashboard_path(@dashboard), params: { view: @view["id"] }, class: "ss-btn ss-btn-primary" do %><%= icon("check", "size-4") %><%= t("arrange.preview.apply") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("arrange.preview.apply"), icon: icon("check", ""), href: arrange_dashboard_path(@dashboard), method: :post, params: { view: @view["id"] }) %>
   <% end %>
 <% end %>
 <% if @same %>

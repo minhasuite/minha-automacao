@@ -96,16 +96,16 @@
         <% if row.complete? %>
           <%= link_to t("presence.setup.see"), "#p-#{row.person.id}", class: "ss-btn ss-btn-ghost ss-btn-sm" %>
         <% elsif row.next_step == "person" && @manage %>
-          <%= button_to t("presence.setup.create"), presence_path, params: { site_id: @site.id, user_id: row.user.id }, class: "ss-btn ss-btn-primary ss-btn-sm" %>
+          <%= render Ss::ButtonComponent.new(label: t("presence.setup.create"), href: presence_path, method: :post, params: { site_id: @site.id, user_id: row.user.id }, size: :sm) %>
         <% end %>
       </li>
     <% end %>
   </ul>
   <% if current_user.owner? %>
-    <%= form_with url: invite_people_path, class: "flex flex-wrap items-end gap-3", data: { turbo: false } do %>
+    <%= ss_form_with url: invite_people_path, class: "flex flex-wrap items-end gap-3", data: { turbo: false } do %>
       <%= hidden_field_tag "invite[site_id]", @site.id, id: nil %><%= hidden_field_tag "invite[site_role]", "resident", id: nil %><%= hidden_field_tag "invite[role]", "member", id: nil %>
       <p class="text-sm text-muted flex-1 min-w-48"><%= t("presence.setup.invite_hint") %></p>
-      <%= submit_tag t("presence.setup.invite"), class: "ss-btn ss-btn-ghost" %>
+      <%= render Ss::ButtonComponent.new(label: t("presence.setup.invite"), type: :submit, variant: :ghost) %>
     <% end %>
   <% end %>
   <p class="text-xs text-muted"><%= t("presence.setup.privacy") %></p>
