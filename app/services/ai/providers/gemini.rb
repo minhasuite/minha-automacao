@@ -51,6 +51,7 @@ module Ai
         text = Array(candidate&.dig("content", "parts")).reject { |p| p["thought"] }.filter_map { |p| p["text"] }.join
         Rails.logger.warn("[ai] gemini sem texto: finish=#{candidate&.dig('finishReason')} block=#{json.dig('promptFeedback', 'blockReason')}") if text.blank?
         meta = json["usageMetadata"] || {}
+        truncated!(max_tokens + headroom, meta["promptTokenCount"], meta["candidatesTokenCount"].to_i + meta["thoughtsTokenCount"].to_i) if candidate&.dig("finishReason") == "MAX_TOKENS"
         # Pensamento é cobrado como saída.
         result(text, schema, meta["promptTokenCount"], meta["candidatesTokenCount"].to_i + meta["thoughtsTokenCount"].to_i)
       end

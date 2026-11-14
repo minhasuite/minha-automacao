@@ -11,6 +11,8 @@ module Integrations
   class MobileAppPlugin < Plugin
     describe key: "mobile_app", title: "App do celular", icon: "device-mobile",
              description: "Bateria, carregando, Wi-Fi e presença (em casa ou fora) de cada celular com o app, como pontos."
+    # Sem cômodo de propósito (o celular anda com a pessoa): a Saúde não acusa "Sem área".
+    def self.roomless? = true
     texts "pt-BR" => { ready: "App do celular pronto. No celular: instale o app, entre e ligue os sensores em Mais → Sensores do celular.", updated: "App do celular atualizado." },
           en: { title: "Phone app", description: "Battery, charging, Wi-Fi and presence (home or away) of each phone with the app, as points.", ready: "Phone app ready. On the phone: install the app, sign in and turn on the sensors under More → Phone sensors.", updated: "Phone app updated." },
           es: { title: "App del celular", description: "Batería, cargando, Wi-Fi y presencia (en casa o fuera) de cada celular con la app, como puntos.", ready: "App del celular lista. En el celular: instala la app, inicia sesión y activa los sensores en Más → Sensores del celular.", updated: "App del celular actualizada." }
@@ -139,9 +141,33 @@ module Integrations
         point = point_for(device, field, s)
         point.report!(value)
         point.report_attrs!(with_track(point, s[:attrs].call(values[field], integration))) if s[:attrs]
+        link_person!(device, point) if field == "location"
       end
       device.update_columns(last_seen_at: Time.current) # rubocop:disable Rails/SkipsModelValidations
       integration.ok!
+    end
+
+    # Como o `person` do HA, que nasce para cada usuário com o celular dele: a primeira localização
+    # que chega liga o "Presença" deste celular à pessoa do dono do aparelho. Sem pessoa, cria pelo
+    # mesmo caminho do assistente da tela Pessoas (`People::Setup.create_person!`, marcada `auto`:
+    # se alguém criar à mão a pessoa desse usuário depois, a automática sai, `HelperTypes::Person.saved`);
+    # com pessoa, só acrescenta a fonte no fim. Nunca mexe em pessoa de outro usuário. → a pessoa.
+    def self.link_person!(device, point)
+      user = User.find_by(id: device.address.to_h["user_id"]) or return
+      site = device.site
+      person = People.persons(site).find_by("points.address->>'user_id' = ?", user.id)
+      if person.nil?
+        person, errors = People::Setup.create_person!(site, user)
+        Rails.logger.warn("[mobile_app] pessoa de #{user.id}: #{errors.to_sentence}") if person.nil?
+        person&.update_column(:address, person.address.merge("auto" => true)) # rubocop:disable Rails/SkipsModelValidations
+        return person
+      end
+      sources = Array(person.address["sources"])
+      return person if sources.include?(point.id)
+
+      form = { "name" => person.name, "user_id" => user.id, "sources" => sources + [ point.id ], "home_ssids" => Array(person.address["home_ssids"]).join(",") }
+      HelperTypes.save(person, form) or Rails.logger.warn("[mobile_app] pessoa de #{user.id}: #{person.errors.full_messages.to_sentence}")
+      person
     end
 
     def self.point_for(device, field, s)

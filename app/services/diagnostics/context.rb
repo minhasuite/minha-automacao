@@ -92,8 +92,23 @@ module Diagnostics
       [ device.driver, device.address.to_h.slice(*config.fetch("duplicate_address_keys")).transform_values(&:to_s).sort ]
     end
 
-    # Limiares por device_class do ponto (`sensors:` do YAML).
-    def sensor(point) = config.dig("sensors", point.device_class.to_s).to_h
+    # Limiares por classe do sensor (`sensors:` do YAML): a do ponto ou a da dica (`class_hints:`),
+    # ex. umidade do solo que o aparelho diz ser "humidity" vira "moisture" (ruidosa, sem "pulo").
+    def sensor(point) = config.dig("sensors", sensor_class(point)).to_h
+
+    def sensor_class(point)
+      klass = point.device_class.to_s
+      hint = Array(config["class_hints"]).find { |h| hint_matches?(h, point, klass) }
+      hint ? hint["class"].to_s : klass
+    end
+
+    def hint_matches?(hint, point, klass)
+      return false unless Array(hint["from"]).map(&:to_s).include?(klass)
+
+      device = point.device
+      Array(hint["models"]).map(&:to_s).include?(device&.model.to_s.strip) ||
+        (hint["name"].present? && [ device&.name, point.name ].compact.any? { |n| Regexp.new(hint["name"], Regexp::IGNORECASE).match?(n) })
+    end
 
     # Último pulo absurdo de cada ponto com `jump` no YAML: {point_id => {from:, to:, at:, minutes:}}.
     # Uma consulta só, nas leituras das últimas `jump_lookback_hours`.

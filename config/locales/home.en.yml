@@ -484,6 +484,20 @@ en:
       enabled: Active
       save: Save mirroring
   history:
+    days:
+      today: Today
+      yesterday: Yesterday
+    summary: Window summary
+    stats: "min %{min} · max %{max} · avg %{avg}"
+    chosen:
+      one: "%{count} of %{max} point"
+      other: "%{count} of %{max} points"
+    clear: Clear
+    suggestions: Compare in one go
+    suggestion_title:
+      one: "%{count} point"
+      other: "%{count} points"
+    pick_hint: Up to %{n}; search by point, device or room.
     subtitle: 'Compare points over time: numbers as overlapping lines, on/off and states as bands.'
     csv: Export CSV
     period: Period
@@ -535,6 +549,10 @@ en:
     empty_hint: Try a longer period or remove a filter.
     bigger: See a longer period
   maps:
+    phone_hint:
+      title: Your phone isn't showing?
+      none: "In the Minha Automação app on the phone (Android): More → Phone sensors → turn on Presence (location) and accept Android's prompt. The phone becomes one of your devices and you show up here and in People."
+      no_location: "Your phone is already linked to this place, but without location. In the app: More → Phone sensors → turn on Presence (location) and, to work with the app closed, Zones in the background."
     title: Map
     subtitle: Where the people of %{site} are, the zones and today's path. Only residents, technicians and the owner can see it.
     aria: Map with %{people} person(s) and %{zones} zone(s)
@@ -542,7 +560,7 @@ en:
     no_center: Nowhere to center the map.
     no_center_hint: Set the place's location (Edit place) or create a zone in Helpers.
     people: People
-    no_people: No people. Create one in Helpers → Person, using the phone app as the source.
+    no_people: No people yet. Whoever turns on Presence in the phone app shows up here on their own; you can also create one in Helpers → Person.
     no_reading: No reading
     since: since
     phone: Phone location

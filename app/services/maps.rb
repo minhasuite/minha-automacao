@@ -14,7 +14,7 @@ module Maps
 
   # → {zones:, people:, center:}. Pessoa sem coordenada exata fica no centro
   # da zona em que está (`precise: false`); fora de zona e sem coordenada, sem posição.
-  def data(site, track: true)
+  def data(site, track: true, user: nil)
     zones = People.zones(site).filter_map do |z|
       lat, lon = HelperTypes::Zone.center(z)
       next unless lat && lon
@@ -23,7 +23,7 @@ module Maps
         "home" => HelperTypes::Zone.home?(z), "count" => z.value.to_i }
     end
     people = People.persons(site).map { |p| person(p, zones, track) }
-    { "zones" => zones, "people" => people, "center" => center(site, zones, people),
+    { "zones" => zones, "people" => people, "center" => center(site, zones, people), "phone" => (phone(site, user) if user),
       "texts" => { "people" => I18n.t("maps.js.people"), "no_reading" => I18n.t("maps.no_reading"), "approx" => I18n.t("maps.js.approx") } }
   end
 
@@ -36,6 +36,18 @@ module Maps
       "home" => HelperTypes::Person.home?(p), "since" => p.changed_at&.iso8601, "quality" => p.quality,
       "lat" => lat, "lon" => lon, "accuracy" => a["accuracy"], "precise" => a["latitude"].present?,
       "track" => (track ? Array(a["track"]).map { |la, lo, t| [ la, lo, Time.zone.at(t.to_i).iso8601 ] } : []) }
+  end
+
+  # O celular de quem está vendo manda a localização? → {state:, title:, hint:} quando não manda
+  # (nil quando manda): "none" = o app nunca registrou este celular (nenhum sensor ligado),
+  # "no_location" = registrou, mas a Localização está desligada. A tela e o app mostram o passo.
+  def phone(site, user)
+    devices = site.devices.where("devices.external_id LIKE ?", "mobile_app:#{user.id}:%").to_a
+    located = devices.any? { |d| d.points.where("address->>'field' = 'location'").exists? }
+    return if located
+
+    state = devices.empty? ? "none" : "no_location"
+    { "state" => state, "title" => I18n.t("maps.phone_hint.title"), "hint" => I18n.t("maps.phone_hint.#{state}") }
   end
 
   def center(site, zones, people)

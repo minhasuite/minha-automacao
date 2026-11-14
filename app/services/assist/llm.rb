@@ -36,7 +36,7 @@ module Assist
       say = nil
       ROUNDS.times do |round|
         res = Ai::Request.call(tenant: ctx.site.tenant, site: ctx.site, source: "voz", system: system(ctx), prompt: turns.join("\n"),
-                               schema: SCHEMA, provider: provider, max_tokens: 800, timeout: 45).data.to_h.with_indifferent_access
+                               schema: SCHEMA, provider: provider, max_tokens: 4_000, timeout: 45).data.to_h.with_indifferent_access
         calls = Array(res[:calls]).first(5)
         say = res[:say].to_s.squish
         break if calls.empty? || round == ROUNDS - 1

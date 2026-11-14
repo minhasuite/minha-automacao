@@ -69,23 +69,32 @@ module Ai
       private
 
       def result(text, schema, input, output)
-        raise Ai::Client::Error, "A IA não devolveu resposta. Tente de novo." if text.blank?
+        raise Ai::Client::Error.new("A IA não devolveu resposta. Tente de novo.", detail: "resposta vazia", usage: { input: input.to_i, output: output.to_i }) if text.blank?
 
-        Result.new(data: schema ? parse_json(text) : text.strip, usage: { input: input.to_i, output: output.to_i })
+        usage = { input: input.to_i, output: output.to_i }
+        Result.new(data: schema ? parse_json(text, usage) : text.strip, usage: usage)
       end
 
-      def parse_json(text)
+      # Resposta cortada no limite de tokens (o raciocínio também conta): o Ai::Request tenta com o dobro.
+      def truncated!(max_tokens, input, output)
+        raise Ai::Client::TruncatedError.new("A IA respondeu num formato inesperado. Tente de novo.",
+                                             detail: "cortada no max_tokens (limite #{max_tokens}, saída #{output.to_i})",
+                                             usage: { input: input.to_i, output: output.to_i })
+      end
+
+      def parse_json(text, usage = nil)
         JSON.parse(text.to_s[/\{.*\}/m] || text.to_s, symbolize_names: true)
       rescue JSON::ParserError => e
         Rails.logger.warn("[ai] #{self.class.key} JSON inválido: #{e.message.truncate(120)}")
-        raise Ai::Client::Error, "A IA respondeu num formato inesperado. Tente de novo."
+        raise Ai::Client::Error.new("A IA respondeu num formato inesperado. Tente de novo.", detail: "JSON inválido (#{text.to_s.size} caracteres)", usage: usage)
       end
 
       # Resposta HTTP de erro: corpo só no log, mensagem genérica para fora.
       def http_error!(code, body)
         Rails.logger.warn("[ai] #{self.class.key} HTTP #{code}: #{body.to_s.first(500)}")
         klass = code.to_i == 429 || code.to_i >= 500 ? Ai::Client::TransientError : Ai::Client::Error
-        raise klass, code.to_i.in?([ 401, 403 ]) ? "A chave do provedor foi recusada (#{code})." : "A IA não conseguiu responder agora (#{code}). Tente de novo."
+        raise klass.new(code.to_i.in?([ 401, 403 ]) ? "A chave do provedor foi recusada (#{code})." : "A IA não conseguiu responder agora (#{code}). Tente de novo.",
+                        detail: "HTTP #{code}", retry_after: @retry_after)
       end
 
       # POST JSON num host fixo do provedor (a URL não vem do usuário).
@@ -95,13 +104,14 @@ module Ai
         headers.merge("Content-Type" => "application/json").each { |k, v| req[k] = v }
         req.body = body.to_json
         res = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: timeout) { |h| h.request(req) }
+        @retry_after = Float(res["retry-after"].to_s, exception: false)
         http_error!(res.code, res.body) unless res.is_a?(Net::HTTPSuccess)
         JSON.parse(res.body)
       rescue Net::OpenTimeout, Net::ReadTimeout
-        raise Ai::Client::TransientError, "A IA demorou demais para responder (mais de #{timeout}s)."
+        raise Ai::Client::TransientError.new("A IA demorou demais para responder (mais de #{timeout}s).", detail: "tempo esgotado (#{timeout}s)")
       rescue SocketError, SystemCallError, OpenSSL::SSL::SSLError, JSON::ParserError => e
         Rails.logger.warn("[ai] #{self.class.key} rede: #{e.class}: #{e.message.truncate(200)}")
-        raise Ai::Client::TransientError, "Falha de rede ao chamar a IA. Tente de novo."
+        raise Ai::Client::TransientError.new("Falha de rede ao chamar a IA. Tente de novo.", detail: "rede (#{e.class.name.demodulize})")
       end
 
       def blocks(user) = user.is_a?(String) ? [ { type: "text", text: user } ] : Array(user).map { |b| b.to_h.with_indifferent_access }

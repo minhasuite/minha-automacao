@@ -7,6 +7,8 @@ module Integrations
   class SpeedtestTrackerPlugin < SchemaPlugin
     describe key: "speedtest_tracker", title: "Speedtest Tracker", icon: "trending-up",
              description: "Velocidade da internet medida pelo Speedtest Tracker da casa: download, upload, latência e a hora do último teste como pontos, para gráficos e alertas."
+    # Sem cômodo de propósito (teste de velocidade da internet): a Saúde não acusa "Sem área".
+    def self.roomless? = true
     texts "pt-BR" => { fields: { token: "Token da API" }, hints: { url: "http://192.168.0.10:8765", token: "Speedtest Tracker → API Tokens (results:read)" },
                        points: { last_test: "Último teste" }, no_result: "O Speedtest Tracker ainda não tem teste." },
           en: { title: "Speedtest Tracker", description: "Internet speed measured by your Speedtest Tracker: download, upload, latency and the last test time as points, for charts and alerts.",

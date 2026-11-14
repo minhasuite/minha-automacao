@@ -76,7 +76,7 @@ module Dashboards
                  "Pontos (id | nome | aparelho | área | capacidade | classe | unidade | comanda/leitura):", *lines ]
       structured = structured?
       prompt += [ "", "Formato: #{schema.to_json}" ] unless structured
-      res = Ai::Request.call(tenant: @site.tenant, site: @site, source: "painel", prompt: prompt.join("\n"), max_tokens: 2_000, timeout: 60,
+      res = Ai::Request.call(tenant: @site.tenant, site: @site, source: "painel", prompt: prompt.join("\n"), max_tokens: 8_000, timeout: 60,
                              system: format(SYSTEM, lang: LANGUAGES.fetch(I18n.locale.to_s, LANGUAGES["pt-BR"])), schema: (schema if structured))
       parse(res.data)
     rescue Ai::Client::Error => e

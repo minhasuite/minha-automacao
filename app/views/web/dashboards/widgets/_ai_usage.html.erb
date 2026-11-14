@@ -10,11 +10,12 @@
   <% rows = Array(d["by_automation"]) %>
   <% if rows.any? %>
     <p class="ss-kicker mt-4 mb-1"><%= d["title"] %></p>
-    <ul class="grid gap-0.5">
+    <%# grid-cols-1 (minmax(0,1fr)): sem ele a coluna crescia com o nome e o número saía do card. %>
+    <ul class="grid grid-cols-1 gap-0.5">
       <% rows.each do |r| %>
-        <li class="ss-item">
+        <li class="ss-item min-w-0">
           <span class="ss-icon-tile is-sm is-muted"><%= icon("lightning-bolt", "") %></span>
-          <span class="ss-item-main"><span class="text-sm"><%= r["name"] %></span>
+          <span class="ss-item-main"><span class="text-sm whitespace-normal [overflow-wrap:anywhere]"><%= r["name"] %></span>
             <span class="text-xs"><%= t("dashboards.w.ran_ago", time: dw_short_ago(Time.zone.parse(r["last_at"]))) if r["last_at"] %></span></span>
           <span class="text-sm font-semibold num text-ink shrink-0"><%= r["calls"] %></span>
           <% if r["errors"].positive? %><span class="ss-badge ss-badge-danger num shrink-0"><%= r["errors"] %></span><% end %>

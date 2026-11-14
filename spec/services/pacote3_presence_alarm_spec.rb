@@ -112,8 +112,9 @@ RSpec.describe "Pacote 3: presença e alarme" do
 
       integration.update!(settings: integration.settings.merge("location_keep_h" => 0))
       Integrations::MobileAppPlugin.report!(phone.reload, "location" => { "latitude" => -15.80, "longitude" => -47.90 })
-      expect(gps.reload.attrs).to eq("distance_m" => 0, "zone" => "Fora")
-      ana = helper("person", "name" => "Ana", "sources" => [ gps.id ]) # a zona Casa nasce agora; a próxima leitura já cai nela
+      # A zona Casa já existe: nasceu com a pessoa que o celular criou sozinho na primeira localização.
+      expect(gps.reload.attrs).to eq("distance_m" => 0, "zone" => "Casa")
+      ana = helper("person", "name" => "Ana", "sources" => [ gps.id ]) # à mão: a automática sai
       Integrations::MobileAppPlugin.report!(phone.reload, "location" => { "latitude" => -15.80, "longitude" => -47.90 })
       expect(ana.reload.value).to eq("Casa")
     end

@@ -10,7 +10,7 @@ module Web
       raise SiteMembership::Forbidden, t("notices.map_forbidden") unless Maps.allowed_role?(@site_role)
 
       @sites = @sites.select { |s| Maps.allowed_role?(s.role_for(current_user)) }
-      @map = Maps.data(@site)
+      @map = Maps.data(@site, user: current_user)
     end
   end
 end

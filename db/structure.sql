@@ -107,7 +107,9 @@ CREATE TABLE public.ai_calls (
     status character varying NOT NULL,
     error character varying,
     duration_ms integer,
-    created_at timestamp(6) without time zone NOT NULL
+    created_at timestamp(6) without time zone NOT NULL,
+    detail character varying,
+    attempts integer DEFAULT 1 NOT NULL
 );
 
 
@@ -5508,6 +5510,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261114183417'),
 ('20261113120731'),
 ('20261113120437'),
 ('20261112160041'),

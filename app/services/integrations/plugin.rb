@@ -37,6 +37,11 @@ module Integrations
       def login(integration, _form) = outcome(:connect, integration: integration)
       def reconfigurable? = true
 
+      # Aparelhos de serviço ou de conta (clima, agenda, o próprio servidor, teste de velocidade, o
+      # celular que anda, as Echo vistas pela conta): sem cômodo de propósito, a Saúde dos aparelhos
+      # não acusa "Sem área" (`Diagnostics::Rules::NoArea`). Plugin de aparelho físico fica com false.
+      def roomless? = false
+
       # Variáveis da tela de login (QR etc.). Erro do serviço: Integrations::Error.
       def connect_locals(_integration, _params) = {}
 

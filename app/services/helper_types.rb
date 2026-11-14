@@ -47,6 +47,7 @@ module HelperTypes
 
     plugin.refresh!(point) if plugin.sourced?
     point.report!(plugin.initial_value(point)) if fresh && !plugin.sourced?
+    plugin.saved(point, fresh) if plugin.respond_to?(:saved)
     true
   end
 

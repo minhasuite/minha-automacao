@@ -71,6 +71,15 @@ diferente na conta, "Reconectar" só em driver com leitura (`Polling`),
 Na tela, o reparo é refeito na hora: o controller roda o diagnóstico de novo e
 só executa se o achado ainda existe e ainda oferece aquele reparo.
 
+## Sem área e limiar por classe (paineis-ia)
+
+- "Sem área" não vale para aparelho de serviço ou de conta: o plugin da integração diz
+  `roomless?` (`Integrations::Plugin`, padrão false; true em clima, agenda, sistema, speedtest,
+  speedtest tracker, app do celular, Alexa e Google Home). Plugin novo de serviço = `def self.roomless? = true`.
+- Limiar por classe do sensor com dica (`class_hints:` no `config/device_diagnostics.yml`): sensor de
+  solo que se declara `humidity` (AY-303Z e afins, ou nome com solo/soil/planta/vaso) usa `moisture`,
+  que é ruidosa e não tem "pulo absurdo" (só fora da terra e valor parado). `Diagnostics::Context#sensor_class`.
+
 ## Estender
 
 - **Regra nova**: classe `< Diagnostics::Rule` com

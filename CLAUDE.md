@@ -216,7 +216,10 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `Ai::Request` (conta, limite `Ai::Budget`, capacidades) e vira um `AiCall`
   sem prompt nem resposta. Ollama pelo `SafeHttp` (IP da LAN em `http_allow`).
   Spec nunca chama provedor de verdade (WebMock ou provedor falso por
-  `stub_const`).
+  `stub_const`). Falha passageira (`TransientError`) tem nova tentativa com espera no `Ai::Request`
+  (`BACKOFF` por origem, `retry-after`), corte no `max_tokens` (`TruncatedError`; o raciocínio conta)
+  tenta com o dobro; o `AiCall` guarda `attempts` e `detail` (status/tipo, nunca o corpo); nos specs a
+  espera é `Ai::Request.sleeper` (zerada em `spec/support/ai_retry.rb`). `docs/ia.md`.
 - **Dados (Lote 2)**: `Dataset`/`DatasetRecord` por local; consulta pelo
   `Datasets::Query` (tipo em `Datasets::AGGREGATES`, filtro em
   `Datasets::OPERATORS`), nunca SQL do usuário. Gravar refaz os helpers
@@ -769,7 +772,8 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   reparo = `< Diagnostics::Fix` (`kind` ação/link/formulário, `role`, `available?`, `call`/`url`) + nome em
   `Diagnostics::FIXES`, **nunca comanda aparelho** (lê de novo, varre, muda cadastro, apaga órfão com AuditEvent
   `device.orphan_delete`). Limiares = `config/device_diagnostics.yml` (o local muda por cima em
-  `sites.settings["device_health"]`, junto dos silenciados). Tela `/saude-aparelhos` (técnico+, web e app pelo
+  `sites.settings["device_health"]`, junto dos silenciados; classe do sensor por dica em `class_hints`).
+  "Sem área" pula aparelho de serviço: `roomless?` no plugin da integração (aberto/fechado). Tela `/saude-aparelhos` (técnico+, web e app pelo
   AppScreen), verificação `device_health` na Saúde e aviso semanal de bateria pelo `HealthCheckJob`.
 - **Desempenho (aberto/fechado, `docs/desempenho.md`)**: pontos do local e painel
   resolvido em cache curto na memória (`Dashboards::Cache`, chave = carimbo do local
@@ -813,7 +817,8 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.23.5`):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.23.5`; no branch `paineis-ia`,
+  temporariamente o branch `paineis-ia` da gem, v0.23.7 pendente de tag):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);

@@ -8,6 +8,8 @@ module Integrations
   class SpeedtestPlugin < SchemaPlugin
     describe key: "speedtest", title: "Speedtest", icon: "trending-up",
              description: "Velocidade da internet de casa (download, upload e latência) pelos servidores do Speedtest.net, de hora em hora, para gráficos e automações."
+    # Sem cômodo de propósito (teste de velocidade da internet): a Saúde não acusa "Sem área".
+    def self.roomless? = true
     texts "pt-BR" => { fields: { server_id: "Servidor (id, opcional)" }, hints: { server_id: "vazio = o mais perto" }, no_server: "Nenhum servidor do Speedtest respondeu." },
           en: { title: "Speedtest", description: "Your home internet speed (download, upload and latency) through Speedtest.net servers, every hour, for charts and automations.",
                 fields: { server_id: "Server (id, optional)" }, hints: { server_id: "empty = the nearest" }, no_server: "No Speedtest server answered." },

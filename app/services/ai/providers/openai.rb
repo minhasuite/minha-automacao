@@ -20,6 +20,7 @@ module Ai
         body[:reasoning_effort] = effort if effort.present?
         json = post_json("#{@base_url}/chat/completions", body, { "Authorization" => "Bearer #{@api_key}" }, timeout)
         usage = json["usage"] || {}
+        truncated!(max_tokens, usage["prompt_tokens"], usage["completion_tokens"]) if json.dig("choices", 0, "finish_reason") == "length"
         result(json.dig("choices", 0, "message", "content"), schema, usage["prompt_tokens"], usage["completion_tokens"])
       end
 

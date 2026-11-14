@@ -315,6 +315,9 @@ pt-BR:
       item_key: "key inválida."
       repeated: "key \"%{key}\" repetida."
   ai_settings:
+    attempts:
+      one: "%{count} tentativa"
+      other: "%{count} tentativas"
     title: "Configurações"
     subtitle: "IA: seus provedores (a chave fica cifrada), o padrão, o limite do mês e quanto cada chamada custou."
     month: "Neste mês"

@@ -14,6 +14,10 @@
   <% end %>
   <% lay.with_aside do %>
     <div class="grid gap-4">
+    <% if (ph = @map["phone"]) %>
+      <%# O celular de quem vê não manda localização: o passo no app (Maps.phone). %>
+      <%= render(Ss::CalloutComponent.new(tone: :info, title: ph["title"], data: { phone_state: ph["state"] })) { ph["hint"] } %>
+    <% end %>
     <section class="ss-card ss-card-pad" aria-labelledby="mp-people">
       <h2 id="mp-people" class="mb-3"><%= t("maps.people") %></h2>
       <% if people.empty? %>

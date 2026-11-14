@@ -200,8 +200,11 @@ module Diagnostics
             es: { label: "Sin área", description: "Dispositivo sin área: queda fuera de las vistas por ambiente y de la voz por ambiente.",
                   reason: "Sin área, el dispositivo no aparece en las vistas por ambiente ni responde a \"apaga la luz de la sala\"." }
 
+      # Aparelho de serviço ou de conta (o plugin da integração diz `roomless?`: clima, agenda,
+      # servidor, speedtest, celular, Echo pela conta) não tem cômodo de propósito.
       def self.applies?(device, ctx)
-        device.removed_at.nil? && device.area_id.nil? && ctx.points_of(device).any? && ctx.points_of(device).none?(&:area_id)
+        device.removed_at.nil? && device.area_id.nil? && !device.integration&.plugin&.roomless? &&
+          ctx.points_of(device).any? && ctx.points_of(device).none?(&:area_id)
       end
 
       def self.fixes(_device, _ctx) = %w[set_area]

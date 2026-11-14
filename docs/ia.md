@@ -72,6 +72,29 @@ manifesto, libera o IP na Saída HTTP e baixa o modelo pela fila
 (`AiPrepareJob` → `prepare(account)` do provedor, `/api/pull`). Provedor que
 precisa preparar algo implementa `self.prepare(account)`.
 
+## Falhas passageiras e motivo técnico (paineis-ia, 14/11/2026)
+
+O "IA fora do ar" da casa (aviso do script da automação quando `analise.data` não vem) disparava
+todo dia às 09:00 com a conta Anthropic ok. Causa: o **Vigia** pedia saída estruturada com o
+`max_tokens` padrão de 1000, e os modelos atuais (Haiku/Sonnet 5.5) **pensam por padrão**: o
+raciocínio conta no `max_tokens`, a resposta parava em `stop_reason: max_tokens` com o JSON pela
+metade (~7 s, sempre) e virava "formato inesperado". As falhas de ~0,5 s ("não conseguiu responder")
+e de 60 s (tempo esgotado) eram passageiras (429/5xx/529 ou conexão presa) sem nova tentativa.
+
+- `Ai::Request::MAX_TOKENS` = 16000 (só se paga o que o modelo usa); cortou mesmo assim
+  (`Ai::Client::TruncatedError`, também no OpenAI `finish_reason: length` e no Gemini
+  `MAX_TOKENS`), tenta **uma vez** com o dobro (teto `MAX_TOKENS_CAP` = 32000).
+- `Ai::Client::TransientError` (429, 5xx, 529 `overloaded_error`, tempo esgotado, rede) ganha nova
+  tentativa com espera crescente (`BACKOFF`: em segundo plano — automação, montar painel — 2 s e 8 s,
+  com alguém olhando 1 s) ou o `retry-after` do provedor (até 30 s). Tempo por tentativa: 90 s em
+  segundo plano, 60 s com alguém olhando (quem chama pode passar `timeout:`).
+- Um `AiCall` por pedido: `attempts` e `detail` (motivo técnico curto: `HTTP 529 overloaded_error`,
+  `tempo esgotado (90s)`, `stop_reason max_tokens (limite 1000, saída 1000)`, `JSON inválido (…)`),
+  nunca prompt nem resposta; os tokens das tentativas cortadas somam no custo. Aparecem no título do
+  resultado em Configurações → IA e na "Linha do tempo da IA".
+- Falha passageira que a nova tentativa resolve não chega à automação (o `analise.data` vem), então o
+  aviso "IA fora do ar" só sai quando a IA está mesmo fora. Spec: `spec/services/ai_retentativa_spec.rb`.
+
 ## Configurações → IA
 
 `/configuracoes/ia` (administradores veem, o Dono muda):

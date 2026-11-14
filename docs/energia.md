@@ -67,6 +67,15 @@ A tela mostra a mesma conta da última hora num quadro de atenção.
 painel" da tela Energia (`Dashboards::AddTo::SOURCES["energy_month"]`) ou pelo
 editor (campo "Mostrar"). O app desenha o mesmo widget (`metric` no dado).
 
+## Energia no celular (paineis-ia)
+
+A tela `/energia` já abre no app pelo AppScreen (Mais → Energia por aparelho). Para quem quer um
+painel no celular, o "Consumo Energético Mobile" da casa foi refeito (script do integrador) só com
+widgets que leem o mesmo `EnergyUse` (mesma tarifa do local): `energy_compare` (hoje/semana/mês contra
+o período anterior, os medidores dos 8 aparelhos que mais gastaram), `energy_breakdown` de hoje, da
+semana e do mês por custo, o helper da tarifa e um botão para `/energia` (tarifa, aviso, comparação).
+Os painéis antigos (`stat`/`chart` sobre um medidor de custo) saíram: a tela é a fonte.
+
 ## Estender
 
 - Outro tipo de regra de aviso = outra chave em `watch` lida pelo

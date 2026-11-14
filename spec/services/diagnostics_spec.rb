@@ -172,6 +172,32 @@ RSpec.describe "Saúde dos aparelhos: diagnóstico (Diagnostics)" do
       f = run.find { |x| x.rule.key == "value_jump" }
       expect(f.detail).to eq("De 24 para 70°C em 10 min")
     end
+
+    it "sensor de solo que se diz 'humidity' usa os limites de umidade do solo (ruidosa: sem pulo absurdo)" do
+      solo = create(:device, site: site, area: sala, name: "Teste EXT Umidade Solo Ulmos", driver: "virtual", status: "online", last_seen_at: now, model: "AY-303Z")
+      ar = create(:device, site: site, area: sala, name: "Teste Sensor da sala", driver: "virtual", status: "online", last_seen_at: now)
+      pts = [ solo, ar ].map do |d|
+        create(:point, device: d, site: site, name: "Umidade", capability: "measure", device_class: "humidity", unit: "%", value: 63, changed_at: now, reported_at: now)
+      end
+      pts.each { |p| Reading.insert_all!([ { point_id: p.id, at: 10.minutes.ago, value: 0 }, { point_id: p.id, at: 9.minutes.ago, value: 63 } ]) }
+      ctx = Diagnostics::Context.new(site, now: now)
+      expect(pts.map { |p| ctx.sensor_class(p) }).to eq(%w[moisture humidity])
+      expect(run.select { |x| x.rule.key == "value_jump" }.map { |x| x.point.device }).to eq([ ar ])
+      solo.update!(name: "Teste Higrômetro", model: "outro") # sem dica de solo: volta a ser umidade do ar
+      expect(Diagnostics::Context.new(site, now: now).sensor_class(pts.first)).to eq("humidity")
+    end
+  end
+
+  it "'sem área' não vale para aparelho de serviço ou de conta (o plugin diz roomless?)" do
+    clima = Integration.create!(site: site, driver: "weather", name: "Teste Clima", status: "ok")
+    tuya = Integration.create!(site: site, driver: "tuya", name: "Teste Tuya", status: "ok")
+    [ [ "Teste Clima", clima ], [ "Teste Fechadura", tuya ] ].each do |name, integ|
+      d = create(:device, site: site, area: nil, name: name, driver: "virtual", status: "online", last_seen_at: now, integration: integ)
+      create(:point, device: d, site: site, name: "#{name} valor", capability: "measure")
+    end
+    expect(keys.select { |k, _| k == "no_area" }).to eq([ [ "no_area", "Teste Fechadura" ] ])
+    expect(Integrations::WeatherPlugin.roomless?).to be(true)
+    expect(Integrations::TuyaPlugin.roomless?).to be(false)
   end
 
   describe "silenciar" do
