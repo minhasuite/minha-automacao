@@ -7,7 +7,8 @@
   <section class="ss-card ss-card-pad" aria-labelledby="excluir">
     <h2 id="excluir" class="flex items-center gap-2"><%= icon("trash", "size-5") %><%= t("site_helpers.edit.delete") %></h2>
     <p class="mt-2 text-sm text-muted"><%= t("datasets.edit.delete_text") %></p>
-    <%= button_to dataset_path(@dataset), method: :delete, class: "ss-btn ss-btn-outline ss-btn-sm mt-3 !text-danger",
-                  form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("datasets.edit.confirm", name: @dataset.name), turbo_confirm_button: t("site_helpers.edit.delete") } } do %><%= icon("trash", "size-4") %><%= t("datasets.edit.delete_button") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("datasets.edit.delete_button"), icon: icon("trash", ""), href: dataset_path(@dataset), method: :delete,
+                                       variant: :outline, size: :sm, css: "mt-3 !text-danger",
+                                       confirm: t("datasets.edit.confirm", name: @dataset.name), confirm_tone: :danger, confirm_button: t("site_helpers.edit.delete")) %>
   </section>
 </div>

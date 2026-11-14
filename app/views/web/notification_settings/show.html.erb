@@ -1,13 +1,13 @@
 <%= render "web/shared/header", title: t("settings.title"), subtitle: t("notifications.settings.subtitle") %>
 <%= render layout: "web/settings/frame", locals: { current: :notifications } do %>
-<%= form_with scope: :prefs, url: settings_notifications_path, method: :patch, class: "grid gap-4" do |f| %>
+<%= ss_form_with scope: :prefs, url: settings_notifications_path, method: :patch, class: "grid gap-4" do |f| %>
   <section class="ss-card ss-card-pad" aria-labelledby="silencio-t">
     <h2 id="silencio-t" class="flex items-center gap-2"><%= icon("moon", "size-4") %><%= t("notifications.settings.quiet_title") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("notifications.settings.quiet_text") %></p>
     <div class="mt-3 grid gap-4 sm:grid-cols-3 items-end">
-      <label class="ss-check"><%= f.check_box :quiet_enabled, checked: @prefs.dig("quiet", "enabled") == true %> <%= t("notifications.settings.quiet_on") %></label>
-      <div><%= f.label :quiet_from, t("notifications.settings.from"), class: "ss-label" %><%= f.time_field :quiet_from, value: @prefs.dig("quiet", "from"), class: "ss-input" %></div>
-      <div><%= f.label :quiet_to, t("notifications.settings.to"), class: "ss-label" %><%= f.time_field :quiet_to, value: @prefs.dig("quiet", "to"), class: "ss-input" %></div>
+      <%= f.ss_check_box :quiet_enabled, label: t("notifications.settings.quiet_on"), checked: @prefs.dig("quiet", "enabled") == true %>
+      <%= f.ss_time_field :quiet_from, label: t("notifications.settings.from"), value: @prefs.dig("quiet", "from") %>
+      <%= f.ss_time_field :quiet_to, label: t("notifications.settings.to"), value: @prefs.dig("quiet", "to") %>
     </div>
   </section>
 
@@ -15,8 +15,8 @@
     <h2 id="resumo-t" class="flex items-center gap-2"><%= icon("calendar", "size-4") %><%= t("notifications.settings.digest_title") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("notifications.settings.digest_text") %></p>
     <div class="mt-3 grid gap-4 sm:grid-cols-3 items-end">
-      <label class="ss-check"><%= f.check_box :digest_enabled, checked: @prefs.dig("digest", "enabled") == true %> <%= t("notifications.settings.digest_on") %></label>
-      <div><%= f.label :digest_at, t("notifications.settings.digest_at"), class: "ss-label" %><%= f.time_field :digest_at, value: @prefs.dig("digest", "at"), class: "ss-input" %></div>
+      <%= f.ss_check_box :digest_enabled, label: t("notifications.settings.digest_on"), checked: @prefs.dig("digest", "enabled") == true %>
+      <%= f.ss_time_field :digest_at, label: t("notifications.settings.digest_at"), value: @prefs.dig("digest", "at") %>
       <div><%= link_to digest_notifications_path, class: "ss-btn ss-btn-ghost" do %><%= icon("calendar", "size-4") %><%= t("notifications.digest.open") %><% end %></div>
     </div>
   </section>
@@ -24,7 +24,7 @@
   <section class="ss-card ss-card-pad" aria-labelledby="silenciar-t">
     <h2 id="silenciar-t" class="flex items-center gap-2"><%= icon("volume-off", "size-4") %><%= t("notifications.settings.mute_title") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("notifications.settings.mute_text") %></p>
-    <div class="mt-3 max-w-xs"><%= f.label :mute_hours, t("notifications.settings.mute_hours"), class: "ss-label" %><%= f.select :mute_hours, mute_hours_choices, { selected: @prefs["mute_hours"].to_i }, class: "ss-input" %></div>
+    <%= f.ss_select :mute_hours, mute_hours_choices, label: t("notifications.settings.mute_hours"), selected: @prefs["mute_hours"].to_i, wrapper_class: "mt-3 max-w-xs" %>
   </section>
 
   <% if @house %>
@@ -32,15 +32,15 @@
       <h2 id="casa-t" class="flex items-center gap-2"><%= icon("home", "size-4") %><%= t("notifications.settings.house_title") %></h2>
       <p class="text-sm text-muted mt-1"><%= t("notifications.settings.house_text") %></p>
       <div class="mt-3 grid gap-4 sm:grid-cols-3 items-end">
-        <label class="ss-check"><%= f.check_box :house_quiet_enabled, checked: @house.dig("quiet", "enabled") == true %> <%= t("notifications.settings.house_quiet_on") %></label>
-        <div><%= f.label :house_quiet_from, t("notifications.settings.from"), class: "ss-label" %><%= f.time_field :house_quiet_from, value: @house.dig("quiet", "from"), class: "ss-input" %></div>
-        <div><%= f.label :house_quiet_to, t("notifications.settings.to"), class: "ss-label" %><%= f.time_field :house_quiet_to, value: @house.dig("quiet", "to"), class: "ss-input" %></div>
-        <div class="sm:col-span-3 max-w-xs"><%= f.label :merge_s, t("notifications.merge.label"), class: "ss-label" %><%= f.select :merge_s, notification_merge_choices, { selected: @house["merge_s"].to_i }, class: "ss-input" %>
-          <p class="text-xs text-muted mt-1"><%= t("notifications.merge.house_hint") %></p></div>
+        <%= f.ss_check_box :house_quiet_enabled, label: t("notifications.settings.house_quiet_on"), checked: @house.dig("quiet", "enabled") == true %>
+        <%= f.ss_time_field :house_quiet_from, label: t("notifications.settings.from"), value: @house.dig("quiet", "from") %>
+        <%= f.ss_time_field :house_quiet_to, label: t("notifications.settings.to"), value: @house.dig("quiet", "to") %>
+        <%= f.ss_select :merge_s, notification_merge_choices, label: t("notifications.merge.label"), selected: @house["merge_s"].to_i,
+                        help: t("notifications.merge.house_hint"), wrapper_class: "sm:col-span-3 max-w-xs" %>
       </div>
     </section>
   <% end %>
-  <div><%= f.submit t("notifications.settings.save"), class: "ss-btn ss-btn-primary" %></div>
+  <div><%= f.ss_submit t("notifications.settings.save") %></div>
 <% end %>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="silenciados-t">
@@ -50,7 +50,7 @@
       <% @mutes.each do |m| %>
         <li class="flex flex-wrap items-center justify-between gap-2">
           <span class="min-w-0"><span class="font-semibold"><%= m["label"] %></span> <span class="text-sm text-muted"><%= t("notifications.mute.until", time: l(m["until"].in_time_zone(Notifications.zone(current_user.tenant)), format: :short)) %></span></span>
-          <%= button_to unmute_notifications_path(key: m["key"]), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("bell", "size-4") %><%= t("notifications.mute.undo") %><% end %>
+          <%= render Ss::ButtonComponent.new(label: t("notifications.mute.undo"), icon: icon("bell", ""), href: unmute_notifications_path(key: m["key"]), method: :delete, variant: :ghost, size: :sm) %>
         </li>
       <% end %>
     </ul>

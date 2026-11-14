@@ -3,11 +3,10 @@
   <% if can?(:manage) %><%= link_to edit_dataset_path(@dataset), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %><%= t("site_helpers.index.edit") %><% end %><% end %>
 <% end %>
 
-<%= form_with url: dataset_path(@dataset), method: :get, class: "ss-card ss-card-pad mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] items-end", role: "search" do %>
-  <div class="min-w-0"><label for="filtros" class="ss-label"><%= t("datasets.show.filters") %></label>
-    <%= text_area_tag :filtros, @filters, rows: 2, class: "ss-input num text-sm", spellcheck: false, placeholder: t("datasets.show.filters_ph") %></div>
-  <div><label for="dias" class="ss-label"><%= t("datasets.show.days") %></label><%= number_field_tag :dias, (@days if @days.positive?), min: 1, class: "ss-input num", placeholder: t("site_helpers.index.all") %></div>
-  <div class="flex gap-2"><button type="submit" class="ss-btn ss-btn-primary"><%= icon("filter", "size-4") %><%= t("datasets.show.filter") %></button>
+<%= ss_form_with url: dataset_path(@dataset), method: :get, class: "ss-card ss-card-pad mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] items-end", role: "search" do |f| %>
+  <%= f.ss_text_area :filtros, label: t("datasets.show.filters"), value: @filters, rows: 2, class: "num text-sm", spellcheck: false, placeholder: t("datasets.show.filters_ph"), wrapper_class: "min-w-0" %>
+  <%= f.ss_number_field :dias, label: t("datasets.show.days"), value: (@days if @days.positive?), min: 1, class: "num", placeholder: t("site_helpers.index.all") %>
+  <div class="flex gap-2"><%= render Ss::ButtonComponent.new(label: t("datasets.show.filter"), icon: icon("filter", ""), type: :submit) %>
     <% if @filters.present? || @days.positive? %><%= link_to t("datasets.show.clear"), dataset_path(@dataset), class: "ss-btn ss-btn-ghost" %><% end %></div>
   <% if @error %><p class="sm:col-span-3 text-sm text-danger" role="alert"><%= @error %></p><% end %>
 <% end %>
