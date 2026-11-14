@@ -183,7 +183,12 @@ module AppScreen
       links = @doc.css("#ss-shell-side .ss-shell-tenant-menu a[href]")
       return [] if links.size < 2
 
-      [ { t: "subnav", items: links.map { |a| { label: squish(a.children.select(&:text?).map(&:text).join), href: a["href"], current: a["aria-current"] == "true" } } } ]
+      [ { t: "subnav", items: links.map { |a| { label: tenant_name(a), href: a["href"], current: a["aria-current"] == "true" } } } ]
+    end
+
+    # Desde a v0.24 da gem o nome vem num .ss-shell-tenant-name (antes, texto solto ao lado da marca).
+    def tenant_name(a)
+      squish(a.at_css(".ss-shell-tenant-name")&.text || a.children.select(&:text?).map(&:text).join)
     end
 
     def blocks(el) = el.children.flat_map { |c| node(c) }

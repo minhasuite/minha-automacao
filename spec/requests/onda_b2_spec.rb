@@ -254,7 +254,8 @@ RSpec.describe "ondaB2: painéis" do
   describe "B11: temas do usuário e barra lateral por pessoa" do
     it "a casa cria um tema (cores, papel de parede, vidro, fonte); ele entra na galeria, valida no painel e pinta" do
       get "/configuracoes/aparencia"
-      expect(response.body).to include("Meu tema", "Temas da casa", "Barra lateral", "Lista Clara", 'data-controller="theme-preview"')
+      expect(response.body).to include("Meu tema", "Temas da casa", "Barra lateral", "Lista Clara")
+      expect(response.body).to match(/data-controller="theme-preview[ "]/) # o ss_form_with da v0.24 soma o ss-validate
       post "/configuracoes/aparencia/temas", params: { theme: { name: "Teste praia", accent: "#0EA5E9", accent2: "#f59e0b", wall_style: "mesh", glass: "1", font: "rounded" } }
       th = within(tenant) { DashboardTheme.last }
       expect(th).to have_attributes(name: "Teste praia", accent: "#0ea5e9", wall_style: "mesh", glass: true, font: "rounded")
