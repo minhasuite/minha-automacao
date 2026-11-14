@@ -38,20 +38,23 @@
             <details class="ss-menu">
               <summary title="<%= t("integrations.index.more") %>" aria-label="<%= t("integrations.index.more_of", name: i.name) %>"><%= icon("dots-horizontal", "size-4") %></summary>
               <div class="min-w-64">
-                <%= button_to sync_integration_path(i), form: { data: { turbo_submits_with: t("integrations.common.asking") } } do %><%= icon("refresh", "size-4") %><%= t("integrations.common.sync_now") %><% end %>
+                <%= render Ss::ButtonComponent.new(label: t("integrations.common.sync_now"), icon: "refresh", variant: :item, href: sync_integration_path(i), method: :post,
+                                                   form: { data: { turbo_submits_with: t("integrations.common.asking") } }) %>
                 <% if i.plugin&.reconfigurable? %><%= link_to connect_integration_path(i) do %><%= icon("pencil", "size-4") %><%= t("integrations.common.reconfigure") %><% end %><% end %>
                 <%= link_to diagnostics_integration_path(i), data: { turbo: false } do %><%= icon("download", "size-4") %><%= t("repairs.diagnostics") %><% end %>
                 <% if Integrations::DebugLog.on?(i) %>
-                  <%= button_to debug_integration_path(i), form: { data: { turbo: false } } do %><%= icon("stop", "size-4") %><%= t("resto.debug.stop") %><% end %>
+                  <%= render Ss::ButtonComponent.new(label: t("resto.debug.stop"), icon: "stop", variant: :item, href: debug_integration_path(i), method: :post, form: { data: { turbo: false } }) %>
                 <% else %>
-                  <%= button_to debug_integration_path(i) do %><%= icon("code", "size-4") %><%= t("resto.debug.start") %><% end %>
+                  <%= render Ss::ButtonComponent.new(label: t("resto.debug.start"), icon: "code", variant: :item, href: debug_integration_path(i), method: :post) %>
                 <% end %>
-                <%= form_with model: i, url: integration_path(i), method: :patch, class: "px-2 py-1.5 flex items-end gap-2" do |f| %>
-                  <div class="flex-1"><%= f.label :poll_min, t("integrations.index.interval"), class: "ss-label", for: "poll-#{i.id}" %><%= f.number_field :poll_min, min: 0, step: "any", class: "ss-input num", id: "poll-#{i.id}", placeholder: t("integrations.index.interval_placeholder") %></div>
-                  <div><%= f.submit t("integrations.common.save"), class: "ss-btn ss-btn-ghost ss-btn-sm" %></div>
+                <%= ss_form_with model: i, url: integration_path(i), method: :patch, class: "px-2 py-1.5 flex items-end gap-2" do |f| %>
+                  <%= f.ss_number_field :poll_min, label: t("integrations.index.interval"), wrapper_class: "flex-1", min: 0, step: "any", class: "num", id: "poll-#{i.id}",
+                                                   placeholder: t("integrations.index.interval_placeholder") %>
+                  <div><%= f.ss_submit t("integrations.common.save"), variant: :ghost, small: true %></div>
                 <% end %>
                 <hr>
-                <%= button_to integration_path(i), method: :delete, class: "is-danger", form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("integrations.index.remove_confirm", name: i.name), turbo_confirm_button: t("integrations.common.remove") } } do %><%= icon("trash", "size-4") %><%= t("integrations.common.remove") %><% end %>
+                <%= render Ss::ButtonComponent.new(label: t("integrations.common.remove"), icon: "trash", variant: :item, tone: :danger, href: integration_path(i), method: :delete,
+                                                   confirm: t("integrations.index.remove_confirm", name: i.name), confirm_tone: :danger, confirm_button: t("integrations.common.remove")) %>
               </div>
             </details>
           <% end %>
@@ -65,10 +68,10 @@
   <section id="adicionar" class="mt-8 scroll-mt-6" aria-labelledby="catalogo">
     <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
       <h2 id="catalogo" class="ss-section"><%= t("integrations.index.add") %></h2>
-      <%= form_with url: site_integrations_path(@site, anchor: "adicionar"), method: :get, class: "flex w-full gap-2 sm:w-auto", role: "search" do %>
-        <label for="q" class="sr-only"><%= t("integrations.index.search_label") %></label>
-        <%= search_field_tag :q, params[:q], class: "ss-input min-w-0 flex-1 sm:w-64", placeholder: t("integrations.index.search_placeholder") %>
-        <button class="ss-btn ss-btn-ghost" aria-label="<%= t("integrations.index.search") %>"><%= icon("search", "size-4") %></button>
+      <%= ss_form_with url: site_integrations_path(@site, anchor: "adicionar"), method: :get, class: "flex w-full gap-2 sm:w-auto items-start", role: "search" do |f| %>
+        <%= f.ss_search_field :q, label: t("integrations.index.search_label"), hide_label: true, value: params[:q], id: "q", wrapper_class: "min-w-0 flex-1 sm:w-64",
+                                  placeholder: t("integrations.index.search_placeholder") %>
+        <%= render Ss::ButtonComponent.new(icon: "search", variant: :ghost, type: :submit, aria: { label: t("integrations.index.search") }) %>
       <% end %>
     </div>
     <% if @catalog.empty? %>
