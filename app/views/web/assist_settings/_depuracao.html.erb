@@ -27,8 +27,9 @@
               <time class="text-xs text-muted num" datetime="<%= r.created_at.iso8601 %>"><%= l(r.created_at, format: "%d/%m %H:%M:%S") %></time>
             </span>
           </summary>
-          <div class="vz-run-bar mx-4" role="img" aria-label="<%= t("assist_settings.runs.bar", ms: r.duration_ms.to_i) %>">
-            <% r.stages.each do |s| %><span class="vz-seg vz-seg-<%= s["stage"] %> <%= 'vz-seg-error' if s["error"] %>" style="flex-grow: <%= [ s["ms"].to_i, total / 50, 1 ].max %>"></span><% end %>
+          <% seg = { "wake" => "bg-[var(--warn)]", "stt" => "bg-[var(--series-3)]", "intent" => "bg-[var(--accent-solid)]", "tts" => "bg-[var(--success)]" } %>
+          <div class="flex gap-[2px] h-[.45rem] mx-4 rounded-full overflow-hidden bg-[var(--field)]" role="img" aria-label="<%= t("assist_settings.runs.bar", ms: r.duration_ms.to_i) %>">
+            <% r.stages.each do |s| %><span class="min-w-[4px] basis-0 <%= s["error"] ? "bg-[var(--danger)]" : seg[s["stage"]] %>" data-stage="<%= s["stage"] %>" style="flex-grow: <%= [ s["ms"].to_i, total / 50, 1 ].max %>"></span><% end %>
           </div>
           <%# Etapas no Ss::JobProgressComponent (tempo de cada uma e o total); a faixa colorida acima é a proporção. %>
           <% stages = r.stages.map do |s|

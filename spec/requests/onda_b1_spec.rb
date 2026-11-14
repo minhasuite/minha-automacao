@@ -30,7 +30,7 @@ RSpec.describe "Web ondaB1: assistente de voz" do
     post "/assistente", params: { site_id: site.id, text: "ligar a luz da sala" }, as: :json
     expect(response.parsed_body).to include("text" => "Liguei Luz.", "run_id" => be_present)
     get "/locais/#{site.id}/assistente", params: { aba: "depuracao" }
-    expect(response.body).to include("ligar a luz da sala", "Liguei Luz.", "turn_on", "vz-seg-intent")
+    expect(response.body).to include("ligar a luz da sala", "Liguei Luz.", "turn_on", %(data-stage="intent"))
 
     commands = within(tenant) { Command.count }
     get "/locais/#{site.id}/assistente", params: { aba: "frases", texto: "deixe a luz da sala em 30%", idioma: "pt-BR" }

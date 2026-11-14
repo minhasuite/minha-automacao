@@ -9,10 +9,14 @@
     <% if pl.preferred? && pl.persisted? %><span class="ss-badge ss-badge-accent"><%= icon("star", "size-3") %><%= t("assist_settings.pipelines.preferred") %></span><% end %>
   </div>
   <% if pl.persisted? %>
-    <ol class="vz-flow" aria-label="<%= t("assist_settings.pipelines.flow") %>">
+    <%# Diagrama do pipeline (wake → voz → intenção → fala): pílulas com um ponto entre elas, só utilitários e tokens. %>
+    <ol class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 p-0 list-none" aria-label="<%= t("assist_settings.pipelines.flow") %>">
       <% [ [ :wake, "bell" ], [ :stt, "microphone" ], [ :agent, "sparkles" ], [ :tts, "volume-up" ] ].each do |kind, ico| %>
         <% label = kind == :agent ? AssistPipeline::AGENTS[pl.agent] : (pl.engine(kind)&.label || (kind == :wake ? t("assist_settings.pipelines.none") : Assist::Engines::Auto.label)) %>
-        <li class="vz-flow-step"><span class="vz-flow-ico"><%= icon(ico, "size-4") %></span><span class="min-w-0"><span class="vz-flow-kind"><%= t("assist_settings.kinds.#{kind}") %></span><span class="vz-flow-val"><%= label %></span></span></li>
+        <li class="relative flex items-center gap-2 min-w-0 py-[.55rem] px-[.6rem] rounded-[.9rem] bg-[var(--field)] not-first:before:content-[''] before:absolute before:-left-[.42rem] before:top-1/2 before:size-[.34rem] before:rounded-full before:bg-[var(--accent-solid)] before:-translate-y-1/2 before:opacity-55">
+          <span class="flex-none grid place-items-center size-8 rounded-[.7rem] text-[var(--accent)] bg-[color-mix(in_srgb,var(--accent-solid)_12%,var(--surface))]"><%= icon(ico, "size-4") %></span>
+          <span class="min-w-0"><span class="block text-[.68rem] font-bold tracking-[.1em] uppercase text-muted"><%= t("assist_settings.kinds.#{kind}") %></span><span class="block text-[.85rem] font-semibold text-ink truncate"><%= label %></span></span>
+        </li>
       <% end %>
     </ol>
   <% end %>
