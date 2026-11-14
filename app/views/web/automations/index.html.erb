@@ -31,7 +31,7 @@
     <ul class="ss-card ss-rows" aria-label="<%= t("automations.index.list") %><%= " · #{category}" if category %>">
       <% items.each do |a| %>
         <li id="automation-<%= a.id %>">
-          <% if can?(:manage) %><label class="ss-check"><input type="checkbox" name="ids[]" value="<%= a.id %>" form="bulk" aria-label="<%= t("automations.common.mark", name: a.name) %>" data-ss-table-target="check" data-action="ss-table#toggleRow"></label><% end %>
+          <% if can?(:manage) %><%= ss_fields do |f| %><%= f.ss_check_box "ids[]", checked_value: a.id, unchecked_value: nil, id: "bulk-row-#{a.id}", form: "bulk", label: t("automations.common.mark", name: a.name), hide_label: true, data: { ss_table_target: "check", action: "ss-table#toggleRow" } %><% end %><% end %>
           <%# No celular o ícone sai (a chave já diz se está ligada) e o texto encolhe: chave e execuções ficam na linha do nome. %>
           <span class="ss-icon-tile max-sm:hidden <%= a.enabled ? 'is-grad' : 'is-muted' %>"><%= icon(a.icon.presence_in(HelperTypes::ICONS) || "lightning-bolt") %></span>
           <div class="min-w-0 flex-1 basis-36 sm:basis-48">
@@ -61,14 +61,13 @@
     <% if can?(:manage) %>
       <div class="ss-selection-bar" role="region" aria-label="<%= t("automations.index.bulk_actions") %>" hidden data-ss-table-target="bar">
         <span><b data-ss-table-target="count">0</b> <%= t("automations.index.marked") %></span>
-        <%= form_with url: bulk_site_automations_path(@site), id: "bulk", class: "ss-dt-bulk" do %>
+        <%= ss_form_with url: bulk_site_automations_path(@site), id: "bulk", class: "ss-dt-bulk" do |f| %>
           <%= hidden_field_tag :back, request.fullpath, id: nil %>
-          <label class="ss-check text-sm ml-3"><input type="checkbox" data-ss-table-target="all" data-action="ss-table#toggleAll"> <%= t("automations.index.mark_all") %></label>
-          <label class="sr-only" for="bulk-op"><%= t("automations.index.bulk_action") %></label>
-          <%= select_tag :op, options_for_select([ [ t("automations.common.turn_on"), "enable" ], [ t("automations.common.turn_off"), "disable" ], [ t("automations.index.shadow_on"), "shadow_on" ], [ t("automations.index.shadow_off"), "shadow_off" ], [ t("automations.common.delete"), "delete" ] ]), id: "bulk-op", class: "ss-input w-auto min-h-0 py-1.5 ml-2" %>
-          <%= button_tag t("automations.index.apply"), data: { turbo_confirm: t("automations.index.apply_confirm"), turbo_confirm_button: t("automations.index.apply_button") } %>
+          <%= f.ss_check_box :all, name: nil, unchecked_value: nil, id: "bulk-all", label: t("automations.index.mark_all"), wrapper_class: "text-sm ml-3", data: { ss_table_target: "all", action: "ss-table#toggleAll" } %>
+          <%= f.ss_select :op, options_for_select([ [ t("automations.common.turn_on"), "enable" ], [ t("automations.common.turn_off"), "disable" ], [ t("automations.index.shadow_on"), "shadow_on" ], [ t("automations.index.shadow_off"), "shadow_off" ], [ t("automations.common.delete"), "delete" ] ]), id: "bulk-op", class: "w-auto min-h-0 py-1.5", wrapper_class: "ml-2", label: t("automations.index.bulk_action"), hide_label: true %>
+          <%= render Ss::ButtonComponent.new(label: t("automations.index.apply"), type: :submit, confirm: t("automations.index.apply_confirm"), confirm_button: t("automations.index.apply_button")) %>
         <% end %>
-        <button type="button" data-action="ss-table#clear" aria-label="<%= t("automations.index.clear_selection") %>"><%= icon("x", "size-4") %></button>
+        <%= render Ss::IconButtonComponent.new(icon: icon("x", "size-4"), label: t("automations.index.clear_selection"), size: :sm, data: { action: "ss-table#clear" }) %>
       </div>
     <% end %>
     </div>

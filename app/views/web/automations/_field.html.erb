@@ -1,4 +1,5 @@
-<%# locals: (fd:, node:, dom:, points:, site:) -%>
+<%# locals: (f:, fd:, node:, dom:, points:, site:) -%>
+<%# f é o builder do ss_form_with do bloco (_block); os nomes vão como string ("block[campo]"). -%>
 <% id = "#{dom}-#{fd.name}" %>
 <% name = "block[#{fd.name}]" %>
 <% v = node[fd.name] %>
@@ -15,8 +16,8 @@
       <div class="grid gap-3 sm:grid-cols-2">
         <% script.fields.each do |sf| %>
           <div class="min-w-0">
-            <label class="text-sm font-semibold text-ink block" for="<%= id %>-<%= sf['name'] %>"><%= sf["label"] %><%= " *" if sf["required"] && sf["default"].nil? %></label>
-            <%= render "web/automations/field_input", fd: sf.merge("required" => false), name: "#{name}[#{sf['name']}]", value: v.to_h[sf["name"]], id: "#{id}-#{sf['name']}", site: site %>
+            <%= render "web/automations/field_input", f: f, fd: sf.merge("required" => false), name: "#{name}[#{sf['name']}]", value: v.to_h[sf["name"]], id: "#{id}-#{sf['name']}", site: site,
+                                                      label: "#{sf['label']}#{' *' if sf['required'] && sf['default'].nil?}" %>
           </div>
         <% end %>
       </div>
@@ -30,77 +31,76 @@
         <%= hidden_field_tag "#{name}[]", "", id: nil %>
         <div class="flex flex-wrap gap-x-3 gap-y-1">
           <% (fd.options == :speech ? Notifier.speech_choices(site) : Notifier.channel_choices(site)).each do |key, label| %>
-            <label class="inline-flex items-center gap-1 text-sm"><%= check_box_tag "#{name}[]", key, v.nil? ? Notifier.default_channels.include?(key) : v.include?(key), id: "#{id}-#{key.parameterize}" %><%= label %></label>
+            <%= f.ss_check_box "#{name}[]", checked_value: key, unchecked_value: nil, checked: (v.nil? ? Notifier.default_channels.include?(key) : v.include?(key)), id: "#{id}-#{key.parameterize}", label: label %>
           <% end %>
         </div>
       <% else %>
         <%= hidden_field_tag name, "0", id: nil %>
-        <label class="inline-flex items-center gap-2 text-sm"><%= check_box_tag name, "1", v.nil? ? fd.name == "continue_on_timeout" : v, id: id %><%= t("automations.helper.yes_cap") %></label>
+        <%= f.ss_check_box name, checked_value: "1", unchecked_value: nil, checked: (v.nil? ? fd.name == "continue_on_timeout" : v), id: id, label: t("automations.helper.yes_cap") %>
       <% end %>
     </fieldset>
   <% else %>
-    <label class="ss-label" for="<%= id %>"><%= fd.label %></label>
     <% case_kind = fd.kind %>
+    <% lbl = fd.label %>
     <% if case_kind.in?(%i[point writable_point]) %>
       <% list = points.values.uniq.select { |p| case_kind == :point || p.writable } %>
-      <%= select_tag name, grouped_options_for_select(list.group_by { |p| p.device.name }.sort.map { |dev, ps| [ dev, ps.map { |p| [ p.name, p.id ] } ] }, v),
-                     include_blank: t("automations.fields.pick_point"), class: "ss-input", id: id %>
+      <%= f.ss_select name, grouped_options_for_select(list.group_by { |p| p.device.name }.sort.map { |dev, ps| [ dev, ps.map { |p| [ p.name, p.id ] } ] }, v),
+                      include_blank: t("automations.fields.pick_point"), id: id, label: lbl %>
     <% elsif case_kind == :value %>
       <% choices = dsl_value_choices(points[node["point"]]) %>
       <% if choices %>
-        <%= select_tag name, options_for_select(choices, v.to_s), include_blank: (fd.name == "value" ? t("automations.field.no_value") : t("automations.field.any")), class: "ss-input", id: id %>
+        <%= f.ss_select name, options_for_select(choices, v.to_s), include_blank: (fd.name == "value" ? t("automations.field.no_value") : t("automations.field.any")), id: id, label: lbl %>
       <% else %>
-        <%= text_field_tag name, v, class: "ss-input", id: id, placeholder: (fd.name == "value" ? "" : t("automations.field.any")) %>
+        <%= f.ss_text_field name, value: v, id: id, placeholder: (fd.name == "value" ? "" : t("automations.field.any")), label: lbl %>
       <% end %>
     <% elsif case_kind.in?(%i[device_trigger device_condition]) %>
       <% point = points[node["point"]] %>
       <% opts = case_kind == :device_trigger ? DeviceAutomations.triggers_for(point) : DeviceAutomations.conditions_for(point) %>
-      <%= select_tag name, options_for_select(opts.invert, v), include_blank: (point ? false : t("automations.field.pick_point_first")), class: "ss-input", id: id %>
+      <%= f.ss_select name, options_for_select(opts.invert, v), include_blank: (point ? false : t("automations.field.pick_point_first")), id: id, label: lbl %>
     <% elsif case_kind == :command %>
       <% point = points[node["point"]] %>
-      <%= select_tag name, options_for_select(command_options(point), v), class: "ss-input", id: id %>
+      <%= f.ss_select name, options_for_select(command_options(point), v), id: id, label: lbl %>
     <% elsif case_kind == :select %>
-      <%= select_tag name, options_for_select(fd.choices.invert, v), include_blank: (fd.required ? false : t("automations.field.none")), class: "ss-input", id: id %>
+      <%= f.ss_select name, options_for_select(fd.choices.invert, v), include_blank: (fd.required ? false : t("automations.field.none")), id: id, label: lbl %>
     <% elsif case_kind.in?(%i[cameras points areas tags]) %>
       <% list = if case_kind == :areas then site.areas.order(:name).map { |a| [ a.name, a.id ] }
                 elsif case_kind == :tags then Tag.order(:name).map { |t| [ t.name, t.id ] }
                 else points.values.uniq.select { |p| case_kind == :points || p.capability == "stream" }.sort_by { |p| [ p.device.name, p.name ] }.map { |p| [ "#{p.device.name}: #{p.name}", p.id ] }
                 end %>
-      <%= hidden_field_tag "#{name}[]", "", id: nil %>
-      <%= select_tag "#{name}[]", options_for_select(list, Array(v)), multiple: true, size: [ [ list.size, 2 ].max, 6 ].min, class: "ss-input", id: id %>
-      <p class="text-xs text-muted mt-1"><%= t("automations.field.multi") %></p>
+      <%# multiple: o select já põe o "#{name}[]" e o hidden vazio (lista vazia apaga). %>
+      <%= f.ss_select name, options_for_select(list, Array(v)), multiple: true, size: [ [ list.size, 2 ].max, 6 ].min, id: id, label: lbl, help: t("automations.field.multi") %>
     <% elsif case_kind == :prompt %>
-      <%= text_area_tag name, v, class: "ss-input", id: id, rows: 5, maxlength: Automations::Dsl::MAX_PROMPT, placeholder: t("automations.field.prompt_ph") %>
+      <%= f.ss_text_area name, value: v, id: id, rows: 5, maxlength: Automations::Dsl::MAX_PROMPT, placeholder: t("automations.field.prompt_ph"), label: lbl %>
     <% elsif case_kind == :ai_output %>
-      <%= text_area_tag name, (Ai::Output.text(v) if v), class: "ss-input num text-sm", id: id, rows: 3, spellcheck: false, placeholder: t("automations.field.ai_output_ph") %>
+      <%= f.ss_text_area name, value: (Ai::Output.text(v) if v), class: "num text-sm", id: id, rows: 3, spellcheck: false, placeholder: t("automations.field.ai_output_ph"), label: lbl %>
     <% elsif case_kind == :kv %>
-      <%= text_area_tag name, v.to_h.map { |k, x| "#{k}: #{x}" }.join("\n"), class: "ss-input num text-sm", id: id, rows: 3, spellcheck: false, placeholder: t("automations.field.kv_ph") %>
+      <%= f.ss_text_area name, value: v.to_h.map { |k, x| "#{k}: #{x}" }.join("\n"), class: "num text-sm", id: id, rows: 3, spellcheck: false, placeholder: t("automations.field.kv_ph"), label: lbl %>
     <% elsif case_kind == :dataset %>
-      <%= select_tag name, options_for_select(site.datasets.order(:name).map { |d| [ d.name, d.id ] }, v), include_blank: t("automations.field.pick_dataset"), class: "ss-input", id: id %>
+      <%= f.ss_select name, options_for_select(site.datasets.order(:name).map { |d| [ d.name, d.id ] }, v), include_blank: t("automations.field.pick_dataset"), id: id, label: lbl %>
     <% elsif case_kind == :recipient %>
-      <%= select_tag name, options_for_select(Notifier.recipient_choices(site), v), class: "ss-input", id: id %>
+      <%= f.ss_select name, options_for_select(Notifier.recipient_choices(site), v), id: id, label: lbl %>
     <% elsif case_kind == :camera %>
-      <%= select_tag name, options_for_select(points.values.uniq.select { |p| p.capability.in?(%w[stream detection]) }.map { |p| [ "#{p.device.name}: #{p.name}", p.id ] }, v), include_blank: t("automations.field.no_camera"), class: "ss-input", id: id %>
+      <%= f.ss_select name, options_for_select(points.values.uniq.select { |p| p.capability.in?(%w[stream detection]) }.map { |p| [ "#{p.device.name}: #{p.name}", p.id ] }, v), include_blank: t("automations.field.no_camera"), id: id, label: lbl %>
     <% elsif case_kind == :buttons %>
-      <%= text_area_tag name, Array(v).map { |b| "#{b["id"]}: #{b["title"]}#{" -> #{[ b["point"], b["command"], b["value"] ].compact.join(" ")}" if b["point"]}" }.join("\n"), class: "ss-input", id: id, rows: 3, maxlength: 600, placeholder: t("automations.field.buttons_ph") %>
+      <%= f.ss_text_area name, value: Array(v).map { |b| "#{b["id"]}: #{b["title"]}#{" -> #{[ b["point"], b["command"], b["value"] ].compact.join(" ")}" if b["point"]}" }.join("\n"), id: id, rows: 3, maxlength: 600, placeholder: t("automations.field.buttons_ph"), label: lbl %>
     <% elsif case_kind == :script %>
-      <%= select_tag name, options_for_select(site.scripts.ordered.map { |s| [ s.name, s.id ] }, v), include_blank: t("automations.field.pick_script_short"), class: "ss-input", id: id %>
+      <%= f.ss_select name, options_for_select(site.scripts.ordered.map { |s| [ s.name, s.id ] }, v), include_blank: t("automations.field.pick_script_short"), id: id, label: lbl %>
     <% elsif case_kind == :scene %>
-      <%= select_tag name, options_for_select(site.scenes.order(:name).map { |s| [ s.name, s.id ] }, v), include_blank: t("automations.field.pick_scene"), class: "ss-input", id: id %>
+      <%= f.ss_select name, options_for_select(site.scenes.order(:name).map { |s| [ s.name, s.id ] }, v), include_blank: t("automations.field.pick_scene"), id: id, label: lbl %>
     <% elsif case_kind == :alert_rule %>
-      <%= select_tag name, options_for_select(site.alert_rules.order(:name).map { |r| [ r.name, r.id ] }, v), include_blank: t("automations.field.pick_rule"), class: "ss-input", id: id %>
+      <%= f.ss_select name, options_for_select(site.alert_rules.order(:name).map { |r| [ r.name, r.id ] }, v), include_blank: t("automations.field.pick_rule"), id: id, label: lbl %>
     <% elsif case_kind == :time %>
-      <%= time_field_tag name, v, class: "ss-input", id: id %>
+      <%= f.ss_time_field name, value: v, id: id, label: lbl %>
     <% elsif case_kind == :template %>
-      <%= text_area_tag name, v, class: "ss-input", id: id, rows: 2, maxlength: 500, placeholder: t("automations.field.template_ph") %>
+      <%= f.ss_text_area name, value: v, id: id, rows: 2, maxlength: 500, placeholder: t("automations.field.template_ph"), label: lbl %>
     <% elsif case_kind == :secret %>
-      <%= password_field_tag name, nil, class: "ss-input", id: id, maxlength: 500, autocomplete: "new-password", placeholder: (v ? t("automations.field.secret_kept") : t("automations.field.secret_ph")) %>
+      <%= f.ss_password_field name, value: nil, id: id, maxlength: 500, autocomplete: "new-password", placeholder: (v ? t("automations.field.secret_kept") : t("automations.field.secret_ph")), label: lbl %>
     <% elsif case_kind == :expr %>
-      <%= text_field_tag name, v, class: "ss-input num text-sm", id: id, maxlength: 500, spellcheck: false, placeholder: t("automations.field.expr_ph") %>
+      <%= f.ss_text_field name, value: v, class: "num text-sm", id: id, maxlength: 500, spellcheck: false, placeholder: t("automations.field.expr_ph"), label: lbl %>
     <% elsif case_kind == :number %>
-      <%= text_field_tag name, v, class: "ss-input", id: id, inputmode: "decimal" %>
+      <%= f.ss_text_field name, value: v, id: id, inputmode: "decimal", label: lbl %>
     <% else %>
-      <%= text_field_tag name, v, class: "ss-input", id: id, maxlength: 500, placeholder: (case_kind == :duration ? "30s, 5m, 1h30m" : nil) %>
+      <%= f.ss_text_field name, value: v, id: id, maxlength: 500, placeholder: (case_kind == :duration ? "30s, 5m, 1h30m" : nil), label: lbl %>
     <% end %>
   <% end %>
 </div>

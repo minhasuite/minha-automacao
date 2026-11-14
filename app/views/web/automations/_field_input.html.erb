@@ -1,14 +1,14 @@
-<%# locals: (fd:, name:, value:, id:, site:) -%>
-<%# Controle de um campo de script pelo tipo (formulário de executar e ação "Executar script"). %>
+<%# locals: (f:, fd:, name:, value:, id:, site:, label:) -%>
+<%# Controle de um campo de script pelo tipo (formulário de executar e ação "Executar script"); f é o builder do ss_form_with de fora. %>
 <% if fd["type"] == "boolean" %>
-  <%= select_tag name, options_for_select([ [ t("automations.helper.yes_cap"), "true" ], [ t("automations.helper.no_cap"), "false" ] ], value.nil? ? nil : value.to_s), include_blank: (fd["required"] ? false : t("automations.fields.default_blank")), class: "ss-input", id: id %>
+  <%= f.ss_select name, options_for_select([ [ t("automations.helper.yes_cap"), "true" ], [ t("automations.helper.no_cap"), "false" ] ], value.nil? ? nil : value.to_s), include_blank: (fd["required"] ? false : t("automations.fields.default_blank")), id: id, label: label %>
 <% elsif fd["type"] == "select" %>
-  <%= select_tag name, options_for_select(Array(fd["options"]), value), include_blank: (fd["required"] ? false : t("automations.fields.default_blank")), class: "ss-input", id: id %>
+  <%= f.ss_select name, options_for_select(Array(fd["options"]), value), include_blank: (fd["required"] ? false : t("automations.fields.default_blank")), id: id, label: label %>
 <% elsif fd["type"] == "point" %>
   <% groups = site.points.includes(:device).ordered.group_by { |p| p.device.name }.sort.map { |dev, ps| [ dev, ps.map { |p| [ p.name, p.id ] } ] } %>
-  <%= select_tag name, grouped_options_for_select(groups, value), include_blank: t("automations.fields.pick_point"), class: "ss-input", id: id %>
+  <%= f.ss_select name, grouped_options_for_select(groups, value), include_blank: t("automations.fields.pick_point"), id: id, label: label %>
 <% elsif fd["type"] == "number" %>
-  <%= text_field_tag name, value, class: "ss-input num", id: id, inputmode: "decimal", required: fd["required"] && fd["default"].nil? %>
+  <%= f.ss_text_field name, value: value, class: "num", id: id, inputmode: "decimal", required: fd["required"] && fd["default"].nil?, label: label %>
 <% else %>
-  <%= text_field_tag name, value, class: "ss-input", id: id, maxlength: 500, required: fd["required"] && fd["default"].nil? %>
+  <%= f.ss_text_field name, value: value, id: id, maxlength: 500, required: fd["required"] && fd["default"].nil?, label: label %>
 <% end %>

@@ -1,6 +1,6 @@
 <% published = params[:publicada] == "1" && @automation.published? %>
 <%= render "web/shared/header", title: t("automations.edit.simulate"), subtitle: t("automations.simulate.subtitle", name: @automation.name), back: edit_automation_path(@automation) %>
-<%= form_with url: simulate_automation_path(@automation), method: :post, class: "ss-card ss-card-pad grid gap-4 max-w-3xl" do %>
+<%= ss_form_with url: simulate_automation_path(@automation), method: :post, class: "ss-card ss-card-pad grid gap-4 max-w-3xl" do |f| %>
   <fieldset>
     <legend class="ss-label"><%= t("automations.simulate.what") %></legend>
     <div class="flex flex-wrap gap-2">
@@ -10,8 +10,8 @@
     <%= hidden_field_tag :publicada, published ? "1" : "0", id: nil %>
   </fieldset>
   <div class="grid gap-3 sm:grid-cols-2">
-    <div><label class="ss-label" for="sim-at"><%= t("automations.simulate.at") %></label><%= datetime_local_field_tag :at, nil, class: "ss-input", id: "sim-at" %></div>
-    <div class="flex items-end"><label class="inline-flex items-center gap-2 text-sm pb-2"><%= check_box_tag :skip_conditions, "1", false, id: "sim-skip" %><%= t("automations.simulate.skip") %></label></div>
+    <%= f.ss_datetime_local_field :at, value: nil, id: "sim-at", label: t("automations.simulate.at") %>
+    <%= f.ss_check_box :skip_conditions, checked_value: "1", unchecked_value: nil, checked: false, id: "sim-skip", label: t("automations.simulate.skip"), wrapper_class: "self-end pb-2" %>
   </div>
   <% if @points.any? %>
     <fieldset>
@@ -20,12 +20,12 @@
         <% @points.each do |p| %>
           <% id = "sim-#{p.id}" %>
           <div class="min-w-0">
-            <label class="text-sm font-semibold text-ink block truncate" for="<%= id %>"><%= p.name %> <span class="font-normal text-muted">· <%= t("automations.simulate.now", value: point_value_text(p)) %></span></label>
+            <% lbl = safe_join([ p.name, " ", tag.span("· #{t('automations.simulate.now', value: point_value_text(p))}", class: "font-normal text-muted") ]) %>
             <% choices = dsl_value_choices(p) %>
             <% if choices %>
-              <%= select_tag "points[#{p.key}]", options_for_select(choices), include_blank: t("automations.simulate.current"), class: "ss-input", id: id %>
+              <%= f.ss_select "points[#{p.key}]", options_for_select(choices), include_blank: t("automations.simulate.current"), id: id, label: lbl %>
             <% else %>
-              <%= text_field_tag "points[#{p.key}]", nil, class: "ss-input", id: id, placeholder: p.value.to_s, inputmode: (p.numeric? ? "decimal" : nil) %>
+              <%= f.ss_text_field "points[#{p.key}]", value: nil, id: id, placeholder: p.value.to_s, inputmode: (p.numeric? ? "decimal" : nil), label: lbl %>
             <% end %>
           </div>
         <% end %>
@@ -33,7 +33,7 @@
     </fieldset>
   <% end %>
   <div class="flex flex-wrap gap-2">
-    <%= button_tag type: "submit", class: "ss-btn ss-btn-primary" do %><%= icon("eye", "size-4") %><%= t("automations.edit.simulate") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("automations.edit.simulate"), icon: icon("eye", "size-4"), type: :submit) %>
     <%= link_to t("automations.settings.cancel"), edit_automation_path(@automation), class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>

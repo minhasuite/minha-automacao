@@ -2,13 +2,13 @@
 <%# Corpo de um bloco do editor (dentro do Ss::BlockComponent): o formulário dos campos e as listas de dentro (então/senão, opções…). -%>
 <% dom = block_dom_id(path) %>
 <% if plain.any? %>
-  <%= form_with url: draft_automation_path(automation), method: :patch, class: "grid gap-3 sm:grid-cols-2" do %>
+  <%= ss_form_with url: draft_automation_path(automation), method: :patch, class: "grid gap-3 sm:grid-cols-2" do |f| %>
     <%= hidden_field_tag :op, "update", id: nil %><%= hidden_field_tag :target, path, id: nil %>
     <% plain.each do |fd| %>
-      <%= render "web/automations/field", fd: fd, node: node, dom: dom, points: points, site: automation.site %>
+      <%= render "web/automations/field", f: f, fd: fd, node: node, dom: dom, points: points, site: automation.site %>
     <% end %>
     <% if spec.respond_to?(:returns) && spec.returns %><p class="sm:col-span-2 text-xs text-muted"><%= t("automations.block.returns") %> <span class="num"><%= spec.returns %></span></p><% end %>
-    <div class="sm:col-span-2"><%= submit_tag t("automations.block.save"), class: "ss-btn ss-btn-primary ss-btn-sm" %></div>
+    <div class="sm:col-span-2"><%= f.ss_submit t("automations.block.save"), small: true %></div>
   <% end %>
 <% end %>
 <% (spec ? spec.fields.select { |fd| Automations::Dsl.list_kind?(fd.kind) } : []).each do |fd| %>

@@ -20,14 +20,14 @@
   <% end %>
 <% end %>
 <% if can?(:manage) %>
-  <%= form_with url: draft_automation_path(automation), method: :patch, class: "flex flex-wrap items-center gap-2 #{'mt-3' if list.any?}" do %>
+  <%= ss_form_with url: draft_automation_path(automation), method: :patch, class: "flex flex-wrap items-center gap-2 #{'mt-3' if list.any?}" do |f| %>
     <%= hidden_field_tag :op, "add", id: nil %><%= hidden_field_tag :target, path, id: nil %>
     <% if kind == :options %>
-      <%= button_tag type: "submit", class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("plus", "size-4") %><%= t("automations.list.add_option") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: t("automations.list.add_option"), icon: icon("plus", "size-4"), type: :submit, variant: :ghost, size: :sm) %>
     <% else %>
-      <label class="sr-only" for="add-<%= path.tr('.', '-') %>"><%= t("automations.list.new_type") %></label>
-      <%= select_tag :type, options_for_select(dsl_type_choices(kind)), class: "ss-input w-auto min-w-0 flex-1 sm:flex-none", id: "add-#{path.tr('.', '-')}" %>
-      <%= button_tag type: "submit", class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("plus", "size-4") %><%= t("automations.list.add") %><% end %>
+      <%= f.ss_select :type, options_for_select(dsl_type_choices(kind)), class: "w-auto min-w-0", wrapper_class: "min-w-0 flex-1 sm:flex-none", id: "add-#{path.tr('.', '-')}",
+                                                                          label: t("automations.list.new_type"), hide_label: true %>
+      <%= render Ss::ButtonComponent.new(label: t("automations.list.add"), icon: icon("plus", "size-4"), type: :submit, variant: :outline, size: :sm) %>
     <% end %>
   <% end %>
 <% end %>

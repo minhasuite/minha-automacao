@@ -3,17 +3,16 @@
   <%= link_to "JSON", json_automation_path(@automation), class: "ss-chip", "aria-current": (!@yaml).to_s %>
   <%= link_to "YAML", json_automation_path(@automation, formato: "yaml"), class: "ss-chip", "aria-current": @yaml.to_s %>
 </nav>
-<%= form_with url: json_automation_path(@automation, formato: (@yaml ? "yaml" : nil)), method: :patch, class: "ss-card ss-card-pad grid gap-3" do %>
+<%= ss_form_with url: json_automation_path(@automation, formato: (@yaml ? "yaml" : nil)), method: :patch, class: "ss-card ss-card-pad grid gap-3" do |f| %>
   <% if @errors.present? %>
     <%= render Ss::CalloutComponent.new(tone: :danger, title: t(@yaml ? "automations.json.not_saved_yaml" : "automations.json.not_saved")) do %>
       <ul><% @errors.first(10).each do |e| %><li><%= e %></li><% end %></ul>
     <% end %>
   <% end %>
-  <label class="ss-label" for="definition"><%= t("automations.json.definition") %></label>
-  <% if @yaml %><p class="text-sm text-muted -mt-1"><%= t("automations.json.yaml_hint") %></p><% end %>
-  <%= text_area_tag :definition, @text, id: "definition", rows: 28, spellcheck: false, class: "ss-input ss-code-input" %>
+  <%= f.ss_text_area :definition, value: @text, id: "definition", rows: 28, spellcheck: false, class: "ss-code-input", label: t("automations.json.definition"),
+                                  help: (t("automations.json.yaml_hint") if @yaml) %>
   <div class="flex flex-wrap gap-2">
-    <%= submit_tag t("automations.json.save"), class: "ss-btn ss-btn-primary" %>
+    <%= f.ss_submit t("automations.json.save") %>
     <%= link_to t("automations.settings.cancel"), edit_automation_path(@automation), class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>

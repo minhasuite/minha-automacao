@@ -2,19 +2,19 @@
 <%= render "web/shared/header", title: t("automations.run_form.title", name: @automation.name), subtitle: t("automations.run_form.subtitle", site: @site.name, version: @automation.version),
                                 back: (can?(:manage) ? edit_automation_path(@automation) : site_scripts_path(@site)) %>
 <% if @automation.published? %>
-  <%= form_with url: run_automation_path(@automation), class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl",
-                data: { turbo_confirm: t("automations.run_form.confirm", name: @automation.name), turbo_confirm_button: t("automations.edit.run") } do %>
+  <%= ss_form_with url: run_automation_path(@automation), class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl",
+                   data: { turbo_confirm: t("automations.run_form.confirm", name: @automation.name), turbo_confirm_button: t("automations.edit.run") } do |f| %>
     <% @automation.fields.each do |fd| %>
       <div class="min-w-0">
-        <label class="ss-label" for="run-<%= fd['name'] %>"><%= fd["label"] %><%= " *" if fd["required"] && fd["default"].nil? %></label>
-        <%= render "web/automations/field_input", fd: fd, name: "fields[#{fd['name']}]", value: fd["default"], id: "run-#{fd['name']}", site: @site %>
+        <%= render "web/automations/field_input", f: f, fd: fd, name: "fields[#{fd['name']}]", value: fd["default"], id: "run-#{fd['name']}", site: @site,
+                                                  label: "#{fd['label']}#{' *' if fd['required'] && fd['default'].nil?}" %>
       </div>
     <% end %>
     <% if risk == "critical" %>
-      <label class="sm:col-span-2 inline-flex items-center gap-2 text-sm text-danger font-semibold"><%= check_box_tag :confirm_critical, "1", false, id: "run-critical" %><%= t("automations.run_form.critical") %></label>
+      <%= f.ss_check_box :confirm_critical, checked_value: "1", unchecked_value: nil, checked: false, id: "run-critical", label: t("automations.run_form.critical"), wrapper_class: "sm:col-span-2 text-danger" %>
     <% end %>
     <div class="sm:col-span-2 flex flex-wrap gap-2">
-      <%= button_tag type: "submit", class: "ss-btn ss-btn-primary" do %><%= icon("play", "size-4") %><%= t("automations.edit.run") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: t("automations.edit.run"), icon: icon("play", "size-4"), type: :submit) %>
     </div>
   <% end %>
 <% else %>
