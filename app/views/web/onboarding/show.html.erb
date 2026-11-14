@@ -8,5 +8,3 @@
     <div class="mt-6"><%= render @step.partial, ctx: @ctx, step: @step, **@step.locals(@ctx) %></div>
   </div>
 </article>
-<%# "Agora não" fica fora do formulário do passo (formulário não aninha); o botão do rodapé aponta para cá. %>
-<% if @step.optional? %><%= form_with url: onboarding_skip_path(@step.key), id: "ob-skip", class: "hidden" do %><% end %><% end %>

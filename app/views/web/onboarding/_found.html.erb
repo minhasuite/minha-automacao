@@ -8,14 +8,10 @@
     <ul class="ss-option-grid" role="list">
       <% found.each_with_index do |e, i| %>
         <li class="ss-rise min-w-0" style="animation-delay: <%= [ i, 10 ].min * 60 %>ms">
-          <label class="ss-option-card is-check h-full">
-            <%= check_box_tag "onboarding[pick][]", e.slice("plugin", "name", "host", "port").to_json, !e["added"], disabled: e["added"], id: "pick-#{i}" %>
-            <span class="ss-option-card-icon" aria-hidden="true"><%= icon(e["icon"], "size-5") %></span>
-            <span class="ss-option-card-body min-w-0">
-              <strong class="truncate"><%= e["name"] %><% if e["added"] %> <span class="ss-badge ss-badge-success"><%= t("onboarding.discover.added_badge") %></span><% end %></strong>
-              <small class="truncate"><%= e["title"] %> · <span class="num"><%= [ e["host"], e["port"] ].compact.join(":") %></span></small>
-            </span>
-          </label>
+          <%= render Ss::OptionCardComponent.new(type: :checkbox, name: "onboarding[pick][]", value: e.slice("plugin", "name", "host", "port").to_json, checked: !e["added"],
+                                                 id: "pick-#{i}", input: { disabled: e["added"] }, css: "h-full", icon: icon(e["icon"], "size-5"),
+                                                 title: safe_join([ e["name"], (safe_join([ " ", tag.span(t("onboarding.discover.added_badge"), class: "ss-badge ss-badge-success") ]) if e["added"]) ].compact),
+                                                 description: safe_join([ e["title"], " · ", tag.span([ e["host"], e["port"] ].compact.join(":"), class: "num") ])) %>
         </li>
       <% end %>
     </ul>
