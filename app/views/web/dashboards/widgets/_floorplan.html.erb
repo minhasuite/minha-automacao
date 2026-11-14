@@ -6,12 +6,9 @@
   <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.floorplan"), css: "mb-2.5") do |h| %>
     <% h.with_action do %>
       <% if layers.size > 1 %>
-        <div class="dw-fp-tabs" role="tablist" aria-label="<%= t("dashboards.w.floors") %>">
-          <% layers.each_with_index do |l, i| %>
-            <%= render Ss::ButtonComponent.new(label: l["title"], variant: :chip, css: "dw-fp-tab", role: "tab", id: "fpt-#{uid}-#{i}", aria: { controls: "fpl-#{uid}-#{i}", selected: i.zero?.to_s },
-                                               data: { floorplan_target: "tab", action: "floorplan#show", floorplan_index_param: i }) %>
-          <% end %>
-        </div>
+        <%= render Ss::SegmentedComponent.new(label: t("dashboards.w.floors"), scroll: true, role: "tablist", items: layers.each_with_index.map { |l, i|
+              { label: l["title"], id: "fpt-#{uid}-#{i}", role: "tab", aria: { controls: "fpl-#{uid}-#{i}", selected: i.zero?.to_s },
+                data: { floorplan_target: "tab", action: "floorplan#show", floorplan_index_param: i } } }) %>
       <% end %>
       <%= render Ss::IconButtonComponent.new(icon: icon("moon", "size-4"), label: t("dashboards.w.night_mode"), variant: :tonal, size: :sm, pressed: false,
                                              data: { action: "floorplan#night", floorplan_target: "nightButton" }) %>

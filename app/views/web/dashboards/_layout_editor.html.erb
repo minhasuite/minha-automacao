@@ -13,14 +13,10 @@
       <h2 id="ed-title" class="flex items-center gap-2"><%= icon("view-boards", "size-5 text-accent") %><%= t("dashboards.le.title") %></h2>
       <p class="text-sm text-muted mt-0.5"><%= t("dashboards.le.hint") %></p>
     </div>
-    <div class="ss-seg w-full sm:w-96" role="group" aria-label="<%= t("dashboards.le.screen") %>">
-      <% { "mobile" => "device-mobile", "tablet" => "device-mobile", "desktop" => "desktop-computer" }.each do |screen, ico| %><% label = t("dashboards.screens.#{screen}") %>
-        <%= render(Ss::ButtonComponent.new(variant: :item, css: "justify-center gap-1.5 text-sm font-bold", aria: { pressed: (screen == "desktop").to_s },
-                                           data: { action: "layout-editor#screen", layout_editor_screen_param: screen, layout_editor_target: "screenButton" })) do %>
-          <%= icon(ico, "size-4 #{'rotate-90' if screen == 'tablet'}") %><span class="max-sm:sr-only"><%= label %></span>
-        <% end %>
-      <% end %>
-    </div>
+    <%= render Ss::SegmentedComponent.new(label: t("dashboards.le.screen"), class: "w-full sm:w-96", items:
+          { "mobile" => "device-mobile", "tablet" => "device-mobile", "desktop" => "desktop-computer" }.map { |screen, ico|
+            { html: safe_join([ icon(ico, "size-4 #{'rotate-90' if screen == 'tablet'}"), tag.span(t("dashboards.screens.#{screen}"), class: "max-sm:sr-only") ]), pressed: screen == "desktop",
+              data: { action: "layout-editor#screen", layout_editor_screen_param: screen, layout_editor_target: "screenButton" } } }) %>
   </div>
   <p id="ed-status" data-turbo-permanent class="text-xs font-semibold mt-2 min-h-4" role="status" aria-live="polite" data-layout-editor-target="status"></p>
   <div class="dw-ed-frame mt-2" data-layout-editor-target="frame">

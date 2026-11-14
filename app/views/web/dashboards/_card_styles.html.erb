@@ -9,7 +9,7 @@
     <% [ nil, *Dashboards::CardStyles.all ].each do |st| %>
       <% key = st&.key %>
       <% on = current.to_s == key.to_s %>
-      <%= render(Ss::ButtonComponent.new(href: card_style_dashboard_path(dashboard), method: :patch, params: { card_style: key.to_s }, variant: :item, css: "w-full text-left !p-0 block",
+      <%= render(Ss::ButtonComponent.new(href: card_style_dashboard_path(dashboard), method: :patch, params: { card_style: key.to_s }, variant: :bare,
                                          form: { class: "contents" }, aria: { pressed: on }, title: (Dashboards::CardStyles.description(st) if st))) do %>
         <span class="ss-card block p-3 <%= on ? "has-outline" : "" %>" style="<%= Dashboards::CardStyles.css(key) %>">
           <span class="flex items-center gap-2 text-sm font-semibold text-ink"><%= icon(st&.icon || "view-boards", "size-4") %><%= st ? Dashboards::CardStyles.label(st) : t("dashboards.card_styles.none") %></span>
