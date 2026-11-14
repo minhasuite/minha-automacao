@@ -5,23 +5,22 @@
   <section class="ss-card ss-card-pad min-w-0" aria-labelledby="vt-t" data-controller="assist-test" data-assist-test-texts-value="<%= t("assist.js").to_json %>">
     <h2 id="vt-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("microphone", "size-5") %><%= t("assist_settings.test.title") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("assist_settings.test.hint") %></p>
-    <%= form_with url: site_assist_test_path(site), method: :post, multipart: true, class: "mt-3 grid gap-3", data: { turbo: false, assist_test_target: "form" } do %>
+    <%= ss_form_with url: site_assist_test_path(site), method: :post, multipart: true, class: "mt-3 grid gap-3", data: { turbo: false, assist_test_target: "form" } do |f| %>
       <div class="grid gap-3 sm:grid-cols-2">
-        <div><label for="vt-pl" class="ss-label"><%= t("assist_settings.test.pipeline") %></label>
-          <%= select_tag :pipeline_id, options_for_select(@pipelines.map { |p| [ p.name, p.id ] }, @test_pipeline&.id), include_blank: (t("assist_settings.test.no_pipeline") if @pipelines.empty?), id: "vt-pl", class: "ss-input" %></div>
-        <div><label for="vt-tx" class="ss-label"><%= t("assist_settings.test.text") %></label>
-          <%= text_field_tag :texto, params[:texto], id: "vt-tx", class: "ss-input", maxlength: 300, placeholder: t("assist_settings.sentences.text_ph") %></div>
+        <%= f.ss_select :pipeline_id, @pipelines.map { |p| [ p.name, p.id ] }, label: t("assist_settings.test.pipeline"), selected: @test_pipeline&.id,
+                                          include_blank: (t("assist_settings.test.no_pipeline") if @pipelines.empty?), id: "vt-pl" %>
+        <%= f.ss_text_field :texto, label: t("assist_settings.test.text"), value: params[:texto], id: "vt-tx", maxlength: 300, placeholder: t("assist_settings.sentences.text_ph") %>
       </div>
-      <%= file_field_tag :audio, accept: "audio/wav", class: "hidden", id: "vt-audio", data: { assist_test_target: "file" }, "aria-hidden": true, tabindex: -1 %>
+      <%= f.ss_file_field :audio, label: t("assist.record"), accept: "audio/wav", id: "vt-audio", data: { assist_test_target: "file" }, "aria-hidden": true, tabindex: -1, wrapper_class: "hidden" %>
       <div class="flex flex-wrap gap-x-5 gap-y-2">
-        <label class="ss-check text-sm"><%= check_box_tag :executar, "1", params[:executar] == "1", id: "vt-ex" %> <%= t("assist_settings.test.execute") %></label>
-        <label class="ss-check text-sm"><%= hidden_field_tag :falar, "0", id: nil %><%= check_box_tag :falar, "1", params[:falar] != "0", id: "vt-sp" %> <%= t("assist_settings.test.speak") %></label>
+        <%= f.ss_check_box :executar, label: t("assist_settings.test.execute"), id: "vt-ex", checked: params[:executar] == "1", unchecked_value: nil, wrapper_class: "text-sm" %>
+        <%= f.ss_check_box :falar, label: t("assist_settings.test.speak"), id: "vt-sp", checked: params[:falar] != "0", wrapper_class: "text-sm" %>
       </div>
       <div class="grid place-items-center">
         <%= render Ss::MicButtonComponent.new(size: 64, labels: { idle: t("assist.record") }, data: { assist_test_target: "mic", action: "ss-mic:press->assist-test#toggle" }) %>
         <p class="mt-2 text-xs text-muted text-center" data-assist-test-target="status" aria-live="polite"><%= t("assist.js.idle") %></p>
       </div>
-      <button class="ss-btn ss-btn-primary justify-self-start"><%= t("assist_settings.test.send") %></button>
+      <%= render Ss::ButtonComponent.new(label: t("assist_settings.test.send"), type: :submit, css: "justify-self-start") %>
     <% end %>
     <% if @test_error %>
       <%= render Ss::CalloutComponent.new(tone: :danger, title: t("assist_settings.test.failed"), css: "mt-4") do %><p class="text-sm"><%= @test_error %></p><% end %>

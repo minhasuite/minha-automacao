@@ -3,11 +3,11 @@
   <section class="ss-card ss-card-pad min-w-0" aria-labelledby="tst-t">
     <h2 id="tst-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("search", "size-5") %><%= t("assist_settings.sentences.try") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("assist_settings.sentences.try_hint") %></p>
-    <%= form_with url: site_assist_settings_path(site), method: :get, class: "mt-3 grid gap-3 sm:grid-cols-[1fr_9rem_auto] items-end" do %>
+    <%= ss_form_with url: site_assist_settings_path(site), method: :get, class: "mt-3 grid gap-3 sm:grid-cols-[1fr_9rem_auto] items-end" do |f| %>
       <%= hidden_field_tag :aba, "frases", id: nil %>
-      <div><label for="tx" class="ss-label"><%= t("assist_settings.sentences.text") %></label><%= text_field_tag :texto, @heard, id: "tx", class: "ss-input", maxlength: 300, placeholder: t("assist_settings.sentences.text_ph") %></div>
-      <div><label for="lg" class="ss-label"><%= t("assist_settings.pipelines.language") %></label><%= select_tag :idioma, options_for_select(Assist::LANGUAGES.map { |l| [ t("assist_settings.languages.#{l.tr('-', '_')}"), l ] }, @language), id: "lg", class: "ss-input" %></div>
-      <button class="ss-btn ss-btn-primary"><%= t("assist_settings.sentences.check") %></button>
+      <%= f.ss_text_field :texto, label: t("assist_settings.sentences.text"), value: @heard, id: "tx", maxlength: 300, placeholder: t("assist_settings.sentences.text_ph") %>
+      <%= f.ss_select :idioma, Assist::LANGUAGES.map { |l| [ t("assist_settings.languages.#{l.tr('-', '_')}"), l ] }, label: t("assist_settings.pipelines.language"), selected: @language, id: "lg" %>
+      <%= render Ss::ButtonComponent.new(label: t("assist_settings.sentences.check"), type: :submit) %>
     <% end %>
     <% if @heard %>
       <% if @understood %>
@@ -25,11 +25,11 @@
   <section class="ss-card ss-card-pad min-w-0" aria-labelledby="tpl-t">
     <h2 id="tpl-t" class="text-base font-bold text-ink flex items-center gap-2"><%= icon("code", "size-5") %><%= t("assist_settings.sentences.template") %></h2>
     <p class="text-sm text-muted mt-1"><%= t("assist_settings.sentences.template_hint") %></p>
-    <%= form_with url: site_assist_settings_path(site), method: :get, class: "mt-3 grid gap-3" do %>
+    <%= ss_form_with url: site_assist_settings_path(site), method: :get, class: "mt-3 grid gap-3" do |f| %>
       <%= hidden_field_tag :aba, "frases", id: nil %>
-      <div><label for="md" class="ss-label"><%= t("assist_settings.sentences.model") %></label><%= text_field_tag :modelo, @template, id: "md", class: "ss-input num", maxlength: 300, placeholder: t("assist_settings.sentences.model_ph") %></div>
-      <div><label for="ex" class="ss-label"><%= t("assist_settings.sentences.sample") %></label><%= text_field_tag :exemplo, @sample, id: "ex", class: "ss-input", maxlength: 300, placeholder: t("assist_settings.sentences.sample_ph") %></div>
-      <div><button class="ss-btn ss-btn-outline"><%= t("assist_settings.sentences.check") %></button></div>
+      <%= f.ss_text_field :modelo, label: t("assist_settings.sentences.model"), value: @template, id: "md", class: "num", maxlength: 300, placeholder: t("assist_settings.sentences.model_ph") %>
+      <%= f.ss_text_field :exemplo, label: t("assist_settings.sentences.sample"), value: @sample, id: "ex", maxlength: 300, placeholder: t("assist_settings.sentences.sample_ph") %>
+      <div><%= render Ss::ButtonComponent.new(label: t("assist_settings.sentences.check"), type: :submit, variant: :outline) %></div>
     <% end %>
     <% if @template %>
       <% if @template_error %>

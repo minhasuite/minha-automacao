@@ -2,16 +2,15 @@
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] items-start max-w-5xl">
   <%# Frame: o POST responde a própria página (200), o que o Turbo só aceita dentro de frame. %>
   <%= turbo_frame_tag "pergunta", class: "grid gap-4 min-w-0" do %>
-    <%= form_with url: ask_path, class: "ss-card ss-card-pad grid gap-3" do %>
+    <%= ss_form_with url: ask_path, class: "ss-card ss-card-pad grid gap-3" do |f| %>
       <% if @sites.size > 1 %>
-        <div><%= label_tag :site_id, t("ask.site"), class: "ss-label" %><%= select_tag :site_id, options_for_select(@sites.map { |s| [ s.name, s.id ] }, @site&.id), class: "ss-input" %></div>
+        <%= f.ss_select :site_id, @sites.map { |s| [ s.name, s.id ] }, label: t("ask.site"), selected: @site&.id %>
       <% elsif @site %>
         <%= hidden_field_tag :site_id, @site.id %>
       <% end %>
-      <div><%= label_tag :question, t("ask.question"), class: "ss-label" %>
-        <%= text_area_tag :question, @question, rows: 3, maxlength: 1000, required: true, class: "ss-input", autofocus: @response.nil?,
-                          placeholder: t("ask.question_ph") %></div>
-      <div><button type="submit" class="ss-btn ss-btn-primary" data-turbo-submits-with="<%= t("ask.thinking") %>" <%= "disabled" unless @site %>><%= icon("sparkles", "size-4") %><%= t("ask.ask") %></button></div>
+      <%= f.ss_text_area :question, label: t("ask.question"), value: @question, rows: 3, maxlength: 1000, required: true, autofocus: @response.nil?,
+                                    placeholder: t("ask.question_ph") %>
+      <div><%= render Ss::ButtonComponent.new(label: t("ask.ask"), icon: icon("sparkles", ""), type: :submit, submitting: t("ask.thinking"), disabled: !@site) %></div>
     <% end %>
 
     <% if @error %>

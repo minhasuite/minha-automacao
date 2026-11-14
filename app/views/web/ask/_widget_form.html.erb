@@ -1,9 +1,8 @@
 <%# locals: (frame:, site_id:, question: nil, placeholder: nil) -%>
-<%= form_with url: ask_widget_path, class: "flex gap-2", data: { turbo_frame: frame } do %>
+<%= ss_form_with url: ask_widget_path, class: "flex gap-2", data: { turbo_frame: frame } do |f| %>
   <%= hidden_field_tag :site_id, site_id, id: nil %><%= hidden_field_tag :frame, frame, id: nil %>
   <%= hidden_field_tag :placeholder, placeholder, id: nil %>
-  <label class="sr-only" for="q_<%= frame %>"><%= t("ask.question") %></label>
-  <input id="q_<%= frame %>" type="text" name="question" value="<%= question %>" maxlength="1000" required autocomplete="off"
-         class="ss-input min-w-0 flex-1" placeholder="<%= placeholder.presence || t("ask.widget_ph") %>">
-  <button class="ss-btn ss-btn-primary ss-btn-sm" data-turbo-submits-with="…" aria-label="<%= t("ask.ask") %>" title="<%= t("ask.ask") %>"><%= icon("sparkles", "size-4") %></button>
+  <%= f.ss_text_field :question, label: t("ask.question"), hide_label: true, id: "q_#{frame}", value: question, maxlength: 1000, required: true, autocomplete: "off",
+                                 placeholder: placeholder.presence || t("ask.widget_ph"), wrapper_class: "min-w-0 flex-1" %>
+  <%= render Ss::ButtonComponent.new(icon: icon("sparkles", ""), type: :submit, size: :sm, submitting: "…", title: t("ask.ask"), aria: { label: t("ask.ask") }) %>
 <% end %>
