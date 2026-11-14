@@ -13,26 +13,22 @@
     <%= render Ss::NoteComponent.new(text: t("dashboards.talk.no_permission"), icon: icon("lock-closed", ""), css: "mt-3") %>
   <% else %>
     <%# A Echo vai à frente do texto, na mesma linha: "para quem" e "o quê" se leem juntos. %>
-    <form class="mt-3 flex gap-2" data-action="submit->announce#send">
+    <%= ss_form_with url: site_talk_path(dashboard.site_id), class: "mt-3 flex gap-2", data: { action: "submit->announce#send" } do |f| %>
       <% if targets.size > 1 %>
-        <label class="sr-only" for="t_<%= w['id'] %>"><%= t("dashboards.talk.target") %></label>
-        <select id="t_<%= w['id'] %>" class="ss-input w-auto max-w-[40%] flex-none" data-announce-target="echo">
-          <option value="all"><%= t("dashboards.talk.all") %></option>
-          <% targets.each do |e| %><option value="<%= e['id'] %>"><%= e["name"] %></option><% end %>
-        </select>
+        <%= f.ss_select :targets, [ [ t("dashboards.talk.all"), "all" ] ] + targets.map { |e| [ e["name"], e["id"] ] }, label: t("dashboards.talk.target"), hide_label: true,
+                        id: "t_#{w['id']}", class: "w-auto", wrapper_class: "max-w-[40%] flex-none", data: { announce_target: "echo" } %>
       <% elsif targets.one? %>
-        <input type="hidden" value="<%= targets.first['id'] %>" data-announce-target="echo">
+        <%= hidden_field_tag :targets, targets.first["id"], id: nil, data: { announce_target: "echo" } %>
       <% end %>
-      <label class="sr-only" for="m_<%= w['id'] %>"><%= t("dashboards.talk.message") %></label>
-      <input id="m_<%= w['id'] %>" type="text" maxlength="250" autocomplete="off" class="ss-input min-w-0 flex-1"
-             placeholder="<%= w["placeholder"].presence || t("dashboards.talk.placeholder") %>" data-announce-target="text">
+      <%= f.ss_text_field :text, label: t("dashboards.talk.message"), hide_label: true, id: "m_#{w['id']}", maxlength: 250, autocomplete: "off",
+                          placeholder: w["placeholder"].presence || t("dashboards.talk.placeholder"), data: { announce_target: "text" }, wrapper_class: "min-w-0 flex-1" %>
       <% if d["audio"] %>
-        <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm" hidden data-announce-target="mic" data-action="announce#record"
-                aria-label="<%= t("dashboards.talk.record") %>" title="<%= t("dashboards.talk.record") %>"><%= icon("mdi:microphone", "size-5") %></button>
+        <%= render Ss::ButtonComponent.new(icon: icon("mdi:microphone", "size-5"), variant: :ghost, size: :sm, hidden: true, title: t("dashboards.talk.record"),
+                                           aria: { label: t("dashboards.talk.record") }, data: { announce_target: "mic", action: "announce#record" }) %>
       <% end %>
-      <button class="ss-btn ss-btn-primary ss-btn-sm" data-announce-target="send" aria-label="<%= t("dashboards.talk.send") %>"
-              title="<%= t("dashboards.talk.send") %>"><%= icon("mdi:send", "size-4") %></button>
-    </form>
+      <%= render Ss::ButtonComponent.new(icon: icon("mdi:send", "size-4"), type: :submit, size: :sm, title: t("dashboards.talk.send"),
+                                         aria: { label: t("dashboards.talk.send") }, data: { announce_target: "send" }) %>
+    <% end %>
     <p class="mt-2 text-xs text-muted min-h-4" role="status" aria-live="polite" data-announce-target="status"></p>
   <% end %>
 </div>

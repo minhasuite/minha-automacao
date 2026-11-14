@@ -40,10 +40,13 @@
       <%= dw_command_form(p, "clean_rooms", w: w, dashboard: dashboard, live: live) do %>
         <fieldset>
           <legend class="ss-kicker mb-2"><%= t("dashboards.w.vac.rooms") %></legend>
-          <%# Cômodos em chips de caixa de marcar da gem (label.ss-chip > input). %>
+          <%# Cômodos nas caixas de marcar da gem (f.ss_check_box). %>
           <div class="ss-chips flex-wrap overflow-visible">
-            <% d["rooms"].each do |r| %>
-              <label class="ss-chip"><input type="checkbox" name="value[rooms][]" value="<%= r['id'] %>" <%= 'disabled' unless can %>><%= r["name"] %></label>
+            <%= ss_fields(nil) do |f| %>
+              <% d["rooms"].each do |r| %>
+                <%= f.ss_check_box "value[rooms][]", label: r["name"], checked_value: r["id"], unchecked_value: nil, include_hidden: false, checked: false,
+                                                     id: "#{uid}-room-#{r['id']}", disabled: !can %>
+              <% end %>
             <% end %>
           </div>
         </fieldset>
@@ -51,15 +54,12 @@
           <div class="mt-3 grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2.5">
             <% d["settings"].each do |role, id| %>
               <% s = points[id] or next %>
-              <div class="min-w-0">
-                <label class="ss-label" for="<%= uid %>-<%= role %>"><%= s["name"] %></label>
-                <%= select_tag "value[#{role}]", options_for_select(Array(s["options"]), s["value"]), id: "#{uid}-#{role}", class: "ss-input", disabled: !can %>
-              </div>
+              <%= ss_fields(nil) { |f| f.ss_select "value[#{role}]", Array(s["options"]), selected: s["value"], label: s["name"], id: "#{uid}-#{role}", disabled: !can, wrapper_class: "min-w-0" } %>
             <% end %>
           </div>
         <% end %>
         <% if can %>
-          <button type="submit" class="ss-btn ss-btn-primary w-full mt-3"><%= icon("play", "size-4") %><%= t("dashboards.w.vac.clean_selected") %></button>
+          <%= render Ss::ButtonComponent.new(label: t("dashboards.w.vac.clean_selected"), icon: icon("play", "size-4"), type: :submit, block: true, css: "mt-3") %>
         <% end %>
       <% end %>
     <% end %>

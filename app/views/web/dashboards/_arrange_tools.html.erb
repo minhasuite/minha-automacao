@@ -6,8 +6,8 @@
   <% if auto %>
     <%= render Ss::NoteComponent.new(text: t("arrange.tools.auto_note"), icon: icon("refresh", "")) %>
     <div class="flex flex-wrap gap-2">
-      <%= button_to freeze_view_dashboard_path(dashboard), params: { view: view["id"] }, class: "ss-btn ss-btn-outline ss-btn-sm",
-                    form: { data: { turbo_confirm: t("arrange.tools.freeze_confirm"), turbo_confirm_button: t("arrange.tools.freeze") } } do %><%= icon("lock-closed", "size-4") %><%= t("arrange.tools.freeze") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: t("arrange.tools.freeze"), icon: icon("lock-closed", "size-4"), href: freeze_view_dashboard_path(dashboard), method: :post, params: { view: view["id"] },
+                                         variant: :outline, size: :sm, confirm: t("arrange.tools.freeze_confirm"), confirm_button: t("arrange.tools.freeze")) %>
     </div>
   <% else %>
     <div class="flex flex-wrap gap-2">
@@ -15,23 +15,22 @@
         <%= link_to arrange_dashboard_path(dashboard, view: view["id"]), class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("view-boards", "size-4") %><%= t("arrange.tools.arrange") %><% end %>
       <% end %>
       <% if view["area"].present? %>
-        <%= button_to auto_view_dashboard_path(dashboard), params: { view: view["id"] }, class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("refresh", "size-4") %><%= t("arrange.tools.make_auto") %><% end %>
+        <%= render Ss::ButtonComponent.new(label: t("arrange.tools.make_auto"), icon: icon("refresh", "size-4"), href: auto_view_dashboard_path(dashboard), method: :post, params: { view: view["id"] },
+                                           variant: :ghost, size: :sm) %>
       <% end %>
     </div>
   <% end %>
   <% if areas.any? %>
-    <%= form_with url: auto_view_dashboard_path(dashboard), method: :post, class: "flex flex-wrap items-end gap-2" do %>
-      <div class="flex-1 min-w-40"><label class="ss-label" for="arr-area"><%= t("arrange.tools.auto_area") %></label>
-        <%= select_tag :area_id, options_for_select(areas.reject(&:floor?).map { |a| [ a.name, a.id ] }), class: "ss-input", id: "arr-area" %></div>
-      <%= submit_tag t("arrange.tools.auto_add"), class: "ss-btn ss-btn-ghost" %>
+    <%= ss_form_with url: auto_view_dashboard_path(dashboard), method: :post, class: "flex flex-wrap items-end gap-2" do |f| %>
+      <%= f.ss_select :area_id, areas.reject(&:floor?).map { |a| [ a.name, a.id ] }, label: t("arrange.tools.auto_area"), id: "arr-area", wrapper_class: "flex-1 min-w-40" %>
+      <%= f.ss_submit t("arrange.tools.auto_add"), variant: :ghost %>
     <% end %>
   <% end %>
-  <%= form_with url: compose_dashboard_path(dashboard), method: :post, class: "grid gap-2", data: { turbo_submits_with: t("arrange.tools.composing") } do %>
+  <%= ss_form_with url: compose_dashboard_path(dashboard), method: :post, class: "grid gap-2", data: { turbo_submits_with: t("arrange.tools.composing") } do |f| %>
     <%= hidden_field_tag :view_id, view["id"], id: nil %>
-    <label class="ss-label" for="arr-text"><%= t("arrange.tools.compose") %></label>
-    <%= text_area_tag :text, nil, class: "ss-input", id: "arr-text", rows: 2, maxlength: Dashboards::Compose::MAX_TEXT, placeholder: t("arrange.tools.compose_placeholder"), "aria-describedby": "arr-text-hint" %>
-    <p id="arr-text-hint" class="text-xs text-muted"><%= t("arrange.tools.compose_hint") %></p>
-    <div><%= submit_tag t("arrange.tools.compose_submit"), class: "ss-btn ss-btn-outline ss-btn-sm" %></div>
+    <%= f.ss_text_area :text, label: t("arrange.tools.compose"), help: t("arrange.tools.compose_hint"), id: "arr-text", rows: 2, maxlength: Dashboards::Compose::MAX_TEXT,
+                              placeholder: t("arrange.tools.compose_placeholder") %>
+    <div><%= f.ss_submit t("arrange.tools.compose_submit"), variant: :outline, small: true, data: { turbo_submits_with: t("arrange.tools.composing") } %></div>
   <% end %>
   <div class="flex flex-wrap gap-3 text-sm">
     <%= link_to t("arrange.tools.changes"), changes_dashboard_path(dashboard), class: "ss-btn ss-btn-ghost ss-btn-sm" %>

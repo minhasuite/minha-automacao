@@ -9,7 +9,8 @@
     <% w["data"]["scenes"].each do |s| %>
       <% if s["can_activate"] %>
         <% confirm = s["confirm"] ? { turbo_confirm: t("dashboards.w.scene_confirm", name: s['name']), turbo_confirm_button: t("dashboards.w.activate") } : {} %>
-        <%= button_to activate_scene_path(s["id"]), params: { back: dashboard_path(dashboard) }, class: "ss-chip max-w-full", title: s["name"], form_class: "contents", form: { data: { turbo_frame: "_top", **confirm } } do %><%= icon(s["icon"].presence || "sparkles", "size-4 shrink-0") %><span class="min-w-0 truncate"><%= s["name"] %></span><% end %>
+        <%= render Ss::ButtonComponent.new(href: activate_scene_path(s["id"]), method: :post, params: { back: dashboard_path(dashboard) }, variant: :chip, css: "max-w-full", title: s["name"],
+                                           form: { class: "contents", data: { turbo_frame: "_top", **confirm } }) do %><%= icon(s["icon"].presence || "sparkles", "size-4 shrink-0") %><span class="min-w-0 truncate"><%= s["name"] %></span><% end %>
       <% else %>
         <span class="ss-chip max-w-full" aria-disabled="true" title="<%= t("dashboards.w.scene_role") %>"><%= icon(s["icon"].presence || "sparkles", "size-4 shrink-0") %><span class="min-w-0 truncate"><%= s["name"] %></span></span>
       <% end %>

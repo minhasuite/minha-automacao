@@ -49,8 +49,8 @@
           <% end %>
         <% elsif builtin && !toggle && p["capability"] == "enum" %>
           <%= dw_command_form(p, "select", w: w, dashboard: dashboard, live: live) do %>
-            <label class="sr-only" for="s_<%= w['id'] %>"><%= t("dashboards.w.choose_x", name: dw_label(w, p)) %></label>
-            <%= select_tag :value, options_for_select(Array(p["options"]), p["value"]), id: "s_#{w['id']}", class: "ss-input", data: { autosubmit: true } %>
+            <%= ss_fields(nil) { |f| f.ss_select :value, Array(p["options"]), selected: p["value"], label: t("dashboards.w.choose_x", name: dw_label(w, p)), hide_label: true,
+                                                 id: "s_#{w['id']}", data: { autosubmit: true } } %>
           <% end %>
         <% elsif builtin && !toggle && p["commands"].include?("set") && p["actions"].blank? %>
           <%= dw_command_form(p, "set", w: w, dashboard: dashboard, live: live) do %>
@@ -59,10 +59,10 @@
                 <%= render Ss::StepperInputComponent.new(name: "value", value: dw_plain(p["value"]), min: p["min"], max: p["max"], step: p["step"] || 1, unit: p["unit"],
                                                          label: t("dashboards.w.new_value_x", name: dw_label(w, p)), hide_label: true, id: "i_#{w['id']}", css: "min-w-0 flex-1") %>
               <% else %>
-                <label class="sr-only" for="i_<%= w['id'] %>"><%= t("dashboards.w.new_value_x", name: dw_label(w, p)) %></label>
-                <input type="<%= p['input'] %>" id="i_<%= w['id'] %>" name="value" class="ss-input min-w-0 flex-1" value="<%= p['value'] unless p['input'] == 'password' %>">
+                <%= ss_fields(nil) { |f| f.ss_text_field :value, type: p["input"], value: (p["value"] unless p["input"] == "password"), label: t("dashboards.w.new_value_x", name: dw_label(w, p)),
+                                                     hide_label: true, id: "i_#{w['id']}", wrapper_class: "min-w-0 flex-1" } %>
               <% end %>
-              <button class="ss-btn ss-btn-primary ss-btn-sm" aria-label="<%= t("dashboards.w.apply_x", name: dw_label(w, p)) %>"><%= icon("check", "size-4") %></button>
+              <%= render Ss::ButtonComponent.new(icon: icon("check", "size-4"), type: :submit, size: :sm, aria: { label: t("dashboards.w.apply_x", name: dw_label(w, p)) }) %>
             </div>
           <% end %>
         <% end %>

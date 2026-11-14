@@ -9,7 +9,7 @@
   <% off_line = p["quality"] != "good" %>
   <% can = p["can_command"] && !off_line %>
   <% c = Array(d["controls"]) %>
-  <%# Os botões do player da gem são button_to sem params: o comando vai na query da URL (o form fica no quadro do widget). %>
+  <%# Os botões do player da gem enviam sem params: o comando vai na query da URL (o form fica no quadro do widget). %>
   <% url = ->(cmd) { command_point_path(p["id"], **dw_command_params(cmd, w: w, dashboard: dashboard, live: live)) if can && c.include?(cmd) } %>
   <% state = off_line ? :unavailable : { "playing" => :playing, "paused" => :paused, "buffering" => :buffering }.fetch(m["state"].to_s, :idle) %>
   <% on = !m["state"].to_s.in?([ "off", "" ]) %>
@@ -32,9 +32,9 @@
       <% if url.call("play_media") %>
         <% player.with_media_picker do %>
           <%= dw_command_form(p, "play_media", w: w, dashboard: dashboard, live: live) do %>
-            <div class="flex gap-2"><label for="pm-<%= w['id'] %>" class="sr-only"><%= t("dashboards.w.what_to_play") %></label>
-              <input id="pm-<%= w['id'] %>" type="text" name="value" class="ss-input flex-1 min-w-0" maxlength="500" placeholder="<%= t("dashboards.w.play_hint") %>" required>
-              <button class="ss-btn ss-btn-outline" type="submit"><%= icon("music-note", "size-4") %><%= t("dashboards.w.mc.resume") %></button></div>
+            <div class="flex gap-2"><%= ss_fields(nil) { |f| f.ss_text_field :value, label: t("dashboards.w.what_to_play"), hide_label: true, id: "pm-#{w['id']}", maxlength: 500,
+                                                                     placeholder: t("dashboards.w.play_hint"), required: true, wrapper_class: "flex-1 min-w-0" } %>
+              <%= render Ss::ButtonComponent.new(label: t("dashboards.w.mc.resume"), icon: icon("music-note", "size-4"), type: :submit, variant: :outline) %></div>
           <% end %>
         <% end %>
       <% end %>

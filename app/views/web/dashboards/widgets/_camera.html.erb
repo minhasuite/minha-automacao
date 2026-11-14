@@ -16,7 +16,8 @@
     <% end %>
     <% unless w["live"] == false %>
       <% c.with_action do %>
-        <button type="button" data-camera-target="liveButton" data-action="camera#toggle" aria-pressed="false" title="<%= t("dashboards.w.live") %>" aria-label="<%= t("dashboards.w.live_x", name: dw_label(w, p)) %>"><%= icon("status-online", "size-4") %></button>
+        <%= render Ss::IconButtonComponent.new(icon: icon("status-online", "size-4"), label: t("dashboards.w.live_x", name: dw_label(w, p)), title: t("dashboards.w.live"), pressed: false,
+                                               data: { camera_target: "liveButton", action: "camera#toggle" }) %>
       <% end %>
     <% end %>
   <% end %>

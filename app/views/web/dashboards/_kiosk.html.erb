@@ -11,23 +11,21 @@
 <div data-controller="kiosk" data-kiosk-idle-value="<%= k['idle'] %>" data-kiosk-saver-value="<%= k['saver'] %>" data-kiosk-motion-value="<%= k['motion'] %>"
      data-kiosk-dim-value="<%= k['dim'] %>" data-kiosk-slides-value="<%= (cameras + photos).to_json %>">
   <div class="ma-kiosk-bar" data-kiosk-target="bar">
-    <button type="button" class="ss-icon-btn" data-action="kiosk#fullscreen" title="<%= t("dashboards.kiosk.fullscreen") %>" aria-label="<%= t("dashboards.kiosk.fullscreen") %>"><%= icon("arrows-expand", "size-5") %></button>
-    <button type="button" class="ss-icon-btn" data-action="kiosk#sleep" title="<%= t("dashboards.kiosk.sleep") %>" aria-label="<%= t("dashboards.kiosk.sleep") %>"><%= icon("moon", "size-5") %></button>
+    <%= render Ss::IconButtonComponent.new(icon: icon("arrows-expand", "size-5"), label: t("dashboards.kiosk.fullscreen"), data: { action: "kiosk#fullscreen" }) %>
+    <%= render Ss::IconButtonComponent.new(icon: icon("moon", "size-5"), label: t("dashboards.kiosk.sleep"), data: { action: "kiosk#sleep" }) %>
     <details class="ma-kiosk-pop relative">
       <summary class="ss-icon-btn" title="<%= t("dashboards.kiosk.settings") %>" aria-label="<%= t("dashboards.kiosk.settings") %>"><%= icon("cog", "size-5") %></summary>
       <div class="ma-kiosk-panel">
-      <%= form_with url: kiosk_path, method: :patch, class: "ss-card ma-kiosk-form" do %>
+      <%= ss_form_with url: kiosk_path, method: :patch, class: "ss-card ma-kiosk-form" do |f| %>
         <p class="font-bold text-ink"><%= t("dashboards.kiosk.this_tablet") %></p>
-        <div><label class="ss-label" for="k-saver"><%= t("dashboards.kiosk.saver") %></label>
-          <%= select_tag :saver, options_for_select(KioskMode::SAVERS.keys.map { |s| [ t("dashboards.kiosk.savers.#{s}"), s ] }, k["saver"]), class: "ss-input", id: "k-saver" %></div>
-        <div><label class="ss-label" for="k-idle"><%= t("dashboards.kiosk.idle") %></label>
-          <%= number_field_tag :idle, k["idle"], min: 1, max: 60, class: "ss-input num", id: "k-idle" %></div>
-        <div><label class="ss-label" for="k-motion"><%= t("dashboards.kiosk.motion") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label>
-          <%= select_tag :motion, options_for_select(site.points.where(capability: "motion").order(:name).map { |p| [ p.name, p.id ] }, k["motion"]), include_blank: t("dashboards.kiosk.touch_only"), class: "ss-input", id: "k-motion" %></div>
-        <label class="ss-check"><%= hidden_field_tag :dim, "0", id: nil %><%= check_box_tag :dim, "1", k["dim"], id: "k-dim" %><%= t("dashboards.kiosk.dim") %></label>
-        <label class="ss-check"><%= hidden_field_tag :clock, "0", id: nil %><%= check_box_tag :clock, "1", k["clock"], id: "k-clock" %><%= t("dashboards.kiosk.clock") %></label>
+        <%= f.ss_select :saver, KioskMode::SAVERS.keys.map { |s| [ t("dashboards.kiosk.savers.#{s}"), s ] }, selected: k["saver"], label: t("dashboards.kiosk.saver"), id: "k-saver" %>
+        <%= f.ss_number_field :idle, value: k["idle"], min: 1, max: 60, class: "num", label: t("dashboards.kiosk.idle"), id: "k-idle" %>
+        <%= f.ss_select :motion, site.points.where(capability: "motion").order(:name).map { |p| [ p.name, p.id ] }, selected: k["motion"], include_blank: t("dashboards.kiosk.touch_only"),
+                        label: safe_join([ t("dashboards.kiosk.motion"), " ", tag.span(t("dashboards.ed.optional"), class: "font-normal") ]), id: "k-motion" %>
+        <%= f.ss_check_box :dim, label: t("dashboards.kiosk.dim"), checked: k["dim"] ? true : false, id: "k-dim" %>
+        <%= f.ss_check_box :clock, label: t("dashboards.kiosk.clock"), checked: k["clock"] ? true : false, id: "k-clock" %>
         <div class="flex flex-wrap gap-2">
-          <%= submit_tag t("dashboards.save"), class: "ss-btn ss-btn-primary" %>
+          <%= f.ss_submit t("dashboards.save") %>
           <%= link_to t("dashboards.kiosk.exit"), url_for(quiosque: 0), class: "ss-btn ss-btn-ghost" %>
         </div>
       <% end %>
@@ -41,15 +39,15 @@
             <ul class="grid grid-cols-4 gap-1.5">
               <% album.each_with_index do |f, i| %>
                 <li class="relative"><%= image_tag rails_blob_path(f, only_path: true), alt: "", class: "aspect-square w-full rounded-lg object-cover", loading: "lazy" %>
-                  <%= button_to album_photo_dashboard_path(dashboard, file_id: f.id), method: :delete, class: "ss-icon-btn is-sm absolute top-0.5 right-0.5", form_class: "contents",
-                                "aria-label": t("dashboards.kiosk.album_remove", n: i + 1), title: t("dashboards.kiosk.album_remove", n: i + 1) do %><%= icon("x", "size-4") %><% end %></li>
+                  <%= render Ss::ButtonComponent.new(icon: icon("x", "size-4"), href: album_photo_dashboard_path(dashboard, file_id: f.id), method: :delete, variant: :ghost, size: :sm,
+                                                     css: "absolute top-0.5 right-0.5", form: { class: "contents" }, title: t("dashboards.kiosk.album_remove", n: i + 1),
+                                                     aria: { label: t("dashboards.kiosk.album_remove", n: i + 1) }) %></li>
               <% end %>
             </ul>
           <% end %>
-          <%= form_with url: album_dashboard_path(dashboard), method: :post, multipart: true, class: "grid gap-2" do %>
-            <label class="ss-label" for="k-album"><%= t("dashboards.kiosk.album_add") %></label>
-            <%= file_field_tag "photos[]", multiple: true, accept: "image/png,image/jpeg,image/webp", class: "ss-input", id: "k-album" %>
-            <%= submit_tag t("dashboards.kiosk.album_add"), class: "ss-btn ss-btn-ghost" %>
+          <%= ss_form_with url: album_dashboard_path(dashboard), method: :post, multipart: true, class: "grid gap-2" do |f| %>
+            <%= f.ss_file_field :photos, multiple: true, include_hidden: false, accept: "image/png,image/jpeg,image/webp", label: t("dashboards.kiosk.album_add"), id: "k-album" %>
+            <%= f.ss_submit t("dashboards.kiosk.album_add"), variant: :ghost %>
           <% end %>
         </div>
       <% end %>

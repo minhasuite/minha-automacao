@@ -15,9 +15,10 @@
     </div>
     <div class="ss-seg w-full sm:w-96" role="group" aria-label="<%= t("dashboards.le.screen") %>">
       <% { "mobile" => "device-mobile", "tablet" => "device-mobile", "desktop" => "desktop-computer" }.each do |screen, ico| %><% label = t("dashboards.screens.#{screen}") %>
-        <button type="button" class="gap-1.5 text-sm font-bold" aria-pressed="<%= screen == 'desktop' %>" data-action="layout-editor#screen" data-layout-editor-screen-param="<%= screen %>" data-layout-editor-target="screenButton">
+        <%= render(Ss::ButtonComponent.new(variant: :item, css: "justify-center gap-1.5 text-sm font-bold", aria: { pressed: (screen == "desktop").to_s },
+                                           data: { action: "layout-editor#screen", layout_editor_screen_param: screen, layout_editor_target: "screenButton" })) do %>
           <%= icon(ico, "size-4 #{'rotate-90' if screen == 'tablet'}") %><span class="max-sm:sr-only"><%= label %></span>
-        </button>
+        <% end %>
       <% end %>
     </div>
   </div>

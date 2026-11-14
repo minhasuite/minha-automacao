@@ -13,9 +13,9 @@
     <% end %>
     <% if can %>
       <%= dw_command_form(p, "add_item", w: w, dashboard: dashboard, live: live) do %>
-        <div class="flex gap-2"><label class="sr-only" for="td-<%= w['id'] %>"><%= d["add_label"] %></label>
-          <input type="text" name="value" id="td-<%= w['id'] %>" class="ss-input min-w-0 flex-1" maxlength="255" placeholder="<%= d["add_label"] %>" required autocomplete="off">
-          <button class="ss-btn ss-btn-primary ss-btn-sm" aria-label="<%= d["add_label"] %>"><%= icon("plus", "size-4") %></button></div>
+        <div class="flex gap-2"><%= ss_fields(nil) { |f| f.ss_text_field :value, label: d["add_label"], hide_label: true, id: "td-#{w['id']}", maxlength: 255, placeholder: d["add_label"],
+                                                                 required: true, autocomplete: "off", wrapper_class: "min-w-0 flex-1" } %>
+          <%= render Ss::ButtonComponent.new(icon: icon("plus", "size-4"), type: :submit, size: :sm, aria: { label: d["add_label"] }) %></div>
       <% end %>
     <% end %>
     <% if Array(d["pending"]).empty? && Array(d["done"]).empty? %><%= render Ss::NoteComponent.new(text: d["empty"], icon: icon("clipboard-list", ""), css: "mt-3") %><% end %>

@@ -19,13 +19,13 @@
     </div>
     <% if p["can_command"] %>
       <%# O comando vai no botão (name="command"); o código no "value" (nunca fica na tela nem no histórico de comandos). %>
-      <%= form_with url: command_point_path(p["id"]), data: { turbo_frame: (live ? nil : "_top") }.compact, class: "mt-3" do %>
+      <%= ss_form_with url: command_point_path(p["id"]), data: { turbo_frame: (live ? nil : "_top") }.compact, class: "mt-3" do %>
         <% if live %><%= hidden_field_tag :dashboard_id, dashboard.id, id: nil %><%= hidden_field_tag :widget_id, w["id"], id: nil %><% end %>
         <% if state == "disarmed" && !d["code_arm"] %>
           <%# Armar sem código: só os modos. %>
           <div class="mt-3 flex flex-wrap gap-2">
             <% d["modes"].each do |m| %>
-              <button type="submit" name="command" value="<%= m['command'] %>" class="ss-btn ss-btn-outline ss-btn-sm flex-auto"><%= m["label"] %></button>
+              <%= render Ss::ButtonComponent.new(label: m["label"], type: :submit, name: "command", value: m["command"], variant: :outline, size: :sm, css: "flex-auto") %>
             <% end %>
           </div>
         <% else %>

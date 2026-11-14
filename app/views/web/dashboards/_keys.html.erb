@@ -6,10 +6,10 @@
 <div data-controller="dashboard-keys" hidden
      data-action="keydown@window->dashboard-keys#key click@window->dashboard-keys#pick focusin@window->dashboard-keys#pick"
      data-dashboard-keys-remove-value="<%= t("dashboards.keys.remove_confirm") %>" data-dashboard-keys-remove-button-value="<%= t("shared.confirm.remove") %>">
-  <%= form_with url: draft_dashboard_path(dashboard), method: :patch, data: { dashboard_keys_target: "form" } do %>
+  <%= ss_form_with url: draft_dashboard_path(dashboard), method: :patch, data: { dashboard_keys_target: "form" } do %>
     <%= hidden_field_tag :op, "", id: nil %><%= hidden_field_tag :kind, "widget", id: nil %><%= hidden_field_tag :target, "", id: nil %><%= hidden_field_tag :view_id, view_id, id: nil %><%= back_field %>
   <% end %>
-  <%= form_with url: copy_dashboard_path(dashboard), data: { dashboard_keys_target: "copy" } do %>
+  <%= ss_form_with url: copy_dashboard_path(dashboard), data: { dashboard_keys_target: "copy" } do %>
     <%= hidden_field_tag :kind, "widget", id: nil %><%= hidden_field_tag :target, "", id: nil %><%= hidden_field_tag :view_id, view_id, id: nil %><%= back_field %>
   <% end %>
 </div>

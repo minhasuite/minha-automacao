@@ -29,9 +29,9 @@
         <summary class="text-sm font-semibold text-accent cursor-pointer"><%= t("dashboards.w.learn_button") %></summary>
         <%= dw_command_form(p, "learn", w: w, dashboard: dashboard, live: live) do %>
           <p class="text-xs text-muted mb-2"><%= t("dashboards.w.learn_hint") %></p>
-          <div class="flex gap-2"><label for="rl-<%= w['id'] %>" class="sr-only"><%= t("dashboards.w.button_name") %></label>
-            <input id="rl-<%= w['id'] %>" type="text" name="value" class="ss-input flex-1 min-w-0" maxlength="60" placeholder="<%= t("dashboards.w.button_placeholder") %>" required>
-            <button class="ss-btn ss-btn-outline" type="submit"><%= t("dashboards.w.learn") %></button></div>
+          <div class="flex gap-2"><%= ss_fields(nil) { |f| f.ss_text_field :value, label: t("dashboards.w.button_name"), hide_label: true, id: "rl-#{w['id']}", maxlength: 60,
+                                                                   placeholder: t("dashboards.w.button_placeholder"), required: true, wrapper_class: "flex-1 min-w-0" } %>
+            <%= render Ss::ButtonComponent.new(label: t("dashboards.w.learn"), type: :submit, variant: :outline) %></div>
         <% end %>
       </details>
     <% end %>

@@ -8,13 +8,13 @@
       <% if layers.size > 1 %>
         <div class="dw-fp-tabs" role="tablist" aria-label="<%= t("dashboards.w.floors") %>">
           <% layers.each_with_index do |l, i| %>
-            <button type="button" role="tab" id="fpt-<%= uid %>-<%= i %>" aria-controls="fpl-<%= uid %>-<%= i %>" aria-selected="<%= i.zero? %>" class="dw-fp-tab"
-                    data-floorplan-target="tab" data-action="floorplan#show" data-floorplan-index-param="<%= i %>"><%= l["title"] %></button>
+            <%= render Ss::ButtonComponent.new(label: l["title"], variant: :chip, css: "dw-fp-tab", role: "tab", id: "fpt-#{uid}-#{i}", aria: { controls: "fpl-#{uid}-#{i}", selected: i.zero?.to_s },
+                                               data: { floorplan_target: "tab", action: "floorplan#show", floorplan_index_param: i }) %>
           <% end %>
         </div>
       <% end %>
-      <button type="button" class="ss-icon-btn is-sm is-tonal" data-action="floorplan#night" data-floorplan-target="nightButton" aria-pressed="false" title="<%= t("dashboards.w.night_mode") %>"
-              aria-label="<%= t("dashboards.w.night_mode") %>"><%= icon("moon", "size-4") %></button>
+      <%= render Ss::IconButtonComponent.new(icon: icon("moon", "size-4"), label: t("dashboards.w.night_mode"), variant: :tonal, size: :sm, pressed: false,
+                                             data: { action: "floorplan#night", floorplan_target: "nightButton" }) %>
     <% end %>
   <% end %>
   <% if layers.empty? %>

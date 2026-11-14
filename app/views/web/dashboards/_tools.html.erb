@@ -7,26 +7,29 @@
 <div class="flex flex-wrap items-center gap-1 shrink-0">
   <% if arrows %>
     <% [ [ "up", "chevron-up" ], [ "down", "chevron-down" ] ].each do |dir, ico| %><% label = t("dashboards.tools.#{dir}", name: name) %>
-      <%= button_to draft_dashboard_path(dashboard), method: :patch, params: base.merge(op: "move", dir: dir), class: "ss-icon-btn is-outline is-sm", title: label, "aria-label": label, form: top do %><%= icon(ico, "size-4") %><% end %>
+      <%= render Ss::ButtonComponent.new(icon: icon(ico, "size-4"), href: draft_dashboard_path(dashboard), method: :patch, params: base.merge(op: "move", dir: dir), variant: :ghost, size: :sm, title: label, aria: { label: label }, form: top) %>
     <% end %>
   <% end %>
   <% if kind.in?(%w[widget section]) %>
     <% label = t("dashboards.tools.copy", name: name) %>
-    <%= button_to copy_dashboard_path(dashboard), params: base, class: "ss-icon-btn is-outline is-sm", title: label, "aria-label": label, form: top do %><%= icon("clipboard-list", "size-4") %><% end %>
+    <%= render Ss::ButtonComponent.new(icon: icon("clipboard-list", "size-4"), href: copy_dashboard_path(dashboard), method: :post, params: base, variant: :ghost, size: :sm, title: label, aria: { label: label }, form: top) %>
     <% label = t("dashboards.tools.duplicate", name: name) %>
-    <%= button_to draft_dashboard_path(dashboard), method: :patch, params: base.merge(op: "duplicate"), class: "ss-icon-btn is-outline is-sm", title: label, "aria-label": label, form: top do %><%= icon("duplicate", "size-4") %><% end %>
+    <%= render Ss::ButtonComponent.new(icon: icon("duplicate", "size-4"), href: draft_dashboard_path(dashboard), method: :patch, params: base.merge(op: "duplicate"), variant: :ghost, size: :sm, title: label, aria: { label: label }, form: top) %>
   <% end %>
   <% if (kind == "section" && clip_kind == "widget") || (kind == "view" && clip_kind == "section") %>
     <% label = t("dashboards.tools.paste", name: clipboard["label"].presence || t("dashboards.clip.#{clip_kind}")) %>
-    <%= button_to draft_dashboard_path(dashboard), method: :patch, params: base.merge(op: "paste"), class: "ss-icon-btn is-outline is-sm", title: label, "aria-label": label, form: top do %><%= icon("inbox", "size-4") %><% end %>
+    <%= render Ss::ButtonComponent.new(icon: icon("inbox", "size-4"), href: draft_dashboard_path(dashboard), method: :patch, params: base.merge(op: "paste"), variant: :ghost, size: :sm, title: label, aria: { label: label }, form: top) %>
   <% end %>
   <% if kind == "widget" %>
     <% if clip_kind == "widget" %>
       <% label = t("dashboards.tools.paste_style", name: clipboard["label"].presence || t("dashboards.clip.widget")) %>
-      <%= button_to draft_dashboard_path(dashboard), method: :patch, params: base.merge(op: "paste_style"), class: "ss-icon-btn is-outline is-sm", title: label, "aria-label": label, form: top do %><%= icon("paint-brush", "size-4") %><% end %>
+      <%= render Ss::ButtonComponent.new(icon: icon("paint-brush", "size-4"), href: draft_dashboard_path(dashboard), method: :patch, params: base.merge(op: "paste_style"), variant: :ghost, size: :sm, title: label, aria: { label: label }, form: top) %>
     <% end %>
     <% label = t("dashboards.tools.json", name: name) %>
     <%= link_to widget_json_dashboard_path(dashboard, widget_id: target, back: back), class: "ss-icon-btn is-outline is-sm", title: label, "aria-label": label, data: { turbo_frame: "_top" } do %><%= icon("code", "size-4") %><% end %>
   <% end %>
-  <%= button_to draft_dashboard_path(dashboard), method: :patch, params: base.merge(op: "remove"), class: "ss-icon-btn is-outline is-sm is-danger", title: t("dashboards.tools.remove", name: name), "aria-label": t("dashboards.tools.remove", name: name), form: { data: { **top.fetch(:data, {}), turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("dashboards.tools.remove_confirm", name: name) } } do %><%= icon("trash", "size-4") %><% end %>
+  <% label = t("dashboards.tools.remove", name: name) %>
+  <%= render Ss::ButtonComponent.new(icon: icon("trash", "size-4"), href: draft_dashboard_path(dashboard), method: :patch, params: base.merge(op: "remove"), variant: :ghost, size: :sm, tone: :danger,
+                                     title: label, aria: { label: label }, form: top, confirm: t("dashboards.tools.remove_confirm", name: name), confirm_tone: :danger,
+                                     confirm_button: t("shared.confirm.remove")) %>
 </div>
