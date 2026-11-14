@@ -1,6 +1,6 @@
 <%= render "web/shared/header", title: t("devices.replace.preview_title"), subtitle: "#{@device.name} → #{@new_device.name}", back: replace_device_path(@device, por: @new_device.id) %>
 
-<%= form_with url: replace_device_path(@device), method: :post, class: "grid gap-4 max-w-3xl", data: { turbo_confirm: t("devices.replace.confirm", old: @device.name, new: @new_device.name), turbo_confirm_button: t("devices.replace.apply") } do %>
+<%= ss_form_with url: replace_device_path(@device), method: :post, class: "grid gap-4 max-w-3xl", data: { turbo_confirm: t("devices.replace.confirm", old: @device.name, new: @new_device.name), turbo_confirm_button: t("devices.replace.apply") } do %>
   <%= hidden_field_tag :new_device_id, @new_device.id %>
   <%= hidden_field_tag :retire, @retire %>
   <%= hidden_field_tag :take_name, @take_name ? "1" : "0" %>
@@ -27,7 +27,7 @@
     <% if @take_name %><p class="mt-1 text-sm"><%= t("devices.replace.take_name_result", old: @device.name, new: @new_device.name) %></p><% end %>
   </section>
   <div class="flex flex-wrap gap-2">
-    <button type="submit" class="ss-btn ss-btn-primary"><%= icon("check", "size-4") %><%= t("devices.replace.apply") %></button>
+    <%= render Ss::ButtonComponent.new(label: t("devices.replace.apply"), icon: icon("check", ""), type: :submit) %>
     <%= link_to t("devices.replace.back_edit"), replace_device_path(@device, por: @new_device.id, assistente: @assistant), class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>
