@@ -231,20 +231,36 @@ module DashboardsHelper
 
   # Botão de comando de um widget: passa por PointsController#command (papel,
   # risco e Points::Command) e volta para o próprio quadro do widget.
+  # O class: de quem chama escolhe o desenho do Ss::ButtonComponent (ss-chip, ss-btn-*); o que sobra
+  # (dw-*, w-full, ss-checklist-x) vai junto, e sem desenho conhecido o botão é o :bare.
+  DW_BUTTON_VARIANTS = { "ss-chip" => :chip, "ss-btn-primary" => :primary, "ss-btn-outline" => :outline,
+                         "ss-btn-ghost" => :ghost, "ss-btn-danger" => :danger }.freeze
+
   def dw_command_button(p, command, w:, dashboard:, live:, value: nil, **opts, &)
     params = { command: command, value: value }.compact
     params.merge!(dashboard_id: dashboard.id, widget_id: w["id"]) if live
     form_data = dw_confirm(p).merge(turbo_frame: live ? nil : "_top").compact
-    button_to(command_point_path(p["id"]), params: params, form: { data: form_data, class: opts.delete(:form_class) }, **opts, &)
+    css = opts.delete(:class).to_s.split
+    variant = css.filter_map { |c| DW_BUTTON_VARIANTS[c] }.first || :bare
+    size = css.include?("ss-btn-sm") ? :sm : :md
+    css -= [ "ss-btn", "ss-btn-sm", *DW_BUTTON_VARIANTS.keys ]
+    render(Ss::ButtonComponent.new(href: command_point_path(p["id"]), method: :post, variant:, size:, params:,
+                                   form: { data: form_data, class: opts.delete(:form_class) }, class: css.join(" ").presence, **opts), &)
   end
 
   # Formulário de valor (slider, seleção) que se envia sozinho ao mudar.
   def dw_command_form(p, command, w:, dashboard:, live:, data: {}, css: "mt-3", &)
-    form_with url: command_point_path(p["id"]), data: dw_confirm(p).merge(turbo_frame: live ? nil : "_top", **data).compact, class: css do |f|
+    ss_form_with url: command_point_path(p["id"]), data: dw_confirm(p).merge(turbo_frame: live ? nil : "_top", **data).compact, class: css do |f|
       safe_join([ hidden_field_tag(:command, command, id: nil),
                   (hidden_field_tag(:dashboard_id, dashboard.id, id: nil) if live),
                   (hidden_field_tag(:widget_id, w["id"], id: nil) if live), capture(f, &) ].compact)
     end
+  end
+
+  # Botão escondido (fora do Tab) que o dw-gesture clica: o form leva o gesto e a confirmação.
+  def dw_hidden_button(path, params, form_data)
+    render(Ss::ButtonComponent.new(href: path, method: :post, variant: :bare, params:, hidden: true, tabindex: -1,
+                                   form: { hidden: true, data: form_data }))
   end
 
   def dw_confirm(p)
@@ -282,13 +298,12 @@ module DashboardsHelper
         params = { command: a["command"], value: a["value"] }.compact
         params.merge!(dashboard_id: dashboard.id, widget_id: w["id"]) if live
         confirm = a["confirm"] ? { turbo_confirm: a["confirm"] } : dw_confirm(p)
-        button_to("", command_point_path(p["id"]), params: params, hidden: true, tabindex: -1,
-                                                   form: { hidden: true, data: confirm.merge(gesture: g, turbo_frame: live ? nil : "_top").compact })
+        dw_hidden_button(command_point_path(p["id"]), params, confirm.merge(gesture: g, turbo_frame: live ? nil : "_top").compact)
       when "command_query" # ideia 12: lote (a consulta fica no servidor; aqui só o lugar tocado)
         next unless a["can_command"]
 
-        button_to("", widget_batch_dashboard_path(dashboard, widget_id: w["id"]), params: { slot: g }, hidden: true, tabindex: -1,
-                                                                                    form: { hidden: true, data: { gesture: g, turbo_confirm: a["confirm"], turbo_frame: "_top" }.compact })
+        dw_hidden_button(widget_batch_dashboard_path(dashboard, widget_id: w["id"]), { slot: g },
+                         { gesture: g, turbo_confirm: a["confirm"], turbo_frame: "_top" }.compact)
       when "more_info" then a["point_id"] && link_to("", point_path(a["point_id"]), hidden: true, tabindex: -1, data: data.merge(turbo_frame: "_top"))
       when "navigate"
         path = a["path"].to_s.start_with?("/") ? a["path"] : dashboard_path(dashboard, view: a["path"])
