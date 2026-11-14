@@ -22,6 +22,7 @@ module Dashboards
     KEYS = %w[key night image blur glass dark night_by night_from night_to backgrounds dim].freeze
     NIGHT_BY = %w[sun window].freeze
     WINDOW = %w[18:00 06:00].freeze # janela padrão (sem sol)
+    BG_COLORS = %w[#1e1b4b #0ea5e9].freeze # cores iniciais do fundo por hora (1ª e 2ª do degradê)
     SUN_EVENTS = %w[sunrise sunset].freeze
     MAX_BACKGROUNDS = 6
     TIME = /\A([01]\d|2[0-3]):[0-5]\d\z/

@@ -2,41 +2,34 @@
 <%# Galeria de temas (uiweb, registro Dashboards::Themes): do painel ou de uma visão. %>
 <% theme ||= {} %>
 <% uid = target.presence || "painel" %>
-<%= form_with url: draft_dashboard_path(dashboard), method: :patch, multipart: true, class: "grid gap-3" do %>
+<%= ss_form_with url: draft_dashboard_path(dashboard), method: :patch, multipart: true, class: "grid gap-3" do |f| %>
   <%= hidden_field_tag :op, "theme", id: nil %><%= hidden_field_tag :target, target, id: nil %><%= hidden_field_tag :view_id, view_id, id: nil %>
   <fieldset>
     <legend class="ss-label"><%= t("dashboards.theme.theme") %> <%= tag.span(t("dashboards.theme.empty_inherit"), class: "font-normal") if inherit %></legend>
     <div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-2">
       <% if inherit %>
-        <label class="ss-swatch is-block"><%= radio_button_tag "theme[key]", "", theme["key"].blank?, id: "th-#{uid}-none" %><span class="ss-icon-tile is-muted is-sm"><%= icon("duplicate", "") %></span><span class="ss-swatch-name"><%= t("dashboards.theme.inherit") %></span></label>
+        <%= f.ss_swatch_radio "theme[key]", "", label: t("dashboards.theme.inherit"), block: true, checked: theme["key"].blank?, id: "th-#{uid}-none" do %><span class="ss-icon-tile is-muted is-sm"><%= icon("duplicate", "") %></span><span class="ss-swatch-name"><%= t("dashboards.theme.inherit") %></span><% end %>
       <% end %>
       <% Dashboards::Themes.all.each do |t| %>
-        <label class="ss-swatch is-block" style="<%= dw_swatch_style(t) %>"><%= radio_button_tag "theme[key]", t.key, theme["key"] == t.key || (!inherit && theme["key"].blank? && t == Dashboards::Themes::Lista), id: "th-#{uid}-#{t.key}" %>
-          <span class="ss-swatch-dots"><i></i><i></i><i></i><i></i></span><span class="ss-swatch-bar"></span><span class="ss-swatch-name"><%= t.label %></span></label>
+        <%= f.ss_swatch_radio "theme[key]", t.key, label: t.label, style: dw_swatch_style(t), block: true, checked: theme["key"] == t.key || (!inherit && theme["key"].blank? && t == Dashboards::Themes::Lista), id: "th-#{uid}-#{t.key}" %>
       <% end %>
     </div>
   </fieldset>
   <div class="grid gap-3 sm:grid-cols-2">
-    <div><label class="ss-label" for="thn-<%= uid %>"><%= t("dashboards.theme.night") %></label>
-      <%= select_tag "theme[night]", options_for_select(Dashboards::Themes.all.map { |t| [ t.label, t.key ] }, theme["night"]), include_blank: t("dashboards.theme.same_day"), class: "ss-input", id: "thn-#{uid}" %></div>
-    <div><label class="ss-label" for="thg-<%= uid %>"><%= t("dashboards.theme.cards") %></label>
-      <%= select_tag "theme[glass]", options_for_select({ t("dashboards.theme.as_theme") => "", t("dashboards.theme.glass") => "1", t("dashboards.theme.solid") => "0" }, theme.key?("glass") ? (theme["glass"] ? "1" : "0") : ""), class: "ss-input", id: "thg-#{uid}" %></div>
-    <div><label class="ss-label" for="thd-<%= uid %>"><%= t("dashboards.theme.mode") %></label>
-      <%= select_tag "theme[dark]", options_for_select({ t("dashboards.theme.mode_person") => "", t("dashboards.theme.mode_dark") => "1" }, theme["dark"] ? "1" : ""), class: "ss-input", id: "thd-#{uid}" %></div>
-    <div><label class="ss-label" for="thu-<%= uid %>"><%= t("dashboards.theme.wallpaper") %> <span class="font-normal"><%= t("dashboards.theme.formats") %></span></label>
-      <%= file_field_tag "theme[upload]", accept: "image/png,image/jpeg,image/webp", class: "ss-input", id: "thu-#{uid}" %>
+    <%= f.ss_select "theme[night]", Dashboards::Themes.all.map { |t| [ t.label, t.key ] }, label: t("dashboards.theme.night"), include_blank: t("dashboards.theme.same_day"), selected: theme["night"], id: "thn-#{uid}" %>
+    <%= f.ss_select "theme[glass]", { t("dashboards.theme.as_theme") => "", t("dashboards.theme.glass") => "1", t("dashboards.theme.solid") => "0" }, label: t("dashboards.theme.cards"), selected: theme.key?("glass") ? (theme["glass"] ? "1" : "0") : "", id: "thg-#{uid}" %>
+    <%= f.ss_select "theme[dark]", { t("dashboards.theme.mode_person") => "", t("dashboards.theme.mode_dark") => "1" }, label: t("dashboards.theme.mode"), selected: theme["dark"] ? "1" : "", id: "thd-#{uid}" %>
+    <div>
+      <%= f.ss_file_field "theme[upload]", label: safe_join([ t("dashboards.theme.wallpaper"), " ", tag.span(t("dashboards.theme.formats"), class: "font-normal") ]), accept: "image/png,image/jpeg,image/webp", id: "thu-#{uid}" %>
       <%= hidden_field_tag "theme[image]", theme["image"], id: nil %>
-      <% if theme["image"].present? %><label class="ss-check mt-1 text-sm"><%= check_box_tag "theme[remove_image]", "1", false, id: "thr-#{uid}" %><%= t("dashboards.theme.remove_wallpaper") %></label><% end %></div>
+      <% if theme["image"].present? %><%= f.ss_check_box "theme[remove_image]", label: t("dashboards.theme.remove_wallpaper"), unchecked_value: nil, checked: false, id: "thr-#{uid}", wrapper_class: "mt-1 text-sm" %><% end %></div>
     <div><%= render Ss::RangeComponent.new(name: "theme[blur]", label: t("dashboards.theme.blur"), value: (theme["blur"] || 0).to_i, min: 0, max: 40, format: "%s px", id: "thb-#{uid}") %></div>
   </div>
   <%# Beleza (ideia 15 e P2.4): noite pelo sol ou por horário, fundo por hora do dia e escurecer à noite. %>
   <div class="grid gap-3 grid-cols-[repeat(auto-fill,minmax(9rem,1fr))]">
-    <div><label class="ss-label" for="thnb-<%= uid %>"><%= t("dashboards.theme.night_by") %></label>
-      <%= select_tag "theme[night_by]", options_for_select({ t("dashboards.theme.night_sun") => "sun", t("dashboards.theme.night_window") => "window" }, theme["night_by"] || "sun"), class: "ss-input", id: "thnb-#{uid}" %></div>
-    <div><label class="ss-label" for="thnf-<%= uid %>"><%= t("dashboards.theme.night_from") %></label>
-      <%= time_field_tag "theme[night_from]", theme["night_from"] || Dashboards::Themes::WINDOW[0], class: "ss-input num", id: "thnf-#{uid}" %></div>
-    <div><label class="ss-label" for="thnt-<%= uid %>"><%= t("dashboards.theme.night_to") %></label>
-      <%= time_field_tag "theme[night_to]", theme["night_to"] || Dashboards::Themes::WINDOW[1], class: "ss-input num", id: "thnt-#{uid}" %></div>
+    <%= f.ss_select "theme[night_by]", { t("dashboards.theme.night_sun") => "sun", t("dashboards.theme.night_window") => "window" }, label: t("dashboards.theme.night_by"), selected: theme["night_by"] || "sun", id: "thnb-#{uid}" %>
+    <%= f.ss_time_field "theme[night_from]", label: t("dashboards.theme.night_from"), value: theme["night_from"] || Dashboards::Themes::WINDOW[0], class: "num", id: "thnf-#{uid}" %>
+    <%= f.ss_time_field "theme[night_to]", label: t("dashboards.theme.night_to"), value: theme["night_to"] || Dashboards::Themes::WINDOW[1], class: "num", id: "thnt-#{uid}" %>
   </div>
   <p class="text-xs text-muted"><%= t("dashboards.theme.night_hint") %></p>
   <div><%= render Ss::RangeComponent.new(name: "theme[dim]", label: t("dashboards.theme.dim"), value: theme["dim"].to_i, min: 0, max: 80, step: 5, format: "%s%%", id: "thdm-#{uid}") %></div>
@@ -48,23 +41,18 @@
       <% n = "theme[backgrounds][#{i}]" %>
       <fieldset class="grid gap-2 grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] items-end border-t border-line pt-2">
         <legend class="sr-only"><%= t("dashboards.theme.bg_n", n: i + 1) %></legend>
-        <div><label class="ss-label" for="thbk-<%= uid %>-<%= i %>"><%= t("dashboards.theme.bg_from") %></label>
-          <%= select_tag "#{n}[kind]", options_for_select({ t("dashboards.theme.bg_at_time") => "time", t("dashboards.theme.bg_sunrise") => "sunrise", t("dashboards.theme.bg_sunset") => "sunset" }, kind), class: "ss-input", id: "thbk-#{uid}-#{i}" %></div>
-        <div><label class="ss-label" for="thbt-<%= uid %>-<%= i %>"><%= t("dashboards.theme.bg_time") %></label>
-          <%= time_field_tag "#{n}[time]", (b["from"] if kind == "time"), class: "ss-input num", id: "thbt-#{uid}-#{i}" %></div>
-        <div><label class="ss-label" for="thbs-<%= uid %>-<%= i %>"><%= t("dashboards.theme.bg_style") %></label>
-          <%= select_tag "#{n}[style]", options_for_select({ t("dashboards.theme.bg_color") => "color", t("dashboards.theme.bg_gradient") => "gradient", t("dashboards.theme.bg_photo") => "image" }, style), class: "ss-input", id: "thbs-#{uid}-#{i}" %></div>
-        <div><label class="ss-label" for="thbc-<%= uid %>-<%= i %>"><%= t("dashboards.theme.bg_color1") %></label>
-          <%= color_field_tag "#{n}[color]", b["color"] || "#1e1b4b", class: "ss-input", id: "thbc-#{uid}-#{i}" %></div>
-        <div><label class="ss-label" for="thbd-<%= uid %>-<%= i %>"><%= t("dashboards.theme.bg_color2") %></label>
-          <%= color_field_tag "#{n}[color2]", b["color2"] || "#0ea5e9", class: "ss-input", id: "thbd-#{uid}-#{i}" %></div>
-        <div class="col-span-full"><label class="ss-label" for="thbu-<%= uid %>-<%= i %>"><%= t("dashboards.theme.bg_photo") %> <span class="font-normal"><%= t("dashboards.theme.formats") %></span></label>
-          <%= file_field_tag "#{n}[upload]", accept: "image/png,image/jpeg,image/webp", class: "ss-input", id: "thbu-#{uid}-#{i}" %>
+        <%= f.ss_select "#{n}[kind]", { t("dashboards.theme.bg_at_time") => "time", t("dashboards.theme.bg_sunrise") => "sunrise", t("dashboards.theme.bg_sunset") => "sunset" }, label: t("dashboards.theme.bg_from"), selected: kind, id: "thbk-#{uid}-#{i}" %>
+        <%= f.ss_time_field "#{n}[time]", label: t("dashboards.theme.bg_time"), value: (b["from"] if kind == "time"), class: "num", id: "thbt-#{uid}-#{i}" %>
+        <%= f.ss_select "#{n}[style]", { t("dashboards.theme.bg_color") => "color", t("dashboards.theme.bg_gradient") => "gradient", t("dashboards.theme.bg_photo") => "image" }, label: t("dashboards.theme.bg_style"), selected: style, id: "thbs-#{uid}-#{i}" %>
+        <%= f.ss_color_field "#{n}[color]", label: t("dashboards.theme.bg_color1"), value: b["color"] || Dashboards::Themes::BG_COLORS[0], id: "thbc-#{uid}-#{i}" %>
+        <%= f.ss_color_field "#{n}[color2]", label: t("dashboards.theme.bg_color2"), value: b["color2"] || Dashboards::Themes::BG_COLORS[1], id: "thbd-#{uid}-#{i}" %>
+        <div class="col-span-full">
+          <%= f.ss_file_field "#{n}[upload]", label: safe_join([ t("dashboards.theme.bg_photo"), " ", tag.span(t("dashboards.theme.formats"), class: "font-normal") ]), accept: "image/png,image/jpeg,image/webp", id: "thbu-#{uid}-#{i}" %>
           <%= hidden_field_tag "#{n}[image]", b["image"], id: nil %>
           <%= hidden_field_tag "#{n}[used]", b.present? ? "1" : "0", id: nil %></div>
-        <% if b.present? %><label class="ss-check text-sm col-span-full"><%= check_box_tag "#{n}[remove]", "1", false, id: "thbr-#{uid}-#{i}" %><%= t("dashboards.theme.bg_remove") %></label><% end %>
+        <% if b.present? %><%= f.ss_check_box "#{n}[remove]", label: t("dashboards.theme.bg_remove"), unchecked_value: nil, checked: false, id: "thbr-#{uid}-#{i}", wrapper_class: "text-sm col-span-full" %><% end %>
       </fieldset>
     <% end %>
   <% end %>
-  <div><%= submit_tag t("dashboards.theme.save"), class: "ss-btn ss-btn-ghost" %></div>
+  <div><%= f.ss_submit t("dashboards.theme.save"), variant: :ghost %></div>
 <% end %>
