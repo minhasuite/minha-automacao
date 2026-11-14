@@ -7,11 +7,11 @@
 <% if @counts.empty? %>
   <%= render Ss::EmptyStateComponent.new(title: t("site_helpers.index.empty"), text: t("site_helpers.index.empty_text"), css: "ss-card") do %><% if can?(:manage) %><%= link_to new_site_helper_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("site_helpers.index.create_first") %><% end %><% end %><% end %>
 <% else %>
-  <%= form_with url: site_helpers_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do %>
-    <div class="min-w-48 flex-1"><label for="q" class="ss-label"><%= t("site_helpers.index.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("site_helpers.index.search_ph") %></div>
+  <%= ss_form_with url: site_helpers_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do |f| %>
+    <%= f.ss_search_field :q, label: t("site_helpers.index.search"), value: params[:q], id: "q", placeholder: t("site_helpers.index.search_ph"), wrapper_class: "min-w-48 flex-1" %>
     <%= hidden_field_tag :tipo, params[:tipo] if params[:tipo].present? %>
-    <% if @labels.any? %><div><label for="rotulo" class="ss-label"><%= t("automations.index.label") %></label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: t("automations.index.all_m"), class: "ss-input", data: { autosubmit: true } %></div><% end %>
-    <button type="submit" class="ss-btn ss-btn-ghost" aria-label="<%= t("site_helpers.index.search") %>"><%= icon("search", "size-4") %></button>
+    <% if @labels.any? %><%= f.ss_select :rotulo, @labels, label: t("automations.index.label"), selected: params[:rotulo], include_blank: t("automations.index.all_m"), id: "rotulo", data: { autosubmit: true } %><% end %>
+    <%= render Ss::ButtonComponent.new(icon: icon("search", ""), type: :submit, variant: :ghost, aria: { label: t("site_helpers.index.search") }) %>
   <% end %>
   <nav class="ss-chips is-solid mb-4" data-controller="ss-scroll-current" aria-label="<%= t("site_helpers.index.filter") %>">
     <%= link_to site_helpers_path(@site, q: params[:q].presence), class: "ss-chip", "aria-current": params[:tipo].blank?.to_s do %><%= t("site_helpers.index.all") %> <span class="ss-chip-count"><%= @counts.values.sum %></span><% end %>

@@ -5,18 +5,17 @@
   <h2 id="este-t"><%= t("push.this_device") %></h2>
   <p class="text-sm text-muted mt-1" data-push-target="status"><%= t("push.checking") %></p>
   <div class="mt-3 flex flex-wrap items-end gap-2">
-    <div class="min-w-0 flex-1 sm:flex-none sm:w-64">
-      <label class="ss-label" for="push-name"><%= t("push.name") %></label>
-      <input id="push-name" type="text" class="ss-input" maxlength="60" placeholder="<%= t("push.name_hint") %>" data-push-target="name">
-    </div>
-    <button type="button" class="ss-btn ss-btn-primary" data-action="push#subscribe" data-push-target="button" disabled><%= icon("bell", "size-4") %><%= t("push.subscribe") %></button>
+    <%= ss_fields(nil) { |f| f.ss_text_field :push_name, label: t("push.name"), id: "push-name", name: nil, maxlength: 60, placeholder: t("push.name_hint"),
+                                               data: { push_target: "name" }, wrapper_class: "min-w-0 flex-1 sm:flex-none sm:w-64" } %>
+    <%= render Ss::ButtonComponent.new(label: t("push.subscribe"), icon: icon("bell", ""), data: { action: "push#subscribe", push_target: "button" }, disabled: true) %>
   </div>
 </section>
 
 <section class="ss-card ss-card-pad mt-4" aria-labelledby="lista-t">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 id="lista-t"><%= t("push.subscribed") %></h2>
-    <%= button_to test_push_subscriptions_path, class: "ss-btn ss-btn-outline ss-btn-sm", disabled: @subscriptions.empty? && @apps.empty? do %><%= icon("speakerphone", "size-4") %><%= t("push.test") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("push.test"), icon: icon("speakerphone", ""), href: test_push_subscriptions_path, method: :post, variant: :outline, size: :sm,
+                                       disabled: @subscriptions.empty? && @apps.empty?) %>
   </div>
   <% if @subscriptions.any? || @apps.any? %>
     <ul class="mt-3 divide-y divide-line">
@@ -27,8 +26,9 @@
             <p class="font-semibold text-ink break-words"><%= s.name.presence || t("push.browser") %></p>
             <p class="text-xs text-muted"><%= t("push.web_push", at: l(s.created_at, format: :short)) %><%= " · #{t('push.last_sent', at: l(s.last_used_at, format: :short))}" if s.last_used_at %></p>
           </div>
-          <%= button_to push_subscription_path(s), method: :delete, class: "ss-icon-btn is-danger", title: t("push.remove", name: s.name), "aria-label": t("push.remove", name: s.name),
-                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("push.remove_confirm", name: s.name.presence || t("push.this_device").downcase) } } do %><%= icon("trash", "") %><% end %>
+          <%= render Ss::ButtonComponent.new(icon: icon("trash", ""), href: push_subscription_path(s), method: :delete, variant: :ghost, size: :sm, css: "text-danger",
+                                             title: t("push.remove", name: s.name), aria: { label: t("push.remove", name: s.name) }, confirm_tone: :danger, confirm_button: t("shared.confirm.remove"),
+                                             confirm: t("push.remove_confirm", name: s.name.presence || t("push.this_device").downcase)) %>
         </li>
       <% end %>
       <% @apps.each do |d| %>

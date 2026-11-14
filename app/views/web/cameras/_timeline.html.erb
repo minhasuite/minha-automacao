@@ -21,10 +21,9 @@
       <div class="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
         <% timeline["events"].last(200).reverse_each do |e| %>
           <% at = Time.iso8601(e["from"]).in_time_zone(zone) %>
-          <button type="button" class="ss-btn ss-btn-outline ss-btn-sm num" data-action="camera-playback#playAt" data-camera-playback-at-param="<%= e["from"] %>"
-                  aria-label="<%= t("cameras.timeline.play_event", kind: kind.call(e["kind"]), at: at.strftime("%H:%M:%S")) %>">
-            <%= at.strftime("%H:%M:%S") %> · <%= kind.call(e["kind"]) %>
-          </button>
+          <%= render Ss::ButtonComponent.new(label: "#{at.strftime("%H:%M:%S")} · #{kind.call(e["kind"])}", variant: :outline, size: :sm, css: "num",
+                                             data: { action: "camera-playback#playAt", camera_playback_at_param: e["from"] },
+                                             aria: { label: t("cameras.timeline.play_event", kind: kind.call(e["kind"]), at: at.strftime("%H:%M:%S")) }) %>
         <% end %>
       </div>
     <% end %>

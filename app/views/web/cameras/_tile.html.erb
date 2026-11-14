@@ -12,16 +12,17 @@
     <video data-camera-target="video" <%= "muted" unless talk %> playsinline autoplay hidden aria-label="<%= t("dashboards.w.live_x", name: point.name) %>"></video>
   <% end %>
   <% c.with_action do %>
-    <button type="button" data-camera-target="liveButton" data-action="camera#toggle" aria-pressed="false" title="<%= t("dashboards.w.live") %>" aria-label="<%= t("dashboards.w.live_x", name: point.name) %>"><%= icon("status-online", "size-4") %></button>
+    <%= render Ss::IconButtonComponent.new(icon: icon("status-online", ""), label: t("dashboards.w.live_x", name: point.name), title: t("dashboards.w.live"), pressed: false,
+                                           data: { camera_target: "liveButton", action: "camera#toggle" }) %>
   <% end %>
   <% if talk %>
     <% c.with_action do %>
-      <button type="button" data-camera-target="talkButton" data-action="camera#talk" aria-pressed="false" title="<%= t("cameras.talk") %>" aria-label="<%= t("cameras.talk") %>"><%= icon("microphone", "size-4") %></button>
+      <%= render Ss::IconButtonComponent.new(icon: icon("microphone", ""), label: t("cameras.talk"), pressed: false, data: { camera_target: "talkButton", action: "camera#talk" }) %>
     <% end %>
   <% end %>
   <% if fullscreen %>
     <% c.with_action do %>
-      <button type="button" data-action="camera#fullscreen" title="<%= t("cameras.screen.fullscreen") %>" aria-label="<%= t("cameras.screen.fullscreen") %>"><%= icon("arrows-expand", "size-4") %></button>
+      <%= render Ss::IconButtonComponent.new(icon: icon("arrows-expand", ""), label: t("cameras.screen.fullscreen"), data: { action: "camera#fullscreen" }) %>
     <% end %>
   <% end %>
 <% end %>

@@ -7,7 +7,8 @@
   <%= extra %>
   <% if can?(:manage) %>
     <% unless enabled.nil? %>
-      <%= button_to (enabled ? t("automations.primitive.disable") : t("automations.primitive.enable")), polymorphic_path(record), method: :patch, params: { record.model_name.param_key => { enabled: !enabled }, back: back }, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { class: "contents" } %>
+      <%= render Ss::ButtonComponent.new(label: (enabled ? t("automations.primitive.disable") : t("automations.primitive.enable")), href: polymorphic_path(record), method: :patch,
+                                         params: { record.model_name.param_key => { enabled: !enabled }, back: back }, variant: :ghost, size: :sm, form: { class: "contents" }) %>
     <% end %>
     <%= link_to t("automations.primitive.edit"), polymorphic_path(record, action: :edit, back: back), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("automations.primitive.edit_name", name: title) %>
   <% end %>

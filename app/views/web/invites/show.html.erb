@@ -4,10 +4,10 @@
   <p class="text-sm text-muted mt-1"><%= @invite.site ? t("invites.hint_site", site: @invite.site.name, date: l(@invite.expires_at.to_date)) : t("invites.hint", date: l(@invite.expires_at.to_date)) %></p>
 </div>
 <%= render "web/sessions/google", text: "signup_with", invite: params[:token] %>
-<%= form_with url: invite_link_path(params[:token]), class: "mt-6 space-y-4" do |f| %>
-  <div><%= f.label :name, t("invites.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, value: params[:name], autocomplete: "name", autofocus: true %></div>
-  <div><%= f.label :email, t("people.email"), class: "ss-label" %><%= f.email_field :email, class: "ss-input", required: true, value: params[:email], autocomplete: "email", placeholder: t("invites.email_hint") %></div>
-  <div><%= f.label :password, t("invites.password"), class: "ss-label" %><%= f.password_field :password, class: "ss-input", required: true, minlength: 8, autocomplete: "new-password" %></div>
-  <%= f.submit t("invites.submit"), class: "ss-btn ss-btn-primary w-full min-h-12" %>
+<%= ss_form_with url: invite_link_path(params[:token]), class: "mt-6 space-y-4" do |f| %>
+  <%= f.ss_text_field :name, label: t("invites.name"), required: true, value: params[:name], autocomplete: "name", autofocus: true %>
+  <%= f.ss_email_field :email, label: t("people.email"), required: true, value: params[:email], autocomplete: "email", placeholder: t("invites.email_hint") %>
+  <%= f.ss_password_field :password, label: t("invites.password"), required: true, minlength: 8, autocomplete: "new-password" %>
+  <%= f.ss_submit t("invites.submit"), css: "w-full min-h-12" %>
 <% end %>
 <p class="mt-6 text-sm text-muted text-center"><%= t("invites.have_account") %> <%= link_to t("invites.sign_in"), login_path, class: "text-accent font-bold" %></p>

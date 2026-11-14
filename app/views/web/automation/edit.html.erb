@@ -1,5 +1,7 @@
 <%= render "web/shared/header", title: (@record.new_record? ? t("automations.primitive.new", what: label_text.downcase) : label_text), subtitle: @site.name, back: back_path %>
 <%= render "web/#{controller_name}/form", site: @site, record: @record %>
 <% if @record.persisted? %>
-  <%= button_to polymorphic_path(@record), method: :delete, params: { back: params[:back] }, class: "ss-btn ss-btn-ghost text-danger mt-4", form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("automations.primitive.delete_confirm", what: label_text.downcase) } } do %><%= icon("trash", "size-4") %><%= t("automations.common.delete") %><% end %>
+  <%= render Ss::ButtonComponent.new(label: t("automations.common.delete"), icon: icon("trash", ""), href: polymorphic_path(@record), method: :delete, params: { back: params[:back] },
+                                     variant: :ghost, css: "text-danger mt-4", confirm: t("automations.primitive.delete_confirm", what: label_text.downcase),
+                                     confirm_tone: :danger, confirm_button: t("shared.confirm.delete")) %>
 <% end %>

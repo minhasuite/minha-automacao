@@ -6,5 +6,6 @@
 <section class="ss-card ss-card-pad mt-4 max-w-3xl">
   <h2><%= t("sites.edit.delete") %></h2>
   <p class="text-sm text-muted mt-1"><%= t("sites.edit.delete_hint") %></p>
-  <%= button_to site_path(@site), method: :delete, class: "ss-btn ss-btn-danger mt-3", form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("sites.edit.delete_confirm", name: @site.name) } } do %><%= icon("trash", "size-4") %><%= t("sites.edit.delete") %><% end %>
+  <%= render Ss::ButtonComponent.new(label: t("sites.edit.delete"), icon: icon("trash", ""), href: site_path(@site), method: :delete, variant: :danger, css: "mt-3",
+                                     confirm: t("sites.edit.delete_confirm", name: @site.name), confirm_tone: :danger, confirm_button: t("shared.confirm.delete")) %>
 </section>
