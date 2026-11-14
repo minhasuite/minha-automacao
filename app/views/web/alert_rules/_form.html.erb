@@ -1,35 +1,37 @@
 <%# locals: (site:, record:) -%>
-<%= form_with model: record.new_record? ? [ site, record ] : record, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-3 max-w-4xl" do |f| %>
+<%= ss_form_with model: record.new_record? ? [ site, record ] : record, class: "ss-card ss-card-pad grid gap-4 md:grid-cols-3 max-w-4xl" do |f| %>
   <%= render "web/shared/errors", record: record %>
   <%= hidden_field_tag :back, params[:back], id: nil %>
-  <div class="md:col-span-2"><%= f.label :name, t("automations.settings.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, placeholder: t("automations.alert_rules.name_ph"), autofocus: true %></div>
-  <div><%= f.label :severity, t("automations.alert_rules.severity"), class: "ss-label" %><%= f.select :severity, AlertRule::SEVERITIES.invert, {}, class: "ss-input" %></div>
-  <div><%= f.label :point_id, t("automations.labels.field_types.point"), class: "ss-label" %><%= f.select :point_id, point_choices(site), { include_blank: t("automations.bp.choose") }, class: "ss-input", required: true %></div>
-  <div><%= f.label :operator, t("automations.alert_rules.operator"), class: "ss-label" %><%= f.select :operator, AlertRule::OPERATORS.invert, {}, class: "ss-input" %></div>
-  <div><%= f.label :value, t("automations.scenes.value"), class: "ss-label" %><%= f.text_field :value, value: record.value, class: "ss-input", placeholder: t("automations.alert_rules.value_ph") %></div>
-  <div><%= f.label :for_min, t("automations.alert_rules.for_min"), class: "ss-label" %><%= f.number_field :for_min, min: 0, step: "any", class: "ss-input num" %></div>
-  <div><%= f.label :repeat_min, t("automations.alert_rules.repeat"), class: "ss-label" %><%= f.number_field :repeat_min, min: 1, class: "ss-input num", placeholder: t("automations.alert_rules.repeat_ph") %></div>
+  <%= f.ss_text_field :name, label: t("automations.settings.name"), wrapper_class: "md:col-span-2", required: true, placeholder: t("automations.alert_rules.name_ph"), autofocus: true %>
+  <%= f.ss_select :severity, AlertRule::SEVERITIES.invert, label: t("automations.alert_rules.severity") %>
+  <%= f.ss_select :point_id, point_choices(site), label: t("automations.labels.field_types.point"), include_blank: t("automations.bp.choose"), required: true %>
+  <%= f.ss_select :operator, AlertRule::OPERATORS.invert, label: t("automations.alert_rules.operator") %>
+  <%= f.ss_text_field :value, label: t("automations.scenes.value"), value: record.value, placeholder: t("automations.alert_rules.value_ph") %>
+  <%= f.ss_number_field :for_min, label: t("automations.alert_rules.for_min"), min: 0, step: "any", class: "num" %>
+  <%= f.ss_number_field :repeat_min, label: t("automations.alert_rules.repeat"), min: 1, class: "num", placeholder: t("automations.alert_rules.repeat_ph") %>
   <fieldset class="md:col-span-3">
     <legend class="ss-label"><%= t("automations.alert_rules.steps") %></legend>
     <div class="grid gap-2">
       <% steps = record.escalation.presence || [ { "wait_s" => 0, "channels" => Notifier.default_channels } ] %>
       <% (steps + Array.new([ 5 - steps.size, 1 ].max) { {} }).each_with_index do |s, i| %>
-        <div class="flex flex-wrap items-center gap-3">
-          <label class="text-sm text-muted w-16" for="step_<%= i %>"><%= t("automations.alert_rules.step", n: i + 1) %></label>
-          <%= number_field_tag "alert_rule[steps][#{i}][wait_min]", (s["wait_s"] && (s["wait_s"] / 60.0).round(2).to_s.delete_suffix(".0")), min: 0, step: "any", class: "ss-input num w-28", id: "step_#{i}", placeholder: "min" %>
+        <div class="flex flex-wrap items-end gap-3">
+          <%= f.ss_number_field :"steps_#{i}_wait_min", label: t("automations.alert_rules.step", n: i + 1), name: "alert_rule[steps][#{i}][wait_min]", id: "step_#{i}",
+                                value: (s["wait_s"] && (s["wait_s"] / 60.0).round(2).to_s.delete_suffix(".0")), min: 0, step: "any", class: "num", wrapper_class: "w-28", placeholder: "min" %>
           <% Notifier.channel_choices(site).each do |key, name| %>
-            <label class="ss-check"><%= check_box_tag "alert_rule[steps][#{i}][channels][]", key, Array(s["channels"]).include?(key), id: "step_#{i}_#{key.parameterize}" %> <%= name %></label>
+            <%= f.ss_check_box :"steps_#{i}_channels", label: name, name: "alert_rule[steps][#{i}][channels][]", id: "step_#{i}_#{key.parameterize}",
+                               checked: Array(s["channels"]).include?(key), checked_value: key, unchecked_value: nil %>
           <% end %>
         </div>
       <% end %>
     </div>
   </fieldset>
-  <div class="md:col-span-3"><%= f.label :message, t("custom.alert.message"), class: "ss-label" %><%= f.text_area :message, rows: 3, class: "ss-input", maxlength: MessageTemplate::MAX, placeholder: t("custom.alert.message_ph") %>
+  <div class="md:col-span-3">
+    <%= f.ss_text_area :message, label: t("custom.alert.message"), rows: 3, maxlength: MessageTemplate::MAX, placeholder: t("custom.alert.message_ph") %>
     <%= render "web/shared/message_preview", preview: @preview, css: "mt-2" %></div>
-  <label class="ss-check"><%= f.check_box :auto_resolve %> <%= t("automations.alert_rules.auto_resolve") %></label>
-  <label class="ss-check"><%= f.check_box :enabled %> <%= t("automations.notify_rules.active") %></label>
+  <%= f.ss_check_box :auto_resolve, label: t("automations.alert_rules.auto_resolve") %>
+  <%= f.ss_check_box :enabled, label: t("automations.notify_rules.active") %>
   <div class="md:col-span-3 flex flex-wrap gap-2">
-    <%= f.submit t("automations.alert_rules.save"), class: "ss-btn ss-btn-primary" %>
-    <%= link_to t("automations.settings.cancel"), back_path, class: "ss-btn ss-btn-ghost" %>
+    <%= f.ss_submit t("automations.alert_rules.save") %>
+    <%= render Ss::ButtonComponent.new(label: t("automations.settings.cancel"), href: back_path, variant: :ghost) %>
   </div>
 <% end %>
