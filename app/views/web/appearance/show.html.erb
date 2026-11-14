@@ -9,8 +9,8 @@
     <h2 id="ap-t" class="flex items-center gap-2"><%= icon("color-swatch", "size-5 text-accent") %><%= t("appearance.theme.title") %></h2>
     <% if mine || device %>
       <div class="flex gap-2">
-        <% if mine %><%= button_to t("appearance.theme.follow_profile"), settings_appearance_path, method: :patch, params: { op: "my_theme", key: "" }, class: "ss-btn ss-btn-ghost ss-btn-sm" %><% end %>
-        <% if device %><%= button_to t("appearance.theme.follow_device"), settings_appearance_path, method: :patch, params: { op: "device_theme", key: "" }, class: "ss-btn ss-btn-ghost ss-btn-sm" %><% end %>
+        <% if mine %><%= render Ss::ButtonComponent.new(label: t("appearance.theme.follow_profile"), href: settings_appearance_path, method: :patch, params: { op: "my_theme", key: "" }, variant: :ghost, size: :sm) %><% end %>
+        <% if device %><%= render Ss::ButtonComponent.new(label: t("appearance.theme.follow_device"), href: settings_appearance_path, method: :patch, params: { op: "device_theme", key: "" }, variant: :ghost, size: :sm) %><% end %>
       </div>
     <% end %>
   </div>
@@ -28,8 +28,10 @@
           </span>
         </div>
         <div class="flex flex-wrap gap-1.5">
-          <%= button_to t("appearance.theme.use_profile"), settings_appearance_path, method: :patch, params: { op: "my_theme", key: th.key }, class: "ss-btn ss-btn-outline ss-btn-sm", disabled: th.key == mine, "aria-label": t("appearance.theme.use_profile_x", name: th.label) %>
-          <%= button_to t("appearance.theme.use_device"), settings_appearance_path, method: :patch, params: { op: "device_theme", key: th.key }, class: "ss-btn ss-btn-ghost ss-btn-sm", disabled: th.key == device, "aria-label": t("appearance.theme.use_device_x", name: th.label) %>
+          <%= render Ss::ButtonComponent.new(label: t("appearance.theme.use_profile"), href: settings_appearance_path, method: :patch, params: { op: "my_theme", key: th.key }, variant: :outline, size: :sm,
+                                             disabled: th.key == mine, aria: { label: t("appearance.theme.use_profile_x", name: th.label) }) %>
+          <%= render Ss::ButtonComponent.new(label: t("appearance.theme.use_device"), href: settings_appearance_path, method: :patch, params: { op: "device_theme", key: th.key }, variant: :ghost, size: :sm,
+                                             disabled: th.key == device, aria: { label: t("appearance.theme.use_device_x", name: th.label) }) %>
         </div>
       </li>
     <% end %>
@@ -57,34 +59,35 @@
             <span class="block text-xs text-muted"><%= [ DashboardTheme::WALLPAPER_LABELS.fetch(th.wall_style, th.wall_style), DashboardTheme::FONT_LABELS.fetch(th.font, th.font), (t("appearance.custom.glass") if th.glass) ].compact.join(" · ") %></span></span>
           <% if current_user.admin? %>
             <%= link_to settings_appearance_path(tema: th.id, anchor: "temas"), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("appearance.custom.edit_x", name: th.name) do %><%= icon("pencil", "size-4") %><% end %>
-            <%= button_to settings_theme_path(th), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("appearance.custom.delete_x", name: th.name), form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("appearance.custom.delete_confirm", name: th.name) } } do %><%= icon("trash", "size-4") %><% end %>
+            <%= render Ss::ButtonComponent.new(icon: icon("trash", ""), href: settings_theme_path(th), method: :delete, variant: :ghost, size: :sm, aria: { label: t("appearance.custom.delete_x", name: th.name) },
+                                               confirm: t("appearance.custom.delete_confirm", name: th.name), confirm_tone: :danger, confirm_button: t("shared.confirm.delete")) %>
           <% end %>
         </li>
       <% end %>
     </ul>
   <% end %>
   <% if current_user.admin? %>
-    <% th = @editing || DashboardTheme.new(accent: "#5a45e8", accent2: "#ec4899", wall_style: "glow", font: "manrope") %>
-    <%= form_with model: th, scope: :theme, url: th.persisted? ? settings_theme_path(th) : settings_themes_path, method: th.persisted? ? :patch : :post,
-                  class: "mt-4 grid gap-5 border-t border-line pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start", data: { controller: "theme-preview" } do |f| %>
+    <% th = @editing || DashboardTheme.new(accent: Dashboards::Themes::Lista.accent, accent2: Dashboards::Themes::Lista.accent2, wall_style: "glow", font: "manrope") %>
+    <%= ss_form_with model: th, scope: :theme, url: th.persisted? ? settings_theme_path(th) : settings_themes_path, method: th.persisted? ? :patch : :post,
+                     class: "mt-4 grid gap-5 border-t border-line pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start", data: { controller: "theme-preview" } do |f| %>
       <div class="grid gap-3 sm:grid-cols-2 content-start">
         <h3 class="sm:col-span-2 font-bold text-ink"><%= th.persisted? ? t("appearance.custom.editing", name: th.name) : t("appearance.custom.new") %></h3>
-        <div class="sm:col-span-2"><%= f.label :name, t("appearance.custom.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", maxlength: 40, required: true, placeholder: t("appearance.custom.name_hint") %></div>
-        <div><%= f.label :accent, t("appearance.custom.accent"), class: "ss-label" %><%= f.color_field :accent, class: "ss-input cursor-pointer p-1", data: { theme_preview_target: "accent", action: "input->theme-preview#update" } %></div>
-        <div><%= f.label :accent2, t("appearance.custom.accent2"), class: "ss-label" %><%= f.color_field :accent2, class: "ss-input cursor-pointer p-1", data: { theme_preview_target: "accent2", action: "input->theme-preview#update" } %></div>
-        <div><%= f.label :wall_style, t("appearance.custom.wallpaper"), class: "ss-label" %>
-          <%= f.select :wall_style, DashboardTheme::WALLPAPERS.map { |k| [ DashboardTheme::WALLPAPER_LABELS.fetch(k, k), k ] }, {}, class: "ss-input", data: { theme_preview_target: "wall", action: "change->theme-preview#update" } %></div>
-        <div><%= f.label :font, t("appearance.custom.font"), class: "ss-label" %>
-          <%= f.select :font, DashboardTheme::FONTS.keys.map { |k| [ DashboardTheme::FONT_LABELS.fetch(k, k), k ] }, {}, class: "ss-input", data: { theme_preview_target: "font", action: "change->theme-preview#update" } %></div>
-        <label class="ss-check sm:col-span-2"><%= f.check_box :glass, data: { theme_preview_target: "glass", action: "change->theme-preview#update" } %><%= t("appearance.custom.glass_hint") %></label>
+        <%= f.ss_text_field :name, label: t("appearance.custom.name"), maxlength: 40, required: true, placeholder: t("appearance.custom.name_hint"), wrapper_class: "sm:col-span-2" %>
+        <%= f.ss_color_field :accent, label: t("appearance.custom.accent"), data: { theme_preview_target: "accent", action: "input->theme-preview#update" } %>
+        <%= f.ss_color_field :accent2, label: t("appearance.custom.accent2"), data: { theme_preview_target: "accent2", action: "input->theme-preview#update" } %>
+        <%= f.ss_select :wall_style, DashboardTheme::WALLPAPERS.map { |k| [ DashboardTheme::WALLPAPER_LABELS.fetch(k, k), k ] }, label: t("appearance.custom.wallpaper"),
+                        data: { theme_preview_target: "wall", action: "change->theme-preview#update" } %>
+        <%= f.ss_select :font, DashboardTheme::FONTS.keys.map { |k| [ DashboardTheme::FONT_LABELS.fetch(k, k), k ] }, label: t("appearance.custom.font"),
+                        data: { theme_preview_target: "font", action: "change->theme-preview#update" } %>
+        <%= f.ss_check_box :glass, label: t("appearance.custom.glass_hint"), wrapper_class: "sm:col-span-2", data: { theme_preview_target: "glass", action: "change->theme-preview#update" } %>
         <div class="sm:col-span-2 flex gap-2">
-          <%= f.submit th.persisted? ? t("appearance.custom.save") : t("appearance.custom.create"), class: "ss-btn ss-btn-primary" %>
+          <%= f.ss_submit th.persisted? ? t("appearance.custom.save") : t("appearance.custom.create") %>
           <% if th.persisted? %><%= link_to t("dashboards.cancel"), settings_appearance_path(anchor: "temas"), class: "ss-btn ss-btn-ghost" %><% end %>
         </div>
       </div>
       <%# Prévia ao vivo: as peças da gem (herói, tiles, chips) com as mesmas variáveis do painel, por cima do papel de parede do tema. %>
       <div class="ap-live <%= "ap-wall-#{th.wall_style}" %> <%= 'ap-glass' if th.glass %>" data-theme-preview-target="preview" data-fonts="<%= DashboardTheme::FONTS.to_json %>" style="<%= th.css %>" role="img" aria-label="<%= t("appearance.custom.preview") %>">
-        <div class="ss-hero rounded-2xl px-4 py-3.5"><p class="ss-kicker"><%= t("appearance.custom.preview") %></p><strong class="block text-xl font-extrabold text-white"><%= t("appearance.custom.sample_title") %></strong></div>
+        <div class="ss-hero rounded-2xl px-4 py-3.5"><p class="ss-kicker"><%= t("appearance.custom.preview") %></p><strong class="block text-xl font-extrabold"><%= t("appearance.custom.sample_title") %></strong></div>
         <div class="grid grid-cols-2 gap-2.5" inert>
           <%= render Ss::DeviceTileComponent.new(name: t("appearance.custom.sample_light"), state: t("appearance.custom.sample_on"), on: true, icon: icon("light-bulb", "")) %>
           <%= render Ss::DeviceTileComponent.new(name: t("appearance.custom.sample_fan"), state: t("appearance.custom.sample_off"), icon: icon("fan", "")) %>
@@ -102,7 +105,7 @@
 <section id="barra" class="ss-card ss-card-pad mt-4" aria-labelledby="ap-s">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 id="ap-s" class="flex items-center gap-2"><%= icon("menu", "size-5 text-accent") %><%= t("appearance.sidebar.title") %></h2>
-    <%= button_to t("appearance.sidebar.reset"), settings_appearance_path, method: :patch, params: { op: "sidebar_reset" }, class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+    <%= render Ss::ButtonComponent.new(label: t("appearance.sidebar.reset"), href: settings_appearance_path, method: :patch, params: { op: "sidebar_reset" }, variant: :ghost, size: :sm) %>
   </div>
   <p class="text-sm text-muted mt-1"><%= t("appearance.sidebar.pitch") %></p>
   <%# Arrastar pela alça (ou ↑/↓ com o foco nela) muda a ordem e salva na hora (op sidebar_order, PATCH JSON);
@@ -114,9 +117,9 @@
         <div class="py-2 flex items-center gap-3 border-b border-line">
           <span class="ss-icon-tile is-accent is-sm"><%= icon(e[:icon], "") %></span>
           <span class="min-w-0 flex-1 font-semibold text-ink truncate"><%= e[:label] %><% if e[:hidden] %> <span class="text-xs font-normal text-muted">· <%= t("appearance.sidebar.hidden") %></span><% end %></span>
-          <%= button_to settings_appearance_path, method: :patch, params: { op: "sidebar", item: e[:key], dir: "toggle" }, class: "ss-icon-btn", "aria-pressed": (!e[:hidden]).to_s,
-                                                  title: t(e[:hidden] ? "appearance.sidebar.show_x" : "appearance.sidebar.hide_x", name: e[:label]),
-                                                  "aria-label": t(e[:hidden] ? "appearance.sidebar.show_x" : "appearance.sidebar.hide_x", name: e[:label]) do %><%= icon(e[:hidden] ? "eye-off" : "eye", "") %><% end %>
+          <% eye = t(e[:hidden] ? "appearance.sidebar.show_x" : "appearance.sidebar.hide_x", name: e[:label]) %>
+          <%= render Ss::ButtonComponent.new(icon: icon(e[:hidden] ? "eye-off" : "eye", ""), href: settings_appearance_path, method: :patch, params: { op: "sidebar", item: e[:key], dir: "toggle" },
+                                             variant: :ghost, size: :sm, title: eye, aria: { label: eye, pressed: (!e[:hidden]).to_s }) %>
         </div>
       <% end %>
     <% end %>
