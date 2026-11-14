@@ -100,6 +100,7 @@ module Web
 
     def destroy
       reset_session
+      forget!
       redirect_to login_path, notice: t("flash.bye")
     end
 
@@ -112,6 +113,7 @@ module Web
       end
 
       reset_session
+      forget!
       session[:mfa] = { "id" => user.id, "at" => Time.current.to_i, "to" => safe_return_to }
       redirect_to login_mfa_path
     end

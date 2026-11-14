@@ -1,18 +1,29 @@
-{
-  "name": "Minha Automação",
-  "short_name": "Automação",
-  "description": "Casa, loja e fábrica: painéis, automações e avisos.",
-  "id": "/",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "any",
-  "lang": "pt-BR",
-  "background_color": "<%= Rails.configuration.x.pwa.splash %>",
-  "theme_color": "<%= Rails.configuration.x.pwa.splash %>",
-  "icons": [
-    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
-    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" },
-    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+<%# PWA (Lote 1; pwa-ios): manifesto no idioma de quem pede. Atalhos (Android/desktop; o iPhone ignora),
+    ícone maskable com a casa dentro da área segura (círculo de 80%) e o fundo em degradê até a borda. -%>
+<%= raw JSON.pretty_generate(
+  name: "Minha Automação",
+  short_name: "Automação",
+  description: t("pwa.manifest.description"),
+  id: "/",
+  start_url: "/",
+  scope: "/",
+  display: "standalone",
+  display_override: %w[standalone minimal-ui],
+  orientation: "any",
+  lang: I18n.locale.to_s,
+  dir: "ltr",
+  categories: %w[utilities lifestyle productivity],
+  background_color: Rails.configuration.x.pwa.splash,
+  theme_color: Rails.configuration.x.pwa.splash,
+  icons: [
+    { src: "/icon-192.png", type: "image/png", sizes: "192x192", purpose: "any" },
+    { src: "/icon-512.png", type: "image/png", sizes: "512x512", purpose: "any" },
+    { src: "/icon-192.png", type: "image/png", sizes: "192x192", purpose: "maskable" },
+    { src: "/icon-512.png", type: "image/png", sizes: "512x512", purpose: "maskable" }
+  ],
+  shortcuts: [
+    { name: t("pwa.manifest.cameras"), url: "/cameras", icons: [ { src: "/icon-192.png", sizes: "192x192", type: "image/png" } ] },
+    { name: t("pwa.manifest.assist"), url: "/?falar=1", icons: [ { src: "/icon-192.png", sizes: "192x192", type: "image/png" } ] },
+    { name: t("pwa.manifest.notifications"), url: "/notificacoes", icons: [ { src: "/icon-192.png", sizes: "192x192", type: "image/png" } ] }
   ]
-}
+) %>

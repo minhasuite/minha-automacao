@@ -46,6 +46,8 @@
   <%= render Ss::DensityPickerComponent.new(label: t("appearance.density.title"), css: "mt-3") %>
 </section>
 
+<%= render "web/pwa/install_section" %>
+
 <%# Temas da casa: criados aqui, entram na galeria do editor de painel e na de cima. %>
 <section id="temas" class="ss-card ss-card-pad mt-4" aria-labelledby="ap-c">
   <h2 id="ap-c" class="flex items-center gap-2"><%= icon("paint-brush", "size-5 text-accent") %><%= t("appearance.custom.title") %></h2>

@@ -7,7 +7,11 @@ class ApplicationController < ActionController::Base
   include KioskMode
   include Localized
 
-  allow_browser versions: :modern
+  # O :modern do Rails pede Safari 17.2; o iPhone com iOS 16.4–17.1 (push e app na Tela de Início já
+  # funcionam) levava 406. Mesmo piso do resto: CSS da gem (:has, color-mix, @layer, dvh) roda no 16.4.
+  # Antes caía num public/406-unsupported-browser.html que não existe (erro 500): agora uma tela nos 3 idiomas.
+  allow_browser versions: { safari: 16.4, chrome: 120, firefox: 121, opera: 106, ie: false },
+                block: -> { render "web/pwa/unsupported_browser", layout: false, status: :not_acceptable }
   set_current_tenant_through_filter
 
   # appweb: pedido interno do app (AppScreen.dispatch, nunca vem de fora:
@@ -42,13 +46,45 @@ class ApplicationController < ActionController::Base
     return @current_user = User.where(disabled_at: nil).find_by(id: request.env[AppScreen::ENV_KEY]) if request.env.key?(AppScreen::ENV_KEY)
 
     user = User.find_by(id: session[:user_id])
-    @current_user = user if user && !user.disabled? && session[:pwd] == user.password_digest.to_s.last(10)
+    return @current_user = user if user && !user.disabled? && session[:pwd] == user.password_digest.to_s.last(10)
+
+    @current_user = remembered_user
+  end
+
+  # Lembrar o aparelho (pwa-ios, docs/pwa.md): o app da Tela de Início do iPhone tem cookies próprios e o
+  # iOS fecha o processo a toda hora, o que apagava a sessão (cookie de sessão) e pedia a senha a cada
+  # abertura. Ao entrar grava um cookie cifrado de REMEMBER_DAYS (pessoa + pedaço do digest da senha: trocar
+  # a senha derruba), httponly e SameSite=Lax; sem sessão, ele refaz a sessão. Escrito só ao entrar, ao
+  # refazer e ao sair (não a cada pedido, para um pedido em voo não desfazer o "Sair").
+  REMEMBER = :ma_remember
+  REMEMBER_DAYS = 30
+
+  def remembered_user
+    data = cookies.encrypted[REMEMBER]
+    return nil unless data.is_a?(Hash)
+
+    user = User.find_by(id: data["u"])
+    return nil unless user && !user.disabled? && data["p"] == user.password_digest.to_s.last(10)
+
+    session[:user_id] = user.id
+    session[:pwd] = data["p"]
+    remember!(user)
+    user
+  end
+
+  def remember!(user)
+    cookies.encrypted[REMEMBER] = { value: { "u" => user.id, "p" => user.password_digest.to_s.last(10) }, expires: REMEMBER_DAYS.days, httponly: true, same_site: :lax }
+  end
+
+  def forget!
+    cookies.delete(REMEMBER)
   end
 
   def sign_in!(user)
     reset_session
     session[:user_id] = user.id
     session[:pwd] = user.password_digest.to_s.last(10)
+    remember!(user)
     Current.user = user
     AuditEvent.login!(user, "web")
   end

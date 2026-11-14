@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { startWav } from "controllers/voice/wav_recorder"
+import { startWav, wav } from "controllers/voice/wav_recorder"
 
 // Assistente de voz (Pacote 3): grava pelo microfone (Web Audio, em WAV; exige
 // https ou localhost) ou manda o texto digitado para /assistente, mostra o
@@ -9,6 +9,39 @@ export default class extends Controller {
   static values = { url: String, site: String, texts: Object, statusUrl: String }
 
   t(key) { return this.textsValue[key] || key }
+
+  // Atalho do app instalado (manifesto, "Falar com a casa" = /?falar=1): abre o diálogo e tira o ?falar.
+  connect() {
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has("falar")) return
+    url.searchParams.delete("falar")
+    history.replaceState(history.state, "", url.pathname + url.search + url.hash)
+    this.open()
+  }
+
+  // iPhone (pwa-ios): o WebKit só toca áudio de um <audio> que já tocou dentro de um toque. Ao gravar ou
+  // mandar (sempre um toque), toca um silêncio curto nele; a resposta, que chega depois, toca sem toque.
+  unlockAudio() {
+    if (this.unlocked) return
+    this.unlocked = true
+    const audio = this.audioTarget
+    audio.muted = true
+    audio.src = URL.createObjectURL(wav([new Float32Array(800)], 16000))
+    const done = () => { audio.pause(); audio.muted = false }
+    audio.play()?.then(done, done)
+  }
+
+  playAnswer(url) {
+    const audio = this.audioTarget
+    audio.hidden = true
+    audio.muted = false
+    audio.src = url
+    // Recusou mesmo assim (navegador sem o toque): mostra o tocador para a pessoa tocar.
+    audio.play()?.catch(() => {
+      audio.hidden = false
+      this.statusTarget.textContent = this.t("tap_to_play")
+    })
+  }
 
   open() {
     this.dialogTarget.showModal()
@@ -41,6 +74,7 @@ export default class extends Controller {
   // ondaB1 (B6): grava WAV PCM 16 kHz mono (vale para a voz da nuvem e para o Wyoming/Whisper local).
   async toggle() {
     if (this.recording) return this.stop()
+    this.unlockAudio()
     try {
       this.recording = await startWav()
       this.micTarget.dataset.ssMicStateValue = "listening"
@@ -66,6 +100,7 @@ export default class extends Controller {
     event.preventDefault()
     const text = this.textTarget.value.trim()
     if (!text) return
+    this.unlockAudio()
     const body = new FormData()
     body.append("text", text)
     this.textTarget.value = ""
@@ -88,7 +123,7 @@ export default class extends Controller {
       this.add(data.heard, "ss-bubble is-me")
       this.add(data.text, "ss-bubble whitespace-pre-line")
       this.statusTarget.textContent = this.t("idle")
-      if (data.audio_url) { this.audioTarget.src = data.audio_url; this.audioTarget.play().catch(() => {}) }
+      if (data.audio_url) this.playAnswer(data.audio_url)
     } catch (e) {
       this.statusTarget.textContent = e.message
     }

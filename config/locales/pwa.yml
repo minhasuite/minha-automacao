@@ -1,0 +1,115 @@
+# PWA no iPhone (pwa-ios, docs/pwa.md): instalar, página sem conexão, atalhos do manifesto, push no iPhone e voz.
+pt-BR:
+  pwa:
+    unsupported:
+      title: Navegador antigo demais
+      text: 'O Minha Automação precisa de um navegador mais novo: no iPhone, iOS 16.4 ou mais novo; no computador e no Android, o Chrome, o Edge, o Firefox ou o Safari atualizados.'
+    install:
+      title: Instalar o app
+      pitch: Na tela inicial, o Minha Automação abre em tela cheia, como um app, e recebe os avisos (no iPhone, só assim).
+      installed: Você está usando o app instalado neste aparelho.
+      button: Instalar o app
+      ios_title: No iPhone ou iPad (Safari)
+      ios_step1: Abra este endereço no Safari (no Chrome do iPhone, toque em Compartilhar e em "Abrir no Safari").
+      ios_step2: Toque em Compartilhar (o quadrado com a seta para cima, na barra de baixo ou de cima).
+      ios_step3: Role a lista, toque em "Adicionar à Tela de Início" e depois em "Adicionar".
+      ios_step4: Abra pelo ícone novo. Para os avisos, vá em Configurações, Meus aparelhos, e toque em "Receber avisos neste aparelho".
+      other_title: No Android ou no computador
+      other_text: Use o botão "Instalar o app". Se ele não aparecer, abra o menu do navegador e toque em "Instalar app" ou "Adicionar à tela inicial".
+      https: 'Instalar e receber avisos exige https: abra pelo acesso externo (o endereço https da casa), não pelo http da rede de casa.'
+      notice_title: Instale o app no iPhone
+      notice_text: Adicione à Tela de Início para abrir em tela cheia e receber os avisos.
+      notice_action: Como instalar
+      dismiss: Agora não
+    offline:
+      title: Sem conexão com a casa
+      text: Este aparelho não alcançou o servidor da casa. Confira o Wi-Fi ou os dados móveis e tente de novo.
+      retry: Tentar de novo
+    manifest:
+      description: 'Casa, loja e fábrica: painéis, automações e avisos.'
+      cameras: Câmeras
+      assist: Falar com a casa
+      notifications: Notificações
+    push:
+      ios_install: 'No iPhone os avisos só chegam com o app instalado: toque em Compartilhar, "Adicionar à Tela de Início", abra pelo ícone e volte aqui.'
+      ios_old: Este iPhone não recebe avisos da web. É preciso o iOS 16.4 ou mais novo, com o app na Tela de Início.
+    login:
+      standalone_google: No app da Tela de Início do iPhone, o botão do Google pode não voltar para cá. Entre com e-mail e senha ou com passkey; o acesso fica lembrado neste aparelho.
+    assist:
+      tap_to_play: Toque no play para ouvir a resposta.
+en:
+  pwa:
+    unsupported:
+      title: Browser too old
+      text: 'Minha Automação needs a newer browser: on iPhone, iOS 16.4 or newer; on a computer or Android, an up-to-date Chrome, Edge, Firefox or Safari.'
+    install:
+      title: Install the app
+      pitch: On the home screen, Minha Automação opens full screen, like an app, and gets notifications (on iPhone, only this way).
+      installed: You are using the installed app on this device.
+      button: Install the app
+      ios_title: On iPhone or iPad (Safari)
+      ios_step1: Open this address in Safari (in Chrome on iPhone, tap Share and "Open in Safari").
+      ios_step2: Tap Share (the square with the up arrow, in the bottom or top bar).
+      ios_step3: Scroll the list, tap "Add to Home Screen" and then "Add".
+      ios_step4: Open it from the new icon. For notifications, go to Settings, My devices, and tap "Get notifications on this device".
+      other_title: On Android or a computer
+      other_text: Use the "Install the app" button. If it does not show up, open the browser menu and tap "Install app" or "Add to home screen".
+      https: 'Installing and notifications need https: open it through the external access (the home https address), not the home network http.'
+      notice_title: Install the app on your iPhone
+      notice_text: Add it to the Home Screen to open full screen and get notifications.
+      notice_action: How to install
+      dismiss: Not now
+    offline:
+      title: No connection to the house
+      text: This device could not reach the house server. Check Wi-Fi or mobile data and try again.
+      retry: Try again
+    manifest:
+      description: 'Home, shop and factory: dashboards, automations and notifications.'
+      cameras: Cameras
+      assist: Talk to the house
+      notifications: Notifications
+    push:
+      ios_install: 'On iPhone, notifications only arrive with the app installed: tap Share, "Add to Home Screen", open it from the icon and come back here.'
+      ios_old: This iPhone does not get web notifications. It needs iOS 16.4 or newer, with the app on the Home Screen.
+    login:
+      standalone_google: In the iPhone Home Screen app, the Google button may not come back here. Sign in with email and password or a passkey; this device stays signed in.
+    assist:
+      tap_to_play: Tap play to hear the answer.
+es:
+  pwa:
+    unsupported:
+      title: Navegador demasiado antiguo
+      text: 'Minha Automação necesita un navegador más nuevo: en el iPhone, iOS 16.4 o más nuevo; en la computadora y en Android, Chrome, Edge, Firefox o Safari actualizados.'
+    install:
+      title: Instalar la app
+      pitch: En la pantalla de inicio, Minha Automação se abre a pantalla completa, como una app, y recibe los avisos (en el iPhone, solo así).
+      installed: Estás usando la app instalada en este dispositivo.
+      button: Instalar la app
+      ios_title: En el iPhone o iPad (Safari)
+      ios_step1: Abre esta dirección en Safari (en Chrome del iPhone, toca Compartir y "Abrir en Safari").
+      ios_step2: Toca Compartir (el cuadrado con la flecha hacia arriba, en la barra de abajo o de arriba).
+      ios_step3: Desplaza la lista, toca "Agregar a inicio" y luego "Agregar".
+      ios_step4: Ábrela desde el ícono nuevo. Para los avisos, ve a Configuración, Mis dispositivos, y toca "Recibir avisos en este dispositivo".
+      other_title: En Android o en la computadora
+      other_text: Usa el botón "Instalar la app". Si no aparece, abre el menú del navegador y toca "Instalar app" o "Agregar a la pantalla de inicio".
+      https: 'Instalar y recibir avisos exige https: ábrela por el acceso externo (la dirección https de la casa), no por el http de la red de casa.'
+      notice_title: Instala la app en el iPhone
+      notice_text: Agrégala a la pantalla de inicio para abrirla a pantalla completa y recibir los avisos.
+      notice_action: Cómo instalar
+      dismiss: Ahora no
+    offline:
+      title: Sin conexión con la casa
+      text: Este dispositivo no alcanzó el servidor de la casa. Revisa el Wi-Fi o los datos móviles e inténtalo de nuevo.
+      retry: Intentar de nuevo
+    manifest:
+      description: 'Casa, tienda y fábrica: paneles, automatizaciones y avisos.'
+      cameras: Cámaras
+      assist: Hablar con la casa
+      notifications: Notificaciones
+    push:
+      ios_install: 'En el iPhone los avisos solo llegan con la app instalada: toca Compartir, "Agregar a inicio", ábrela desde el ícono y vuelve aquí.'
+      ios_old: Este iPhone no recibe avisos de la web. Necesita iOS 16.4 o más nuevo, con la app en la pantalla de inicio.
+    login:
+      standalone_google: En la app de la pantalla de inicio del iPhone, el botón de Google puede no volver aquí. Entra con correo y contraseña o con passkey; el acceso queda recordado en este dispositivo.
+    assist:
+      tap_to_play: Toca play para oír la respuesta.

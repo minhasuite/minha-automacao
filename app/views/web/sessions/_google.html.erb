@@ -10,6 +10,8 @@
       <%= hidden_field_tag :invite, invite, id: nil if invite %>
     <% end %>
     <div class="flex justify-center min-h-11" data-google-signin-target="button"></div>
+    <%# pwa-ios: no app da Tela de Início do iPhone o pop-up do Google pode não voltar (docs/pwa.md). %>
+    <%= render Ss::NoteComponent.new(text: t("pwa.login.standalone_google"), icon: icon("information-circle", ""), css: "mt-3", data: { google_signin_target: "standalone" }, hidden: true) %>
     <% if divider %>
       <div class="ss-divider mt-6"><%= t("sessions.or") %></div>
     <% end %>

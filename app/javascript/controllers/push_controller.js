@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { ios, standalone } from "controllers/pwa/platform"
 
 // Meus aparelhos: inscreve este navegador no Web Push (chave VAPID pública do
 // servidor) e manda a inscrição para o Rails. Só funciona em https (ou
@@ -11,6 +12,10 @@ export default class extends Controller {
   async connect() {
     const t = this.textsValue
     if (!window.isSecureContext) return this.state(t.https)
+    // pwa-ios: no iPhone o push só existe no app da Tela de Início (iOS 16.4+); no Safari comum explica
+    // como instalar em vez de dizer só "não recebe".
+    if (ios() && !standalone()) return this.state(t.ios_install)
+    if (ios() && !("PushManager" in window)) return this.state(t.ios_old)
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       return this.state(t.unsupported)
     }

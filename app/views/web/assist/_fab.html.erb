@@ -2,7 +2,7 @@
 <%# Assistente de voz (Pacote 3): microfone → STT → intenção local ou "Perguntar à casa" → texto e fala.
     Botão flutuante da gem (Ss::FabComponent) em todas as telas, uma vez no layout (id estável: o morph
     do Turbo casa o mesmo nó). O local é o da tela ou o do Início (assist_site). %>
-<div id="assist" data-controller="assist" data-assist-url-value="<%= assist_path %>" data-assist-status-url-value="<%= assist_status_path %>" data-assist-site-value="<%= site.id %>" data-assist-texts-value="<%= t("assist.js").to_json %>" class="contents">
+<div id="assist" data-controller="assist" data-assist-url-value="<%= assist_path %>" data-assist-status-url-value="<%= assist_status_path %>" data-assist-site-value="<%= site.id %>" data-assist-texts-value="<%= t("assist.js").merge(tap_to_play: t("pwa.assist.tap_to_play")).to_json %>" class="contents">
   <%= render Ss::FabComponent.new(icon: icon("microphone", ""), label: t("assist.title"), lift: lift, id: "assist-fab", data: { action: "assist#open" }) %>
   <%# Diálogo da gem sem o cabeçalho dela: o X é o assist#close (para a gravação antes de fechar). %>
   <%= render Ss::DialogComponent.new(id: "assist-dialog", title: t("assist.title"), header: false, size: :sm, data: { assist_target: "dialog" }) do %>
@@ -26,6 +26,7 @@
       <%= render Ss::ButtonComponent.new(icon: icon("chevron-right", "size-4"), type: :submit, aria: { label: t("assist.send") }) %>
     <% end %>
     <div class="mt-4 flex flex-col gap-2" data-assist-target="log" aria-live="polite"></div>
-    <audio data-assist-target="audio" class="hidden"></audio>
+    <%# Tocador escondido; aparece só se o navegador recusar tocar a resposta sozinho (pwa-ios). %>
+    <audio data-assist-target="audio" class="mt-3 w-full" controls playsinline hidden></audio>
   <% end %>
 </div>
