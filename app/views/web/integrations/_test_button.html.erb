@@ -1,5 +1,5 @@
 <%# locals: (integration:) -%>
-<%= form_with scope: :integration, url: connect_integration_path(integration), method: :post do |f| %>
+<%= ss_form_with scope: :integration, url: connect_integration_path(integration), method: :post do |f| %>
   <%= f.hidden_field :test, value: "1" %>
-  <%= f.button class: "ss-btn ss-btn-outline w-fit", data: { turbo_submits_with: t("integrations.common.sending") } do %><%= icon("speakerphone", "size-4") %><%= t("integrations.common.send_test") %><% end %>
+  <%= render Ss::ButtonComponent.new(label: t("integrations.common.send_test"), icon: icon("speakerphone", ""), type: :submit, variant: :outline, class: "w-fit", submitting: t("integrations.common.sending")) %>
 <% end %>

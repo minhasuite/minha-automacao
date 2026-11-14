@@ -13,16 +13,12 @@
     <%= render(Ss::NoteComponent.new(tone: :warn, icon: icon("exclamation-circle", ""))) { t("pairing.no_broker") } %>
   <% end %>
 
-  <%= form_with url: site_pairing_open_path(@site, @adapter.key), method: :post, class: "ss-card ss-card-pad grid gap-3" do %>
+  <%= ss_form_with url: site_pairing_open_path(@site, @adapter.key), method: :post, class: "ss-card ss-card-pad grid gap-3" do |f| %>
     <%= render Ss::CardHeaderComponent.new(title: t("pairing.open_title"), subtitle: t("pairing.open_hint", min: (@adapter.max_seconds / 60.0).round), icon: icon("plus", "")) %>
     <% if @routers.any? %>
-      <div>
-        <%= label_tag :via, t("pairing.via"), class: "ss-label" %>
-        <%= select_tag :via, options_for_select(@routers, @bridge.info["via"]), include_blank: t("pairing.via_all"), class: "ss-input max-w-md" %>
-        <p class="text-xs text-muted mt-1"><%= t("pairing.via_hint") %></p>
-      </div>
+      <%= f.ss_select :via, @routers, label: t("pairing.via"), selected: @bridge.info["via"], include_blank: t("pairing.via_all"), help: t("pairing.via_hint"), class: "max-w-md" %>
     <% end %>
-    <div><button type="submit" class="ss-btn ss-btn-primary"><%= icon("status-online", "size-4") %><%= @bridge.open? ? t("pairing.renew") : t("pairing.open") %></button></div>
+    <div><%= render Ss::ButtonComponent.new(label: @bridge.open? ? t("pairing.renew") : t("pairing.open"), icon: icon("status-online", ""), type: :submit) %></div>
   <% end %>
 
   <turbo-frame id="pairing-live" src="<%= site_pairing_live_path(@site, @adapter.key) %>" target="_top" data-controller="ss-reload" data-ss-reload-every-value="2000">

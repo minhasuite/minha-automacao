@@ -13,8 +13,9 @@
       </div>
       <% if bridge.open? %>
         <div class="flex flex-wrap gap-2">
-          <%= button_to t("pairing.renew_short"), site_pairing_open_path(site, adapter.key), params: { via: bridge.info["via"] }.compact, class: "ss-btn ss-btn-outline ss-btn-sm" %>
-          <%= button_to t("pairing.close"), site_pairing_close_path(site, adapter.key), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+          <%= render Ss::ButtonComponent.new(label: t("pairing.renew_short"), href: site_pairing_open_path(site, adapter.key), method: :post, params: { via: bridge.info["via"] }.compact,
+                                             variant: :outline, size: :sm) %>
+          <%= render Ss::ButtonComponent.new(label: t("pairing.close"), href: site_pairing_close_path(site, adapter.key), method: :post, variant: :ghost, size: :sm) %>
         </div>
       <% end %>
     </div>
