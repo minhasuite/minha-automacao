@@ -5,7 +5,7 @@
       <legend class="ss-label"><%= t("onboarding.areas.suggestions") %></legend>
       <div class="flex flex-wrap gap-2">
         <% suggested.each do |k| %>
-          <label class="ss-chip"><%= check_box_tag "onboarding[suggested][]", k, areas.empty? && k.in?(%w[living kitchen bedroom bathroom]), id: "sug-#{k}" %><%= t("onboarding.areas.suggested.#{k}") %></label>
+          <%= f.ss_chip_check_box :suggested, multiple: true, label: t("onboarding.areas.suggested.#{k}"), checked_value: k, unchecked_value: nil, checked: areas.empty? && k.in?(%w[living kitchen bedroom bathroom]), id: "sug-#{k}" %>
         <% end %>
       </div>
     </fieldset>

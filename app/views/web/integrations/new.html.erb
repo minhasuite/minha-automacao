@@ -31,7 +31,7 @@
               data: { turbo_submits_with: t("integrations.common.connecting") } do |f| %>
   <%= render integration_form_partial(@plugin), f: f, integration: nil %>
   <div class="flex flex-wrap gap-2">
-    <%= f.submit t("integrations.common.continue"), class: "ss-btn ss-btn-primary" %>
+    <%= f.ss_submit t("integrations.common.continue"), data: { turbo_submits_with: t("integrations.common.connecting") } %>
     <%= link_to t("integrations.common.cancel"), site_integrations_path(@site), class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>

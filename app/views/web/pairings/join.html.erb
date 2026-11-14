@@ -21,18 +21,11 @@
       <div data-controller="ss-reload" data-ss-reload-every-value="3000"><%= render(Ss::NoteComponent.new) { t("pairing.waiting_interview") } %></div>
     <% end %>
   <% else %>
-    <%= form_with url: site_pairing_join_new_path(@site, @adapter.key, @join), method: :post, class: "ss-card ss-card-pad grid gap-3" do %>
+    <%= ss_form_with url: site_pairing_join_new_path(@site, @adapter.key, @join), method: :post, class: "ss-card ss-card-pad grid gap-3" do |f| %>
       <%= render Ss::CardHeaderComponent.new(title: t("pairing.new_title"), subtitle: t("pairing.new_hint"), icon: icon("plus", ""), heading: :h2) %>
-      <div>
-        <%= label_tag :name, t("pairing.fields.name"), class: "ss-label" %>
-        <%= text_field_tag :name, params[:name] || @device.name, class: "ss-input", required: true, maxlength: 120 %>
-        <p class="text-xs text-muted mt-1"><%= t("pairing.name_hint") %></p>
-      </div>
-      <div>
-        <%= label_tag :area_id, t("pairing.fields.area"), class: "ss-label" %>
-        <%= select_tag :area_id, options_for_select(@areas.map { |a| [ a.name, a.id ] }, params[:area_id] || @device.area_id), include_blank: t("pairing.no_area"), class: "ss-input" %>
-      </div>
-      <div><button type="submit" class="ss-btn ss-btn-primary"><%= icon("check", "size-4") %><%= t("pairing.save_new") %></button></div>
+      <%= f.ss_text_field :name, label: t("pairing.fields.name"), help: t("pairing.name_hint"), value: params[:name] || @device.name, required: true, maxlength: 120 %>
+      <%= f.ss_select :area_id, @areas.map { |a| [ a.name, a.id ] }, label: t("pairing.fields.area"), include_blank: t("pairing.no_area"), selected: params[:area_id] || @device.area_id %>
+      <div><%= render Ss::ButtonComponent.new(label: t("pairing.save_new"), icon: icon("check", ""), type: :submit) %></div>
     <% end %>
 
     <section class="ss-card ss-card-pad" aria-labelledby="pairing-replace">
@@ -56,6 +49,6 @@
       <% end %>
     </section>
 
-    <div><%= button_to t("pairing.dismiss"), site_pairing_join_dismiss_path(@site, @adapter.key, @join), class: "ss-btn ss-btn-ghost", form: { data: { turbo_confirm: t("pairing.dismiss_confirm") } } %></div>
+    <div><%= render Ss::ButtonComponent.new(label: t("pairing.dismiss"), href: site_pairing_join_dismiss_path(@site, @adapter.key, @join), method: :post, variant: :ghost, confirm: t("pairing.dismiss_confirm")) %></div>
   <% end %>
 </div>
