@@ -2,17 +2,17 @@
 <% qtext = ->(list) { Array(list).map { |q| ar.query_text(q) }.join("\n") } %>
 <%= render "web/shared/header", title: t("arrange.rules.title"), subtitle: t("arrange.rules.subtitle", site: @site.name), back: settings_dashboards_path %>
 <%= render layout: "web/settings/frame", locals: { current: :dashboards } do %>
-  <%= form_with url: settings_arrange_rules_path(@site), method: :patch, class: "grid gap-6" do %>
+  <%= ss_form_with url: settings_arrange_rules_path(@site), method: :patch, class: "grid gap-6" do |f| %>
     <%= render Ss::NoteComponent.new(text: t("arrange.rules.query_help", keys: Points::Query::KEYS.join(", ")), icon: icon("information-circle", "")) %>
     <section class="grid gap-3">
       <%= render Ss::SectionHeaderComponent.new(title: t("arrange.rules.badges_title"), subtitle: t("arrange.rules.badges_hint")) %>
       <div class="ss-card ss-card-pad grid gap-3 sm:grid-cols-2">
-        <div><label class="ss-label" for="ar-bw"><%= t("arrange.rules.widget_types") %></label>
-          <%= text_field_tag "arrange[badges][widgets]", Array(@rules.dig("badges", "widgets")).join(", "), class: "ss-input num", id: "ar-bw" %></div>
-        <div class="sm:col-span-2"><label class="ss-label" for="ar-bq"><%= t("arrange.rules.queries") %></label>
-          <%= text_area_tag "arrange[badges][queries]", qtext.(Array(@rules.dig("badges", "match")).pluck("query").compact), class: "ss-input num", id: "ar-bq", rows: 3 %></div>
-        <div class="sm:col-span-2"><label class="ss-label" for="ar-bi"><%= t("arrange.rules.icons") %></label>
-          <%= text_area_tag "arrange[badges][icons]", @rules.dig("badges", "icons").to_h.map { |k, v| "#{k}=#{v}" }.join("\n"), class: "ss-input num", id: "ar-bi", rows: 4 %></div>
+        <%= f.ss_text_field "arrange[badges][widgets]", label: t("arrange.rules.widget_types"), name: "arrange[badges][widgets]", id: "ar-bw", class: "num",
+                                                        value: Array(@rules.dig("badges", "widgets")).join(", ") %>
+        <%= f.ss_text_area "arrange[badges][queries]", label: t("arrange.rules.queries"), name: "arrange[badges][queries]", id: "ar-bq", class: "num", rows: 3,
+                                                       value: qtext.(Array(@rules.dig("badges", "match")).pluck("query").compact), wrapper_class: "sm:col-span-2" %>
+        <%= f.ss_text_area "arrange[badges][icons]", label: t("arrange.rules.icons"), name: "arrange[badges][icons]", id: "ar-bi", class: "num", rows: 4,
+                                                     value: @rules.dig("badges", "icons").to_h.map { |k, v| "#{k}=#{v}" }.join("\n"), wrapper_class: "sm:col-span-2" %>
       </div>
     </section>
 
@@ -22,23 +22,25 @@
       <% rows = cols + [ {} ] * [ ar::MAX_COLUMNS - cols.size, 0 ].max %>
       <% rows.each_with_index do |c, i| %>
         <% match = Array(c["match"]) %>
+        <% base = "arrange[columns][#{i}]" %>
         <fieldset class="ss-card ss-card-pad grid gap-3 sm:grid-cols-3">
           <legend class="sr-only"><%= t("arrange.rules.column_n", n: i + 1) %></legend>
-          <div><label class="ss-label" for="ar-c<%= i %>-id"><%= t("arrange.rules.column_id", n: i + 1) %></label>
-            <%= text_field_tag "arrange[columns][#{i}][id]", c["id"], class: "ss-input num", id: "ar-c#{i}-id", maxlength: 30, placeholder: t("arrange.rules.column_id_placeholder") %></div>
-          <div><label class="ss-label" for="ar-c<%= i %>-t"><%= t("arrange.rules.column_title") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label>
-            <%= text_field_tag "arrange[columns][#{i}][title]", c["title"], class: "ss-input", id: "ar-c#{i}-t", maxlength: 60 %></div>
-          <div><label class="ss-label" for="ar-c<%= i %>-f"><%= t("arrange.rules.full") %></label>
-            <%= text_field_tag "arrange[columns][#{i}][full]", Array(c["full"]).join(", "), class: "ss-input num", id: "ar-c#{i}-f" %></div>
-          <div class="sm:col-span-3"><label class="ss-label" for="ar-c<%= i %>-ty"><%= t("arrange.rules.types") %></label>
-            <%= text_field_tag "arrange[columns][#{i}][types]", match.flat_map { Array(_1["type"]) }.join(", "), class: "ss-input num", id: "ar-c#{i}-ty" %></div>
-          <div class="sm:col-span-3"><label class="ss-label" for="ar-c<%= i %>-q"><%= t("arrange.rules.queries") %></label>
-            <%= text_area_tag "arrange[columns][#{i}][queries]", qtext.(match.pluck("query").compact), class: "ss-input num", id: "ar-c#{i}-q", rows: 2 %></div>
-          <% if c["id"].present? %><label class="ss-check"><%= check_box_tag "arrange[columns][#{i}][remove]", "1", false, id: "ar-c#{i}-x" %><%= t("arrange.rules.remove_column") %></label><% end %>
+          <%= f.ss_text_field "#{base}[id]", label: t("arrange.rules.column_id", n: i + 1), name: "#{base}[id]", id: "ar-c#{i}-id", class: "num", value: c["id"],
+                                             maxlength: 30, placeholder: t("arrange.rules.column_id_placeholder") %>
+          <%= f.ss_text_field "#{base}[title]", label: safe_join([ t("arrange.rules.column_title"), " ", tag.span(t("dashboards.ed.optional"), class: "font-normal") ]),
+                                                name: "#{base}[title]", id: "ar-c#{i}-t", value: c["title"], maxlength: 60 %>
+          <%= f.ss_text_field "#{base}[full]", label: t("arrange.rules.full"), name: "#{base}[full]", id: "ar-c#{i}-f", class: "num", value: Array(c["full"]).join(", ") %>
+          <%= f.ss_text_field "#{base}[types]", label: t("arrange.rules.types"), name: "#{base}[types]", id: "ar-c#{i}-ty", class: "num",
+                                                value: match.flat_map { Array(_1["type"]) }.join(", "), wrapper_class: "sm:col-span-3" %>
+          <%= f.ss_text_area "#{base}[queries]", label: t("arrange.rules.queries"), name: "#{base}[queries]", id: "ar-c#{i}-q", class: "num", rows: 2,
+                                                 value: qtext.(match.pluck("query").compact), wrapper_class: "sm:col-span-3" %>
+          <% if c["id"].present? %>
+            <%= f.ss_check_box "#{base}[remove]", label: t("arrange.rules.remove_column"), name: "#{base}[remove]", id: "ar-c#{i}-x", checked: false, unchecked_value: nil %>
+          <% end %>
         </fieldset>
       <% end %>
-      <div class="max-w-xs"><label class="ss-label" for="ar-fb"><%= t("arrange.rules.fallback") %></label>
-        <%= text_field_tag "arrange[fallback]", @rules["fallback"], class: "ss-input num", id: "ar-fb", required: true %></div>
+      <%= f.ss_text_field "arrange[fallback]", label: t("arrange.rules.fallback"), name: "arrange[fallback]", id: "ar-fb", class: "num", value: @rules["fallback"],
+                                               required: true, wrapper_class: "max-w-xs" %>
       <p class="text-xs text-muted"><%= t("arrange.rules.widget_types_hint", types: Dashboards::Schema.types.keys.join(", ")) %></p>
     </section>
 
@@ -46,18 +48,17 @@
       <%= render Ss::SectionHeaderComponent.new(title: t("arrange.rules.auto_title"), subtitle: t("arrange.rules.auto_hint")) %>
       <div class="ss-card ss-card-pad grid gap-3 sm:grid-cols-2">
         <% ar::AUTO_LISTS.each do |k| %>
-          <div><label class="ss-label" for="ar-a-<%= k %>"><%= t("arrange.rules.auto.#{k}") %></label>
-            <%= text_area_tag "auto[#{k}]", qtext.(@auto[k]), class: "ss-input num", id: "ar-a-#{k}", rows: 2 %></div>
+          <%= f.ss_text_area "auto[#{k}]", label: t("arrange.rules.auto.#{k}"), name: "auto[#{k}]", id: "ar-a-#{k}", class: "num", rows: 2, value: qtext.(@auto[k]) %>
         <% end %>
-        <label class="ss-check"><%= hidden_field_tag "auto[light_names]", "0", id: nil %><%= check_box_tag "auto[light_names]", "1", @auto["light_names"] != false, id: "ar-a-ln" %><%= t("arrange.rules.auto.light_names") %></label>
-        <div><label class="ss-label" for="ar-a-pl"><%= t("arrange.rules.auto.power_limit") %></label>
-          <%= number_field_tag "auto[power_limit]", @auto["power_limit"], min: 1, max: 8, class: "ss-input num", id: "ar-a-pl" %></div>
+        <%= f.ss_check_box "auto[light_names]", label: t("arrange.rules.auto.light_names"), name: "auto[light_names]", id: "ar-a-ln", checked: @auto["light_names"] != false %>
+        <%= f.ss_number_field "auto[power_limit]", label: t("arrange.rules.auto.power_limit"), name: "auto[power_limit]", id: "ar-a-pl", class: "num",
+                                                   value: @auto["power_limit"], min: 1, max: 8 %>
       </div>
     </section>
 
     <div class="flex flex-wrap gap-2">
-      <%= submit_tag t("arrange.rules.save"), class: "ss-btn ss-btn-primary" %>
-      <% if @custom %><%= submit_tag t("arrange.rules.reset"), name: "reset", class: "ss-btn ss-btn-ghost", data: { turbo_confirm: t("arrange.rules.reset_confirm"), turbo_confirm_button: t("arrange.rules.reset") } %><% end %>
+      <%= f.ss_submit t("arrange.rules.save") %>
+      <% if @custom %><%= f.ss_submit t("arrange.rules.reset"), name: "reset", variant: :ghost, data: { turbo_confirm: t("arrange.rules.reset_confirm"), turbo_confirm_button: t("arrange.rules.reset") } %><% end %>
     </div>
   <% end %>
 <% end %>
