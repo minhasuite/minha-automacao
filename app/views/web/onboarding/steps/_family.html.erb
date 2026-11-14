@@ -1,6 +1,6 @@
 <%# locals: (ctx:, step:) -%>
 <% invite = ctx.data[:invite_url] %>
-<%= form_with url: onboarding_step_path(step.key), scope: :onboarding, data: { turbo: false } do |f| %>
+<%= ss_form_with url: onboarding_step_path(step.key), scope: :onboarding, class: "block", data: { turbo: false } do |f| %>
   <div class="grid gap-4 md:grid-cols-2">
     <section class="ss-card ss-card-pad is-soft" aria-labelledby="ob-invite">
       <h2 id="ob-invite" class="flex items-center gap-2"><%= icon("users", "size-5 text-accent") %><%= t("onboarding.family.invite_title") %></h2>
@@ -8,12 +8,13 @@
       <% if invite %>
         <div class="ss-qr-box mt-3 w-40"><%= qr_svg(invite) %></div>
         <div class="mt-3 flex gap-2" data-controller="ss-copy" data-ss-copy-done-value="<%= ss_t("code_block.copied") %>">
-          <%= text_field_tag :invite_link, invite, readonly: true, class: "ss-input num text-xs", data: { ss_copy_target: "source", action: "focus->ss-copy#select" }, "aria-label": t("onboarding.family.invite_link") %>
-          <button type="button" class="ss-btn ss-btn-outline" data-action="ss-copy#copy" data-ss-copy-target="button"><%= icon("duplicate", "size-4") %><span data-ss-copy-target="label"><%= t("onboarding.family.copy") %></span></button>
+          <%= f.ss_text_field :invite_link, label: t("onboarding.family.invite_link"), hide_label: true, value: invite, readonly: true, name: "invite_link", id: "invite_link", class: "num text-xs",
+                              wrapper_class: "flex-1 min-w-0", data: { ss_copy_target: "source", action: "focus->ss-copy#select" } %>
+          <%= render(Ss::ButtonComponent.new(icon: icon("duplicate", ""), variant: :outline, data: { action: "ss-copy#copy", ss_copy_target: "button" })) do %><span data-ss-copy-target="label"><%= t("onboarding.family.copy") %></span><% end %>
         </div>
         <p class="text-xs text-muted mt-2"><%= t("onboarding.family.invite_note") %></p>
       <% else %>
-        <button type="submit" name="onboarding[invite]" value="1" class="ss-btn ss-btn-outline mt-3"><%= icon("link", "size-4") %><%= t("onboarding.family.invite_button") %></button>
+        <%= render Ss::ButtonComponent.new(label: t("onboarding.family.invite_button"), icon: icon("link", ""), variant: :outline, type: :submit, name: "onboarding[invite]", value: "1", class: "mt-3") %>
       <% end %>
     </section>
     <section class="ss-card ss-card-pad is-soft" aria-labelledby="ob-app">

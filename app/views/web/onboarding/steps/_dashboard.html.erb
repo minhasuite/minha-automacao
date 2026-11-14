@@ -1,5 +1,5 @@
 <%# locals: (ctx:, step:, dashboard:, views:, themes:, current:, areas: [], layouts: []) -%>
-<%= form_with url: onboarding_step_path(step.key), scope: :onboarding, data: { turbo_submits_with: t("onboarding.saving") } do |f| %>
+<%= ss_form_with url: onboarding_step_path(step.key), scope: :onboarding, class: "block", data: { turbo_submits_with: t("onboarding.saving") } do |f| %>
   <fieldset>
     <legend class="ss-label"><%= t("onboarding.dashboard.theme") %></legend>
     <%# Galeria de temas com a amostra da gem (.ss-swatch): o rádio some e a escolhida ganha o anel. %>

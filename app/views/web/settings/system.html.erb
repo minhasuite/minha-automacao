@@ -35,8 +35,8 @@
   <div class="mt-4 flex flex-wrap gap-2">
     <% if owner && Updates.available?(@release) && !running %>
       <% if Updates.supported? %>
-        <%= button_to settings_update_path, params: { tag: @release["tag"] }, class: "ss-btn ss-btn-primary",
-                      form: { data: { turbo_confirm: t("updates.confirm", tag: @release["tag"]), turbo_confirm_button: t("updates.now") } } do %><%= icon("download", "size-4") %><%= t("updates.now") %><% end %>
+        <%= render Ss::ButtonComponent.new(label: t("updates.now"), icon: icon("download", "size-4"), href: settings_update_path, method: :post, params: { tag: @release["tag"] },
+                                           confirm: t("updates.confirm", tag: @release["tag"]), confirm_button: t("updates.now")) %>
       <% else %>
         <p class="text-sm text-muted"><%= t("updates.unsupported") %></p>
       <% end %>
@@ -47,22 +47,12 @@
 
   <% if owner && Updates.supported? %>
     <% cfg = Updates.settings %>
-    <%= form_with url: settings_updates_path, class: "mt-4 grid gap-3 sm:grid-cols-3 items-end", aria: { label: t("updates.auto_title") } do %>
-      <div>
-        <label for="up-channel" class="ss-label"><%= t("updates.channel") %></label>
-        <%= select_tag :channel, options_for_select(Updates::CHANNELS.map { |c| [ t("updates.channels.#{c}"), c ] }, Updates.channel), id: "up-channel", class: "ss-input" %>
-      </div>
-      <div>
-        <label for="up-window" class="ss-label"><%= t("updates.window") %></label>
-        <%= select_tag :window_start, options_for_select((0..23).map { |h| [ t("updates.window_option", from: format("%02d:00", h), to: format("%02d:00", (h + Updates::WINDOW_HOURS) % 24)), h ] }, cfg["window_start"].to_i), id: "up-window", class: "ss-input" %>
-      </div>
-      <div class="flex items-center gap-2">
-        <%= hidden_field_tag :auto, "0", id: nil %>
-        <%= check_box_tag :auto, "1", cfg["auto"], id: "up-auto" %>
-        <label for="up-auto" class="text-sm"><%= t("updates.auto") %></label>
-      </div>
+    <%= ss_form_with url: settings_updates_path, class: "mt-4 grid gap-3 sm:grid-cols-3 items-end", aria: { label: t("updates.auto_title") } do |f| %>
+      <%= f.ss_select :channel, options_for_select(Updates::CHANNELS.map { |c| [ t("updates.channels.#{c}"), c ] }, Updates.channel), id: "up-channel", label: t("updates.channel") %>
+      <%= f.ss_select :window_start, options_for_select((0..23).map { |h| [ t("updates.window_option", from: format("%02d:00", h), to: format("%02d:00", (h + Updates::WINDOW_HOURS) % 24)), h ] }, cfg["window_start"].to_i), id: "up-window", label: t("updates.window") %>
+      <%= f.ss_check_box :auto, checked_value: "1", unchecked_value: "0", checked: cfg["auto"].present?, id: "up-auto", label: t("updates.auto") %>
       <p class="text-xs text-muted sm:col-span-3"><%= t("updates.auto_hint", days: Updates::AUTO_MIN_AGE.in_days.to_i) %></p>
-      <div class="sm:col-span-3"><%= submit_tag t("updates.save"), class: "ss-btn ss-btn-ghost", name: nil %></div>
+      <div class="sm:col-span-3"><%= f.ss_submit t("updates.save"), variant: :ghost, name: nil %></div>
     <% end %>
   <% end %>
 </section>
@@ -77,8 +67,8 @@
     <div class="ss-danger-zone">
       <h3 class="ss-danger-zone-title"><%= t("settings.system.wipe_title") %></h3>
       <p><%= t("settings.system.wipe_text") %></p>
-      <%= form_with url: settings_wipe_path, class: "mt-3 flex flex-wrap gap-2", data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("settings.system.wipe_button"), turbo_confirm: t("settings.system.wipe_confirm") } do %>
-        <%= text_field_tag :confirm, nil, placeholder: t("settings.system.wipe_type"), class: "ss-input w-40", "aria-label": t("settings.system.wipe_type") %><%= submit_tag t("settings.system.wipe_button"), class: "ss-btn ss-btn-danger", name: nil %>
+      <%= ss_form_with url: settings_wipe_path, class: "mt-3 flex flex-wrap gap-2", data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("settings.system.wipe_button"), turbo_confirm: t("settings.system.wipe_confirm") } do |f| %>
+        <%= f.ss_text_field :confirm, value: nil, placeholder: t("settings.system.wipe_type"), class: "w-40", label: t("settings.system.wipe_type"), hide_label: true %><%= f.ss_submit t("settings.system.wipe_button"), variant: :danger, name: nil %>
       <% end %>
     </div>
   <% end %>
@@ -98,10 +88,9 @@
   <h2 id="http-t"><%= t("settings.system.http_title") %></h2>
   <p class="text-sm text-muted mt-1"><%= t("settings.system.http_text_html") %></p>
   <% if owner %>
-    <%= form_with url: settings_system_path, method: :patch, class: "mt-3 grid gap-2 max-w-xl" do %>
-      <%= label_tag :http_allow, t("settings.system.http_label"), class: "ss-label" %>
-      <%= text_area_tag :http_allow, current_user.tenant.http_allow_text, rows: 3, class: "ss-input num", placeholder: "192.168.68.10\nmeu-gestor.local" %>
-      <div><%= submit_tag t("settings.system.save"), class: "ss-btn ss-btn-primary", name: nil %></div>
+    <%= ss_form_with url: settings_system_path, method: :patch, class: "mt-3 grid gap-2 max-w-xl" do |f| %>
+      <%= f.ss_text_area :http_allow, value: current_user.tenant.http_allow_text, rows: 3, class: "num", placeholder: "192.168.68.10\nmeu-gestor.local", label: t("settings.system.http_label") %>
+      <div><%= f.ss_submit t("settings.system.save"), name: nil %></div>
     <% end %>
   <% else %>
     <p class="text-sm mt-2"><%= current_user.tenant.http_allow.presence&.join(", ") || t("settings.system.http_none") %></p>
@@ -114,10 +103,9 @@
   <% on = Shadow.global?(current_user.tenant) %>
   <p class="mt-2"><span class="ss-badge <%= on ? 'ss-badge-accent' : '' %>"><%= on ? t("settings.system.on") : t("settings.system.off") %></span></p>
   <% if owner %>
-    <%= button_to settings_system_path, method: :patch, params: { shadow: !on }, class: "ss-btn #{on ? 'ss-btn-outline' : 'ss-btn-primary'} mt-3",
-                  form: { data: { turbo_confirm: (on ? t("settings.system.shadow_off_confirm") : t("settings.system.shadow_on_confirm")), turbo_confirm_button: t("settings.system.confirm") } } do %>
-      <%= on ? t("settings.system.shadow_off") : t("settings.system.shadow_on") %>
-    <% end %>
+    <%= render Ss::ButtonComponent.new(label: (on ? t("settings.system.shadow_off") : t("settings.system.shadow_on")), href: settings_system_path, method: :patch, params: { shadow: !on },
+                                       variant: (on ? :outline : :primary), css: "mt-3",
+                                       confirm: (on ? t("settings.system.shadow_off_confirm") : t("settings.system.shadow_on_confirm")), confirm_button: t("settings.system.confirm")) %>
   <% end %>
 </section>
 

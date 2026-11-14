@@ -20,30 +20,25 @@
         <% end %>
       </div>
       <% if sat.last_error %><p class="mt-2 text-sm text-danger" role="alert"><%= sat.last_error %></p><% end %>
-      <%= form_with model: sat, scope: :satellite, url: sat.persisted? ? site_assist_satellite_path(site, sat) : site_assist_satellites_path(site), method: sat.persisted? ? :patch : :post,
+      <%= ss_form_with model: sat, scope: :satellite, url: sat.persisted? ? site_assist_satellite_path(site, sat) : site_assist_satellites_path(site), method: sat.persisted? ? :patch : :post,
                     class: "mt-4 grid gap-3 sm:grid-cols-2" do |f| %>
-        <div><%= f.label :name, t("assist_settings.pipelines.name"), class: "ss-label", for: "sn-#{id}" %><%= f.text_field :name, id: "sn-#{id}", class: "ss-input", maxlength: 60, required: true %></div>
-        <div><%= f.label :kind, t("assist_settings.satellites.kind"), class: "ss-label", for: "sk-#{id}" %>
-          <%= f.select :kind, Assist::Satellites.plugins.map { |p| [ p.label, p.key ] }, {}, id: "sk-#{id}", class: "ss-input" %></div>
-        <div><%= f.label :host, t("assist_settings.fields.host"), class: "ss-label", for: "sh-#{id}" %><%= f.text_field :host, id: "sh-#{id}", class: "ss-input num", maxlength: 120, placeholder: "192.168.0.50" %></div>
-        <div><%= f.label :port, t("assist_settings.fields.port"), class: "ss-label", for: "sp-#{id}" %><%= f.number_field :port, id: "sp-#{id}", class: "ss-input num", min: 1, max: 65_535, placeholder: Wyoming::PORTS[:satellite] %></div>
-        <div class="sm:col-span-2"><%= f.label :device_id, t("assist_settings.satellites.device"), class: "ss-label", for: "sd-#{id}" %>
-          <%= f.select :device_id, devices, { include_blank: t("assist_settings.satellites.device_none") }, id: "sd-#{id}", class: "ss-input" %></div>
-        <div><%= f.label :area_id, t("assist_settings.satellites.area"), class: "ss-label", for: "sa-#{id}" %>
-          <%= f.select :area_id, areas, { include_blank: t("assist_settings.satellites.no_area") }, id: "sa-#{id}", class: "ss-input" %></div>
-        <div><%= f.label :pipeline_id, t("assist_settings.satellites.pipeline"), class: "ss-label", for: "sl-#{id}" %>
-          <%= f.select :pipeline_id, pipelines, { include_blank: t("assist_settings.satellites.preferred") }, id: "sl-#{id}", class: "ss-input" %></div>
-        <div><%= f.label :role, t("assist_settings.satellites.role"), class: "ss-label", for: "sr-#{id}" %>
-          <%= f.select :role, AssistSatellite::ROLES.map { |r| [ SiteMembership::ROLE_LABELS[r], r ] }, {}, id: "sr-#{id}", class: "ss-input" %></div>
-        <label class="ss-check text-sm self-end pb-2"><%= f.check_box :enabled, id: "se-#{id}" %> <%= t("assist_settings.satellites.enabled") %></label>
+        <%= f.ss_text_field :name, label: t("assist_settings.pipelines.name"), id: "sn-#{id}", maxlength: 60, required: true %>
+        <%= f.ss_select :kind, Assist::Satellites.plugins.map { |p| [ p.label, p.key ] }, label: t("assist_settings.satellites.kind"), id: "sk-#{id}" %>
+        <%= f.ss_text_field :host, label: t("assist_settings.fields.host"), id: "sh-#{id}", class: "num", maxlength: 120, placeholder: "192.168.0.50" %>
+        <%= f.ss_number_field :port, label: t("assist_settings.fields.port"), id: "sp-#{id}", class: "num", min: 1, max: 65_535, placeholder: Wyoming::PORTS[:satellite] %>
+        <%= f.ss_select :device_id, devices, label: t("assist_settings.satellites.device"), include_blank: t("assist_settings.satellites.device_none"), id: "sd-#{id}", wrapper_class: "sm:col-span-2" %>
+        <%= f.ss_select :area_id, areas, label: t("assist_settings.satellites.area"), include_blank: t("assist_settings.satellites.no_area"), id: "sa-#{id}" %>
+        <%= f.ss_select :pipeline_id, pipelines, label: t("assist_settings.satellites.pipeline"), include_blank: t("assist_settings.satellites.preferred"), id: "sl-#{id}" %>
+        <%= f.ss_select :role, AssistSatellite::ROLES.map { |r| [ SiteMembership::ROLE_LABELS[r], r ] }, label: t("assist_settings.satellites.role"), id: "sr-#{id}" %>
+        <%= f.ss_check_box :enabled, label: t("assist_settings.satellites.enabled"), id: "se-#{id}", wrapper_class: "text-sm self-end pb-2" %>
         <p class="text-xs text-muted sm:col-span-2"><%= Assist::Satellites.plugins.map(&:hint).join(" ") %></p>
-        <div class="sm:col-span-2"><%= f.submit sat.persisted? ? t("assist_settings.save") : t("assist_settings.satellites.create"), class: "ss-btn ss-btn-primary", name: nil %></div>
+        <div class="sm:col-span-2"><%= f.ss_submit sat.persisted? ? t("assist_settings.save") : t("assist_settings.satellites.create"), name: nil %></div>
       <% end %>
       <% if sat.persisted? %>
         <div class="mt-2 flex flex-wrap gap-2">
-          <%= button_to t("assist_settings.satellites.test"), site_assist_satellite_test_path(site, sat), class: "ss-btn ss-btn-outline ss-btn-sm" %>
-          <%= button_to t("assist_settings.remove"), site_assist_satellite_path(site, sat), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger",
-                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("assist_settings.satellites.confirm_remove", name: sat.name) } } %>
+          <%= render Ss::ButtonComponent.new(label: t("assist_settings.satellites.test"), href: site_assist_satellite_test_path(site, sat), method: :post, variant: :outline, size: :sm) %>
+          <%= render Ss::ButtonComponent.new(label: t("assist_settings.remove"), href: site_assist_satellite_path(site, sat), method: :delete, variant: :ghost, size: :sm, css: "text-danger",
+                                             confirm: t("assist_settings.satellites.confirm_remove", name: sat.name), confirm_tone: :danger, confirm_button: t("shared.confirm.remove")) %>
         </div>
       <% end %>
     </section>

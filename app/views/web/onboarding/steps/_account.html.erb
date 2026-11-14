@@ -1,10 +1,10 @@
 <%# locals: (ctx:, step:) -%>
 <% v = params[:onboarding] || {} %>
 <div class="max-w-lg -mt-6"><%= render "web/sessions/google", text: "signup_with", return_to: onboarding_path %></div>
-<%= form_with url: onboarding_step_path(step.key), scope: :onboarding, class: "grid gap-4 max-w-lg", data: { turbo_submits_with: t("onboarding.saving") } do |f| %>
-  <div><%= f.label :name, t("onboarding.account.name"), class: "ss-label" %><%= f.text_field :name, value: v[:name], class: "ss-input", required: true, autofocus: true, autocomplete: "name" %></div>
-  <div><%= f.label :email, t("onboarding.account.email"), class: "ss-label" %><%= f.email_field :email, value: v[:email], class: "ss-input", required: true, autocomplete: "email", placeholder: t("onboarding.account.email_hint") %></div>
-  <div><%= f.label :password, t("onboarding.account.password"), class: "ss-label" %><%= f.password_field :password, class: "ss-input", required: true, minlength: 8, autocomplete: "new-password" %></div>
+<%= ss_form_with url: onboarding_step_path(step.key), scope: :onboarding, class: "grid gap-4 max-w-lg", data: { turbo_submits_with: t("onboarding.saving") } do |f| %>
+  <%= f.ss_text_field :name, label: t("onboarding.account.name"), value: v[:name], required: true, autofocus: true, autocomplete: "name" %>
+  <%= f.ss_email_field :email, label: t("onboarding.account.email"), value: v[:email], required: true, autocomplete: "email", placeholder: t("onboarding.account.email_hint") %>
+  <%= f.ss_password_field :password, label: t("onboarding.account.password"), required: true, minlength: 8, autocomplete: "new-password" %>
   <p class="text-xs text-muted flex items-start gap-2"><%= icon("lock-closed", "size-4 shrink-0") %><%= t("onboarding.account.privacy") %></p>
   <% if Onboarding.fresh_install? %><p class="text-sm"><%= link_to t("backup_restore.from_backup"), onboarding_step_path("restore"), class: "font-bold text-accent" %></p><% end %>
   <%= render "web/onboarding/nav", step: step, label: t("onboarding.account.submit") %>

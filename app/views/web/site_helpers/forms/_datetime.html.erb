@@ -1,6 +1,2 @@
 <%# locals: (f:, point:) -%>
-<fieldset class="sm:col-span-2 min-w-0"><legend class="ss-label"><%= t("helper_forms.datetime.keeps") %></legend>
-  <div class="flex flex-wrap gap-4">
-    <% HelperTypes::Datetime.modes.each do |k, label| %><label class="ss-check"><%= f.radio_button :mode, k, checked: HelperTypes::Datetime.mode(point) == k %><%= label %></label><% end %>
-  </div>
-</fieldset>
+<%= f.ss_radio_buttons :mode, HelperTypes::Datetime.modes.map { |k, label| [ label, k ] }, label: t("helper_forms.datetime.keeps"), checked: HelperTypes::Datetime.mode(point), wrapper_class: "sm:col-span-2 min-w-0" %>

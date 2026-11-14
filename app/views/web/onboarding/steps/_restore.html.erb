@@ -5,13 +5,13 @@
     <p class="text-sm text-muted mt-1"><%= t("backup_restore.onboarding_wait") %></p>
   </div>
 <% else %>
-  <%= form_with url: onboarding_step_path(step.key), scope: :onboarding, multipart: true, class: "grid gap-4 max-w-lg", data: { turbo: false } do |f| %>
+  <%= ss_form_with url: onboarding_step_path(step.key), scope: :onboarding, multipart: true, class: "grid gap-4 max-w-lg", data: { turbo: false } do |f| %>
     <% unless available %><%= render(Ss::CalloutComponent.new(tone: :warn)) { t("backup_restore.no_supervisor") } %><% end %>
-    <div><%= f.label :file, t("backup_restore.file"), class: "ss-label" %><%= f.file_field :file, accept: ".gz,.enc", class: "ss-input", required: true %></div>
-    <div><%= f.label :passphrase, t("backup_restore.passphrase"), class: "ss-label" %><%= f.password_field :passphrase, class: "ss-input", autocomplete: "off" %></div>
+    <%= f.ss_file_field :file, label: t("backup_restore.file"), accept: ".gz,.enc", required: true %>
+    <%= f.ss_password_field :passphrase, label: t("backup_restore.passphrase"), autocomplete: "off" %>
     <p class="text-xs text-muted"><%= t("backup_restore.upload_hint") %></p>
     <div class="flex flex-wrap items-center gap-3">
-      <%= f.submit t("backup_restore.submit"), class: "ss-btn ss-btn-primary min-h-12", disabled: !available %>
+      <%= f.ss_submit t("backup_restore.submit"), css: "min-h-12", disabled: !available %>
       <%= link_to t("backup_restore.fresh"), onboarding_step_path("account"), class: "text-sm font-bold text-accent" %>
     </div>
   <% end %>

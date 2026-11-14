@@ -1,5 +1,5 @@
 <%# locals: (f:, point:) -%>
-<div><%= f.label :initial, t("helper_forms.counter.initial"), class: "ss-label" %><%= f.number_field :initial, value: point.address["initial"] || 0, step: 1, class: "ss-input num", required: true %></div>
-<div><%= f.label :step, t("helper_forms.step"), class: "ss-label" %><%= f.number_field :step, value: (point.step || 1).to_i, step: 1, min: 1, class: "ss-input num", required: true %></div>
-<div><%= f.label :min, t("helper_forms.counter.min"), class: "ss-label" %><%= f.number_field :min, value: point.min&.to_i, step: 1, class: "ss-input num" %></div>
-<div><%= f.label :max, t("helper_forms.counter.max"), class: "ss-label" %><%= f.number_field :max, value: point.max&.to_i, step: 1, class: "ss-input num" %></div>
+<%= f.ss_number_field :initial, label: t("helper_forms.counter.initial"), value: point.address["initial"] || 0, step: 1, class: "num", required: true %>
+<%= f.ss_number_field :step, label: t("helper_forms.step"), value: (point.step || 1).to_i, step: 1, min: 1, class: "num", required: true %>
+<%= f.ss_number_field :min, label: t("helper_forms.counter.min"), value: point.min&.to_i, step: 1, class: "num" %>
+<%= f.ss_number_field :max, label: t("helper_forms.counter.max"), value: point.max&.to_i, step: 1, class: "num" %>

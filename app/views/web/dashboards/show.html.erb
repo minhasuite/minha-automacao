@@ -10,7 +10,8 @@
 <% if @preview && !@embed %>
   <%= render Ss::CalloutComponent.new(tone: :accent, title: t("dashboards.preview"), icon: icon("eye", ""), css: "mb-4") do |c| %>
     <% c.with_action { link_to t("dashboards.back_editor"), edit_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost ss-btn-sm" } %>
-    <% c.with_action do %><%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary ss-btn-sm", form: { data: { turbo_confirm: t("dashboards.publish_confirm"), turbo_confirm_button: t("dashboards.publish") } } do %><%= icon("upload", "size-4") %><%= t("dashboards.publish") %><% end %><% end %>
+    <% c.with_action do %><%= render Ss::ButtonComponent.new(label: t("dashboards.publish"), icon: icon("upload", "size-4"), href: publish_dashboard_path(@dashboard), method: :post, size: :sm,
+                                                               confirm: t("dashboards.publish_confirm"), confirm_button: t("dashboards.publish")) %><% end %>
     <p><%= t("dashboards.preview_note", n: @dashboard.version) %></p>
   <% end %>
 <% end %>
@@ -57,9 +58,8 @@
 <div data-controller="ss-filter">
 <% if view["sections"].sum { |s| s["widgets"].size } > 3 && !kiosk %>
   <div class="mt-4 max-w-md" role="search">
-    <label class="sr-only" for="dw-search"><%= t("dashboards.search.label") %></label>
-    <input type="search" id="dw-search" class="ss-input" placeholder="<%= t("dashboards.search.placeholder") %>" autocomplete="off"
-           data-ss-filter-target="input" data-action="input->ss-filter#apply keydown.esc->ss-filter#clear">
+    <%= ss_fields do |f| %><%= f.ss_search_field :dw_search, label: t("dashboards.search.label"), hide_label: true, id: "dw-search", placeholder: t("dashboards.search.placeholder"), autocomplete: "off",
+                                                  data: { ss_filter_target: "input", action: "input->ss-filter#apply keydown.esc->ss-filter#clear" } %><% end %>
     <p class="text-sm text-muted mt-2" data-ss-filter-target="empty" hidden><%= t("dashboards.search.none") %></p>
   </div>
 <% end %>

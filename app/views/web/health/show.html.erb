@@ -32,8 +32,8 @@
       <% end %>
     </div>
     <% if @drive[:connected] %>
-      <%= button_to settings_health_drive_path, method: :delete, class: "ss-btn ss-btn-ghost",
-                    form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("health.drive.confirm"), turbo_confirm_button: t("health.drive.disconnect") } } do %><%= t("health.drive.disconnect") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: t("health.drive.disconnect"), href: settings_health_drive_path, method: :delete, variant: :ghost,
+                                         confirm: t("health.drive.confirm"), confirm_tone: :danger, confirm_button: t("health.drive.disconnect")) %>
     <% else %>
       <%= link_to t("health.drive.connect"), @drive[:auth_url], class: "ss-btn ss-btn-primary", data: { turbo: false } %>
     <% end %>
@@ -59,10 +59,10 @@
                   <% if i.ignored %><span class="ss-badge ss-badge-muted"><%= t("repairs.ignored_badge") %></span><% end %>
                   <% if i.fix && !i.ignored %><%= link_to i.fix[:url], class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("pencil", "size-4") %><%= i.fix[:label] %><% end %><% end %>
                   <% if r.check.repairs? && !i.ignored %>
-                    <%= button_to settings_health_repair_path(check: r.check.key, item: i.key), class: "ss-btn ss-btn-primary ss-btn-sm" do %><%= icon("refresh", "size-4") %><%= t("repairs.fix") %><% end %>
+                    <%= render Ss::ButtonComponent.new(label: t("repairs.fix"), icon: icon("refresh", "size-4"), href: settings_health_repair_path(check: r.check.key, item: i.key), method: :post, size: :sm) %>
                   <% end %>
-                  <%= button_to settings_health_ignore_path(ref: "#{r.check.key}:#{i.key}", on: i.ignored ? "0" : "1"), class: "ss-btn ss-btn-ghost ss-btn-sm",
-                                "aria-label": t(i.ignored ? "repairs.show_of" : "repairs.ignore_of", title: i.title) do %><%= t(i.ignored ? "repairs.show" : "repairs.ignore") %><% end %>
+                  <%= render Ss::ButtonComponent.new(label: t(i.ignored ? "repairs.show" : "repairs.ignore"), href: settings_health_ignore_path(ref: "#{r.check.key}:#{i.key}", on: i.ignored ? "0" : "1"),
+                                                     method: :post, variant: :ghost, size: :sm, aria: { label: t(i.ignored ? "repairs.show_of" : "repairs.ignore_of", title: i.title) }) %>
                 </div>
               <% end %>
             </div>

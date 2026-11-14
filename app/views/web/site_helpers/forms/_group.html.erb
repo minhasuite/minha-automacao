@@ -11,7 +11,8 @@
         <p class="text-xs font-bold uppercase text-muted mb-1"><%= cap %></p>
         <div class="grid gap-1 sm:grid-cols-2">
           <% ps.each do |p| %>
-            <label class="ss-check !font-normal min-w-0"><%= check_box_tag "helper[members][]", p.id, selected.include?(p.id), id: "m_#{p.id}" %><span class="truncate"><%= p.name %> <span class="text-muted">· <%= p.device.name %></span></span></label>
+            <%= f.ss_check_box :members, label: tag.span(class: "truncate font-normal") { safe_join([ p.name, " ", tag.span("· #{p.device.name}", class: "text-muted") ]) },
+                               multiple: true, checked: selected.include?(p.id), checked_value: p.id, unchecked_value: nil, id: "m_#{p.id}", wrapper_class: "min-w-0" %>
           <% end %>
         </div>
       </div>
@@ -19,5 +20,5 @@
   </div>
   <p class="text-xs text-muted mt-1"><%= t("helper_forms.group.hint") %></p>
 </fieldset>
-<div class="sm:col-span-2"><%= f.label :mode, t("helper_forms.group.value"), class: "ss-label" %>
-  <%= f.select :mode, grouped_options_for_select([ [ t("helper_forms.group.bool"), HelperTypes::Group.bool_modes.invert.to_a ], [ t("helper_forms.group.num"), HelperTypes::Group.num_modes.invert.to_a ] ], point.address["mode"]), {}, class: "ss-input" %></div>
+<%= f.ss_select :mode, grouped_options_for_select([ [ t("helper_forms.group.bool"), HelperTypes::Group.bool_modes.invert.to_a ], [ t("helper_forms.group.num"), HelperTypes::Group.num_modes.invert.to_a ] ], point.address["mode"]),
+                label: t("helper_forms.group.value"), wrapper_class: "sm:col-span-2" %>

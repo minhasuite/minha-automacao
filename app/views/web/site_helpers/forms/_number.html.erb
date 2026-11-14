@@ -1,10 +1,6 @@
 <%# locals: (f:, point:) -%>
-<div><%= f.label :min, t("helper_forms.number.min"), class: "ss-label" %><%= f.number_field :min, value: point.min || 0, step: "any", class: "ss-input num", required: true %></div>
-<div><%= f.label :max, t("helper_forms.number.max"), class: "ss-label" %><%= f.number_field :max, value: point.max || 100, step: "any", class: "ss-input num", required: true %></div>
-<div><%= f.label :step, t("helper_forms.step"), class: "ss-label" %><%= f.number_field :step, value: point.step || 1, step: "any", min: 0, class: "ss-input num", required: true %></div>
-<div><%= f.label :unit, t("helper_forms.number.unit"), class: "ss-label" %><%= f.text_field :unit, value: point.unit, class: "ss-input", maxlength: 20, placeholder: "°C, min, %" %></div>
-<fieldset class="sm:col-span-2 min-w-0"><legend class="ss-label"><%= t("helper_forms.number.display") %></legend>
-  <div class="flex flex-wrap gap-4">
-    <% HelperTypes::Number.modes.each do |k, label| %><label class="ss-check"><%= f.radio_button :mode, k, checked: (point.address["mode"] || "slider") == k %><%= label %></label><% end %>
-  </div>
-</fieldset>
+<%= f.ss_number_field :min, label: t("helper_forms.number.min"), value: point.min || 0, step: "any", class: "num", required: true %>
+<%= f.ss_number_field :max, label: t("helper_forms.number.max"), value: point.max || 100, step: "any", class: "num", required: true %>
+<%= f.ss_number_field :step, label: t("helper_forms.step"), value: point.step || 1, step: "any", min: 0, class: "num", required: true %>
+<%= f.ss_text_field :unit, label: t("helper_forms.number.unit"), value: point.unit, maxlength: 20, placeholder: "°C, min, %" %>
+<%= f.ss_radio_buttons :mode, HelperTypes::Number.modes.map { |k, label| [ label, k ] }, label: t("helper_forms.number.display"), checked: point.address["mode"] || "slider", wrapper_class: "sm:col-span-2 min-w-0" %>

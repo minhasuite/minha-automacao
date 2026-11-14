@@ -8,17 +8,16 @@
     <%= link_to t("dashboards.add_to.open_editor"), edit_dashboard_path(@dashboards.first), class: "ss-btn ss-btn-primary" if @dashboards.any? %>
   <% end %>
 <% else %>
-  <%= form_with url: dashboard_adds_path, class: "ss-card ss-card-pad grid gap-4 max-w-2xl" do %>
+  <%= ss_form_with url: dashboard_adds_path, class: "ss-card ss-card-pad grid gap-4 max-w-2xl" do |f| %>
     <%= hidden_field_tag :tipo, @type, id: nil %><%= hidden_field_tag :id, @record.id, id: nil %>
     <div class="flex items-center gap-3">
       <span class="ss-icon-tile is-accent"><%= icon(Dashboards::Widgets[@widget["type"]]&.icon || "cube", "") %></span>
       <p class="min-w-0"><span class="block font-bold text-ink"><%= @widget["label"].presence || name %></span>
         <span class="block text-sm text-muted"><%= t("dashboards.add_to.becomes", type: type_label) %></span></p>
     </div>
-    <div><label class="ss-label" for="place"><%= t("dashboards.add_to.where") %></label>
-      <%= select_tag :place, grouped_options_for_select(@places.group_by(&:first).map { |d, list| [ d.name, list.map { |_, v, s| [ "#{v['title']} · #{s['title'].presence || t('dashboards.ed.untitled')}", "#{d.id}:#{s['id']}" ] } ] }),
-                     id: "place", class: "ss-input", required: true %></div>
+    <%= f.ss_select :place, grouped_options_for_select(@places.group_by(&:first).map { |d, list| [ d.name, list.map { |_, v, s| [ "#{v['title']} · #{s['title'].presence || t('dashboards.ed.untitled')}", "#{d.id}:#{s['id']}" ] } ] }),
+                    label: t("dashboards.add_to.where"), id: "place", required: true %>
     <p class="text-sm text-muted"><%= t("dashboards.add_to.draft_note") %></p>
-    <div><%= submit_tag t("dashboards.add_to.submit"), class: "ss-btn ss-btn-primary" %></div>
+    <div><%= f.ss_submit t("dashboards.add_to.submit") %></div>
   <% end %>
 <% end %>

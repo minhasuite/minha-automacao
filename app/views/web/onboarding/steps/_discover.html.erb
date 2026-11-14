@@ -1,5 +1,5 @@
 <%# locals: (ctx:, step:) -%>
-<%= form_with url: onboarding_step_path(step.key), scope: :onboarding, data: { turbo_submits_with: t("onboarding.saving") } do %>
+<%= ss_form_with url: onboarding_step_path(step.key), scope: :onboarding, class: "block", data: { turbo_submits_with: t("onboarding.saving") } do %>
   <%# A procura roda quando a tela abre (turbo-frame): enquanto isso, o radar. %>
   <turbo-frame id="ob-found" src="<%= onboarding_discover_path %>" loading="eager">
     <%# Radar da gem (Ss::ScanRadarComponent, procurando); embaixo, os nomes que passam (arte do produto). %>

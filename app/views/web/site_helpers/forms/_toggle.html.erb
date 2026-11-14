@@ -1,2 +1,2 @@
 <%# locals: (f:, point:) -%>
-<label class="ss-check sm:col-span-2"><%= f.check_box :initial, { checked: point.address["initial"] == true }, "1", "0" %><%= t("helper_forms.toggle.initial") %></label>
+<%= f.ss_check_box :initial, label: t("helper_forms.toggle.initial"), checked: point.address["initial"] == true, wrapper_class: "sm:col-span-2" %>

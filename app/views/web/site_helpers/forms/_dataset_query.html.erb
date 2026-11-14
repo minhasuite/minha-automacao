@@ -1,12 +1,10 @@
 <%# locals: (f:, point:) -%>
 <% datasets = point.site.datasets.order(:name) %>
 <% a = point.address %>
-<div class="sm:col-span-2"><%= f.label :dataset, t("helper_forms.query.dataset"), class: "ss-label" %>
-  <%= f.select :dataset, datasets.map { |d| [ d.name, d.id ] }, { selected: a.dig("sources", 0), include_blank: t("helper_forms.query.pick") }, class: "ss-input", required: true %>
-  <% if datasets.empty? %><p class="text-xs text-muted mt-1"><%= t("helper_forms.query.none") %> <%= link_to t("datasets.index.title"), site_datasets_path(point.site) %>.</p><% end %></div>
-<div><%= f.label :op, t("helper_forms.query.op"), class: "ss-label" %><%= f.select :op, Datasets.scalar_choices.invert, { selected: a["op"] }, class: "ss-input" %></div>
-<div><%= f.label :field, t("helper_forms.query.field"), class: "ss-label" %><%= f.text_field :field, value: a["field"], class: "ss-input num", maxlength: 40, placeholder: t("helper_forms.query.field_ph") %></div>
-<div><%= f.label :window, t("helper_forms.query.window"), class: "ss-label" %><%= f.text_field :window, value: (helper_duration(a["window_s"]) if a["window_s"]), class: "ss-input num", placeholder: "24h, 168h" %></div>
-<div class="sm:col-span-2"><%= f.label :filters, t("helper_forms.query.filters"), class: "ss-label" %>
-  <%= f.text_area :filters, value: a["filters"], rows: 2, class: "ss-input num text-sm", placeholder: t("helper_forms.query.filters_ph") %>
-  <p class="text-xs text-muted mt-1"><%= t("helper_forms.query.operators") %> <%= Datasets.operators.map(&:symbol).join(" ") %>.</p></div>
+<%= f.ss_select :dataset, datasets.map { |d| [ d.name, d.id ] }, label: t("helper_forms.query.dataset"), selected: a.dig("sources", 0), include_blank: t("helper_forms.query.pick"), required: true,
+                wrapper_class: "sm:col-span-2", help: (safe_join([ t("helper_forms.query.none"), " ", link_to(t("datasets.index.title"), site_datasets_path(point.site)), "." ]) if datasets.empty?) %>
+<%= f.ss_select :op, Datasets.scalar_choices.invert, label: t("helper_forms.query.op"), selected: a["op"] %>
+<%= f.ss_text_field :field, label: t("helper_forms.query.field"), value: a["field"], class: "num", maxlength: 40, placeholder: t("helper_forms.query.field_ph") %>
+<%= f.ss_text_field :window, label: t("helper_forms.query.window"), value: (helper_duration(a["window_s"]) if a["window_s"]), class: "num", placeholder: "24h, 168h" %>
+<%= f.ss_text_area :filters, label: t("helper_forms.query.filters"), value: a["filters"], rows: 2, class: "num text-sm", placeholder: t("helper_forms.query.filters_ph"), wrapper_class: "sm:col-span-2",
+                   help: "#{t('helper_forms.query.operators')} #{Datasets.operators.map(&:symbol).join(' ')}." %>

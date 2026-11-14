@@ -1,9 +1,7 @@
 <%# locals: (f:, point:) -%>
 <% a = point.address %>
-<div><%= f.label :base, t("helper_forms.tariff.base"), class: "ss-label" %><%= f.text_field :base, value: a["base"]&.then { |v| format("%.4g", v).tr(".", ",") }, class: "ss-input num max-w-40", inputmode: "decimal", placeholder: "0,65", required: true %></div>
-<label class="ss-check self-end"><%= f.check_box :weekdays_only, { checked: a.fetch("weekdays_only", true) }, "1", "0" %><%= t("helper_forms.tariff.weekdays") %></label>
-<div class="sm:col-span-2"><%= f.label :bands, t("helper_forms.tariff.bands"), class: "ss-label" %>
-  <%= f.text_area :bands, value: Array(a["bands"]).map { |b| "#{"#{b['label']} " if b['label']}#{b['from']}-#{b['to']} = #{format('%.4g', b['price']).tr('.', ',')}" }.join("\n"),
-                  rows: 4, class: "ss-input num", placeholder: HelperTypes::Tariff::WHITE %>
-  <p class="text-xs text-muted mt-1"><%= t("helper_forms.tariff.hint") %></p>
-</div>
+<%= f.ss_text_field :base, label: t("helper_forms.tariff.base"), value: a["base"]&.then { |v| format("%.4g", v).tr(".", ",") }, class: "num max-w-40", inputmode: "decimal", placeholder: "0,65", required: true %>
+<%= f.ss_check_box :weekdays_only, label: t("helper_forms.tariff.weekdays"), checked: a.fetch("weekdays_only", true), wrapper_class: "self-end" %>
+<%= f.ss_text_area :bands, label: t("helper_forms.tariff.bands"),
+                   value: Array(a["bands"]).map { |b| "#{"#{b['label']} " if b['label']}#{b['from']}-#{b['to']} = #{format('%.4g', b['price']).tr('.', ',')}" }.join("\n"),
+                   rows: 4, class: "num", placeholder: HelperTypes::Tariff::WHITE, help: t("helper_forms.tariff.hint"), wrapper_class: "sm:col-span-2" %>

@@ -4,10 +4,11 @@
     do Turbo casa o mesmo nó). O local é o da tela ou o do Início (assist_site). %>
 <div id="assist" data-controller="assist" data-assist-url-value="<%= assist_path %>" data-assist-status-url-value="<%= assist_status_path %>" data-assist-site-value="<%= site.id %>" data-assist-texts-value="<%= t("assist.js").to_json %>" class="contents">
   <%= render Ss::FabComponent.new(icon: icon("microphone", ""), label: t("assist.title"), lift: lift, id: "assist-fab", data: { action: "assist#open" }) %>
-  <dialog class="ss-dialog" data-assist-target="dialog" aria-labelledby="assist-title">
+  <%# Diálogo da gem sem o cabeçalho dela: o X é o assist#close (para a gravação antes de fechar). %>
+  <%= render Ss::DialogComponent.new(id: "assist-dialog", title: t("assist.title"), header: false, size: :sm, data: { assist_target: "dialog" }) do %>
     <div class="flex items-center justify-between gap-2">
       <h2 id="assist-title" class="text-lg font-bold text-ink"><%= t("assist.title") %></h2>
-      <button type="button" class="ss-icon-btn" data-action="assist#close" title="<%= t("assist.close") %>" aria-label="<%= t("assist.close") %>"><%= icon("x", "") %></button>
+      <%= render Ss::IconButtonComponent.new(icon: icon("x", ""), label: t("assist.close"), data: { action: "assist#close" }) %>
     </div>
     <%# voz-offline: sem internet a casa entende só os comandos locais (o diálogo pergunta ao abrir). %>
     <div class="mt-2" data-assist-target="offline" hidden>
@@ -20,12 +21,11 @@
       <%= render Ss::MicButtonComponent.new(size: 72, labels: { idle: t("assist.record") }, data: { assist_target: "mic", action: "ss-mic:press->assist#toggle" }) %>
       <p class="mt-2 text-xs text-muted text-center" data-assist-target="status" aria-live="polite"><%= t("assist.js.idle") %></p>
     </div>
-    <form class="mt-4 flex gap-2" data-action="submit->assist#send">
-      <label for="assist-text" class="sr-only"><%= t("assist.or_write") %></label>
-      <input id="assist-text" class="ss-input flex-1" data-assist-target="text" maxlength="300" placeholder="<%= t("assist.write_ph") %>" autocomplete="off">
-      <button class="ss-btn ss-btn-primary" aria-label="<%= t("assist.send") %>"><%= icon("chevron-right", "size-4") %></button>
-    </form>
+    <%= ss_form_with url: assist_path, class: "mt-4 flex gap-2", data: { action: "submit->assist#send" } do |f| %>
+      <%= f.ss_text_field :text, label: t("assist.or_write"), hide_label: true, id: "assist-text", wrapper_class: "flex-1", data: { assist_target: "text" }, maxlength: 300, placeholder: t("assist.write_ph"), autocomplete: "off" %>
+      <%= render Ss::ButtonComponent.new(icon: icon("chevron-right", "size-4"), type: :submit, aria: { label: t("assist.send") }) %>
+    <% end %>
     <div class="mt-4 flex flex-col gap-2" data-assist-target="log" aria-live="polite"></div>
     <audio data-assist-target="audio" class="hidden"></audio>
-  </dialog>
+  <% end %>
 </div>

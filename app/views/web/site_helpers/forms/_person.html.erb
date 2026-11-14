@@ -3,7 +3,7 @@
 <% chosen = Array(a["sources"]) %>
 <% options = People.by_confidence(People.trackable(point.site)).map { |p| [ "#{p.name} · #{p.device.name} (#{People.tracker_for(p).label} · #{t("presence.confidence.#{People.tracker_for(p).confidence}")})", p.id ] } %>
 <% delay = point.new_record? && !a.key?("away_delay_s") ? People::AWAY_DELAY_S : a["away_delay_s"].to_i %>
-<div><%= f.label :user_id, t("helper_forms.person.user"), class: "ss-label" %><%= f.select :user_id, User.where(disabled_at: nil).order(:name).pluck(:name, :id), { selected: a["user_id"], include_blank: t("helper_forms.person.no_user") }, class: "ss-input" %></div>
+<%= f.ss_select :user_id, User.where(disabled_at: nil).order(:name).pluck(:name, :id), label: t("helper_forms.person.user"), selected: a["user_id"], include_blank: t("helper_forms.person.no_user") %>
 <fieldset class="sm:col-span-2 min-w-0">
   <legend class="ss-label"><%= t("helper_forms.person.sources") %></legend>
   <% if options.empty? %>
@@ -12,14 +12,13 @@
   <ol class="grid gap-2">
     <% [ chosen.size + 1, 3 ].max.clamp(1, HelperTypes::Person::MAX_SOURCES).times do |i| %>
       <li class="flex items-center gap-2"><span class="text-xs text-muted num w-5"><%= i + 1 %>.</span>
-        <label for="src_<%= i %>" class="sr-only"><%= t("helper_forms.person.source", n: i + 1) %></label>
-        <%= select_tag "helper[sources][]", options_for_select(options, chosen[i]), include_blank: "—", id: "src_#{i}", class: "ss-input" %></li>
+        <%= f.ss_select :sources, options_for_select(options, chosen[i]), label: t("helper_forms.person.source", n: i + 1), hide_label: true, include_blank: "—",
+                        name: "helper[sources][]", id: "src_#{i}", wrapper_class: "flex-1 min-w-0" %></li>
     <% end %>
   </ol>
   <p class="text-xs text-muted mt-1"><%= t("helper_forms.person.sources_hint") %></p>
 </fieldset>
-<div class="sm:col-span-2"><%= f.label :home_ssids, t("helper_forms.person.ssids"), class: "ss-label" %><%= f.text_field :home_ssids, value: Array(a["home_ssids"]).join(", "), class: "ss-input", placeholder: "MinhaRede, MinhaRede-5G" %></div>
-<div><%= label_tag "helper_away_delay_min", t("helper_forms.person.away_delay"), class: "ss-label" %>
-  <%= number_field_tag "helper[away_delay_min]", (delay / 60.0).round(1).to_s.delete_suffix(".0"), in: 0..60, step: "any", id: "helper_away_delay_min", class: "ss-input num" %>
-  <p class="text-xs text-muted mt-1"><%= t("helper_forms.person.away_delay_hint") %></p></div>
+<%= f.ss_text_field :home_ssids, label: t("helper_forms.person.ssids"), value: Array(a["home_ssids"]).join(", "), placeholder: "MinhaRede, MinhaRede-5G", wrapper_class: "sm:col-span-2" %>
+<%= f.ss_number_field :away_delay_min, label: t("helper_forms.person.away_delay"), value: (delay / 60.0).round(1).to_s.delete_suffix(".0"), in: 0..60, step: "any", class: "num",
+                      help: t("helper_forms.person.away_delay_hint") %>
 <p class="sm:col-span-2 text-xs text-muted"><%= t("helper_forms.person.privacy") %></p>

@@ -23,7 +23,7 @@
       </div>
       <div class="flex flex-wrap gap-2 mt-auto">
         <%= link_to t("dashboards.open"), dashboard_path(d), class: "ss-btn ss-btn-outline ss-btn-sm" %>
-        <% unless mine %><%= button_to t("dashboards.prefer"), prefer_dashboard_path(d), class: "ss-btn ss-btn-ghost ss-btn-sm" %><% end %>
+        <% unless mine %><%= render Ss::ButtonComponent.new(label: t("dashboards.prefer"), href: prefer_dashboard_path(d), method: :post, variant: :ghost, size: :sm) %><% end %>
         <% if can?(:manage) %><%= link_to edit_dashboard_path(d), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("pencil", "size-4") %><%= t("dashboards.edit") %><% end %><% end %>
       </div>
     </article>

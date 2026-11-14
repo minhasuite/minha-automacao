@@ -44,8 +44,9 @@
       <div class="flex justify-end gap-1">
         <% if SiteMembership.allowed?(@roles[d.site_id], :manage) %>
           <%= link_to edit_dashboard_path(d), class: "ss-icon-btn is-outline is-sm", title: t("shared.edit_name", name: d.name), "aria-label": t("shared.edit_name", name: d.name) do %><%= icon("pencil", "size-4") %><% end %>
-          <%= button_to duplicate_dashboard_path(d), class: "ss-icon-btn is-outline is-sm", title: t("settings_dashboards.duplicate", name: d.name), "aria-label": t("settings_dashboards.duplicate", name: d.name) do %><%= icon("duplicate", "size-4") %><% end %>
-          <%= button_to dashboard_path(d), method: :delete, class: "ss-icon-btn is-outline is-sm is-danger", title: t("settings_dashboards.delete", name: d.name), "aria-label": t("settings_dashboards.delete", name: d.name), form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("settings_dashboards.delete_confirm", name: d.name), turbo_confirm_button: t("settings_dashboards.delete_button") } } do %><%= icon("trash", "size-4") %><% end %>
+          <%= render Ss::ButtonComponent.new(icon: icon("duplicate", "size-4"), href: duplicate_dashboard_path(d), method: :post, variant: :outline, size: :sm, title: t("settings_dashboards.duplicate", name: d.name), aria: { label: t("settings_dashboards.duplicate", name: d.name) }) %>
+          <%= render Ss::ButtonComponent.new(icon: icon("trash", "size-4"), href: dashboard_path(d), method: :delete, variant: :danger, size: :sm, title: t("settings_dashboards.delete", name: d.name), aria: { label: t("settings_dashboards.delete", name: d.name) },
+                                             confirm: t("settings_dashboards.delete_confirm", name: d.name), confirm_tone: :danger, confirm_button: t("settings_dashboards.delete_button")) %>
         <% else %>
           <%= link_to t("settings_dashboards.open"), dashboard_path(d), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
         <% end %>

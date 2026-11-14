@@ -1,7 +1,7 @@
 <%# locals: (ctx:, step:, site:, weather:) -%>
 <% v = params[:onboarding] || {} %>
-<%= form_with url: onboarding_step_path(step.key), scope: :onboarding, class: "grid gap-4 grid-cols-2", data: { controller: "onboarding-home", turbo_submits_with: t("onboarding.saving"), onboarding_home_found_value: t("onboarding.home.located"), onboarding_home_denied_value: t("onboarding.home.locate_failed") } do |f| %>
-  <div class="col-span-2"><%= f.label :name, t("onboarding.home.name"), class: "ss-label" %><%= f.text_field :name, value: v[:name] || site.name, class: "ss-input", required: true, autofocus: true %></div>
+<%= ss_form_with url: onboarding_step_path(step.key), scope: :onboarding, class: "grid gap-4 grid-cols-2", data: { controller: "onboarding-home", turbo_submits_with: t("onboarding.saving"), onboarding_home_found_value: t("onboarding.home.located"), onboarding_home_denied_value: t("onboarding.home.locate_failed") } do |f| %>
+  <%= f.ss_text_field :name, label: t("onboarding.home.name"), value: v[:name] || site.name, required: true, autofocus: true, wrapper_class: "col-span-2" %>
   <fieldset class="col-span-2">
     <legend class="ss-label"><%= t("onboarding.home.kind") %></legend>
     <%# Tipo do local: Ss::OptionCardComponent em tiles (ícone em cima) numa grade de três. %>
@@ -12,18 +12,16 @@
       <% end %>
     </div>
   </fieldset>
-  <div class="col-span-2">
-    <%= f.label :timezone, t("onboarding.home.timezone"), class: "ss-label" %>
-    <%= f.select :timezone, ActiveSupport::TimeZone.all.map { |z| [ z.to_s, z.tzinfo.name ] }.uniq(&:last), { selected: v[:timezone] || site.timezone || "America/Sao_Paulo" },
-                 class: "ss-input", data: { onboarding_home_target: "zone", fresh: ctx.site.nil? } %>
-  </div>
+  <%= f.ss_select :timezone, ActiveSupport::TimeZone.all.map { |z| [ z.to_s, z.tzinfo.name ] }.uniq(&:last), label: t("onboarding.home.timezone"),
+                  selected: v[:timezone] || site.timezone || "America/Sao_Paulo", data: { onboarding_home_target: "zone", fresh: ctx.site.nil? }, wrapper_class: "col-span-2" %>
   <%# Localização num aviso da gem com o botão de pedir ao navegador; a linha de status muda pelo controller. %>
   <%= render Ss::CalloutComponent.new(tone: :accent, title: t("onboarding.home.location"), icon: icon("location-marker", ""), css: "col-span-2") do |c| %>
-    <% c.with_action do %><button type="button" class="ss-btn ss-btn-outline ss-btn-sm" data-action="onboarding-home#locate"><%= icon("location-marker", "size-4") %><%= t("onboarding.home.locate") %></button><% end %>
+    <% c.with_action do %><%= render Ss::ButtonComponent.new(label: t("onboarding.home.locate"), icon: icon("location-marker", ""), variant: :outline, size: :sm, data: { action: "onboarding-home#locate" }) %><% end %>
     <p data-onboarding-home-target="status" role="status"><%= t("onboarding.home.location_hint") %></p>
   <% end %>
-  <div><%= f.label :latitude, t("onboarding.home.latitude"), class: "ss-label" %><%= f.text_field :latitude, value: v[:latitude] || site.latitude, class: "ss-input num", inputmode: "decimal", placeholder: "-15.79", data: { onboarding_home_target: "lat" } %></div>
-  <div><%= f.label :longitude, t("onboarding.home.longitude"), class: "ss-label" %><%= f.text_field :longitude, value: v[:longitude] || site.longitude, class: "ss-input num", inputmode: "decimal", placeholder: "-47.88", data: { onboarding_home_target: "lon" } %></div>
-  <label class="col-span-2 ss-check"><%= f.check_box :weather, { checked: weather }, "1", "0" %><span><strong class="text-ink"><%= t("onboarding.home.weather") %></strong> <span class="text-muted text-sm"><%= t("onboarding.home.weather_hint") %></span></span></label>
+  <%= f.ss_text_field :latitude, label: t("onboarding.home.latitude"), value: v[:latitude] || site.latitude, class: "num", inputmode: "decimal", placeholder: "-15.79", data: { onboarding_home_target: "lat" } %>
+  <%= f.ss_text_field :longitude, label: t("onboarding.home.longitude"), value: v[:longitude] || site.longitude, class: "num", inputmode: "decimal", placeholder: "-47.88", data: { onboarding_home_target: "lon" } %>
+  <%= f.ss_check_box :weather, label: tag.span { safe_join([ tag.strong(t("onboarding.home.weather"), class: "text-ink"), " ", tag.span(t("onboarding.home.weather_hint"), class: "text-muted text-sm") ]) },
+                     checked: weather, wrapper_class: "col-span-2" %>
   <div class="col-span-2"><%= render "web/onboarding/nav", step: step %></div>
 <% end %>

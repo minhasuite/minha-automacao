@@ -20,18 +20,18 @@
   </section>
   <aside class="grid gap-4">
     <% if @locals.any? && can?(:manage) %>
-      <%= form_with scope: :event, url: site_agenda_path(@site), class: "ss-card ss-card-pad grid gap-3" do |f| %>
+      <%= ss_form_with scope: :event, url: site_agenda_path(@site), class: "ss-card ss-card-pad grid gap-3" do |f| %>
         <h2><%= t("agenda.show.new_event") %></h2>
-        <div><%= f.label :point_id, t("agenda.show.calendar"), class: "ss-label" %><%= f.select :point_id, @locals.map { |c| [ c.name, c.id ] }, {}, class: "ss-input" %></div>
-        <div><%= f.label :summary, t("agenda.show.summary"), class: "ss-label" %><%= f.text_field :summary, class: "ss-input", required: true, maxlength: 255, placeholder: t("agenda.show.summary_ph") %></div>
+        <%= f.ss_select :point_id, @locals.map { |c| [ c.name, c.id ] }, label: t("agenda.show.calendar") %>
+        <%= f.ss_text_field :summary, label: t("agenda.show.summary"), required: true, maxlength: 255, placeholder: t("agenda.show.summary_ph") %>
         <div class="grid grid-cols-2 gap-2">
-          <div><%= f.label :start, t("agenda.show.start"), class: "ss-label" %><%= f.datetime_local_field :start, class: "ss-input", required: true %></div>
-          <div><%= f.label :end, t("agenda.show.finish"), class: "ss-label" %><%= f.datetime_local_field :end, class: "ss-input" %></div>
+          <%= f.ss_datetime_local_field :start, label: t("agenda.show.start"), required: true %>
+          <%= f.ss_datetime_local_field :end, label: t("agenda.show.finish") %>
         </div>
-        <label class="ss-check"><%= f.check_box :all_day %> <%= t("agenda.show.all_day") %></label>
-        <div><%= f.label :repeat, t("agenda.show.repeat"), class: "ss-label" %><%= f.select :repeat, HelperTypes::LocalCalendar::REPEATS.map { |r| [ HelperTypes::LocalCalendar.text("repeat.#{r}"), r ] }, {}, class: "ss-input" %></div>
-        <div><%= f.label :location, t("agenda.show.location"), class: "ss-label" %><%= f.text_field :location, class: "ss-input", maxlength: 255 %></div>
-        <%= f.submit t("agenda.show.create"), class: "ss-btn ss-btn-primary" %>
+        <%= f.ss_check_box :all_day, label: t("agenda.show.all_day") %>
+        <%= f.ss_select :repeat, HelperTypes::LocalCalendar::REPEATS.map { |r| [ HelperTypes::LocalCalendar.text("repeat.#{r}"), r ] }, label: t("agenda.show.repeat") %>
+        <%= f.ss_text_field :location, label: t("agenda.show.location"), maxlength: 255 %>
+        <div><%= f.ss_submit t("agenda.show.create") %></div>
       <% end %>
     <% end %>
     <% @locals.each do |c| %>
@@ -43,7 +43,9 @@
           <% list.sort_by { |e| e["start"] }.each do |e| %>
             <li class="flex items-center gap-2 text-sm">
               <span class="min-w-0 flex-1 truncate"><%= e["summary"] %> <span class="text-muted">· <%= l(Time.zone.parse(e["start"]).in_time_zone(@zone), format: :short) %><%= " · #{HelperTypes::LocalCalendar.text("repeat.#{e['repeat']}").downcase}" if e["repeat"].present? && e["repeat"] != "none" %></span></span>
-              <% if can?(:manage) %><%= button_to event_site_agenda_path(@site, c.id, e["uid"]), method: :delete, class: "ss-icon-btn is-sm is-danger", form: { class: "contents", data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.erase"), turbo_confirm: t("agenda.show.delete_confirm", name: e["summary"]) } }, title: t("agenda.show.delete", name: e["summary"]), "aria-label": t("agenda.show.delete", name: e["summary"]) do %><%= icon("trash", "") %><% end %><% end %>
+              <% if can?(:manage) %><%= render Ss::ButtonComponent.new(icon: icon("trash", ""), href: event_site_agenda_path(@site, c.id, e["uid"]), method: :delete, variant: :ghost, size: :sm, class: "text-danger",
+                                                                        form: { class: "contents" }, confirm: t("agenda.show.delete_confirm", name: e["summary"]), confirm_tone: :danger, confirm_button: t("shared.confirm.erase"),
+                                                                        title: t("agenda.show.delete", name: e["summary"]), aria: { label: t("agenda.show.delete", name: e["summary"]) }) %><% end %>
             </li>
           <% end %>
         </ul>

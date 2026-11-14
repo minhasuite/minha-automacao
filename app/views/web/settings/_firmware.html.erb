@@ -15,8 +15,8 @@
               <% if v[:notes_url].present? %> · <%= link_to t("firmware.notes"), v[:notes_url], target: "_blank", rel: "noopener" %><% end %></p>
           </div>
           <% if v[:state] == "available" %>
-            <%= button_to settings_firmware_path(point_id: p.id), class: "ss-btn ss-btn-primary ss-btn-sm",
-                          form: { data: { turbo_confirm: t("firmware.confirm", name: p.device.name, version: v[:latest]) } } do %><%= icon("download", "size-4") %><%= t("firmware.install") %><% end %>
+            <%= render Ss::ButtonComponent.new(label: t("firmware.install"), icon: icon("download", "size-4"), href: settings_firmware_path(point_id: p.id), method: :post, size: :sm,
+                                               confirm: t("firmware.confirm", name: p.device.name, version: v[:latest])) %>
           <% else %>
             <span class="ss-badge <%= v[:state] == "installing" ? "ss-badge-accent" : "ss-badge-success" %>"><%= t("firmware.states.#{v[:state]}") %></span>
           <% end %>

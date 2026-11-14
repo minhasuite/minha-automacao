@@ -17,13 +17,13 @@
   </nav>
   <details <%= "open" if f.custom_dates? %>>
     <summary class="ss-summary text-sm font-semibold text-ink-2"><%= t("logbook.more_filters") %></summary>
-    <%= form_with url: logbook_path, method: :get, class: "flex flex-wrap items-end gap-3 mt-3", data: { turbo_frame: "logbook", turbo_action: "advance" } do %>
+    <%= ss_form_with url: logbook_path, method: :get, class: "flex flex-wrap items-end gap-3 mt-3", data: { turbo_frame: "logbook", turbo_action: "advance" } do %>
       <%= hidden_field_tag :site_id, @site.id, id: nil %>
       <% f.to_params.except(:from, :until, :before, :period, :sources).each do |k, v| %><%= hidden_field_tag k, v, id: nil %><% end %>
       <% if f.keys.size < sources.size %><% f.keys.each do |k| %><%= hidden_field_tag "sources[]", k, id: nil %><% end %><% end %>
       <%= render Ss::DateRangeComponent.new(from_name: "from", to_name: "until", from: (f.from.to_date.iso8601 if f.custom_dates?), to: params[:until].presence,
                                             legend: t("history.pick_dates"), id: "lb-range") %>
-      <button class="ss-btn ss-btn-primary"><%= t("points.apply") %></button>
+      <%= render Ss::ButtonComponent.new(label: t("points.apply"), type: :submit) %>
     <% end %>
   </details>
 </section>

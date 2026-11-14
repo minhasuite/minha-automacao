@@ -1,11 +1,9 @@
 <%# locals: (f:, point:) -%>
-<div><%= f.label :kind, t("helper_forms.template.kind"), class: "ss-label" %><%= f.select :kind, HelperTypes::Template.kinds.invert, { selected: point.address["kind"] }, class: "ss-input" %></div>
-<div><%= f.label :unit, t("helper_forms.template.unit"), class: "ss-label" %><%= f.text_field :unit, value: point.unit, class: "ss-input", maxlength: 20, placeholder: "°C, W" %></div>
-<div class="sm:col-span-2"><%= f.label :expr, t("helper_forms.template.expr"), class: "ss-label" %><%= f.text_area :expr, value: point.address["expr"], rows: 3, maxlength: 500, class: "ss-input num text-sm", spellcheck: false, required: true,
-                                                    placeholder: "sala.temperatura - externo.temperatura" %>
-  <p class="text-xs text-muted mt-1"><%= t("helper_forms.template.expr_hint_html") %></p></div>
-<div><%= f.label :every, t("helper_forms.template.every"), class: "ss-label" %><%= f.text_field :every, value: (Automations::Dsl.duration_label(point.address["every"]).delete(" ") if point.address["every"]), class: "ss-input num", maxlength: 10, placeholder: "1m, 15m, 1h" %>
-  <p class="text-xs text-muted mt-1"><%= t("helper_forms.template.every_hint") %></p></div>
-<div class="sm:col-span-2"><%= f.label :attrs, t("helper_forms.template.attrs"), class: "ss-label" %><%= f.text_area :attrs, value: point.address["attrs"].to_h.map { |k, v| "#{k}: #{v}" }.join("\n"), rows: 3, maxlength: 5000, class: "ss-input num text-sm", spellcheck: false,
-                                                     placeholder: 'frase: {{ points["sala.luz"].text }} desde {{ points["sala.luz"].changed_at | date: "%H:%M" }}' %>
-  <p class="text-xs text-muted mt-1"><%= t("helper_forms.template.attrs_hint_html") %></p></div>
+<%= f.ss_select :kind, HelperTypes::Template.kinds.invert, label: t("helper_forms.template.kind"), selected: point.address["kind"] %>
+<%= f.ss_text_field :unit, label: t("helper_forms.template.unit"), value: point.unit, maxlength: 20, placeholder: "°C, W" %>
+<%= f.ss_text_area :expr, label: t("helper_forms.template.expr"), value: point.address["expr"], rows: 3, maxlength: 500, class: "num text-sm", spellcheck: false, required: true,
+                   placeholder: "sala.temperatura - externo.temperatura", help: t("helper_forms.template.expr_hint_html"), wrapper_class: "sm:col-span-2" %>
+<%= f.ss_text_field :every, label: t("helper_forms.template.every"), value: (Automations::Dsl.duration_label(point.address["every"]).delete(" ") if point.address["every"]), class: "num", maxlength: 10,
+                    placeholder: "1m, 15m, 1h", help: t("helper_forms.template.every_hint") %>
+<%= f.ss_text_area :attrs, label: t("helper_forms.template.attrs"), value: point.address["attrs"].to_h.map { |k, v| "#{k}: #{v}" }.join("\n"), rows: 3, maxlength: 5000, class: "num text-sm", spellcheck: false,
+                   placeholder: 'frase: {{ points["sala.luz"].text }} desde {{ points["sala.luz"].changed_at | date: "%H:%M" }}', help: t("helper_forms.template.attrs_hint_html"), wrapper_class: "sm:col-span-2" %>

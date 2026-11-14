@@ -1,6 +1,6 @@
 <%# locals: (f:, point:) -%>
 <% sources = point.site.points.includes(:device).where(data_type: %w[integer decimal]).where.not(id: point.id).ordered %>
-<div class="sm:col-span-2"><%= f.label :source, t("helper_forms.source"), class: "ss-label" %>
-  <%= f.select :source, sources.map { |p| [ "#{p.name} · #{p.device.name}", p.id ] }, { selected: point.address.dig("sources", 0), include_blank: t("helper_forms.pick_numeric") }, class: "ss-input", required: true %></div>
-<div><%= f.label :func, t("helper_forms.statistics.func"), class: "ss-label" %><%= f.select :func, HelperTypes::Statistics.funcs.invert, { selected: point.address["func"] }, class: "ss-input" %></div>
-<div><%= f.label :window, t("helper_forms.statistics.window"), class: "ss-label" %><%= f.text_field :window, value: helper_duration(point.address["window_s"]), class: "ss-input num", required: true, placeholder: "1h, 30m, 24h" %></div>
+<%= f.ss_select :source, sources.map { |p| [ "#{p.name} · #{p.device.name}", p.id ] }, label: t("helper_forms.source"), selected: point.address.dig("sources", 0),
+                include_blank: t("helper_forms.pick_numeric"), required: true, wrapper_class: "sm:col-span-2" %>
+<%= f.ss_select :func, HelperTypes::Statistics.funcs.invert, label: t("helper_forms.statistics.func"), selected: point.address["func"] %>
+<%= f.ss_text_field :window, label: t("helper_forms.statistics.window"), value: helper_duration(point.address["window_s"]), class: "num", required: true, placeholder: "1h, 30m, 24h" %>

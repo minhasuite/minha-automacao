@@ -1,14 +1,13 @@
 <%= render "web/shared/header", title: t("dashboards.json.title"), subtitle: "#{@dashboard.name} · #{t("dashboards.json.subtitle")}", back: edit_dashboard_path(@dashboard) %>
-<%= form_with url: json_dashboard_path(@dashboard), method: :patch, class: "ss-card ss-card-pad grid gap-3" do %>
+<%= ss_form_with url: json_dashboard_path(@dashboard), method: :patch, class: "ss-card ss-card-pad grid gap-3" do |f| %>
   <% if @errors.present? %>
     <%= render Ss::CalloutComponent.new(tone: :danger, title: t("dashboards.json.not_saved")) do %>
       <ul><% @errors.first(10).each do |e| %><li><%= e %></li><% end %></ul>
     <% end %>
   <% end %>
-  <label class="ss-label" for="definition"><%= t("dashboards.json.definition") %></label>
-  <%= text_area_tag :definition, @text, id: "definition", rows: 28, spellcheck: false, class: "ss-input num text-xs leading-relaxed" %>
+  <%= f.ss_text_area :definition, label: t("dashboards.json.definition"), value: @text, id: "definition", rows: 28, spellcheck: false, class: "num text-xs leading-relaxed" %>
   <div class="flex flex-wrap gap-2">
-    <%= submit_tag t("dashboards.json.submit"), class: "ss-btn ss-btn-primary" %>
+    <%= f.ss_submit t("dashboards.json.submit") %>
     <%= link_to t("dashboards.cancel"), edit_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>

@@ -1,11 +1,11 @@
 <%# locals: (f:, point:) -%>
 <% a = point.address %>
 <% site = point.site %>
-<label class="ss-check sm:col-span-2"><%= f.check_box :home, { checked: a["home"] == true }, "1", "0" %><%= t("helper_forms.zone.home") %><%= ": #{site.latitude}, #{site.longitude}" if site.latitude && site.longitude %>)</label>
+<%= f.ss_check_box :home, label: "#{t('helper_forms.zone.home')}#{": #{site.latitude}, #{site.longitude}" if site.latitude && site.longitude})", checked: a["home"] == true, wrapper_class: "sm:col-span-2" %>
 <fieldset class="sm:col-span-2 grid grid-cols-2 gap-2">
   <legend class="ss-label"><%= t("helper_forms.zone.center") %> <span class="font-normal"><%= t("helper_forms.zone.center_note") %></span></legend>
-  <div><%= f.label :latitude, "Latitude", class: "text-xs text-muted" %><%= f.text_field :latitude, value: a["latitude"], class: "ss-input num", inputmode: "decimal", placeholder: "-12,345678" %></div>
-  <div><%= f.label :longitude, "Longitude", class: "text-xs text-muted" %><%= f.text_field :longitude, value: a["longitude"], class: "ss-input num", inputmode: "decimal", placeholder: "-45,678901" %></div>
+  <%= f.ss_text_field :latitude, label: "Latitude", value: a["latitude"], class: "num", inputmode: "decimal", placeholder: "-12,345678" %>
+  <%= f.ss_text_field :longitude, label: "Longitude", value: a["longitude"], class: "num", inputmode: "decimal", placeholder: "-45,678901" %>
 </fieldset>
-<div><%= f.label :radius_m, t("helper_forms.zone.radius"), class: "ss-label" %><%= f.number_field :radius_m, value: a["radius_m"] || HelperTypes::Zone::DEFAULT_RADIUS, min: 20, max: 50_000, class: "ss-input num max-w-40" %></div>
+<%= f.ss_number_field :radius_m, label: t("helper_forms.zone.radius"), value: a["radius_m"] || HelperTypes::Zone::DEFAULT_RADIUS, min: 20, max: 50_000, class: "num max-w-40" %>
 <p class="sm:col-span-2 text-xs text-muted"><%= t("helper_forms.zone.hint") %></p>

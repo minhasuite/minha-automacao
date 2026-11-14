@@ -1,29 +1,31 @@
 <%# locals: (f:, point:) -%>
 <% a = point.address %>
 <% sensors = point.site.points.includes(:device).where(capability: %w[contact motion tamper problem onoff gate]).where(helper: nil).ordered %>
-<div><%= f.label :code, a["code_digest"] ? t("helper_forms.alarm.new_code") : t("helper_forms.alarm.code"), class: "ss-label" %>
-  <%= f.password_field :code, value: nil, class: "ss-input num max-w-48", inputmode: "numeric", autocomplete: "new-password", pattern: "[0-9]{4,8}", required: a["code_digest"].nil? %></div>
-<div><%= f.label :trigger_time, t("helper_forms.alarm.trigger_time"), class: "ss-label" %><%= f.text_field :trigger_time, value: helper_duration(a["trigger_s"] || 180), class: "ss-input num max-w-40", placeholder: "3m" %>
-  <p class="text-xs text-muted mt-1"><%= t("helper_forms.alarm.trigger_hint") %></p></div>
-<label class="ss-check sm:col-span-2"><%= f.check_box :code_arm, { checked: a["code_arm"] == true }, "1", "0" %><%= t("helper_forms.alarm.code_arm") %></label>
+<%= f.ss_password_field :code, label: a["code_digest"] ? t("helper_forms.alarm.new_code") : t("helper_forms.alarm.code"), value: nil, class: "num max-w-48", inputmode: "numeric",
+                        autocomplete: "new-password", pattern: "[0-9]{4,8}", required: a["code_digest"].nil? %>
+<%= f.ss_text_field :trigger_time, label: t("helper_forms.alarm.trigger_time"), value: helper_duration(a["trigger_s"] || 180), class: "num max-w-40", placeholder: "3m", help: t("helper_forms.alarm.trigger_hint") %>
+<%= f.ss_check_box :code_arm, label: t("helper_forms.alarm.code_arm"), checked: a["code_arm"] == true, wrapper_class: "sm:col-span-2" %>
 <% HelperTypes::AlarmPanel::MODES.each do |state, m| %>
   <% conf = a.dig("modes", state) || {} %>
   <% chosen = Array(conf["sensors"]) %>
   <fieldset class="sm:col-span-2 min-w-0 rounded-xl p-3 ring-1 ring-inset ring-line grid gap-3 sm:grid-cols-2">
     <legend class="px-1 ss-label"><%= t("helper_forms.alarm.mode", mode: HelperTypes::AlarmPanel.mode_label(state).downcase) %></legend>
-    <label class="ss-check sm:col-span-2"><%= check_box_tag "helper[modes][#{state}][enabled]", "1", conf.present?, id: "mode_#{state}" %><%= t("helper_forms.alarm.use_mode") %></label>
-    <div><label for="exit_<%= state %>" class="ss-label"><%= t("helper_forms.alarm.exit") %></label><%= text_field_tag "helper[modes][#{state}][exit]", helper_duration(conf["exit_s"] || 0), id: "exit_#{state}", class: "ss-input num", placeholder: "60s" %></div>
-    <div><label for="entry_<%= state %>" class="ss-label"><%= t("helper_forms.alarm.entry") %></label><%= text_field_tag "helper[modes][#{state}][entry]", helper_duration(conf["entry_s"] || 0), id: "entry_#{state}", class: "ss-input num", placeholder: "30s" %></div>
-    <div class="sm:col-span-2">
-      <p class="ss-label"><%= t("helper_forms.alarm.sensors") %></p>
-      <%= hidden_field_tag "helper[modes][#{state}][sensors][]", "", id: nil %>
-      <div class="max-h-56 overflow-y-auto grid gap-1 sm:grid-cols-2">
-        <% sensors.each do |s| %>
-          <label class="ss-check !font-normal min-w-0"><%= check_box_tag "helper[modes][#{state}][sensors][]", s.id, chosen.include?(s.id), id: "s_#{state}_#{s.id}" %><span class="truncate"><%= s.name %> <span class="text-muted">· <%= s.device.name %></span></span></label>
-        <% end %>
+    <%= ss_fields "helper[modes][#{state}]" do |mf| %>
+      <%= mf.ss_check_box :enabled, label: t("helper_forms.alarm.use_mode"), checked: conf.present?, unchecked_value: nil, id: "mode_#{state}", wrapper_class: "sm:col-span-2" %>
+      <%= mf.ss_text_field :exit, label: t("helper_forms.alarm.exit"), value: helper_duration(conf["exit_s"] || 0), id: "exit_#{state}", class: "num", placeholder: "60s" %>
+      <%= mf.ss_text_field :entry, label: t("helper_forms.alarm.entry"), value: helper_duration(conf["entry_s"] || 0), id: "entry_#{state}", class: "num", placeholder: "30s" %>
+      <div class="sm:col-span-2">
+        <p class="ss-label"><%= t("helper_forms.alarm.sensors") %></p>
+        <%= hidden_field_tag "helper[modes][#{state}][sensors][]", "", id: nil %>
+        <div class="max-h-56 overflow-y-auto grid gap-1 sm:grid-cols-2">
+          <% sensors.each do |s| %>
+            <%= mf.ss_check_box :sensors, label: tag.span(class: "truncate font-normal") { safe_join([ s.name, " ", tag.span("· #{s.device.name}", class: "text-muted") ]) },
+                                multiple: true, checked: chosen.include?(s.id), checked_value: s.id, unchecked_value: nil, id: "s_#{state}_#{s.id}", wrapper_class: "min-w-0" %>
+          <% end %>
+        </div>
+        <% if sensors.empty? %><p class="text-sm text-muted"><%= t("helper_forms.alarm.no_sensors") %></p><% end %>
       </div>
-      <% if sensors.empty? %><p class="text-sm text-muted"><%= t("helper_forms.alarm.no_sensors") %></p><% end %>
-    </div>
+    <% end %>
   </fieldset>
 <% end %>
 <p class="sm:col-span-2 text-xs text-muted"><%= t("helper_forms.alarm.hint") %></p>
