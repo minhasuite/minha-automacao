@@ -204,11 +204,11 @@ RSpec.describe "Beleza dos painéis" do
   describe "quiosque (ideia 21)" do
     it "relógio grande, movimento e álbum de fotos (web e API)" do
       get "/paineis/#{dashboard.id}", params: { quiosque: 1 }
-      expect(response.body).not_to include("ma-kiosk-clock")
+      expect(response.body).not_to include(%(data-kiosk-target="bigClock"))
       expect(response.body).to include("Álbum do protetor de tela", "Nenhuma foto no álbum.")
       patch "/quiosque", params: { saver: "photos", idle: "3", clock: "1", dim: "1" }
       get "/paineis/#{dashboard.id}"
-      expect(response.body).to include("ma-kiosk-clock", 'data-kiosk-target="bigClock"', 'data-kiosk-slides-value="[]"')
+      expect(response.body).to include('data-kiosk-target="bigClock"', 'data-kiosk-slides-value="[]"')
 
       within(tenant) { dashboard.files.attach(io: StringIO.new(png), filename: "planta.png", content_type: "image/png") } # imagem do painel (não é do álbum)
       get "/paineis/#{dashboard.id}"

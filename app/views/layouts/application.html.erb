@@ -22,7 +22,8 @@
 <% body_theme = @body_theme || {} %>
 <%# ss-inputs: caixas e rádios soltos no desenho da suíte; tema e "esconder valores" pelos controllers da gem
     (ss-privacy na chave "privacy" de antes, para não perder a escolha de quem já usava). %>
-<body class="ss-base ss-inputs min-h-screen<%= " ma-kiosk" if kiosk %> <%= body_theme["class"] %>" style="<%= body_theme["style"] %>"
+<%# Quiosque: tela cheia sem limite de largura; o cursor some parado (is-kiosk-idle, do kiosk_controller). %>
+<body class="ss-base ss-inputs min-h-screen<%= " [&_main]:max-w-none [&.is-kiosk-idle]:cursor-none! [&.is-kiosk-idle_*]:cursor-none!" if kiosk %> <%= body_theme["class"] %>" style="<%= body_theme["style"] %>"
       data-controller="ss-theme ss-privacy" data-ss-privacy-key-value="privacy" data-action="keydown.p@window->ss-privacy#key">
   <%= ss_skip_link("#conteudo", t("layout.skip")) %>
   <% if kiosk %>
@@ -41,7 +42,7 @@
     <% end %>
   <% end %>
   <%# "Falar com a casa" em todas as telas: botão flutuante da gem fora do <main> (o AppScreen lê só o main;
-      o app tem o dele), uma vez por página. No quiosque, acima da barra do canto (.ma-kiosk-bar). %>
+      o app tem o dele), uma vez por página. No quiosque, acima da barra do canto. %>
   <% if (site = assist_site) %><%= render "web/assist/fab", site: site, lift: ("4rem" if kiosk) %><% end %>
   <%= render "web/shared/flash" %>
   <%= render "web/shared/palette" if current_user %>

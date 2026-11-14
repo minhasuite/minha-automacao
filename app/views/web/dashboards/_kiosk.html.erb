@@ -10,13 +10,14 @@
 <% can_album = SiteMembership.allowed?(@site_role, :manage) %>
 <div data-controller="kiosk" data-kiosk-idle-value="<%= k['idle'] %>" data-kiosk-saver-value="<%= k['saver'] %>" data-kiosk-motion-value="<%= k['motion'] %>"
      data-kiosk-dim-value="<%= k['dim'] %>" data-kiosk-slides-value="<%= (cameras + photos).to_json %>">
-  <div class="ma-kiosk-bar" data-kiosk-target="bar">
+  <%# Barra do canto (some com o cursor parado), protetor de tela e relógio grande: domínio, em utilitários e tokens. %>
+  <div class="fixed right-4 bottom-4 z-[60] flex gap-[.4rem] p-[.3rem] rounded-full bg-[color-mix(in_srgb,var(--surface)_80%,transparent)] backdrop-blur-[12px] shadow-[var(--shadow-card)] transition-opacity duration-[.4s] [.is-kiosk-idle_&]:opacity-0" data-kiosk-target="bar">
     <%= render Ss::IconButtonComponent.new(icon: icon("arrows-expand", "size-5"), label: t("dashboards.kiosk.fullscreen"), data: { action: "kiosk#fullscreen" }) %>
     <%= render Ss::IconButtonComponent.new(icon: icon("moon", "size-5"), label: t("dashboards.kiosk.sleep"), data: { action: "kiosk#sleep" }) %>
     <details class="ma-kiosk-pop relative">
       <summary class="ss-icon-btn" title="<%= t("dashboards.kiosk.settings") %>" aria-label="<%= t("dashboards.kiosk.settings") %>"><%= icon("cog", "size-5") %></summary>
-      <div class="ma-kiosk-panel">
-      <%= ss_form_with url: kiosk_path, method: :patch, class: "ss-card ma-kiosk-form" do |f| %>
+      <div class="absolute right-0 bottom-14 grid gap-2 w-[min(20rem,calc(100vw-2rem))] max-h-[calc(100dvh-5rem)] overflow-y-auto">
+      <%= ss_form_with url: kiosk_path, method: :patch, class: "ss-card grid gap-3 p-4" do |f| %>
         <p class="font-bold text-ink"><%= t("dashboards.kiosk.this_tablet") %></p>
         <%= f.ss_select :saver, KioskMode::SAVERS.keys.map { |s| [ t("dashboards.kiosk.savers.#{s}"), s ] }, selected: k["saver"], label: t("dashboards.kiosk.saver"), id: "k-saver" %>
         <%= f.ss_number_field :idle, value: k["idle"], min: 1, max: 60, class: "num", label: t("dashboards.kiosk.idle"), id: "k-idle" %>
@@ -32,7 +33,7 @@
       <%# Ideia 21: álbum do protetor de tela (fotos enviadas; quem edita o painel). %>
       <% if can_album %>
         <% album = dashboard.album %>
-        <div class="ss-card ma-kiosk-form">
+        <div class="ss-card grid gap-3 p-4">
           <p class="font-bold text-ink"><%= t("dashboards.kiosk.album") %></p>
           <p class="text-xs text-muted"><%= t("dashboards.kiosk.album_hint", max: Dashboard::ALBUM_MAX) %> <%= t("dashboards.kiosk.album_count", count: album.size) %></p>
           <% if album.any? %>
@@ -56,20 +57,22 @@
   </div>
   <% if k["clock"] %>
     <%# Ideia 21: relógio grande com o painel aceso (o mesmo relógio do protetor). %>
-    <p class="ma-kiosk-clock num" aria-hidden="true"><span data-kiosk-target="bigClock">--:--</span><small data-kiosk-target="bigDate"></small></p>
+    <p class="num fixed top-[max(.75rem,env(safe-area-inset-top))] right-4 z-30 m-0 grid justify-items-end pointer-events-none text-[clamp(2.5rem,7vw,5.5rem)] font-light leading-none tracking-[-.03em] text-ink [text-shadow:0_2px_16px_color-mix(in_srgb,var(--page)_80%,transparent)] [&_small]:mt-[.35rem] [&_small]:text-[clamp(.8rem,1.6vw,1.1rem)] [&_small]:font-semibold [&_small]:tracking-normal [&_small]:text-ink-2 [&_small]:first-letter:uppercase" aria-hidden="true"><span data-kiosk-target="bigClock">--:--</span><small data-kiosk-target="bigDate"></small></p>
   <% end %>
 
-  <div class="ma-saver <%= 'ma-saver-dim' if k['dim'] %>" data-kiosk-target="saver" hidden role="dialog" aria-modal="true" aria-label="<%= t("dashboards.kiosk.saver_label") %>">
-    <div class="ma-saver-slide" data-kiosk-target="slide" aria-hidden="true"></div>
-    <div class="ma-saver-info">
-      <p class="ma-saver-clock num" data-kiosk-target="clock">--:--</p>
-      <p class="ma-saver-date" data-kiosk-target="date"></p>
+  <div class="fixed inset-0 z-[80] grid place-items-center overflow-hidden text-[var(--on-accent)] bg-[color-mix(in_srgb,var(--side)_60%,black)] cursor-none [&[hidden]]:hidden" data-kiosk-target="saver" hidden role="dialog" aria-modal="true" aria-label="<%= t("dashboards.kiosk.saver_label") %>">
+    <div class="ss-anim-to absolute -inset-[20%] bg-[radial-gradient(circle_at_30%_30%,color-mix(in_srgb,var(--accent)_45%,transparent),transparent_55%),radial-gradient(circle_at_70%_75%,color-mix(in_srgb,var(--series-2)_35%,transparent),transparent_55%)]"
+         style="--ss-anim-to: translate(6%, -4%) rotate(8deg); --ss-anim-dur: 30s; --ss-anim-iter: infinite; --ss-anim-dir: alternate; --ss-anim-ease: ease-in-out" aria-hidden="true"></div>
+    <div class="absolute inset-0 bg-center bg-cover bg-no-repeat bg-[image:var(--slide)] opacity-0 transition-opacity duration-[1.2s] motion-reduce:transition-none [&.is-on]:opacity-100 <%= 'brightness-[.7]' if k['dim'] %> after:content-[''] after:absolute after:inset-0 after:bg-[linear-gradient(180deg,transparent_40%,color-mix(in_srgb,var(--side)_75%,transparent))]" data-kiosk-target="slide" aria-hidden="true"></div>
+    <div class="relative text-center [text-shadow:0_2px_24px_color-mix(in_srgb,black_45%,transparent)] <%= 'opacity-80' if k['dim'] %>">
+      <p class="num text-[clamp(4rem,18vw,11rem)] font-extrabold tracking-[-.04em] leading-none" data-kiosk-target="clock">--:--</p>
+      <p class="mt-2 text-[clamp(1rem,3vw,1.6rem)] font-semibold opacity-85 first-letter:uppercase" data-kiosk-target="date"></p>
       <% if k["saver"] == "weather" && (weather || temperature) %>
-        <p class="ma-saver-weather"><%= icon("cloud", "size-6") %>
+        <p class="inline-flex items-center gap-[.6rem] mt-5 py-2 px-4 rounded-full text-[1.15rem] font-bold bg-[color-mix(in_srgb,white_12%,transparent)] backdrop-blur-[8px]"><%= icon("cloud", "size-6") %>
           <% if temperature %><span class="num"><%= point_value_text(temperature) %></span><% end %>
           <% if weather %><span><%= point_value_text(weather) %></span><% end %></p>
       <% end %>
-      <p class="ma-saver-hint"><%= site.name %> · <%= t("dashboards.kiosk.touch_back") %></p>
+      <p class="mt-8 text-[.85rem] opacity-55"><%= site.name %> · <%= t("dashboards.kiosk.touch_back") %></p>
     </div>
   </div>
 </div>

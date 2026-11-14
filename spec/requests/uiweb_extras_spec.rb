@@ -23,7 +23,7 @@ RSpec.describe "Quiosque, busca global e temas" do
   describe "quiosque" do
     it "?quiosque=1 liga neste aparelho (cookie), sem menu; ajustes e ?quiosque=0 desligam" do
       get "/", params: { quiosque: 1 }
-      expect(response.body).to include("ma-kiosk", 'data-controller="kiosk"', "Protetor de tela").and not_include('id="ss-shell-side"')
+      expect(response.body).to include("[&amp;_main]:max-w-none", 'data-controller="kiosk"', "Protetor de tela").and not_include('id="ss-shell-side"')
       get "/"
       expect(response.body).to include('data-controller="kiosk"') # o aparelho lembra
 
