@@ -19,8 +19,10 @@ Rails.application.routes.draw do
 
   # PWA (Lote 1): manifesto, service worker e o que ele chama sem sessão (a
   # resposta do botão com o token de uso único e a imagem por URL assinada).
-  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+  # pwa-ios (docs/pwa.md): manifesto no idioma de quem pede, service worker com versão e a página sem conexão.
+  get "manifest" => "web/pwa#manifest", as: :pwa_manifest
+  get "service-worker" => "web/pwa#service_worker", as: :pwa_service_worker
+  get "sem-conexao" => "web/pwa#offline", as: :offline
   post "push/resposta", to: "push#respond", as: :push_respond
   get "push/imagem", to: "push#image", as: :push_image
   # Respostas de mensageiro (Pacote 4: Telegram, WhatsApp): o plugin da integração valida.

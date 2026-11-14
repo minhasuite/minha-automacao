@@ -94,6 +94,7 @@ module Web
         Accounts::DestroyCompany.call(tenant)
       end
       reset_session
+      forget!
       redirect_to login_path, notice: t("notices.account_deleted")
     end
 

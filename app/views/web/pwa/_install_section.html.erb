@@ -1,0 +1,21 @@
+<%# Configurações → Aparência #instalar (pwa-ios, docs/pwa.md): o que vale neste aparelho. O pwa-install mostra
+    "já instalado", o passo a passo do iPhone (sem pedido de instalação no Safari) ou o botão do navegador. %>
+<section id="instalar" class="ss-card ss-card-pad mt-4 scroll-mt-24" aria-labelledby="ap-i" data-controller="pwa-install">
+  <h2 id="ap-i" class="flex items-center gap-2"><%= icon("device-mobile", "size-5 text-accent") %><%= t("pwa.install.title") %></h2>
+  <p class="text-sm text-muted mt-1"><%= t("pwa.install.pitch") %></p>
+  <%= render Ss::NoteComponent.new(text: t("pwa.install.installed"), icon: icon("check-circle", ""), tone: :success, css: "mt-3", data: { pwa_install_target: "installed" }, hidden: true) %>
+  <%= render Ss::NoteComponent.new(text: t("pwa.install.https"), icon: icon("lock-closed", ""), tone: :warn, css: "mt-3", data: { pwa_install_target: "https" }, hidden: true) %>
+  <div class="mt-3" data-pwa-install-target="button" hidden>
+    <%= render Ss::ButtonComponent.new(label: t("pwa.install.button"), icon: icon("download", ""), data: { action: "pwa-install#install" }) %>
+  </div>
+  <div class="mt-4" data-pwa-install-target="ios">
+    <h3 class="font-bold text-ink"><%= t("pwa.install.ios_title") %></h3>
+    <ol class="ss-steps mt-2">
+      <% 1.upto(4) do |n| %><li><%= t("pwa.install.ios_step#{n}") %></li><% end %>
+    </ol>
+  </div>
+  <div class="mt-4" data-pwa-install-target="other">
+    <h3 class="font-bold text-ink"><%= t("pwa.install.other_title") %></h3>
+    <p class="text-sm text-ink-2 mt-1"><%= t("pwa.install.other_text") %></p>
+  </div>
+</section>

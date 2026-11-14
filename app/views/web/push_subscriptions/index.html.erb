@@ -1,7 +1,7 @@
 <%= render "web/shared/header", title: t("settings.title"), subtitle: t("push.subtitle") %>
 <%= render layout: "web/settings/frame", locals: { current: :push } do %>
 <section class="ss-card ss-card-pad" aria-labelledby="este-t" data-controller="push" data-push-key-value="<%= Push::Browser.public_key %>"
-         data-push-url-value="<%= push_subscriptions_path %>" data-push-texts-value="<%= t("push.js").to_json %>">
+         data-push-url-value="<%= push_subscriptions_path %>" data-push-texts-value="<%= t("push.js").merge(ios_install: t("pwa.push.ios_install"), ios_old: t("pwa.push.ios_old")).to_json %>">
   <h2 id="este-t"><%= t("push.this_device") %></h2>
   <p class="text-sm text-muted mt-1" data-push-target="status"><%= t("push.checking") %></p>
   <div class="mt-3 flex flex-wrap items-end gap-2">

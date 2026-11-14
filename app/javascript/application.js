@@ -149,6 +149,26 @@ if ("serviceWorker" in navigator && window.isSecureContext) {
   navigator.serviceWorker.register("/service-worker.js", { scope: "/" }).catch(() => {})
 }
 
+// Instalar (pwa-ios, docs/pwa.md): o Chrome/Edge entrega o pedido de instalação uma vez; guarda para o
+// botão "Instalar o app" (pwa-install). O iPhone não tem esse evento: lá é o passo a passo.
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault()
+  window.maInstallPrompt = e
+  window.dispatchEvent(new Event("ma:installable"))
+})
+window.addEventListener("appinstalled", () => { window.maInstallPrompt = null })
+
+// Selo do ícone do app instalado (Badging API: iPhone na Tela de Início 16.4+, Chrome/Edge instalado) com os
+// avisos não lidos do <meta name="ma-unread"> do layout; o service worker acerta o número quando chega push.
+function appBadge() {
+  const meta = document.querySelector('meta[name="ma-unread"]')
+  if (!meta || !("setAppBadge" in navigator)) return
+  const n = parseInt(meta.content, 10) || 0
+  ;(n > 0 ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {})
+}
+document.addEventListener("turbo:load", appBadge)
+document.addEventListener("turbo:morph", appBadge)
+
 // Menus em <details> (.ss-menu da gem e o .ma-kiosk-pop do quiosque): Esc fecha e devolve o
 // foco ao botão, clique fora fecha, e o summary diz se está aberto (aria-expanded).
 const MENUS = "details.ss-menu, details.ma-kiosk-pop"

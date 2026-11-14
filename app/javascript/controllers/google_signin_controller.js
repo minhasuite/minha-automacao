@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { ios, standalone } from "controllers/pwa/platform"
 
 // Botão do Google (Google Identity Services): carrega o script do Google uma
 // vez (vale também nas visitas do Turbo), desenha o botão no tema e no idioma
@@ -16,9 +17,11 @@ const loadGis = () => gis ||= new Promise((resolve, reject) => {
 
 export default class extends Controller {
   static values = { client: String, text: String, locale: String }
-  static targets = ["form", "credential", "button"]
+  static targets = ["form", "credential", "button", "standalone"]
 
   async connect() {
+    // pwa-ios: no app da Tela de Início do iPhone o pop-up do Google pode não voltar; a nota aponta senha/passkey.
+    if (this.hasStandaloneTarget) this.standaloneTarget.hidden = !(ios() && standalone())
     try { await loadGis() } catch { this.element.hidden = true; return }
     const root = document.documentElement
     const dark = root.dataset.theme === "dark" || (!root.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches)

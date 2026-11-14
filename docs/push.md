@@ -226,6 +226,7 @@ falsos, nada sai para fora) e `spec/requests/notificacoes_central_spec.rb`.
 - **Android (Chrome):** instale a PWA (menu → "Instalar app") e inscreva em
   Configurações → Meus aparelhos. Funciona também no Chrome sem instalar.
 - **iPhone:** só iOS 16.4+ e só com a PWA na tela inicial (Compartilhar →
-  Adicionar à Tela de Início), aberta pelo ícone.
+  Adicionar à Tela de Início), aberta pelo ícone. Instalar, selo do ícone, página sem conexão,
+  área segura, câmeras, voz e sessão no iPhone: `docs/pwa.md`.
 - "Apagar aviso" pelo Web Push fecha a notificação; alguns navegadores podem
   mostrar um aviso genérico quando um push chega sem notificação nova.

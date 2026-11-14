@@ -17,7 +17,8 @@ module Push
     # `ids` = só essas inscrições (nova tentativa). Devolve as que falharam de
     # forma passageira (Transient, docs/confiabilidade.md).
     def deliver_some(user, message, ids)
-      payload = message.to_h(capabilities).to_json
+      # "unread": avisos não lidos da pessoa, para o selo do ícone (navigator.setAppBadge no service worker).
+      payload = message.to_h(capabilities).merge("unread" => unread(user)).to_json
       subs = user.push_subscriptions
       subs = subs.where(id: ids) if ids
       subs.filter_map { |sub| sub.id if send_to(sub, payload, ttl: message.ttl, urgency: message.urgency) == :retry }
@@ -25,9 +26,11 @@ module Push
 
     # Pede ao service worker para fechar o aviso com a tag.
     def clear(user, tag)
-      payload = { "type" => "clear", "tag" => tag }.to_json
+      payload = { "type" => "clear", "tag" => tag, "unread" => unread(user) }.to_json
       user.push_subscriptions.find_each { |sub| send_to(sub, payload, ttl: DEFAULT_TTL, urgency: "normal") }
     end
+
+    def unread(user) = ActsAsTenant.with_tenant(user.tenant) { Notification.for_user(user).unread.count }
 
     # => true | false (inscrição removida ou falha) | :retry (falha passageira: nada chegou)
     def send_to(sub, payload, ttl:, urgency:)

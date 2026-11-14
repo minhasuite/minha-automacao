@@ -8,5 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Automação">
-<%# "default": o iOS não desenha a página por baixo do relógio (a moldura da gem não reserva a área segura do topo). %>
+<%# Barra de status do iPhone (pwa-ios, docs/pwa.md): fica "default" de propósito. Com viewport-fit=cover (nos
+    layouts) a moldura da gem já respeita o env(safe-area-inset-*), mas o "black-translucent" deixa o relógio
+    sempre branco: no tema claro ele some sobre o topo claro. Com "default" o iOS pinta a barra com o
+    theme-color (o --page do tema em uso, pelo _theme_head) e o texto acompanha. Sem splash próprio
+    (apple-touch-startup-image pede uma imagem por tamanho de tela): o iPhone mostra o fundo até carregar. %>
 <meta name="apple-mobile-web-app-status-bar-style" content="default">

@@ -192,6 +192,12 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `kind: "event"` no motor). Web Push exige https (servidor da casa: só pelo acesso
   externo) e as chaves `VAPID_*` (`bin/vapid-keys`; nunca no repo). Nunca
   mande push de teste para o celular de alguém: teste com navegador headless.
+- **PWA no iPhone (`docs/pwa.md`)**: manifesto/service worker/sem conexão pelo `Web::PwaController` (SW
+  com `VERSION`, guarda só `/sem-conexao`; nada da casa em cache), instalar em Aparência `#instalar` + aviso
+  no Início só no Safari do iPhone (`controllers/pwa/platform.js`), selo do ícone pelo `unread` do Web Push
+  e `<meta name="ma-unread">`, `viewport-fit=cover` com a área segura da gem, barra de status `default`
+  (decidido), login lembrado pelo cookie cifrado `ma_remember` (30 dias, escrito só ao entrar/sair) e
+  `allow_browser` com Safari 16.4.
 - **Menos ruído nos avisos (aberto/fechado, `docs/push.md` "Menos ruído")**: nível =
   `data["priority"]` (crítico fura silêncio e "silenciar", nunca junta); juntar = `merge_key`/
   `merge_s`/`merge_subject` no `data` (`Notifications::Merge`; regra de aviso por padrão com a

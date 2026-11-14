@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="<%= I18n.locale %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title><%= t("pwa.offline.title") %> — Minha Automação</title>
+  <%# Guardada pelo service worker (docs/pwa.md): sem sessão, sem dado da casa, sem script além do tema. %>
+  <%= stylesheet_link_tag "tailwind" %>
+  <%= ss_theme_color_tag(Rails.configuration.x.pwa.page_light, dark: true) %>
+  <%= render "web/shared/theme_head" %>
+</head>
+<body class="ss-base min-h-screen grid place-items-center px-4 py-10">
+  <main class="w-full max-w-md ss-card ss-card-pad">
+    <%= render Ss::EmptyStateComponent.new(variant: :erro, title: t("pwa.offline.title"), text: t("pwa.offline.text"),
+                                           primary: { label: t("pwa.offline.retry"), url: "/" }) %>
+  </main>
+</body>
+</html>

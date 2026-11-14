@@ -1,0 +1,7 @@
+<%# Início (pwa-ios): aviso discreto e dispensável só no Safari do iPhone fora do app instalado (o
+    pwa-install decide no navegador; nasce escondido, então ninguém mais vê nem o app Android). %>
+<div class="mb-4" data-controller="pwa-install" data-pwa-install-mode-value="notice" data-action="ss-notice:dismiss->pwa-install#dismiss" hidden>
+  <%= render Ss::NoticeCardComponent.new(title: t("pwa.install.notice_title"), text: t("pwa.install.notice_text"), icon: icon("device-mobile", ""),
+                                         dismissible: true, dismiss_label: t("pwa.install.dismiss"),
+                                         actions: [ { label: t("pwa.install.notice_action"), url: settings_appearance_path(anchor: "instalar"), method: :get } ]) %>
+</div>

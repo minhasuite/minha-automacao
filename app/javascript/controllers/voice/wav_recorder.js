@@ -1,9 +1,21 @@
 // Gravação do microfone em WAV PCM 16 kHz mono (ondaB1 B6; voz-offline): o
 // formato que o Whisper local (Wyoming) aceita e que a nuvem também lê.
-// Exige https ou localhost. start() → { stop(): Blob }.
+// Exige https ou localhost. startWav() → { stop(): Blob } (16 kHz, ou menos se o aparelho gravar abaixo).
 export async function startWav() {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } })
-  const ctx = new AudioContext({ sampleRate: 16000 })
+  // iPhone (pwa-ios): o AudioContext nasce e acorda (resume) ainda dentro do toque, antes de qualquer await;
+  // criado depois do getUserMedia ele fica "suspended" e grava silêncio. Taxa do aparelho (o WebKit não
+  // mistura microfone de 48 kHz com contexto de 16 kHz): a conversão para 16 kHz é no stop().
+  const Ctx = window.AudioContext || window.webkitAudioContext
+  const ctx = new Ctx()
+  const resumed = ctx.resume().catch(() => {})
+  let stream
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } })
+  } catch (e) {
+    ctx.close()
+    throw e
+  }
+  await resumed
   const source = ctx.createMediaStreamSource(stream)
   const node = ctx.createScriptProcessor(4096, 1, 1)
   const samples = []
@@ -17,9 +29,30 @@ export async function startWav() {
       stream.getTracks().forEach((t) => t.stop())
       const rate = ctx.sampleRate
       ctx.close()
-      return wav(samples, rate)
+      const to = Math.min(rate, RATE)
+      return wav([resample(samples, rate, to)], to)
     }
   }
+}
+
+const RATE = 16000
+
+// Média por janela (o bastante para voz) de `from` Hz para `to` Hz; mesma taxa = só junta os pedaços.
+export function resample(chunks, from, to) {
+  const length = chunks.reduce((n, c) => n + c.length, 0)
+  const all = new Float32Array(length)
+  let o = 0
+  chunks.forEach((c) => { all.set(c, o); o += c.length })
+  if (from <= to) return all
+  const ratio = from / to
+  const out = new Float32Array(Math.floor(length / ratio))
+  for (let i = 0; i < out.length; i++) {
+    const a = Math.floor(i * ratio), b = Math.min(length, Math.floor((i + 1) * ratio))
+    let sum = 0
+    for (let j = a; j < b; j++) sum += all[j]
+    out[i] = b > a ? sum / (b - a) : 0
+  }
+  return out
 }
 
 export function wav(chunks, rate) {

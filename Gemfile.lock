@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/minhasuite/componentes-ui.git
-  revision: 05838374f384fdadd9fd37772d275fa19cfbc8dd
-  tag: v0.23.4
+  revision: acbe73954e5c31abd9e5884327b5a0cb570be176
+  branch: pwa-ios
   specs:
     componentes_ui (0.23.4)
       railties (>= 8.0)

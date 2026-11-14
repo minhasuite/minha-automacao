@@ -2,12 +2,14 @@
 <html lang="<%= I18n.locale %>">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title><%= [ content_for(:title), "Minha Automação" ].compact.join(" — ") %></title>
   <meta name="view-transition" content="same-origin">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= render "web/shared/pwa_head" %>
+  <%# Selo do ícone da PWA (application.js → navigator.setAppBadge): avisos não lidos. %>
+  <% if current_user %><meta name="ma-unread" content="<%= unread_notifications %>"><% end %>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
   <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>

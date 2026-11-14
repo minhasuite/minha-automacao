@@ -1,0 +1,103 @@
+// Service worker da PWA (Lote 1; iPhone em pwa-ios, docs/pwa.md). Push, botões do aviso, selo do ícone
+// e a página "Sem conexão com a casa". Não guarda páginas nem dados da casa: só a página sem conexão
+// (a mesma para todos), o CSS dela e o ícone. Mensagem do servidor = Push::Message#to_h (+ "unread", o
+// número de avisos não lidos da pessoa, para o selo), ou {type: "clear", tag} para apagar o aviso.
+// A versão muda com o CSS e a versão do app: o navegador vê o arquivo novo e atualiza sozinho.
+const VERSION = "<%= @version %>"
+const CACHE = `ma-offline-${VERSION}`
+const OFFLINE_URL = "<%= offline_path %>"
+const OFFLINE_ASSETS = <%= raw @offline_assets.to_json %>
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE)
+    .then((cache) => cache.addAll(OFFLINE_ASSETS.map((url) => new Request(url, { credentials: "same-origin", cache: "reload" }))))
+    .catch(() => null)
+    .then(() => self.skipWaiting()))
+})
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys()
+    await Promise.all(keys.filter((k) => k.startsWith("ma-offline-") && k !== CACHE).map((k) => caches.delete(k)))
+    // Carregar a página enquanto o service worker acorda (onde houver; o Safari não tem).
+    if (self.registration.navigationPreload) await self.registration.navigationPreload.enable().catch(() => null)
+    await self.clients.claim()
+  })())
+})
+
+// Só navegação (abrir o app, recarregar, link fora do Turbo): vai à rede sempre; sem rede, a página
+// "Sem conexão com a casa". O CSS da página sem conexão sai do cache só quando a rede falha.
+self.addEventListener("fetch", (event) => {
+  const req = event.request
+  if (req.method !== "GET") return
+  if (req.mode === "navigate") {
+    event.respondWith((async () => {
+      try {
+        return (await event.preloadResponse) || (await fetch(req))
+      } catch (_) {
+        return (await caches.match(OFFLINE_URL, { cacheName: CACHE })) ||
+          new Response("<!doctype html><meta charset=utf-8><title>Minha Automação</title><p>Offline", { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } })
+      }
+    })())
+  } else if (OFFLINE_ASSETS.includes(new URL(req.url).pathname)) {
+    event.respondWith(fetch(req).catch(() => caches.match(req, { cacheName: CACHE }).then((r) => r || Response.error())))
+  }
+})
+
+// Selo do ícone (Badging API: iPhone com o app na Tela de Início, iOS 16.4+; Chrome/Edge instalado).
+function badge(unread) {
+  if (!Number.isInteger(unread) || !("setAppBadge" in self.navigator)) return Promise.resolve()
+  return (unread > 0 ? self.navigator.setAppBadge(unread) : self.navigator.clearAppBadge()).catch(() => null)
+}
+
+self.addEventListener("push", (event) => {
+  let msg = {}
+  try { msg = event.data ? event.data.json() : {} } catch (_) { msg = { title: "Minha Automação", body: event.data?.text() || "" } }
+
+  if (msg.type === "clear") {
+    event.waitUntil(Promise.all([
+      self.registration.getNotifications({ tag: msg.tag }).then((list) => list.forEach((n) => n.close())),
+      badge(msg.unread)
+    ]))
+    return
+  }
+
+  // O WebKit (iPhone) exige mostrar uma notificação a cada push (userVisibleOnly) e ignora actions,
+  // image, badge e requireInteraction: o aviso chega com título, texto e ícone, e o toque abre o link.
+  const options = {
+    body: msg.body || "",
+    icon: msg.icon || "/icon-192.png",
+    badge: msg.badge || "/badge-96.png",
+    image: msg.image || undefined,
+    tag: msg.tag || undefined,
+    renotify: !!(msg.tag && msg.renotify),
+    requireInteraction: !!msg.requireInteraction,
+    actions: (msg.actions || []).slice(0, 3),
+    data: msg.data || {}
+  }
+  event.waitUntil(Promise.all([self.registration.showNotification(msg.title || "Minha Automação", options), badge(msg.unread)]))
+})
+
+self.addEventListener("notificationclick", (event) => {
+  const n = event.notification
+  const data = n.data || {}
+  n.close()
+  const answer = event.action && data.token
+    ? fetch("/push/resposta", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "omit",
+                                body: JSON.stringify({ token: data.token, action_id: event.action }) }).catch(() => null)
+    : Promise.resolve()
+  // Botão respondido não abre nada; tocar no corpo abre o link do aviso.
+  const open = event.action ? Promise.resolve() : focusOrOpen(data.url || "/notificacoes")
+  event.waitUntil(Promise.all([answer, open]))
+})
+
+function focusOrOpen(url) {
+  const target = new URL(url, self.location.origin).href
+  return self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+    const same = list.find((c) => new URL(c.url).origin === self.location.origin)
+    if (same && new URL(target).origin === self.location.origin && "navigate" in same) {
+      return same.navigate(target).then((c) => (c || same).focus()).catch(() => self.clients.openWindow(target))
+    }
+    return self.clients.openWindow(target)
+  })
+}

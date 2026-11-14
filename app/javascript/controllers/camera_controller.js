@@ -10,6 +10,9 @@ import { Controller } from "@hotwired/stimulus"
 // Rails (`/cameras/:id/mse`); sem MSE no navegador (iPhone antigo), o HLS pelo
 // link assinado (`/cameras/:id/hls`). Depois de um WebRTC que não conectou, a
 // página vai direto ao MSE por WEBRTC_SKIP_MS (as outras câmeras não esperam).
+// iPhone (pwa-ios, docs/pwa.md): sem MediaSource clássico; o iOS 17.1+ tem o ManagedMediaSource (usado
+// aqui) e, se o MSE falhar ou não existir, o HLS nativo do <video> (.m3u8, playsinline). Vídeo com som
+// sem gesto é barrado pelo WebKit: o play() tenta de novo sem som em vez de ficar preso na foto.
 // `source(pb)` troca o vídeo pela reprodução do DVR (`?pb=` nos mesmos caminhos).
 //
 // `autoplay` (widget com `autoplay: true`, tela de Câmeras): o ao vivo abre
@@ -45,6 +48,17 @@ let webrtcFailedAt = 0
 
 function freeSlot() {
   for (const c of [...waiting]) { waiting.delete(c); c.sync() }
+}
+
+// play() que não fica preso: o WebKit (iPhone) recusa vídeo com som sem gesto; aí vai sem som.
+function playVideo(video) {
+  const p = video.play()
+  if (!p) return
+  p.catch((e) => {
+    if (e?.name !== "NotAllowedError" || video.muted) return
+    video.muted = true
+    video.play().catch(() => {})
+  })
 }
 
 function withPb(url, pb) {
@@ -160,6 +174,7 @@ export default class extends Controller {
     pc.ontrack = (e) => {
       if (e.track.kind !== "video" || this.pc !== pc) return
       this.videoTarget.srcObject = e.streams[0] || new MediaStream([e.track])
+      playVideo(this.videoTarget)
       this.played()
     }
     pc.onconnectionstatechange = () => { if (this.pc === pc && pc.connectionState === "failed") this.webrtcFailed(session) }
@@ -203,7 +218,7 @@ export default class extends Controller {
     if (!MS) return this.startHls(session)
     // O MSE ganha o próprio prazo (WebSocket + o go2rtc abrir a câmera).
     clearTimeout(this.noVideo)
-    this.noVideo = setTimeout(() => { if (this.session === session && !this.playing) this.liveFailed() }, NO_VIDEO_MS)
+    this.noVideo = setTimeout(() => { if (this.session === session && !this.playing) this.mseFailed(session) }, NO_VIDEO_MS)
     const video = this.videoTarget
     const ms = new MS()
     if (window.ManagedMediaSource && MS === window.ManagedMediaSource) {
@@ -237,8 +252,8 @@ export default class extends Controller {
                 if (!sb.updating && queue.length) this.append(sb, queue.shift())
                 this.trim(sb)
               })
-            } catch { this.liveFailed() }
-          } else if (msg.type === "error") this.liveFailed()
+            } catch { this.mseFailed(session) }
+          } else if (msg.type === "error") this.mseFailed(session)
           return
         }
         if (!sb) return
@@ -250,15 +265,15 @@ export default class extends Controller {
       ws.onclose = () => {
         if (this.ws !== ws) return
         // Fim do tempo máximo do proxy com o vídeo tocando: abre de novo na hora.
-        this.playing ? this.restart() : this.liveFailed()
+        this.playing ? this.restart() : this.mseFailed(session)
       }
     }, { once: true })
     video.onloadeddata = () => { if (this.session === session) this.played() }
-    video.play().catch(() => {})
+    playVideo(video)
   }
 
   append(sb, data) {
-    try { sb.appendBuffer(data) } catch { this.liveFailed() }
+    try { sb.appendBuffer(data) } catch { this.mseFailed(this.session) }
   }
 
   // Fica perto do vivo (no máximo 2,5 s atrás) e o buffer não passa de ~15 s.
@@ -269,13 +284,33 @@ export default class extends Controller {
     const start = sb.buffered.start(0)
     if (end - video.currentTime > 2.5) video.currentTime = end - 0.5
     if (end - start > 15) { try { sb.remove(start, end - 10) } catch { /* segue */ } }
-    if (video.paused) video.play().catch(() => {})
+    if (video.paused) playVideo(video)
   }
+
+  // MSE que não abriu (codec, ManagedMediaSource recusou...): no Safari, o HLS nativo antes de desistir.
+  mseFailed(session) {
+    if (this.session !== session) return
+    if (this.playing || this.hlsTried === session || !this.canHls()) return this.liveFailed()
+    const ws = this.ws
+    this.ws = null
+    ws?.close()
+    const video = this.videoTarget
+    video.onloadeddata = null
+    video.srcObject = null
+    if (video.getAttribute("src")) { video.removeAttribute("src"); video.load() }
+    this.startHls(session)
+  }
+
+  canHls() { return this.hasHlsValue && !!this.videoTarget.canPlayType("application/vnd.apple.mpegurl") }
 
   // HLS (Safari sem MSE): o link assinado vem do Rails e o <video> toca sozinho.
   async startHls(session) {
     const video = this.videoTarget
-    if (!this.hasHlsValue || !video.canPlayType("application/vnd.apple.mpegurl")) return this.liveFailed()
+    if (!this.canHls()) return this.liveFailed()
+    this.hlsTried = session
+    // O HLS ganha o próprio prazo (o go2rtc monta os primeiros segmentos).
+    clearTimeout(this.noVideo)
+    this.noVideo = setTimeout(() => { if (this.session === session && !this.playing) this.liveFailed() }, NO_VIDEO_MS)
     try {
       const res = await fetch(withPb(this.hlsValue, this.pb), { headers: { Accept: "application/json" } })
       if (!res.ok) throw new Error(res.status)
@@ -284,7 +319,7 @@ export default class extends Controller {
       this.hlsOn = true
       video.onloadeddata = () => { if (this.session === session) this.played() }
       video.src = url
-      video.play().catch(() => {})
+      playVideo(video)
     } catch {
       if (this.session === session) this.liveFailed()
     }
@@ -473,8 +508,10 @@ export default class extends Controller {
 
   // Tela cheia do card (botão ou tecla F na tela da câmera).
   fullscreen() {
-    if (document.fullscreenElement) document.exitFullscreen()
-    else this.element.requestFullscreen?.().catch(() => {})
+    if (document.fullscreenElement) return document.exitFullscreen()
+    // iPhone: só o <video> entra em tela cheia (webkitEnterFullscreen), e só com o vídeo tocando.
+    if (!this.element.requestFullscreen && this.playing && this.videoTarget.webkitEnterFullscreen) return this.videoTarget.webkitEnterFullscreen()
+    this.element.requestFullscreen?.().catch(() => {})
   }
 
   show(el) {

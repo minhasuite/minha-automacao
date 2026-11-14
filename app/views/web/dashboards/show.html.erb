@@ -16,6 +16,8 @@
   <% end %>
 <% end %>
 
+<% if @home && live && !kiosk && !request.env.key?(AppScreen::ENV_KEY) %><%= render "web/pwa/install_notice" %><% end %>
+
 <%# Topo discreto (Ss::PageComponent compacto da gem): a linha de cima, o título e só o editar, em ícone. O
     servidor resolve o topo da visão (`hero_now`, Dashboards::Hero: Liquid, saudação, esconder; P1.4); sem
     ele (prévia antiga), local · data e o nome da visão. O "Falar" é o botão flutuante do layout. %>

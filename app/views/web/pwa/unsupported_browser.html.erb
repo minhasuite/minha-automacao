@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="<%= I18n.locale %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title><%= t("pwa.unsupported.title") %> — Minha Automação</title>
+  <%# allow_browser do ApplicationController (Safari 16.4+): o navegador velho pode nem ler o CSS todo; o texto basta. %>
+  <%= stylesheet_link_tag "tailwind" %>
+</head>
+<body class="ss-base min-h-screen grid place-items-center px-4 py-10">
+  <main class="w-full max-w-md ss-card ss-card-pad">
+    <%= render Ss::EmptyStateComponent.new(variant: :erro, title: t("pwa.unsupported.title"), text: t("pwa.unsupported.text")) %>
+  </main>
+</body>
+</html>
