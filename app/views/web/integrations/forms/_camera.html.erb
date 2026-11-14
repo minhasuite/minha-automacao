@@ -2,20 +2,17 @@
 <% s = integration&.settings || {} %>
 <% mode = s["mode"] || "rtsp" %>
 <% if integration.nil? %>
-  <fieldset class="grid gap-2">
-    <legend class="ss-label"><%= t("integrations.forms.camera.how") %></legend>
-    <label class="ss-check"><%= f.radio_button :mode, "rtsp", checked: true %><%= t("integrations.forms.camera.rtsp") %> <span class="text-muted text-sm">— <%= t("integrations.forms.camera.rtsp_hint") %></span></label>
-    <label class="ss-check"><%= f.radio_button :mode, "onvif" %>ONVIF <span class="text-muted text-sm">— <%= t("integrations.forms.camera.onvif_hint") %></span></label>
-  </fieldset>
+  <% hint = ->(text, note) { safe_join([text, " ", tag.span("— #{note}", class: "text-muted text-sm")]) } %>
+  <%= f.ss_radio_buttons :mode, [[hint.call(t("integrations.forms.camera.rtsp"), t("integrations.forms.camera.rtsp_hint")), "rtsp"],
+                                 [hint.call("ONVIF", t("integrations.forms.camera.onvif_hint")), "onvif"]],
+                         label: t("integrations.forms.camera.how"), checked: "rtsp", inline: false %>
   <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: t("integrations.forms.camera.name_hint"), maxlength: 80 %></div>
 <% end %>
 <div class="grid gap-4 md:grid-cols-2">
   <% if integration.nil? || mode == "rtsp" %>
-    <div class="md:col-span-2">
-      <%= f.label :url, "#{t("integrations.forms.camera.rtsp")}#{" (#{t("integrations.forms.camera.rtsp_mode")})" if integration.nil?}", class: "ss-label" %>
-      <%= f.text_field :url, class: "ss-input font-mono text-sm", autocomplete: "off", spellcheck: false, value: nil,
-                       placeholder: integration ? t("integrations.forms.camera.keep_url") : "rtsp://192.168.0.20:554/stream2" %>
-    </div>
+    <%= f.ss_text_field :url, label: "#{t("integrations.forms.camera.rtsp")}#{" (#{t("integrations.forms.camera.rtsp_mode")})" if integration.nil?}",
+                        class: "font-mono text-sm", autocomplete: "off", spellcheck: false, value: nil, wrapper_class: "md:col-span-2",
+                        placeholder: integration ? t("integrations.forms.camera.keep_url") : "rtsp://192.168.0.20:554/stream2" %>
   <% end %>
   <% if integration.nil? || mode == "onvif" %>
     <div><%= f.ss_text_field :host, label: "#{t("integrations.forms.camera.ip")}#{" (#{t("integrations.forms.camera.onvif_mode")})" if integration.nil?}", class: "num", value: s["host"], placeholder: "192.168.0.20", inputmode: "decimal" %></div>

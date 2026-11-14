@@ -2,19 +2,17 @@
 <% google = Calendars::Google.configured? %>
 <% mode = integration&.settings&.dig("mode") || "ics" %>
 <% if integration.nil? %>
-  <fieldset class="grid gap-2">
-    <legend class="ss-label"><%= t("integrations.forms.calendar.how") %></legend>
-    <label class="ss-check"><%= f.radio_button :mode, "ics", checked: true %><%= t("integrations.forms.calendar.ics") %> <span class="text-muted text-sm">— <%= t("integrations.forms.calendar.ics_hint") %></span></label>
-    <label class="ss-check <%= 'opacity-60' unless google %>"><%= f.radio_button :mode, "google", disabled: !google %><%= t("integrations.forms.calendar.google") %> <span class="text-muted text-sm">— <%= google ? t("integrations.forms.calendar.google_on") : t("integrations.forms.calendar.google_off") %></span></label>
-  </fieldset>
+  <%# Sem o Google configurado a opção some e o motivo vai na ajuda do grupo. %>
+  <% hint = ->(text, note) { safe_join([text, " ", tag.span("— #{note}", class: "text-muted text-sm")]) } %>
+  <% choices = [[hint.call(t("integrations.forms.calendar.ics"), t("integrations.forms.calendar.ics_hint")), "ics"]] %>
+  <% choices << [hint.call(t("integrations.forms.calendar.google"), t("integrations.forms.calendar.google_on")), "google"] if google %>
+  <%= f.ss_radio_buttons :mode, choices, label: t("integrations.forms.calendar.how"), checked: "ics", inline: false,
+                         help: ("#{t("integrations.forms.calendar.google")} — #{t("integrations.forms.calendar.google_off")}" unless google) %>
   <div><%= f.ss_text_field :name, label: t("integrations.forms.common.name"), placeholder: t("integrations.forms.calendar.name_hint"), maxlength: 80 %></div>
 <% end %>
 <% if mode == "ics" %>
-  <div>
-    <%= f.label :urls, t("integrations.forms.calendar.urls"), class: "ss-label" %>
-    <%= f.text_area :urls, rows: 3, class: "ss-input text-sm", autocomplete: "off", spellcheck: false, value: nil,
-                    placeholder: integration ? t("integrations.forms.calendar.keep") : "https://calendar.google.com/calendar/ical/.../private-.../basic.ics" %>
-  </div>
+  <%= f.ss_text_area :urls, label: t("integrations.forms.calendar.urls"), rows: 3, class: "text-sm", autocomplete: "off", spellcheck: false, value: nil,
+                     placeholder: integration ? t("integrations.forms.calendar.keep") : "https://calendar.google.com/calendar/ical/.../private-.../basic.ics" %>
   <p class="text-xs text-muted"><%= t("integrations.forms.calendar.ics_help_html") %></p>
 <% else %>
   <p class="text-sm text-ink-2"><%= t("integrations.forms.calendar.google_help") %></p>

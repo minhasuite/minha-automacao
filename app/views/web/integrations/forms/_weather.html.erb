@@ -14,7 +14,7 @@
 <% end %>
 <fieldset class="grid grid-cols-2 gap-2">
   <legend class="ss-label"><%= t("integrations.forms.weather.location") %> <span class="font-normal">(<%= t("integrations.forms.weather.location_blank") %><%= ": #{site.latitude}, #{site.longitude}" if site&.latitude && site&.longitude %>)</span></legend>
-  <div><%= f.label :latitude, "Latitude", class: "text-xs text-muted" %><%= f.text_field :latitude, value: s["latitude"], class: "ss-input num", inputmode: "decimal", placeholder: "-12,345678" %></div>
-  <div><%= f.label :longitude, "Longitude", class: "text-xs text-muted" %><%= f.text_field :longitude, value: s["longitude"], class: "ss-input num", inputmode: "decimal", placeholder: "-45,678901" %></div>
+  <%= f.ss_text_field :latitude, label: "Latitude", value: s["latitude"], class: "num", inputmode: "decimal", placeholder: "-12,345678" %>
+  <%= f.ss_text_field :longitude, label: "Longitude", value: s["longitude"], class: "num", inputmode: "decimal", placeholder: "-45,678901" %>
 </fieldset>
 <p class="text-xs text-muted"><%= t("integrations.forms.weather.help") %></p>

@@ -3,18 +3,19 @@
 <% if s["captcha"].present? %>
   <div class="rounded-xl border border-line p-3 grid gap-2">
     <p class="text-sm font-semibold text-ink"><%= t("integrations.forms.xiaomi.captcha_intro") %></p>
-    <img src="data:image/jpeg;base64,<%= s['captcha'] %>" alt="<%= t("integrations.forms.xiaomi.captcha_alt") %>" class="h-14 w-fit rounded bg-white">
+    <img src="data:image/jpeg;base64,<%= s['captcha'] %>" alt="<%= t("integrations.forms.xiaomi.captcha_alt") %>" class="h-14 w-fit rounded bg-surface">
     <div><%= f.ss_text_field :captcha, label: t("integrations.forms.xiaomi.captcha"), autocomplete: "off", required: true %></div>
   </div>
 <% end %>
 <div class="grid gap-4 md:grid-cols-2">
   <div><%= f.ss_text_field :username, label: t("integrations.forms.xiaomi.username"), autocomplete: "username", value: s["username"] %></div>
   <div><%= f.ss_password_field :password, label: t("integrations.forms.common.password"), autocomplete: "current-password" %></div>
-  <div><%= f.label :region, t("integrations.forms.xiaomi.region"), class: "ss-label" %><%= f.select :region, Miio::Cloud::REGIONS.invert, { selected: s["region"].to_s }, class: "ss-input" %></div>
+  <%= f.ss_select :region, Miio::Cloud::REGIONS.invert, label: t("integrations.forms.xiaomi.region"), selected: s["region"].to_s %>
 </div>
 <p class="text-xs text-muted"><%= t("integrations.forms.xiaomi.help") %></p>
 <% if integration %>
   <%= link_to connect_integration_path(integration, modo: "qr"), class: "ss-btn ss-btn-outline w-fit" do %><%= icon("photograph", "size-4") %><%= t("integrations.forms.xiaomi.qr") %><% end %>
 <% else %>
-  <button type="submit" name="integration[modo]" value="qr" formnovalidate class="ss-btn ss-btn-outline w-fit"><%= icon("photograph", "size-4") %><%= t("integrations.forms.xiaomi.qr") %></button>
+  <%= render Ss::ButtonComponent.new(label: t("integrations.forms.xiaomi.qr"), icon: icon("photograph", ""), type: :submit, variant: :outline, css: "w-fit",
+                                     name: "integration[modo]", value: "qr", formnovalidate: true) %>
 <% end %>

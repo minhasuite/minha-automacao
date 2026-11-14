@@ -8,22 +8,19 @@
 <% plugin.fields.each do |fld| %>
   <% hint = plugin.field_hint(fld.key) %>
   <% value = params[fld.key].presence || s[fld.key].presence || fld.default %>
-  <div>
-    <%= f.label fld.key, plugin.field_label(fld.key), class: "ss-label" %>
-    <% case fld.type %>
-    <% when :password %>
-      <%= f.password_field fld.key, class: "ss-input font-mono text-sm", autocomplete: "new-password", value: nil, required: fld.required && integration.nil?,
-                           placeholder: integration ? t("integrations.forms.common.keep") : hint.presence %>
-    <% when :select %>
-      <%= f.select fld.key, Array(fld.options).map { |o| [ plugin.option_label(fld.key, o), o ] }, { selected: value }, class: "ss-input" %>
-    <% when :textarea %>
-      <%= f.text_area fld.key, class: "ss-input font-mono text-sm", rows: 6, value: value, required: fld.required, placeholder: hint.presence, spellcheck: false %>
-    <% when :number %>
-      <%= f.number_field fld.key, class: "ss-input num", value: value, step: "any", required: fld.required, placeholder: hint.presence %>
-    <% else %>
-      <%= f.text_field fld.key, class: "ss-input#{' num' if fld.key == 'host'}", value: value, required: fld.required, placeholder: hint.presence,
-                       autocomplete: "off", spellcheck: false, inputmode: (fld.type == :url ? "url" : nil) %>
-    <% end %>
-  </div>
+  <% label = plugin.field_label(fld.key) %>
+  <% if fld.type == :password %>
+    <%= f.ss_password_field fld.key, label: label, class: "font-mono text-sm", autocomplete: "new-password", value: nil, required: fld.required && integration.nil?,
+                            placeholder: integration ? t("integrations.forms.common.keep") : hint.presence %>
+  <% elsif fld.type == :select %>
+    <%= f.ss_select fld.key, Array(fld.options).map { |o| [ plugin.option_label(fld.key, o), o ] }, label: label, selected: value %>
+  <% elsif fld.type == :textarea %>
+    <%= f.ss_text_area fld.key, label: label, class: "font-mono text-sm", rows: 6, value: value, required: fld.required, placeholder: hint.presence, spellcheck: false %>
+  <% elsif fld.type == :number %>
+    <%= f.ss_number_field fld.key, label: label, class: "num", value: value, step: "any", required: fld.required, placeholder: hint.presence %>
+  <% else %>
+    <%= f.ss_text_field fld.key, label: label, class: ("num" if fld.key == "host"), value: value, required: fld.required, placeholder: hint.presence,
+                        autocomplete: "off", spellcheck: false, inputmode: (fld.type == :url ? "url" : nil) %>
+  <% end %>
 <% end %>
 <% if plugin.note.present? %><p class="text-xs text-muted"><%= plugin.note %></p><% end %>

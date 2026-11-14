@@ -1,16 +1,10 @@
 <%# locals: (f:, integration:) -%>
 <% if integration.nil? %>
   <p class="text-sm text-ink-2"><%= t("integrations.forms.alexa.intro") %></p>
-  <div>
-    <%= f.label :domain, t("integrations.forms.alexa.domain"), class: "ss-label" %>
-    <%= f.select :domain, Alexa::Auth::DOMAINS, { selected: Alexa::Auth::DEFAULT_DOMAIN }, class: "ss-input" %>
-  </div>
+  <%= f.ss_select :domain, Alexa::Auth::DOMAINS, label: t("integrations.forms.alexa.domain"), selected: Alexa::Auth::DEFAULT_DOMAIN %>
 <% else %>
-  <div>
-    <%= f.label :return_url, t("integrations.forms.alexa.return_url"), class: "ss-label" %>
-    <%= f.text_area :return_url, rows: 3, class: "ss-input font-mono text-xs", autocomplete: "off", spellcheck: false,
-                    placeholder: "https://www.amazon.com.br/ap/maplanding?...openid.oa2.authorization_code=..." %>
-  </div>
+  <%= f.ss_text_area :return_url, label: t("integrations.forms.alexa.return_url"), rows: 3, class: "font-mono text-xs", autocomplete: "off", spellcheck: false,
+                     placeholder: "https://www.amazon.com.br/ap/maplanding?...openid.oa2.authorization_code=..." %>
   <p class="text-xs text-muted"><%= t("integrations.forms.alexa.return_hint") %></p>
 <% end %>
 <details class="text-sm">

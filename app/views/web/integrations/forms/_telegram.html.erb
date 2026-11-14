@@ -9,6 +9,6 @@
 </div>
 <% if integration %>
   <div><%= f.ss_text_field :chat_id, label: t("integrations.forms.telegram.chat"), value: s["chat_id"], class: "num", placeholder: t("integrations.forms.telegram.chat_hint") %></div>
-  <label class="ss-check"><%= f.check_box :webhook, { checked: s["webhook"] == true }, "1", "0" %><%= t("integrations.forms.telegram.webhook") %></label>
+  <%= f.ss_check_box :webhook, label: t("integrations.forms.telegram.webhook"), checked: s["webhook"] == true %>
   <p class="text-xs text-muted"><%= t("integrations.forms.telegram.webhook_hint") %></p>
 <% end %>

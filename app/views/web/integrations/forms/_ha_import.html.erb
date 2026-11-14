@@ -1,4 +1,4 @@
 <%# locals: (f:, integration:) -%>
 <p class="text-sm text-ink-2"><%= t("integrations.forms.ha_import.intro_html") %></p>
-<div><%= f.label :arquivo, t("integrations.forms.ha_import.file"), class: "ss-label" %><%= f.file_field :arquivo, class: "ss-input", required: true, accept: "application/json,.json,*/*" %></div>
+<%= f.ss_file_field :arquivo, label: t("integrations.forms.ha_import.file"), required: true, accept: "application/json,.json,*/*" %>
 <p class="text-xs text-muted"><%= t("integrations.forms.ha_import.note") %></p>
