@@ -9,9 +9,9 @@
   <% if locked %>
     <p class="mt-3"><span class="ss-badge ss-badge-accent"><%= @person.role_label %></span></p>
   <% else %>
-    <%= form_with scope: :person, url: person_path(@person), method: :patch, class: "mt-3 flex flex-wrap items-end gap-2" do |f| %>
-      <div><%= f.label :role, t("people.role"), class: "ss-label" %><%= f.select :role, User::ROLES.excluding("owner").map { |r| [ User::ROLE_LABELS[r], r ] }, { selected: @person.role }, class: "ss-input" %></div>
-      <%= f.submit t("people.save_role"), class: "ss-btn ss-btn-ghost" %>
+    <%= ss_form_with scope: :person, url: person_path(@person), method: :patch, class: "mt-3 flex flex-wrap items-end gap-2" do |f| %>
+      <%= f.ss_select :role, User::ROLES.excluding("owner").map { |r| [ User::ROLE_LABELS[r], r ] }, label: t("people.role"), selected: @person.role %>
+      <%= f.ss_submit t("people.save_role"), variant: :ghost %>
     <% end %>
   <% end %>
 </section>
@@ -21,27 +21,28 @@
   <% if @person.admin? %>
     <p class="text-sm text-muted mt-1"><%= t("people.admin_everywhere", role: @person.role_label.downcase) %></p>
   <% else %>
-    <%= form_with url: sites_person_path(@person), method: :patch, class: "mt-3" do %>
+    <%= ss_form_with url: sites_person_path(@person), method: :patch, class: "mt-3" do |f| %>
       <ul class="divide-y divide-line">
         <% @sites.each do |s| %>
           <li class="py-2 flex flex-wrap items-center justify-between gap-3">
-            <label for="role-<%= s.id %>" class="font-semibold text-ink"><%= s.name %> <span class="text-xs text-muted font-normal"><%= s.kind_label %></span></label>
-            <%= select_tag "roles[#{s.id}]", options_for_select([ [ t("people.no_access"), "" ] ] + SiteMembership::ROLES.map { |r| [ SiteMembership.role_label(r), r ] }, @memberships[s.id]&.role),
-                           class: "ss-input w-44", id: "role-#{s.id}", disabled: !owner %>
+            <span class="font-semibold text-ink" aria-hidden="true"><%= s.name %> <span class="text-xs text-muted font-normal"><%= s.kind_label %></span></span>
+            <%= f.ss_select "roles[#{s.id}]", [ [ t("people.no_access"), "" ] ] + SiteMembership::ROLES.map { |r| [ SiteMembership.role_label(r), r ] }, selected: @memberships[s.id]&.role.to_s,
+                            label: "#{s.name} · #{s.kind_label}", hide_label: true, wrapper_class: "w-44", id: "role-#{s.id}", disabled: !owner %>
           </li>
         <% end %>
       </ul>
-      <% if owner %><div class="mt-3"><%= submit_tag t("people.save_sites"), class: "ss-btn ss-btn-primary", name: nil %></div><% end %>
+      <% if owner %><div class="mt-3"><%= f.ss_submit t("people.save_sites"), name: nil %></div><% end %>
     <% end %>
   <% end %>
 </section>
 
 <% unless locked %>
   <section class="ss-card ss-card-pad mt-4 flex flex-wrap gap-2" aria-label="<%= t("people.actions") %>">
-    <%= button_to toggle_person_path(@person), class: "ss-btn ss-btn-outline", form: { data: { turbo_confirm: @person.disabled? ? t("people.enable_confirm", name: @person.name) : t("people.disable_confirm", name: @person.name) } } do %>
-      <%= icon(@person.disabled? ? "check-circle" : "minus-circle", "size-4") %><%= @person.disabled? ? t("people.enable") : t("people.disable") %>
-    <% end %>
-    <%= button_to person_path(@person), method: :delete, class: "ss-btn ss-btn-danger", form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("people.remove_confirm", name: @person.name), turbo_confirm_button: t("people.remove") } } do %><%= icon("trash", "size-4") %><%= t("people.remove") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: @person.disabled? ? t("people.enable") : t("people.disable"), icon: icon(@person.disabled? ? "check-circle" : "minus-circle", ""),
+                                       href: toggle_person_path(@person), method: :post, variant: :outline,
+                                       confirm: @person.disabled? ? t("people.enable_confirm", name: @person.name) : t("people.disable_confirm", name: @person.name)) %>
+    <%= render Ss::ButtonComponent.new(label: t("people.remove"), icon: icon("trash", ""), href: person_path(@person), method: :delete, variant: :danger,
+                                       confirm: t("people.remove_confirm", name: @person.name), confirm_tone: :danger, confirm_button: t("people.remove")) %>
   </section>
 <% end %>
 <% end %>
