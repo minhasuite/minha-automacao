@@ -1,7 +1,7 @@
 <%# locals: (step:, label: nil) -%>
 <%# Rodapé dos passos: voltar, "Agora não" (passo opcional: o mesmo formulário vai para o pular, sem validar) e continuar. %>
 <% prev = @steps[0...@steps.index(step)].reverse.find { |s| s.ready?(@ctx) } %>
-<div class="ob-nav">
+<div class="flex flex-wrap items-center gap-2 mt-7 pt-5 border-t border-line">
   <% if prev %><%= link_to onboarding_step_path(prev.key), class: "ss-btn ss-btn-ghost" do %><%= icon("arrow-left", "size-4") %><%= t("onboarding.back") %><% end %><% end %>
   <span class="flex-1"></span>
   <% if step.optional? %><%= render Ss::ButtonComponent.new(label: t("onboarding.skip"), variant: :ghost, type: :submit, formaction: onboarding_skip_path(step.key), formnovalidate: true) %><% end %>

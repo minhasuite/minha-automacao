@@ -3,10 +3,10 @@
   <%# A procura roda quando a tela abre (turbo-frame): enquanto isso, o radar. %>
   <turbo-frame id="ob-found" src="<%= onboarding_discover_path %>" loading="eager">
     <%# Radar da gem (Ss::ScanRadarComponent, procurando); embaixo, os nomes que passam (arte do produto). %>
-    <div class="ob-radar-wrap">
+    <div class="flex flex-col items-center text-center pt-6 pb-2">
       <%= render Ss::ScanRadarComponent.new(state: :searching, size: 168, icon: icon("status-online", ""), labels: { searching: t("onboarding.discover.searching") }) %>
-      <p class="text-sm text-muted mt-1 ob-ticker" aria-hidden="true">
-        <% Integrations.plugins.select(&:discovers?).first(6).each_with_index do |p, i| %><span style="animation-delay: <%= i * 0.9 %>s"><%= p.title %></span><% end %>
+      <p class="text-sm text-muted mt-1 relative h-[1.3rem] w-64" aria-hidden="true">
+        <% Integrations.plugins.select(&:discovers?).first(6).each_with_index do |p, i| %><span class="ss-anim-tick absolute inset-0 opacity-0 motion-reduce:first:opacity-100" style="--ss-anim-delay: <%= i * 0.9 %>s"><%= p.title %></span><% end %>
       </p>
     </div>
   </turbo-frame>

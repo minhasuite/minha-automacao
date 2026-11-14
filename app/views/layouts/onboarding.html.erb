@@ -16,9 +16,14 @@
   <%= render "web/shared/theme_head" %>
 </head>
 <%# Primeira configuração (produto): tela cheia, passos no topo, ilustração e formulário no cartão. %>
-<body class="ss-base ss-inputs ob-page min-h-screen" data-controller="ss-theme">
-  <div class="ob-blobs" aria-hidden="true"><span></span><span></span><span></span></div>
-  <header class="ob-top">
+<body class="ss-base ss-inputs relative overflow-x-hidden min-h-screen" data-controller="ss-theme">
+  <%# Fundo da primeira configuração: manchas que se mexem devagar (.ss-anim-to da gem, vai e volta). %>
+  <div class="fixed inset-0 -z-1 pointer-events-none overflow-hidden [&>span]:absolute [&>span]:size-[46vmax] [&>span]:rounded-full [&>span]:blur-[70px] [&>span]:opacity-32" aria-hidden="true">
+    <span class="ss-anim-to -top-[18vmax] -left-[12vmax] bg-accent" style="--ss-anim-to: translate(6vmax, 4vmax) scale(1.08); --ss-anim-dur: 26s; --ss-anim-iter: infinite; --ss-anim-dir: alternate; --ss-anim-ease: ease-in-out"></span>
+    <span class="ss-anim-to -bottom-[22vmax] -right-[14vmax] bg-[var(--series-2)]" style="--ss-anim-to: translate(6vmax, 4vmax) scale(1.08); --ss-anim-dur: 32s; --ss-anim-delay: -6s; --ss-anim-iter: infinite; --ss-anim-dir: alternate; --ss-anim-ease: ease-in-out"></span>
+    <span class="ss-anim-to top-[30%] left-[55%] size-[26vmax]! opacity-14! bg-[color-mix(in_srgb,var(--danger)_60%,var(--accent))]" style="--ss-anim-to: translate(6vmax, 4vmax) scale(1.08); --ss-anim-dur: 38s; --ss-anim-iter: infinite; --ss-anim-dir: alternate; --ss-anim-ease: ease-in-out"></span>
+  </div>
+  <header class="flex items-center justify-between gap-4 py-4 px-5 max-w-[72rem] mx-auto">
     <span class="flex items-center gap-2.5 font-bold text-ink">
       <span class="ss-icon-tile is-sm is-grad"><%= icon("lightning-bolt", "size-5") %></span>
       <span class="max-sm:sr-only">Minha Automação</span>
@@ -28,12 +33,12 @@
       <%= render Ss::IconButtonComponent.new(icon: icon("moon", ""), label: t("layout.theme"), data: { action: "ss-theme#toggle" }) %>
     </div>
   </header>
-  <main class="ob-main" id="conteudo">
+  <main class="flex flex-col items-center gap-5 pt-2 px-4 pb-12" id="conteudo">
     <% if @steps && @step %>
       <%# Passos no Ss::WizardComponent em modo servidor: cada passo é uma página; o já feito (e pronto) é link. %>
       <% done = Array(Onboarding.state(@ctx.tenant)["done"]) %>
       <%= render Ss::WizardComponent.new(current: @steps.index(@step) || 0, done: @steps.each_index.select { |i| done.include?(@steps[i].key) },
-                                         css: "ob-wizard") do |w| %>
+                                         css: "w-full max-w-[64rem]") do |w| %>
         <% @steps.each { |s| w.with_step(title: s.title, url: (onboarding_step_path(s.key) if s != @step && done.include?(s.key) && s.ready?(@ctx))) } %>
         <%= yield %>
       <% end %>

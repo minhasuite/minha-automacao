@@ -1,9 +1,7 @@
 @import "tailwindcss";
 /* Lista Clara (tokens, tema claro/escuro, .ss-* e o CSS dos Ss::*Component) vem da
    gem componentes_ui: o tailwindcss:build gera o builds/tailwind/componentes_ui.css.
-   Componente genérico novo nasce lá, não aqui (skill lista-clara). */
+   O produto não tem CSS próprio (o spec/componentes_ui/conformidade_spec.rb barra): peça
+   genérica nova nasce na gem (skill lista-clara); desenho de domínio (planta, painel, robô,
+   ilustrações) vai em utilitário do Tailwind com os tokens e o movimento da gem. */
 @import "../builds/tailwind/componentes_ui";
-/* Telas do produto: só domínio (allowlist no topo de cada arquivo e no bin/conferir-css). */
-@import "./dashboards.css";
-@import "./paineis.css";
-@import "./produto.css";

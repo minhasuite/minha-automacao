@@ -4,7 +4,6 @@
 # lâmpada vem em --glow (inline); sem ela, o âmbar do --warn. Classes por extenso (sem interpolação): o
 # Tailwind só gera o que lê inteiro no código.
 module FloorplanHelper
-
   FP_ROOT = "group/fp motion-reduce:[&_*]:transition-none".freeze
   FP_STAGE = "relative overflow-hidden rounded-[14px] bg-field isolate @container " \
              "[&.is-drawn]:aspect-[16/10] [&.is-drawn]:bg-[radial-gradient(circle,color-mix(in_srgb,var(--muted)_22%,transparent)_1px,transparent_1.5px)] " \
@@ -54,13 +53,13 @@ module FloorplanHelper
 
   def dw_fp_pin_class(on:, light:, alert:, fan:, off_line:)
     look = if !on then FP_PIN_OFF
-           elsif light then FP_PIN_LIGHT
-           elsif alert then FP_PIN_ALERT
-           else FP_PIN_ON
-           end
+    elsif light then FP_PIN_LIGHT
+    elsif alert then FP_PIN_ALERT
+    else FP_PIN_ON
+    end
     ink = if off_line then "text-danger border-dashed"
-          elsif !on then "text-muted group-data-[night]/fp:text-[color-mix(in_srgb,var(--side-ink)_60%,transparent)]"
-          end
+    elsif !on then "text-muted group-data-[night]/fp:text-[color-mix(in_srgb,var(--side-ink)_60%,transparent)]"
+    end
     [ FP_PIN, look, ink, (FP_PIN_FAN if fan) ].compact.join(" ")
   end
 end

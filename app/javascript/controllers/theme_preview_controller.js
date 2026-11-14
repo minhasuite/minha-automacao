@@ -16,7 +16,7 @@ export default class extends Controller {
     el.style.setProperty("--accent2", b)
     const fonts = JSON.parse(el.dataset.fonts || "{}")
     el.style.setProperty("--font-sans", fonts[this.fontTarget.value] || "")
-    el.className = el.className.replace(/\bap-wall-\w+\b/g, "").trim() + ` ap-wall-${this.wallTarget.value}`
-    el.classList.toggle("ap-glass", this.glassTarget.checked)
+    el.dataset.wall = this.wallTarget.value
+    el.classList.toggle("ss-wall-glass", this.glassTarget.checked)
   }
 }

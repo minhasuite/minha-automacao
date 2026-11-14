@@ -1,7 +1,7 @@
 <% i = @steps.index(@step) %>
-<article class="ob-card ss-card" aria-labelledby="ob-title">
-  <div class="ob-art" aria-hidden="true"><%= render "web/onboarding/art", art: @step.art %></div>
-  <div class="ob-content">
+<article class="ss-card w-full max-w-[64rem] grid overflow-hidden min-[900px]:grid-cols-[22rem_1fr] ss-anim-from" style="--ss-anim-from: translateY(14px) scale(.985); --ss-anim-from-opacity: 0; --ss-anim-dur: .55s" aria-labelledby="ob-title">
+  <div class="grid place-items-center p-6 bg-[image:var(--grad-soft)] border-b border-line min-[900px]:border-b-0 min-[900px]:border-r min-[900px]:p-8 max-[899px]:[&_svg]:max-h-[11rem]" aria-hidden="true"><%= render "web/onboarding/art", art: @step.art %></div>
+  <div class="p-6 min-w-0 sm:p-9">
     <% if i %><p class="ss-kicker text-accent!"><%= t("onboarding.step_of", n: i + 1, total: @steps.size) %></p><% end %>
     <h1 id="ob-title" class="mt-1 text-3xl! [text-wrap:balance]"><%= @step.title %></h1>
     <p class="mt-2 text-muted max-w-xl"><%= @step.subtitle %></p>
