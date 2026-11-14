@@ -1,24 +1,25 @@
 <%# locals: (w:, uid:, types:, point_options:, **) -%>
-<%# ondaB2 (B9): toque, segurar e duplo toque (Dashboards::Actions); os campos de cada ação aparecem quando ela está escolhida (sem JS). %>
+<%# ondaB2 (B9): toque, segurar e duplo toque (Dashboards::Actions); os campos de cada ação aparecem quando ela está escolhida (ss-reveal da gem, um por gesto). %>
 <% actions = Dashboards::Actions.plugins %>
-<style><%= actions.flat_map { |a| a.fields.map { |fd| ".dw-act:has(option[value=#{a.key}]:checked) [data-act~=#{fd}]" } }.join(", ") %> { display: block; }</style>
+<% by_field = actions.each_with_object(Hash.new { |h, k| h[k] = [] }) { |a, h| a.fields.each { |fd| h[fd.to_s] << a.key } } %>
 <%= ss_fields do |f| %>
-<fieldset class="sm:col-span-2" data-for="<%= types %>">
+<fieldset class="sm:col-span-2" data-ss-reveal-for="<%= types %>">
   <legend class="ss-label"><%= t("dashboards.act.title") %> <span class="font-normal"><%= t("dashboards.act.hint") %></span></legend>
   <div class="grid gap-3 lg:grid-cols-3">
     <% Dashboards::Actions::GESTURES.each do |g, field| %>
       <% a = w[field].is_a?(Hash) ? w[field] : {} %>
-      <div class="dw-act ss-card p-3 grid gap-2 content-start">
-        <%= f.ss_select "gestures[#{g}][action]", options_for_select([ [ t("dashboards.act.default"), "" ] ] + actions.map { |x| [ x.label, x.key ] }, a["action"]), label: t("dashboards.act.gestures.#{g}"), id: "ga-#{g}-#{uid}" %>
-        <div data-act="point">
+      <div class="ss-card p-3 grid gap-2 content-start" data-controller="ss-reveal">
+        <%= f.ss_select "gestures[#{g}][action]", options_for_select([ [ t("dashboards.act.default"), "" ] ] + actions.map { |x| [ x.label, x.key ] }, a["action"]), label: t("dashboards.act.gestures.#{g}"), id: "ga-#{g}-#{uid}",
+                                                       data: { ss_reveal_target: "source", action: "change->ss-reveal#update" } %>
+        <div data-ss-reveal-for="<%= by_field["point"].join(" ") %>">
           <%= f.ss_select "gestures[#{g}][point]", grouped_options_for_select(point_options, a["point"]), label: t("dashboards.wf.point"), include_blank: t("dashboards.act.same_point"), id: "gp-#{g}-#{uid}" %></div>
-        <div data-act="command">
+        <div data-ss-reveal-for="<%= by_field["command"].join(" ") %>">
           <%= f.ss_text_field "gestures[#{g}][command]", label: t("dashboards.act.command"), value: a["command"], id: "gc-#{g}-#{uid}", placeholder: "toggle, run, set", maxlength: 40 %></div>
-        <div data-act="value">
+        <div data-ss-reveal-for="<%= by_field["value"].join(" ") %>">
           <%= f.ss_text_field "gestures[#{g}][value]", label: t("dashboards.act.value"), value: a["value"], id: "gv-#{g}-#{uid}", maxlength: 120 %></div>
-        <div data-act="navigation_path">
+        <div data-ss-reveal-for="<%= by_field["navigation_path"].join(" ") %>">
           <%= f.ss_text_field "gestures[#{g}][navigation_path]", label: t("dashboards.act.navigation_path"), value: a["navigation_path"], id: "gn-#{g}-#{uid}", placeholder: t("dashboards.act.path_hint"), maxlength: 120 %></div>
-        <div data-act="url">
+        <div data-ss-reveal-for="<%= by_field["url"].join(" ") %>">
           <%= f.ss_url_field "gestures[#{g}][url]", label: t("dashboards.act.url"), value: a["url"], id: "gu-#{g}-#{uid}", placeholder: "https://", maxlength: 500 %></div>
         <%= f.ss_check_box "gestures[#{g}][confirmation]", label: t("dashboards.act.confirm"), checked: a["confirmation"].present?, include_hidden: false, id: "gk-#{g}-#{uid}", wrapper_class: "text-xs" %>
       </div>

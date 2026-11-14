@@ -46,7 +46,7 @@ RSpec.describe "Lote 4: telas de clima e painel" do
     post "/locais/#{site.id}/integracoes", params: { tipo: "weather", integration: { provider: "open_meteo" } }
     d = within(tenant) { Dashboard.ensure_for(site).first }
     get "/paineis/#{d.id}/editar"
-    expect(response.body).to include(%(<option value="weather">Clima</option>), ".dw-wf:has(option[value=weather]:checked) [data-for~=weather]", "Mostrar em")
+    expect(response.body).to include(%(<option value="weather">Clima</option>), %(data-ss-reveal-target="source"), "weather", "Mostrar em")
     patch "/paineis/#{d.id}/rascunho", params: { op: "add_view", title: "Tempo" }
     v = within(tenant) { d.reload.draft["views"].last["id"] }
     patch "/paineis/#{d.id}/rascunho", params: { op: "add_section", view_id: v, title: "Tempo" }

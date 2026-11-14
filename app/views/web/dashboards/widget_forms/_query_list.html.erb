@@ -1,8 +1,8 @@
 <%# locals: (w:, uid:, types:, **) -%>
 <% q = w["query"] || {} %>
 <%= ss_fields do |f| %>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_select "widget[query][sort]", options_for_select({ t("dashboards.wf.q.sorts.name") => "name", t("dashboards.wf.q.sorts.value") => "value", t("dashboards.wf.q.sorts.value_desc") => "-value", t("dashboards.wf.q.sorts.oldest") => "changed_at", t("dashboards.wf.q.sorts.newest") => "-changed_at" }, q["sort"]), label: t("dashboards.wf.q.sort"), include_blank: t("dashboards.wf.q.sorts.name"), id: "qo-#{uid}" %></div>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_text_field "widget[empty_text]", label: t("dashboards.wf.q.empty_text"), value: w["empty_text"], id: "et-#{uid}", placeholder: t("dashboards.gen.all_off") %></div>
 <% end %>

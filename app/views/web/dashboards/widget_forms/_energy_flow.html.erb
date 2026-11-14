@@ -1,10 +1,10 @@
 <%# locals: (w:, uid:, types:, point_options:, **) -%>
 <%= ss_fields do |f| %>
 <% %w[grid solar battery battery_soc home co2 solar_forecast].each do |k| %>
-  <div data-for="<%= types %>">
+  <div data-ss-reveal-for="<%= types %>">
     <%= f.ss_select "widget[#{k}]", grouped_options_for_select(point_options, w[k]), label: t("dashboards.wf.flow.#{k}"), include_blank: t("dashboards.wf.none"), id: "ef-#{k}-#{uid}" %></div>
 <% end %>
-<div data-for="<%= types %>" class="flex flex-col justify-end gap-2">
+<div data-ss-reveal-for="<%= types %>" class="flex flex-col justify-end gap-2">
   <%= f.ss_check_box "widget[grid_invert]", label: t("dashboards.wf.grid_invert"), checked: w["grid_invert"] ? true : false, id: "efgi-#{uid}" %>
   <%= f.ss_check_box "widget[battery_invert]", label: t("dashboards.wf.battery_invert"), checked: w["battery_invert"] ? true : false, id: "efbi-#{uid}" %>
 </div>

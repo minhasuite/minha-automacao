@@ -1,32 +1,32 @@
 <%# locals: (w:, uid:, types:, **) -%>
 <%# ondaB2 (B10): campos dos cards novos; cada campo diz para quais tipos aparece. %>
 <%= ss_fields do |f| %>
-<div data-for="image plant">
+<div data-ss-reveal-for="image plant">
   <%= f.ss_text_field "widget[image]", label: t("dashboards.cards.form.image"), value: w["image"], id: "im-#{uid}", placeholder: "https://", maxlength: 500 %></div>
-<div data-for="image plant">
+<div data-ss-reveal-for="image plant">
   <%= f.ss_file_field "widget[upload]", label: t("dashboards.cards.form.upload"), accept: "image/png,image/jpeg,image/webp", id: "iu-#{uid}" %></div>
-<div class="sm:col-span-2" data-for="iframe">
+<div class="sm:col-span-2" data-ss-reveal-for="iframe">
   <%= f.ss_url_field "widget[url]", label: t("dashboards.cards.form.url"), value: w["url"], id: "if-#{uid}", placeholder: "https://", maxlength: 500 %></div>
-<div data-for="image iframe">
+<div data-ss-reveal-for="image iframe">
   <%= f.ss_select "widget[aspect]", options_for_select(Dashboards::Widgets::ImageWidget::ASPECTS.keys, w["aspect"] || "16:9"), label: t("dashboards.cards.form.aspect"), class: "num", id: "ia-#{uid}" %></div>
-<div data-for="calendar">
+<div data-ss-reveal-for="calendar">
   <%= f.ss_number_field "widget[days]", label: t("dashboards.cards.form.days"), value: w["days"] || 7, min: 1, max: 31, class: "num", id: "cd-#{uid}" %></div>
-<div data-for="logbook">
+<div data-ss-reveal-for="logbook">
   <%= f.ss_select "widget[period]", options_for_select(%w[24h 7d 30d].index_by { |k| Logbook::PERIOD_LABELS.fetch(k, k) }, w["period"] || "24h"), label: t("dashboards.cards.form.period"), id: "lp-#{uid}" %></div>
-<div data-for="logbook">
+<div data-ss-reveal-for="logbook">
   <%= f.ss_number_field "widget[limit]", label: t("dashboards.cards.form.limit"), value: w["limit"] || 10, min: 3, max: 30, class: "num", id: "ll-#{uid}" %></div>
-<div data-for="clock">
+<div data-ss-reveal-for="clock">
   <%= f.ss_select "widget[format]", options_for_select({ "24 h" => "24h", "12 h" => "12h" }, w["format"] || "24h"), label: t("dashboards.cards.form.format"), id: "cf-#{uid}" %></div>
-<div data-for="clock">
+<div data-ss-reveal-for="clock">
   <%= f.ss_select "widget[size]", options_for_select(Dashboards::Widgets::ClockWidget::SIZES.index_by { |k| t("dashboards.cards.form.sizes.#{k}") }, w["size"] || "medium"), label: t("dashboards.cards.form.size"), id: "cz-#{uid}" %></div>
-<fieldset class="sm:col-span-2" data-for="clock button todo">
+<fieldset class="sm:col-span-2" data-ss-reveal-for="clock button todo">
   <div class="flex flex-wrap gap-4">
-    <div data-for="clock"><%= f.ss_check_box "widget[seconds]", label: t("dashboards.cards.form.seconds"), checked: w["seconds"] == "1", id: "cs-#{uid}" %></div>
-    <div data-for="clock"><%= f.ss_check_box "widget[show_date]", label: t("dashboards.cards.form.show_date"), checked: w["show_date"] != "0", id: "cdt-#{uid}" %></div>
-    <div data-for="button"><%= f.ss_check_box "widget[show_state]", label: t("dashboards.cards.form.show_state"), checked: w["show_state"] != "0", id: "bs-#{uid}" %></div>
-    <div data-for="todo"><%= f.ss_check_box "widget[hide_completed]", label: t("dashboards.cards.form.hide_completed"), checked: w["hide_completed"] == "1", id: "th-#{uid}" %></div>
+    <div data-ss-reveal-for="clock"><%= f.ss_check_box "widget[seconds]", label: t("dashboards.cards.form.seconds"), checked: w["seconds"] == "1", id: "cs-#{uid}" %></div>
+    <div data-ss-reveal-for="clock"><%= f.ss_check_box "widget[show_date]", label: t("dashboards.cards.form.show_date"), checked: w["show_date"] != "0", id: "cdt-#{uid}" %></div>
+    <div data-ss-reveal-for="button"><%= f.ss_check_box "widget[show_state]", label: t("dashboards.cards.form.show_state"), checked: w["show_state"] != "0", id: "bs-#{uid}" %></div>
+    <div data-ss-reveal-for="todo"><%= f.ss_check_box "widget[hide_completed]", label: t("dashboards.cards.form.hide_completed"), checked: w["hide_completed"] == "1", id: "th-#{uid}" %></div>
   </div>
 </fieldset>
-<div class="sm:col-span-2" data-for="button">
+<div class="sm:col-span-2" data-ss-reveal-for="button">
   <%= f.ss_select "widget[icon]", options_for_select(HelperTypes::ICONS, w["icon"]), label: t("dashboards.cards.form.icon"), include_blank: t("dashboards.cards.form.icon_auto"), id: "bi-#{uid}" %></div>
 <% end %>

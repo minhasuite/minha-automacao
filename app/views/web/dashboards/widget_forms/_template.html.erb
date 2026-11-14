@@ -5,13 +5,13 @@
 <% templates = Dashboards::CardTemplates.all(@site) %>
 <% vars = w["vars"].is_a?(Hash) ? w["vars"] : {} %>
 <%= ss_fields do |f| %>
-<div class="sm:col-span-2" data-for="<%= types %>">
+<div class="sm:col-span-2" data-ss-reveal-for="<%= types %>">
   <%= f.ss_select "widget[template]", options_for_select(templates.map { |tp| [ Dashboards::CardTemplates.name(tp), tp["key"] ] }, w["template"]), label: t("dashboards.templates.pick"), id: "tpl-#{uid}" %>
   <p class="text-xs text-muted mt-1"><%= link_to t("dashboards.templates.manage"), site_card_templates_path(@site), data: { turbo_frame: "_top" } %></p></div>
 <% templates.flat_map { |tp| Array(tp["params"]).map { |p| [ p, tp ] } }.uniq { |p, _| p["key"] }.each do |p, tp| %>
   <% id = "tv-#{p['key']}-#{uid}" %>
   <% label = safe_join([ Dashboards::CardTemplates.param_label(p), " ", tag.span("(#{Dashboards::CardTemplates.name(tp)})", class: "font-normal") ]) %>
-  <div data-for="<%= types %>">
+  <div data-ss-reveal-for="<%= types %>">
     <% if p["kind"] == "area" %>
       <%= f.ss_select "widget[vars][#{p['key']}]", options_from_collection_for_select(areas, :id, :name, vars[p["key"]]), label: label, include_blank: true, id: id %>
     <% elsif p["kind"] == "point" %>

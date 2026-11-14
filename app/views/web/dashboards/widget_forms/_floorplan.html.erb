@@ -5,7 +5,7 @@
 <% if w.empty? || w["type"] == "floorplan" %>
 <% layers = Array(w["layers"]) + [ {} ] %>
 <% area_options = areas.map { |a| [ a.name, a.id ] } %>
-<div class="sm:col-span-2 grid gap-3" data-for="<%= types %>">
+<div class="sm:col-span-2 grid gap-3" data-ss-reveal-for="<%= types %>">
 <%= ss_fields do |f| %>
   <% layers.each_with_index do |l, li| %>
     <% base = "widget[layers][#{li}]" %>

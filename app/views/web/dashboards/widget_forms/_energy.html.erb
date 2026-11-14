@@ -1,14 +1,14 @@
 <%# locals: (w:, uid:, types:, point_options:, **) -%>
 <%= ss_fields do |f| %>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_select "widget[period]", options_for_select(Dashboards::Energy::PERIODS.keys.index_by { |k| t("dashboards.periods.#{k}") }, w["period"] || "month"), label: t("dashboards.wf.period"), id: "pe-#{uid}" %></div>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_number_field "widget[cycle_day]", label: safe_join([ t("dashboards.wf.cycle_day"), " ", tag.span(t("dashboards.wf.cycle_only"), class: "font-normal") ]), value: w["cycle_day"], in: 1..28, class: "num", id: "cd-#{uid}", placeholder: t("dashboards.wf.cycle_placeholder") %></div>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_text_field "widget[tariff]", label: t("dashboards.wf.tariff"), value: w["tariff"], class: "num", id: "tf-#{uid}", inputmode: "decimal", placeholder: t("dashboards.wf.tariff_placeholder") %></div>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_select "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), label: safe_join([ t("dashboards.wf.tariff_point"), " ", tag.span(t("dashboards.wf.tariff_point_hint"), class: "font-normal") ]), include_blank: t("dashboards.wf.use_fixed"), id: "tp2-#{uid}" %></div>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_text_field "widget[goal]", label: t("dashboards.wf.goal"), value: w["goal"], class: "num", id: "gl-#{uid}", inputmode: "decimal" %></div>
-<div data-for="<%= types %>" class="flex items-end"><%= f.ss_check_box "widget[compare]", label: t("dashboards.wf.compare"), checked: w["compare"] ? true : false, id: "cp-#{uid}" %></div>
+<div data-ss-reveal-for="<%= types %>" class="flex items-end"><%= f.ss_check_box "widget[compare]", label: t("dashboards.wf.compare"), checked: w["compare"] ? true : false, id: "cp-#{uid}" %></div>
 <% end %>

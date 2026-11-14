@@ -1,4 +1,4 @@
 <%# locals: (w:, uid:, types:, **) -%>
 <%# ondaB2 (B12): gás ou água; período, tarifa e meta seguem os campos do Consumo e custo. %>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= ss_fields { |f| f.ss_select "widget[kind]", options_for_select(Dashboards::Widgets::UtilityWidget::KINDS.keys.index_by { |k| Dashboards::Widgets::UtilityWidget.text(k) }, w["kind"] || "water"), label: t("dashboards.energy_b12.kind"), id: "uk-#{uid}" } %></div>

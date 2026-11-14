@@ -8,7 +8,7 @@
   <% fid = "#{uid}-f#{i}" %>
   <% name = "#{prefix}[#{i}]" %>
   <% legend = f["label_key"].present? ? t("dashboards.facts.labels.#{f['label_key']}.other", count: "N", default: f["id"]) : (f["id"].presence || t("dashboards.facts.new")) %>
-  <fieldset class="ss-card ss-card-pad grid gap-3 sm:grid-cols-2" <%= tag.attributes(data: { for: types }) %>>
+  <fieldset class="ss-card ss-card-pad grid gap-3 sm:grid-cols-2" <%= tag.attributes(data: { ss_reveal_for: types }) %>>
     <legend class="ss-label"><%= t("dashboards.facts.item", n: i + 1) %> · <%= legend %></legend>
     <%= hidden_field_tag "#{name}[id]", f["id"], id: nil %>
     <%= hidden_field_tag "#{name}[label_key]", f["label_key"], id: nil %>
@@ -23,7 +23,7 @@
     <%= fb.ss_text_field "#{name}[format]", label: t("dashboards.facts.format"), value: f["format"], id: "#{fid}-fo", maxlength: 12, placeholder: "W" %>
     <% shown, rest = Dashboards::Facts.split_query((f["query"] || {}).except(*(scoped ? %w[area] : []))) %>
     <%= render "web/dashboards/widget_forms/query", w: { "query" => shown }, uid: fid, types: types, areas: areas, prefix: "#{name}[query]" %>
-    <div class="sm:col-span-2" <%= tag.attributes(data: { for: types }) %>>
+    <div class="sm:col-span-2" <%= tag.attributes(data: { ss_reveal_for: types }) %>>
       <%= fb.ss_text_field "#{name}[query_text]", label: t("dashboards.facts.query_text"), value: rest, class: "num", id: "#{fid}-qt", placeholder: "quality=unavailable,error capability=contact,gate" %>
       <p class="text-xs text-muted mt-1"><%= t("dashboards.facts.query_text_hint") %></p></div>
     <% if f["query"].present? %>

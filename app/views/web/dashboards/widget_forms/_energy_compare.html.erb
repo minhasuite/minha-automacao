@@ -1,7 +1,7 @@
 <%# locals: (w:, uid:, types:, point_options:, **) -%>
 <%= ss_fields do |f| %>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_text_field "widget[tariff]", label: t("dashboards.wf.tariff"), value: w["tariff"], class: "num", id: "tf-#{uid}", inputmode: "decimal", placeholder: t("dashboards.wf.tariff_placeholder") %></div>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_select "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), label: safe_join([ t("dashboards.wf.tariff_point"), " ", tag.span(t("dashboards.wf.tariff_point_hint2"), class: "font-normal") ]), include_blank: t("dashboards.wf.use_fixed"), id: "tp3-#{uid}" %></div>
 <% end %>

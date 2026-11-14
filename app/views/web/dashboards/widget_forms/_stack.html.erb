@@ -1,8 +1,8 @@
 <%# locals: (w:, uid:, types:, **) -%>
 <%= ss_fields do |f| %>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_select "widget[direction]", options_for_select(Dashboards::Widgets::StackWidget::DIRECTIONS.index_by { |k| t("dashboards.vt.form.directions.#{k}") }, w["direction"] || "vertical"), label: t("dashboards.vt.form.direction"), id: "sd-#{uid}" %></div>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= f.ss_select "widget[columns]", options_for_select([ 2, 3, 4 ], w["columns"] || 2), label: t("dashboards.vt.form.columns"), class: "num", id: "sc-#{uid}" %></div>
 <% end %>
-<p class="sm:col-span-2 text-xs text-muted" data-for="<%= types %>"><%= t("dashboards.vt.form.stack_hint") %></p>
+<p class="sm:col-span-2 text-xs text-muted" data-ss-reveal-for="<%= types %>"><%= t("dashboards.vt.form.stack_hint") %></p>

@@ -1,3 +1,3 @@
 <%# locals: (w:, uid:, types:, **) -%>
-<div data-for="<%= types %>">
+<div data-ss-reveal-for="<%= types %>">
   <%= ss_fields { |f| f.ss_select "widget[range]", options_for_select(%w[24h 7d 30d].index_by { |r| t("dashboards.wf.ranges.#{r}") }, w["range"]), label: t("dashboards.wf.period"), id: "rg-#{uid}" } %></div>

@@ -37,7 +37,7 @@ RSpec.describe "Widgets do painel por registro" do
     d = within(tenant) { Dashboard.ensure_for(site).first }
     get "/paineis/#{d.id}/editar"
     expect(response.body).to include(%(<option value="contador_falso">Contador falso</option>),
-                                     "[data-for~=contador_falso]", %(data-for="heading contador_falso"))
+                                     %(data-ss-reveal-target="source"), %(data-ss-reveal-for="heading contador_falso"))
     patch "/paineis/#{d.id}/rascunho", params: { op: "add_view", title: "Teste" }
     v = within(tenant) { d.reload.draft["views"].last["id"] }
     patch "/paineis/#{d.id}/rascunho", params: { op: "add_section", view_id: v, title: "Teste" }
