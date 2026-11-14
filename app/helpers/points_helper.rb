@@ -178,7 +178,7 @@ module PointsHelper
     "#{v['summary']} · #{when_text}#{l(at, format: ' %H:%M') unless v['all_day']}"
   end
 
-  # Valor do ponto para um <input> (data/hora no formato do campo).
+  # Valor do ponto para um campo de formulário (data/hora no formato do campo).
   def point_input_type(point)
     return "number" if point.numeric?
     return { "date" => "date", "time" => "time" }.fetch(point.address["mode"], "datetime-local") if point.capability == "datetime"

@@ -4,8 +4,8 @@
   <h1 class="text-2xl mt-4"><%= t("passwords.heading") %></h1>
   <p class="text-sm text-muted mt-1"><%= t("passwords.lead") %></p>
 </div>
-<%= form_with url: forgot_password_path, class: "mt-6 space-y-4" do |f| %>
-  <div><%= f.label :email, t("sessions.email"), class: "ss-label" %><%= f.email_field :email, class: "ss-input", required: true, autofocus: true, placeholder: t("sessions.email_hint") %></div>
-  <%= f.submit t("passwords.submit"), class: "ss-btn ss-btn-primary w-full min-h-12" %>
+<%= ss_form_with url: forgot_password_path, class: "mt-6 space-y-4" do |f| %>
+  <%= f.ss_email_field :email, label: t("sessions.email"), required: true, autofocus: true, placeholder: t("sessions.email_hint") %>
+  <%= f.ss_submit t("passwords.submit"), css: "w-full min-h-12" %>
 <% end %>
 <p class="mt-6 text-sm text-center"><%= link_to login_path, class: "inline-flex items-center gap-1 text-accent font-bold" do %><%= icon("arrow-left", "size-4") %><%= t("passwords.back") %><% end %></p>

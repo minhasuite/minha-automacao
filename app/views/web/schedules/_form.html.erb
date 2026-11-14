@@ -16,7 +16,7 @@
   <%= render Ss::SwitchComponent.new(name: "schedule[enabled]", checked: record.enabled, label: t("automations.schedules.active"), show_label: true, id: "schedule_enabled") %>
   <% if record.next_run_at && record.enabled %><p class="md:col-span-2 text-sm text-muted"><%= t("automations.schedules.next", at: l(record.next_run_at.in_time_zone(site.timezone), format: :short)) %></p><% end %>
   <div class="md:col-span-3 flex flex-wrap gap-2">
-    <%= f.submit t("automations.schedules.save"), class: "ss-btn ss-btn-primary" %>
+    <%= f.ss_submit t("automations.schedules.save") %>
     <%= link_to t("automations.settings.cancel"), back_path, class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>

@@ -8,7 +8,7 @@
                 data: { turbo_submits_with: t("integrations.common.connecting") } do |f| %>
     <h2 class="font-bold"><%= t("integrations.connect.account") %></h2>
     <%= render integration_form_partial(@plugin), f: f, integration: @integration %>
-    <div><%= f.submit t("integrations.connect.submit"), class: "ss-btn ss-btn-primary" %></div>
+    <div><%= f.ss_submit t("integrations.connect.submit") %></div>
   <% end %>
 </div>
 <% end %>

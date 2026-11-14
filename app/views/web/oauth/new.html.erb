@@ -5,11 +5,10 @@
   <h1 class="text-2xl mt-4"><%= google ? t("protocols.google.oauth_title") : t("oauth.title") %></h1>
   <p class="text-sm text-muted mt-1"><%= google ? t("protocols.google.oauth_hint") : t("oauth.hint") %></p>
 </div>
-<%= form_with url: oauth_authorize_path, class: "mt-6 space-y-4" do |f| %>
+<%= ss_form_with url: oauth_authorize_path, class: "mt-6 space-y-4" do |f| %>
   <% %w[client_id redirect_uri state response_type scope].each do |k| %><%= hidden_field_tag k, params[k], id: nil %><% end %>
-  <div><%= f.label :site_id, t("oauth.site"), class: "ss-label" %>
-    <%= f.select :site_id, @sites.map { |s| [ s.name, s.id ] }, {}, class: "ss-input" %></div>
+  <%= f.ss_select :site_id, @sites.map { |s| [ s.name, s.id ] }, label: t("oauth.site") %>
   <p class="text-xs text-muted"><%= t("oauth.signed_in_html", email: tag.strong(current_user.email)) %></p>
-  <%= f.submit t("oauth.allow"), class: "ss-btn ss-btn-primary w-full min-h-12" %>
-  <%= f.submit t("oauth.deny"), name: "deny", class: "ss-btn ss-btn-ghost w-full" %>
+  <%= f.ss_submit t("oauth.allow"), css: "w-full min-h-12" %>
+  <%= f.ss_submit t("oauth.deny"), name: "deny", variant: :ghost, css: "w-full" %>
 <% end %>
