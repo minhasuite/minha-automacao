@@ -25,7 +25,7 @@
     </span>
     <div class="flex items-center gap-2">
       <%= render "web/shared/locale_picker" %>
-      <button type="button" class="ss-icon-btn" data-action="ss-theme#toggle" title="<%= t("layout.theme") %>" aria-label="<%= t("layout.theme") %>"><%= icon("moon", "") %></button>
+      <%= render Ss::IconButtonComponent.new(icon: icon("moon", ""), label: t("layout.theme"), data: { action: "ss-theme#toggle" }) %>
     </div>
   </header>
   <main class="ob-main" id="conteudo">

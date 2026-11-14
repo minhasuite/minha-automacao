@@ -18,14 +18,14 @@
 <body class="ss-base ss-inputs min-h-screen" data-controller="ss-theme">
   <div class="min-h-screen grid lg:grid-cols-2">
     <aside class="ss-hero rounded-none! hidden lg:flex flex-col justify-between p-12 shadow-none!">
-      <%= link_to root_path, class: "flex items-center gap-3 no-underline text-white font-bold text-lg" do %>
+      <%= link_to root_path, class: "flex items-center gap-3 no-underline text-on-accent font-bold text-lg" do %>
         <span class="ss-icon-tile is-on-grad"><%= icon("lightning-bolt", "size-5") %></span>Minha Automação
       <% end %>
       <div class="max-w-md">
         <p class="text-4xl font-bold leading-tight tracking-tight"><%= t("layout.tagline_html") %></p>
-        <p class="mt-4 text-white/80 leading-relaxed"><%= t("layout.pitch") %></p>
+        <p class="mt-4 text-on-accent/80 leading-relaxed"><%= t("layout.pitch") %></p>
       </div>
-      <p class="text-xs text-white/70">© <%= Date.current.year %> Minha Automação · MinhaSuite</p>
+      <p class="text-xs text-on-accent/70">© <%= Date.current.year %> Minha Automação · MinhaSuite</p>
     </aside>
     <main class="flex flex-col items-center justify-center px-4 py-10">
       <%= link_to root_path, class: "lg:hidden mb-8 flex items-center gap-2.5 no-underline font-bold text-lg text-ink" do %>
