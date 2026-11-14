@@ -4,6 +4,6 @@
 <div class="ob-nav">
   <% if prev %><%= link_to onboarding_step_path(prev.key), class: "ss-btn ss-btn-ghost" do %><%= icon("arrow-left", "size-4") %><%= t("onboarding.back") %><% end %><% end %>
   <span class="flex-1"></span>
-  <% if step.optional? %><button type="submit" form="ob-skip" class="ss-btn ss-btn-ghost"><%= t("onboarding.skip") %></button><% end %>
-  <button type="submit" class="ss-btn ss-btn-primary min-h-12 px-6"><%= label || t("onboarding.next") %><%= icon("chevron-right", "size-4") %></button>
+  <% if step.optional? %><%= render Ss::ButtonComponent.new(label: t("onboarding.skip"), variant: :ghost, type: :submit, form: "ob-skip") %><% end %>
+  <%= render Ss::ButtonComponent.new(label: label || t("onboarding.next"), trailing_icon: "chevron-right", type: :submit, class: "min-h-12 px-6") %>
 </div>

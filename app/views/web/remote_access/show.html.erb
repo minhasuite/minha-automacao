@@ -21,8 +21,8 @@
     <p class="mt-3 text-sm"><%= t("remote.address") %> <%= link_to st["url"], st["url"], class: "font-semibold text-accent break-all", target: "_blank", rel: "noopener" %></p>
   <% end %>
   <% if owner && st["enabled"] %>
-    <%= button_to settings_remote_path, method: :delete, class: "ss-btn ss-btn-danger mt-4",
-                  form: { data: { turbo_confirm: t("remote.off_confirm"), turbo_confirm_button: t("remote.turn_off") } } do %><%= icon("x-circle", "size-4") %><%= t("remote.turn_off") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("remote.turn_off"), icon: "x-circle", variant: :danger, href: settings_remote_path, method: :delete, class: "mt-4",
+                                       confirm: t("remote.off_confirm"), confirm_button: t("remote.turn_off")) %>
   <% end %>
 </section>
 
@@ -31,18 +31,15 @@
     <h2 id="rp-<%= p.key %>" class="flex items-center gap-2"><%= icon(p.icon, "size-5 text-accent") %><%= p.label %></h2>
     <p class="text-sm text-muted mt-1 max-w-2xl"><%= p.description %></p>
     <% if owner && !live["manual"] %>
-      <%= form_with url: settings_remote_path(provider: p.key), method: :patch, scope: :remote, class: "mt-3 grid gap-3 max-w-xl", data: { turbo_submits_with: t("onboarding.saving") } do |f| %>
+      <%= ss_form_with url: settings_remote_path(provider: p.key), method: :patch, scope: :remote, class: "mt-3 grid gap-3 max-w-xl", data: { turbo_submits_with: t("onboarding.saving") } do |f| %>
         <% p.fields.each do |fd| %>
-          <div>
-            <%= f.label fd["key"], t("remote.#{p.key}.fields.#{fd['key']}"), class: "ss-label" %>
-            <% if fd["secret"] %>
-              <%= f.password_field fd["key"], class: "ss-input num", autocomplete: "off", placeholder: (t("remote.keep_secret") if st["provider"] == p.key) %>
-            <% else %>
-              <%= f.text_field fd["key"], value: (st["url"] if st["provider"] == p.key), class: "ss-input num", placeholder: "https://casa.exemplo.com" %>
-            <% end %>
-          </div>
+          <% if fd["secret"] %>
+            <%= f.ss_password_field fd["key"], label: t("remote.#{p.key}.fields.#{fd['key']}"), class: "num", autocomplete: "off", placeholder: (t("remote.keep_secret") if st["provider"] == p.key) %>
+          <% else %>
+            <%= f.ss_text_field fd["key"], label: t("remote.#{p.key}.fields.#{fd['key']}"), value: (st["url"] if st["provider"] == p.key), class: "num", placeholder: "https://casa.exemplo.com" %>
+          <% end %>
         <% end %>
-        <div><%= f.submit st["enabled"] && st["provider"] == p.key ? t("remote.save") : t("remote.turn_on"), class: "ss-btn ss-btn-primary" %></div>
+        <div><%= f.ss_submit st["enabled"] && st["provider"] == p.key ? t("remote.save") : t("remote.turn_on") %></div>
       <% end %>
     <% end %>
   </section>

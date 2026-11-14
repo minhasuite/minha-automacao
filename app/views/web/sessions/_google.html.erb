@@ -4,7 +4,7 @@
 <% if google_login_available? %>
   <div class="mt-6" data-controller="google-signin" data-google-signin-client-value="<%= GoogleLogin.client_id %>"
        data-google-signin-text-value="<%= text %>" data-google-signin-locale-value="<%= I18n.locale %>" data-google="button">
-    <%= form_with url: url, data: { turbo: false, google_signin_target: "form" } do %>
+    <%= ss_form_with url: url, data: { turbo: false, google_signin_target: "form" } do %>
       <%= hidden_field_tag :credential, nil, id: nil, data: { google_signin_target: "credential" } %>
       <%= hidden_field_tag :return_to, return_to, id: nil if return_to.present? %>
       <%= hidden_field_tag :invite, invite, id: nil if invite %>

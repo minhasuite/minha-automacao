@@ -4,10 +4,10 @@
   <h1 class="text-2xl mt-2"><%= t("security.login.title") %></h1>
   <p class="text-sm text-muted mt-1"><%= t("security.login.lead") %></p>
 </div>
-<%= form_with url: login_mfa_path, class: "mt-6 space-y-4" do %>
-  <div><label for="code" class="ss-label"><%= t("security.totp.code") %></label>
-    <input id="code" name="code" class="ss-input num text-center text-xl tracking-widest" inputmode="numeric" autocomplete="one-time-code" required autofocus></div>
-  <button class="ss-btn ss-btn-primary w-full min-h-12"><%= t("security.login.submit") %></button>
+<%= ss_form_with url: login_mfa_path, class: "mt-6 space-y-4" do |f| %>
+  <%= f.ss_text_field :code, label: t("security.totp.code"), id: "code", class: "num text-center text-xl tracking-widest", inputmode: "numeric",
+                             autocomplete: "one-time-code", required: true, autofocus: true %>
+  <%= f.ss_submit t("security.login.submit"), css: "w-full min-h-12" %>
 <% end %>
 <p class="mt-4 text-xs text-muted text-center"><%= t("security.login.recovery_hint") %></p>
 <p class="mt-4 text-sm text-center"><%= link_to t("security.login.back"), login_path, class: "text-accent font-bold" %></p>

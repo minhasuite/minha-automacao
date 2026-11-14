@@ -1,6 +1,7 @@
 <%= render "web/shared/header", title: t("protocols.panel.title", name: @integration.name), subtitle: [ @plugin.title, (@integration.account if reveal_sensitive?) ].compact.join(" · "), back: site_integrations_path(@site) do %>
   <%= link_to site_devices_path(@site, integracao: @integration.id), class: "ss-btn ss-btn-outline" do %><%= icon("view-list", "size-4") %><%= t("integrations.index.see_devices") %><% end %>
-  <%= button_to sync_integration_path(@integration), class: "ss-btn ss-btn-ghost", form: { data: { turbo_submits_with: t("integrations.common.asking") } } do %><%= icon("refresh", "size-4") %><%= t("integrations.common.sync_now") %><% end %>
+  <%= render Ss::ButtonComponent.new(label: t("integrations.common.sync_now"), icon: "refresh", variant: :ghost, href: sync_integration_path(@integration), method: :post,
+                                    form: { data: { turbo_submits_with: t("integrations.common.asking") } }) %>
 <% end %>
 <div class="grid gap-4 max-w-6xl" <% if @refresh %>data-controller="ss-reload" data-ss-reload-every-value="<%= @refresh %>"<% end %>>
   <% if @locals[:error] %>

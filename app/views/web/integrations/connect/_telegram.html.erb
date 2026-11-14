@@ -7,10 +7,10 @@
     <p class="text-sm text-muted"><%= t("integrations.connect.telegram.none") %></p>
   <% end %>
   <% chats.each do |c| %>
-    <%= form_with scope: :integration, url: connect_integration_path(integration), method: :post, class: "flex flex-wrap items-center gap-2" do |f| %>
+    <%= ss_form_with scope: :integration, url: connect_integration_path(integration), method: :post, class: "flex flex-wrap items-center gap-2" do |f| %>
       <%= f.hidden_field :chat_id, value: c["id"] %>
       <span class="text-sm font-semibold"><%= c["name"].presence || c["id"] %></span><span class="text-xs text-muted num"><%= c["id"] %></span>
-      <%= f.submit t("integrations.connect.telegram.use"), class: "ss-btn ss-btn-primary ss-btn-sm" %>
+      <%= f.ss_submit t("integrations.connect.telegram.use"), small: true %>
     <% end %>
   <% end %>
   <% if integration.settings["chat_id"].present? %>

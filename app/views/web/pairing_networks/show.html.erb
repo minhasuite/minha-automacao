@@ -3,7 +3,8 @@
 <%= render "web/shared/header", title: t("pairing.network.title", protocol: @adapter.label), subtitle: t("pairing.network.subtitle", site: @site.name), back: site_devices_path(@site) do %>
   <% if can?(:manage) %>
     <%= link_to site_pairing_path(@site, @adapter.key), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("pairing.button", protocol: @adapter.label) %><% end %>
-    <%= button_to site_pairing_network_map_path(@site, @adapter.key), class: "ss-btn ss-btn-outline", form: { data: { turbo_submits_with: t("pairing.network.asking") } } do %><%= icon("refresh", "size-4") %><%= t("pairing.network.refresh_map") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("pairing.network.refresh_map"), icon: "refresh", variant: :outline, href: site_pairing_network_map_path(@site, @adapter.key),
+                                        method: :post, form: { data: { turbo_submits_with: t("pairing.network.asking") } }) %>
   <% end %>
 <% end %>
 
@@ -39,8 +40,8 @@
             <g>
               <title><%= [ n[:name], t("pairing.roles.#{n[:role]}"), (t("pairing.lqi", n: n[:lqi]) if n[:lqi]) ].compact.join(" · ") %></title>
               <% if n[:device_id] %><a href="<%= device_path(n[:device_id]) %>"><% end %>
-              <circle cx="<%= n[:x] %>" cy="<%= n[:y] %>" r="<%= r %>" fill="<%= fill %>" stroke="var(--surface, #fff)" stroke-width="3" />
-              <text x="<%= n[:x] %>" y="<%= n[:y] + r + 18 %>" text-anchor="middle" font-size="<%= n[:role] == "end_device" ? 17 : 20 %>" fill="currentColor" stroke="var(--surface, #fff)" stroke-width="5" paint-order="stroke"><%= (n[:role] == "coordinator" ? t("pairing.roles.coordinator") : n[:name]).to_s.truncate(22) %></text>
+              <circle cx="<%= n[:x] %>" cy="<%= n[:y] %>" r="<%= r %>" fill="<%= fill %>" stroke="var(--surface)" stroke-width="3" />
+              <text x="<%= n[:x] %>" y="<%= n[:y] + r + 18 %>" text-anchor="middle" font-size="<%= n[:role] == "end_device" ? 17 : 20 %>" fill="currentColor" stroke="var(--surface)" stroke-width="5" paint-order="stroke"><%= (n[:role] == "coordinator" ? t("pairing.roles.coordinator") : n[:name]).to_s.truncate(22) %></text>
               <% if n[:device_id] %></a><% end %>
             </g>
           <% end %>

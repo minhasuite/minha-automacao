@@ -5,8 +5,10 @@
 <% nothing = !@dashboard.draft? && !@dashboard.auto? %>
 <%= render "web/shared/header", title: t("dashboards.review.title"), subtitle: [ @dashboard.name, t("dashboards.review.changes", count: @changes) ].join(" · "), back: edit_dashboard_path(@dashboard, view: @view&.dig("id")) do %>
   <%= link_to compare_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost" do %><%= icon("switch-horizontal", "size-4") %><%= t("dashboards.cmp.short") %><% end %>
-  <%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary", disabled: nothing, title: (t("dashboards.ed.nothing_to_publish") if nothing),
-                form: { data: { turbo_confirm: (@warnings.any? ? t("dashboards.review.confirm_warnings", count: @warnings.size) : t("dashboards.ed.publish_confirm")), turbo_confirm_button: t("dashboards.publish") } } do %><%= icon("upload", "size-4") %><%= t("dashboards.publish") %><% end %>
+  <%= render Ss::ButtonComponent.new(label: t("dashboards.publish"), icon: "upload", href: publish_dashboard_path(@dashboard), method: :post, disabled: nothing,
+                                     title: (t("dashboards.ed.nothing_to_publish") if nothing),
+                                     confirm: (@warnings.any? ? t("dashboards.review.confirm_warnings", count: @warnings.size) : t("dashboards.ed.publish_confirm")),
+                                     confirm_button: t("dashboards.publish")) %>
 <% end %>
 
 <section class="ss-card ss-card-pad" aria-labelledby="rv-warn">
