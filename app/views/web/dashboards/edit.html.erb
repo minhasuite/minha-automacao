@@ -11,7 +11,7 @@
   <%# Ideias 24 e 25: publicar passa pela revisão (prévia em todos os tamanhos e temas + avisos que não bloqueiam). %>
   <% why = (t("dashboards.ed.nothing_to_publish") unless @dashboard.draft? || @dashboard.auto?) %>
   <% if why %>
-    <button type="button" class="ss-btn ss-btn-primary" disabled title="<%= why %>" aria-describedby="publish-why"><%= icon("upload", "size-4") %><%= t("dashboards.publish") %></button>
+    <%= render Ss::ButtonComponent.new(label: t("dashboards.publish"), icon: "upload", disabled: true, title: why, aria: { describedby: "publish-why" }) %>
     <p id="publish-why" class="basis-full text-right text-xs text-muted sm:basis-auto"><%= why %></p>
   <% else %>
     <%= link_to review_dashboard_path(@dashboard, view: view&.dig("id")), class: "ss-btn ss-btn-primary", data: { dw_key: "publish" } do %><%= icon("upload", "size-4") %><%= t("dashboards.review.publish_btn") %><% end %>
@@ -43,11 +43,11 @@
       <%# Nova vista: .ss-menu da gem com botão de texto; o painel é o próprio formulário. %>
       <details class="ss-menu is-end shrink-0" id="dw-new-view" <%= "open" if params[:nova_visao].present? %>>
         <summary class="ss-menu-btn" aria-label="<%= t("dashboards.ed.new_view") %>"><%= icon("plus", "size-4") %><span class="max-sm:sr-only"><%= t("dashboards.ed.new_view") %></span></summary>
-        <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "!flex gap-2 p-3 w-[min(20rem,calc(100vw-2rem))]" do %>
+        <%= ss_form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "!flex items-start gap-2 p-3 w-[min(20rem,calc(100vw-2rem))]" do |f| %>
           <%= hidden_field_tag :op, "add_view", id: nil %>
-          <label class="sr-only" for="nv-title"><%= t("dashboards.ed.view_name") %></label>
-          <%= text_field_tag :title, nil, class: "ss-input", id: "nv-title", placeholder: t("dashboards.ed.view_placeholder"), required: true, maxlength: 60, autofocus: params[:nova_visao].present? %>
-          <%= submit_tag t("dashboards.ed.create"), class: "ss-btn ss-btn-primary" %>
+          <%= f.ss_text_field :title, label: t("dashboards.ed.view_name"), hide_label: true, id: "nv-title", wrapper_class: "flex-1 min-w-0", placeholder: t("dashboards.ed.view_placeholder"),
+                                      required: true, maxlength: 60, autofocus: params[:nova_visao].present? %>
+          <%= f.ss_submit t("dashboards.ed.create") %>
         <% end %>
       </details>
     </div>
@@ -55,25 +55,25 @@
     <% if view %>
       <section class="ss-card ss-card-pad" aria-label="<%= t("dashboards.ed.view_label", name: view['title']) %>">
         <div class="flex flex-wrap items-end gap-3">
-          <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-64" do %>
+          <%= ss_form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-64" do |f| %>
             <%= hidden_field_tag :op, "update_view", id: nil %><%= hidden_field_tag :target, view["id"], id: nil %><%= hidden_field_tag :view_id, view["id"], id: nil %>
-            <div class="flex-1 min-w-40"><label class="ss-label" for="vt"><%= t("dashboards.ed.view_name") %></label><%= text_field_tag :title, view["title"], class: "ss-input", id: "vt", maxlength: 60 %></div>
+            <%= f.ss_text_field :title, label: t("dashboards.ed.view_name"), value: view["title"], id: "vt", maxlength: 60, wrapper_class: "flex-1 min-w-40" %>
             <div class="basis-full"><%= render "web/shared/icon_picker", name: "icon", selected: view["icon"], icons: Dashboard::ICONS, id: "vi", label: t("dashboards.ed.view_icon") %></div>
             <details class="basis-full" <%= "open" if view["path"].present? %>>
               <summary class="ss-summary text-sm font-semibold text-ink-2 w-fit"><%= t("dashboards.ed.view_path") %></summary>
-              <div class="mt-2 max-w-xs"><label class="ss-label" for="vp"><%= t("dashboards.ed.link_name") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label><%= text_field_tag :path, view["path"], class: "ss-input num", id: "vp", maxlength: 40, placeholder: t("dashboards.ed.path_placeholder"), pattern: "[a-z0-9][a-z0-9-]*", title: t("dashboards.ed.path_title"), "aria-describedby": "vp-hint" %>
-                <p id="vp-hint" class="text-xs text-muted mt-1"><%= t("dashboards.ed.path_hint") %></p></div>
+              <%= f.ss_text_field :path, label: safe_join([t("dashboards.ed.link_name"), " ", tag.span(t("dashboards.ed.optional"), class: "font-normal")]), value: view["path"], class: "num",
+                                         id: "vp", maxlength: 40, placeholder: t("dashboards.ed.path_placeholder"), pattern: "[a-z0-9][a-z0-9-]*", title: t("dashboards.ed.path_title"),
+                                         help: t("dashboards.ed.path_hint"), wrapper_class: "mt-2 max-w-xs" %>
             </details>
             <%# ondaB2 (B8): tipo da visão e subvisão (fora das abas, com "voltar"). %>
             <div class="basis-full grid gap-3 sm:grid-cols-3 items-end">
-              <div><label class="ss-label" for="vty"><%= t("dashboards.vt.form.type") %></label>
-                <%= select_tag :view_type, options_for_select(Dashboards::ViewTypes.plugins.map { |x| [ x.label, x.key, { title: x.description } ] }, view["type"] || "sections"), class: "ss-input", id: "vty" %></div>
-              <label class="ss-check pb-2"><%= check_box_tag :subview, "1", view["subview"] == true, id: "vsub" %><%= t("dashboards.vt.form.subview") %></label>
+              <%= f.ss_select :view_type, Dashboards::ViewTypes.plugins.map { |x| [ x.label, x.key, { title: x.description } ] }, label: t("dashboards.vt.form.type"),
+                                          selected: view["type"] || "sections", id: "vty" %>
+              <%= f.ss_check_box :subview, label: t("dashboards.vt.form.subview"), checked: view["subview"] == true, unchecked_value: nil, id: "vsub", wrapper_class: "pb-2" %>
               <%# Beleza (ideia 17): visão inicial do painel (ex.: a planta como visão principal). %>
-              <label class="ss-check pb-2"><%= hidden_field_tag :start_view, "0", id: nil %><%= check_box_tag :start_view, "1", @draft["start_view"] == view["id"], id: "vstart" %><%= t("dashboards.vt.form.start") %></label>
-              <div><label class="ss-label" for="vbk"><%= t("dashboards.vt.form.back") %></label>
-                <%= select_tag :back_path, options_for_select(Array(@draft["views"]).reject { |x| x["id"] == view["id"] }.map { |x| [ x["title"], x["path"].presence || x["id"] ] }, view["back_path"]),
-                               include_blank: t("dashboards.vt.form.back_first"), class: "ss-input", id: "vbk" %></div>
+              <%= f.ss_check_box :start_view, label: t("dashboards.vt.form.start"), checked: @draft["start_view"] == view["id"], id: "vstart", wrapper_class: "pb-2" %>
+              <%= f.ss_select :back_path, Array(@draft["views"]).reject { |x| x["id"] == view["id"] }.map { |x| [ x["title"], x["path"].presence || x["id"] ] },
+                              label: t("dashboards.vt.form.back"), selected: view["back_path"], include_blank: t("dashboards.vt.form.back_first"), id: "vbk" %>
             </div>
             <%# P1.4: o topo da visão (Dashboards::Hero): título e linha de cima com Liquid, saudação e esconder. %>
             <% hero = view["hero"].is_a?(Hash) ? view["hero"] : {} %>
@@ -81,18 +81,18 @@
               <summary class="ss-summary text-sm font-semibold text-ink-2 w-fit"><%= t("dashboards.hero.form.title") %></summary>
               <%= hidden_field_tag "hero[present]", "1", id: nil %>
               <div class="mt-2 grid gap-3 sm:grid-cols-2">
-                <div><label class="ss-label" for="vht"><%= t("dashboards.hero.form.text") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label>
-                  <%= text_field_tag "hero[title]", hero["title"], class: "ss-input", id: "vht", maxlength: Dashboards::Hero::MAX, placeholder: t("dashboards.hero.form.text_placeholder") %></div>
-                <div><label class="ss-label" for="vhk"><%= t("dashboards.hero.form.kicker") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label>
-                  <%= text_field_tag "hero[kicker]", hero["kicker"], class: "ss-input", id: "vhk", maxlength: Dashboards::Hero::MAX, placeholder: t("dashboards.hero.form.kicker_placeholder") %></div>
-                <div><label class="ss-label" for="vhg"><%= t("dashboards.hero.form.greeting") %></label>
-                  <%= select_tag "hero[greeting]", options_for_select({ t("dashboards.hero.form.greeting_auto") => "", t("dashboards.hero.form.greeting_on") => "1", t("dashboards.hero.form.greeting_off") => "0" },
-                                                                      { true => "1", false => "0" }.fetch(hero["greeting"], "")), class: "ss-input", id: "vhg" %></div>
-                <label class="ss-check self-end pb-2"><%= check_box_tag "hero[hide]", "1", hero["hide"] == true, id: "vhh" %><%= t("dashboards.hero.form.hide") %></label>
+                <% opt = tag.span(t("dashboards.ed.optional"), class: "font-normal") %>
+                <%= f.ss_text_field "hero[title]", label: safe_join([t("dashboards.hero.form.text"), " ", opt]), value: hero["title"], id: "vht", maxlength: Dashboards::Hero::MAX,
+                                                   placeholder: t("dashboards.hero.form.text_placeholder") %>
+                <%= f.ss_text_field "hero[kicker]", label: safe_join([t("dashboards.hero.form.kicker"), " ", opt]), value: hero["kicker"], id: "vhk", maxlength: Dashboards::Hero::MAX,
+                                                    placeholder: t("dashboards.hero.form.kicker_placeholder") %>
+                <%= f.ss_select "hero[greeting]", [ [ t("dashboards.hero.form.greeting_auto"), "" ], [ t("dashboards.hero.form.greeting_on"), "1" ], [ t("dashboards.hero.form.greeting_off"), "0" ] ],
+                                label: t("dashboards.hero.form.greeting"), selected: { true => "1", false => "0" }.fetch(hero["greeting"], ""), id: "vhg" %>
+                <%= f.ss_check_box "hero[hide]", label: t("dashboards.hero.form.hide"), checked: hero["hide"] == true, unchecked_value: nil, id: "vhh", wrapper_class: "self-end pb-2" %>
                 <p class="sm:col-span-2 text-xs text-muted"><%= t("dashboards.hero.form.hint") %></p>
               </div>
             </details>
-            <%= submit_tag t("dashboards.save"), class: "ss-btn ss-btn-ghost" %>
+            <%= f.ss_submit t("dashboards.save"), variant: :ghost %>
           <% end %>
           <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "view", target: view["id"], view_id: view["id"], name: t("dashboards.ed.the_view", name: view["title"]), clipboard: @clipboard %>
         </div>
@@ -116,14 +116,14 @@
             <span class="text-xs font-semibold text-muted shrink-0"><%= t("dashboards.ed.widgets", count: Array(s["widgets"]).size) %></span>
           </summary>
           <div class="flex flex-wrap items-end gap-3 mt-3">
-            <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-64" do %>
+            <%= ss_form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "flex flex-wrap items-end gap-2 flex-1 min-w-64" do |f| %>
               <%= hidden_field_tag :op, "update_section", id: nil %><%= hidden_field_tag :target, s["id"], id: nil %><%= hidden_field_tag :view_id, view["id"], id: nil %>
-              <div class="flex-1 min-w-40"><label class="ss-label" for="st-<%= s['id'] %>"><%= t("dashboards.section") %></label><%= text_field_tag :title, s["title"], class: "ss-input", id: "st-#{s['id']}", maxlength: 60, placeholder: t("dashboards.ed.untitled") %></div>
-              <div class="w-44"><label class="ss-label" for="sw-<%= s['id'] %>"><%= t("dashboards.ed.desktop_width") %></label>
-                <%= select_tag "span[desktop]", options_for_select({ t("dashboards.ed.width.full") => 12, t("dashboards.ed.width.two_thirds") => 8, t("dashboards.ed.width.half") => 6, t("dashboards.ed.width.third") => 4 }, s.dig("span", "desktop") || 12), class: "ss-input", id: "sw-#{s['id']}" %>
-                <%= hidden_field_tag "span[mobile]", 12, id: nil %><%= hidden_field_tag "span[tablet]", (s.dig("span", "desktop") || 12) == 12 ? 12 : 6, id: nil %></div>
-              <% if view["type"] == "sidebar" %><label class="ss-check pb-2"><%= check_box_tag :position, "sidebar", s["position"] == "sidebar", id: "spo-#{s['id']}" %><%= t("dashboards.vt.form.in_sidebar") %></label><% end %>
-              <%= submit_tag t("dashboards.save"), class: "ss-btn ss-btn-ghost" %>
+              <%= f.ss_text_field :title, label: t("dashboards.section"), value: s["title"], id: "st-#{s['id']}", maxlength: 60, placeholder: t("dashboards.ed.untitled"), wrapper_class: "flex-1 min-w-40" %>
+              <%= f.ss_select "span[desktop]", [ [ t("dashboards.ed.width.full"), 12 ], [ t("dashboards.ed.width.two_thirds"), 8 ], [ t("dashboards.ed.width.half"), 6 ], [ t("dashboards.ed.width.third"), 4 ] ],
+                              label: t("dashboards.ed.desktop_width"), selected: s.dig("span", "desktop") || 12, id: "sw-#{s['id']}", wrapper_class: "w-44" %>
+              <%= hidden_field_tag "span[mobile]", 12, id: nil %><%= hidden_field_tag "span[tablet]", (s.dig("span", "desktop") || 12) == 12 ? 12 : 6, id: nil %>
+              <% if view["type"] == "sidebar" %><%= f.ss_check_box :position, label: t("dashboards.vt.form.in_sidebar"), checked_value: "sidebar", unchecked_value: nil, checked: s["position"] == "sidebar", id: "spo-#{s['id']}", wrapper_class: "pb-2" %><% end %>
+              <%= f.ss_submit t("dashboards.save"), variant: :ghost %>
             <% end %>
             <%= render "web/dashboards/tools", dashboard: @dashboard, kind: "section", target: s["id"], view_id: view["id"], name: t("dashboards.ed.the_section", name: s["title"]), clipboard: @clipboard %>
           </div>
@@ -141,28 +141,28 @@
         </section>
       <% end %>
 
-      <%= form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "ss-card p-3 flex gap-2" do %>
+      <%= ss_form_with url: draft_dashboard_path(@dashboard), method: :patch, class: "ss-card p-3 flex items-start gap-2" do |f| %>
         <%= hidden_field_tag :op, "add_section", id: nil %><%= hidden_field_tag :view_id, view["id"], id: nil %>
-        <label class="sr-only" for="ns-title"><%= t("dashboards.ed.new_section_name") %></label>
-        <%= text_field_tag :title, nil, class: "ss-input", id: "ns-title", placeholder: t("dashboards.ed.new_section_placeholder"), maxlength: 60 %>
-        <%= submit_tag t("dashboards.ed.add_section"), class: "ss-btn ss-btn-outline" %>
+        <%= f.ss_text_field :title, label: t("dashboards.ed.new_section_name"), hide_label: true, id: "ns-title", placeholder: t("dashboards.ed.new_section_placeholder"), maxlength: 60, wrapper_class: "flex-1 min-w-0" %>
+        <%= f.ss_submit t("dashboards.ed.add_section"), variant: :outline %>
       <% end %>
     <% end %>
   </div>
 
   <aside class="flex flex-col gap-4">
-    <%= form_with model: @dashboard, url: dashboard_path(@dashboard), class: "ss-card ss-card-pad grid gap-3" do |f| %>
+    <%= ss_form_with model: @dashboard, url: dashboard_path(@dashboard), class: "ss-card ss-card-pad grid gap-3" do |f| %>
       <h2><%= t("dashboards.ed.dashboard") %></h2>
-      <div><%= f.label :name, t("dashboards.ed.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true %></div>
+      <%= f.ss_text_field :name, label: t("dashboards.ed.name"), required: true %>
       <%= render "web/shared/icon_picker", name: "dashboard[icon]", selected: @dashboard.icon, icons: Dashboard::ICONS, id: "dashboard_icon" %>
-      <label class="ss-check"><%= f.check_box :sidebar %><%= t("dashboards.ed.sidebar") %></label>
+      <%= f.ss_check_box :sidebar, label: t("dashboards.ed.sidebar") %>
       <fieldset><legend class="ss-label"><%= t("dashboards.ed.who_sees") %> <span class="font-normal"><%= t("dashboards.ed.none_all") %></span></legend>
         <div class="flex flex-wrap gap-3">
-          <% SiteMembership::ROLES.each do |r| %><label class="ss-check"><%= check_box_tag "dashboard[roles][]", r, @dashboard.roles.include?(r), id: "dr-#{r}" %><%= SiteMembership.role_label(r) %></label><% end %>
+          <% SiteMembership::ROLES.each do |r| %><%= f.ss_check_box :roles, label: SiteMembership.role_label(r), multiple: true, checked_value: r, unchecked_value: nil,
+                                                                  checked: @dashboard.roles.include?(r), id: "dr-#{r}" %><% end %>
           <%= hidden_field_tag "dashboard[roles][]", "", id: nil %>
         </div></fieldset>
-      <label class="ss-check"><%= f.check_box :site_default %><%= t("dashboards.site_default") %></label>
-      <div><%= f.submit t("dashboards.ed.save_dashboard"), class: "ss-btn ss-btn-ghost" %></div>
+      <%= f.ss_check_box :site_default, label: t("dashboards.site_default") %>
+      <div><%= f.ss_submit t("dashboards.ed.save_dashboard"), variant: :ghost %></div>
     <% end %>
     <section class="ss-card ss-card-pad" aria-labelledby="theme-title">
       <h2 id="theme-title" class="flex items-center gap-2"><%= icon("color-swatch", "size-5 text-accent") %><%= t("dashboards.ed.appearance") %></h2>
@@ -173,16 +173,16 @@
     <% if current_user.dashboard_prefs[@site.id] == @dashboard.id %>
       <p class="ss-badge ss-badge-success w-fit"><%= t("dashboards.mine") %></p>
     <% else %>
-      <%= button_to prefer_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost w-full" do %><%= icon("home", "size-4") %><%= t("dashboards.prefer") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: t("dashboards.prefer"), icon: "home", variant: :ghost, block: true, href: prefer_dashboard_path(@dashboard), method: :post) %>
     <% end %>
-    <%= button_to duplicate_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost w-full" do %><%= icon("duplicate", "size-4") %><%= t("dashboards.ed.duplicate") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("dashboards.ed.duplicate"), icon: "duplicate", variant: :ghost, block: true, href: duplicate_dashboard_path(@dashboard), method: :post) %>
 
     <section class="ss-card ss-card-pad">
       <h2><%= t("dashboards.ed.draft") %></h2>
       <p class="text-sm text-muted mt-1"><%= t("dashboards.ed.draft_hint") %></p>
       <div class="flex flex-wrap gap-2 mt-3">
         <%= link_to json_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("document-text", "size-4") %><%= t("dashboards.ed.json") %><% end %>
-        <% if @dashboard.draft? %><%= button_to t("dashboards.ed.discard"), discard_dashboard_path(@dashboard), class: "ss-btn ss-btn-danger ss-btn-sm", form: { data: { turbo_confirm: t("dashboards.ed.discard_confirm") } } %><% end %>
+        <% if @dashboard.draft? %><%= render Ss::ButtonComponent.new(label: t("dashboards.ed.discard"), variant: :danger, size: :sm, href: discard_dashboard_path(@dashboard), method: :post, confirm: t("dashboards.ed.discard_confirm")) %><% end %>
       </div>
     </section>
 
@@ -202,7 +202,8 @@
               <% if v.version == @dashboard.version %>
                 <span class="ss-badge ss-badge-success"><%= t("dashboards.ed.live") %></span>
               <% else %>
-                <%= button_to t("dashboards.ed.revert"), revert_dashboard_path(@dashboard), params: { version: v.version }, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm: t("dashboards.ed.revert_confirm", n: v.version), turbo_confirm_button: t("dashboards.publish") } } %>
+                <%= render Ss::ButtonComponent.new(label: t("dashboards.ed.revert"), variant: :ghost, size: :sm, href: revert_dashboard_path(@dashboard), method: :post, params: { version: v.version },
+                                                   confirm: t("dashboards.ed.revert_confirm", n: v.version), confirm_button: t("dashboards.publish")) %>
               <% end %>
             </li>
           <% end %>
@@ -210,6 +211,7 @@
       <% end %>
     </section>
 
-    <%= button_to dashboard_path(@dashboard), method: :delete, class: "ss-btn ss-btn-danger w-full", form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.delete"), turbo_confirm: t("dashboards.ed.delete_confirm", name: @dashboard.name) } } do %><%= icon("trash", "size-4") %><%= t("dashboards.ed.delete") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("dashboards.ed.delete"), icon: "trash", variant: :danger, block: true, href: dashboard_path(@dashboard), method: :delete,
+                                       confirm: t("dashboards.ed.delete_confirm", name: @dashboard.name), confirm_tone: :danger, confirm_button: t("shared.confirm.delete")) %>
   </aside>
 </div>
