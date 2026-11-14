@@ -38,7 +38,7 @@ module Dashboards
     # Variáveis CSS da marca a partir das duas cores (já validadas): as da gem (ComponentesUi.brand_css, o
     # mesmo SsBrand.fromColors que o app usa no DashThemes.brand) e o papel de parede.
     def css_vars(accent, accent2, wallpaper = nil)
-      [ ComponentesUi.brand_css(accent, accent2), ("--wall: #{wallpaper}" if wallpaper) ].compact.join("; ")
+      [ ComponentesUi.brand_css(accent, accent2), ("--ss-wall: #{wallpaper}" if wallpaper) ].compact.join("; ")
     end
 
     def errors(theme, where)

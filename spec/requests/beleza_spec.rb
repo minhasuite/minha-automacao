@@ -77,7 +77,7 @@ RSpec.describe "Beleza dos painéis" do
 
       publish(within(tenant) { dashboard.published.deep_dup }.merge("theme" => theme))
       travel_to(late) { get "/paineis/#{dashboard.id}" }
-      expect(response.body).to include("dw-has-wall", "dw-dim", "dw-night", "--wall: #1e1b4b", "--wall-dim: 40%")
+      expect(response.body).to include("ss-wall", "is-dim", "is-night", "--ss-wall: #1e1b4b", "--ss-wall-dim: 40%")
       travel_to(morning) { get "/api/v1/dashboards/#{dashboard.id}", headers: auth_headers(user) }
       expect(data["views"].first["theme_now"]).to include("is_night" => false, "wall" => { "color" => "#fde68a", "color2" => "#38bdf8" })
     end

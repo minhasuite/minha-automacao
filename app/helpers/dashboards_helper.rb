@@ -208,16 +208,17 @@ module DashboardsHelper
   def dw_media_image(m) = m["image"].to_s.match?(%r{\A(https://|/)[^"'()\s<>]+\z}) ? m["image"] : nil
 
   # Tema resolvido (Dashboards::Themes.resolve) → classe e style do <body>:
-  # variáveis de cor, papel de parede (link já validado no Schema), desfoque e vidro.
+  # variáveis de cor, papel de parede da gem (.ss-wall, link já validado no Schema), desfoque e vidro (.ss-wall-glass).
+  # dw-themed/dw-theme-<key> são só marcas (sem CSS); is-night avisa a planta que é noite.
   def dw_theme_attrs(th)
     t = th["theme"]
     image = th["image"].to_s.match?(Dashboards::Themes::IMAGE) ? th["image"] : nil
     wall = Dashboards::Themes.wall_css(th["wall"]) # beleza (ideia 15): fundo da faixa do dia (cor/degradê)
     dim = th["dim"].to_i.clamp(0, 80)
-    style = [ t.css, ("--wall: #{wall}" if wall), ("--wall-img: url('#{image}')" if image), "--wall-blur: #{th['blur'].to_i}px",
-              ("--wall-dim: #{dim}%" if dim.positive?) ].compact.join("; ")
-    { "class" => [ "dw-themed", "dw-theme-#{t.key}", ("dw-glass" if th["glass"]), ("dw-has-wall" if image || t.wallpaper || wall),
-                   ("dw-dim" if dim.positive?), ("dw-night" if th["is_night"]) ].compact.join(" "), "style" => style }
+    style = [ t.css, ("--ss-wall: #{wall}" if wall), ("--ss-wall-img: url('#{image}')" if image), "--ss-wall-blur: #{th['blur'].to_i}px",
+              ("--ss-wall-dim: #{dim}%" if dim.positive?) ].compact.join("; ")
+    { "class" => [ "dw-themed", "dw-theme-#{t.key}", ("ss-wall-glass" if th["glass"]), ("ss-wall" if image || t.wallpaper || wall),
+                   ("is-dim" if dim.positive?), ("is-night" if th["is_night"]) ].compact.join(" "), "style" => style }
   end
 
   # Amostra de tema (.ss-swatch da gem): as cores do tema nos círculos e o papel de parede atrás deles.

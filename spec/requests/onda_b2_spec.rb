@@ -259,7 +259,7 @@ RSpec.describe "ondaB2: painéis" do
       th = within(tenant) { DashboardTheme.last }
       expect(th).to have_attributes(name: "Teste praia", accent: "#0ea5e9", wall_style: "mesh", glass: true, font: "rounded")
       expect(th.key).to match(/\Au-[a-z0-9]{8}\z/)
-      expect(th.css).to include("--accent: #0ea5e9", "--grad: linear-gradient(135deg, #0ea5e9 0%, #f59e0b 100%)", "--wall: radial-gradient", "--font-sans: ui-rounded")
+      expect(th.css).to include("--accent: #0ea5e9", "--grad: linear-gradient(135deg, #0ea5e9 0%, #f59e0b 100%)", "--ss-wall: radial-gradient", "--font-sans: ui-rounded")
 
       d = board([ { "id" => "w1", "type" => "tile", "bind" => power.id } ], view: { "theme" => { "key" => th.key } })
       expect(within(tenant) { Dashboards::Schema.errors(d.definition) }).to eq([])

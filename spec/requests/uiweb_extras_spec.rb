@@ -119,7 +119,7 @@ RSpec.describe "Quiosque, busca global e temas" do
       patch "/paineis/#{dashboard.id}/rascunho", params: { op: "theme", view_id: "home", theme: { key: "teste-mar" } }
       within(tenant) { dashboard.reload.publish! }
       get "/paineis/#{dashboard.id}"
-      expect(response.body).to include("dw-theme-teste-mar dw-glass", "--accent: #123456")
+      expect(response.body).to include("dw-theme-teste-mar ss-wall-glass", "--accent: #123456")
       expect { Class.new(Dashboards::Themes::Base) { describe key: "x", label: "X", accent: "red;}", accent2: "#000000" } }.to raise_error(ArgumentError)
     end
   end
