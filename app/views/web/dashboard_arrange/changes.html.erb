@@ -1,7 +1,8 @@
 <%= render "web/shared/header", title: t("arrange.changes.title", name: @dashboard.name), subtitle: t("arrange.changes.subtitle"), back: edit_dashboard_path(@dashboard, view: @focus) do %>
   <% if @dashboard.draft? %>
-    <%= button_to discard_dashboard_path(@dashboard), class: "ss-btn ss-btn-ghost", form: { data: { turbo_confirm: t("dashboards.ed.discard_confirm") } } do %><%= t("dashboards.ed.discard") %><% end %>
-    <%= button_to publish_dashboard_path(@dashboard), class: "ss-btn ss-btn-primary", form: { data: { turbo_confirm: t("dashboards.ed.publish_confirm"), turbo_confirm_button: t("dashboards.publish") } } do %><%= icon("upload", "size-4") %><%= t("dashboards.publish") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("dashboards.ed.discard"), href: discard_dashboard_path(@dashboard), method: :post, variant: :ghost, confirm: t("dashboards.ed.discard_confirm")) %>
+    <%= render Ss::ButtonComponent.new(label: t("dashboards.publish"), icon: icon("upload", ""), href: publish_dashboard_path(@dashboard), method: :post,
+                                       confirm: t("dashboards.ed.publish_confirm"), confirm_button: t("dashboards.publish")) %>
   <% end %>
 <% end %>
 <% if @same %>

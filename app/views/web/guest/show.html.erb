@@ -17,10 +17,9 @@
             <% if p["can_command"] && p["risk"] != "critical" %>
               <% cmd = (cmds & %w[toggle]).first || (cmds & %w[press run pulse]).first %>
               <% if cmd %>
-                <%= button_to guest_command_path(params[:token]), params: { point_id: id, command: cmd }, class: "ss-btn ss-btn-outline ss-btn-sm",
-                              form: { data: ({ turbo_confirm: t("points.confirm", name: p["name"]) } if p["confirm"].present? || p["risk"] != "normal") } do %>
-                  <%= cmd == "toggle" ? (p["on"] ? t("guest.turn_off") : t("guest.turn_on")) : t("guest.press") %>
-                <% end %>
+                <%= render Ss::ButtonComponent.new(label: cmd == "toggle" ? (p["on"] ? t("guest.turn_off") : t("guest.turn_on")) : t("guest.press"), href: guest_command_path(params[:token]),
+                                                   method: :post, params: { point_id: id, command: cmd }, variant: :outline, size: :sm,
+                                                   confirm: (t("points.confirm", name: p["name"]) if p["confirm"].present? || p["risk"] != "normal")) %>
               <% end %>
             <% end %>
           </div>
