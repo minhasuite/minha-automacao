@@ -6,40 +6,43 @@
     <ul><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
   <% end %>
 <% end %>
-<%= form_with url: use_blueprint_path(@blueprint), class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl" do %>
-  <div class="sm:col-span-2"><label class="ss-label" for="bp-name"><%= t("automations.settings.name") %></label><%= text_field_tag :name, params[:name] || @blueprint.name, class: "ss-input", id: "bp-name", maxlength: 120, required: true %></div>
+<%= ss_form_with url: use_blueprint_path(@blueprint), class: "ss-card ss-card-pad grid gap-4 sm:grid-cols-2 max-w-3xl" do |f| %>
+  <%= f.ss_text_field :name, label: t("automations.settings.name"), value: params[:name] || @blueprint.name, id: "bp-name", maxlength: 120, required: true, wrapper_class: "sm:col-span-2" %>
   <% @blueprint.inputs.each do |input| %>
     <% id = "in-#{input['key']}" %>
     <% name = "inputs[#{input['key']}]" %>
     <% value = @values.key?(input["key"]) ? @values[input["key"]] : input["default"] %>
-    <div class="min-w-0 <%= 'sm:col-span-2' if input['type'] == 'point' %>">
-      <label class="ss-label" for="<%= id %>"><%= input["label"] %><%= " *" if @blueprint.required?(input) %></label>
-      <% if input["type"] == "point" %>
-        <% caps = Array(input.dig("filter", "capability")) %>
-        <% list = points.select { |p| (caps.empty? || caps.include?(p.capability)) && (!input.dig("filter", "writable") || p.writable) } %>
-        <% groups = list.group_by { |p| p.area&.name || p.device.name }.sort.map { |g, ps| [ g, ps.map { |p| [ p.name, p.id ] } ] } %>
-        <%= select_tag name, grouped_options_for_select(groups, value), include_blank: (list.empty? ? t("automations.bp.no_point_fits") : t("automations.fields.pick_point")), class: "ss-input", id: id %>
-        <% if caps.any? %><p class="text-xs text-muted mt-1"><%= t("automations.bp.only_caps", caps: caps.map { |c| Point::CAPABILITY_LABELS.fetch(c, c).downcase }.join(t("automations.blueprint_errors.or"))) %></p><% end %>
-      <% elsif (assoc = Blueprint::RECORD_INPUTS[input["type"]]) %>
-        <%= select_tag name, options_for_select(@site.public_send(assoc).order(:name).map { |r| [ r.name, r.id ] }, value), include_blank: t("automations.bp.choose"), class: "ss-input", id: id %>
-      <% elsif input["type"] == "boolean" %>
-        <%= select_tag name, options_for_select([ [ t("automations.helper.yes_cap"), "true" ], [ t("automations.helper.no_cap"), "false" ] ], value.nil? ? nil : value.to_s), class: "ss-input", id: id %>
-      <% elsif input["type"] == "select" %>
-        <%= select_tag name, options_for_select(Array(input["options"]), value), include_blank: !@blueprint.required?(input), class: "ss-input", id: id %>
-      <% elsif input["type"] == "time" %>
-        <%= time_field_tag name, value, class: "ss-input", id: id %>
-      <% elsif input["type"] == "number" %>
-        <%= text_field_tag name, value, class: "ss-input num", id: id, inputmode: "decimal" %>
-      <% else %>
-        <%= text_field_tag name, value, class: "ss-input", id: id, maxlength: 500, placeholder: (input["type"] == "duration" ? "30s, 5m, 1h30m" : nil) %>
-      <% end %>
-      <% if input["description"].present? %><p class="text-xs text-muted mt-1"><%= input["description"] %></p><% end %>
-    </div>
+    <% label = "#{input['label']}#{' *' if @blueprint.required?(input)}" %>
+    <% wrap = [ "min-w-0", ("sm:col-span-2" if input["type"] == "point") ].compact.join(" ") %>
+    <% help = input["description"].presence %>
+    <% if input["type"] == "point" %>
+      <% caps = Array(input.dig("filter", "capability")) %>
+      <% list = points.select { |p| (caps.empty? || caps.include?(p.capability)) && (!input.dig("filter", "writable") || p.writable) } %>
+      <% groups = list.group_by { |p| p.area&.name || p.device.name }.sort.map { |g, ps| [ g, ps.map { |p| [ p.name, p.id ] } ] } %>
+      <% only = (t("automations.bp.only_caps", caps: caps.map { |c| Point::CAPABILITY_LABELS.fetch(c, c).downcase }.join(t("automations.blueprint_errors.or"))) if caps.any?) %>
+      <%= f.ss_select name, grouped_options_for_select(groups, value), label:, id:, wrapper_class: wrap, help: [ only, help ].compact.join(" · ").presence,
+                      include_blank: (list.empty? ? t("automations.bp.no_point_fits") : t("automations.fields.pick_point")) %>
+    <% elsif (assoc = Blueprint::RECORD_INPUTS[input["type"]]) %>
+      <%= f.ss_select name, options_for_select(@site.public_send(assoc).order(:name).map { |r| [ r.name, r.id ] }, value), label:, id:, wrapper_class: wrap, help:,
+                      include_blank: t("automations.bp.choose") %>
+    <% elsif input["type"] == "boolean" %>
+      <%= f.ss_select name, options_for_select([ [ t("automations.helper.yes_cap"), "true" ], [ t("automations.helper.no_cap"), "false" ] ], value.nil? ? nil : value.to_s),
+                      label:, id:, wrapper_class: wrap, help: help %>
+    <% elsif input["type"] == "select" %>
+      <%= f.ss_select name, options_for_select(Array(input["options"]), value), label:, id:, wrapper_class: wrap, help:, include_blank: !@blueprint.required?(input) %>
+    <% elsif input["type"] == "time" %>
+      <%= f.ss_time_field name, value:, label:, id:, wrapper_class: wrap, help: help %>
+    <% elsif input["type"] == "number" %>
+      <%= f.ss_text_field name, value:, label:, id:, wrapper_class: wrap, help:, class: "num", inputmode: "decimal" %>
+    <% else %>
+      <%= f.ss_text_field name, value:, label:, id:, wrapper_class: wrap, help:, maxlength: 500, placeholder: (input["type"] == "duration" ? "30s, 5m, 1h30m" : nil) %>
+    <% end %>
   <% end %>
-  <div><label class="ss-label" for="bp-area"><%= t("automations.settings.area") %></label><%= select_tag :area_id, options_for_select(@site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, params[:area_id]), include_blank: t("automations.settings.none"), class: "ss-input", id: "bp-area" %></div>
+  <%= f.ss_select :area_id, @site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, label: t("automations.settings.area"), selected: params[:area_id],
+                  include_blank: t("automations.settings.none"), id: "bp-area" %>
   <p class="sm:col-span-2 text-sm text-muted"><%= t(script ? "automations.bp.born_script" : "automations.bp.born_automation") %></p>
   <div class="sm:col-span-2 flex flex-wrap gap-2">
-    <%= button_tag type: "submit", class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t(script ? "automations.bp.create_script" : "automations.bp.create_automation") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t(script ? "automations.bp.create_script" : "automations.bp.create_automation"), icon: icon("plus", ""), type: :submit) %>
     <%= link_to t("automations.settings.cancel"), blueprint_path(@blueprint), class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>

@@ -32,12 +32,12 @@
   </div>
   <details>
     <summary class="ss-summary text-sm font-semibold text-ink-2"><%= icon("calendar", "size-4") %><%= t("history.pick_dates") %></summary>
-    <%= form_with url: history_path, method: :get, class: "flex flex-wrap gap-3 mt-2.5" do %>
+    <%= ss_form_with url: history_path, method: :get, class: "flex flex-wrap gap-3 mt-2.5" do |f| %>
       <%= hidden_field_tag :site_id, @site.id, id: nil %>
       <% ids.each do |id| %><%= hidden_field_tag "point_ids[]", id, id: nil %><% end %>
-      <div class="flex-[1_1_12rem]"><label class="ss-label" for="hx-from"><%= t("history.from") %></label><%= datetime_local_field_tag :from, @from.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "ss-input num", id: "hx-from" %></div>
-      <div class="flex-[1_1_12rem]"><label class="ss-label" for="hx-to"><%= t("history.to") %></label><%= datetime_local_field_tag :to, @to.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "ss-input num", id: "hx-to" %></div>
-      <button class="ss-btn ss-btn-primary self-end"><%= t("points.apply") %></button>
+      <%= f.ss_datetime_local_field :from, label: t("history.from"), value: @from.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "num", id: "hx-from", wrapper_class: "flex-[1_1_12rem]" %>
+      <%= f.ss_datetime_local_field :to, label: t("history.to"), value: @to.in_time_zone(@zone).strftime("%Y-%m-%dT%H:%M"), class: "num", id: "hx-to", wrapper_class: "flex-[1_1_12rem]" %>
+      <%= render Ss::ButtonComponent.new(label: t("points.apply"), type: :submit, class: "self-end") %>
     <% end %>
   </details>
 </section>
@@ -55,13 +55,15 @@
   </div>
   <details class="mt-3" <%= "open" if @selected.empty? %>>
     <summary class="ss-summary text-sm font-semibold text-ink-2"><%= icon("plus", "size-4") %><%= t("history.pick_points") %> <span class="text-muted font-normal"><%= t("history.up_to", n: Points::Overlay::MAX) %></span></summary>
-    <%= form_with url: history_path, method: :get, data: { controller: "ss-filter" } do %>
+    <%= ss_form_with url: history_path, method: :get, data: { controller: "ss-filter" } do |f| %>
       <%= hidden_field_tag :site_id, @site.id, id: nil %>
       <%= hidden_field_tag :from, @from.iso8601, id: nil %><%= hidden_field_tag :to, @to.iso8601, id: nil %>
       <div class="flex flex-wrap items-center gap-2.5 mt-3">
-        <label class="ss-search flex-1 min-w-48"><%= icon("search") %>
-          <input type="search" placeholder="<%= t("history.filter_name") %>" aria-label="<%= t("history.filter_points") %>" data-ss-filter-target="input" data-action="input->ss-filter#apply keydown.esc->ss-filter#clear"></label>
-        <button class="ss-btn ss-btn-primary"><%= t("history.show") %></button>
+        <%# Filtro só na tela (ss-filter): sem name, não vai na URL. %>
+        <%= f.ss_search_field :hx_filter, name: nil, id: "hx-filter", label: t("history.filter_points"), hide_label: true, prefix: icon("search", ""),
+                              placeholder: t("history.filter_name"), wrapper_class: "flex-1 min-w-48",
+                              data: { ss_filter_target: "input", action: "input->ss-filter#apply keydown.esc->ss-filter#clear" } %>
+        <%= render Ss::ButtonComponent.new(label: t("history.show"), type: :submit) %>
       </div>
       <% groups = @site.points.where(hidden: false, disabled: false).where.not(capability: %w[stream calendar command]).includes(:device, :area, device: :area).ordered.group_by { |p| p.area&.name || p.device.area&.name || t("devices.no_area") } %>
       <div class="grid gap-4 mt-4 max-h-[26rem] overflow-auto pr-1 grid-cols-[repeat(auto-fill,minmax(15rem,1fr))]">

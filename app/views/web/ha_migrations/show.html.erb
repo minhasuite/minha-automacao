@@ -14,17 +14,17 @@
     <% if status == "failed" %>
       <%= render(Ss::CalloutComponent.new(tone: :danger, class: "mt-3")) { s["error"] } %>
     <% end %>
-    <%= form_with url: connect_site_ha_migration_path(@site), class: "grid gap-4 mt-4 sm:grid-cols-2" do %>
-      <div class="sm:col-span-2"><label class="ss-label" for="mg-url"><%= t("ha_migration.url") %></label>
-        <%= url_field_tag :url, @integration&.settings&.dig("url"), class: "ss-input", id: "mg-url", placeholder: "http://192.168.0.10:8123", required: true %></div>
-      <div class="sm:col-span-2"><label class="ss-label" for="mg-token"><%= t("ha_migration.token") %></label>
-        <%= password_field_tag :token, nil, class: "ss-input num", id: "mg-token", autocomplete: "off", placeholder: (@integration&.secrets&.dig("token").present? ? t("ha_migration.token_saved") : "eyJhbGciOi…"), required: @integration&.secrets&.dig("token").blank? %></div>
+    <%= ss_form_with url: connect_site_ha_migration_path(@site), class: "grid gap-4 mt-4 sm:grid-cols-2" do |f| %>
+      <%= f.ss_url_field :url, label: t("ha_migration.url"), value: @integration&.settings&.dig("url"), id: "mg-url", placeholder: "http://192.168.0.10:8123", required: true,
+                         wrapper_class: "sm:col-span-2" %>
+      <%= f.ss_password_field :token, label: t("ha_migration.token"), value: nil, class: "num", id: "mg-token", autocomplete: "off", wrapper_class: "sm:col-span-2",
+                              placeholder: (@integration&.secrets&.dig("token").present? ? t("ha_migration.token_saved") : "eyJhbGciOi…"), required: @integration&.secrets&.dig("token").blank? %>
       <ol class="sm:col-span-2 grid gap-1 pl-5 list-decimal text-sm text-ink-2">
         <li><%= t("ha_migration.help1_html") %></li>
         <li><%= t("ha_migration.help2_html") %></li>
         <li><%= t("ha_migration.help3") %></li>
       </ol>
-      <div class="sm:col-span-2"><button class="ss-btn ss-btn-primary"><%= icon("link", "size-4") %><%= t("ha_migration.connect_read") %></button></div>
+      <div class="sm:col-span-2"><%= render Ss::ButtonComponent.new(label: t("ha_migration.connect_read"), icon: icon("link", ""), type: :submit) %></div>
     <% end %>
   </section>
 
@@ -38,7 +38,7 @@
 <% elsif status == "preview" %>
   <% p = s["preview"] %>
   <% plain = ->(key, **o) { strip_tags(t(key, **o).to_s.gsub("<br>", " ")) } %>
-  <%= form_with url: import_site_ha_migration_path(@site), class: "grid gap-4", multipart: true do %>
+  <%= ss_form_with url: import_site_ha_migration_path(@site), class: "grid gap-4", multipart: true do |f| %>
     <%= render Ss::KpiStripComponent.new(label: t("ha_migration.steps.review"), items: [
           { label: plain.call("ha_migration.stats.areas_html", n: p.dig("areas", "new")), value: p.dig("areas", "total").to_s },
           { label: plain.call("ha_migration.stats.devices_html"), value: "#{p.dig("devices", "matched")}/#{p.dig("devices", "total")}" },
@@ -50,13 +50,12 @@
     <% end %>
 
     <section class="ss-card ss-card-pad">
-      <label class="ss-check font-semibold"><%= check_box_tag :helpers, "1", true, id: "mg-helpers" %><% names = t("ha_migration.helper_kinds").stringify_keys %>
-      <%= t("ha_migration.helpers") %> <span class="font-normal text-muted">(<%= p["helpers"].map { |d, n| "#{n} #{names.fetch(d, d)}" }.join(", ").presence || t("ha_migration.none") %>)</span></label>
-      <div class="mt-3">
-        <label class="ss-label" for="mg-config"><%= t("ha_migration.config_yaml") %></label>
-        <%= file_field_tag :config_yaml, id: "mg-config", accept: ".yaml,.yml", class: "ss-input" %>
-        <p class="ss-hint"><%= t("ha_migration.config_yaml_hint") %></p>
-      </div>
+      <% names = t("ha_migration.helper_kinds").stringify_keys %>
+      <% kinds = p["helpers"].map { |d, n| "#{n} #{names.fetch(d, d)}" }.join(", ").presence || t("ha_migration.none") %>
+      <%= f.ss_check_box :helpers, label: safe_join([ t("ha_migration.helpers"), " ", tag.span("(#{kinds})", class: "font-normal text-muted") ]),
+                         checked: true, unchecked_value: nil, id: "mg-helpers", wrapper_class: "font-semibold" %>
+      <%= f.ss_file_field :config_yaml, label: t("ha_migration.config_yaml"), help: t("ha_migration.config_yaml_hint"), id: "mg-config", accept: ".yaml,.yml",
+                          wrapper_class: "mt-3" %>
     </section>
     <% { "automations" => t("ha_migration.groups.automations"), "scripts" => t("ha_migration.groups.scripts"), "scenes" => t("ha_migration.groups.scenes") }.each do |key, title| %>
       <% list = p[key] %>
@@ -72,8 +71,9 @@
       </details>
     <% end %>
     <div class="flex flex-wrap gap-2.5">
-      <button class="ss-btn ss-btn-primary"><%= icon("download", "size-4") %><%= t("ha_migration.import_shadow") %></button>
-      <%= button_to t("ha_migration.restart"), reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-ghost", form: { class: "contents" } %>
+      <%= render Ss::ButtonComponent.new(label: t("ha_migration.import_shadow"), icon: icon("download", ""), type: :submit) %>
+      <%# "Recomeçar" fica dentro do form da importação: envia o mesmo form para o reset (formaction), sem form aninhado. %>
+      <%= render Ss::ButtonComponent.new(label: t("ha_migration.restart"), variant: :ghost, type: :submit, formaction: reset_site_ha_migration_path(@site), formnovalidate: true) %>
     </div>
   <% end %>
 
@@ -90,7 +90,7 @@
   <% else %>
     <section class="ss-card ss-card-pad max-w-[46rem] grid gap-3" role="status">
       <%= render(Ss::CalloutComponent.new(tone: :danger, title: t("ha_migration.stopped").delete_suffix(":"))) { s["error"] } %>
-      <div><%= button_to t("ha_migration.restart"), reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-primary" %></div>
+      <div><%= render Ss::ButtonComponent.new(label: t("ha_migration.restart"), href: reset_site_ha_migration_path(@site), method: :post) %></div>
     </section>
   <% end %>
 
@@ -135,7 +135,7 @@
   <div class="flex flex-wrap gap-2.5 mt-4">
     <%= link_to site_shadow_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("eye", "size-4") %><%= t("ha_migration.see_shadow") %><% end %>
     <%= link_to site_automations_path(@site), class: "ss-btn ss-btn-outline" do %><%= icon("sparkles", "size-4") %><%= t("ha_migration.groups.automations") %><% end %>
-    <%= button_to t("ha_migration.import_again"), reset_site_ha_migration_path(@site), class: "ss-btn ss-btn-ghost", form: { class: "contents" } %>
+    <%= render Ss::ButtonComponent.new(label: t("ha_migration.import_again"), href: reset_site_ha_migration_path(@site), method: :post, variant: :ghost, form: { class: "contents" }) %>
   </div>
 <% end %>
 <% end %>
@@ -160,7 +160,9 @@
       <% end %>
     <% end %>
     <% unless dz["status"] == "running" %>
-      <%= button_to dashboards_site_ha_migration_path(@site), class: "ss-btn ss-btn-primary mt-4", form: { data: { turbo_confirm: (t("ha_migration.dash.confirm") if dz["status"] == "done") } } do %><%= icon("download", "size-4") %><%= dz["status"] == "done" ? t("ha_migration.dash.again") : t("ha_migration.dash.import") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: (dz["status"] == "done" ? t("ha_migration.dash.again") : t("ha_migration.dash.import")), icon: icon("download", ""),
+                                         href: dashboards_site_ha_migration_path(@site), method: :post, class: "mt-4",
+                                         confirm: (t("ha_migration.dash.confirm") if dz["status"] == "done")) %>
     <% end %>
   </section>
 <% end %>

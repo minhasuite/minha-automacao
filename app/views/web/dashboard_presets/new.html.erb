@@ -1,29 +1,27 @@
 <%= render "web/shared/header", title: t("dashboards.presets.title", name: @kind.title), subtitle: @kind.description, back: site_dashboard_presets_path(@site) %>
 <% pts = @site.points.where(disabled: false).includes(:device).ordered.to_a %>
 <% opts = ->(f) { pts.select { |p| f.filter.nil? || f.filter.call(p) }.map { |p| [ "#{p.name} · #{p.device.name}", p.id ] } } %>
-<%= form_with url: site_dashboard_preset_path(@site, @kind.key), scope: :preset, class: "ss-card ss-card-pad max-w-3xl" do |f| %>
+<%= ss_form_with url: site_dashboard_preset_path(@site, @kind.key), scope: :preset, class: "ss-card ss-card-pad max-w-3xl" do |f| %>
   <% if @errors.present? %>
     <%= render(Ss::CalloutComponent.new(tone: :danger, css: "mb-4")) { tag.p(t("dashboards.presets.failed", errors: @errors.first(3).to_sentence)) } %>
   <% end %>
   <div class="grid gap-4 sm:grid-cols-2">
-    <div class="sm:col-span-2"><%= f.label :name, t("dashboards.presets.name"), class: "ss-label" %><%= f.text_field :name, value: @form["name"].presence || @kind.title, class: "ss-input", maxlength: 80 %></div>
+    <%= f.ss_text_field :name, label: t("dashboards.presets.name"), value: @form["name"].presence || @kind.title, maxlength: 80, wrapper_class: "sm:col-span-2" %>
     <% @kind.fields.each do |fd| %>
-      <div class="<%= 'sm:col-span-2' if fd.kind == :points %>">
-        <%= f.label fd.key, class: "ss-label" do %><%= fd.label %><% if fd.hint %> <span class="font-normal">(<%= fd.hint %>)</span><% end %><% end %>
-        <% if fd.kind == :point %>
-          <% list = opts.(fd) %>
-          <%= f.select fd.key, list, { include_blank: list.any? ? t("dashboards.presets.none") : t("dashboards.presets.no_point"), selected: @form[fd.key] }, class: "ss-input" %>
-        <% elsif fd.kind == :area %>
-          <%= f.select fd.key, @site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, { include_blank: t("dashboards.presets.none"), selected: @form[fd.key] }, class: "ss-input" %>
-        <% elsif fd.kind == :points %>
-          <%= f.select fd.key, opts.(fd), { selected: Array(@form[fd.key]) }, multiple: true, size: 6, class: "ss-input" %>
-        <% else %>
-          <%= f.text_field fd.key, value: @form[fd.key], class: "ss-input num", inputmode: (fd.kind == :number ? "decimal" : nil), placeholder: (fd.hint if fd.kind == :number) %>
-        <% end %>
-      </div>
+      <% label = safe_join([ fd.label, (tag.span(" (#{fd.hint})", class: "font-normal") if fd.hint) ].compact) %>
+      <% if fd.kind == :point %>
+        <% list = opts.(fd) %>
+        <%= f.ss_select fd.key, list, label: label, selected: @form[fd.key], include_blank: list.any? ? t("dashboards.presets.none") : t("dashboards.presets.no_point") %>
+      <% elsif fd.kind == :area %>
+        <%= f.ss_select fd.key, @site.areas.order(:position, :name).map { |a| [ a.name, a.id ] }, label: label, selected: @form[fd.key], include_blank: t("dashboards.presets.none") %>
+      <% elsif fd.kind == :points %>
+        <%= f.ss_select fd.key, opts.(fd), label: label, selected: Array(@form[fd.key]), multiple: true, size: 6, wrapper_class: "sm:col-span-2" %>
+      <% else %>
+        <%= f.ss_text_field fd.key, label: label, value: @form[fd.key], class: "num", inputmode: (fd.kind == :number ? "decimal" : nil), placeholder: (fd.hint if fd.kind == :number) %>
+      <% end %>
     <% end %>
   </div>
   <% if @kind.fields.any? { |fd| fd.key == "tariff" } %><p class="text-sm text-muted mt-4"><%= t("dashboards.presets.tariff_html") %></p><% end %>
-  <div class="flex flex-wrap gap-2 mt-5"><button class="ss-btn ss-btn-primary"><%= icon("check", "size-4") %><%= t("dashboards.create") %></button>
+  <div class="flex flex-wrap gap-2 mt-5"><%= render Ss::ButtonComponent.new(label: t("dashboards.create"), icon: icon("check", ""), type: :submit) %>
     <%= link_to t("dashboards.cancel"), site_dashboard_presets_path(@site), class: "ss-btn ss-btn-ghost" %></div>
 <% end %>

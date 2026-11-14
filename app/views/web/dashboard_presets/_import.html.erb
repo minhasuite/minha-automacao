@@ -2,9 +2,9 @@
 <%# P2.3: importar o pacote que alguém exportou (painel ou modelo de card); depois, escolher os próprios pontos. %>
 <section class="ss-card ss-card-pad mt-6 grid gap-3" aria-labelledby="imp-title">
   <%= render Ss::SectionHeaderComponent.new(title: t("dashboards.presets.import_title"), subtitle: t("dashboards.presets.import_hint"), icon: icon("upload", "")) %>
-  <%= form_with url: site_dashboard_presets_import_path(site), multipart: true, class: "flex flex-wrap items-end gap-2", data: { turbo: false } do %>
-    <div class="min-w-0 flex-1"><label class="ss-label" for="imp-file"><%= t("dashboards.presets.import_file_label") %></label>
-      <%= file_field_tag :file, accept: ".json,.yml,.yaml,application/json", class: "ss-input", id: "imp-file", required: true %></div>
-    <%= button_tag class: "ss-btn ss-btn-outline" do %><%= icon("upload", "size-4") %><%= t("dashboards.presets.import") %><% end %>
+  <%= ss_form_with url: site_dashboard_presets_import_path(site), multipart: true, class: "flex flex-wrap items-end gap-2", data: { turbo: false } do |f| %>
+    <%= f.ss_file_field :file, label: t("dashboards.presets.import_file_label"), accept: ".json,.yml,.yaml,application/json", id: "imp-file", required: true,
+                        wrapper_class: "min-w-0 flex-1" %>
+    <%= render Ss::ButtonComponent.new(label: t("dashboards.presets.import"), icon: icon("upload", ""), variant: :outline, type: :submit) %>
   <% end %>
 </section>

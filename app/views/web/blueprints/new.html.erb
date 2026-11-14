@@ -4,22 +4,16 @@
     <% if @unsupported.present? %><p><%= t("automations.bp.unsupported_list", list: @unsupported.join("; ")) %></p><% end %>
   <% end %>
 <% end %>
-<%= form_with url: site_blueprints_path(@site), class: "ss-card ss-card-pad grid gap-4 max-w-3xl" do %>
-  <div>
-    <label class="ss-label" for="bp-url"><%= t("automations.bp.url") %></label>
-    <%= url_field_tag :url, params[:url], class: "ss-input", id: "bp-url", placeholder: "https://github.com/.../blueprints/automation/motion_light.yaml" %>
-  </div>
+<%= ss_form_with url: site_blueprints_path(@site), class: "ss-card ss-card-pad grid gap-4 max-w-3xl" do |f| %>
+  <%= f.ss_url_field :url, label: t("automations.bp.url"), value: params[:url], id: "bp-url", placeholder: "https://github.com/.../blueprints/automation/motion_light.yaml" %>
   <div class="ss-divider" role="separator"><%= t("automations.bp.or") %></div>
-  <div>
-    <label class="ss-label" for="bp-yaml"><%= t("automations.bp.yaml") %></label>
-    <%= text_area_tag :yaml, params[:yaml], id: "bp-yaml", rows: 14, spellcheck: false, class: "ss-input ss-code-input", placeholder: "blueprint:\n  name: ...\n  domain: automation\n  input: ..." %>
-  </div>
+  <%= f.ss_text_area :yaml, label: t("automations.bp.yaml"), value: params[:yaml], id: "bp-yaml", rows: 14, spellcheck: false, class: "ss-code-input", placeholder: "blueprint:\n  name: ...\n  domain: automation\n  input: ..." %>
   <%= render Ss::CalloutComponent.new(tone: :accent, title: t("automations.bp.converts")) do %>
     <p><%= t("automations.bp.converts_list") %></p>
     <p><%= t("automations.bp.converts_many") %></p>
   <% end %>
   <div class="flex flex-wrap gap-2">
-    <%= button_tag type: "submit", class: "ss-btn ss-btn-primary" do %><%= icon("download", "size-4") %><%= t("automations.bp.import") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("automations.bp.import"), icon: icon("download", ""), type: :submit) %>
     <%= link_to t("automations.settings.cancel"), site_blueprints_path(@site), class: "ss-btn ss-btn-ghost" %>
   </div>
 <% end %>
