@@ -1,20 +1,15 @@
 <%= render "web/shared/header", title: t("arrange.wizard.title"), subtitle: t("arrange.wizard.subtitle", site: @site.name), back: site_dashboards_path(@site) %>
-<%= form_with url: site_dashboard_wizard_path(@site), method: :post, class: "grid gap-6 max-w-3xl", data: { turbo_submits_with: t("arrange.wizard.creating") } do %>
-  <div class="max-w-sm"><label class="ss-label" for="wz-name"><%= t("arrange.wizard.name") %></label>
-    <%= text_field_tag :name, t("arrange.wizard.default_name"), class: "ss-input", id: "wz-name", maxlength: 60, required: true %></div>
+<%= ss_form_with url: site_dashboard_wizard_path(@site), method: :post, class: "grid gap-6 max-w-3xl", data: { turbo_submits_with: t("arrange.wizard.creating") } do |f| %>
+  <%= f.ss_text_field :name, label: t("arrange.wizard.name"), value: t("arrange.wizard.default_name"), id: "wz-name", maxlength: 60, required: true, wrapper_class: "max-w-sm" %>
   <div class="ss-card ss-card-pad"><%= render "web/dashboard_wizard/fields", areas: @areas %></div>
   <fieldset>
     <legend class="ss-label"><%= t("onboarding.dashboard.theme") %></legend>
     <div class="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3">
       <% Dashboards::Themes.plugins.each_with_index do |th, i| %>
-        <label class="ss-swatch ss-swatch-lg is-block" style="<%= dw_swatch_style(th) %>">
-          <%= radio_button_tag :theme, th.key, i.zero?, id: "wz-t-#{th.key}" %>
-          <span class="ss-swatch-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="ss-swatch-bar" aria-hidden="true"></span>
-          <span class="ss-swatch-name"><%= th.label %></span>
-        </label>
+        <%= f.ss_swatch_radio :theme, th.key, label: th.label, style: dw_swatch_style(th), size: :lg, block: true, checked: i.zero?, id: "wz-t-#{th.key}" %>
       <% end %>
     </div>
   </fieldset>
   <p class="text-sm text-muted"><%= t("arrange.wizard.hint") %></p>
-  <div><%= submit_tag t("arrange.wizard.submit"), class: "ss-btn ss-btn-primary" %></div>
+  <div><%= f.ss_submit t("arrange.wizard.submit"), data: { turbo_submits_with: t("arrange.wizard.creating") } %></div>
 <% end %>
