@@ -803,7 +803,7 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.21.0`):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.23.4`):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);
@@ -832,22 +832,22 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
   `DeviceTileComponent`) com o risco no título.
 - Fuso: gráfico, faixas e diário recebem `time_zone:` com o fuso IANA do local
   (sem `Time.use_zone` na view).
-- CSS: o `application.css` importa o build da gem e depois os CSS de tela, **só de
-  domínio** — a allowlist fica no topo de cada arquivo (comentário "domínio:") e no
-  `bin/conferir-css` (`CSS_DOMINIO`; o `spec/conferir_css_spec.rb` roda ele): grade/pilha do
-  painel, arte viva dos pontos e o robô, planta (`dw-fp*`/`dw-fpe*`), editor (`dw-ed*`, `dw-wf`,
-  `dw-act`), gestos, temas no `<body>` e quiosque (`dashboards.css`, `paineis.css`), tela do
-  Leaflet e pinos (`mp-`, `paridade.css`), primeira configuração e ilustrações (`ob-`/`oba-`,
-  `produto.css`), diagrama da voz (`vz-`, `voz.css`) e a arte do vazio (`ma-ea-*`). **Nada de
-  peça genérica aqui** (v0.14 fechou o resto): card `ss-card ss-card-pad` + `Ss::CardHeaderComponent`,
-  frase no lugar do conteúdo `Ss::NoteComponent`, linhas `.ss-item`, ícone `.ss-icon-tile` (`.is-heat`,
-  foto dentro), botão no herói `.ss-btn.is-on-grad`, tarefa `.ss-checklist [role=checkbox]` + `.ss-checklist-x`,
-  galeria de temas `label.ss-swatch` (`dw_swatch_style`), barras `.ss-bars`, `.ss-progress`, `.ss-delta`,
-  `.ss-label-chip`, player/etapas dentro de card com `css: "is-flush"`, vidro do tema pelos tokens
-  `--ss-card-bg/-border/-filter`; regra em cima de `.ss-*` é proibida (o `conferir-css` barra). Layout
-  sem identidade visual vai em utilitário do Tailwind. Caixa de marcar solta = `ss-inputs` e base
-  (`<summary>` sem marcador, menos movimento) = `ss-base` no `<body>`. Menus `<details>` (`.ss-menu`,
-  `.ma-kiosk-pop`): Esc/clique fora no `application.js`.
+- CSS: **nenhum CSS próprio** (desde 14/11/2026): o `application.css` só importa o Tailwind e o build da gem,
+  e o `spec/componentes_ui/conformidade_spec.rb` (`ComponentesUi::Conformidade`, sem exceções) barra CSS, tag
+  crua (`<button>`, `<input>`, `button_to`, `*_field_tag`, `form_with` sem `ss_`), cor literal/da paleta, card à
+  mão e classe de estado no JS que não seja `ss-*`/`is-*`. Desenho de domínio (grade do painel = `.ss-span-grid`/
+  `.ss-span` com `--ss-span-m/t/d`; planta = `FloorplanHelper`; editor, quiosque, robô, mapa, voz, primeira
+  configuração e ilustrações) fica em utilitário do Tailwind com os tokens da gem; movimento pelas
+  `.ss-anim-*` da gem (ou `animate-[ss-a-*]` quando precisa de duas); papel de parede no `<body>` = `.ss-wall`
+  (`--ss-wall-*`, `.is-dim`, `.ss-wall-glass`); campos que dependem de um select = Stimulus `ss-reveal`
+  (`data-ss-reveal-for`). Estado mudado por JS = classe `is-*` + variante `[&.is-x]:` no markup; posição/tamanho
+  por variável (`style.setProperty("--x", …)`), nunca `el.style.left`. Classe sem CSS (`dw-ed-w`, `dw-fp-img`,
+  `ma-kiosk-pop`) é só gancho de JS. **Nada de peça genérica aqui**: card `ss-card ss-card-pad` +
+  `Ss::CardHeaderComponent`, frase `Ss::NoteComponent`, linhas `.ss-item`, ícone `.ss-icon-tile`, botão
+  `Ss::ButtonComponent` (`variant: :bare` para conteúdo livre, `:item` em menu), seletor `Ss::SegmentedComponent`,
+  tarefa `.ss-checklist [role=checkbox]`, temas `f.ss_swatch_radio`, chips `f.ss_chip_check_box`. Caixa de marcar
+  solta = `ss-inputs` e base = `ss-base` no `<body>`. Menus `<details>` (`.ss-menu`, `.ma-kiosk-pop`): Esc/clique
+  fora no `application.js`.
 - Stimulus: comportamento genérico é da gem (`ss-copy`, `ss-filter`, `ss-poll`,
   `ss-reload`, `ss-autosubmit`, `ss-check-all`, `ss-sortable`, `ss-scroll-current` nas faixas de chips, `ss-theme` e
   `ss-privacy` no `<body>`). Os do produto (`controllers/`) são só de domínio:
