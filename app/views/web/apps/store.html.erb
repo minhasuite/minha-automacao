@@ -7,11 +7,10 @@
       <%= link_to c, apps_store_path(q: params[:q], categoria: c), class: "ss-chip shrink-0", "aria-current": (params[:categoria] == c).to_s %>
     <% end %>
   </nav>
-  <%= form_with url: apps_store_path, method: :get, class: "flex gap-2", role: "search" do %>
+  <%= ss_form_with url: apps_store_path, method: :get, class: "flex gap-2", role: "search" do |f| %>
     <%= hidden_field_tag :categoria, params[:categoria] if params[:categoria].present? %>
-    <label for="q" class="sr-only"><%= t("apps.search_label") %></label>
-    <%= search_field_tag :q, params[:q], class: "ss-input w-56", placeholder: t("apps.search_hint") %>
-    <button class="ss-btn ss-btn-ghost" aria-label="<%= t("integrations.index.search") %>"><%= icon("search", "size-4") %></button>
+    <%= f.ss_search_field :q, label: t("apps.search_label"), hide_label: true, value: params[:q], id: "q", class: "w-56", placeholder: t("apps.search_hint") %>
+    <%= render Ss::ButtonComponent.new(icon: icon("search", ""), type: :submit, variant: :ghost, aria: { label: t("integrations.index.search") }) %>
   <% end %>
 </div>
 <% if @offline %><p class="text-sm text-muted mb-3" role="status"><%= icon("information-circle", "size-4 inline") %> <%= @offline %></p><% end %>
@@ -48,15 +47,16 @@
         <li class="py-2 flex flex-wrap items-center justify-between gap-2">
           <div class="min-w-0"><p class="font-semibold text-ink"><%= r["name"] %> <span class="text-xs text-muted"><%= t("resto.apps.repo_apps", count: r["apps"].to_h.size) %></span></p>
             <p class="text-xs text-muted break-all"><%= r["url"] %></p></div>
-          <%= button_to app_repositories_path, method: :delete, params: { url: r["url"] }, class: "ss-btn ss-btn-ghost ss-btn-sm",
-                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("integrations.common.remove"), turbo_confirm: t("resto.apps.remove_confirm", name: r["name"]) } } do %><%= icon("trash", "size-4") %><%= t("integrations.common.remove") %><% end %>
+          <%= render Ss::ButtonComponent.new(label: t("integrations.common.remove"), icon: icon("trash", ""), href: app_repositories_path, method: :delete, params: { url: r["url"] },
+                                             variant: :ghost, size: :sm, confirm: t("resto.apps.remove_confirm", name: r["name"]), confirm_tone: :danger,
+                                             confirm_button: t("integrations.common.remove")) %>
         </li>
       <% end %>
     </ul>
   <% end %>
-  <%= form_with url: app_repositories_path, class: "mt-4 flex flex-wrap gap-2 items-end" do %>
-    <div class="flex-1 min-w-0"><%= label_tag :url, t("resto.apps.repo_url"), class: "ss-label" %><%= url_field_tag :url, nil, class: "ss-input w-full", placeholder: "https://exemplo.com/apps.json", required: true %></div>
-    <button class="ss-btn ss-btn-outline"><%= icon("plus", "size-4") %><%= t("resto.apps.add_repo") %></button>
+  <%= ss_form_with url: app_repositories_path, class: "mt-4 flex flex-wrap gap-2 items-end" do |f| %>
+    <%= f.ss_url_field :url, label: t("resto.apps.repo_url"), id: "url", placeholder: "https://exemplo.com/apps.json", required: true, wrapper_class: "flex-1 min-w-0" %>
+    <%= render Ss::ButtonComponent.new(label: t("resto.apps.add_repo"), icon: icon("plus", ""), type: :submit, variant: :outline) %>
   <% end %>
 </section>
 <% end %>

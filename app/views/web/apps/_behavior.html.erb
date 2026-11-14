@@ -1,11 +1,5 @@
 <%# locals: (boot:, watchdog:) -%>
-<div>
-  <%= hidden_field_tag :boot, "0", id: nil %>
-  <label class="ss-check"><%= check_box_tag :boot, "1", boot, id: "app-boot" %><%= t("apps.boot") %></label>
-  <p class="text-xs text-muted mt-1"><%= t("apps.boot_hint") %></p>
-</div>
-<div>
-  <%= hidden_field_tag :watchdog, "0", id: nil %>
-  <label class="ss-check"><%= check_box_tag :watchdog, "1", watchdog, id: "app-watchdog" %>Watchdog</label>
-  <p class="text-xs text-muted mt-1"><%= t("apps.watchdog_hint") %></p>
-</div>
+<%= ss_fields(nil) do |f| %>
+  <%= f.ss_check_box :boot, label: t("apps.boot"), id: "app-boot", checked: boot ? true : false, help: t("apps.boot_hint") %>
+  <%= f.ss_check_box :watchdog, label: "Watchdog", id: "app-watchdog", checked: watchdog ? true : false, help: t("apps.watchdog_hint") %>
+<% end %>

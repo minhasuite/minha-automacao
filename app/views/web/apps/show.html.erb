@@ -39,20 +39,20 @@
     </dl>
     <% if app_update?(@app, st) %>
       <%= render Ss::CalloutComponent.new(tone: :warn, title: t("apps.update_from_to", from: st["version"], to: @app.version), class: "mt-4") do |c| %>
-        <% c.with_action do %><%= button_to t("apps.upgrade"), upgrade_app_path(@app.key), class: "ss-btn ss-btn-primary ss-btn-sm", form: { data: { turbo_confirm: t("apps.upgrade_confirm", name: @app.name, version: @app.version) } } %><% end %>
+        <% c.with_action do %><%= render Ss::ButtonComponent.new(label: t("apps.upgrade"), href: upgrade_app_path(@app.key), method: :post, size: :sm, confirm: t("apps.upgrade_confirm", name: @app.name, version: @app.version)) %><% end %>
       <% end %>
     <% end %>
     <% if installed %>
       <div class="mt-4 flex flex-wrap gap-2">
         <% unless @app.system? %>
           <% if running %>
-            <%= button_to act_app_path(@app.key, do: "stop"), class: "ss-btn ss-btn-ghost", disabled: st["busy"].present? do %><%= icon("stop", "size-4") %><%= t("apps.stop") %><% end %>
+            <%= render Ss::ButtonComponent.new(label: t("apps.stop"), icon: icon("stop", ""), href: act_app_path(@app.key, do: "stop"), method: :post, variant: :ghost, disabled: st["busy"].present?) %>
           <% else %>
-            <%= button_to act_app_path(@app.key, do: "start"), class: "ss-btn ss-btn-primary", disabled: st["busy"].present? do %><%= icon("play", "size-4") %><%= t("apps.start") %><% end %>
+            <%= render Ss::ButtonComponent.new(label: t("apps.start"), icon: icon("play", ""), href: act_app_path(@app.key, do: "start"), method: :post, disabled: st["busy"].present?) %>
           <% end %>
         <% end %>
-        <%= button_to act_app_path(@app.key, do: "restart"), class: "ss-btn ss-btn-ghost", disabled: st["busy"].present?,
-                      form: { data: { turbo_confirm: (@app.system? ? t("apps.restart_confirm", name: @app.name) : nil) } } do %><%= icon("refresh", "size-4") %><%= t("apps.restart") %><% end %>
+        <%= render Ss::ButtonComponent.new(label: t("apps.restart"), icon: icon("refresh", ""), href: act_app_path(@app.key, do: "restart"), method: :post, variant: :ghost,
+                                           disabled: st["busy"].present?, confirm: (@app.system? ? t("apps.restart_confirm", name: @app.name) : nil)) %>
         <% if @app.web_ui && running %>
           <%= link_to launch_app_path(@app.key), class: "ss-btn ss-btn-outline", target: "_blank", rel: "noopener" do %><%= icon("external-link", "size-4") %><%= t("apps.open_ui") %><% end %>
         <% end %>
@@ -68,10 +68,10 @@
       <% if st["busy"] %>
         <%= render Ss::SplashComponent.new(message: t("apps.busy", what: st["busy"]), inline: true) %>
       <% else %>
-        <%= form_with url: install_app_path(@app.key), class: "mt-3 grid gap-4 md:grid-cols-2", data: { turbo_submits_with: t("apps.installing") } do %>
+        <%= ss_form_with url: install_app_path(@app.key), class: "mt-3 grid gap-4 md:grid-cols-2", data: { turbo_submits_with: t("apps.installing") } do |f| %>
           <%= render "web/apps/options", app: @app, values: {} %>
           <%= render "web/apps/behavior", boot: true, watchdog: true %>
-          <div class="md:col-span-2"><%= submit_tag t("apps.install"), class: "ss-btn ss-btn-primary", name: nil %></div>
+          <div class="md:col-span-2"><%= f.ss_submit t("apps.install"), name: nil, data: { turbo_submits_with: t("apps.installing") } %></div>
         <% end %>
       <% end %>
     </section>
@@ -80,18 +80,18 @@
   <% if installed && !@app.system? %>
     <section class="ss-card ss-card-pad mt-4" aria-labelledby="comp-t">
       <h2 id="comp-t"><%= t("apps.behavior") %></h2>
-      <%= form_with url: app_path(@app.key), method: :patch, class: "mt-3 grid gap-4 md:grid-cols-2" do %>
+      <%= ss_form_with url: app_path(@app.key), method: :patch, class: "mt-3 grid gap-4 md:grid-cols-2" do |f| %>
         <%= render "web/apps/behavior", boot: st["boot"], watchdog: st["watchdog"] %>
-        <div class="md:col-span-2"><%= submit_tag t("integrations.common.save"), class: "ss-btn ss-btn-ghost", name: nil %></div>
+        <div class="md:col-span-2"><%= f.ss_submit t("integrations.common.save"), variant: :ghost, name: nil %></div>
       <% end %>
     </section>
 
     <section class="ss-card ss-card-pad mt-4" aria-labelledby="desinst-t">
       <h2 id="desinst-t"><%= t("apps.uninstall") %></h2>
-      <%= form_with url: app_path(@app.key), method: :delete, class: "mt-3 flex flex-wrap items-center gap-4",
-                    data: { turbo_confirm: t("apps.uninstall_confirm", name: @app.name), turbo_confirm_button: t("apps.uninstall") } do %>
-        <label class="ss-check"><%= check_box_tag :keep_data, "1", true, id: "keep-data" %><%= t("apps.keep_data") %></label>
-        <%= button_tag class: "ss-btn ss-btn-danger", name: nil do %><%= icon("trash", "size-4") %><%= t("apps.uninstall") %><% end %>
+      <%= ss_form_with url: app_path(@app.key), method: :delete, class: "mt-3 flex flex-wrap items-center gap-4",
+                       data: { turbo_confirm: t("apps.uninstall_confirm", name: @app.name), turbo_confirm_button: t("apps.uninstall") } do |f| %>
+        <%= f.ss_check_box :keep_data, label: t("apps.keep_data"), id: "keep-data", checked: true, unchecked_value: nil %>
+        <%= render Ss::ButtonComponent.new(label: t("apps.uninstall"), icon: icon("trash", ""), type: :submit, variant: :danger) %>
       <% end %>
     </section>
   <% end %>
@@ -102,9 +102,9 @@
       <p class="text-sm text-muted mt-1"><%= @app.system? ? t("apps.system_config") : t("apps.no_options") %></p>
     <% else %>
       <p class="text-sm text-muted mt-1"><%= t("apps.config_hint") %></p>
-      <%= form_with url: app_path(@app.key), method: :patch, class: "mt-3 grid gap-4 md:grid-cols-2", data: { turbo_submits_with: t("apps.saving") } do %>
+      <%= ss_form_with url: app_path(@app.key), method: :patch, class: "mt-3 grid gap-4 md:grid-cols-2", data: { turbo_submits_with: t("apps.saving") } do |f| %>
         <%= render "web/apps/options", app: @app, values: st["options"] || {} %>
-        <div class="md:col-span-2"><%= submit_tag t("apps.save_restart"), class: "ss-btn ss-btn-primary", name: nil, disabled: st["busy"].present? %></div>
+        <div class="md:col-span-2"><%= f.ss_submit t("apps.save_restart"), name: nil, disabled: st["busy"].present?, data: { turbo_submits_with: t("apps.saving") } %></div>
       <% end %>
     <% end %>
   </section>
