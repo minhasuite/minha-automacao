@@ -18,9 +18,21 @@
                                          url: point_path(p["id"]), link_data: { turbo_frame: "_top" }, wide: true, unavailable_label: t("dashboards.w.offline"), css: "h-full") do |tile| %>
   <% tile.with_footer do %>
     <% if busy && !off_line %>
-      <%# Robô limpando (uiweb): ele percorre o piso em faixas e deixa o rastro; só CSS. %>
-      <div class="dw-vac-run dw-anim <%= 'dw-vac-back' if p['value'] == 'returning' %>" aria-hidden="true">
-        <span class="dw-vac-trail"></span><span class="dw-vac-bot"><span></span></span><span class="dw-vac-dock"></span>
+      <%# Robô limpando (uiweb): percorre o piso em faixas (offset-path, .ss-anim-path) e deixa o rastro; voltando,
+          vai para a base. Movimento da gem (parado com menos movimento), desenho em utilitários e tokens. %>
+      <% back = p["value"] == "returning" %>
+      <div class="@container relative h-[4.2rem] mt-[.8rem] overflow-hidden rounded-[14px] bg-[repeating-linear-gradient(90deg,var(--field)_0_22px,color-mix(in_srgb,var(--field)_70%,var(--surface))_22px_44px)]" aria-hidden="true">
+        <span class="ss-anim-from absolute inset-y-0 left-0 w-full origin-left bg-[linear-gradient(90deg,color-mix(in_srgb,var(--accent)_16%,transparent),transparent)]"
+              style="--ss-anim-from: scaleX(0); --ss-anim-dur: 9s; --ss-anim-iter: infinite; --ss-anim-ease: linear"></span>
+        <% if back %>
+          <span class="ss-anim-from absolute left-[2.5%] top-[30%] size-[1.9rem] rounded-full bg-surface border-[3px] border-accent shadow-[0_6px_14px_-6px_color-mix(in_srgb,var(--accent)_60%,transparent)]"
+                style="--ss-anim-from: translateX(87.5cqw); --ss-anim-dur: 4s; --ss-anim-ease: ease-in-out; --ss-anim-fill: both">
+        <% else %>
+          <span class="ss-anim-path absolute left-0 top-0 size-[1.9rem] rounded-full bg-surface border-[3px] border-accent shadow-[0_6px_14px_-6px_color-mix(in_srgb,var(--accent)_60%,transparent)] [offset-path:inset(20%_6%_30%_7%)]"
+                style="--ss-anim-dur: 9s">
+        <% end %>
+          <span class="ss-anim-breathe absolute right-[2px] top-1/2 size-[6px] -mt-[3px] rounded-full bg-accent" style="--ss-anim-dur: 1s"></span></span>
+        <span class="absolute left-[4px] top-1/2 w-[8px] h-8 -mt-4 rounded-[4px] bg-[color-mix(in_srgb,var(--accent)_45%,var(--surface))]"></span>
       </div>
     <% end %>
     <% if fault && fault["value"] == true && !off_line %>

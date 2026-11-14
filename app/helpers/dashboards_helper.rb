@@ -83,7 +83,7 @@ module DashboardsHelper
   def dw_spin_style(p)
     v = p["value"]
     pct = v.is_a?(Numeric) ? v.to_f.clamp(1, 100) : 60
-    "--spin: #{(2.4 - (pct * 0.021)).round(2)}s"
+    "--ss-anim-dur: #{(2.4 - (pct * 0.021)).round(2)}s"
   end
 
   COVER = /cortina|persiana|toldo|blackout/i
@@ -99,7 +99,9 @@ module DashboardsHelper
     else icon(dw_point_icon(p))
     end
     spin = dw_fan?(p) && dw_on?(p)
-    tag.span(art, class: [ "dw-anim dw-ico-art", ("dw-spinning" if spin) ], style: (dw_spin_style(p) if spin)).to_s
+    # Ventilador ligado gira (.ss-anim-spin da gem, mais rápido quanto maior a velocidade; parado com menos movimento).
+    art = tag.span(art, class: "ss-anim-spin inline-flex", style: dw_spin_style(p)) if spin
+    tag.span(art, class: "contents").to_s
   end
 
   # Cor do tile aceso: a cor real da luz, âmbar para luz sem cor, a cor do widget ou a marca.
@@ -185,7 +187,8 @@ module DashboardsHelper
   def dw_cover_art(value)
     open = value.is_a?(Numeric) ? value.to_f.clamp(0, 100) / 100 : 0.5
     tag.svg(safe_join([ tag.rect(x: 3, y: 3, width: 18, height: 18, rx: 2.5, fill: "none", stroke: "currentColor", "stroke-width": 2),
-                        tag.rect(x: 5, y: 5, width: 14, height: 14, rx: 1, class: "dw-cover-blind", fill: "currentColor", style: "--c: #{(1 - open).round(2)}"),
+                        tag.rect(x: 5, y: 5, width: 14, height: 14, rx: 1, fill: "currentColor", class: "ss-anim-from [transform-box:fill-box] origin-top [transform:scaleY(var(--c))] opacity-55",
+                                 style: "--c: #{(1 - open).round(2)}; --ss-anim-from: scaleY(#{(1 - open + 0.25).round(2)})"),
                         tag.path(d: "M12 5v14", stroke: "currentColor", "stroke-width": 1, opacity: ".35") ]),
             viewBox: "0 0 24 24", class: "size-5", "aria-hidden": true)
   end
@@ -194,8 +197,18 @@ module DashboardsHelper
   def dw_gate_art(value)
     bars = safe_join((0..3).map { |i| tag.path(d: "M#{6 + (i * 3.5)} 7v12", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round") })
     tag.svg(safe_join([ tag.path(d: "M3 4v16M21 4v16", stroke: "currentColor", "stroke-width": 2.2, "stroke-linecap": "round"),
-                        tag.g(safe_join([ bars, tag.path(d: "M5 9h12M5 16h12", stroke: "currentColor", "stroke-width": 1.4) ]), class: "dw-gate-bars dw-gate-#{value.presence || 'unknown'}") ]),
+                        tag.g(safe_join([ bars, tag.path(d: "M5 9h12M5 16h12", stroke: "currentColor", "stroke-width": 1.4) ]), **dw_gate_motion(value)) ]),
             viewBox: "0 0 24 24", class: "size-5", "aria-hidden": true)
+  end
+
+  # Grades do portão: aberto ficam de lado (9px) e apagadas; abrindo vão e voltam (.ss-anim-to da gem).
+  def dw_gate_motion(value)
+    base = "transition-transform duration-[.8s] ease-[cubic-bezier(.2,.8,.2,1)]"
+    case value.to_s
+    when "open" then { class: "#{base} [transform:translateX(9px)] opacity-55" }
+    when "opening" then { class: "#{base} ss-anim-to", style: "--ss-anim-to: translateX(9px); --ss-anim-dur: 1.6s; --ss-anim-iter: infinite; --ss-anim-dir: alternate; --ss-anim-ease: ease-in-out" }
+    else { class: base }
+    end
   end
 
   # Condição do clima (Weather::CONDITIONS, as do HA) → a do Ss::WeatherCardComponent.
@@ -276,8 +289,11 @@ module DashboardsHelper
     [ number_with_precision(v, precision: 1, strip_insignificant_zeros: true, delimiter: "."), unit ].compact.join(" ")
   end
 
-  # Fundo do cartão de área: a foto da área ou um dos gradientes da casa (fixo por área).
-  def dw_area_art(area) = "dw-art-#{area['id'].to_s.bytes.sum % AREA_ARTS}"
+  # Fundo do cartão de área: a foto da área ou um dos gradientes da casa (fixo por área), só com tokens.
+  AREA_ART_CLASSES = [ "bg-[linear-gradient(135deg,var(--accent),var(--series-2))]", "bg-[linear-gradient(135deg,var(--warn),var(--danger))]",
+                       "bg-[linear-gradient(135deg,var(--series-2),var(--success))]", "bg-[linear-gradient(135deg,var(--accent),color-mix(in_srgb,var(--danger)_70%,var(--accent)))]",
+                       "bg-[linear-gradient(135deg,var(--success),var(--series-2))]", "bg-[linear-gradient(135deg,var(--ink-2),var(--accent))]" ].freeze
+  def dw_area_art(area) = AREA_ART_CLASSES[area["id"].to_s.bytes.sum % AREA_ARTS]
 
   # Tom do bloco do cartão de área (variant: do Ss::MosaicTileComponent, 0 a 4): a mesma conta do app
   # (soma dos códigos do id), para a área ter a mesma cor no web e no app.

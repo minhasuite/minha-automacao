@@ -3,31 +3,31 @@
 <%= render Ss::EmptyStateComponent.new(title: title, text: text, css: css) do |e| %>
   <% e.with_art do %>
     <svg viewBox="0 0 160 110" aria-hidden="true" focusable="false">
-      <ellipse cx="80" cy="100" rx="62" ry="6" class="ma-ea-shadow"/>
+      <ellipse cx="80" cy="100" rx="62" ry="6" class="fill-[color-mix(in_srgb,var(--ink)_8%,transparent)]"/>
       <% if art == "plan" %>
-        <rect x="22" y="14" width="116" height="80" rx="8" class="ma-ea-paper"/>
-        <path d="M22 54h52V14M74 54v40M74 70h64M106 14v40" class="ma-ea-wall"/>
-        <rect x="30" y="22" width="36" height="24" rx="4" class="ma-ea-room"/>
-        <circle cx="48" cy="34" r="5" class="ma-ea-dot ma-ea-pulse"/>
-        <circle cx="120" cy="32" r="4" class="ma-ea-dot2"/>
-        <circle cx="96" cy="82" r="4" class="ma-ea-dot2"/>
-        <path d="M118 74l10 10m0-10l-10 10" class="ma-ea-wall" opacity=".35"/>
+        <rect x="22" y="14" width="116" height="80" rx="8" class="fill-surface stroke-line stroke-[1.5]"/>
+        <path d="M22 54h52V14M74 54v40M74 70h64M106 14v40" class="fill-none stroke-[color-mix(in_srgb,var(--accent)_70%,var(--muted))] stroke-[2.5] [stroke-linecap:round] [stroke-linejoin:round]"/>
+        <rect x="30" y="22" width="36" height="24" rx="4" class="fill-[color-mix(in_srgb,var(--accent)_14%,var(--surface))]"/>
+        <circle cx="48" cy="34" r="5" class="fill-warn ss-anim-breathe [transform-box:fill-box] origin-center"/>
+        <circle cx="120" cy="32" r="4" class="fill-[color-mix(in_srgb,var(--accent)_55%,var(--surface))]"/>
+        <circle cx="96" cy="82" r="4" class="fill-[color-mix(in_srgb,var(--accent)_55%,var(--surface))]"/>
+        <path d="M118 74l10 10m0-10l-10 10" class="fill-none stroke-[color-mix(in_srgb,var(--accent)_70%,var(--muted))] stroke-[2.5] [stroke-linecap:round] [stroke-linejoin:round]" opacity=".35"/>
       <% elsif art == "search" %>
-        <rect x="26" y="20" width="108" height="20" rx="10" class="ma-ea-paper"/>
-        <circle cx="40" cy="30" r="5" class="ma-ea-wall"/>
-        <path d="M44 34l4 4" class="ma-ea-wall"/>
-        <rect x="54" y="27" width="46" height="6" rx="3" class="ma-ea-room"/>
-        <rect x="34" y="50" width="92" height="12" rx="6" class="ma-ea-room"/>
-        <rect x="34" y="68" width="70" height="12" rx="6" class="ma-ea-room" opacity=".6"/>
-        <circle cx="124" cy="74" r="5" class="ma-ea-dot ma-ea-pulse"/>
+        <rect x="26" y="20" width="108" height="20" rx="10" class="fill-surface stroke-line stroke-[1.5]"/>
+        <circle cx="40" cy="30" r="5" class="fill-none stroke-[color-mix(in_srgb,var(--accent)_70%,var(--muted))] stroke-[2.5] [stroke-linecap:round] [stroke-linejoin:round]"/>
+        <path d="M44 34l4 4" class="fill-none stroke-[color-mix(in_srgb,var(--accent)_70%,var(--muted))] stroke-[2.5] [stroke-linecap:round] [stroke-linejoin:round]"/>
+        <rect x="54" y="27" width="46" height="6" rx="3" class="fill-[color-mix(in_srgb,var(--accent)_14%,var(--surface))]"/>
+        <rect x="34" y="50" width="92" height="12" rx="6" class="fill-[color-mix(in_srgb,var(--accent)_14%,var(--surface))]"/>
+        <rect x="34" y="68" width="70" height="12" rx="6" class="fill-[color-mix(in_srgb,var(--accent)_14%,var(--surface))]" opacity=".6"/>
+        <circle cx="124" cy="74" r="5" class="fill-warn ss-anim-breathe [transform-box:fill-box] origin-center"/>
       <% else %>
-        <rect x="24" y="16" width="52" height="34" rx="8" class="ma-ea-paper"/>
-        <rect x="84" y="16" width="52" height="34" rx="8" class="ma-ea-room"/>
-        <rect x="24" y="58" width="112" height="34" rx="8" class="ma-ea-paper"/>
-        <circle cx="40" cy="33" r="7" class="ma-ea-dot ma-ea-pulse"/>
-        <rect x="52" y="29" width="16" height="4" rx="2" class="ma-ea-room"/>
-        <path d="M36 82l14-10 12 6 16-12 14 8 16-10 12 6" class="ma-ea-wall"/>
-        <path d="M110 22v22M99 33h22" class="ma-ea-wall" opacity=".5"/>
+        <rect x="24" y="16" width="52" height="34" rx="8" class="fill-surface stroke-line stroke-[1.5]"/>
+        <rect x="84" y="16" width="52" height="34" rx="8" class="fill-[color-mix(in_srgb,var(--accent)_14%,var(--surface))]"/>
+        <rect x="24" y="58" width="112" height="34" rx="8" class="fill-surface stroke-line stroke-[1.5]"/>
+        <circle cx="40" cy="33" r="7" class="fill-warn ss-anim-breathe [transform-box:fill-box] origin-center"/>
+        <rect x="52" y="29" width="16" height="4" rx="2" class="fill-[color-mix(in_srgb,var(--accent)_14%,var(--surface))]"/>
+        <path d="M36 82l14-10 12 6 16-12 14 8 16-10 12 6" class="fill-none stroke-[color-mix(in_srgb,var(--accent)_70%,var(--muted))] stroke-[2.5] [stroke-linecap:round] [stroke-linejoin:round]"/>
+        <path d="M110 22v22M99 33h22" class="fill-none stroke-[color-mix(in_srgb,var(--accent)_70%,var(--muted))] stroke-[2.5] [stroke-linecap:round] [stroke-linejoin:round]" opacity=".5"/>
       <% end %>
     </svg>
   <% end %>
