@@ -15,24 +15,20 @@
       <span class="ss-badge <%= 'ss-badge-warn' if @live.positive? %>"><%= t("automations.shadow_page.live", count: @live) %></span></p>
   </div>
   <% if can?(:admin) %>
-    <%= button_to site_shadow_path(@site), method: :patch, params: { shadow: !@site.shadow }, class: "ss-btn #{@site.shadow ? 'ss-btn-outline' : 'ss-btn-primary'}",
-                  form: { data: { turbo_confirm: (@site.shadow ? t("automations.shadow_page.off_confirm") : t("automations.shadow_page.on_confirm")), turbo_confirm_button: t("automations.shadow_page.confirm") } } do %>
-      <%= icon("moon", "size-4") %><%= @site.shadow ? t("automations.shadow_page.turn_off") : t("automations.shadow_page.turn_on") %>
-    <% end %>
+    <%= render Ss::ButtonComponent.new(label: @site.shadow ? t("automations.shadow_page.turn_off") : t("automations.shadow_page.turn_on"), icon: icon("moon", ""),
+                                       href: site_shadow_path(@site), method: :patch, params: { shadow: !@site.shadow }, variant: @site.shadow ? :outline : :primary,
+                                       confirm: (@site.shadow ? t("automations.shadow_page.off_confirm") : t("automations.shadow_page.on_confirm")), confirm_button: t("automations.shadow_page.confirm")) %>
   <% end %>
 </section>
 
 <div class="grid gap-6 lg:grid-cols-3 items-start">
   <div class="lg:col-span-2 min-w-0">
     <h2 class="mb-2"><%= t("automations.shadow_page.would") %></h2>
-    <%= form_with url: site_shadow_path(@site), method: :get, class: "mb-3 grid gap-3 grid-cols-2 sm:flex sm:flex-wrap sm:items-end", role: "search" do %>
-      <div class="col-span-2 min-w-0 sm:min-w-48 sm:flex-1"><label for="automacao" class="ss-label"><%= t("automations.shadow_page.origin") %></label>
-        <%= select_tag :automacao, options_for_select(@origins, params[:automacao]), include_blank: t("automations.index.all_f"), class: "ss-input", data: { autosubmit: true } %></div>
-      <div><label for="tipo" class="ss-label"><%= t("automations.shadow_page.action_type") %></label>
-        <%= select_tag :tipo, options_for_select(@types.map { |ty| [ shadow_action_label(ty), ty ] }, params[:tipo]), include_blank: t("automations.index.all_m"), class: "ss-input", data: { autosubmit: true } %></div>
-      <div><label for="horas" class="ss-label"><%= t("automations.shadow_page.period") %></label>
-        <%= select_tag :horas, options_for_select(Web::ShadowController::WINDOWS.invert, @hours), class: "ss-input", data: { autosubmit: true } %></div>
-      <button type="submit" class="ss-btn ss-btn-ghost hidden sm:inline-flex" aria-label="<%= t("automations.shadow_page.filter") %>"><%= icon("filter", "size-4") %></button>
+    <%= ss_form_with url: site_shadow_path(@site), method: :get, class: "mb-3 grid gap-3 grid-cols-2 sm:flex sm:flex-wrap sm:items-end", role: "search" do |f| %>
+      <%= f.ss_select :automacao, @origins, label: t("automations.shadow_page.origin"), include_blank: t("automations.index.all_f"), selected: params[:automacao], data: { autosubmit: true }, wrapper_class: "col-span-2 min-w-0 sm:min-w-48 sm:flex-1" %>
+      <%= f.ss_select :tipo, @types.map { |ty| [ shadow_action_label(ty), ty ] }, label: t("automations.shadow_page.action_type"), include_blank: t("automations.index.all_m"), selected: params[:tipo], data: { autosubmit: true } %>
+      <%= f.ss_select :horas, Web::ShadowController::WINDOWS.invert, label: t("automations.shadow_page.period"), selected: @hours, data: { autosubmit: true } %>
+      <%= render Ss::ButtonComponent.new(icon: icon("filter", ""), type: :submit, variant: :ghost, class: "hidden sm:inline-flex", aria: { label: t("automations.shadow_page.filter") }) %>
     <% end %>
 
     <% if @actions.empty? %>
@@ -63,11 +59,10 @@
       <% if @sources.empty? %><p class="text-sm text-muted mt-1"><%= t("automations.shadow_page.no_sources") %></p><% end %>
       <% @sources.each do |plugin, integration| %>
         <% if integration %>
-          <%= form_with url: compare_site_shadow_path(@site), class: "grid gap-2 mt-2" do %>
+          <%= ss_form_with url: compare_site_shadow_path(@site), class: "grid gap-2 mt-2" do |f| %>
             <%= hidden_field_tag :fonte, plugin.key, id: nil %>
-            <label class="ss-label" for="horas-<%= plugin.key %>"><%= t("automations.shadow_page.window", name: plugin.title) %></label>
-            <%= select_tag :horas, options_for_select(Web::ShadowController::WINDOWS.invert, "24"), class: "ss-input", id: "horas-#{plugin.key}" %>
-            <% if can?(:manage) %><button class="ss-btn ss-btn-primary"><%= icon("refresh", "size-4") %><%= t("automations.shadow_page.compare_now") %></button><% end %>
+            <%= f.ss_select :horas, Web::ShadowController::WINDOWS.invert, label: t("automations.shadow_page.window", name: plugin.title), selected: "24", id: "horas-#{plugin.key}" %>
+            <% if can?(:manage) %><%= render Ss::ButtonComponent.new(label: t("automations.shadow_page.compare_now"), icon: icon("refresh", ""), type: :submit) %><% end %>
           <% end %>
         <% else %>
           <p class="text-sm text-muted mt-1"><%= t("automations.shadow_page.connect_html", name: plugin.title, link: link_to(t("automations.shadow_page.integrations"), site_integrations_path(@site))) %></p>
@@ -90,9 +85,11 @@
       <% if @refs.empty? %>
         <p class="text-sm text-muted mt-1"><%= t("automations.shadow_page.no_migration") %></p>
       <% else %>
-        <table class="ss-table mt-2 text-sm"><tbody>
-          <% @refs.sort.each do |(source, kind), n| %><tr><td><%= source %></td><td><%= kind %></td><td class="num r"><%= n %></td></tr><% end %>
-        </tbody></table>
+        <%= render Ss::DataTableComponent.new(rows: @refs.sort, id: "sombra-de-para", caption: t("automations.shadow_page.mapping"), tools: false, flat: true, empty_art: false, max_height: "none", css: "mt-2 text-sm") do |tb| %>
+          <% tb.column :source, t("automations.shadow_page.map_source") do |(key, _n)| %><%= key[0] %><% end %>
+          <% tb.column :kind, t("automations.shadow_page.map_kind") do |(key, _n)| %><%= key[1] %><% end %>
+          <% tb.column :count, t("automations.shadow_page.map_count"), align: :right do |(_key, n)| %><span class="num"><%= n %></span><% end %>
+        <% end %>
         <% if @unmapped.any? %>
           <details class="mt-2 text-sm"><summary class="ss-summary"><%= t("automations.shadow_page.unmapped", count: @unmapped.size) %></summary>
             <ul class="mt-1 grid gap-1"><% @unmapped.each do |r| %><li class="break-words"><code class="ss-code-inline"><%= r.external_id %></code> <span class="text-muted"><%= r.note %></span></li><% end %></ul>

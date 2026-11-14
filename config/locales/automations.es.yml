@@ -808,6 +808,9 @@ es:
       integrations: "Integraciones"
       comparisons: "Comparaciones"
       mapping: "Correspondencia de la migración"
+      map_source: "Origen"
+      map_kind: "Tipo"
+      map_count: "Cantidad"
       no_migration: "Sin migración importada (consulta la guía de migración)."
       unmapped:
         one: "Sin par aquí (%{count})"

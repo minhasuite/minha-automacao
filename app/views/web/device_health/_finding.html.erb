@@ -25,28 +25,26 @@
           <% if fx.kind == :link %>
             <%= link_to fx.url(f), class: "ss-btn ss-btn-outline ss-btn-sm", data: { fix: key } do %><%= icon(fx.icon, "size-4") %><%= fx.label %><% end %>
           <% elsif fx.kind == :form %>
-            <%= form_with url: device_health_fix_path(site_id: @site.id, **fp), class: "flex flex-wrap items-center gap-2", data: { fix: key } do %>
+            <%= ss_form_with url: device_health_fix_path(site_id: @site.id, **fp), class: "flex flex-wrap items-center gap-2", data: { fix: key } do |form| %>
               <%= hidden_field_tag :ref, f.ref, id: nil %><%= hidden_field_tag :fix, key, id: nil %>
-              <label for="<%= dom %>-<%= key %>" class="sr-only"><%= fx.label %></label>
-              <%= select_tag :area_id, options_for_select(fx.options(f, nil)), id: "#{dom}-#{key}", class: "ss-input ss-input-sm w-auto" %>
-              <button type="submit" class="ss-btn ss-btn-outline ss-btn-sm"><%= icon(fx.icon, "size-4") %><%= fx.label %></button>
+              <%= form.ss_select :area_id, fx.options(f, nil), label: fx.label, hide_label: true, id: "#{dom}-#{key}", class: "ss-input-sm w-auto" %>
+              <%= render Ss::ButtonComponent.new(label: fx.label, icon: icon(fx.icon, ""), type: :submit, variant: :outline, size: :sm) %>
             <% end %>
           <% else %>
-            <% confirm = fx.confirm? ? { turbo_confirm: (fx.respond_to?(:confirm_text) ? fx.confirm_text(f) : Diagnostics::Fix.text(:confirm, label: fx.label, name: f.name)),
-                                         turbo_confirm_button: fx.label, turbo_confirm_tone: (fx.danger? ? "danger" : nil) }.compact : {} %>
-            <%= button_to device_health_fix_path(site_id: @site.id, **fp), params: { ref: f.ref, fix: key },
-                          class: "ss-btn #{fx.danger? ? 'ss-btn-ghost is-danger' : 'ss-btn-primary'} ss-btn-sm", form: { data: confirm.merge(fix: key) } do %><%= icon(fx.icon, "size-4") %><%= fx.label %><% end %>
+            <% confirm = (fx.respond_to?(:confirm_text) ? fx.confirm_text(f) : Diagnostics::Fix.text(:confirm, label: fx.label, name: f.name)) if fx.confirm? %>
+            <%= render Ss::ButtonComponent.new(label: fx.label, icon: icon(fx.icon, ""), href: device_health_fix_path(site_id: @site.id, **fp), method: :post, params: { ref: f.ref, fix: key },
+                                               variant: fx.danger? ? :ghost : :primary, tone: (:danger if fx.danger?), size: :sm, form: { data: { fix: key } },
+                                               confirm:, confirm_button: (fx.label if confirm), confirm_tone: (:danger if confirm && fx.danger?)) %>
           <% end %>
         <% end %>
-        <%= form_with url: device_health_snooze_path(site_id: @site.id, **fp), class: "flex flex-wrap items-center gap-2", data: { snooze: f.ref } do %>
+        <%= ss_form_with url: device_health_snooze_path(site_id: @site.id, **fp), class: "flex flex-wrap items-center gap-2", data: { snooze: f.ref } do |form| %>
           <%= hidden_field_tag :ref, f.ref, id: nil %>
-          <label for="<%= dom %>-days" class="sr-only"><%= t("device_health.snooze_for", name: f.name) %></label>
-          <%= select_tag :days, options_for_select(Diagnostics.config.fetch("snooze_days").map { |d| [ t("device_health.days", count: d), d ] }), id: "#{dom}-days", class: "ss-input ss-input-sm w-auto" %>
-          <button type="submit" class="ss-btn ss-btn-ghost ss-btn-sm"><%= icon("bell", "size-4") %><%= t("device_health.snooze") %></button>
+          <%= form.ss_select :days, Diagnostics.config.fetch("snooze_days").map { |d| [ t("device_health.days", count: d), d ] }, label: t("device_health.snooze_for", name: f.name), hide_label: true, id: "#{dom}-days", class: "ss-input-sm w-auto" %>
+          <%= render Ss::ButtonComponent.new(label: t("device_health.snooze"), icon: icon("bell", ""), type: :submit, variant: :ghost, size: :sm) %>
         <% end %>
       <% else %>
-        <%= button_to device_health_snooze_path(site_id: @site.id, **fp), params: { ref: f.ref, on: "0" }, class: "ss-btn ss-btn-ghost ss-btn-sm",
-                      "aria-label": t("device_health.unsnooze_of", name: f.name) do %><%= t("device_health.unsnooze") %><% end %>
+        <%= render Ss::ButtonComponent.new(label: t("device_health.unsnooze"), href: device_health_snooze_path(site_id: @site.id, **fp), method: :post, params: { ref: f.ref, on: "0" },
+                                           variant: :ghost, size: :sm, aria: { label: t("device_health.unsnooze_of", name: f.name) }) %>
       <% end %>
     </div>
   </div>

@@ -808,6 +808,9 @@ en:
       integrations: "Integrations"
       comparisons: "Comparisons"
       mapping: "Migration mapping"
+      map_source: "Source"
+      map_kind: "Kind"
+      map_count: "Count"
       no_migration: "No imported migration (see the migration guide)."
       unmapped:
         one: "No match here (%{count})"
