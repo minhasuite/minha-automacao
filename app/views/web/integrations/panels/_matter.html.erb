@@ -39,27 +39,28 @@
 <div class="grid gap-4 lg:grid-cols-2">
   <section class="ss-card ss-card-pad grid gap-3 content-start" aria-labelledby="mt-add">
     <h2 id="mt-add" class="font-bold text-ink"><%= t("protocols.matter.add") %></h2>
-    <%= form_with url: act.call("commission"), scope: :panel, class: "grid gap-3", data: { turbo_submits_with: t("protocols.matter.commissioning") } do |f| %>
-      <div><%= f.label :code, t("protocols.matter.code_label"), class: "ss-label" %><%= f.text_field :code, class: "ss-input font-mono", autocomplete: "off", spellcheck: false, required: true, placeholder: t("integrations.forms.matter.code_hint") %></div>
-      <fieldset class="grid gap-2">
-        <legend class="ss-label"><%= t("protocols.matter.how") %></legend>
-        <label class="flex items-start gap-2"><%= radio_button_tag "panel[mode]", "network", true, class: "mt-1" %><span><span class="font-semibold text-ink"><%= t("protocols.matter.mode_network") %></span><br><span class="text-sm text-muted"><%= t("protocols.matter.mode_network_hint") %></span></span></label>
-        <label class="flex items-start gap-2 <%= 'opacity-60' unless info['bluetooth_enabled'] %>"><%= radio_button_tag "panel[mode]", "ble", false, class: "mt-1", disabled: !info["bluetooth_enabled"] %><span><span class="font-semibold text-ink"><%= t("protocols.matter.mode_ble") %></span><br><span class="text-sm text-muted"><%= info["bluetooth_enabled"] ? t("protocols.matter.mode_ble_hint") : t("protocols.matter.mode_ble_off") %></span></span></label>
-      </fieldset>
+    <%= ss_form_with url: act.call("commission"), scope: :panel, class: "grid gap-3", data: { turbo_submits_with: t("protocols.matter.commissioning") } do |f| %>
+      <%= f.ss_text_field :code, label: t("protocols.matter.code_label"), class: "font-mono", autocomplete: "off", spellcheck: false, required: true, placeholder: t("integrations.forms.matter.code_hint") %>
+      <% mode = ->(key, hint) { safe_join([ tag.span(t("protocols.matter.#{key}"), class: "font-semibold text-ink"), tag.br, tag.span(hint, class: "text-sm text-muted") ]) } %>
+      <%# Sem Bluetooth no Matter Server o BLE não entra como opção (a gem não desliga uma opção só); o motivo fica na ajuda. %>
+      <% modes = [ [ mode.call("mode_network", t("protocols.matter.mode_network_hint")), "network" ] ]
+         modes << [ mode.call("mode_ble", t("protocols.matter.mode_ble_hint")), "ble" ] if info["bluetooth_enabled"] %>
+      <%= f.ss_radio_buttons :mode, modes, label: t("protocols.matter.how"), inline: false, checked: "network",
+                             help: (safe_join([ t("protocols.matter.mode_ble"), ": ", t("protocols.matter.mode_ble_off") ]) unless info["bluetooth_enabled"]) %>
       <p class="text-xs text-muted"><%= t("protocols.matter.phone_soon") %></p>
-      <div><%= f.submit t("protocols.matter.commission"), class: "ss-btn ss-btn-primary" %></div>
+      <div><%= f.ss_submit t("protocols.matter.commission"), data: { turbo_submits_with: t("protocols.matter.commissioning") } %></div>
     <% end %>
   </section>
 
   <section class="ss-card ss-card-pad grid gap-4 content-start" aria-labelledby="mt-net">
     <h2 id="mt-net" class="font-bold text-ink"><%= t("protocols.matter.networks") %></h2>
-    <%= form_with url: act.call("wifi"), scope: :panel, class: "grid gap-2 sm:grid-cols-[1fr_1fr_auto] items-end" do |f| %>
-      <div><%= f.label :ssid, t("protocols.matter.ssid"), class: "ss-label" %><%= f.text_field :ssid, class: "ss-input", autocomplete: "off", required: true %></div>
-      <div><%= f.label :password, t("protocols.matter.password"), class: "ss-label" %><%= f.password_field :password, class: "ss-input", autocomplete: "new-password" %></div>
-      <%= f.submit t("protocols.matter.save_wifi"), class: "ss-btn ss-btn-outline" %>
+    <%= ss_form_with url: act.call("wifi"), scope: :panel, class: "grid gap-2 sm:grid-cols-[1fr_1fr_auto] items-end" do |f| %>
+      <%= f.ss_text_field :ssid, label: t("protocols.matter.ssid"), autocomplete: "off", required: true %>
+      <%= f.ss_password_field :password, label: t("protocols.matter.password"), autocomplete: "new-password" %>
+      <%= f.ss_submit t("protocols.matter.save_wifi"), variant: :outline %>
     <% end %>
     <div class="flex flex-wrap items-center gap-2">
-      <%= button_to act.call("thread"), class: "ss-btn ss-btn-outline ss-btn-sm", disabled: thread_dataset.blank? do %><%= icon("share", "size-4") %><%= t("protocols.matter.use_thread") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: t("protocols.matter.use_thread"), icon: icon("share", ""), href: act.call("thread"), method: :post, variant: :outline, size: :sm, disabled: thread_dataset.blank?) %>
       <span class="text-xs text-muted"><%= thread_dataset.present? ? t("protocols.matter.thread_ready") : t("protocols.matter.thread_missing") %></span>
     </div>
   </section>
@@ -80,9 +81,13 @@
     <% tb.column :actions, t("protocols.zwave.col_actions"), align: :right, hideable: false do |n| %>
       <% entry = Matter::Map.entry(n) %>
       <div class="inline-flex gap-1">
-        <%= button_to act.call("share"), params: { "panel[node]" => n["node_id"] }, class: "ss-icon-btn is-sm", title: t("protocols.matter.share") do %><%= icon("user-group", "size-4") %><span class="sr-only"><%= t("protocols.matter.share") %></span><% end %>
-        <%= button_to act.call("interview"), params: { "panel[node]" => n["node_id"] }, class: "ss-icon-btn is-sm", title: t("protocols.zwave.reinterview") do %><%= icon("refresh", "size-4") %><span class="sr-only"><%= t("protocols.zwave.reinterview") %></span><% end %>
-        <%= button_to act.call("remove"), params: { "panel[node]" => n["node_id"] }, class: "ss-icon-btn is-sm is-danger", title: t("protocols.matter.remove"), form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("protocols.matter.remove_confirm", name: entry["name"]) } } do %><%= icon("trash", "size-4") %><span class="sr-only"><%= t("protocols.matter.remove") %></span><% end %>
+        <%= render Ss::ButtonComponent.new(icon: icon("user-group", ""), href: act.call("share"), method: :post, params: { "panel[node]" => n["node_id"] }, variant: :ghost, size: :sm,
+                                           title: t("protocols.matter.share"), aria: { label: t("protocols.matter.share") }) %>
+        <%= render Ss::ButtonComponent.new(icon: icon("refresh", ""), href: act.call("interview"), method: :post, params: { "panel[node]" => n["node_id"] }, variant: :ghost, size: :sm,
+                                           title: t("protocols.zwave.reinterview"), aria: { label: t("protocols.zwave.reinterview") }) %>
+        <%= render Ss::ButtonComponent.new(icon: icon("trash", ""), href: act.call("remove"), method: :post, params: { "panel[node]" => n["node_id"] }, variant: :ghost, tone: :danger, size: :sm,
+                                           title: t("protocols.matter.remove"), aria: { label: t("protocols.matter.remove") },
+                                           confirm: t("protocols.matter.remove_confirm", name: entry["name"]), confirm_tone: :danger, confirm_button: t("shared.confirm.remove")) %>
       </div>
     <% end %>
   <% end %>

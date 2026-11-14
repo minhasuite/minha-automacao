@@ -3,10 +3,7 @@
 <% copy = lambda do |label, value| %>
   <div>
     <p class="ss-label"><%= label %></p>
-    <div class="flex items-center gap-2" data-controller="ss-copy" data-ss-copy-done-value="<%= ss_t("code_block.copied") %>">
-      <input type="text" readonly value="<%= value %>" aria-label="<%= label %>" class="ss-input font-mono text-xs flex-1 min-w-0" data-ss-copy-target="source" data-action="focus->ss-copy#select">
-      <button type="button" class="ss-icon-btn" data-action="ss-copy#copy" data-ss-copy-target="button" title="<%= t("protocols.google.copy") %>"><%= icon("duplicate", "size-4") %><span class="sr-only" data-ss-copy-target="label"><%= t("protocols.google.copy") %></span></button>
-    </div>
+    <%= render Ss::CodeBlockComponent.new(text: value, label:) %>
   </div>
 <% end %>
 
@@ -32,7 +29,9 @@
       <% copy.call(t("protocols.google.authorize_url"), oauth_authorize_url) %>
       <% copy.call(t("protocols.google.token_url"), oauth_token_url) %>
       <div class="flex flex-wrap items-center gap-2">
-        <%= button_to act.call("secret"), class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: { turbo_confirm: (t("protocols.google.secret_confirm") if has_secret) } } do %><%= icon("finger-print", "size-4") %><%= has_secret ? t("protocols.google.secret_again") : t("protocols.google.secret") %><% end %>
+        <%= render Ss::ButtonComponent.new(label: has_secret ? t("protocols.google.secret_again") : t("protocols.google.secret"), icon: icon("finger-print", ""),
+                                           href: act.call("secret"), method: :post, variant: :outline, size: :sm,
+                                           confirm: (t("protocols.google.secret_confirm") if has_secret)) %>
         <% if has_secret %><span class="ss-badge ss-badge-success"><%= t("protocols.google.secret_ok") %></span><% end %>
       </div></li>
     <li class="grid gap-2 content-start"><span class="font-semibold text-ink"><%= t("protocols.google.step_redirect") %></span>
@@ -42,7 +41,7 @@
       <%= link_to t("protocols.google.edit"), connect_integration_path(integration), class: "ss-btn ss-btn-ghost ss-btn-sm w-fit" %></li>
   </ol>
   <div class="flex flex-wrap gap-2">
-    <%= button_to act.call("sync"), class: "ss-btn ss-btn-primary", disabled: !service_account do %><%= icon("refresh", "size-4") %><%= t("protocols.google.sync") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("protocols.google.sync"), icon: icon("refresh", ""), href: act.call("sync"), method: :post, disabled: !service_account) %>
   </div>
 </section>
 
@@ -53,7 +52,7 @@
       <% links.each do |l| %>
         <li class="px-4 py-3 flex items-center justify-between gap-3">
           <span><span class="font-semibold text-ink"><%= l.user.name.presence || l.user.email %></span><br><span class="text-xs text-muted"><%= t("protocols.google.since", time: l(l.created_at, format: :short)) %></span></span>
-          <%= button_to t("protocols.google.unlink"), act.call("unlink"), params: { "panel[token]" => l.id }, class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+          <%= render Ss::ButtonComponent.new(label: t("protocols.google.unlink"), href: act.call("unlink"), method: :post, params: { "panel[token]" => l.id }, variant: :ghost, size: :sm) %>
         </li>
       <% end %>
     </ul>

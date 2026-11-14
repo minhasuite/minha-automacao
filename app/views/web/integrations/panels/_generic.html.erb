@@ -7,14 +7,12 @@
   </section>
 <% end %>
 <% if rows.any? %>
-  <section class="ss-card overflow-hidden">
-    <table class="ss-table"><tbody>
-      <% rows.each do |label, value| %><tr><td class="text-muted"><%= label %></td><td class="font-semibold text-ink break-words"><%= value.presence || "—" %></td></tr><% end %>
-    </tbody></table>
+  <section class="ss-card ss-card-pad divide-y divide-line">
+    <% rows.each do |label, value| %><div class="ss-value-row"><span><%= label %></span><b class="whitespace-normal break-words min-w-0 text-right"><%= value.presence || "—" %></b></div><% end %>
   </section>
 <% end %>
 <% if actions.any? %>
   <div class="flex flex-wrap gap-2">
-    <% actions.each do |action, label| %><%= button_to label, panel_action_integration_path(integration, acao: action), class: "ss-btn ss-btn-outline" %><% end %>
+    <% actions.each do |action, label| %><%= render Ss::ButtonComponent.new(label:, href: panel_action_integration_path(integration, acao: action), method: :post, variant: :outline) %><% end %>
   </div>
 <% end %>

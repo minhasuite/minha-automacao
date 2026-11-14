@@ -57,8 +57,9 @@
       <p class="text-sm text-muted mt-1"><%= t("hardware.power.hint") %></p></div>
     <div class="flex flex-wrap gap-2">
       <% %w[reboot shutdown].each do |a| %>
-        <%= button_to settings_hardware_power_path(acao: a), class: "ss-btn #{a == "shutdown" ? "ss-btn-danger" : "ss-btn-ghost"}",
-                      form: { data: { turbo_confirm: t("hardware.power.confirm.#{a}"), turbo_confirm_button: t("hardware.power.#{a}") } } do %><%= t("hardware.power.#{a}") %><% end %>
+        <%= render Ss::ButtonComponent.new(label: t("hardware.power.#{a}"), href: settings_hardware_power_path(acao: a), method: :post,
+                                           variant: a == "shutdown" ? :danger : :ghost,
+                                           confirm: t("hardware.power.confirm.#{a}"), confirm_button: t("hardware.power.#{a}")) %>
       <% end %>
     </div>
   </section>

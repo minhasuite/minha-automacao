@@ -42,24 +42,26 @@
     <% when "requested", "running", "stop" %>
       <div class="flex flex-wrap items-center gap-3">
         <p class="text-ink font-semibold"><%= inclusion["mode"] == "exclude" ? t("protocols.zwave.waiting_exclude") : t("protocols.zwave.waiting_include") %></p>
-        <%= button_to t("protocols.zwave.stop"), act.call("stop"), class: "ss-btn ss-btn-outline ss-btn-sm" %>
+        <%= render Ss::ButtonComponent.new(label: t("protocols.zwave.stop"), href: act.call("stop"), method: :post, variant: :outline, size: :sm) %>
       </div>
     <% when "grant" %>
-      <%= form_with url: act.call("grant"), scope: :panel, class: "grid gap-3" do |f| %>
+      <%= ss_form_with url: act.call("grant"), scope: :panel, class: "grid gap-3" do |f| %>
         <p class="text-ink font-semibold"><%= t("protocols.zwave.grant_title") %></p>
         <% Array(inclusion["requested"]).each do |c| %>
-          <label class="flex items-start gap-2"><%= check_box_tag "panel[classes][]", c, true, id: "cls-#{c}", class: "mt-1" %><span><span class="font-semibold text-ink"><%= t("protocols.zwave.classes.#{classes.fetch(c.to_i, 'unknown')}") %></span><br><span class="text-sm text-muted"><%= t("protocols.zwave.classes_hint.#{classes.fetch(c.to_i, 'unknown')}") %></span></span></label>
+          <% k = classes.fetch(c.to_i, "unknown") %>
+          <%= f.ss_check_box :classes, multiple: true, checked: true, checked_value: c, unchecked_value: nil, id: "cls-#{c}",
+                             label: safe_join([ tag.span(t("protocols.zwave.classes.#{k}"), class: "font-semibold text-ink"), tag.br, tag.span(t("protocols.zwave.classes_hint.#{k}"), class: "text-sm text-muted") ]) %>
         <% end %>
-        <div class="flex gap-2"><%= f.submit t("protocols.zwave.grant"), class: "ss-btn ss-btn-primary" %></div>
+        <div class="flex gap-2"><%= f.ss_submit t("protocols.zwave.grant") %></div>
       <% end %>
     <% when "dsk" %>
       <% groups = inclusion["dsk"].to_s.split("-") %>
-      <%= form_with url: act.call("pin"), scope: :panel, class: "grid gap-3 max-w-xl" do |f| %>
+      <%= ss_form_with url: act.call("pin"), scope: :panel, class: "grid gap-3 max-w-xl" do |f| %>
         <p class="text-ink font-semibold"><%= t("protocols.zwave.dsk_title") %></p>
         <p class="font-mono text-lg tracking-wider text-ink num" aria-label="<%= t("protocols.zwave.dsk") %>"><span class="text-accent">•••••</span>-<%= groups.drop(1).join("-") %></p>
-        <div><%= f.label :pin, t("protocols.zwave.pin"), class: "ss-label" %><%= f.text_field :pin, class: "ss-input num w-40 font-mono text-lg", inputmode: "numeric", pattern: "[0-9]{5}", maxlength: 5, autocomplete: "off", required: true %></div>
-        <p class="text-xs text-muted"><%= t("protocols.zwave.pin_hint") %></p>
-        <div><%= f.submit t("protocols.zwave.send_pin"), class: "ss-btn ss-btn-primary" %></div>
+        <%= f.ss_text_field :pin, label: t("protocols.zwave.pin"), help: t("protocols.zwave.pin_hint"), class: "num w-40 font-mono text-lg", inputmode: "numeric", pattern: "[0-9]{5}", maxlength: 5,
+                                  autocomplete: "off", required: true %>
+        <div><%= f.ss_submit t("protocols.zwave.send_pin") %></div>
       <% end %>
     <% when "added" %>
       <p class="text-ink font-semibold"><%= t("protocols.zwave.added", node: inclusion["node"]) %></p>
@@ -68,32 +70,28 @@
       <div class="flex flex-wrap items-center gap-3">
         <p class="font-semibold <%= state == 'failed' ? 'text-danger' : 'text-ink' %>"><%= t("protocols.zwave.states.#{state}", node: inclusion["node"]) %><%= " #{inclusion['message']}" if state == "failed" && inclusion["message"] && reveal_sensitive? %></p>
         <% if state == "done" %><%= link_to t("protocols.zwave.see_found"), found_integration_path(integration), class: "ss-btn ss-btn-primary ss-btn-sm" %><% end %>
-        <%= button_to t("protocols.zwave.dismiss"), act.call("dismiss"), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
+        <%= render Ss::ButtonComponent.new(label: t("protocols.zwave.dismiss"), href: act.call("dismiss"), method: :post, variant: :ghost, size: :sm) %>
       </div>
     <% else %>
       <div class="grid gap-4 lg:grid-cols-2">
-        <%= form_with url: act.call("include"), scope: :panel, class: "grid gap-3" do |f| %>
-          <fieldset class="grid gap-2">
-            <legend class="ss-label"><%= t("protocols.zwave.strategy") %></legend>
-            <% %w[default s2 insecure].each_with_index do |s, i| %>
-              <label class="flex items-start gap-2"><%= radio_button_tag "panel[strategy]", s, i.zero?, class: "mt-1" %><span><span class="font-semibold text-ink"><%= t("protocols.zwave.strategies.#{s}") %></span><br><span class="text-sm text-muted"><%= t("protocols.zwave.strategies_hint.#{s}") %></span></span></label>
-            <% end %>
-          </fieldset>
+        <%= ss_form_with url: act.call("include"), scope: :panel, class: "grid gap-3" do |f| %>
+          <% strategies = %w[default s2 insecure].map { |s| [ safe_join([ tag.span(t("protocols.zwave.strategies.#{s}"), class: "font-semibold text-ink"), tag.br, tag.span(t("protocols.zwave.strategies_hint.#{s}"), class: "text-sm text-muted") ]), s ] } %>
+          <%= f.ss_radio_buttons :strategy, strategies, label: t("protocols.zwave.strategy"), inline: false, checked: "default" %>
           <div class="flex flex-wrap gap-2">
-            <%= f.button class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("protocols.zwave.include") %><% end %>
+            <%= render Ss::ButtonComponent.new(label: t("protocols.zwave.include"), icon: icon("plus", ""), type: :submit) %>
           </div>
         <% end %>
         <div class="grid gap-3 content-start">
-          <%= form_with url: act.call("smart_start"), scope: :panel, class: "grid gap-2" do |f| %>
-            <%= f.label :qr, t("protocols.zwave.smart_start"), class: "ss-label" %>
-            <%= f.text_field :qr, class: "ss-input font-mono text-sm", inputmode: "numeric", placeholder: "9001234…", autocomplete: "off", spellcheck: false %>
-            <p class="text-xs text-muted"><%= t("protocols.zwave.smart_start_hint") %></p>
-            <div><%= f.submit t("protocols.zwave.provision"), class: "ss-btn ss-btn-outline ss-btn-sm" %></div>
+          <%= ss_form_with url: act.call("smart_start"), scope: :panel, class: "grid gap-2" do |f| %>
+            <%= f.ss_text_field :qr, label: t("protocols.zwave.smart_start"), help: t("protocols.zwave.smart_start_hint"), class: "font-mono text-sm", inputmode: "numeric", placeholder: "9001234…",
+                                     autocomplete: "off", spellcheck: false %>
+            <div><%= f.ss_submit t("protocols.zwave.provision"), variant: :outline, small: true %></div>
           <% end %>
           <hr class="border-line">
           <div class="flex flex-wrap items-center gap-2">
-            <%= button_to act.call("exclude"), class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: { turbo_confirm: t("protocols.zwave.exclude_confirm") } } do %><%= icon("minus-circle", "size-4") %><%= t("protocols.zwave.exclude") %><% end %>
-            <%= button_to act.call("rebuild_routes"), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("share", "size-4") %><%= t("protocols.zwave.rebuild") %><% end %>
+            <%= render Ss::ButtonComponent.new(label: t("protocols.zwave.exclude"), icon: icon("minus-circle", ""), href: act.call("exclude"), method: :post, variant: :outline, size: :sm,
+                                               confirm: t("protocols.zwave.exclude_confirm")) %>
+            <%= render Ss::ButtonComponent.new(label: t("protocols.zwave.rebuild"), icon: icon("share", ""), href: act.call("rebuild_routes"), method: :post, variant: :ghost, size: :sm) %>
           </div>
         </div>
       </div>
@@ -114,7 +112,7 @@
         <% color = n[:controller] ? "var(--accent)" : { "dead" => "var(--danger)", "asleep" => "var(--muted)" }.fetch(n[:status], "var(--success)") %>
         <g><title><%= "#{n[:id]} · #{n[:name]} · #{t("protocols.zwave.status.#{n[:status]}")}" %></title>
           <circle cx="<%= n[:x] %>" cy="<%= n[:y] %>" r="<%= n[:controller] ? 5 : 3.6 %>" fill="<%= color %>" />
-          <text x="<%= n[:x] %>" y="<%= n[:y] + 1.2 %>" text-anchor="middle" font-size="3" font-weight="700" fill="var(--bg, #fff)"><%= n[:id] %></text>
+          <text x="<%= n[:x] %>" y="<%= n[:y] + 1.2 %>" text-anchor="middle" font-size="3" font-weight="700" fill="var(--on-accent)"><%= n[:id] %></text>
         </g>
       <% end %>
     </svg>
@@ -134,9 +132,12 @@
       <% tb.column :security, t("protocols.zwave.col_security") do |n| %><%= n["isSecure"] ? t("protocols.zwave.classes.#{classes.fetch(n['highestSecurityClass'].to_i, 's2_unauthenticated')}") : t("protocols.zwave.insecure") %><% end %>
       <% tb.column :actions, t("protocols.zwave.col_actions"), align: :right, hideable: false do |n| %>
         <div class="inline-flex gap-1">
-          <%= button_to act.call("reinterview"), params: { "panel[node]" => n["nodeId"] }, class: "ss-icon-btn is-sm", title: t("protocols.zwave.reinterview") do %><%= icon("refresh", "size-4") %><span class="sr-only"><%= t("protocols.zwave.reinterview") %></span><% end %>
+          <%= render Ss::ButtonComponent.new(icon: icon("refresh", ""), href: act.call("reinterview"), method: :post, params: { "panel[node]" => n["nodeId"] }, variant: :ghost, size: :sm,
+                                             title: t("protocols.zwave.reinterview"), aria: { label: t("protocols.zwave.reinterview") }) %>
           <% if ZwaveJs::STATUS.fetch(n["status"], "unknown") == "dead" %>
-            <%= button_to act.call("remove_failed"), params: { "panel[node]" => n["nodeId"] }, class: "ss-icon-btn is-sm is-danger", title: t("protocols.zwave.remove_failed"), form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("shared.confirm.remove"), turbo_confirm: t("protocols.zwave.remove_failed_confirm", n: n["nodeId"]) } } do %><%= icon("trash", "size-4") %><span class="sr-only"><%= t("protocols.zwave.remove_failed") %></span><% end %>
+            <%= render Ss::ButtonComponent.new(icon: icon("trash", ""), href: act.call("remove_failed"), method: :post, params: { "panel[node]" => n["nodeId"] }, variant: :ghost, tone: :danger, size: :sm,
+                                               title: t("protocols.zwave.remove_failed"), aria: { label: t("protocols.zwave.remove_failed") },
+                                               confirm: t("protocols.zwave.remove_failed_confirm", n: n["nodeId"]), confirm_tone: :danger, confirm_button: t("shared.confirm.remove")) %>
           <% end %>
         </div>
       <% end %>
@@ -150,7 +151,7 @@
     <ul class="mt-2 divide-y divide-line">
       <% provisioning.each do |e| %>
         <li class="py-2 flex items-center justify-between gap-3"><span class="font-mono text-sm num"><%= e["dsk"].to_s.split("-").first(2).join("-") %>-…</span>
-          <%= button_to t("protocols.zwave.unprovision"), act.call("unprovision"), params: { "panel[dsk]" => e["dsk"] }, class: "ss-btn ss-btn-ghost ss-btn-sm" %></li>
+          <%= render Ss::ButtonComponent.new(label: t("protocols.zwave.unprovision"), href: act.call("unprovision"), method: :post, params: { "panel[dsk]" => e["dsk"] }, variant: :ghost, size: :sm) %></li>
       <% end %>
     </ul>
   </section>
