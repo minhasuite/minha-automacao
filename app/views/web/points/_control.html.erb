@@ -12,37 +12,44 @@
       <%= render Ss::SwitchComponent.new(url: command_point_path(point), on: on, label: "#{on ? t('points.turn_off') : t('points.turn_on')} #{point.name}",
                                          params: { command: "toggle" }, confirm: confirm[:turbo_confirm], confirm_title: confirm[:turbo_confirm_title]) %>
     <% elsif cmds.include?("run") %>
-      <%= button_to command_point_path(point), params: { command: "run" }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: confirm } do %><%= icon("play", "size-4") %><%= t("points.run") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: t("points.run"), icon: icon("play", ""), href: command_point_path(point), method: :post, params: { command: "run" },
+                                         variant: :outline, size: :sm, form: { data: confirm }) %>
     <% elsif cmds.include?("press") %>
-      <%= button_to command_point_path(point), params: { command: "press" }, class: "ss-btn ss-btn-outline ss-btn-sm", form: { data: confirm } do %><%= icon("lightning-bolt", "size-4") %><%= t("points.press") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: t("points.press"), icon: icon("lightning-bolt", ""), href: command_point_path(point), method: :post, params: { command: "press" },
+                                         variant: :outline, size: :sm, form: { data: confirm }) %>
     <% elsif cmds.include?("select") %>
-      <%= form_with url: command_point_path(point), data: confirm do %>
+      <%= ss_form_with url: command_point_path(point), data: confirm, class: "block" do |f| %>
         <%= hidden_field_tag :command, "select", id: nil %>
-        <label for="<%= fid %>" class="sr-only"><%= t("points.choose", name: point.name) %></label>
-        <%= select_tag :value, options_for_select(point.option_values, point.value), id: fid, class: "ss-input !py-1.5 min-w-36", data: { autosubmit: true } %>
+        <%= f.ss_select :value, point.option_values, label: t("points.choose", name: point.name), hide_label: true, selected: point.value, id: fid,
+                        class: "!py-1.5 min-w-36", data: { autosubmit: true } %>
       <% end %>
     <% elsif cmds.include?("set") && point.numeric? && point.address["mode"] != "box" && point.min && point.max %>
-      <%= form_with url: command_point_path(point), data: confirm, class: "flex items-center gap-2" do %>
+      <%= ss_form_with url: command_point_path(point), data: confirm, class: "flex items-center gap-2" do %>
         <%= hidden_field_tag :command, "set", id: nil %>
         <%= render Ss::RangeComponent.new(name: "value", label: t("points.adjust", name: point.name), hide_label: true, value: dw_plain(point.value || point.min), min: dw_plain(point.min),
                                           max: dw_plain(point.max), step: dw_plain(point.step || 1), format: dw_range_format(point.unit), submit: :release, id: fid, css: "w-36 sm:w-48") %>
       <% end %>
     <% elsif cmds.include?("set") && actions.empty? %>
-      <%= form_with url: command_point_path(point), data: confirm, class: "flex items-center gap-2" do %>
+      <%= ss_form_with url: command_point_path(point), data: confirm, class: "flex items-center gap-2" do |f| %>
         <%= hidden_field_tag :command, "set", id: nil %>
-        <label for="<%= fid %>" class="sr-only"><%= t("points.new_value", name: point.name) %></label>
         <% type = point_input_type(point) %>
-        <input type="<%= type %>" id="<%= fid %>" name="value" class="ss-input !py-1.5 <%= type == 'number' ? 'num w-28' : 'w-44' %>" <%= "required" unless type.in?(%w[text password]) %>
-               value="<%= point.value unless type == 'password' %>" <% if type == "number" %>min="<%= point.min %>" max="<%= point.max %>" step="<%= point.step || 'any' %>"<% end %>
-               <% if type.in?(%w[text password]) %>maxlength="<%= (point.max || 255).to_i %>"<% end %>>
-        <button class="ss-btn ss-btn-ghost ss-btn-sm" title="<%= t("points.apply") %>" aria-label="<%= t("points.apply") %> <%= point.name %>"><%= icon("check", "size-4") %></button>
+        <% kind = { "number" => :ss_number_field, "password" => :ss_password_field, "date" => :ss_date_field, "time" => :ss_time_field,
+                    "datetime-local" => :ss_datetime_local_field }.fetch(type, :ss_text_field) %>
+        <% input = { id: fid, class: "!py-1.5 #{type == 'number' ? 'num w-28' : 'w-44'}", label: t("points.new_value", name: point.name), hide_label: true } %>
+        <% input[:required] = true unless type.in?(%w[text password]) %>
+        <% input[:value] = point.value unless type == "password" %>
+        <% input.merge!(min: point.min, max: point.max, step: point.step || "any") if type == "number" %>
+        <% input[:maxlength] = (point.max || 255).to_i if type.in?(%w[text password]) %>
+        <%= f.public_send(kind, :value, **input) %>
+        <%= render Ss::ButtonComponent.new(icon: icon("check", ""), type: :submit, variant: :ghost, size: :sm, title: t("points.apply"), aria: { label: "#{t('points.apply')} #{point.name}" }) %>
       <% end %>
     <% end %>
     <% if actions.any? %>
       <span class="ss-btn-group" role="group" aria-label="<%= t("points.actions", name: point.name) %>">
         <% actions.each do |c| %>
           <% ico, label = PointsHelper::ACTION_BUTTONS.fetch(c, [ "lightning-bolt", c ]) %>
-          <%= button_to command_point_path(point), params: { command: c }, form: { data: confirm }, title: label, "aria-label": "#{label} #{point.name}" do %><%= icon(ico, "") %><% end %>
+          <%= render Ss::ButtonComponent.new(icon: icon(ico, ""), href: command_point_path(point), method: :post, params: { command: c }, variant: :ghost, size: :sm, css: "p-0",
+                                             form: { data: confirm }, title: label, aria: { label: "#{label} #{point.name}" }) %>
         <% end %>
       </span>
     <% end %>

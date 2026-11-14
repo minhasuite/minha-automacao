@@ -18,11 +18,12 @@
         <video data-camera-target="video" playsinline autoplay hidden aria-label="<%= t("dashboards.w.live_x", name: point.name) %>"></video>
       <% end %>
       <% c.with_action do %>
-        <button type="button" data-camera-target="liveButton" data-action="camera#toggle" aria-pressed="false" title="<%= t("dashboards.w.live") %>" aria-label="<%= t("dashboards.w.live_x", name: point.name) %>"><%= icon("status-online", "size-4") %></button>
+        <%= render Ss::IconButtonComponent.new(icon: icon("status-online", ""), label: t("dashboards.w.live_x", name: point.name), title: t("dashboards.w.live"), pressed: false,
+                                               data: { camera_target: "liveButton", action: "camera#toggle" }) %>
       <% end %>
       <% if cmds.include?("play_media") && can_cmd %>
         <% c.with_action do %>
-          <button type="button" data-camera-target="talkButton" data-action="camera#talk" aria-pressed="false" title="<%= t("cameras.talk") %>" aria-label="<%= t("cameras.talk") %>"><%= icon("microphone", "size-4") %></button>
+          <%= render Ss::IconButtonComponent.new(icon: icon("microphone", ""), label: t("cameras.talk"), pressed: false, data: { camera_target: "talkButton", action: "camera#talk" }) %>
         <% end %>
       <% end %>
     <% end %>
@@ -51,7 +52,8 @@
         <%= link_to camera_path(point), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("clock", "size-4") %><%= t("cameras.screen.open_timeline") %><% end %>
         <%= link_to site_media_browse_path(site, "recordings", path: point.id), class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("video-camera", "size-4") %><%= t("cameras.see_recordings") %><% end %>
         <% if cmds.include?("record") && can_cmd %>
-          <%= button_to command_point_path(point), params: { command: "record", value: rec["event_s"] }, class: "ss-btn ss-btn-outline ss-btn-sm" do %><%= icon("stop", "size-4") %><%= t("cameras.record_now", s: rec["event_s"]) %><% end %>
+          <%= render Ss::ButtonComponent.new(label: t("cameras.record_now", s: rec["event_s"]), icon: icon("stop", ""), href: command_point_path(point), method: :post,
+                                             params: { command: "record", value: rec["event_s"] }, variant: :outline, size: :sm) %>
         <% end %>
       </div>
     </div>
@@ -59,25 +61,16 @@
     <% if can?(:manage) %>
       <details class="ss-card ss-card-pad">
         <summary class="font-bold text-ink cursor-pointer"><%= t("cameras.settings") %></summary>
-        <%= form_with url: camera_settings_path(point), method: :patch, class: "grid gap-3 mt-3" do %>
-          <div>
-            <label class="ss-label" for="rec-mode"><%= t("cameras.mode") %></label>
-            <%= select_tag :mode, options_for_select(Recordings::MODES.map { |m| [ t("cameras.modes.#{m}"), m ] }, rec["mode"]), id: "rec-mode", class: "ss-input" %>
-          </div>
+        <%= ss_form_with url: camera_settings_path(point), method: :patch, class: "grid gap-3 mt-3" do |f| %>
+          <%= f.ss_select :mode, Recordings::MODES.map { |m| [ t("cameras.modes.#{m}"), m ] }, label: t("cameras.mode"), selected: rec["mode"], id: "rec-mode" %>
           <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="ss-label" for="rec-days"><%= t("cameras.retention") %></label>
-              <%= number_field_tag :retention_days, rec["retention_days"], id: "rec-days", class: "ss-input num", min: 1, max: Recordings::MAX_RETENTION %>
-            </div>
-            <div>
-              <label class="ss-label" for="rec-secs"><%= t("cameras.event_s") %></label>
-              <%= number_field_tag :event_s, rec["event_s"], id: "rec-secs", class: "ss-input num", min: 5, max: Points::Command::MAX_RECORD_S %>
-            </div>
+            <%= f.ss_number_field :retention_days, label: t("cameras.retention"), value: rec["retention_days"], id: "rec-days", class: "num", min: 1, max: Recordings::MAX_RETENTION %>
+            <%= f.ss_number_field :event_s, label: t("cameras.event_s"), value: rec["event_s"], id: "rec-secs", class: "num", min: 5, max: Points::Command::MAX_RECORD_S %>
           </div>
-          <label class="ss-check"><%= check_box_tag :ptz, "1", point.address["ptz"] || cmds.include?("ptz"), id: "cam-ptz" %> <%= t("cameras.has_ptz") %></label>
-          <label class="ss-check"><%= check_box_tag :talk, "1", point.address["talk"], id: "cam-talk" %> <%= t("cameras.has_talk") %></label>
+          <%= f.ss_check_box :ptz, label: t("cameras.has_ptz"), checked: (point.address["ptz"] || cmds.include?("ptz")).present?, unchecked_value: nil, id: "cam-ptz" %>
+          <%= f.ss_check_box :talk, label: t("cameras.has_talk"), checked: point.address["talk"].present?, unchecked_value: nil, id: "cam-talk" %>
           <p class="text-xs text-muted"><%= t("cameras.settings_hint") %></p>
-          <button class="ss-btn ss-btn-primary"><%= t("cameras.save") %></button>
+          <div><%= f.ss_submit t("cameras.save"), name: nil %></div>
         <% end %>
       </details>
     <% end %>

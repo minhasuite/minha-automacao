@@ -29,23 +29,25 @@
       <% elsif point.capability == "stream" %>
         <%# ondaC2: câmera tem PTZ, gravar e falar na página do ponto (_camera). %>
       <% elsif point.capability.in?(%w[gate command]) %>
-        <%= button_to command_point_path(point), params: { command: point.capability == "gate" ? "pulse" : "press" }, class: "ss-btn ss-btn-primary w-full", form: { data: confirm } do %><%= icon("lightning-bolt", "size-4") %><%= t("points.fire") %><% end %>
+        <%= render Ss::ButtonComponent.new(label: t("points.fire"), icon: icon("lightning-bolt", ""), href: command_point_path(point), method: :post,
+                                           params: { command: point.capability == "gate" ? "pulse" : "press" }, block: true, form: { data: confirm }) %>
       <% else %>
-        <%= form_with url: command_point_path(point), class: "flex gap-2", data: confirm do |f| %>
+        <%= ss_form_with url: command_point_path(point), class: "flex gap-2", data: confirm do |f| %>
           <%= f.hidden_field :command, value: point.capability == "enum" ? "select" : "set", id: nil %>
           <% field_id = "value_#{point.id}" %>
-          <label for="<%= field_id %>" class="sr-only"><%= t("points.new_value", name: point.name) %></label>
+          <% value_label = t("points.new_value", name: point.name) %>
           <% if point.capability == "enum" %>
-            <%= f.select :value, point.option_values, { selected: point.value }, class: "ss-input flex-1 min-w-0", id: field_id %>
+            <%= f.ss_select :value, point.option_values, label: value_label, hide_label: true, selected: point.value, id: field_id, wrapper_class: "flex-1 min-w-0" %>
           <% elsif point.capability == "color" %>
-            <%= f.color_field :value, value: Points::Color.hex_of(point.value), class: "ss-input flex-1 min-w-0 h-11", id: field_id %>
+            <%= f.ss_color_field :value, label: value_label, hide_label: true, value: Points::Color.hex_of(point.value), class: "h-11", id: field_id, wrapper_class: "flex-1 min-w-0" %>
           <% elsif point.numeric? %>
+            <label for="<%= field_id %>" class="sr-only"><%= value_label %></label>
             <%= render Ss::StepperInputComponent.new(name: "value", value: dw_plain(point.value), min: dw_plain(point.min), max: dw_plain(point.max), step: dw_plain(point.step || 1),
                                                      unit: point.unit, id: field_id, css: "flex-1 min-w-0") %>
           <% else %>
-            <%= f.text_field :value, value: point.value, maxlength: 255, class: "ss-input flex-1 min-w-0", id: field_id %>
+            <%= f.ss_text_field :value, label: value_label, hide_label: true, value: point.value, maxlength: 255, id: field_id, wrapper_class: "flex-1 min-w-0" %>
           <% end %>
-          <%= f.button t("points.apply"), class: "ss-btn ss-btn-primary", name: nil %>
+          <%= render Ss::ButtonComponent.new(label: t("points.apply"), type: :submit) %>
         <% end %>
       <% end %>
     <% elsif point.writable && !point.disabled && Points::Command.commands_for(point).empty? %>

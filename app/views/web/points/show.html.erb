@@ -3,7 +3,8 @@
   <% if can?(:manage) %><%= render "web/dashboards/add_to_link", type: "point", record: @point %><% end %>
   <%# Ideia 13: favorito da pessoa (a linha fixa no topo do painel). %>
   <% fav = Dashboards::Personal.favorite?(current_user, @point) %>
-  <%= button_to favorite_point_path(@point), class: "ss-btn #{fav ? 'ss-btn-primary' : 'ss-btn-outline'}", "aria-pressed": fav.to_s do %><%= icon("star", "size-4") %><%= fav ? t("favorites.on") : t("favorites.add") %><% end %>
+  <%= render Ss::ButtonComponent.new(label: fav ? t("favorites.on") : t("favorites.add"), icon: icon("star", ""), href: favorite_point_path(@point), method: :post,
+                                     variant: fav ? :primary : :outline, aria: { pressed: fav.to_s }) %>
 <% end %>
 
 <div class="grid gap-4 lg:grid-cols-3">
