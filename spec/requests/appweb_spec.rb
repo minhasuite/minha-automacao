@@ -153,7 +153,8 @@ RSpec.describe "Telas do servidor no app (appweb)" do
       "helpers" => "/locais/#{site.id}/helpers", "helper_novo" => "/locais/#{site.id}/helpers/novo?tipo=timer",
       "assistente" => "/locais/#{site.id}/assistente", "expor" => "/locais/#{site.id}/expor", "listas" => "/locais/#{site.id}/listas",
       "agenda" => "/locais/#{site.id}/agenda", "pacotes" => "/locais/#{site.id}/pacotes", "ferramentas" => "/locais/#{site.id}/ferramentas",
-      "prontos" => "/locais/#{site.id}/paineis/prontos", "busca" => "/busca?q=luz", "perguntar" => "/perguntar"
+      "prontos" => "/locais/#{site.id}/paineis/prontos", "busca" => "/busca?q=luz",
+      "avisos_preferencias" => "/notificacoes/preferencias"
     }
     dir = ENV["APPWEB_DUMP"].presence
     FileUtils.mkdir_p(dir) if dir

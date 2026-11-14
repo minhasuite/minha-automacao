@@ -86,24 +86,24 @@ RSpec.describe "Lote 2: telas de IA e dados" do
   end
 
   describe "Perguntar à casa" do
-    it "responde com os pontos do local no contexto; sem IA explica; só leitura" do
+    # A tela /perguntar saiu (shell-sino): a pergunta segue pelo card do painel (e pelo "Falar com a casa").
+    it "responde com os pontos do local no contexto; sem IA explica; só leitura; sem a tela própria" do
       get "/perguntar"
-      expect(response.body).to include("Perguntar à casa", "Só responde, não executa comandos")
-      post "/perguntar", params: { site_id: site.id, question: "Tem luz acesa?" }
+      expect(response).to have_http_status(:not_found)
+      ask = ->(question, site_id = site.id) { post "/perguntar/painel", params: { site_id: site_id, frame: "ask_w-1", question: question } }
+      ask.call("Tem luz acesa?")
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.body).to include("Nenhum provedor de IA configurado", "Configurar a IA")
+      expect(response.body).to include("Nenhum provedor de IA configurado")
 
       within(tenant) { AiAccount.create!(provider: "anthropic", api_key: "sk") }
       anthropic_ok("Sim, a Luz da sala está ligada.")
-      post "/perguntar", params: { site_id: site.id, question: "Tem luz acesa?" }
+      ask.call("Tem luz acesa?")
       expect(response.body).to include("Sim, a Luz da sala está ligada.", "claude-sonnet-5-5")
       expect(a_request(:post, "https://api.anthropic.com/v1/messages").with { |r| r.body.include?("Luz [sala.luz]") && r.body.include?("Tem luz acesa?") }).to have_been_made
       expect(within(tenant) { AiCall.sole }).to have_attributes(source: "pergunta", site_id: site.id)
 
-      post "/perguntar", params: { site_id: site.id, question: " " }
-      expect(response).to have_http_status(:unprocessable_content)
       other = within(create(:tenant)) { create(:site) }
-      post "/perguntar", params: { site_id: other.id, question: "x" }
+      ask.call("x", other.id)
       expect(response).to have_http_status(:not_found)
     end
   end

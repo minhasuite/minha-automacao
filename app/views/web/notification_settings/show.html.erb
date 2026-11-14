@@ -1,5 +1,6 @@
-<%= render "web/shared/header", title: t("settings.title"), subtitle: t("notifications.settings.subtitle") %>
-<%= render layout: "web/settings/frame", locals: { current: :notifications } do %>
+<%# Preferências dos avisos (shell-sino): uma aba da central (o sino leva aqui pela engrenagem), fora de Configurações. %>
+<%= render "web/shared/header", title: t("automations.notifications.title"), subtitle: t("notifications.settings.subtitle") %>
+<%= render "web/notifications/tabs", current: :settings %>
 <%= ss_form_with scope: :prefs, url: settings_notifications_path, method: :patch, class: "grid gap-4" do |f| %>
   <section class="ss-card ss-card-pad" aria-labelledby="silencio-t">
     <h2 id="silencio-t" class="flex items-center gap-2"><%= icon("moon", "size-4") %><%= t("notifications.settings.quiet_title") %></h2>
@@ -58,4 +59,3 @@
     <p class="text-sm text-muted mt-1"><%= t("notifications.mute.none") %></p>
   <% end %>
 </section>
-<% end %>

@@ -1,21 +1,12 @@
 <%# locals: (w:) -%>
 <% d = w["data"] %>
-<%# Selo do topo do painel: a pílula clara sobre o herói da gem (.ss-hero-chip). Sem valor (ponto sem leitura ou
+<%# Selo do topo do painel: o Ss::BadgeComponent da gem (o SsBadge do app), pequeno e fino como as pílulas dos cartões
+    de área e da câmera, para todo selo igual (antes o número saía grande em DM Mono). Sem valor (ponto sem leitura ou
     atributo que não veio) não aparece: "—" no topo não diz nada. O texto pela contagem vem pronto do servidor
     (`caption`, dos `labels` {zero, one, other}; P1.4); sem `labels`, "número rótulo". Com consulta, tocar abre a
     lista dos pontos que entram no número (ideia 14). %>
 <% unless d["value"].nil? || d["text"].to_s.strip.in?(["", "—", "-"]) %>
-  <% body = capture do %>
-    <% if w["icon"].present? %><%= icon(w["icon"], "size-4") %><% end %>
-    <% if d["caption"].present? %>
-      <span class="font-semibold"><%= d["caption"] %></span>
-    <% else %>
-      <strong class="num"><%= d["text"] %></strong><% if w["label"].present? %> <span class="font-semibold opacity-85"><%= w["label"] %></span><% end %>
-    <% end %>
-  <% end %>
-  <% if d["drill_url"] %>
-    <%= link_to body, d["drill_url"], class: "ss-hero-chip no-underline", data: { turbo_frame: "_top" } %>
-  <% else %>
-    <span class="ss-hero-chip"><%= body %></span>
-  <% end %>
+  <% text = d["caption"].presence || [ d["text"], w["label"].presence ].compact.join(" ") %>
+  <%= render Ss::BadgeComponent.new(label: text, icon: (icon(w["icon"], "") if w["icon"].present?), href: d["drill_url"],
+                                    link_data: ({ turbo_frame: "_top" } if d["drill_url"]), title: (t("dashboards.drill.open", what: text) if d["drill_url"])) %>
 <% end %>

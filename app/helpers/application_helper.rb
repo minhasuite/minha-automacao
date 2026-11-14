@@ -113,10 +113,9 @@ module ApplicationHelper
                 ({ key: "presence", label: t("nav.presence"), path: presence_path, icon: "users" } if Maps.allowed?(user)),
                 { key: "energy", label: t("nav.energy"), path: energy_path, icon: "lightning-bolt" },
                 { key: "alerts", label: t("nav.alerts"), path: alerts_path, icon: "exclamation-circle",
-                  badge: -> { Alert.active.where(acked_at: nil, site_id: Site.visible_to(user).select(:id)).count } },
-                { key: "ask", label: t("nav.ask"), path: ask_path, icon: "sparkles" } ].compact
+                  badge: -> { Alert.active.where(acked_at: nil, site_id: Site.visible_to(user).select(:id)).count } } ].compact
     end
-    list << { key: "notifications", label: t("nav.notifications"), path: notifications_path, icon: "bell", badge: -> { unread_notifications(user) } }
+    # Avisos: no sino do topo (web/notifications/_bell, shell-sino), não no menu.
     list << { key: "settings", label: reader ? t("nav.account") : t("nav.settings"), path: reader ? settings_account_path : settings_path, icon: "cog" }
     prefs = user.dashboard_prefs.to_h["sidebar"].to_h
     order = Array(prefs["order"])

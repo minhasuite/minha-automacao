@@ -1,10 +1,13 @@
-<%= render "web/shared/header", title: t("sites.index.title"), subtitle: t("sites.index.subtitle") do %>
+<%# Locais dentro de Configurações (mesmo quadro e subnavegação das outras, shell-sino). %>
+<%= render "web/shared/header", title: t("settings.title"), subtitle: t("sites.index.subtitle") do %>
   <% if current_user.admin? %><%= link_to new_site_path, class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("sites.index.new") %><% end %><% end %>
 <% end %>
+<%= render layout: "web/settings/frame", locals: { current: :sites } do %>
 <% if @sites.any? %>
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
     <% @sites.each_with_index do |site, i| %><%= render "web/sites/card", site: site, delay: [ i, 7 ].min * 40 %><% end %>
   </div>
 <% else %>
   <%= render Ss::EmptyStateComponent.new(title: t("sites.index.none"), text: (current_user.admin? ? t("sites.index.none_hint") : t("sites.index.ask_owner")), css: "ss-card") do %><% if current_user.admin? %><%= link_to new_site_path, class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("sites.index.first") %><% end %><% end %><% end %>
+<% end %>
 <% end %>

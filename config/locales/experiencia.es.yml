@@ -29,10 +29,6 @@ es:
       failed:
         one: 1 falló
         other: '%{count} fallaron'
-    search:
-      label: Buscar en el panel
-      placeholder: Buscar tarjeta, aparato o ambiente
-      none: Nada en este panel con ese nombre.
   favorites:
     title: Favoritos
     add: Agregar a favoritos

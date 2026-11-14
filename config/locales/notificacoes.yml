@@ -1,6 +1,13 @@
 # Notificações com menos ruído (Notifications; docs/push.md, "Menos ruído").
 pt-BR:
   notifications:
+    bell:
+      title: "Avisos"
+      all: "Ver todos os avisos"
+      empty: "Nenhum aviso por aqui."
+    tabs:
+      label: "Central de avisos"
+      list: "Avisos"
     kinds:
       convite: "Convites"
       resumo_diario: "Resumo diário"
@@ -107,6 +114,13 @@ pt-BR:
       save: "Salvar"
 en:
   notifications:
+    bell:
+      title: "Notifications"
+      all: "See all notifications"
+      empty: "No notifications here."
+    tabs:
+      label: "Notification center"
+      list: "Notifications"
     kinds:
       convite: "Invitations"
       resumo_diario: "Daily summary"
@@ -213,6 +227,13 @@ en:
       save: "Save"
 es:
   notifications:
+    bell:
+      title: "Avisos"
+      all: "Ver todos los avisos"
+      empty: "No hay avisos aquí."
+    tabs:
+      label: "Central de avisos"
+      list: "Avisos"
     kinds:
       convite: "Invitaciones"
       resumo_diario: "Resumen diario"

@@ -30,10 +30,6 @@ pt-BR:
       failed:
         one: 1 falhou
         other: '%{count} falharam'
-    search:
-      label: Buscar no painel
-      placeholder: Buscar cartão, aparelho ou cômodo
-      none: Nada neste painel com esse nome.
   favorites:
     title: Favoritos
     add: Favoritar

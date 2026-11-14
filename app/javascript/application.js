@@ -168,6 +168,12 @@ function appBadge() {
 }
 document.addEventListener("turbo:load", appBadge)
 document.addEventListener("turbo:morph", appBadge)
+// O sino do topo (ss-bell) conferiu o número: o selo do ícone acompanha sem esperar a próxima página.
+document.addEventListener("ss-bell:change", (e) => {
+  const meta = document.querySelector('meta[name="ma-unread"]')
+  if (meta) meta.content = String(e.detail.count)
+  appBadge()
+})
 
 // Menus em <details> (.ss-menu da gem e o .ma-kiosk-pop do quiosque): Esc fecha e devolve o
 // foco ao botão, clique fora fecha, e o summary diz se está aberto (aria-expanded).

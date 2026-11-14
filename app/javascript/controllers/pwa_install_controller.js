@@ -3,7 +3,7 @@ import { standalone, ios, iosSafari, installPrompt } from "controllers/pwa/platf
 
 // Instalar o app (pwa-ios, docs/pwa.md). O iPhone não tem beforeinstallprompt: lá vale o passo a passo
 // (Compartilhar → Adicionar à Tela de Início); no Android/computador, o botão chama o pedido do navegador.
-// mode "settings" (Configurações → Aparência #instalar): mostra o que vale para este aparelho.
+// mode "settings" (Configurações → Meus aparelhos #instalar): mostra o que vale para este aparelho.
 // mode "notice" (Início): o aviso discreto só no Safari do iPhone fora do app instalado, até dispensar
 // (localStorage "ma-install-notice" = "off", só deste aparelho).
 const KEY = "ma-install-notice"

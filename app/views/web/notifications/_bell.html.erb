@@ -1,0 +1,7 @@
+<%# Sino do topo (Ss::NotificationBellComponent no slot bell do Ss::AppShellComponent, shell-sino): o contador de não lidos
+    (atualiza a cada minuto pelo `count`), os últimos avisos ao abrir (`recent`, frame lazy), marcar todos como lidos
+    (fica na tela), a engrenagem das preferências e "ver todos" (a central). %>
+<%= render Ss::NotificationBellComponent.new(id: "avisos", count: unread_notifications, label: t("notifications.bell.title"),
+                                             src: recent_notifications_path, count_url: count_notifications_path, every: 60_000,
+                                             all_href: notifications_path, read_all_href: read_all_notifications_path(back: 1),
+                                             settings_href: settings_notifications_path) %>

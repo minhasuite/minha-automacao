@@ -1,0 +1,7 @@
+<%# Miolo do sino (frame "avisos-list"): os últimos avisos; abrir marca como lido e leva ao destino (read com open=1). %>
+<%= render Ss::NotificationListComponent.new(frame_id: "avisos-list", empty: t("notifications.bell.empty"), items: @notifications.map { |n|
+      ico, tone = ApplicationHelper::NOTIFICATION_KINDS.fetch(n.kind, [ "bell", "is-muted" ])
+      { title: with_money(n.title), text: (with_money(n.body.to_s.truncate(140)) if n.body.present?), time: ma_when(n.created_at),
+        href: read_notification_path(n, open: 1), method: :patch, unread: n.read_at.nil?, icon: icon(ico, ""),
+        tone: (n.critical? ? :danger : tone.delete_prefix("is-").to_sym) }
+    }) %>

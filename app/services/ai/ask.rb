@@ -2,7 +2,7 @@ module Ai
   # "Perguntar à casa" (Lote 2, o `conversation.process` do HA): pergunta
   # livre sobre o estado atual, com os pontos do local (e o resumo das
   # últimas horas) como contexto. Só leitura: a IA não executa comando nem
-  # vê nada além do texto do contexto. Usado pela tela /perguntar e pelo
+  # vê nada além do texto do contexto. Usado pelo card "Perguntar à casa" do painel, pela API e pelo
   # assistente de voz (Assist) quando nenhuma intenção local reconhece a frase.
   module Ask
     SYSTEM = "Você é o assistente de uma instalação de automação (casa, loja ou fábrica). Responda em português do Brasil, " \

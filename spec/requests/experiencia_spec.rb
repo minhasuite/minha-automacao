@@ -176,8 +176,11 @@ RSpec.describe "Experiência do painel" do
 
       get "/paineis/#{dashboard.id}"
       body = response.body
-      expect(body).to include("Favoritos", 'data-controller="ss-filter"', 'data-ss-filter-target="item"', "Buscar no painel")
-      expect(body).to match(/data-ss-filter-text="[^"]*Teto/)
+      expect(body).to include("Favoritos")
+      # A busca dentro do painel saiu (shell-sino): é pelo Ctrl+K, que acha o card pelo nome.
+      expect(body).not_to include('data-controller="ss-filter"', "dw-search")
+      get "/busca", params: { q: "Teto" }
+      expect(response.body).to include("Teto")
 
       put "/api/v1/points/#{temp.id}/favorite", params: { favorite: true }, headers: auth_headers(user)
       expect(data).to include("favorite" => true, "favorites" => [ teto.id, temp.id ])

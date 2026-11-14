@@ -1,0 +1,7 @@
+<%# locals: (current:) -%>
+<%# Abas da central de avisos (shell-sino): a lista, o resumo do dia e as preferências (que saíram de Configurações). %>
+<%= render Ss::SegmentedComponent.new(label: t("notifications.tabs.label"), scroll: true, css: "mb-4", items: [
+      { label: t("notifications.tabs.list"), href: notifications_path, current: current == :list },
+      { label: t("notifications.digest.open"), href: digest_notifications_path, current: current == :digest },
+      { label: t("notifications.settings.open"), href: settings_notifications_path, current: current == :settings }
+    ]) %>

@@ -29,10 +29,6 @@ en:
       failed:
         one: 1 failed
         other: '%{count} failed'
-    search:
-      label: Search the dashboard
-      placeholder: Search card, device or room
-      none: Nothing on this dashboard with that name.
   favorites:
     title: Favorites
     add: Add to favorites
