@@ -1,8 +1,10 @@
 <%# locals: (name:, pin:, point_options:, id:) -%>
+<%= ss_fields do |f| %>
 <div class="dw-fpe-row" data-kind="pin">
-  <div class="min-w-0 flex-1"><label class="sr-only" for="fp-p-<%= id %>"><%= t("dashboards.wf.point") %></label>
-    <%= select_tag "#{name}[point]", grouped_options_for_select(point_options, pin["point"]), include_blank: t("dashboards.wf.pick_point"), class: "ss-input", id: "fp-p-#{id}", data: { role: "ref", action: "floorplan-editor#render" } %></div>
-  <label class="dw-fpe-num"><span>x %</span><%= number_field_tag "#{name}[x]", pin["x"] || 50, min: 0, max: 100, step: "any", id: nil, class: "ss-input num", data: { role: "x", action: "floorplan-editor#render" } %></label>
-  <label class="dw-fpe-num"><span>y %</span><%= number_field_tag "#{name}[y]", pin["y"] || 50, min: 0, max: 100, step: "any", id: nil, class: "ss-input num", data: { role: "y", action: "floorplan-editor#render" } %></label>
-  <% if pin["point"] %><label class="ss-check text-xs"><%= check_box_tag "#{name}[remove]", "1", false, id: "fp-r-#{id}", data: { role: "remove", action: "floorplan-editor#render" } %><%= t("dashboards.wf.fp.remove") %></label><% end %>
+  <div class="min-w-0 flex-1">
+    <%= f.ss_select "#{name}[point]", grouped_options_for_select(point_options, pin["point"]), label: t("dashboards.wf.point"), hide_label: true, include_blank: t("dashboards.wf.pick_point"), id: "fp-p-#{id}", data: { role: "ref", action: "floorplan-editor#render" } %></div>
+  <%= f.ss_number_field "#{name}[x]", label: "x %", value: pin["x"] || 50, min: 0, max: 100, step: "any", id: "fp-x-#{id}", class: "num", wrapper_class: "dw-fpe-num", data: { role: "x", action: "floorplan-editor#render" } %>
+  <%= f.ss_number_field "#{name}[y]", label: "y %", value: pin["y"] || 50, min: 0, max: 100, step: "any", id: "fp-y-#{id}", class: "num", wrapper_class: "dw-fpe-num", data: { role: "y", action: "floorplan-editor#render" } %>
+  <% if pin["point"] %><%= f.ss_check_box "#{name}[remove]", label: t("dashboards.wf.fp.remove"), checked: false, include_hidden: false, id: "fp-r-#{id}", wrapper_class: "text-xs", data: { role: "remove", action: "floorplan-editor#render" } %><% end %>
 </div>
+<% end %>

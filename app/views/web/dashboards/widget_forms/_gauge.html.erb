@@ -1,5 +1,5 @@
 <%# locals: (w:, uid:, types:, **) -%>
-<div data-for="<%= types %>"><div class="grid grid-cols-2 gap-2">
-  <div><label class="ss-label" for="mn-<%= uid %>"><%= t("dashboards.wf.min") %></label><%= text_field_tag "widget[min]", w["min"], class: "ss-input num", id: "mn-#{uid}", inputmode: "decimal" %></div>
-  <div><label class="ss-label" for="mx-<%= uid %>"><%= t("dashboards.wf.max") %></label><%= text_field_tag "widget[max]", w["max"], class: "ss-input num", id: "mx-#{uid}", inputmode: "decimal" %></div>
-</div></div>
+<div data-for="<%= types %>"><%= ss_fields do |f| %><div class="grid grid-cols-2 gap-2">
+  <%= f.ss_text_field "widget[min]", label: t("dashboards.wf.min"), value: w["min"], class: "num", id: "mn-#{uid}", inputmode: "decimal" %>
+  <%= f.ss_text_field "widget[max]", label: t("dashboards.wf.max"), value: w["max"], class: "num", id: "mx-#{uid}", inputmode: "decimal" %>
+</div><% end %></div>

@@ -1,12 +1,14 @@
 <%# locals: (w:, uid:, types:, point_options:, **) -%>
-<div data-for="<%= types %>"><label class="ss-label" for="pb-<%= uid %>"><%= t("dashboards.wf.period") %></label>
-  <%= select_tag "widget[period]", options_for_select(Dashboards::Widgets::EnergyBreakdownWidget::PERIODS.keys.index_by { |k| t("dashboards.periods.#{k}") }, w["period"] || "month"), class: "ss-input", id: "pb-#{uid}" %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="lb2-<%= uid %>"><%= t("dashboards.wf.limit") %> <span class="font-normal"><%= t("dashboards.wf.limit_hint") %></span></label>
-  <%= number_field_tag "widget[limit]", w["limit"], in: 3..20, class: "ss-input num", id: "lb2-#{uid}", placeholder: "8" %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="tf-<%= uid %>"><%= t("dashboards.wf.tariff") %></label>
-  <%= text_field_tag "widget[tariff]", w["tariff"], class: "ss-input num", id: "tf-#{uid}", inputmode: "decimal", placeholder: t("dashboards.wf.tariff_placeholder") %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="tp3-<%= uid %>"><%= t("dashboards.wf.tariff_point") %> <span class="font-normal"><%= t("dashboards.wf.tariff_point_hint2") %></span></label>
-  <%= select_tag "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), include_blank: t("dashboards.wf.use_fixed"), class: "ss-input", id: "tp3-#{uid}" %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="mb-<%= uid %>"><%= t("energy.wf.metric") %></label>
-  <%= select_tag "widget[metric]", options_for_select(Dashboards::Widgets::EnergyBreakdownWidget::METRICS.index_by { |k| t("energy.wf.metrics.#{k}") }, w["metric"] || "kwh"), class: "ss-input", id: "mb-#{uid}" %></div>
+<%= ss_fields do |f| %>
+<div data-for="<%= types %>">
+  <%= f.ss_select "widget[period]", options_for_select(Dashboards::Widgets::EnergyBreakdownWidget::PERIODS.keys.index_by { |k| t("dashboards.periods.#{k}") }, w["period"] || "month"), label: t("dashboards.wf.period"), id: "pb-#{uid}" %></div>
+<div data-for="<%= types %>">
+  <%= f.ss_number_field "widget[limit]", label: safe_join([ t("dashboards.wf.limit"), " ", tag.span(t("dashboards.wf.limit_hint"), class: "font-normal") ]), value: w["limit"], in: 3..20, class: "num", id: "lb2-#{uid}", placeholder: "8" %></div>
+<div data-for="<%= types %>">
+  <%= f.ss_text_field "widget[tariff]", label: t("dashboards.wf.tariff"), value: w["tariff"], class: "num", id: "tf-#{uid}", inputmode: "decimal", placeholder: t("dashboards.wf.tariff_placeholder") %></div>
+<div data-for="<%= types %>">
+  <%= f.ss_select "widget[tariff_point]", grouped_options_for_select(point_options, w["tariff_point"]), label: safe_join([ t("dashboards.wf.tariff_point"), " ", tag.span(t("dashboards.wf.tariff_point_hint2"), class: "font-normal") ]), include_blank: t("dashboards.wf.use_fixed"), id: "tp3-#{uid}" %></div>
+<div data-for="<%= types %>">
+  <%= f.ss_select "widget[metric]", options_for_select(Dashboards::Widgets::EnergyBreakdownWidget::METRICS.index_by { |k| t("energy.wf.metrics.#{k}") }, w["metric"] || "kwh"), label: t("energy.wf.metric"), id: "mb-#{uid}" %></div>
+<% end %>
 <p data-for="<%= types %>" class="text-xs text-muted sm:col-span-2"><%= t("dashboards.wf.breakdown_hint") %></p>

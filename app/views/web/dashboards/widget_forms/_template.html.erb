@@ -4,17 +4,20 @@
     de fora no servidor. Criar e editar modelos: Local → Modelos de card. %>
 <% templates = Dashboards::CardTemplates.all(@site) %>
 <% vars = w["vars"].is_a?(Hash) ? w["vars"] : {} %>
-<div class="sm:col-span-2" data-for="<%= types %>"><label class="ss-label" for="tpl-<%= uid %>"><%= t("dashboards.templates.pick") %></label>
-  <%= select_tag "widget[template]", options_for_select(templates.map { |tp| [ Dashboards::CardTemplates.name(tp), tp["key"] ] }, w["template"]), class: "ss-input", id: "tpl-#{uid}" %>
+<%= ss_fields do |f| %>
+<div class="sm:col-span-2" data-for="<%= types %>">
+  <%= f.ss_select "widget[template]", options_for_select(templates.map { |tp| [ Dashboards::CardTemplates.name(tp), tp["key"] ] }, w["template"]), label: t("dashboards.templates.pick"), id: "tpl-#{uid}" %>
   <p class="text-xs text-muted mt-1"><%= link_to t("dashboards.templates.manage"), site_card_templates_path(@site), data: { turbo_frame: "_top" } %></p></div>
 <% templates.flat_map { |tp| Array(tp["params"]).map { |p| [ p, tp ] } }.uniq { |p, _| p["key"] }.each do |p, tp| %>
   <% id = "tv-#{p['key']}-#{uid}" %>
-  <div data-for="<%= types %>"><label class="ss-label" for="<%= id %>"><%= Dashboards::CardTemplates.param_label(p) %> <span class="font-normal">(<%= Dashboards::CardTemplates.name(tp) %>)</span></label>
+  <% label = safe_join([ Dashboards::CardTemplates.param_label(p), " ", tag.span("(#{Dashboards::CardTemplates.name(tp)})", class: "font-normal") ]) %>
+  <div data-for="<%= types %>">
     <% if p["kind"] == "area" %>
-      <%= select_tag "widget[vars][#{p['key']}]", options_from_collection_for_select(areas, :id, :name, vars[p["key"]]), include_blank: true, class: "ss-input", id: id %>
+      <%= f.ss_select "widget[vars][#{p['key']}]", options_from_collection_for_select(areas, :id, :name, vars[p["key"]]), label: label, include_blank: true, id: id %>
     <% elsif p["kind"] == "point" %>
-      <%= select_tag "widget[vars][#{p['key']}]", grouped_options_for_select(point_options, vars[p["key"]]), include_blank: t("dashboards.wf.pick_point"), class: "ss-input", id: id %>
+      <%= f.ss_select "widget[vars][#{p['key']}]", grouped_options_for_select(point_options, vars[p["key"]]), label: label, include_blank: t("dashboards.wf.pick_point"), id: id %>
     <% else %>
-      <%= text_field_tag "widget[vars][#{p['key']}]", vars[p["key"]], class: "ss-input", id: id, maxlength: Dashboards::CardTemplates::MAX_TEXT, inputmode: (p["kind"] == "number" ? "decimal" : nil) %>
+      <%= f.ss_text_field "widget[vars][#{p['key']}]", label: label, value: vars[p["key"]], id: id, maxlength: Dashboards::CardTemplates::MAX_TEXT, inputmode: (p["kind"] == "number" ? "decimal" : nil) %>
     <% end %></div>
+<% end %>
 <% end %>

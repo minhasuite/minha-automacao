@@ -1,4 +1,6 @@
 <%# locals: (w:, uid:, types:, **) -%>
-<div data-for="<%= types %>"><label class="ss-label" for="mh-<%= uid %>"><%= t("dashboards.wf.height") %></label>
-  <%= number_field_tag "widget[height]", w["height"], in: 180..800, class: "ss-input num", id: "mh-#{uid}", placeholder: "320" %></div>
-<div data-for="<%= types %>" class="flex items-end"><label class="ss-check"><%= hidden_field_tag "widget[track]", "0", id: nil %><%= check_box_tag "widget[track]", "1", w["track"] != false, id: "mt-#{uid}" %><%= t("dashboards.wf.track") %></label></div>
+<%= ss_fields do |f| %>
+<div data-for="<%= types %>">
+  <%= f.ss_number_field "widget[height]", label: t("dashboards.wf.height"), value: w["height"], in: 180..800, class: "num", id: "mh-#{uid}", placeholder: "320" %></div>
+<div data-for="<%= types %>" class="flex items-end"><%= f.ss_check_box "widget[track]", label: t("dashboards.wf.track"), checked: w["track"] != false, id: "mt-#{uid}" %></div>
+<% end %>

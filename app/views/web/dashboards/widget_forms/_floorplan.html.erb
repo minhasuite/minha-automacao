@@ -6,6 +6,7 @@
 <% layers = Array(w["layers"]) + [ {} ] %>
 <% area_options = areas.map { |a| [ a.name, a.id ] } %>
 <div class="sm:col-span-2 grid gap-3" data-for="<%= types %>">
+<%= ss_fields do |f| %>
   <% layers.each_with_index do |l, li| %>
     <% base = "widget[layers][#{li}]" %>
     <% fresh = l.empty? %>
@@ -13,12 +14,9 @@
       <summary class="cursor-pointer font-semibold text-ink flex items-center gap-2"><%= icon(fresh ? "plus" : "map", "size-4 text-accent") %><%= fresh ? (layers.size == 1 ? t("dashboards.wf.fp.first_layer") : t("dashboards.wf.fp.new_layer")) : l["title"] %></summary>
       <%= hidden_field_tag "#{base}[id]", l["id"], id: nil %>
       <div class="grid gap-3 sm:grid-cols-2 mt-3">
-        <div><label class="ss-label" for="fl-t-<%= uid %>-<%= li %>"><%= t("dashboards.wf.fp.layer_name") %></label>
-          <%= text_field_tag "#{base}[title]", l["title"], class: "ss-input", id: "fl-t-#{uid}-#{li}", maxlength: 40, placeholder: t("dashboards.wf.fp.layer_placeholder") %></div>
-        <div><label class="ss-label" for="fl-u-<%= uid %>-<%= li %>"><%= t("dashboards.wf.fp.image") %> <span class="font-normal"><%= t("dashboards.wf.fp.image_hint") %></span></label>
-          <%= file_field_tag "#{base}[upload]", accept: "image/png,image/jpeg,image/webp", class: "ss-input", id: "fl-u-#{uid}-#{li}", data: { action: "floorplan-editor#preview" } %></div>
-        <div class="sm:col-span-2"><label class="ss-label" for="fl-i-<%= uid %>-<%= li %>"><%= t("dashboards.wf.fp.image_url") %> <span class="font-normal"><%= t("dashboards.wf.fp.image_url_hint") %></span></label>
-          <%= text_field_tag "#{base}[image]", l["image"], class: "ss-input", id: "fl-i-#{uid}-#{li}", placeholder: "https://…", data: { floorplan_editor_target: "image", action: "floorplan-editor#render" } %></div>
+        <%= f.ss_text_field "#{base}[title]", label: t("dashboards.wf.fp.layer_name"), value: l["title"], id: "fl-t-#{uid}-#{li}", maxlength: 40, placeholder: t("dashboards.wf.fp.layer_placeholder") %>
+        <%= f.ss_file_field "#{base}[upload]", label: safe_join([ t("dashboards.wf.fp.image"), " ", tag.span(t("dashboards.wf.fp.image_hint"), class: "font-normal") ]), accept: "image/png,image/jpeg,image/webp", id: "fl-u-#{uid}-#{li}", data: { action: "floorplan-editor#preview" } %>
+        <%= f.ss_text_field "#{base}[image]", label: safe_join([ t("dashboards.wf.fp.image_url"), " ", tag.span(t("dashboards.wf.fp.image_url_hint"), class: "font-normal") ]), value: l["image"], id: "fl-i-#{uid}-#{li}", placeholder: "https://…", wrapper_class: "sm:col-span-2", data: { floorplan_editor_target: "image", action: "floorplan-editor#render" } %>
       </div>
 
       <p class="text-xs text-muted mt-3" id="fl-hint-<%= uid %>-<%= li %>"><%= t("dashboards.wf.fp.drag_hint") %></p>
@@ -33,7 +31,7 @@
             <%= render "web/dashboards/widget_forms/floorplan_pin", name: "#{base}[pins][#{pi}]", pin: pin, point_options: point_options, id: "#{uid}-#{li}-#{pi}" %>
           <% end %>
         </div>
-        <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm mt-2" data-action="floorplan-editor#addPin" hidden data-floorplan-editor-target="js"><%= icon("plus", "size-4") %><%= t("dashboards.wf.fp.add_pin") %></button>
+        <%= render Ss::ButtonComponent.new(label: t("dashboards.wf.fp.add_pin"), icon: icon("plus", ""), variant: :ghost, size: :sm, css: "mt-2", hidden: true, data: { action: "floorplan-editor#addPin", floorplan_editor_target: "js" }) %>
       </fieldset>
 
       <fieldset class="mt-3">
@@ -43,10 +41,11 @@
             <%= render "web/dashboards/widget_forms/floorplan_room", name: "#{base}[rooms][#{ri}]", room: room, area_options: area_options, id: "#{uid}-#{li}-#{ri}" %>
           <% end %>
         </div>
-        <button type="button" class="ss-btn ss-btn-ghost ss-btn-sm mt-2" data-action="floorplan-editor#addRoom" hidden data-floorplan-editor-target="js"><%= icon("plus", "size-4") %><%= t("dashboards.wf.fp.add_room") %></button>
+        <%= render Ss::ButtonComponent.new(label: t("dashboards.wf.fp.add_room"), icon: icon("plus", ""), variant: :ghost, size: :sm, css: "mt-2", hidden: true, data: { action: "floorplan-editor#addRoom", floorplan_editor_target: "js" }) %>
       </fieldset>
-      <% unless fresh %><label class="ss-check mt-3"><%= check_box_tag "#{base}[remove]", "1", false, id: "fl-r-#{uid}-#{li}" %><%= t("dashboards.wf.fp.remove_layer") %></label><% end %>
+      <% unless fresh %><%= f.ss_check_box "#{base}[remove]", label: t("dashboards.wf.fp.remove_layer"), checked: false, include_hidden: false, id: "fl-r-#{uid}-#{li}", wrapper_class: "mt-3" %><% end %>
     </details>
   <% end %>
+<% end %>
 </div>
 <% end %>

@@ -6,6 +6,7 @@
 <details class="sm:col-span-2"<%= " open" if rules.any? || w.key?("stale_after_min") %>>
   <summary class="ss-label cursor-pointer"><%= t("dashboards.style.form.title") %></summary>
   <p class="text-xs text-muted mt-1"><%= t("dashboards.style.form.hint") %></p>
+  <%= ss_fields do |f| %>
   <div class="grid gap-3 mt-3">
     <% (rules + [ {} ]).each_with_index do |r, i| %>
       <% cond = r["when"] || {} %>
@@ -17,38 +18,28 @@
       <fieldset class="ss-card ss-card-pad grid gap-3 sm:grid-cols-3">
         <legend class="ss-label"><%= t("dashboards.style.form.rule", n: i + 1) %></legend>
         <% if simple %>
-          <div class="sm:col-span-3"><label class="ss-label" for="<%= sid %>-p"><%= t("dashboards.style.form.when_point") %></label>
-            <%= select_tag "#{n}[point]", grouped_options_for_select(point_options, st["point"] || nu["point"]), include_blank: t("dashboards.style.form.no_point"), class: "ss-input", id: "#{sid}-p" %></div>
-          <div><label class="ss-label" for="<%= sid %>-is"><%= t("dashboards.style.form.is") %></label>
-            <%= text_field_tag "#{n}[is]", Array(st["is"] || st["not"]).first, class: "ss-input", id: "#{sid}-is", placeholder: "true, open, on" %></div>
-          <div><label class="ss-label" for="<%= sid %>-ab"><%= t("dashboards.style.form.above") %></label>
-            <%= text_field_tag "#{n}[above]", nu["above"], class: "ss-input num", id: "#{sid}-ab", inputmode: "decimal" %></div>
-          <div><label class="ss-label" for="<%= sid %>-be"><%= t("dashboards.style.form.below") %></label>
-            <%= text_field_tag "#{n}[below]", nu["below"], class: "ss-input num", id: "#{sid}-be", inputmode: "decimal" %></div>
-          <label class="ss-check"><%= check_box_tag "#{n}[negate]", "1", st.key?("not"), id: "#{sid}-ng" %><%= t("dashboards.style.form.negate") %></label>
-          <div><label class="ss-label" for="<%= sid %>-af"><%= t("dashboards.style.form.after") %></label>
-            <%= time_field_tag "#{n}[after]", cond.dig("time", "after"), class: "ss-input num", id: "#{sid}-af" %></div>
-          <div><label class="ss-label" for="<%= sid %>-bf"><%= t("dashboards.style.form.before") %></label>
-            <%= time_field_tag "#{n}[before]", cond.dig("time", "before"), class: "ss-input num", id: "#{sid}-bf" %></div>
+          <%= f.ss_select "#{n}[point]", grouped_options_for_select(point_options, st["point"] || nu["point"]), label: t("dashboards.style.form.when_point"), include_blank: t("dashboards.style.form.no_point"), id: "#{sid}-p", wrapper_class: "sm:col-span-3" %>
+          <%= f.ss_text_field "#{n}[is]", label: t("dashboards.style.form.is"), value: Array(st["is"] || st["not"]).first, id: "#{sid}-is", placeholder: "true, open, on" %>
+          <%= f.ss_text_field "#{n}[above]", label: t("dashboards.style.form.above"), value: nu["above"], class: "num", id: "#{sid}-ab", inputmode: "decimal" %>
+          <%= f.ss_text_field "#{n}[below]", label: t("dashboards.style.form.below"), value: nu["below"], class: "num", id: "#{sid}-be", inputmode: "decimal" %>
+          <%= f.ss_check_box "#{n}[negate]", label: t("dashboards.style.form.negate"), checked: st.key?("not"), include_hidden: false, id: "#{sid}-ng" %>
+          <%= f.ss_time_field "#{n}[after]", label: t("dashboards.style.form.after"), value: cond.dig("time", "after"), class: "num", id: "#{sid}-af" %>
+          <%= f.ss_time_field "#{n}[before]", label: t("dashboards.style.form.before"), value: cond.dig("time", "before"), class: "num", id: "#{sid}-bf" %>
         <% else %>
           <%= hidden_field_tag "#{n}[when_json]", cond.to_json, id: nil %>
           <p class="sm:col-span-3 text-sm text-muted"><%= t("dashboards.style.form.advanced") %> <code class="num"><%= cond.to_json.truncate(120) %></code></p>
         <% end %>
-        <div><label class="ss-label" for="<%= sid %>-to"><%= t("dashboards.facts.tone") %></label>
-          <%= select_tag "#{n}[tone]", options_for_select(Dashboards::Style::TONES.index_by { |k| t("dashboards.facts.tones.#{k}") }, r["tone"]), include_blank: t("dashboards.facts.tones.none"), class: "ss-input", id: "#{sid}-to" %></div>
-        <div><label class="ss-label" for="<%= sid %>-co"><%= t("dashboards.style.form.color") %></label>
-          <%= select_tag "#{n}[color]", options_for_select(Dashboards::Schema::COLORS.index_by { |k| t("dashboards.wf.colors.#{k}") }, r["color"]), include_blank: t("dashboards.facts.tones.none"), class: "ss-input", id: "#{sid}-co" %></div>
-        <div><label class="ss-label" for="<%= sid %>-ic"><%= t("dashboards.facts.icon") %></label>
-          <%= text_field_tag "#{n}[icon]", r["icon"], class: "ss-input", id: "#{sid}-ic", maxlength: 80, placeholder: "mdi:door-open" %></div>
-        <div><label class="ss-label" for="<%= sid %>-lb"><%= t("dashboards.style.form.label") %></label>
-          <%= text_field_tag "#{n}[label]", r["label"], class: "ss-input", id: "#{sid}-lb", maxlength: 80 %></div>
-        <div class="sm:col-span-2"><label class="ss-label" for="<%= sid %>-bd"><%= t("dashboards.style.form.badge") %></label>
-          <%= text_field_tag "#{n}[badge]", r["badge"], class: "ss-input", id: "#{sid}-bd", maxlength: 80, placeholder: t("dashboards.style.form.badge_placeholder") %></div>
-        <% if r.any? %><label class="ss-check sm:col-span-3"><%= check_box_tag "#{n}[remove]", "1", false, id: "#{sid}-rm" %><%= t("dashboards.style.form.remove") %></label><% end %>
+        <%= f.ss_select "#{n}[tone]", options_for_select(Dashboards::Style::TONES.index_by { |k| t("dashboards.facts.tones.#{k}") }, r["tone"]), label: t("dashboards.facts.tone"), include_blank: t("dashboards.facts.tones.none"), id: "#{sid}-to" %>
+        <%= f.ss_select "#{n}[color]", options_for_select(Dashboards::Schema::COLORS.index_by { |k| t("dashboards.wf.colors.#{k}") }, r["color"]), label: t("dashboards.style.form.color"), include_blank: t("dashboards.facts.tones.none"), id: "#{sid}-co" %>
+        <%= f.ss_text_field "#{n}[icon]", label: t("dashboards.facts.icon"), value: r["icon"], id: "#{sid}-ic", maxlength: 80, placeholder: "mdi:door-open" %>
+        <%= f.ss_text_field "#{n}[label]", label: t("dashboards.style.form.label"), value: r["label"], id: "#{sid}-lb", maxlength: 80 %>
+        <%= f.ss_text_field "#{n}[badge]", label: t("dashboards.style.form.badge"), value: r["badge"], id: "#{sid}-bd", maxlength: 80, placeholder: t("dashboards.style.form.badge_placeholder"), wrapper_class: "sm:col-span-2" %>
+        <% if r.any? %><%= f.ss_check_box "#{n}[remove]", label: t("dashboards.style.form.remove"), checked: false, include_hidden: false, id: "#{sid}-rm", wrapper_class: "sm:col-span-3" %><% end %>
       </fieldset>
     <% end %>
-    <div class="max-w-xs"><label class="ss-label" for="sa-<%= uid %>"><%= t("dashboards.stale.form.label") %></label>
-      <%= number_field_tag "widget[stale_after_min]", w["stale_after_min"], min: 0, max: Dashboards::Staleness::MAX_MIN, class: "ss-input num", id: "sa-#{uid}", placeholder: t("dashboards.stale.form.placeholder") %>
+    <div class="max-w-xs">
+      <%= f.ss_number_field "widget[stale_after_min]", label: t("dashboards.stale.form.label"), value: w["stale_after_min"], min: 0, max: Dashboards::Staleness::MAX_MIN, class: "num", id: "sa-#{uid}", placeholder: t("dashboards.stale.form.placeholder") %>
       <p class="text-xs text-muted mt-1"><%= t("dashboards.stale.form.hint") %></p></div>
   </div>
+  <% end %>
 </details>

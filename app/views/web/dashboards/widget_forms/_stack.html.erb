@@ -1,6 +1,8 @@
 <%# locals: (w:, uid:, types:, **) -%>
-<div data-for="<%= types %>"><label class="ss-label" for="sd-<%= uid %>"><%= t("dashboards.vt.form.direction") %></label>
-  <%= select_tag "widget[direction]", options_for_select(Dashboards::Widgets::StackWidget::DIRECTIONS.index_by { |k| t("dashboards.vt.form.directions.#{k}") }, w["direction"] || "vertical"), class: "ss-input", id: "sd-#{uid}" %></div>
-<div data-for="<%= types %>"><label class="ss-label" for="sc-<%= uid %>"><%= t("dashboards.vt.form.columns") %></label>
-  <%= select_tag "widget[columns]", options_for_select([ 2, 3, 4 ], w["columns"] || 2), class: "ss-input num", id: "sc-#{uid}" %></div>
+<%= ss_fields do |f| %>
+<div data-for="<%= types %>">
+  <%= f.ss_select "widget[direction]", options_for_select(Dashboards::Widgets::StackWidget::DIRECTIONS.index_by { |k| t("dashboards.vt.form.directions.#{k}") }, w["direction"] || "vertical"), label: t("dashboards.vt.form.direction"), id: "sd-#{uid}" %></div>
+<div data-for="<%= types %>">
+  <%= f.ss_select "widget[columns]", options_for_select([ 2, 3, 4 ], w["columns"] || 2), label: t("dashboards.vt.form.columns"), class: "num", id: "sc-#{uid}" %></div>
+<% end %>
 <p class="sm:col-span-2 text-xs text-muted" data-for="<%= types %>"><%= t("dashboards.vt.form.stack_hint") %></p>

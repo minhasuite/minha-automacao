@@ -1,12 +1,14 @@
 <%# locals: (w:, uid:, types:, areas:, **) -%>
-<div data-for="<%= types %>"><label class="ss-label" for="ar-<%= uid %>"><%= t("dashboards.wf.area") %></label>
-  <%= select_tag "widget[area]", options_from_collection_for_select(areas, :id, :name, w["area"]), class: "ss-input", id: "ar-#{uid}" %></div>
+<%= ss_fields do |f| %>
+<div data-for="<%= types %>">
+  <%= f.ss_select "widget[area]", options_from_collection_for_select(areas, :id, :name, w["area"]), label: t("dashboards.wf.area"), id: "ar-#{uid}" %></div>
 <%# P1.1: sem itens próprios, vale o padrão do local (Configurações → Painéis → Padrões). %>
 <details class="sm:col-span-2" data-for="<%= types %>"<%= " open" if w["facts"].is_a?(Array) %>>
   <summary class="ss-label cursor-pointer"><%= t("dashboards.facts.own_title") %></summary>
-  <label class="ss-check mt-2"><%= check_box_tag "widget[own_facts]", "1", w["facts"].is_a?(Array), id: "of-#{uid}" %><%= t("dashboards.facts.own") %></label>
+  <%= f.ss_check_box "widget[own_facts]", label: t("dashboards.facts.own"), checked: w["facts"].is_a?(Array), include_hidden: false, id: "of-#{uid}", wrapper_class: "mt-2" %>
   <p class="text-xs text-muted mt-1"><%= t("dashboards.facts.own_hint") %></p>
   <div class="grid gap-3 mt-3">
     <%= render "web/dashboards/widget_forms/facts_fields", facts: (w["facts"].is_a?(Array) ? w["facts"] : Dashboards::Facts::AREA_DEFAULTS), prefix: "widget[facts]", uid: "af-#{uid}", areas: areas, types: types, scoped: true %>
   </div>
 </details>
+<% end %>

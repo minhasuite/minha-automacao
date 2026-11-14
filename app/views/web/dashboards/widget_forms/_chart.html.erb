@@ -1,3 +1,3 @@
 <%# locals: (w:, uid:, types:, **) -%>
-<div data-for="<%= types %>"><label class="ss-label" for="rg-<%= uid %>"><%= t("dashboards.wf.period") %></label>
-  <%= select_tag "widget[range]", options_for_select(%w[24h 7d 30d].index_by { |r| t("dashboards.wf.ranges.#{r}") }, w["range"]), class: "ss-input", id: "rg-#{uid}" %></div>
+<div data-for="<%= types %>">
+  <%= ss_fields { |f| f.ss_select "widget[range]", options_for_select(%w[24h 7d 30d].index_by { |r| t("dashboards.wf.ranges.#{r}") }, w["range"]), label: t("dashboards.wf.period"), id: "rg-#{uid}" } %></div>

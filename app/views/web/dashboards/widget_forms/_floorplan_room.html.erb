@@ -1,9 +1,11 @@
 <%# locals: (name:, room:, area_options:, id:) -%>
+<%= ss_fields do |f| %>
 <div class="dw-fpe-row" data-kind="room">
-  <div class="min-w-0 flex-1"><label class="sr-only" for="fr-a-<%= id %>"><%= t("dashboards.wf.area") %></label>
-    <%= select_tag "#{name}[area]", options_for_select(area_options, room["area"]), include_blank: t("dashboards.wf.fp.pick_area"), class: "ss-input", id: "fr-a-#{id}", data: { role: "ref", action: "floorplan-editor#render" } %></div>
+  <div class="min-w-0 flex-1">
+    <%= f.ss_select "#{name}[area]", options_for_select(area_options, room["area"]), label: t("dashboards.wf.area"), hide_label: true, include_blank: t("dashboards.wf.fp.pick_area"), id: "fr-a-#{id}", data: { role: "ref", action: "floorplan-editor#render" } %></div>
   <% { "x" => 10, "y" => 10, "w" => 30, "h" => 30 }.each do |k, default| %>
-    <label class="dw-fpe-num"><span><%= t("dashboards.wf.fp.dims.#{k}") %></span><%= number_field_tag "#{name}[#{k}]", room[k] || default, min: 0, max: 100, step: "any", id: nil, class: "ss-input num", data: { role: k, action: "floorplan-editor#render" } %></label>
+    <%= f.ss_number_field "#{name}[#{k}]", label: t("dashboards.wf.fp.dims.#{k}"), value: room[k] || default, min: 0, max: 100, step: "any", id: "fr-#{k}-#{id}", class: "num", wrapper_class: "dw-fpe-num", data: { role: k, action: "floorplan-editor#render" } %>
   <% end %>
-  <% if room["area"] %><label class="ss-check text-xs"><%= check_box_tag "#{name}[remove]", "1", false, id: "fr-r-#{id}", data: { role: "remove", action: "floorplan-editor#render" } %><%= t("dashboards.wf.fp.remove") %></label><% end %>
+  <% if room["area"] %><%= f.ss_check_box "#{name}[remove]", label: t("dashboards.wf.fp.remove"), checked: false, include_hidden: false, id: "fr-r-#{id}", wrapper_class: "text-xs", data: { role: "remove", action: "floorplan-editor#render" } %><% end %>
 </div>
+<% end %>
