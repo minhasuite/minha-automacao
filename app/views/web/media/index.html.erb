@@ -33,15 +33,13 @@
                                                           volume: t("media.index.volume", name: p.name), mute: t("media.cmd.mute"), unmute: t("dashboards.w.mc.unmute") }) do |player| %>
           <% if ok && others.any? %>
             <% player.with_media_picker do %>
-              <%= form_with url: site_media_control_path(@site, p), class: "flex flex-wrap items-end gap-2" do %>
+              <%= ss_form_with url: site_media_control_path(@site, p), class: "flex flex-wrap items-end gap-2" do |f| %>
                 <%= hidden_field_tag :command, "join", id: nil %>
-                <div class="flex-1 min-w-40">
-                  <label class="ss-label" for="join-<%= p.id %>"><%= t("media.index.join") %></label>
-                  <%= select_tag :value, options_for_select(others.map { |o| [ o.device.name, o.id ] }), id: "join-#{p.id}", class: "ss-input" %>
-                </div>
-                <button class="ss-btn ss-btn-ghost ss-btn-sm"><%= icon("link", "size-4") %><%= t("media.index.join_btn") %></button>
+                <%= f.ss_select :value, others.map { |o| [ o.device.name, o.id ] }, id: "join-#{p.id}", label: t("media.index.join"), wrapper_class: "flex-1 min-w-40" %>
+                <%= render Ss::ButtonComponent.new(label: t("media.index.join_btn"), icon: icon("link", ""), type: :submit, variant: :ghost, size: :sm) %>
               <% end %>
-              <%= button_to site_media_control_path(@site, p), params: { command: "unjoin" }, class: "ss-btn ss-btn-ghost ss-btn-sm mt-2" do %><%= icon("x", "size-4") %><%= t("media.index.unjoin") %><% end %>
+              <%= render Ss::ButtonComponent.new(label: t("media.index.unjoin"), icon: icon("x", ""), href: site_media_control_path(@site, p), method: :post,
+                                                 params: { command: "unjoin" }, variant: :ghost, size: :sm, css: "mt-2") %>
             <% end %>
           <% end %>
         <% end %>
@@ -53,16 +51,10 @@
     <section class="ss-card ss-card-pad mb-6" aria-labelledby="say-title">
       <h2 id="say-title" class="flex items-center gap-2"><span class="ss-icon-tile text-accent"><%= icon("speakerphone") %></span><%= t("media.index.say") %></h2>
       <p class="text-sm text-muted mt-1"><%= t("media.index.say_hint") %></p>
-      <%= form_with url: site_media_speak_path(@site), class: "grid gap-3 sm:grid-cols-[1fr_2fr_auto] items-end mt-3" do %>
-        <div>
-          <label class="ss-label" for="say-player"><%= t("media.index.on") %></label>
-          <%= select_tag :player_id, options_for_select(@players.map { |p| [ Notifier::Channels::Player.name(p), p.id ] }), id: "say-player", class: "ss-input" %>
-        </div>
-        <div>
-          <label class="ss-label" for="say-text"><%= t("media.index.text") %></label>
-          <%= text_field_tag :text, nil, id: "say-text", class: "ss-input", maxlength: Points::Command::MAX_SPEECH, required: true, placeholder: t("media.index.say_ph") %>
-        </div>
-        <button class="ss-btn ss-btn-primary"><%= icon("volume-up", "size-4") %><%= t("media.index.say_btn") %></button>
+      <%= ss_form_with url: site_media_speak_path(@site), class: "grid gap-3 sm:grid-cols-[1fr_2fr_auto] items-end mt-3" do |f| %>
+        <%= f.ss_select :player_id, @players.map { |p| [ Notifier::Channels::Player.name(p), p.id ] }, id: "say-player", label: t("media.index.on") %>
+        <%= f.ss_text_field :text, id: "say-text", label: t("media.index.text"), maxlength: Points::Command::MAX_SPEECH, required: true, placeholder: t("media.index.say_ph") %>
+        <%= render Ss::ButtonComponent.new(label: t("media.index.say_btn"), icon: icon("volume-up", ""), type: :submit) %>
       <% end %>
     </section>
   <% end %>

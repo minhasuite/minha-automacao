@@ -8,32 +8,30 @@
 <% pts = site.points.where(disabled: false).includes(:device).ordered.to_a %>
 <% save_url = template.persisted? ? card_template_path(template) : site_card_templates_path(site) %>
 <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
-  <%= form_with model: template, url: preview_site_card_templates_path(site), scope: :card_template, class: "grid gap-4",
+  <%= ss_form_with model: template, url: preview_site_card_templates_path(site), scope: :card_template, class: "grid gap-4",
                 data: { controller: "ss-autosubmit", action: "input->ss-autosubmit#queue change->ss-autosubmit#now", turbo_frame: "tpl_preview" } do |f| %>
     <%= render Ss::FormErrorsComponent.new(record: template) if template.errors.any? %>
     <section class="ss-card ss-card-pad grid gap-3 sm:grid-cols-2">
-      <div><%= f.label :name, t("dashboards.templates.name"), class: "ss-label" %><%= f.text_field :name, class: "ss-input", required: true, maxlength: 80 %></div>
-      <div><%= f.label :key, t("dashboards.templates.key"), class: "ss-label" %>
-        <%= f.text_field :key, class: "ss-input num", required: true, pattern: "[a-z0-9][a-z0-9_-]{1,39}", disabled: template.persisted? %></div>
-      <div class="sm:col-span-2"><%= f.label :description, t("dashboards.templates.description"), class: "ss-label" %><%= f.text_field :description, class: "ss-input", maxlength: 200 %></div>
-      <div class="sm:col-span-2"><%= f.label :layout, t("dashboards.templates.layout"), class: "ss-label" %>
-        <%= f.select :layout, Dashboards::CardTemplates::LAYOUTS.map { |l| [ t("dashboards.templates.layouts.#{l}"), l ] }, {}, class: "ss-input" %>
-        <p class="text-xs text-muted mt-1"><%= t("dashboards.templates.layout_hint") %></p></div>
+      <%= f.ss_text_field :name, label: t("dashboards.templates.name"), required: true, maxlength: 80 %>
+      <%= f.ss_text_field :key, label: t("dashboards.templates.key"), class: "num", required: true, pattern: "[a-z0-9][a-z0-9_-]{1,39}", disabled: template.persisted? %>
+      <%= f.ss_text_field :description, label: t("dashboards.templates.description"), wrapper_class: "sm:col-span-2", maxlength: 200 %>
+      <%= f.ss_select :layout, Dashboards::CardTemplates::LAYOUTS.map { |l| [ t("dashboards.templates.layouts.#{l}"), l ] }, label: t("dashboards.templates.layout"),
+                      help: t("dashboards.templates.layout_hint"), wrapper_class: "sm:col-span-2" %>
     </section>
 
     <section class="ss-card ss-card-pad grid gap-3">
       <%= render Ss::SectionHeaderComponent.new(title: t("dashboards.templates.params"), subtitle: t("dashboards.templates.params_hint")) %>
       <% rows = Array(template.params) + Array.new([ Dashboards::CardTemplates::MAX_PARAMS - Array(template.params).size, 2 ].min.clamp(0, 2)) { {} } %>
       <% rows.each_with_index do |p, i| %>
-        <div class="grid gap-2 sm:grid-cols-[1fr_1fr_9rem_auto] items-end">
-          <div><label class="ss-label" for="tp-k<%= i %>"><%= t("dashboards.templates.param_key") %></label>
-            <%= text_field_tag "card_template[params][#{i}][key]", p["key"], class: "ss-input num", id: "tp-k#{i}", placeholder: "area", maxlength: 30 %></div>
-          <div><label class="ss-label" for="tp-l<%= i %>"><%= t("dashboards.templates.param_label") %></label>
-            <%= text_field_tag "card_template[params][#{i}][label]", (Dashboards::CardTemplates.param_label(p) if p["key"]), class: "ss-input", id: "tp-l#{i}", maxlength: 60 %></div>
-          <div><label class="ss-label" for="tp-t<%= i %>"><%= t("dashboards.templates.param_kind") %></label>
-            <%= select_tag "card_template[params][#{i}][kind]", options_for_select(Dashboards::CardTemplates::KINDS.map { |k| [ t("dashboards.templates.kinds.#{k}"), k ] }, p["kind"]), class: "ss-input", id: "tp-t#{i}" %></div>
-          <label class="ss-check pb-2"><%= check_box_tag "card_template[params][#{i}][required]", "1", p["required"], id: "tp-r#{i}" %><%= t("dashboards.templates.param_required") %></label>
-        </div>
+        <%= ss_fields "card_template[params][#{i}]" do |pf| %>
+          <div class="grid gap-2 sm:grid-cols-[1fr_1fr_9rem_auto] items-end">
+            <%= pf.ss_text_field :key, value: p["key"], id: "tp-k#{i}", label: t("dashboards.templates.param_key"), class: "num", placeholder: "area", maxlength: 30 %>
+            <%= pf.ss_text_field :label, value: (Dashboards::CardTemplates.param_label(p) if p["key"]), id: "tp-l#{i}", label: t("dashboards.templates.param_label"), maxlength: 60 %>
+            <%= pf.ss_select :kind, Dashboards::CardTemplates::KINDS.map { |k| [ t("dashboards.templates.kinds.#{k}"), k ] }, selected: p["kind"], id: "tp-t#{i}",
+                             label: t("dashboards.templates.param_kind") %>
+            <%= pf.ss_check_box :required, checked: p["required"].present?, unchecked_value: nil, id: "tp-r#{i}", label: t("dashboards.templates.param_required"), wrapper_class: "pb-2" %>
+          </div>
+        <% end %>
       <% end %>
     </section>
 
@@ -41,28 +39,30 @@
       <%= render Ss::SectionHeaderComponent.new(title: t("dashboards.templates.slots"), subtitle: t("dashboards.templates.slots_hint")) %>
       <% Dashboards::CardTemplates::SLOTS.each do |s| %>
         <% big = %w[facts tap tone].include?(s) || !slots[s].is_a?(String) && !slots[s].nil? %>
-        <div><label class="ss-label" for="ts-<%= s %>"><%= t("dashboards.templates.slot_names.#{s}") %> <span class="font-normal"><%= t("dashboards.templates.slot_hints.#{s}") %></span></label>
-          <%= text_area_tag "card_template[slot_#{s}]", slot_text.(slots[s]), class: "ss-input num", id: "ts-#{s}", rows: big ? 4 : 1, spellcheck: false %></div>
+        <%= f.ss_text_area :"slot_#{s}", value: slot_text.(slots[s]), id: "ts-#{s}", class: "num", rows: big ? 4 : 1, spellcheck: false,
+                           label: safe_join([ t("dashboards.templates.slot_names.#{s}"), " ", tag.span(t("dashboards.templates.slot_hints.#{s}"), class: "font-normal") ]) %>
       <% end %>
     </section>
 
     <section class="ss-card ss-card-pad grid gap-3 sm:grid-cols-2">
       <%= render Ss::SectionHeaderComponent.new(title: t("dashboards.templates.sample"), subtitle: t("dashboards.templates.sample_hint"), css: "sm:col-span-2") %>
-      <% Array(template.params).each do |p| %>
-        <% id = "tx-#{p['key']}" %>
-        <div><label class="ss-label" for="<%= id %>"><%= Dashboards::CardTemplates.param_label(p) %></label>
+      <%= ss_fields "card_template[sample]" do |sf| %>
+        <% Array(template.params).each do |p| %>
+          <% id = "tx-#{p['key']}" %>
+          <% label = Dashboards::CardTemplates.param_label(p) %>
           <% if p["kind"] == "area" %>
-            <%= select_tag "card_template[sample][#{p['key']}]", options_from_collection_for_select(areas, :id, :name, sample[p["key"]] || areas.first&.id), include_blank: true, class: "ss-input", id: id %>
+            <%= sf.ss_select p["key"], areas.map { |a| [ a.name, a.id ] }, selected: sample[p["key"]] || areas.first&.id, include_blank: true, id: id, label: label %>
           <% elsif p["kind"] == "point" %>
-            <%= select_tag "card_template[sample][#{p['key']}]", options_for_select(pts.map { |pt| [ "#{pt.name} · #{pt.device.name}", pt.id ] }, sample[p["key"]] || pts.first&.id), include_blank: true, class: "ss-input", id: id %>
+            <%= sf.ss_select p["key"], pts.map { |pt| [ "#{pt.name} · #{pt.device.name}", pt.id ] }, selected: sample[p["key"]] || pts.first&.id, include_blank: true, id: id, label: label %>
           <% else %>
-            <%= text_field_tag "card_template[sample][#{p['key']}]", sample[p["key"]], class: "ss-input", id: id %>
-          <% end %></div>
+            <%= sf.ss_text_field p["key"], value: sample[p["key"]], id: id, label: label %>
+          <% end %>
+        <% end %>
       <% end %>
     </section>
 
     <div class="flex flex-wrap gap-2">
-      <%= button_tag type: "submit", class: "ss-btn ss-btn-primary", formaction: save_url, data: { turbo_frame: "_top" } do %><%= icon("check", "size-4") %><%= t("dashboards.templates.save") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: t("dashboards.templates.save"), icon: icon("check", ""), type: :submit, formaction: save_url, data: { turbo_frame: "_top" }) %>
       <%= link_to t("dashboards.cancel"), site_card_templates_path(site), class: "ss-btn ss-btn-ghost" %>
     </div>
   <% end %>

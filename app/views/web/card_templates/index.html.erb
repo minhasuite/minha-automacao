@@ -16,11 +16,12 @@
       <% if (desc = Dashboards::CardTemplates.loc(tp["description"])).present? %><p class="text-sm text-muted"><%= desc %></p><% end %>
       <div class="mt-auto flex flex-wrap gap-2">
         <% unless tp["builtin"] %><%= link_to t("dashboards.templates.edit"), edit_card_template_path(tp["id"]), class: "ss-btn ss-btn-outline ss-btn-sm" %><% end %>
-        <%= button_to duplicate_site_card_templates_path(@site), params: { key: tp["key"] }, class: "ss-btn ss-btn-ghost ss-btn-sm" do %><%= icon("duplicate", "size-4") %><%= t("dashboards.templates.duplicate") %><% end %>
+        <%= render Ss::ButtonComponent.new(label: t("dashboards.templates.duplicate"), icon: icon("duplicate", ""), href: duplicate_site_card_templates_path(@site), method: :post,
+                                           params: { key: tp["key"] }, variant: :ghost, size: :sm) %>
         <%= link_to export_site_card_templates_path(@site, key: tp["key"]), class: "ss-btn ss-btn-ghost ss-btn-sm", data: { turbo: false } do %><%= icon("download", "size-4") %><%= t("dashboards.templates.export") %><% end %>
         <% unless tp["builtin"] %>
-          <%= button_to t("dashboards.templates.remove"), card_template_path(tp["id"]), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm",
-                        form: { data: { turbo_confirm: t("dashboards.templates.remove_confirm", name: tp["name"]), turbo_confirm_tone: "danger", turbo_confirm_button: t("dashboards.templates.remove") } } %>
+          <%= render Ss::ButtonComponent.new(label: t("dashboards.templates.remove"), href: card_template_path(tp["id"]), method: :delete, variant: :ghost, size: :sm,
+                                             confirm: t("dashboards.templates.remove_confirm", name: tp["name"]), confirm_tone: :danger, confirm_button: t("dashboards.templates.remove")) %>
         <% end %>
       </div>
     </article>

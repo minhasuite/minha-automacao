@@ -12,16 +12,16 @@
           <p class="text-xs text-muted num truncate"><%= r.point.key %><%= " · #{r.point.unit}" if r.point.unit.present? %> · <%= t("dev_tools.stats.hours", n: r.hours) %> · <%= l(r.first_at, format: :short) %> → <%= l(r.last_at, format: :short) %></p>
         </div>
         <div class="flex flex-wrap items-end gap-2">
-          <%= form_with url: dev_tools_stats_adjust_site_path(@site), class: "flex flex-wrap items-end gap-1" do %>
+          <%= ss_form_with url: dev_tools_stats_adjust_site_path(@site), class: "flex flex-wrap items-end gap-1" do |f| %>
             <%= hidden_field_tag :point_id, r.point.id, id: nil %>
-            <div><label for="at_<%= r.point.id %>" class="ss-label !text-xs"><%= t("dev_tools.stats.hour") %></label>
-              <input id="at_<%= r.point.id %>" type="datetime-local" step="3600" name="at" class="ss-input !py-1 text-sm" required></div>
-            <div><label for="sum_<%= r.point.id %>" class="ss-label !text-xs"><%= t("dev_tools.stats.sum") %></label>
-              <input id="sum_<%= r.point.id %>" name="sum" inputmode="decimal" class="ss-input !py-1 w-24 text-sm" required></div>
-            <button class="ss-btn ss-btn-ghost ss-btn-sm" aria-label="<%= t("dev_tools.stats.adjust_of", name: r.point.name) %>"><%= icon("check", "size-4") %><%= t("dev_tools.stats.adjust") %></button>
+            <%= f.ss_datetime_local_field :at, id: "at_#{r.point.id}", label: t("dev_tools.stats.hour"), step: 3600, class: "!py-1 text-sm", required: true %>
+            <%= f.ss_text_field :sum, id: "sum_#{r.point.id}", label: t("dev_tools.stats.sum"), inputmode: "decimal", class: "!py-1 w-24 text-sm", required: true %>
+            <%= render Ss::ButtonComponent.new(label: t("dev_tools.stats.adjust"), icon: icon("check", ""), type: :submit, variant: :ghost, size: :sm,
+                                               aria: { label: t("dev_tools.stats.adjust_of", name: r.point.name) }) %>
           <% end %>
-          <%= button_to dev_tools_stats_purge_site_path(@site, point_id: r.point.id), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm text-danger",
-                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("dev_tools.stats.confirm", name: r.point.name), turbo_confirm_button: t("dev_tools.stats.purge") } } do %><%= icon("trash", "size-4") %><%= t("dev_tools.stats.purge") %><% end %>
+          <%= render Ss::ButtonComponent.new(label: t("dev_tools.stats.purge"), icon: icon("trash", ""), href: dev_tools_stats_purge_site_path(@site, point_id: r.point.id),
+                                             method: :delete, variant: :ghost, size: :sm, tone: :danger,
+                                             confirm: t("dev_tools.stats.confirm", name: r.point.name), confirm_tone: :danger, confirm_button: t("dev_tools.stats.purge")) %>
         </div>
       </li>
     <% end %>

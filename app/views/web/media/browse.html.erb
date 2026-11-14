@@ -26,22 +26,20 @@
         <% if @item.subtitle.present? %><p class="text-sm text-muted mt-1"><%= @item.subtitle %></p><% end %>
         <% if preview %><%= link_to MediaSources.public_url(preview), class: "ss-btn ss-btn-ghost ss-btn-sm mt-3", target: "_blank", rel: "noopener" do %><%= icon("external-link", "size-4") %><%= t("media.browse.open") %><% end %><% end %>
         <% if @players.any? && can?(:command) %>
-          <%= form_with url: site_media_play_path(@site), class: "flex flex-wrap items-end gap-2 mt-4" do %>
+          <%= ss_form_with url: site_media_play_path(@site), class: "flex flex-wrap items-end gap-2 mt-4" do |f| %>
             <%= hidden_field_tag :source, @source.key, id: nil %>
             <%= hidden_field_tag :item, @item.id, id: nil %>
             <%= hidden_field_tag :path, @path, id: nil %>
-            <div class="flex-1 min-w-48">
-              <label class="ss-label" for="play-on"><%= t("media.browse.play_on") %></label>
-              <%= select_tag :player_id, options_for_select(@players.map { |p| [ Notifier::Channels::Player.name(p), p.id ] }), id: "play-on", class: "ss-input" %>
-            </div>
-            <button class="ss-btn ss-btn-primary"><%= icon("play", "size-4") %><%= t("media.browse.play") %></button>
+            <%= f.ss_select :player_id, @players.map { |p| [ Notifier::Channels::Player.name(p), p.id ] }, id: "play-on", label: t("media.browse.play_on"), wrapper_class: "flex-1 min-w-48" %>
+            <%= render Ss::ButtonComponent.new(label: t("media.browse.play"), icon: icon("play", ""), type: :submit) %>
           <% end %>
         <% elsif @players.empty? %>
           <p class="text-sm text-muted mt-4"><%= t("media.browse.no_player") %></p>
         <% end %>
         <% if @source.uploads? && can?(:manage) %>
-          <%= button_to site_media_file_delete_path(@site), method: :delete, params: { path: @item.id }, class: "ss-btn ss-btn-ghost ss-btn-sm mt-3",
-                        form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("media.files.delete"), turbo_confirm: t("media.files.confirm_delete", name: @item.title) } } do %><%= icon("trash", "size-4") %><%= t("media.files.delete") %><% end %>
+          <%= render Ss::ButtonComponent.new(label: t("media.files.delete"), icon: icon("trash", ""), href: site_media_file_delete_path(@site), method: :delete, params: { path: @item.id },
+                                             variant: :ghost, size: :sm, css: "mt-3",
+                                             confirm: t("media.files.confirm_delete", name: @item.title), confirm_tone: :danger, confirm_button: t("media.files.delete")) %>
         <% end %>
       </div>
     </div>
@@ -49,30 +47,24 @@
 <% end %>
 
 <% if @source.searchable? %>
-  <%= form_with url: site_media_browse_path(@site, @source.key), method: :get, class: "flex gap-2 mb-4", role: "search" do %>
-    <label class="sr-only" for="media-q"><%= t("media.browse.search") %></label>
-    <%= search_field_tag :q, @query, id: "media-q", class: "ss-input flex-1 min-w-0", placeholder: t("media.browse.search_ph") %>
-    <button class="ss-btn ss-btn-ghost" aria-label="<%= t("media.browse.search") %>"><%= icon("search", "size-4") %></button>
+  <%= ss_form_with url: site_media_browse_path(@site, @source.key), method: :get, class: "flex gap-2 mb-4", role: "search" do |f| %>
+    <%= f.ss_search_field :q, value: @query, id: "media-q", label: t("media.browse.search"), hide_label: true, wrapper_class: "flex-1 min-w-0", placeholder: t("media.browse.search_ph") %>
+    <%= render Ss::ButtonComponent.new(icon: icon("search", ""), type: :submit, variant: :ghost, aria: { label: t("media.browse.search") }) %>
   <% end %>
 <% end %>
 
 <% if @source.uploads? && can?(:manage) && !@item %>
   <div class="grid gap-3 sm:grid-cols-2 mb-4">
-    <%= form_with url: site_media_files_path(@site), multipart: true, class: "ss-card ss-card-pad flex flex-wrap items-end gap-2" do %>
+    <%= ss_form_with url: site_media_files_path(@site), multipart: true, class: "ss-card ss-card-pad flex flex-wrap items-end gap-2" do |f| %>
       <%= hidden_field_tag :path, @path, id: nil %>
-      <div class="flex-1 min-w-48">
-        <label class="ss-label" for="media-upload"><%= t("media.files.upload") %></label>
-        <%= file_field_tag "files[]", id: "media-upload", multiple: true, accept: "audio/*,video/*,image/*", class: "ss-input", required: true %>
-      </div>
-      <button class="ss-btn ss-btn-primary"><%= icon("upload", "size-4") %><%= t("media.files.send") %></button>
+      <%= f.ss_file_field :files, id: "media-upload", multiple: true, include_hidden: false, accept: "audio/*,video/*,image/*", required: true,
+                          label: t("media.files.upload"), wrapper_class: "flex-1 min-w-48" %>
+      <%= render Ss::ButtonComponent.new(label: t("media.files.send"), icon: icon("upload", ""), type: :submit) %>
     <% end %>
-    <%= form_with url: site_media_folders_path(@site), class: "ss-card ss-card-pad flex flex-wrap items-end gap-2" do %>
+    <%= ss_form_with url: site_media_folders_path(@site), class: "ss-card ss-card-pad flex flex-wrap items-end gap-2" do |f| %>
       <%= hidden_field_tag :path, @path, id: nil %>
-      <div class="flex-1 min-w-48">
-        <label class="ss-label" for="media-folder"><%= t("media.files.new_folder") %></label>
-        <%= text_field_tag :name, nil, id: "media-folder", class: "ss-input", maxlength: 120, required: true %>
-      </div>
-      <button class="ss-btn ss-btn-ghost"><%= icon("plus", "size-4") %><%= t("media.files.create") %></button>
+      <%= f.ss_text_field :name, id: "media-folder", label: t("media.files.new_folder"), wrapper_class: "flex-1 min-w-48", maxlength: 120, required: true %>
+      <%= render Ss::ButtonComponent.new(label: t("media.files.create"), icon: icon("plus", ""), type: :submit, variant: :ghost) %>
     <% end %>
   </div>
 <% end %>
