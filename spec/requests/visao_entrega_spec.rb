@@ -86,14 +86,14 @@ RSpec.describe "Visão por tela e câmera com som e falar" do
       publish(defn(views))
       sign_in
       get "/paineis/#{dashboard.id}"
-      expect(response.body).to match(/class="ss-chip no-underline dw-hide-tablet dw-hide-desktop"[^>]*>.*Entrega/m)
+      expect(response.body).to match(/class="ss-chip no-underline ss-hide-tablet ss-hide-desktop"[^>]*>.*Entrega/m)
       expect(response.body).not_to include("view-fallback")
       get "/paineis/#{dashboard.id}", params: { view: "entrega" }
       body = response.body
       expect(body).to include('data-controller="view-fallback"', "Esta visão não aparece nesta tela.", "Abrir Início")
       expect(body).to include(%(data-view-fallback-url-value="/paineis/#{dashboard.id}?view=home"))
-      expect(body).to include('class="mt-4 dw-hide-mobile dw-hide-desktop"', 'class="mt-4 dw-hide-mobile dw-hide-tablet"')
-      expect(body).to include('data-controller="ss-filter" class="dw-hide-tablet dw-hide-desktop"')
+      expect(body).to include('class="mt-4 ss-hide-mobile ss-hide-desktop"', 'class="mt-4 ss-hide-mobile ss-hide-tablet"')
+      expect(body).to include('data-controller="ss-filter" class="ss-hide-tablet ss-hide-desktop"')
       # No Início, o mesmo (link do Início com o local).
       get "/", params: { view: "entrega" }
       expect(response.body).to include("view-fallback", "?local=#{site.id}&amp;view=home")

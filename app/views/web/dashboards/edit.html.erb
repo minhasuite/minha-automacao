@@ -83,7 +83,8 @@
               <legend class="ss-label"><%= t("dashboards.wf.show_on") %> <span class="font-normal"><%= t("dashboards.view_visible.screens_hint") %></span></legend>
               <div class="flex flex-wrap gap-3">
                 <% Dashboards::Schema::SCREENS.each do |screen| %>
-                  <label class="ss-check"><%= check_box_tag "view_visible[screens][]", screen, vscreens.include?(screen), id: "vsc-#{screen}" %><%= t("dashboards.screens.#{screen}") %></label>
+                  <%= f.ss_check_box "view_visible[screens]", multiple: true, label: t("dashboards.screens.#{screen}"), checked_value: screen, unchecked_value: nil,
+                                                              checked: vscreens.include?(screen), id: "vsc-#{screen}" %>
                 <% end %>
               </div>
             </fieldset>
@@ -91,7 +92,8 @@
               <legend class="ss-label"><%= t("dashboards.ed.who_sees") %> <span class="font-normal"><%= t("dashboards.view_visible.roles_hint") %></span></legend>
               <div class="flex flex-wrap gap-3">
                 <% SiteMembership::ROLES.each do |r| %>
-                  <label class="ss-check"><%= check_box_tag "view_visible[roles][]", r, vroles.include?(r), id: "vro-#{r}" %><%= SiteMembership.role_label(r) %></label>
+                  <%= f.ss_check_box "view_visible[roles]", multiple: true, label: SiteMembership.role_label(r), checked_value: r, unchecked_value: nil,
+                                                            checked: vroles.include?(r), id: "vro-#{r}" %>
                 <% end %>
               </div>
             </fieldset>

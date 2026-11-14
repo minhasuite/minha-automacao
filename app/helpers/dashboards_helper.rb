@@ -27,7 +27,7 @@ module DashboardsHelper
   end
 
   # Classes que deixam o bloco só numa tela.
-  def dw_only_on(screen) = (Dashboards::Schema::SCREENS - [ screen ]).map { |s| "dw-hide-#{s}" }.join(" ")
+  def dw_screen_only(screen) = (Dashboards::Schema::SCREENS - [ screen ]).map { |s| "ss-hide-#{s}" }.join(" ")
 
   # Texto do widget Texto (Lote 4, G18a): escapa tudo e aplica um Markdown
   # mínimo: "# título" (até ###), "- item", **negrito**, *itálico*; linha em

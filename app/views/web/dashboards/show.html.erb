@@ -58,7 +58,7 @@
     o aviso só aparece nessa tela e leva sozinho (view-fallback) à primeira aba que aparece nela. %>
 <% fallbacks = dw_view_fallbacks(@resolved["views"], view) %>
 <% fallbacks.each do |screen, other| %>
-  <div class="mt-4 <%= dw_only_on(screen) %>" data-controller="view-fallback" data-view-fallback-url-value="<%= tab_href.call(other) %>">
+  <div class="mt-4 <%= dw_screen_only(screen) %>" data-controller="view-fallback" data-view-fallback-url-value="<%= tab_href.call(other) %>">
     <%= render Ss::CalloutComponent.new(tone: :accent, title: t("dashboards.view_visible.hidden_here"), icon: icon("eye-off", "")) do |c| %>
       <% c.with_action { link_to t("dashboards.view_visible.open_other", name: other["title"]), tab_href.call(other), class: "ss-btn ss-btn-primary ss-btn-sm" } %>
     <% end %>
@@ -67,7 +67,7 @@
 
 <%# Ideia 13: favoritos da pessoa no topo e busca dentro do painel (filtra os widgets pelo `search` do servidor). %>
 <% if @resolved["favorites_now"].present? %><%= render "web/dashboards/favorites", ids: @resolved["favorites_now"], points: points, live: live %><% end %>
-<div data-controller="ss-filter" class="<%= fallbacks.keys.map { |s| "dw-hide-#{s}" }.join(" ") %>">
+<div data-controller="ss-filter" class="<%= fallbacks.keys.map { |s| "ss-hide-#{s}" }.join(" ") %>">
 <% if view["sections"].sum { |s| s["widgets"].size } > 3 && !kiosk %>
   <div class="mt-4 max-w-md" role="search">
     <%= ss_fields do |f| %><%= f.ss_search_field :dw_search, label: t("dashboards.search.label"), hide_label: true, id: "dw-search", placeholder: t("dashboards.search.placeholder"), autocomplete: "off",

@@ -400,9 +400,8 @@ export default class extends Controller {
     const b = this.soundButtonTarget
     b.hidden = !this.playing
     b.setAttribute("aria-pressed", this.soundOn ? "true" : "false")
-    b.classList.toggle("ring-2", attention)
-    b.classList.toggle("ring-white", attention)
-    b.classList.toggle("animate-pulse", attention)
+    // Som recusado pelo navegador: o aviso de status pede o toque; o botão só ganha o foco.
+    if (attention) b.focus({ preventScroll: true })
     if (this.hasSoundOnTarget) this.soundOnTarget.hidden = !this.soundOn
     if (this.hasSoundOffTarget) this.soundOffTarget.hidden = this.soundOn
   }
