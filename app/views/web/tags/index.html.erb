@@ -9,14 +9,15 @@
         <li id="<%= dom_id(tg) %>">
           <span class="ss-label-chip" style="<%= "--c: #{tg.color}" if tg.color %>"><%= tg.name %></span>
           <p class="min-w-0 flex-1 basis-40 text-sm text-muted"><%= use.any? ? use.map { |type, n| t("tags.kinds.#{type}", count: n, default: "#{n} #{type}") }.join(" · ") : t("tags.index.unused") %></p>
-          <%= form_with model: tg, url: tag_path(tg), method: :patch, class: "flex flex-wrap items-center gap-2" do |f| %>
-            <label class="sr-only" for="<%= dom_id(tg, :name) %>"><%= t("tags.index.name_of", name: tg.name) %></label>
-            <%= f.text_field :name, class: "ss-input w-40", id: dom_id(tg, :name), maxlength: 40 %>
-            <label class="sr-only" for="<%= dom_id(tg, :color) %>"><%= t("tags.index.color_of", name: tg.name) %></label>
-            <%= f.color_field :color, value: tg.color.presence || "#5a45e8", class: "h-10 w-12 rounded-lg border border-line bg-transparent", id: dom_id(tg, :color) %>
-            <%= f.submit t("tags.index.save"), class: "ss-btn ss-btn-outline ss-btn-sm" %>
+          <%= ss_form_with model: tg, url: tag_path(tg), method: :patch, class: "flex flex-wrap items-center gap-2" do |f| %>
+            <%= f.ss_text_field :name, label: t("tags.index.name_of", name: tg.name), hide_label: true, class: "w-40", id: dom_id(tg, :name), maxlength: 40 %>
+            <%# Sem cor, o seletor abre no violeta da marca (a cor do theme-color da gem). %>
+            <%= f.ss_color_field :color, label: t("tags.index.color_of", name: tg.name), hide_label: true, value: tg.color.presence || ComponentesUi::Helpers::THEME_COLOR[:light], id: dom_id(tg, :color) %>
+            <%= f.ss_submit t("tags.index.save"), variant: :outline, small: true %>
           <% end %>
-          <%= button_to tag_path(tg), method: :delete, class: "ss-icon-btn is-danger", title: t("tags.index.delete", name: tg.name), "aria-label": t("tags.index.delete", name: tg.name), form: { class: "contents", data: { turbo_confirm_tone: "danger", turbo_confirm: t("tags.index.delete_confirm", name: tg.name), turbo_confirm_button: t("tags.index.delete_button") } } do %><%= icon("trash", "") %><% end %>
+          <%= render Ss::ButtonComponent.new(icon: icon("trash", ""), href: tag_path(tg), method: :delete, variant: :ghost, tone: :danger, title: t("tags.index.delete", name: tg.name),
+                                             aria: { label: t("tags.index.delete", name: tg.name) }, form: { class: "contents" },
+                                             confirm: t("tags.index.delete_confirm", name: tg.name), confirm_tone: :danger, confirm_button: t("tags.index.delete_button")) %>
         </li>
       <% end %>
     </ul>

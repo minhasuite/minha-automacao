@@ -1,12 +1,9 @@
 <%# locals: (site:, catalog:, entries:, tags:, installed:) -%>
 <%# Aba "Explorar" (Packages::Catalog): o catálogo só aponta; instalar passa pela prévia de sempre. %>
-<%= form_with url: site_packages_path(site), method: :get, class: "ss-card ss-card-pad mb-4 flex flex-wrap items-end gap-3" do %>
+<%= ss_form_with url: site_packages_path(site), method: :get, class: "ss-card ss-card-pad mb-4 flex flex-wrap items-end gap-3" do |f| %>
   <%= hidden_field_tag :tab, "explorar" %>
-  <div class="min-w-56 flex-1">
-    <label for="q" class="ss-label"><%= t("packages.catalog.search") %></label>
-    <%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("packages.catalog.search_ph") %>
-  </div>
-  <button type="submit" class="ss-btn ss-btn-ghost"><%= icon("search", "size-4") %><%= t("packages.catalog.search") %></button>
+  <%= f.ss_search_field :q, label: t("packages.catalog.search"), value: params[:q], placeholder: t("packages.catalog.search_ph"), wrapper_class: "min-w-56 flex-1" %>
+  <%= render Ss::ButtonComponent.new(label: t("packages.catalog.search"), icon: icon("search", "size-4"), type: :submit, variant: :ghost) %>
   <% if tags.any? %>
     <div class="basis-full ss-chips is-solid" data-controller="ss-scroll-current" aria-label="<%= t("packages.catalog.tags") %>">
       <% tags.each do |tg| %>
@@ -42,9 +39,8 @@
             <%= link_to t("packages.catalog.installed_v", v: mine.version), package_path(mine), class: "ss-btn ss-btn-ghost ss-btn-sm" %>
           <% end %>
           <% if can?(:manage) %>
-            <%= button_to preview_site_packages_path(site), params: { url: e.url }, class: "ss-btn #{mine ? 'ss-btn-ghost' : 'ss-btn-primary'} ss-btn-sm", form_class: "contents" do %>
-              <%= icon("eye", "size-4") %><%= t(mine ? "packages.catalog.review" : "packages.index.preview") %>
-            <% end %>
+            <%= render Ss::ButtonComponent.new(label: t(mine ? "packages.catalog.review" : "packages.index.preview"), icon: icon("eye", "size-4"), href: preview_site_packages_path(site), method: :post,
+                                               params: { url: e.url }, variant: (mine ? :ghost : :primary), size: :sm, form: { class: "contents" }) %>
           <% end %>
         </div>
       </li>

@@ -2,7 +2,7 @@
 <%# Prévia de um texto em Liquid (MessageTemplate): o botão manda o formulário com `preview=1` e a tela volta com o resultado, sem salvar. -%>
 <div class="<%= css %> grid gap-2" data-message-preview>
   <p class="text-xs text-muted"><%= t("custom.preview.hint_html") %></p>
-  <div><button type="submit" name="preview" value="1" class="ss-btn ss-btn-outline ss-btn-sm" formnovalidate><%= icon("eye", "size-4") %><%= t("custom.preview.button") %></button></div>
+  <div><%= render Ss::ButtonComponent.new(label: t("custom.preview.button"), icon: icon("eye", "size-4"), type: :submit, name: "preview", value: "1", variant: :outline, size: :sm, formnovalidate: true) %></div>
   <% if preview %>
     <% text, error = preview %>
     <% if error %>

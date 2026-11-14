@@ -28,9 +28,9 @@
 </ul>
 
 <% if @errors.empty? %>
-  <%= form_with url: install_site_packages_path(@site), class: "flex flex-wrap gap-2" do %>
+  <%= ss_form_with url: install_site_packages_path(@site), class: "flex flex-wrap gap-2" do %>
     <%= hidden_field_tag :url, @url, id: nil %>
-    <button type="submit" class="ss-btn ss-btn-primary"><%= icon("download", "size-4") %><%= @existing ? t("packages.preview.update_to", v: m["version"]) : t("packages.preview.install") %></button>
+    <%= render Ss::ButtonComponent.new(label: (@existing ? t("packages.preview.update_to", v: m["version"]) : t("packages.preview.install")), icon: icon("download", "size-4"), type: :submit) %>
     <%= link_to t("site_helpers.form.cancel"), site_packages_path(@site), class: "ss-btn ss-btn-ghost" %>
   <% end %>
 <% end %>

@@ -2,12 +2,9 @@
 <%= render "web/sites/tabs", site: @site, current: :packages %>
 
 <% if can?(:manage) %>
-  <%= form_with url: preview_site_packages_path(@site), class: "ss-card ss-card-pad mb-4 flex flex-wrap items-end gap-3" do %>
-    <div class="min-w-64 flex-1">
-      <label for="url" class="ss-label"><%= t("packages.index.url") %></label>
-      <%= url_field_tag :url, params[:url], class: "ss-input", required: true, placeholder: t("packages.index.url_ph") %>
-    </div>
-    <button type="submit" class="ss-btn ss-btn-primary"><%= icon("eye", "size-4") %><%= t("packages.index.preview") %></button>
+  <%= ss_form_with url: preview_site_packages_path(@site), class: "ss-card ss-card-pad mb-4 flex flex-wrap items-end gap-3" do |f| %>
+    <%= f.ss_url_field :url, label: t("packages.index.url"), value: params[:url], required: true, placeholder: t("packages.index.url_ph"), wrapper_class: "min-w-64 flex-1" %>
+    <%= render Ss::ButtonComponent.new(label: t("packages.index.preview"), icon: icon("eye", "size-4"), type: :submit) %>
     <p class="basis-full text-xs text-muted"><%= t("packages.index.hint_html") %></p>
   <% end %>
 <% end %>

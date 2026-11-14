@@ -1,4 +1,9 @@
 <%# locals: (css:, label: nil) -%>
-<button type="button" class="<%= css %>" data-action="ss-privacy#toggle" title="<%= t("layout.values_toggle") %> (P)" aria-label="<%= t("layout.values_toggle") %>">
-  <span class="ss-eye-on"><%= icon("eye", "size-4") %></span><span class="ss-eye-off"><%= icon("eye-off", "size-4") %></span><%= label %>
-</button>
+<%# css: as classes de sempre ("ss-btn ss-btn-ghost ss-btn-sm lg:hidden"); a variante e o tamanho saem delas para o Ss::ButtonComponent. %>
+<% classes = css.to_s.split %>
+<% variant = classes.include?("is-on-grad") ? :on_grad : :ghost %>
+<% size = classes.include?("ss-btn-sm") ? :sm : :md %>
+<% extra = (classes - %w[ss-btn ss-btn-ghost ss-btn-sm is-on-grad]).join(" ") %>
+<%= render(Ss::ButtonComponent.new(variant:, size:, css: extra, title: "#{t("layout.values_toggle")} (P)", aria: { label: t("layout.values_toggle") }, data: { action: "ss-privacy#toggle" })) do %>
+  <span class="ss-eye-on"><%= icon("eye", "size-4") %></span><span class="ss-eye-off"><%= icon("eye-off", "size-4") %></span><% if label %><span><%= label %></span><% end %>
+<% end %>

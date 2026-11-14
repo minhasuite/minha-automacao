@@ -63,29 +63,25 @@
     · <%= @watch["enabled"] ? t("energy.watch.on", factor: number_with_precision(@watch["factor"], precision: 1, strip_insignificant_zeros: true, separator: ","), min: number_with_precision(@watch["min_kwh"], precision: 2, strip_insignificant_zeros: true, separator: ",")) : t("energy.watch.off") %>
   </p>
   <% if @manage %>
-    <%= form_with url: energy_path, method: :patch, scope: :energy, class: "grid gap-4 sm:grid-cols-2" do |f| %>
+    <%= ss_form_with url: energy_path, method: :patch, scope: :energy, class: "grid gap-4 sm:grid-cols-2" do |f| %>
       <%= hidden_field_tag :site_id, @site.id, id: nil %>
-      <div><label class="ss-label" for="en-tp"><%= t("energy.form.tariff_point") %></label>
-        <%= f.select :tariff_point, EnergyUse.tariff_choices(@site).map { |p| [ p.name, p.id ] }, { selected: EnergyUse.settings(@site)["tariff_point"], include_blank: t("energy.form.auto") }, id: "en-tp", class: "ss-input" %></div>
-      <div><label class="ss-label" for="en-tf"><%= t("energy.form.tariff") %></label>
-        <%= f.text_field :tariff, value: @tariff, id: "en-tf", class: "ss-input num", inputmode: "decimal", placeholder: "0,95" %></div>
-      <div class="sm:col-span-2"><label class="flex items-center gap-2"><%= f.check_box :enabled, { checked: @watch["enabled"], id: "en-on" } %><span><%= t("energy.form.enabled") %></span></label>
-        <p class="text-xs text-muted mt-1"><%= t("energy.form.enabled_hint") %></p></div>
-      <div><label class="ss-label" for="en-fa"><%= t("energy.form.factor") %></label>
-        <%= f.text_field :factor, value: @watch["factor"], id: "en-fa", class: "ss-input num", inputmode: "decimal" %></div>
-      <div><label class="ss-label" for="en-mk"><%= t("energy.form.min_kwh") %></label>
-        <%= f.text_field :min_kwh, value: @watch["min_kwh"], id: "en-mk", class: "ss-input num", inputmode: "decimal" %></div>
+      <%= f.ss_select :tariff_point, EnergyUse.tariff_choices(@site).map { |p| [ p.name, p.id ] }, label: t("energy.form.tariff_point"),
+                      selected: EnergyUse.settings(@site)["tariff_point"], include_blank: t("energy.form.auto"), id: "en-tp" %>
+      <%= f.ss_text_field :tariff, label: t("energy.form.tariff"), value: @tariff, id: "en-tf", class: "num", inputmode: "decimal", placeholder: "0,95" %>
+      <%= f.ss_check_box :enabled, label: t("energy.form.enabled"), help: t("energy.form.enabled_hint"), checked: @watch["enabled"], id: "en-on", wrapper_class: "sm:col-span-2" %>
+      <%= f.ss_text_field :factor, label: t("energy.form.factor"), value: @watch["factor"], id: "en-fa", class: "num", inputmode: "decimal" %>
+      <%= f.ss_text_field :min_kwh, label: t("energy.form.min_kwh"), value: @watch["min_kwh"], id: "en-mk", class: "num", inputmode: "decimal" %>
       <% devices = EnergyUse.devices(@site).keys.sort_by(&:name) %>
       <% if devices.any? %>
         <fieldset class="sm:col-span-2"><legend class="ss-label"><%= t("energy.form.ignore") %></legend>
           <div class="grid gap-1 sm:grid-cols-2">
             <% devices.each do |d| %>
-              <label class="flex items-center gap-2 text-sm"><%= check_box_tag "energy[ignore][]", d.id, Array(@watch["ignore"]).include?(d.id), id: "en-ig-#{d.id}" %><span><%= d.name %></span></label>
+              <%= f.ss_check_box :ignore, label: d.name, multiple: true, checked_value: d.id, include_hidden: false, checked: Array(@watch["ignore"]).include?(d.id), id: "en-ig-#{d.id}", wrapper_class: "text-sm" %>
             <% end %>
           </div>
         </fieldset>
       <% end %>
-      <div class="sm:col-span-2"><%= f.submit t("energy.form.save"), class: "ss-btn ss-btn-primary" %></div>
+      <div class="sm:col-span-2"><%= f.ss_submit t("energy.form.save") %></div>
     <% end %>
   <% end %>
 </section>

@@ -14,15 +14,13 @@
     <% else %>
       <section class="ss-card ss-card-pad grid gap-3" aria-labelledby="gl-form">
         <%= render Ss::CardHeaderComponent.new(title: t("guest_links.new"), subtitle: t("guest_links.new_hint"), icon: icon("link", ""), id: "gl-form") %>
-        <%= form_with scope: :guest_link, url: settings_guest_links_path, method: :post, data: { turbo: false }, class: "grid gap-3 sm:grid-cols-2 items-end" do |f| %>
-          <div><%= f.label :name, t("guest_links.name"), class: "ss-label", for: "gl-name" %><%= f.text_field :name, class: "ss-input", id: "gl-name", required: true, maxlength: 80, placeholder: t("guest_links.name_hint") %></div>
-          <div><%= f.label :dashboard_id, t("guest_links.dashboard"), class: "ss-label", for: "gl-dash" %><%= f.select :dashboard_id, @dashboards, {}, class: "ss-input", id: "gl-dash" %></div>
-          <div><%= f.label :role, t("guest_links.role"), class: "ss-label", for: "gl-role" %>
-            <%= f.select :role, GuestLink::ROLES.map { |r| [ t("guest_links.roles.#{r}"), r ] }, {}, class: "ss-input", id: "gl-role" %></div>
-          <div><%= f.label :hours, t("guest_links.hours"), class: "ss-label", for: "gl-hours" %>
-            <%= f.select :hours, GuestLink::TTLS.map { |h| [ t("guest_links.ttl", count: h), h ] }, { selected: 8 }, class: "ss-input", id: "gl-hours" %></div>
+        <%= ss_form_with scope: :guest_link, url: settings_guest_links_path, method: :post, data: { turbo: false }, class: "grid gap-3 sm:grid-cols-2 items-end" do |f| %>
+          <%= f.ss_text_field :name, label: t("guest_links.name"), id: "gl-name", required: true, maxlength: 80, placeholder: t("guest_links.name_hint") %>
+          <%= f.ss_select :dashboard_id, @dashboards, label: t("guest_links.dashboard"), id: "gl-dash" %>
+          <%= f.ss_select :role, GuestLink::ROLES.map { |r| [ t("guest_links.roles.#{r}"), r ] }, label: t("guest_links.role"), id: "gl-role" %>
+          <%= f.ss_select :hours, GuestLink::TTLS.map { |h| [ t("guest_links.ttl", count: h), h ] }, label: t("guest_links.hours"), selected: 8, id: "gl-hours" %>
           <p class="text-sm text-muted sm:col-span-2"><%= t("guest_links.mark_hint") %></p>
-          <div class="sm:col-span-2"><%= f.submit t("guest_links.create"), class: "ss-btn ss-btn-primary" %></div>
+          <div class="sm:col-span-2"><%= f.ss_submit t("guest_links.create") %></div>
         <% end %>
       </section>
 
@@ -42,8 +40,8 @@
             <% tb.column :uses, t("guest_links.uses") do |l| %><span class="num"><%= l.uses %></span><%= " · #{l(l.last_used_at, format: :short)}" if l.last_used_at %><% end %>
             <% tb.column :actions, t("people.actions"), align: :right do |l| %>
               <% if l.active? %>
-                <%= button_to t("guest_links.revoke"), settings_guest_link_path(l), method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm is-danger",
-                              form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("guest_links.revoke_confirm", name: l.name), turbo_confirm_button: t("guest_links.revoke") } } %>
+                <%= render Ss::ButtonComponent.new(label: t("guest_links.revoke"), href: settings_guest_link_path(l), method: :delete, variant: :ghost, size: :sm, tone: :danger,
+                                                   confirm: t("guest_links.revoke_confirm", name: l.name), confirm_tone: :danger, confirm_button: t("guest_links.revoke")) %>
               <% end %>
             <% end %>
           <% end %>

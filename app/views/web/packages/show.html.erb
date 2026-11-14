@@ -2,7 +2,8 @@
 <%= render "web/shared/header", title: @package.name, subtitle: [ t("packages.version", v: @package.version), m["description"].to_s.truncate(160).presence ].compact.join(" · "), back: site_packages_path(@site) do %>
   <% if can?(:manage) %>
     <%= link_to check_package_path(@package), class: "ss-btn ss-btn-outline" do %><%= icon("refresh", "size-4") %><%= t("packages.show.check") %><% end %>
-    <%= button_to package_path(@package), method: :delete, class: "ss-btn ss-btn-ghost text-danger", form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("packages.show.confirm"), turbo_confirm_button: t("packages.show.remove") } } do %><%= icon("trash", "size-4") %><%= t("packages.show.remove") %><% end %>
+    <%= render Ss::ButtonComponent.new(label: t("packages.show.remove"), icon: icon("trash", "size-4"), href: package_path(@package), method: :delete, variant: :ghost, tone: :danger,
+                                       confirm: t("packages.show.confirm"), confirm_tone: :danger, confirm_button: t("packages.show.remove")) %>
   <% end %>
 <% end %>
 

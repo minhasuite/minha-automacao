@@ -3,13 +3,13 @@
 <div class="flex items-center gap-3 px-1.5 pt-1.5 pb-2">
   <%= ss_avatar(current_user.name.to_s, size: 32) %>
   <div class="ss-shell-label min-w-0 flex-1">
-    <p class="truncate text-sm font-semibold text-white"><%= current_user.name %></p>
-    <p class="truncate text-xs text-white/50"><%= current_user.email %></p>
+    <p class="truncate text-sm font-semibold text-side-ink"><%= current_user.name %></p>
+    <p class="truncate text-xs text-side-ink/50"><%= current_user.email %></p>
   </div>
   <span class="ss-shell-label ss-badge ss-badge-muted shrink-0"><%= current_user.role_label %></span>
 </div>
 <div class="ss-shell-label"><div class="grid grid-cols-3 gap-1">
-  <button type="button" class="ss-btn ss-btn-sm is-on-grad px-1 text-xs" data-action="ss-theme#toggle"><%= icon("moon", "size-4") %><%= t("layout.theme") %></button>
+  <%= render Ss::ButtonComponent.new(label: t("layout.theme"), icon: icon("moon", "size-4"), variant: :on_grad, size: :sm, css: "px-1 text-xs", data: { action: "ss-theme#toggle" }) %>
   <%= render "web/shared/privacy_button", css: "ss-btn ss-btn-sm is-on-grad px-1 text-xs", label: t("layout.values") %>
-  <%= button_to logout_path, method: :delete, class: "ss-btn ss-btn-sm is-on-grad w-full px-1 text-xs", form: { class: "contents" } do %><%= icon("logout", "size-4") %><%= t("layout.logout") %><% end %>
+  <%= render Ss::ButtonComponent.new(label: t("layout.logout"), icon: icon("logout", "size-4"), href: logout_path, method: :delete, variant: :on_grad, size: :sm, css: "w-full px-1 text-xs", form: { class: "contents" }) %>
 </div></div>

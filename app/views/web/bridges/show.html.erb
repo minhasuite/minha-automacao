@@ -3,52 +3,46 @@
 <% admin = can?(:admin) %>
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-  <%= form_with url: site_bridge_path(@site, @bridge.key), method: :patch, class: "ss-card min-w-0", aria: { label: t("bridges.exposed_on", name: @bridge.title) }, data: { controller: "ss-filter" } do %>
+  <%= ss_form_with url: site_bridge_path(@site, @bridge.key), method: :patch, class: "ss-card block min-w-0", aria: { label: t("bridges.exposed_on", name: @bridge.title) }, data: { controller: "ss-filter" } do |f| %>
     <div class="ss-card-pad flex flex-wrap items-center justify-between gap-2 border-b border-line">
       <div>
         <h2 class="font-bold"><%= t("bridges.exposed") %></h2>
         <p class="text-sm text-muted"><%= t("bridges.count_html", n: tag.span(@exposed.size, class: "num"), total: tag.span(@items.size, class: "num")) %></p>
       </div>
-      <% if admin && @items.any? %><%= submit_tag t("integrations.common.save"), class: "ss-btn ss-btn-primary", name: nil %><% end %>
+      <% if admin && @items.any? %><%= f.ss_submit t("integrations.common.save"), name: nil %><% end %>
     </div>
     <% if @items.empty? %>
       <p class="ss-card-pad text-sm text-muted"><%= t("bridges.empty") %></p>
     <% else %>
       <div class="ss-card-pad border-b border-line">
-        <label for="br-busca" class="ss-label"><%= t("bridges.search") %></label>
-        <input type="search" id="br-busca" class="ss-input" placeholder="<%= t("bridges.search_hint") %>" autocomplete="off" data-ss-filter-target="input" data-action="input->ss-filter#apply keydown.esc->ss-filter#clear">
-        <p class="text-sm text-muted mt-2" data-ss-filter-target="empty" hidden><%= t("bridges.no_match") %> <button type="button" class="font-semibold text-accent" data-action="ss-filter#clear"><%= t("bridges.clear") %></button></p>
+        <%= f.ss_search_field :busca, label: t("bridges.search"), id: "br-busca", placeholder: t("bridges.search_hint"), autocomplete: "off",
+                              data: { ss_filter_target: "input", action: "input->ss-filter#apply keydown.esc->ss-filter#clear" } %>
+        <p class="text-sm text-muted mt-2" data-ss-filter-target="empty" hidden><%= t("bridges.no_match") %> <%= render Ss::ButtonComponent.new(label: t("bridges.clear"), variant: :ghost, size: :sm, data: { action: "ss-filter#clear" }) %></p>
       </div>
       <ul class="ss-rows">
         <% @items.each do |p, type| %>
           <% e = @exposed[p.id] %>
           <% critical = p.risk == "critical" %>
           <li class="flex-wrap" data-ss-filter-target="item">
-            <label class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
-              <%= hidden_field_tag "items[#{p.id}][exposed]", "0", id: nil %>
-              <%= check_box_tag "items[#{p.id}][exposed]", "1", e.present?, id: "br-#{p.id}", disabled: !admin, class: "size-5" %>
-              <span class="ss-icon-tile <%= e ? 'is-grad' : 'is-accent' %>"><%= icon(point_icon(p)) %></span>
-              <span class="min-w-0">
-                <% title, context = p.display_names %>
-                <span class="block font-bold text-ink truncate"><%= title %></span>
-                <span class="block text-xs text-muted truncate"><%= [ context, @bridge.label(type) ].compact.join(" · ") %></span>
-              </span>
-            </label>
+            <% title, context = p.display_names %>
+            <%= f.ss_check_box "items[#{p.id}][exposed]", id: "br-#{p.id}", checked: e.present?, disabled: !admin, class: "size-5",
+                               wrapper_class: "min-w-0 flex-1 [&>label]:gap-3 [&>label]:cursor-pointer",
+                               label: safe_join([ tag.span(icon(point_icon(p)), class: "ss-icon-tile #{e ? 'is-grad' : 'is-accent'}"),
+                                                  tag.span(class: "min-w-0") { safe_join([ tag.span(title, class: "block font-bold text-ink truncate"),
+                                                                                           tag.span([ context, @bridge.label(type) ].compact.join(" · "), class: "block text-xs text-muted truncate") ]) } ]) %>
             <div class="flex items-center gap-2 w-full sm:w-auto">
               <% if critical %><span class="ss-badge ss-badge-danger shrink-0"><%= t("bridges.critical") %></span><% end %>
-              <%= text_field_tag "items[#{p.id}][name]", e&.name, placeholder: t("bridges.name_in_app", name: p.name), maxlength: 60, disabled: !admin,
-                                 class: "ss-input text-sm sm:w-56", "aria-label": t("bridges.name_of", name: p.name) %>
+              <%= f.ss_text_field "items[#{p.id}][name]", id: "brn-#{p.id}", value: e&.name, label: t("bridges.name_of", name: p.name), hide_label: true, placeholder: t("bridges.name_in_app", name: p.name),
+                                  maxlength: 60, disabled: !admin, class: "text-sm sm:w-56" %>
             </div>
             <% if critical && admin && e.nil? %>
-              <label class="ss-check w-full text-sm text-danger">
-                <%= check_box_tag "items[#{p.id}][confirm]", "1", false, id: "brc-#{p.id}" %>
-                <%= t("bridges.confirm", name: p.name) %>
-              </label>
+              <%= f.ss_check_box "items[#{p.id}][confirm]", id: "brc-#{p.id}", checked: false, include_hidden: false, label: t("bridges.confirm", name: p.name),
+                                 wrapper_class: "w-full text-sm text-danger" %>
             <% end %>
           </li>
         <% end %>
       </ul>
-      <% if admin %><div class="ss-card-pad border-t border-line"><%= submit_tag t("integrations.common.save"), class: "ss-btn ss-btn-primary", name: nil %></div><% end %>
+      <% if admin %><div class="ss-card-pad border-t border-line"><%= f.ss_submit t("integrations.common.save"), name: nil %></div><% end %>
     <% end %>
   <% end %>
 
@@ -84,7 +78,7 @@
         <%= render Ss::CodeBlockComponent.new(text: @key, label: t("bridges.key_once"), css: "mt-1") %>
       <% end %>
       <% if admin %>
-        <%= button_to t("bridges.generate"), service_key_site_bridge_path(@site, @bridge.key), class: "ss-btn ss-btn-ghost mt-3", form: { data: { turbo: false } } %>
+        <%= render Ss::ButtonComponent.new(label: t("bridges.generate"), href: service_key_site_bridge_path(@site, @bridge.key), method: :post, variant: :ghost, css: "mt-3", form: { data: { turbo: false } }) %>
         <p class="text-xs text-muted mt-2"><%= t("bridges.old_keys") %></p>
       <% end %>
     </section>

@@ -1,21 +1,15 @@
 <%# locals: (f:, record:, categories: nil, span: "sm:col-span-2") -%>
-<%# ondaA1 (A2): rótulos (todos os modelos) e categoria (listas que agrupam). -%>
+<%# ondaA1 (A2): rótulos (todos os modelos) e categoria (listas que agrupam). O ss_fields com o mesmo
+    escopo do f serve a quem chama com o formulário comum ou o da gem (mesmos name/id). -%>
 <% list_id = "labels-#{record.class.name.underscore}" %>
-<div class="<%= categories ? '' : span %>">
-  <%= f.label :label_list, t("shared.organize.labels"), class: "ss-label" %>
-  <%= f.text_field :label_list, class: "ss-input", maxlength: 300, placeholder: t("shared.organize.labels_ph"), list: list_id, autocomplete: "off" %>
+<%= ss_fields(f.object_name, model: f.object) do |o| %>
+  <%= o.ss_text_field :label_list, label: t("shared.organize.labels"), wrapper_class: (categories ? nil : span), maxlength: 300, placeholder: t("shared.organize.labels_ph"), list: list_id, autocomplete: "off" %>
   <datalist id="<%= list_id %>"><% Tag.order(:name).limit(200).pluck(:name).each do |n| %><option value="<%= n %>"></option><% end %></datalist>
-</div>
-<% if categories %>
-  <div>
-    <%= f.label :category, t("shared.organize.category"), class: "ss-label" %>
-    <%= f.text_field :category, class: "ss-input", maxlength: 60, placeholder: t("shared.organize.category_ph"), list: "#{list_id}-cat", autocomplete: "off" %>
+  <% if categories %>
+    <%= o.ss_text_field :category, label: t("shared.organize.category"), maxlength: 60, placeholder: t("shared.organize.category_ph"), list: "#{list_id}-cat", autocomplete: "off" %>
     <datalist id="<%= list_id %>-cat"><% categories.each do |c| %><option value="<%= c %>"></option><% end %></datalist>
-  </div>
-<% end %>
-<% if record.respond_to?(:alias_list) %>
-  <div class="<%= span %>">
-    <%= f.label :alias_list, t("shared.organize.aliases"), class: "ss-label" %>
-    <%= f.text_field :alias_list, class: "ss-input", maxlength: 600, placeholder: t("shared.organize.aliases_ph") %>
-  </div>
+  <% end %>
+  <% if record.respond_to?(:alias_list) %>
+    <%= o.ss_text_field :alias_list, label: t("shared.organize.aliases"), wrapper_class: span, maxlength: 600, placeholder: t("shared.organize.aliases_ph") %>
+  <% end %>
 <% end %>
