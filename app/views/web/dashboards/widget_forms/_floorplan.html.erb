@@ -10,7 +10,7 @@
   <% layers.each_with_index do |l, li| %>
     <% base = "widget[layers][#{li}]" %>
     <% fresh = l.empty? %>
-    <details class="dw-fpe rounded-2xl border border-line p-3" <%= "open" if li.zero? %> data-controller="floorplan-editor">
+    <details class="rounded-2xl border border-line p-3" <%= "open" if li.zero? %> data-controller="floorplan-editor">
       <summary class="cursor-pointer font-semibold text-ink flex items-center gap-2"><%= icon(fresh ? "plus" : "map", "size-4 text-accent") %><%= fresh ? (layers.size == 1 ? t("dashboards.wf.fp.first_layer") : t("dashboards.wf.fp.new_layer")) : l["title"] %></summary>
       <%= hidden_field_tag "#{base}[id]", l["id"], id: nil %>
       <div class="grid gap-3 sm:grid-cols-2 mt-3">
@@ -20,8 +20,8 @@
       </div>
 
       <p class="text-xs text-muted mt-3" id="fl-hint-<%= uid %>-<%= li %>"><%= t("dashboards.wf.fp.drag_hint") %></p>
-      <div class="dw-fpe-canvas <%= 'dw-fp-drawn' if l['image'].blank? %>" data-floorplan-editor-target="canvas" aria-describedby="fl-hint-<%= uid %>-<%= li %>">
-        <img src="<%= l['image'] %>" alt="" class="dw-fp-img" data-floorplan-editor-target="img"<%= " hidden" if l["image"].blank? %>>
+      <div class="<%= FloorplanHelper::FPE_CANVAS %> <%= 'is-drawn' if l['image'].blank? %>" data-floorplan-editor-target="canvas" aria-describedby="fl-hint-<%= uid %>-<%= li %>">
+        <img src="<%= l['image'] %>" alt="" class="<%= FloorplanHelper::FP_IMG %>" data-floorplan-editor-target="img"<%= " hidden" if l["image"].blank? %>>
       </div>
 
       <fieldset class="mt-3">

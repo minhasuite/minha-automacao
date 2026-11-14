@@ -60,7 +60,7 @@ RSpec.describe "Planta baixa (widget floorplan)" do
     within(tenant) { dashboard.publish! }
     view = within(tenant) { dashboard.reload.definition["views"].last["id"] }
     get "/paineis/#{dashboard.id}", params: { view: view }
-    expect(response.body).to include('data-controller="floorplan"', "dw-fp-light", "--glow: #ff0000", "Desligar Luz", "Abrir Teste Sala", layer["image"])
+    expect(response.body).to include('data-controller="floorplan"', "bg-[var(--glow,var(--warn))]", "--glow: #ff0000", "Desligar Luz", "Abrir Teste Sala", layer["image"])
 
     get "/paineis/#{dashboard.id}/editar", params: { view: view }
     expect(response.body).to include('data-controller="floorplan-editor"', "Arraste os pontos", 'multipart/form-data')

@@ -4,6 +4,13 @@ import { Controller } from "@hotwired/stimulus"
 // deixa arrastar. Arrastar escreve os campos x/y (e larg./alt. na alça do
 // cômodo) da própria linha; os campos continuam sendo a fonte da verdade, e
 // quem usa o teclado edita os números direto.
+// Marcas do quadro de arrastar: o mesmo desenho do cômodo/pino da planta (FloorplanHelper), em utilitários;
+// posição e tamanho por --x/--y/--w/--h (em %), arrastando = is-dragging.
+const DRAG = "cursor-grab touch-none [&.is-dragging]:cursor-grabbing [&.is-dragging]:z-[3] [&.is-dragging]:shadow-[0_0_0_3px_var(--accent)]"
+const ROOM = `absolute flex items-start py-[.35rem] px-2 rounded-[10px] no-underline border-[1.5px] border-[color-mix(in_srgb,var(--accent)_35%,transparent)] bg-[color-mix(in_srgb,var(--accent)_6%,transparent)] transition-[background-color,border-color,box-shadow] duration-[.4s] hover:border-accent hover:bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] in-[.is-drawn]:bg-surface in-[.is-drawn]:border-line in-[.is-drawn]:shadow-[var(--shadow-card)] group-data-[night]/fp:in-[.is-drawn]:bg-[color-mix(in_srgb,var(--side)_70%,black)] group-data-[night]/fp:in-[.is-drawn]:border-[color-mix(in_srgb,var(--side)_60%,var(--accent))] group-data-[night]/fp:in-[.is-drawn]:shadow-none @max-[520px]:py-[.2rem] @max-[520px]:px-[.3rem] @max-[520px]:rounded-[7px] z-[2] text-[.72rem] font-extrabold text-ink-2 left-[var(--x)] top-[var(--y)] w-[var(--w)] h-[var(--h)] ${DRAG}`
+const PIN = `absolute z-[3] grid place-items-center size-[1.6rem] rounded-full -translate-x-1/2 -translate-y-1/2 left-[var(--x)] top-[var(--y)] border-2 border-transparent text-[var(--on-accent)] bg-[image:var(--grad)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--ink)_35%,transparent)] ${DRAG}`
+const HANDLE = "absolute -right-[6px] -bottom-[6px] size-[14px] rounded-[4px] bg-accent cursor-nwse-resize"
+
 export default class extends Controller {
   static targets = ["canvas", "img", "image", "pins", "rooms", "js"]
 
@@ -23,21 +30,22 @@ export default class extends Controller {
   render() {
     const url = this.imageTarget.value.trim()
     if (url && !this.previewing && /^(https:\/\/|\/)/.test(url)) { this.imgTarget.src = url; this.imgTarget.hidden = false }
-    this.canvasTarget.classList.toggle("dw-fp-drawn", this.imgTarget.hidden)
+    this.canvasTarget.classList.toggle("is-drawn", this.imgTarget.hidden)
     this.canvasTarget.querySelectorAll(".dw-fpe-mark").forEach((m) => m.remove())
     this.rows().forEach((row) => {
       const ref = this.field(row, "ref")
       if (!ref.value || this.field(row, "remove")?.checked) return
       const room = row.dataset.kind === "room"
       const mark = document.createElement("div")
-      mark.className = `dw-fpe-mark ${room ? "dw-fp-room" : "dw-fp-pin dw-on"}`
+      mark.className = `dw-fpe-mark ${room ? ROOM : PIN}`
       mark.textContent = room ? ref.selectedOptions[0].text : ""
       mark.title = ref.selectedOptions[0].text
       this.place(mark, row)
-      mark.addEventListener("pointerdown", (e) => this.drag(e, row, mark, e.target.classList.contains("dw-fpe-handle") ? "size" : "move"))
+      mark.addEventListener("pointerdown", (e) => this.drag(e, row, mark, e.target.dataset.handle ? "size" : "move"))
       if (room) {
         const h = document.createElement("span")
-        h.className = "dw-fpe-handle"
+        h.className = HANDLE
+        h.dataset.handle = "1"
         mark.append(h)
       }
       this.canvasTarget.append(mark)
@@ -46,9 +54,9 @@ export default class extends Controller {
 
   place(mark, row) {
     const v = (k) => parseFloat(this.field(row, k)?.value) || 0
-    mark.style.left = `${v("x")}%`
-    mark.style.top = `${v("y")}%`
-    if (row.dataset.kind === "room") { mark.style.width = `${v("w")}%`; mark.style.height = `${v("h")}%` }
+    mark.style.setProperty("--x", `${v("x")}%`)
+    mark.style.setProperty("--y", `${v("y")}%`)
+    if (row.dataset.kind === "room") { mark.style.setProperty("--w", `${v("w")}%`); mark.style.setProperty("--h", `${v("h")}%`) }
   }
 
   drag(event, row, mark, mode) {
@@ -59,14 +67,14 @@ export default class extends Controller {
     const [sx, sy] = pct(event)
     const start = Object.fromEntries(["x", "y", "w", "h"].map((k) => [k, parseFloat(this.field(row, k)?.value) || 0]))
     const set = (k, n) => { const f = this.field(row, k); if (f) f.value = Math.round(Math.min(100, Math.max(0, n)) * 10) / 10 }
-    mark.classList.add("dw-fpe-dragging")
+    mark.classList.add("is-dragging")
     const move = (e) => {
       const [x, y] = pct(e)
       if (mode === "size") { set("w", start.w + x - sx); set("h", start.h + y - sy) } else { set("x", start.x + x - sx); set("y", start.y + y - sy) }
       this.place(mark, row)
     }
     const up = () => {
-      mark.classList.remove("dw-fpe-dragging")
+      mark.classList.remove("is-dragging")
       mark.removeEventListener("pointermove", move)
       mark.removeEventListener("pointerup", up)
     }

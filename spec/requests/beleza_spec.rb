@@ -163,7 +163,7 @@ RSpec.describe "Beleza dos painéis" do
 
       get "/paineis/#{dashboard.id}" # sem ?view=, abre na visão inicial
       body = response.body
-      expect(body).to include("dw-fp-full", "dw-fp-door", 'data-ss-cue-kind-value="open"', "--glow: #ff0000")
+      expect(body).to include("dw-fp-full", 'data-ss-cue-kind-value="open"', "--glow: #ff0000")
       expect(body.index("dw-fp-full")).to be < body.index(%(data-points="#{door.id}")) if body.include?(%(data-points="#{door.id}"))
       get "/paineis/#{dashboard.id}", params: { view: "home" }
       expect(response.body).not_to include("dw-fp-full")

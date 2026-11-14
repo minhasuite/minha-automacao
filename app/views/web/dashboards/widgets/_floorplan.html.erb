@@ -1,7 +1,7 @@
 <%# locals: (w:, points:, dashboard:, live:) -%>
 <% layers = Array(w.dig("data", "layers")) %>
 <% uid = w["id"] %>
-<div class="ss-card ss-card-pad h-full dw-fp" data-controller="floorplan" data-floorplan-key-value="<%= uid %>">
+<div class="ss-card ss-card-pad h-full <%= FloorplanHelper::FP_ROOT %>" data-controller="floorplan" data-floorplan-key-value="<%= uid %>">
   <%# Cabeçalho padrão de card da gem; à direita, os andares (abas da planta) e o modo noite (botão de ícone da gem). %>
   <%= render Ss::CardHeaderComponent.new(title: w["label"].presence || t("dashboards.w.floorplan"), css: "mb-2.5") do |h| %>
     <% h.with_action do %>
@@ -18,15 +18,15 @@
     <%= render "web/shared/empty_art", art: "plan", title: t("dashboards.w.fp_empty"), text: t("dashboards.w.fp_empty_hint") %>
   <% end %>
   <% layers.each_with_index do |l, i| %>
-    <div class="dw-fp-layer" id="fpl-<%= uid %>-<%= i %>" role="<%= 'tabpanel' if layers.size > 1 %>" aria-labelledby="<%= "fpt-#{uid}-#{i}" if layers.size > 1 %>" data-floorplan-target="layer"<%= " hidden" unless i.zero? %>>
-      <div class="dw-fp-stage <%= 'dw-fp-drawn' if l['image'].blank? %>">
-        <% if l["image"].present? %><img src="<%= l['image'] %>" alt="<%= t("dashboards.w.plan_x", name: l['title']) %>" class="dw-fp-img" loading="lazy" decoding="async"><% end %>
+    <div id="fpl-<%= uid %>-<%= i %>" role="<%= 'tabpanel' if layers.size > 1 %>" aria-labelledby="<%= "fpt-#{uid}-#{i}" if layers.size > 1 %>" data-floorplan-target="layer"<%= " hidden" unless i.zero? %>>
+      <div class="<%= FloorplanHelper::FP_STAGE %> <%= l['image'].blank? ? 'is-drawn' : FloorplanHelper::FP_LOADING %>">
+        <% if l["image"].present? %><img src="<%= l['image'] %>" alt="<%= t("dashboards.w.plan_x", name: l['title']) %>" class="<%= FloorplanHelper::FP_IMG %>" loading="lazy" decoding="async"><% end %>
         <% l["rooms"].each do |room| %>
           <% target = room["view_id"] ? dw_view_path(dashboard, { "id" => room["view_id"] }, home: @home) : area_path(room["area_id"]) %>
           <% room_glow = dw_glow(points[room["glow_id"]]) if room["glow_id"] %>
-          <%= link_to target, class: "dw-fp-room #{'dw-fp-room-on' if room['on'].positive?}", style: "left: #{room['x']}%; top: #{room['y']}%; width: #{room['w']}%; height: #{room['h']}%#{"; --glow: #{room_glow}" if room_glow}",
+          <%= link_to target, class: dw_fp_room_class(on: room["on"].positive?), style: "left: #{room['x']}%; top: #{room['y']}%; width: #{room['w']}%; height: #{room['h']}%#{"; --glow: #{room_glow}" if room_glow}",
                               data: { turbo_frame: "_top" }, "aria-label": t("dashboards.w.open_x", name: room['name']) + (room['on'].positive? ? " (#{t("dashboards.w.lights_on", count: room['on'])})" : "") do %>
-            <span class="dw-fp-room-name"><%= room["name"] %></span>
+            <span class="<%= FloorplanHelper::FP_ROOM_NAME %>"><%= room["name"] %></span>
           <% end %>
         <% end %>
         <% l["pins"].each do |pin| %>
@@ -39,17 +39,17 @@
           <% door = p["capability"].in?(%w[contact gate cover]) %>
           <%# Beleza (ideias 17 e 18): luz que acende e porta que abre acenam (ss-cue da gem; menos movimento desliga). %>
           <% cue = ss_cue_data(kind: door ? :open : :on, active: on, key: "fp-#{uid}-#{p['id']}") %>
-          <% css = [ "dw-fp-pin", "ss-cue", ("dw-on" if on), ("dw-fp-light" if light), ("dw-fp-door" if door), ("dw-fp-alert" if alert), ("dw-fp-fan" if dw_fan?(p) && on), ("dw-unavailable" if off_line) ].compact.join(" ") %>
+          <% css = "#{dw_fp_pin_class(on: on, light: light, alert: alert, fan: dw_fan?(p) && on, off_line: off_line)} ss-cue" %>
           <% style = [ ("--glow: #{glow}" if glow), (dw_spin_style(p) if dw_fan?(p)) ].compact.join("; ") %>
           <% label = "#{dw_row_names(p).first}: #{off_line ? t("dashboards.w.no_signal").downcase : p['text']}" %>
-          <span class="dw-fp-at" style="left: <%= pin['x'] %>%; top: <%= pin['y'] %>%">
+          <span class="<%= FloorplanHelper::FP_AT %>" style="left: <%= pin['x'] %>%; top: <%= pin['y'] %>%">
             <% if p["can_command"] && !off_line && Array(p["commands"]).include?("toggle") %>
               <%= dw_command_button(p, "toggle", w: w, dashboard: dashboard, live: live, class: css, style: style, form_class: "contents", "aria-pressed": p["on"].to_s, data: cue,
                                     "aria-label": t(p['on'] ? "dashboards.w.turn_off_x" : "dashboards.w.turn_on_x", name: dw_row_names(p).first), title: label) do %><%= icon(p["display_icon"], "size-4") %><% end %>
             <% else %>
               <%= link_to point_path(p["id"]), class: css, style: style, title: label, "aria-label": label, data: { turbo_frame: "_top", **cue } do %><%= icon(p["display_icon"], "size-4") %><% end %>
             <% end %>
-            <% if p["value"].is_a?(Numeric) && !p["on"] && !off_line && p["capability"] != "dimmer" %><span class="dw-fp-val num" aria-hidden="true"><%= p["text"] %></span><% end %>
+            <% if p["value"].is_a?(Numeric) && !p["on"] && !off_line && p["capability"] != "dimmer" %><span class="<%= FloorplanHelper::FP_VAL %> num" aria-hidden="true"><%= p["text"] %></span><% end %>
           </span>
         <% end %>
       </div>
