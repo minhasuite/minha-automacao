@@ -1,6 +1,7 @@
-<%# Configurações → Aparência #instalar (pwa-ios, docs/pwa.md): o que vale neste aparelho. O pwa-install mostra
-    "já instalado", o passo a passo do iPhone (sem pedido de instalação no Safari) ou o botão do navegador. %>
-<section id="instalar" class="ss-card ss-card-pad mt-4 scroll-mt-24" aria-labelledby="ap-i" data-controller="pwa-install">
+<%# locals: (css: "mt-4") -%>
+<%# Configurações → Meus aparelhos #instalar (pwa-ios, docs/pwa.md; antes em Aparência): o que vale neste aparelho. O
+    pwa-install mostra "já instalado", o passo a passo do iPhone (sem pedido de instalação no Safari) ou o botão do navegador. %>
+<section id="instalar" class="ss-card ss-card-pad <%= css %> scroll-mt-24" aria-labelledby="ap-i" data-controller="pwa-install">
   <h2 id="ap-i" class="flex items-center gap-2"><%= icon("device-mobile", "size-5 text-accent") %><%= t("pwa.install.title") %></h2>
   <p class="text-sm text-muted mt-1"><%= t("pwa.install.pitch") %></p>
   <%= render Ss::NoteComponent.new(text: t("pwa.install.installed"), icon: icon("check-circle", ""), tone: :success, css: "mt-3", data: { pwa_install_target: "installed" }, hidden: true) %>

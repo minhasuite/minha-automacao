@@ -1,12 +1,14 @@
 <% fp = params.permit(*Web::DeviceHealthController::FILTERS).to_h.symbolize_keys %>
 <% open = Diagnostics.problems(@all) %>
-<%= render "web/shared/header", title: t("device_health.title"), subtitle: t("device_health.subtitle", site: @site.name) do %>
+<%# Dentro de Configurações (mesmo quadro e subnavegação das outras, shell-sino). %>
+<%= render "web/shared/header", title: t("settings.title"), subtitle: t("device_health.subtitle", site: @site.name) do %>
   <%= link_to site_devices_path(@site), class: "ss-btn ss-btn-ghost" do %><%= icon("chip", "size-4") %><%= t("device_health.devices") %><% end %>
   <% if current_user.admin? %>
     <%= link_to settings_health_path, class: "ss-btn ss-btn-ghost" do %><%= icon("shield-check", "size-4") %><%= t("device_health.system_health") %><% end %>
   <% end %>
 <% end %>
 <%= render "web/shared/site_switch", sites: @sites, site: @site, path: device_health_path %>
+<%= render layout: "web/settings/frame", locals: { current: :device_health } do %>
 
 <%= render Ss::KpiStripComponent.new(label: t("device_health.summary"), count: false, css: "mb-4", items: [
       { label: t("device_health.kpi.open"), value: open.size.to_s },
@@ -66,3 +68,4 @@
     <div class="sm:col-span-2"><%= f.ss_submit t("device_health.settings.save") %></div>
   <% end %>
 </section>
+<% end %>

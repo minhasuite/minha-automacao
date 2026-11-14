@@ -84,7 +84,7 @@ RSpec.describe "Primeira configuração" do
     expect(flash[:notice]).to eq("Tudo pronto! Sua casa está no ar.")
     expect(Onboarding.pending?(owner.reload)).to be(false)
     get "/"
-    expect(response.body).to include("ss-hero")
+    expect(response.body).to include("ss-badge") # selos do topo do painel (Ss::BadgeComponent)
     get "/primeira-configuracao"
     expect(response).to have_http_status(:ok) # pode rever, mas o Início não volta para cá
   end

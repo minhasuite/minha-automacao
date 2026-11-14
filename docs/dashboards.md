@@ -118,7 +118,7 @@ ou `key` do ponto.
 | `gauge` | `bind`, `min`, `max` (padrão: do ponto, senão 0–100) | medidor em arco |
 | `chart` | `binds`, `range` (`24h`/`7d`/`30d`) | linhas na mesma escala (booleano: faixas ligado) |
 | `query_list` | `query`, `empty_text`, `or?` (outras consultas somadas, até 30), `display?` (`rows`/`tiles`), `labels?` ({id do ponto → nome}) | lista automática (até 24), em lista ou grade de tiles; `empty_text` `" "` = some quando vazia. `or` e `labels` vêm do auto-entities do HA e ficam ao editar pelo formulário (`QueryListWidget.keep`) |
-| `ask` (plugin) | `placeholder?` | "Perguntar à casa" no painel: a pergunta vai para `Ai::Ask` (o mesmo da tela `/perguntar`, só leitura) e a resposta aparece no card (web `POST /perguntar/painel`, no frame do widget; API `POST /api/v1/sites/:id/ask` → `{answer, provider, model}`). Sem provedor de IA ligado, o card leva a Configurações → IA |
+| `ask` (plugin) | `placeholder?` | "Perguntar à casa" no painel: a pergunta vai para `Ai::Ask` (só leitura; a tela `/perguntar` saiu em 14/11/2026) e a resposta aparece no card (web `POST /perguntar/painel`, no frame do widget; API `POST /api/v1/sites/:id/ask` → `{answer, provider, model}`). Sem provedor de IA ligado, o card leva a Configurações → IA |
 | `ai_usage` (plugin) | — | Uso de IA do local (`AiCall`): chamadas hoje, no mês, falhas em 30 dias e, para técnico ou dono, o gasto estimado do mês; abaixo, as automações que mais chamaram em 30 dias |
 | `ai_log` (plugin) | `limit?` (3 a 30, padrão 8) | Linha do tempo da IA: as últimas chamadas no formato do Diário (`items` com `at`, `icon`, `tone`, `title`, `state`, `detail`), sem prompt nem resposta |
 | `announce` (plugin) | `binds?` (as Echos do seletor; vazio = todas), `placeholder?` | "Falar na Alexa": texto (anúncio), Echo de destino ou todas e microfone (voz gravada até 60 s; só em https). Envio por `Alexa::Talk` (web `POST /locais/:id/falar-na-alexa`, API `POST /api/v1/sites/:id/talk`): a voz vira MP3 (ffmpeg) e a Echo toca `<audio>` do link curto `/fala/<chave>.mp3` em `MEDIA_PUBLIC_URL` (https de fora); sem ele, o microfone some |
@@ -802,8 +802,12 @@ Depois do cache (que é por papel), cada widget ganha `search` (rótulo, título
 áreas) e o painel `favorites_now` (pontos favoritos da pessoa neste local, já em `points`).
 Favoritos em `users.dashboard_prefs["favorites"]` = {site_id → [ids]} (até 12): web "Favoritar" na página do
 ponto (`POST /pontos/:id/favorito`), app pela estrela da folha do ponto (`PUT /api/v1/points/:id/favorite`
-`{favorite}`). Painel com `"favorites": false` não mostra a linha. A web filtra pelo `ss-filter` da gem (a busca
-aparece com mais de 3 cards), o app pelo mesmo texto.
+`{favorite}`). Painel com `"favorites": false` não mostra a linha. Não há mais busca dentro do painel (saiu em
+14/11/2026, shell-sino, na web e no app): achar card, aparelho ou cômodo é pelo Ctrl+K / lupa do Início
+(`/busca`, `Search::WidgetsSource`, `DevicesSource`, `AreasSource`). O `search` segue na resposta (app antigo).
+
+Selos do topo da visão (`badges`): `Ss::BadgeComponent` da gem na web e `SsBadge` no app, pequenos e finos como
+as pílulas dos cartões de área (antes o número saía grande em DM Mono no `.ss-hero-chip`).
 
 ### Saúde da casa (ideia 23)
 

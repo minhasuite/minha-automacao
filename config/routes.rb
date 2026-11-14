@@ -83,9 +83,15 @@ Rails.application.routes.draw do
       patch :mute, on: :member, path: "silenciar"
       delete :unmute, on: :collection, path: "silencios"
       get :digest, on: :collection, path: "resumo"
+      # Sino do topo (shell-sino): os últimos avisos (frame do popover) e o contador (JSON).
+      get :recent, on: :collection, path: "recentes"
+      get :count, on: :collection, path: "contagem"
     end
-    get "configuracoes/notificacoes", to: "notification_settings#show", as: :settings_notifications
-    patch "configuracoes/notificacoes", to: "notification_settings#update"
+    # Preferências dos avisos: dentro da central (aba "Preferências" e engrenagem do sino), fora de Configurações.
+    # O endereço antigo segue valendo (app até a versão nova, links salvos).
+    get "notificacoes/preferencias", to: "notification_settings#show", as: :settings_notifications
+    patch "notificacoes/preferencias", to: "notification_settings#update"
+    get "configuracoes/notificacoes", to: redirect("/notificacoes/preferencias")
 
     # Câmeras (F8): quadro e ao vivo (WebRTC) passando pelo Rails.
     # Busca global (Ctrl+K, uiweb).
@@ -422,8 +428,6 @@ Rails.application.routes.draw do
     patch "configuracoes/ia/:provider", to: "ai_settings#provider", as: :settings_ai_provider
     post "configuracoes/ia/:provider/teste", to: "ai_settings#check", as: :settings_ai_check
     # Perguntar à casa (Lote 2): só leitura, com os pontos do local como contexto.
-    get "perguntar", to: "ask#show", as: :ask
-    post "perguntar", to: "ask#create"
     post "perguntar/painel", to: "ask#widget", as: :ask_widget # card "Perguntar à casa" do painel (resposta no frame dele)
     # Assistente de voz (Pacote 3): áudio ou texto → intenção local ou "Perguntar à casa".
     post "assistente", to: "assist#create", as: :assist

@@ -160,7 +160,7 @@ informação de agora). Quem põe a chave:
 - ação "Avisar": só com o campo `merge` (duração) no bloco; chave = `tag:<tag>`
   ou `automation:<id>`, assunto = nome da automação;
 - janela da instalação: `tenants.settings["notifications"]["merge_s"]`
-  (padrão 120 s; Configurações → Notificações, administradores).
+  (padrão 120 s; preferências da central, `/notificacoes/preferencias`, administradores).
 
 **Horário de silêncio**: o canal declara `quiet_scope` no plugin
 (`Notifier::Channels`): `:person` (push: o de cada pessoa,
@@ -196,7 +196,17 @@ baixa (`devices.battery_point_id` ≤ 20%) e avisos. A tela mostra as mesmas par
 **Central** (`/notificacoes`, `Notifications::Filter`): filtros por tipo,
 área (pelo ponto do aviso), nível e não lidas; "Marcar estas como lidas"
 respeita o filtro; selo do nível e de "N avisos juntos"; menu "Silenciar".
-Preferências em Configurações → Notificações (`/configuracoes/notificacoes`).
+Preferências na própria central (aba "Preferências", `/notificacoes/preferencias`; o endereço antigo
+`/configuracoes/notificacoes` redireciona), fora de Configurações.
+
+**Sino do topo** (shell-sino): `Ss::NotificationBellComponent` no slot `bell` do `Ss::AppShellComponent`
+(`web/notifications/_bell`), à direita da barra de cima, no lugar do item "Notificações" do menu. Contador de não
+lidos (o mesmo `unread_notifications` do `<meta name="ma-unread">`) atualizado a cada minuto por
+`GET /notificacoes/contagem` (`{count}`; não há canal em tempo real de avisos) e ao abrir; o popover carrega os
+últimos 8 (`GET /notificacoes/recentes`, frame lazy, recarregado ao reabrir). Abrir um aviso marca como lido e
+leva ao destino (`PATCH /notificacoes/:id/lida?open=1` → `data["url"]` interno ou o aviso na central); "Marcar
+todas como lidas" fica na tela (`back=1`); engrenagem = preferências; "Ver todos os avisos" = central. O
+`ss-bell:change` acerta o selo do ícone da PWA. O app segue com a aba "Avisos" (nativa).
 
 API (app): `GET /notifications?kind=&area_id=&level=&unread=` (cada aviso
 com `level`, `count`, `mute_key`; `meta.filters` = opções com rótulo,

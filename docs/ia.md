@@ -118,7 +118,9 @@ Simulação não chama a IA.
 
 ## Perguntar à casa
 
-`/perguntar` (menu lateral): escolhe o local e pergunta. O contexto é o
+Sem tela própria (a `/perguntar` saiu do menu e das rotas em 14/11/2026, shell-sino): pergunta-se pelo
+card `ask` do painel (`POST /perguntar/painel`; API `POST /api/v1/sites/:id/ask`) ou pelo "Falar com a
+casa" (o `Assist` cai no `Ai::Ask` quando nenhuma intenção casa). O contexto é o
 estado de todos os pontos do local (até 150) e o resumo das últimas 6 horas.
 Só leitura nesta fase: a IA não executa comando. Conta como chamada
 `pergunta` no limite.

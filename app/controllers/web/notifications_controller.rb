@@ -1,8 +1,11 @@
 module Web
   # Central de notificações: filtros por tipo, área e nível, marcar tudo como
   # lido (o que o filtro mostra), silenciar a origem do aviso por X horas e o
-  # resumo do dia (docs/push.md, "Menos ruído").
+  # resumo do dia (docs/push.md, "Menos ruído"). O sino do topo (web/notifications/_bell, shell-sino) lê
+  # `recent` (os últimos, no frame do popover) e `count` (o contador, JSON).
   class NotificationsController < ApplicationController
+    RECENT = 8
+
     def index
       @filters = Notifications::Filter.active(filter_params)
       @choices = Notifications::Filter.choices(current_user)
@@ -10,11 +13,25 @@ module Web
       @pagy, @notifications = pagy(Notifications::Filter.apply(Notification.for_user(current_user), @filters).order(created_at: :desc))
     end
 
-    # Abrir a notificação marca como lida.
+    # Sino: os últimos avisos (frame do popover; os links vão para a página inteira).
+    def recent
+      @notifications = Notification.for_user(current_user).order(created_at: :desc).limit(RECENT)
+      render layout: false
+    end
+
+    def count
+      render json: { count: helpers.unread_notifications }
+    end
+
+    # Abrir a notificação marca como lida. Pelo sino (`open=1`), leva ao destino do aviso (caminho interno) ou
+    # a ele na central.
     def read
       n = Notification.for_user(current_user).find(params[:id])
       n.update!(read_at: n.read_at || Time.current)
-      redirect_to notifications_path
+      return redirect_to(notifications_path) unless params[:open].present?
+
+      url = n.open_url
+      redirect_to(url&.start_with?("/") ? url : notifications_path(anchor: helpers.dom_id(n)))
     end
 
     # Botão do aviso (Lote 1): a primeira resposta vale e vira o evento das automações.
@@ -29,6 +46,9 @@ module Web
     def read_all
       filters = Notifications::Filter.active(filter_params)
       Notifications::Filter.apply(Notification.for_user(current_user), filters).unread.update_all(read_at: Time.current) # rubocop:disable Rails/SkipsModelValidations
+      # Pelo sino (`back=1`): fica na tela em que a pessoa estava.
+      return redirect_back_or_to(notifications_path, notice: t("automations.flash.all_read")) if params[:back].present?
+
       redirect_to notifications_path(filters), notice: t("automations.flash.all_read")
     end
 

@@ -93,7 +93,7 @@ RSpec.describe "Visão por tela e câmera com som e falar" do
       expect(body).to include('data-controller="view-fallback"', "Esta visão não aparece nesta tela.", "Abrir Início")
       expect(body).to include(%(data-view-fallback-url-value="/paineis/#{dashboard.id}?view=home"))
       expect(body).to include('class="mt-4 ss-hide-mobile ss-hide-desktop"', 'class="mt-4 ss-hide-mobile ss-hide-tablet"')
-      expect(body).to include('data-controller="ss-filter" class="ss-hide-tablet ss-hide-desktop"')
+      expect(body).to include('<div class="ss-hide-tablet ss-hide-desktop">')
       # No Início, o mesmo (link do Início com o local).
       get "/", params: { view: "entrega" }
       expect(response.body).to include("view-fallback", "?local=#{site.id}&amp;view=home")

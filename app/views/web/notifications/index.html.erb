@@ -1,8 +1,7 @@
 <%= render "web/shared/header", title: t("automations.notifications.title"), subtitle: t("automations.notifications.subtitle") do %>
-  <%= link_to digest_notifications_path, class: "ss-btn ss-btn-ghost" do %><%= icon("calendar", "size-4") %><%= t("notifications.digest.open") %><% end %>
-  <%= link_to settings_notifications_path, class: "ss-btn ss-btn-ghost" do %><%= icon("adjustments", "size-4") %><%= t("notifications.settings.open") %><% end %>
   <%= render Ss::ButtonComponent.new(label: t(@filters.any? ? "notifications.filters.read_these" : "automations.notifications.read_all"), icon: icon("check", ""), href: read_all_notifications_path(@filters), method: :patch, variant: :ghost) %>
 <% end %>
+<%= render "web/notifications/tabs", current: :list %>
 <%= ss_form_with url: notifications_path, method: :get, class: "ss-card ss-card-pad mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end",
                  data: { controller: "ss-autosubmit", action: "change->ss-autosubmit#now", turbo_action: "replace" } do |f| %>
   <%= f.ss_select :kind, @choices[:kinds].map(&:reverse), selected: @filters[:kind], include_blank: t("notifications.filters.all"), label: t("notifications.filters.kind") %>

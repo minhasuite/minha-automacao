@@ -2,7 +2,7 @@ require "rails_helper"
 
 # Central de notificações (web, API e app pelo AppScreen): filtros, marcar as
 # filtradas como lidas, silenciar a origem por X horas, resumo do dia e
-# Configurações → Notificações. Nada de push de verdade (FeatureFlag desligada).
+# as preferências (aba da central; antes Configurações → Notificações) e o sino do topo. Nada de push de verdade (FeatureFlag desligada).
 RSpec.describe "Central de notificações com menos ruído" do
   let(:user) { create(:user, name: "Dona") }
   let(:tenant) { user.tenant }
@@ -42,18 +42,58 @@ RSpec.describe "Central de notificações com menos ruído" do
       expect(flash[:alert]).to include("não tem automação nem ponto")
     end
 
-    it "resumo do dia e Configurações → Notificações" do
+    it "resumo do dia e preferências na central (fora de Configurações)" do
       get "/notificacoes/resumo"
-      expect(response.body).to include("Resumo do dia", "2 avisos")
+      expect(response.body).to include("Resumo do dia", "2 avisos", 'href="/notificacoes/preferencias"')
       get "/configuracoes/notificacoes"
-      expect(response.body).to include("Meu horário de silêncio", "Silêncio da casa", "Juntar avisos seguidos")
-      patch "/configuracoes/notificacoes", params: { prefs: { quiet_enabled: "1", quiet_from: "22:00", quiet_to: "06:30", digest_enabled: "1", digest_at: "08:15",
+      expect(response).to redirect_to("/notificacoes/preferencias")
+      get "/notificacoes/preferencias"
+      expect(response.body).to include("Meu horário de silêncio", "Silêncio da casa", "Juntar avisos seguidos", 'aria-current="true" href="/notificacoes/preferencias"')
+      expect(response.body).not_to include('href="/configuracoes/notificacoes"')
+      get "/configuracoes/aparencia"
+      expect(Nokogiri::HTML(response.body).css(".ss-subnav a").map(&:text).join(" ")).not_to include("Notificações")
+      patch "/notificacoes/preferencias", params: { prefs: { quiet_enabled: "1", quiet_from: "22:00", quiet_to: "06:30", digest_enabled: "1", digest_at: "08:15",
                                                               mute_hours: "8", house_quiet_enabled: "1", house_quiet_from: "23:00", house_quiet_to: "06:00", merge_s: "60" } }
-      expect(response).to redirect_to("/configuracoes/notificacoes")
+      expect(response).to redirect_to("/notificacoes/preferencias")
       prefs = Notifications.user_prefs(user.reload)
       expect(prefs["quiet"]).to eq("enabled" => true, "from" => "22:00", "to" => "06:30")
       expect(prefs["mute_hours"]).to eq(8)
       expect(Notifications.merge_window(tenant.reload)).to eq(60)
+    end
+
+    it "sino do topo: contador, últimos avisos, abrir marca como lido e leva ao destino, marcar todos fica na tela" do
+      within(tenant) { aviso.update!(data: aviso.data.merge("url" => "/locais/#{site.id}")) }
+      get "/locais"
+      doc = Nokogiri::HTML(response.body)
+      bell = doc.at_css("header .ss-bell")
+      expect(bell["data-ss-bell-url-value"]).to eq("/notificacoes/contagem")
+      expect(bell.at_css(".ss-bell-count").text).to eq("2")
+      expect(bell.at_css("turbo-frame#avisos-list")["src"]).to eq("/notificacoes/recentes")
+      expect(bell.at_css("a.ss-bell-foot")["href"]).to eq("/notificacoes")
+      expect(bell.at_css(".ss-bell-head a.ss-icon-btn")["href"]).to eq("/notificacoes/preferencias")
+      expect(doc.css(".ss-shell-nav a").map { |a| a["href"] }).not_to include("/notificacoes", "/perguntar")
+
+      get "/notificacoes/contagem"
+      expect(response.parsed_body).to eq("count" => 2)
+      get "/notificacoes/recentes"
+      frame = Nokogiri::HTML(response.body).at_css("turbo-frame#avisos-list")
+      expect(frame.css("li").size).to eq(2)
+      expect(frame.css(".ss-bell-item.is-unread").size).to eq(2)
+      expect(frame.at_css("form[action='/notificacoes/#{aviso.id}/lida?open=1']")).to be_present
+
+      patch "/notificacoes/#{aviso.id}/lida", params: { open: 1 }
+      expect(response).to redirect_to("/locais/#{site.id}")
+      patch "/notificacoes/#{sistema.id}/lida", params: { open: 1 }
+      expect(response).to redirect_to("/notificacoes#notification_#{sistema.id}")
+      get "/notificacoes/contagem"
+      expect(response.parsed_body).to eq("count" => 0)
+
+      within(tenant) { Notifier.notify!(kind: "sistema", title: "Outro", push: false) }
+      patch "/notificacoes/todas-lidas", params: { back: 1 }, headers: { "HTTP_REFERER" => "http://www.example.com/locais" }
+      expect(response).to redirect_to("http://www.example.com/locais")
+      expect(within(tenant) { Notification.for_user(user).unread.count }).to eq(0)
+      get "/notificacoes/recentes"
+      expect(response.body).not_to include("is-unread")
     end
 
     it "nível e janela na regra de aviso" do
@@ -102,7 +142,7 @@ RSpec.describe "Central de notificações com menos ruído" do
 
   describe "app (AppScreen)" do
     it "as telas novas abrem transcodificadas" do
-      %w[/configuracoes/notificacoes /notificacoes/resumo /notificacoes].each do |path|
+      %w[/notificacoes/preferencias /notificacoes/resumo /notificacoes].each do |path|
         get "/api/v1/screen", params: { path: path }, headers: auth_headers(user)
         expect(response).to have_http_status(:ok), path
         expect(data["page"]["blocks"]).to be_present

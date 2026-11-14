@@ -23,7 +23,6 @@ module SettingsNav
     [ :account, "settings.nav.account", :settings_account_path, "user-group", ->(_u) { true } ],
     [ :security, "security.nav", :settings_security_path, "shield-check", ->(_u) { true } ],
     [ :appearance, "appearance.nav", :settings_appearance_path, "color-swatch", ->(_u) { true } ],
-    [ :notifications, "notifications.settings.nav", :settings_notifications_path, "volume-off", ->(_u) { true } ],
     [ :push, "settings.nav.push", :push_subscriptions_path, "bell", ->(_u) { true } ]
   ].freeze
 

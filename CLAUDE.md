@@ -53,7 +53,7 @@ aviso com botões, imagem e link, gatilho/espera "resposta de aviso",
 `continue_on_error` e `response_variable` (`docs/push.md`) + **Lote 2**: IA da
 instalação (provedores como plugins em `Ai::PROVIDERS`, chave do usuário
 cifrada, Configurações → IA com teste, padrão, limite mensal e uso; ações
-"Pedir à IA" e "Gerar dados por IA"; "Perguntar à casa"; `docs/ia.md`) e
+"Pedir à IA" e "Gerar dados por IA"; "Perguntar à casa" só no card `ask` e no "Falar com a casa", sem tela; `docs/ia.md`) e
 conjuntos de dados (aba Dados, ações "Registrar/Consultar dados", helper
 Consulta; consultas em `Datasets::AGGREGATES`; `docs/dados.md`) + **Lote 3**:
 câmera RTSP/ONVIF como plugin (`CameraPlugin`, `Onvif`, movimento por
@@ -193,7 +193,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   externo) e as chaves `VAPID_*` (`bin/vapid-keys`; nunca no repo). Nunca
   mande push de teste para o celular de alguém: teste com navegador headless.
 - **PWA no iPhone (`docs/pwa.md`)**: manifesto/service worker/sem conexão pelo `Web::PwaController` (SW
-  com `VERSION`, guarda só `/sem-conexao`; nada da casa em cache), instalar em Aparência `#instalar` + aviso
+  com `VERSION`, guarda só `/sem-conexao`; nada da casa em cache), instalar em Meus aparelhos `#instalar` + aviso
   no Início só no Safari do iPhone (`controllers/pwa/platform.js`), selo do ícone pelo `unread` do Web Push
   e `<meta name="ma-unread">`, `viewport-fit=cover` com a área segura da gem, barra de status `default`
   (decidido), login lembrado pelo cookie cifrado `ma_remember` (30 dias, escrito só ao entrar/sair) e
@@ -820,7 +820,9 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
   classe `.ss-*` solta só onde não há componente; peça genérica que falta nasce na
   gem (skill `lista-clara`), nunca aqui.
 - Moldura: `Ss::AppShellComponent` no layout (`shell_nav` com separador antes de
-  Configurações, selo 0 some; `tenants:` só no Diário/Histórico/Mapa pela
+  Configurações, selo 0 some; avisos no sino do topo, slot `bell` = `web/notifications/_bell`, não no menu, e as
+  preferências deles na central `/notificacoes/preferencias`, não em Configurações; Locais e Saúde dos aparelhos
+  dentro do `web/settings/_frame`; selo de painel = `Ss::BadgeComponent`; sem busca dentro do painel (Ctrl+K); `tenants:` só no Diário/Histórico/Mapa pela
   `web/shared/_site_switch`; `main_max: "80rem"` a não ser com `content_for :wide`) e
   `ss_app_shell_head` no `<head>` (menu recolhido no `<html>`, sobrevive ao morph).
   "Falar com a casa" é o `Ss::FabComponent` do layout (`web/assist/_fab`, fora do `<main>`, local pelo

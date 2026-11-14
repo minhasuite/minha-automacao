@@ -39,6 +39,8 @@
                                          main_max: (content_for?(:wide) ? nil : "80rem")) do |s| %>
       <% s.with_mark do %><img src="/icon-192.png" alt=""><% end %>
       <% s.with_top do %><%= render "web/shared/privacy_button", css: "ss-btn ss-btn-ghost ss-btn-sm lg:hidden" %><% end %>
+      <%# Avisos: o sino no canto direito da barra de cima (shell-sino), não mais no menu. %>
+      <% if current_user %><% s.with_bell do %><%= render "web/notifications/bell" %><% end %><% end %>
       <% s.with_side_footer do %><%= render "web/shared/side_footer" %><% end %>
       <%= yield %>
     <% end %>

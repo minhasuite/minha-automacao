@@ -53,14 +53,16 @@ RSpec.describe "PWA no iPhone" do
     expect(response.body).to include("No connection to the house")
   end
 
-  it "telas: área segura, selo de não lidos, instalar (Aparência e Início) e push explicado no iPhone" do
+  it "telas: área segura, selo de não lidos, instalar (Meus aparelhos e Início) e push explicado no iPhone" do
     sign_in
     within(tenant) { 2.times { |i| Notifier.notify!(kind: "aviso", title: "A#{i}", push: false) } }
     get "/configuracoes/aparencia"
+    expect(response.body).not_to include('id="instalar"')
+    get "/configuracoes/aparelhos"
     expect(response.body).to include("viewport-fit=cover", %(<meta name="ma-unread" content="2">), 'id="instalar"', 'data-controller="pwa-install"',
                                      "Adicionar à Tela de Início", "ss-steps")
     get "/"
-    expect(response.body).to include('data-pwa-install-mode-value="notice"', "Instale o app no iPhone", "#instalar")
+    expect(response.body).to include('data-pwa-install-mode-value="notice"', "Instale o app no iPhone", "/configuracoes/aparelhos#instalar")
     get "/configuracoes/aparelhos"
     expect(response.body).to include("ios_install", "ios_old")
     get "/entrar"

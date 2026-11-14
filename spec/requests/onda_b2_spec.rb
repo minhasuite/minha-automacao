@@ -311,13 +311,14 @@ RSpec.describe "ondaB2: painéis" do
       nav = response.body[/<nav class="ss-nav.*?<\/nav>/m]
       expect(nav).not_to include(">Diário<")
       expect(nav).to include("Configurações")
-      expect(nav.index(">Histórico<")).to be < nav.index(">Notificações<")
+      expect(nav.index(">Histórico<")).to be < nav.index(">Alertas<")
+      expect(nav).not_to include(">Notificações<") # no sino do topo (shell-sino)
       # Arrastar (Ss::SortableListComponent): PATCH JSON { ids } na ordem nova, sem redirecionar.
       expect(response.body).to include('data-controller="ss-sortable"', "op=sidebar_order")
-      patch "/configuracoes/aparencia?op=sidebar_order", params: { ids: %w[notifications history nao-existe] }, as: :json
+      patch "/configuracoes/aparencia?op=sidebar_order", params: { ids: %w[alerts history nao-existe] }, as: :json
       expect(response).to have_http_status(:no_content)
       order = within(tenant) { user.reload.dashboard_prefs.dig("sidebar", "order") }
-      expect(order.first(2)).to eq(%w[notifications history])
+      expect(order.first(2)).to eq(%w[alerts history])
       expect(order).not_to include("nao-existe")
       expect(within(tenant) { user.reload.dashboard_prefs.dig("sidebar", "hidden") }).to eq([ "logbook" ])
       patch "/configuracoes/aparencia", params: { op: "sidebar_reset" }

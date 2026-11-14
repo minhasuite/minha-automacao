@@ -1,6 +1,7 @@
-<%= render "web/shared/header", title: t("notifications.digest.title"), subtitle: t("notifications.digest.subtitle"), back: notifications_path do %>
+<%= render "web/shared/header", title: t("notifications.digest.title"), subtitle: t("notifications.digest.subtitle") do %>
   <%= link_to settings_notifications_path(anchor: "resumo"), class: "ss-btn ss-btn-ghost" do %><%= icon("adjustments", "size-4") %><%= t("notifications.digest.configure") %><% end %>
 <% end %>
+<%= render "web/notifications/tabs", current: :digest %>
 <% if @parts.any? %>
   <div class="grid gap-4 md:grid-cols-2">
     <% @parts.each do |part| %>

@@ -5,7 +5,7 @@ Push e canais em `docs/push.md`; aqui o que faz a PWA funcionar bem no WebKit.
 
 ## Instalar
 
-- iOS não tem `beforeinstallprompt`. **Configurações → Aparência → "Instalar o app"** (`#instalar`,
+- iOS não tem `beforeinstallprompt`. **Configurações → Meus aparelhos → "Instalar o app"** (`/configuracoes/aparelhos#instalar`; até 14/11/2026 em Aparência,
   `web/pwa/_install_section`) mostra o que vale no aparelho: "já instalado" (standalone), o passo a passo
   do iPhone (Compartilhar → Adicionar à Tela de Início) ou, no Android/computador, o botão que chama o
   pedido do navegador (guardado em `application.js` como `window.maInstallPrompt`).
