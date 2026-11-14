@@ -1,5 +1,12 @@
 # Diário e Histórico (paridade com o Logbook e o History do HA)
 
+**Qual é qual.** O **Diário** responde "o que aconteceu?": uma lista de acontecimentos em texto,
+do mais novo para o mais velho (mudou de estado, comando, automação rodou, cena, alerta, cadastro,
+entrada), de todo o local, com filtros. O **Histórico** responde "como esse valor andou?": gráficos
+de alguns pontos que você escolhe (até 12) na mesma janela de tempo, para comparar (temperatura
+com o ar ligado, consumo com a bomba, porta com movimento). Diário = linha do tempo de eventos;
+Histórico = séries numéricas e faixas de estado.
+
 ## Diário (`/diario`, `GET /api/v1/sites/:id/logbook`)
 
 Linha do tempo de tudo o que aconteceu num local, do mais novo para o mais
@@ -39,3 +46,17 @@ aproximar/afastar e arrastar no gráfico (mouse) para aproximar; cursor com
 os valores de cada série. Resolução pelo `Points::History` (cru até 2 dias,
 por hora até 31, por dia depois). **Exportar CSV** (`;`, vírgula decimal):
 ponto, chave, unidade, início, fim, valor, mínimo, máximo.
+
+### Tela do Histórico (paineis-ia, 14/11/2026)
+
+- Período numa faixa só (`ss-chips` + `ss-scroll-current`, rola no celular): **Hoje** (do começo do
+  dia no fuso do local até agora), **Ontem** (o dia inteiro), 1 h a 30 dias; ‹ › desloca, aproximar/
+  afastar e datas. `Points::Overlay.window` aceita `range=today|yesterday`; `current?` marca o chip.
+- `Ss::AsideLayoutComponent`: gráficos no principal; na coluna (no celular, embaixo) os pontos
+  escolhidos com cor e valor de agora (tirar um, "Limpar"), **"Comparar de uma vez"** e a escolha
+  com busca (nome do ponto, do aparelho e o cômodo, pelo `data-ss-filter-text` do `ss-filter`).
+- Sugestões (`Points::Overlay.suggestions`): grupos de 2+ pontos dos aparelhos listados — medida da
+  mesma unidade e classe (ou nome) e faixas da mesma capacidade (porta, movimento, presença) —, os
+  maiores primeiro, até 12 pontos cada. Sem ponto escolhido, aparecem no estado vazio.
+- Cada gráfico (um por unidade, 260 px) tem a legenda com o resumo da janela: agora, mínimo, máximo
+  e média (`hx_stats`); linha do tempo das faixas com o nome em cima (`label_position: :top`).

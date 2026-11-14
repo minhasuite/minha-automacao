@@ -315,6 +315,9 @@ en:
       item_key: "invalid key."
       repeated: "duplicate key \"%{key}\"."
   ai_settings:
+    attempts:
+      one: "%{count} attempt"
+      other: "%{count} attempts"
     title: "Settings"
     subtitle: "AI: your providers (keys are stored encrypted), the default, the monthly limit and what each call cost."
     month: "This month"

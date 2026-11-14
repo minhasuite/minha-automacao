@@ -37,7 +37,7 @@ gem "stimulus-rails"
 gem "tailwindcss-rails", "~> 4.2"
 # Lista Clara da suíte (tokens, .ss-*, Ss::*Component e os controllers ss-*).
 # Repo público: sem chave. Traz o view_component.
-gem "componentes_ui", git: "https://github.com/minhasuite/componentes-ui.git", branch: "shell-sino"
+gem "componentes_ui", git: "https://github.com/minhasuite/componentes-ui.git", branch: "onda7" # temporário (onda7): o integrador troca pela tag v0.25.0
 
 # Foto do produto: Active Storage → R2 (variantes com libvips).
 gem "image_processing", "~> 2.0"

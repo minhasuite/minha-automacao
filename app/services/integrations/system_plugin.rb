@@ -11,6 +11,8 @@ module Integrations
   class SystemPlugin < Plugin
     describe key: "system", title: "Sistema", icon: "cog",
              description: "Disco, último backup, integrações com erro, automações que falharam e pontos sem sinal, como pontos."
+    # Sem cômodo de propósito (o próprio servidor): a Saúde não acusa "Sem área".
+    def self.roomless? = true
     texts "pt-BR" => { added: "Sistema adicionado: %{n} pontos." },
           en: { title: "System", description: "Disk, last backup, integrations with errors, failed automations and points with no signal, as points.", added: "System added: %{n} points." },
           es: { title: "Sistema", description: "Disco, último respaldo, integraciones con error, automatizaciones que fallaron y puntos sin señal, como puntos.", added: "Sistema agregado: %{n} puntos." }

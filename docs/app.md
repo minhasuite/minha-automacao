@@ -87,6 +87,19 @@ não há ponto de presença. Sensor novo = entrada em `SENSORS` + o app mandar o
 campo. O app manda as leituras ao abrir, ao voltar para ele e a cada 15 min
 com ele aberto (leitura em segundo plano fica para a próxima rodada).
 
+### O celular no Mapa (paineis-ia)
+
+O celular só se registra quando a pessoa liga um sensor em **Mais → Sensores do celular** (nada vai
+sem consentimento). A primeira localização (`MobileAppPlugin.report!` com `location`) liga o
+"Presença" do celular à **pessoa** do dono do aparelho (`link_person!`: a pessoa com
+`address.user_id` ganha a fonte; sem ela, cria pelo assistente da tela Pessoas,
+`People::Setup.create_person!`, marcada `address.auto`), como o `person` do HA: ele aparece no Mapa e
+em Pessoas sem passo a mais. Pessoa criada à mão para o mesmo usuário ou com uma fonte da automática
+a substitui (`HelperTypes::Person.saved`; hook genérico `saved(point, fresh)` no `HelperTypes.save`). `Maps.data(site, user:)` traz `phone`
+(`none` = o app nunca registrou este celular; `no_location` = registrou sem localização; nil = ok):
+a web mostra o passo num `Ss::CalloutComponent` e o app, no Mapa, um `SsCallout` com o botão
+"Ligar a localização agora" (consentimento → permissão do Android → primeira leitura → recarrega).
+
 ## Testar
 
 - Servidor: `spec/requests/f7_app_spec.rb` (+ `points_channel_spec`,

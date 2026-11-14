@@ -18,7 +18,7 @@ module Ai
     # `provider`: a conta (voz-offline: o Assist escolhe a da rede da casa sem internet).
     def response(site:, question:, source: "pergunta", provider: nil)
       ctx = Automations::Context.new(site: site)
-      Ai::Request.call(tenant: site.tenant, site: site, source: source, system: system, max_tokens: 800, timeout: 45, provider: provider,
+      Ai::Request.call(tenant: site.tenant, site: site, source: source, system: system, max_tokens: 4_000, timeout: 45, provider: provider,
                        prompt: "#{Ai::PointContext.text(ctx, history_s: HISTORY)}\n\nPergunta: #{question.to_s.strip.truncate(1_000)}")
     end
 

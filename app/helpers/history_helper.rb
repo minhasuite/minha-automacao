@@ -24,6 +24,24 @@ module HistoryHelper
     end
   end
 
+  # Resumo da série na janela (legenda do gráfico): mínimo, máximo e média
+  # (média das médias por hora/dia, ou das leituras cruas). nil sem leituras.
+  def hx_stats(series)
+    rows = series.rows.reject { |r| r[1].nil? }
+    return if rows.empty?
+
+    mins = rows.map { |r| (r[2] || r[1]).to_f }
+    maxs = rows.map { |r| (r[3] || r[1]).to_f }
+    { min: mins.min, max: maxs.max, avg: rows.sum { |r| r[1].to_f } / rows.size }
+  end
+
+  # Número com a unidade do ponto, no formato da tela (vírgula decimal, até 1 casa acima de 10).
+  def hx_num(value, unit)
+    v = value.to_f
+    txt = number_with_precision(v, precision: v.abs >= 10 ? 1 : 2, strip_insignificant_zeros: true)
+    unit.present? ? "#{txt} #{unit}" : txt
+  end
+
   # Mesma tela com outra janela (zoom e deslocamento), mantendo os pontos.
   def hx_path(site, ids, from, to) = history_path(site_id: site.id, point_ids: ids, from: from.iso8601, to: to.iso8601)
 end

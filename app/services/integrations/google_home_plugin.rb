@@ -8,6 +8,8 @@ module Integrations
   class GoogleHomePlugin < Plugin
     describe key: "google_home", title: "Google Home", icon: "speakerphone",
              description: "Google Home e Google Assistente pela nuvem (cloud-to-cloud), sem Matter: os pontos marcados em Expor aparecem no app Google Home e atendem por voz."
+    # Sem cômodo de propósito (alto-falantes vistos pela conta): a Saúde não acusa "Sem área".
+    def self.roomless? = true
     texts "pt-BR" => { bad_project: "Id do projeto: letras minúsculas, números e hífen (o do Google Home Developer Console).", bad_account: "Conta de serviço inválida: cole o JSON baixado no Google Cloud (tipo service_account).",
                        saved: "Google Home configurado. Siga os passos da tela.", secret: "Segredo do cliente (aparece só agora; cole no Developer Console): %{secret}",
                        synced: "Pedido de sincronização enviado para %{n} conta(s).", no_account: "Cole a conta de serviço para sincronizar e mandar o estado na hora.",

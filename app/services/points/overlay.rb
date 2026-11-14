@@ -7,6 +7,14 @@ module Points
     MAX = 12
     RANGES = { "1h" => 1.hour, "6h" => 6.hours, "24h" => 24.hours, "7d" => 7.days, "30d" => 30.days }.freeze
     RANGE_LABELS = LocalizedLabel.for("labels.periods", %w[1h 6h 24h 7d 30d])
+    # Dias do calendário no fuso do local (a janela é calculada dentro do Time.use_zone).
+    DAYS = %w[today yesterday].freeze
+    DAY_LABELS = LocalizedLabel.for("history.days", DAYS)
+    # Sugestões de comparação (tela Histórico): grupos com pelo menos MIN_GROUP pontos.
+    SUGGESTIONS = 6
+    MIN_GROUP = 2
+    # O que vira faixa e vale sugerir junto (portas, movimento, presença).
+    BAND_GROUPS = %w[contact motion occupancy presence].freeze
     MIN_SPAN = 5.minutes
     MAX_SPAN = 366.days
 
@@ -21,11 +29,43 @@ module Points
     def self.window(params, now: Time.current)
       to = parse(params[:to])
       from = parse(params[:from])
+      day = day_window(params[:range].to_s, now) and return day
       to = now if to.nil? || to > now
       from = to - RANGES.fetch(params[:range].to_s, 24.hours) if from.nil? || from >= to
       from = to - MAX_SPAN if to - from > MAX_SPAN
       from = to - MIN_SPAN if to - from < MIN_SPAN
       [ from, to ]
+    end
+
+    # Hoje (do começo do dia até agora) ou ontem (o dia inteiro), no fuso atual.
+    def self.day_window(range, now)
+      case range
+      when "today" then [ now.beginning_of_day, now ]
+      when "yesterday" then [ (now - 1.day).beginning_of_day, now.beginning_of_day ]
+      end
+    end
+
+    # A janela [de, até] bate com o atalho `key`? (o chip marcado)
+    def self.current?(key, from, to, now: Time.current)
+      want = day_window(key.to_s, now) || (RANGES[key.to_s] && [ now - RANGES[key.to_s], now ])
+      want.present? && (want[0] - from).abs < 1.minute && (want[1] - to).abs < 1.minute
+    end
+
+    # Grupos prontos para comparar (o "temperaturas da casa"): medidas da mesma
+    # unidade e mesma classe (ou nome) e, para faixas, a mesma capacidade.
+    # → [{label:, ids:, unit:, count:}], os maiores primeiro.
+    def self.suggestions(site)
+      pts = site.points.where(hidden: false, disabled: false, helper: nil, device_id: site.devices.listed.select(:id)).includes(:device).to_a
+      groups = pts.group_by do |p|
+        if p.numeric? && p.capability == "measure" then [ "n", p.unit.to_s, p.device_class.presence || p.name.to_s.downcase ]
+        elsif BAND_GROUPS.include?(p.capability) then [ "b", p.capability ]
+        end
+      end
+      groups.delete(nil)
+      groups.select { |_, list| list.size >= MIN_GROUP }.sort_by { |k, list| [ -list.size, k.join ] }.first(SUGGESTIONS).map do |key, list|
+        name = list.map(&:name).tally.max_by { |n, c| [ c, -n.size ] }.first
+        { label: name, unit: (key[1].presence if key[0] == "n"), count: list.size, ids: list.sort_by { |p| [ p.device&.name.to_s, p.name ] }.first(MAX).map(&:id) }
+      end
     end
 
     def self.parse(v) = v.presence && (Time.zone.parse(v.to_s) rescue nil) # rubocop:disable Style/RescueModifier

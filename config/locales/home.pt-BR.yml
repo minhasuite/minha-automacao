@@ -484,6 +484,20 @@ pt-BR:
       enabled: Ativo
       save: Salvar espelhamento
   history:
+    days:
+      today: Hoje
+      yesterday: Ontem
+    summary: Resumo da janela
+    stats: "mín. %{min} · máx. %{max} · média %{avg}"
+    chosen:
+      one: "%{count} de %{max} ponto"
+      other: "%{count} de %{max} pontos"
+    clear: Limpar
+    suggestions: Comparar de uma vez
+    suggestion_title:
+      one: "%{count} ponto"
+      other: "%{count} pontos"
+    pick_hint: Até %{n}; busque por ponto, aparelho ou cômodo.
     subtitle: 'Compare pontos no tempo: números em linhas sobrepostas, liga/desliga e estados em faixas.'
     csv: Exportar CSV
     period: Período
@@ -535,6 +549,10 @@ pt-BR:
     empty_hint: Tente um período maior ou tire algum filtro.
     bigger: Ver um período maior
   maps:
+    phone_hint:
+      title: Seu celular não aparece?
+      none: "No app Minha Automação do celular (Android): Mais → Sensores do celular → ligue Presença (a localização) e aceite o pedido do Android. O celular entra como aparelho seu e você aparece aqui e em Pessoas."
+      no_location: "Seu celular já está ligado ao local, mas sem localização. No app: Mais → Sensores do celular → ligue Presença (a localização) e, para funcionar com o app fechado, Zonas em segundo plano."
     title: Mapa
     subtitle: Onde estão as pessoas de %{site}, as zonas e o caminho de hoje. Só moradores, técnicos e o dono veem.
     aria: Mapa com %{people} pessoa(s) e %{zones} zona(s)
@@ -542,7 +560,7 @@ pt-BR:
     no_center: Sem lugar para centralizar o mapa.
     no_center_hint: Cadastre a localização do local (Editar local) ou crie uma zona nos Helpers.
     people: Pessoas
-    no_people: Nenhuma pessoa. Crie em Helpers → Pessoa, com o app do celular como fonte.
+    no_people: Nenhuma pessoa ainda. Quem liga a Presença no app do celular aparece aqui sozinho; também dá para criar em Helpers → Pessoa.
     no_reading: Sem leitura
     since: desde
     phone: Localização do celular

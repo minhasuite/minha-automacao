@@ -9,7 +9,7 @@ module Api
         role = authorize_site!(site, :view)
         return render_error(:forbidden, "Seu papel neste local não mostra onde as pessoas estão.", status: :forbidden) unless Maps.allowed_role?(role)
 
-        render_data(Maps.data(site, track: params[:track] != "false"))
+        render_data(Maps.data(site, track: params[:track] != "false", user: current_user))
       end
     end
   end

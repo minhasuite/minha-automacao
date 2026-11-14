@@ -83,7 +83,7 @@
     <% tb.column :model, t("ai_settings.model") do |c| %><span class="block"><%= Ai.provider(c.provider)&.label || c.provider %></span><span class="block text-xs text-muted num"><%= c.model %></span><% end %>
     <% tb.column :tokens, t("ai_settings.tokens"), align: :right, sortable: true do |c| %><span class="num"><%= number_with_delimiter(c.tokens) %></span><% end %>
     <% tb.column :cost, t("ai_settings.cost"), align: :right, sortable: true do |c| %><span class="num"><%= usd(c.cost) %></span><% end %>
-    <% tb.column :status, t("ai_settings.result") do |c| %><span class="ss-badge <%= { 'ok' => 'ss-badge-success', 'error' => 'ss-badge-danger', 'blocked' => 'ss-badge-warn' }[c.status] %>" title="<%= c.error %>"><%= c.status_label %></span><% end %>
+    <% tb.column :status, t("ai_settings.result") do |c| %><span class="ss-badge <%= { 'ok' => 'ss-badge-success', 'error' => 'ss-badge-danger', 'blocked' => 'ss-badge-warn' }[c.status] %>" title="<%= [ c.error, c.detail, (t("ai_settings.attempts", count: c.attempts) if c.attempts > 1) ].compact_blank.join(" · ") %>"><%= c.status_label %></span><% end %>
   <% end %>
 </section>
 <p class="text-xs text-muted mt-3"><%= t("ai_settings.cost_note") %></p>

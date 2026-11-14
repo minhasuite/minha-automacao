@@ -40,6 +40,23 @@ module HelperTypes
       point.options = options(point.site)
     end
 
+    # A pessoa criada sozinha pelo celular (`address.auto`, MobileAppPlugin.link_person!) sai quando
+    # alguém cria à mão outra para o mesmo usuário ou com uma fonte dela (o mesmo celular): uma
+    # pessoa por usuário, como no HA.
+    def self.saved(point, fresh)
+      return unless fresh && !point.address["auto"]
+
+      user_id = point.address["user_id"]
+      mine = Array(point.address["sources"])
+      autos = point.site.points.where(helper: key).where.not(id: point.id).where("points.address->>'auto' = 'true'").select do |p|
+        (user_id && p.address["user_id"] == user_id) || Array(p.address["sources"]).intersect?(mine)
+      end
+      return if autos.empty?
+
+      autos.each(&:destroy!)
+      People.zones(point.site).each { |z| Zone.refresh!(z) }
+    end
+
     def self.sourced? = true
     # Tolerância para sair: o relógio confirma a saída depois de `away_delay_s`.
     def self.clocked? = true

@@ -42,10 +42,17 @@ jump_lookback_hours: 24
 sensors:
   temperature: { stuck_hours: 24, jump: 15, jump_minutes: 30 }
   humidity: { stuck_hours: 24, zero_hours: 3, jump: 40, jump_minutes: 30 }
-  moisture: { stuck_hours: 48, zero_hours: 3, jump: 60, jump_minutes: 30 }
+  # Umidade do solo é ruidosa por natureza (rega, sol, leitura que pisca 0): sem "pulo absurdo".
+  moisture: { stuck_hours: 48, zero_hours: 3 }
   pressure: { stuck_hours: 24, jump: 30, jump_minutes: 30 }
   illuminance: { stuck_hours: 48 }
   battery: { jump: 50, jump_minutes: 60 }
+
+# Classe do sensor para os limiares acima quando a do ponto engana: sensor de solo que se
+# declara "humidity" (ex. AY-303Z no zigbee2mqtt) passa a usar os limites de "moisture".
+# Casa por modelo do aparelho ou por nome (do aparelho ou do ponto, sem maiúsculas).
+class_hints:
+  - { class: moisture, from: [humidity], models: [AY-303Z, TS0601_soil, SGS01ZB, ZG-303Z], name: "\\b(solo|soil|plantas?|vaso)\\b" }
 
 # Endereço que identifica o aparelho na rede: dois aparelhos ativos do mesmo
 # driver com esses campos iguais (e host preenchido) = duplicados. Canal,

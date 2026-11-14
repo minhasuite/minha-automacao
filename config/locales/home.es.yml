@@ -484,6 +484,20 @@ es:
       enabled: Activo
       save: Guardar espejado
   history:
+    days:
+      today: Hoy
+      yesterday: Ayer
+    summary: Resumen del período
+    stats: "mín. %{min} · máx. %{max} · media %{avg}"
+    chosen:
+      one: "%{count} de %{max} punto"
+      other: "%{count} de %{max} puntos"
+    clear: Limpiar
+    suggestions: Comparar de una vez
+    suggestion_title:
+      one: "%{count} punto"
+      other: "%{count} puntos"
+    pick_hint: Hasta %{n}; busca por punto, dispositivo o ambiente.
     subtitle: 'Compara puntos en el tiempo: números en líneas superpuestas, encendido/apagado y estados en franjas.'
     csv: Exportar CSV
     period: Período
@@ -535,6 +549,10 @@ es:
     empty_hint: Prueba un período más largo o quita algún filtro.
     bigger: Ver un período más largo
   maps:
+    phone_hint:
+      title: ¿Tu celular no aparece?
+      none: "En la app Minha Automação del celular (Android): Más → Sensores del celular → activa Presencia (la ubicación) y acepta el pedido de Android. El celular entra como dispositivo tuyo y apareces aquí y en Personas."
+      no_location: "Tu celular ya está vinculado al lugar, pero sin ubicación. En la app: Más → Sensores del celular → activa Presencia (la ubicación) y, para funcionar con la app cerrada, Zonas en segundo plano."
     title: Mapa
     subtitle: Dónde están las personas de %{site}, las zonas y el recorrido de hoy. Solo lo ven residentes, técnicos y el dueño.
     aria: Mapa con %{people} persona(s) y %{zones} zona(s)
@@ -542,7 +560,7 @@ es:
     no_center: No hay dónde centrar el mapa.
     no_center_hint: Registra la ubicación del lugar (Editar lugar) o crea una zona en Helpers.
     people: Personas
-    no_people: No hay personas. Crea una en Helpers → Persona, con la app del celular como fuente.
+    no_people: Todavía no hay personas. Quien activa Presencia en la app del celular aparece aquí solo; también se puede crear en Helpers → Persona.
     no_reading: Sin lectura
     since: desde
     phone: Ubicación del celular

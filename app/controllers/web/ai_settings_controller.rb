@@ -44,7 +44,7 @@ module Web
       return redirect_to(settings_ai_path, alert: t("ai_settings.flash.save_first")) unless account&.usable?
 
       notice = if account.plugin.supports?(:text)
-        res = Ai::Request.call(tenant: current_user.tenant, provider: account.provider, source: "teste", max_tokens: 30, timeout: 30,
+        res = Ai::Request.call(tenant: current_user.tenant, provider: account.provider, source: "teste", max_tokens: 1_000, timeout: 30,
                                prompt: "Responda apenas com a palavra OK.")
         t("ai_settings.flash.answered", name: account.plugin.label, model: res.model, tokens: res.tokens)
       else # só voz (Lote 5): gera uma fala curta
