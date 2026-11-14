@@ -5,11 +5,7 @@
     <%# Galeria de temas com a amostra da gem (.ss-swatch): o rádio some e a escolhida ganha o anel. %>
     <div class="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3">
       <% themes.each do |th| %>
-        <label class="ss-swatch ss-swatch-lg is-block" style="<%= dw_swatch_style(th) %>">
-          <%= f.radio_button :theme, th.key, checked: th.key == current %>
-          <span class="ss-swatch-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="ss-swatch-bar" aria-hidden="true"></span>
-          <span class="ss-swatch-name"><%= th.label %></span>
-        </label>
+        <%= f.ss_swatch_radio :theme, th.key, label: th.label, style: dw_swatch_style(th), size: :lg, block: true, checked: th.key == current %>
       <% end %>
     </div>
   </fieldset>
