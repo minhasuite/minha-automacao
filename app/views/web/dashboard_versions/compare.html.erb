@@ -7,10 +7,10 @@
 <% if @choices.size < 2 %>
   <%= render Ss::EmptyStateComponent.new(title: t("dashboards.cmp.nothing"), text: t("dashboards.cmp.nothing_hint"), css: "ss-card") %>
 <% else %>
-  <%= form_with url: compare_dashboard_path(@dashboard), method: :get, class: "ss-card ss-card-pad flex flex-wrap items-end gap-3" do %>
-    <div class="min-w-40 flex-1"><label class="ss-label" for="cmp-a"><%= t("dashboards.cmp.left") %></label><%= select_tag :a, options_for_select(@choices, @a), id: "cmp-a", class: "ss-input", data: { autosubmit: true } %></div>
-    <div class="min-w-40 flex-1"><label class="ss-label" for="cmp-b"><%= t("dashboards.cmp.right") %></label><%= select_tag :b, options_for_select(@choices, @b), id: "cmp-b", class: "ss-input", data: { autosubmit: true } %></div>
-    <%= submit_tag t("dashboards.cmp.submit"), class: "ss-btn ss-btn-outline", name: nil %>
+  <%= ss_form_with url: compare_dashboard_path(@dashboard), method: :get, class: "ss-card ss-card-pad flex flex-wrap items-end gap-3" do |f| %>
+    <%= f.ss_select :a, @choices, label: t("dashboards.cmp.left"), selected: @a, id: "cmp-a", wrapper_class: "min-w-40 flex-1", data: { autosubmit: true } %>
+    <%= f.ss_select :b, @choices, label: t("dashboards.cmp.right"), selected: @b, id: "cmp-b", wrapper_class: "min-w-40 flex-1", data: { autosubmit: true } %>
+    <%= f.ss_submit t("dashboards.cmp.submit"), variant: :outline, name: nil %>
   <% end %>
 
   <% if @diff %>
@@ -61,7 +61,8 @@
             <% if v.version == @dashboard.version %>
               <span class="ss-badge ss-badge-success"><%= t("dashboards.ed.live") %></span>
             <% else %>
-              <%= button_to t("dashboards.ed.revert"), revert_dashboard_path(@dashboard), params: { version: v.version }, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm: t("dashboards.ed.revert_confirm", n: v.version), turbo_confirm_button: t("dashboards.publish") } } %>
+              <%= render Ss::ButtonComponent.new(label: t("dashboards.ed.revert"), href: revert_dashboard_path(@dashboard), method: :post, params: { version: v.version }, variant: :ghost, size: :sm,
+                                                 confirm: t("dashboards.ed.revert_confirm", n: v.version), confirm_button: t("dashboards.publish")) %>
             <% end %>
           </li>
         <% end %>

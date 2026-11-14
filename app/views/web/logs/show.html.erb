@@ -5,19 +5,16 @@
     <%= link_to t("logs.tabs.#{key}"), settings_logs_path(aba: key), class: "ss-chip no-underline", "aria-current": (key == @tab).to_s %>
   <% end %>
 </nav>
-<%= form_with url: settings_logs_path, method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do %>
+<%= ss_form_with url: settings_logs_path, method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do |f| %>
   <%= hidden_field_tag :aba, @tab, id: nil %>
   <% if @tab == "resumo" %>
-    <div><label for="nivel" class="ss-label"><%= t("logs.level") %></label>
-      <%= select_tag :nivel, options_for_select([ [ t("logs.levels.warn"), "warn" ], [ t("logs.levels.error"), "error" ] ], params[:nivel]), include_blank: t("logs.all"), class: "ss-input" %></div>
-    <div><label for="fonte" class="ss-label"><%= t("logs.source") %></label>
-      <%= select_tag :fonte, options_for_select(@sources, params[:fonte]), include_blank: t("logs.all"), class: "ss-input" %></div>
+    <%= f.ss_select :nivel, [ [ t("logs.levels.warn"), "warn" ], [ t("logs.levels.error"), "error" ] ], label: t("logs.level"), selected: params[:nivel], include_blank: t("logs.all") %>
+    <%= f.ss_select :fonte, @sources, label: t("logs.source"), selected: params[:fonte], include_blank: t("logs.all") %>
   <% else %>
-    <div><label for="servico" class="ss-label"><%= t("logs.service") %></label>
-      <%= select_tag :servico, options_for_select(Web::LogsController::SERVICES.map { |s| [ t("logs.services.#{s}"), s ] }, @service), class: "ss-input" %></div>
+    <%= f.ss_select :servico, Web::LogsController::SERVICES.map { |s| [ t("logs.services.#{s}"), s ] }, label: t("logs.service"), selected: @service %>
   <% end %>
-  <div class="min-w-48 flex-1"><label for="q" class="ss-label"><%= t("logs.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input" %></div>
-  <button type="submit" class="ss-btn ss-btn-ghost"><%= icon("search", "size-4") %><%= t("logs.filter") %></button>
+  <%= f.ss_search_field :q, label: t("logs.search"), value: params[:q], wrapper_class: "min-w-48 flex-1" %>
+  <%= render Ss::ButtonComponent.new(label: t("logs.filter"), icon: icon("search", ""), type: :submit, variant: :ghost) %>
   <%= link_to settings_logs_path(request.query_parameters.merge(format: :text)), class: "ss-btn ss-btn-outline", data: { turbo: false } do %><%= icon("download", "size-4") %><%= t("logs.download") %><% end %>
 <% end %>
 
@@ -38,7 +35,8 @@
       <% end %>
     </ul>
     <div class="mt-3 flex justify-end">
-      <%= button_to settings_logs_path, method: :delete, class: "ss-btn ss-btn-ghost ss-btn-sm", form: { data: { turbo_confirm_tone: "danger", turbo_confirm: t("logs.clear_confirm"), turbo_confirm_button: t("logs.clear") } } do %><%= icon("trash", "size-4") %><%= t("logs.clear") %><% end %>
+      <%= render Ss::ButtonComponent.new(label: t("logs.clear"), icon: icon("trash", ""), href: settings_logs_path, method: :delete, variant: :ghost, size: :sm,
+                                         confirm: t("logs.clear_confirm"), confirm_tone: :danger, confirm_button: t("logs.clear")) %>
     </div>
   <% end %>
 <% elsif @error %>
