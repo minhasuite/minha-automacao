@@ -55,18 +55,14 @@
 <%# Ajustes do local: limiares e o aviso de bateria (o padrão vem do config/device_diagnostics.yml). %>
 <section class="ss-card ss-card-pad mt-6" aria-labelledby="dh-settings" data-device-health="settings">
   <%= render Ss::CardHeaderComponent.new(title: t("device_health.settings.title"), subtitle: t("device_health.settings.subtitle"), id: "dh-settings", heading: :h2, icon: icon("adjustments", "")) %>
-  <%= form_with url: device_health_settings_path(site_id: @site.id, **fp), method: :patch, class: "mt-3 grid gap-3 sm:grid-cols-2" do %>
+  <%= ss_form_with url: device_health_settings_path(site_id: @site.id, **fp), method: :patch, class: "mt-3 grid gap-3 sm:grid-cols-2" do |f| %>
     <% Diagnostics.config.fetch("editable").each do |k, spec| %>
       <% if spec["type"] == "boolean" %>
-        <%= hidden_field_tag "settings[#{k}]", "0", id: nil %>
-        <label class="ss-check sm:col-span-2" for="dh-<%= k %>"><%= check_box_tag "settings[#{k}]", "1", @settings[k], id: "dh-#{k}" %><%= t("device_health.settings.#{k}") %></label>
+        <%= f.ss_check_box "settings[#{k}]", label: t("device_health.settings.#{k}"), id: "dh-#{k}", checked: @settings[k].present? && @settings[k] != false, wrapper_class: "sm:col-span-2" %>
       <% else %>
-        <div>
-          <label for="dh-<%= k %>" class="ss-label"><%= t("device_health.settings.#{k}") %></label>
-          <%= number_field_tag "settings[#{k}]", @settings[k], id: "dh-#{k}", min: spec["min"], max: spec["max"], class: "ss-input num" %>
-        </div>
+        <%= f.ss_number_field "settings[#{k}]", label: t("device_health.settings.#{k}"), value: @settings[k], id: "dh-#{k}", min: spec["min"], max: spec["max"], class: "num" %>
       <% end %>
     <% end %>
-    <div class="sm:col-span-2"><button type="submit" class="ss-btn ss-btn-primary"><%= t("device_health.settings.save") %></button></div>
+    <div class="sm:col-span-2"><%= f.ss_submit t("device_health.settings.save") %></div>
   <% end %>
 </section>

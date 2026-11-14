@@ -1,6 +1,6 @@
 <%= render "web/shared/header", title: t("dashboard_defaults.title"), subtitle: t("dashboard_defaults.subtitle", site: @site.name), back: settings_dashboards_path %>
 <%= render layout: "web/settings/frame", locals: { current: :dashboards } do %>
-  <%= form_with url: settings_dashboard_defaults_path(@site), method: :patch, class: "grid gap-6" do %>
+  <%= ss_form_with url: settings_dashboard_defaults_path(@site), method: :patch, class: "grid gap-6" do |f| %>
     <section class="grid gap-3">
       <%= render Ss::SectionHeaderComponent.new(title: t("dashboard_defaults.facts_title"), subtitle: t("dashboard_defaults.facts_hint")) %>
       <%= render "web/dashboards/widget_forms/facts_fields", facts: @facts, prefix: "facts", uid: "dd", areas: @site.areas.order(:position, :name).to_a, scoped: true %>
@@ -10,10 +10,8 @@
       <div class="ss-card ss-card-pad grid gap-3 sm:grid-cols-2">
         <% rows = @stale.to_a + [ [ "", nil ], [ "", nil ] ] %>
         <% rows.each_with_index do |(key, min), i| %>
-          <div><label class="ss-label" for="st-k<%= i %>"><%= t("dashboard_defaults.stale_key") %></label>
-            <%= text_field_tag "stale[#{i}][key]", key, class: "ss-input", id: "st-k#{i}", placeholder: "temperature, measure, default", list: "st-keys" %></div>
-          <div><label class="ss-label" for="st-m<%= i %>"><%= t("dashboard_defaults.stale_min") %></label>
-            <%= number_field_tag "stale[#{i}][min]", min, min: 1, max: Dashboards::Staleness::MAX_MIN, class: "ss-input num", id: "st-m#{i}" %></div>
+          <%= f.ss_text_field "stale[#{i}][key]", label: t("dashboard_defaults.stale_key"), value: key, id: "st-k#{i}", placeholder: "temperature, measure, default", list: "st-keys" %>
+          <%= f.ss_number_field "stale[#{i}][min]", label: t("dashboard_defaults.stale_min"), value: min, min: 1, max: Dashboards::Staleness::MAX_MIN, class: "num", id: "st-m#{i}" %>
         <% end %>
         <datalist id="st-keys"><% (%w[default] + Point::CAPABILITIES.keys + %w[temperature humidity power energy battery]).uniq.each do |k| %><option value="<%= k %>"></option><% end %></datalist>
       </div>
@@ -24,20 +22,19 @@
         <% rows = @quick + [ {}, {} ] %>
         <% rows.first(Dashboards::Actions::MAX_QUICK).each_with_index do |q, i| %>
           <div class="grid gap-3 sm:grid-cols-4 items-end">
-            <div><label class="ss-label" for="qa-l<%= i %>"><%= t("dashboard_defaults.quick_label") %></label>
-              <%= text_field_tag "quick[#{i}][label]", q["label"], class: "ss-input", id: "qa-l#{i}", maxlength: 40, placeholder: t("dashboard_defaults.quick_label_hint") %></div>
-            <div class="sm:col-span-2"><label class="ss-label" for="qa-q<%= i %>"><%= t("dashboard_defaults.quick_query") %></label>
-              <%= text_field_tag "quick[#{i}][query]", q["query"].is_a?(Hash) ? q["query"].map { |k, v| "#{k}=#{v}" }.join(" ") : q["query"], class: "ss-input", id: "qa-q#{i}", placeholder: "capability=onoff state=on tag=iluminacao" %></div>
-            <div><label class="ss-label" for="qa-c<%= i %>"><%= t("dashboard_defaults.quick_command") %></label>
-              <%= select_tag "quick[#{i}][command]", options_for_select(%w[off on toggle press].map { |c| [ Points::Timeline::COMMAND_LABELS.fetch(c, c), c ] }, q["command"] || "off"), class: "ss-input", id: "qa-c#{i}" %></div>
+            <%= f.ss_text_field "quick[#{i}][label]", label: t("dashboard_defaults.quick_label"), value: q["label"], id: "qa-l#{i}", maxlength: 40, placeholder: t("dashboard_defaults.quick_label_hint") %>
+            <%= f.ss_text_field "quick[#{i}][query]", label: t("dashboard_defaults.quick_query"), wrapper_class: "sm:col-span-2", id: "qa-q#{i}", placeholder: "capability=onoff state=on tag=iluminacao",
+                                                     value: q["query"].is_a?(Hash) ? q["query"].map { |k, v| "#{k}=#{v}" }.join(" ") : q["query"] %>
+            <%= f.ss_select "quick[#{i}][command]", %w[off on toggle press].map { |c| [ Points::Timeline::COMMAND_LABELS.fetch(c, c), c ] }, label: t("dashboard_defaults.quick_command"),
+                                                    selected: q["command"] || "off", id: "qa-c#{i}" %>
             <%= hidden_field_tag "quick[#{i}][icon]", q["icon"] %>
           </div>
         <% end %>
       </div>
     </section>
     <div class="flex flex-wrap gap-2">
-      <%= submit_tag t("dashboard_defaults.save"), class: "ss-btn ss-btn-primary" %>
-      <%= submit_tag t("dashboard_defaults.reset"), name: "reset", class: "ss-btn ss-btn-ghost", data: { turbo_confirm: t("dashboard_defaults.reset_confirm"), turbo_confirm_button: t("dashboard_defaults.reset") } %>
+      <%= f.ss_submit t("dashboard_defaults.save") %>
+      <%= f.ss_submit t("dashboard_defaults.reset"), name: "reset", variant: :ghost, data: { turbo_confirm: t("dashboard_defaults.reset_confirm"), turbo_confirm_button: t("dashboard_defaults.reset") } %>
     </div>
   <% end %>
 <% end %>
