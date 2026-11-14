@@ -66,9 +66,11 @@
       <span class="ss-badge ss-badge-dot ss-badge-<%= tone %>" title="<%= note %>"><%= label %></span><% if note && tone != "success" %><span class="block text-xs text-muted mt-1 max-w-48 max-md:hidden"><%= note.truncate(70) %></span><% end %>
     <% end %>
     <% tb.bulk_actions do %>
-      <label for="acao" class="sr-only"><%= t("devices.with_checked") %></label><%= select_tag :acao, options_for_select([ [ t("devices.with_checked_hint"), "" ] ] + Web::DevicesController::BULK.invert.to_a), class: "ss-input", required: true %>
-      <span class="contents [.ss-selection-bar:not(:has(option[value=area]:checked))_&]:hidden"><label for="area_id" class="sr-only"><%= t("devices.move_area") %></label><%= select_tag :area_id, options_for_select([ [ t("devices.no_area"), "" ] ] + @areas.map { |a| [ a.name, a.id ] }), class: "ss-input" %></span>
-      <button type="submit" class="ss-btn ss-btn-primary ss-btn-sm" data-turbo-confirm="<%= t("devices.bulk_confirm") %>" data-turbo-confirm-button="<%= t("devices.apply") %>"><%= t("devices.apply") %></button>
+      <%= ss_fields do |f| %>
+        <%= f.ss_select :acao, [ [ t("devices.with_checked_hint"), "" ] ] + Web::DevicesController::BULK.invert.to_a, label: t("devices.with_checked"), hide_label: true, required: true %>
+        <span class="contents [.ss-selection-bar:not(:has(option[value=area]:checked))_&]:hidden"><%= f.ss_select :area_id, [ [ t("devices.no_area"), "" ] ] + @areas.map { |a| [ a.name, a.id ] }, label: t("devices.move_area"), hide_label: true %></span>
+        <%= render Ss::ButtonComponent.new(label: t("devices.apply"), type: :submit, size: :sm, confirm: t("devices.bulk_confirm"), confirm_button: t("devices.apply")) %>
+      <% end %>
     <% end %>
   <% end %>
   </div>
