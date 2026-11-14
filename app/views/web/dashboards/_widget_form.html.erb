@@ -5,20 +5,18 @@
 <% plugins = Dashboards::Widgets.plugins %>
 <% uid = "#{op}-#{target}" %>
 <%# `back`: "painel" = a gaveta da edição na própria tela (ideia 1); a resposta é a página toda. %>
-<%= form_with url: draft_dashboard_path(dashboard), method: :patch, multipart: true, class: "dw-wf grid gap-3 sm:grid-cols-2 pt-3", data: ({ turbo_frame: "_top" } if back) do |f| %>
+<%= ss_form_with url: draft_dashboard_path(dashboard), method: :patch, multipart: true, class: "dw-wf grid gap-3 sm:grid-cols-2 pt-3", data: ({ turbo_frame: "_top" } if back) do |f| %>
   <% if back %><%= hidden_field_tag :back, back, id: nil %><% end %>
   <%= hidden_field_tag :op, op, id: nil %><%= hidden_field_tag :target, target, id: nil %><%= hidden_field_tag :view_id, view_id, id: nil %>
-  <div><label class="ss-label" for="t-<%= uid %>"><%= t("dashboards.kind") %></label>
-    <%= select_tag "widget[type]", options_for_select(Dashboards::Schema.labels.invert, w["type"] || "tile"), class: "ss-input", id: "t-#{uid}" %></div>
-  <div><label class="ss-label" for="l-<%= uid %>"><%= t("dashboards.wf.label") %> <span class="font-normal"><%= t("dashboards.ed.optional") %></span></label>
-    <%= text_field_tag "widget[label]", w["label"], class: "ss-input", id: "l-#{uid}", maxlength: 80, placeholder: t("dashboards.wf.label_hint") %></div>
+  <%= f.ss_select "widget[type]", Dashboards::Schema.labels.invert, label: t("dashboards.kind"), selected: w["type"] || "tile", id: "t-#{uid}" %>
+  <%= f.ss_text_field "widget[label]", label: safe_join([ t("dashboards.wf.label"), " ", tag.span(t("dashboards.ed.optional"), class: "font-normal") ]), value: w["label"], id: "l-#{uid}", maxlength: 80, placeholder: t("dashboards.wf.label_hint") %>
 
   <%# Tipos de widget = plugins (Dashboards::Widgets): os campos de cada tipo aparecem quando ele está escolhido. %>
   <style><%= plugins.map { |pl| ".dw-wf:has(option[value=#{pl.type}]:checked) [data-for~=#{pl.type}]" }.join(", ") %> { display: block; }</style>
-  <div class="sm:col-span-2" data-for="<%= plugins.select(&:bind?).map(&:type).join(" ") %>"><label class="ss-label" for="b-<%= uid %>"><%= t("dashboards.wf.point") %></label>
-    <%= select_tag "widget[bind]", grouped_options_for_select(point_options, w["bind"]), include_blank: t("dashboards.wf.pick_point"), class: "ss-input", id: "b-#{uid}" %></div>
-  <div class="sm:col-span-2" data-for="<%= plugins.select(&:binds?).map(&:type).join(" ") %>"><label class="ss-label" for="bs-<%= uid %>"><%= t("dashboards.wf.points") %> <span class="font-normal"><%= t("dashboards.wf.points_hint") %></span></label>
-    <%= select_tag "widget[binds][]", grouped_options_for_select(point_options, w["binds"]), multiple: true, size: 6, class: "ss-input", id: "bs-#{uid}" %></div>
+  <div class="sm:col-span-2" data-for="<%= plugins.select(&:bind?).map(&:type).join(" ") %>">
+    <%= f.ss_select "widget[bind]", point_options, label: t("dashboards.wf.point"), include_blank: t("dashboards.wf.pick_point"), selected: w["bind"], id: "b-#{uid}" %></div>
+  <div class="sm:col-span-2" data-for="<%= plugins.select(&:binds?).map(&:type).join(" ") %>">
+    <%= f.ss_select "widget[binds]", point_options, label: safe_join([ t("dashboards.wf.points"), " ", tag.span(t("dashboards.wf.points_hint"), class: "font-normal") ]), selected: w["binds"], multiple: true, size: 6, id: "bs-#{uid}" %></div>
   <%# P2.5: tipos que só aparecem na web (card de terceiros) avisam que o app mostra "abrir na web". %>
   <% if (web_only = plugins.select(&:web_only?).map(&:type)).any? %>
     <div class="sm:col-span-2" data-for="<%= web_only.join(" ") %>"><%= render Ss::NoteComponent.new(text: t("dashboards.wf.web_only"), icon: icon("globe-alt", "")) %></div>
@@ -37,8 +35,7 @@
     <legend class="ss-label"><%= t("dashboards.wf.width") %></legend>
     <div class="grid grid-cols-3 gap-2">
       <% %w[mobile tablet desktop].each do |screen| %><% label = t("dashboards.screens.#{screen}") %>
-        <div><label class="text-xs text-muted" for="sp-<%= screen %>-<%= uid %>"><%= label %></label>
-          <%= select_tag "span[#{screen}]", options_for_select((1..12).to_a.reverse, span[screen]), class: "ss-input num", id: "sp-#{screen}-#{uid}" %></div>
+        <%= f.ss_select "span[#{screen}]", (1..12).to_a.reverse, label:, selected: span[screen], class: "num", id: "sp-#{screen}-#{uid}" %>
       <% end %>
     </div>
   </fieldset>
@@ -46,7 +43,7 @@
     <legend class="ss-label"><%= t("dashboards.wf.show_on") %> <span class="font-normal"><%= t("dashboards.wf.show_on_hint") %></span></legend>
     <div class="flex flex-wrap gap-3">
       <% %w[mobile tablet desktop].each do |screen| %><% label = t("dashboards.screens.#{screen}") %>
-        <label class="ss-check"><%= check_box_tag "widget[screens][]", screen, screens.include?(screen), id: "sc-#{screen}-#{uid}" %><%= label %></label>
+        <%= f.ss_check_box "widget[screens]", multiple: true, label:, checked_value: screen, unchecked_value: nil, checked: screens.include?(screen), id: "sc-#{screen}-#{uid}" %>
       <% end %>
     </div>
   </fieldset>
@@ -54,9 +51,9 @@
     <legend class="ss-label"><%= t("dashboards.ed.who_sees") %> <span class="font-normal"><%= t("dashboards.wf.who_hint") %></span></legend>
     <div class="flex flex-wrap gap-3">
       <% SiteMembership::ROLES.each do |r| %>
-        <label class="ss-check"><%= check_box_tag "widget[roles][]", r, roles.include?(r), id: "ro-#{r}-#{uid}" %><%= SiteMembership.role_label(r) %></label>
+        <%= f.ss_check_box "widget[roles]", multiple: true, label: SiteMembership.role_label(r), checked_value: r, unchecked_value: nil, checked: roles.include?(r), id: "ro-#{r}-#{uid}" %>
       <% end %>
     </div>
   </fieldset>
-  <div class="sm:col-span-2"><%= submit_tag op == "add_widget" ? t("dashboards.ed.add_widget") : t("dashboards.wf.save"), class: "ss-btn ss-btn-primary" %></div>
+  <div class="sm:col-span-2"><%= f.ss_submit op == "add_widget" ? t("dashboards.ed.add_widget") : t("dashboards.wf.save") %></div>
 <% end %>
