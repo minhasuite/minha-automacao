@@ -10,6 +10,9 @@ ports:
 volumes:
   - { name: data, path: /app/data }
 web_ui: { port: 8080 }
+# Rede Zigbee (chave, PAN, PAN estendido): NUNCA por variável de ambiente. Com GENERATE no env o
+# z2m sorteia uma rede nova a cada início e não grava (perdemos a rede da casa assim em 14/11/2026).
+# Sem env, o z2m sorteia uma vez, grava no configuration.yaml do volume e reusa nos próximos inícios.
 env:
   TZ: America/Sao_Paulo
   Z2M_ONBOARD_NO_SERVER: "1"
@@ -17,9 +20,6 @@ env:
   ZIGBEE2MQTT_CONFIG_MQTT_USER: automacao
   ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/zigbee
   ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_ENABLED: "false"
-  ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY: GENERATE
-  ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID: GENERATE
-  ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID: GENERATE
   ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED: "true"
   ZIGBEE2MQTT_CONFIG_FRONTEND_PORT: "8080"
 server_env:

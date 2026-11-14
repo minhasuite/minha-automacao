@@ -28,6 +28,13 @@ RSpec.describe AppCatalog do
     expect(hosts).to eq(hosts.uniq)
   end
 
+  it "nenhum manifesto sorteia valor a cada início pelo env (GENERATE): a rede Zigbee some no próximo reinício" do
+    described_class.all.each do |m|
+      bad = m.data.fetch("env", {}).select { |_k, v| v.to_s.strip.casecmp?("GENERATE") }
+      expect(bad).to be_empty, "#{m.key}: #{bad.keys.join(', ')} = GENERATE no env"
+    end
+  end
+
   it "app do sistema tem a mesma versão do serviço no compose" do
     compose = YAML.safe_load_file(Rails.root.join("docker-compose.local.yml"), aliases: true)
     described_class.all.select(&:system?).each do |m|
