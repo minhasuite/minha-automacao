@@ -6,5 +6,4 @@
 /* Telas do produto: só domínio (allowlist no topo de cada arquivo e no bin/conferir-css). */
 @import "./dashboards.css";
 @import "./paineis.css";
-@import "./paridade.css";
 @import "./produto.css";

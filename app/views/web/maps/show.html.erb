@@ -1,7 +1,7 @@
 <%= render "web/shared/header", title: t("maps.title"), subtitle: t("maps.subtitle", site: @site.name) %>
 <%= render "web/shared/site_switch", sites: @sites, site: @site, path: map_path %>
 <% people = @map["people"] %>
-<%# Mapa + coluna lateral da gem (Ss::AsideLayoutComponent); o mapa (Leaflet, mp-*) é o domínio. %>
+<%# Mapa + coluna lateral da gem (Ss::AsideLayoutComponent); o mapa (Leaflet) é o domínio. Cor de cada pessoa = --series-N. %>
 <%= render Ss::AsideLayoutComponent.new(label: t("maps.people"), data: (@map["center"] ? { controller: "map", map_data_value: @map.to_json } : {})) do |lay| %>
   <% lay.with_main do %>
   <section class="ss-card overflow-hidden" aria-label="<%= t("maps.title") %>">
@@ -24,7 +24,7 @@
             <% off = p["quality"] != "good" %>
             <li>
               <%= render(Ss::ButtonComponent.new(variant: :item, disabled: !p["lat"], data: { action: "map#focus", map_id_param: p["id"] })) do %>
-                <span class="mp-avatar <%= 'mp-home' if p['home'] && !off %>" style="--mp-c: var(--s<%= i % 6 %>)"><%= p["initials"] %></span>
+                <span class="grid place-items-center flex-none rounded-full font-bold text-[.8rem] leading-none text-[var(--on-accent)] bg-[var(--mp-c,var(--accent))] border-[3px] border-surface size-[2.4rem] <%= p['home'] && !off ? "shadow-[0_0_0_2px_var(--success),0_8px_18px_-8px_color-mix(in_srgb,var(--ink)_50%,transparent)]" : "shadow-[0_0_0_2px_var(--mp-c,var(--accent)),0_8px_18px_-8px_color-mix(in_srgb,var(--ink)_50%,transparent)]" %>" style="--mp-c: var(--series-<%= i % 6 + 1 %>)"><%= p["initials"] %></span>
                 <span class="ss-item-main">
                   <span class="block font-semibold text-ink truncate"><%= p["name"] %></span>
                   <span class="block text-xs text-muted truncate"><%= off ? t("points.no_signal") : (p["zone"].presence || t("maps.no_reading")) %><% if p["since"] && !off %> · <%= t("maps.since") %> <%= l(Time.zone.parse(p["since"]), format: Time.zone.parse(p["since"]).to_date == Date.current ? "%H:%M" : "%d/%m %H:%M") %><% end %></span>

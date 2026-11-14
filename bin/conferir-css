@@ -21,9 +21,7 @@ CSS_DOMINIO = {
     /\Ama-kiosk(-[a-z]+)?\z/, /\Ama-saver(-[a-z]+)?\z/, /\Ama-ea-[a-z0-9]+\z/ # quiosque e arte do vazio
   ],
   "paineis.css" => [/\Adw-(tappable|holding|panel|stack(-[a-z]+)?)\z/, /\Aap-(live|glass|wall-[a-z]+)\z/],
-  "paridade.css" => [/\Amp-(map|compact|canvas|fallback|avatar|home|approx|pin)\z/],
   "produto.css" => [/\Aob-(page|blobs|top|main|wizard|card|art|content|nav|radar-wrap|ticker)\z/, /\Aoba(-[a-z0-9-]+)?\z/],
-  "voz.css" => [/\Avz-(flow(-[a-z]+)?|run-bar|seg(-[a-z]+)?)\z/]
 }.freeze
 ALLOW = CSS_DOMINIO.values.flatten
 # Classes só de comportamento (gancho de JS, sem CSS): também são domínio.

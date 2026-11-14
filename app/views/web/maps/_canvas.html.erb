@@ -1,6 +1,7 @@
 <%# locals: (map:, height:, compact: false, controller: true) -%>
-<div class="mp-map <%= 'mp-compact' if compact %>" style="--mp-h: <%= height %>px" <% if controller %>data-controller="map" data-map-data-value="<%= map.except('point_ids').to_json %>"<% end %>
+<%# Tela do Leaflet (domínio): altura por --mp-h, no celular até 58vh; o fallback cobre quando o Leaflet falha. %>
+<div class="relative overflow-hidden bg-field h-[var(--mp-h,320px)] <%= compact ? "mt-[.6rem] rounded-[14px]" : "rounded-[inherit] max-lg:h-[min(var(--mp-h,560px),58vh)]" %>" style="--mp-h: <%= height %>px" <% if controller %>data-controller="map" data-map-data-value="<%= map.except('point_ids').to_json %>"<% end %>
      role="region" aria-label="<%= t("maps.aria", people: map['people'].size, zones: map['zones'].size) %>">
-  <div class="mp-canvas" data-map-target="canvas"></div>
-  <%= render Ss::EmptyStateComponent.new(variant: :erro, compact: true, title: t("maps.failed"), css: "mp-fallback", hidden: true, data: { map_target: "fallback" }) %>
+  <div class="absolute inset-0 z-0 [&_.leaflet-container]:font-[inherit] [&_.leaflet-container]:bg-field dark:[&_.leaflet-tile-pane]:[filter:invert(1)_hue-rotate(180deg)_brightness(.92)_contrast(.9)_saturate(.6)]" data-map-target="canvas"></div>
+  <%= render Ss::EmptyStateComponent.new(variant: :erro, compact: true, title: t("maps.failed"), css: "absolute inset-0 z-[1] content-center [&[hidden]]:hidden", hidden: true, data: { map_target: "fallback" }) %>
 </div>

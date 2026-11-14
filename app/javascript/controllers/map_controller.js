@@ -20,8 +20,9 @@ export default class extends Controller {
     if (!this.element.isConnected) return
     const d = this.dataValue
     const css = getComputedStyle(document.documentElement)
-    const color = (i) => css.getPropertyValue(`--s${i % 6}`).trim() || "#5a45e8"
-    const accent = css.getPropertyValue("--accent").trim() || "#5a45e8"
+    // Cor de cada pessoa: a série da gem (a mesma no pino, no trajeto e na lista).
+    const accent = css.getPropertyValue("--accent").trim()
+    const color = (i) => css.getPropertyValue(`--series-${(i % 6) + 1}`).trim() || accent
     this.map = L.map(this.canvasTarget, { scrollWheelZoom: false }).setView(d.center, 15)
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19, attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
@@ -41,8 +42,8 @@ export default class extends Controller {
       }
       if (p.lat == null) return
       const icon = L.divIcon({
-        className: "mp-pin", iconSize: [40, 40], iconAnchor: [20, 20],
-        html: `<span class="mp-avatar ${p.home ? "mp-home" : ""} ${p.precise ? "" : "mp-approx"}" style="--mp-c: ${color(i)}">${esc(p.initials)}</span>`
+        className: "bg-transparent border-0", iconSize: [40, 40], iconAnchor: [20, 20],
+        html: `<span class="grid place-items-center flex-none rounded-full font-bold text-[.8rem] leading-none text-[var(--on-accent)] bg-[var(--mp-c,var(--accent))] border-[3px] border-surface size-10 ${p.home ? "shadow-[0_0_0_2px_var(--success),0_8px_18px_-8px_color-mix(in_srgb,var(--ink)_50%,transparent)]" : "shadow-[0_0_0_2px_var(--mp-c,var(--accent)),0_8px_18px_-8px_color-mix(in_srgb,var(--ink)_50%,transparent)]"} ${p.precise ? "" : "opacity-85 border-dashed"}" style="--mp-c: ${color(i)}">${esc(p.initials)}</span>`
       })
       const m = L.marker([p.lat, p.lon], { icon, title: p.name }).addTo(this.map)
       m.bindPopup(`<strong>${esc(p.name)}</strong><br>${esc(p.zone || d.texts?.no_reading || "")}${p.precise ? "" : ` (${esc(d.texts?.approx ?? "")})`}`)
