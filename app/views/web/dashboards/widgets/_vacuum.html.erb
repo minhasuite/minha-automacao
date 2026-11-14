@@ -40,12 +40,12 @@
       <%= dw_command_form(p, "clean_rooms", w: w, dashboard: dashboard, live: live) do %>
         <fieldset>
           <legend class="ss-kicker mb-2"><%= t("dashboards.w.vac.rooms") %></legend>
-          <%# Cômodos nas caixas de marcar da gem (f.ss_check_box). %>
+          <%# Cômodos nos chips de marcar da gem (f.ss_chip_check_box). %>
           <div class="ss-chips flex-wrap overflow-visible">
             <%= ss_fields(nil) do |f| %>
               <% d["rooms"].each do |r| %>
-                <%= f.ss_check_box "value[rooms][]", label: r["name"], checked_value: r["id"], unchecked_value: nil, include_hidden: false, checked: false,
-                                                     id: "#{uid}-room-#{r['id']}", disabled: !can %>
+                <%= f.ss_chip_check_box "value[rooms][]", label: r["name"], checked_value: r["id"], unchecked_value: nil, checked: false,
+                                                          id: "#{uid}-room-#{r['id']}", disabled: !can %>
               <% end %>
             <% end %>
           </div>
