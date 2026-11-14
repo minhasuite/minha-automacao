@@ -345,7 +345,7 @@ RSpec.describe "Lote 8: recursos genéricos da migração" do
       expect(cor).to have_attributes(shadow: true, enabled: true)
       expect(cor.definition["triggers"].pluck("point")).to eq([ mov.id, Point.find_by!(key: "robo.fim").id ])
       acts = cor.definition["actions"]
-      expect(acts[1]).to include("command" => "set", "point" => Point.find_by!(name: "Cor").id, "value" => { "rgb" => [ 255, 0, 0 ] })
+      expect(acts[1]).to include("command" => "set", "point" => Point.find_by!(name: "Cor", capability: "color").id, "value" => { "rgb" => [ 255, 0, 0 ] })
       expect(acts[2]).to include("type" => "command_query", "query" => "tag=iluminação")
       expect(r.items.find { |i| i["name"] == "Cor" }["lossless"]).to be(true)
       expect(r.items.find { |i| i["name"] == "Atributo" }["notes"]).to include(a_string_including("não informa o atributo x"))
