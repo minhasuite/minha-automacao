@@ -4,53 +4,49 @@
 <% exposed = @items.count { |t, _| t.alexa_exposed } %>
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-  <%= form_with url: site_alexa_path(@site), method: :patch, class: "ss-card min-w-0", aria: { label: t("alexa.items_label") }, data: { controller: "ss-filter" } do %>
+  <%= ss_form_with url: site_alexa_path(@site), method: :patch, class: "ss-card min-w-0", aria: { label: t("alexa.items_label") }, data: { controller: "ss-filter" } do |f| %>
     <div class="ss-card-pad flex flex-wrap items-center justify-between gap-2 border-b border-line">
       <div>
         <h2 class="font-bold"><%= t("alexa.items") %></h2>
         <p class="text-sm text-muted"><%= t("bridges.count_html", n: tag.span(exposed, class: "num"), total: tag.span(@items.size, class: "num")) %></p>
       </div>
-      <% if admin && @items.any? %><%= submit_tag t("integrations.common.save"), class: "ss-btn ss-btn-primary", name: nil %><% end %>
+      <% if admin && @items.any? %><%= f.ss_submit t("integrations.common.save"), name: nil %><% end %>
     </div>
     <% if @items.empty? %>
       <p class="ss-card-pad text-sm text-muted"><%= t("alexa.empty") %></p>
     <% else %>
       <div class="ss-card-pad border-b border-line">
-        <label for="ax-busca" class="ss-label"><%= t("bridges.search") %></label>
-        <input type="search" id="ax-busca" class="ss-input" placeholder="<%= t("alexa.search_hint") %>" autocomplete="off" data-ss-filter-target="input" data-action="input->ss-filter#apply keydown.esc->ss-filter#clear">
-        <p class="text-sm text-muted mt-2" data-ss-filter-target="empty" hidden><%= t("bridges.no_match") %> <button type="button" class="font-semibold text-accent" data-action="ss-filter#clear"><%= t("bridges.clear") %></button></p>
+        <%= f.ss_search_field :ax_busca, label: t("bridges.search"), id: "ax-busca", name: nil, placeholder: t("alexa.search_hint"), autocomplete: "off",
+                                         data: { ss_filter_target: "input", action: "input->ss-filter#apply keydown.esc->ss-filter#clear" } %>
+        <p class="text-sm text-muted mt-2" data-ss-filter-target="empty" hidden><%= t("bridges.no_match") %>
+          <%= render Ss::ButtonComponent.new(label: t("bridges.clear"), variant: :ghost, size: :sm, data: { action: "ss-filter#clear" }) %></p>
       </div>
       <ul class="ss-rows">
         <% @items.each do |t, ifaces| %>
           <% id = Alexa::SmartHome.endpoint_id(t) %>
           <% critical = t.risk == "critical" %>
           <li class="flex-wrap" data-ss-filter-target="item">
-            <label class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
-              <%= hidden_field_tag "items[#{id}][exposed]", "0", id: nil %>
-              <%= check_box_tag "items[#{id}][exposed]", "1", t.alexa_exposed, id: "ax-#{id}", disabled: !admin, class: "size-5" %>
-              <span class="ss-icon-tile <%= t.alexa_exposed ? 'is-grad' : 'is-accent' %>"><%= icon(t.is_a?(Scene) ? "sparkles" : point_icon(t)) %></span>
-              <span class="min-w-0">
-                <% title, context = t.is_a?(Scene) ? [ t.name, t("alexa.scene") ] : t.display_names %>
-                <span class="block font-bold text-ink truncate"><%= title %></span>
-                <span class="block text-xs text-muted truncate"><%= [ context, ifaces.map(&:label).join(", ") ].compact.join(" · ") %></span>
-              </span>
-            </label>
+            <%= hidden_field_tag "items[#{id}][exposed]", "0", id: nil %>
+            <% title, context = t.is_a?(Scene) ? [ t.name, t("alexa.scene") ] : t.display_names %>
+            <% text = safe_join([ tag.span(icon(t.is_a?(Scene) ? "sparkles" : point_icon(t)), class: "ss-icon-tile #{t.alexa_exposed ? 'is-grad' : 'is-accent'}"),
+                                  tag.span(class: "min-w-0") { safe_join([ tag.span(title, class: "block font-bold text-ink truncate"),
+                                                                          tag.span([ context, ifaces.map(&:label).join(", ") ].compact.join(" · "), class: "block text-xs text-muted truncate") ]) } ]) %>
+            <%= f.ss_check_box "items[#{id}][exposed]", label: text, name: "items[#{id}][exposed]", id: "ax-#{id}", checked: t.alexa_exposed, unchecked_value: nil,
+                                                        disabled: !admin, class: "size-5", wrapper_class: "min-w-0 flex-1 [&>.ss-check]:gap-3 [&>.ss-check]:cursor-pointer" %>
             <div class="flex items-center gap-2 w-full sm:w-auto">
               <% if critical %><span class="ss-badge ss-badge-danger shrink-0"><%= t("bridges.critical") %></span><% end %>
-              <%= text_field_tag "items[#{id}][name]", t.alexa_name, placeholder: t("alexa.spoken", name: t.name), maxlength: 60, disabled: !admin,
-                                 class: "ss-input text-sm sm:w-56", "aria-label": t("alexa.spoken_of", name: t.name) %>
+              <%= f.ss_text_field "items[#{id}][name]", label: t("alexa.spoken_of", name: t.name), hide_label: true, name: "items[#{id}][name]", id: "axn-#{id}",
+                                                        value: t.alexa_name, placeholder: t("alexa.spoken", name: t.name), maxlength: 60, disabled: !admin,
+                                                        class: "text-sm", wrapper_class: "w-full sm:w-56" %>
             </div>
             <% if critical && admin %>
-              <label class="ss-check w-full text-sm text-danger">
-                <%= check_box_tag "items[#{id}][confirm]", "1", false, id: "axc-#{id}" %>
-                <%= t("alexa.confirm", name: t.name) %>
-                <%= t("alexa.voice_code") if ifaces.any? { |i| i.namespace == "Alexa.LockController" } %>
-              </label>
+              <%= f.ss_check_box "items[#{id}][confirm]", name: "items[#{id}][confirm]", id: "axc-#{id}", checked: false, unchecked_value: nil, wrapper_class: "w-full text-sm text-danger",
+                                                          label: [ t("alexa.confirm", name: t.name), (t("alexa.voice_code") if ifaces.any? { |i| i.namespace == "Alexa.LockController" }) ].compact.join(" ") %>
             <% end %>
           </li>
         <% end %>
       </ul>
-      <% if admin %><div class="ss-card-pad border-t border-line"><%= submit_tag t("integrations.common.save"), class: "ss-btn ss-btn-primary", name: nil %></div><% end %>
+      <% if admin %><div class="ss-card-pad border-t border-line"><%= f.ss_submit t("integrations.common.save"), name: nil %></div><% end %>
     <% end %>
   <% end %>
 
@@ -64,7 +60,8 @@
           <% @links.each do |tk| %>
             <li class="flex items-center justify-between gap-2 text-sm">
               <span class="min-w-0"><span class="block font-semibold truncate"><%= tk.user.name %></span><span class="text-xs text-muted"><%= t("alexa.since", date: l(tk.created_at.to_date)) %><%= ", #{t("alexa.used_ago", ago: time_ago_in_words(tk.last_used_at))}" if tk.last_used_at %></span></span>
-              <% if admin %><%= button_to t("alexa.unlink"), unlink_site_alexa_path(@site, token_id: tk.id), method: :delete, class: "ss-btn ss-btn-ghost text-sm", form: { data: { turbo_confirm_tone: "danger", turbo_confirm_button: t("alexa.unlink"), turbo_confirm: t("alexa.unlink_confirm") } } %><% end %>
+              <% if admin %><%= render Ss::ButtonComponent.new(label: t("alexa.unlink"), href: unlink_site_alexa_path(@site, token_id: tk.id), method: :delete, variant: :ghost, css: "text-sm",
+                                                              confirm: t("alexa.unlink_confirm"), confirm_tone: :danger, confirm_button: t("alexa.unlink")) %><% end %>
             </li>
           <% end %>
         </ul>
@@ -82,13 +79,13 @@
         <% end %>
       </dl>
       <% if current_user.owner? && admin %>
-        <%= form_with url: client_site_alexa_path(@site), class: "mt-3 grid gap-2" do %>
-          <%= label_tag :redirect_uris, t("alexa.redirect_uris"), class: "ss-label" %>
-          <%= text_area_tag :redirect_uris, @tenant.alexa_redirect_uris.join("\n"), rows: 3, class: "ss-input text-xs font-mono", placeholder: "https://pitangui.amazon.com/api/skill/link/..." %>
+        <%= ss_form_with url: client_site_alexa_path(@site), class: "mt-3 grid gap-2" do |f| %>
+          <%= f.ss_text_area :redirect_uris, label: t("alexa.redirect_uris"), value: @tenant.alexa_redirect_uris.join("\n"), rows: 3, class: "text-xs font-mono",
+                                             placeholder: "https://pitangui.amazon.com/api/skill/link/..." %>
           <div class="flex flex-wrap gap-2">
-            <%= submit_tag t("alexa.save_urls"), class: "ss-btn ss-btn-ghost", name: nil %>
-            <%= submit_tag @tenant.alexa_client_id ? t("alexa.new_secret") : t("alexa.new_client"), name: "generate", class: "ss-btn ss-btn-primary",
-                           data: (@tenant.alexa_client_id ? { turbo_confirm: t("alexa.new_secret_confirm") } : {}) %>
+            <%= f.ss_submit t("alexa.save_urls"), variant: :ghost, name: nil %>
+            <%= f.ss_submit (@tenant.alexa_client_id ? t("alexa.new_secret") : t("alexa.new_client")), name: "generate",
+                            data: (@tenant.alexa_client_id ? { turbo_confirm: t("alexa.new_secret_confirm") } : {}) %>
           </div>
         <% end %>
       <% end %>
