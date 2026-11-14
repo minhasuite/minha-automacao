@@ -8,10 +8,10 @@
     <% if can?(:manage) %><%= link_to new_site_scene_path(@site), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("automations.index.create_first") %><% end %><% end %>
   <% end %>
 <% else %>
-  <%= form_with url: site_scenes_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do %>
-    <div class="min-w-48 flex-1"><label for="q" class="ss-label"><%= t("automations.common.search") %></label><%= search_field_tag :q, params[:q], class: "ss-input", placeholder: t("automations.scenes.search_placeholder") %></div>
-    <% if @labels.any? %><div><label for="rotulo" class="ss-label"><%= t("automations.index.label") %></label><%= select_tag :rotulo, options_for_select(@labels, params[:rotulo]), include_blank: t("automations.index.all_m"), class: "ss-input", data: { autosubmit: true } %></div><% end %>
-    <button type="submit" class="ss-btn ss-btn-ghost" aria-label="<%= t("automations.common.search") %>"><%= icon("search", "size-4") %></button>
+  <%= ss_form_with url: site_scenes_path(@site), method: :get, class: "mb-3 flex flex-wrap items-end gap-3", role: "search" do |f| %>
+    <%= f.ss_search_field :q, label: t("automations.common.search"), value: params[:q], placeholder: t("automations.scenes.search_placeholder"), wrapper_class: "min-w-48 flex-1" %>
+    <% if @labels.any? %><%= f.ss_select :rotulo, @labels, label: t("automations.index.label"), selected: params[:rotulo], include_blank: t("automations.index.all_m"), data: { autosubmit: true } %><% end %>
+    <%= render Ss::IconButtonComponent.new(icon: icon("search", ""), label: t("automations.common.search"), type: :submit) %>
   <% end %>
   <% if @scenes.empty? %>
     <%= render Ss::EmptyStateComponent.new(title: t("automations.scenes.no_match"), variant: :busca, css: "ss-card") do %><%= link_to t("automations.scripts_page.clear"), site_scenes_path(@site), class: "ss-btn ss-btn-ghost" %><% end %>
@@ -32,8 +32,8 @@
           <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
             <% if can?(:manage) %><%= render "web/dashboards/add_to_link", type: "scene", record: s, css: "ss-btn ss-btn-ghost ss-btn-sm" %><% end %>
             <% if can?(:command, risk: risk) %>
-              <%= button_to activate_scene_path(s), params: { back: request.fullpath }, class: "ss-btn ss-btn-primary ss-btn-sm",
-                            form: { class: "contents", data: { turbo_confirm: t("automations.scenes.activate_confirm", name: s.name), turbo_confirm_button: t("automations.scenes.activate") } } do %><%= icon("lightning-bolt", "size-4") %><%= t("automations.scenes.activate") %><% end %>
+              <%= render Ss::ButtonComponent.new(label: t("automations.scenes.activate"), icon: icon("lightning-bolt", ""), href: activate_scene_path(s), method: :post, params: { back: request.fullpath }, size: :sm,
+                                                 form: { class: "contents" }, confirm: t("automations.scenes.activate_confirm", name: s.name), confirm_button: t("automations.scenes.activate")) %>
             <% end %>
           </div>
         </li>
