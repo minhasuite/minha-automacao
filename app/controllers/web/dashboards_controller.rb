@@ -13,7 +13,7 @@ module Web
     def index
       @site = Site.find(params[:site_id])
       authorize_site!(@site, :view)
-      @dashboards = Dashboard.ensure_for(@site).select { |d| d.visible_to?(@site_role) }
+      @dashboards = Dashboard.ensure_for(@site).select { |d| d.visible_to?(@site_role, current_user) }
     end
 
     def show
@@ -29,7 +29,7 @@ module Web
       Dashboards::Personal.apply!(@resolved, site: @site, user: current_user, role: @site_role) # ideia 13: busca e favoritos
       @preview = preview
       @view = pick_view(@resolved)
-      @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role) }
+      @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role, current_user) }
       return unless @edit_here
 
       @history = Dashboards::History.state(@dashboard)
@@ -103,6 +103,13 @@ module Web
       @site.dashboards.where.not(id: @dashboard.id).update_all(site_default: false) if @dashboard.site_default && @dashboard.valid?
       @dashboard.save!
       redirect_to edit_dashboard_path(@dashboard), notice: t("dashboards.flash.saved")
+    end
+
+    # mobile-ajustes: "Mostrar em" pela lista de Configurações → Painéis ("" = automático, pelo nome).
+    def show_in
+      load_dashboard(:manage)
+      @dashboard.update!(show_in: params[:show_in].presence_in(Dashboard::SHOW_IN))
+      redirect_back_or_to settings_dashboards_path, notice: t("dashboards.show_in.saved", name: @dashboard.name, where: helpers.dashboard_show_in_label(@dashboard))
     end
 
     def duplicate
@@ -235,7 +242,7 @@ module Web
     end
 
     def dashboard_params
-      params.require(:dashboard).permit(:name, :kind, :site_default, :icon, :sidebar, roles: []).tap { |p| p[:roles] = Array(p[:roles]).compact_blank if p.key?(:roles) }
+      params.require(:dashboard).permit(:name, :kind, :site_default, :icon, :sidebar, :show_in, roles: []).tap { |p| p[:roles] = Array(p[:roles]).compact_blank if p.key?(:roles) }
     end
 
     def blank_definition = { "schema_version" => Dashboards::Schema::VERSION, "views" => [ { "id" => "home", "title" => t("dashboards.gen.home"), "sections" => [] } ] }

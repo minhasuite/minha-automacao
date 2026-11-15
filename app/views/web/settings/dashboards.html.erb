@@ -38,6 +38,16 @@
     <% end %>
     <% tb.column :site, t("people.site"), sortable: true do |d| %><%= d.site.name %><% end %>
     <% tb.column :views, t("settings_dashboards.views") do |d| %><%= d.auto? ? t("settings_dashboards.auto_views") : Array(d.definition["views"]).size %><% end %>
+    <% tb.column :show_in, t("dashboards.show_in.label") do |d| %>
+      <% if SiteMembership.allowed?(@roles[d.site_id], :manage) %>
+        <%= ss_form_with url: show_in_dashboard_path(d), method: :patch, data: { controller: "ss-autosubmit" } do |f| %>
+          <%= f.ss_select :show_in, dashboard_show_in_options(d), label: t("dashboards.show_in.label_for", name: d.name), hide_label: true, selected: d.show_in.to_s,
+                                    id: "show-in-#{d.id}", wrapper_class: "w-48", data: { action: "change->ss-autosubmit#submit" } %>
+        <% end %>
+      <% else %>
+        <%= dashboard_show_in_label(d) %>
+      <% end %>
+    <% end %>
     <% tb.column :sidebar, t("settings_dashboards.in_menu") do |d| %><%= d.sidebar ? t("settings_dashboards.yes") : t("settings_dashboards.no") %><% end %>
     <% tb.column :roles, t("settings_dashboards.who") do |d| %><%= d.roles.empty? ? t("logbook.all") : d.roles.map { |r| SiteMembership.role_label(r) }.to_sentence %><% end %>
     <% tb.column :actions, t("people.actions"), align: :right do |d| %>

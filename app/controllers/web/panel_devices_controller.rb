@@ -50,7 +50,7 @@ module Web
       sites = Site.visible_to(current_user).order(:name).to_a
       sites.flat_map do |s|
         role = s.role_for(current_user)
-        Dashboard.ensure_for(s).select { |d| d.visible_to?(role) }.map { |d| [ "#{s.name} · #{d.name}", d.id ] }
+        Dashboard.ensure_for(s).select { |d| d.visible_to?(role, current_user) }.map { |d| [ "#{s.name} · #{d.name}", d.id ] }
       end
     end
 

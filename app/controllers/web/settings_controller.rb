@@ -19,7 +19,7 @@ module Web
       @sites.each { |s| Dashboard.ensure_for(s) }
       order = table_sort({ "name" => "dashboards.name", "site" => "(SELECT name FROM sites WHERE sites.id = dashboards.site_id)" }, default: "name")
       @dashboards = Dashboard.where(site_id: @sites.map(&:id)).includes(:site).order(order).to_a
-                             .select { |d| d.visible_to?(@roles[d.site_id]) }
+                             .select { |d| d.visible_to?(@roles[d.site_id], current_user) }
     end
 
     def system

@@ -629,7 +629,8 @@ CREATE TABLE public.dashboards (
     updated_at timestamp(6) without time zone NOT NULL,
     icon character varying,
     sidebar boolean DEFAULT false NOT NULL,
-    app_default boolean DEFAULT false NOT NULL
+    app_default boolean DEFAULT false NOT NULL,
+    show_in character varying
 );
 
 
@@ -1267,7 +1268,8 @@ CREATE TABLE public.site_memberships (
     area_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL,
     expires_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    dashboard_ids uuid[]
 );
 
 
@@ -5510,6 +5512,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261115120917'),
 ('20261114183417'),
 ('20261113120731'),
 ('20261113120437'),

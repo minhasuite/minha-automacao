@@ -102,6 +102,8 @@ Rails.application.routes.draw do
     # P2.3 e ideia 19: exportar o painel como pacote e o estilo dos cards em um clique.
     get "paineis/:id/exportar", to: "dashboard_exports#show", as: :export_dashboard
     patch "paineis/:id/estilo-dos-cards", to: "dashboard_card_styles#update", as: :card_style_dashboard
+    # mobile-ajustes: "Mostrar em" (celular/web) direto da lista de Configurações → Painéis.
+    patch "paineis/:id/mostrar-em", to: "dashboards#show_in", as: :show_in_dashboard
     get "cameras/:id/quadro", to: "cameras#snapshot", as: :camera_snapshot
     post "cameras/:id/ao-vivo", to: "cameras#webrtc", as: :camera_webrtc
     # cameras2: tela de Câmeras, ao vivo fora de casa (MSE por WebSocket e HLS pelo Rails),
@@ -455,6 +457,8 @@ Rails.application.routes.draw do
       resources :people, path: "pessoas", only: %i[index show create update destroy] do
         post :toggle, on: :member, path: "ativar"
         patch :sites, on: :member, path: "locais"
+        # mobile-ajustes: painéis permitidos e o padrão (web e app) da pessoa em cada local.
+        patch :dashboards, on: :member, path: "paineis"
         post :invite, on: :collection, path: "convite"
       end
       resources :invites, path: "convites", only: :destroy

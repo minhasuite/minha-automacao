@@ -200,9 +200,9 @@ RSpec.describe "Dashboards (serviços)" do
         expect(d).not_to be_valid
         expect(d.errors.full_messages.join).to include("views", "papel")
         d.roles = []
-        expect(d.visible_to?("guest")).to be true
+        expect(d.visible_to?("guest", nil)).to be true
         d.roles = [ "resident" ]
-        expect([ d.visible_to?("guest"), d.visible_to?("owner"), d.visible_to?("resident") ]).to eq([ false, true, true ])
+        expect([ d.visible_to?("guest", nil), d.visible_to?("owner", nil), d.visible_to?("resident", nil) ]).to eq([ false, true, true ])
       end
     end
 

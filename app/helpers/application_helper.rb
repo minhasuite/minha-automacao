@@ -100,7 +100,7 @@ module ApplicationHelper
     # O Início é o painel padrão do local: leva o nome e o ícone dele e o painel
     # não se repete na lista (antes: "Início" + "Casa" levando à mesma tela).
     home = Dashboard.where(site_id: Site.visible_to(user).select(:id), site_default: true).ordered.includes(:site).to_a
-                    .find { |d| d.visible_to?(d.site.role_for(user)) }
+                    .find { |d| d.visible_to?(d.site.role_for(user), user) }
     list = [ { key: "home", label: home&.name || t("nav.home"), path: root_path, icon: home&.icon_name || "lightning-bolt" } ]
     list += Dashboard.sidebar_for(user).reject { |d| d.id == home&.id }.map { |d| { key: "dash:#{d.id}", label: d.name, path: dashboard_path(d), icon: d.icon_name } }
     list += Cards.panels(Site.visible_to(user)).map { |p| { key: "panel:#{p['package'].id}:#{p['key']}", label: p["name"], path: custom_panel_path(p["package"], p["key"]), icon: p["icon"] } } # resto

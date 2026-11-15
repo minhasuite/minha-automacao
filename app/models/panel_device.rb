@@ -42,8 +42,8 @@ class PanelDevice < ApplicationRecord
   end
 
   # O painel do aparelho no local, se a pessoa (pelo papel) vê.
-  def dashboard_for(site, role)
-    dashboard if dashboard && dashboard.site_id == site.id && dashboard.visible_to?(role)
+  def dashboard_for(site, role, user)
+    dashboard if dashboard && dashboard.site_id == site.id && dashboard.visible_to?(role, user)
   end
 
   def seen!(user_agent)

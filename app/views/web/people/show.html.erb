@@ -36,6 +36,46 @@
   <% end %>
 </section>
 
+<%# mobile-ajustes: painéis que a pessoa abre em cada local e o padrão dela na web e no app. %>
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="paineis-t">
+  <h2 id="paineis-t"><%= t("people.dashboards.title") %></h2>
+  <% if @person.admin? %>
+    <p class="text-sm text-muted mt-1"><%= t("people.dashboards.admin_all") %></p>
+  <% elsif @memberships.empty? %>
+    <p class="text-sm text-muted mt-1"><%= t("people.dashboards.no_site") %></p>
+  <% else %>
+    <p class="text-sm text-muted mt-1"><%= t("people.dashboards.hint") %></p>
+    <%= ss_form_with url: dashboards_person_path(@person), method: :patch, class: "mt-3 grid gap-4" do |f| %>
+      <% @sites.select { |s| @memberships[s.id] }.each do |s| %>
+        <% list = @site_dashboards[s.id].to_a %>
+        <% allowed = @memberships[s.id].dashboard_ids %>
+        <% chosen = list.select { |d| allowed.nil? || allowed.include?(d.id) } %>
+        <fieldset class="grid gap-3">
+          <legend class="ss-label"><%= s.name %></legend>
+          <% if list.empty? %>
+            <p class="text-sm text-muted"><%= t("people.dashboards.site_empty") %></p>
+          <% else %>
+            <div class="flex flex-wrap gap-2" role="group" aria-label="<%= t("people.dashboards.allowed_in", site: s.name) %>">
+              <% list.each do |d| %>
+                <%= f.ss_chip_check_box "dashboards[#{s.id}][ids]", label: d.name, multiple: true, checked_value: d.id, unchecked_value: nil,
+                                        checked: chosen.include?(d), id: "pd-#{s.id}-#{d.id}", disabled: !owner %>
+              <% end %>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+              <% options = [ [ t("people.dashboards.site_default"), "" ] ] + list.map { |d| [ d.name, d.id ] } %>
+              <%= f.ss_select "dashboards[#{s.id}][web]", options, label: t("people.dashboards.default_web"), selected: @person.dashboard_prefs[s.id].to_s,
+                              id: "pd-#{s.id}-web", disabled: !owner %>
+              <%= f.ss_select "dashboards[#{s.id}][app]", options, label: t("people.dashboards.default_app"), selected: @person.dashboard_prefs["app:#{s.id}"].to_s,
+                              id: "pd-#{s.id}-app", disabled: !owner %>
+            </div>
+          <% end %>
+        </fieldset>
+      <% end %>
+      <% if owner %><div><%= f.ss_submit t("people.dashboards.save"), name: nil %></div><% end %>
+    <% end %>
+  <% end %>
+</section>
+
 <% unless locked %>
   <section class="ss-card ss-card-pad mt-4 flex flex-wrap gap-2" aria-label="<%= t("people.actions") %>">
     <%= render Ss::ButtonComponent.new(label: @person.disabled? ? t("people.enable") : t("people.disable"), icon: icon(@person.disabled? ? "check-circle" : "minus-circle", ""),

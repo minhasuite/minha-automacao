@@ -17,7 +17,7 @@ module DashboardEditing
     @dashboard = Dashboard.find(params[:id])
     @site = @dashboard.site
     authorize_site!(@site, action)
-    raise ActiveRecord::RecordNotFound unless @dashboard.visible_to?(@site_role)
+    raise ActiveRecord::RecordNotFound unless @dashboard.visible_to?(@site_role, current_user)
   end
 
   # Ideia 1: na edição na própria tela (`back=painel`) a volta é o painel em modo editar.

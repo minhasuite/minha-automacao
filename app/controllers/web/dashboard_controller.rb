@@ -14,7 +14,7 @@ module Web
 
       authorize_site!(@site, :view)
       @dashboard = Dashboard.default_for(@site, current_user, @site_role, device: device) or return render(:welcome)
-      @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role) }
+      @dashboards = @site.dashboards.ordered.select { |d| d.visible_to?(@site_role, current_user) }
       # A visão do aparelho (ideia 10) vale quando a URL não pede outra; depois o contexto (`open_if`).
       slug = params[:view].presence || (device.view.presence if device&.dashboard_id == @dashboard.id)
       # Só a visão aberta é resolvida (as abas são links: cada uma resolve a sua ao abrir).

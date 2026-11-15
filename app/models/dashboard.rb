@@ -27,8 +27,16 @@ class Dashboard < ApplicationRecord
   def album = files.select { |f| f.image? && f.blob.metadata["album"] }
   def saver_photos = album.presence || files.select(&:image?)
 
+  # mobile-ajustes: onde o painel aparece na lista (`show_in`: app = celular, web ou both). Sem marca (NULL),
+  # vale o nome: "Mobile"/"Celular"/"App" no nome ou o `app_default` (painel do app importado do HA) = app; o
+  # resto = web. Se nenhum painel do local aparece numa superfície, ela mostra todos (instalação nova).
+  SHOW_IN = %w[app web both].freeze
+  SURFACES = %w[app web].freeze
+  APP_NAME = /\b(mobile|celular|app)\b/i
+
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }
+  validates :show_in, inclusion: { in: SHOW_IN }, allow_nil: true
   validate :icon_known
   validate :roles_known
   validate :definitions_valid
@@ -37,8 +45,9 @@ class Dashboard < ApplicationRecord
 
   normalizes :name, with: ->(v) { v.to_s.squish }
   normalizes :icon, with: ->(v) { v.presence }
+  normalizes :show_in, with: ->(v) { v.presence }
 
-  audited_attributes :name, :version, :roles, :site_default, :sidebar
+  audited_attributes :name, :version, :roles, :site_default, :sidebar, :show_in
 
   scope :ordered, -> { order(site_default: :desc, position: :asc, created_at: :asc) }
 
@@ -51,22 +60,37 @@ class Dashboard < ApplicationRecord
   # No app (`app: true`): a escolha da pessoa no app; senão o painel marcado
   # para o app (`app_default`, ex. a versão Mobile importada do HA); senão o da web.
   # `device` (ideia 10, PanelDevice): "neste aparelho abre o painel X" vale antes de tudo.
+  # mobile-ajustes: a escolha da pessoa (feita por ela ou pelo dono em Pessoas) vale em qualquer superfície;
+  # sem ela, o padrão é o primeiro painel da superfície (o do local primeiro). Painel não permitido some.
   def self.default_for(site, user, role, app: false, device: nil)
-    list = ensure_for(site).select { |d| d.visible_to?(role) }
-    mine = device&.dashboard_for(site, role) and return mine
+    list = ensure_for(site).select { |d| d.visible_to?(role, user) }
+    mine = device&.dashboard_for(site, role, user) and return mine
+    surface = for_surface(list, app ? "app" : "web")
     if app
       mine = list.find { |d| d.id == user.dashboard_prefs["app:#{site.id}"] }
-      return mine || list.find(&:app_default?) || default_for(site, user, role)
+      return mine || surface.find(&:app_default?) || surface.find { |d| d.id == user.dashboard_prefs[site.id] } || surface.first
     end
-    list.find { |d| d.id == user.dashboard_prefs[site.id] } || list.first
+    list.find { |d| d.id == user.dashboard_prefs[site.id] } || surface.first
   end
 
-  # Painéis marcados "mostrar no menu" que a pessoa vê (barra lateral, como no HA).
+  # Os painéis da lista que aparecem na superfície ("app" ou "web"); nenhum = todos.
+  def self.for_surface(list, surface)
+    list.select { |d| d.shown_in?(surface) }.presence || list
+  end
+
+  # Painéis marcados "mostrar no menu" que a pessoa vê (barra lateral, como no HA); só os da web
+  # (mobile-ajustes: "Mostrar em"; o painel só do celular sai do menu da web).
   def self.sidebar_for(user)
     sites = Site.visible_to(user).to_a.index_by(&:id)
     where(sidebar: true, site_id: sites.keys).ordered.includes(:site).to_a
-      .select { |d| d.visible_to?(sites[d.site_id].role_for(user)) }
+      .select { |d| d.visible_to?(sites[d.site_id].role_for(user), user) }
+      .select { |d| d.shown_in?("web") }
   end
+
+  def show_in_effective = show_in || show_in_by_name
+  def show_in_by_name = app_default? || name.to_s.match?(APP_NAME) ? "app" : "web"
+  def show_in_auto? = show_in.nil?
+  def shown_in?(surface) = show_in_effective.in?([ surface.to_s, "both" ])
 
   def kind_label = I18n.t("dashboards.kinds.#{kind}", default: kind)
   def icon_name = icon || "view-boards"
@@ -79,7 +103,14 @@ class Dashboard < ApplicationRecord
       copy
     end
   end
-  def visible_to?(role) = roles.empty? || role == "owner" || roles.include?(role)
+  # Papel (lista `roles` do painel) e, mobile-ajustes, os painéis permitidos à pessoa no local
+  # (`site_memberships.dashboard_ids`, nil = todos). Dono do local e administradores veem sempre.
+  def visible_to?(role, user)
+    return true if role == "owner"
+    return false unless roles.empty? || roles.include?(role)
+
+    user.nil? || user.dashboard_allowed?(self)
+  end
   # Automático: gerado a cada leitura, com o tema escolhido (primeira configuração) guardado em `definition`.
   # Visão com a marca `auto` (ideia 6) se refaz a cada leitura (Dashboards::AutoViews).
   def published = auto? ? Dashboards::Generator.call(site).merge(definition.to_h.slice("theme")) : Dashboards::AutoViews.expand(definition, site)

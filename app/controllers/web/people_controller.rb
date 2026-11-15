@@ -8,7 +8,7 @@ module Web
 
     before_action :require_admin!
     before_action :require_owner!, except: %i[index show]
-    before_action :load_person, only: %i[show update destroy toggle sites]
+    before_action :load_person, only: %i[show update destroy toggle sites dashboards]
     before_action :protect_owner!, only: %i[update destroy toggle]
 
     def index
@@ -31,6 +31,7 @@ module Web
     def show
       @sites = Site.order(:name).to_a
       @memberships = SiteMembership.where(user: @person).index_by(&:site_id)
+      @site_dashboards = Dashboard.where(site_id: @memberships.keys).ordered.to_a.group_by(&:site_id)
     end
 
     # Opção (a): o dono cria a conta com e-mail e senha inicial.
@@ -66,6 +67,29 @@ module Web
         end
       end
       redirect_to person_path(@person), notice: t("notices.sites_updated")
+    end
+
+    # mobile-ajustes: painéis que a pessoa pode abrir em cada local (todos marcados = todos, inclusive os
+    # que vierem) e o padrão dela na web e no app. { dashboards: { site_id => { ids: [], web:, app: } } }.
+    # Dono e administradores abrem todos (não há o que marcar).
+    def dashboards
+      return redirect_to(person_path(@person), alert: t("people.dashboards.admin_all")) if @person.admin?
+
+      prefs = @person.dashboard_prefs.to_h
+      plan = params.fetch(:dashboards, {}).to_unsafe_h.filter_map do |site_id, p|
+        membership = SiteMembership.find_by(site_id: site_id, user: @person) or next
+        all = membership.site.dashboards.ids
+        ids = Array(p[:ids]).compact_blank & all
+        return redirect_to(person_path(@person), alert: t("people.dashboards.none_checked", site: membership.site.name)) if ids.empty?
+
+        { site_id => p[:web], "app:#{site_id}" => p[:app] }.each { |key, id| id.presence.in?(ids) ? prefs[key] = id : prefs.delete(key) }
+        [ membership, ids.sort == all.sort ? nil : ids ]
+      end
+      SiteMembership.transaction do
+        plan.each { |membership, ids| membership.update!(dashboard_ids: ids) }
+        @person.update!(dashboard_prefs: prefs)
+      end
+      redirect_to person_path(@person), notice: t("people.dashboards.saved")
     end
 
     def toggle

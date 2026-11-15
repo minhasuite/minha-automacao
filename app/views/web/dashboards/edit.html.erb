@@ -177,6 +177,8 @@
       <%= f.ss_text_field :name, label: t("dashboards.ed.name"), required: true %>
       <%= render "web/shared/icon_picker", name: "dashboard[icon]", selected: @dashboard.icon, icons: Dashboard::ICONS, id: "dashboard_icon" %>
       <%= f.ss_check_box :sidebar, label: t("dashboards.ed.sidebar") %>
+      <%= f.ss_select :show_in, dashboard_show_in_options(@dashboard), label: t("dashboards.show_in.label"), selected: @dashboard.show_in.to_s,
+                                help: t("dashboards.show_in.hint"), id: "dashboard_show_in" %>
       <fieldset><legend class="ss-label"><%= t("dashboards.ed.who_sees") %> <span class="font-normal"><%= t("dashboards.ed.none_all") %></span></legend>
         <div class="flex flex-wrap gap-3">
           <% SiteMembership::ROLES.each do |r| %><%= f.ss_check_box :roles, label: SiteMembership.role_label(r), multiple: true, checked_value: r, unchecked_value: nil,

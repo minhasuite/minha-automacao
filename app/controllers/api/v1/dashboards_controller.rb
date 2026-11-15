@@ -9,11 +9,13 @@ module Api
       def index
         site = Site.find(params[:site_id])
         role = authorize_site!(site, :view)
-        list = Dashboard.ensure_for(site).select { |d| d.visible_to?(role) }
+        all = Dashboard.ensure_for(site).select { |d| d.visible_to?(role, current_user) }
         device = PanelDevice.current(request) # ideia 10: o id do app em X-MA-Device
         device&.seen!(request.user_agent)
-        mine = device&.dashboard_for(site, role)
+        mine = device&.dashboard_for(site, role, current_user)
         default = mine || Dashboard.default_for(site, current_user, role, app: true) # a API é a do app
+        list = bool(params[:all]) ? all : Dashboard.for_surface(all, "app")
+        list = all.select { |d| list.include?(d) || d == default } # o padrão escolhido sempre aparece
         render_data(list.map { |d| summary(d).merge(default: d.id == default&.id, device_default: d.id == mine&.id) })
       end
 
@@ -119,13 +121,13 @@ module Api
       def find(action)
         dashboard = Dashboard.find(params[:id])
         role = authorize_site!(dashboard.site, action)
-        raise ActiveRecord::RecordNotFound unless dashboard.visible_to?(role)
+        raise ActiveRecord::RecordNotFound unless dashboard.visible_to?(role, current_user)
 
         [ dashboard, role ]
       end
 
       def attrs
-        params.permit(:name, :kind, :site_default, roles: []).to_h
+        params.permit(:name, :kind, :site_default, :show_in, roles: []).to_h
       end
 
       # JSON da definição como veio (sem strong params: é validado pelo Schema).
@@ -139,7 +141,8 @@ module Api
 
       def summary(d)
         { id: d.id, site_id: d.site_id, name: d.name, kind: d.kind, auto: d.auto, site_default: d.site_default, app_default: d.app_default, icon: d.icon, version: d.version,
-          has_draft: d.draft?, roles: d.roles, schema_version: d.schema_version, updated_at: d.updated_at }
+          has_draft: d.draft?, roles: d.roles, schema_version: d.schema_version, updated_at: d.updated_at,
+          show_in: d.show_in_effective, show_in_auto: d.show_in_auto? }
       end
     end
   end

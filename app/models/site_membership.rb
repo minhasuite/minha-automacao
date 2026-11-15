@@ -22,7 +22,7 @@ class SiteMembership < ApplicationRecord
   validates :user_id, uniqueness: { scope: :site_id }
   validate :user_in_same_tenant
 
-  audited_attributes :role, :expires_at, :area_ids
+  audited_attributes :role, :expires_at, :area_ids, :dashboard_ids
 
   scope :active, -> { where(expires_at: nil).or(where(expires_at: Time.current..)) }
 

@@ -10,7 +10,7 @@ module Search
     def self.call(q, ctx)
       return [] if q.verb
 
-      dashboards = Dashboard.where(site_id: ctx.site_ids).ordered.select { |d| ctx.allowed?(d.site_id, :manage) && d.visible_to?(ctx.roles[d.site_id]) }
+      dashboards = Dashboard.where(site_id: ctx.site_ids).ordered.select { |d| ctx.allowed?(d.site_id, :manage) && d.visible_to?(ctx.roles[d.site_id], ctx.user) }
       actions(q, dashboards) + duplicates(q, dashboards)
     end
 

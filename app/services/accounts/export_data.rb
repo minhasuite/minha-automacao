@@ -18,6 +18,8 @@ module Accounts
           members: @tenant.users.order(:name).map { |u| { name: u.name, email: u.email, role: u.role, joined_at: u.created_at.iso8601 } },
           notifications: Notification.order(:created_at).map { |n| n.slice(:kind, :title, :body, :read_at, :created_at) },
           sites: SiteSerializer.new(Site.order(:name)).to_h,
+          # Papel por local e os painéis permitidos (mobile-ajustes: `dashboard_ids`, nil = todos).
+          site_memberships: SiteMembership.order(:created_at).map { |r| r.as_json(only: %w[site_id user_id role area_ids dashboard_ids expires_at]) },
           areas: AreaSerializer.new(Area.order(:name)).to_h,
           devices: DeviceSerializer.new(Device.order(:name), params: { reveal: @user.admin? }).to_h,
           points: PointSerializer.new(Point.order(:key), params: { reveal: @user.admin? }).to_h,

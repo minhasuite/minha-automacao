@@ -34,7 +34,7 @@ module Web
       @site = Dashboards::AddTo.site_of(@record)
       authorize_site!(@site, :manage)
       @widget = Dashboards::AddTo.widget(@type, @record) or raise ActiveRecord::RecordNotFound
-      @dashboards = Dashboard.ensure_for(@site).select { |d| d.visible_to?(@site_role) }
+      @dashboards = Dashboard.ensure_for(@site).select { |d| d.visible_to?(@site_role, current_user) }
     end
   end
 end

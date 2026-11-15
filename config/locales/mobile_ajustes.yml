@@ -1,0 +1,79 @@
+# mobile-ajustes: "Mostrar em" do painel (celular/web) e painéis por pessoa (permitidos e padrão).
+pt-BR:
+  dashboards:
+    show_in:
+      label: Mostrar em
+      label_for: "Mostrar %{name} em"
+      hint: "Onde o painel entra na lista. Automático: nome com Mobile, Celular ou App (ou o painel do app importado) fica no celular; os outros, na web."
+      app: Celular (app)
+      web: Web
+      both: Web e celular
+      auto_option: "Automático (%{label})"
+      auto_label: "%{label} (automático)"
+      saved: "%{name}: mostrar em %{where}."
+  people:
+    dashboards:
+      title: Painéis
+      hint: "Marque os painéis que a pessoa pode abrir (todos marcados = todos, inclusive os novos) e o que abre primeiro na web e no app. Dono e administradores veem sempre todos."
+      admin_all: Dono e administradores abrem todos os painéis.
+      no_site: A pessoa ainda não tem acesso a nenhum local.
+      site_empty: Este local ainda não tem painel.
+      allowed_in: "Painéis que pode abrir em %{site}"
+      site_default: Padrão do local
+      default_web: Painel padrão na web
+      default_app: Painel padrão no app
+      save: Salvar painéis
+      saved: Painéis da pessoa salvos.
+      none_checked: "Marque pelo menos um painel em %{site}."
+en:
+  dashboards:
+    show_in:
+      label: Show in
+      label_for: "Show %{name} in"
+      hint: "Where the dashboard is listed. Automatic: a name with Mobile, Celular or App (or the imported app dashboard) goes to the phone; the others to the web."
+      app: Phone (app)
+      web: Web
+      both: Web and phone
+      auto_option: "Automatic (%{label})"
+      auto_label: "%{label} (automatic)"
+      saved: "%{name}: shown in %{where}."
+  people:
+    dashboards:
+      title: Dashboards
+      hint: "Check the dashboards this person can open (all checked = all, including new ones) and which one opens first on the web and in the app. Owner and administrators always see all."
+      admin_all: Owner and administrators open every dashboard.
+      no_site: This person has no access to any place yet.
+      site_empty: This place has no dashboard yet.
+      allowed_in: "Dashboards they can open in %{site}"
+      site_default: Place default
+      default_web: Default dashboard on the web
+      default_app: Default dashboard in the app
+      save: Save dashboards
+      saved: Dashboards saved.
+      none_checked: "Check at least one dashboard in %{site}."
+es:
+  dashboards:
+    show_in:
+      label: Mostrar en
+      label_for: "Mostrar %{name} en"
+      hint: "Dónde aparece el panel en la lista. Automático: nombre con Mobile, Celular o App (o el panel de la app importado) va al celular; los demás, a la web."
+      app: Celular (app)
+      web: Web
+      both: Web y celular
+      auto_option: "Automático (%{label})"
+      auto_label: "%{label} (automático)"
+      saved: "%{name}: mostrar en %{where}."
+  people:
+    dashboards:
+      title: Paneles
+      hint: "Marque los paneles que la persona puede abrir (todos marcados = todos, incluidos los nuevos) y cuál abre primero en la web y en la app. Dueño y administradores ven siempre todos."
+      admin_all: Dueño y administradores abren todos los paneles.
+      no_site: La persona todavía no tiene acceso a ningún lugar.
+      site_empty: Este lugar todavía no tiene panel.
+      allowed_in: "Paneles que puede abrir en %{site}"
+      site_default: Predeterminado del lugar
+      default_web: Panel predeterminado en la web
+      default_app: Panel predeterminado en la app
+      save: Guardar paneles
+      saved: Paneles guardados.
+      none_checked: "Marque al menos un panel en %{site}."

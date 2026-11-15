@@ -4,6 +4,18 @@ module DashboardsHelper
   SECTION_SPAN = { "mobile" => 12, "tablet" => 12, "desktop" => 12 }.freeze
   AREA_ARTS = 6
 
+  # mobile-ajustes: "Mostrar em" do painel (o efetivo; sem marca, com "(automático)").
+  def dashboard_show_in_label(dashboard)
+    label = t("dashboards.show_in.#{dashboard.show_in_effective}")
+    dashboard.show_in_auto? ? t("dashboards.show_in.auto_label", label: label) : label
+  end
+
+  # Opções do seletor: automático (pelo nome) e as três marcas.
+  def dashboard_show_in_options(dashboard)
+    auto = t("dashboards.show_in.auto_option", label: t("dashboards.show_in.#{dashboard.show_in_by_name}"))
+    [ [ auto, "" ] ] + Dashboard::SHOW_IN.map { |k| [ t("dashboards.show_in.#{k}"), k ] }
+  end
+
   # Largura na grade de 12 colunas por tela da gem (.ss-span-grid / .ss-span), em variáveis CSS.
   def dw_span_style(span, default = DEFAULT_SPAN)
     s = default.merge(span || {})

@@ -93,6 +93,24 @@ class User < ApplicationRecord
   end
   def role_label = ROLE_LABELS.fetch(role, role)
 
+  # mobile-ajustes: painéis que o dono liberou para a pessoa no local (`site_memberships.dashboard_ids`;
+  # nil = todos). Dono e administradores abrem todos. Guardado por pedido (a pessoa é carregada a cada um).
+  def dashboard_ids_for(site_id)
+    return if admin?
+
+    @dashboard_ids_for ||= {}
+    return @dashboard_ids_for[site_id] if @dashboard_ids_for.key?(site_id)
+
+    @dashboard_ids_for[site_id] = ActsAsTenant.with_tenant(tenant) { SiteMembership.active.where(user_id: id, site_id: site_id).pick(:dashboard_ids) }
+  end
+
+  def dashboard_allowed?(dashboard) = dashboard_ids_for(dashboard.site_id)&.include?(dashboard.id) != false
+
+  def reload(*)
+    @dashboard_ids_for = nil
+    super
+  end
+
   private
 
   def has_some_credential

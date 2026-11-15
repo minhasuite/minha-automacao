@@ -20,7 +20,7 @@ module Search
     end
 
     def self.entries(ctx, only: nil)
-      dashboards = Dashboard.where(site_id: ctx.site_ids).then { |s| only ? s.where(id: only) : s }.ordered.select { |d| d.visible_to?(ctx.roles[d.site_id]) }
+      dashboards = Dashboard.where(site_id: ctx.site_ids).then { |s| only ? s.where(id: only) : s }.ordered.select { |d| d.visible_to?(ctx.roles[d.site_id], ctx.user) }
       names = Point.where(site_id: dashboards.map(&:site_id).uniq).pluck(:id, :name).to_h
       dashboards.flat_map do |d|
         role = ctx.roles[d.site_id]

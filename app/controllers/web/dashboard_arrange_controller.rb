@@ -64,7 +64,7 @@ module Web
       @dashboard = Dashboard.find(params[:id])
       @site = @dashboard.site
       authorize_site!(@site, :manage)
-      raise ActiveRecord::RecordNotFound unless @dashboard.visible_to?(@site_role)
+      raise ActiveRecord::RecordNotFound unless @dashboard.visible_to?(@site_role, current_user)
     end
 
     def find_view(defn) = Array(defn["views"]).find { |v| v["id"] == params[:view].to_s }
