@@ -60,7 +60,7 @@ RSpec.describe "Painéis por superfície e por pessoa" do
     it "web: editável no editor e na lista de Configurações → Painéis; o menu da web esconde o só do celular" do
       sign_in(owner)
       get "/configuracoes/paineis"
-      expect(response.body).to include("Mostrar em", "Automático (Celular (app))", %(id="show-in-#{mobile.id}"))
+      expect(response.body).to include("Mostrar em", "Automático (Celular)", %(id="show-in-#{mobile.id}"))
       expect(response.body).not_to include(%(href="/paineis/#{mobile.id}" class="ss-shell-link)) # (link do menu, ver abaixo)
       get "/"
       menu = Nokogiri::HTML(response.body).css("nav a").map { |a| a["href"] }

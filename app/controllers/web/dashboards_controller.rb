@@ -42,7 +42,6 @@ module Web
       resolver = Dashboards::Resolver.new(@dashboard, role: @site_role)
       w = resolver.widget(params[:widget_id]) or raise ActiveRecord::RecordNotFound
       points = resolver.points_payload
-      w["search"] = Dashboards::Personal.search_text(w, points, @site.areas.pluck(:id, :name).to_h) # a busca continua achando depois da recarga
       render partial: "web/dashboards/widget", locals: { w: w, points: points, dashboard: @dashboard, badge: params[:badge].present?, error: flash[:alert] }
     end
 

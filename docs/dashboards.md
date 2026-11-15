@@ -261,6 +261,33 @@ cópia publicada como v1, fora do menu e do padrão) e excluir. No painel:
 HA: `Dashboard.sidebar_for(user)` respeita `roles`), `roles` e o padrão por
 pessoa ("Abrir no meu Início" = `prefer`).
 
+### Mostrar em: celular e/ou web (mobile-ajustes, 15/11/2026)
+
+`dashboards.show_in` = `app` (celular), `web` ou `both`; **sem marca (NULL) vale o nome**:
+`Dashboard#show_in_by_name` = celular quando o nome tem "Mobile", "Celular" ou "App" (palavra inteira) ou o painel é
+o `app_default` (importado do HA); o resto, web. Efetivo em `show_in_effective`; `shown_in?(:app|:web)`.
+
+- **App**: `GET /api/v1/sites/:id/dashboards` traz só os do celular (`Dashboard.for_surface`; `?all=1` = todos) e
+  sempre o padrão da pessoa no app; cada item com `show_in` (efetivo) e `show_in_auto`. Local sem nenhum painel do
+  celular mostra todos (instalação nova, só o automático "Casa").
+- **Web**: o menu lateral (`sidebar_for`) só com os da web; o padrão da web (`default_for`) é o primeiro da web se a
+  pessoa não escolheu. A lista de Configurações → Painéis mostra todos, com a coluna "Mostrar em" editável
+  (`PATCH /paineis/:id/mostrar-em`, técnico+) e o mesmo seletor no editor ("Automático (…)" volta ao NULL).
+- Casa (HP): `hp-mostrar-em.rb` (runner, idempotente; sem `APLICAR=1` só mostra) grava o efetivo nos painéis sem
+  marca. Não é obrigatório: sem ele o servidor já decide pelo nome.
+
+### Painéis permitidos e padrão por pessoa (mobile-ajustes)
+
+`site_memberships.dashboard_ids` (uuid[], **NULL = todos**, inclusive os que vierem): Configurações → Pessoas →
+pessoa → "Painéis" (só o dono muda; `PATCH /configuracoes/pessoas/:id/paineis`), com os chips dos painéis de cada
+local em que ela tem papel e os seletores "Painel padrão na web" (`dashboard_prefs[site_id]`) e "no app"
+(`dashboard_prefs["app:<site_id>"]`). Todos marcados grava NULL; nenhum marcado é recusado; padrão fora dos
+permitidos é apagado. Vale em todo lugar que pergunta `Dashboard#visible_to?(papel, pessoa)` (papel da lista
+`roles` **e** `User#dashboard_allowed?`): painel e widget (o quadro do tempo real) na web e na API = 404, listas da
+API, menu, Início, aparelho do painel (`PanelDevice`), busca (painéis, cards e ações) e o pré-aquecimento. Dono
+do local e administradores (papel `owner` no local) veem todos. O app que estava num painel que deixou de ser
+permitido recebe 404 ao reler e volta ao padrão. Exportar inclui os papéis por local com `dashboard_ids`.
+
 **Visões (abas)** = as `views` do JSON (existem desde a F5, então os painéis
 antigos já são "uma ou mais visões" e nada precisou migrar). Cada visão tem
 `title`, `icon`, `path` (opcional, `[a-z0-9-]`, até 40, único no painel; a
@@ -798,13 +825,13 @@ papel x risco por ponto (o resto é pulado e contado); crítico nunca vai em lot
 
 ### Busca e favoritos (`Dashboards::Personal`, ideia 13)
 
-Depois do cache (que é por papel), cada widget ganha `search` (rótulo, título, nomes dos pontos, aparelhos e
-áreas) e o painel `favorites_now` (pontos favoritos da pessoa neste local, já em `points`).
+Depois do cache (que é por papel), o painel ganha `favorites_now` (pontos favoritos da pessoa neste local, já em `points`).
 Favoritos em `users.dashboard_prefs["favorites"]` = {site_id → [ids]} (até 12): web "Favoritar" na página do
 ponto (`POST /pontos/:id/favorito`), app pela estrela da folha do ponto (`PUT /api/v1/points/:id/favorite`
 `{favorite}`). Painel com `"favorites": false` não mostra a linha. Não há mais busca dentro do painel (saiu em
 14/11/2026, shell-sino, na web e no app): achar card, aparelho ou cômodo é pelo Ctrl+K / lupa do Início
-(`/busca`, `Search::WidgetsSource`, `DevicesSource`, `AreasSource`). O `search` segue na resposta (app antigo).
+(`/busca`, `Search::WidgetsSource`, `DevicesSource`, `AreasSource`). O `search` de cada widget saiu da
+resposta em mobile-ajustes (15/11/2026): nenhum cliente lia mais (o app antigo mostrava o campo sem depender dele).
 
 Selos do topo da visão (`badges`): `Ss::BadgeComponent` da gem na web e `SsBadge` no app, pequenos e finos como
 as pílulas dos cartões de área (antes o número saía grande em DM Mono no `.ss-hero-chip`).

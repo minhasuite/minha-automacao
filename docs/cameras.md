@@ -212,6 +212,25 @@ funciona de qualquer lugar.
 o WebSocket+MSE exigiria um player próprio). Escolhido por ser o caminho mais
 simples e seguro: só HTTP curto pelo túnel, link assinado, sem cabeçalho.
 
+**Caminho pela rede no app (mobile-ajustes, 15/11/2026; `livePathProvider`)**: o app já sabe se está na
+rede de casa (endereço de casa cadastrado e respondendo ao `/up` em 1,5 s) e decide antes de tentar:
+
+| Onde | Antes | Agora |
+|---|---|---|
+| Em casa (endereço de casa em uso) | WebRTC com STUN (coleta de candidatos esperava o STUN, até 2 s); depois de uma queda fora de casa, 5 min indo ao HLS mesmo em casa | WebRTC só com candidatos locais (coleta em milissegundos), sem o "pular 5 min" |
+| Fora (endereço de casa cadastrado e sem resposta) | coleta (até 2 s) + troca do SDP pelo túnel + 4 s esperando mídia que nunca chega + pedir o link do HLS + HLS | HLS direto |
+| Sem endereço de casa cadastrado | igual ao "fora" de antes | WebRTC como antes, com o link do HLS já pedido em paralelo (a queda toca na hora) |
+
+Medido (go2rtc 1.9.9 em container com fonte de teste `ffmpeg:virtual?video=testsrc…#video=h264` re-servida por
+RTSP como uma câmera, e o Rails de dev com `GO2RTC_URL` apontando para ele): link assinado
+(`GET /api/v1/cameras/:id/hls`) 0,02–0,1 s; índice pelo Rails 0,1–0,2 s; `init.mp4` + 1º pedaço 0,19–0,28 s
+(go2rtc direto: 0,12 s). O servidor não é o gargalo: pedaços de 0,5 s (`TARGETDURATION:1`) e o pedaço
+bloqueia até haver vídeo. O que pesava era o app: fora de casa ~6–7 s parados antes de começar o HLS (até 2 s
+de coleta + SDP + 4 s), que agora somem; sobra o túnel e o buffer inicial do ExoPlayer (~2,5 s de mídia,
+`bufferForPlaybackMs` padrão; o `video_player` não deixa mudar). Ganho esperado fora de casa: de ~8–10 s para
+~3–4 s até o 1º quadro em movimento (a foto do card aparece na hora, como antes). Câmera real (DVR) soma o
+tempo de abrir o RTSP (~0,5–1,5 s) nos dois casos.
+
 ### Gravações do DVR (linha do tempo e reprodução)
 
 Perfil por fabricante como **dado** em `config/device_maps/dvr.yml`

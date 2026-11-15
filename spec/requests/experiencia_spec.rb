@@ -187,7 +187,7 @@ RSpec.describe "Experiência do painel" do
       get "/api/v1/dashboards/#{dashboard.id}", headers: auth_headers(user)
       expect(data["favorites_now"]).to eq([ teto.id, temp.id ])
       expect(data["points"][temp.id]).to include("name" => "Temperatura")
-      expect(data["views"].first["sections"].first["widgets"].first["search"]).to include("Sala")
+      expect(data["views"].first["sections"].first["widgets"].first).not_to have_key("search") # mobile-ajustes: sem busca no painel
 
       put "/api/v1/points/#{teto.id}/favorite", params: { favorite: false }, headers: auth_headers(user)
       expect(data["favorites"]).to eq([ temp.id ])

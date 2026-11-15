@@ -5,7 +5,7 @@ pt-BR:
       label: Mostrar em
       label_for: "Mostrar %{name} em"
       hint: "Onde o painel entra na lista. Automático: nome com Mobile, Celular ou App (ou o painel do app importado) fica no celular; os outros, na web."
-      app: Celular (app)
+      app: Celular
       web: Web
       both: Web e celular
       auto_option: "Automático (%{label})"
@@ -31,7 +31,7 @@ en:
       label: Show in
       label_for: "Show %{name} in"
       hint: "Where the dashboard is listed. Automatic: a name with Mobile, Celular or App (or the imported app dashboard) goes to the phone; the others to the web."
-      app: Phone (app)
+      app: Phone
       web: Web
       both: Web and phone
       auto_option: "Automatic (%{label})"
@@ -57,7 +57,7 @@ es:
       label: Mostrar en
       label_for: "Mostrar %{name} en"
       hint: "Dónde aparece el panel en la lista. Automático: nombre con Mobile, Celular o App (o el panel de la app importado) va al celular; los demás, a la web."
-      app: Celular (app)
+      app: Celular
       web: Web
       both: Web y celular
       auto_option: "Automático (%{label})"

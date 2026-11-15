@@ -305,7 +305,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   `[site, :points]`; a tela recarrega os `turbo-frame[data-points~=id]` em
   `/paineis/:id/w/:widget_id` com o papel de quem vê. Widget nunca comanda
   direto: o botão vai para `PointsController#command` (papel x risco) e volta
-  ao quadro. Painel padrão da pessoa em `users.dashboard_prefs`.
+  ao quadro. Painel padrão da pessoa em `users.dashboard_prefs`. **Mostrar em e painéis por pessoa
+  (mobile-ajustes)**: `dashboards.show_in` (app/web/both; NULL = pelo nome, "Mobile" = celular) filtra a lista do
+  app e o menu da web (`Dashboard.for_surface`); `site_memberships.dashboard_ids` (NULL = todos) limita os painéis
+  da pessoa, e todo acesso passa por `Dashboard#visible_to?(papel, pessoa)` (sem a pessoa = só o papel);
+  dono/administradores veem todos (`docs/dashboards.md`).
 - **Automações da DSL (F6)**: `definition` = publicada (roda), `draft` =
   rascunho do editor (pode ficar incompleto; a DSL é validada na
   publicação). Ações viram programa plano (`Engine#compile`); espera grava
@@ -817,8 +821,8 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.23.5`; no branch `paineis-ia`,
-  temporariamente o branch `paineis-ia` da gem, v0.23.7 pendente de tag):
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.23.5`; nos branches `onda7` e
+  `mobile-ajustes`, temporariamente o branch `onda7` da gem, v0.25 pendente de tag):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
   `Ss::*Component` (exemplos na vitrine da gem, `rails/sample/app/views/vitrine/`);
