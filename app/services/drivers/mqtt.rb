@@ -12,8 +12,18 @@ module Drivers
   # resto: `command_map` (nome do comando → payload: robô), `payload_install`
   # (firmware) e `image` ("mqtt": o payload é o JPEG da câmera, guardado como quadro).
   # `invert`: ponto bool com o sentido trocado (Points::Decode.invert).
+  #
+  # Confirmação do Zigbee (15/11/2026): no zigbee2mqtt, publicar não quer dizer que chegou (rota quebrada dá
+  # "Delivery failed" lá e o comando ficava "confirmado" aqui). Ponto do z2m com tópico de estado espera o
+  # estado novo voltar (o z2m só publica depois que o aparelho responde) por até `confirm_wait` s; sem isso,
+  # o comando falha com NoReply. Botão (`payload_press`) e `command_map` não esperam (não há estado a conferir).
   class Mqtt
     class Error < StandardError; end
+    class NoReply < Error; end
+
+    # Segundos de espera pelo eco do zigbee2mqtt (o timeout dele é 10 s). 0 = não espera (testes).
+    class_attribute :confirm_wait, default: Rails.env.test? ? 0 : 10
+    POLL = 0.2
 
     def self.url = ENV["MQTT_URL"].presence
 
@@ -23,8 +33,11 @@ module Drivers
       return ::Mqtt::Listener.publish(topic, a["command_map"].fetch(command) { raise Error, "Comando sem payload: #{command}." }.to_s) if a["command_map"].is_a?(Hash)
 
       new_value = Points::Command.new(point, command, value).new_value
+      sent_at = Time.current
       ::Mqtt::Listener.publish(topic, self.class.payload(point, new_value), **(a["retain"] ? { retain: true } : {}))
-      point.report!(new_value) if a["topic"].blank?
+      return point.report!(new_value) if a["topic"].blank?
+
+      confirm!(point, new_value, sent_at) if confirm?(point)
     end
 
     # Valor do ponto → payload publicado.
@@ -95,6 +108,32 @@ module Drivers
       return false if raw.to_s == a.fetch("state_off", a.fetch("payload_off", false)).to_s
 
       raw if [ true, false ].include?(raw)
+    end
+
+    private
+
+    def confirm?(point)
+      a = point.address
+      confirm_wait.positive? && !a.key?("payload_press") && a["topic"].to_s.start_with?("#{::Mqtt::Z2m.base}/")
+    end
+
+    # Espera o estado novo voltar do aparelho (o Mqtt::Listener grava, em outra thread).
+    def confirm!(point, expected, sent_at)
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + confirm_wait
+      loop do
+        at, value = ActsAsTenant.with_tenant(point.tenant) { Point.where(id: point.id).pick(:reported_at, :value) }
+        return if at && at >= sent_at && same?(value, expected)
+        break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+        sleep POLL
+      end
+      raise NoReply, "#{point.device.name} não respondeu pelo Zigbee em #{confirm_wait} s: o comando pode não ter chegado (sinal fraco ou rota caída)."
+    end
+
+    def same?(got, want)
+      return (got.to_f - want.to_f).abs < 1e-6 if got.is_a?(Numeric) && want.is_a?(Numeric)
+
+      got == want
     end
   end
 end

@@ -101,3 +101,11 @@ chegou e o escalonamento avisou por horas).
   mantém o "desatualizado"; valor novo ou "Redefinir estado" volta a "Bom".
   Escalonamento que não deve insistir num estado em que ninguém confia usa a
   condição "Ponto está" com a situação "Bom".
+
+## Zigbee: confirmado só com resposta do aparelho (15/11/2026)
+
+Publicar no zigbee2mqtt não garante que o comando chegou: com a rota caída, o z2m registra `Delivery failed` e o
+comando ficava "confirmado" aqui (caso do interruptor do escritório). Agora o `Drivers::Mqtt` espera o estado novo
+voltar (eco do z2m, gravado pelo `Mqtt::Listener`) por até `confirm_wait` s (10; 0 nos testes) nos pontos com tópico
+de estado em `Z2M_BASE_TOPIC/…`; sem resposta, o comando falha com `NoReply` ("não respondeu pelo Zigbee"), que não é
+repetido sozinho (pode ter chegado). Botão (`payload_press`), `command_map` e MQTT genérico não esperam.

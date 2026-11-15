@@ -56,6 +56,26 @@ RSpec.describe "Driver mqtt e zigbee2mqtt" do
       expect(only_cmd.reload.value).to be true
     end
 
+    it "zigbee2mqtt: confirma só quando o aparelho devolve o estado; sem resposta, falha avisando (15/11/2026)" do
+      described_class.confirm_wait = 1
+      client = instance_double(MQTT::Client)
+      allow(MQTT::Client).to receive(:connect).and_yield(client)
+      relay = point(capability: "onoff", value: false, address: { "topic" => "zigbee2mqtt/ESC Interruptor", "json_path" => "state_l2", "payload_on" => "ON", "payload_off" => "OFF" })
+      # Respondeu: o eco do z2m (o Mqtt::Listener, aqui na hora) grava o estado novo.
+      allow(client).to receive(:publish) { within(tenant) { relay.reload.report!(true) } }
+      expect { described_class.new.execute(relay, "on", nil) }.not_to raise_error
+      # Rota caída: nada volta.
+      allow(client).to receive(:publish)
+      t = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      expect { described_class.new.execute(relay, "off", nil) }.to raise_error(Drivers::Mqtt::NoReply, /não respondeu pelo Zigbee/)
+      expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - t).to be_between(0.9, 3)
+      # Fora do z2m (MQTT genérico) segue sem esperar.
+      plain = point(capability: "onoff", address: { "topic" => "casa/rele" })
+      expect { described_class.new.execute(plain, "on", nil) }.not_to raise_error
+    ensure
+      described_class.confirm_wait = 0
+    end
+
     it "sem tópico, sem broker ou broker fora do ar: falha com o motivo" do
       expect { described_class.new.execute(point(address: {}), "on", nil) }.to raise_error(Drivers::Mqtt::Error, /sem tópico/i)
       relay = point(address: { "topic" => "z/r" })
