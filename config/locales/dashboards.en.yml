@@ -105,6 +105,9 @@ en:
       path_placeholder: 'e.g. kitchen'
       path_title: Lowercase letters, numbers and hyphens
       path_hint: Opens this view directly from a short link. Lowercase letters, numbers and hyphens only.
+      view_link: Tab that opens another screen
+      view_link_name: Screen path
+      view_link_hint: "With a path, the tab becomes a shortcut to that screen of the installation (e.g. /energia, /cameras); the sections of this view are kept. Empty = normal view."
       the_view: the view %{name}
       view_theme: Theme for this view
       section_label: Section %{name}
@@ -610,6 +613,8 @@ en:
       at_section: 'section %{id}'
       too_many: 'too many widgets (maximum %{max})'
       start_view: 'start_view must be the id of a view (not a subview)'
+      view_link: '%{where}: link must be a path of this installation (like /energia), on a tab that is not a subview'
+      only_links: 'the dashboard needs at least one view that is not a link'
       at_widget: 'widget %{id} (%{where})'
       unknown_type: '%{where}: unknown type %{type}'
       required: '%{where}: %{prop} is required'

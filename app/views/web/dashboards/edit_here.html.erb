@@ -17,7 +17,7 @@
 
 <% if @resolved["views"].size > 1 %>
   <nav class="ss-chips is-solid mb-4" data-controller="ss-scroll-current" aria-label="<%= t("dashboards.views") %>">
-    <% @resolved["views"].each do |v| %>
+    <% @resolved["views"].reject { |v| Dashboards.link?(v) }.each do |v| %>
       <%= link_to dashboard_path(@dashboard, editar: 1, view: v["id"]), class: "ss-chip no-underline", "aria-current": (v == view ? "true" : nil) do %><%= icon(v["icon"].presence || "view-boards", "size-4") %><%= v["title"] %><% end %>
     <% end %>
   </nav>

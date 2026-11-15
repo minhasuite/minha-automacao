@@ -47,12 +47,14 @@ RSpec.describe "Painéis importados do HA" do
 
     home, cozinha = defn["views"]
     expect(home).to include("title" => "Início", "path" => "home", "icon" => "mdi:home", "type" => "sections")
-    theme_key = within(tenant) { DashboardTheme.sole }.key
-    expect(home["theme"]).to include("key" => theme_key, "glass" => true)
+    # mobile-ajustes: o tema do HA vira o tema pronto mais parecido (nada de "tema da casa").
+    theme_key = home["theme"]["key"]
+    expect(Dashboards::Themes.plugins.map(&:key)).to include(theme_key)
+    expect(home["theme"]).to include("glass" => true)
     expect(home["theme"]["image"]).to start_with("/rails/active_storage/blobs/")
     expect(cozinha).to include("subview" => true, "back_path" => "home")
     expect(cozinha["theme"]).not_to have_key("image") # o fundo da cozinha não veio
-    expect(within(tenant) { DashboardTheme.sole }).to have_attributes(accent: "#3366ff", accent2: "#ff8800", glass: true)
+    expect(within(tenant) { DashboardTheme.count }).to eq(0)
 
     # badges: atributo do sensor, "diferente de" na visibilidade; sem par = fora
     expect(home["badges"].size).to eq(2)

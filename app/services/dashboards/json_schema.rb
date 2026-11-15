@@ -63,6 +63,8 @@ module Dashboards
       { "type" => "object", "required" => %w[id title sections], "properties" => {
         "id" => id, "title" => STRING, "icon" => STRING, "path" => { "type" => "string", "pattern" => "^[a-z0-9][a-z0-9-]{0,39}$" },
         "type" => { "enum" => ViewTypes.plugins.map(&:key) }, "subview" => { "type" => "boolean" }, "back_path" => STRING,
+        # mobile-ajustes: aba-link (atalho para uma tela da instalação, como /energia; sem seções).
+        "link" => { "type" => "string", "pattern" => "^/[^/]" },
         "area" => STRING, "theme" => { "$ref" => "#/$defs/theme" },
         # visao-entrega: a visão só para algumas telas, papéis ou aparelhos.
         "visible_if" => { "type" => "object", "description" => t(:view_visible_if), "additionalProperties" => false, "minProperties" => 1,

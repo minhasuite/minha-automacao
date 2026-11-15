@@ -72,7 +72,8 @@ module Drivers
         [ [ p.address["siid"].to_i, p.address["piid"].to_i ], raw(p, args[role]) ]
       end
       client.set_properties(settings) if settings.any?
-      client.action(siid, aiid, [ args["rooms"].join(",") ])
+      piid = (point.address["room_ids_piid"] || Miio::Vacuum::ROOM_IDS_PIID).to_i
+      client.action(siid, aiid, [ { "piid" => piid, "value" => args["rooms"].join(",") } ])
     end
 
     def raw(point, value) = point.address["map"] ? Miio::Vacuum.encode(point, value) : point.to_raw(value)

@@ -253,7 +253,8 @@ module Web
       case params[:op]
       when "add_view" then focus[:view] = editor.add_view(title: params[:title], icon: params[:icon])
       when "update_view"
-        editor.update_view(t, title: params[:title], icon: params[:icon], path: params[:path], type: params[:view_type], subview: params[:subview], back_path: params[:back_path])
+        editor.update_view(t, title: params[:title], icon: params[:icon], path: params[:path], type: params[:view_type], subview: params[:subview], back_path: params[:back_path],
+                                     link: params[:view_link])
         editor.set_hero(t, hero_param) if params.dig(:hero, :present)
         editor.set_view_visible(t, visibility_param(params.fetch(:view_visible, {}).permit(roles: [], screens: []))) if params.dig(:view_visible, :present)
         editor.set_start(t, params[:start_view] == "1") if params.key?(:start_view)

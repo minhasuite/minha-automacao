@@ -66,6 +66,11 @@ module Dashboards
         context_rules(view["order_if"], "first", where, e) if view.key?("order_if")
         view_visible(view["visible_if"], where, e) if view.key?("visible_if")
         Array(view["badges"]).each { |b| widget(b, msg(:at_badge, where: where), ids, e) }
+        if view.key?("link")
+          link_ok = view["link"].is_a?(String) && view["link"].match?(Dashboards::LINK) && view["subview"] != true
+          e << msg(:view_link, where: where) unless link_ok
+          next
+        end
         sections = view["sections"]
         next e << msg(:sections_list, where: where) unless sections.is_a?(Array)
 
@@ -85,7 +90,8 @@ module Dashboards
       e << msg(:too_many, max: MAX_WIDGETS) if ids.size - boxes > MAX_WIDGETS
       context_rules(defn["open_if"], "view", msg(:at_dashboard), e) if defn.key?("open_if")
       # Beleza (ideia 17): visão inicial = id de uma visão que não é subvisão.
-      e << msg(:start_view) if defn.key?("start_view") && views.none? { |v| v.is_a?(Hash) && v["id"] == defn["start_view"] && v["subview"] != true }
+      e << msg(:start_view) if defn.key?("start_view") && views.none? { |v| v.is_a?(Hash) && v["id"] == defn["start_view"] && v["subview"] != true && !v.key?("link") }
+      e << msg(:only_links) if views.all? { |v| v.is_a?(Hash) && v.key?("link") }
       e
     end
 

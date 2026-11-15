@@ -105,6 +105,9 @@ pt-BR:
       path_placeholder: 'ex.: cozinha'
       path_title: Letras minúsculas, números e hífen
       path_hint: Para abrir esta visão direto por um link curto. Só letras minúsculas, números e hífen.
+      view_link: Aba que abre outra tela
+      view_link_name: Caminho da tela
+      view_link_hint: "Com caminho, a aba vira atalho para essa tela da instalação (ex.: /energia, /cameras); as seções desta visão ficam guardadas. Vazio = visão normal."
       the_view: a visão %{name}
       view_theme: Tema desta visão
       section_label: Seção %{name}
@@ -610,6 +613,8 @@ pt-BR:
       at_section: 'seção %{id}'
       too_many: 'widgets demais (máximo %{max})'
       start_view: 'start_view precisa ser o id de uma visão (que não seja subvisão)'
+      view_link: '%{where}: link precisa ser um caminho desta instalação (como /energia), numa aba que não é subvisão'
+      only_links: 'o painel precisa de ao menos uma visão que não seja link'
       at_widget: 'widget %{id} (%{where})'
       unknown_type: '%{where}: tipo desconhecido %{type}'
       required: '%{where}: %{prop} obrigatório'

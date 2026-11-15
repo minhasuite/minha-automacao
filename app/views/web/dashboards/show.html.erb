@@ -47,7 +47,9 @@
 <% end %>
 
 <% tabs = Dashboards::ViewTypes.tabs(@resolved["views"], view) %>
-<% tab_href = ->(v) { @preview ? dashboard_path(@dashboard, view: v["path"].presence || v["id"], rascunho: 1) : dw_view_path(@dashboard, v, home: @home) } %>
+<%# mobile-ajustes: aba-link (`link`) leva direto à tela da instalação (como /energia). %>
+<% tab_href = ->(v) { next v["link"] if Dashboards.link?(v)
+                      @preview ?dashboard_path(@dashboard, view: v["path"].presence || v["id"], rascunho: 1) : dw_view_path(@dashboard, v, home: @home) } %>
 <% if tabs.size > 1 %>
   <nav class="ss-chips is-solid mt-4" data-controller="ss-scroll-current" aria-label="<%= t("dashboards.views") %>">
     <% tabs.each do |v| %>

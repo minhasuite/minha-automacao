@@ -18,7 +18,7 @@ module Dashboards
   # que já começou hoje (antes da primeira, a última de ontem). `color` sozinha = cor lisa, com
   # `color2` = degradê; `image` troca o papel de parede. `dim` (0 a 80, %): escurece o fundo à noite.
   module Themes
-    PLUGINS = %w[Lista Aurora Oceano Floresta PorDoSol Grafite].freeze
+    PLUGINS = %w[Lista Aurora Oceano Floresta PorDoSol Grafite Lavanda Rosa Areia Menta Ceu Cafe CeuNoturno MeiaNoite].freeze
     KEYS = %w[key night image blur glass dark night_by night_from night_to backgrounds dim].freeze
     NIGHT_BY = %w[sun window].freeze
     WINDOW = %w[18:00 06:00].freeze # janela padrão (sem sol)
@@ -32,8 +32,32 @@ module Dashboards
     module_function
 
     def plugins = PLUGINS.map { |n| const_get(n) }
-    # ondaB2 (B11): os prontos e os da casa (DashboardTheme, chave "u-...").
-    def all = plugins + (ActsAsTenant.current_tenant ? DashboardTheme.order(:name).to_a : [])
+    # mobile-ajustes (15/11/2026): só os prontos. Os "temas da casa" (DashboardTheme, chave "u-...") saíram da
+    # tela; a chave antiga ainda resolve para painel que não foi migrado (`[]`), mas não entra na galeria.
+    def all = plugins
+    # Tema pronto mais parecido com uma cor (importação do HA, migração dos temas da casa): o de matiz mais perto.
+    def nearest(hex, dark: false)
+      return Lista unless hex.to_s.match?(HEX)
+
+      list = plugins.select { |t| t.dark == dark }.presence || plugins
+      list.min_by { |t| hue_distance(hue(hex), hue(t.accent)) }
+    end
+
+    def hue(hex)
+      r, g, b = hex[1..].scan(/../).map { |c| c.hex / 255.0 }
+      max, min = [ r, g, b ].max, [ r, g, b ].min
+      return 0 if max == min
+
+      d = max - min
+      h = if max == r then ((g - b) / d) % 6
+      elsif max == g then ((b - r) / d) + 2
+      else ((r - g) / d) + 4
+      end
+      h * 60
+    end
+
+    def hue_distance(a, b) = [ (a - b).abs, 360 - (a - b).abs ].min
+
     def [](key) = plugins.find { |t| t.key == key.to_s } || (DashboardTheme.find_by(key: key.to_s) if key.to_s.start_with?("u-") && ActsAsTenant.current_tenant)
 
     # Variáveis CSS da marca a partir das duas cores (já validadas): as da gem (ComponentesUi.brand_css, o
@@ -130,12 +154,21 @@ module Dashboards
       return nil if t.empty? && !mine
 
       dark_now = night?(t, site, now)
-      night = !mine && t["night"].present? && dark_now
-      theme = mine || self[night ? t["night"] : t["key"]] || Lista
+      # mobile-ajustes: o tema da pessoa vale por inteiro (cores, fundo, vidro e escuro), por cima do desenho do
+      # painel; "Seguir o painel" (sem tema escolhido) traz de volta as fotos e o fundo de cada visão.
+      return person(mine, dark_now) if mine
+
+      night = t["night"].present? && dark_now
+      theme = self[night ? t["night"] : t["key"]] || Lista
       wall = background_now(t, site, now)
       { "theme" => theme, "night" => night, "image" => wall ? wall["image"] : t["image"], "blur" => t["blur"] || 0, "glass" => t.fetch("glass", theme.glass),
-        "dark" => t["dark"] == true, "is_night" => dark_now, "wall" => wall&.except("image").presence,
+        "dark" => t["dark"] == true || theme.dark, "is_night" => dark_now, "wall" => wall&.except("image").presence,
         "dim" => (t["dim"].to_i if dark_now && t["dim"].to_i.positive?) }.compact
+    end
+
+    # O tema escolhido pela pessoa (perfil ou aparelho) sozinho, em qualquer tela.
+    def person(theme, is_night = false)
+      { "theme" => theme, "night" => false, "blur" => 0, "glass" => theme.glass, "dark" => theme.dark, "is_night" => is_night }
     end
 
     class Base
@@ -143,11 +176,12 @@ module Dashboards
       translates :label
 
       class << self
-        attr_reader :key, :accent, :accent2, :wallpaper, :glass
+        attr_reader :key, :accent, :accent2, :wallpaper, :glass, :dark
 
         # accent/accent2: as duas cores do degradê da marca (botões, ligado,
-        # hero); wallpaper: fundo CSS sem imagem; glass: cartões de vidro.
-        def describe(key:, label:, accent:, accent2:, wallpaper: nil, glass: false)
+        # hero); wallpaper: fundo CSS sem imagem; glass: cartões de vidro;
+        # dark: o tema só existe no escuro (abre no escuro, qualquer que seja o da pessoa).
+        def describe(key:, label:, accent:, accent2:, wallpaper: nil, glass: false, dark: false)
           raise ArgumentError, "cor inválida" unless [ accent, accent2 ].all? { |c| c.match?(HEX) }
 
           @key = key
@@ -156,6 +190,7 @@ module Dashboards
           @accent2 = accent2
           @wallpaper = wallpaper
           @glass = glass
+          @dark = dark
         end
 
         # Variáveis CSS do tema (só cores validadas na definição).
@@ -193,9 +228,59 @@ module Dashboards
     end
 
     class Grafite < Base
-      texts en: { label: "Graphite (night)" }, es: { label: "Grafito (noche)" }
-      describe key: "grafite", label: "Grafite (noite)", accent: "#6366f1", accent2: "#0ea5e9", glass: true,
+      texts en: { label: "Graphite" }, es: { label: "Grafito" }
+      describe key: "grafite", label: "Grafite", accent: "#6366f1", accent2: "#0ea5e9", glass: true, dark: true,
                wallpaper: "radial-gradient(80% 60% at 50% -10%, rgba(99, 102, 241, .35), transparent), radial-gradient(50% 40% at 100% 100%, rgba(14, 165, 233, .18), transparent)"
+    end
+
+    # mobile-ajustes (15/11/2026): mais temas prontos no lugar dos temas da casa.
+    class Lavanda < Base
+      texts en: { label: "Lavender" }, es: { label: "Lavanda" }
+      describe key: "lavanda", label: "Lavanda", accent: "#7c3aed", accent2: "#c084fc",
+               wallpaper: "radial-gradient(65% 55% at 10% 0%, rgba(192, 132, 252, .30), transparent), radial-gradient(55% 55% at 95% 95%, rgba(124, 58, 237, .24), transparent)"
+    end
+
+    class Rosa < Base
+      texts en: { label: "Rose" }, es: { label: "Rosa" }
+      describe key: "rosa", label: "Rosa", accent: "#db2777", accent2: "#fb7185",
+               wallpaper: "radial-gradient(65% 55% at 0% 0%, rgba(251, 113, 133, .28), transparent), radial-gradient(55% 55% at 100% 100%, rgba(219, 39, 119, .22), transparent)"
+    end
+
+    class Areia < Base
+      texts en: { label: "Sand" }, es: { label: "Arena" }
+      describe key: "areia", label: "Areia", accent: "#b45309", accent2: "#eab308",
+               wallpaper: "radial-gradient(70% 60% at 100% 0%, rgba(234, 179, 8, .24), transparent), radial-gradient(60% 50% at 0% 100%, rgba(180, 83, 9, .20), transparent)"
+    end
+
+    class Menta < Base
+      texts en: { label: "Mint" }, es: { label: "Menta" }
+      describe key: "menta", label: "Menta", accent: "#0d9488", accent2: "#22c55e",
+               wallpaper: "radial-gradient(70% 60% at 0% 0%, rgba(45, 212, 191, .26), transparent), radial-gradient(60% 55% at 100% 100%, rgba(34, 197, 94, .22), transparent)"
+    end
+
+    class Ceu < Base
+      texts en: { label: "Sky" }, es: { label: "Cielo" }
+      describe key: "ceu", label: "Céu", accent: "#0284c7", accent2: "#38bdf8", glass: true,
+               wallpaper: "radial-gradient(80% 60% at 50% -10%, rgba(56, 189, 248, .32), transparent), radial-gradient(55% 50% at 0% 100%, rgba(2, 132, 199, .20), transparent)"
+    end
+
+    class Cafe < Base
+      texts en: { label: "Coffee" }, es: { label: "Café" }
+      describe key: "cafe", label: "Café", accent: "#92400e", accent2: "#c2410c",
+               wallpaper: "radial-gradient(70% 60% at 0% 0%, rgba(194, 65, 12, .22), transparent), radial-gradient(60% 55% at 100% 100%, rgba(146, 64, 14, .22), transparent)"
+    end
+
+    # O "Casa-glass" importado do HA (azul, vidro e escuro) virou tema pronto.
+    class CeuNoturno < Base
+      texts en: { label: "Night sky" }, es: { label: "Cielo nocturno" }
+      describe key: "ceu-noturno", label: "Céu noturno", accent: "#5aa9ff", accent2: "#3b82f6", glass: true, dark: true,
+               wallpaper: "radial-gradient(80% 60% at 50% -10%, rgba(90, 169, 255, .30), transparent), radial-gradient(50% 45% at 100% 100%, rgba(59, 130, 246, .20), transparent)"
+    end
+
+    class MeiaNoite < Base
+      texts en: { label: "Midnight" }, es: { label: "Medianoche" }
+      describe key: "meia-noite", label: "Meia-noite", accent: "#8b5cf6", accent2: "#22d3ee", glass: true, dark: true,
+               wallpaper: "radial-gradient(70% 55% at 0% 0%, rgba(139, 92, 246, .30), transparent), radial-gradient(60% 50% at 100% 100%, rgba(34, 211, 238, .18), transparent)"
     end
   end
 end

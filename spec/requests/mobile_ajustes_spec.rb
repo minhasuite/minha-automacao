@@ -177,4 +177,45 @@ RSpec.describe "Painéis por superfície e por pessoa" do
       expect(data[:site_memberships].find { |m| m["user_id"] == lia.id }["dashboard_ids"]).to eq([ casa.id ])
     end
   end
+
+  describe "aba-link (atalho para outra tela)" do
+    let(:with_link) do
+      definition.merge("views" => definition["views"] + [ { "id" => "v-energia", "title" => "Energia", "icon" => "mdi:lightning-bolt", "link" => "/energia", "sections" => [] } ])
+    end
+
+    it "valida o caminho, nunca abre como visão e aparece na faixa de abas da web e na API" do
+      within(tenant) do
+        expect(Dashboards::Schema.errors(with_link)).to eq([])
+        bad = with_link.deep_dup.tap { |d| d["views"].last["link"] = "https://fora.com" }
+        expect(Dashboards::Schema.errors(bad).join).to include("link")
+        only = { "schema_version" => 1, "views" => [ with_link["views"].last ] }
+        expect(Dashboards::Schema.errors(only).join).to include("ao menos uma visão")
+        casa.publish!(with_link)
+      end
+      sign_in(owner)
+      get "/paineis/#{casa.id}", params: { view: "v-energia" }
+      html = Nokogiri::HTML(response.body)
+      expect(html.at_css("nav.ss-chips a[aria-current='true']").text).to include("Início") # a aba-link não abre
+      expect(html.css("nav.ss-chips a").map { |a| a["href"] }).to include("/energia")
+
+      get "/api/v1/dashboards/#{casa.id}", headers: auth_headers(owner)
+      energia = response.parsed_body.dig("data", "views").find { |v| v["id"] == "v-energia" }
+      expect(energia).to include("link" => "/energia", "sections" => [])
+    end
+
+    it "o editor transforma a visão em aba-link e volta" do
+      sign_in(owner)
+      within(tenant) { casa.update!(draft: with_link.deep_dup.tap { |d| d["views"].last.delete("link") }) }
+      patch "/paineis/#{casa.id}/rascunho", params: { op: "update_view", target: "v-energia", view_id: "v-energia", title: "Energia", view_link: "/energia" }
+      expect(within(tenant) { casa.reload.draft["views"].last["link"] }).to eq("/energia")
+      patch "/paineis/#{casa.id}/rascunho", params: { op: "update_view", target: "v-energia", view_id: "v-energia", title: "Energia", view_link: "" }
+      expect(within(tenant) { casa.reload.draft["views"].last }).not_to have_key("link")
+    end
+  end
+
+  it "Configurações abre em Locais" do
+    sign_in(owner)
+    get "/configuracoes"
+    expect(response).to redirect_to("/locais")
+  end
 end

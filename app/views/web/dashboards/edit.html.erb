@@ -65,6 +65,12 @@
                                          id: "vp", maxlength: 40, placeholder: t("dashboards.ed.path_placeholder"), pattern: "[a-z0-9][a-z0-9-]*", title: t("dashboards.ed.path_title"),
                                          help: t("dashboards.ed.path_hint"), wrapper_class: "mt-2 max-w-xs" %>
             </details>
+            <%# mobile-ajustes: aba-link (atalho para uma tela da instalação, como /energia). %>
+            <details class="basis-full" <%= "open" if view["link"].present? %>>
+              <summary class="ss-summary text-sm font-semibold text-ink-2 w-fit"><%= t("dashboards.ed.view_link") %></summary>
+              <%= f.ss_text_field :view_link, label: safe_join([t("dashboards.ed.view_link_name"), " ", tag.span(t("dashboards.ed.optional"), class: "font-normal")]), value: view["link"].to_s,
+                                              class: "num", id: "vlk", maxlength: 200, placeholder: "/energia", help: t("dashboards.ed.view_link_hint"), wrapper_class: "mt-2 max-w-xs" %>
+            </details>
             <%# ondaB2 (B8): tipo da visão e subvisão (fora das abas, com "voltar"). %>
             <div class="basis-full grid gap-3 sm:grid-cols-3 items-end">
               <%= f.ss_select :view_type, Dashboards::ViewTypes.plugins.map { |x| [ x.label, x.key, { title: x.description } ] }, label: t("dashboards.vt.form.type"),

@@ -7,11 +7,16 @@ module Dashboards
   # Visão pedida na URL (`?view=`): pelo caminho ou pelo id; sem pedido, a do
   # contexto (`open_view`, ideia 9: `open_if` do painel); senão a primeira.
   def self.pick_view(resolved, slug)
-    views = resolved["views"]
+    # mobile-ajustes: aba-link (`link`) não abre como visão; é só atalho na faixa de abas.
+    views = resolved["views"].reject { |v| link?(v) }
     # Sem `?view=`: a do contexto (`open_if`, ideia 9), a inicial (`start_view`, ideia 17), a primeira.
     find = ->(s) { views.find { |v| s.present? && (v["path"] == s || v["id"] == s) } }
     find.call(slug) || (slug.blank? && (find.call(resolved["open_view"]) || find.call(resolved["start_view"]))) || views.first
   end
+
+  # Aba-link (mobile-ajustes): `"link": "/energia"` = a aba leva a uma tela interna, sem seções.
+  LINK = %r{\A/(?!/)[\w\-/]{0,100}(?:\?[\w=&\-]{0,100})?\z}
+  def self.link?(view) = view.is_a?(Hash) && view["link"].present?
 
   # `visible_if.role` de widget ou visão: sem lista = todos; o dono vê tudo.
   def self.role_ok?(cond, role)

@@ -97,7 +97,8 @@
           </div>
         <% end %>
       <% end %>
-      <%= render "web/shared/empty_art", art: "search", title: t("history.empty"), text: t("history.empty_hint"), css: "ss-card", actions: chips.presence %>
+      <%# mobile-ajustes: o vazio num card da largura da coluna (como o do período), não num cartão estreito solto. %>
+      <div class="ss-card"><%= render "web/shared/empty_art", art: "search", title: t("history.empty"), text: t("history.empty_hint"), actions: chips.presence %></div>
     <% end %>
   <% end %>
 

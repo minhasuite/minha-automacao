@@ -34,7 +34,7 @@ module DashboardsHelper
     screens = Dashboards.view_screens(view)
     return {} if screens.empty?
 
-    tabs = views.reject { |v| v["subview"] == true || v == view }
+    tabs = views.reject { |v| v["subview"] == true || v == view || Dashboards.link?(v) }
     (Dashboards::Schema::SCREENS - screens).filter_map { |s| (f = tabs.find { |v| Dashboards.view_shown_on?(v, s) }) && [ s, f ] }.to_h
   end
 

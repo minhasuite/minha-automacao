@@ -1,15 +1,12 @@
 module Web
   # Configurações → Aparência (ondaB2 B11): o tema de cada pessoa (no perfil
-  # ou só neste aparelho, por cima do tema do painel), os temas criados pela
-  # casa (cores, papel de parede, vidro e fonte, com prévia) e a barra
-  # lateral de cada pessoa (ordem e o que aparece).
+  # ou só neste aparelho; vale por inteiro em toda tela, por cima do desenho do
+  # painel), a densidade e a barra lateral de cada pessoa (ordem e o que
+  # aparece). Os "temas da casa" saíram em 15/11/2026 (mobile-ajustes): só os
+  # prontos de `Dashboards::Themes`.
   class AppearanceController < ApplicationController
-    before_action :require_admin!, only: %i[create_theme update_theme destroy_theme]
-
     def show
       @themes = Dashboards::Themes.all
-      @custom = DashboardTheme.order(:name).to_a
-      @editing = @custom.find { |t| t.id == params[:tema] }
       @entries = helpers.sidebar_entries(all: true)
     end
 
@@ -29,26 +26,7 @@ module Web
       redirect_to settings_appearance_path(anchor: params[:op].to_s.start_with?("sidebar") ? "barra" : "tema"), notice: t("appearance.saved")
     end
 
-    def create_theme
-      theme = DashboardTheme.create!(theme_params)
-      redirect_to settings_appearance_path(anchor: "temas"), notice: t("appearance.created", name: theme.name)
-    end
-
-    def update_theme
-      DashboardTheme.find(params[:id]).update!(theme_params)
-      redirect_to settings_appearance_path(anchor: "temas"), notice: t("appearance.saved")
-    end
-
-    def destroy_theme
-      DashboardTheme.find(params[:id]).destroy!
-      redirect_to settings_appearance_path(anchor: "temas"), notice: t("appearance.removed")
-    end
-
     private
-
-    def require_admin!
-      back_with_alert(t("appearance.admin_only")) unless current_user.admin?
-    end
 
     # Só chave que existe (pronta ou da casa); vazio = segue o painel.
     def theme_key(key) = key.presence && Dashboards::Themes[key] ? key : nil
@@ -81,10 +59,6 @@ module Web
       keys = helpers.sidebar_entries(all: true).map { |e| e[:key] }
       order = (Array(params[:ids]).map(&:to_s) & keys) | (Array(current["order"]) & keys) | keys
       { "order" => order, "hidden" => Array(current["hidden"]) & keys }
-    end
-
-    def theme_params
-      params.require(:theme).permit(:name, :accent, :accent2, :wall_style, :glass, :font)
     end
   end
 end

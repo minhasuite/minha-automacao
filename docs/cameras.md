@@ -290,3 +290,18 @@ nesse firmware, o tempo de abertura do `cam/playback` no go2rtc 1.9.9 e se o tú
 (`ms-tunel-casa`) repassa o `Upgrade: websocket` (o Action Cable já passa por ele).
 Sem áudio no HLS (só vídeo). DVR com relógio fora do fuso do local desloca a
 linha do tempo.
+
+## Câmeras pré-carregadas e quadro na hora (mobile-ajustes, 15/11/2026)
+
+- **`Cameras::Warmer`** (worker, `CAMERA_PRELOAD=off` desliga): uma thread por câmera da rede de casa
+  (sem `on_demand`, sem MQTT, com fonte) segura um consumidor no go2rtc (`/api/stream.mp4`, lido e
+  descartado), e o RTSP com o DVR fica aberto. Medido na casa: o primeiro quadro das câmeras lentas
+  (canais 17 a 19) caiu de ~4,2 s para ~1 s; custo ~100 kbps por câmera dentro do compose. A lista é
+  refeita a cada 60 s; câmera que cai tenta de novo com espera crescente (até 2 min). O go2rtc 1.9.9
+  não tem `preload` pela API (a imagem `1.9.10` publicada ainda é a mesma revisão).
+- **Quadro na hora** (`Drivers::Go2rtc.frame`): com um quadro guardado de até `QUICK_MAX` (30 s), ele sai
+  na hora com a idade ("há 12 s") e o novo vem em segundo plano; sem quadro recente, busca na hora como
+  antes. Vale para a web e o app (mesmo endpoint).
+- O esqueleto de carregando já é do `Ss::CameraTileComponent`/`SsCameraTile` (estado `loading`) e só
+  aparece até o primeiro quadro.
+

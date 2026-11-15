@@ -126,4 +126,46 @@ RSpec.describe Drivers::Go2rtc do
     expect(cams_section["widgets"].map { |w| w["type"] }.uniq).to eq([ "camera" ])
     expect(Dashboards::Schema.errors(defn)).to be_empty
   end
+
+  describe "mobile-ajustes: câmeras ágeis" do
+    it "frame: quadro guardado recente sai na hora e o novo vem em segundo plano" do
+      import(cams)
+      p = stream("Quintal")
+      req = stub_request(:get, "#{base}/api/frame.jpeg?src=#{p.id}").to_return(body: "NOVO")
+      FileUtils.mkdir_p(described_class::SNAPSHOT_DIR)
+      file = described_class::SNAPSHOT_DIR.join("#{p.id}.jpg")
+      file.binwrite("VELHO")
+      File.utime(Time.now - 10, Time.now - 10, file)
+      later = []
+      allow(described_class::BACKGROUND).to receive(:post) { |&blk| later << blk }
+      expect(described_class.frame(p).jpeg).to eq("VELHO")
+      expect(req).not_to have_been_requested
+      later.each(&:call)
+      expect(req).to have_been_requested.once
+      expect(file.binread).to eq("NOVO")
+    end
+
+    it "frame: sem quadro recente, busca na hora (como antes)" do
+      import(cams)
+      p = stream("Quintal")
+      stub_request(:get, "#{base}/api/frame.jpeg?src=#{p.id}").to_return(body: "AGORA")
+      expect(described_class.frame(p).jpeg).to eq("AGORA")
+    end
+
+    it "Warmer: pré-carrega só as câmeras da rede de casa e segura o stream do go2rtc" do
+      import(cams)
+      within(tenant) { stream("Canal 2").update!(address: stream("Canal 2").address.merge("on_demand" => "tuya")) }
+      ids = Cameras::Warmer.wanted
+      expect(ids).to include(stream("Canal 1").id, stream("Quintal").id)
+      expect(ids).not_to include(stream("Canal 2").id, stream("Frente").id) # nuvem e sem senha ficam de fora
+
+      ok = stub_request(:get, "#{base}/api/stream.mp4?src=#{stream('Quintal').id}").to_return(body: "x" * 64)
+      expect(Cameras::Warmer.consume(stream("Quintal").id, limit: 16)).to be(true)
+      expect(ok).to have_been_requested
+      stub_request(:get, "#{base}/api/stream.mp4?src=#{stream('Canal 1').id}").to_return(status: 404)
+      expect(Cameras::Warmer.consume(stream("Canal 1").id)).to be(false)
+      stub_request(:get, "#{base}/api/stream.mp4?src=x").to_raise(Errno::ECONNREFUSED)
+      expect(Cameras::Warmer.consume("x")).to be(false)
+    end
+  end
 end

@@ -105,6 +105,9 @@ es:
       path_placeholder: 'ej.: cocina'
       path_title: Minúsculas, números y guion
       path_hint: Para abrir esta vista directo con un enlace corto. Solo minúsculas, números y guion.
+      view_link: Pestaña que abre otra pantalla
+      view_link_name: Ruta de la pantalla
+      view_link_hint: "Con ruta, la pestaña se vuelve atajo a esa pantalla de la instalación (ej.: /energia, /cameras); las secciones de esta vista se guardan. Vacío = vista normal."
       the_view: la vista %{name}
       view_theme: Tema de esta vista
       section_label: Sección %{name}
@@ -610,6 +613,8 @@ es:
       at_section: 'sección %{id}'
       too_many: 'demasiados widgets (máximo %{max})'
       start_view: 'start_view debe ser el id de una vista (que no sea subvista)'
+      view_link: '%{where}: link debe ser una ruta de esta instalación (como /energia), en una pestaña que no sea subvista'
+      only_links: 'el panel necesita al menos una vista que no sea enlace'
       at_widget: 'widget %{id} (%{where})'
       unknown_type: '%{where}: tipo desconocido %{type}'
       required: '%{where}: %{prop} es obligatorio'

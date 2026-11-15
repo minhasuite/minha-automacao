@@ -19,12 +19,14 @@ module Dashboards
 
     # `path`: o pedaço da URL da visão (?view=cozinha); vazio = usa o id.
     # ondaB2 (B8): `type` (ViewTypes), subvisão e para onde ela volta.
-    def update_view(id, title:, icon: nil, path: nil, type: nil, subview: nil, back_path: nil)
+    # mobile-ajustes: `link` (caminho interno, como /energia) faz da visão uma aba-link; as seções ficam guardadas.
+    def update_view(id, title:, icon: nil, path: nil, type: nil, subview: nil, back_path: nil, link: nil)
       v = view(id)
+      v.merge!("link" => link.to_s.strip.presence) unless link.nil?
       v.merge!("title" => title.presence || v["title"], "icon" => icon.presence, "path" => path.to_s.parameterize.presence,
                "type" => (type if type.present? && type != "sections" && ViewTypes[type]), "subview" => (true if subview == "1"),
                "back_path" => (back_path.presence if subview == "1")).compact!
-      %w[type subview back_path].each { |k| v.delete(k) if v[k].nil? }
+      %w[type subview back_path link].each { |k| v.delete(k) if v[k].nil? }
     end
 
     # Beleza (ideia 17): a visão que abre primeiro (`start_view`, ex. a planta); desmarcar a atual tira.

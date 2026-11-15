@@ -20,11 +20,12 @@
     <% @themes.each do |th| %>
       <li class="ss-card ss-card-pad grid content-start gap-2">
         <span class="ss-swatch is-block" style="<%= dw_swatch_style(th) %>" aria-hidden="true"><span class="ss-swatch-dots"><i></i><i></i><i></i><i></i></span><span class="ss-swatch-bar"></span></span>
-        <div class="flex items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center justify-between gap-1">
           <strong class="text-ink truncate"><%= th.label %></strong>
           <span class="flex gap-1">
             <% if th.key == mine %><span class="ss-badge ss-badge-success"><%= t("appearance.theme.mine") %></span><% end %>
             <% if th.key == device %><span class="ss-badge ss-badge-muted"><%= t("appearance.theme.here") %></span><% end %>
+            <% if th.dark %><span class="ss-badge ss-badge-muted"><%= icon("moon", "size-3") %><%= t("appearance.theme.dark") %></span><% end %>
           </span>
         </div>
         <div class="flex flex-wrap gap-1.5">
@@ -44,62 +45,6 @@
   <h2 id="ap-d" class="flex items-center gap-2"><%= icon("adjustments", "size-5 text-accent") %><%= t("appearance.density.title") %></h2>
   <p class="text-sm text-muted mt-1"><%= t("appearance.density.pitch") %></p>
   <%= render Ss::DensityPickerComponent.new(label: t("appearance.density.title"), css: "mt-3") %>
-</section>
-
-<%# Temas da casa: criados aqui, entram na galeria do editor de painel e na de cima. %>
-<section id="temas" class="ss-card ss-card-pad mt-4" aria-labelledby="ap-c">
-  <h2 id="ap-c" class="flex items-center gap-2"><%= icon("paint-brush", "size-5 text-accent") %><%= t("appearance.custom.title") %></h2>
-  <p class="text-sm text-muted mt-1"><%= t("appearance.custom.pitch") %></p>
-  <% if @custom.any? %>
-    <ul class="mt-3 divide-y divide-line">
-      <% @custom.each do |th| %>
-        <li class="py-2 flex items-center gap-3">
-          <span class="ss-swatch" style="<%= dw_swatch_style(th) %>" aria-hidden="true"><span class="ss-swatch-dots"><i></i><i></i><i></i></span></span>
-          <span class="min-w-0 flex-1"><span class="block font-semibold text-ink truncate"><%= th.name %></span>
-            <span class="block text-xs text-muted"><%= [ DashboardTheme::WALLPAPER_LABELS.fetch(th.wall_style, th.wall_style), DashboardTheme::FONT_LABELS.fetch(th.font, th.font), (t("appearance.custom.glass") if th.glass) ].compact.join(" · ") %></span></span>
-          <% if current_user.admin? %>
-            <%= link_to settings_appearance_path(tema: th.id, anchor: "temas"), class: "ss-btn ss-btn-ghost ss-btn-sm", "aria-label": t("appearance.custom.edit_x", name: th.name) do %><%= icon("pencil", "size-4") %><% end %>
-            <%= render Ss::ButtonComponent.new(icon: icon("trash", ""), href: settings_theme_path(th), method: :delete, variant: :ghost, size: :sm, aria: { label: t("appearance.custom.delete_x", name: th.name) },
-                                               confirm: t("appearance.custom.delete_confirm", name: th.name), confirm_tone: :danger, confirm_button: t("shared.confirm.delete")) %>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
-  <% end %>
-  <% if current_user.admin? %>
-    <% th = @editing || DashboardTheme.new(accent: Dashboards::Themes::Lista.accent, accent2: Dashboards::Themes::Lista.accent2, wall_style: "glow", font: "manrope") %>
-    <%= ss_form_with model: th, scope: :theme, url: th.persisted? ? settings_theme_path(th) : settings_themes_path, method: th.persisted? ? :patch : :post,
-                     class: "mt-4 grid gap-5 border-t border-line pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start", data: { controller: "theme-preview" } do |f| %>
-      <div class="grid gap-3 sm:grid-cols-2 content-start">
-        <h3 class="sm:col-span-2 font-bold text-ink"><%= th.persisted? ? t("appearance.custom.editing", name: th.name) : t("appearance.custom.new") %></h3>
-        <%= f.ss_text_field :name, label: t("appearance.custom.name"), maxlength: 40, required: true, placeholder: t("appearance.custom.name_hint"), wrapper_class: "sm:col-span-2" %>
-        <%= f.ss_color_field :accent, label: t("appearance.custom.accent"), data: { theme_preview_target: "accent", action: "input->theme-preview#update" } %>
-        <%= f.ss_color_field :accent2, label: t("appearance.custom.accent2"), data: { theme_preview_target: "accent2", action: "input->theme-preview#update" } %>
-        <%= f.ss_select :wall_style, DashboardTheme::WALLPAPERS.map { |k| [ DashboardTheme::WALLPAPER_LABELS.fetch(k, k), k ] }, label: t("appearance.custom.wallpaper"),
-                        data: { theme_preview_target: "wall", action: "change->theme-preview#update" } %>
-        <%= f.ss_select :font, DashboardTheme::FONTS.keys.map { |k| [ DashboardTheme::FONT_LABELS.fetch(k, k), k ] }, label: t("appearance.custom.font"),
-                        data: { theme_preview_target: "font", action: "change->theme-preview#update" } %>
-        <%= f.ss_check_box :glass, label: t("appearance.custom.glass_hint"), wrapper_class: "sm:col-span-2", data: { theme_preview_target: "glass", action: "change->theme-preview#update" } %>
-        <div class="sm:col-span-2 flex gap-2">
-          <%= f.ss_submit th.persisted? ? t("appearance.custom.save") : t("appearance.custom.create") %>
-          <% if th.persisted? %><%= link_to t("dashboards.cancel"), settings_appearance_path(anchor: "temas"), class: "ss-btn ss-btn-ghost" %><% end %>
-        </div>
-      </div>
-      <%# Prévia ao vivo: as peças da gem (herói, tiles, chips) com as mesmas variáveis do painel, por cima do papel de parede do tema. %>
-      <%# Prévia do tema: papel de parede (data-wall) atrás das peças da gem; vidro = .ss-wall-glass da gem. %>
-      <div class="relative overflow-hidden isolate grid gap-3 p-[.9rem] rounded-[1.1rem] bg-[var(--bg,var(--field))] font-sans before:content-[''] before:absolute before:inset-0 before:-z-1 data-[wall=glow]:before:bg-[radial-gradient(60%_50%_at_10%_0%,color-mix(in_srgb,var(--accent)_32%,transparent),transparent),radial-gradient(55%_55%_at_95%_95%,color-mix(in_srgb,var(--accent2,var(--accent))_28%,transparent),transparent)] data-[wall=mesh]:before:bg-[radial-gradient(40%_40%_at_20%_20%,color-mix(in_srgb,var(--accent)_32%,transparent),transparent),radial-gradient(45%_45%_at_80%_30%,color-mix(in_srgb,var(--accent2,var(--accent))_28%,transparent),transparent),radial-gradient(50%_50%_at_50%_100%,color-mix(in_srgb,var(--accent)_22%,transparent),transparent)] data-[wall=solid]:before:bg-[linear-gradient(color-mix(in_srgb,var(--accent)_12%,transparent),color-mix(in_srgb,var(--accent2,var(--accent))_12%,transparent))] <%= 'ss-wall-glass' if th.glass %>" data-wall="<%= th.wall_style %>" data-theme-preview-target="preview" data-fonts="<%= DashboardTheme::FONTS.to_json %>" style="<%= th.css %>" role="img" aria-label="<%= t("appearance.custom.preview") %>">
-        <div class="ss-hero rounded-2xl px-4 py-3.5"><p class="ss-kicker"><%= t("appearance.custom.preview") %></p><strong class="block text-xl font-extrabold"><%= t("appearance.custom.sample_title") %></strong></div>
-        <div class="grid grid-cols-2 gap-2.5" inert>
-          <%= render Ss::DeviceTileComponent.new(name: t("appearance.custom.sample_light"), state: t("appearance.custom.sample_on"), on: true, icon: icon("light-bulb", "")) %>
-          <%= render Ss::DeviceTileComponent.new(name: t("appearance.custom.sample_fan"), state: t("appearance.custom.sample_off"), icon: icon("fan", "")) %>
-          <div class="ss-card ss-card-pad col-span-2 flex flex-wrap items-center justify-between gap-2">
-            <span class="ss-label mb-0"><%= icon("thermometer", "") %><%= t("appearance.custom.sample_target") %></span>
-            <span class="ss-chips p-0"><span class="ss-chip" aria-current="true">23 °C</span><span class="ss-chip"><%= t("appearance.custom.sample_mode") %></span></span>
-          </div>
-        </div>
-      </div>
-    <% end %>
-  <% end %>
 </section>
 
 <%# Barra lateral de cada pessoa: ordem e o que aparece (Configurações fica sempre). %>

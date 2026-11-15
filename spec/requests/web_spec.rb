@@ -60,7 +60,7 @@ RSpec.describe "Web (sessão em cookie)" do
 
     it "abre cada seção, sem dados de empresa nem \"entrar em outra empresa\"" do
       get "/configuracoes"
-      expect(response).to redirect_to("/configuracoes/paineis")
+      expect(response).to redirect_to("/locais")
       %w[/configuracoes/paineis /configuracoes/pessoas /configuracoes/chaves /configuracoes/sistema /configuracoes/conta].each do |path|
         get path
         expect(response).to have_http_status(:ok)

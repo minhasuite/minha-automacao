@@ -21,6 +21,10 @@ module Miio
       "start" => [ 2, 1 ], "continue" => [ 2, 8 ], "pause" => [ 2, 7 ], "stop" => [ 2, 2 ], "home" => [ 2, 3 ],
       "clean_rooms" => [ 2, 16 ], "wash_mop" => [ 2, 19 ], "dry_mop" => [ 2, 20 ], "empty" => [ 2, 18 ], "locate" => [ 6, 1 ]
     }.freeze
+    # Entrada da ação "limpar cômodos" (2.16 start-vacuum-room-sweep, `in: [15]`): a propriedade 2.15
+    # vacuum-room-ids, com os ids do mapa separados por vírgula. O MIoT pede `in` como [{piid, value}]: a
+    # string solta (como era até 15/11/2026) volta code 0 e o robô não faz nada.
+    ROOM_IDS_PIID = 15
     # Ajustes da limpeza (papel → pt-BR por código), na ordem do widget.
     SETTINGS = {
       "mode" => [ "Modo", [ 2, 4 ], { 1 => "Só aspirar", 2 => "Só passar pano", 3 => "Aspirar e passar pano", 4 => "Aspirar antes do pano" } ],

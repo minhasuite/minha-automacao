@@ -371,7 +371,9 @@ risco e `confirm` do ponto viram a pergunta de confirmação.
 ### Temas
 
 `Dashboards::Themes::PLUGINS` (Lista Clara, Aurora, Oceano, Floresta, Pôr do
-sol, Grafite). No JSON, `theme` no painel e/ou na visão (a visão herda e
+sol, Grafite, Lavanda, Rosa, Areia, Menta, Céu, Café, Céu noturno, Meia-noite;
+`dark: true` = só escuro: Grafite, Céu noturno e Meia-noite abrem no escuro). No
+app, o papel de parede de cada chave em `dash_themes.dart` (`_walls`). No JSON, `theme` no painel e/ou na visão (a visão herda e
 troca): `key`, `night` (tema da noite: pelo sol do local ou por horário, ver
 "Beleza" no fim), `image` (papel
 de parede), `blur` (0 a 40), `glass` (cartões de vidro) e `dark` (a visão
@@ -393,6 +395,14 @@ guarda sempre seções; o tipo só muda o desenho (partial
 `web/dashboards/views/_<chave>`; no app `ViewLayouts.register`). Subvisão:
 `"subview": true` e `back_path` (caminho ou id): fora das abas, com "Voltar
 para" no topo.
+
+**Aba-link (mobile-ajustes, 15/11/2026)**: `"link": "/energia"` (caminho desta
+instalação, `Dashboards::LINK`; não pode ser subvisão) faz da visão um atalho na
+faixa de abas para outra tela (web: link; app: `ServerScreen` com o `site_id`).
+Nunca abre como visão (`Dashboards.pick_view`, `start_view`, voltar e
+`view-fallback` pulam), o resolvedor não resolve nada dela e as seções que ela
+tiver ficam guardadas. O painel precisa de ao menos uma visão que não seja link.
+Editor: "Aba que abre outra tela" no formulário da visão.
 
 ### Pilha e grade (`stack`)
 
@@ -463,14 +473,20 @@ modos, liga/desliga, aceitam `features`), `button`, `calendar` (`binds`,
 O fluxo de energia aceita `co2` (parcela fóssil, %) e `solar_forecast`
 (kWh de hoje); o painel pronto de Energia pede gás, água, CO2 e previsão.
 
-### Temas da casa, tema da pessoa e barra lateral
+### Tema da pessoa e barra lateral
 
-Configurações → Aparência: temas criados (`DashboardTheme`: cores, papel de
-parede, vidro, fonte) com prévia ao vivo, que entram na galeria
-(`Dashboards::Themes.all`); o tema da pessoa vale por cima do painel, no
-perfil (web e app: `PATCH /api/v1/me` `theme`, `GET /api/v1/themes`) ou só
-no aparelho (cookie `ma_theme`); a barra lateral de cada pessoa esconde e
-reordena itens (`dashboard_prefs["sidebar"]`; Configurações fica sempre).
+Configurações → Aparência: a galeria é só dos temas prontos
+(`Dashboards::Themes.all` = `PLUGINS`). Os "temas da casa" (`DashboardTheme`)
+saíram da tela em 15/11/2026 (mobile-ajustes: muita personalização confundia);
+a chave `u-…` antiga ainda resolve em painel não migrado, e a importação do HA
+escolhe o pronto mais parecido (`Themes.nearest`, pela matiz; escuro se o do HA
+é só escuro). O tema da pessoa, no perfil (web e app: `PATCH /api/v1/me`
+`theme`, `GET /api/v1/themes`) ou só no aparelho (cookie `ma_theme`), vale **por
+inteiro** (`Themes.person`: cores, fundo do tema, vidro e escuro, sem a foto nem
+as faixas da visão) e em **toda tela** da web (layout), não só no painel; "Perfil
+segue o painel" traz o desenho de cada painel de volta. A barra lateral de cada
+pessoa esconde e reordena itens (`dashboard_prefs["sidebar"]`; Configurações
+fica sempre).
 
 ## Painéis importados do Home Assistant (2026-11)
 

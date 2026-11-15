@@ -2,11 +2,8 @@
 pt-BR:
   appearance:
     nav: Aparência
-    subtitle: Tema de cada pessoa, temas da casa e a barra lateral
+    subtitle: Tema de cada pessoa, densidade e a barra lateral
     saved: Aparência salva.
-    created: "Tema %{name} criado."
-    removed: Tema removido.
-    admin_only: Só o dono ou um administrador cria e muda os temas da casa.
     too_many: "A casa já tem %{max} temas."
     unknown: Tema não existe.
     wallpapers:
@@ -25,41 +22,16 @@ pt-BR:
       pitch: "Tamanho de botões, campos e espaços. Compacta cabe mais no painel e no computador; confortável deixa os alvos maiores (o tablet da parede, por exemplo). Vale neste aparelho, junto com o claro/escuro."
     theme:
       title: Meu tema
-      pitch: Vale por cima do tema que o painel escolheu. No perfil, vai com você para todo aparelho; neste aparelho, só aqui (o tablet da parede, por exemplo).
+      pitch: "O tema escolhido vale por inteiro em todas as telas (cores, fundo, vidro e escuro), por cima do desenho de cada painel. No perfil, vai com você para todo aparelho; neste aparelho, só aqui (o tablet da parede, por exemplo). Para voltar às fotos e fundos de cada painel, use \"Perfil segue o painel\"."
       mine: No perfil
       here: Neste aparelho
+      dark: escuro
       use_profile: Usar no perfil
       use_device: Neste aparelho
       use_profile_x: "Usar %{name} no meu perfil"
       use_device_x: "Usar %{name} neste aparelho"
       follow_profile: Perfil segue o painel
       follow_device: Aparelho segue o perfil
-    custom:
-      title: Temas da casa
-      pitch: Crie temas com as cores da casa. Eles aparecem na galeria do editor de painel e aqui em cima.
-      new: Novo tema
-      editing: "Editando %{name}"
-      name: Nome
-      name_hint: Casa de praia
-      accent: Cor principal
-      accent2: Segunda cor
-      wallpaper: Papel de parede
-      font: Fonte
-      glass: vidro
-      glass_hint: Cartões de vidro (desfoque por cima do papel de parede)
-      create: Criar tema
-      save: Salvar tema
-      preview: Prévia
-      edit_x: "Editar %{name}"
-      delete_x: "Excluir %{name}"
-      delete_confirm: "Excluir o tema %{name}? Painéis que usam voltam ao padrão."
-      sample_title: Boa noite, Ana
-      sample_light: Luz da sala
-      sample_fan: Ventilador
-      sample_on: Ligada · 80%
-      sample_off: Desligado
-      sample_target: Temperatura alvo
-      sample_mode: Refrigerar
     sidebar:
       title: Barra lateral
       pitch: A ordem e o que aparece no menu são só seus. Arraste pela alça para mudar a ordem; Configurações fica sempre.
@@ -71,11 +43,8 @@ pt-BR:
 en:
   appearance:
     nav: Appearance
-    subtitle: Each person's theme, house themes and the sidebar
+    subtitle: Each person's theme, density and the sidebar
     saved: Appearance saved.
-    created: "Theme %{name} created."
-    removed: Theme removed.
-    admin_only: Only the owner or an admin creates and changes house themes.
     too_many: "The house already has %{max} themes."
     unknown: Theme does not exist.
     wallpapers:
@@ -94,41 +63,16 @@ en:
       pitch: "Size of buttons, fields and spacing. Compact fits more on dashboards and desktops; comfortable makes targets bigger (the wall tablet, for example). Applies to this device, like light/dark."
     theme:
       title: My theme
-      pitch: It goes over the theme the dashboard chose. In the profile it follows you to every device; on this device, only here (the wall tablet, for example).
+      pitch: "The chosen theme applies in full on every screen (colors, background, glass and dark), over each dashboard's design. In the profile it follows you to every device; on this device, only here (the wall tablet, for example). To get each dashboard's photos and backgrounds back, use \"Profile follows the dashboard\"."
       mine: In profile
       here: On this device
+      dark: dark
       use_profile: Use in profile
       use_device: On this device
       use_profile_x: "Use %{name} in my profile"
       use_device_x: "Use %{name} on this device"
       follow_profile: Profile follows the dashboard
       follow_device: Device follows the profile
-    custom:
-      title: House themes
-      pitch: Create themes with the house colors. They show up in the dashboard editor gallery and up here.
-      new: New theme
-      editing: "Editing %{name}"
-      name: Name
-      name_hint: Beach house
-      accent: Main color
-      accent2: Second color
-      wallpaper: Wallpaper
-      font: Font
-      glass: glass
-      glass_hint: Glass cards (blur over the wallpaper)
-      create: Create theme
-      save: Save theme
-      preview: Preview
-      edit_x: "Edit %{name}"
-      delete_x: "Delete %{name}"
-      delete_confirm: "Delete the theme %{name}? Dashboards using it go back to the default."
-      sample_title: Good evening, Ana
-      sample_light: Living room light
-      sample_fan: Fan
-      sample_on: On · 80%
-      sample_off: "Off"
-      sample_target: Target temperature
-      sample_mode: Cool
     sidebar:
       title: Sidebar
       pitch: The order and what shows in the menu are yours only. Drag by the handle to reorder; Settings always stays.
@@ -140,11 +84,8 @@ en:
 es:
   appearance:
     nav: Apariencia
-    subtitle: El tema de cada persona, los temas de la casa y la barra lateral
+    subtitle: El tema de cada persona, la densidad y la barra lateral
     saved: Apariencia guardada.
-    created: "Tema %{name} creado."
-    removed: Tema eliminado.
-    admin_only: Solo el dueño o un administrador crea y cambia los temas de la casa.
     too_many: "La casa ya tiene %{max} temas."
     unknown: El tema no existe.
     wallpapers:
@@ -163,41 +104,16 @@ es:
       pitch: "Tamaño de botones, campos y espacios. Compacta cabe más en el panel y en la computadora; cómoda agranda los objetivos (la tablet de la pared, por ejemplo). Vale en este dispositivo, como claro/oscuro."
     theme:
       title: Mi tema
-      pitch: Va por encima del tema que eligió el panel. En el perfil te sigue a todo aparato; en este aparato, solo aquí (la tablet de la pared, por ejemplo).
+      pitch: "El tema elegido vale por completo en todas las pantallas (colores, fondo, vidrio y oscuro), por encima del diseño de cada panel. En el perfil te sigue a todo aparato; en este aparato, solo aquí (la tablet de la pared, por ejemplo). Para volver a las fotos y fondos de cada panel, usa \"El perfil sigue al panel\"."
       mine: En el perfil
       here: En este aparato
+      dark: oscuro
       use_profile: Usar en el perfil
       use_device: En este aparato
       use_profile_x: "Usar %{name} en mi perfil"
       use_device_x: "Usar %{name} en este aparato"
       follow_profile: El perfil sigue al panel
       follow_device: El aparato sigue al perfil
-    custom:
-      title: Temas de la casa
-      pitch: Crea temas con los colores de la casa. Aparecen en la galería del editor de paneles y aquí arriba.
-      new: Nuevo tema
-      editing: "Editando %{name}"
-      name: Nombre
-      name_hint: Casa de playa
-      accent: Color principal
-      accent2: Segundo color
-      wallpaper: Fondo
-      font: Fuente
-      glass: vidrio
-      glass_hint: Tarjetas de vidrio (desenfoque sobre el fondo)
-      create: Crear tema
-      save: Guardar tema
-      preview: Vista previa
-      edit_x: "Editar %{name}"
-      delete_x: "Eliminar %{name}"
-      delete_confirm: "¿Eliminar el tema %{name}? Los paneles que lo usan vuelven al predeterminado."
-      sample_title: Buenas noches, Ana
-      sample_light: Luz de la sala
-      sample_fan: Ventilador
-      sample_on: Encendida · 80%
-      sample_off: Apagado
-      sample_target: Temperatura objetivo
-      sample_mode: Enfriar
     sidebar:
       title: Barra lateral
       pitch: El orden y lo que aparece en el menú son solo tuyos. Arrastra por el asa para cambiar el orden; Configuración queda siempre.

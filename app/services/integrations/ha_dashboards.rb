@@ -107,22 +107,17 @@ module Integrations
                  .pluck(:external_id, :kind).to_h { |ext, k| [ ext, k.delete_prefix(kind) ] }
     end
 
-    # Tema do HA usado nas visões → tema criado daqui (cores do tema, vidro).
-    def theme_key(site, integration, transport, panels)
+    # Tema do HA usado nas visões → o tema pronto daqui mais parecido (pela cor principal; só escuro se o do HA
+    # for só escuro). mobile-ajustes (15/11/2026): não cria mais "tema da casa".
+    def theme_key(_site, _integration, transport, panels)
       name = panels.flat_map { |p| Array(p.dig("config", "views")).map { |v| v["theme"] } }.compact.tally.max_by(&:last)&.first
       return nil if name.blank?
 
       vars = transport.ws("frontend/get_themes").to_h.dig("themes", name).to_h
       vars = vars["modes"].to_h["dark"].to_h.merge(vars.except("modes")) if vars["modes"].is_a?(Hash)
-      color = ->(*keys) { keys.filter_map { |k| vars[k].to_s[/#\h{6}\b/] }.first }
-      ref = "theme:#{name}"
-      existing = ExternalRef.map_for(site, SOURCE, "DashboardTheme")[ref]
-      theme = DashboardTheme.find_by(id: existing) || DashboardTheme.new
-      theme.update!(name: name.to_s.humanize.first(40), accent: color.("primary-color", "accent-color") || "#7c3aed",
-                    accent2: color.("accent-color", "primary-color") || "#0ea5e9", glass: true)
-      ExternalRef.link!(site, SOURCE, ref, kind: "theme", target: theme, name: name)
-      theme.key
-    rescue Integrations::Error, ActiveRecord::RecordInvalid
+      color = %w[primary-color accent-color].filter_map { |k| vars[k].to_s[/#\h{6}\b/] }.first
+      Dashboards::Themes.nearest(color&.downcase, dark: theme_dark?(transport, panels)).key
+    rescue Integrations::Error
       nil
     end
 

@@ -10,7 +10,7 @@ module Web
     # Leitor só tem a própria conta (e os aparelhos de push).
     before_action :deny_reader!, except: %i[show account update_account destroy_account]
 
-    def show = redirect_to(current_user.reader? ? settings_account_path : settings_dashboards_path)
+    def show = redirect_to(current_user.reader? ? settings_account_path : sites_path) # a primeira do quadro: Locais
 
     # Todos os painéis dos locais que a pessoa vê, com a coluna Local.
     def dashboards

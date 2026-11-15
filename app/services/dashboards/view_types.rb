@@ -40,7 +40,7 @@ module Dashboards
       return other(view["back_path"]) if view["back_path"].to_s.start_with?("/")
 
       ref = view["back_path"]
-      views.find { |v| ref && (v["path"] == ref || v["id"] == ref) } || views.find { |v| v["subview"] != true }
+      views.find { |v| ref && (v["path"] == ref || v["id"] == ref) && !Dashboards.link?(v) } || views.find { |v| v["subview"] != true && !Dashboards.link?(v) }
     end
 
     def other(path)

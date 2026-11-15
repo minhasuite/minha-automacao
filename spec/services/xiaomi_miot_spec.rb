@@ -107,7 +107,7 @@ RSpec.describe "Xiaomi MIoT (robô aspirador)" do
       expect(fake.calls.select { |c| c["method"] == "action" }.last["params"]).to include("aiid" => 8)
     end
 
-    it "limpar cômodos grava só os ajustes que mudaram e manda os ids como texto" do
+    it "limpar cômodos grava só os ajustes que mudaram e manda os ids na propriedade 2.15 (in = [{piid, value}])" do
       described_class.poll(device)
       command = Points::Command.call(robot, "clean_rooms", { "rooms" => %w[5 45], "mode" => "Só aspirar", "suction" => "Normal" }, source: "web")
       expect(command.value).to eq("rooms" => [ 5, 45 ], "mode" => "Só aspirar", "suction" => "Normal")
@@ -116,7 +116,7 @@ RSpec.describe "Xiaomi MIoT (robô aspirador)" do
       set = fake.calls.find { |c| c["method"] == "set_properties" }["params"]
       expect(set.map { |p| [ p["siid"], p["piid"], p["value"] ] }).to eq([ [ 2, 4, 1 ] ])
       action = fake.calls.find { |c| c["method"] == "action" }["params"]
-      expect(action).to include("siid" => 2, "aiid" => 16, "in" => [ "5,45" ])
+      expect(action).to include("siid" => 2, "aiid" => 16, "in" => [ { "piid" => 15, "value" => "5,45" } ])
       expect(by_name("Modo").value).to eq("Só aspirar")
     end
 

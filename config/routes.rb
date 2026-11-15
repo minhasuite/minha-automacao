@@ -417,9 +417,6 @@ Rails.application.routes.draw do
     delete "configuracoes/fila/erros/:id", to: "queue#discard_job", as: :settings_queue_discard
     get "configuracoes/aparencia", to: "appearance#show", as: :settings_appearance
     patch "configuracoes/aparencia", to: "appearance#update"
-    post "configuracoes/aparencia/temas", to: "appearance#create_theme", as: :settings_themes
-    patch "configuracoes/aparencia/temas/:id", to: "appearance#update_theme", as: :settings_theme
-    delete "configuracoes/aparencia/temas/:id", to: "appearance#destroy_theme"
     delete "configuracoes/logs", to: "logs#destroy"
     post "configuracoes/hardware/:acao", to: "hardware#power", as: :settings_hardware_power
     # Backup no Google Drive: conectar volta por integrations#oauth_callback.

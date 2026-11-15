@@ -29,6 +29,8 @@ module Dashboards
     def call
       target = target_view_id
       views = role_views.map do |view|
+        # mobile-ajustes: aba-link não resolve nada (só o atalho na faixa de abas).
+        next view.merge("badges" => [], "sections" => []) if Dashboards.link?(view)
         next lazy_view(view) if target && view["id"] != target
 
         view.merge({ "theme_now" => theme_now(view) }.compact).merge("badges" => Array(view["badges"]).filter_map { |w| resolve(w) },

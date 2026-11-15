@@ -21,13 +21,17 @@
   <%= ss_density_head %>
   <%= render "web/shared/theme_head" %>
 </head>
-<% body_theme = @body_theme || {} %>
+<%# mobile-ajustes: o tema escolhido pela pessoa (Configurações → Aparência) vale em toda tela, não só no painel. %>
+<% person_theme = !@body_theme && !kiosk && Current.theme_key.present? && Dashboards::Themes[Current.theme_key] %>
+<% person_theme = Dashboards::Themes.person(person_theme) if person_theme %>
+<% body_theme = @body_theme || (person_theme ? dw_theme_attrs(person_theme) : {}) %>
 <%# ss-inputs: caixas e rádios soltos no desenho da suíte; tema e "esconder valores" pelos controllers da gem
     (ss-privacy na chave "privacy" de antes, para não perder a escolha de quem já usava). %>
 <%# Quiosque: tela cheia sem limite de largura; o cursor some parado (is-kiosk-idle, do kiosk_controller). %>
 <body class="ss-base ss-inputs min-h-screen<%= " [&_main]:max-w-none [&.is-kiosk-idle]:cursor-none! [&.is-kiosk-idle_*]:cursor-none!" if kiosk %> <%= body_theme["class"] %>" style="<%= body_theme["style"] %>"
       data-controller="ss-theme ss-privacy" data-ss-privacy-key-value="privacy" data-action="keydown.p@window->ss-privacy#key">
   <%= ss_skip_link("#conteudo", t("layout.skip")) %>
+  <% if person_theme && person_theme["dark"] %><%= render "web/dashboards/force_dark" %><% end %>
   <% if kiosk %>
     <main id="conteudo" tabindex="-1" class="outline-none min-w-0 px-4 py-6 lg:px-8 lg:py-8 <%= content_for?(:wide) ? "" : "max-w-7xl" %> mx-auto"><%= yield %></main>
   <% else %>

@@ -16,6 +16,7 @@ module Drivers
     class Error < StandardError; end
 
     SNAPSHOT_TTL = 3 # s: vários olhando a mesma câmera usam o mesmo quadro
+    QUICK_MAX = 30 # s: quadro guardado até esta idade sai na hora e o novo vem em segundo plano (`frame`)
     # Câmera que falhou fica FAIL_HOLD s sem nova tentativa (quadro e ao vivo):
     # sem isso cada pedido de quadro de cada painel aberto (a cada 3 s) refazia
     # tudo, e três câmeras de nuvem fora do ar abriam centenas de conexões
@@ -134,10 +135,13 @@ module Drivers
     # na hora com o último quadro guardado (`offline` se ela está fora) ou o
     # erro (503, "offline"). As boas da rede de casa continuam na hora.
     # `width`: quadro menor (celular), redimensionado aqui pelo libvips.
+    # mobile-ajustes: com um quadro de até QUICK_MAX s guardado, ele sai na hora (com a idade) e o novo vem em
+    # segundo plano; a tela não espera o go2rtc (0,4 a 4 s por câmera do DVR) ao abrir.
     def frame(point, width: nil)
       file = SNAPSHOT_DIR.join("#{point.id}.jpg")
       fresh = file.exist? && file.mtime > SNAPSHOT_TTL.seconds.ago
-      if point.address["image"] == "mqtt" || fresh || !slow?(point)
+      recent = file.exist? && file.mtime > QUICK_MAX.seconds.ago
+      if point.address["image"] == "mqtt" || fresh || (!slow?(point) && !recent)
         jpeg = snapshot(point)
         return Frame.new(jpeg: sized(point, jpeg, width), at: file.exist? ? file.mtime : Time.current, offline: false)
       end

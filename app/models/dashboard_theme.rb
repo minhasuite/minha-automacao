@@ -29,6 +29,8 @@ class DashboardTheme < ApplicationRecord
   before_validation { self.key ||= "u-#{SecureRandom.alphanumeric(8).downcase}" }
 
   def label = name
+  # Legado (mobile-ajustes): tema da casa responde como um pronto que não é só escuro.
+  def dark = false
   def wallpaper = wallpaper_css
 
   # Papel de parede em CSS a partir das duas cores (só cores validadas).

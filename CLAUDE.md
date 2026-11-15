@@ -309,7 +309,11 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   (mobile-ajustes)**: `dashboards.show_in` (app/web/both; NULL = pelo nome, "Mobile" = celular) filtra a lista do
   app e o menu da web (`Dashboard.for_surface`); `site_memberships.dashboard_ids` (NULL = todos) limita os painéis
   da pessoa, e todo acesso passa por `Dashboard#visible_to?(papel, pessoa)` (sem a pessoa = só o papel);
-  dono/administradores veem todos (`docs/dashboards.md`).
+  dono/administradores veem todos (`docs/dashboards.md`). **Aba-link** (`"link": "/energia"` na visão): atalho na
+  faixa de abas, nunca abre como visão (`Dashboards.link?`/`pick_view`). **Temas**: só os prontos
+  (`Dashboards::Themes::PLUGINS`; os da casa saíram da tela em 15/11/2026, a chave `u-…` antiga ainda resolve), e o
+  tema da pessoa vale por inteiro em toda tela (`Themes.person` no layout). **Câmeras**: `Cameras::Warmer` no worker
+  segura o RTSP aberto no go2rtc e o `frame` devolve o quadro guardado recente na hora (`docs/cameras.md`).
 - **Automações da DSL (F6)**: `definition` = publicada (roda), `draft` =
   rascunho do editor (pode ficar incompleto; a DSL é validada na
   publicação). Ações viram programa plano (`Engine#compile`); espera grava

@@ -252,26 +252,37 @@ RSpec.describe "ondaB2: painéis" do
   end
 
   describe "B11: temas do usuário e barra lateral por pessoa" do
-    it "a casa cria um tema (cores, papel de parede, vidro, fonte); ele entra na galeria, valida no painel e pinta" do
+    it "a galeria só tem os temas prontos (os da casa saíram em mobile-ajustes); tema antigo da casa ainda pinta o painel" do
       get "/configuracoes/aparencia"
-      expect(response.body).to include("Meu tema", "Temas da casa", "Barra lateral", "Lista Clara")
-      expect(response.body).to match(/data-controller="theme-preview[ "]/) # o ss_form_with da v0.24 soma o ss-validate
-      post "/configuracoes/aparencia/temas", params: { theme: { name: "Teste praia", accent: "#0EA5E9", accent2: "#f59e0b", wall_style: "mesh", glass: "1", font: "rounded" } }
-      th = within(tenant) { DashboardTheme.last }
-      expect(th).to have_attributes(name: "Teste praia", accent: "#0ea5e9", wall_style: "mesh", glass: true, font: "rounded")
-      expect(th.key).to match(/\Au-[a-z0-9]{8}\z/)
-      expect(th.css).to include("--accent: #0ea5e9", "--grad: linear-gradient(135deg, #0ea5e9 0%, #f59e0b 100%)", "--ss-wall: radial-gradient", "--font-sans: ui-rounded")
+      expect(response.body).to include("Meu tema", "Barra lateral", "Lista Clara", "Lavanda", "Céu noturno", "escuro")
+      expect(response.body).not_to include("Temas da casa", "theme-preview")
+      expect(Dashboards::Themes.all.map(&:key)).to eq(Dashboards::Themes.plugins.map(&:key))
+      expect(Dashboards::Themes.plugins.size).to be >= 14
 
+      th = within(tenant) { DashboardTheme.create!(name: "Legado", accent: "#0ea5e9", accent2: "#f59e0b", wall_style: "mesh", glass: true, font: "rounded") }
       d = board([ { "id" => "w1", "type" => "tile", "bind" => power.id } ], view: { "theme" => { "key" => th.key } })
       expect(within(tenant) { Dashboards::Schema.errors(d.definition) }).to eq([])
-      expect(resolved(d)["views"][0]["theme_now"]).to include("key" => th.key, "accent" => "#0ea5e9", "accent2" => "#f59e0b")
+      expect(resolved(d)["views"][0]["theme_now"]).to include("key" => th.key, "accent" => "#0ea5e9")
       get "/paineis/#{d.id}"
-      expect(response.body).to include("dw-theme-#{th.key}", "--font-sans: ui-rounded")
-      get "/paineis/#{d.id}/editar"
-      expect(response.body).to include("Teste praia")
+      expect(response.body).to include("dw-theme-#{th.key}")
+    end
 
-      post "/configuracoes/aparencia/temas", params: { theme: { name: "Teste ruim", accent: "red", accent2: "#000000", wall_style: "glow", font: "manrope" } }
-      expect(within(tenant) { DashboardTheme.count }).to eq(1)
+    it "tema escolhido vale por inteiro (sem a foto da visão) e em toda tela; tema escuro abre no escuro" do
+      d = board([ { "id" => "w1", "type" => "tile", "bind" => power.id } ], view: { "theme" => { "key" => "aurora", "image" => "/foto.jpg", "glass" => true } })
+      get "/paineis/#{d.id}"
+      expect(response.body).to include("dw-theme-aurora", "/foto.jpg")
+      patch "/configuracoes/aparencia", params: { op: "my_theme", key: "lavanda" }
+      get "/paineis/#{d.id}"
+      expect(response.body).to include("dw-theme-lavanda")
+      expect(response.body).not_to include("/foto.jpg")
+      get "/historico"
+      expect(response.body).to include("dw-theme-lavanda")
+      expect(response.body).not_to include("data-dw-dark")
+      patch "/configuracoes/aparencia", params: { op: "my_theme", key: "meia-noite" }
+      get "/configuracoes/aparencia"
+      expect(response.body).to include("dw-theme-meia-noite", "data-dw-dark")
+      expect(Dashboards::Themes.nearest("#5aa9ff", dark: true).key).to eq("ceu-noturno")
+      expect(Dashboards::Themes.nearest("#22c55e").key).to be_in(%w[floresta menta])
     end
 
     it "tema da pessoa vale por cima do painel, no perfil (web e app) ou só no aparelho" do
