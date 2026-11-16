@@ -121,13 +121,15 @@ module Drivers
     def confirm!(point, expected, sent_at)
       deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + confirm_wait
       loop do
-        at, value = ActsAsTenant.with_tenant(point.tenant) { Point.where(id: point.id).pick(:reported_at, :value) }
+        # `uncached`: o job roda com o cache de consultas ligado e a mesma consulta devolveria sempre o valor antigo.
+        at, value = ActsAsTenant.with_tenant(point.tenant) { Point.uncached { Point.where(id: point.id).pick(:reported_at, :value) } }
         return if at && at >= sent_at && same?(value, expected)
         break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
 
         sleep POLL
       end
-      raise NoReply, "#{point.device.name} não respondeu pelo Zigbee em #{confirm_wait} s: o comando pode não ter chegado (sinal fraco ou rota caída)."
+      name = ActsAsTenant.with_tenant(point.tenant) { point.device.name }
+      raise NoReply, "#{name} não respondeu pelo Zigbee em #{confirm_wait} s: o comando pode não ter chegado (sinal fraco ou rota caída)."
     end
 
     def same?(got, want)

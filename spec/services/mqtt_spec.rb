@@ -61,17 +61,21 @@ RSpec.describe "Driver mqtt e zigbee2mqtt" do
       client = instance_double(MQTT::Client)
       allow(MQTT::Client).to receive(:connect).and_yield(client)
       relay = point(capability: "onoff", value: false, address: { "topic" => "zigbee2mqtt/ESC Interruptor", "json_path" => "state_l2", "payload_on" => "ON", "payload_off" => "OFF" })
-      # Respondeu: o eco do z2m (o Mqtt::Listener, aqui na hora) grava o estado novo.
-      allow(client).to receive(:publish) { within(tenant) { relay.reload.report!(true) } }
-      expect { described_class.new.execute(relay, "on", nil) }.not_to raise_error
+      run = ->(cmd) { within(tenant) { described_class.new.execute(Point.find(relay.id), cmd, nil) } }
+      # Respondeu: o eco do z2m (o Mqtt::Listener) grava o estado novo. A releitura é sem o cache de consultas:
+      # no job ele está ligado e o ouvinte grava por outra conexão (16/11/2026: relia o valor antigo e dava falha).
+      allow(client).to receive(:publish) { within(tenant) { Point.find(relay.id).report!(true) } }
+      allow(Point).to receive(:uncached).and_call_original
+      expect { run.("on") }.not_to raise_error
+      expect(Point).to have_received(:uncached).at_least(:once)
       # Rota caída: nada volta.
       allow(client).to receive(:publish)
       t = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      expect { described_class.new.execute(relay, "off", nil) }.to raise_error(Drivers::Mqtt::NoReply, /não respondeu pelo Zigbee/)
+      expect { run.("off") }.to raise_error(Drivers::Mqtt::NoReply, /ESC|não respondeu pelo Zigbee/)
       expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - t).to be_between(0.9, 3)
       # Fora do z2m (MQTT genérico) segue sem esperar.
       plain = point(capability: "onoff", address: { "topic" => "casa/rele" })
-      expect { described_class.new.execute(plain, "on", nil) }.not_to raise_error
+      expect { within(tenant) { described_class.new.execute(plain, "on", nil) } }.not_to raise_error
     ensure
       described_class.confirm_wait = 0
     end
