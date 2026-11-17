@@ -469,18 +469,20 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
 
     it "agenda local: evento com repetição vira os eventos da janela (como ICS) e serve ao gatilho de agenda" do
       cal = helper("local_calendar", "Agenda da casa")
+      # O exemplo inteiro num "hoje" fixo: a janela de eventos é contada a partir de agora, e com o
+      # relógio de verdade o Feriado de 15/11 saía da janela depois dessa data (quebrou em 17/11/2026).
       travel_to(Time.zone.parse("2026-11-02 08:00 -03:00")) do
         HelperTypes::LocalCalendar.add_event!(cal, "summary" => "Lixo reciclável", "start" => "2026-11-03 19:00", "end" => "2026-11-03 20:00", "repeat" => "weekly")
         HelperTypes::LocalCalendar.add_event!(cal, "summary" => "Feriado", "start" => "2026-11-15", "all_day" => "1")
+        ev = Calendars.events(cal.reload)
+        expect(ev.count { |e| e["summary"] == "Lixo reciclável" }).to be >= 4
+        expect(ev.find { |e| e["summary"] == "Feriado" }).to include("all_day" => true)
+        expect(cal.value).to include("summary" => "Lixo reciclável")
+        expect { HelperTypes::LocalCalendar.add_event!(cal, "summary" => "", "start" => "2026-11-03 19:00") }.to raise_error(ArgumentError)
+        uid = cal.address["local"].first["uid"]
+        HelperTypes::LocalCalendar.remove_event!(cal, uid)
+        expect(Calendars.events(cal.reload).pluck("summary").uniq).to eq([ "Feriado" ])
       end
-      ev = Calendars.events(cal.reload)
-      expect(ev.count { |e| e["summary"] == "Lixo reciclável" }).to be >= 4
-      expect(ev.find { |e| e["summary"] == "Feriado" }).to include("all_day" => true)
-      expect(cal.value).to include("summary" => "Lixo reciclável")
-      expect { HelperTypes::LocalCalendar.add_event!(cal, "summary" => "", "start" => "2026-11-03 19:00") }.to raise_error(ArgumentError)
-      uid = cal.address["local"].first["uid"]
-      HelperTypes::LocalCalendar.remove_event!(cal, uid)
-      expect(Calendars.events(cal.reload).pluck("summary").uniq).to eq([ "Feriado" ])
     end
 
     it "automação cria evento na agenda local" do
