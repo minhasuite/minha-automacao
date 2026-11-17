@@ -4,8 +4,10 @@ Monolito Rails 8.1: web (Hotwire) **e** API `/api/v1` do app Flutter
 `minha-automacao-app`, no mesmo processo. É o servidor de automação da
 MinhaSuite (casa, loja e fábrica), no lugar do Home Assistant. Roda inteiro
 num servidor local (Linux com Docker, túnel Cloudflare para fora); não há
-central/borda nem `EDGE=1`. Não há instância na VPS (a de demonstração,
-`minhaautomacao.minhasuite.com`, foi desligada em 10/11/2026). Produto em
+central/borda nem `EDGE=1`. Na VPS roda só a **instância de demonstração**
+(`minhaautomacao.minhasuite.com`, religada em 16/11/2026 para a revisão da Play:
+o app pede um servidor e o revisor do Google entra numa casa de aparelhos
+virtuais; ver "Deploy"). Produto em
 `../docs/PROPOSTA.md`; modelo de dados, DSL, API e decisões em
 `../docs/ESQUEMA-V1.md`; stack em `docs/adr/0001-stack.md`. O padrão da suíte
 está na skill `padrao-suite`; aqui só o que é deste repo.
@@ -901,6 +903,16 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 ## Deploy
 
 Push no `master` → quality → imagem `ghcr.io/minhasuite/minha-automacao` e
-release beta (o "Atualizar" das instalações lê). O CI não publica em lugar
-nenhum: a casa recebe por `bin/deploy-local <tag>` (seção "Servidor local")
-ou pelo "Atualizar". Boot com `db:prepare`.
+release beta (o "Atualizar" das instalações lê) → `deploy-demo`. A casa recebe
+por `bin/deploy-local <tag>` (seção "Servidor local") ou pelo "Atualizar".
+Boot com `db:prepare`.
+
+**Demonstração (revisão da Play).** O job `deploy-demo` sobe a imagem `latest`
+em `/opt/minha-automacao` na VPS com o `docker-compose.demo.yml`
+(`minhasuite/.github/.github/actions/deploy-vps@master`: saúde no `/up` e volta
+para a imagem anterior se quebrar; secrets `VPS_SSH_KEY`/`VPS_HOST`/`VPS_USER`).
+O `.env`, a conta do revisor (`MINHA_AUTOMACAO_REVIEW_*`), os scripts da casa de
+demonstração e a rota do Caddy ficam em `minha-infra`
+(`platform/minha-automacao-demo/`, `vault/`, `caddy/sites/minhaautomacao.conf`).
+Mudou o login ou o que o app precisa para entrar? Confira as instruções do
+revisor no Play Console (Conteúdo do app › Acesso ao app).
