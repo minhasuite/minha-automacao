@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="<%= I18n.locale %>">
+<html lang="<%= I18n.locale %>" data-palette="ambar">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -12,6 +12,8 @@
   <% if current_user %><meta name="ma-unread" content="<%= unread_notifications %>"><% end %>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <%# Tema, paleta (a do produto: âmbar, no data-palette do <html>) e preto total escolhidos, antes do CSS. %>
+  <%= ss_theme_head %>
   <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
   <%= turbo_refresh_method_tag :morph %>

@@ -201,6 +201,14 @@ RSpec.describe "Configurações (F8d)" do
       expect(Dashboards::Schema.errors({ "schema_version" => 1, "views" => views })).to include(/caminho só com/)
     end
 
+    it "aparência da suíte (componentes_ui v1.3): paletas com a cor do app (âmbar) e o tema antes da 1ª pintura" do
+      get "/configuracoes/conta"
+      expect(response.body).to include('data-palette="ambar"', "data-ss-theme-head", "ss-pal-chip", 'data-ss-theme-palette-param="none"', "Cor do app")
+      # A âmbar é a cor do app (1ª ficha), não aparece de novo entre as paletas.
+      expect(response.body).not_to include('data-ss-theme-palette-param="ambar"')
+      expect(response.body.index("data-ss-theme-head")).to be < response.body.index("/assets/tailwind")
+    end
+
     it "painel no menu lateral só para quem o vê" do
       d = within(tenant) { Dashboard.ensure_for(casa).first.tap { |x| x.update!(sidebar: true, name: "Painel da Casa", roles: [ "resident" ]) } }
       get "/configuracoes/conta"

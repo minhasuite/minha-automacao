@@ -183,7 +183,9 @@ module AppScreen
       links = @doc.css("#ss-shell-side .ss-shell-tenant-menu a[href]")
       return [] if links.size < 2
 
-      [ { t: "subnav", items: links.map { |a| { label: squish(a.children.select(&:text?).map(&:text).join), href: a["href"], current: a["aria-current"] == "true" } } } ]
+      # componentes_ui ≥ v0.28: o nome vem em .ss-shell-tenant-name (antes, texto solto ao lado da inicial).
+      label = ->(a) { squish(a.at_css(".ss-shell-tenant-name")&.text || a.children.select(&:text?).map(&:text).join) }
+      [ { t: "subnav", items: links.map { |a| { label: label.(a), href: a["href"], current: a["aria-current"] == "true" } } } ]
     end
 
     def blocks(el) = el.children.flat_map { |c| node(c) }
