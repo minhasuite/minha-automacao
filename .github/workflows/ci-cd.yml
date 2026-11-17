@@ -48,7 +48,7 @@ jobs:
       - name: Portas dos serviços
         run: |
           echo "DATABASE_TEST_URL=postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports['5432'] }}/minha_automacao_test" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       # Runner self-hosted da WSL: sem compilador no host, roda num container.
       - name: Testes em container (self-hosted)
         if: runner.environment == 'self-hosted'
@@ -105,7 +105,7 @@ jobs:
       packages: write
       contents: write # release da tag
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # notas da release: commits desde a tag anterior
       # docker build/push simples: o buildx não funciona com o podman do runner da WSL.
@@ -191,7 +191,7 @@ jobs:
     if: github.ref_name == 'master'
     runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: minhasuite/.github/.github/actions/deploy-vps@master
         with:
           ssh_key: ${{ secrets.VPS_SSH_KEY }}
