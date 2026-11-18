@@ -48,7 +48,7 @@ jobs:
       - name: Portas dos serviços
         run: |
           echo "DATABASE_TEST_URL=postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports['5432'] }}/minha_automacao_test" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       # Runner self-hosted da WSL: sem compilador no host, roda num container.
       - name: Testes em container (self-hosted)
         if: runner.environment == 'self-hosted'
@@ -105,7 +105,7 @@ jobs:
       packages: write
       contents: write # release da tag
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # notas da release: commits desde a tag anterior
       # docker build/push simples: o buildx não funciona com o podman do runner da WSL.
@@ -181,3 +181,22 @@ jobs:
             '{tag_name: $t, target_commitish: $sha, name: $t, body: $b, prerelease: ($stable | not), make_latest: (if $stable then "true" else "false" end)}' \
             | curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
                 "https://api.github.com/repos/${{ github.repository }}/releases" -d @- | jq -r .html_url
+
+  # Instância de DEMONSTRAÇÃO na VPS (https://minhaautomacao.minhasuite.com), para a revisão da
+  # Play: o revisor do Google entra nela pelo app. Sobe a imagem latest deste build com o
+  # docker-compose.demo.yml (saúde no /up e volta para a anterior se quebrar). A casa de verdade
+  # roda no servidor local e não depende disto.
+  deploy-demo:
+    needs: build
+    if: github.ref_name == 'master'
+    runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: minhasuite/.github/.github/actions/deploy-vps@master
+        with:
+          ssh_key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          user: ${{ secrets.VPS_USER }}
+          app_path: /opt/minha-automacao
+          compose_file: docker-compose.demo.yml
+          health_container: ms-minha-automacao-web

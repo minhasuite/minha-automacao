@@ -11,7 +11,7 @@
   <% end %>
   <div class="mt-4 flex flex-wrap gap-2 items-center">
     <span class="text-sm font-semibold text-muted" aria-hidden="true"><%= t("layout.theme") %>:</span>
-    <%= render Ss::ThemeSwitcherComponent.new(palettes: false, oled: false, label: t("layout.theme"), css: "w-72 max-w-full") %>
+    <%= render Ss::ThemeSwitcherComponent.new(app_palette: "ambar", label: t("layout.theme"), css: "max-w-full") %>
   </div>
   <div class="mt-4 flex flex-wrap gap-2 items-center">
     <span class="text-sm font-semibold text-muted"><%= t("layout.language") %>:</span>
