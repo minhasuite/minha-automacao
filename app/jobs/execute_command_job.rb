@@ -7,6 +7,11 @@
 # o Retry-After do serviço), nunca além do `Command::TTL` contado da criação.
 # `attempts` conta as tentativas; o erro de cada uma fica em `error`.
 #
+# Zigbee sem resposta (`Drivers::Mqtt::NoReply`, 18/11/2026): não dá para saber se chegou, então só repete o que
+# não faz mal chegar duas vezes (ligar, desligar, definir valor; nunca "alternar") e nunca em ponto crítico. Comando
+# de automação tenta de novo em 5 s, 30 s, 2 min e 5 min dentro do `Command::AUTOMATION_TTL`; o de quem tocou na
+# tela, uma vez em 5 s, dentro do `Command::TTL`.
+#
 # Lote (`batch_id`, anúncio em várias Echo da mesma conta): o líder executa
 # uma vez para todos (`execute_group` do driver) e os outros acompanham o status.
 class ExecuteCommandJob < ApplicationJob
@@ -25,7 +30,7 @@ class ExecuteCommandJob < ApplicationJob
   private
 
   def execute(command)
-    return expire(command) if command.created_at < Command::TTL.ago
+    return expire(command) if command.deadline < Time.current
 
     command.update!(status: "sent", sent_at: Time.current, attempts: command.attempts + 1)
     follow(command)
@@ -53,18 +58,26 @@ class ExecuteCommandJob < ApplicationJob
     [ point, *others ].each { |p| driver.execute(p, command.command, command.value) }
   end
 
-  # Volta para a fila se a falha é passageira e ainda dá tempo (Command::TTL).
+  NO_REPLY_WAITS = { true => [ 5, 30, 120, 300 ], false => [ 5 ] }.freeze # automação? → esperas
+
+  # Volta para a fila se a falha é passageira e ainda dá tempo (Command#deadline).
   def retry_later(command, error)
     return false unless command.persisted? && command.status == "sent"
-    return false unless Transient.retryable?(error, strict: command.point&.risk == "critical")
 
-    wait = Transient.wait(command.attempts, error) or return false
-    return false if Time.current + wait > command.created_at + Command::TTL
+    wait = retry_wait(command, error) or return false
+    return false if Time.current + wait > command.deadline
 
     command.update!(status: "pending", error: "Tentativa #{command.attempts} falhou: #{error.message}".truncate(255))
     follow(command)
     retry_job(wait: wait)
     true
+  end
+
+  def retry_wait(command, error)
+    return Transient.wait(command.attempts, error) if Transient.retryable?(error, strict: command.point&.risk == "critical")
+    return unless error.is_a?(Drivers::Mqtt::NoReply) && Command::IDEMPOTENT.include?(command.command) && command.point&.risk != "critical"
+
+    NO_REPLY_WAITS[command.source == "automation"][command.attempts - 1]
   end
 
   # Passou do prazo na fila. Depois de alguma tentativa é falha (com o último

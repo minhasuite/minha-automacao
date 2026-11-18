@@ -189,6 +189,8 @@ pt-BR:
         script_finished: "Script terminou"
         system_started: "Sistema iniciou"
         system_stopping: "Sistema vai desligar"
+        timer:
+          finished: "Temporizador terminou"
       alert_title: "Alerta %{name}: %{event}"
       input_types:
         point: "Ponto"

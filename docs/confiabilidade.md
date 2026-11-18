@@ -109,3 +109,11 @@ comando ficava "confirmado" aqui (caso do interruptor do escritório). Agora o `
 voltar (eco do z2m, gravado pelo `Mqtt::Listener`) por até `confirm_wait` s (10; 0 nos testes) nos pontos com tópico
 de estado em `Z2M_BASE_TOPIC/…`; sem resposta, o comando falha com `NoReply` ("não respondeu pelo Zigbee"), que não é
 repetido sozinho (pode ter chegado). Botão (`payload_press`), `command_map` e MQTT genérico não esperam.
+
+### Nova tentativa do Zigbee sem resposta (18/11/2026)
+
+Às 23:30 de 17/11 a rede do servidor estava fora (voltou às 23:32) e os "desligar" da iluminação externa falharam
+sem nova tentativa. Agora `Drivers::Mqtt::NoReply` repete só o que não faz mal chegar duas vezes
+(`Command::IDEMPOTENT`: ligar, desligar, definir; nunca "alternar") e nunca em ponto crítico: comando de automação
+em 5 s, 30 s, 2 min e 5 min (`ExecuteCommandJob::NO_REPLY_WAITS`), com prazo `Command::AUTOMATION_TTL` (10 min,
+`Command#deadline`); comando de pessoa, uma vez em 5 s dentro do `Command::TTL`.

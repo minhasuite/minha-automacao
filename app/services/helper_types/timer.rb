@@ -80,8 +80,18 @@ module HelperTypes
         a["remaining_s"] = remaining(point) if point.value == "active"
         a = point.address if point.value == "paused"
       end
+      was = point.value
       point.address = a
       point.report!(state)
+      finished!(point) if command == "finish" && state == "finished" && was != "finished"
+    end
+
+    # Como o timer do HA: ao terminar, o evento "timer.finished" (automações importadas do HA esperam por ele)
+    # com o ponto e, se o timer veio do HA, o entity_id de lá (`event_data: {entity_id: timer.x}` casa).
+    def self.finished!(point)
+      ha = ExternalRef.where(site_id: point.site_id, target_id: point.id).where("external_id LIKE 'timer.%'").pick(:external_id)
+      payload = { "point_id" => point.id, "name" => point.name, "entity_id" => ha }.compact
+      Automations.safely { Automations::Triggers.event(point.site_id, "timer.finished", payload) }
     end
 
     # Job do fim: só termina se ainda for o mesmo agendamento.

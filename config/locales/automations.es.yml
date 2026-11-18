@@ -189,6 +189,8 @@ es:
         script_finished: "Script terminó"
         system_started: "Sistema iniciado"
         system_stopping: "El sistema se apagará"
+        timer:
+          finished: "Temporizador terminó"
       alert_title: "Alerta %{name}: %{event}"
       input_types:
         point: "Punto"

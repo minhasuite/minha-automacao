@@ -11,6 +11,16 @@ class Command < ApplicationRecord
   SOURCES = LocalizedLabel.for("labels.command_sources", %w[web api automation alexa voice push bridge google guest])
   # Comando que não saiu nesse tempo não sai mais (portão abrindo 5 min depois).
   TTL = 1.minute
+  # Comando de automação que o Zigbee não confirmou ("ligar/desligar" das 23:30 com a rede fora por 2 min,
+  # 17/11/2026) ainda pode chegar dentro desta janela (ExecuteCommandJob, `retry_no_reply`).
+  AUTOMATION_TTL = 10.minutes
+
+  # Comandos que não fazem mal chegar duas vezes (o "alternar" faz: desfaria o primeiro).
+  IDEMPOTENT = %w[on off set select].freeze
+
+  # Prazo do comando: o de quem está olhando a tela (TTL) ou, para ligar/desligar/definir de automação, o
+  # AUTOMATION_TTL (o horário das 23:30 ainda vale se a rede voltar às 23:32).
+  def deadline = created_at + (source == "automation" && IDEMPOTENT.include?(command) ? AUTOMATION_TTL : TTL)
   RETENTION_DAYS = 365
 
   belongs_to :site

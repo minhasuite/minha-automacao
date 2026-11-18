@@ -107,6 +107,23 @@ RSpec.describe HelperTypes do
     expect(described_class.save(bad, "name" => "x", "initial" => "20", "max" => "10")).to be false
   end
 
+  it "temporizador: ao terminar dispara o evento timer.finished, como o HA (automação importada do HA roda)" do
+    t = helper("timer", "duration" => "10m")
+    alvo = create(:point, device: create(:device, site: site, driver: "virtual", name: "Bomba"), name: "Motor", capability: "onoff", writable: true, value: true)
+    auto = site.automations.create!(name: "Desliga ao expirar timer")
+    auto.publish!({ "triggers" => [ { "type" => "event", "event" => "timer.finished" } ], "conditions" => [],
+                    "actions" => [ { "type" => "command", "point" => alvo.id, "command" => "off" } ] })
+    auto.update!(enabled: true)
+    ExternalRef.link!(site, "home_assistant", "timer.piscina_filtro", kind: "helper", target: t)
+    cmd(t, "start")
+    expect { HelperTimerJob.perform_now(t.id, t.reload.address["finishes_at"]) }.to change { AutomationRun.where(automation_id: auto.id).count }.by(1)
+    expect(alvo.reload.value).to be false
+    run = AutomationRun.where(automation_id: auto.id).last
+    expect(run.trigger.to_json).to include("timer.piscina_filtro")
+    # Terminar de novo (já terminado) não dispara outra vez.
+    expect { cmd(t, "finish") }.not_to(change { AutomationRun.count })
+  end
+
   it "temporizador: inicia, pausa, retoma, cancela e termina pelo job (job velho não faz nada)" do
     t = helper("timer", "duration" => "10m")
     expect(t).to have_attributes(value: "idle", capability: "timer")

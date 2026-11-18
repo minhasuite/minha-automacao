@@ -479,8 +479,11 @@ RSpec.describe "ondaA1: paridade HA (organização e automações)" do
       expect(cal.value).to include("summary" => "Lixo reciclável")
       expect { HelperTypes::LocalCalendar.add_event!(cal, "summary" => "", "start" => "2026-11-03 19:00") }.to raise_error(ArgumentError)
       uid = cal.address["local"].first["uid"]
-      HelperTypes::LocalCalendar.remove_event!(cal, uid)
-      expect(Calendars.events(cal.reload).pluck("summary").uniq).to eq([ "Feriado" ])
+      # Na data do teste (o feriado de 15/11 sai da janela quando o relógio de verdade passa dele).
+      travel_to(Time.zone.parse("2026-11-02 08:00 -03:00")) do
+        HelperTypes::LocalCalendar.remove_event!(cal, uid)
+        expect(Calendars.events(cal.reload).pluck("summary").uniq).to eq([ "Feriado" ])
+      end
     end
 
     it "automação cria evento na agenda local" do

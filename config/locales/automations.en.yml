@@ -189,6 +189,8 @@ en:
         script_finished: "Script finished"
         system_started: "System started"
         system_stopping: "System shutting down"
+        timer:
+          finished: "Timer finished"
       alert_title: "Alert %{name}: %{event}"
       input_types:
         point: "Point"

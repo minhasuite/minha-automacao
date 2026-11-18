@@ -99,9 +99,48 @@ RSpec.describe "Confiabilidade" do
       expect(driver.calls.size).to eq(3)
     end
 
+    it "Zigbee sem resposta: automação repete ligar/desligar (5 s, 30 s, 2 min, 5 min) dentro de 10 min" do
+      no_reply = Drivers::Mqtt::NoReply.new("TER Escada não respondeu pelo Zigbee em 10 s")
+      driver = fake_driver(no_reply, no_reply, no_reply, nil)
+      c = command
+      described_class.perform_now(c.id)
+      expect(c.reload).to have_attributes(status: "pending", attempts: 1, error: /Tentativa 1 falhou: TER Escada não respondeu/)
+      travel(6.seconds)
+      described_class.perform_now(c.id)
+      travel(31.seconds)
+      described_class.perform_now(c.id)
+      expect(c.reload).to have_attributes(status: "pending", attempts: 3) # já passou do TTL de 1 min da pessoa
+      travel(2.minutes + 1.second)
+      described_class.perform_now(c.id)
+      expect(c.reload).to have_attributes(status: "confirmed", attempts: 4)
+      expect(driver.calls.size).to eq(4)
+    end
+
+    it "Zigbee sem resposta: pessoa tenta mais uma vez; alternar e ponto crítico nunca repetem" do
+      no_reply = Drivers::Mqtt::NoReply.new("não respondeu pelo Zigbee")
+      fake_driver(no_reply, no_reply)
+      c = command(source: "web")
+      described_class.perform_now(c.id)
+      expect(c.reload).to have_attributes(status: "pending", attempts: 1)
+      travel(6.seconds)
+      described_class.perform_now(c.id)
+      expect(c.reload).to have_attributes(status: "failed", attempts: 2, error: /2 tentativas/)
+
+      fake_driver(no_reply)
+      toggle = Points::Command.call(point, "toggle", nil, source: "automation", user: nil)
+      described_class.perform_now(toggle.id)
+      expect(toggle.reload).to have_attributes(status: "failed", attempts: 1)
+
+      fake_driver(no_reply)
+      point.update!(risk: "critical")
+      crit = command
+      described_class.perform_now(crit.id)
+      expect(crit.reload).to have_attributes(status: "failed", attempts: 1)
+    end
+
     it "nunca passa do Command::TTL: sem tempo para a próxima, falha com o número de tentativas" do
       fake_driver(Net::OpenTimeout.new, Net::OpenTimeout.new)
-      c = command
+      c = command(source: "web") # o de automação ligar/desligar tem o AUTOMATION_TTL (Zigbee sem resposta)
       described_class.perform_now(c.id)
       travel(40.seconds) # a próxima seria em 30 s: 70 s > TTL de 60 s
       described_class.perform_now(c.id)
@@ -110,7 +149,7 @@ RSpec.describe "Confiabilidade" do
 
     it "nova tentativa que chega tarde à fila falha (não expira calada)" do
       fake_driver(Net::OpenTimeout.new)
-      c = command
+      c = command(source: "web")
       described_class.perform_now(c.id)
       travel(2.minutes)
       described_class.perform_now(c.id)

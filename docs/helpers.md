@@ -121,7 +121,7 @@ registrado por `stub_const`).
 ## Automações, painéis e API
 
 - **Gatilho**: "Ponto mudou" no helper (de/para opcionais). Botão: sem
-  de/para, dispara a cada aperto. Temporizador terminou: para "Terminou".
+  de/para, dispara a cada aperto. Temporizador terminou: para "Terminou", ou o evento `timer.finished` (como o HA; dados `point_id`, `name` e, se veio do HA, `entity_id`), que as automações importadas do HA esperam (18/11/2026).
 - **Condição**: "Ponto está" / "Ponto entre limites" / expressão, como
   qualquer ponto.
 - **Ação**: "Comandar ponto"; o editor lista os comandos do plugin com os
