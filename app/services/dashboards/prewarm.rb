@@ -9,12 +9,19 @@ module Dashboards
   # Alvos = `Dashboard.default_for` de cada pessoa ativa (web e app), uma vez por
   # [painel, papel]. Desligado onde o cache está desligado (testes).
   module Prewarm
-    DEBOUNCE = 5 # segundos
+    # 18/11/2026 (desempenho e calor do servidor): era 5 s e rodava 139 vezes por hora na casa, cada uma
+    # resolvendo o painel de todo mundo; o cache do painel é por minuto, então mais que isso é trabalho jogado fora.
+    DEBOUNCE = 30 # segundos
+    # Capacidades que só mudam de número o tempo todo (medição): não pré-aquecem, a não ser que a qualidade mude.
+    NOISY = %w[measure].freeze
     MAX_TARGETS = 20
 
     @due = Concurrent::Map.new
 
     module_function
+
+    # Vale pré-aquecer por esta mudança? Medição só quando a qualidade muda (caiu, voltou).
+    def worth?(point, quality_changed = false) = quality_changed || !NOISY.include?(point.capability)
 
     # Avisa que algo do local mudou; enfileira um pré-aquecimento se não há um a caminho.
     def touch(site_id)

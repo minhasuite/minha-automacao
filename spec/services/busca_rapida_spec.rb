@@ -178,6 +178,18 @@ RSpec.describe "Busca rápida e painel rápido" do
       expect { Dashboards::Prewarm.touch(site.id) }.not_to raise_error
     end
 
+    it "medição que só mudou de número não pré-aquece (18/11/2026); estado e queda de qualidade sim" do
+      medida = build(:point, capability: "measure")
+      expect(Dashboards::Prewarm.worth?(medida)).to be(false)
+      expect(Dashboards::Prewarm.worth?(medida, true)).to be(true) # caiu ou voltou
+      expect(Dashboards::Prewarm.worth?(build(:point, capability: "onoff"))).to be(true)
+      Dashboards::Cache.enabled = true
+      Dashboards::Prewarm.instance_variable_get(:@due).clear
+      p = create(:point, device: create(:device, site: site), capability: "measure", value: 1)
+      expect { p.report!(2) }.not_to have_enqueued_job(DashboardPrewarmJob)
+      expect { p.report!(2, quality: "unavailable") }.to have_enqueued_job(DashboardPrewarmJob)
+    end
+
     it "consulta por área começa pelos pontos da área (id ou nome), com o mesmo resultado" do
       q = Points::Query.new(site)
       expect(q.call({ "area" => sala.id }).map(&:name)).to contain_exactly("Luz", "Tomada", "Câmera da Garagem")

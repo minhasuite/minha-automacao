@@ -162,3 +162,16 @@ que o servidor da casa): olhe a proporção.
 Câmera fora do ar (go2rtc num IP que não responde, `script/perf/cam.rb`), cada vez que a
 espera da falha vence: antes 3,0 s presos na thread do Puma a cada rodada (e até 15 s
 com resposta lenta); depois só a primeira (3,0 s), as seguintes 8–10 ms.
+
+## Calor do servidor da casa (18/11/2026)
+
+O HP da casa desliga perto de 114 °C; trabalho de fundo que não serve a ninguém vira calor. Medido na casa e cortado:
+
+- **Pré-aquecimento do painel**: rodava 139 vezes por hora (debounce de 5 s e qualquer ponto, inclusive o processador
+  do servidor e a potência, que mudam a cada poucos segundos e deixam o painel pré-aquecido velho na hora). Agora
+  `Dashboards::Prewarm::DEBOUNCE` = 30 s e medição (`Prewarm::NOISY`) só pré-aquece quando a qualidade muda
+  (`Prewarm.worth?`).
+- **Sensores com consulta (origem "*")**: `HelperTypes::STAR_DEBOUNCE` 5 → 15 s (132 recálculos por hora, 14 sensores
+  importados do HA em cada).
+- **Solid Cache**: em produção `max_size` 32 MB e `max_age` 1 dia (`config/cache.yml`). A entrada vencida só sai
+  quando o cache bate no teto: com 256 MB eram ~20 mil painéis resolvidos velhos (~19 kB cada), 80% do banco.
