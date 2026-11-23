@@ -315,7 +315,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   faixa de abas, nunca abre como visão (`Dashboards.link?`/`pick_view`). **Temas**: só os prontos
   (`Dashboards::Themes::PLUGINS`; os da casa saíram da tela em 15/11/2026, a chave `u-…` antiga ainda resolve), e o
   tema da pessoa vale por inteiro em toda tela (`Themes.person` no layout). **Câmeras**: `Cameras::Warmer` no worker
-  segura o RTSP aberto no go2rtc e o `frame` devolve o quadro guardado recente na hora (`docs/cameras.md`).
+  segura o RTSP aberto no go2rtc e o `frame` devolve o quadro guardado recente na hora (`docs/cameras.md`). **Movimento do DVR**: `DvrEvents` (aparelho `go2rtc` com `address.events`, protocolo em `DvrEvents::PROTOCOLS`, hoje Intelbras/Dahua) acende o ponto "Movimento · <câmera>" em tempo real pelo ouvinte do worker (`DVR_EVENTS=off`).
 - **Automações da DSL (F6)**: `definition` = publicada (roda), `draft` =
   rascunho do editor (pode ficar incompleto; a DSL é validada na
   publicação). Ações viram programa plano (`Engine#compile`); espera grava

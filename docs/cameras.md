@@ -305,3 +305,18 @@ linha do tempo.
 - O esqueleto de carregando já é do `Ss::CameraTileComponent`/`SsCameraTile` (estado `loading`) e só
   aparece até o primeiro quadro.
 
+
+## Movimento do DVR/NVR em tempo real (`DvrEvents`, 23/11/2026)
+
+O gravador avisa quando um canal vê movimento e o MA acende o ponto "Movimento · <câmera>" (e apaga no fim), sem IA
+e sem custo. No Intelbras/Dahua com a "detecção inteligente" (SMD) ligada, o DVR só avisa pessoa ou veículo
+(árvore, sombra e bicho não); ele não diz qual dos dois, então a separação fica para a automação (IA na foto).
+
+- Liga por aparelho: `address.events` = protocolo de `DvrEvents::PROTOCOLS` no aparelho `go2rtc` do DVR (hoje
+  `dahua`, que vale para Intelbras e Dahua: `eventManager.cgi?action=attach`, Digest pelo `Isapi.digest`).
+- Pontos: um `motion` por ponto `stream` com canal no caminho RTSP (`channel=N`), na área da câmera, `address`
+  {dvr_event: "motion", channel: N} (`DvrEvents.ensure_points!`, idempotente, a cada conexão).
+- Ouvinte no worker (`DvrEvents::Listener`, `DVR_EVENTS=off` desliga): uma thread por aparelho, batimento de 20 s,
+  caiu = movimento indisponível, nova tentativa com espera crescente até 60 s.
+- Protocolo novo (Hikvision ISAPI, ...) = módulo com `path`, `parse(texto)` → [[tipo, canal, ligado]] e
+  `channel(ponto)` + chave em `PROTOCOLS`.
