@@ -108,7 +108,9 @@ está vivo (nada de temperatura, backup ou problemas), por isso fica como plano 
 
 - 24/11/2026: etapa 1 no ar na casa (`ServerVitals`, `ServerWatchJob`, verificação "Servidor" da Saúde). Etapas 2 e
   3 e o freio no código (`Integrator`, `Integrator::Report`, `Integrator::Watch`, `Installation`, `/integrador`,
-  `POST /api/v1/integrador/resumo`, `Updates::Auto.held?`). Falta subir a instância da central na VPS (compose,
-  Caddy, DNS, segredos no vault) e ligar a casa nela (`INTEGRATOR_URL`/`INTEGRATOR_TOKEN`).
+  `POST /api/v1/integrador/resumo`, `Updates::Auto.held?`).
+- 24/11/2026, noite: central no ar em `https://central-automacao.minhasuite.com` (`docker-compose.central.yml`, um
+  container, ~530 MB; job `deploy-central` do CI; infra em `minha-infra/platform/minha-automacao-central`). A casa
+  do Herlon é a primeira instalação ("Casa Herlon") e já manda o resumo.
 - Fora por enquanto: o aviso "versão atrás da estável há mais de 7 dias" (pede a central consultar as releases).
 

@@ -1,0 +1,73 @@
+# Stack da CENTRAL DO INTEGRADOR do minha-automacao (/opt/minha-automacao-central na VPS,
+# https://central-automacao.minhasuite.com; docs/PROPOSTA-integrador.md). Recebe o resumo das instalações dos
+# clientes (POST /api/v1/integrador/resumo), mostra /integrador e avisa o integrador. Não é a demonstração
+# (docker-compose.demo.yml, revisão da Play): esta não pode ser vista por login de teste.
+#
+# Um container só (web + fila no Puma: SOLID_QUEUE_IN_PUMA, um processo): a central não tem aparelho, só
+# resumos e avisos. Postgres COMPARTILHADO da VPS (ms-postgres), banco próprio `minha_automacao_central`.
+# Variáveis com o prefixo MINHA_AUTOMACAO_CENTRAL_ no .env (vault/prod-env/minha-automacao-central.env).
+# O job deploy-central do ci-cd.yml envia este arquivo e sobe a imagem latest a cada push no master.
+
+services:
+  minha-automacao-central:
+    image: ${MINHA_AUTOMACAO_CENTRAL_IMAGE:-ghcr.io/minhasuite/minha-automacao:latest}
+    container_name: ms-minha-automacao-central
+    restart: unless-stopped
+    networks:
+      - minhasuite-net
+    volumes:
+      - ms-minha-automacao-central-storage:/app/storage
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: postgresql://${MINHA_AUTOMACAO_CENTRAL_DB_USER:-minha_automacao_central}:${MINHA_AUTOMACAO_CENTRAL_DB_PASSWORD:?set MINHA_AUTOMACAO_CENTRAL_DB_PASSWORD}@ms-postgres:5432/minha_automacao_central
+      SECRET_KEY_BASE: ${MINHA_AUTOMACAO_CENTRAL_SECRET_KEY_BASE:?set MINHA_AUTOMACAO_CENTRAL_SECRET_KEY_BASE}
+      AR_ENCRYPTION_PRIMARY_KEY: ${MINHA_AUTOMACAO_CENTRAL_AR_ENC_PRIMARY_KEY:?set MINHA_AUTOMACAO_CENTRAL_AR_ENC_PRIMARY_KEY}
+      AR_ENCRYPTION_DETERMINISTIC_KEY: ${MINHA_AUTOMACAO_CENTRAL_AR_ENC_DETERMINISTIC_KEY:?set MINHA_AUTOMACAO_CENTRAL_AR_ENC_DETERMINISTIC_KEY}
+      AR_ENCRYPTION_KEY_DERIVATION_SALT: ${MINHA_AUTOMACAO_CENTRAL_AR_ENC_SALT:?set MINHA_AUTOMACAO_CENTRAL_AR_ENC_SALT}
+      APP_HOST: ${MINHA_AUTOMACAO_CENTRAL_APP_HOST:-central-automacao.minhasuite.com}
+      RAILS_LOG_TO_STDOUT: "true"
+      INTEGRATOR_HUB: "1"
+      # Web Push (o integrador recebe os avisos da central no navegador/PWA do celular).
+      VAPID_PUBLIC_KEY: ${MINHA_AUTOMACAO_CENTRAL_VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${MINHA_AUTOMACAO_CENTRAL_VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${MINHA_AUTOMACAO_CENTRAL_VAPID_SUBJECT:-mailto:contato@minhasuite.com}
+      MEULOG_URL: ${MINHA_AUTOMACAO_CENTRAL_MEULOG_URL:-}
+      MEULOG_TOKEN: ${MINHA_AUTOMACAO_CENTRAL_MEULOG_TOKEN:-}
+      # Um processo com a fila dentro (memória da VPS); ouvintes de aparelho não têm o que olhar aqui.
+      SOLID_QUEUE_IN_PUMA: "1"
+      WEB_CONCURRENCY: "0"
+      RAILS_MAX_THREADS: "3"
+      JOB_CONCURRENCY: "1"
+      DB_POOL: "8"
+      TUYA_LISTENER: "off"
+      TUYA_CLOUD_LISTENER: "off"
+      ONVIF_LISTENER: "off"
+      ESPHOME_LISTENER: "off"
+      MATTER_LISTENER: "off"
+      ZWAVE_LISTENER: "off"
+      ASSIST_SATELLITES: "off"
+      RECORDINGS: "off"
+      POLLING: "off"
+      TELEGRAM_LISTENER: "off"
+      CAMERA_PRELOAD: "off"
+      DVR_EVENTS: "off"
+    expose:
+      - "3000"
+    command: >
+      bash -c "bundle exec rails db:prepare &&
+               exec bundle exec puma -C config/puma.rb"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/up || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+networks:
+  minhasuite-net:
+    name: minhasuite-net
+    external: true
+
+volumes:
+  ms-minha-automacao-central-storage:
+    name: ms-minha-automacao-central-storage

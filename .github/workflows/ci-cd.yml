@@ -200,3 +200,19 @@ jobs:
           app_path: /opt/minha-automacao
           compose_file: docker-compose.demo.yml
           health_container: ms-minha-automacao-web
+
+  # Central do integrador (docs/PROPOSTA-integrador.md): mesma imagem, INTEGRATOR_HUB=1, um container.
+  deploy-central:
+    needs: build
+    if: github.ref_name == 'master'
+    runs-on: ${{ vars.RUNNER_LABEL || 'self-hosted' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: minhasuite/.github/.github/actions/deploy-vps@master
+        with:
+          ssh_key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          user: ${{ secrets.VPS_USER }}
+          app_path: /opt/minha-automacao-central
+          compose_file: docker-compose.central.yml
+          health_container: ms-minha-automacao-central
