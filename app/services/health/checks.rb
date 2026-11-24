@@ -152,6 +152,38 @@ module Health
       end
     end
 
+    # Sinais vitais do servidor (ServerVitals, 24/11/2026): temperatura, internet e a última queda.
+    class Server < Check
+      describe key: "server", label: "Servidor", icon: "chip"
+      texts "pt-BR" => { temp: "Temperatura", temp_detail: "%{temp} °C (atenção a partir de %{warn} °C, desliga perto de 114 °C)",
+                         no_sensor: "Sem sensor de temperatura", internet: "Internet", online: "Conectado", offline: "Sem internet desde %{since}",
+                         outage: "Última queda" },
+            en: { label: "Server", temp: "Temperature", temp_detail: "%{temp} °C (warning from %{warn} °C, shuts down near 114 °C)",
+                  no_sensor: "No temperature sensor", internet: "Internet", online: "Connected", offline: "Offline since %{since}",
+                  outage: "Last outage" },
+            es: { label: "Servidor", temp: "Temperatura", temp_detail: "%{temp} °C (atención desde %{warn} °C, se apaga cerca de 114 °C)",
+                  no_sensor: "Sin sensor de temperatura", internet: "Internet", online: "Conectado", offline: "Sin internet desde %{since}",
+                  outage: "Última caída" }
+
+      def self.items(_tenant)
+        s = ::ServerVitals.state
+        temp = ::ServerVitals.temperature
+        list = [ item(key: "temp", status: ::ServerVitals.level(temp), title: text(:temp),
+                      detail: temp ? text(:temp_detail, temp: temp, warn: ::ServerVitals::WARN_C) : text(:no_sensor)) ]
+        if s.key?("online")
+          down = s["down_since"] && Time.zone.parse(s["down_since"])
+          list << item(key: "internet", status: s["online"] ? "ok" : "error", title: text(:internet),
+                       detail: s["online"] ? text(:online) : text(:offline, since: I18n.l(down || Time.current, format: :short)))
+        end
+        if (o = ::ServerVitals.last_outage(s))
+          recent = Time.zone.parse(o["to"]) > ::ServerVitals::RECENT.ago
+          list << item(key: "outage", status: recent ? "warn" : "ok", title: text(:outage), at: Time.zone.parse(o["to"]),
+                       detail: ::ServerVitals.last_outage_text(s))
+        end
+        list
+      end
+    end
+
     # Versão e tempo no ar (deste processo).
     class Runtime < Check
       describe key: "runtime", label: "Versão e tempo no ar", icon: "information-circle"

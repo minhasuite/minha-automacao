@@ -33,6 +33,10 @@ production:
   run_schedules:
     class: RunSchedulesJob
     schedule: every minute
+  # Sinais vitais do servidor (ServerVitals): batimento, internet e temperatura; quedas e calor viram aviso.
+  server_watch:
+    class: ServerWatchJob
+    schedule: every minute
   # Câmeras (F8): streams do go2rtc.
   go2rtc_sync:
     class: Go2rtcSyncJob

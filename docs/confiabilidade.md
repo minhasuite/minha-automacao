@@ -117,3 +117,13 @@ sem nova tentativa. Agora `Drivers::Mqtt::NoReply` repete só o que não faz mal
 (`Command::IDEMPOTENT`: ligar, desligar, definir; nunca "alternar") e nunca em ponto crítico: comando de automação
 em 5 s, 30 s, 2 min e 5 min (`ExecuteCommandJob::NO_REPLY_WAITS`), com prazo `Command::AUTOMATION_TTL` (10 min,
 `Command#deadline`); comando de pessoa, uma vez em 5 s dentro do `Command::TTL`.
+
+## Sinais vitais do servidor (`ServerVitals`, 24/11/2026)
+
+`ServerWatchJob` a cada minuto grava o batimento, confere a internet (`Internet.probe`) e lê a temperatura da CPU
+(`/sys/class/hwmon`: coretemp, k10temp, acpitz…; no Raspberry Pi, a zona térmica). Viram aviso ao dono e aos
+administradores: **ficou sem internet** (ao voltar, com início, fim e duração; queda menor que 2 min não avisa),
+**ficou desligado** (batimento parado mais de 5 min, no primeiro minuto depois de ligar) e **servidor quente**
+(2 minutos seguidos em 95 °C ou mais; no máximo um por hora). Aparecem também na Saúde (verificação "Servidor") e
+na integração Sistema (pontos "Temperatura do servidor", "Servidor sem internet" e "Última queda do servidor").
+Estado em `storage/server-vitals.json`. É a etapa 1 da `docs/PROPOSTA-integrador.md`.

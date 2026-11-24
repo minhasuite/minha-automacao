@@ -1,0 +1,45 @@
+pt-BR:
+  server_vitals:
+    none: Nenhuma queda registrada
+    "off":
+      title: "O servidor ficou desligado por %{duration}"
+      body: "Parado de %{from} a %{to}: sem automações, avisos nem câmeras nesse tempo. Se não foi você, confira energia e temperatura."
+    network:
+      title: "O servidor ficou sem internet por %{duration}"
+      body: "Sem internet de %{from} a %{to}: avisos, Alexa e acesso de fora pararam nesse tempo."
+    hot:
+      title: "Servidor quente: %{temp} °C"
+      body: "A CPU está em %{temp} °C há mais de 2 minutos (limite de atenção: %{limit} °C). Perto de 114 °C ele desliga sozinho: confira a ventilação."
+    last:
+      network: "Sem internet por %{duration} (%{from} a %{to})"
+      "off": "Desligado por %{duration} (%{from} a %{to})"
+en:
+  server_vitals:
+    none: No outage recorded
+    "off":
+      title: "The server was off for %{duration}"
+      body: "Down from %{from} to %{to}: no automations, notifications or cameras in that time. If it wasn't you, check power and temperature."
+    network:
+      title: "The server had no internet for %{duration}"
+      body: "No internet from %{from} to %{to}: notifications, Alexa and remote access stopped in that time."
+    hot:
+      title: "Server running hot: %{temp} °C"
+      body: "The CPU has been at %{temp} °C for over 2 minutes (warning limit: %{limit} °C). Near 114 °C it shuts itself down: check the airflow."
+    last:
+      network: "No internet for %{duration} (%{from} to %{to})"
+      "off": "Off for %{duration} (%{from} to %{to})"
+es:
+  server_vitals:
+    none: Ninguna caída registrada
+    "off":
+      title: "El servidor estuvo apagado por %{duration}"
+      body: "Detenido de %{from} a %{to}: sin automatizaciones, avisos ni cámaras en ese tiempo. Si no fuiste tú, revisa la energía y la temperatura."
+    network:
+      title: "El servidor estuvo sin internet por %{duration}"
+      body: "Sin internet de %{from} a %{to}: avisos, Alexa y acceso remoto se detuvieron en ese tiempo."
+    hot:
+      title: "Servidor caliente: %{temp} °C"
+      body: "La CPU está a %{temp} °C hace más de 2 minutos (límite de atención: %{limit} °C). Cerca de 114 °C se apaga solo: revisa la ventilación."
+    last:
+      network: "Sin internet por %{duration} (%{from} a %{to})"
+      "off": "Apagado por %{duration} (%{from} a %{to})"

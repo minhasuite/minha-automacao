@@ -45,6 +45,13 @@ module Integrations
       # G20: só com a cópia externa configurada (sem ela, não cria o ponto).
       "offsite_backup_late" => { name: "Backup externo atrasado ou com falha", capability: "problem", device_class: "problem",
                                  read: ->(_site) { !Backups.offsite_ok? if Backups.configured? } },
+      # Sinais vitais (ServerVitals, 24/11/2026): temperatura da CPU, internet e a última queda (de rede ou desligado).
+      "cpu_temp" => { name: "Temperatura do servidor", capability: "measure", unit: "°C", device_class: "temperature",
+                      read: ->(_site) { ServerVitals.temperature } },
+      "offline" => { name: "Servidor sem internet", capability: "problem", device_class: "connectivity",
+                     read: ->(_site) { ServerVitals.state["online"] == false } },
+      "last_outage" => { name: "Última queda do servidor", capability: "text",
+                         read: ->(_site) { ServerVitals.last_outage_text } },
       "integrations_error" => { name: "Integrações com erro", capability: "measure", read: ->(site) { site.integrations.where(status: "error").count } },
       "integrations_error_names" => { name: "Integrações com erro (nomes)", capability: "text",
                                       read: ->(site) { site.integrations.where(status: "error").order(:name).pluck(:name).join(", ") } },
