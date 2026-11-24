@@ -167,8 +167,23 @@ class Automation < ApplicationRecord
   # Chamado pelo motor no fim de cada execução de verdade: última execução na
   # lista e a próxima da fila.
   def after_run(run)
+    fold_skipped(run) if run.status == "skipped" && !run.dry_run
     update_columns(last_run_at: run.started_at, last_status: run.status, last_error: (run.error if %w[failed interrupted].include?(run.status))) # rubocop:disable Rails/SkipsModelValidations
     start_queued!
+  end
+
+  # "Condições não atendidas" não acumula (24/11/2026): fica só a mais nova, que conta as que vieram antes
+  # (`state["skipped_count"]`, desde `state["skipped_since"]`). Sem isso, um gatilho barulhento fora do horário
+  # (movimento do DVR de dia: ~3 mil por dia) enchia as KEEP execuções guardadas e empurrava as que rodaram de fato.
+  def fold_skipped(run)
+    older = runs.real.where(status: "skipped").where.not(id: run.id)
+    prev = older.order(created_at: :desc).pick(:state, :started_at)
+    return unless prev
+
+    count = prev[0].to_h["skipped_count"].to_i.nonzero? || 1
+    since = prev[0].to_h["skipped_since"] || prev[1].iso8601
+    run.update_columns(state: run.state.to_h.merge("skipped_count" => count + 1, "skipped_since" => since)) # rubocop:disable Rails/SkipsModelValidations
+    older.delete_all
   end
 
   # Próxima execução da fila (modo `queued`), se nenhuma está ativa. Também

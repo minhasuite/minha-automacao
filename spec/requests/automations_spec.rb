@@ -164,8 +164,13 @@ RSpec.describe "Automações (DSL): web e API" do
       get "/locais/#{site.id}/automacoes"
       expect(response.body).to include("Portão", "/automacoes/#{a.id}/execucoes") # o nome abre as execuções
       expect(response.body).not_to include("Nova automação")
+      within(tenant) do
+        a.runs.create!(site: site, status: "skipped", trigger: {}, started_at: Time.current, steps: [],
+                       state: { "skipped_count" => 5, "skipped_since" => Time.zone.local(2026, 11, 24, 8, 0).iso8601 })
+      end
       get "/automacoes/#{a.id}/execucoes"
       expect(response).to have_http_status(:ok)
+      expect(response.body).to include("e mais 4 vezes desde")
       get "/automacoes/#{a.id}/editar"
       expect(flash[:alert]).to eq("Seu papel neste local não permite isso.")
       post "/automacoes/#{a.id}/executar", params: { confirm_critical: "1" }

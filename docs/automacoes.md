@@ -206,6 +206,10 @@ Até 1000 caracteres.
   virtuais em cadeia, ou por comando dela no ponto nos últimos 10 s) vira
   execução "Laço evitado", sem rodar. Corrente com mais de 3 automações idem.
   Mais de 30 execuções por minuto: ignora e mostra o erro na lista.
+- **Condições não atendidas não acumulam** (24/11/2026): fica só a execução mais nova com esse resultado, e
+  ela conta as anteriores (`state.skipped_count`/`skipped_since`, "e mais N vezes desde…" na lista; API
+  `skipped_count`/`skipped_since`). Um gatilho barulhento fora do horário (movimento do DVR de dia, ~3 mil por
+  dia) enchia as 200 execuções guardadas por automação e empurrava as que rodaram de fato.
 - **Espera**: o programa (ações achatadas com saltos) para no contador de
   programa; o estado vai para `automation_runs.state` e o
   `AutomationResumeJob` retoma no Solid Queue. `wait_for` olha de novo na

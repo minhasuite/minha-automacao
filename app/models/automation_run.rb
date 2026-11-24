@@ -27,6 +27,9 @@ class AutomationRun < ApplicationRecord
   scope :active, -> { real.where(status: "waiting").or(real.where(status: "running", updated_at: STALE.ago..)) }
 
   def status_label = STATUSES.fetch(status, status)
+  # "Condições não atendidas" guarda só a mais nova (Automation#fold_skipped): quantas ela representa e desde quando.
+  def skipped_count = state.to_h["skipped_count"].to_i.nonzero? || (status == "skipped" ? 1 : nil)
+  def skipped_since = (t = state.to_h["skipped_since"]) && Time.zone.parse(t)
   def tone = TONES.fetch(status, "muted")
   def finished? = finished_at.present?
   def duration_s = finished_at && (finished_at - started_at)

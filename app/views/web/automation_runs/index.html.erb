@@ -8,7 +8,7 @@
         <%= link_to automation_run_path(r), class: "flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 no-underline hover:bg-field" do %>
           <span class="min-w-0 flex-1 basis-48">
             <span class="block font-semibold text-ink"><%= l(r.started_at, format: :short) %><% if r.dry_run %> <span class="ss-badge ss-badge-accent"><%= t("automations.runs.simulation") %></span><% end %></span>
-            <span class="block text-sm text-muted break-words"><%= r.trigger["title"] || t("automations.runs.trigger_default") %><%= " · #{r.error}" if r.error.present? %></span>
+            <span class="block text-sm text-muted break-words"><%= r.trigger["title"] || t("automations.runs.trigger_default") %><%= " · #{r.error}" if r.error.present? %><%= " · #{t("automations.runs.skipped_more", count: r.skipped_count - 1, since: l(r.skipped_since, format: :short))}" if r.skipped_since %></span>
           </span>
           <%= run_badge(r) %>
           <%= icon("chevron-right", "size-4 text-muted") %>

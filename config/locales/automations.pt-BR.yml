@@ -609,6 +609,9 @@ pt-BR:
     new:
       script: "Novo script"
     runs:
+      skipped_more:
+        one: "e mais 1 vez desde %{since}"
+        other: "e mais %{count} vezes desde %{since}"
       subtitle: "%{name} · últimos %{days} dias"
       checks: "Condições conferidas"
       empty: "Nenhuma execução ainda."

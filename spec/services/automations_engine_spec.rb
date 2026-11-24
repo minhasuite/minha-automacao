@@ -419,6 +419,22 @@ RSpec.describe "Automações: motor da DSL" do
       expect(a.fire!({ "type" => "manual" }, skip_conditions: true).status).to eq("done")
       expect(a.fire!({ "type" => "manual" }).status).to eq("skipped")
     end
+
+    it "condições não atendidas não acumulam: fica a mais nova, contando as de antes; as que rodaram ficam" do
+      a = build({ "triggers" => manual, "conditions" => [ { "type" => "expr", "expr" => "1 = 2" } ], "actions" => [ notify("foi") ] })
+      done = a.fire!({ "type" => "manual" }, skip_conditions: true)
+      first = travel_to(2.minutes.ago) { a.fire!({ "type" => "manual" }) }
+      3.times { a.fire!({ "type" => "manual" }) }
+      last = a.runs.real.where(status: "skipped").sole
+      expect(last).to have_attributes(skipped_count: 4, skipped_since: first.started_at.change(usec: 0))
+      expect(a.runs.real.ids).to contain_exactly(done.id, last.id)
+      expect(AutomationRunSerializer.new(last).to_h["skipped_count"]).to eq(4)
+      expect(a.reload.last_status).to eq("skipped")
+
+      sim = a.simulate!
+      expect(sim.status).to eq("skipped")
+      expect(a.runs.real.where(status: "skipped").count).to eq(1)
+    end
   end
 
   describe "simulação" do

@@ -609,6 +609,9 @@ en:
     new:
       script: "New script"
     runs:
+      skipped_more:
+        one: "and 1 more time since %{since}"
+        other: "and %{count} more times since %{since}"
       subtitle: "%{name} · last %{days} days"
       checks: "Conditions checked"
       empty: "No runs yet."
