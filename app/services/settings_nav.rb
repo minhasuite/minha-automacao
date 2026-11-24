@@ -18,6 +18,7 @@ module SettingsNav
     [ :logs, "logs.nav", :settings_logs_path, "document-text", ->(u) { SystemLog.visible_to?(u) } ],
     [ :queue, "queue.nav", :settings_queue_path, "clock", ->(u) { QueueMonitor.visible_to?(u) } ],
     [ :labels, "settings.nav.labels", :tags_path, "tag", ->(u) { u.admin? } ],
+    [ :integrator, "integrator.nav", :integrator_path, "desktop-computer", ->(u) { u.owner? && Integrator.hub? } ],
     [ :system, "settings.nav.system", :settings_system_path, "cog", ->(u) { !u.reader? } ],
     [ :remote, "settings.nav.remote", :settings_remote_path, "globe", ->(u) { u.admin? } ],
     [ :account, "settings.nav.account", :settings_account_path, "user-group", ->(_u) { true } ],

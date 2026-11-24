@@ -415,6 +415,12 @@ Rails.application.routes.draw do
     get "configuracoes/fila", to: "queue#show", as: :settings_queue
     post "configuracoes/fila/erros/:id/tentar", to: "queue#retry_job", as: :settings_queue_retry
     delete "configuracoes/fila/erros/:id", to: "queue#discard_job", as: :settings_queue_discard
+    # Central do integrador (Integrator, só INTEGRATOR_HUB=1): as instalações dos clientes.
+    get "integrador", to: "integrator#index", as: :integrator
+    post "integrador", to: "integrator#create"
+    get "integrador/:id", to: "integrator#show", as: :integrator_installation
+    patch "integrador/:id", to: "integrator#update"
+    delete "integrador/:id", to: "integrator#destroy"
     get "configuracoes/aparencia", to: "appearance#show", as: :settings_appearance
     patch "configuracoes/aparencia", to: "appearance#update"
     delete "configuracoes/logs", to: "logs#destroy"
@@ -480,6 +486,8 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      # Central do integrador (Integrator): resumo das instalações, com o token de cada uma.
+      post "integrador/resumo", to: "integrator_reports#create", as: :integrator_report
       post "auth/signup", to: "auth#signup"
       post "auth/login", to: "auth#login"
       get "auth/providers", to: "auth#providers"

@@ -315,7 +315,7 @@ rodar spec que renderiza layout. Cobertura mínima 90%.
   faixa de abas, nunca abre como visão (`Dashboards.link?`/`pick_view`). **Temas**: só os prontos
   (`Dashboards::Themes::PLUGINS`; os da casa saíram da tela em 15/11/2026, a chave `u-…` antiga ainda resolve), e o
   tema da pessoa vale por inteiro em toda tela (`Themes.person` no layout). **Câmeras**: `Cameras::Warmer` no worker
-  segura o RTSP aberto no go2rtc e o `frame` devolve o quadro guardado recente na hora (`docs/cameras.md`). **Movimento do DVR**: `DvrEvents` (aparelho `go2rtc` com `address.events`, protocolo em `DvrEvents::PROTOCOLS`, hoje Intelbras/Dahua) acende o ponto "Movimento · <câmera>" em tempo real pelo ouvinte do worker (`DVR_EVENTS=off`).
+  segura o RTSP aberto no go2rtc e o `frame` devolve o quadro guardado recente na hora (`docs/cameras.md`). **Integrador** (`docs/PROPOSTA-integrador.md`): a instalação manda o resumo a cada 5 min (`Integrator::Report`, só contagens e situações, LGPD; `INTEGRATOR_URL`/`INTEGRATOR_TOKEN`) e a central (`INTEGRATOR_HUB=1`, instância própria, nunca a de demonstração) mostra `/integrador`, avisa por `Integrator::Watch` (regra nova = linha em `RULES`) e segura versão (`installations.max_version` → `Updates::Auto.held?`); sinais vitais do servidor em `ServerVitals`. **Movimento do DVR**: `DvrEvents` (aparelho `go2rtc` com `address.events`, protocolo em `DvrEvents::PROTOCOLS`, hoje Intelbras/Dahua) acende o ponto "Movimento · <câmera>" em tempo real pelo ouvinte do worker (`DVR_EVENTS=off`).
 - **Automações da DSL (F6)**: `definition` = publicada (roda), `draft` =
   rascunho do editor (pode ficar incompleto; a DSL é validada na
   publicação). Ações viram programa plano (`Engine#compile`); espera grava

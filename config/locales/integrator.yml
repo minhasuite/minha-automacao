@@ -1,0 +1,288 @@
+pt-BR:
+  integrator:
+    nav: Instalações (integrador)
+    title: Instalações dos clientes
+    subtitle: 'Cada instalação manda um resumo a cada 5 minutos: a lista mostra quem precisa de atenção.'
+    subtitle_one: Versão %{version} · canal %{channel}
+    created: Instalação %{name} criada
+    copy_now: 'Copie agora para o .env do servidor do cliente: o token não aparece de novo.'
+    env: Linhas do .env
+    empty: Nenhuma instalação ainda
+    empty_hint: Crie uma instalação para cada cliente e coloque o token no .env do servidor dele.
+    client: Cliente
+    state: Situação
+    seen: Último resumo
+    temp: Temperatura
+    disk: Disco
+    problems: Problemas
+    new: Nova instalação
+    new_hint: Gera o token que o servidor do cliente usa para mandar o resumo.
+    name_hint: Casa do João
+    create: Criar instalação
+    never: nunca
+    seen_at: Último resumo %{ago}.
+    waiting_hint: 'Ainda não chegou nenhum resumo: confira o INTEGRATOR_URL e o INTEGRATOR_TOKEN no servidor do cliente.'
+    since: desde %{at}
+    summary: Último resumo
+    cpu: Processador
+    memory: Memória
+    disk_value: '%{used}% usado · %{free} GB livres'
+    internet: Internet
+    offline_now: Sem internet agora
+    online: Conectado
+    last_outage: Última queda
+    backup_offsite: Backup fora do local
+    restore: Teste de restauração
+    ok: ok
+    failed: falhou
+    devices: Aparelhos
+    devices_value: '%{n} aparelhos · %{off} pontos sem sinal'
+    failures: Falhas em 24 h
+    failures_value: '%{commands} de %{total} comandos · automações com falha: %{runs}'
+    charts: Últimos 2 dias
+    settings: Ajustes
+    max_version: Versão máxima liberada (freio)
+    max_version_hint: Vazio = sem freio. Com uma versão, o servidor do cliente não atualiza além dela.
+    notes: Observações
+    save: Salvar
+    remove: Remover
+    remove_confirm: Remover a instalação %{name}? O servidor do cliente para de aparecer aqui (o token deixa de valer).
+    status:
+      waiting: Aguardando
+      ok: Ok
+      warn: Atenção
+      error: Com erro
+      offline: Sem sinal
+    labels:
+      offline: Sem sinal
+      hot: Servidor quente
+      disk: Disco cheio
+      no_internet: Sem internet
+      backup_late: Backup atrasado
+      restore_failed: Teste de restauração falhou
+      queue: Fila parada
+      health: Saúde com erro
+    alerts:
+      offline: sem sinal desde %{since}
+      hot: servidor a %{temp} °C
+      disk: disco %{used}% cheio
+      no_internet: servidor sem internet
+      backup_late: último backup em %{at}
+      restore_failed: o teste de restauração do backup falhou
+      queue: '%{n} comandos parados na fila'
+      health: Saúde com erro em %{checks}
+    checks:
+      integrations: Integrações
+      devices: Aparelhos
+      device_health: Saúde dos aparelhos
+      reliability: Confiabilidade
+      queues: Fila
+      backup: Backup
+      disk: Disco
+      server: Servidor
+      runtime: Versão
+      performance: Desempenho
+      shadow: Sombra
+      custom: Verificações da casa
+      cutover: Troca do HA
+    notify:
+      problem: '%{name}: %{problem}'
+      back: '%{name}: voltou ao normal (%{problem})'
+      outage:
+        'off': '%{name}: o servidor ficou desligado por %{duration}'
+        network: '%{name}: o servidor ficou sem internet por %{duration}'
+    flash:
+      saved: Instalação salva.
+      removed: Instalação %{name} removida.
+en:
+  integrator:
+    nav: Installations (integrator)
+    title: Client installations
+    subtitle: 'Each installation sends a summary every 5 minutes: the list shows who needs attention.'
+    subtitle_one: Version %{version} · %{channel} channel
+    created: Installation %{name} created
+    copy_now: 'Copy it now into the client server''s .env: the token won''t be shown again.'
+    env: Lines for .env
+    empty: No installations yet
+    empty_hint: Create one installation per client and put its token in that server's .env.
+    client: Client
+    state: Status
+    seen: Last summary
+    temp: Temperature
+    disk: Disk
+    problems: Problems
+    new: New installation
+    new_hint: Generates the token the client's server uses to send its summary.
+    name_hint: John's house
+    create: Create installation
+    never: never
+    seen_at: Last summary %{ago}.
+    waiting_hint: 'No summary yet: check INTEGRATOR_URL and INTEGRATOR_TOKEN on the client''s server.'
+    since: since %{at}
+    summary: Last summary
+    cpu: CPU
+    memory: Memory
+    disk_value: '%{used}% used · %{free} GB free'
+    internet: Internet
+    offline_now: Offline now
+    online: Connected
+    last_outage: Last outage
+    backup_offsite: Off-site backup
+    restore: Restore test
+    ok: ok
+    failed: failed
+    devices: Devices
+    devices_value: '%{n} devices · %{off} points offline'
+    failures: Failures in 24 h
+    failures_value: '%{commands} of %{total} commands · failed automations: %{runs}'
+    charts: Last 2 days
+    settings: Settings
+    max_version: Highest released version (brake)
+    max_version_hint: Empty = no brake. With a version, the client's server won't update past it.
+    notes: Notes
+    save: Save
+    remove: Remove
+    remove_confirm: Remove installation %{name}? The client's server stops showing here (the token stops working).
+    status:
+      waiting: Waiting
+      ok: Ok
+      warn: Attention
+      error: Error
+      offline: Offline
+    labels:
+      offline: No signal
+      hot: Server running hot
+      disk: Disk almost full
+      no_internet: No internet
+      backup_late: Backup late
+      restore_failed: Restore test failed
+      queue: Queue stuck
+      health: Health error
+    alerts:
+      offline: no signal since %{since}
+      hot: server at %{temp} °C
+      disk: disk %{used}% full
+      no_internet: server without internet
+      backup_late: last backup at %{at}
+      restore_failed: the backup restore test failed
+      queue: '%{n} commands stuck in the queue'
+      health: Health error in %{checks}
+    checks:
+      integrations: Integrations
+      devices: Devices
+      device_health: Device health
+      reliability: Reliability
+      queues: Queue
+      backup: Backup
+      disk: Disk
+      server: Server
+      runtime: Version
+      performance: Performance
+      shadow: Shadow
+      custom: Custom checks
+      cutover: HA cutover
+    notify:
+      problem: '%{name}: %{problem}'
+      back: '%{name}: back to normal (%{problem})'
+      outage:
+        'off': '%{name}: the server was off for %{duration}'
+        network: '%{name}: the server had no internet for %{duration}'
+    flash:
+      saved: Installation saved.
+      removed: Installation %{name} removed.
+es:
+  integrator:
+    nav: Instalaciones (integrador)
+    title: Instalaciones de los clientes
+    subtitle: 'Cada instalación envía un resumen cada 5 minutos: la lista muestra quién necesita atención.'
+    subtitle_one: Versión %{version} · canal %{channel}
+    created: Instalación %{name} creada
+    copy_now: 'Cópialo ahora en el .env del servidor del cliente: el token no se mostrará de nuevo.'
+    env: Líneas del .env
+    empty: Ninguna instalación todavía
+    empty_hint: Crea una instalación por cliente y pon su token en el .env de su servidor.
+    client: Cliente
+    state: Situación
+    seen: Último resumen
+    temp: Temperatura
+    disk: Disco
+    problems: Problemas
+    new: Nueva instalación
+    new_hint: Genera el token que el servidor del cliente usa para enviar el resumen.
+    name_hint: Casa de Juan
+    create: Crear instalación
+    never: nunca
+    seen_at: Último resumen %{ago}.
+    waiting_hint: 'Todavía no llegó ningún resumen: revisa INTEGRATOR_URL e INTEGRATOR_TOKEN en el servidor del cliente.'
+    since: desde %{at}
+    summary: Último resumen
+    cpu: Procesador
+    memory: Memoria
+    disk_value: '%{used}% usado · %{free} GB libres'
+    internet: Internet
+    offline_now: Sin internet ahora
+    online: Conectado
+    last_outage: Última caída
+    backup_offsite: Copia fuera del lugar
+    restore: Prueba de restauración
+    ok: ok
+    failed: falló
+    devices: Aparatos
+    devices_value: '%{n} aparatos · %{off} puntos sin señal'
+    failures: Fallos en 24 h
+    failures_value: '%{commands} de %{total} comandos · automatizaciones con fallo: %{runs}'
+    charts: Últimos 2 días
+    settings: Ajustes
+    max_version: Versión máxima liberada (freno)
+    max_version_hint: Vacío = sin freno. Con una versión, el servidor del cliente no actualiza más allá de ella.
+    notes: Notas
+    save: Guardar
+    remove: Quitar
+    remove_confirm: ¿Quitar la instalación %{name}? El servidor del cliente deja de aparecer aquí (el token deja de valer).
+    status:
+      waiting: Esperando
+      ok: Ok
+      warn: Atención
+      error: Con error
+      offline: Sin señal
+    labels:
+      offline: Sin señal
+      hot: Servidor caliente
+      disk: Disco lleno
+      no_internet: Sin internet
+      backup_late: Copia atrasada
+      restore_failed: Prueba de restauración falló
+      queue: Cola detenida
+      health: Salud con error
+    alerts:
+      offline: sin señal desde %{since}
+      hot: servidor a %{temp} °C
+      disk: disco %{used}% lleno
+      no_internet: servidor sin internet
+      backup_late: última copia el %{at}
+      restore_failed: la prueba de restauración falló
+      queue: '%{n} comandos detenidos en la cola'
+      health: Salud con error en %{checks}
+    checks:
+      integrations: Integraciones
+      devices: Aparatos
+      device_health: Salud de los aparatos
+      reliability: Confiabilidad
+      queues: Cola
+      backup: Copia
+      disk: Disco
+      server: Servidor
+      runtime: Versión
+      performance: Rendimiento
+      shadow: Sombra
+      custom: Verificaciones propias
+      cutover: Cambio del HA
+    notify:
+      problem: '%{name}: %{problem}'
+      back: '%{name}: volvió a la normalidad (%{problem})'
+      outage:
+        'off': '%{name}: el servidor estuvo apagado por %{duration}'
+        network: '%{name}: el servidor estuvo sin internet por %{duration}'
+    flash:
+      saved: Instalación guardada.
+      removed: Instalación %{name} quitada.

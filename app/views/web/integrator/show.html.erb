@@ -1,0 +1,57 @@
+<% i = @installation %>
+<% series = ->(attr, name, unit) { { name: name, unit: unit, decimals: 0, points: @samples.filter_map { |s| (v = s.public_send(attr)) && [ s.at, v ] } } } %>
+<%= render "web/shared/header", title: i.name, subtitle: t("integrator.subtitle_one", version: i.version_tag.presence || "—", channel: i.report.dig("version", "channel") || "—") %>
+<%= render layout: "web/settings/frame", locals: { current: :integrator } do %>
+<section class="ss-card ss-card-pad" aria-labelledby="inst-estado-t">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h2 id="inst-estado-t"><%= t("integrator.state") %></h2>
+    <%= render "web/integrator/status", installation: i %>
+  </div>
+  <p class="text-sm text-muted mt-1"><%= i.last_seen_at ? t("integrator.seen_at", ago: ago_text(i.last_seen_at)) : t("integrator.waiting_hint") %></p>
+  <% problems = i.alerts.except("last_outage_to").keys %>
+  <% if problems.any? %>
+    <ul class="mt-3 grid gap-1">
+      <% problems.each do |k| %><li class="ss-item"><%= icon("exclamation-circle", "size-4 text-warn") %><%= t("integrator.labels.#{k}", default: k) %> <span class="text-xs text-muted"><%= t("integrator.since", at: l(Time.zone.parse(i.alerts[k]), format: :short)) %></span></li><% end %>
+    </ul>
+  <% end %>
+</section>
+
+<% if i.last_seen_at %>
+  <% s, b, h = i.server, i.backup, i.house %>
+  <section class="ss-card ss-card-pad mt-4" aria-labelledby="inst-resumo-t">
+    <h2 id="inst-resumo-t"><%= t("integrator.summary") %></h2>
+    <dl class="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2 text-sm">
+      <% rows = { t("integrator.temp") => (s["temp"] ? "#{s['temp']} °C" : "—"), t("integrator.cpu") => "#{s['cpu'] || '—'}%", t("integrator.memory") => "#{s['memory'] || '—'}%",
+                  t("integrator.disk") => (s.dig("disk", "used") ? t("integrator.disk_value", used: s.dig("disk", "used"), free: s.dig("disk", "free")) : "—"),
+                  t("integrator.internet") => (s["online"] == false ? t("integrator.offline_now") : t("integrator.online")),
+                  t("integrator.last_outage") => ServerVitals.outage_text(s["last_outage"]),
+                  t("integrator.backup_offsite") => (b["offsite_at"] ? l(Time.zone.parse(b["offsite_at"]), format: :short) : t("integrator.never")),
+                  t("integrator.restore") => (b["restored_at"] ? "#{l(Time.zone.parse(b['restored_at']), format: :short)} · #{b['restore_ok'] ? t('integrator.ok') : t('integrator.failed')}" : t("integrator.never")),
+                  t("integrator.devices") => t("integrator.devices_value", n: h["devices"].to_i, off: h["points_unavailable"].to_i),
+                  t("integrator.failures") => t("integrator.failures_value", commands: h["commands_failed_24h"].to_i, total: h["commands_24h"].to_i, runs: h["runs_failed_24h"].to_i) } %>
+      <% rows.each do |k, v| %><div class="flex justify-between gap-3 border-b border-line py-1"><dt class="text-muted"><%= k %></dt><dd class="text-ink font-semibold text-right"><%= v %></dd></div><% end %>
+    </dl>
+  </section>
+
+  <% if @samples.size > 1 %>
+    <section class="ss-card ss-card-pad mt-4" aria-label="<%= t("integrator.charts") %>">
+      <%= render Ss::TimeSeriesChartComponent.new(title: t("integrator.charts"), from: @samples.first.at, to: @samples.last.at, height: 220,
+                                                  series: [ series.(:temp, t("integrator.temp"), "°C"), series.(:disk_used, t("integrator.disk"), "%"), series.(:memory, t("integrator.memory"), "%") ]) %>
+    </section>
+  <% end %>
+<% end %>
+
+<section class="ss-card ss-card-pad mt-4" aria-labelledby="inst-ajustes-t">
+  <h2 id="inst-ajustes-t"><%= t("integrator.settings") %></h2>
+  <%= ss_form_with model: i, scope: :installation, url: integrator_installation_path(i), method: :patch, class: "mt-3 grid gap-4 md:grid-cols-2" do |f| %>
+    <%= f.ss_text_field :name, label: t("integrator.client"), required: true, maxlength: 80 %>
+    <%= f.ss_text_field :max_version, label: t("integrator.max_version"), placeholder: "v0.9.3", help: t("integrator.max_version_hint"), class: "num" %>
+    <%= f.ss_text_area :notes, label: t("integrator.notes"), rows: 3, wrapper_class: "md:col-span-2" %>
+    <div class="md:col-span-2 flex flex-wrap gap-2">
+      <%= f.ss_submit t("integrator.save") %>
+      <%= render Ss::ButtonComponent.new(label: t("integrator.remove"), href: integrator_installation_path(i), method: :delete, variant: :ghost, tone: :danger,
+                                         confirm: t("integrator.remove_confirm", name: i.name), confirm_tone: :danger, confirm_button: t("integrator.remove")) %>
+    </div>
+  <% end %>
+</section>
+<% end %>

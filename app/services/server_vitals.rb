@@ -100,9 +100,13 @@ module ServerVitals
     list.max_by { |o| o["to"].to_s }
   end
 
-  def last_outage_text(s = state)
-    o = last_outage(s) or return I18n.t("server_vitals.none")
-    I18n.t("server_vitals.last.#{o['kind']}", duration: duration(o["seconds"]), **span(o))
+  def last_outage_text(s = state) = outage_text(last_outage(s))
+
+  # {"kind", "from", "to", "seconds"} → "Sem internet por 4 h 45 min (17/11 18:46 a 23:32)".
+  def outage_text(o)
+    return I18n.t("server_vitals.none") unless o.is_a?(Hash) && o["from"] && o["to"]
+
+    I18n.t("server_vitals.last.#{o['kind'] == 'off' ? 'off' : 'network'}", duration: duration(o["seconds"]), **span(o))
   end
 
   def outage(from, to) = { "from" => from.iso8601, "to" => to.iso8601, "seconds" => (to - from).to_i }
@@ -133,7 +137,8 @@ module ServerVitals
   def duration(seconds)
     d, rest = seconds.to_i.divmod(86_400)
     h, rest = rest.divmod(3600)
-    m = [ rest / 60, 1 ].max
-    [ ("#{d} d" if d.positive?), ("#{h} h" if h.positive?), ("#{m} min" unless d.positive? && h.positive?) ].compact.join(" ")
+    m = rest / 60
+    parts = [ ("#{d} d" if d.positive?), ("#{h} h" if h.positive?), ("#{m} min" if m.positive? && d.zero?) ].compact
+    parts.empty? ? "1 min" : parts.join(" ")
   end
 end

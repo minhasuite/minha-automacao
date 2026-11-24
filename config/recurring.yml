@@ -37,6 +37,14 @@ production:
   server_watch:
     class: ServerWatchJob
     schedule: every minute
+  # Integrador (Integrator): resumo da instalação para a central (só com INTEGRATOR_URL/TOKEN) e, na central,
+  # os avisos sobre as instalações (só com INTEGRATOR_HUB=1).
+  integrator_report:
+    class: IntegratorReportJob
+    schedule: every 5 minutes
+  integrator_watch:
+    class: IntegratorWatchJob
+    schedule: every minute
   # Câmeras (F8): streams do go2rtc.
   go2rtc_sync:
     class: Go2rtcSyncJob

@@ -1,0 +1,3 @@
+<%# locals: (installation:) -%>
+<% tones = { "ok" => :success, "warn" => :warn, "error" => :danger, "offline" => :danger, "waiting" => :muted } %>
+<%= render Ss::BadgeComponent.new(label: t("integrator.status.#{installation.status}"), tone: tones.fetch(installation.status, :muted), dot: true) %>

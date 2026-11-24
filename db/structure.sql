@@ -786,6 +786,42 @@ CREATE TABLE public.guest_links (
 
 
 --
+-- Name: installation_samples; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.installation_samples (
+    installation_id uuid NOT NULL,
+    at timestamp(6) without time zone NOT NULL,
+    temp integer,
+    cpu integer,
+    memory integer,
+    disk_used integer,
+    online boolean
+);
+
+
+--
+-- Name: installations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.installations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    name character varying NOT NULL,
+    token_digest character varying NOT NULL,
+    last_report jsonb DEFAULT '{}'::jsonb NOT NULL,
+    last_seen_at timestamp(6) without time zone,
+    status character varying DEFAULT 'waiting'::character varying NOT NULL,
+    version_tag character varying,
+    max_version character varying,
+    alerts jsonb DEFAULT '{}'::jsonb NOT NULL,
+    notes text,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: integrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2326,6 +2362,14 @@ ALTER TABLE ONLY public.guest_links
 
 
 --
+-- Name: installations installations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.installations
+    ADD CONSTRAINT installations_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: integrations integrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3445,6 +3489,34 @@ CREATE UNIQUE INDEX index_guest_links_on_token_digest ON public.guest_links USIN
 
 
 --
+-- Name: index_installation_samples_on_installation_id_and_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_installation_samples_on_installation_id_and_at ON public.installation_samples USING btree (installation_id, at);
+
+
+--
+-- Name: index_installations_on_tenant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_installations_on_tenant_id ON public.installations USING btree (tenant_id);
+
+
+--
+-- Name: index_installations_on_tenant_id_and_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_installations_on_tenant_id_and_name ON public.installations USING btree (tenant_id, name);
+
+
+--
+-- Name: index_installations_on_token_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_installations_on_token_digest ON public.installations USING btree (token_digest);
+
+
+--
 -- Name: index_integrations_on_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4279,6 +4351,14 @@ ALTER TABLE ONLY public.schedules
 
 ALTER TABLE ONLY public.guest_links
     ADD CONSTRAINT fk_rails_0862434461 FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
+
+
+--
+-- Name: installations fk_rails_0cc4405a4a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.installations
+    ADD CONSTRAINT fk_rails_0cc4405a4a FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
 
 
 --
@@ -5138,6 +5218,14 @@ ALTER TABLE ONLY public.schedules
 
 
 --
+-- Name: installation_samples fk_rails_ad30990ac7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.installation_samples
+    ADD CONSTRAINT fk_rails_ad30990ac7 FOREIGN KEY (installation_id) REFERENCES public.installations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: notifications fk_rails_b080fb4855; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5512,6 +5600,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261124180000'),
 ('20261115120917'),
 ('20261114183417'),
 ('20261113120731'),

@@ -4,7 +4,8 @@ module Updates
   # botão) a cada instalação; depois, com "atualizar sozinho" ligado, dentro da
   # janela e sem outra rodando, começa a atualização para a release do canal.
   # Estável só depois de AUTO_MIN_AGE publicada; uma versão que voltou ou falhou
-  # não é tentada de novo sozinha (o botão continua valendo).
+  # não é tentada de novo sozinha (o botão continua valendo). Com o freio da central do integrador
+  # (`Integrator.max_version`), não passa da versão liberada.
   module Auto
     module_function
 
@@ -25,10 +26,17 @@ module Updates
       return :none unless Updates.available?(release)
       return :failed_before if cfg["failed_tag"] == release["tag"]
       return :too_new unless old_enough?(release, now)
+      return :held if held?(release)
 
       Updates.start!(release["tag"])
       Updates.save_settings!("auto_started" => release["tag"], "auto_started_at" => now.iso8601)
       :started
+    end
+
+    # Freio da central do integrador (Integrator.max_version): não passa da versão que a central liberou.
+    def held?(release)
+      max = Integrator.max_version or return false
+      Updates.newer?(release["tag"], max)
     end
 
     def old_enough?(release, now)

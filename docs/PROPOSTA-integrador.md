@@ -1,6 +1,6 @@
 # Proposta: o MA nos clientes do integrador (várias instalações)
 
-Rascunho de 24/11/2026, para aprovar. Cenário: o Herlon instala e mantém o Minha Automação na casa ou empresa
+Aprovada em 24/11/2026 (etapas 1 a 3 e o freio feitos no mesmo dia; ver "Andamento" no fim). Cenário: o Herlon instala e mantém o Minha Automação na casa ou empresa
 dos clientes dele. A plataforma continua livre (Apache 2.0): nada aqui é cobrança, licença ou nuvem paga. O
 objetivo é cuidar de N instalações sem ir lá e sem entrar por SSH em cada uma.
 
@@ -25,8 +25,9 @@ integrador (`POST` https, um token por instalação):
   worker vivo (batimento do Solid Queue), fila atrasada.
 - **Rede**: se a internet e a rede de casa respondem; ao voltar de uma queda, **quanto tempo ficou fora**
   (o envio que não saiu fica guardado e vai quando a rede volta).
-- **Casa**: as verificações de Saúde que já existem (status por verificação), aparelhos sem sinal (contagem e os
-  5 primeiros), comandos que falharam e automações com erro nas últimas 24 h, chamadas de IA com erro.
+- **Casa**: as verificações de Saúde que já existem (só o status e quantos problemas por verificação), contagem de
+  aparelhos e de pontos sem sinal, comandos que falharam e automações com erro nas últimas 24 h, chamadas de IA com
+  erro. **Só contagens**: nome de aparelho fica de fora (na casa piloto, "Echo Suíte Eva" carrega o nome de uma pessoa).
 - **Backup**: último dump local, última cópia fora, último teste de restauração e o resultado.
 
 **Fica de fora, de propósito (LGPD e confiança do cliente)**: imagem de câmera, nome de pessoa, localização,
@@ -38,8 +39,9 @@ calculado duas vezes) e um job recorrente manda (`IntegratorReportJob`). Liga co
 
 ## 2. A central do integrador
 
-**Proposta: a própria Minha Automação, numa instância na VPS, no papel de central** (a demonstração na VPS
-já é publicada pelo CI). Reaproveita login, papéis, avisos com push para o celular do Herlon, a tela no padrão
+**A própria Minha Automação, numa instância só dela na VPS, no papel de central** (mesma imagem, banco e
+subdomínio próprios). Não é a instância de demonstração da VPS: aquela existe para o revisor da Play, com login de
+teste, e não pode ver cliente. Reaproveita login, papéis, avisos com push para o celular do Herlon, a tela no padrão
 Lista Clara e o app. Nada de produto novo. A tela só aparece onde `INTEGRATOR_HUB=1`.
 
 - **Lista de clientes** com semáforo (ok / atenção / com erro), visto por último, versão, temperatura, disco,
@@ -101,3 +103,12 @@ está vivo (nada de temperatura, backup ou problemas), por isso fica como plano 
 - Forçar temperatura (limite baixo de teste) e disco: a central avisa e depois mostra o "voltou".
 - Segurar uma versão na central: um servidor de teste no canal Estável não atualiza para ela.
 - Restaurar a cópia mais nova da casa num segundo equipamento e abrir o painel com os aparelhos.
+
+## Andamento
+
+- 24/11/2026: etapa 1 no ar na casa (`ServerVitals`, `ServerWatchJob`, verificação "Servidor" da Saúde). Etapas 2 e
+  3 e o freio no código (`Integrator`, `Integrator::Report`, `Integrator::Watch`, `Installation`, `/integrador`,
+  `POST /api/v1/integrador/resumo`, `Updates::Auto.held?`). Falta subir a instância da central na VPS (compose,
+  Caddy, DNS, segredos no vault) e ligar a casa nela (`INTEGRATOR_URL`/`INTEGRATOR_TOKEN`).
+- Fora por enquanto: o aviso "versão atrás da estável há mais de 7 dias" (pede a central consultar as releases).
+

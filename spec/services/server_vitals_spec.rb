@@ -25,6 +25,7 @@ RSpec.describe ServerVitals do
     File.write(pi.join("class/thermal/thermal_zone0/temp"), "47234")
     expect(described_class.temperature(pi.to_s)).to eq(47)
     expect(described_class.temperature(dir.join("vazio").to_s)).to be_nil
+    expect([ 3600, 285 * 60, 90, 30, 90_000 ].map { |x| described_class.duration(x) }).to eq([ "1 h", "4 h 45 min", "1 min", "1 min", "1 d 1 h" ])
     expect([ described_class.level(61), described_class.level(88), described_class.level(97), described_class.level(nil) ]).to eq(%w[ok warn error ok])
   end
 
