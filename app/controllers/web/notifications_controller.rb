@@ -10,7 +10,12 @@ module Web
       @filters = Notifications::Filter.active(filter_params)
       @choices = Notifications::Filter.choices(current_user)
       @mutes = Notifications.mute_list(current_user)
-      @pagy, @notifications = pagy(Notifications::Filter.apply(Notification.for_user(current_user), @filters).order(created_at: :desc))
+      scope = Notifications::Filter.apply(Notification.for_user(current_user), @filters)
+      @pagy, @notifications = pagy(scope.order(created_at: :desc))
+      @unread = scope.unread.count
+      # Alertas ainda abertos dos avisos desta página: o "Ciente" vai no próprio aviso.
+      ids = @notifications.filter_map { |n| n.data.to_h["alert_id"] if n.kind == "alerta" }
+      @alerts = Alert.where(id: ids, site_id: Site.visible_to(current_user).select(:id)).includes(:site).index_by(&:id)
     end
 
     # Sino: os últimos avisos (frame do popover; os links vão para a página inteira).
@@ -31,7 +36,7 @@ module Web
       return redirect_to(notifications_path) unless params[:open].present?
 
       url = n.open_url
-      redirect_to(url&.start_with?("/") ? url : notifications_path(anchor: helpers.dom_id(n)))
+      redirect_to(url&.start_with?("/") ? url : notifications_path(anchor: helpers.notification_anchor(n)))
     end
 
     # Botão do aviso (Lote 1): a primeira resposta vale e vira o evento das automações.

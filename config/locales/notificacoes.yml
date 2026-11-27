@@ -1,5 +1,10 @@
 # Notificações com menos ruído (Notifications; docs/push.md, "Menos ruído").
 pt-BR:
+  # O selo do nível na central do pacote (Ss::NotificationCenterComponent) com os nomes do app.
+  componentes_ui:
+    notification_center:
+      level_warning: "Importante"
+      level_critical: "Crítico"
   notifications:
     bell:
       title: "Avisos"
@@ -113,6 +118,11 @@ pt-BR:
       house_quiet_on: "Ligado"
       save: "Salvar"
 en:
+  # O selo do nível na central do pacote (Ss::NotificationCenterComponent) com os nomes do app.
+  componentes_ui:
+    notification_center:
+      level_warning: "Important"
+      level_critical: "Critical"
   notifications:
     bell:
       title: "Notifications"
@@ -226,6 +236,11 @@ en:
       house_quiet_on: "On"
       save: "Save"
 es:
+  # O selo do nível na central do pacote (Ss::NotificationCenterComponent) com os nomes do app.
+  componentes_ui:
+    notification_center:
+      level_warning: "Importante"
+      level_critical: "Crítico"
   notifications:
     bell:
       title: "Avisos"

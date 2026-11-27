@@ -71,7 +71,10 @@ RSpec.describe "Web no celular" do
     get "/alertas"
     expect(response.body).to include("há 40 min")
     get "/notificacoes"
-    expect(response.body).to match(%r{<time datetime="[^"]+" title="[^"]+">há 1 min</time>})
+    # A central do pacote agrupa por dia ("Hoje") e mostra a hora de cada aviso.
+    central = Nokogiri::HTML(response.body).at_css("section.ss-ncenter")
+    expect(central.at_css(".ss-ncenter-day").text).to eq("Hoje")
+    expect(central.at_css("time.ss-ncenter-time")["datetime"]).to be_present
     expect(response.body).to include('name="theme-color" content="#f6f5fb" media="(prefers-color-scheme: light)"',
                                       'name="apple-mobile-web-app-status-bar-style" content="default"')
   end

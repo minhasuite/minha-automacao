@@ -31,6 +31,28 @@ RSpec.describe "Central de notificações com menos ruído" do
       expect(sistema.reload.read_at).to be_nil
     end
 
+    it "aviso rico na central do pacote: nível, silenciar e o Ciente do alerta aberto" do
+      alert = within(tenant) do
+        rule = AlertRule.create!(site: site, point: gate, name: "Portão aberto", operator: "eq", value: true, severity: "critical")
+        Alert.create!(site: site, alert_rule: rule, point: gate, opened_at: 5.minutes.ago)
+      end
+      within(tenant) { Notifier.notify!(kind: "alerta", title: "Portão aberto há 5 min", push: false, data: { "alert_id" => alert.id, "point_id" => gate.id, "site_id" => site.id, "priority" => "critical" }) }
+      get "/notificacoes"
+      doc = Nokogiri::HTML(response.body)
+      item = doc.css(".ss-ncenter-item").find { |li| li.text.include?("Portão aberto há 5 min") }
+      expect(item["class"]).to include("is-critical", "is-unread")
+      expect(item.at_css(".ss-ncenter-level").text).to include("Crítico")
+      expect(item.at_css("form[action='/alertas/#{alert.id}/ciente?back=notificacoes']").text).to include("Ciente")
+      expect(item.at_css("details.ss-ncenter-mute").text).to include("Silenciar")
+      expect(doc.at_css(".ss-ncenter-head").text).to include("Marcar todas como lidas")
+
+      post "/alertas/#{alert.id}/ciente", params: { back: "notificacoes" }
+      expect(response).to redirect_to("/notificacoes")
+      expect(within(tenant) { alert.reload.acked? }).to be true
+      get "/notificacoes"
+      expect(response.body).not_to include("/alertas/#{alert.id}/ciente")
+    end
+
     it "silencia pelo aviso, lista e reativa" do
       patch "/notificacoes/#{aviso.id}/silenciar", params: { hours: 4 }
       expect(flash[:notice]).to include("Portão silenciado até")
@@ -84,7 +106,7 @@ RSpec.describe "Central de notificações com menos ruído" do
       patch "/notificacoes/#{aviso.id}/lida", params: { open: 1 }
       expect(response).to redirect_to("/locais/#{site.id}")
       patch "/notificacoes/#{sistema.id}/lida", params: { open: 1 }
-      expect(response).to redirect_to("/notificacoes#notification_#{sistema.id}")
+      expect(response).to redirect_to("/notificacoes#notificacoes-item-#{sistema.id}")
       get "/notificacoes/contagem"
       expect(response.parsed_body).to eq("count" => 0)
 

@@ -12,7 +12,8 @@ module Web
       alert = Alert.find(params[:id])
       authorize_site!(alert.site, :command, risk: "sensitive")
       alert.ack!(current_user)
-      redirect_to alerts_path, notice: t("automations.flash.alert_ack")
+      # Pelo aviso da central (`back=notificacoes`): fica nela.
+      redirect_to (params[:back] == "notificacoes" ? notifications_path : alerts_path), notice: t("automations.flash.alert_ack")
     end
   end
 end
