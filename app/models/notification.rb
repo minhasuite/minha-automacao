@@ -21,7 +21,10 @@ class Notification < ApplicationRecord
   validates :kind, inclusion: { in: KINDS }
   validates :title, presence: true
 
-  scope :unread, -> { where(read_at: nil) }
+  # Arquivada sai da lista e do sino (não conta como não lida) e volta pelo desfazer.
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
+  scope :unread, -> { active.where(read_at: nil) }
   # O que esta pessoa vê no sino: o que é dela e, se for admin, o da empresa.
   scope :for_user, ->(u) { u.admin? ? where(user_id: [ u.id, nil ]) : where(user_id: u.id) }
   scope :tagged, ->(tag) { where("notifications.data->>'tag' = ?", tag) }
@@ -29,6 +32,10 @@ class Notification < ApplicationRecord
   # Botão do sistema no push (docs/push.md, "Menos ruído"): silencia a
   # automação/ponto deste aviso para quem tocou, sem responder ao aviso.
   MUTE_ACTION = "ma-mute".freeze
+
+  def archive! = archived_at.present? || update!(archived_at: Time.current)
+
+  def unarchive! = archived_at.nil? || update!(archived_at: nil)
 
   # Nível do aviso: normal, high (importante) ou critical (fura o silêncio).
   def level = Notifications.level(self)

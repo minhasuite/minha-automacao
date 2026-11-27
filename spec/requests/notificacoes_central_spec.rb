@@ -31,6 +31,20 @@ RSpec.describe "Central de notificações com menos ruído" do
       expect(sistema.reload.read_at).to be_nil
     end
 
+    it "arquiva pelo botão da central, tira do sino e desfaz pelo aviso" do
+      get "/notificacoes"
+      expect(response.body).to include("/notificacoes/#{sistema.id}/arquivar", "Arquivar")
+      post "/notificacoes/#{sistema.id}/arquivar"
+      expect(response).to redirect_to("/notificacoes")
+      follow_redirect!
+      expect(response.body).to include("Notificação arquivada.", "/notificacoes/#{sistema.id}/desarquivar")
+      expect(response.body).not_to include("Atualização pronta")
+      get "/notificacoes/contagem"
+      expect(response.parsed_body["count"]).to eq(1)
+      post "/notificacoes/#{sistema.id}/desarquivar"
+      expect(sistema.reload.archived_at).to be_nil
+    end
+
     it "aviso rico na central do pacote: nível, silenciar e o Ciente do alerta aberto" do
       alert = within(tenant) do
         rule = AlertRule.create!(site: site, point: gate, name: "Portão aberto", operator: "eq", value: true, severity: "critical")
@@ -167,6 +181,19 @@ RSpec.describe "Central de notificações com menos ruído" do
       expect(data["digest"]).to eq("enabled" => true, "at" => "07:00")
       get "/api/v1/notifications/preferences", headers: headers
       expect(data).to include("house", "mute_hours")
+    end
+
+    it "arquiva (sai da lista e do não lido), lista em ?archived=true e desfaz" do
+      post "/api/v1/notifications/#{sistema.id}/archive", headers: headers
+      expect(data["archived_at"]).to be_present
+      expect(json["meta"]["unread_count"]).to eq(1)
+      get "/api/v1/notifications", headers: headers
+      expect(data.map { |n| n["title"] }).to eq([ "Portão: Aberto" ])
+      get "/api/v1/notifications", params: { archived: true }, headers: headers
+      expect(data.map { |n| n["title"] }).to eq([ "Atualização pronta" ])
+      post "/api/v1/notifications/#{sistema.id}/unarchive", headers: headers
+      expect(data["archived_at"]).to be_nil
+      expect(json["meta"]["unread_count"]).to eq(2)
     end
 
     it "NotifyRule aceita nível e janela" do

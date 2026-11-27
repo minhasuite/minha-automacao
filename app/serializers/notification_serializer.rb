@@ -1,5 +1,5 @@
 class NotificationSerializer < ApplicationSerializer
-  attributes :id, :kind, :title, :body, :data, :read_at, :created_at
+  attributes :id, :kind, :title, :body, :data, :read_at, :archived_at, :created_at
   # Lote 1 no app (F7): botões ainda respondíveis, resposta dada, link e imagem
   # (caminho relativo = no próprio servidor).
   attribute(:actions) { |n| n.responded_at ? [] : n.actions.map { |a| { id: a["id"], title: a["title"] } } }

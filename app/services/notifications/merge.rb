@@ -32,7 +32,7 @@ module Notifications
       return unless mergeable?(data)
 
       last = Notification.where(user_id: user&.id).where("notifications.data->>'merge_key' = ?", key(data))
-                         .where(responded_at: nil).where(updated_at: (now - window(data))..).order(updated_at: :desc).first
+                         .where(responded_at: nil, archived_at: nil).where(updated_at: (now - window(data))..).order(updated_at: :desc).first
       return unless last
 
       entries = Array(last.data["entries"])

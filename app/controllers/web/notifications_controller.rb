@@ -10,7 +10,7 @@ module Web
       @filters = Notifications::Filter.active(filter_params)
       @choices = Notifications::Filter.choices(current_user)
       @mutes = Notifications.mute_list(current_user)
-      scope = Notifications::Filter.apply(Notification.for_user(current_user), @filters)
+      scope = Notifications::Filter.apply(Notification.for_user(current_user).active, @filters)
       @pagy, @notifications = pagy(scope.order(created_at: :desc))
       @unread = scope.unread.count
       # Alertas ainda abertos dos avisos desta página: o "Ciente" vai no próprio aviso.
@@ -20,7 +20,7 @@ module Web
 
     # Sino: os últimos avisos (frame do popover; os links vão para a página inteira).
     def recent
-      @notifications = Notification.for_user(current_user).order(created_at: :desc).limit(RECENT)
+      @notifications = Notification.for_user(current_user).active.order(created_at: :desc).limit(RECENT)
       render layout: false
     end
 
@@ -55,6 +55,18 @@ module Web
       return redirect_back_or_to(notifications_path, notice: t("automations.flash.all_read")) if params[:back].present?
 
       redirect_to notifications_path(filters), notice: t("automations.flash.all_read")
+    end
+
+    # Sai da lista e do sino; o aviso de volta traz o Desfazer (unarchive).
+    def archive
+      Notification.for_user(current_user).find(params[:id]).archive!
+      flash[:undo_archive] = params[:id]
+      redirect_to notifications_path, notice: t("notifications.archive.done")
+    end
+
+    def unarchive
+      Notification.for_user(current_user).find(params[:id]).unarchive!
+      redirect_to notifications_path, notice: t("notifications.archive.undone")
     end
 
     # Silencia a automação/ponto deste aviso para mim por `hours`.

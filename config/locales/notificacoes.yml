@@ -51,6 +51,9 @@ pt-BR:
       empty: "Nada com estes filtros"
       empty_hint: "Tire um filtro para ver mais."
       clear: "Limpar filtros"
+    archive:
+      done: "Notificação arquivada."
+      undone: "Notificação de volta à lista."
     mute:
       push_button:
         one: "Silenciar %{count} h"
@@ -169,6 +172,9 @@ en:
       empty: "Nothing with these filters"
       empty_hint: "Remove a filter to see more."
       clear: "Clear filters"
+    archive:
+      done: "Notification archived."
+      undone: "Notification back on the list."
     mute:
       push_button:
         one: "Mute %{count} h"
@@ -287,6 +293,9 @@ es:
       empty: "Nada con estos filtros"
       empty_hint: "Quita un filtro para ver más."
       clear: "Limpiar filtros"
+    archive:
+      done: "Notificación archivada."
+      undone: "Notificación de vuelta en la lista."
     mute:
       push_button:
         one: "Silenciar %{count} h"

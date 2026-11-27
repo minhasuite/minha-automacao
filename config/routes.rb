@@ -81,6 +81,8 @@ Rails.application.routes.draw do
       patch :respond, on: :member, path: "responder"
       patch :read_all, on: :collection, path: "todas-lidas"
       patch :mute, on: :member, path: "silenciar"
+      post :archive, on: :member, path: "arquivar"
+      post :unarchive, on: :member, path: "desarquivar"
       delete :unmute, on: :collection, path: "silencios"
       get :digest, on: :collection, path: "resumo"
       # Sino do topo (shell-sino): os últimos avisos (frame do popover) e o contador (JSON).
@@ -527,6 +529,8 @@ Rails.application.routes.draw do
         patch :read, on: :member
         post :respond, on: :member
         patch :read, on: :collection, action: :read_all
+        post :archive, on: :member
+        post :unarchive, on: :member
         # Menos ruído (docs/push.md): silenciar a origem, resumo e preferências.
         post :mute, on: :member
         delete :mutes, on: :collection, action: :unmute

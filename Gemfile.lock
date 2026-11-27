@@ -1,9 +1,9 @@
 GIT
   remote: https://github.com/minhasuite/componentes-ui.git
-  revision: 68fb18d0653a3a5d74213f4cd91bf5903c6ca0a6
-  tag: v1.9.3
+  revision: 5b9a509bed658026739d57ccc6068cbf1ceeef73
+  tag: v1.14.1
   specs:
-    componentes_ui (1.9.3)
+    componentes_ui (1.14.1)
       railties (>= 8.0)
       tailwindcss-rails (>= 4.2)
       view_component (>= 3.9)

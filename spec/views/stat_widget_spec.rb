@@ -11,6 +11,7 @@ RSpec.describe "web/dashboards/widgets/_stat" do
   end
 
   it "mantém o texto de outras unidades" do
-    expect(Nokogiri::HTML(render_stat("32,7 kWh")).css(".ss-kpi-card-value").text.squish).to eq("32,7 kWh")
+    # v1.14: o valor do KPI é o odômetro (os rolos de dígitos); o texto lido fica no .ss-sr.
+    expect(Nokogiri::HTML(render_stat("32,7 kWh")).css(".ss-kpi-card-value .ss-sr").text.squish).to eq("32,7 kWh")
   end
 end

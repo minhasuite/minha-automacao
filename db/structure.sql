@@ -896,7 +896,8 @@ CREATE TABLE public.notifications (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     responded_at timestamp(6) without time zone,
-    response jsonb
+    response jsonb,
+    archived_at timestamp(6) without time zone
 );
 
 
@@ -5600,6 +5601,7 @@ ALTER TABLE public.readings
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261127120000'),
 ('20261124180000'),
 ('20261115120917'),
 ('20261114183417'),

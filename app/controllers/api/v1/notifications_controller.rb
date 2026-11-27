@@ -1,10 +1,13 @@
 module Api
   module V1
     class NotificationsController < BaseController
-      # GET /notifications?unread=true&kind=&area_id=&level= — meta traz as
-      # opções dos filtros (rótulos já no idioma) e o que está silenciado.
+      # GET /notifications?unread=true&kind=&area_id=&level=&archived= — meta traz as
+      # opções dos filtros (rótulos já no idioma) e o que está silenciado. Sem as
+      # arquivadas; ?archived=true lista só elas.
       def index
-        scope = Notifications::Filter.apply(Notification.for_user(current_user), filter_params).order(created_at: :desc)
+        base = Notification.for_user(current_user)
+        base = ActiveModel::Type::Boolean.new.cast(params[:archived]) ? base.archived : base.active
+        scope = Notifications::Filter.apply(base, filter_params).order(created_at: :desc)
         records, meta = paginate(scope)
         choices = Notifications::Filter.choices(current_user)
         filters = choices.transform_values { |list| list.map { |v, l| { value: v, label: l } } }
@@ -60,6 +63,20 @@ module Api
         Notifications::Settings.update(current_user, params.permit(:quiet_enabled, :quiet_from, :quiet_to, :digest_enabled, :digest_at, :mute_hours,
                                                                    :house_quiet_enabled, :house_quiet_from, :house_quiet_to, :merge_s))
         render_data(Notifications::Settings.show(current_user.reload))
+      end
+
+      # POST /notifications/:id/archive — sai da lista e do sino.
+      def archive
+        notification = Notification.for_user(current_user).find(params[:id])
+        notification.archive!
+        render_data(NotificationSerializer.new(notification).to_h, meta: { unread_count: Notification.for_user(current_user).unread.count })
+      end
+
+      # POST /notifications/:id/unarchive — o desfazer do arquivar.
+      def unarchive
+        notification = Notification.for_user(current_user).find(params[:id])
+        notification.unarchive!
+        render_data(NotificationSerializer.new(notification).to_h, meta: { unread_count: Notification.for_user(current_user).unread.count })
       end
 
       # PATCH /notifications/:id/read
