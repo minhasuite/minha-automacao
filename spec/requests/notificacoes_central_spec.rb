@@ -83,6 +83,20 @@ RSpec.describe "Central de notificações com menos ruído" do
       expect(Notifications.merge_window(tenant.reload)).to eq(60)
     end
 
+    it "o Abrir com link de fora abre em outra aba; o de dentro fica na mesma (componentes_ui v1.9.3)" do
+      within(tenant) do
+        aviso.update!(data: aviso.data.merge("url" => "https://exemplo.com.br/relatorio"))
+        sistema.update!(data: sistema.data.to_h.merge("url" => "/locais/#{site.id}"))
+      end
+      get "/notificacoes"
+      doc = Nokogiri::HTML(response.body)
+      fora = doc.at_css("a[href='https://exemplo.com.br/relatorio']")
+      expect(fora["target"]).to eq("_blank")
+      expect(fora["rel"]).to include("noopener")
+      dentro = doc.at_css("a[href='/locais/#{site.id}']")
+      expect(dentro["target"]).to be_nil
+    end
+
     it "sino do topo: contador, últimos avisos, abrir marca como lido e leva ao destino, marcar todos fica na tela" do
       within(tenant) { aviso.update!(data: aviso.data.merge("url" => "/locais/#{site.id}")) }
       get "/locais"
