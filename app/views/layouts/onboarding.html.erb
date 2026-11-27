@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title><%= [ @step&.title, t("onboarding.title"), "Minha Automação" ].compact.join(" — ") %></title>
-  <meta name="view-transition" content="same-origin">
+  <%= ss_view_transitions_head %>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= render "web/shared/pwa_head" %>

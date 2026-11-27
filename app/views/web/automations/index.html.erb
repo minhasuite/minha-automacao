@@ -30,7 +30,7 @@
     <%= render layout: "web/shared/category_group", locals: { name: category, count: items.size, grouped: groups.size > 1 || category } do %>
     <ul class="ss-card ss-rows" aria-label="<%= t("automations.index.list") %><%= " · #{category}" if category %>">
       <% items.each do |a| %>
-        <li id="automation-<%= a.id %>">
+        <%= tag.li id: "automation-#{a.id}", **ss_view_transition_attrs(a) do %>
           <% if can?(:manage) %><%= ss_fields do |f| %><%= f.ss_check_box "ids[]", checked_value: a.id, unchecked_value: nil, id: "bulk-row-#{a.id}", form: "bulk", label: t("automations.common.mark", name: a.name), hide_label: true, data: { ss_table_target: "check", action: "ss-table#toggleRow" } %><% end %><% end %>
           <%# No celular o ícone sai (a chave já diz se está ligada) e o texto encolhe: chave e execuções ficam na linha do nome. %>
           <span class="ss-icon-tile max-sm:hidden <%= a.enabled ? 'is-grad' : 'is-muted' %>"><%= icon(a.icon.presence_in(HelperTypes::ICONS) || "lightning-bolt") %></span>
@@ -53,7 +53,7 @@
             <% end %>
           </div>
           <% end %>
-        </li>
+        <% end %>
       <% end %>
     </ul>
     <% end %>

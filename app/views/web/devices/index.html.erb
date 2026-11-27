@@ -32,14 +32,14 @@
     <ul class="ss-rows ss-card overflow-hidden" aria-label="<%= t("devices.mobile_list") %>">
       <% @devices.each do |d| %>
         <% label, tone, note = device_situation(d) %>
-        <li class="relative">
+        <%= tag.li class: "relative", **ss_view_transition_attrs(d) do %>
           <span class="ss-icon-tile text-accent"><%= icon(device_icon(d), "") %></span>
           <span class="min-w-0 flex-1">
             <%= link_to d.name, device_path(d), class: "block font-semibold text-ink no-underline truncate after:absolute after:inset-0" %>
             <span class="block text-sm text-muted truncate"><%= [ d.area&.name, t("devices.points_count", count: @points.fetch(d.id, 0)), d.integration&.name || d.driver_label ].compact.join(" · ") %></span>
           </span>
           <span class="ss-badge ss-badge-dot ss-badge-<%= tone %> shrink-0" title="<%= note %>"><%= label %></span>
-        </li>
+        <% end %>
       <% end %>
     </ul>
     <%= render "web/shared/pagination", pagy: @pagy %>
@@ -52,10 +52,10 @@
                                         pagination: { page: @pagy.page, pages: @pagy.pages, total: @pagy.count }) do |tb| %>
     <% tb.column :name, t("devices.name"), sortable: true, hideable: false do |d| %>
       <%# No celular a linha vira cartão com a caixa de marcar no canto: o nome deixa o espaço dela. %>
-      <div class="flex items-center gap-3 min-w-0 max-sm:pr-7">
+      <%= tag.div class: "flex items-center gap-3 min-w-0 max-sm:pr-7", **ss_view_transition_attrs(d) do %>
         <span class="ss-icon-tile size-9 text-accent max-sm:size-8"><%= icon(device_icon(d)) %></span>
         <div class="min-w-0 text-left"><%= link_to d.name, device_path(d), class: "font-semibold text-ink no-underline hover:text-accent" %></div>
-      </div>
+      <% end %>
     <% end %>
     <% tb.column :maker, t("devices.maker") do |d| %><span class="text-ink-2"><%= [ d.manufacturer, d.model ].compact_blank.join(" · ").presence || d.driver_label %></span><% end %>
     <% tb.column :area, t("devices.area"), sortable: true do |d| %><%= d.area&.name || "—" %><% end %>

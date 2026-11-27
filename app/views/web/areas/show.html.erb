@@ -1,4 +1,4 @@
-<%= render "web/shared/header", title: @area.name, subtitle: [ @area.kind_label, (@area.level_label if @area.floor?), @site.name ].compact.join(" · "), back: site_path(@site) do %>
+<%= render "web/shared/header", title: @area.name, subtitle: [ @area.kind_label, (@area.level_label if @area.floor?), @site.name ].compact.join(" · "), back: site_path(@site), view_transition: @area do %>
   <% if can?(:manage) %>
     <%= link_to new_site_device_path(@site, area_id: @area.id), class: "ss-btn ss-btn-primary" do %><%= icon("plus", "size-4") %><%= t("devices.new") %><% end %>
     <%= link_to edit_area_path(@area), class: "ss-btn ss-btn-ghost" do %><%= icon("pencil", "size-4") %><%= t("shared.edit") %><% end %>

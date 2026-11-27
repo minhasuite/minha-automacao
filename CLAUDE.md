@@ -827,7 +827,7 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
 
 - Controllers em `app/controllers/web/`, finos, chamando os mesmos serviços
   da API. Caminhos em português (`/entrar`, `/notificacoes`, `/configuracoes`).
-- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v0.23.5`; nos branches `onda7` e
+- Lista Clara vem da gem `componentes_ui` (tag no `Gemfile`, hoje `v1.9.1`; nos branches `onda7` e
   `mobile-ajustes`, temporariamente o branch `onda7` da gem, v0.25 pendente de tag):
   tokens, `.ss-*`, `Ss::*Component` e os controllers `ss-*` (`controllers/index.js`
   carrega os da gem). **Componente primeiro**: tela nova ou mexida usa o
@@ -843,7 +843,8 @@ de `/opt/minha-automacao`. Acesso inicial do dono em `acesso-inicial.txt`.
   "Falar com a casa" é o `Ss::FabComponent` do layout (`web/assist/_fab`, fora do `<main>`, local pelo
   `assist_site`), em toda tela; o topo do painel é o `Ss::PageComponent(eyebrow:, compact: true)` com o
   editar só em ícone (sem herói em degradê, sem atalho "Painéis").
-  Cabeçalho pelo `web/shared/_header` (`Ss::PageComponent` só com o topo); vazio pelo
+  Cabeçalho pelo `web/shared/_header` (`Ss::PageComponent` só com o topo; `view_transition:` = o registro cujo card
+  da lista leva `ss_view_transition_attrs`: aparelhos, áreas e automações, v1.9); vazio pelo
   `Ss::EmptyStateComponent` (com a ilustração do produto: `web/shared/_empty_art`,
   `with_art`); tabelas pelo `Ss::DataTableComponent` com ordem no servidor
   (`TableSort`); paleta Ctrl+K `Ss::CommandPaletteComponent` (`web/shared/_palette`,
