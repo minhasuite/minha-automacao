@@ -79,6 +79,7 @@ pt-BR:
     vs_previous: Contra o período anterior
     previous_was: "Mesmo trecho antes: %{kwh} · %{cost}"
     ranking: Ranking por aparelho
+    explain: "Soma do consumo dos %{n} aparelhos medidos em %{period}"
     by_cost: Pelo custo, com a tarifa do local
     by_kwh: Pelo consumo (defina a tarifa para ver o custo)
     empty: Nenhum aparelho com medição de energia ou potência neste local.
@@ -198,6 +199,7 @@ en:
     vs_previous: Versus the previous period
     previous_was: "Same stretch before: %{kwh} · %{cost}"
     ranking: Ranking by device
+    explain: "Sum of the usage of the %{n} metered devices in %{period}"
     by_cost: By cost, with the place's rate
     by_kwh: By usage (set the rate to see the cost)
     empty: No device measuring energy or power in this place.
@@ -317,6 +319,7 @@ es:
     vs_previous: Contra el período anterior
     previous_was: "Mismo tramo antes: %{kwh} · %{cost}"
     ranking: Ranking por aparato
+    explain: "Suma del consumo de los %{n} aparatos medidos en %{period}"
     by_cost: Por costo, con la tarifa del lugar
     by_kwh: Por consumo (define la tarifa para ver el costo)
     empty: Ningún aparato con medición de energía o potencia en este lugar.

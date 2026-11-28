@@ -24,6 +24,7 @@ module NotificationsHelper
       icon: icon(ico, ""), tone: (tone.delete_prefix("is-").to_sym unless level), level: level,
       href: read_notification_path(n), method: :patch,
       archive_href: archive_notification_path(n), archive_method: :post,
+      unarchive_href: unarchive_notification_path(n), unarchive_method: :post,
       image: n.image_url, image_alt: t("automations.notifications.image"),
       actions: notification_center_actions(n, alerts[n.data.to_h["alert_id"]]),
       mute: (notification_center_mute(n) if n.mute_key) }

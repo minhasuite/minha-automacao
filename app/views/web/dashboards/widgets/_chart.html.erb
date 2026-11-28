@@ -8,7 +8,7 @@
   <%= render Ss::CardHeaderComponent.new(title: title) %>
   <% if chart %>
     <%= render Ss::TimeSeriesChartComponent.new(title: title, series: chart[:series], bands: chart[:bands], from: chart[:from], to: chart[:to],
-                                                height: 180, locale: I18n.locale.to_s, time_zone: dashboard.site.timezone, css: "mt-2") %>
+                                                height: 180, locale: I18n.locale.to_s, time_zone: dashboard.site.timezone, scrub: true, css: "mt-2") %>
     <% if chart[:on_seconds] %><p class="text-sm text-ink-2 mt-2"><%= t("dashboards.w.on_for_html", time: tag.strong(duration_text(chart[:on_seconds]), class: "num")) %></p><% end %>
   <% else %>
     <%= render Ss::NoteComponent.new(text: t("dashboards.w.no_readings"), icon: icon("chart-bar", ""), css: "mt-3") %>

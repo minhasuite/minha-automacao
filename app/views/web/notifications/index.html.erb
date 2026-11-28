@@ -23,15 +23,17 @@
     </ul>
   </section>
 <% end %>
-<% if @notifications.any? %>
+<% if @notifications.any? || @archived %>
   <%# A central do pacote (v1.9.2, aviso rico): por dia, lido/não lido, nível, foto, botões de resposta, "Ciente" do
       alerta aberto, abrir o destino e silenciar a origem. Tocar no aviso marca como lido (fica nesta página). %>
+  <%# Arquivar com o desfazer da central e a aba Arquivadas com o Desarquivar (v1.14.2). %>
   <%= render Ss::NotificationCenterComponent.new(id: "notificacoes", label: t("automations.notifications.title"),
         unread_count: @unread, read_all_href: read_all_notifications_path(@filters),
+        archived: @archived, archive_undo: true, archived_url: notifications_path(arquivadas: 1), inbox_url: notifications_path,
         items: @notifications.map { |n| notification_center_item(n, @alerts) }) %>
   <%= render "web/shared/pagination", pagy: @pagy %>
 <% elsif @filters.any? %>
   <%= render Ss::EmptyStateComponent.new(title: t("notifications.filters.empty"), text: t("notifications.filters.empty_hint"), css: "ss-card") do %><%= link_to notifications_path, class: "ss-btn ss-btn-ghost" do %><%= icon("filter", "size-4") %><%= t("notifications.filters.clear") %><% end %><% end %>
 <% else %>
-  <%= render Ss::EmptyStateComponent.new(title: t("automations.notifications.empty"), text: t("automations.notifications.empty_hint"), css: "ss-card") do %><%= link_to push_subscriptions_path, class: "ss-btn ss-btn-ghost" do %><%= icon("bell", "size-4") %><%= t("automations.notifications.my_devices") %><% end %><% end %>
+  <%= render Ss::EmptyStateComponent.new(title: t("automations.notifications.empty"), text: t("automations.notifications.empty_hint"), css: "ss-card") do %><%= link_to push_subscriptions_path, class: "ss-btn ss-btn-ghost" do %><%= icon("bell", "size-4") %><%= t("automations.notifications.my_devices") %><% end %><%= link_to notifications_path(arquivadas: 1), class: "ss-btn ss-btn-ghost" do %><%= icon("archive", "size-4") %><%= t("notifications.archive.tab") %><% end %><% end %>
 <% end %>

@@ -4,8 +4,12 @@
 <% money = ->(v) { number_to_currency(v, unit: "R$ ", separator: ",", delimiter: ".") } %>
 <% title = w["label"].presence || t("dashboards.w.by_device") %>
 <div class="ss-card ss-card-pad h-full">
-  <%= render Ss::CardHeaderComponent.new(title: title, subtitle: [ d["period_label"], kwh.(d["total_kwh"]), (money.(d["total_cost"]) if d["total_cost"]) ].compact.join(" · "),
-                                         icon: icon("chart-bar", ""), tone: :heat) %>
+  <%# De onde vem o total (v1.13): a soma por aparelho; o app explica igual no toque longo. %>
+  <%= render(Ss::ExplainComponent.new(value: kwh.(d["total_kwh"]), title: title, formula: t("energy.explain", n: d["rows"].size, period: d["period_label"]),
+        items: d["rows"].first(6).map { |r| { label: r["name"], value: kwh.(r["kwh"]), hint: (money.(r["cost"]) if r["cost"]) } }, more: [ d["rows"].size - 6, 0 ].max)) do %>
+    <%= render Ss::CardHeaderComponent.new(title: title, subtitle: [ d["period_label"], kwh.(d["total_kwh"]), (money.(d["total_cost"]) if d["total_cost"]) ].compact.join(" · "),
+                                           icon: icon("chart-bar", ""), tone: :heat) %>
+  <% end %>
   <% if d["rows"].empty? %>
     <%= render Ss::NoteComponent.new(text: d["empty"] ? t("dashboards.w.no_energy_points") : t("dashboards.w.no_usage"), icon: icon("lightning-bolt", ""), css: "mt-3") %>
   <% else %>

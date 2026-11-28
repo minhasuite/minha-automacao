@@ -69,6 +69,9 @@
   </div>
 <% end %>
 
+<%# Desde a última visita (v1.13), só no Início e fora do quiosque: o ss-since guarda a visita no navegador e busca
+    o cartão em /desde (alertas, automações e gravações nos locais que a pessoa vê). %>
+<% if @home && live && !kiosk %><%= render Ss::SinceLastVisitComponent.new(src: "#{since_last_visit_path}?desde=%{since}", css: "mb-4 empty:mb-0") %><% end %>
 <%# Ideia 13: favoritos da pessoa no topo. A busca dentro do painel saiu (shell-sino): achar cartão, aparelho ou
     cômodo é pelo Ctrl+K (/busca: Search::WidgetsSource, DevicesSource, AreasSource). %>
 <% if @resolved["favorites_now"].present? %><%= render "web/dashboards/favorites", ids: @resolved["favorites_now"], points: points, live: live %><% end %>

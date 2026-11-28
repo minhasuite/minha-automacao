@@ -53,7 +53,8 @@ pt-BR:
       clear: "Limpar filtros"
     archive:
       done: "Notificação arquivada."
-      undone: "Notificação de volta à lista."
+      undone: "Notificação de volta à caixa de entrada."
+      tab: "Arquivadas"
     mute:
       push_button:
         one: "Silenciar %{count} h"
@@ -174,7 +175,8 @@ en:
       clear: "Clear filters"
     archive:
       done: "Notification archived."
-      undone: "Notification back on the list."
+      undone: "Notification back in the inbox."
+      tab: "Archived"
     mute:
       push_button:
         one: "Mute %{count} h"
@@ -295,7 +297,8 @@ es:
       clear: "Limpiar filtros"
     archive:
       done: "Notificación archivada."
-      undone: "Notificación de vuelta en la lista."
+      undone: "Notificación de vuelta en la bandeja de entrada."
+      tab: "Archivadas"
     mute:
       push_button:
         one: "Silenciar %{count} h"

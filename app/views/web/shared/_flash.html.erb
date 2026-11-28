@@ -1,8 +1,4 @@
 <%# Avisos da requisição na pilha da gem (#ss-toasts): o de sucesso some sozinho, o de erro
     fica até fechar. Resposta em Turbo Stream empilha com Ss::ToastStackComponent.append(turbo_stream, message:, tone:). %>
 <% toasts = { notice: :good, alert: :bad }.filter_map { |key, tone| { message: flash[key], tone: tone, sticky: tone == :bad } if flash[key].present? } %>
-<%# Arquivar aviso traz o Desfazer (8 s). %>
-<% if (archived = flash[:undo_archive].presence) && (toast = toasts.find { _1[:tone] == :good }) %>
-  <% toast.merge!(duration: 8, undo_url: unarchive_notification_path(archived), undo_method: :post) %>
-<% end %>
 <%= render Ss::ToastStackComponent.new(toasts: toasts) %>

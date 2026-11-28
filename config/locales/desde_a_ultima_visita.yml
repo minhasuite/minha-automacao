@@ -1,0 +1,43 @@
+# "Desde a última visita" (SinceLastVisit): o resumo do Início do web e do app (componentes_ui v1.13/v1.14.2).
+pt-BR:
+  since_last_visit:
+    alerts:
+      one: "alerta abriu"
+      other: "alertas abriram"
+    automations:
+      one: "automação rodou"
+      other: "automações rodaram"
+    failed:
+      one: "automação falhou"
+      other: "automações falharam"
+    recordings:
+      one: "gravação das câmeras"
+      other: "gravações das câmeras"
+en:
+  since_last_visit:
+    alerts:
+      one: "alert opened"
+      other: "alerts opened"
+    automations:
+      one: "automation ran"
+      other: "automations ran"
+    failed:
+      one: "automation failed"
+      other: "automations failed"
+    recordings:
+      one: "camera recording"
+      other: "camera recordings"
+es:
+  since_last_visit:
+    alerts:
+      one: "alerta se abrió"
+      other: "alertas se abrieron"
+    automations:
+      one: "automatización se ejecutó"
+      other: "automatizaciones se ejecutaron"
+    failed:
+      one: "automatización falló"
+      other: "automatizaciones fallaron"
+    recordings:
+      one: "grabación de las cámaras"
+      other: "grabaciones de las cámaras"

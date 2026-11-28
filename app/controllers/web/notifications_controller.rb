@@ -6,11 +6,14 @@ module Web
   class NotificationsController < ApplicationController
     RECENT = 8
 
+    # ?arquivadas=1: a aba Arquivadas da central (v1.14.2), com o Desarquivar.
     def index
+      @archived = params[:arquivadas].present?
       @filters = Notifications::Filter.active(filter_params)
       @choices = Notifications::Filter.choices(current_user)
       @mutes = Notifications.mute_list(current_user)
-      scope = Notifications::Filter.apply(Notification.for_user(current_user).active, @filters)
+      mine = Notification.for_user(current_user)
+      scope = Notifications::Filter.apply(@archived ? mine.archived : mine.active, @filters)
       @pagy, @notifications = pagy(scope.order(created_at: :desc))
       @unread = scope.unread.count
       # Alertas ainda abertos dos avisos desta página: o "Ciente" vai no próprio aviso.
@@ -57,16 +60,16 @@ module Web
       redirect_to notifications_path(filters), notice: t("automations.flash.all_read")
     end
 
-    # Sai da lista e do sino; o aviso de volta traz o Desfazer (unarchive).
+    # Sai da lista e do sino. O desfazer é da central (archive_undo: o POST só vem depois do tempo sem desfazer).
     def archive
       Notification.for_user(current_user).find(params[:id]).archive!
-      flash[:undo_archive] = params[:id]
-      redirect_to notifications_path, notice: t("notifications.archive.done")
+      redirect_to notifications_path
     end
 
+    # O "Desarquivar" da aba Arquivadas.
     def unarchive
       Notification.for_user(current_user).find(params[:id]).unarchive!
-      redirect_to notifications_path, notice: t("notifications.archive.undone")
+      redirect_to notifications_path(arquivadas: 1), notice: t("notifications.archive.undone")
     end
 
     # Silencia a automação/ponto deste aviso para mim por `hours`.

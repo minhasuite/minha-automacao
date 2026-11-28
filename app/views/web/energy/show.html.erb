@@ -12,7 +12,12 @@
   <% end %>
 </nav>
 <div class="grid gap-4 sm:grid-cols-3 mb-6">
-  <%= render Ss::KpiCardComponent.new(label: t("energy.used"), value: kwh.(r["total_kwh"]), icon: icon("lightning-bolt", ""), tone: :heat, caption: r["label"]) %>
+  <%# De onde vem o consumo (v1.13): a soma por aparelho, os que mais gastam com o link (o app explica igual). %>
+  <% rows = Array(r["rows"]) %>
+  <%= render(Ss::ExplainComponent.new(value: kwh.(r["total_kwh"]), title: t("energy.used"), formula: t("energy.explain", n: rows.size, period: r["label"]),
+        items: rows.first(6).map { |x| { label: x["name"], value: kwh.(x["kwh"]), hint: (money.(x["cost"]) if r["priced"]) } }, more: [ rows.size - 6, 0 ].max)) do %>
+    <%= render Ss::KpiCardComponent.new(label: t("energy.used"), value: kwh.(r["total_kwh"]), icon: icon("lightning-bolt", ""), tone: :heat, caption: r["label"]) %>
+  <% end %>
   <%= render Ss::KpiCardComponent.new(label: t("energy.cost"), value: r["priced"] ? money.(r["total_cost"]) : "—", money: r["priced"], icon: icon("cash", ""),
                                       caption: (r["priced"] ? nil : t("energy.no_tariff"))) %>
   <%= render Ss::KpiCardComponent.new(label: t("energy.vs_previous"), value: delta.(r["delta_pct"]), icon: icon((r["delta_pct"].to_i.positive? ? "trending-up" : "trending-down"), ""),

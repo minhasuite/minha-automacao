@@ -1,0 +1,7 @@
+<%# O cartão "desde a última visita" do Início: alertas, automações e o diário da casa. %>
+<% links = { "alerts" => [ alerts_path, "exclamation-circle" ], "automations" => [ logbook_path, "lightning-bolt" ],
+             "failed" => [ logbook_path, "exclamation" ], "recordings" => [ cameras_path, "video-camera" ] } %>
+<%= render Ss::SinceLastVisitComponent.new(since: @since, items: @items.map { |i|
+      href, ico = links.fetch(i[:key], [ nil, "bell" ])
+      { value: i[:value], label: i[:label], tone: i[:tone].to_sym, icon: ico, href: href }
+    }) %>

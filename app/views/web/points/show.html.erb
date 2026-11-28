@@ -25,7 +25,7 @@
       <%# Gráfico da gem: série com cursor e balão (faixa mín–máx nos rollups) ou faixa de liga/desliga. %>
       <%= render Ss::TimeSeriesChartComponent.new(title: @point.name, series: [ chart[:series] ].compact, bands: [ chart[:band] ].compact, from: @history.from, to: @history.to,
                                                   mode: (@point.capability.in?(%w[enum]) ? :step : :line), locale: I18n.locale.to_s,
-                                                  time_zone: @site.timezone, css: "mt-4") %>
+                                                  time_zone: @site.timezone, scrub: true, css: "mt-4") %>
       <% if chart[:on_seconds] %>
         <p class="text-sm text-ink-2 mt-3"><%= t("points.show.on_for_html", time: duration_text(chart[:on_seconds])) %></p>
       <% end %>

@@ -172,6 +172,8 @@ RSpec.describe "Pessoas e Energia" do
       travel_to(now) { get "/energia", params: { site_id: site.id, periodo: "month" } }
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Bomba Teste", "Ranking por aparelho", "+100%")
+      # De onde vem o consumo (componentes_ui v1.13): a soma por aparelho no ExplainComponent.
+      expect(response.body).to include('data-controller="ss-explain"', "Soma do consumo dos 2 aparelhos medidos")
 
       # Card "Gasto do mês por aparelho": energy_breakdown pelo custo, com a tarifa do local.
       w = within(tenant) { Dashboards::AddTo.widget("energy_month", site) }

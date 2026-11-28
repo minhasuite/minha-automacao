@@ -441,6 +441,7 @@ Rails.application.routes.draw do
     get "assistente/estado", to: "assist#status", as: :assist_status # voz-offline: modo offline e de onde vem cada etapa
     # Paridade com o HA (roadmap de vendas): Diário, Histórico e Mapa da instalação (um local por vez).
     get "diario", to: "logbook#show", as: :logbook
+    get "desde", to: "since_last_visit#show", as: :since_last_visit
     # Saúde dos aparelhos (Diagnostics): achados, reparos seguros, silenciar e ajustes do local.
     get "saude-aparelhos", to: "device_health#show", as: :device_health
     post "saude-aparelhos/reparar", to: "device_health#fix", as: :device_health_fix
@@ -525,6 +526,7 @@ Rails.application.routes.draw do
       patch "company", to: "companies#update"
       post "company/invites", to: "companies#invite"
 
+      get "since_last_visit", to: "since_last_visit#show"
       resources :notifications, only: :index do
         patch :read, on: :member
         post :respond, on: :member

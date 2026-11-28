@@ -31,17 +31,19 @@ RSpec.describe "Central de notificações com menos ruído" do
       expect(sistema.reload.read_at).to be_nil
     end
 
-    it "arquiva pelo botão da central, tira do sino e desfaz pelo aviso" do
+    it "arquiva com o desfazer da central, tira do sino e desarquiva pela aba Arquivadas" do
       get "/notificacoes"
-      expect(response.body).to include("/notificacoes/#{sistema.id}/arquivar", "Arquivar")
+      expect(response.body).to include("/notificacoes/#{sistema.id}/arquivar", "Arquivar", "ss-undoable", "/notificacoes?arquivadas=1")
       post "/notificacoes/#{sistema.id}/arquivar"
       expect(response).to redirect_to("/notificacoes")
       follow_redirect!
-      expect(response.body).to include("Notificação arquivada.", "/notificacoes/#{sistema.id}/desarquivar")
-      expect(response.body).not_to include("Atualização pronta")
+      expect(response.body).not_to include("Atualização pronta", "Notificação arquivada.")
       get "/notificacoes/contagem"
       expect(response.parsed_body["count"]).to eq(1)
+      get "/notificacoes", params: { arquivadas: 1 }
+      expect(response.body).to include("Atualização pronta", "/notificacoes/#{sistema.id}/desarquivar", "Desarquivar")
       post "/notificacoes/#{sistema.id}/desarquivar"
+      expect(response).to redirect_to("/notificacoes?arquivadas=1")
       expect(sistema.reload.archived_at).to be_nil
     end
 
